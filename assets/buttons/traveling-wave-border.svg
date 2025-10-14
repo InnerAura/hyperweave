@@ -1,0 +1,42 @@
+<!-- S1 — TRAVELING WAVE BORDER (dual dash runners + breathing width) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="50" viewBox="0 0 180 50" role="img" aria-label="Wave Mode">
+  <defs>
+    <linearGradient id="s1-grad" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"  stop-color="#845EF7"/>
+      <stop offset="50%" stop-color="#0AFFEF"/>
+      <stop offset="100%" stop-color="#FF0A54"/>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="12s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="s1-shadow" x="-40%" y="-80%" width="180%" height="260%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0AFFEF" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- pill fill -->
+  <rect x="0" y="0" width="180" height="50" rx="22" fill="url(#s1-grad)" opacity="0.18"/>
+  <rect x="0" y="0" width="180" height="50" rx="22" fill="#0b0b12" opacity="0.10"/>
+
+  <!-- thin baseline outline -->
+  <rect x="1" y="1" width="178" height="48" rx="21" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/>
+
+  <!-- runner A -->
+  <rect x="1.5" y="1.5" width="177" height="47" rx="20.5" fill="none"
+        stroke="url(#s1-grad)" stroke-linecap="round" stroke-width="4.2"
+        pathLength="100" stroke-dasharray="12 8" filter="url(#s1-shadow)">
+    <animate attributeName="stroke-dashoffset" values="0;-100" dur="2.2s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-width" values="4.2;5;4.2" dur="2.2s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- runner B (counter-phase, finer) -->
+  <rect x="1.5" y="1.5" width="177" height="47" rx="20.5" fill="none"
+        stroke="url(#s1-grad)" stroke-linecap="round" stroke-width="3.2"
+        pathLength="100" stroke-dasharray="6 94" opacity="0.85">
+    <animate attributeName="stroke-dashoffset" values="0;100" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.85;0.45;0.85" dur="3s" repeatCount="indefinite"/>
+  </rect>
+
+  <text x="90" y="32" font-family="Inter, ui-sans-serif, system-ui, Arial" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">
+    ⊕ View more details
+  </text>
+</svg>
