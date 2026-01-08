@@ -1,0 +1,42 @@
+{
+  "name": "hyperweave",
+  "version": "0.1.0",
+  "description": "HyperWeave Living Artifact Protocol - Zero-JS SVG badge generation with embedded provenance",
+  "server": {
+    "module": "hyperweave.mcp.server",
+    "entry_point": "main"
+  },
+  "tools": [
+    {
+      "name": "hw_discover_capabilities",
+      "description": "Discover HyperWeave capabilities and optimal workflows. USE THIS FIRST."
+    },
+    {
+      "name": "hw_query_ontology",
+      "description": "Query themes, motions, glyphs, and effects from the v7 ontology."
+    },
+    {
+      "name": "hw_use_specimen",
+      "description": "Generate badge from pre-validated specimen (GOLDEN PATH)."
+    },
+    {
+      "name": "hw_validate",
+      "description": "Validate SVG against Living Artifact Protocol."
+    }
+  ],
+  "resources": [
+    {
+      "uri": "ontology://hyperweave/badge/v7.0/summary",
+      "description": "Ontology summary with theme tiers, motions, and series"
+    }
+  ],
+  "transport": {
+    "default": "stdio",
+    "supported": ["stdio", "sse"]
+  },
+  "metadata": {
+    "ontology_version": "7.0.0",
+    "protocol": "Living Artifact Protocol v7",
+    "formula": "BADGE = THEME(state) x CONTENT x MOTION"
+  }
+}

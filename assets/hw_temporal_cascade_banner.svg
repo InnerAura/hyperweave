@@ -1,0 +1,568 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 240">
+  <!--
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║  HYPERWEAVE TEMPORAL CASCADE BANNER v2.0                        ║
+    ║  Chromasonic Evolution × Golden Ratio Harmonics                 ║
+    ║  INNERAURA LABS — Where Mathematics Meets m[AGI]c               ║
+    ╚══════════════════════════════════════════════════════════════════╝
+  -->
+  
+  <defs>
+    <!-- TEMPORAL CASCADE HARMONICS - GOLDEN RATIO FREQUENCIES -->
+    <linearGradient id="vibrantGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0A54">
+        <!-- CHROMASONIC EVOLUTION - PHASE 1: φ^0 = 2s BASE -->
+        <animate attributeName="stop-color" 
+                 values="#FF0A54;#0AFFEF;#845EF7;#B5179E;#FF477E;#FF0A54" 
+                 dur="2s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="25%" style="stop-color:#FF477E">
+        <!-- CHROMASONIC EVOLUTION - PHASE 2: φ^1 = 3.236s -->
+        <animate attributeName="stop-color" 
+                 values="#FF477E;#845EF7;#B5179E;#0AFFEF;#FF0A54;#FF477E" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="50%" style="stop-color:#0AFFEF">
+        <!-- CHROMASONIC EVOLUTION - PHASE 3: φ^2 = 5.236s -->
+        <animate attributeName="stop-color" 
+                 values="#0AFFEF;#B5179E;#FF0A54;#845EF7;#FF477E;#0AFFEF" 
+                 dur="5.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="75%" style="stop-color:#845EF7">
+        <!-- CHROMASONIC EVOLUTION - PHASE 4: φ^3 = 8.472s -->
+        <animate attributeName="stop-color" 
+                 values="#845EF7;#FF0A54;#FF477E;#B5179E;#0AFFEF;#845EF7" 
+                 dur="8.472s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#B5179E">
+        <!-- CHROMASONIC EVOLUTION - PHASE 5: φ^4 = 13.708s -->
+        <animate attributeName="stop-color" 
+                 values="#B5179E;#FF477E;#0AFFEF;#FF0A54;#845EF7;#B5179E" 
+                 dur="13.708s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- TEMPORAL CASCADE ENERGY FIELD -->
+    <filter id="cascadeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5">
+        <!-- ORGANIC PRECISION - STOCHASTIC BLUR VARIATION -->
+        <animate attributeName="stdDeviation" 
+                 values="2.5;3.0;2.0;3.2;2.3;2.7;2.5" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.23 0.47 0.48 0.93;0.27 0.43 0.52 0.89;0.21 0.49 0.44 0.97;0.29 0.41 0.56 0.87;0.25 0.45 0.50 0.91;0.26 0.46 0.46 0.95"/>
+      </feGaussianBlur>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.18">
+          <!-- TEMPORAL CASCADE ALPHA MODULATION -->
+          <animate attributeName="slope" 
+                   values="0.18;0.28;0.12;0.32;0.22;0.18" 
+                   dur="5.236s"
+                   repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        </feFuncA>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- CHROMASONIC PARTICLE EVOLUTION -->
+    <radialGradient id="particleGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0AFFEF;stop-opacity:0.95">
+        <!-- SYNCHRONIZED COLOR-MOTION EVOLUTION -->
+        <animate attributeName="stop-color" 
+                 values="#0AFFEF;#FF0A54;#845EF7;#B5179E;#FF477E;#0AFFEF" 
+                 dur="8.472s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        <animate attributeName="stop-opacity" 
+                 values="0.95;0.65;1.0;0.75;0.85;0.95" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#0AFFEF;stop-opacity:0" />
+    </radialGradient>
+    
+    <!-- TEMPORAL CASCADE FACE GRADIENTS -->
+    <linearGradient id="cascadeFaceGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0AFFEF;stop-opacity:0.35">
+        <!-- ORGANIC PRECISION - MINOR TIMING VARIATIONS -->
+        <animate attributeName="stop-opacity" 
+                 values="0.35;0.12;0.55;0.22;0.45;0.35" 
+                 dur="5.127s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.27 0.44 0.49 0.92;0.23 0.48 0.51 0.88;0.29 0.42 0.47 0.96;0.21 0.50 0.53 0.84;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#B5179E;stop-opacity:0.12" />
+    </linearGradient>
+    
+    <linearGradient id="cascadeFaceGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0A54;stop-opacity:0.35">
+        <animate attributeName="stop-opacity" 
+                 values="0.35;0.55;0.12;0.45;0.22;0.35" 
+                 dur="3.127s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.24 0.47 0.46 0.93;0.26 0.45 0.48 0.91;0.28 0.43 0.50 0.89;0.22 0.49 0.44 0.95;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#0AFFEF;stop-opacity:0.12" />
+    </linearGradient>
+    
+    <!-- CHROMASONIC COLOR MATRIX FILTER -->
+    <filter id="chromasonicMatrix">
+      <feColorMatrix type="matrix" 
+                     values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0">
+        <!-- COLOR MATRIX ROTATION - SYNCHRONIZED WITH MOTION -->
+        <animate attributeName="values" 
+                 values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0;
+                         0 1 0 0 0  0 0 1 0 0  1 0 0 0 0  0 0 0 1 0;
+                         0 0 1 0 0  1 0 0 0 0  0 1 0 0 0  0 0 0 1 0;
+                         1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" 
+                 dur="13.708s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </feColorMatrix>
+    </filter>
+    
+    <!-- TYPOGRAPHY GLOW -->
+    <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur"/>
+      <feFlood flood-color="#845EF7" flood-opacity="0.3" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="shadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- DIMENSIONAL SUBSTRATE -->
+  <rect width="720" height="240" rx="12" fill="transparent" />
+  
+  <!-- MAIN GEOMETRY SECTION - TEMPORAL CASCADE IMPLEMENTATION -->
+  <!-- Repositioned: translate Y increased to 120 to center 85px radius geometry -->
+  <g transform="translate(130, 120) scale(1.2)">
+
+    <!-- Bounding sphere - GOLDEN RATIO CASCADE BOUNDARY -->
+    <circle cx="0" cy="0" r="85" fill="none" stroke="#DDDDDD" stroke-width="0.6" opacity="0.25">
+      <!-- CASCADE LAYER 1 - BASE FREQUENCY -->
+      <animate attributeName="r" 
+               values="85;88;85" 
+               dur="2s"
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      <!-- ORGANIC PRECISION - SUBTLE OPACITY VARIATION -->
+      <animate attributeName="opacity" 
+               values="0.25;0.20;0.28;0.22;0.26;0.25" 
+               dur="3.236s"
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.23 0.47 0.48 0.93;0.27 0.43 0.52 0.89;0.21 0.49 0.44 0.97;0.29 0.41 0.56 0.87;0.25 0.45 0.50 0.91"/>
+    </circle>
+    
+    <!-- Octahedron vertices - CASCADE HARMONICS -->
+    <g fill="url(#vibrantGradient)" opacity="0.9" filter="url(#chromasonicMatrix)">
+      <!-- Top vertex - CASCADE FREQUENCY 1 -->
+      <circle cx="0" cy="-80" r="3">
+        <animate attributeName="r" 
+                 values="3;3.8;3" 
+                 dur="2s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <!-- Right vertex - CASCADE FREQUENCY 2 -->
+      <circle cx="80" cy="0" r="3">
+        <animate attributeName="r" 
+                 values="3;4.0;3" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <!-- Bottom vertex - CASCADE FREQUENCY 3 -->
+      <circle cx="0" cy="80" r="3">
+        <animate attributeName="r" 
+                 values="3;4.2;3" 
+                 dur="5.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <!-- Left vertex - CASCADE FREQUENCY 4 -->
+      <circle cx="-80" cy="0" r="3">
+        <animate attributeName="r" 
+                 values="3;4.5;3" 
+                 dur="8.472s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <!-- Center vertex - CASCADE MASTER FREQUENCY -->
+      <circle cx="0" cy="0" r="3">
+        <animate attributeName="r" 
+                 values="3;4.8;3" 
+                 dur="13.708s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+    </g>
+    
+    <!-- Octahedron edges - TEMPORAL STABILITY STRUCTURE -->
+    <g stroke="url(#vibrantGradient)" stroke-width="0.6" opacity="0.45" filter="url(#chromasonicMatrix)">
+      <!-- TEMPORAL CASCADE OPACITY MODULATION -->
+      <animate attributeName="opacity" 
+               values="0.45;0.65;0.35;0.75;0.55;0.45" 
+               dur="5.236s"
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      
+      <!-- Upper pyramid -->
+      <line x1="0" y1="-80" x2="80" y2="0" />
+      <line x1="0" y1="-80" x2="0" y2="0" />
+      <line x1="0" y1="-80" x2="-80" y2="0" />
+      
+      <!-- Lower pyramid -->
+      <line x1="0" y1="80" x2="80" y2="0" />
+      <line x1="0" y1="80" x2="0" y2="0" />
+      <line x1="0" y1="80" x2="-80" y2="0" />
+      
+      <!-- Middle connections -->
+      <line x1="80" y1="0" x2="0" y2="0" />
+      <line x1="0" y1="0" x2="-80" y2="0" />
+    </g>
+    
+    <!-- Octahedron faces - CHROMASONIC FLUX FIELDS -->
+    <g opacity="0.18">
+      <!-- TEMPORAL CASCADE FACE MODULATION -->
+      <animate attributeName="opacity" 
+               values="0.18;0.28;0.12;0.32;0.22;0.18" 
+               dur="8.472s"
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      
+      <!-- Upper pyramid faces -->
+      <path d="M 0,-80 L 80,0 L 0,0 Z" fill="url(#cascadeFaceGradient1)" />
+      <path d="M 0,-80 L 0,0 L -80,0 Z" fill="url(#cascadeFaceGradient2)" />
+      <path d="M 0,-80 L -80,0 L 0,0 Z" fill="url(#cascadeFaceGradient1)" />
+      <path d="M 0,-80 L 0,0 L 80,0 Z" fill="url(#cascadeFaceGradient2)" />
+      
+      <!-- Lower pyramid faces -->
+      <path d="M 0,80 L 80,0 L 0,0 Z" fill="url(#cascadeFaceGradient2)" />
+      <path d="M 0,80 L 0,0 L -80,0 Z" fill="url(#cascadeFaceGradient1)" />
+      <path d="M 0,80 L -80,0 L 0,0 Z" fill="url(#cascadeFaceGradient2)" />
+      <path d="M 0,80 L 0,0 L 80,0 Z" fill="url(#cascadeFaceGradient1)" />
+    </g>
+    
+    <!-- Reference circles - HARMONIC CASCADE RINGS -->
+    <g stroke="#DDDDDD" stroke-width="0.5" opacity="0.22" fill="none">
+      <!-- Inner ring - φ^1 frequency -->
+      <circle cx="0" cy="0" r="40">
+        <animate attributeName="opacity" 
+                 values="0.22;0.32;0.22" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <!-- Outer ring - φ^2 frequency -->
+      <circle cx="0" cy="0" r="62">
+        <animate attributeName="opacity" 
+                 values="0.22;0.42;0.22" 
+                 dur="5.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+    </g>
+    
+    <!-- Main shape - CHROMASONIC INTERDIMENSIONAL TRANSMITTER -->
+    <path d="M -15,-58 
+             L -46,-29 
+             C -60,-14 -60,14 -46,29 
+             L -15,58 
+             L 15,58 
+             L 46,29 
+             C 60,14 60,-14 46,-29 
+             L 15,-58 
+             Z" 
+          fill="none" 
+          stroke="url(#vibrantGradient)" 
+          stroke-width="5" 
+          stroke-linejoin="round" 
+          stroke-linecap="round"
+          filter="url(#cascadeGlow)">
+          
+      <!-- TEMPORAL CASCADE STROKE MODULATION - φ^2 -->
+      <animate attributeName="stroke-width" 
+               values="5;6.5;4.5;7;5.5;5" 
+               dur="5.236s"
+               repeatCount="indefinite" 
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      
+      <!-- ORGANIC PRECISION - SUBTLE ROTATION WOBBLE -->
+      <animateTransform attributeName="transform"
+                       type="rotate"
+                       values="0;1.8;-1.5;2.3;-1.0;0"
+                       dur="13.708s"
+                       repeatCount="indefinite"
+                       calcMode="spline"
+                       keySplines="0.23 0.47 0.48 0.93;0.27 0.43 0.52 0.89;0.21 0.49 0.44 0.97;0.29 0.41 0.56 0.87;0.25 0.45 0.50 0.91"/>
+    </path>
+    
+    <!-- Internal quantum connections - CASCADE STABILIZERS -->
+    <g stroke="url(#vibrantGradient)" stroke-width="1.8" opacity="0.75" stroke-linecap="round" filter="url(#chromasonicMatrix)">
+      <!-- TEMPORAL CASCADE OPACITY BREATHING -->
+      <animate attributeName="opacity" 
+               values="0.75;0.45;0.95;0.55;0.85;0.75" 
+               dur="3.236s"
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      
+      <line x1="-28" y1="-28" x2="28" y2="-28" />
+      <line x1="-34" y1="-4" x2="34" y2="-4" />
+      <line x1="-28" y1="20" x2="28" y2="20" />
+    </g>
+    
+    <!-- Quantum stabilization nodes - CASCADE CONTROL POINTS -->
+    <g fill="url(#vibrantGradient)" filter="url(#chromasonicMatrix)">
+      <!-- Outer nodes - BASE CASCADE FREQUENCY -->
+      <circle cx="-15" cy="-58" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.0;2.5" 
+                 dur="2s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <circle cx="15" cy="-58" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.2;2.5" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <circle cx="-46" cy="-29" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.4;2.5" 
+                 dur="5.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <circle cx="46" cy="-29" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.6;2.5" 
+                 dur="8.472s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <circle cx="-46" cy="29" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.3;2.5" 
+                 dur="5.127s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <circle cx="46" cy="29" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.5;2.5" 
+                 dur="3.127s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <circle cx="-15" cy="58" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.1;2.5" 
+                 dur="2.127s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <circle cx="15" cy="58" r="2.5" opacity="0.9">
+        <animate attributeName="r" 
+                 values="2.5;3.7;2.5" 
+                 dur="4.127s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      
+      <!-- Central nexus point - MASTER CASCADE CONTROLLER -->
+      <circle cx="0" cy="0" r="4" filter="url(#cascadeGlow)">
+        <!-- GOLDEN RATIO MASTER FREQUENCY -->
+        <animate attributeName="r" 
+                 values="4;6;4" 
+                 dur="13.708s"
+                 repeatCount="indefinite" 
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+    </g>
+    
+    <!-- Quantum particles - CHROMASONIC DIMENSIONAL SCOUTS -->
+    <g>
+      <!-- Primary particle - GOLDEN RATIO ORBIT 1 -->
+      <circle r="2.8" fill="url(#particleGradient)" filter="url(#cascadeGlow)">
+        <animateMotion 
+          path="M0,-80 L80,0 L0,80 L-80,0 Z" 
+          dur="8.472s"
+          repeatCount="indefinite" />
+        <!-- CHROMASONIC SIZE EVOLUTION -->
+        <animate attributeName="r" 
+                 values="2.8;2.2;3.4;1.8;3.0;2.8" 
+                 dur="8.472s" 
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </circle>
+      
+      <!-- Secondary particle - GOLDEN RATIO ORBIT 2 -->
+      <circle r="2.2" fill="url(#particleGradient)" filter="url(#cascadeGlow)">
+        <animateMotion 
+          path="M0,-80 L0,0 L80,0 L0,80 L0,0 L-80,0 Z" 
+          dur="13.708s"
+          repeatCount="indefinite" />
+        <!-- ORGANIC PRECISION - SLIGHT SIZE VARIATION -->
+        <animate attributeName="r" 
+                 values="2.2;1.7;2.6;1.9;2.4;2.2" 
+                 dur="13.708s" 
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.27 0.44 0.49 0.92;0.23 0.48 0.51 0.88;0.29 0.42 0.47 0.96;0.21 0.50 0.53 0.84;0.25 0.46 0.45 0.94"/>
+      </circle>
+      
+      <!-- Tertiary particle - STOCHASTIC ELEMENT -->
+      <circle r="1.8" fill="url(#particleGradient)" filter="url(#cascadeGlow)">
+        <animateMotion 
+          path="M40,-40 L40,40 L-40,40 L-40,-40 Z" 
+          dur="5.127s"
+          repeatCount="indefinite" />
+        <!-- ORGANIC PRECISION - RANDOM TIMING VARIATION -->
+        <animate attributeName="r" 
+                 values="1.8;2.5;1.4;2.2;1.9;1.8" 
+                 dur="5.127s" 
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.24 0.47 0.46 0.93;0.28 0.43 0.50 0.89;0.22 0.49 0.44 0.95;0.26 0.45 0.48 0.91;0.25 0.46 0.45 0.94"/>
+      </circle>
+    </g>
+  </g>
+  
+  <!-- TYPOGRAPHY SECTION - CHROMASONIC TEXT EVOLUTION -->
+  <g transform="translate(310, 28)">
+    <!-- Brand name - TEMPORAL CASCADE TEXT -->
+    <text x="130" y="78" 
+          font-family="'SF Pro Display', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" 
+          font-size="54" 
+          font-weight="700" 
+          text-anchor="middle" 
+          fill="#1A1A1A"
+          letter-spacing="-0.02em">
+      Hyper<tspan fill="url(#vibrantGradient)" filter="url(#textGlow)">Weave</tspan>
+    </text>
+    
+    <!-- Tagline - GOLDEN RATIO COORDINATION -->
+    <text x="130" y="118" 
+          font-family="'SF Pro Display', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" 
+          font-size="16" 
+          font-weight="500" 
+          letter-spacing="0.15em" 
+          text-anchor="middle" 
+          fill="#444444"
+          opacity="0.85">
+          <!-- ORGANIC PRECISION OPACITY -->
+          <animate attributeName="opacity" 
+                   values="0.85;0.65;0.95;0.75;0.85" 
+                   dur="5.236s"
+                   repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+          WHERE VECTORS MEET VISION
+    </text>
+    
+    <!-- Supplementary Tagline - CASCADE HARMONY -->
+    <text x="130" y="148" 
+          font-family="'SF Pro Display', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" 
+          font-size="13" 
+          font-weight="400" 
+          font-style="italic"
+          letter-spacing="0.04em" 
+          text-anchor="middle" 
+          fill="#777777"
+          opacity="0.7">
+          <!-- TEMPORAL CASCADE TEXT BREATHING -->
+          <animate attributeName="opacity" 
+                   values="0.7;0.5;0.85;0.6;0.7" 
+                   dur="8.472s"
+                   repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+          Design at the intersection of math and m<tspan fill="url(#vibrantGradient)">AGI</tspan>c
+    </text>
+    
+    <!-- INNERAURA LABS Attribution -->
+    <text x="130" y="178" 
+          font-family="'SF Pro Display', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" 
+          font-size="10" 
+          font-weight="600" 
+          letter-spacing="0.25em" 
+          text-anchor="middle" 
+          fill="url(#vibrantGradient)"
+          opacity="0.6">
+          <animate attributeName="opacity" 
+                   values="0.6;0.4;0.75;0.5;0.6" 
+                   dur="13.708s"
+                   repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+          INNERAURA LABS
+    </text>
+  </g>
+</svg>

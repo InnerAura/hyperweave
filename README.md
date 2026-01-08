@@ -1,164 +1,74 @@
 <div align="center" id="top">
 
-<!-- HYPERWEAVE BANNER SVG -->
 <img
-  src="assets/banners/wave-phase-turbulence-banner-adaptive.svg"
-  alt="HyperWeave Banner Wave Phase"
+  src="assets/hw_temporal_cascade_banner.svg"
+  alt="Hyperweave Banner: Temporal Cascade Harmonics Style"
+  width="100%"
+/>
+
+<p align="center">
+  <a href="" alt="cicd">
+    <img
+    src="./assets/mms_build_badge.svg"
+    alt="Badge: MMS CICD"
+    />
+  </a>
+  <a href="" alt="status">
+    <img
+    src="./assets/mms_status_badge.svg"
+    alt="Badge: MMS Status"
+    />
+  </a>
+  <a href="" alt="version">
+    <img
+    src="./assets/mms_version_badge.svg"
+    alt="Badge: MMS Version"
+    />
+  </a>
+</p>
+
+<img
+  src="assets/hw_data_stream_flow_hr.svg"
+  alt="Thematic Break: Data Stream Flow Theme"
   width="100%"
   style="max-width: 100%;"
 />
 
-<!-- HYPERWEAVE BADGES -->
+</div>
+
+## What is HypeWeave?
+
+HypeWeave is a compositional visual protocol that transforms parameters into **Adaptive Artifacts** — self-contained SVGs with embedded CSS animations and **zero** JavaScript dependencies. HypeWeave enables seamless code visualization across different platforms
+
+Infrastructure that allows agents and humans to generate, customize, and render SVG components through APIs, CLI, and MCP.
+
+**🎯 Key Feature: Format-Adaptive Delivery**
+
+The same SVG works everywhere — GitHub READMEs, Slack, email, dark/light modes — with zero JavaScript. State transitions, animations, and accessibility are built into the artifact itself.
+
+---
+
+<div align="center">
+
 <p align="center">
-  <!-- BADGE SVGs -->
-  <a href="#top" alt="Return to Home">
-    <img 
-    src="assets/badges/svg/conway-badge.svg"
-    alt="Button: Liquid Glass Style"
-    width="25%"
-    style="max-width: 100%; cursor: pointer;"
+  <a href="https://inneraura.ai" alt="InnerAura Labs">
+    <img
+    src="./assets/inneraura_hero.svg"
+    alt="InnerAura Labs Logo"
     />
   </a>
-  <a href="#top" alt="Return to Home">
-    <img 
-    src="/assets/badges/liquid-glass-badge.svg"
-    alt="Button: Liquid Glass Style"
-    width="15%"
-    style="max-width: 100%; cursor: pointer;"
-    />
-  </a>
-  <!-- BADGE SVGs -->
-  <a href="#top" alt="Return to Home">
-    <img 
-    src="/assets/badges/liquid-glass-badge.svg"
-    alt="Button: Liquid Glass Style"
-    width="15%"
-    style="max-width: 100%; cursor: pointer;"
-    />
-  </a>
-  <!-- BADGE SVGs -->
-  <a href="#top" alt="Return to Home">
-    <img 
-    src="/assets/badges/liquid-glass-badge.svg"
-    alt="Button: Liquid Glass Style"
-    width="15%"
-    style="max-width: 100%; cursor: pointer;"
-    />
-  </a>
-  <!-- BADGE SVGs -->
-  <a href="#top" alt="Return to Home">
-    <img 
-    src="/assets/badges/liquid-glass-badge.svg"
-    alt="Button: Liquid Glass Style"
-    width="15%"
-    style="max-width: 100%; cursor: pointer;"
+</p>
+
+<p align="center">
+  <a href="#top" alt="Built with InnerAura Labs Badge">
+    <img
+    src="assets/button.svg"
+    alt="Built with InnerAura Labs Badge"
+    width="150px"
     />
   </a>
 </p>
 
 </div>
 
-<!-- THEMATIC BREAK SVG -->
-<img 
-  src="/assets/dividers/hexagonal-wave-networks.svg"
-  alt="Thematic Break: Hexagonal Wave Networks Style" 
-  width="100%" 
-  style="max-width: 100%;"
-/>
-
-# HyperWeave
-
-<em>HYPERWEAVE: WHERE DESIGN EMERGES ⚡</em>
-
-
-<!-- HYPERWEAVE CALLOUT SVG -->
-<img 
-  src="/assets/callouts/chromatic-pulse-callout.svg" 
-  alt="HyperWeave Screenshot"
-  width="100%"
-  style="max-width: 100%;"
-/>
-
 ---
-
-<div align="left">
-  <!-- BUTTON SVG -->
-  <a href="#top" alt="Return to Home">
-    <img 
-    src="/assets/buttons/traveling-wave-border.svg"
-    alt="Button: Traveling Wave Border Style" 
-    width="15%"
-    style="max-width: 100%; cursor: pointer;"
-    />
-  </a>
-  <!-- THEMATIC BREAK SVG -->
-  <img 
-    src="/assets/dividers/hexagonal-wave-networks.svg"
-    alt="Thematic Break: Hexagonal Wave Networks Style" 
-    width="100%" 
-    style="max-width: 100%;"
-  />
-
-</div>
-
----
-
-## Acknowledgements
-
-Inspiration from pioneers of visualization and SVG democratization:
-
-- [Ant Design](https://ant.design)
-- [Lobehub](https://github.com/lobehub)
-- [Shields.io](https://shields.io)
-
-<div align="center">
-
-<!-- THEMATIC BREAK -->
-<img 
-  src="/assets/dividers/hexagonal-wave-networks.svg"
-  alt="Thematic Break: Hexagonal Wave Networks Style" 
-  width="100%"
-  />
-</div>
-
-<!-- FOOTER -->
-<p align="center">
-  <em>Constraint breeds computation</em>
-  <br />
-  <em>Computation births form</em>
-  <br />
-  <small>
-    <em>With 🩵 from InnerAura</em>
-    <br />
-    <em>♥ → ∅ → ∞</em>
-  </small>
-</div>
-
-<div align="center">
-  <!-- BUTTON -->
-  <a href="#top" alt="Return to Home">
-    <img 
-      src="/assets/buttons/orbiting-arcs.svg"
-      alt="Button: Dual Chasers Style" 
-      width="25%"
-      style="max-width: 100%; cursor: pointer;"
-      />
-  </a>
-  <!-- THEMATIC BREAK -->
-  <img 
-    src="/assets/dividers/hexagonal-wave-networks.svg"
-    alt="Thematic Break: Hexagonal Wave Networks Style" 
-    width="100%"
-    style="max-width: 100%;"
-    />
-</div>
-
-<!-- REFERENCE LINKS -->
-
-<!-- DEVELOPER TOOLS -->
-[uv]: "x"
-[just]: https://github.com/casey/just
-
-<!-- LICENSE -->
-[license]: "<LICENSE>"
-[license-badge]: https://img.shields.io/badge/license-X-blue.svg
