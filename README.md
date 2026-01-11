@@ -7,6 +7,13 @@
 />
 
 <p align="center">
+  <a href="" alt="glass">
+    <img
+    src="./assets/badge.svg"
+    alt="Badge: liquid-glass"
+    width="100px"
+    />
+  </a>
   <a href="" alt="cicd">
     <img
     src="./assets/mms_build_badge.svg"
@@ -37,6 +44,8 @@
 </div>
 
 ## What is HypeWeave?
+
+Visual Intelligence Infrastructure for the Agentic Economy.
 
 HypeWeave is a compositional visual protocol that transforms parameters into **Adaptive Artifacts** — self-contained SVGs with embedded CSS animations and **zero** JavaScript dependencies. HypeWeave enables seamless code visualization across different platforms
 
