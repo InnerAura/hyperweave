@@ -26,5 +26,6 @@ htmlcov/
 archive/
 # .claude/
 # CLAUDE.md
-# outputs/
+outputs/
+scripts/
 specs/
