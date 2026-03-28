@@ -556,35 +556,54 @@
   </g>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- L5: TYPOGRAPHY — CSS CLASS FILLS ONLY        -->
-  <!-- No fill="url()" on text/tspan. Solid colors  -->
-  <!-- via CSS. Gradient fills on tspan break mobile -->
-  <!-- Safari SVG-as-img (defaults to black).        -->
+  <!-- L5: TYPOGRAPHY — INLINE FILLS, dk/lt SWITCH  -->
+  <!-- Same pattern as footer. Inline fill attrs.   -->
   <!-- ═══════════════════════════════════════════ -->
 
-  <!-- Wordmark -->
-  <g class="wm">
+  <!-- Wordmark — DARK -->
+  <g class="wm dk">
     <text x="470" y="242"
           font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
           font-size="113" font-weight="900" font-style="italic"
-          letter-spacing="-3.5" filter="url(#f-txt)">
-      <tspan class="hyper-fill">Hyper</tspan><tspan class="weave-fill">Weave</tspan>
+          letter-spacing="-3.5">
+      <tspan fill="#e0e8ff">Hyper</tspan><tspan fill="#7070f0">Weave</tspan>
     </text>
   </g>
 
-  <!-- DIVIDER -->
-  <line class="dv div-line" x1="470" y1="260" x2="960" y2="260" stroke-width=".9"/>
+  <!-- Wordmark — LIGHT -->
+  <g class="wm lt">
+    <text x="470" y="242"
+          font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+          font-size="113" font-weight="900" font-style="italic"
+          letter-spacing="-3.5">
+      <tspan fill="#0c1848">Hyper</tspan><tspan fill="#2838a8">Weave</tspan>
+    </text>
+  </g>
 
-  <!-- TAGLINE -->
-  <g class="tg">
-    <text class="tag-text" x="473" y="286"
+  <!-- DIVIDER — dk/lt -->
+  <line class="dv dk" x1="470" y1="260" x2="960" y2="260" stroke="#3050c0" stroke-width=".9"/>
+  <line class="dv lt" x1="470" y1="260" x2="960" y2="260" stroke="#5070d0" stroke-width=".9"/>
+
+  <!-- TAGLINE — dk/lt with inline fills -->
+  <g class="tg dk">
+    <text fill="#8898c8" x="473" y="286"
+          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="15" font-weight="500" letter-spacing="7">WHERE VECTORS MEET VISION</text>
+  </g>
+  <g class="tg lt">
+    <text fill="#3a4878" x="473" y="286"
           font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
           font-size="15" font-weight="500" letter-spacing="7">WHERE VECTORS MEET VISION</text>
   </g>
 
-  <!-- LAB -->
-  <g class="lb">
-    <text class="lab-text" x="473" y="316"
+  <!-- LAB — dk/lt with inline fills -->
+  <g class="lb dk">
+    <text fill="#5868d8" x="473" y="316"
+          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="12" font-weight="600" letter-spacing="6">INNERAURA LABS</text>
+  </g>
+  <g class="lb lt">
+    <text fill="#3840a8" x="473" y="316"
           font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
           font-size="12" font-weight="600" letter-spacing="6">INNERAURA LABS</text>
   </g>
