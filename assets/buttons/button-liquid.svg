@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Return ⤴"
+     viewBox="0 0 260 80" width="260" height="80">
+  <title>Return — Liquid Surface</title>
+  <defs>
+    <!-- THE GRADIENT — fast rotating, high saturation, sapphire spectrum -->
+    <linearGradient id="ls-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1838b0"/>
+      <stop offset="15%" stop-color="#4080ff"/>
+      <stop offset="30%" stop-color="#80c0ff"/>
+      <stop offset="45%" stop-color="#d0e8ff"/>
+      <stop offset="60%" stop-color="#5848d8"/>
+      <stop offset="75%" stop-color="#4080ff"/>
+      <stop offset="90%" stop-color="#2050e0"/>
+      <stop offset="100%" stop-color="#1838b0"/>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="3s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- DARK: void interior -->
+    <radialGradient id="ls-void" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#08062e"/>
+      <stop offset="100%" stop-color="#030118"/>
+    </radialGradient>
+
+    <!-- LIGHT: frosted sapphire interior -->
+    <radialGradient id="ls-frost" cx="45%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#f4f7ff"/>
+      <stop offset="40%" stop-color="#e8eeff"/>
+      <stop offset="100%" stop-color="#d8e2ff"/>
+    </radialGradient>
+
+    <!-- HEAVY GLOW — this is the main event, stdDev=8, cranked saturation -->
+    <filter id="ls-megaglow" x="-40%" y="-60%" width="180%" height="220%">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feColorMatrix in="b" type="saturate" values="2.5" result="sat"/>
+      <feColorMatrix in="sat" type="matrix"
+        values="0.2 0 0.5 0 0.05
+                0.1 0.15 0.4 0 0.03
+                0.3 0.1 1.3 0 0.15
+                0 0 0 0.75 0" result="tint"/>
+      <feMerge>
+        <feMergeNode in="tint"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- OUTER BLOOM — even wider, softer -->
+    <filter id="ls-bloom" x="-60%" y="-80%" width="220%" height="260%">
+      <feGaussianBlur stdDeviation="14"/>
+      <feColorMatrix type="matrix"
+        values="0.1 0 0.35 0 0.03
+                0.06 0.08 0.25 0 0.02
+                0.15 0.05 0.8 0 0.08
+                0 0 0 0.4 0"/>
+    </filter>
+
+    <!-- TEXT GLOW -->
+    <filter id="ls-txtglow" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0 0 0 0 0.25  0 0 0 0 0.5  0 0 0 0 1  0 0 0 0.5 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- LIGHT MODE text glow (darker) -->
+    <filter id="ls-txtglow-lt" x="-15%" y="-25%" width="130%" height="150%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0 0 0 0 0.1  0 0 0 0 0.2  0 0 0 0 0.6  0 0 0 0.3 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- LIGHT MODE border glow — blue radiating on white -->
+    <filter id="ls-glow-lt" x="-35%" y="-55%" width="170%" height="210%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0.15 0 0.4 0 0.04
+                0.1 0.12 0.35 0 0.03
+                0.25 0.08 1.0 0 0.12
+                0 0 0 0.65 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="ls-bloom-lt" x="-50%" y="-70%" width="200%" height="240%">
+      <feGaussianBlur stdDeviation="12"/>
+      <feColorMatrix type="matrix"
+        values="0.08 0 0.3 0 0.02
+                0.05 0.06 0.22 0 0.01
+                0.12 0.04 0.7 0 0.06
+                0 0 0 0.3 0"/>
+    </filter>
+  </defs>
+
+  <style>
+    @media(prefers-reduced-motion:reduce){
+      *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+      animate,animateTransform{display:none!important}
+    }
+    @media(forced-colors:active){
+      .ls-body{fill:ButtonFace!important;stroke:ButtonText!important}
+      .ls-txt,.ls-gly{fill:ButtonText!important;filter:none!important}
+      .ls-border,.ls-bloom-ring,.ls-outer{display:none!important}
+    }
+
+    /* ═══ DARK (default) ═══ */
+    .ls-body { fill: url(#ls-void); }
+    .ls-border { filter: url(#ls-megaglow); }
+    .ls-bloom-ring { filter: url(#ls-bloom); }
+    .ls-txt { fill: #ffffff; filter: url(#ls-txtglow); }
+    .ls-gly { fill: #80c0ff; filter: url(#ls-txtglow); }
+
+    /* ═══ LIGHT ═══ */
+    @media(prefers-color-scheme:light){
+      .ls-body { fill: url(#ls-frost); }
+      .ls-border { filter: url(#ls-glow-lt); }
+      .ls-bloom-ring { filter: url(#ls-bloom-lt); }
+      .ls-txt { fill: #0c1860; filter: url(#ls-txtglow-lt); }
+      .ls-gly { fill: #2040c0; filter: url(#ls-txtglow-lt); }
+      .ls-inner { stroke: rgba(30,50,160,.12) !important; }
+    }
+  </style>
+
+  <!-- OUTERMOST BLOOM — massive soft bleed -->
+  <rect class="ls-bloom-ring" x="16" y="16" width="228" height="48" rx="12"
+        fill="none" stroke="url(#ls-grad)" stroke-width="6" opacity=".5"/>
+
+  <!-- PRIMARY BORDER — thick, glowing, pulsing, the MAIN visual -->
+  <rect class="ls-border" x="16" y="16" width="228" height="48" rx="12"
+        fill="none" stroke="url(#ls-grad)" stroke-width="4">
+    <animate attributeName="stroke-width" values="4;5.5;4" dur="2s" repeatCount="indefinite"
+             calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+  </rect>
+
+  <!-- OUTER HALO — pulsing independently -->
+  <rect x="12" y="12" width="236" height="56" rx="16"
+        fill="none" stroke="#4080ff" stroke-width="1.2" opacity=".3">
+    <animate attributeName="opacity" values=".3;.55;.3" dur="1.5s" repeatCount="indefinite"
+             calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    <animate attributeName="stroke-width" values="1.2;2;1.2" dur="2.5s" repeatCount="indefinite"
+             calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+  </rect>
+
+  <!-- BODY -->
+  <rect class="ls-body" x="18" y="18" width="224" height="44" rx="10"/>
+
+  <!-- INNER TRACE — tight accent -->
+  <rect class="ls-inner" x="21" y="21" width="218" height="38" rx="7"
+        fill="none" stroke="rgba(64,128,255,.15)" stroke-width=".8">
+    <animate attributeName="opacity" values=".8;1;.8" dur="2s" begin=".5s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Text -->
+  <text class="ls-txt" x="110" y="46" font-family="'Inter','SF Pro Display',system-ui,sans-serif"
+        font-size="15" font-weight="700" letter-spacing="4" text-anchor="middle">RETURN</text>
+  <text class="ls-gly" x="178" y="47" font-family="'SF Mono','JetBrains Mono',monospace"
+        font-size="20" text-anchor="middle">⤴</text>
+</svg>

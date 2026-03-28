@@ -1,3 +1,5 @@
+<div id="top">
+
 <p align="center">
   <img src="./assets/hyperweave-banner.svg" alt="HyperWeave" width="800"/>
 </p>
@@ -29,9 +31,11 @@
 </p>
 -->
 
+<!--
 <p align="center">
   <img src="./specs/genomes/chrome-horizon/strip_readme_ai.svg" alt="metric strip"/>
 </p>
+-->
 
 ---
 
@@ -240,17 +244,27 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
 
 ---
 
+<!--
 <p align="center">
   <img src="./assets/marquees/badge-showcase-triple.svg" alt="genome marquee" width="100%"/>
 </p>
+-->
 
 <p align="center">
-  <img src="assets/footers/inneraura-footer-cobalt.svg" alt="InnerAura Labs" width="100%"/>
+  <img src="assets/footers/inneraura-footer-liquid.svg" alt="InnerAura Labs" width="100%"/>
 </p>
 
+<div align="center">
+
+[![][return-top]](#top)
+
+</div>
+
+<!--
 <p align="center">
   <sub>Built by <a href="https://inneraura.ai/">InnerAura Labs</a></sub>
 </p>
+-->
 
 <!-- REFERENCE LINKS -->
 [inneraura.ai]: https://inneraura.ai/
@@ -262,3 +276,5 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
 [tiktok]: https://www.tiktok.com/@hyperweave.ai
 [x]: https://x.com/InnerAuraLabs
 [youtube]: https://www.youtube.com/@InnerAuraLabs
+
+[return-top]: ./assets/buttons/button-liquid.svg
