@@ -11,31 +11,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/InnerAura/hyperweave"><img src="./assets/icons/cobalt-sapphire-github.svg" width="48" alt="GitHub"/></a>&nbsp;
-  <a href="https://discord.gg/wVmcAZPQZ8"><img src="./assets/icons/cobalt-sapphire-discord.svg" width="48" alt="Discord"/></a>&nbsp;
-  <a href="https://www.instagram.com/hyperweave.ai/"><img src="./assets/icons/cobalt-sapphire-instagram.svg" width="48" alt="Instagram"/></a>&nbsp;
-  <a href="https://www.linkedin.com/company/inneraura"><img src="./assets/icons/cobalt-sapphire-linkedin.svg" width="48" alt="LinkedIn"/></a>&nbsp;
-  <a href="https://www.tiktok.com/@hyperweave.ai"><img src="./assets/icons/cobalt-sapphire-tiktok.svg" width="48" alt="TikTok"/></a>&nbsp;
-  <a href="https://x.com/InnerAuraLabs"><img src="./assets/icons/cobalt-sapphire-x.svg" width="48" alt="X"/></a>&nbsp;
-  <a href="https://www.youtube.com/@InnerAuraLabs"><img src="./assets/icons/cobalt-sapphire-youtube.svg" width="48" alt="YouTube"/></a>&nbsp;
-  <a href="https://hyperweave.readthedocs.io/"><img src="./assets/icons/cobalt-sapphire-docs.svg" width="48" alt="Docs"/></a>
+  <img src="https://hyperweave.app/v1/live/github/InnerAura/hyperweave/stars/chrome-horizon.static" alt="stars"/>
+  <img src="https://hyperweave.app/v1/live/github/InnerAura/hyperweave/forks/chrome-horizon.static" alt="forks"/>
+  <img src="https://hyperweave.app/v1/live/pypi/hyperweave/version/chrome-horizon.static" alt="version"/>
+  <img src="https://hyperweave.app/v1/live/github/InnerAura/hyperweave/license/chrome-horizon.static" alt="license"/>
+  <img src="https://hyperweave.app/v1/live/pypi/hyperweave/python_requires/chrome-horizon.static" alt="python"/>
 </p>
-
-<!--
-<p align="center">
-  <img src="./specs/genomes/chrome-horizon/badge_build.svg" alt="build: passing"/>
-  <img src="./specs/genomes/chrome-horizon/badge_coverage.svg" alt="coverage"/>
-  <img src="./specs/genomes/chrome-horizon/badge_version.svg" alt="version"/>
-  <img src="./specs/genomes/chrome-horizon/badge_license.svg" alt="license: MIT"/>
-  <img src="./specs/genomes/chrome-horizon/badge_python.svg" alt="python: 3.12+"/>
-</p>
--->
-
-<!--
-<p align="center">
-  <img src="./specs/genomes/chrome-horizon/strip_readme_ai.svg" alt="metric strip"/>
-</p>
--->
 
 ---
 
@@ -252,6 +233,40 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
 
 <p align="center">
   <img src="assets/footers/inneraura-footer-liquid.svg" alt="InnerAura Labs" width="100%"/>
+</p>
+
+<p align="center">
+  <!-- <a href="https://github.com/InnerAura/hyperweave">
+  <img src="./assets/icons/cobalt-sapphire-github.svg" width="48" alt="GitHub"/>
+  </a>
+  &nbsp; -->
+  <a href="https://discord.gg/wVmcAZPQZ8">
+  <img src="./assets/icons/cobalt-sapphire-discord.svg" width="48" alt="Discord"/>
+  </a>
+  &nbsp;
+  <a href="https://www.instagram.com/hyperweave.ai/">
+  <img src="./assets/icons/cobalt-sapphire-instagram.svg" width="48" alt="Instagram"/>
+  </a>
+  &nbsp;
+  <a href="https://www.linkedin.com/company/inneraura">
+  <img src="./assets/icons/cobalt-sapphire-linkedin.svg" width="48" alt="LinkedIn"/>
+  </a>
+  &nbsp;
+  <a href="https://www.tiktok.com/@hyperweave.ai">
+  <img src="./assets/icons/cobalt-sapphire-tiktok.svg" width="48" alt="TikTok"/>
+  </a>
+  &nbsp;
+  <a href="https://x.com/InnerAuraLabs">
+  <img src="./assets/icons/cobalt-sapphire-x.svg" width="48" alt="X"/>
+  </a>
+  &nbsp;
+  <a href="https://www.youtube.com/@InnerAuraLabs">
+  <img src="./assets/icons/cobalt-sapphire-youtube.svg" width="48" alt="YouTube"/>
+  </a>
+  <!-- &nbsp;
+  <a href="https://hyperweave.readthedocs.io/">
+  <img src="./assets/icons/cobalt-sapphire-docs.svg" width="48" alt="Docs"/>
+  </a> -->
 </p>
 
 <div align="center">

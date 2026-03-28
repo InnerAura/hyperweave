@@ -438,9 +438,7 @@ async def test_strip_live_data(client: AsyncClient) -> None:
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
         patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
     ):
-        resp = await client.get(
-            "/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars"
-        )
+        resp = await client.get("/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars")
         assert resp.status_code == 200
         assert "stale-while-revalidate" in resp.headers.get("cache-control", "")
 
@@ -450,9 +448,7 @@ async def test_strip_live_data_error(client: AsyncClient) -> None:
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, side_effect=Exception("timeout")),
         patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
     ):
-        resp = await client.get(
-            "/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars"
-        )
+        resp = await client.get("/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars")
         assert resp.status_code == 200
 
 

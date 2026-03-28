@@ -20,9 +20,13 @@ _BRIDGE_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP, Fr
 _TELEMETRY_FRAMES: frozenset[str] = frozenset({FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD})
 
 # Marquee frame types — need frame_fill, status colors, ink tiers
-_MARQUEE_FRAMES: frozenset[str] = frozenset({
-    FrameType.MARQUEE_HORIZONTAL, FrameType.MARQUEE_VERTICAL, FrameType.MARQUEE_COUNTER,
-})
+_MARQUEE_FRAMES: frozenset[str] = frozenset(
+    {
+        FrameType.MARQUEE_HORIZONTAL,
+        FrameType.MARQUEE_VERTICAL,
+        FrameType.MARQUEE_COUNTER,
+    }
+)
 
 
 def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, str]:

@@ -449,7 +449,7 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
     scroll_distance = 1000
     base_speed = 90.2  # px/s (1000 / 11.09)
     # Speed override: marquee_speeds[0] scales all rows uniformly
-    speed = (spec.marquee_speeds[0] if spec.marquee_speeds else 1.0)
+    speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
     scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
     # Parse brand items from title (pipe-separated for phrases, fallback to space-split)
@@ -472,35 +472,49 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
 
         row1_cells: list[dict[str, Any]] = []
         for i, text in enumerate(brand_items):
-            row1_cells.append({
-                "text": text,
-                "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
-            })
+            row1_cells.append(
+                {
+                    "text": text,
+                    "color": "var(--dna-ink-primary)"
+                    if i % 2 == 0
+                    else "var(--dna-ink-secondary, var(--dna-ink-muted))",
+                }
+            )
 
         row2_cells: list[dict[str, Any]] = []
         for m in metric_items:
-            row2_cells.append({
-                "text": m["label"],
-                "color": "var(--dna-signal)",
-                "font_weight": "700",
-            })
-            row2_cells.append({
-                "text": m["value"],
-                "color": "var(--dna-ink-primary)",
-                "font_size": "15",
-                "font_weight": "800",
-                "font_family": "var(--dna-font-display, 'Inter', system-ui, sans-serif)",
-                "dx": "6",
-            })
+            row2_cells.append(
+                {
+                    "text": m["label"],
+                    "color": "var(--dna-signal)",
+                    "font_weight": "700",
+                }
+            )
+            row2_cells.append(
+                {
+                    "text": m["value"],
+                    "color": "var(--dna-ink-primary)",
+                    "font_size": "15",
+                    "font_weight": "800",
+                    "font_family": "var(--dna-font-display, 'Inter', system-ui, sans-serif)",
+                    "dx": "6",
+                }
+            )
             if m.get("delta"):
                 arrow = "▲" if m.get("delta_dir") == "positive" else "▼"
-                color = "var(--dna-status-passing-core)" if m.get("delta_dir") == "positive" else "var(--dna-status-failing-core)"
-                row2_cells.append({
-                    "text": f"{arrow}{m['delta']}",
-                    "color": color,
-                    "font_size": "9",
-                    "dx": "4",
-                })
+                color = (
+                    "var(--dna-status-passing-core)"
+                    if m.get("delta_dir") == "positive"
+                    else "var(--dna-status-failing-core)"
+                )
+                row2_cells.append(
+                    {
+                        "text": f"{arrow}{m['delta']}",
+                        "color": color,
+                        "font_size": "9",
+                        "dx": "4",
+                    }
+                )
 
         status_items: list[dict[str, Any]] = [
             {"text": "●", "color": "var(--dna-signal)", "dx": "16"},
@@ -520,33 +534,57 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
         all_rows = [
             {
                 "cells": row1_cells,
-                "scroll_distance": scroll_distance, "scroll_dur": scroll_dur,
+                "scroll_distance": scroll_distance,
+                "scroll_dur": scroll_dur,
                 "direction": "rtl",
-                "separator": "●", "separator_color": "var(--dna-signal)", "separator_opacity": ".25",
-                "gap": 20, "font_size": 14, "font_weight": "800", "letter_spacing": "3",
+                "separator": "●",
+                "separator_color": "var(--dna-signal)",
+                "separator_opacity": ".25",
+                "gap": 20,
+                "font_size": 14,
+                "font_weight": "800",
+                "letter_spacing": "3",
                 "font_family": "var(--dna-font-display, 'Inter', system-ui, sans-serif)",
                 "text_start_x": 16,
-                "row_y": row_ys[0], "row_h": row_hs[0], "text_y": text_ys[0],
+                "row_y": row_ys[0],
+                "row_h": row_hs[0],
+                "text_y": text_ys[0],
             },
             {
                 "cells": row2_cells,
-                "scroll_distance": scroll_distance, "scroll_dur": scroll_dur,
+                "scroll_distance": scroll_distance,
+                "scroll_dur": scroll_dur,
                 "direction": "ltr",
-                "separator": "", "separator_color": "", "separator_opacity": "",
-                "gap": 32, "font_size": 11, "font_weight": "700", "letter_spacing": "1",
+                "separator": "",
+                "separator_color": "",
+                "separator_opacity": "",
+                "gap": 32,
+                "font_size": 11,
+                "font_weight": "700",
+                "letter_spacing": "1",
                 "font_family": "var(--dna-font-mono, 'Courier New', monospace)",
                 "text_start_x": 16,
-                "row_y": row_ys[1], "row_h": row_hs[1], "text_y": text_ys[1],
+                "row_y": row_ys[1],
+                "row_h": row_hs[1],
+                "text_y": text_ys[1],
             },
             {
                 "cells": status_items,
-                "scroll_distance": scroll_distance, "scroll_dur": scroll_dur,
+                "scroll_distance": scroll_distance,
+                "scroll_dur": scroll_dur,
                 "direction": "rtl",
-                "separator": "", "separator_color": "", "separator_opacity": "",
-                "gap": 24, "font_size": 10, "font_weight": "500", "letter_spacing": ".5",
+                "separator": "",
+                "separator_color": "",
+                "separator_opacity": "",
+                "gap": 24,
+                "font_size": 10,
+                "font_weight": "500",
+                "letter_spacing": ".5",
                 "font_family": "var(--dna-font-mono, 'Courier New', monospace)",
                 "text_start_x": 16,
-                "row_y": row_ys[2], "row_h": row_hs[2], "text_y": text_ys[2],
+                "row_y": row_ys[2],
+                "row_h": row_hs[2],
+                "text_y": text_ys[2],
             },
         ]
         divider_ys = [46, 90]
@@ -560,67 +598,103 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
 
         row1_cells = []
         for i, text in enumerate(brand_items):
-            row1_cells.append({
-                "text": text,
-                "color": "var(--dna-signal)" if i % 2 == 0 else "var(--dna-ink-primary)",
-            })
+            row1_cells.append(
+                {
+                    "text": text,
+                    "color": "var(--dna-signal)" if i % 2 == 0 else "var(--dna-ink-primary)",
+                }
+            )
 
         row2_cells = []
         for m in metric_items:
-            row2_cells.append({
-                "text": m["label"],
-                "color": "var(--dna-label-text, var(--dna-signal-dim))",
-                "font_weight": "700",
-            })
-            row2_cells.append({
-                "text": m["value"],
-                "color": "var(--dna-ink-primary)",
-                "font_size": "15",
-                "font_weight": "800",
-                "dx": "6",
-            })
+            row2_cells.append(
+                {
+                    "text": m["label"],
+                    "color": "var(--dna-label-text, var(--dna-signal-dim))",
+                    "font_weight": "700",
+                }
+            )
+            row2_cells.append(
+                {
+                    "text": m["value"],
+                    "color": "var(--dna-ink-primary)",
+                    "font_size": "15",
+                    "font_weight": "800",
+                    "dx": "6",
+                }
+            )
             if m.get("delta"):
                 arrow = "▲" if m.get("delta_dir") == "positive" else "▼"
-                color = "var(--dna-status-passing-core)" if m.get("delta_dir") == "positive" else "var(--dna-status-failing-core)"
-                row2_cells.append({
-                    "text": f"{arrow}{m['delta']}",
-                    "color": color,
-                    "font_size": "9",
-                    "dx": "4",
-                })
+                color = (
+                    "var(--dna-status-passing-core)"
+                    if m.get("delta_dir") == "positive"
+                    else "var(--dna-status-failing-core)"
+                )
+                row2_cells.append(
+                    {
+                        "text": f"{arrow}{m['delta']}",
+                        "color": color,
+                        "font_size": "9",
+                        "dx": "4",
+                    }
+                )
 
         status_items = _build_counter_status_items(spec)
 
         all_rows = [
             {
                 "cells": row1_cells,
-                "scroll_distance": scroll_distance, "scroll_dur": scroll_dur,
+                "scroll_distance": scroll_distance,
+                "scroll_dur": scroll_dur,
                 "direction": "rtl",
-                "separator": "■", "separator_color": "var(--dna-border)", "separator_opacity": "",
-                "gap": 28, "font_size": 14, "font_weight": "800", "letter_spacing": "4",
+                "separator": "■",
+                "separator_color": "var(--dna-border)",
+                "separator_opacity": "",
+                "gap": 28,
+                "font_size": 14,
+                "font_weight": "800",
+                "letter_spacing": "4",
                 "font_family": "var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)",
                 "text_start_x": 20,
-                "row_y": row_ys[0], "row_h": row_hs[0], "text_y": text_ys[0],
+                "row_y": row_ys[0],
+                "row_h": row_hs[0],
+                "text_y": text_ys[0],
             },
             {
                 "cells": row2_cells,
-                "scroll_distance": scroll_distance, "scroll_dur": scroll_dur,
+                "scroll_distance": scroll_distance,
+                "scroll_dur": scroll_dur,
                 "direction": "ltr",
-                "separator": "", "separator_color": "", "separator_opacity": "",
-                "gap": 32, "font_size": 11, "font_weight": "700", "letter_spacing": "1.5",
+                "separator": "",
+                "separator_color": "",
+                "separator_opacity": "",
+                "gap": 32,
+                "font_size": 11,
+                "font_weight": "700",
+                "letter_spacing": "1.5",
                 "font_family": "var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)",
                 "text_start_x": 20,
-                "row_y": row_ys[1], "row_h": row_hs[1], "text_y": text_ys[1],
+                "row_y": row_ys[1],
+                "row_h": row_hs[1],
+                "text_y": text_ys[1],
             },
             {
                 "cells": status_items,
-                "scroll_distance": scroll_distance, "scroll_dur": scroll_dur,
+                "scroll_distance": scroll_distance,
+                "scroll_dur": scroll_dur,
                 "direction": "rtl",
-                "separator": "", "separator_color": "", "separator_opacity": "",
-                "gap": 24, "font_size": 10, "font_weight": "500", "letter_spacing": "1",
+                "separator": "",
+                "separator_color": "",
+                "separator_opacity": "",
+                "gap": 24,
+                "font_size": 10,
+                "font_weight": "500",
+                "letter_spacing": "1",
                 "font_family": "var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)",
                 "text_start_x": 20,
-                "row_y": row_ys[2], "row_h": row_hs[2], "text_y": text_ys[2],
+                "row_y": row_ys[2],
+                "row_h": row_hs[2],
+                "text_y": text_ys[2],
             },
         ]
         divider_ys = [44, 88]
@@ -639,7 +713,7 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
         "rivet_opacity": 0.4,
         "fade_width": 36,
         "beacon_pulse_dur": "2.618s",
-        "divider_ys": divider_ys[:n_rows - 1],
+        "divider_ys": divider_ys[: n_rows - 1],
         "clip_x": clip_x if is_chrome else 6,
         "clip_w": clip_w if is_chrome else 788,
         "direction": spec.marquee_direction,
@@ -659,7 +733,7 @@ def _resolve_vertical(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str
     header_h = 33
     row_height = 30
     base_dur = 23.42  # default at speed=1.0
-    speed = (spec.marquee_speeds[0] if spec.marquee_speeds else 1.0)
+    speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
     scroll_dur = round(base_dur / speed, 2)
     fade_h = 18
 
@@ -707,7 +781,7 @@ def _resolve_horizontal(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[s
     width, height = 800, 40
     scroll_distance = 1000
     base_speed = 90.2
-    speed = (spec.marquee_speeds[0] if spec.marquee_speeds else 1.0)
+    speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
     scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
     items_text = spec.title or ""
@@ -791,11 +865,26 @@ def _build_counter_status_items(spec: ComposeSpec) -> list[dict[str, Any]]:
         {"text": "●", "color": "var(--dna-status-passing-core)", "font_weight": "700", "dx": "20"},
         {"text": "ONLINE", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "font_weight": "500", "dx": "6"},
         {"text": "●", "color": "var(--dna-status-passing-core)", "font_weight": "700", "dx": "24"},
-        {"text": "CDN EDGE 14ms", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "font_weight": "500", "dx": "6"},
+        {
+            "text": "CDN EDGE 14ms",
+            "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
+            "font_weight": "500",
+            "dx": "6",
+        },
         {"text": "◆", "color": "var(--dna-signal)", "font_weight": "700", "dx": "24"},
-        {"text": "CIM COMPLIANT", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "font_weight": "500", "dx": "6"},
+        {
+            "text": "CIM COMPLIANT",
+            "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
+            "font_weight": "500",
+            "dx": "6",
+        },
         {"text": "◆", "color": "var(--dna-signal)", "font_weight": "700", "dx": "24"},
-        {"text": "WCAG AA PASS", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "font_weight": "500", "dx": "6"},
+        {
+            "text": "WCAG AA PASS",
+            "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
+            "font_weight": "500",
+            "dx": "6",
+        },
     ]
 
 
@@ -803,17 +892,17 @@ def _build_vertical_rows(raw_items: list[str], *, is_chrome: bool = False) -> li
     """Build structured telemetry rows from raw text items."""
     default_events = [
         ("ok", "compositor.compose() → badge", "OK"),
-        ("ok", "genome.load(\"brutalist-emerald\")", "OK"),
+        ("ok", 'genome.load("brutalist-emerald")', "OK"),
         ("info", "frame.render(strip, 560×52)", "2.1KB"),
-        ("warn", "cache.miss(\"cdn-edge-sjc\")", "WARN"),
-        ("ok", "mcp.tool_call(\"compose_badge\")", "OK"),
+        ("warn", 'cache.miss("cdn-edge-sjc")', "WARN"),
+        ("ok", 'mcp.tool_call("compose_badge")', "OK"),
         ("ok", "validator.cim_check() → PASS", "OK"),
-        ("info", "metadata.tier(\"resonant\")", "T2"),
+        ("info", 'metadata.tier("resonant")', "T2"),
         ("ok", "a11y.wcag_aa() → 4.7:1", "PASS"),
         ("err", "animate.cx() → CIM VIOLATION", "ERR"),
         ("ok", "compositor.compose() → banner", "OK"),
-        ("info", "cdn.purge(\"edge-*\") → 14ms", "14ms"),
-        ("ok", "genome.register(\"tokyo-street\")", "OK"),
+        ("info", 'cdn.purge("edge-*") → 14ms', "14ms"),
+        ("ok", 'genome.register("tokyo-street")', "OK"),
     ]
 
     # Chrome uses accent_complement (#8A7355) for WARN, brutalist uses standard warning color
@@ -840,9 +929,7 @@ def _build_vertical_rows(raw_items: list[str], *, is_chrome: bool = False) -> li
 
     # Use raw_items as event messages if they look like events, otherwise use defaults
     if len(raw_items) >= 4 and any(c in " ".join(raw_items) for c in ["(", "→", "."]):
-        events = [(
-            "ok", item, "OK"
-        ) for item in raw_items]
+        events = [("ok", item, "OK") for item in raw_items]
     else:
         events = default_events
 
@@ -850,15 +937,17 @@ def _build_vertical_rows(raw_items: list[str], *, is_chrome: bool = False) -> li
     minute = 0
     for i, (status, message, label) in enumerate(events):
         minute += 4 + (i % 3) * 2
-        rows.append({
-            "status": status,
-            "timestamp": f"{minute // 60:02d}:{minute % 60:02d}",
-            "message": message,
-            "status_label": label,
-            "dot_color": _status_dot.get(status, _status_dot["ok"]),
-            "timestamp_color": _status_ts.get(status, _status_ts["ok"]),
-            "label_color": _status_label_color.get(status, _status_label_color["ok"]),
-        })
+        rows.append(
+            {
+                "status": status,
+                "timestamp": f"{minute // 60:02d}:{minute % 60:02d}",
+                "message": message,
+                "status_label": label,
+                "dot_color": _status_dot.get(status, _status_dot["ok"]),
+                "timestamp_color": _status_ts.get(status, _status_ts["ok"]),
+                "label_color": _status_label_color.get(status, _status_label_color["ok"]),
+            }
+        )
     return rows
 
 

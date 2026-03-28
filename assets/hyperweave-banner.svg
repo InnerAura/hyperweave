@@ -281,6 +281,10 @@
     .cn-dk { stroke: url(#s-cn-dk); }
     .cn-lt { stroke: url(#s-cn-lt); }
 
+    /* WORDMARK — solid fills, no url() on text ever */
+    .hyper-fill { fill: #e0e8ff; }
+    .weave-fill { fill: #7070f0; }
+
     @media (prefers-color-scheme: light) {
       .lt { display: inline; }
       .dk { display: none; }
@@ -288,6 +292,8 @@
       .tag-text { fill: #3a4878; }
       .lab-text { fill: #3840a8; }
       .div-line { stroke: #5070d0; }
+      .hyper-fill { fill: #0c1848; }
+      .weave-fill { fill: #2838a8; }
     }
 
     /* ═══════════════════════════════════ */
@@ -550,27 +556,19 @@
   </g>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- L5: TYPOGRAPHY — DARK/LIGHT SWITCHED        -->
-  <!-- Two complete text groups, CSS toggles which -->
+  <!-- L5: TYPOGRAPHY — CSS CLASS FILLS ONLY        -->
+  <!-- No fill="url()" on text/tspan. Solid colors  -->
+  <!-- via CSS. Gradient fills on tspan break mobile -->
+  <!-- Safari SVG-as-img (defaults to black).        -->
   <!-- ═══════════════════════════════════════════ -->
 
-  <!-- DARK wordmark -->
-  <g class="wm dk">
+  <!-- Wordmark -->
+  <g class="wm">
     <text x="470" y="242"
           font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
           font-size="113" font-weight="900" font-style="italic"
           letter-spacing="-3.5" filter="url(#f-txt)">
-      <tspan fill="url(#s-hyp-dk)">Hyper</tspan><tspan fill="url(#s-wev-dk)">Weave</tspan>
-    </text>
-  </g>
-
-  <!-- LIGHT wordmark -->
-  <g class="wm lt">
-    <text x="470" y="242"
-          font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
-          font-size="113" font-weight="900" font-style="italic"
-          letter-spacing="-3.5">
-      <tspan fill="url(#s-hyp-lt)">Hyper</tspan><tspan fill="url(#s-wev-lt)">Weave</tspan>
+      <tspan class="hyper-fill">Hyper</tspan><tspan class="weave-fill">Weave</tspan>
     </text>
   </g>
 
