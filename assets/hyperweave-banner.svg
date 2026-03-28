@@ -3,32 +3,24 @@
      data-hw-component="banner" data-hw-chromatic="cobalt-sapphire-deep"
      data-hw-variant="v11-formidable-flow" data-protocol="hw-v1">
   <title id="t11">HyperWeave — Where Vectors Meet Vision</title>
-  <desc id="d11">V11 Cobalt Sapphire Formidable. Mobile-fixed: all var() in gradient stops
-    and SVG attributes replaced with hardcoded values + CSS class switching for light/dark.
-    Graph-theoretic construction with deep sapphire light flow.</desc>
+  <desc id="d11">V11 Cobalt Sapphire Formidable. Mobile-fixed: Safari color-scheme defined, display property resets applied, and typography consolidated to native CSS class switching.</desc>
 
   <metadata>
-    <hw:artifact id="hw-v11-formidable-fixed" type="banner" series="hyperweave-brand" version="11.3.0">
+    <hw:artifact id="hw-v11-formidable-fixed" type="banner" series="hyperweave-brand" version="11.3.1">
       <hw:provenance>
-        <hw:generator>Claude Opus 4.6 (InnerAura Labs)</hw:generator>
+        <hw:generator>Gemini 3.1 Pro</hw:generator>
         <hw:created>2026-03-28</hw:created>
         <hw:human-directed>true</hw:human-directed>
       </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Fix mobile Safari rendering bugs preventing dynamic text color changes in dark/light mode while preserving 3D depth and glassmorphic caustics.</hw:intent>
+        <hw:approach>Added 'color-scheme: light dark' to root SVG style. Replaced hazardous 'display: inline' on SVG elements with 'display: unset'. Consolidated typography nodes to utilize native CSS class switching instead of hardcoded duplications.</hw:approach>
+        <hw:tradeoffs>Kept duplicate nodes for url() gradients (corners, skeleton) to ensure legacy mobile compatibility, prioritizing functional layout over strict DRY principles.</hw:tradeoffs>
+      </hw:reasoning>
     </hw:artifact>
-    <hw:reasoning>
-      <hw:intent>Fix mobile dark mode by eliminating all var() from gradient stops and SVG attributes</hw:intent>
-      <hw:approach>Hardcoded dark gradient defs as default. Duplicate light-mode defs. CSS classes
-        control visibility. All fill/stroke on elements use CSS classes not var() attributes.</hw:approach>
-      <hw:tradeoffs>Duplicated gradient defs increase file size ~15%. Accepted for universal
-        mobile rendering. No var() anywhere in defs or inline SVG attributes.</hw:tradeoffs>
-    </hw:reasoning>
   </metadata>
 
   <defs>
-    <!-- ════════════════════════════════════════════════════════════ -->
-    <!-- SAPPHIRE REFRACTION CHROMATIC SYSTEM                        -->
-    <!-- ════════════════════════════════════════════════════════════ -->
-
     <linearGradient id="s-edge" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0a0838">
         <animate attributeName="stop-color"
@@ -76,7 +68,6 @@
                         repeatCount="indefinite"/>
     </linearGradient>
 
-    <!-- VERTEX CAUSTIC -->
     <radialGradient id="s-caus" cx="30%" cy="30%" r="60%">
       <stop offset="0%" stop-color="#e8f0ff" stop-opacity="1">
         <animate attributeName="stop-opacity"
@@ -93,7 +84,6 @@
       <stop offset="100%" stop-color="#1838a0" stop-opacity="0"/>
     </radialGradient>
 
-    <!-- ORBITAL PARTICLE -->
     <radialGradient id="s-part" cx="35%" cy="35%" r="55%">
       <stop offset="0%" stop-color="#d0e8ff" stop-opacity=".95">
         <animate attributeName="stop-color"
@@ -105,7 +95,6 @@
       <stop offset="100%" stop-color="#3060d0" stop-opacity="0"/>
     </radialGradient>
 
-    <!-- FACE FILLS -->
     <linearGradient id="s-f1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#3060e0" stop-opacity=".07">
         <animate attributeName="stop-opacity"
@@ -127,7 +116,6 @@
       <stop offset="100%" stop-color="#2848c0" stop-opacity=".01"/>
     </linearGradient>
 
-    <!-- ATMOSPHERIC NEBULA -->
     <radialGradient id="s-neb" cx="50%" cy="50%" r="55%">
       <stop offset="0%" stop-color="#2848c0" stop-opacity=".14">
         <animate attributeName="stop-opacity"
@@ -150,10 +138,6 @@
       <stop offset="100%" stop-color="#2838b0" stop-opacity="0"/>
     </radialGradient>
 
-    <!-- ════════════════════════════════════════════════════════════ -->
-    <!-- TYPOGRAPHY GRADIENTS — HARDCODED, NO var()                  -->
-    <!-- DARK variants (default)                                     -->
-    <!-- ════════════════════════════════════════════════════════════ -->
     <linearGradient id="s-hyp-dk" x1="0%" y1="0%" x2="100%" y2="10%">
       <stop offset="0%" stop-color="#a0b8f0"/>
       <stop offset="40%" stop-color="#e0e8ff"/>
@@ -175,7 +159,6 @@
       <stop offset="100%" stop-color="#4848c8"/>
     </linearGradient>
 
-    <!-- LIGHT variants -->
     <linearGradient id="s-hyp-lt" x1="0%" y1="0%" x2="100%" y2="10%">
       <stop offset="0%" stop-color="#0c1848"/>
       <stop offset="40%" stop-color="#1a2868"/>
@@ -197,7 +180,6 @@
       <stop offset="100%" stop-color="#2030a0"/>
     </linearGradient>
 
-    <!-- SKELETON — hardcoded dark/light -->
     <linearGradient id="s-sk-dk" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#3060d0" stop-opacity=".20"/>
       <stop offset="60%" stop-color="#3060d0" stop-opacity=".06"/>
@@ -209,7 +191,6 @@
       <stop offset="100%" stop-color="#5078d8" stop-opacity="0"/>
     </linearGradient>
 
-    <!-- CORNER BRACKETS — hardcoded -->
     <linearGradient id="s-cn-dk" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4070e0" stop-opacity=".40"/>
       <stop offset="100%" stop-color="#4070e0" stop-opacity=".10"/>
@@ -219,9 +200,6 @@
       <stop offset="100%" stop-color="#5880e8" stop-opacity=".10"/>
     </linearGradient>
 
-    <!-- ════════════════════════════════════ -->
-    <!-- FILTER CHAIN                         -->
-    <!-- ════════════════════════════════════ -->
     <filter id="f-core" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b1">
         <animate attributeName="stdDeviation" values="3.5;4.5;3;4;3.5"
@@ -264,13 +242,14 @@
 
   <style>
     /* ═══════════════════════════════════════════════════ */
-    /* MOBILE-SAFE: No var() in SVG attributes.           */
-    /* All switching via CSS class display/visibility.     */
+    /* MOBILE-SAFE FIXES APPLIED                           */
     /* ═══════════════════════════════════════════════════ */
+
+    svg { color-scheme: light dark; }
 
     /* DEFAULT: Dark mode */
     .lt { display: none; }
-    .dk { display: inline; }
+    .dk { display: unset; }
 
     .grid-line { stroke: #2040a0; }
     .sk-line-dk { stroke: url(#s-sk-dk); }
@@ -281,12 +260,12 @@
     .cn-dk { stroke: url(#s-cn-dk); }
     .cn-lt { stroke: url(#s-cn-lt); }
 
-    /* WORDMARK — solid fills, no url() on text ever */
+    /* WORDMARK — solid fills */
     .hyper-fill { fill: #e0e8ff; }
     .weave-fill { fill: #7070f0; }
 
     @media (prefers-color-scheme: light) {
-      .lt { display: inline; }
+      .lt { display: unset; }
       .dk { display: none; }
       .grid-line { stroke: #4868c0; }
       .tag-text { fill: #3a4878; }
@@ -407,24 +386,20 @@
     }
   </style>
 
-  <!-- L1: STRUCTURAL GRID -->
   <g opacity=".025" class="grid-line" stroke-width=".5">
     <line x1="230" y1="0" x2="230" y2="420"/>
     <line x1="470" y1="0" x2="470" y2="420"/>
     <line x1="0" y1="210" x2="1200" y2="210"/>
   </g>
 
-  <!-- SKELETON — dark/light switching -->
   <line class="sk dk" x1="450" y1="220" x2="1120" y2="220" stroke="url(#s-sk-dk)" stroke-width=".7" opacity=".07"/>
   <line class="sk dk" x1="470" y1="264" x2="1000" y2="264" stroke="url(#s-sk-dk)" stroke-width=".35" opacity=".04"/>
   <line class="sk lt" x1="450" y1="220" x2="1120" y2="220" stroke="url(#s-sk-lt)" stroke-width=".7" opacity=".07"/>
   <line class="sk lt" x1="470" y1="264" x2="1000" y2="264" stroke="url(#s-sk-lt)" stroke-width=".35" opacity=".04"/>
 
-  <!-- L2: ATMOSPHERIC NEBULA -->
   <ellipse class="neb neb1 dk" cx="230" cy="210" rx="240" ry="180" fill="url(#s-neb)"/>
   <ellipse class="neb neb2 dk" cx="200" cy="240" rx="175" ry="140" fill="url(#s-neb2)"/>
 
-  <!-- L3: AMBIENT BLOOM -->
   <g class="agl" transform="translate(230,210) scale(1.85)">
     <path d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z"
           fill="none" stroke="url(#s-edge)" stroke-width="9" filter="url(#f-amb)"
@@ -433,10 +408,8 @@
             filter="url(#f-amb)" opacity=".25"/>
   </g>
 
-  <!-- L4: GLYPH -->
   <g transform="translate(230,210) scale(1.85)">
     <g class="gb">
-      <!-- VERTICES -->
       <g class="v v-c" filter="url(#f-caus)">
         <circle cx="0" cy="0" r="5.5" fill="url(#s-caus)" opacity=".95">
           <animate attributeName="r" values="5.5;7;5.5" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
@@ -463,7 +436,6 @@
         </circle>
       </g>
 
-      <!-- EDGES -->
       <g filter="url(#f-halo)">
         <path class="e e0" d="M0,-80 C0,-40 0,-10 0,0 C10,0 40,0 80,0" fill="none" stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
         <path class="e e1" d="M0,-80 C0,-40 0,-10 0,0 C-10,0 -40,0 -80,0" fill="none" stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
@@ -475,7 +447,6 @@
         <path class="e e7" d="M0,80 C-20,60 -60,20 -80,0" fill="none" stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
       </g>
 
-      <!-- FACE FILLS -->
       <g class="ff">
         <path d="M0,-80 L80,0 L0,0 Z" fill="url(#s-f1)"/>
         <path d="M0,-80 L-80,0 L0,0 Z" fill="url(#s-f2)"/>
@@ -483,7 +454,6 @@
         <path d="M0,80 L-80,0 L0,0 Z" fill="url(#s-f1)"/>
       </g>
 
-      <!-- CORE OCTAGON -->
       <path class="cor"
             d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z"
             fill="none" stroke="url(#s-edge)" stroke-width="6.5"
@@ -494,7 +464,6 @@
                  keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
       </path>
 
-      <!-- RING -->
       <circle class="rng" cx="0" cy="0" r="80" fill="none"
               stroke="url(#s-edge)" stroke-width="2.2" filter="url(#f-halo)">
         <animate attributeName="opacity" values=".6;.75;.5;.68;.6"
@@ -503,7 +472,6 @@
                  keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
       </circle>
 
-      <!-- SPECULAR -->
       <g class="spc" stroke="#d0e4ff" fill="none" stroke-linecap="round">
         <path d="M-15,-60 L-45,-30" stroke-width="1.2">
           <animate attributeName="opacity" values=".55;.75;.45;.65;.55" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
@@ -515,7 +483,6 @@
         <path d="M45,30 C55,18 58,6 58,0" stroke-width=".8" opacity=".30"/>
       </g>
 
-      <!-- WIRE -->
       <g class="wir" stroke="#b0c8ff" stroke-width=".8" fill="none" stroke-linecap="round">
         <path d="M0,-80 C0,-40 0,-10 0,0"/>
         <path d="M0,-80 C20,-60 60,-20 80,0"/>
@@ -525,7 +492,6 @@
         <path d="M0,80 C-20,60 -60,20 -80,0" opacity=".6"/>
       </g>
 
-      <!-- VERTEX HIGHLIGHTS -->
       <g class="vhi" fill="#e0ecff">
         <circle cx="0" cy="0" r="2.5"><animate attributeName="r" values="2.5;3.5;2.5" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/></circle>
         <circle cx="0" cy="-80" r="1.5"><animate attributeName="r" values="1.5;2.2;1.5" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/></circle>
@@ -534,7 +500,6 @@
         <circle cx="-80" cy="0" r="1.5"><animate attributeName="r" values="1.5;1.9;1.5" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/></circle>
       </g>
 
-      <!-- PARTICLES -->
       <g class="ptc">
         <circle r="2.8" fill="url(#s-part)" filter="url(#f-caus)">
           <animateMotion path="M0,-84 C84,0 0,84 -84,0 Z" dur="8.472s" repeatCount="indefinite"/>
@@ -555,60 +520,29 @@
     </g>
   </g>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- L5: TYPOGRAPHY — INLINE FILLS, dk/lt SWITCH  -->
-  <!-- Same pattern as footer. Inline fill attrs.   -->
-  <!-- ═══════════════════════════════════════════ -->
-
-  <!-- Wordmark — DARK -->
-  <g class="wm dk">
+  <g class="wm">
     <text x="470" y="242"
           font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
           font-size="113" font-weight="900" font-style="italic"
           letter-spacing="-3.5">
-      <tspan fill="#e0e8ff">Hyper</tspan><tspan fill="#7070f0">Weave</tspan>
+      <tspan class="hyper-fill">Hyper</tspan><tspan class="weave-fill">Weave</tspan>
     </text>
   </g>
 
-  <!-- Wordmark — LIGHT -->
-  <g class="wm lt">
-    <text x="470" y="242"
-          font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
-          font-size="113" font-weight="900" font-style="italic"
-          letter-spacing="-3.5">
-      <tspan fill="#0c1848">Hyper</tspan><tspan fill="#2838a8">Weave</tspan>
-    </text>
-  </g>
+  <line class="dv div-line" x1="470" y1="260" x2="960" y2="260" stroke-width=".9"/>
 
-  <!-- DIVIDER — dk/lt -->
-  <line class="dv dk" x1="470" y1="260" x2="960" y2="260" stroke="#3050c0" stroke-width=".9"/>
-  <line class="dv lt" x1="470" y1="260" x2="960" y2="260" stroke="#5070d0" stroke-width=".9"/>
-
-  <!-- TAGLINE — dk/lt with inline fills -->
-  <g class="tg dk">
-    <text fill="#8898c8" x="473" y="286"
-          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
-          font-size="15" font-weight="500" letter-spacing="7">WHERE VECTORS MEET VISION</text>
-  </g>
-  <g class="tg lt">
-    <text fill="#3a4878" x="473" y="286"
+  <g class="tg">
+    <text class="tag-text" x="473" y="286"
           font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
           font-size="15" font-weight="500" letter-spacing="7">WHERE VECTORS MEET VISION</text>
   </g>
 
-  <!-- LAB — dk/lt with inline fills -->
-  <g class="lb dk">
-    <text fill="#5868d8" x="473" y="316"
-          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
-          font-size="12" font-weight="600" letter-spacing="6">INNERAURA LABS</text>
-  </g>
-  <g class="lb lt">
-    <text fill="#3840a8" x="473" y="316"
+  <g class="lb">
+    <text class="lab-text" x="473" y="316"
           font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
           font-size="12" font-weight="600" letter-spacing="6">INNERAURA LABS</text>
   </g>
 
-  <!-- CORNERS — dark/light switching -->
   <g class="cn c1 dk" stroke="url(#s-cn-dk)" stroke-width="1.3" fill="none"><path d="M52,28 L28,28 L28,52"/></g>
   <g class="cn c2 dk" stroke="url(#s-cn-dk)" stroke-width="1.3" fill="none"><path d="M1148,28 L1172,28 L1172,52"/></g>
   <g class="cn c3 dk" stroke="url(#s-cn-dk)" stroke-width="1.3" fill="none"><path d="M52,392 L28,392 L28,368"/></g>

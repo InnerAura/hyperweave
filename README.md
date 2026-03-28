@@ -232,40 +232,40 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
 -->
 
 <p align="center">
-  <img src="assets/footers/inneraura-footer-liquid.svg" alt="InnerAura Labs" width="100%"/>
+  <img src="assets/footers/inneraura-footer.svg" alt="InnerAura Labs" width="100%"/>
 </p>
 
 <p align="center">
   <!-- <a href="https://github.com/InnerAura/hyperweave">
-  <img src="./assets/icons/cobalt-sapphire-github.svg" width="48" alt="GitHub"/>
+  <img src="./assets/icons/cobalt-sapphire-github.svg" width="36" alt="GitHub"/>
   </a>
   &nbsp; -->
   <a href="https://discord.gg/wVmcAZPQZ8">
-  <img src="./assets/icons/cobalt-sapphire-discord.svg" width="48" alt="Discord"/>
+  <img src="./assets/icons/cobalt-sapphire-discord.svg" width="36" alt="Discord"/>
   </a>
   &nbsp;
   <a href="https://www.instagram.com/hyperweave.ai/">
-  <img src="./assets/icons/cobalt-sapphire-instagram.svg" width="48" alt="Instagram"/>
+  <img src="./assets/icons/cobalt-sapphire-instagram.svg" width="36" alt="Instagram"/>
   </a>
   &nbsp;
   <a href="https://www.linkedin.com/company/inneraura">
-  <img src="./assets/icons/cobalt-sapphire-linkedin.svg" width="48" alt="LinkedIn"/>
+  <img src="./assets/icons/cobalt-sapphire-linkedin.svg" width="36" alt="LinkedIn"/>
   </a>
   &nbsp;
   <a href="https://www.tiktok.com/@hyperweave.ai">
-  <img src="./assets/icons/cobalt-sapphire-tiktok.svg" width="48" alt="TikTok"/>
+  <img src="./assets/icons/cobalt-sapphire-tiktok.svg" width="36" alt="TikTok"/>
   </a>
   &nbsp;
   <a href="https://x.com/InnerAuraLabs">
-  <img src="./assets/icons/cobalt-sapphire-x.svg" width="48" alt="X"/>
+  <img src="./assets/icons/cobalt-sapphire-x.svg" width="36" alt="X"/>
   </a>
   &nbsp;
   <a href="https://www.youtube.com/@InnerAuraLabs">
-  <img src="./assets/icons/cobalt-sapphire-youtube.svg" width="48" alt="YouTube"/>
+  <img src="./assets/icons/cobalt-sapphire-youtube.svg" width="36" alt="YouTube"/>
   </a>
   <!-- &nbsp;
   <a href="https://hyperweave.readthedocs.io/">
-  <img src="./assets/icons/cobalt-sapphire-docs.svg" width="48" alt="Docs"/>
+  <img src="./assets/icons/cobalt-sapphire-docs.svg" width="36" alt="Docs"/>
   </a> -->
 </p>
 
