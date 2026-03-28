@@ -1,0 +1,144 @@
+{# HyperWeave Master Card — 800x900 cross-session accumulator.
+   Specimen: specs/telemetry-artifacts/mastercard.svg
+   Five sections: hero -> session history sparkline -> token burn -> heatmap -> skills.
+   Extends document.svg.j2.  Context: ComposeSpec dict. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+  <linearGradient id="{{ uid }}-bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-surface)"/>
+    <stop offset="100%" stop-color="var(--dna-surface-deep)"/>
+  </linearGradient>
+  <linearGradient id="{{ uid }}-burn-fill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0.25"/>
+    <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0.02"/>
+  </linearGradient>
+{% endblock %}
+
+{% block content %}
+{% set cw = width | default(800) %}
+{% set ch = height | default(900) %}
+{% set mx = 24 %}
+{% set content_w = cw - (mx * 2) %}
+
+{# === Background === #}
+<rect width="{{ cw }}" height="{{ ch }}" rx="4" fill="url(#{{ uid }}-bg)"/>
+<rect x="0.5" y="0.5" width="{{ cw - 1 }}" height="{{ ch - 1 }}"
+      rx="4" fill="none" stroke="var(--dna-border)" stroke-width="1"/>
+
+{# === SECTION 1: HERO SUMMARY (y:0-76) === #}
+<g transform="translate({{ mx }}, 18)" data-hw-zone="hero">
+  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">MASTER CARD</text>
+  <text class="s ink1" font-size="24" font-weight="700" y="26"
+        letter-spacing="-0.5px">{{ mc_title }}</text>
+  <text class="m ink3" font-size="10" y="42">{{ mc_subtitle }}</text>
+  <g transform="translate({{ content_w }}, 0)" text-anchor="end">
+    <text class="m ghost" font-size="9" letter-spacing="1px">LIFETIME</text>
+    <text class="m ink2" font-size="10" y="16">{{ mc_total_tokens }}</text>
+    <text class="m ink2" font-size="10" y="30">{{ mc_total_cost }}</text>
+    <text class="m ink2" font-size="10" y="44">{{ mc_session_count }} sessions</text>
+  </g>
+</g>
+<line x1="{{ mx }}" y1="76" x2="{{ cw - mx }}" y2="76" class="div"/>
+
+{# === SECTION 2: SESSION HISTORY SPARKLINE (y:84-260) === #}
+<g transform="translate({{ mx }}, 84)" data-hw-zone="history">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">SESSION HISTORY ({{ session_entries | length }})</text>
+  <text class="m ink3" font-size="8" x="{{ content_w }}" text-anchor="end">bar height = tokens</text>
+
+{% if history_bars %}
+  <g transform="translate(0, 16)">
+{% for bar in history_bars %}
+{% if bar.health == 'failing' %}
+    <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}"
+          fill="var(--dna-status-failing-core)" opacity="0.6" rx="1"/>
+{% elif bar.health == 'warning' %}
+    <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}"
+          fill="var(--dna-status-warning-core)" opacity="0.5" rx="1"/>
+{% else %}
+    <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}"
+          fill="var(--dna-signal)" opacity="0.6" rx="1"/>
+{% endif %}
+{% endfor %}
+  </g>
+{% else %}
+  <text class="m ghost" font-size="10" y="90">No session history data</text>
+{% endif %}
+</g>
+<line x1="{{ mx }}" y1="260" x2="{{ cw - mx }}" y2="260" class="div"/>
+
+{# === SECTION 3: TOKEN BURN (y:268-500) === #}
+<g transform="translate({{ mx }}, 268)" data-hw-zone="burn">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">TOKEN BURN — {{ burn_session_id | default('latest') }}</text>
+  <text class="m ghost" font-size="10" y="120" x="{{ content_w // 2 }}" text-anchor="middle">Burn curve data pending</text>
+</g>
+<line x1="{{ mx }}" y1="500" x2="{{ cw - mx }}" y2="500" class="div"/>
+
+{# === SECTION 4: CODEBASE HEATMAP (y:508-720) === #}
+<g transform="translate({{ mx }}, 508)" data-hw-zone="heatmap">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">CODEBASE HEATMAP ({{ heatmap_file_count | default(0) }} FILES)</text>
+  <text class="m ink3" font-size="8" x="{{ content_w }}" text-anchor="end">reads = blue intensity · writes = amber dots</text>
+
+{% if heatmap_rows %}
+  <g transform="translate(0, 20)">
+    <text class="m ghost" font-size="7" letter-spacing="1px">FILE</text>
+    <text class="m ghost" font-size="7" x="380" letter-spacing="1px">READS</text>
+    <text class="m ghost" font-size="7" x="620" letter-spacing="1px">WRITES</text>
+    <text class="m ghost" font-size="7" x="690" letter-spacing="1px">LAST</text>
+  </g>
+  <g transform="translate(0, 36)">
+{% for row in heatmap_rows %}
+    <text class="m ink2" font-size="9" y="{{ loop.index0 * 18 + 10 }}">{{ row.path }}</text>
+    <rect x="380" y="{{ loop.index0 * 18 + 2 }}" width="{{ row.bar_w }}" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="{{ 0.2 + row.intensity * 0.15 }}"/>
+    <text class="m ghost" font-size="8" x="{{ 384 + row.bar_w }}" y="{{ loop.index0 * 18 + 10 }}">{{ row.reads }}</text>
+{% for w in range([row.writes, 5] | min) %}
+    <circle cx="{{ 626 + w * 10 }}" cy="{{ loop.index0 * 18 + 7 }}" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+{% endfor %}
+    <text class="m ghost" font-size="8" x="{{ 626 + ([row.writes, 5] | min) * 10 + 4 }}" y="{{ loop.index0 * 18 + 10 }}">{{ row.writes }}</text>
+    <text class="m ghost" font-size="8" x="690" y="{{ loop.index0 * 18 + 10 }}">{{ row.last }}</text>
+{% endfor %}
+  </g>
+{% else %}
+  <text class="m ghost" font-size="10" y="100">No file data</text>
+{% endif %}
+</g>
+<line x1="{{ mx }}" y1="720" x2="{{ cw - mx }}" y2="720" class="div"/>
+
+{# === SECTION 5: SKILL TRACKER (y:728-880) === #}
+<g transform="translate({{ mx }}, 728)" data-hw-zone="skills">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">SKILL TRACKER</text>
+  <text class="m" font-size="7" fill="var(--dna-status-warning-core)"
+        x="{{ content_w }}" text-anchor="end"
+        letter-spacing="0.5px">EXPERIMENTAL</text>
+
+{% for skill in skills | default([]) %}
+  <g transform="translate(0, {{ 22 + (loop.index0 * 38) }})">
+{% set state_color = 'var(--dna-status-passing-core)' if skill.state == 'mastered' else 'var(--dna-tool-explore)' %}
+    <rect x="0" y="0" width="4" height="28" rx="1" fill="{{ state_color }}" opacity="0.7"/>
+    <text class="m ink2" font-size="10" x="14" y="12">{{ skill.name }}</text>
+    <text class="m ghost" font-size="8" x="14" y="24">{{ skill.lang }} · {{ skill.attempts }} attempts</text>
+    <rect x="280" y="4" width="336" height="8" rx="2" fill="var(--dna-border)" opacity="0.3"/>
+    <rect x="280" y="4" width="{{ skill.bar_w }}" height="8" rx="2" fill="{{ state_color }}" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="624" y="12">{{ skill.pct }}%</text>
+    <text class="m ghost" font-size="8" x="672" y="12">{{ skill.accepted }}/{{ skill.attempts }}</text>
+  </g>
+{% endfor %}
+
+{% if not skills %}
+  <text class="m ghost" font-size="10" y="50">No skill data</text>
+{% endif %}
+</g>
+
+<line x1="{{ mx }}" y1="860" x2="{{ cw - mx }}" y2="860" class="div"/>
+
+{# === Footer === #}
+<text class="m ghost" font-size="9" x="{{ mx }}" y="{{ ch - 14 }}">{{ footer_left }}</text>
+<text class="m ghost" font-size="9" x="{{ cw - mx }}" y="{{ ch - 14 }}"
+      text-anchor="end">{{ footer_right }}</text>
+{% endblock %}

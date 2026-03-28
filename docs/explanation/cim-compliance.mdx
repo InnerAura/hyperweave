@@ -1,0 +1,96 @@
+---
+title: "CIM Compliance"
+description: "The Compositional Integrity Model (CIM) -- how HyperWeave governs motion, metadata, and artifact trust."
+---
+
+## What is CIM?
+
+The Compositional Integrity Model (CIM) is HyperWeave's governance framework. It defines which motions, metadata levels, and composition behaviors are allowed in a given context. CIM ensures that artifacts are safe, accessible, and predictable in production environments.
+
+## Policy Regimes
+
+Three regimes control CIM enforcement:
+
+| Regime | CIM Enforced | Behavior |
+|---|---|---|
+| `normal` | Yes | Non-compliant motions silently downgrade to `static`. WCAG contrast checked. |
+| `permissive` | No | All motions allowed. Waiver flag added to metadata. Contrast warnings only. |
+| `ungoverned` | No | No validation. No metadata governance. For development/testing only. |
+
+## CIM-Compliant Motions
+
+Only these motions pass CIM validation under the `normal` regime:
+
+| Motion | Type | Why Compliant |
+|---|---|---|
+| `static` | -- | No animation, always safe |
+| `bars` | kinetic | Predictable horizontal sweep, low distraction |
+| `broadcast` | kinetic | Subtle radial pulse, accessibility-safe |
+| `cascade` | kinetic | Sequential letter reveal, readable |
+| `drop` | kinetic | Gravity effect, natural motion |
+| `crash` | kinetic | Impact effect, brief and contained |
+
+## Non-CIM Motions
+
+These motions require `permissive` or `ungoverned` regime:
+
+| Motion | Type | Why Non-Compliant |
+|---|---|---|
+| `chromatic-pulse` | border | Continuous color cycling may trigger photosensitive responses |
+| `corner-trace` | border | Persistent motion on border edges |
+| `dual-orbit` | border | Two moving elements, higher visual complexity |
+| `entanglement` | border | Oscillating patterns |
+| `rimrun` | border | Continuous glow trace |
+| `converge` | kinetic | Letters moving from edges, high motion area |
+| `breach` | kinetic | Barrier-breaking effect, sudden motion |
+| `pulse` | kinetic | Rhythmic scale change, repetitive |
+| `collapse` | kinetic | Implosion effect, large motion area |
+
+## Downgrade Behavior
+
+Under `normal` regime, requesting a non-CIM motion does not error. Instead:
+
+1. The motion is silently downgraded to `static`
+2. The artifact renders without animation
+3. No error is raised (graceful degradation)
+
+Under `permissive` regime:
+1. The motion is applied as requested
+2. A waiver flag is added to the artifact metadata
+3. The artifact is marked as non-CIM
+
+## Policy Lane Validation
+
+CIM is enforced in the `lanes.py` validation step of the compose pipeline:
+
+```
+ComposeSpec -> engine.py -> ... -> lanes.py (CIM check) -> templates.py -> SVG
+```
+
+The policy lane validator checks:
+- Motion CIM compliance against the regime
+- WCAG AA contrast ratio for text on background
+- Genome-motion compatibility (does the genome support this motion?)
+
+## Practical Usage
+
+```bash
+# Normal regime: cascade is CIM-compliant, works fine
+hyperweave compose banner "HYPERWEAVE" -m cascade
+
+# Normal regime: dual-orbit is NOT CIM-compliant, silently becomes static
+hyperweave compose badge "build" "passing" -m dual-orbit
+
+# Permissive regime: dual-orbit is applied with waiver
+hyperweave compose badge "build" "passing" -m dual-orbit --regime permissive
+```
+
+## Why CIM Exists
+
+Motion in SVG artifacts is powerful but dangerous:
+- **Accessibility**: Continuous animation can trigger seizures or vestibular disorders
+- **Professionalism**: Flashing badges in enterprise documentation look unprofessional
+- **Predictability**: Agents need to know their output will be acceptable in context
+- **Platform safety**: Some platforms strip or misrender complex animations
+
+CIM gives you the full motion vocabulary in development while ensuring production artifacts meet a baseline of safety and quality.

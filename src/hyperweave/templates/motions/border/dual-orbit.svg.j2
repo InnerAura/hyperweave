@@ -1,0 +1,19 @@
+{# Border motion: dual-orbit — two runners in phase-locked orbit, offset by half perimeter.
+   Context: uid, w, h, rx, perim, vis, gap, half #}
+{% set defs %}{% endset %}
+{% set overlay %}
+<rect x=".5" y=".5" width="{{ w - 1 }}" height="{{ h - 1 }}" rx="{{ rx }}"
+      fill="none" stroke="var(--dna-signal)" stroke-width="2"
+      stroke-dasharray="{{ vis }} {{ gap }}">
+  <animate attributeName="stroke-dashoffset"
+           values="0;-{{ perim }}" dur="3s" repeatCount="indefinite"/>
+</rect>
+<rect x=".5" y=".5" width="{{ w - 1 }}" height="{{ h - 1 }}" rx="{{ rx }}"
+      fill="none" stroke="var(--dna-signal)" stroke-width="2"
+      opacity="0.6" stroke-dasharray="{{ vis }} {{ gap }}"
+      stroke-dashoffset="{{ half }}">
+  <animate attributeName="stroke-dashoffset"
+           values="{{ half }};{{ half - perim }}" dur="3s"
+           repeatCount="indefinite"/>
+</rect>
+{% endset %}

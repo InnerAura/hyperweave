@@ -1,10 +1,5 @@
-"""
-HyperWeave CLI entry point.
+"""Entry point: python -m hyperweave."""
 
-Enables module execution: `python -m hyperweave`
-"""
+from hyperweave.cli import app
 
-from hyperweave.cli.main import app
-
-if __name__ == "__main__":
-    app()
+app()

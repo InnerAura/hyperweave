@@ -1,0 +1,1 @@
+{"id":"bar","name":"Bar","svg_fragment":"<g class=\"hw-rule\"><rect x=\"0\" y=\"-3\" width=\"{{rule_width}}\" height=\"6\" rx=\"3\" fill=\"var(--dna-border)\" opacity=\"0.3\"/><rect x=\"2\" y=\"-1.5\" width=\"{{rule_width_inner}}\" height=\"3\" rx=\"1.5\" fill=\"var(--dna-signal)\" opacity=\"0.15\"/></g>"}

@@ -1,0 +1,1357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:hw="https://hyperweave.dev/hw/v1.0"
+  viewBox="0 0 140 20"
+  width="140"
+  height="20"
+  role="img"
+  aria-labelledby="hw-title hw-desc"
+  data-hw-theme="arcade"
+  data-hw-variant="snes"
+  data-hw-value="75"
+  data-hw-state="healthy"
+>
+  <title id="hw-title">HP Badge</title>
+  <desc id="hw-desc">Health points status badge with reactive fill bar. SNES-inspired arcade theme.</desc>
+  
+  <metadata>
+    <hw:artifact type="badge" series="arcade" version="1.1.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.5 (Anthropic) [claude-opus-4-5-20251101]</hw:generator>
+        <hw:created>2026-01-03</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Health bar badge for percentage-based metrics. Data-bound via CSS custom property.</hw:intent>
+        <hw:approach>140x20 canonical badge size. CSS state machine drives bar fill and color.</hw:approach>
+        <hw:tradeoffs>CHOSE inset bevel over stroke border to prevent bleed. CHOSE 6px bar height for legibility at small size.</hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="arcade" a11y="WCAG-AA"/>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <linearGradient id="hw-label" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2A3580"/>
+      <stop offset="100%" stop-color="#191E40"/>
+    </linearGradient>
+    <linearGradient id="hw-value" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5B6EE1"/>
+      <stop offset="100%" stop-color="#3A4CC0"/>
+    </linearGradient>
+    <clipPath id="hw-clip"><rect width="140" height="20" rx="2"/></clipPath>
+  </defs>
+
+  <style>
+    .hw-bar-fill {
+      transition: width 0.618s ease-out;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hw-bar-fill { transition: none; }
+    }
+  </style>
+
+  <g clip-path="url(#hw-clip)">
+    <!-- Label background -->
+    <rect fill="url(#hw-label)" width="32" height="20"/>
+    <!-- Value background -->
+    <rect fill="url(#hw-value)" x="32" width="108" height="20"/>
+    
+    <!-- Seam line -->
+    <line stroke="#0a0a1a" stroke-width="1" x1="32" x2="32" y1="0" y2="20"/>
+    <line stroke="rgba(255,255,255,0.15)" stroke-width="0.5" x1="33" x2="33" y1="0" y2="20"/>
+    
+    <!-- Top highlight bevel -->
+    <rect fill="rgba(255,255,255,0.25)" width="140" height="2"/>
+    <!-- Left highlight bevel -->
+    <rect fill="rgba(255,255,255,0.2)" width="2" height="20"/>
+    <!-- Bottom shadow bevel -->
+    <rect fill="rgba(0,0,0,0.3)" y="18" width="140" height="2"/>
+    <!-- Right shadow bevel -->
+    <rect fill="rgba(0,0,0,0.25)" x="138" width="2" height="20"/>
+  </g>
+
+  <!-- Label text -->
+  <text 
+    fill="#FFFFFF" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="9" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="16" 
+    y="14"
+  >HP</text>
+
+  <!-- Health bar track -->
+  <rect fill="#0a0a1a" x="38" y="7" width="96" height="6" rx="1"/>
+  
+  <!-- Health bar fill (data-reactive) -->
+  <rect 
+    class="hw-bar-fill" 
+    fill="#4ADE80" 
+    x="39" 
+    y="8" 
+    width="70" 
+    height="4" 
+    rx="0.5"
+  />
+
+  <!-- Subtle inner border -->
+  <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x="0.5" y="0.5" rx="1.5"/>
+</svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:hw="https://hyperweave.dev/hw/v1.0"
+  viewBox="0 0 140 20"
+  width="140"
+  height="20"
+  role="img"
+  aria-labelledby="hw-title hw-desc"
+  data-hw-theme="arcade"
+  data-hw-variant="gameboy"
+  data-hw-value="99"
+>
+  <title id="hw-title">LVL Badge</title>
+  <desc id="hw-desc">Level indicator badge. Game Boy-inspired green palette.</desc>
+  
+  <metadata>
+    <hw:artifact type="badge" series="arcade" version="1.1.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.5 (Anthropic) [claude-opus-4-5-20251101]</hw:generator>
+        <hw:created>2026-01-03</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Level/version badge for numeric values. Iconic Game Boy palette.</hw:intent>
+        <hw:approach>140x20 canonical size. Inset bevels for authentic 8-bit feel.</hw:approach>
+        <hw:tradeoffs>CHOSE authentic 4-color Game Boy palette over modernized. CHOSE dark-on-light text for value field contrast.</hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="arcade" a11y="WCAG-AA"/>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <linearGradient id="hw-label" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#306230"/>
+      <stop offset="100%" stop-color="#0F380F"/>
+    </linearGradient>
+    <linearGradient id="hw-value" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9BBC0F"/>
+      <stop offset="100%" stop-color="#8BAC0F"/>
+    </linearGradient>
+    <clipPath id="hw-clip"><rect width="140" height="20" rx="2"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#hw-clip)">
+    <!-- Label background -->
+    <rect fill="url(#hw-label)" width="40" height="20"/>
+    <!-- Value background -->
+    <rect fill="url(#hw-value)" x="40" width="100" height="20"/>
+    
+    <!-- Seam line -->
+    <line stroke="#0a2a0a" stroke-width="1" x1="40" x2="40" y1="0" y2="20"/>
+    <line stroke="rgba(255,255,255,0.15)" stroke-width="0.5" x1="41" x2="41" y1="0" y2="20"/>
+    
+    <!-- Top highlight bevel -->
+    <rect fill="rgba(255,255,255,0.25)" width="140" height="2"/>
+    <!-- Left highlight bevel -->
+    <rect fill="rgba(255,255,255,0.2)" width="2" height="20"/>
+    <!-- Bottom shadow bevel -->
+    <rect fill="rgba(0,0,0,0.3)" y="18" width="140" height="2"/>
+    <!-- Right shadow bevel -->
+    <rect fill="rgba(0,0,0,0.25)" x="138" width="2" height="20"/>
+  </g>
+
+  <!-- Label text -->
+  <text 
+    fill="#9BBC0F" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="9" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="20" 
+    y="14"
+  >LVL</text>
+
+  <!-- Value text -->
+  <text 
+    fill="#0F380F" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="11" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="90" 
+    y="14.5"
+  >99</text>
+
+  <!-- Subtle inner border -->
+  <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x="0.5" y="0.5" rx="1.5"/>
+</svg>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:hw="https://hyperweave.dev/hw/v1.0"
+  viewBox="0 0 140 20"
+  width="140"
+  height="20"
+  role="img"
+  aria-labelledby="hw-title hw-desc"
+  data-hw-theme="arcade"
+  data-hw-variant="arcade"
+  data-hw-state="max"
+>
+  <title id="hw-title">POWER Badge</title>
+  <desc id="hw-desc">Power status badge. Arcade gold palette.</desc>
+  
+  <metadata>
+    <hw:artifact type="badge" series="arcade" version="1.2.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.5 (Anthropic) [claude-opus-4-5-20251101]</hw:generator>
+        <hw:created>2026-01-03</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>MAX power state indicator. Arcade gold palette.</hw:intent>
+        <hw:approach>140x20 canonical size. Static bevel system matching set consistency.</hw:approach>
+        <hw:tradeoffs>REJECTED animation—consistency across badge set is more valuable than individual flair. All arcade badges share identical edge treatment.</hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="arcade" a11y="WCAG-AA"/>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <linearGradient id="hw-label" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#B8860B"/>
+      <stop offset="100%" stop-color="#8B6508"/>
+    </linearGradient>
+    <linearGradient id="hw-value" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#FFA500"/>
+    </linearGradient>
+    <clipPath id="hw-clip"><rect width="140" height="20" rx="2"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#hw-clip)">
+    <!-- Label background -->
+    <rect fill="url(#hw-label)" width="48" height="20"/>
+    <!-- Value background -->
+    <rect fill="url(#hw-value)" x="48" width="92" height="20"/>
+    
+    <!-- Seam line -->
+    <line stroke="#6a4a00" stroke-width="1" x1="48" x2="48" y1="0" y2="20"/>
+    <line stroke="rgba(255,255,255,0.2)" stroke-width="0.5" x1="49" x2="49" y1="0" y2="20"/>
+    
+    <!-- Top highlight bevel -->
+    <rect fill="rgba(255,255,255,0.3)" width="140" height="2"/>
+    <!-- Left highlight bevel -->
+    <rect fill="rgba(255,255,255,0.25)" width="2" height="20"/>
+    <!-- Bottom shadow bevel -->
+    <rect fill="rgba(0,0,0,0.35)" y="18" width="140" height="2"/>
+    <!-- Right shadow bevel -->
+    <rect fill="rgba(0,0,0,0.3)" x="138" width="2" height="20"/>
+  </g>
+
+  <!-- Label text -->
+  <text 
+    fill="#FFFFFF" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="9" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="24" 
+    y="14"
+  >POWER</text>
+
+  <!-- Value text -->
+  <text 
+    fill="#000000" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="11" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="94" 
+    y="14.5"
+  >MAX</text>
+
+  <!-- Subtle inner border -->
+  <rect fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1" width="139" height="19" x="0.5" y="0.5" rx="1.5"/>
+</svg>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:hw="https://hyperweave.dev/hw/v1.0"
+  viewBox="0 0 140 20"
+  width="140"
+  height="20"
+  role="img"
+  aria-labelledby="hw-title hw-desc"
+  data-hw-theme="arcade"
+  data-hw-variant="retro"
+  data-hw-value="9999"
+>
+  <title id="hw-title">SCORE Badge</title>
+  <desc id="hw-desc">High score display badge. Retro purple palette.</desc>
+  
+  <metadata>
+    <hw:artifact type="badge" series="arcade" version="1.1.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.5 (Anthropic) [claude-opus-4-5-20251101]</hw:generator>
+        <hw:created>2026-01-03</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Score/points badge for cumulative metrics (downloads, stars).</hw:intent>
+        <hw:approach>140x20 canonical size. Purple palette evokes arcade leaderboards.</hw:approach>
+        <hw:tradeoffs>CHOSE static display over animated counter for simplicity. CHOSE monospace alignment for numeric stability.</hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="arcade" a11y="WCAG-AA"/>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <linearGradient id="hw-label" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4B0082"/>
+      <stop offset="100%" stop-color="#2E004D"/>
+    </linearGradient>
+    <linearGradient id="hw-value" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9966CC"/>
+      <stop offset="100%" stop-color="#6A359C"/>
+    </linearGradient>
+    <clipPath id="hw-clip"><rect width="140" height="20" rx="2"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#hw-clip)">
+    <!-- Label background -->
+    <rect fill="url(#hw-label)" width="48" height="20"/>
+    <!-- Value background -->
+    <rect fill="url(#hw-value)" x="48" width="92" height="20"/>
+    
+    <!-- Seam line -->
+    <line stroke="#1a0030" stroke-width="1" x1="48" x2="48" y1="0" y2="20"/>
+    <line stroke="rgba(255,255,255,0.15)" stroke-width="0.5" x1="49" x2="49" y1="0" y2="20"/>
+    
+    <!-- Top highlight bevel -->
+    <rect fill="rgba(255,255,255,0.25)" width="140" height="2"/>
+    <!-- Left highlight bevel -->
+    <rect fill="rgba(255,255,255,0.2)" width="2" height="20"/>
+    <!-- Bottom shadow bevel -->
+    <rect fill="rgba(0,0,0,0.35)" y="18" width="140" height="2"/>
+    <!-- Right shadow bevel -->
+    <rect fill="rgba(0,0,0,0.3)" x="138" width="2" height="20"/>
+  </g>
+
+  <!-- Label text -->
+  <text 
+    fill="#FFFFFF" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="9" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="24" 
+    y="14"
+  >SCORE</text>
+
+  <!-- Value text -->
+  <text 
+    fill="#FFFFFF" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="11" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="94" 
+    y="14.5"
+  >9999</text>
+
+  <!-- Subtle inner border -->
+  <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x="0.5" y="0.5" rx="1.5"/>
+</svg>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:hw="https://hyperweave.dev/hw/v1.0"
+  viewBox="0 0 140 20"
+  width="140"
+  height="20"
+  role="img"
+  aria-labelledby="hw-title hw-desc"
+  data-hw-theme="arcade"
+  data-hw-variant="nes"
+  data-hw-status="boss"
+>
+  <title id="hw-title">STATUS Badge</title>
+  <desc id="hw-desc">Status indicator badge. NES red palette for critical states.</desc>
+  
+  <metadata>
+    <hw:artifact type="badge" series="arcade" version="1.1.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.5 (Anthropic) [claude-opus-4-5-20251101]</hw:generator>
+        <hw:created>2026-01-03</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Boss/critical status for attention-demanding states (BOSS, LIVE, CRITICAL).</hw:intent>
+        <hw:approach>140x20 canonical size. NES red evokes danger and importance.</hw:approach>
+        <hw:tradeoffs>CHOSE continuous red gradient to maintain urgency. REJECTED two-tone for visual harmony.</hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="arcade" a11y="WCAG-AA"/>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <linearGradient id="hw-label" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#880000"/>
+      <stop offset="100%" stop-color="#660000"/>
+    </linearGradient>
+    <linearGradient id="hw-value" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D94A38"/>
+      <stop offset="100%" stop-color="#B42010"/>
+    </linearGradient>
+    <clipPath id="hw-clip"><rect width="140" height="20" rx="2"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#hw-clip)">
+    <!-- Label background -->
+    <rect fill="url(#hw-label)" width="52" height="20"/>
+    <!-- Value background -->
+    <rect fill="url(#hw-value)" x="52" width="88" height="20"/>
+    
+    <!-- Seam line -->
+    <line stroke="#400000" stroke-width="1" x1="52" x2="52" y1="0" y2="20"/>
+    <line stroke="rgba(255,255,255,0.12)" stroke-width="0.5" x1="53" x2="53" y1="0" y2="20"/>
+    
+    <!-- Top highlight bevel -->
+    <rect fill="rgba(255,255,255,0.22)" width="140" height="2"/>
+    <!-- Left highlight bevel -->
+    <rect fill="rgba(255,255,255,0.18)" width="2" height="20"/>
+    <!-- Bottom shadow bevel -->
+    <rect fill="rgba(0,0,0,0.35)" y="18" width="140" height="2"/>
+    <!-- Right shadow bevel -->
+    <rect fill="rgba(0,0,0,0.3)" x="138" width="2" height="20"/>
+  </g>
+
+  <!-- Label text -->
+  <text 
+    fill="#FFFFFF" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="9" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="26" 
+    y="14"
+  >STATUS</text>
+
+  <!-- Value text -->
+  <text 
+    fill="#FFFFFF" 
+    font-family="system-ui,-apple-system,sans-serif" 
+    font-size="11" 
+    font-weight="800" 
+    letter-spacing="0.5"
+    text-anchor="middle" 
+    x="96" 
+    y="14.5"
+  >BOSS</text>
+
+  <!-- Subtle inner border -->
+  <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x="0.5" y="0.5" rx="1.5"/>
+</svg>
+<svg role="img" aria-labelledby="crystal-title" width="90" height="20" viewbox="0 0 90 20" xmlns="http://www.w3.org/2000/svg" data-hw-chromatic="crystal" data-hw-state="pure" xmlns:hw="https://hyperweave.app/protocol/v1">
+  <title id="crystal-title">
+    crystal: pure
+  </title>
+  <metadata>
+    <hw:artifact type="badge" series="glass-collection" variant="crystal">
+      <hw:chromatic primary="#f8f8ff" accent="#E8E8FF">
+      </hw:chromatic>
+      <hw:reasoning>
+        <hw:intent>
+          Maximum clarity diamond-like glass with prismatic edge refraction
+        </hw:intent>
+        <hw:tradeoffs>
+          Near-white substrate; rainbow rim spectrum; high specular; inverted for dark backgrounds
+        </hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+  <defs>
+    <filter id="crystal-fx" x="-15%" y="-25%" width="130%" height="150%">
+      <feturbulence type="turbulence" basefrequency="0.02" numoctaves="1" seed="31" result="n">
+        <animate attributename="baseFrequency" values="0.02;0.028;0.02" dur="6s" repeatcount="indefinite">
+        </animate>
+      </feturbulence>
+      <fecomponenttransfer in="n" result="qt">
+        <fefunca type="discrete" tablevalues="0 0.3 0.6 0.9 1">
+        </fefunca>
+      </fecomponenttransfer>
+      <fedisplacementmap in="SourceGraphic" in2="qt" scale="2.2" xchannelselector="R" ychannelselector="G" result="refr">
+        <animate attributename="scale" values="2.2;3.2;2.2" dur="6s" repeatcount="indefinite">
+        </animate>
+      </fedisplacementmap>
+      <fegaussianblur in="SourceAlpha" stddeviation="0.4" result="sa">
+      </fegaussianblur>
+      <fespecularlighting in="sa" surfacescale="3.5" specularconstant="1.5" specularexponent="45" lighting-color="#ffffff" result="spec">
+        <fepointlight x="12" y="4" z="55">
+          <animate attributename="x" values="12;78;12" dur="5s" repeatcount="indefinite">
+          </animate>
+        </fepointlight>
+      </fespecularlighting>
+      <fecomposite in="spec" in2="SourceAlpha" operator="in" result="specClip">
+      </fecomposite>
+      <fecomposite in="refr" in2="specClip" operator="arithmetic" k2="1" k3="1.3">
+      </fecomposite>
+    </filter>
+    <lineargradient id="crystal-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15">
+      </stop>
+      <stop offset="50%" stop-color="#f0f0ff" stop-opacity="0.12">
+      </stop>
+      <stop offset="100%" stop-color="#e8e8ff" stop-opacity="0.1">
+      </stop>
+    </lineargradient>
+    <lineargradient id="crystal-rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF0040">
+      </stop>
+      <stop offset="16.66%" stop-color="#FF8000">
+      </stop>
+      <stop offset="33.33%" stop-color="#FFFF00">
+      </stop>
+      <stop offset="50%" stop-color="#00FF00">
+      </stop>
+      <stop offset="66.66%" stop-color="#00FFFF">
+      </stop>
+      <stop offset="83.33%" stop-color="#0080FF">
+      </stop>
+      <stop offset="100%" stop-color="#8000FF">
+      </stop>
+      <animatetransform attributename="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="8s" repeatcount="indefinite">
+      </animatetransform>
+    </lineargradient>
+    <lineargradient id="crystal-glare" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.8">
+      </stop>
+      <stop offset="40%" stop-color="#fff" stop-opacity="0">
+      </stop>
+    </lineargradient>
+    <mask id="crystal-glare-mask">
+      <rect x="-140" y="0" width="100" height="20" fill="url(#crystal-glare)">
+        <animate attributename="x" values="-140;110;-140" dur="5s" repeatcount="indefinite">
+        </animate>
+      </rect>
+    </mask>
+    <style>
+      @media (prefers-reduced-motion: reduce) {
+              #crystal-fx animate, #crystal-glare-mask animate { display: none; }
+            }
+    </style>
+  </defs>
+  <g filter="url(#crystal-fx)">
+    <path d="M3 0 H45 V20 H3 Q0 20 0 17 V3 Q0 0 3 0 Z" fill="url(#crystal-fill)">
+    </path>
+    <path d="M45 0 H87 Q90 0 90 3 V17 Q90 20 87 20 H45 Z" fill="url(#crystal-fill)">
+    </path>
+    <rect x="0" y="0" width="90" height="20" fill="#fff" opacity="0.7" mask="url(#crystal-glare-mask)">
+    </rect>
+  </g>
+  <path d="M3 .5 H44.5 V19.5 H3 Q.5 19.5 .5 17 V3 Q.5 .5 3 .5 Z" fill="none" stroke="rgba(255,255,255,.25)" stroke-width=".5">
+  </path>
+  <path d="M45.5 .5 H87 Q89.5 .5 89.5 3 V17 Q89.5 19.5 87 19.5 H45.5 Z" fill="none" stroke="rgba(255,255,255,.3)" stroke-width=".5">
+  </path>
+  <path d="M3 0 H45 V20 H3 Q0 20 0 17 V3 Q0 0 3 0 Z" fill="none" stroke="url(#crystal-rim)" stroke-width="1.4" pathlength="100" stroke-dasharray="14 86" opacity=".95">
+    <animate attributename="stroke-dashoffset" values="0;-100" dur="2.2s" repeatcount="indefinite">
+    </animate>
+  </path>
+  <path d="M45 0 H87 Q90 0 90 3 V17 Q90 20 87 20 H45 Z" fill="none" stroke="url(#crystal-rim)" stroke-width="1.3" pathlength="100" stroke-dasharray="12 88" opacity=".9">
+    <animate attributename="stroke-dashoffset" values="0;100" dur="2.6s" repeatcount="indefinite">
+    </animate>
+  </path>
+  <text x="22.5" y="14" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,.95)" text-anchor="middle">
+    crystal
+  </text>
+  <text x="67.5" y="14" font-family="ui-monospace,monospace" font-size="11" font-weight="500" fill="#ffffff" text-anchor="middle">
+    pure
+  </text>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="20" viewBox="0 0 140 20"
+     role="img" aria-labelledby="badge-title">
+    <defs>
+        <!-- Mondrian micro-grid -->
+        <linearGradient id="badgeRed" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#DC143C" />
+            <stop offset="100%" stop-color="#B91C3C" />
+        </linearGradient>
+        <filter id="badgeDepth">
+            <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#000000"
+                          flood-opacity="0.2" />
+        </filter>
+    </defs>
+    <!-- Badge composition -->
+    <rect width="140" height="20" fill="#FFFFFF" filter="url(#badgeDepth)" />
+    <rect width="4" height="20" fill="#000000" />
+    <rect x="4" width="46" height="20" fill="#F8F8F8" />
+    <rect x="50" width="4" height="20" fill="#000000" />
+    <rect x="54" width="86" height="20" fill="url(#badgeRed)" />
+    <!-- Typography -->
+    <g font-family="'SF Mono', 'Monaco', monospace" font-size="11">
+        <text x="27" y="14" text-anchor="middle" fill="#000000" font-weight="600">
+            <title id="badge-title">arXiv De Stijl Publication Badge</title>
+            arXiv
+        </text>
+        <text x="97" y="14" text-anchor="middle" fill="#FFFFFF"
+              font-weight="500">2024.03.001</text>
+    </g>
+    <!-- Status indicator -->
+    <rect x="130" y="8" width="4" height="4" fill="#FFD700">
+        <animate attributeName="opacity" values="1;0.3;1" dur="2s"
+                 repeatCount="indefinite" />
+    </rect>
+</svg><svg role="img" aria-labelledby="theorem1Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="theorem" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="theorem1Title">
+    Theorem De Stijl: Proof Verified
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          De Stijl neoplastic form with mathematical blue. Blue is De Stijl primary—appropriate for theorem/proof context suggesting ink, precision, rigor.
+        </hw:intent>
+        <hw:approach>
+          Same bar structure. White key panel (chalk). Deep slate-blue value panel. Cyan accent line for mathematical coolness. QED-style square indicator.
+        </hw:approach>
+        <hw:tradeoffs>
+          Chose royal blue over Mondrian cobalt for better contrast with white text. Slate blue gradient maintains depth without competing with accent.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .theorem-base { fill: #FFFFFF; }
+          .theorem-bar { fill: #000000; }
+          .theorem-value { fill: url(#theoremValueGrad); }
+          .theorem-accent { fill: #4169E1; }
+          .theorem-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .theorem-key-text { fill: #1A1A2E; }
+          .theorem-value-text { fill: #FFFFFF; }
+          .theorem-status { fill: none; stroke: #87CEEB; stroke-width: 1.5; }
+          .theorem-status-fill { fill: #87CEEB; }
+          .theorem-body { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+  </style>
+  <defs>
+    <lineargradient id="theoremValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2C3E50">
+      </stop>
+      <stop offset="100%" stop-color="#1A252F">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="theorem-body">
+    <rect width="140" height="20" class="theorem-base">
+    </rect>
+    <rect width="4" height="20" class="theorem-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="theorem-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="theorem-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="theorem-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="theorem-text theorem-key-text">
+    PROOF
+  </text>
+  <text x="92" y="14" text-anchor="middle" class="theorem-text theorem-value-text">
+    VERIFIED
+  </text>
+  <!-- QED box -->
+  <rect x="126" y="6" width="8" height="8" class="theorem-status">
+  </rect>
+  <rect x="128" y="8" width="4" height="4" class="theorem-status-fill">
+  </rect>
+</svg>
+<svg role="img" aria-labelledby="theorem2Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="theorem" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="theorem2Title">
+    Theorem De Stijl: arXiv Preprint
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          arXiv preprint variant—open QED box indicates unverified proof (shared but not yet peer reviewed).
+        </hw:intent>
+        <hw:approach>
+          Same neoplastic structure. Open square indicator semantically encodes preprint status.
+        </hw:approach>
+        <hw:tradeoffs>
+          Open vs filled box may be subtle distinction—accepted as appropriate for academic audience.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .theorem2-base { fill: #FFFFFF; }
+          .theorem2-bar { fill: #000000; }
+          .theorem2-value { fill: url(#theorem2ValueGrad); }
+          .theorem2-accent { fill: #4169E1; }
+          .theorem2-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .theorem2-key-text { fill: #1A1A2E; }
+          .theorem2-value-text { fill: #FFFFFF; font-size: 10px; }
+          .theorem2-status { fill: none; stroke: #5F9EA0; stroke-width: 1.5; }
+          .theorem2-body { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+  </style>
+  <defs>
+    <lineargradient id="theorem2ValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2C3E50">
+      </stop>
+      <stop offset="100%" stop-color="#1A252F">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="theorem2-body">
+    <rect width="140" height="20" class="theorem2-base">
+    </rect>
+    <rect width="4" height="20" class="theorem2-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="theorem2-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="theorem2-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="theorem2-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="theorem2-text theorem2-key-text">
+    arXiv
+  </text>
+  <text x="92" y="14" text-anchor="middle" class="theorem2-text theorem2-value-text">
+    2412.00142
+  </text>
+  <!-- Open QED box (preprint) -->
+  <rect x="126" y="6" width="8" height="8" class="theorem2-status">
+  </rect>
+</svg>
+<svg role="img" aria-labelledby="symp2Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="symposium" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="symp2Title">
+    Symposium De Stijl: NeurIPS Venue
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          Conference venue variant—lavender accent distinguishes from gold award badges.
+        </hw:intent>
+        <hw:approach>
+          Same neoplastic structure. Lavender accent line for venue context. Circle indicator instead of star—forums vs prizes.
+        </hw:approach>
+        <hw:tradeoffs>
+          Lavender less prominent than gold—appropriate for venue (prestigious but not prize-winning).
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .symp2-base { fill: #F5F5F5; }
+          .symp2-bar { fill: #0F1628; }
+          .symp2-value { fill: url(#symp2ValueGrad); }
+          .symp2-accent { fill: #9370DB; }
+          .symp2-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .symp2-key-text { fill: #0F1628; }
+          .symp2-value-text { fill: #E6E6FA; }
+          .symp2-status { fill: #9370DB; opacity: 0.8; }
+          .symp2-body { filter: drop-shadow(0 1px 2px rgba(15,22,40,0.3)); }
+  </style>
+  <defs>
+    <lineargradient id="symp2ValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1A2744">
+      </stop>
+      <stop offset="100%" stop-color="#0F1628">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="symp2-body">
+    <rect width="140" height="20" class="symp2-base">
+    </rect>
+    <rect width="4" height="20" class="symp2-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="symp2-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="symp2-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="symp2-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="symp2-text symp2-key-text">
+    VENUE
+  </text>
+  <text x="97" y="14" text-anchor="middle" class="symp2-text symp2-value-text">
+    NeurIPS
+  </text>
+  <!-- Circle indicator -->
+  <circle cx="132" cy="10" r="3" class="symp2-status">
+  </circle>
+</svg>
+<svg role="img" aria-labelledby="symp1Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="symposium" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="symp1Title">
+    Symposium De Stijl: Best Paper Award
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          De Stijl neoplastic form with classical academy palette. Navy and gold suggest scholarly robes, laurel crowns, institutional gravitas.
+        </hw:intent>
+        <hw:approach>
+          Marble white key panel. Deep navy value panel. Gold accent line and star indicator for awards. Purple undertone in navy suggests classical purple.
+        </hw:approach>
+        <hw:tradeoffs>
+          Navy extends De Stijl blue toward purple—justified by classical academic context. Gold star indicator reserved for award badges only.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .symp-base { fill: #F5F5F5; }
+          .symp-bar { fill: #0F1628; }
+          .symp-value { fill: url(#sympValueGrad); }
+          .symp-accent { fill: #C9B037; }
+          .symp-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .symp-key-text { fill: #0F1628; }
+          .symp-value-text { fill: #E6E6FA; }
+          .symp-star { fill: #C9B037; }
+          @keyframes sympStar { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.15); } }
+          .symp-star { animation: sympStar 2.618s ease-in-out infinite; transform-origin: center; will-change: transform, opacity; }
+          .symp-body { filter: drop-shadow(0 1px 2px rgba(15,22,40,0.3)); }
+          @media (prefers-reduced-motion: reduce) { .symp-star { animation: none; opacity: 1; } }
+  </style>
+  <defs>
+    <lineargradient id="sympValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1A2744">
+      </stop>
+      <stop offset="100%" stop-color="#0F1628">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="symp-body">
+    <rect width="140" height="20" class="symp-base">
+    </rect>
+    <rect width="4" height="20" class="symp-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="symp-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="symp-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="symp-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="symp-text symp-key-text">
+    AWARD
+  </text>
+  <text x="92" y="14" text-anchor="middle" class="symp-text symp-value-text">
+    BEST PAPER
+  </text>
+  <!-- Star indicator -->
+  <polygon points="132,5 133.5,8 137,8 134.5,10 135.5,13 132,11 128.5,13 129.5,10 127,8 130.5,8" class="symp-star">
+  </polygon>
+</svg>
+<svg role="img" aria-labelledby="codex1Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="codex" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="codex1Title">
+    Codex De Stijl: Peer Reviewed
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          De Stijl neoplastic form applied to illuminated manuscript palette. Black bar dividers create Mondrian grid. Gold accent line replaces yellow primary—scholarly gold leaf tradition.
+        </hw:intent>
+        <hw:approach>
+          Left black bar (4px), vellum key panel, center black bar with gold accent stripe, burgundy value panel with gradient. Geometric status indicator pulses like candlelight on gold leaf.
+        </hw:approach>
+        <hw:tradeoffs>
+          Gold replaces De Stijl yellow for scholarly context. Burgundy replaces red—maintains primary color energy with manuscript warmth. Vellum off-white for key panel rather than pure white.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    :root {
+            --codex-vellum: #F5E6D3;
+            --codex-burgundy-start: #8B1A1A;
+            --codex-burgundy-end: #6B1010;
+            --codex-gold: #D4AF37;
+            --codex-black: #000000;
+            --codex-text-dark: #2A1215;
+            --codex-text-light: #F5E6D3;
+          }
+          .codex-base { fill: var(--codex-vellum); }
+          .codex-bar { fill: var(--codex-black); }
+          .codex-value { fill: url(#codexValueGrad); }
+          .codex-accent { fill: var(--codex-gold); }
+          .codex-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .codex-key-text { fill: var(--codex-text-dark); }
+          .codex-value-text { fill: var(--codex-text-light); }
+          .codex-status { fill: var(--codex-gold); }
+          @keyframes codexPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+          .codex-status { animation: codexPulse 2s ease-in-out infinite; will-change: opacity; }
+          .codex-body { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+          @media (prefers-reduced-motion: reduce) { .codex-status { animation: none; opacity: 1; } }
+  </style>
+  <defs>
+    <lineargradient id="codexValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B1A1A">
+      </stop>
+      <stop offset="100%" stop-color="#6B1010">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="codex-body">
+    <!-- Base white -->
+    <rect width="140" height="20" class="codex-base">
+    </rect>
+    <!-- Left black bar -->
+    <rect width="4" height="20" class="codex-bar">
+    </rect>
+    <!-- Center black bar -->
+    <rect x="50" width="4" height="20" class="codex-bar">
+    </rect>
+    <!-- Gold accent line -->
+    <rect x="49" y="0" width="2" height="20" class="codex-accent">
+    </rect>
+    <!-- Value panel -->
+    <rect x="54" width="86" height="20" class="codex-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="codex-text codex-key-text">
+    PEER
+  </text>
+  <text x="97" y="14" text-anchor="middle" class="codex-text codex-value-text">
+    REVIEWED
+  </text>
+  <!-- Status indicator -->
+  <rect x="130" y="8" width="4" height="4" class="codex-status">
+  </rect>
+</svg>
+<svg role="img" aria-labelledby="codex2Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="codex" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="codex2Title">
+    Codex De Stijl: Citations
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          Citation count variant maintaining Codex De Stijl architecture.
+        </hw:intent>
+        <hw:approach>
+          Identical neoplastic structure with numeric value content.
+        </hw:approach>
+        <hw:tradeoffs>
+          Numeric rendering requires adequate spacing—maintained through same panel proportions.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .codex2-base { fill: #F5E6D3; }
+          .codex2-bar { fill: #000000; }
+          .codex2-value { fill: url(#codex2ValueGrad); }
+          .codex2-accent { fill: #D4AF37; }
+          .codex2-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .codex2-key-text { fill: #2A1215; }
+          .codex2-value-text { fill: #F5E6D3; }
+          .codex2-body { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+  </style>
+  <defs>
+    <lineargradient id="codex2ValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B1A1A">
+      </stop>
+      <stop offset="100%" stop-color="#6B1010">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="codex2-body">
+    <rect width="140" height="20" class="codex2-base">
+    </rect>
+    <rect width="4" height="20" class="codex2-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="codex2-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="codex2-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="codex2-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="codex2-text codex2-key-text">
+    CITED
+  </text>
+  <text x="97" y="14" text-anchor="middle" class="codex2-text codex2-value-text">
+    1,247
+  </text>
+</svg>
+<svg role="img" aria-labelledby="cipher1Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="cipher" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="cipher1Title">
+    Cipher De Stijl: Signature Verified
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          De Stijl neoplastic form with terminal green palette. Green phosphor CRT aesthetic suggests cryptographic verification, command line truth revelation.
+        </hw:intent>
+        <hw:approach>
+          Light terminal green key panel. Pure black value panel. Emerald accent line. Pulsing indicator suggests active verification process.
+        </hw:approach>
+        <hw:tradeoffs>
+          Black value panel with green text is less readable than other scholar badges—accepted as authentic to terminal aesthetic. Green provides sufficient contrast.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .cipher-base { fill: #0A140A; }
+          .cipher-bar { fill: #003300; }
+          .cipher-key { fill: #0F1F0F; }
+          .cipher-value { fill: #050A05; }
+          .cipher-accent { fill: #50C878; }
+          .cipher-text { font-family: 'SF Mono', Monaco, monospace; font-size: 10px; font-weight: 600; }
+          .cipher-key-text { fill: #50C878; }
+          .cipher-value-text { fill: #98FF98; }
+          .cipher-status { fill: #50C878; }
+          @keyframes cipherPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+          .cipher-status { animation: cipherPulse 1.5s ease-in-out infinite; will-change: opacity; }
+          .cipher-body { filter: drop-shadow(0 0 4px rgba(80,200,120,0.3)); }
+          @media (prefers-reduced-motion: reduce) { .cipher-status { animation: none; opacity: 1; } }
+  </style>
+  <g class="cipher-body">
+    <rect width="140" height="20" class="cipher-base">
+    </rect>
+    <rect x="4" width="46" height="20" class="cipher-key">
+    </rect>
+    <rect width="4" height="20" class="cipher-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="cipher-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="cipher-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="cipher-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="cipher-text cipher-key-text">
+    SIGNED
+  </text>
+  <text x="97" y="14" text-anchor="middle" class="cipher-text cipher-value-text">
+    VERIFIED
+  </text>
+  <!-- Pulsing indicator -->
+  <rect x="130" y="8" width="4" height="4" class="cipher-status">
+  </rect>
+</svg>
+<svg role="img" aria-labelledby="cipher2Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="cipher" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="cipher2Title">
+    Cipher De Stijl: SHA256 Hash
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          Hash integrity variant—truncated cryptographic hash displayed in terminal aesthetic.
+        </hw:intent>
+        <hw:approach>
+          Same neoplastic structure. Dimmer hash text suggests computed output. Silver accent line for immutable/metallic seal concept.
+        </hw:approach>
+        <hw:tradeoffs>
+          Hash truncated for space—ellipsis indicates continuation. Silver shifts from pure green palette but adds semantic meaning (sealed/permanent).
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .cipher2-base { fill: #0A140A; }
+          .cipher2-bar { fill: #003300; }
+          .cipher2-key { fill: #0F1F0F; }
+          .cipher2-value { fill: #050A05; }
+          .cipher2-accent { fill: #A0A0A0; }
+          .cipher2-text { font-family: 'SF Mono', Monaco, monospace; font-size: 10px; font-weight: 600; }
+          .cipher2-key-text { fill: #50C878; }
+          .cipher2-value-text { fill: #70B070; font-size: 8px; }
+          .cipher2-body { filter: drop-shadow(0 0 4px rgba(80,200,120,0.3)); }
+  </style>
+  <g class="cipher2-body">
+    <rect width="140" height="20" class="cipher2-base">
+    </rect>
+    <rect x="4" width="46" height="20" class="cipher2-key">
+    </rect>
+    <rect width="4" height="20" class="cipher2-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="cipher2-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="cipher2-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="cipher2-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="cipher2-text cipher2-key-text">
+    SHA256
+  </text>
+  <text x="97" y="14" text-anchor="middle" class="cipher2-text cipher2-value-text">
+    a7f3b9c2...d92e
+  </text>
+</svg>
+<svg role="img" aria-labelledby="archive2Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="archive" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="archive2Title">
+    Archive De Stijl: ORCID
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          ORCID identifier variant—same archival architecture with green accent suggesting ORCID brand.
+        </hw:intent>
+        <hw:approach>
+          Green accent line references ORCID visual identity while maintaining Archive neoplastic structure.
+        </hw:approach>
+        <hw:tradeoffs>
+          ORCID green competes slightly with sepia warmth—accepted as brand recognition priority.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .archive2-base { fill: #FFF8E7; }
+          .archive2-bar { fill: #2F1810; }
+          .archive2-value { fill: url(#archive2ValueGrad); }
+          .archive2-accent { fill: #A6CE39; }
+          .archive2-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .archive2-key-text { fill: #A6CE39; font-weight: 700; }
+          .archive2-value-text { fill: #FFF8E7; font-size: 9px; }
+          .archive2-body { filter: drop-shadow(0 1px 2px rgba(47,24,16,0.3)); }
+  </style>
+  <defs>
+    <lineargradient id="archive2ValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B7355">
+      </stop>
+      <stop offset="100%" stop-color="#6B5344">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="archive2-body">
+    <rect width="140" height="20" class="archive2-base">
+    </rect>
+    <rect width="4" height="20" class="archive2-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="archive2-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="archive2-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="archive2-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="archive2-text archive2-key-text">
+    ORCID
+  </text>
+  <text x="97" y="14" text-anchor="middle" class="archive2-text archive2-value-text">
+    0000-0001-2345
+  </text>
+</svg>
+<svg role="img" aria-labelledby="archive1Title" width="140" height="20" viewbox="0 0 140 20" xmlns="http://www.w3.org/2000/svg" data-protocol="hyperweave-v1.0" data-scholar="archive" data-style="de-stijl" xmlns:hw="https://hyperweave.dev/hw/v1.0">
+  <title id="archive1Title">
+    Archive De Stijl: DOI Registered
+  </title>
+  <metadata>
+    <hw:artifact type="de-stijl-badge" series="five-scholars" version="1.0">
+      <hw:provenance>
+        <hw:generator>
+          Claude Opus 4.5 (InnerAura Labs) [claude-opus-4-5-20251101]
+        </hw:generator>
+        <hw:created>
+          2025-12-16
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>
+          De Stijl neoplastic form with archival sepia palette. Warm browns suggest aged paper, brass catalog hardware, oak drawer fronts—the material culture of preservation.
+        </hw:intent>
+        <hw:approach>
+          Cream key panel (index card). Sepia-brown value panel. Brass/bronze accent line. Circular indicator suggests catalog drawer handle.
+        </hw:approach>
+        <hw:tradeoffs>
+          Brown palette extends beyond strict De Stijl primaries—justified by archival context. Maintains neoplastic structure while adapting color to domain.
+        </hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="140x20" performance="composite-only" theme="adaptive" a11y="WCAG-AA">
+      </hw:spec>
+    </hw:artifact>
+  </metadata>
+  <style>
+    .archive-base { fill: #FFF8E7; }
+          .archive-bar { fill: #2F1810; }
+          .archive-value { fill: url(#archiveValueGrad); }
+          .archive-accent { fill: #C9A227; }
+          .archive-text { font-family: 'SF Mono', Monaco, monospace; font-size: 11px; font-weight: 600; }
+          .archive-key-text { fill: #5D4E37; }
+          .archive-value-text { fill: #FFF8E7; }
+          .archive-status { fill: #C9A227; }
+          @keyframes archivePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+          .archive-status { animation: archivePulse 3s ease-in-out infinite; will-change: opacity; }
+          .archive-body { filter: drop-shadow(0 1px 2px rgba(47,24,16,0.3)); }
+          @media (prefers-reduced-motion: reduce) { .archive-status { animation: none; opacity: 1; } }
+  </style>
+  <defs>
+    <lineargradient id="archiveValueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B7355">
+      </stop>
+      <stop offset="100%" stop-color="#6B5344">
+      </stop>
+    </lineargradient>
+  </defs>
+  <g class="archive-body">
+    <rect width="140" height="20" class="archive-base">
+    </rect>
+    <rect width="4" height="20" class="archive-bar">
+    </rect>
+    <rect x="50" width="4" height="20" class="archive-bar">
+    </rect>
+    <rect x="49" y="0" width="2" height="20" class="archive-accent">
+    </rect>
+    <rect x="54" width="86" height="20" class="archive-value">
+    </rect>
+  </g>
+  <text x="27" y="14" text-anchor="middle" class="archive-text archive-key-text">
+    DOI
+  </text>
+  <text x="97" y="14" text-anchor="middle" class="archive-text archive-value-text">
+    REGISTERED
+  </text>
+  <!-- Circular indicator (drawer handle) -->
+  <circle cx="132" cy="10" r="3" class="archive-status">
+  </circle>
+</svg>
+

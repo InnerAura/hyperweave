@@ -1,0 +1,128 @@
+---
+title: "Build an Artifact Kit"
+description: "Compose a branded artifact set -- banner, badges, strip, divider, and social icons -- in one command for any surface."
+---
+
+This tutorial walks you through composing a full artifact kit. By the end, you will have a banner, status badges, a metric strip, a section divider, and social icons -- all in a consistent genome. The `readme` kit type targets README surfaces, but the same concept scales to docs pages, Notion workspaces, Slack bots, or any `<img>`-capable surface.
+
+## Prerequisites
+
+- HyperWeave installed
+- A project you want to badge (any project works)
+
+## Step 1: Generate the Kit
+
+The `kit` command composes a full artifact set. The `readme` type produces artifacts suited for a README, but the output works on any surface:
+
+```bash
+hyperweave kit readme \
+  --genome brutalist-emerald \
+  --project "my-project" \
+  --badges "build:passing,version:v0.1.0,coverage:95%,license:MIT" \
+  --social "github,discord,x" \
+  --output ./assets/
+```
+
+This writes the following files to `./assets/`:
+
+| File | Frame Type | Content |
+|---|---|---|
+| `banner.svg` | banner | "MY-PROJECT" hero banner |
+| `badge-build.svg` | badge | "build: passing" (state: passing) |
+| `badge-version.svg` | badge | "version: v0.1.0" (state: active) |
+| `badge-coverage.svg` | badge | "coverage: 95%" (state: passing) |
+| `badge-license.svg` | badge | "license: MIT" (state: active) |
+| `strip.svg` | strip | 4-metric strip |
+| `divider.svg` | divider | Zeropoint divider |
+| `icon-github.svg` | icon | GitHub glyph |
+| `icon-discord.svg` | icon | Discord glyph |
+| `icon-x.svg` | icon | X glyph |
+
+## Step 2: Embed the Artifacts
+
+```markdown
+<p align="center">
+  <img src="./assets/banner.svg" alt="my-project" width="800"/>
+</p>
+
+<p align="center">
+  <img src="./assets/badge-build.svg" alt="build: passing"/>
+  <img src="./assets/badge-version.svg" alt="version: v0.1.0"/>
+  <img src="./assets/badge-coverage.svg" alt="coverage: 95%"/>
+  <img src="./assets/badge-license.svg" alt="license: MIT"/>
+</p>
+
+<p align="center">
+  <img src="./assets/strip.svg" alt="project metrics"/>
+</p>
+```
+
+## Step 3: Automatic State Inference
+
+The kit automatically infers badge states from values:
+
+| Value Pattern | Inferred State |
+|---|---|
+| Contains "passing" or "success" | `passing` |
+| Contains "failing" or "error" | `failing` |
+| Contains "warning" | `warning` |
+| Percentage >= 90% | `passing` |
+| Percentage 70-89% | `warning` |
+| Percentage < 70% | `critical` |
+| Everything else | `active` |
+
+So `coverage:95%` automatically gets the `passing` state, while `coverage:55%` would get `critical`.
+
+## Step 4: Try Chrome Genome
+
+Regenerate the same kit with a different genome:
+
+```bash
+hyperweave kit readme \
+  -g chrome-horizon \
+  --project "my-project" \
+  --badges "build:passing,version:v0.1.0" \
+  --output ./assets-chrome/
+```
+
+Compare the two sets. Same content, entirely different visual identity.
+
+## Step 5: Use the HTTP API
+
+The kit endpoint is also available via HTTP:
+
+```bash
+hyperweave serve --port 8000
+
+curl -X POST http://localhost:8000/v1/kit/readme \
+  -H "Content-Type: application/json" \
+  -d '{
+    "genome": "brutalist-emerald",
+    "project": "my-project",
+    "badges": "build:passing,version:v0.1.0",
+    "social": "github"
+  }'
+```
+
+Returns a JSON object with SVG strings keyed by artifact name.
+
+## Step 6: Use MCP
+
+```
+hw_kit(
+  type="readme",
+  genome="brutalist-emerald",
+  project="my-project",
+  badges="build:passing,version:v0.1.0,coverage:95%",
+  social="github,discord"
+)
+```
+
+Returns a dict of SVG strings -- your AI agent can embed them directly.
+
+## What You Learned
+
+- `hyperweave kit readme` generates a complete artifact set
+- Badge states are automatically inferred from values
+- The same kit renders in any genome
+- Kit is available via CLI, HTTP, and MCP

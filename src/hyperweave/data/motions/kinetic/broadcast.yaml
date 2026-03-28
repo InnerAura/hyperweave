@@ -1,0 +1,101 @@
+id: broadcast
+name: Broadcast
+category: css
+specimen: specs/motion/motion-kinetic-typography/banner_broadcast.svg
+cim_compliant: true
+animated_properties:
+  - opacity
+applies_to:
+  - banner
+timing:
+  strobe_duration: "3.0s"
+  strobe_easing: "ease-in-out"
+  settle_delay: "2.8s"
+  settle_duration: "0.6s"
+  blink_delay: "2.9s"
+  blink_pulse_delay: "3.3s"
+  blink_pulse_duration: "1.8s"
+structure:
+  layers:
+    - name: normal
+      description: "Primary text on dark background"
+    - name: inverse
+      description: "Inverse text (signal color bg, dark text)"
+    - name: final
+      description: "Settled final state with accent bars"
+    - name: blink
+      description: "8x8 blink indicator, top-right"
+keyframes:
+  flash_normal:
+    "0%": "opacity: 1"
+    "8%": "opacity: 0"
+    "16%": "opacity: 1"
+    "24%": "opacity: 0"
+    "32%": "opacity: 1"
+    "38%": "opacity: 0"
+    "44%": "opacity: 1"
+    "50%": "opacity: 0"
+    "57%": "opacity: 1"
+    "65%": "opacity: 0"
+    "74%": "opacity: 1"
+    "84%": "opacity: 0.2"
+    "92%": "opacity: 0.8"
+    "100%": "opacity: 1"
+  flash_inverse:
+    "0%": "opacity: 0"
+    "8%": "opacity: 1"
+    "16%": "opacity: 0"
+    "24%": "opacity: 1"
+    "32%": "opacity: 0"
+    "38%": "opacity: 1"
+    "44%": "opacity: 0"
+    "50%": "opacity: 1"
+    "57%": "opacity: 0"
+    "65%": "opacity: 0.6"
+    "74%": "opacity: 0"
+    "84%": "opacity: 0"
+    "100%": "opacity: 0"
+  settle:
+    "100%": "opacity: 1"
+  blink_pulse:
+    "0%, 100%": "opacity: 1"
+    "50%": "opacity: 0.1"
+css: |
+  .hw-motion-broadcast-normal {
+    will-change: opacity;
+    animation: hw-motion-broadcast-flash-normal 3.0s ease-in-out forwards;
+  }
+  @keyframes hw-motion-broadcast-flash-normal {
+    0%   { opacity: 1; } 8%   { opacity: 0; } 16%  { opacity: 1; }
+    24%  { opacity: 0; } 32%  { opacity: 1; } 38%  { opacity: 0; }
+    44%  { opacity: 1; } 50%  { opacity: 0; } 57%  { opacity: 1; }
+    65%  { opacity: 0; } 74%  { opacity: 1; } 84%  { opacity: 0.2; }
+    92%  { opacity: 0.8; } 100% { opacity: 0; }
+  }
+  .hw-motion-broadcast-inverse {
+    will-change: opacity;
+    animation: hw-motion-broadcast-flash-inv 3.0s ease-in-out forwards;
+  }
+  @keyframes hw-motion-broadcast-flash-inv {
+    0%   { opacity: 0; } 8%   { opacity: 1; } 16%  { opacity: 0; }
+    24%  { opacity: 1; } 32%  { opacity: 0; } 38%  { opacity: 1; }
+    44%  { opacity: 0; } 50%  { opacity: 1; } 57%  { opacity: 0; }
+    65%  { opacity: 0.6; } 74%  { opacity: 0; } 84%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  .hw-motion-broadcast-final {
+    will-change: opacity; opacity: 0;
+    animation: hw-motion-broadcast-settle 0.6s cubic-bezier(.33,1,.68,1) 2.8s forwards;
+  }
+  @keyframes hw-motion-broadcast-settle { to { opacity: 1; } }
+  .hw-motion-broadcast-blink {
+    will-change: opacity; opacity: 0;
+    animation: hw-motion-broadcast-settle 0.4s ease-out 2.9s both, hw-motion-broadcast-pulse 1.8s ease-in-out 3.3s infinite;
+  }
+  @keyframes hw-motion-broadcast-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-broadcast-normal { animation: none; opacity: 0; }
+    .hw-motion-broadcast-inverse { animation: none; opacity: 0; }
+    .hw-motion-broadcast-final, .hw-motion-broadcast-blink { animation: none; opacity: 1; }
+  }
+description: "Binary strobe lock: normal/inverse layers alternate visibility in a decaying strobe pattern over 3s, settling to final state. 8x8 blink indicator pulses at 1.8s cycle. CIM-compliant (opacity only)."

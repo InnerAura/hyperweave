@@ -1,0 +1,107 @@
+---
+title: "Camo Compatibility"
+description: "How HyperWeave artifacts survive GitHub's Camo proxy and other CDN/proxy layers."
+---
+
+## The Problem
+
+When you embed an SVG in a GitHub README, GitHub doesn't serve it directly. It proxies the image through **Camo** -- a caching asset proxy that sanitizes and re-serves images. Other platforms (Notion, Slack, email clients) have similar proxy layers.
+
+If your SVG depends on external resources (fonts, stylesheets, images), they break behind Camo. If your headers are wrong, the proxy may cache stale content or refuse to serve it.
+
+## HyperWeave's Approach
+
+Every HyperWeave artifact is designed for zero-trust proxy environments:
+
+### 1. Self-Contained SVGs
+
+All HyperWeave SVGs are fully self-contained:
+- **Zero external references**: No `<use href="...">`, no `@import url()`, no `<image href="...">`
+- **Inline CSS**: All styles in `<style>` blocks within the SVG
+- **Inline glyphs**: Glyph paths are embedded directly, not referenced
+- **No JavaScript**: Pure CSS/SMIL animation only
+
+### 2. Camo-Hardening Headers
+
+The HTTP API applies specific headers to all SVG responses:
+
+```
+Access-Control-Allow-Origin: *
+Vary: Accept
+X-Content-Type-Options: nosniff
+Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'
+```
+
+| Header | Purpose |
+|---|---|
+| `Access-Control-Allow-Origin: *` | Allows cross-origin embedding |
+| `Vary: Accept` | Ensures correct content negotiation through proxies |
+| `X-Content-Type-Options: nosniff` | Prevents MIME type confusion |
+| `Content-Security-Policy` | Restricts the SVG to inline styles only |
+
+### 3. ETag Caching
+
+Composition endpoints return deterministic ETags based on the ComposeSpec hash. This enables:
+- **304 Not Modified**: Proxies can validate freshness without re-fetching
+- **Deterministic output**: Same spec always produces the same ETag
+- **Stale-while-revalidate**: Fresh content served while background revalidation happens
+
+### 4. Tiered Cache-Control
+
+Different endpoint types use different cache strategies:
+
+| Endpoint | Cache-Control | Rationale |
+|---|---|---|
+| `/v1/badge/...`, `/v1/strip/...`, etc. | `max-age=300` | Data-bound compositions, may change |
+| `/v1/live/...`, `/v1/strip/...?live=` | `max-age={ttl}, stale-while-revalidate=3600` | Live data, TTL varies by provider |
+| `/v1/genomes`, `/v1/motions`, `/v1/glyphs`, `/v1/frames` | `max-age=3600` | Discovery data, changes infrequently |
+| `/g/{genome}` | `max-age=86400, stale-while-revalidate=604800` | Genome DNA rarely changes |
+| `/a/inneraura/{slug}` | `max-age=31536000, immutable` | Editorial specimens never change |
+
+## Platform Behavior
+
+### GitHub README
+
+GitHub Camo proxies `<img src="...">` tags:
+- **CSS animations**: Preserved (Camo passes through SVG content)
+- **SMIL animations**: Preserved (GitHub renders SMIL)
+- **External resources**: Blocked (Camo strips them)
+- **JavaScript**: Stripped (security policy)
+- **Inline SVG**: Not allowed in README markdown (must use `<img>` tags)
+
+### Notion
+
+Notion re-hosts images:
+- CSS animations: Rendered in preview, may be static in exports
+- SMIL: Rendered
+- External resources: Blocked
+
+### Email Clients
+
+Most email clients strip SVG animation:
+- Use `static` motion for email badges
+- Embedded images are typically converted to PNG by email proxies
+
+## Testing Camo Compatibility
+
+To verify an artifact survives Camo:
+
+1. Serve locally: `hyperweave serve --port 8000`
+2. Embed in a test README: `![badge](http://localhost:8000/v1/badge/build/passing/brutalist-emerald)`
+3. Push to GitHub and verify the badge renders correctly
+4. Check that animations play (SMIL and CSS both work)
+
+Or test directly with the Camo URL:
+
+```
+https://camo.githubusercontent.com/<hash>/<url>
+```
+
+## What Breaks
+
+Common pitfalls that HyperWeave avoids:
+- `@import url('https://fonts.googleapis.com/...')` -- blocked by Camo
+- `xlink:href="external.svg#id"` -- blocked, resource not proxied
+- `<script>` -- stripped entirely
+- Non-inline CSS (external stylesheets) -- not loaded through proxy
+- Overly long CSS class names -- some proxies have size limits

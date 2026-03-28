@@ -1,0 +1,160 @@
+---
+title: "Telemetry Contract Reference"
+description: "Reference for the telemetry data contract -- the bridge between session parsing and visual rendering."
+---
+
+The telemetry contract is the data structure output by `build_contract()` and consumed by telemetry frame templates (receipt, rhythm-strip, master-card).
+
+## Building the Contract
+
+```python
+from hyperweave.telemetry.contract import build_contract
+
+contract = build_contract("path/to/session.jsonl")
+```
+
+Or via CLI:
+
+```bash
+hyperweave session parse path/to/session.jsonl
+```
+
+## Contract Structure
+
+```json
+{
+  "session": {
+    "id": "abc123",
+    "duration_minutes": 8.5,
+    "start_time": "2026-03-24T10:00:00Z",
+    "end_time": "2026-03-24T10:08:30Z"
+  },
+  "tools": [
+    {
+      "name": "Read",
+      "count": 12,
+      "color": "#4CAF50",
+      "class": "read"
+    }
+  ],
+  "stages": [
+    {
+      "id": 1,
+      "label": "Exploration",
+      "start_pct": 0.0,
+      "end_pct": 0.35,
+      "tool_distribution": {"Read": 8, "Grep": 4}
+    }
+  ],
+  "corrections": [
+    {
+      "type": "explicit",
+      "signal": "lexical",
+      "turn": 5
+    }
+  ],
+  "profile": {
+    "total_input_tokens": 45000,
+    "total_output_tokens": 12000,
+    "total_cost": 0.42
+  }
+}
+```
+
+## Contract Fields
+
+### session
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `str` | Session identifier |
+| `duration_minutes` | `float` | Total session duration |
+| `start_time` | `str` | ISO 8601 start timestamp |
+| `end_time` | `str` | ISO 8601 end timestamp |
+
+### tools
+
+List of tool usage summaries:
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | `str` | Tool name (Read, Edit, Bash, etc.) |
+| `count` | `int` | Number of invocations |
+| `color` | `str` | Hex color from `tool-colors.yaml` |
+| `class` | `str` | Tool class from `tool-classes.yaml` |
+
+### stages
+
+List of detected workflow stages:
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `int` | Stage sequence number |
+| `label` | `str` | Stage label from `stage-labels.yaml` |
+| `start_pct` | `float` | Start position (0.0 - 1.0) |
+| `end_pct` | `float` | End position (0.0 - 1.0) |
+| `tool_distribution` | `dict` | Tool name to count within stage |
+
+### corrections
+
+List of detected correction events:
+
+| Field | Type | Description |
+|---|---|---|
+| `type` | `str` | Correction type |
+| `signal` | `str` | Detection signal (lexical or behavioral) |
+| `turn` | `int` | Turn number where correction occurred |
+
+### profile
+
+| Field | Type | Description |
+|---|---|---|
+| `total_input_tokens` | `int` | Total input tokens consumed |
+| `total_output_tokens` | `int` | Total output tokens generated |
+| `total_cost` | `float` | Estimated cost in USD |
+
+## Pipeline Architecture
+
+```
+JSONL transcript
+  -> parser.py (5-pass)
+    -> stages.py (3-signal detector)
+    -> corrections.py (dual-signal classifier)
+    -> contract.py (orchestration glue)
+  -> ComposeSpec(type="receipt", telemetry_data=contract)
+    -> receipt template
+  -> SVG
+```
+
+### Parser Passes
+
+1. **Tool calls**: Names, arguments, durations, outcomes
+2. **Outcomes**: Success, failure, partial results
+3. **User text**: Prompts, corrections, feedback
+4. **Agent spans**: Reasoning blocks, decision points
+5. **Turn durations**: Latency and throughput
+
+### Stage Detector
+
+3-signal weighted detector:
+- Temporal signal: 0.3 weight
+- Class shift signal: 0.4 weight
+- Explicit signal: 0.3 weight
+- Threshold: 0.6
+
+### Correction Classifier
+
+Dual-signal detection:
+- Lexical patterns (explicit user corrections)
+- Behavioral patterns (undo/redo sequences)
+
+## Configuration Files
+
+All telemetry config lives in `data/telemetry/`:
+
+| File | Purpose |
+|---|---|
+| `tool-colors.yaml` | Tool name to hex color mapping |
+| `tool-classes.yaml` | Tool name to class mapping |
+| `stage-labels.yaml` | Stage ID to display label |
+| `stage-config.yaml` | Detector weights and thresholds |

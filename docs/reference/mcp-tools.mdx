@@ -1,0 +1,114 @@
+---
+title: "MCP Tools Reference"
+description: "Reference for HyperWeave's 4 MCP tools and 3 resources via FastMCP v3."
+---
+
+HyperWeave exposes a FastMCP v3 server with 4 tools and 3 resources. Configure it in your MCP client:
+
+```json
+{
+  "mcpServers": {
+    "hyperweave": {
+      "command": "hyperweave",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+## Tools
+
+### `hw_compose`
+
+Compose any HyperWeave artifact. Returns self-contained SVG string.
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `type` | `str` | `"badge"` | Frame type |
+| `title` | `str` | `""` | Primary text |
+| `value` | `str` | `""` | Secondary text |
+| `genome` | `str` | `"brutalist-emerald"` | Genome slug |
+| `state` | `str` | `"active"` | Semantic status |
+| `motion` | `str` | `"static"` | Motion primitive |
+| `glyph` | `str` | `""` | Glyph ID |
+| `glyph_mode` | `str` | `"auto"` | Glyph rendering mode |
+| `regime` | `str` | `"normal"` | Policy regime |
+| `variant` | `str` | `"default"` | Frame variant |
+| `divider_variant` | `str` | `"zeropoint"` | Divider variant |
+| `direction` | `str` | `"ltr"` | Marquee direction |
+| `rows` | `int` | `3` | Counter rows |
+| `speeds` | `list[float] \| None` | `None` | Per-row scroll speeds |
+| `telemetry_data` | `dict \| None` | `None` | Telemetry contract |
+
+**Content by frame type:**
+
+| Frame | `title` | `value` |
+|---|---|---|
+| badge | Left panel text | Right panel text |
+| strip | Identity text | Metrics: `"STARS:2.9k,FORKS:278"` |
+| banner | Title text | Subtitle |
+| icon | (unused) | (unused, use `glyph`) |
+| divider | (unused) | (unused, use `divider_variant`) |
+| marquee | Pipe-separated text | (unused) |
+| receipt | (unused) | (unused, use `telemetry_data`) |
+
+### `hw_live`
+
+Compose a badge with live data fetched from a provider.
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `provider` | `str` | **required** | `github`, `pypi`, `npm`, `arxiv`, `huggingface`, `docker` |
+| `identifier` | `str` | **required** | Resource ID |
+| `metric` | `str` | **required** | Metric name |
+| `genome` | `str` | `"brutalist-emerald"` | Genome slug |
+| `glyph` | `str` | `""` | Glyph ID |
+| `state` | `str` | `"active"` | Semantic status |
+
+Returns SVG string. On provider error, returns a badge with value `"error"`.
+
+### `hw_kit`
+
+Compose a full artifact kit. Returns dict of SVG strings keyed by artifact name.
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `type` | `str` | `"readme"` | Kit type |
+| `genome` | `str` | `"brutalist-emerald"` | Genome slug |
+| `project` | `str` | `""` | Project name |
+| `badges` | `str` | `""` | Badge pairs: `"build:passing,version:v0.1.0"` |
+| `social` | `str` | `""` | Social glyph IDs: `"github,discord,x"` |
+
+### `hw_discover`
+
+Discover available HyperWeave components. Returns structured data about genomes, motions, glyphs, and frame types.
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `what` | `str` | `"all"` | `all`, `genomes`, `motions`, `glyphs`, `frames` |
+
+## Resources
+
+### `hyperweave://schema`
+
+ComposeSpec parameter reference. Returns JSON with all valid parameter values:
+
+```json
+{
+  "type": ["badge", "strip", "banner", ...],
+  "genome": ["brutalist-emerald", "chrome-horizon"],
+  "motion": ["static", "chromatic-pulse", ...],
+  "state": ["active", "passing", ...],
+  "glyph_mode": ["auto", "fill", "wire", "none"],
+  "regime": ["normal", "permissive", "ungoverned"],
+  "divider_variant": ["block", "current", "takeoff", "void", "zeropoint"]
+}
+```
+
+### `hyperweave://genomes`
+
+Full genome configurations with colors, motions, and profiles. Returns JSON keyed by genome ID.
+
+### `hyperweave://motions`
+
+Motion primitives with frame compatibility and CIM compliance. Returns JSON keyed by motion ID.

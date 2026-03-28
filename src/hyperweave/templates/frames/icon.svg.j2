@@ -1,0 +1,143 @@
+{# HyperWeave Icon Frame — 64x64.
+   TWO frame systems:
+     1. Brutalist tectonic (specimen: brutalist-emerald/icon_*.svg)
+     2. Chrome satin (specimens: chrome-horizon-new/icon-circle-v2.svg, icon-square-v2.svg)
+        No label, no glow filter. Chrome ring → inner border → well → glyph bright solid.
+   Extends document.svg.j2. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+{% if profile_id == 'brutalist' %}
+  <filter id="{{ uid }}-shadow">
+    <feDropShadow dx="0" dy="1" stdDeviation="2"
+                  flood-color="var(--dna-shadow-color, #000)"
+                  flood-opacity="var(--dna-shadow-opacity, 0.15)"/>
+  </filter>
+{% elif is_chrome | default(false) and envelope_stops | default([]) %}
+  {# ══ CHROME SATIN DEFS ══ #}
+  <linearGradient id="{{ uid }}-env" x1="0" x2="0" y1="0" y2="1">
+  {% for stop in envelope_stops %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
+  </linearGradient>
+  <filter id="{{ uid }}-sh" x="-6%" y="-4%" width="112%" height="114%">
+    <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
+  </filter>
+{% if icon_variant | default('binary-circular') == 'binary-square' %}
+  <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="{{ well_top | default('#0A1822') }}"/>
+    <stop offset="100%" stop-color="{{ well_bottom | default('#060E16') }}"/>
+  </linearGradient>
+  <clipPath id="{{ uid }}-clip"><rect width="64" height="64" rx="14"/></clipPath>
+{% else %}
+  <radialGradient id="{{ uid }}-well" cx="0.5" cy="0.45" r="0.55">
+    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
+    <stop offset="100%" stop-color="{{ well_bottom | default('#060E16') }}"/>
+  </radialGradient>
+  <clipPath id="{{ uid }}-top-clip"><rect x="14" y="2" width="36" height="16"/></clipPath>
+{% endif %}
+{% else %}
+  {# Non-chrome, non-brutalist: solid color frame #}
+  <linearGradient id="{{ uid }}-frame-grad" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="{{ genome_signal | default('#845ef7') }}"/>
+    <stop offset="100%" stop-color="{{ genome_signal_dim | default('#6d28d9') }}"/>
+  </linearGradient>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% set icon_size = width | default(64) %}
+{% set cx = icon_size / 2 %}
+
+{% if profile_id == 'brutalist' %}
+{# ════════════════════════════════════════════════════════════════════
+   BRUTALIST — square, border strips, filled glyph, label panel
+   ════════════════════════════════════════════════════════════════════ #}
+{% set cy = icon_size * 0.4375 %}
+{% set label_panel_h = (icon_size * 0.21875) | int %}
+{% set label_y = icon_size - label_panel_h %}
+
+<g filter="url(#{{ uid }}-shadow)">
+  <rect width="{{ icon_size }}" height="{{ icon_size }}" fill="var(--dna-surface)"/>
+  <rect x="0" y="0" width="{{ icon_size }}" height="4" fill="var(--dna-border)"/>
+  <rect x="0" y="4" width="{{ icon_size }}" height="2" fill="var(--dna-signal)"/>
+  <rect x="0" y="0" width="4" height="{{ icon_size }}" fill="var(--dna-border)"/>
+  <rect x="4" y="0" width="2" height="{{ label_y }}" fill="var(--dna-signal)"/>
+  {% if glyph_path %}
+  <g>
+    <svg x="{{ cx - 12 }}" y="{{ cy - 12 }}" width="24" height="24" viewBox="{{ glyph_viewbox }}">
+      <path d="{{ glyph_path }}" fill="var(--dna-signal-dim)" stroke="none"/>
+    </svg>
+  </g>
+  {% endif %}
+  {% if icon_label %}
+  <rect x="0" y="{{ label_y }}" width="{{ icon_size }}" height="{{ label_panel_h }}"
+        fill="var(--dna-signal-dim)"/>
+  <text x="{{ cx }}" y="{{ (label_y + label_panel_h * 0.71) | int }}"
+        text-anchor="middle"
+        font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+        font-size="7" font-weight="700"
+        fill="var(--dna-ink-on-accent)"
+        letter-spacing="0.15em">{{ icon_label | upper }}</text>
+  {% endif %}
+</g>
+
+{% elif is_chrome | default(false) and envelope_stops | default([]) %}
+{# ════════════════════════════════════════════════════════════════════
+   CHROME SATIN — specimens: icon-circle-v2.svg, icon-square-v2.svg
+   Chrome ring → inner border → well → top highlight → bright glyph.
+   No label. No glow filter. Crisp silhouette.
+   ════════════════════════════════════════════════════════════════════ #}
+
+{% if icon_variant | default('binary-circular') == 'binary-square' %}
+{# ── Square variant (specimen: icon-square-v2.svg) ── #}
+<g clip-path="url(#{{ uid }}-clip)">
+  <rect width="64" height="64" rx="14" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-sh)"/>
+</g>
+<rect x="3.5" y="3.5" width="57" height="57" rx="11" fill="none" stroke="#000510" stroke-width="0.8"/>
+<rect x="4" y="4" width="56" height="56" rx="10" fill="url(#{{ uid }}-well)"/>
+<rect x="10" y="4" width="44" height="0.8" rx="0.4" fill="{{ specular_light | default('#6AACC8') }}" opacity="0.12"/>
+
+{% if glyph_path %}
+<g transform="translate(16,16)">
+  <svg viewBox="{{ glyph_viewbox }}" width="32" height="32">
+    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default('#E0ECF6') }}"/>
+  </svg>
+</g>
+{% endif %}
+
+{% else %}
+{# ── Circle variant (specimen: icon-circle-v2.svg) ── #}
+<circle cx="32" cy="32" r="28" fill="none" stroke="url(#{{ uid }}-env)" stroke-width="3" filter="url(#{{ uid }}-sh)"/>
+<circle cx="32" cy="32" r="26.5" fill="url(#{{ uid }}-well)"/>
+<circle cx="32" cy="32" r="26.5" fill="none" stroke="#000510" stroke-width="0.5"/>
+<g clip-path="url(#{{ uid }}-top-clip)">
+  <circle cx="32" cy="32" r="26" fill="none" stroke="{{ specular_light | default('#6AACC8') }}" stroke-width="0.8" opacity="0.15"/>
+</g>
+
+{% if glyph_path %}
+<g transform="translate(17,17)">
+  <svg viewBox="{{ glyph_viewbox }}" width="30" height="30">
+    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default('#E0ECF6') }}"/>
+  </svg>
+</g>
+{% endif %}
+
+{% endif %}
+
+{% else %}
+{# ════════════════════════════════════════════════════════════════════
+   GENERIC (non-chrome, non-brutalist) — circle frame, solid color
+   ════════════════════════════════════════════════════════════════════ #}
+<circle cx="{{ cx }}" cy="{{ cx }}" r="22"
+        fill="none" stroke="url(#{{ uid }}-frame-grad)" stroke-width="2"/>
+{% if glyph_path %}
+<g transform="translate({{ cx - 12 }},{{ cx - 12 }})">
+  <svg viewBox="{{ glyph_viewbox }}" width="24" height="24">
+    <path d="{{ glyph_path }}" fill="url(#{{ uid }}-frame-grad)"/>
+  </svg>
+</g>
+{% endif %}
+{% endif %}
+
+{% endblock %}

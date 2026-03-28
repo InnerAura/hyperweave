@@ -1,0 +1,47 @@
+id: dual-orbit
+name: Dual Orbit
+category: smil
+specimen: specs/motion/motion-border-frames/004-dual-orbit.svg
+cim_compliant: false
+cim_waiver: "Animates stroke-dashoffset (paint) on two stroke layers for dual-runner perimeter trace."
+animated_properties:
+  - stroke-dashoffset
+applies_to:
+  - badge
+  - strip
+  - banner
+  - icon
+timing:
+  duration: "3s"
+  easing: "linear"
+  repeat: "indefinite"
+stroke_topology:
+  perimeter: 680
+  layers: 2
+  dash_pattern: "100 580"
+  layer_2_offset: 340
+keyframes:
+  layer_1_dashoffset:
+    values: "0;-680"
+    dur: "3s"
+  layer_2_dashoffset:
+    initial: 340
+    values: "340;-340"
+    dur: "3s"
+    opacity: 0.6
+smil: |
+  <!-- Layer 1: primary runner -->
+  <animate attributeName="stroke-dashoffset"
+           values="0;-680" dur="3s" repeatCount="indefinite"/>
+  <!-- Layer 2: secondary runner, offset by half perimeter, reduced opacity -->
+  <animate attributeName="stroke-dashoffset"
+           values="340;-340" dur="3s" repeatCount="indefinite"/>
+css: |
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-dual-orbit,
+    .hw-motion-dual-orbit * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+description: "Binary star system mechanics: two 100px runners trace a 680px perimeter in phase-locked orbit, offset by 340px (half-perimeter). Layer 2 at 60% opacity creates depth. 2 SMIL animations, 3s period."

@@ -1,0 +1,654 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 86" width="800" height="86"
+     role="img" aria-labelledby="mq-t" data-hw-type="marquee" data-hw-motion="scroll-triple"
+     data-hw-chromatic="chrome-horizon">
+  <title id="mq-t">HyperWeave Badge Showcase — Mixed DNA Triple Flow</title>
+  <desc>Three rows of badges from arcade, De Stijl, proofset, and matrix DNA systems scrolling in alternating directions</desc>
+  <metadata>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:dc="http://purl.org/dc/elements/1.1/"
+             xmlns:hw="https://hyperweave.dev/hw/v8.0">
+      <rdf:Description>
+        <dc:title>HyperWeave Badge Showcase — Mixed DNA Triple Flow</dc:title>
+        <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+        <dc:date>2026-03-27</dc:date>
+        <dc:rights>CC BY 4.0</dc:rights>
+        <hw:reasoning>
+          <hw:intent>Showcase the full breadth of HyperWeave badge DNA systems in a single animated marquee</hw:intent>
+          <hw:approach>Mix arcade, De Stijl scholarly, matrix DNA, and proofset badges across three counter-scrolling rows with chrome-horizon frame</hw:approach>
+          <hw:tradeoffs>Mixed badge sizes (140-158px) standardized to 166px pitch; arcade bevels preserved; De Stijl structure faithful to specimens</hw:tradeoffs>
+        </hw:reasoning>
+      </rdf:Description>
+    </rdf:RDF>
+  </metadata>
+  <defs>
+    <!-- ═══ Frame Defs ═══ -->
+    <clipPath id="mq-outer"><rect width="800" height="86" rx="6"/></clipPath>
+    <clipPath id="mq-r1"><rect x="4" y="0" width="792" height="28"/></clipPath>
+    <clipPath id="mq-r2"><rect x="4" y="29" width="792" height="28"/></clipPath>
+    <clipPath id="mq-r3"><rect x="4" y="58" width="792" height="28"/></clipPath>
+    <linearGradient id="mq-fl" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#000A14"/><stop offset="100%" stop-color="#000A14" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="mq-fr" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#000A14" stop-opacity="0"/><stop offset="100%" stop-color="#000A14"/>
+    </linearGradient>
+    <linearGradient id="mq-bg" x1="0" y1="0" x2=".5" y2="1">
+      <stop offset="0%" stop-color="#000A14"/>
+      <stop offset="50%" stop-color="#040410"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="mq-env" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#000A14"/>
+      <stop offset="12%" stop-color="#0A2540"/>
+      <stop offset="25%" stop-color="#1A4A6E"/>
+      <stop offset="36%" stop-color="#3A7EA8"/>
+      <stop offset="44%" stop-color="#6AACC8"/>
+      <stop offset="50%" stop-color="#C8DAE6"/>
+      <stop offset="56%" stop-color="#B8A888"/>
+      <stop offset="64%" stop-color="#6A5840"/>
+      <stop offset="75%" stop-color="#2A2218"/>
+      <stop offset="88%" stop-color="#100E0A"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <radialGradient id="mq-n1" cx=".1" cy=".3" r=".5">
+      <stop offset="0%" stop-color="#0A2540" stop-opacity=".5"/><stop offset="100%" stop-color="#0A2540" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="mq-n2" cx=".9" cy=".7" r=".45">
+      <stop offset="0%" stop-color="#1A3040" stop-opacity=".4"/><stop offset="100%" stop-color="#1A3040" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mq-spec" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="35%" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#fff" stop-opacity="0.04"/>
+      <stop offset="65%" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+      <animate attributeName="x1" values="-1;1;-1" dur="18s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+      <animate attributeName="x2" values="0;2;0" dur="18s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+    </linearGradient>
+    <filter id="mq-sh" x="-1%" y="-4%" width="102%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity=".3"/>
+    </filter>
+
+    <!-- ═══ Shared Badge Clip-paths ═══ -->
+    <clipPath id="bc140"><rect width="140" height="20" rx="2"/></clipPath>
+    <clipPath id="bc150"><rect width="150" height="20"/></clipPath>
+    <clipPath id="bc158"><rect width="158" height="20"/></clipPath>
+
+    <!-- ═══ Arcade Badge Gradients ═══ -->
+    <linearGradient id="hp-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#2A3580"/><stop offset="100%" stop-color="#191E40"/></linearGradient>
+    <linearGradient id="hp-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#5B6EE1"/><stop offset="100%" stop-color="#3A4CC0"/></linearGradient>
+    <linearGradient id="lv-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#306230"/><stop offset="100%" stop-color="#0F380F"/></linearGradient>
+    <linearGradient id="lv-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#9BBC0F"/><stop offset="100%" stop-color="#8BAC0F"/></linearGradient>
+    <linearGradient id="pw-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#B8860B"/><stop offset="100%" stop-color="#8B6508"/></linearGradient>
+    <linearGradient id="pw-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#FFD700"/><stop offset="100%" stop-color="#FFA500"/></linearGradient>
+    <linearGradient id="sc-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#4B0082"/><stop offset="100%" stop-color="#2E004D"/></linearGradient>
+    <linearGradient id="sc-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#9966CC"/><stop offset="100%" stop-color="#6A359C"/></linearGradient>
+    <linearGradient id="st-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#880000"/><stop offset="100%" stop-color="#660000"/></linearGradient>
+    <linearGradient id="st-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#D94A38"/><stop offset="100%" stop-color="#B42010"/></linearGradient>
+
+    <!-- ═══ Matrix Badge Gradients ═══ -->
+    <linearGradient id="sv-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#253048"/><stop offset="100%" stop-color="#1E293B"/></linearGradient>
+    <linearGradient id="sv-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#2A2050"/><stop offset="100%" stop-color="#1E293B"/></linearGradient>
+    <linearGradient id="fe-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#1A3A2A"/><stop offset="100%" stop-color="#14532D"/></linearGradient>
+    <linearGradient id="fe-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#0F2518"/><stop offset="100%" stop-color="#0A2E1A"/></linearGradient>
+    <linearGradient id="og-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#222"/><stop offset="100%" stop-color="#18181B"/></linearGradient>
+    <linearGradient id="og-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#1C1A10"/><stop offset="100%" stop-color="#18181B"/></linearGradient>
+    <linearGradient id="su-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#141400"/><stop offset="100%" stop-color="#0A0A0A"/></linearGradient>
+    <linearGradient id="su-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#111100"/><stop offset="100%" stop-color="#0A0A0A"/></linearGradient>
+    <linearGradient id="oa-l" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#162740"/><stop offset="100%" stop-color="#0F172A"/></linearGradient>
+    <linearGradient id="oa-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#1E3A5F"/><stop offset="100%" stop-color="#0F172A"/></linearGradient>
+
+    <!-- ═══ De Stijl Badge Gradients ═══ -->
+    <linearGradient id="thm-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#2C3E50"/><stop offset="100%" stop-color="#1A252F"/></linearGradient>
+    <linearGradient id="sy-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#1A2744"/><stop offset="100%" stop-color="#0F1628"/></linearGradient>
+    <linearGradient id="cx-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#8B1A1A"/><stop offset="100%" stop-color="#6B1010"/></linearGradient>
+    <linearGradient id="ar-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#8B7355"/><stop offset="100%" stop-color="#6B5344"/></linearGradient>
+
+    <!-- ═══ Proofset Badge Gradients ═══ -->
+    <linearGradient id="be-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#1A3828"/><stop offset="100%" stop-color="#153020"/></linearGradient>
+    <linearGradient id="ch-r" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#0C1E2E"/><stop offset="100%" stop-color="#06101A"/></linearGradient>
+    <linearGradient id="ch-env" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#000A14"/><stop offset="12%" stop-color="#0A2540"/>
+      <stop offset="25%" stop-color="#1A4A6E"/><stop offset="36%" stop-color="#3A7EA8"/>
+      <stop offset="44%" stop-color="#6AACC8"/><stop offset="50%" stop-color="#C8DAE6"/>
+      <stop offset="56%" stop-color="#B8A888"/><stop offset="64%" stop-color="#6A5840"/>
+      <stop offset="75%" stop-color="#2A2218"/><stop offset="88%" stop-color="#100E0A"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="ch-ct" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#5A8AAA"/><stop offset="15%" stop-color="#A8D4F0"/>
+      <stop offset="35%" stop-color="#D8ECF8"/><stop offset="50%" stop-color="#FFFFFF"/>
+      <stop offset="65%" stop-color="#D8ECF8"/><stop offset="85%" stop-color="#A8D4F0"/>
+      <stop offset="100%" stop-color="#5A8AAA"/>
+    </linearGradient>
+    <linearGradient id="ch-sep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5BA3D4" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#5BA3D4" stop-opacity=".35"/>
+      <stop offset="50%" stop-color="#6AACC8" stop-opacity=".45"/>
+      <stop offset="70%" stop-color="#5BA3D4" stop-opacity=".35"/>
+      <stop offset="100%" stop-color="#5BA3D4" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- ═══ Crystal Badge Gradients ═══ -->
+    <linearGradient id="crystal-rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF0040"/><stop offset="16.66%" stop-color="#FF8000"/>
+      <stop offset="33.33%" stop-color="#FFFF00"/><stop offset="50%" stop-color="#00FF00"/>
+      <stop offset="66.66%" stop-color="#00FFFF"/><stop offset="83.33%" stop-color="#0080FF"/>
+      <stop offset="100%" stop-color="#8000FF"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="8s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- ═══ GitHub Glyph Symbol ═══ -->
+    <symbol id="gh" viewBox="0 0 24 24">
+      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+    </symbol>
+
+    <!-- ═══════════════════════════════════════════════════
+         BADGE DEFINITIONS — 21 unique badges, defined once
+    ════════════════════════════════════════════════════ -->
+
+    <!-- ── ROW 1 ── -->
+
+    <!-- HP (SNES Arcade) — health bar badge -->
+    <g id="b-hp">
+      <g clip-path="url(#bc140)">
+        <rect width="32" height="20" fill="url(#hp-l)"/>
+        <rect x="32" width="108" height="20" fill="url(#hp-r)"/>
+        <line stroke="#0a0a1a" stroke-width="1" x1="32" x2="32" y1="0" y2="20"/>
+        <line stroke="rgba(255,255,255,0.15)" stroke-width="0.5" x1="33" x2="33" y1="0" y2="20"/>
+        <rect fill="rgba(255,255,255,0.25)" width="140" height="2"/>
+        <rect fill="rgba(255,255,255,0.2)" width="2" height="20"/>
+        <rect fill="rgba(0,0,0,0.3)" y="18" width="140" height="2"/>
+        <rect fill="rgba(0,0,0,0.25)" x="138" width="2" height="20"/>
+      </g>
+      <text fill="#FFF" font-family="system-ui,sans-serif" font-size="9" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="16" y="14">HP</text>
+      <rect fill="#0a0a1a" x="38" y="7" width="96" height="6" rx="1"/>
+      <rect fill="#4ADE80" x="39" y="8" width="70" height="4" rx="0.5"/>
+      <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x=".5" y=".5" rx="1.5"/>
+    </g>
+
+    <!-- Slate-Violet — DEPLOY live (Matrix DNA) -->
+    <g id="b-sv">
+      <g clip-path="url(#bc158)">
+        <rect width="73" height="20" fill="url(#sv-l)"/>
+        <rect x="78" width="80" height="20" fill="url(#sv-r)"/>
+        <rect x=".5" y=".5" width="157" height="19" fill="none" stroke="rgba(255,255,255,0.06)"/>
+        <rect width="4" height="20" fill="#8B5CF6"/>
+        <rect x="73" width="2" height="20" fill="#8B5CF6"/>
+        <rect x="75" width="3" height="20" fill="#0F172A"/>
+      </g>
+      <g fill="#8B5CF6"><use href="#gh" x="9" y="4" width="12" height="12"/></g>
+      <text x="47" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" letter-spacing="0.06em" fill="#C4B5FD">DEPLOY</text>
+      <text x="108" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="700" fill="#E9D5FF">live</text>
+      <g transform="translate(138,5)">
+        <rect width="10" height="10" fill="none" stroke="#8B5CF6" stroke-width="1.2"/>
+        <rect x="2" y="2" width="6" height="6" fill="#A78BFA" opacity=".7">
+          <animate attributeName="opacity" values=".3;1;.3" dur="2s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </g>
+
+    <!-- PROOF VERIFIED (Theorem De Stijl) -->
+    <g id="b-thm">
+      <rect width="140" height="20" fill="#FFFFFF"/>
+      <rect width="4" height="20" fill="#000"/>
+      <rect x="50" width="4" height="20" fill="#000"/>
+      <rect x="49" width="2" height="20" fill="#4169E1"/>
+      <rect x="54" width="86" height="20" fill="url(#thm-r)"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#1A1A2E">PROOF</text>
+      <text x="92" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#FFF">VERIFIED</text>
+      <rect x="126" y="6" width="8" height="8" fill="none" stroke="#87CEEB" stroke-width="1.5"/>
+      <rect x="128" y="8" width="4" height="4" fill="#87CEEB"/>
+    </g>
+
+    <!-- Chrome-Horizon BUILD:passing (faithful to proofset badge_passing.svg) -->
+    <g id="b-ch">
+      <g clip-path="url(#bc150)">
+        <rect width="150" height="20" fill="url(#ch-env)"/>
+        <rect x="1" y="1" width="148" height="18" rx="2" fill="none" stroke="#000510" stroke-width=".6"/>
+        <rect x="2" y="2" width="146" height="16" rx="1" fill="url(#ch-r)"/>
+        <rect x="2" y="2" width="4" height="16" fill="url(#ch-env)" opacity=".7"/>
+      </g>
+      <rect x="8" y="2" width="134" height=".5" rx=".25" fill="#6AACC8" opacity=".08"/>
+      <line x1="74" y1="4" x2="74" y2="16" stroke="url(#ch-sep)" stroke-width=".75"/>
+      <g fill="#E0ECF6"><use href="#gh" x="9" y="3" width="14" height="14"/></g>
+      <text x="50" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Courier New',monospace" font-size="8" font-weight="600"
+            letter-spacing="0.16em" fill="#5BA3D4">BUILD</text>
+      <text x="106" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Impact','Arial Black',system-ui" font-size="11" font-weight="700" font-style="italic"
+            fill="url(#ch-ct)" letter-spacing=".4">passing</text>
+      <g transform="translate(137,10)">
+        <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx=".7" transform="rotate(45)" fill="#040C14"/>
+        <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx=".7" transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width=".5"/>
+        <rect x="-2.2" y="-2.2" width="4.4" height="4.4" rx=".3" transform="rotate(45)" fill="#22C55E" opacity=".7">
+          <animate attributeName="opacity" values=".3;1;.3" dur="2s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </g>
+
+    <!-- Chrome-Horizon RELEASE v1.2.3 (no indicator — version info) -->
+    <g id="b-ch-rel">
+      <g clip-path="url(#bc150)">
+        <rect width="150" height="20" fill="url(#ch-env)"/>
+        <rect x="1" y="1" width="148" height="18" rx="2" fill="none" stroke="#000510" stroke-width=".6"/>
+        <rect x="2" y="2" width="146" height="16" rx="1" fill="url(#ch-r)"/>
+        <rect x="2" y="2" width="4" height="16" fill="url(#ch-env)" opacity=".7"/>
+      </g>
+      <rect x="8" y="2" width="134" height=".5" rx=".25" fill="#6AACC8" opacity=".08"/>
+      <line x1="74" y1="4" x2="74" y2="16" stroke="url(#ch-sep)" stroke-width=".75"/>
+      <g fill="#E0ECF6"><use href="#gh" x="9" y="3" width="14" height="14"/></g>
+      <text x="50" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Courier New',monospace" font-size="8" font-weight="600"
+            letter-spacing="0.12em" fill="#5BA3D4">RELEASE</text>
+      <text x="112" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Impact','Arial Black',system-ui" font-size="11" font-weight="700" font-style="italic"
+            fill="url(#ch-ct)" letter-spacing=".4">v1.2.3</text>
+    </g>
+
+    <!-- Chrome-Horizon COVERAGE 94.7% (with indicator — health metric) -->
+    <g id="b-ch-cov">
+      <g clip-path="url(#bc150)">
+        <rect width="150" height="20" fill="url(#ch-env)"/>
+        <rect x="1" y="1" width="148" height="18" rx="2" fill="none" stroke="#000510" stroke-width=".6"/>
+        <rect x="2" y="2" width="146" height="16" rx="1" fill="url(#ch-r)"/>
+        <rect x="2" y="2" width="4" height="16" fill="url(#ch-env)" opacity=".7"/>
+      </g>
+      <rect x="8" y="2" width="134" height=".5" rx=".25" fill="#6AACC8" opacity=".08"/>
+      <line x1="74" y1="4" x2="74" y2="16" stroke="url(#ch-sep)" stroke-width=".75"/>
+      <g fill="#E0ECF6"><use href="#gh" x="9" y="3" width="14" height="14"/></g>
+      <text x="50" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Courier New',monospace" font-size="7" font-weight="600"
+            letter-spacing="0.1em" fill="#5BA3D4">COVERAGE</text>
+      <text x="106" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Impact','Arial Black',system-ui" font-size="11" font-weight="700" font-style="italic"
+            fill="url(#ch-ct)" letter-spacing=".4">94.7%</text>
+      <g transform="translate(137,10)">
+        <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx=".7" transform="rotate(45)" fill="#040C14"/>
+        <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx=".7" transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width=".5"/>
+        <rect x="-2.2" y="-2.2" width="4.4" height="4.4" rx=".3" transform="rotate(45)" fill="#22C55E" opacity=".7">
+          <animate attributeName="opacity" values=".3;1;.3" dur="2s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </g>
+
+    <!-- Chrome-Horizon DOCS synced (no indicator — info badge) -->
+    <g id="b-ch-docs">
+      <g clip-path="url(#bc150)">
+        <rect width="150" height="20" fill="url(#ch-env)"/>
+        <rect x="1" y="1" width="148" height="18" rx="2" fill="none" stroke="#000510" stroke-width=".6"/>
+        <rect x="2" y="2" width="146" height="16" rx="1" fill="url(#ch-r)"/>
+        <rect x="2" y="2" width="4" height="16" fill="url(#ch-env)" opacity=".7"/>
+      </g>
+      <rect x="8" y="2" width="134" height=".5" rx=".25" fill="#6AACC8" opacity=".08"/>
+      <line x1="74" y1="4" x2="74" y2="16" stroke="url(#ch-sep)" stroke-width=".75"/>
+      <g fill="#E0ECF6"><use href="#gh" x="9" y="3" width="14" height="14"/></g>
+      <text x="50" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Courier New',monospace" font-size="8" font-weight="600"
+            letter-spacing="0.16em" fill="#5BA3D4">DOCS</text>
+      <text x="112" y="10" text-anchor="middle" dominant-baseline="central"
+            font-family="'Impact','Arial Black',system-ui" font-size="11" font-weight="700" font-style="italic"
+            fill="url(#ch-ct)" letter-spacing=".4">synced</text>
+    </g>
+
+    <!-- SCORE 9999 (Retro Purple Arcade) -->
+    <g id="b-sc">
+      <g clip-path="url(#bc140)">
+        <rect width="48" height="20" fill="url(#sc-l)"/>
+        <rect x="48" width="92" height="20" fill="url(#sc-r)"/>
+        <line stroke="#1a0030" stroke-width="1" x1="48" x2="48" y1="0" y2="20"/>
+        <line stroke="rgba(255,255,255,0.15)" stroke-width="0.5" x1="49" x2="49" y1="0" y2="20"/>
+        <rect fill="rgba(255,255,255,0.25)" width="140" height="2"/>
+        <rect fill="rgba(255,255,255,0.2)" width="2" height="20"/>
+        <rect fill="rgba(0,0,0,0.35)" y="18" width="140" height="2"/>
+        <rect fill="rgba(0,0,0,0.3)" x="138" width="2" height="20"/>
+      </g>
+      <text fill="#FFF" font-family="system-ui,sans-serif" font-size="9" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="24" y="14">SCORE</text>
+      <text fill="#FFF" font-family="system-ui,sans-serif" font-size="11" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="94" y="14.5">9999</text>
+      <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x=".5" y=".5" rx="1.5"/>
+    </g>
+
+    <!-- Sulfur — UPTIME 99.9% (Matrix DNA) -->
+    <g id="b-su">
+      <g clip-path="url(#bc158)">
+        <rect width="73" height="20" fill="url(#su-l)"/>
+        <rect x="78" width="80" height="20" fill="url(#su-r)"/>
+        <rect x=".5" y=".5" width="157" height="19" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <rect width="4" height="20" fill="#CCFF00"/>
+        <rect x="73" width="2" height="20" fill="#CCFF00" opacity=".7"/>
+        <rect x="75" width="3" height="20" fill="#050505"/>
+      </g>
+      <g fill="#CCFF00"><use href="#gh" x="9" y="4" width="12" height="12"/></g>
+      <text x="47" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="10" font-weight="600" letter-spacing="0.06em" fill="#CCFF00">UPTIME</text>
+      <text x="118" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="700" fill="#EAFF60">99.9%</text>
+    </g>
+
+    <!-- PEER REVIEWED (Codex De Stijl) -->
+    <g id="b-cx">
+      <rect width="140" height="20" fill="#F5E6D3"/>
+      <rect width="4" height="20" fill="#000"/>
+      <rect x="50" width="4" height="20" fill="#000"/>
+      <rect x="49" width="2" height="20" fill="#D4AF37"/>
+      <rect x="54" width="86" height="20" fill="url(#cx-r)"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#2A1215">PEER</text>
+      <text x="97" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#F5E6D3">REVIEWED</text>
+      <rect x="130" y="8" width="4" height="4" fill="#D4AF37" opacity=".8">
+        <animate attributeName="opacity" values="1;.5;1" dur="2s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+
+    <!-- ── ROW 2 ── -->
+
+    <!-- LVL 99 (Game Boy Arcade) -->
+    <g id="b-lv">
+      <g clip-path="url(#bc140)">
+        <rect width="40" height="20" fill="url(#lv-l)"/>
+        <rect x="40" width="100" height="20" fill="url(#lv-r)"/>
+        <line stroke="#0a2a0a" stroke-width="1" x1="40" x2="40" y1="0" y2="20"/>
+        <line stroke="rgba(255,255,255,0.15)" stroke-width="0.5" x1="41" x2="41" y1="0" y2="20"/>
+        <rect fill="rgba(255,255,255,0.25)" width="140" height="2"/>
+        <rect fill="rgba(255,255,255,0.2)" width="2" height="20"/>
+        <rect fill="rgba(0,0,0,0.3)" y="18" width="140" height="2"/>
+        <rect fill="rgba(0,0,0,0.25)" x="138" width="2" height="20"/>
+      </g>
+      <text fill="#9BBC0F" font-family="system-ui,sans-serif" font-size="9" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="20" y="14">LVL</text>
+      <text fill="#0F380F" font-family="system-ui,sans-serif" font-size="11" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="90" y="14.5">99</text>
+      <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x=".5" y=".5" rx="1.5"/>
+    </g>
+
+    <!-- Forest-Emerald — LINT clean (Matrix DNA) -->
+    <g id="b-fe">
+      <g clip-path="url(#bc158)">
+        <rect width="73" height="20" fill="url(#fe-l)"/>
+        <rect x="78" width="80" height="20" fill="url(#fe-r)"/>
+        <rect x=".5" y=".5" width="157" height="19" fill="none" stroke="rgba(255,255,255,0.06)"/>
+        <rect width="4" height="20" fill="#10B981"/>
+        <rect x="73" width="2" height="20" fill="#10B981"/>
+        <rect x="75" width="3" height="20" fill="#0A2E1A"/>
+      </g>
+      <g fill="#10B981"><use href="#gh" x="9" y="4" width="12" height="12"/></g>
+      <text x="47" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" letter-spacing="0.06em" fill="#6EE7B7">LINT</text>
+      <text x="118" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="700" fill="#A7F3D0">clean</text>
+    </g>
+
+    <!-- arXiv 2412.00142 (Theorem De Stijl — preprint) -->
+    <g id="b-arxiv">
+      <rect width="140" height="20" fill="#FFF"/>
+      <rect width="4" height="20" fill="#000"/>
+      <rect x="50" width="4" height="20" fill="#000"/>
+      <rect x="49" width="2" height="20" fill="#4169E1"/>
+      <rect x="54" width="86" height="20" fill="url(#thm-r)"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#1A1A2E">arXiv</text>
+      <text x="92" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="10" font-weight="600" fill="#FFF">2412.00142</text>
+      <rect x="126" y="6" width="8" height="8" fill="none" stroke="#5F9EA0" stroke-width="1.5"/>
+    </g>
+
+    <!-- Brutalist-Emerald TESTS 94.7% (Proofset) -->
+    <g id="b-be">
+      <g clip-path="url(#bc150)">
+        <rect width="69" height="20" fill="#14532D"/>
+        <rect x="73" width="77" height="20" fill="url(#be-r)"/>
+        <rect x=".5" y=".5" width="149" height="19" fill="none" stroke="rgba(167,243,208,0.06)"/>
+        <rect width="4" height="20" fill="#10B981"/>
+        <rect x="69" width="2" height="20" fill="#10B981"/>
+        <rect x="71" width="3" height="20" fill="#0A2E1A"/>
+      </g>
+      <g fill="#10B981"><use href="#gh" x="8" y="3" width="14" height="14"/></g>
+      <text x="43.5" y="13.8" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" letter-spacing="0.06em" fill="#6EE7B7">TESTS</text>
+      <text x="106" y="13.8" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="700" fill="#A7F3D0">94.7%</text>
+      <g transform="translate(134,6)">
+        <rect fill="none" stroke="#10B981" stroke-width="1.2" width="8" height="8"/>
+        <rect x="2" y="2" width="4" height="4" fill="#34D399" opacity=".7">
+          <animate attributeName="opacity" values=".3;1;.3" dur="2s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </g>
+
+    <!-- AWARD BEST PAPER (Symposium De Stijl) -->
+    <g id="b-award">
+      <rect width="140" height="20" fill="#F5F5F5"/>
+      <rect width="4" height="20" fill="#0F1628"/>
+      <rect x="50" width="4" height="20" fill="#0F1628"/>
+      <rect x="49" width="2" height="20" fill="#C9B037"/>
+      <rect x="54" width="86" height="20" fill="url(#sy-r)"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#0F1628">AWARD</text>
+      <text x="92" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="10" font-weight="600" fill="#E6E6FA">BEST PAPER</text>
+      <polygon points="132,5 133.5,8 137,8 134.5,10 135.5,13 132,11 128.5,13 129.5,10 127,8 130.5,8" fill="#C9B037">
+        <animate attributeName="opacity" values="1;.8;1" dur="2.618s" repeatCount="indefinite"/>
+      </polygon>
+    </g>
+
+    <!-- Ocean-Azure — API v2.1.0 (Matrix DNA) -->
+    <g id="b-oa">
+      <g clip-path="url(#bc158)">
+        <rect width="73" height="20" fill="url(#oa-l)"/>
+        <rect x="78" width="80" height="20" fill="url(#oa-r)"/>
+        <rect x=".5" y=".5" width="157" height="19" fill="none" stroke="rgba(255,255,255,0.06)"/>
+        <rect width="4" height="20" fill="#3B82F6"/>
+        <rect x="73" width="2" height="20" fill="#3B82F6"/>
+        <rect x="75" width="3" height="20" fill="#0A1022"/>
+      </g>
+      <g fill="#3B82F6"><use href="#gh" x="9" y="4" width="12" height="12"/></g>
+      <text x="47" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" letter-spacing="0.06em" fill="#60A5FA">API</text>
+      <text x="118" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="700" fill="#BFDBFE">v2.1.0</text>
+    </g>
+
+    <!-- SIGNED VERIFIED (Cipher De Stijl) -->
+    <g id="b-cipher">
+      <rect width="140" height="20" fill="#0A140A"/>
+      <rect x="4" width="46" height="20" fill="#0F1F0F"/>
+      <rect width="4" height="20" fill="#003300"/>
+      <rect x="50" width="4" height="20" fill="#003300"/>
+      <rect x="49" width="2" height="20" fill="#50C878"/>
+      <rect x="54" width="86" height="20" fill="#050A05"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="10" font-weight="600" fill="#50C878">SIGNED</text>
+      <text x="97" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="10" font-weight="600" fill="#98FF98">VERIFIED</text>
+      <rect x="130" y="8" width="4" height="4" fill="#50C878">
+        <animate attributeName="opacity" values="1;.4;1" dur="1.5s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+
+    <!-- ── ROW 3 ── -->
+
+    <!-- POWER MAX (Arcade Gold) -->
+    <g id="b-pw">
+      <g clip-path="url(#bc140)">
+        <rect width="48" height="20" fill="url(#pw-l)"/>
+        <rect x="48" width="92" height="20" fill="url(#pw-r)"/>
+        <line stroke="#6a4a00" stroke-width="1" x1="48" x2="48" y1="0" y2="20"/>
+        <line stroke="rgba(255,255,255,0.2)" stroke-width="0.5" x1="49" x2="49" y1="0" y2="20"/>
+        <rect fill="rgba(255,255,255,0.3)" width="140" height="2"/>
+        <rect fill="rgba(255,255,255,0.25)" width="2" height="20"/>
+        <rect fill="rgba(0,0,0,0.35)" y="18" width="140" height="2"/>
+        <rect fill="rgba(0,0,0,0.3)" x="138" width="2" height="20"/>
+      </g>
+      <text fill="#FFF" font-family="system-ui,sans-serif" font-size="9" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="24" y="14">POWER</text>
+      <text fill="#000" font-family="system-ui,sans-serif" font-size="11" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="94" y="14.5">MAX</text>
+      <rect fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1" width="139" height="19" x=".5" y=".5" rx="1.5"/>
+    </g>
+
+    <!-- Obsidian-Gold — STARS 2.9K (Matrix DNA) -->
+    <g id="b-og">
+      <g clip-path="url(#bc158)">
+        <rect width="73" height="20" fill="url(#og-l)"/>
+        <rect x="78" width="80" height="20" fill="url(#og-r)"/>
+        <rect x=".5" y=".5" width="157" height="19" fill="none" stroke="rgba(255,255,255,0.05)"/>
+        <rect width="4" height="20" fill="#F59E0B"/>
+        <rect x="73" width="2" height="20" fill="#444"/>
+        <rect x="75" width="3" height="20" fill="#09090B"/>
+      </g>
+      <g fill="#F59E0B"><use href="#gh" x="9" y="4" width="12" height="12"/></g>
+      <text x="47" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" letter-spacing="0.06em" fill="#FDE68A">STARS</text>
+      <text x="118" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="700" fill="#E5E5E5">2.9K</text>
+    </g>
+
+    <!-- VENUE NeurIPS (Symposium De Stijl) -->
+    <g id="b-venue">
+      <rect width="140" height="20" fill="#F5F5F5"/>
+      <rect width="4" height="20" fill="#0F1628"/>
+      <rect x="50" width="4" height="20" fill="#0F1628"/>
+      <rect x="49" width="2" height="20" fill="#9370DB"/>
+      <rect x="54" width="86" height="20" fill="url(#sy-r)"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#0F1628">VENUE</text>
+      <text x="97" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="600" fill="#E6E6FA">NeurIPS</text>
+      <circle cx="132" cy="10" r="3" fill="#9370DB" opacity=".8"/>
+    </g>
+
+    <!-- STATUS BOSS (NES Red Arcade) -->
+    <g id="b-st">
+      <g clip-path="url(#bc140)">
+        <rect width="52" height="20" fill="url(#st-l)"/>
+        <rect x="52" width="88" height="20" fill="url(#st-r)"/>
+        <line stroke="#400000" stroke-width="1" x1="52" x2="52" y1="0" y2="20"/>
+        <line stroke="rgba(255,255,255,0.12)" stroke-width="0.5" x1="53" x2="53" y1="0" y2="20"/>
+        <rect fill="rgba(255,255,255,0.22)" width="140" height="2"/>
+        <rect fill="rgba(255,255,255,0.18)" width="2" height="20"/>
+        <rect fill="rgba(0,0,0,0.35)" y="18" width="140" height="2"/>
+        <rect fill="rgba(0,0,0,0.3)" x="138" width="2" height="20"/>
+      </g>
+      <text fill="#FFF" font-family="system-ui,sans-serif" font-size="9" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="26" y="14">STATUS</text>
+      <text fill="#FFF" font-family="system-ui,sans-serif" font-size="11" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="96" y="14.5">BOSS</text>
+      <rect fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="1" width="139" height="19" x=".5" y=".5" rx="1.5"/>
+    </g>
+
+    <!-- Crystal Glass Badge (from sample-badges.svg, scaled to 140px) -->
+    <g id="b-crystal">
+      <rect width="140" height="20" rx="3" fill="rgba(248,248,255,0.06)"/>
+      <path d="M3 0 H70 V20 H3 Q0 20 0 17 V3 Q0 0 3 0 Z" fill="rgba(255,255,255,0.1)"/>
+      <path d="M70 0 H137 Q140 0 140 3 V17 Q140 20 137 20 H70 Z" fill="rgba(255,255,255,0.07)"/>
+      <path d="M3 .5 H69.5 V19.5 H3 Q.5 19.5 .5 17 V3 Q.5 .5 3 .5 Z" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".5"/>
+      <path d="M70.5 .5 H137 Q139.5 .5 139.5 3 V17 Q139.5 19.5 137 19.5 H70.5 Z" fill="none" stroke="rgba(255,255,255,.25)" stroke-width=".5"/>
+      <path d="M3 0 H70 V20 H3 Q0 20 0 17 V3 Q0 0 3 0 Z" fill="none" stroke="url(#crystal-rim)" stroke-width="1.4" pathLength="100" stroke-dasharray="14 86" opacity=".95">
+        <animate attributeName="stroke-dashoffset" values="0;-100" dur="2.2s" repeatCount="indefinite"/>
+      </path>
+      <path d="M70 0 H137 Q140 0 140 3 V17 Q140 20 137 20 H70 Z" fill="none" stroke="url(#crystal-rim)" stroke-width="1.3" pathLength="100" stroke-dasharray="12 88" opacity=".9">
+        <animate attributeName="stroke-dashoffset" values="0;100" dur="2.6s" repeatCount="indefinite"/>
+      </path>
+      <text x="35" y="14" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,.92)" text-anchor="middle">LICENSE</text>
+      <text x="105" y="14" font-family="ui-monospace,monospace" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">MIT</text>
+    </g>
+
+    <!-- SHA256 (Cipher De Stijl) -->
+    <g id="b-sha">
+      <rect width="140" height="20" fill="#0A140A"/>
+      <rect x="4" width="46" height="20" fill="#0F1F0F"/>
+      <rect width="4" height="20" fill="#003300"/>
+      <rect x="50" width="4" height="20" fill="#003300"/>
+      <rect x="49" width="2" height="20" fill="#A0A0A0"/>
+      <rect x="54" width="86" height="20" fill="#050A05"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="10" font-weight="600" fill="#50C878">SHA256</text>
+      <text x="97" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="8" font-weight="600" fill="#70B070">a7f3b9c2...d92e</text>
+    </g>
+
+    <!-- ORCID (Archive De Stijl) -->
+    <g id="b-orcid">
+      <rect width="140" height="20" fill="#FFF8E7"/>
+      <rect width="4" height="20" fill="#2F1810"/>
+      <rect x="50" width="4" height="20" fill="#2F1810"/>
+      <rect x="49" width="2" height="20" fill="#A6CE39"/>
+      <rect x="54" width="86" height="20" fill="url(#ar-r)"/>
+      <text x="27" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="11" font-weight="700" fill="#A6CE39">ORCID</text>
+      <text x="97" y="14" text-anchor="middle" font-family="'SF Mono',monospace" font-size="9" font-weight="600" fill="#FFF8E7">0000-0001-2345</text>
+    </g>
+  </defs>
+
+  <style>
+    /* GPU-promote scrolling strips for compositor-only animation */
+    .mq-scroll {
+      will-change: transform;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mq-scroll { will-change: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+      animate, animateTransform, animateMotion, set {
+        display: none !important;
+      }
+    }
+  </style>
+
+  <!-- ═══ Background: Chrome-Horizon Frame ═══ -->
+  <g clip-path="url(#mq-outer)" filter="url(#mq-sh)">
+    <rect width="800" height="86" fill="url(#mq-env)"/>
+  </g>
+  <rect x="1" y="1" width="798" height="84" rx="5" fill="none" stroke="#000510" stroke-width=".6"/>
+  <rect x="2" y="2" width="796" height="82" rx="4" fill="url(#mq-bg)"/>
+  <rect x="2" y="2" width="796" height="82" rx="4" fill="url(#mq-n1)"/>
+  <rect x="2" y="2" width="796" height="82" rx="4" fill="url(#mq-n2)"/>
+  <rect x="2" y="2" width="796" height="82" rx="4" fill="url(#mq-spec)" style="mix-blend-mode:screen;pointer-events:none"/>
+  <rect x="60" y="2" width="680" height=".5" fill="#6AACC8" opacity=".08"/>
+  <line x1="8" y1="29" x2="792" y2="29" stroke="#5BA3D4" stroke-width=".4" stroke-opacity=".08"/>
+  <line x1="8" y1="58" x2="792" y2="58" stroke="#5BA3D4" stroke-width=".4" stroke-opacity=".08"/>
+
+  <!-- ═══ Row 1: scrolls left ═══ -->
+  <g clip-path="url(#mq-r1)">
+    <g class="mq-scroll">
+      <animateTransform attributeName="transform" type="translate"
+          from="0 0" to="-1162 0" dur="21s" repeatCount="indefinite"/>
+      <use href="#b-hp"  x="0" y="4"/>
+      <use href="#b-sv"  x="166" y="4"/>
+      <use href="#b-thm" x="332" y="4"/>
+      <use href="#b-ch"  x="498" y="4"/>
+      <use href="#b-sc"  x="664" y="4"/>
+      <use href="#b-ch-rel"  x="830" y="4"/>
+      <use href="#b-cx"  x="996" y="4"/>
+      <use href="#b-hp"  x="1162" y="4"/>
+      <use href="#b-sv"  x="1328" y="4"/>
+      <use href="#b-thm" x="1494" y="4"/>
+      <use href="#b-ch"  x="1660" y="4"/>
+      <use href="#b-sc"  x="1826" y="4"/>
+      <use href="#b-ch-rel"  x="1992" y="4"/>
+      <use href="#b-cx"  x="2158" y="4"/>
+    </g>
+  </g>
+
+  <!-- ═══ Row 2: scrolls right ═══ -->
+  <g clip-path="url(#mq-r2)">
+    <g class="mq-scroll">
+      <animateTransform attributeName="transform" type="translate"
+          from="-1162 0" to="0 0" dur="16s" repeatCount="indefinite"/>
+      <use href="#b-lv"     x="0" y="33"/>
+      <use href="#b-fe"     x="166" y="33"/>
+      <use href="#b-arxiv"  x="332" y="33"/>
+      <use href="#b-ch-cov"     x="498" y="33"/>
+      <use href="#b-award"  x="664" y="33"/>
+      <use href="#b-oa"     x="830" y="33"/>
+      <use href="#b-cipher" x="996" y="33"/>
+      <use href="#b-lv"     x="1162" y="33"/>
+      <use href="#b-fe"     x="1328" y="33"/>
+      <use href="#b-arxiv"  x="1494" y="33"/>
+      <use href="#b-ch-cov"     x="1660" y="33"/>
+      <use href="#b-award"  x="1826" y="33"/>
+      <use href="#b-oa"     x="1992" y="33"/>
+      <use href="#b-cipher" x="2158" y="33"/>
+    </g>
+  </g>
+
+  <!-- ═══ Row 3: scrolls left ═══ -->
+  <g clip-path="url(#mq-r3)">
+    <g class="mq-scroll">
+      <animateTransform attributeName="transform" type="translate"
+          from="0 0" to="-1162 0" dur="18s" repeatCount="indefinite"/>
+      <use href="#b-pw"    x="0" y="62"/>
+      <use href="#b-og"    x="166" y="62"/>
+      <use href="#b-venue" x="332" y="62"/>
+      <use href="#b-st"    x="498" y="62"/>
+      <use href="#b-crystal"   x="664" y="62"/>
+      <use href="#b-ch-docs"   x="830" y="62"/>
+      <use href="#b-orcid" x="996" y="62"/>
+      <use href="#b-pw"    x="1162" y="62"/>
+      <use href="#b-og"    x="1328" y="62"/>
+      <use href="#b-venue" x="1494" y="62"/>
+      <use href="#b-st"    x="1660" y="62"/>
+      <use href="#b-crystal"   x="1826" y="62"/>
+      <use href="#b-ch-docs"   x="1992" y="62"/>
+      <use href="#b-orcid" x="2158" y="62"/>
+    </g>
+  </g>
+
+  <!-- ═══ Fade Overlays ═══ -->
+  <rect x="2" y="2" width="44" height="82" rx="4" fill="url(#mq-fl)"/>
+  <rect x="754" y="2" width="44" height="82" rx="4" fill="url(#mq-fr)"/>
+</svg>

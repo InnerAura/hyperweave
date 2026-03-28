@@ -1,9 +1,3 @@
-"""
-HyperWeave Living Artifact Protocol.
+"""HyperWeave -- Compositor API for self-contained SVG artifacts."""
 
-URL → Deterministic Compilation → Living SVG Artifact
-"""
-
-__version__ = "3.3.0"
-__author__ = "InnerAura Labs"
-__license__ = "MIT"
+__version__ = "0.1.0"

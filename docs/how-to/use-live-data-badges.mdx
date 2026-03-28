@@ -1,0 +1,113 @@
+---
+title: "Use Live Data"
+description: "Fetch real-time metrics from GitHub, PyPI, npm, arXiv, HuggingFace, and Docker Hub and render them as badges or strips."
+---
+
+## The Problem
+
+You want artifacts that show real-time data -- GitHub stars, PyPI versions, npm downloads -- rendered in your HyperWeave genome instead of a third-party badge service.
+
+## Live Data Badges
+
+### CLI
+
+```bash
+# GitHub stars
+hyperweave live github anthropics/claude-code stars -g brutalist-emerald -o stars.svg
+
+# PyPI version
+hyperweave live pypi fastmcp version -g chrome-horizon -o version.svg
+
+# npm downloads
+hyperweave live npm express version
+
+# arXiv paper title
+hyperweave live arxiv 2301.00774 title
+
+# HuggingFace model downloads
+hyperweave live huggingface meta-llama/Llama-2-7b downloads
+
+# Docker Hub pull count
+hyperweave live docker library/nginx pull_count
+```
+
+### HTTP API
+
+The live endpoint fetches data and renders in one request:
+
+```
+GET /v1/live/{provider}/{identifier}/{metric}/{genome}.{motion}
+```
+
+Examples:
+
+```bash
+curl http://localhost:8000/v1/live/github/anthropics/claude-code/stars/brutalist-emerald.chromatic-pulse
+curl http://localhost:8000/v1/live/pypi/fastmcp/version/chrome-horizon
+```
+
+The response includes caching headers:
+
+| Header | Value |
+|---|---|
+| `Cache-Control` | `public, max-age={ttl}, stale-while-revalidate=3600` |
+| `X-HW-Provider` | The data provider name |
+| `X-HW-Cache-Tier` | `connector` (success) or `error` (failure) |
+
+### MCP
+
+```
+hw_live(provider="github", identifier="anthropics/claude-code", metric="stars", genome="brutalist-emerald")
+```
+
+## Supported Providers
+
+| Provider | Identifier Format | Available Metrics |
+|---|---|---|
+| `github` | `owner/repo` | `stars`, `forks`, `watchers`, `issues`, `license`, `language` |
+| `pypi` | `package-name` | `version`, `license`, `python_requires` |
+| `npm` | `package-name` | `version`, `license` |
+| `arxiv` | `paper-id` | `title`, `authors`, `categories`, `summary`, `published` |
+| `huggingface` | `org/model` | `downloads`, `likes`, `tags`, `library_name`, `pipeline_tag` |
+| `docker` | `namespace/repo` | `pull_count`, `star_count`, `last_updated` |
+
+## Live Data Strips
+
+Strips support multi-provider live data via the `?live=` query parameter. Multiple providers are fetched concurrently.
+
+```
+GET /v1/strip/{title}/{genome}.{motion}?live=provider:id:metric,provider:id:metric
+```
+
+```bash
+# Single provider
+curl "localhost:8000/v1/strip/claude-code/brutalist-emerald.static?live=github:anthropics/claude-code:stars"
+
+# Multiple providers (fetched concurrently)
+curl "localhost:8000/v1/strip/fastmcp/brutalist-emerald.rimrun?live=github:jlowin/fastmcp:stars,pypi:fastmcp:version"
+```
+
+The resolved values are formatted as pipe-separated metrics (e.g., `stars: 2.9k | version: 0.6.3`) and passed to the strip's metric resolver. The `Cache-Control` TTL is the minimum across all provider responses.
+
+If a single provider fails, that metric shows `"error"` while successful providers render normally.
+
+<Warning>
+  The `?live=` parameter overrides `?value=` when both are provided.
+</Warning>
+
+## Error Handling
+
+If the provider is unreachable, the badge renders with value `"error"` and a 60-second cache TTL. The circuit breaker opens after 5 consecutive failures per provider, preventing cascading timeouts.
+
+## Caching
+
+Provider TTLs (in-memory cache):
+
+| Provider | TTL |
+|---|---|
+| GitHub | 300s (5 min) |
+| PyPI | 600s (10 min) |
+| npm | 600s (10 min) |
+| arXiv | 1800s (30 min) |
+| HuggingFace | 600s (10 min) |
+| Docker | 600s (10 min) |

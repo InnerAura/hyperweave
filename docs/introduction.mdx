@@ -1,0 +1,86 @@
+---
+title: "Introduction"
+description: "HyperWeave is a compositional visual intelligence system that produces self-contained SVG artifacts from semantic parameters."
+mode: "wide"
+---
+
+<img
+  src="assets/hyperweave-banner.svg"
+  alt="HyperWeave — Where Vectors Meet Vision"
+  style={{width: '100%', maxWidth: '960px', display: 'block', margin: '0 auto 2rem'}}
+/>
+
+# HyperWeave
+
+A headless visual design system for AI agents. One API call composes self-contained SVG -- from status badges to telemetry strips to full branded component kits. Zero external dependencies. Living CSS state machines. Renders anywhere an `<img>` tag works.
+
+## The Composition Formula
+
+Every artifact is the output of a single formula:
+
+```
+ARTIFACT = FRAME x PROFILE x GENOME x SLOTS x MOTION x ENVIRONMENT
+```
+
+- **Frame**: The structural type (badge, strip, banner, icon, divider, marquee, receipt)
+- **Profile**: Structural skeleton (corner radii, accent widths, typography scale, glyph backing)
+- **Genome**: Aesthetic DNA (colors, shadows, glow, rhythm, compatible motions)
+- **Slots**: Content filling frame zones (labels, values, metrics, glyphs)
+- **Motion**: Animation primitive (SMIL border overlays or CSS kinetic typography)
+- **Environment**: Target platform constraints (GitHub README, Notion, email)
+
+## Why HyperWeave?
+
+Agent-generated visuals are disposable -- no state, no brand, no memory. Every generation starts from zero. HyperWeave solves this structurally:
+
+- **Semantic SVGs** with embedded CSS state machines -- artifacts respond to their own state
+- **Genome system** -- portable, machine-readable aesthetic specs any agent can consume
+- **Self-contained** -- zero external references, no runtime JS, no CDN dependencies
+- **Three interfaces** -- CLI, HTTP API, and MCP tools for any integration pattern
+- **Telemetry** -- parse Claude Code sessions into structured visual receipts
+
+## What Ships in v0.1
+
+| Dimension | Count |
+|---|---|
+| Frame types | 12 (badge, strip, banner, icon, divider, marquee-h/v/counter, receipt, rhythm-strip, master-card, catalog) |
+| Genomes | 2 (brutalist-emerald, chrome-horizon) |
+| Motion configs | 16 (1 static + 5 border SMIL + 10 kinetic CSS) |
+| Glyphs | 97 (91 Simple Icons + 6 geometric) |
+| Divider variants | 5 (block, current, takeoff, void, zeropoint) |
+| Metadata tiers | 5 (Tier 0 silent through Tier 4 reasoning) |
+
+## Three Interfaces
+
+<CardGroup cols={3}>
+  <Card title="CLI" icon="terminal">
+    Typer-based CLI for composing artifacts from the command line.
+    ```bash
+    hyperweave compose badge "build" "passing"
+    ```
+  </Card>
+  <Card title="HTTP API" icon="server">
+    FastAPI with URL grammar, POST composition, live data, and discovery.
+    ```bash
+    curl localhost:8000/v1/badge/build/passing/brutalist-emerald
+    ```
+  </Card>
+  <Card title="MCP" icon="robot">
+    FastMCP v3 with 4 tools and 3 resources for AI agent integration.
+    ```
+    hw_compose(type="badge", title="build", value="passing")
+    ```
+  </Card>
+</CardGroup>
+
+## Architecture at a Glance
+
+```
+ComposeSpec -> engine.py -> assembler.py (CSS) -> lanes.py (validate) -> templates.py (Jinja2) -> SVG
+```
+
+Python builds context dicts. Jinja2 builds SVG. YAML defines config. Three layers, no mixing.
+
+<Card title="Next: Quick Start" icon="rocket" href="/quickstart">
+  Install HyperWeave and compose your first artifact in under 2 minutes.
+</Card>

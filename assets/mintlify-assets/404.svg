@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:hw="https://hyperweave.dev/hw/v1.0"
+     viewBox="0 0 400 300"
+     role="img"
+     aria-labelledby="hw-404-title hw-404-desc"
+     data-hw-variant="error"
+     data-hw-status="offline"
+     data-hw-regime="auto">
+  
+  <title id="hw-404-title">Page Not Found</title>
+  <desc id="hw-404-desc">The requested artifact could not be located in the hyperweave.</desc>
+  
+  <metadata>
+    <hw:artifact type="404-illustration" series="hyperweave" version="1.0">
+      <hw:provenance>
+        <hw:generator>Claude (Anthropic)</hw:generator>
+        <hw:created>2026-01-21</hw:created>
+        <hw:protocol>HyperWeave v7.1</hw:protocol>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Error state illustration - transforms brand energy into narrative of "signal lost" while maintaining visual identity</hw:intent>
+        <hw:approach>Transmitter geometry fragmented with offset segments; particles drift aimlessly instead of orbiting; chromatic cycling slowed and desaturated; glitch displacement filter on core elements</hw:approach>
+        <hw:tradeoffs>Broke geometric perfection intentionally to communicate state; retained enough brand DNA to be recognizable; error message integrated as monospace diagnostic output</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+  
+  <defs>
+    <!-- DESATURATED CHROMATIC - "signal degraded" -->
+    <linearGradient id="hw-404-chroma" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0A54;stop-opacity:0.6">
+        <animate attributeName="stop-color" 
+                 values="#FF0A54;#666666;#845EF7;#444444;#FF0A54" 
+                 dur="5s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="50%" style="stop-color:#555555">
+        <animate attributeName="stop-color" 
+                 values="#555555;#845EF7;#333333;#0AFFEF;#555555" 
+                 dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#845EF7;stop-opacity:0.5">
+        <animate attributeName="stop-color" 
+                 values="#845EF7;#333333;#0AFFEF;#666666;#845EF7" 
+                 dur="13s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- GLITCH ARTIFACT GRADIENT -->
+    <linearGradient id="hw-404-glitch" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0AFFEF;stop-opacity:0.8"/>
+      <stop offset="50%" style="stop-color:#FF0A54;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#845EF7;stop-opacity:0.8"/>
+    </linearGradient>
+    
+    <!-- LOST PARTICLE -->
+    <radialGradient id="hw-404-particle" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0AFFEF;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#0AFFEF;stop-opacity:0"/>
+    </radialGradient>
+    
+    <!-- GLITCH DISPLACEMENT FILTER -->
+    <filter id="hw-404-glitch-filter" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise" seed="5">
+        <animate attributeName="seed" values="5;12;3;8;5" dur="0.5s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="4;8;2;6;4" dur="3.236s" repeatCount="indefinite"/>
+      </feDisplacementMap>
+    </filter>
+    
+    <!-- SCAN LINE FILTER -->
+    <filter id="hw-404-scanlines">
+      <feFlood flood-color="#000" flood-opacity="0.03" result="flood"/>
+      <feTile in="flood" result="tile"/>
+      <feComposite in="SourceGraphic" in2="tile" operator="over"/>
+    </filter>
+    
+    <!-- WEAK GLOW -->
+    <filter id="hw-404-dim-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feComponentTransfer in="blur">
+        <feFuncA type="linear" slope="0.4"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <style><![CDATA[
+    .hw-404-bg { fill: #FAFAFA; }
+    .hw-404-text { fill: #1A1A1A; }
+    .hw-404-subtext { fill: #71717A; }
+    .hw-404-wire { stroke: #D4D4D8; }
+    .hw-404-code { fill: #A1A1AA; }
+    
+    @media (prefers-color-scheme: dark) {
+      .hw-404-bg { fill: #0F0F12; }
+      .hw-404-text { fill: #F8FAFC; }
+      .hw-404-subtext { fill: #A1A1AA; }
+      .hw-404-wire { stroke: #3F3F46; }
+      .hw-404-code { fill: #52525B; }
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+    }
+  ]]></style>
+  
+  <!-- BACKGROUND -->
+  <rect class="hw-404-bg" width="400" height="300"/>
+  
+  <!-- FRACTURED GRID (signal degraded) -->
+  <g class="hw-404-wire" fill="none" stroke-width="0.5" opacity="0.3">
+    <line x1="0" y1="150" x2="160" y2="150"/>
+    <line x1="180" y1="150" x2="400" y2="150"/> <!-- gap -->
+    <line x1="200" y1="0" x2="200" y2="120"/>
+    <line x1="200" y1="140" x2="200" y2="300"/> <!-- gap -->
+    <circle cx="200" cy="130" r="60" stroke-dasharray="8 4" opacity="0.4"/>
+  </g>
+  
+  <!-- MAIN GEOMETRY - FRACTURED TRANSMITTER -->
+  <g transform="translate(200, 130)">
+    
+    <!-- BROKEN BOUNDING RING -->
+    <g class="hw-404-wire" fill="none" stroke-width="0.5" opacity="0.4">
+      <path d="M -50,0 A50,50 0 0,1 0,-50"/>
+      <path d="M 10,-49 A50,50 0 0,1 50,0"/>
+      <path d="M 50,5 A50,50 0 0,1 0,50"/>
+      <path d="M -5,50 A50,50 0 0,1 -50,0"/>
+    </g>
+    
+    <!-- FRAGMENTED TRANSMITTER - pieces offset -->
+    <g filter="url(#hw-404-glitch-filter)">
+      
+      <!-- TOP FRAGMENT (displaced up-left) -->
+      <path d="M -8,-30 
+               L -24,-15 
+               C -31,-7 -31,0 -28,4"
+            fill="none" 
+            stroke="url(#hw-404-chroma)" 
+            stroke-width="2.5" 
+            stroke-linecap="round"
+            transform="translate(-3, -4)"
+            opacity="0.7"
+            filter="url(#hw-404-dim-glow)">
+        <animate attributeName="opacity" values="0.7;0.4;0.8;0.5;0.7" dur="2s" repeatCount="indefinite"/>
+      </path>
+      
+      <!-- TOP-RIGHT FRAGMENT -->
+      <path d="M 8,-30 
+               L 24,-15 
+               C 31,-7 31,7 24,15"
+            fill="none" 
+            stroke="url(#hw-404-chroma)" 
+            stroke-width="2.5" 
+            stroke-linecap="round"
+            transform="translate(5, -2)"
+            opacity="0.6"
+            filter="url(#hw-404-dim-glow)">
+        <animate attributeName="opacity" values="0.6;0.3;0.7;0.4;0.6" dur="2.5s" repeatCount="indefinite"/>
+      </path>
+      
+      <!-- BOTTOM-LEFT FRAGMENT -->
+      <path d="M -24,15 
+               L -8,30"
+            fill="none" 
+            stroke="url(#hw-404-chroma)" 
+            stroke-width="2.5" 
+            stroke-linecap="round"
+            transform="translate(-4, 3)"
+            opacity="0.5"
+            filter="url(#hw-404-dim-glow)">
+        <animate attributeName="opacity" values="0.5;0.7;0.3;0.6;0.5" dur="3s" repeatCount="indefinite"/>
+      </path>
+      
+      <!-- BOTTOM-RIGHT FRAGMENT -->
+      <path d="M 8,30 
+               L 24,15"
+            fill="none" 
+            stroke="url(#hw-404-chroma)" 
+            stroke-width="2.5" 
+            stroke-linecap="round"
+            transform="translate(2, 5)"
+            opacity="0.6"
+            filter="url(#hw-404-dim-glow)">
+        <animate attributeName="opacity" values="0.6;0.4;0.8;0.5;0.6" dur="2.2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    
+    <!-- GLITCH ARTIFACTS - chromatic aberration slices -->
+    <g opacity="0.4">
+      <rect x="-35" y="-5" width="70" height="2" fill="url(#hw-404-glitch)">
+        <animate attributeName="opacity" values="0.4;0;0.6;0;0.4" dur="0.3s" repeatCount="indefinite"/>
+        <animate attributeName="y" values="-5;10;-15;5;-5" dur="0.5s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="-30" y="8" width="60" height="1" fill="url(#hw-404-glitch)">
+        <animate attributeName="opacity" values="0;0.5;0;0.3;0" dur="0.4s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+    
+    <!-- BROKEN INTERNAL LINES -->
+    <g stroke="url(#hw-404-chroma)" stroke-width="1" opacity="0.4" stroke-linecap="round" stroke-dasharray="4 6">
+      <line x1="-15" y1="-15" x2="5" y2="-15"/>
+      <line x1="10" y1="-15" x2="15" y2="-15"/>
+      <line x1="-18" y1="-2" x2="18" y2="-2"/>
+      <line x1="-12" y1="10" x2="12" y2="10"/>
+    </g>
+    
+    <!-- SCATTERED NODES (no longer aligned) -->
+    <g fill="url(#hw-404-chroma)" opacity="0.6">
+      <circle cx="-10" cy="-32" r="1.5"/>
+      <circle cx="12" cy="-28" r="1.5"/>
+      <circle cx="-28" cy="-12" r="1.5"/>
+      <circle cx="30" cy="-18" r="1.5"/>
+      <circle cx="-26" cy="18" r="1.5"/>
+      <circle cx="28" cy="12" r="1.5"/>
+      <circle cx="-6" cy="32" r="1.5"/>
+      <circle cx="10" cy="35" r="1.5"/>
+    </g>
+    
+    <!-- NEXUS - flickering, unstable -->
+    <circle cx="0" cy="0" r="3" fill="url(#hw-404-chroma)" filter="url(#hw-404-dim-glow)">
+      <animate attributeName="r" values="3;4;2;3.5;3" dur="0.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.3;0.8;0.5;1" dur="0.5s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- LOST PARTICLES - drifting aimlessly -->
+    <circle r="2" fill="url(#hw-404-particle)" opacity="0.5">
+      <animate attributeName="cx" values="-40;50;-30;60;-40" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="20;-30;40;-20;20" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.1;0.5" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.5" fill="url(#hw-404-particle)" opacity="0.4">
+      <animate attributeName="cx" values="30;-45;25;-50;30" dur="12s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="-25;35;-40;25;-25" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.5;0.2;0.4" dur="5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- ERROR TEXT -->
+  <g transform="translate(200, 220)">
+    <text text-anchor="middle" 
+          class="hw-404-text"
+          font-family="'Inter', -apple-system, sans-serif" 
+          font-size="48" 
+          font-weight="700"
+          opacity="0.9">
+      404
+    </text>
+    
+    <text y="30" text-anchor="middle" 
+          class="hw-404-subtext"
+          font-family="'Inter', -apple-system, sans-serif" 
+          font-size="14" 
+          font-weight="400">
+      Artifact not found in the hyperweave
+    </text>
+    
+    <!-- DIAGNOSTIC CODE -->
+    <text y="55" text-anchor="middle" 
+          class="hw-404-code"
+          font-family="'SF Mono', 'JetBrains Mono', monospace" 
+          font-size="10">
+      ERR::SIGNAL_LOST | NEXUS_UNREACHABLE
+    </text>
+  </g>
+</svg>

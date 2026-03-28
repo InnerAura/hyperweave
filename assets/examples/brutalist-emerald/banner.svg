@@ -1,0 +1,269 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.dev/hw/v8.0"
+     role="img"
+     aria-labelledby="hw-574164c2-title hw-574164c2-desc"
+     viewBox="0 0 1200 600"
+     width="1200" height="600"
+     data-hw-id="574164c2-b73d-4a36-a51c-7c5141a8a116"
+     data-hw-type="banner"
+     data-hw-frame="banner"
+     data-hw-genome="brutalist-emerald"
+     data-hw-status="active"
+     data-hw-profile="brutalist"
+     data-hw-motion="static"
+     data-hw-generation="1"
+     data-hw-contract="574164c2-b73d-4a36-a51c-7c5141a8a116"
+     data-hw-variant="default"
+     data-hw-regime="normal"
+     data-hw-chromatic="brutalist-emerald">
+  <title id="hw-574164c2-title">HYPERWEAVE: Visual Intelligence System</title>
+  <desc id="hw-574164c2-desc">A banner artifact, using brutalist-emerald genome.</desc>
+  <metadata>
+  <hw:artifact id="574164c2-b73d-4a36-a51c-7c5141a8a116" type="banner" series="core" version="0.1.0"
+               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:provenance>
+      <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-03-27T22:38:03.119180+00:00</hw:created>
+      <hw:human-directed>true</hw:human-directed>
+    </hw:provenance>
+    <hw:spec size="1200x600" performance="composite-only"
+             theme="dark" a11y="WCAG-AA" platform="web"/>
+  </hw:artifact>
+  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:frame>banner</hw:frame>
+    <hw:genome>brutalist-emerald@0.1.0</hw:genome>
+    <hw:profile>brutalist</hw:profile>
+    <hw:slots>
+    </hw:slots>
+    <hw:environment platform="web" motion="static" status="active"/>
+  </hw:composition>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:title>HYPERWEAVE: Visual Intelligence System</dc:title>
+      <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-03-27T22:38:03.119180+00:00</dc:date>
+      <dc:rights>CC BY 4.0</dc:rights>
+    </rdf:Description>
+  </rdf:RDF>
+  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:chromatic system="brutalist-emerald" space="oklch"
+                  palette="" contrast-ratio="4.5:1"/>
+    <hw:motion vocabulary="static" physics="none"
+               timing="phi" duration-base="2.618s"
+               stagger-regime="contemplative" cim-compliant="true"/>
+    <hw:geometry form-language="geometric" corner-radius="5px"
+                 grid="auto" proportional-system="phi"
+                 mathematical-basis="golden-ratio" symmetry="bilateral"/>
+    <hw:typography stack="" hierarchy="11/18/8"
+                   weight-range="500-900" metrics-method="lut"/>
+    <hw:material surface="genome-native" depth="deep" texture="none"/>
+  </hw:aesthetic>
+  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:intent></hw:intent>
+    <hw:approach></hw:approach>
+    <hw:tradeoffs></hw:tradeoffs>
+    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>1200x600 (2.00), left-to-right</hw:spatial-notes>
+  </hw:reasoning>
+</metadata>
+  <style>svg, :root {
+  --dna-surface: #14532D;
+  --dna-surface-alt: #1A3828;
+  --dna-surface-deep: #153020;
+  --dna-ink-primary: #A7F3D0;
+  --dna-ink-muted: #6EE7B7;
+  --dna-ink-on-accent: #14532D;
+  --dna-ink-bright: #14532D;
+  --dna-ink-sub: #6EE7B7;
+  --dna-signal: #10B981;
+  --dna-signal-dim: #34D399;
+  --dna-border: #2A5A3A;
+  --dna-border-tint: #1A3A2A;
+  --dna-shadow-color: #10B981;
+  --dna-shadow-opacity: 0.10;
+  --dna-glow: 0px;
+  --dna-corner: 0;
+  --dna-rhythm-base: 2.618s;
+  --dna-bg: #14532D;
+  --dna-bg-alt: #1A3828;
+  --dna-brand-text: #A7F3D0;
+  --dna-status-passing-core: #059669;
+  --dna-rhythm-slow: 4.236s;
+  --dna-metric-text: #34D399;
+  --dna-label-text: #6EE7B7;
+  --dna-sep: #2A5A3A;
+  --dna-status-delta-positive: #22C55E;
+  --dna-status-delta-negative: #DC2626;
+}
+/* === HyperWeave Bridge Classes ===
+ * Maps semantic class names (hw-*) to genome DNA custom properties (--dna-*).
+ * Genome-agnostic: works with ANY genome that defines the --dna-* contract.
+ */
+
+/* ── Surface fills ── */
+.hw-surface      { fill: var(--dna-surface); }
+.hw-surface-deep { fill: var(--dna-surface-deep); }
+.hw-bg           { fill: var(--dna-bg); }
+.hw-bg-alt       { fill: var(--dna-bg-alt); }
+
+/* ── Signal / Accent ── */
+.hw-signal       { fill: var(--dna-signal); }
+.hw-signal-stroke { stroke: var(--dna-signal); }
+.hw-signal-dim   { fill: var(--dna-signal-dim); }
+
+/* ── Ink / Typography ── */
+.hw-ink          { fill: var(--dna-ink-primary); }
+.hw-ink-muted    { fill: var(--dna-ink-muted); }
+.hw-ink-sub      { fill: var(--dna-ink-sub); }
+.hw-ink-bright   { fill: var(--dna-ink-bright); }
+.hw-ink-on-accent { fill: var(--dna-ink-on-accent); }
+
+/* ── Border / Separator ── */
+.hw-border       { stroke: var(--dna-border); }
+.hw-sep          { stroke: var(--dna-sep); }
+
+/* ── Status ── */
+.hw-status-pass  { fill: var(--dna-status-passing-core); }
+.hw-status-warn  { fill: var(--dna-status-warning-core); }
+.hw-status-fail  { fill: var(--dna-status-failing-core); }
+.hw-delta-pos    { fill: var(--dna-status-delta-positive); }
+.hw-delta-neg    { fill: var(--dna-status-delta-negative); }
+
+/* ── Extended ── */
+.hw-glow         { flood-color: var(--dna-glow); }
+.hw-brand-text   { fill: var(--dna-brand-text); }
+.hw-metric-text  { fill: var(--dna-metric-text); }
+.hw-border-tint  { stroke: var(--dna-border-tint); }
+.hw-glyph-inner  { fill: var(--dna-glyph-inner); }
+.hw-seam-gap     { fill: var(--dna-seam-gap); }
+.hw-label-txt    { fill: var(--dna-label-text); }
+
+/* === HyperWeave Accessibility Layer ===
+ * Non-negotiable media queries for motion, color scheme, and forced colors.
+ * Included in EVERY artifact.
+ *
+ * CAMO NOTE: @media (prefers-color-scheme) and @media (forced-colors: active)
+ * are INERT when served through GitHub Camo as img tags. The img element
+ * creates an isolated browsing context — the parent document's color scheme
+ * and forced-colors mode do not propagate into it. Artifacts will always
+ * render in their default (dark) theme on GitHub READMEs.
+ *
+ * These queries DO activate when the SVG is embedded directly (svg inline,
+ * object, or opened as a standalone document). This is a known accepted
+ * tradeoff: dark-default through Camo, adaptive in direct embed.
+ */
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hw-logic-bit { animation: none !important; opacity: .8; }
+  .hw-scanner { animation: none; opacity: 0; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  animate, animateTransform, animateMotion, set {
+    display: none !important;
+  }
+}
+
+/* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
+/* Genome-provided light_mode alleles are injected by the CSS assembler
+   into a separate @media (prefers-color-scheme: light) block per artifact.
+   This placeholder is intentionally empty; it exists as documentation. */
+
+/* ── Forced Colors (Windows High Contrast) ── */
+@media (forced-colors: active) {
+  text { fill: CanvasText !important; }
+  rect, path, circle, ellipse, polygon, polyline, line {
+    stroke: CanvasText;
+  }
+  .hw-frame-bg { fill: Canvas !important; }
+  .hw-accent-bar { fill: Highlight !important; }
+  .hw-signal { fill: Highlight !important; }
+  .hw-logic-bit { fill: Highlight !important; }
+}
+</style>
+  <defs>
+  <filter id="hw-574164c2-noise">
+    <feTurbulence type="fractalNoise" baseFrequency="0.55"
+                  numOctaves="5" seed="55"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  <filter id="hw-574164c2-glow">
+    <feGaussianBlur stdDeviation="16"/>
+  </filter>
+  </defs>
+
+
+<rect width="1200" height="600" fill="var(--dna-surface)"/>
+<rect width="1200" height="600" filter="url(#hw-574164c2-noise)"
+      opacity="0.1" style="mix-blend-mode:overlay"/>
+
+<rect x="60" y="60" width="1080" height="480"
+      fill="var(--dna-surface-alt)"/>
+<rect x="60" y="60" width="1080" height="80"
+      fill="var(--dna-surface-deep)"/>
+<rect x="60" y="140" width="240" height="260"
+      fill="var(--dna-surface-deep)"/>
+<rect x="60" y="400" width="240" height="140"
+      fill="var(--dna-surface-deep)"/>
+<rect x="900" y="400" width="240" height="140"
+      fill="var(--dna-surface-alt)"/>
+
+<rect x="60" y="60" width="1080" height="3"
+      fill="var(--dna-signal)"/>
+<rect x="60" y="537" width="1080" height="3"
+      fill="var(--dna-signal)"/>
+
+<line x1="60" y1="140"
+      x2="1140" y2="140"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="60" y1="400"
+      x2="1140" y2="400"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="300" y1="60"
+      x2="300" y2="540"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="900" y1="60"
+      x2="900" y2="540"
+      stroke="var(--dna-border)" stroke-width="1"/>
+
+<g data-hw-zone="title">
+  <text x="600" y="340" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="160" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="var(--dna-signal)" filter="url(#hw-574164c2-glow)"
+        opacity="0.2">HYPERWEAVE</text>
+  <text x="600" y="340" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="160" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="none" stroke="var(--dna-signal-dim)" stroke-width="0.5"
+        opacity="0.1">HYPERWEAVE</text>
+  <text x="600" y="340" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="160" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="var(--dna-ink-muted)">HYPERWEAVE</text>
+</g>
+
+<g data-hw-zone="status" transform="translate(1100,80)">
+  <rect x="-5" y="-5" width="10" height="10"
+        fill="var(--dna-signal)"/>
+  <rect class="hw-logic-bit" x="-3" y="-3" width="6" height="6"
+        fill="var(--dna-signal-dim)"/>
+</g>
+
+<text x="600" y="404" text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" fill="var(--dna-signal-dim)"
+      letter-spacing="0.2em" opacity="0.6">VISUAL INTELLIGENCE SYSTEM</text>
+
+<text x="80" y="565"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" fill="var(--dna-signal-dim)"
+      letter-spacing="0.3em" opacity="0.3">V0.1 · BRUTALIST EMERALD</text>
+</svg>

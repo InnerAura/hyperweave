@@ -1,0 +1,351 @@
+{# HyperWeave Divider Frame — specimen-faithful variants only.
+   Each variant reproduces its specimen SVG with hardcoded specimen colors.
+   Dividers are shared components — they have their own visual identity,
+   NOT genome-colored. Colors come from the specimen, not --dna-* vars.
+   Extends document.svg.j2.  Context: ComposeSpec dict.
+
+   Specimens (source of truth):
+     block      → specs/components/dividers/block_divider.svg
+     current    → specs/components/dividers/current_divider.svg
+     takeoff    → specs/components/dividers/takeoff_divider.svg
+     void       → specs/components/dividers/void_divider.svg
+     zeropoint  → specs/components/dividers/zeropoint_divider.svg
+#}
+{% extends "document.svg.j2" %}
+
+{# ═══════════════════════════════════════════════
+   DEFS BLOCK — gradients, filters, patterns per variant
+   ═══════════════════════════════════════════════ #}
+{% block defs %}
+{% set dw = width | default(700) %}
+{% set dh = height | default(60) %}
+{% set cy = dh // 2 %}
+
+{% if divider_variant == 'block' %}
+  {# ── De Stijl: specimen uses black rule, white bg, primary colors ── #}
+  <linearGradient id="{{ uid }}-rule-fade" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+    <stop offset="20%" stop-color="#000000" stop-opacity="1"/>
+    <stop offset="50%" stop-color="#000000" stop-opacity="1"/>
+    <stop offset="80%" stop-color="#000000" stop-opacity="1"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </linearGradient>
+  <pattern id="{{ uid }}-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+    <circle cx="10" cy="10" r="0.5" fill="#000000" opacity="0.2"/>
+  </pattern>
+
+{% elif divider_variant == 'current' %}
+  {# ── Five Currents: specimen rainbow — red/blue/orange/green/indigo ── #}
+  <linearGradient id="{{ uid }}-rainbow" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#ff0000"/>
+    <stop offset="20%" stop-color="#0000ff"/>
+    <stop offset="40%" stop-color="#ff8c00"/>
+    <stop offset="60%" stop-color="#00fa9a"/>
+    <stop offset="80%" stop-color="#4b0082"/>
+    <stop offset="100%" stop-color="#ff0000"/>
+    <animate attributeName="x1" values="0%;100%;0%" dur="10s" repeatCount="indefinite"/>
+  </linearGradient>
+  <filter id="{{ uid }}-flow-shadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+    <feOffset dx="1" dy="1" result="offsetBlur"/>
+    <feComponentTransfer>
+      <feFuncA type="linear" slope="0.5"/>
+    </feComponentTransfer>
+    <feMerge>
+      <feMergeNode/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+{% elif divider_variant == 'takeoff' %}
+  {# ── Rocket: specimen flame gradient — reds/oranges/yellows/white ── #}
+  <linearGradient id="{{ uid }}-escape" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#FF6B6B">
+      <animate attributeName="stop-color"
+        values="#FF6B6B;#FF4444;#FF0000;#FF6B6B"
+        dur="1s" repeatCount="indefinite"/>
+    </stop>
+    <stop offset="50%" stop-color="#FFA500">
+      <animate attributeName="stop-color"
+        values="#FFA500;#FF8C00;#FFD700;#FFA500"
+        dur="1s" repeatCount="indefinite"/>
+    </stop>
+    <stop offset="100%" stop-color="#FFFF00">
+      <animate attributeName="stop-color"
+        values="#FFFF00;#FFD700;#FFFFFF;#FFFF00"
+        dur="1s" repeatCount="indefinite"/>
+    </stop>
+  </linearGradient>
+  <filter id="{{ uid }}-thruster-glow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+    <feMerge>
+      <feMergeNode in="coloredBlur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+{% elif divider_variant == 'void' %}
+  {# ── Spectral Terminus: specimen spectral gradient — blue/purple/pink/amber/green ── #}
+  <linearGradient id="{{ uid }}-flux" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0"/>
+    <stop offset="20%" stop-color="#3b82f6" stop-opacity="0.8"/>
+    <stop offset="40%" stop-color="#8b5cf6" stop-opacity="1"/>
+    <stop offset="50%" stop-color="#ec4899" stop-opacity="1"/>
+    <stop offset="60%" stop-color="#f59e0b" stop-opacity="1"/>
+    <stop offset="80%" stop-color="#10b981" stop-opacity="0.8"/>
+    <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+  </linearGradient>
+  <filter id="{{ uid }}-bloom" x="-50%" y="-200%" width="200%" height="500%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="glow"/>
+    <feComponentTransfer in="glow" result="intensified">
+      <feFuncA type="linear" slope="1.5"/>
+    </feComponentTransfer>
+    <feMerge>
+      <feMergeNode in="intensified"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+{% else %}
+  {# ── Zeropoint (default): specimen aurora — dark/blue/green/teal/dark ── #}
+  <linearGradient id="{{ uid }}-aurora" x1="0%" x2="100%" y1="50%" y2="50%">
+    <stop offset="0%" style="stop-color:#0a0f1a;stop-opacity:0"/>
+    <stop offset="20%" style="stop-color:#1a2b49;stop-opacity:0.8"/>
+    <stop offset="50%" style="stop-color:#00ff94;stop-opacity:1"/>
+    <stop offset="80%" style="stop-color:#4c8b8b;stop-opacity:0.8"/>
+    <stop offset="100%" style="stop-color:#0a0f1a;stop-opacity:0"/>
+  </linearGradient>
+
+{% endif %}
+{% endblock %}
+
+{# ═══════════════════════════════════════════════
+   CONTENT BLOCK — specimen-faithful rendering per variant
+   ═══════════════════════════════════════════════ #}
+{% block content %}
+{% set dw = width | default(700) %}
+{% set dh = height | default(60) %}
+{% set cy = dh // 2 %}
+
+{# ═══════════════════════════════════════════════════════════
+   VARIANT: block — De Stijl Geometric Composition
+   Source: block_divider.svg (700x80)
+   Palette: black rule, #DC143C red block, #0047AB blue block,
+            #FFD700 gold accents, #FAFAFA background, #999 label
+   ═══════════════════════════════════════════════════════════ #}
+{% if divider_variant == 'block' %}
+{% set block_size = 20 %}
+{% set block_offset = (dw * 0.357) | int %}
+{% set block_spread = (dw * 0.257) | int %}
+
+{# No background — transparent (matches updated specimen destijl_divider.svg) #}
+
+{# Central thick rule with edge fade #}
+<rect x="0" y="{{ cy - 2 }}" width="{{ dw }}" height="4"
+      fill="url(#{{ uid }}-rule-fade)"/>
+
+{# De Stijl composition centered #}
+<g transform="translate({{ block_offset }}, 0)">
+  {# Left colored block — Mondrian red #}
+  <rect x="0" y="{{ cy - block_size // 2 }}" width="{{ block_size }}" height="{{ block_size }}"
+        fill="#DC143C" opacity="0.9"/>
+  <rect x="0" y="{{ cy - block_size // 2 }}" width="{{ block_size }}" height="{{ block_size }}"
+        fill="none" stroke="#000000" stroke-width="2"/>
+
+  {# Right colored block — Mondrian blue #}
+  <rect x="{{ block_spread }}" y="{{ cy - block_size // 2 }}" width="{{ block_size }}" height="{{ block_size }}"
+        fill="#0047AB" opacity="0.9"/>
+  <rect x="{{ block_spread }}" y="{{ cy - block_size // 2 }}" width="{{ block_size }}" height="{{ block_size }}"
+        fill="none" stroke="#000000" stroke-width="2"/>
+
+  {# Center § nexus — white box with black border #}
+  <g transform="translate({{ block_spread // 2 }}, {{ cy }})">
+    <rect x="-30" y="-8" width="60" height="16"
+          fill="#FFFFFF" stroke="#000000" stroke-width="2"/>
+    <text x="0" y="4" font-family="'Georgia', serif" font-size="12" font-weight="400"
+          text-anchor="middle" fill="#000000">&#xa7;</text>
+  </g>
+</g>
+
+{# Gold accent squares #}
+<rect x="{{ (dw * 0.214) | int }}" y="{{ cy - 4 }}" width="8" height="8"
+      fill="#FFD700"/>
+<rect x="{{ (dw * 0.774) | int }}" y="{{ cy - 4 }}" width="8" height="8"
+      fill="#FFD700"/>
+
+{# Section break label #}
+<text x="{{ dw // 2 }}" y="{{ cy + 25 }}" font-family="'SF Mono', monospace"
+      font-size="9" text-anchor="middle" fill="#999999" opacity="0.7">
+  {{ divider_label | default('SECTION BREAK') | upper }}
+</text>
+
+{# ═══════════════════════════════════════════════════════════
+   VARIANT: current — Animated Rainbow Bezier
+   Source: current_divider.svg (800x30)
+   Palette: 6-color rainbow gradient (hardcoded), drop shadow
+   ═══════════════════════════════════════════════════════════ #}
+{% elif divider_variant == 'current' %}
+{% set p1 = (dw * 0.125) | int %}
+{% set p2 = (dw * 0.25) | int %}
+{% set p3 = (dw * 0.375) | int %}
+{% set p4 = (dw * 0.5) | int %}
+{% set p5 = (dw * 0.625) | int %}
+{% set p6 = (dw * 0.75) | int %}
+{% set p7 = (dw * 0.875) | int %}
+{% set amp = (dh * 0.33) | int %}
+<path d="M0,{{ cy }} C{{ p1 }},{{ cy - amp }} {{ p2 }},{{ cy + amp }} {{ p3 }},{{ cy }} C{{ p4 }},{{ cy - amp }} {{ p5 }},{{ cy + amp }} {{ p6 }},{{ cy }} C{{ p7 }},{{ cy - amp }} {{ dw }},{{ cy }} {{ dw }},{{ cy }}"
+      stroke="url(#{{ uid }}-rainbow)" stroke-width="4" stroke-linecap="round"
+      fill="none" filter="url(#{{ uid }}-flow-shadow)" stroke-dasharray="20 5">
+  <animate attributeName="stroke-dashoffset" from="0" to="25" dur="3s" repeatCount="indefinite"/>
+</path>
+
+{# ═══════════════════════════════════════════════════════════
+   VARIANT: takeoff — Rocket Trajectory
+   Source: takeoff_divider.svg (800x100)
+   Palette: #FF3333/#CC0000 rocket, #FF4444 trajectory,
+            flame gradient reds/oranges/yellows, #FF0000 boosters
+   ═══════════════════════════════════════════════════════════ #}
+{% elif divider_variant == 'takeoff' %}
+{% set rx = dw // 2 %}
+{% set traj_dip = (dh * 0.3) | int %}
+
+{# Trajectory arc — dashed bezier #}
+<path d="M0,{{ cy }} Q{{ dw // 4 }},{{ cy - traj_dip }} {{ rx }},{{ cy }} T{{ dw }},{{ cy }}"
+      fill="none" stroke="#FF4444" stroke-width="1"
+      stroke-dasharray="5,5" opacity="0.5"/>
+
+{# Warning zone — full-width glow strip at low opacity #}
+<rect x="0" y="{{ cy - 5 }}" width="{{ dw }}" height="10"
+      fill="url(#{{ uid }}-escape)" opacity="0.1"/>
+
+{# Rocket group — travels along trajectory #}
+<g transform="translate({{ rx }}, {{ cy }})">
+  {# Nose cone #}
+  <path d="M-10,0 L0,-15 L10,0 Z" fill="#FF3333"/>
+  {# Body #}
+  <rect x="-10" y="0" width="20" height="15" fill="#CC0000"/>
+
+  {# Thruster flames — 3 paths with animated geometry + glow #}
+  <g filter="url(#{{ uid }}-thruster-glow)">
+    {# Left flame #}
+    <path d="M-7,15 L-12,30 L-2,20 Z" fill="url(#{{ uid }}-escape)">
+      <animate attributeName="d" values="M-7,15 L-12,30 L-2,20 Z; M-7,15 L-15,45 L-2,20 Z; M-7,15 L-12,30 L-2,20 Z"
+               dur="0.3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.7;1" dur="0.3s" repeatCount="indefinite"/>
+    </path>
+    {# Right flame #}
+    <path d="M7,15 L12,30 L2,20 Z" fill="url(#{{ uid }}-escape)">
+      <animate attributeName="d" values="M7,15 L12,30 L2,20 Z; M7,15 L15,45 L2,20 Z; M7,15 L12,30 L2,20 Z"
+               dur="0.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.7;1" dur="0.2s" repeatCount="indefinite"/>
+    </path>
+    {# Center flame #}
+    <path d="M-3,15 L0,35 L3,15 Z" fill="url(#{{ uid }}-escape)">
+      <animate attributeName="d" values="M-3,15 L0,35 L3,15 Z; M-3,15 L0,50 L3,15 Z; M-3,15 L0,35 L3,15 Z"
+               dur="0.25s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.6;1" dur="0.25s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  {# Emergency boosters — alternating blink #}
+  <circle cx="-15" cy="10" r="2" fill="#FF0000" opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="0.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="15" cy="10" r="2" fill="#FF0000" opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="0.5s" begin="0.25s" repeatCount="indefinite"/>
+  </circle>
+
+  {# Rocket travels along trajectory #}
+  <animateMotion path="M-{{ rx }},0 Q-{{ dw // 4 }},-{{ traj_dip }} 0,0 T{{ rx }},0"
+                 dur="5s" repeatCount="indefinite"/>
+</g>
+
+{# CRITICAL warning label #}
+<text x="{{ dw - 50 }}" y="{{ (dh * 0.2) | int }}"
+      font-family="'Courier New', monospace" font-size="10"
+      fill="#FF0000" font-weight="bold">
+  &#x26a0; {{ divider_label | default('CRITICAL') | upper }}
+  <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+</text>
+
+{# ═══════════════════════════════════════════════════════════
+   VARIANT: void — Spectral Terminus
+   Source: void_divider.svg (1000x40)
+   Palette: blue/purple/pink/amber/green spectral gradient
+   ═══════════════════════════════════════════════════════════ #}
+{% elif divider_variant == 'void' %}
+{% set aura_rx = (dw * 0.45) | int %}
+{% set filament_x = (dw * 0.05) | int %}
+{% set filament_w = (dw * 0.9) | int %}
+
+{# Inline style for void hover interaction #}
+<style>
+  .{{ uid }}-void-root {
+    --hw-gain: 0.4;
+    --hw-scale-x: 0.8;
+    --hw-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .{{ uid }}-void-root:hover {
+    --hw-gain: 0.9;
+    --hw-scale-x: 1;
+  }
+  @media (prefers-color-scheme: light) {
+    .{{ uid }}-void-root { --hw-gain: 0.25; }
+    .{{ uid }}-void-root:hover { --hw-gain: 0.6; }
+  }
+  .{{ uid }}-aura {
+    fill: url(#{{ uid }}-flux);
+    filter: url(#{{ uid }}-bloom);
+    opacity: var(--hw-gain);
+    transform-origin: center;
+    transform: scaleX(var(--hw-scale-x));
+    transition: opacity 0.6s var(--hw-ease), transform 0.8s var(--hw-ease);
+    will-change: opacity, transform;
+  }
+  .{{ uid }}-filament {
+    fill: url(#{{ uid }}-flux);
+    opacity: calc(var(--hw-gain) + 0.1);
+    transform-origin: center;
+    transform: scaleX(var(--hw-scale-x));
+    transition: transform 0.8s var(--hw-ease);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .{{ uid }}-aura, .{{ uid }}-filament { transition: none; }
+  }
+</style>
+
+<g class="{{ uid }}-void-root">
+  {# Layer 1: Volumetric Glow — the aura #}
+  <ellipse class="{{ uid }}-aura"
+           cx="{{ dw // 2 }}" cy="{{ cy }}"
+           rx="{{ aura_rx }}" ry="4"/>
+
+  {# Layer 2: Core Photon Stream — the visible terminus #}
+  <rect class="{{ uid }}-filament"
+        x="{{ filament_x }}" y="{{ cy - 1 }}"
+        width="{{ filament_w }}" height="1.5" rx="1"/>
+</g>
+
+{# ═══════════════════════════════════════════════════════════
+   VARIANT: zeropoint — Aurora Nexus Beacon (default)
+   Source: zeropoint_divider.svg (300x20)
+   Palette: #0a0f1a dark / #1a2b49 / #00ff94 green / #4c8b8b teal
+   ═══════════════════════════════════════════════════════════ #}
+{% else %}
+{# Aurora rule — full width 2px line #}
+<rect fill="url(#{{ uid }}-aurora)" height="2" width="{{ dw }}" x="0" y="{{ cy - 1 }}"/>
+
+{# Nexus beacon — specimen green outer, dark inner #}
+<circle cx="{{ dw // 2 }}" cy="{{ cy }}" r="4" fill="#00ff94"/>
+<circle cx="{{ dw // 2 }}" cy="{{ cy }}" r="2" fill="#0a0f1a"/>
+
+{# Label #}
+{% if divider_label %}
+<text x="{{ dw // 2 }}" y="{{ cy + 14 }}" text-anchor="middle"
+      font-family="'SF Mono','JetBrains Mono',monospace"
+      font-size="7" fill="#666666" opacity="0.5"
+      letter-spacing="0.15em">{{ divider_label | upper }}</text>
+{% endif %}
+
+{% endif %}
+{% endblock %}

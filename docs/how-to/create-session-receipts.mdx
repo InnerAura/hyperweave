@@ -1,0 +1,99 @@
+---
+title: "Create Session Receipts"
+description: "Parse Claude Code session transcripts and render structured telemetry visualizations."
+---
+
+## The Problem
+
+You want to visualize your Claude Code session data -- tool usage, cost, token counts, and workflow stages -- as structured SVG artifacts.
+
+## Parse a Session
+
+First, parse the raw JSONL transcript into a telemetry contract:
+
+```bash
+hyperweave session parse .claude/projects/<project>/sessions/<session-id>.jsonl
+```
+
+This outputs JSON with the full session analysis: tools, stages, corrections, cost, and profile data.
+
+## Render a Receipt
+
+Render a receipt card from a transcript:
+
+```bash
+hyperweave session receipt .claude/projects/<project>/sessions/<session-id>.jsonl
+```
+
+Receipts are written to `.hyperweave/receipts/<session-id>.svg` by default. Override with `-o`:
+
+```bash
+hyperweave session receipt transcript.jsonl -o my-receipt.svg
+```
+
+The receipt includes a one-line summary on stderr:
+
+```
+Receipt: $0.42 · 12.5K tokens · 8m -> .hyperweave/receipts/abc123.svg
+```
+
+## Render a Rhythm Strip
+
+Rhythm strips show tool call density and classification over time:
+
+```bash
+hyperweave session strip transcript.jsonl -o rhythm.svg
+```
+
+## Using the Data Contract Directly
+
+For custom rendering or integration, use the Python API:
+
+```python
+from hyperweave.telemetry.contract import build_contract
+
+contract = build_contract("path/to/session.jsonl")
+# Returns dict with: session, tools, stages, corrections, profile, cost
+```
+
+Then compose with the contract:
+
+```python
+from hyperweave.compose.engine import compose
+from hyperweave.core.models import ComposeSpec
+
+spec = ComposeSpec(type="receipt", telemetry_data=contract)
+result = compose(spec)
+# result.svg contains the receipt SVG
+```
+
+## Telemetry Frame Types
+
+| Frame | Description |
+|---|---|
+| `receipt` | Session summary card with cost, tokens, duration, tools |
+| `rhythm-strip` | Timeline showing tool call density and classification |
+| `master-card` | Comprehensive session analysis card |
+
+<Info>
+  Telemetry frames are genome-independent -- they use their own built-in palette. The CLI and MCP do not accept a genome parameter for telemetry commands.
+</Info>
+
+## MCP Integration
+
+```
+hw_compose(
+  type="receipt",
+  telemetry_data={...contract dict...}
+)
+```
+
+## Hook-Based Automation
+
+For automatic receipt generation after every session, install the Claude Code hook:
+
+```bash
+hyperweave install-hook
+```
+
+See the [Install Session Telemetry](/tutorials/install-session-telemetry) tutorial for details.

@@ -1,0 +1,280 @@
+{# HyperWeave Banner Frame — 1200x600 (full) or 800x220 (compact).
+   Full: 3-column editorial grid, triple-layer hero text, grain texture.
+   Compact: clean surface with centered text.
+   Chrome: motorsport typography with env-map gradient, skew, glow
+   (specimen: chrome-horizon-banner.svg).
+   Extends document.svg.j2.  Context: ComposeSpec dict. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+{% if is_chrome and envelope_stops %}
+  {# Chrome env-map gradient (HDRI simulation, animated y1/y2) #}
+  <linearGradient id="{{ uid }}-chrome-env" x1="0" x2="0" y1="0" y2="1">
+  {% for stop in envelope_stops %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
+    <animate attributeName="y1" values="-0.3;0.1;-0.3" dur="6s"
+             repeatCount="indefinite" calcMode="spline"
+             keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+    <animate attributeName="y2" values="0.7;1.1;0.7" dur="6s"
+             repeatCount="indefinite" calcMode="spline"
+             keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+  </linearGradient>
+  {# Edge glow filter — accent-colored bloom #}
+  <filter id="{{ uid }}-glow" x="-15%" y="-15%" width="130%" height="130%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
+    <feFlood flood-color="#5ba3d4" flood-opacity="0.4"/>
+    <feComposite in2="blur" operator="in" result="glow"/>
+    <feMerge>
+      <feMergeNode in="glow"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  {# Drop shadow for text depth #}
+  <filter id="{{ uid }}-shadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="0" dy="3" stdDeviation="6"
+                  flood-color="#000" flood-opacity="0.25"/>
+  </filter>
+  {# Product-weight bevel — shadow + light specular (satin chrome specimens) #}
+  <filter id="{{ uid }}-bevel" x="-2%" y="-4%" width="104%" height="110%">
+    <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#000" flood-opacity="{{ bevel_shadow_opacity | default('0.30') }}"/>
+    <feSpecularLighting in="SourceAlpha" surfaceScale="1.0" specularConstant="0.4"
+                        specularExponent="30" lighting-color="{{ specular_light | default('#6AACC8') }}" result="s">
+      <feDistantLight azimuth="225" elevation="50"/>
+    </feSpecularLighting>
+    <feComposite in="s" in2="SourceAlpha" operator="in" result="sc"/>
+    <feComposite in="SourceGraphic" in2="sc" operator="arithmetic" k1="0" k2="1" k3="0.12" k4="0"/>
+  </filter>
+  {# Well gradient (lightened per satin specimens) #}
+  <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
+    <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
+  </linearGradient>
+{% else %}
+  {# Noise texture filter #}
+  <filter id="{{ uid }}-noise">
+    <feTurbulence type="fractalNoise" baseFrequency="0.55"
+                  numOctaves="5" seed="{{ noise_seed | default(55) }}"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  {# Glow filter for text layer 1 #}
+  <filter id="{{ uid }}-glow">
+    <feGaussianBlur stdDeviation="{{ glow_radius | default(16) }}"/>
+  </filter>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% set bw = width | default(1200) %}
+{% set bh = height | default(600) %}
+{% set text_cx = bw // 2 %}
+{% set is_full = (banner_variant | default('full')) == 'full' %}
+
+{% if is_chrome and envelope_stops %}
+{# ════════════════════════════════════════════════════════════════════
+   CHROME BANNER — Motorsport typography (specimen: chrome-horizon-banner.svg)
+   Transparent background, Impact italic, env-map fill, skewX(-10),
+   accent stripe, Courier New labels.
+   ════════════════════════════════════════════════════════════════════ #}
+{% set chrome_fs = title_font_size | default(145 if is_full else 64) %}
+{% set chrome_text_y = (bh * 0.44) | int %}
+{% set stripe_y = (bh * 0.58) | int %}
+{% set label_start_y = stripe_y + 35 %}
+{% set chrome_rx = chrome_corner | default('6') %}
+
+{# === Chrome background: TRANSPARENT (specimen: chrome-horizon-banner.svg) === #}
+{# No background fill — chrome banners are transparent for universal placement #}
+
+{# Chrome text with env-map fill, dark stroke for light-mode contrast, skew #}
+{% if motion_id and motion_id != 'static' %}
+{# Override kinetic motion text to use chrome typography + env-map fill.
+   CSS !important beats SVG presentation attributes (font-family="..."). #}
+<style>
+  .hw-motion-target text,
+  .hw-motion-target .hw-motion-bars-text,
+  .hw-motion-target .hw-motion-cascade-text,
+  .hw-motion-target .hw-motion-broadcast-normal,
+  .hw-motion-target .hw-motion-broadcast-final,
+  .hw-motion-target .hw-motion-crash-c,
+  .hw-motion-target .hw-motion-breach-materialized,
+  .hw-motion-target .hw-motion-breach-ghost,
+  .hw-motion-target .hw-motion-pulse-headline {
+    font-family: 'Impact','Arial Black',system-ui,sans-serif !important;
+    font-style: italic !important;
+    letter-spacing: -3px !important;
+    fill: url(#{{ uid }}-chrome-env) !important;
+    stroke: rgba(0,10,20,0.35);
+    stroke-width: 1px;
+    paint-order: stroke fill;
+  }
+</style>
+{% endif %}
+<g data-hw-zone="title"{% if motion_id and motion_id != 'static' %} class="hw-motion-target"{% endif %}>
+{% if motion_id and motion_id != 'static' %}
+  {# Motion SVG uses absolute coordinates — do NOT wrap in translate/skew #}
+  {{ motion_svg | safe }}
+{% else %}
+  <g filter="url(#{{ uid }}-glow)" transform="translate({{ text_cx }}, {{ chrome_text_y }}) skewX(-10)">
+    <text x="0" y="0" text-anchor="middle"
+          font-family="'Impact','Arial Black',system-ui,sans-serif"
+          font-size="{{ chrome_fs }}" font-weight="900" font-style="italic"
+          letter-spacing="-3px"
+          fill="url(#{{ uid }}-chrome-env)"
+          stroke="rgba(0,10,20,0.35)" stroke-width="1"
+          paint-order="stroke fill"
+          text-rendering="geometricPrecision"
+          filter="url(#{{ uid }}-shadow)">{{ banner_title | default(title_text) }}</text>
+  </g>
+{% endif %}
+</g>
+
+{# Accent stripe divider #}
+<rect x="{{ (bw * 0.11) | int }}" y="{{ stripe_y }}"
+      width="{{ (bw * 0.78) | int }}" height="2"
+      fill="url(#{{ uid }}-chrome-env)" opacity="0.6"/>
+
+{# Labels — Courier New monospace, chrome accent color #}
+{% if banner_label %}
+<g transform="translate({{ text_cx }}, {{ label_start_y }})">
+  <text text-anchor="middle"
+        font-family="'Courier New',monospace"
+        font-size="11" fill="#3d7fad"
+        letter-spacing="4px"
+        text-transform="uppercase">{{ banner_label | upper }}</text>
+</g>
+{% endif %}
+{% if banner_subtitle %}
+<g transform="translate({{ text_cx }}, {{ label_start_y + 20 }})">
+  <text text-anchor="middle"
+        font-family="'Courier New',monospace"
+        font-size="11" fill="#3d7fad"
+        letter-spacing="4px"
+        text-transform="uppercase">{{ banner_subtitle | upper }}</text>
+</g>
+{% endif %}
+
+{# Status indicator (top-right) #}
+{% if is_full %}
+<g data-hw-zone="status" transform="translate({{ bw - 60 }},40)">
+  <circle r="5" fill="none" stroke="#3d7fad" stroke-width="1.2"/>
+  <circle class="hw-logic-bit" r="2.5"
+          fill="var(--dna-status-color, #22C55E)"/>
+</g>
+{% endif %}
+
+{% else %}
+{# ════════════════════════════════════════════════════════════════════
+   STANDARD BANNER — Editorial grid + triple-layer hero text
+   ════════════════════════════════════════════════════════════════════ #}
+{# === Scale factor: all geometry proportional to canvas === #}
+{% set scale = bw / 1200.0 %}
+{% set margin = (60 * scale) | int %}
+{% set inner_w = bw - margin * 2 %}
+{% set inner_h = bh - margin * 2 %}
+{% set fs = title_font_size | default(160 if is_full else 42) %}
+{% set col_w = (240 * scale) | int %}
+{% set col_x1 = margin + col_w %}
+{% set col_x2 = margin + inner_w - col_w %}
+{% set header_h = (80 * scale) | int %}
+{% set row_y1 = margin + header_h %}
+{% set footer_h = (140 * scale) | int %}
+{% set row_y2 = margin + inner_h - footer_h %}
+{% set text_y = (row_y1 + row_y2) // 2 + (fs * 0.44) | int %}
+
+{# === Background layers === #}
+<rect width="{{ bw }}" height="{{ bh }}" fill="var(--dna-surface)"/>
+<rect width="{{ bw }}" height="{{ bh }}" filter="url(#{{ uid }}-noise)"
+      opacity="0.1" style="mix-blend-mode:overlay"/>
+
+{# === Editorial grid (scales with canvas) === #}
+{# Inner panel #}
+<rect x="{{ margin }}" y="{{ margin }}" width="{{ inner_w }}" height="{{ inner_h }}"
+      fill="var(--dna-surface-alt)"/>
+{# Header bar #}
+<rect x="{{ margin }}" y="{{ margin }}" width="{{ inner_w }}" height="{{ header_h }}"
+      fill="var(--dna-surface-deep)"/>
+{# Left sidebar panel #}
+<rect x="{{ margin }}" y="{{ row_y1 }}" width="{{ col_w }}" height="{{ row_y2 - row_y1 }}"
+      fill="var(--dna-surface-deep)"/>
+{# Bottom-left recess #}
+<rect x="{{ margin }}" y="{{ row_y2 }}" width="{{ col_w }}" height="{{ bh - margin - row_y2 }}"
+      fill="var(--dna-surface-deep)"/>
+{# Bottom-right recess #}
+<rect x="{{ col_x2 }}" y="{{ row_y2 }}" width="{{ col_w }}" height="{{ bh - margin - row_y2 }}"
+      fill="var(--dna-surface-alt)"/>
+
+{# Signal accent bars (top + bottom of inner frame) #}
+<rect x="{{ margin }}" y="{{ margin }}" width="{{ inner_w }}" height="3"
+      fill="var(--dna-signal)"/>
+<rect x="{{ margin }}" y="{{ bh - margin - 3 }}" width="{{ inner_w }}" height="3"
+      fill="var(--dna-signal)"/>
+
+{# Grid lines #}
+<line x1="{{ margin }}" y1="{{ row_y1 }}"
+      x2="{{ margin + inner_w }}" y2="{{ row_y1 }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="{{ margin }}" y1="{{ row_y2 }}"
+      x2="{{ margin + inner_w }}" y2="{{ row_y2 }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="{{ col_x1 }}" y1="{{ margin }}"
+      x2="{{ col_x1 }}" y2="{{ bh - margin }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="{{ col_x2 }}" y1="{{ margin }}"
+      x2="{{ col_x2 }}" y2="{{ bh - margin }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+
+{# === Triple-layer text stack === #}
+<g data-hw-zone="title"{% if motion_id and motion_id != 'static' %} class="hw-motion-target"{% endif %}>
+{% if motion_id and motion_id != 'static' %}
+  {{ motion_svg | safe }}
+{% else %}
+  {# Layer 1: Glow (blurred, low opacity) #}
+  <text x="{{ text_cx }}" y="{{ text_y }}" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="{{ fs }}" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="var(--dna-signal)" filter="url(#{{ uid }}-glow)"
+        opacity="0.2">{{ banner_title | default(title_text) }}</text>
+  {# Layer 2: Ghost (stroke-only) #}
+  <text x="{{ text_cx }}" y="{{ text_y }}" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="{{ fs }}" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="none" stroke="var(--dna-signal-dim)" stroke-width="0.5"
+        opacity="0.1">{{ banner_title | default(title_text) }}</text>
+  {# Layer 3: Main solid #}
+  <text x="{{ text_cx }}" y="{{ text_y }}" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="{{ fs }}" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="var(--dna-ink-muted)">{{ banner_title | default(title_text) }}</text>
+{% endif %}
+</g>
+
+{# === Status indicator (top-right corner) === #}
+<g data-hw-zone="status" transform="translate({{ bw - margin - (40 * scale) | int }},{{ margin + (20 * scale) | int }})">
+  <rect x="-5" y="-5" width="10" height="10"
+        fill="var(--dna-signal)"/>
+  <rect class="hw-logic-bit" x="-3" y="-3" width="6" height="6"
+        fill="var(--dna-signal-dim)"/>
+</g>
+
+{# === Subtitle === #}
+{% if banner_subtitle %}
+{% set sub_fs = [(11 * scale) | int, 8] | max %}
+<text x="{{ text_cx }}" y="{{ text_y + (fs * 0.4) | int }}" text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="{{ sub_fs }}" fill="var(--dna-signal-dim)"
+      letter-spacing="0.2em" opacity="0.6">{{ banner_subtitle | upper }}</text>
+{% endif %}
+
+{# === Footer label === #}
+{% if banner_label %}
+{% set footer_fs = [(11 * scale) | int, 8] | max %}
+<text x="{{ margin + 20 }}" y="{{ bh - margin + (25 * scale) | int }}"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="{{ footer_fs }}" fill="var(--dna-signal-dim)"
+      letter-spacing="0.3em" opacity="0.3">{{ banner_label }}</text>
+{% endif %}
+{% endif %}
+{% endblock %}

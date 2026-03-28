@@ -1,50 +1,30 @@
-# Build Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
 *.egg-info/
-build/
 dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.env
+.venv/
+*.egg
+.DS_Store
+.hyperweave/
+*.svg.bak
+.benchmarks/
+node_modules/
 
-# Compiled Python Files
-*.pyc
-*.pyo
-**/__pycache__/
-
-# Documentation and MkDocs
-.cache
-site
-
-# Jupyter Notebook
-.ipynb_checkpoints/
-notebooks/
-
-# Logging
-*.log
-logs/
-
-# Python Development
-**/.mypy_cache/
-**/.pytest_cache/
-**/.ruff_cache/
+# testing
+.coverage
+.coverage.*
 htmlcov/
 
-# System-Specific Files
-.DS_Store
-
-# Temporary Files
-*~
-
-# Testing
-.benchmarks/
-*coverage*
-**/.nox/
-
-# Virtual Environment
-.env
-**/.venv/
-
-# VSCode Workspace Settings
-.vscode/
-
-# InnerAura/hyperweave
+# inneraura/hyperweave
+archive/
 # .claude/
 # CLAUDE.md
-.env.example
+# outputs/
+specs/

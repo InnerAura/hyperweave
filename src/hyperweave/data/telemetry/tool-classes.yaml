@@ -1,0 +1,26 @@
+# Tool name -> functional class mapping.
+# Loaded by telemetry/models.py at import time.
+# Values must match ToolClass enum: explore, mutate, execute, coordinate.
+Read: explore
+Glob: explore
+Grep: explore
+WebSearch: explore
+WebFetch: explore
+Edit: mutate
+Write: mutate
+NotebookEdit: mutate
+Bash: execute
+Task: coordinate
+TaskCreate: coordinate
+TaskUpdate: coordinate
+TaskList: coordinate
+TaskGet: coordinate
+TaskOutput: coordinate
+TaskStop: coordinate
+SendMessage: coordinate
+TeamCreate: coordinate
+TeamDelete: coordinate
+Skill: coordinate
+EnterPlanMode: coordinate
+ExitPlanMode: coordinate
+AskUserQuestion: coordinate

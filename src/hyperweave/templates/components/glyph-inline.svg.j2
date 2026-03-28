@@ -1,0 +1,10 @@
+{# Inline glyph SVG fragment — used for glyph_svg context variable.
+   Modes: fill (default/auto) = solid, wire = stroke-only, none = hidden.
+   glyph_fill_color: override fill color (default: var(--dna-signal)). #}
+{% set mode = glyph_mode | default('fill') %}
+{% set fill_color = glyph_fill_color | default('var(--dna-signal)') %}
+{% if mode == 'wire' %}
+<svg viewBox="{{ glyph_viewbox }}" width="14" height="14"><path d="{{ glyph_path }}" fill="none" stroke="{{ fill_color }}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+{% elif mode != 'none' %}
+<svg viewBox="{{ glyph_viewbox }}" width="14" height="14"><path d="{{ glyph_path }}" fill="{{ fill_color }}"/></svg>
+{% endif %}

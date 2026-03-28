@@ -1,0 +1,100 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "HyperWeave",
+  "logo": {
+    "dark": "/assets/hyperweave-navbar-logo.svg",
+    "light": "/assets/hyperweave-navbar-logo.svg"
+  },
+  "favicon": "/assets/favicon.svg",
+  "colors": {
+    "primary": "#7878f8",
+    "light": "#a0b8f0",
+    "dark": "#4848c8",
+    "background": {
+      "dark": "#060420",
+      "light": "#f4f5ff"
+    }
+  },
+  "modeToggle": {
+    "default": "dark",
+    "isHidden": false
+  },
+  "metadata": {
+    "og:image": "/assets/og-image.svg",
+    "og:description": "Compositor API for self-contained SVG artifacts from semantic parameters."
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/eli64s/hyperweave"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Install",
+    "url": "https://github.com/eli64s/hyperweave#install"
+  },
+  "anchors": [
+    {
+      "name": "API Reference",
+      "icon": "code",
+      "url": "reference"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/eli64s/hyperweave"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["introduction", "quickstart"]
+    },
+    {
+      "group": "Tutorials",
+      "pages": [
+        "tutorials/compose-your-first-badge",
+        "tutorials/build-an-artifact-kit",
+        "tutorials/install-session-telemetry"
+      ]
+    },
+    {
+      "group": "How-To Guides",
+      "pages": [
+        "how-to/use-live-data-badges",
+        "how-to/add-motion-to-badges",
+        "how-to/create-session-receipts",
+        "how-to/set-up-claude-code-hooks"
+      ]
+    },
+    {
+      "group": "Reference",
+      "pages": [
+        "reference/compose-spec",
+        "reference/cli",
+        "reference/http-api",
+        "reference/mcp-tools",
+        "reference/genomes",
+        "reference/motions",
+        "reference/telemetry-contract"
+      ]
+    },
+    {
+      "group": "Explanation",
+      "pages": [
+        "explanation/architecture",
+        "explanation/genome-profile-system",
+        "explanation/metadata-tiers",
+        "explanation/cim-compliance",
+        "explanation/camo-compatibility"
+      ]
+    },
+    {
+      "group": "Specification",
+      "pages": ["spec/hyperweave-protocol"]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/eli64s/hyperweave"
+  }
+}

@@ -1,0 +1,1 @@
+{"id":"dashed","name":"Dashed","svg_fragment":"<g class=\"hw-rule\"><line x1=\"0\" y1=\"0\" x2=\"{{rule_width}}\" y2=\"0\" stroke=\"var(--dna-border)\" stroke-width=\"1\" stroke-dasharray=\"8 4\"/></g>"}

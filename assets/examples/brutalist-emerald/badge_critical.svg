@@ -1,0 +1,488 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.dev/hw/v8.0"
+     role="img"
+     aria-labelledby="hw-cf5411d2-title hw-cf5411d2-desc"
+     viewBox="0 0 157 20"
+     width="157" height="20"
+     data-hw-id="cf5411d2-fc4e-4193-9c4e-202f035a8440"
+     data-hw-type="badge"
+     data-hw-frame="badge"
+     data-hw-genome="brutalist-emerald"
+     data-hw-status="critical"
+     data-hw-profile="brutalist"
+     data-hw-motion="static"
+     data-hw-generation="1"
+     data-hw-contract="cf5411d2-fc4e-4193-9c4e-202f035a8440"
+     data-hw-variant="default"
+     data-hw-regime="normal"
+     data-hw-glyph="github"
+     data-hw-chromatic="brutalist-emerald">
+  <title id="hw-cf5411d2-title">BUILD: critical</title>
+  <desc id="hw-cf5411d2-desc">A badge artifact, using brutalist-emerald genome, in critical state.</desc>
+  <metadata>
+  <hw:artifact id="cf5411d2-fc4e-4193-9c4e-202f035a8440" type="badge" series="core" version="0.1.0"
+               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:provenance>
+      <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-03-27T22:38:03.144365+00:00</hw:created>
+      <hw:human-directed>true</hw:human-directed>
+    </hw:provenance>
+    <hw:spec size="157x20" performance="composite-only"
+             theme="dark" a11y="WCAG-AA" platform="web"/>
+  </hw:artifact>
+  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:frame>badge</hw:frame>
+    <hw:genome>brutalist-emerald@0.1.0</hw:genome>
+    <hw:profile>brutalist</hw:profile>
+    <hw:slots>
+    </hw:slots>
+    <hw:environment platform="web" motion="static" status="critical"/>
+  </hw:composition>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:title>BUILD: critical</dc:title>
+      <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-03-27T22:38:03.144365+00:00</dc:date>
+      <dc:rights>CC BY 4.0</dc:rights>
+    </rdf:Description>
+  </rdf:RDF>
+  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:chromatic system="brutalist-emerald" space="oklch"
+                  palette="" contrast-ratio="4.5:1"/>
+    <hw:motion vocabulary="static" physics="none"
+               timing="phi" duration-base="2.618s"
+               stagger-regime="contemplative" cim-compliant="true"/>
+    <hw:geometry form-language="geometric" corner-radius="5px"
+                 grid="auto" proportional-system="phi"
+                 mathematical-basis="golden-ratio" symmetry="bilateral"/>
+    <hw:typography stack="" hierarchy="11/18/8"
+                   weight-range="500-900" metrics-method="lut"/>
+    <hw:material surface="genome-native" depth="deep" texture="none"/>
+  </hw:aesthetic>
+  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:intent></hw:intent>
+    <hw:approach></hw:approach>
+    <hw:tradeoffs></hw:tradeoffs>
+    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>157x20 (7.85), left-to-right</hw:spatial-notes>
+  </hw:reasoning>
+</metadata>
+  <style>svg, :root {
+  --dna-surface: #14532D;
+  --dna-surface-alt: #1A3828;
+  --dna-surface-deep: #153020;
+  --dna-ink-primary: #A7F3D0;
+  --dna-ink-muted: #6EE7B7;
+  --dna-ink-on-accent: #14532D;
+  --dna-ink-bright: #14532D;
+  --dna-ink-sub: #6EE7B7;
+  --dna-signal: #10B981;
+  --dna-signal-dim: #34D399;
+  --dna-border: #2A5A3A;
+  --dna-border-tint: #1A3A2A;
+  --dna-shadow-color: #10B981;
+  --dna-shadow-opacity: 0.10;
+  --dna-glow: 0px;
+  --dna-corner: 0;
+  --dna-rhythm-base: 2.618s;
+  --dna-bg: #14532D;
+  --dna-bg-alt: #1A3828;
+  --dna-brand-text: #A7F3D0;
+  --dna-status-passing-core: #059669;
+  --dna-status-warning-core: #F59E0B;
+  --dna-status-failing-core: #DC2626;
+  --dna-rhythm-slow: 4.236s;
+  --dna-rhythm-fast: 1.618s;
+  --dna-density: 0.6;
+  --dna-metric-text: #34D399;
+  --dna-label-text: #6EE7B7;
+  --dna-glyph-inner: #34D399;
+  --dna-seam-gap: #0A2E1A;
+  --dna-badge-value-text: #A7F3D0;
+  --dna-badge-pass-sep: #10B981;
+  --dna-badge-pass-core: #34D399;
+  --dna-badge-warn-color: #F59E0B;
+  --dna-material-specular: 0.0;
+  --dna-material-roughness: 0.8;
+  --dna-sep: #2A5A3A;
+  --dna-status-delta-positive: #22C55E;
+  --dna-status-delta-negative: #DC2626;
+}
+/* === HyperWeave Bridge Classes ===
+ * Maps semantic class names (hw-*) to genome DNA custom properties (--dna-*).
+ * Genome-agnostic: works with ANY genome that defines the --dna-* contract.
+ */
+
+/* ── Surface fills ── */
+.hw-surface      { fill: var(--dna-surface); }
+.hw-surface-deep { fill: var(--dna-surface-deep); }
+.hw-bg           { fill: var(--dna-bg); }
+.hw-bg-alt       { fill: var(--dna-bg-alt); }
+
+/* ── Signal / Accent ── */
+.hw-signal       { fill: var(--dna-signal); }
+.hw-signal-stroke { stroke: var(--dna-signal); }
+.hw-signal-dim   { fill: var(--dna-signal-dim); }
+
+/* ── Ink / Typography ── */
+.hw-ink          { fill: var(--dna-ink-primary); }
+.hw-ink-muted    { fill: var(--dna-ink-muted); }
+.hw-ink-sub      { fill: var(--dna-ink-sub); }
+.hw-ink-bright   { fill: var(--dna-ink-bright); }
+.hw-ink-on-accent { fill: var(--dna-ink-on-accent); }
+
+/* ── Border / Separator ── */
+.hw-border       { stroke: var(--dna-border); }
+.hw-sep          { stroke: var(--dna-sep); }
+
+/* ── Status ── */
+.hw-status-pass  { fill: var(--dna-status-passing-core); }
+.hw-status-warn  { fill: var(--dna-status-warning-core); }
+.hw-status-fail  { fill: var(--dna-status-failing-core); }
+.hw-delta-pos    { fill: var(--dna-status-delta-positive); }
+.hw-delta-neg    { fill: var(--dna-status-delta-negative); }
+
+/* ── Extended ── */
+.hw-glow         { flood-color: var(--dna-glow); }
+.hw-brand-text   { fill: var(--dna-brand-text); }
+.hw-metric-text  { fill: var(--dna-metric-text); }
+.hw-border-tint  { stroke: var(--dna-border-tint); }
+.hw-glyph-inner  { fill: var(--dna-glyph-inner); }
+.hw-seam-gap     { fill: var(--dna-seam-gap); }
+.hw-label-txt    { fill: var(--dna-label-text); }
+
+/* === HyperWeave Expression Layer ===
+ * CSS state machine driven by data-hw-* attributes.
+ * Genome-agnostic: all colors via --dna-* custom properties.
+ */
+
+/* ── Typography ── */
+.hw-title {
+  font-family: var(--dna-font-display, 'Inter', -apple-system, system-ui, sans-serif);
+  font-size: 13px; font-weight: 600;
+  fill: var(--dna-ink, #E4E4E7);
+  letter-spacing: -0.01em;
+}
+.hw-value {
+  font-family: var(--dna-font-display, 'Inter', -apple-system, system-ui, sans-serif);
+  font-size: 15px; font-weight: 700;
+  fill: var(--dna-ink, #E4E4E7);
+  letter-spacing: -0.02em;
+}
+.hw-label {
+  font-family: var(--dna-font-mono, 'SF Mono', 'JetBrains Mono', monospace);
+  font-size: 8px; font-weight: 600;
+  fill: var(--dna-ink-muted, #A1A1AA);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.hw-delta {
+  font-family: var(--dna-font-mono, 'SF Mono', 'JetBrains Mono', monospace);
+  font-size: 10px; font-weight: 600;
+}
+.hw-delta--positive { fill: var(--dna-status-delta-positive, #22C55E); }
+.hw-delta--negative { fill: var(--dna-status-delta-negative, #DC2626); }
+.hw-delta--neutral  { fill: var(--dna-ink-muted, #A1A1AA); }
+
+/* ── Structural ── */
+.hw-frame-bg {
+  fill: var(--dna-surface, var(--dna-bg, #1C1C1C));
+  rx: var(--dna-corner, 5px);
+}
+.hw-frame-edge {
+  fill: none;
+  stroke: rgba(255,255,255,0.07);
+  stroke-width: 1;
+}
+.hw-divider {
+  stroke: var(--dna-border, var(--dna-sep, #3F3F46));
+  stroke-width: 1;
+}
+.hw-accent-bar {
+  fill: var(--dna-signal, #B31B1B);
+}
+
+/* ── Status ── */
+.hw-status-ring {
+  fill: none;
+  stroke: var(--dna-border, var(--dna-sep, #3F3F46));
+  stroke-width: 1.2;
+}
+.hw-status-core {
+  fill: var(--dna-status-color, var(--dna-status-passing-core, #22C55E));
+  will-change: opacity;
+}
+
+/* ── Glyph ── */
+.hw-glyph {
+  fill: none;
+  stroke: var(--dna-signal, #B31B1B);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* === Status Phenotype === */
+[data-hw-status="active"]   { --dna-status-color: var(--dna-status-passing-core, #22C55E); }
+[data-hw-status="passing"]  { --dna-status-color: var(--dna-status-passing-core, #22C55E); }
+[data-hw-status="building"] { --dna-status-color: var(--dna-signal, #3B82F6); }
+[data-hw-status="warning"]  { --dna-status-color: var(--dna-status-warning-core, #F59E0B); }
+[data-hw-status="critical"] { --dna-status-color: var(--dna-status-failing-core, #EF4444); }
+[data-hw-status="failing"]  { --dna-status-color: var(--dna-status-failing-core, #EF4444); }
+[data-hw-status="offline"]  { --dna-status-color: var(--dna-ink-muted, #A1A1AA); }
+
+svg[data-hw-status="warning"]  { filter: drop-shadow(0 0 4px rgba(245,158,11,0.3)); }
+svg[data-hw-status="critical"],
+svg[data-hw-status="failing"]  { filter: drop-shadow(0 0 5px rgba(220,38,38,0.4)); }
+svg[data-hw-status="offline"]  { opacity: .65; filter: grayscale(45%); }
+
+/* === Badge State Machine v2 === */
+[data-hw-status="active"], [data-hw-status="passing"] {
+  --hw-state-core: var(--dna-badge-pass-core, var(--dna-signal));
+  --hw-state-sep: var(--dna-badge-pass-sep, var(--dna-signal));
+  --hw-state-ring: var(--dna-badge-pass-sep, var(--dna-signal));
+  --hw-state-value: var(--dna-badge-value-text, var(--dna-brand-text));
+  --hw-state-signal: var(--dna-signal);
+  --hw-state-specular: var(--dna-signal);
+  --hw-state-sweep: var(--dna-signal);
+}
+
+[data-hw-status="warning"] {
+  --hw-state-core: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-sep: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-ring: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-value: #FDE68A;
+  --hw-state-signal: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-specular: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-sweep: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+}
+
+[data-hw-status="critical"], [data-hw-status="failing"] {
+  --hw-state-core: var(--dna-status-failing-core);
+  --hw-state-sep: var(--dna-status-failing-core);
+  --hw-state-ring: var(--dna-status-failing-core);
+  --hw-state-value: #FCA5A5;
+  --hw-state-signal: var(--dna-status-failing-core);
+  --hw-state-specular: var(--dna-status-failing-core);
+  --hw-state-sweep: var(--dna-status-failing-core);
+}
+
+/* Default (neutral/offline/building) */
+svg:not([data-hw-status="active"]):not([data-hw-status="passing"]):not([data-hw-status="warning"]):not([data-hw-status="critical"]):not([data-hw-status="failing"]) {
+  --hw-state-core: var(--dna-signal);
+  --hw-state-sep: var(--dna-signal);
+  --hw-state-ring: var(--dna-signal);
+  --hw-state-value: var(--dna-badge-value-text, var(--dna-brand-text));
+  --hw-state-signal: var(--dna-signal);
+  --hw-state-specular: var(--dna-signal);
+  --hw-state-sweep: var(--dna-signal);
+}
+
+/* === Badge Element Classes === */
+.hw-label-text {
+  fill: var(--dna-metric-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.hw-value-text { fill: var(--hw-state-value); }
+.hw-sep-signal { fill: var(--hw-state-sep); }
+.hw-sep-shadow { fill: var(--dna-sep); }
+.hw-indicator-ring {
+  stroke: var(--hw-state-ring);
+  stroke-width: 1.2;
+  fill: none;
+}
+.hw-logic-bit {
+  fill: var(--hw-state-core);
+  will-change: opacity;
+}
+.hw-scanner {
+  fill: var(--hw-state-sweep);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* State tint overlay on right panel */
+.hw-state-tint { fill: transparent; opacity: 0; }
+[data-hw-status="warning"] .hw-state-tint {
+  fill: var(--hw-state-core);
+  opacity: 0.06;
+}
+[data-hw-status="critical"] .hw-state-tint,
+[data-hw-status="failing"] .hw-state-tint {
+  fill: var(--hw-state-core);
+  opacity: 0.08;
+}
+
+/* === Living Value: Threshold State Machine === */
+[data-hw-value^="9"], [data-hw-value^="8"] {
+  --dna-status-color: var(--dna-status-passing-core, #22C55E);
+}
+[data-hw-value^="7"], [data-hw-value^="6"] {
+  --dna-status-color: var(--dna-status-warning-core, #F59E0B);
+}
+[data-hw-value^="5"], [data-hw-value^="4"],
+[data-hw-value^="3"], [data-hw-value^="2"],
+[data-hw-value^="1"], [data-hw-value^="0"] {
+  --dna-status-color: var(--dna-status-failing-core, #EF4444);
+}
+[data-hw-value] .hw-living { fill: var(--dna-status-color); }
+
+/* === HyperWeave Status Indicator Animations ===
+ * State-dependent animation speeds for .hw-logic-bit
+ * Active: slow breathe. Warning: medium pulse. Critical: fast strobe.
+ */
+
+/* Active/passing: slow breathe 2s */
+[data-hw-status="active"] .hw-logic-bit,
+[data-hw-status="passing"] .hw-logic-bit {
+  animation: hw-breathe 2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Warning: medium pulse 0.9s */
+[data-hw-status="warning"] .hw-logic-bit {
+  animation: hw-pulse 0.9s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Critical/failing: strobe 0.35s */
+[data-hw-status="critical"] .hw-logic-bit,
+[data-hw-status="failing"] .hw-logic-bit {
+  animation: hw-strobe 0.35s steps(1) infinite;
+  will-change: opacity;
+}
+
+/* Building: faster breathe 1.5s */
+[data-hw-status="building"] .hw-logic-bit {
+  animation: hw-breathe 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Offline: no animation */
+[data-hw-status="offline"] .hw-logic-bit {
+  animation: none;
+  opacity: .4;
+}
+
+/* === Keyframes === */
+@keyframes hw-breathe {
+  0%, 100% { opacity: .3; }
+  50%      { opacity: 1; }
+}
+@keyframes hw-pulse {
+  0%, 100% { opacity: .25; }
+  50%      { opacity: 1; }
+}
+@keyframes hw-strobe {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: .1; }
+}
+@keyframes hw-sweep {
+  0%   { opacity: 0; transform: translateX(-120%) skewX(-15deg); }
+  30%  { opacity: 0.06; }
+  70%  { opacity: 0.06; }
+  100% { opacity: 0; transform: translateX(120%) skewX(-15deg); }
+}
+
+/* === HyperWeave Accessibility Layer ===
+ * Non-negotiable media queries for motion, color scheme, and forced colors.
+ * Included in EVERY artifact.
+ *
+ * CAMO NOTE: @media (prefers-color-scheme) and @media (forced-colors: active)
+ * are INERT when served through GitHub Camo as img tags. The img element
+ * creates an isolated browsing context — the parent document's color scheme
+ * and forced-colors mode do not propagate into it. Artifacts will always
+ * render in their default (dark) theme on GitHub READMEs.
+ *
+ * These queries DO activate when the SVG is embedded directly (svg inline,
+ * object, or opened as a standalone document). This is a known accepted
+ * tradeoff: dark-default through Camo, adaptive in direct embed.
+ */
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hw-logic-bit { animation: none !important; opacity: .8; }
+  .hw-scanner { animation: none; opacity: 0; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  animate, animateTransform, animateMotion, set {
+    display: none !important;
+  }
+}
+
+/* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
+/* Genome-provided light_mode alleles are injected by the CSS assembler
+   into a separate @media (prefers-color-scheme: light) block per artifact.
+   This placeholder is intentionally empty; it exists as documentation. */
+
+/* ── Forced Colors (Windows High Contrast) ── */
+@media (forced-colors: active) {
+  text { fill: CanvasText !important; }
+  rect, path, circle, ellipse, polygon, polyline, line {
+    stroke: CanvasText;
+  }
+  .hw-frame-bg { fill: Canvas !important; }
+  .hw-accent-bar { fill: Highlight !important; }
+  .hw-signal { fill: Highlight !important; }
+  .hw-logic-bit { fill: Highlight !important; }
+}
+</style>
+  <defs>
+<linearGradient id="hw-cf5411d2-val-bg" x1="0" x2="1" y1="0" y2="0">
+  <stop offset="0%" style="stop-color: var(--dna-border-tint)"/>
+  <stop offset="100%" style="stop-color: var(--dna-surface-deep)"/>
+</linearGradient>
+<clipPath id="hw-cf5411d2-clip">
+  <rect width="157" height="20"/>
+</clipPath>
+  </defs>
+
+
+<g clip-path="url(#hw-cf5411d2-clip)">
+  <rect width="69" height="20" fill="var(--dna-surface)"/>
+  <rect x="73" width="84" height="20" fill="url(#hw-cf5411d2-val-bg)"/>
+</g>
+<rect x=".5" y=".5" width="156" height="19" fill="none" stroke="var(--dna-ink-primary)" stroke-opacity="0.06"/>
+<rect x="0" y="0" width="4" height="20" fill="var(--dna-signal)" data-hw-zone="accent-bar"/>
+<rect x="69" y="0" width="2" height="20" fill="var(--hw-state-sep, var(--dna-signal))"/>
+<rect x="71" y="0" width="3" height="20" fill="var(--dna-seam-gap, var(--dna-surface-deep))"/>
+
+<g data-hw-zone="glyph" transform="translate(7,3.0)">
+  <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-signal)"/></svg>
+
+</g>
+
+<text data-hw-zone="label"
+      x="43.5" y="13.8"
+      text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" font-weight="600"
+      fill="var(--dna-label-text)"
+      letter-spacing="0.06em">BUILD</text>
+
+<text data-hw-zone="value"
+      x="109.5" y="13.8"
+      text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" font-weight="700"
+      fill="var(--hw-state-value, var(--dna-brand-text))">critical</text>
+
+<g data-hw-zone="status" transform="translate(141,6)">
+  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="1.2" width="8" height="8"/>
+  <rect class="hw-logic-bit" x="2.0" y="2.0" width="4" height="4"
+        fill="var(--dna-status-color, var(--dna-signal))"/>
+</g>
+
+<rect class="hw-state-tint" x="74" y="0"
+      width="83" height="20"
+      pointer-events="none"/>
+
+</svg>

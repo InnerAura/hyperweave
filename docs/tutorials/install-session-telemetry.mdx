@@ -1,0 +1,116 @@
+---
+title: "Install Session Telemetry"
+description: "Set up HyperWeave to automatically generate visual session receipts after every Claude Code conversation."
+---
+
+HyperWeave can parse Claude Code session transcripts and render structured telemetry artifacts -- receipts, rhythm strips, and master cards. This tutorial sets up automatic receipt generation via Claude Code hooks.
+
+## Prerequisites
+
+- HyperWeave installed
+- Claude Code CLI installed and configured
+- At least one completed Claude Code session (produces `.claude/` transcript files)
+
+## Step 1: Install the Hook
+
+HyperWeave ships with a one-command hook installer:
+
+```bash
+hyperweave install-hook
+```
+
+This adds a `SessionEnd` hook to your Claude Code settings (`~/.claude/settings.json`) that runs `hw session receipt` after every conversation.
+
+<Info>
+  The hook reads the transcript path from stdin (Claude Code provides it as JSON) and writes a receipt SVG to `.hyperweave/receipts/`.
+</Info>
+
+## Step 2: Verify the Hook
+
+Check your settings:
+
+```bash
+cat ~/.claude/settings.json
+```
+
+You should see:
+
+```json
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hw session receipt",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Step 3: Run a Test Session
+
+Start a Claude Code session, ask a question, then end the conversation. After the session ends, check for the receipt:
+
+```bash
+ls .hyperweave/receipts/
+```
+
+You should see an SVG file named with the session ID.
+
+## Step 4: Manual Receipt Generation
+
+You can also generate receipts manually from any transcript:
+
+```bash
+hyperweave session receipt .claude/projects/<project>/sessions/<session-id>.jsonl
+```
+
+Or parse the raw telemetry data:
+
+```bash
+hyperweave session parse .claude/projects/<project>/sessions/<session-id>.jsonl
+```
+
+This outputs the telemetry contract as JSON -- useful for debugging or custom visualization.
+
+## Step 5: Render a Rhythm Strip
+
+Rhythm strips show tool call density over time:
+
+```bash
+hyperweave session strip .claude/projects/<project>/sessions/<session-id>.jsonl -o strip.svg
+```
+
+## What the Telemetry Pipeline Does
+
+The telemetry system processes session transcripts in 5 passes:
+
+1. **Tool calls**: Extracts tool names, arguments, durations, outcomes
+2. **Outcomes**: Classifies success, failure, and partial results
+3. **User text**: Captures prompts, corrections, and feedback signals
+4. **Agent spans**: Identifies reasoning blocks and decision points
+5. **Turn durations**: Computes latency and throughput metrics
+
+Then applies:
+- **3-signal stage detector**: Temporal (0.3), class shift (0.4), explicit (0.3) with 0.6 threshold
+- **Dual-signal correction classifier**: Lexical patterns + behavioral signals
+- **Cost computation**: Token counts and pricing
+
+All configuration lives in YAML files under `data/telemetry/`:
+- `tool-colors.yaml` -- tool name to color mapping
+- `tool-classes.yaml` -- tool name to class mapping
+- `stage-labels.yaml` -- stage ID to label mapping
+- `stage-config.yaml` -- detector weights and thresholds
+
+## What You Learned
+
+- `hyperweave install-hook` sets up automatic session receipts
+- Receipts are rendered to `.hyperweave/receipts/` after each session
+- Manual generation works with `hyperweave session receipt <path>`
+- The telemetry pipeline uses a 5-pass parser with 3-signal stage detection

@@ -1,0 +1,42 @@
+/* === HyperWeave Bridge Classes ===
+ * Maps semantic class names (hw-*) to genome DNA custom properties (--dna-*).
+ * Genome-agnostic: works with ANY genome that defines the --dna-* contract.
+ */
+
+/* ── Surface fills ── */
+.hw-surface      { fill: var(--dna-surface); }
+.hw-surface-deep { fill: var(--dna-surface-deep); }
+.hw-bg           { fill: var(--dna-bg); }
+.hw-bg-alt       { fill: var(--dna-bg-alt); }
+
+/* ── Signal / Accent ── */
+.hw-signal       { fill: var(--dna-signal); }
+.hw-signal-stroke { stroke: var(--dna-signal); }
+.hw-signal-dim   { fill: var(--dna-signal-dim); }
+
+/* ── Ink / Typography ── */
+.hw-ink          { fill: var(--dna-ink-primary); }
+.hw-ink-muted    { fill: var(--dna-ink-muted); }
+.hw-ink-sub      { fill: var(--dna-ink-sub); }
+.hw-ink-bright   { fill: var(--dna-ink-bright); }
+.hw-ink-on-accent { fill: var(--dna-ink-on-accent); }
+
+/* ── Border / Separator ── */
+.hw-border       { stroke: var(--dna-border); }
+.hw-sep          { stroke: var(--dna-sep); }
+
+/* ── Status ── */
+.hw-status-pass  { fill: var(--dna-status-passing-core); }
+.hw-status-warn  { fill: var(--dna-status-warning-core); }
+.hw-status-fail  { fill: var(--dna-status-failing-core); }
+.hw-delta-pos    { fill: var(--dna-status-delta-positive); }
+.hw-delta-neg    { fill: var(--dna-status-delta-negative); }
+
+/* ── Extended ── */
+.hw-glow         { flood-color: var(--dna-glow); }
+.hw-brand-text   { fill: var(--dna-brand-text); }
+.hw-metric-text  { fill: var(--dna-metric-text); }
+.hw-border-tint  { stroke: var(--dna-border-tint); }
+.hw-glyph-inner  { fill: var(--dna-glyph-inner); }
+.hw-seam-gap     { fill: var(--dna-seam-gap); }
+.hw-label-txt    { fill: var(--dna-label-text); }

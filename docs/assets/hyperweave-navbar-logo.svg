@@ -1,0 +1,299 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 180 48"
+     role="img"
+     aria-labelledby="hw-nav-title"
+     data-hw-component="navbar-logo"
+     data-hw-chromatic="cobalt-sapphire-deep"
+     data-hw-variant="navbar">
+
+  <title id="hw-nav-title">HyperWeave</title>
+
+  <metadata>
+    <hw:artifact type="navbar-logo" series="hyperweave-brand" version="11.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.6 (InnerAura Labs)</hw:generator>
+        <hw:created>2026-03-25</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:aesthetic>
+        <hw:chromatic system="cobalt-sapphire-deep" space="oklch"/>
+        <hw:motion physics="sapphire-optics+phi-cascade" timing="material-deceleration+phi"/>
+      </hw:aesthetic>
+      <hw:reasoning>
+        <hw:intent>Compact navbar identity with sapphire crystal DNA from V11 banner</hw:intent>
+        <hw:approach>Transmitter geometry preserved; full 6-stop sapphire refraction gradient; adaptive text via CSS custom properties matching banner; caustic vertex nodes; sapphire particle shards</hw:approach>
+        <hw:tradeoffs>Removed octahedron scaffold (too dense at 40px); kept 2 orbiting particles; sapphire feColorMatrix filter simplified for small scale rendering</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SAPPHIRE REFRACTION — 6-stop spectrum from V11 -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <linearGradient id="s-nav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0838">
+        <animate attributeName="stop-color"
+                 values="#0a0838;#141070;#0a0838"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="18%" stop-color="#1838b0">
+        <animate attributeName="stop-color"
+                 values="#1838b0;#2850d8;#1030a0;#2048c8;#1838b0"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="42%" stop-color="#4080ff">
+        <animate attributeName="stop-color"
+                 values="#4080ff;#60a0ff;#3070f0;#5090ff;#4080ff"
+                 dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="55%" stop-color="#d0e4ff">
+        <animate attributeName="stop-color"
+                 values="#d0e4ff;#e8f0ff;#b8d4ff;#dce8ff;#d0e4ff"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="78%" stop-color="#5848d8">
+        <animate attributeName="stop-color"
+                 values="#5848d8;#7060f0;#4838c0;#6858e8;#5848d8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#120860">
+        <animate attributeName="stop-color"
+                 values="#120860;#1c1088;#0c0650;#120860"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="13.708s"
+                        repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- TYPOGRAPHY — "Hyper" gradient (adaptive via CSS vars) -->
+    <linearGradient id="s-hyp" x1="0%" y1="0%" x2="100%" y2="10%">
+      <stop offset="0%" stop-color="var(--hw-t1a)"/>
+      <stop offset="40%" stop-color="var(--hw-t1b)"/>
+      <stop offset="100%" stop-color="var(--hw-t1c)"/>
+    </linearGradient>
+
+    <!-- TYPOGRAPHY — "Weave" gradient (adaptive via CSS vars) -->
+    <linearGradient id="s-wev" x1="0%" y1="0%" x2="100%" y2="10%">
+      <stop offset="0%" stop-color="var(--hw-t2a)">
+        <animate attributeName="stop-color"
+                 values="var(--hw-t2a);var(--hw-t2b);var(--hw-t2a)"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="50%" stop-color="var(--hw-t2b)">
+        <animate attributeName="stop-color"
+                 values="var(--hw-t2b);var(--hw-t2c);var(--hw-t2b)"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="var(--hw-t2c)"/>
+    </linearGradient>
+
+    <!-- VERTEX CAUSTIC — light accumulation at nodes -->
+    <radialGradient id="s-caus" cx="30%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#e8f0ff" stop-opacity="1"/>
+      <stop offset="25%" stop-color="#6090ff" stop-opacity=".7"/>
+      <stop offset="100%" stop-color="#1838a0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- ORBITAL PARTICLE — sapphire shard -->
+    <radialGradient id="s-part" cx="35%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#d0e8ff" stop-opacity=".95">
+        <animate attributeName="stop-color"
+                 values="#d0e8ff;#b0d0ff;#e0f0ff;#d0e8ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#3060d0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- SAPPHIRE GLOW — blue-channel dominant feColorMatrix -->
+    <filter id="f-nav" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="b">
+        <animate attributeName="stdDeviation"
+                 values="1.5;2.0;1.2;1.8;1.5"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </feGaussianBlur>
+      <feColorMatrix in="b" type="matrix"
+                     values="0.15 0 0.5  0 0.04
+                             0.08 0.12 0.4 0 0.02
+                             0.2  0.08 1.0 0 0.08
+                             0    0    0   0.55 0" result="t"/>
+      <feMerge>
+        <feMergeNode in="t"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    /* ═══════════════════════════════════════════ */
+    /* ADAPTIVE CHROMATIC SYSTEM — from V11 banner */
+    /* ═══════════════════════════════════════════ */
+
+    svg {
+      /* DARK MODE (default — sapphire formidable) */
+      --hw-t1a: #a0b8f0;
+      --hw-t1b: #e0e8ff;
+      --hw-t1c: #90a8e0;
+      --hw-t2a: #5858e0;
+      --hw-t2b: #7878f8;
+      --hw-t2c: #4848c8;
+      --hw-wire: #2040a0;
+    }
+
+    @media (prefers-color-scheme: light) {
+      svg {
+        --hw-t1a: #0c1848;
+        --hw-t1b: #1a2868;
+        --hw-t1c: #101c50;
+        --hw-t2a: #2838a8;
+        --hw-t2b: #3848c0;
+        --hw-t2c: #2030a0;
+        --hw-wire: #4868c0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- LOGO SYMBOL (centered in 48px height)  -->
+  <!-- ═══════════════════════════════════════ -->
+  <g data-hw-section="symbol" transform="translate(24, 24)">
+
+    <!-- Bounding ring — sapphire wire -->
+    <circle cx="0" cy="0" r="20" fill="none"
+            stroke="var(--hw-wire)" stroke-width="0.5" opacity="0.3">
+      <animate attributeName="opacity"
+               values="0.3;0.4;0.25;0.35;0.3"
+               dur="8.472s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+
+    <!-- CORE TRANSMITTER — sapphire refraction -->
+    <path d="M -3.7,-14.3
+             L -11.4,-7.1
+             C -14.9,-3.4 -14.9,3.4 -11.4,7.1
+             L -3.7,14.3
+             L 3.7,14.3
+             L 11.4,7.1
+             C 14.9,3.4 14.9,-3.4 11.4,-7.1
+             L 3.7,-14.3
+             Z"
+          fill="none"
+          stroke="url(#s-nav)"
+          stroke-width="2.5"
+          stroke-linejoin="round"
+          stroke-linecap="round"
+          filter="url(#f-nav)">
+      <animate attributeName="stroke-width"
+               values="2.5;3.0;2.3;3.2;2.5"
+               dur="8.472s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      <animateTransform attributeName="transform"
+                       type="rotate"
+                       values="0;1.5;-1.2;2.1;-0.8;0"
+                       dur="13.708s"
+                       repeatCount="indefinite"
+                       calcMode="spline"
+                       keySplines="0.23 0.47 0.48 0.93;0.27 0.43 0.52 0.89;0.21 0.49 0.44 0.97;0.29 0.41 0.56 0.87;0.25 0.45 0.50 0.91"/>
+    </path>
+
+    <!-- INTERNAL CONNECTIONS — sapphire light channels -->
+    <g stroke="url(#s-nav)" stroke-width="1" opacity="0.7" stroke-linecap="round">
+      <animate attributeName="opacity"
+               values="0.7;0.5;0.8;0.6;0.7"
+               dur="3.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      <line x1="-7" y1="-7" x2="7" y2="-7"/>
+      <line x1="-8.5" y1="-1" x2="8.5" y2="-1"/>
+      <line x1="-7" y1="5" x2="7" y2="5"/>
+    </g>
+
+    <!-- CORNER NODES — caustic accumulation -->
+    <g fill="url(#s-caus)">
+      <circle cx="-3.7" cy="-14.3" r="1.2"/>
+      <circle cx="3.7" cy="-14.3" r="1.2"/>
+      <circle cx="-11.4" cy="-7.1" r="1.2"/>
+      <circle cx="11.4" cy="-7.1" r="1.2"/>
+      <circle cx="-11.4" cy="7.1" r="1.2"/>
+      <circle cx="11.4" cy="7.1" r="1.2"/>
+      <circle cx="-3.7" cy="14.3" r="1.2"/>
+      <circle cx="3.7" cy="14.3" r="1.2"/>
+    </g>
+
+    <!-- NEXUS — sapphire caustic peak -->
+    <circle cx="0" cy="0" r="2" fill="url(#s-caus)" filter="url(#f-nav)">
+      <animate attributeName="r"
+               values="2;2.8;2"
+               dur="3.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+
+    <!-- ORBITING PARTICLES — sapphire shards -->
+    <circle r="1.2" fill="url(#s-part)" filter="url(#f-nav)">
+      <animateMotion
+        path="M0,-16 L16,0 L0,16 L-16,0 Z"
+        dur="8.472s"
+        repeatCount="indefinite"/>
+      <animate attributeName="r"
+               values="1.2;0.9;1.4;1.0;1.2"
+               dur="8.472s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+
+    <circle r="0.9" fill="url(#s-part)" filter="url(#f-nav)">
+      <animateMotion
+        path="M10,-10 L10,10 L-10,10 L-10,-10 Z"
+        dur="5.236s"
+        repeatCount="indefinite"/>
+      <animate attributeName="r"
+               values="0.9;1.2;0.7;1.0;0.9"
+               dur="5.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+  </g>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- WORDMARK — sapphire adaptive typography -->
+  <!-- ═══════════════════════════════════════ -->
+  <g data-hw-section="wordmark" transform="translate(52, 24)">
+    <text y="6"
+          font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+          font-size="18"
+          font-weight="700">
+      <tspan fill="url(#s-hyp)">Hyper</tspan><tspan fill="url(#s-wev)">Weave</tspan>
+    </text>
+  </g>
+</svg>

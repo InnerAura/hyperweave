@@ -1,0 +1,135 @@
+---
+title: "ComposeSpec Reference"
+description: "Complete parameter reference for the ComposeSpec model -- the single input to the composition pipeline."
+---
+
+`ComposeSpec` is the Pydantic model that serves as the sole input to the composition pipeline. Every artifact -- badge, strip, banner, icon, divider, marquee, or telemetry frame -- is produced from a single `ComposeSpec`.
+
+## Model Definition
+
+```python
+from hyperweave.core.models import ComposeSpec
+
+spec = ComposeSpec(
+    type="badge",
+    genome_id="brutalist-emerald",
+    title="build",
+    value="passing",
+    state="passing",
+    motion="static",
+    glyph="github",
+    glyph_mode="auto",
+    regime="normal",
+    variant="default",
+    metadata_tier=3,
+)
+```
+
+## Parameters
+
+### Core Identity
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `type` | `FrameType` | **required** | Frame type to compose |
+| `genome_id` | `GenomeId` | `"brutalist-emerald"` | Genome slug |
+| `profile_id` | `str` | *auto-resolved* | Profile ID (resolved from genome if empty) |
+| `frame_id` | `str` | `""` | Resolved frame identifier |
+
+### Content
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `title` | `str` | `""` | Primary text (label for badge, identity for strip, title for banner) |
+| `value` | `str` | `""` | Secondary text (value for badge, metrics for strip, subtitle for banner) |
+| `slots` | `list[SlotContent]` | `[]` | Structured content filling frame zones |
+
+### Appearance
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `state` | `str` | `"active"` | Semantic status (drives indicator color) |
+| `motion` | `str` | `"static"` | Motion primitive to apply |
+| `glyph` | `str` | `""` | Glyph ID from the 97-glyph library |
+| `glyph_mode` | `str` | `"auto"` | Glyph rendering mode |
+| `variant` | `str` | `"default"` | Frame variant (e.g., "compact" for banner) |
+
+### Governance
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `regime` | `str` | `"normal"` | Policy regime for CIM enforcement |
+| `metadata_tier` | `int` | `3` | Metadata verbosity (0=silent, 3=resonant, 4=reasoning) |
+| `generation` | `int` | `1` | Generation counter (ge=1) |
+
+### Divider Options
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `divider_variant` | `str` | `"zeropoint"` | Divider visual variant |
+
+### Marquee Options
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `marquee_direction` | `str` | `"ltr"` | Scroll direction (`ltr`, `rtl`, `up`, `down`) |
+| `marquee_rows` | `int` | `1` | Number of counter rows |
+| `marquee_speeds` | `list[float] \| None` | `None` | Per-row scroll speeds |
+
+<Info>
+  The CLI, HTTP, and MCP interfaces use the short forms `direction`, `rows`, and `speeds`. The ComposeSpec model uses the prefixed `marquee_*` names internally because the model is a flat namespace shared across all frame types.
+</Info>
+
+### Telemetry
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `telemetry_data` | `dict \| None` | `None` | Telemetry contract dict for receipt/rhythm-strip/master-card |
+
+## Enum Values
+
+### FrameType
+
+`badge`, `strip`, `banner`, `icon`, `divider`, `marquee-horizontal`, `marquee-vertical`, `marquee-counter`, `receipt`, `rhythm-strip`, `master-card`, `catalog`
+
+### GenomeId
+
+`brutalist-emerald`, `chrome-horizon`
+
+### MotionId
+
+`static`, `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun`, `bars`, `broadcast`, `cascade`, `collapse`, `converge`, `crash`, `drop`, `breach`, `pulse`
+
+### ArtifactStatus
+
+`active`, `passing`, `building`, `warning`, `critical`, `failing`, `offline`, `loop`
+
+### GlyphMode
+
+`auto`, `fill`, `wire`, `none`
+
+### Regime
+
+`normal`, `permissive`, `ungoverned`
+
+### DividerVariant
+
+`block`, `current`, `takeoff`, `void`, `zeropoint`
+
+## ComposeResult
+
+The output of `compose(spec)`:
+
+| Field | Type | Description |
+|---|---|---|
+| `svg` | `str` | Self-contained SVG string |
+| `width` | `int` | Artifact width in pixels |
+| `height` | `int` | Artifact height in pixels |
+| `metadata` | `ArtifactMetadata \| None` | Structured metadata (when tier >= 1) |
+
+## Model Behavior
+
+- **Frozen**: All instances are immutable after creation
+- **Extra forbidden**: Unknown fields raise `ValidationError`
+- **Auto-resolve profile**: `profile_id` is resolved from `genome_id` if not explicitly set
+- **Generation constraint**: `generation` must be >= 1

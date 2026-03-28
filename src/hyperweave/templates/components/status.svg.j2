@@ -1,0 +1,23 @@
+{# HyperWeave Status Indicator Component.
+   Renders as square (brutalist) or circle (default) based on profile.
+   Expects: status_x, status_y, status_shape ('square' or 'circle'),
+            status_size (outer dimension, default 8) #}
+{% set shape = status_shape | default('circle') %}
+{% set sz = status_size | default(8) %}
+{% set inner = sz * 0.5 %}
+{% set offset = (sz - inner) / 2 %}
+<g data-hw-zone="status" transform="translate({{ status_x }},{{ status_y }})">
+{% if shape == 'square' %}
+  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))"
+        stroke-width="1.2" width="{{ sz }}" height="{{ sz }}"/>
+  <rect class="hw-logic-bit" x="{{ offset }}" y="{{ offset }}"
+        width="{{ inner }}" height="{{ inner }}"
+        fill="var(--hw-state-core, var(--dna-signal))"/>
+{% else %}
+  <circle fill="none" stroke="var(--hw-state-ring, var(--dna-signal))"
+          stroke-width="1.2" cx="{{ sz / 2 }}" cy="{{ sz / 2 }}" r="{{ sz / 2 }}"/>
+  <circle class="hw-logic-bit"
+          cx="{{ sz / 2 }}" cy="{{ sz / 2 }}" r="{{ inner / 2 }}"
+          fill="var(--hw-state-core, var(--dna-signal))"/>
+{% endif %}
+</g>

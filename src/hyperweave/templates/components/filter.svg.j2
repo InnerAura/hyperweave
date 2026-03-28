@@ -1,0 +1,21 @@
+{# HyperWeave Reusable Filter Defs.
+   Glow, shadow, blur filters. Expects: uid #}
+
+{# Drop shadow filter for icons #}
+<filter id="{{ uid }}-shadow">
+  <feDropShadow dx="0" dy="1" stdDeviation="2"
+                flood-color="var(--dna-shadow-color, #000)"
+                flood-opacity="var(--dna-shadow-opacity, 0.15)"/>
+</filter>
+
+{# Soft glow filter for borders / accents #}
+<filter id="{{ uid }}-glow" x="-30%" y="-30%" width="160%" height="160%">
+  <feGaussianBlur in="SourceGraphic" stdDeviation="1.8"/>
+  <feComponentTransfer>
+    <feFuncA type="linear" slope="0.2"/>
+  </feComponentTransfer>
+  <feMerge>
+    <feMergeNode/>
+    <feMergeNode in="SourceGraphic"/>
+  </feMerge>
+</filter>

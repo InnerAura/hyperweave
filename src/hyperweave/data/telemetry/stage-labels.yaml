@@ -1,0 +1,8 @@
+# ToolClass -> StageLabel mapping.
+# Loaded by telemetry/models.py at import time.
+# Keys match ToolClass enum, values match StageLabel enum.
+explore: reconnaissance
+mutate: implementation
+execute: validation
+coordinate: orchestration
+reflect: deliberation

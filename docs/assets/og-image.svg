@@ -1,0 +1,500 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 1200 630"
+     role="img"
+     aria-labelledby="hw-og-title hw-og-desc"
+     data-hw-component="og-image"
+     data-hw-chromatic="cobalt-sapphire-deep"
+     data-hw-variant="og-image">
+
+  <title id="hw-og-title">HyperWeave &#x2014; Where Vectors Meet Vision</title>
+  <desc id="hw-og-desc">Visual infrastructure for the agentic web. Living SVG Artifacts with zero JavaScript.</desc>
+
+  <metadata>
+    <hw:artifact type="og-image" series="hyperweave-brand" version="11.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.6 (InnerAura Labs)</hw:generator>
+        <hw:created>2026-03-25</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:aesthetic>
+        <hw:chromatic system="cobalt-sapphire-deep" space="oklch" contrast-ratio="15.1:1"/>
+        <hw:motion vocabulary="vertex-scale,edge-clip-draw,core-scale,sapphire-refraction,caustic-pulse,luminance-flow"
+                   physics="graph-construction+sapphire-optics+phi-cascade"
+                   timing="material-deceleration+phi"/>
+        <hw:geometry form-language="octahedral-angular" proportional-system="phi"
+                     symmetry="4-fold-rotational"/>
+        <hw:material surface="sapphire-crystal" depth="deep"/>
+      </hw:aesthetic>
+      <hw:reasoning>
+        <hw:intent>Social sharing preview with full sapphire crystal DNA from V11 banner</hw:intent>
+        <hw:approach>Hero composition: transmitter left with octahedron scaffold, typography right. Full sapphire filter chain (core+halo+ambient+caustic), atmospheric nebula, phi-ratio motion cascade. Dark sapphire substrate for social card compatibility.</hw:approach>
+        <hw:tradeoffs>Static platforms (Twitter/LinkedIn) show frozen frame — gradient initial state designed for visual impact without animation. Dark substrate (#060420) required instead of transparent for social card rendering. Formidable typography at 72px with italic weight matches banner severity.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- SAPPHIRE REFRACTION CHROMATIC SYSTEM                        -->
+    <!-- 6-stop spectrum identical to V11 banner                     -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <linearGradient id="s-edge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <!-- Entry face — deep sapphire -->
+      <stop offset="0%" stop-color="#0a0838">
+        <animate attributeName="stop-color"
+                 values="#0a0838;#141070;#0a0838"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <!-- First refraction — cobalt brightening -->
+      <stop offset="18%" stop-color="#1838b0">
+        <animate attributeName="stop-color"
+                 values="#1838b0;#2850d8;#1030a0;#2048c8;#1838b0"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Crystal core — peak luminance -->
+      <stop offset="42%" stop-color="#4080ff">
+        <animate attributeName="stop-color"
+                 values="#4080ff;#60a0ff;#3070f0;#5090ff;#4080ff"
+                 dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Internal caustic — white-blue flash -->
+      <stop offset="55%" stop-color="#d0e4ff">
+        <animate attributeName="stop-color"
+                 values="#d0e4ff;#e8f0ff;#b8d4ff;#dce8ff;#d0e4ff"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Exit refraction — violet dispersion -->
+      <stop offset="78%" stop-color="#5848d8">
+        <animate attributeName="stop-color"
+                 values="#5848d8;#7060f0;#4838c0;#6858e8;#5848d8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Exit face — deep indigo -->
+      <stop offset="100%" stop-color="#120860">
+        <animate attributeName="stop-color"
+                 values="#120860;#1c1088;#0c0650;#120860"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="13.708s"
+                        repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- VERTEX CAUSTIC — light accumulation at graph nodes -->
+    <radialGradient id="s-caus" cx="30%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#e8f0ff" stop-opacity="1">
+        <animate attributeName="stop-opacity"
+                 values="1;.8;1" dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="25%" stop-color="#6090ff" stop-opacity=".7"/>
+      <stop offset="100%" stop-color="#1838a0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- ORBITAL PARTICLE — sapphire shard -->
+    <radialGradient id="s-part" cx="35%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#d0e8ff" stop-opacity=".95">
+        <animate attributeName="stop-color"
+                 values="#d0e8ff;#b0d0ff;#e0f0ff;#d0e8ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#3060d0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- FACE INTERIOR — sapphire crystal planes -->
+    <linearGradient id="s-f1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3060e0" stop-opacity=".07">
+        <animate attributeName="stop-opacity"
+                 values=".07;.13;.04;.10;.07"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#1838a0" stop-opacity=".02"/>
+    </linearGradient>
+    <linearGradient id="s-f2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5050d8" stop-opacity=".05"/>
+      <stop offset="100%" stop-color="#2848c0" stop-opacity=".01"/>
+    </linearGradient>
+
+    <!-- ATMOSPHERIC NEBULA -->
+    <radialGradient id="s-neb" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2848c0" stop-opacity=".14">
+        <animate attributeName="stop-opacity"
+                 values=".14;.20;.10;.17;.14"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="35%" stop-color="#1838a0" stop-opacity=".07"/>
+      <stop offset="100%" stop-color="#0c1060" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- TYPOGRAPHY — "Hyper" gradient (dark mode fixed for OG) -->
+    <linearGradient id="s-hyp" x1="0%" y1="0%" x2="100%" y2="10%">
+      <stop offset="0%" stop-color="#a0b8f0"/>
+      <stop offset="40%" stop-color="#e0e8ff"/>
+      <stop offset="100%" stop-color="#90a8e0"/>
+    </linearGradient>
+
+    <!-- TYPOGRAPHY — "Weave" gradient (sapphire shimmer) -->
+    <linearGradient id="s-wev" x1="0%" y1="0%" x2="100%" y2="10%">
+      <stop offset="0%" stop-color="#5858e0">
+        <animate attributeName="stop-color"
+                 values="#5858e0;#7878f8;#5858e0"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="50%" stop-color="#7878f8">
+        <animate attributeName="stop-color"
+                 values="#7878f8;#4848c8;#7878f8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#4848c8"/>
+    </linearGradient>
+
+    <!-- BACKGROUND — deep sapphire substrate -->
+    <linearGradient id="s-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060420"/>
+      <stop offset="50%" stop-color="#080630"/>
+      <stop offset="100%" stop-color="#0a0838"/>
+    </linearGradient>
+
+    <!-- ════════════════════════════════════ -->
+    <!-- FILTER CHAIN — SAPPHIRE LIGHT DEPTH -->
+    <!-- ════════════════════════════════════ -->
+
+    <!-- CORE GLOW — sapphire interior luminance -->
+    <filter id="f-core" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b1">
+        <animate attributeName="stdDeviation"
+                 values="4;5.5;3.5;5;4"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </feGaussianBlur>
+      <feColorMatrix in="b1" type="matrix"
+                     values="0.15 0 0.6 0 0.06
+                             0.08 0.12 0.5 0 0.03
+                             0.25 0.1 1.2 0 0.10
+                             0    0   0   0.65 0" result="t1"/>
+      <feMerge>
+        <feMergeNode in="t1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- EDGE HALO — secondary sapphire bloom -->
+    <filter id="f-halo" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b2"/>
+      <feColorMatrix in="b2" type="matrix"
+                     values="0.10 0 0.45 0 0.03
+                             0.06 0.08 0.35 0 0.01
+                             0.18 0.05 0.90 0 0.06
+                             0    0    0    0.22 0" result="t2"/>
+      <feMerge>
+        <feMergeNode in="t2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- AMBIENT BLOOM — outermost atmospheric field -->
+    <filter id="f-amb" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="18"/>
+      <feColorMatrix type="matrix"
+                     values="0.06 0 0.30 0 0.02
+                             0.04 0.05 0.22 0 0.01
+                             0.10 0.03 0.65 0 0.04
+                             0    0    0    0.12 0"/>
+    </filter>
+
+    <!-- CAUSTIC NODE — vertex light accumulation -->
+    <filter id="f-caus" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="cb"/>
+      <feColorMatrix in="cb" type="matrix"
+                     values="0.2  0 0.55 0 0.10
+                             0.12 0.15 0.45 0 0.06
+                             0.25 0.08 1.1 0 0.14
+                             0    0    0   0.75 0" result="ct"/>
+      <feMerge>
+        <feMergeNode in="ct"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- TEXT SAPPHIRE GLOW -->
+    <filter id="f-txt" x="-8%" y="-20%" width="116%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="tb"/>
+      <feFlood flood-color="#3060e0" flood-opacity=".15" result="tc"/>
+      <feComposite in="tc" in2="tb" operator="in" result="ts"/>
+      <feMerge>
+        <feMergeNode in="ts"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- L0: SAPPHIRE SUBSTRATE                  -->
+  <!-- ═══════════════════════════════════════ -->
+  <rect width="1200" height="630" fill="url(#s-bg)"/>
+
+  <!-- L1: AMBIENT GRID — precision scaffolding -->
+  <g opacity=".03" stroke="#4080ff" stroke-width=".5">
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="350" y1="0" x2="350" y2="630"/>
+    <circle cx="350" cy="315" r="200" fill="none"/>
+    <circle cx="350" cy="315" r="280" fill="none"/>
+  </g>
+
+  <!-- L2: ATMOSPHERIC NEBULA FIELD -->
+  <ellipse cx="350" cy="315" rx="300" ry="240" fill="url(#s-neb)" opacity=".12">
+    <animate attributeName="opacity" values=".12;.18;.10;.15;.12"
+             dur="13.708s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+  </ellipse>
+
+  <!-- L3: AMBIENT BLOOM (outermost glow layer) -->
+  <g transform="translate(350,315)">
+    <path d="M-30,-115 L-92,-58 C-120,-28 -120,28 -92,58 L-30,115 L30,115 L92,58 C120,28 120,-28 92,-58 L30,-115 Z"
+          fill="none" stroke="url(#s-edge)" stroke-width="10" filter="url(#f-amb)"
+          stroke-linejoin="round" stroke-linecap="round" opacity=".5"/>
+    <circle cx="0" cy="0" r="165" fill="none" stroke="url(#s-edge)" stroke-width="4"
+            filter="url(#f-amb)" opacity=".25"/>
+  </g>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- L4: MAIN GLYPH — GRAPH CONSTRUCTION     -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(350,315)">
+
+    <!-- Octahedron scaffold -->
+    <g stroke="url(#s-edge)" stroke-width="1.2" opacity=".3" fill="none">
+      <animate attributeName="opacity"
+               values=".3;.45;.3"
+               dur="5.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      <line x1="0" y1="-160" x2="160" y2="0"/>
+      <line x1="0" y1="-160" x2="0" y2="0"/>
+      <line x1="0" y1="-160" x2="-160" y2="0"/>
+      <line x1="0" y1="160" x2="160" y2="0"/>
+      <line x1="0" y1="160" x2="0" y2="0"/>
+      <line x1="0" y1="160" x2="-160" y2="0"/>
+      <line x1="160" y1="0" x2="0" y2="0"/>
+      <line x1="0" y1="0" x2="-160" y2="0"/>
+    </g>
+
+    <!-- Octahedron vertices — caustic nodes -->
+    <g fill="url(#s-caus)" filter="url(#f-caus)">
+      <circle cx="0" cy="-160" r="5">
+        <animate attributeName="r" values="5;6.5;5" dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      <circle cx="160" cy="0" r="5">
+        <animate attributeName="r" values="5;6;5" dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      <circle cx="0" cy="160" r="5">
+        <animate attributeName="r" values="5;6.2;5" dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+      <circle cx="-160" cy="0" r="5">
+        <animate attributeName="r" values="5;5.8;5" dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </circle>
+    </g>
+
+    <!-- Reference rings — sapphire wire -->
+    <circle cx="0" cy="0" r="80" fill="none" stroke="#2040a0" stroke-width=".6" opacity=".2">
+      <animate attributeName="opacity" values=".2;.35;.2" dur="3.236s" repeatCount="indefinite"
+               calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+    <circle cx="0" cy="0" r="120" fill="none" stroke="#2040a0" stroke-width=".5" opacity=".15">
+      <animate attributeName="opacity" values=".15;.28;.15" dur="5.236s" repeatCount="indefinite"
+               calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+
+    <!-- FACE FILLS — sapphire crystal interior planes -->
+    <g opacity=".08">
+      <path d="M0,-160 L160,0 L0,0 Z" fill="url(#s-f1)"/>
+      <path d="M0,-160 L-160,0 L0,0 Z" fill="url(#s-f2)"/>
+      <path d="M0,160 L160,0 L0,0 Z" fill="url(#s-f2)"/>
+      <path d="M0,160 L-160,0 L0,0 Z" fill="url(#s-f1)"/>
+    </g>
+
+    <!-- CORE TRANSMITTER — primary structural identity -->
+    <path d="M-30,-115 L-92,-58 C-120,-28 -120,28 -92,58 L-30,115 L30,115 L92,58 C120,28 120,-28 92,-58 L30,-115 Z"
+          fill="none" stroke="url(#s-edge)" stroke-width="8"
+          stroke-linejoin="round" stroke-linecap="round" filter="url(#f-core)">
+      <animate attributeName="stroke-width" values="8;9.5;7;9;8"
+               dur="8.472s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </path>
+
+    <!-- RING BOUNDARY -->
+    <circle cx="0" cy="0" r="160" fill="none"
+            stroke="url(#s-edge)" stroke-width="2.5" filter="url(#f-halo)">
+      <animate attributeName="opacity" values=".6;.75;.5;.68;.6"
+               dur="13.708s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+
+    <!-- INTERNAL CONNECTIONS — sapphire light channels -->
+    <g stroke="url(#s-edge)" stroke-width="3" opacity=".7" stroke-linecap="round">
+      <animate attributeName="opacity" values=".7;.5;.8;.7"
+               dur="3.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      <line x1="-58" y1="-58" x2="58" y2="-58"/>
+      <line x1="-70" y1="-9" x2="70" y2="-9"/>
+      <line x1="-58" y1="39" x2="58" y2="39"/>
+    </g>
+
+    <!-- CORNER NODES — caustic accumulation -->
+    <g fill="url(#s-caus)">
+      <circle cx="-30" cy="-115" r="4"/>
+      <circle cx="30" cy="-115" r="4"/>
+      <circle cx="-92" cy="-58" r="4"/>
+      <circle cx="92" cy="-58" r="4"/>
+      <circle cx="-92" cy="58" r="4"/>
+      <circle cx="92" cy="58" r="4"/>
+      <circle cx="-30" cy="115" r="4"/>
+      <circle cx="30" cy="115" r="4"/>
+    </g>
+
+    <!-- SPECULAR HIGHLIGHTS — sapphire surface reflections -->
+    <g stroke="#d0e4ff" fill="none" stroke-linecap="round">
+      <path d="M-30,-115 L-92,-58" stroke-width="1.5">
+        <animate attributeName="opacity" values=".55;.75;.45;.65;.55"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </path>
+      <path d="M30,-115 L92,-58" stroke-width="1.3" opacity=".50"/>
+      <path d="M-92,58 C-108,38 -118,14 -118,0" stroke-width="1" opacity=".35"/>
+      <path d="M92,58 C108,38 118,14 118,0" stroke-width="1" opacity=".30"/>
+    </g>
+
+    <!-- NEXUS — sapphire caustic peak -->
+    <circle cx="0" cy="0" r="8" fill="url(#s-caus)" filter="url(#f-caus)">
+      <animate attributeName="r" values="8;11;8"
+               dur="3.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+
+    <!-- VERTEX HIGHLIGHT — nexus caustic peak -->
+    <circle cx="0" cy="0" r="3.5" fill="#e0ecff">
+      <animate attributeName="r" values="3.5;5;3.5" dur="3.236s" repeatCount="indefinite"
+               calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+
+    <!-- ORBITING PARTICLES — sapphire shards -->
+    <circle r="5" fill="url(#s-part)" filter="url(#f-caus)">
+      <animateMotion path="M0,-140 L140,0 L0,140 L-140,0 Z"
+                     dur="8.472s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="5;3.5;6;4;5"
+               dur="8.472s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+    <circle r="3.5" fill="url(#s-part)" filter="url(#f-caus)">
+      <animateMotion path="M140,0 C0,-140 -140,0 0,140 Z"
+                     dur="13.708s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3.5;4.5;2.8;3.8;3.5"
+               dur="13.708s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+    <circle r="2.5" fill="#d0e4ff" opacity=".6">
+      <animateMotion path="M80,-80 L80,80 L-80,80 L-80,-80 Z"
+                     dur="5.236s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values=".6;.85;.4;.7;.6"
+               dur="5.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+  </g>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- L5: TYPOGRAPHY — FORMIDABLE, SAPPHIRE      -->
+  <!-- ═══════════════════════════════════════════ -->
+  <g transform="translate(620, 270)">
+    <!-- Brand wordmark — commanding, formidable -->
+    <text font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+          font-size="72" font-weight="900" font-style="italic"
+          letter-spacing="-2" filter="url(#f-txt)">
+      <tspan fill="url(#s-hyp)">Hyper</tspan><tspan fill="url(#s-wev)">Weave</tspan>
+    </text>
+
+    <!-- DIVIDER — surgical precision -->
+    <line x1="0" y1="18" x2="490" y2="18"
+          stroke="#3050c0" stroke-width=".9" opacity=".22"/>
+
+    <!-- TAGLINE — formidable condensed tracking -->
+    <text y="48"
+          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="15" font-weight="500" letter-spacing="7"
+          fill="#8898c8">WHERE VECTORS MEET VISION</text>
+
+    <!-- Secondary tagline -->
+    <text y="88"
+          font-family="'Inter','SF Pro Display',system-ui,sans-serif"
+          font-size="18" font-weight="400"
+          fill="#5868a8">Visual infrastructure for the agentic web</text>
+
+    <!-- Value prop — sapphire accent -->
+    <text y="128"
+          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="13" font-weight="500" letter-spacing="2"
+          fill="#4060d0" opacity=".75">LIVING SVG ARTIFACTS &#x2022; ZERO JAVASCRIPT</text>
+  </g>
+
+  <!-- URL footer — sapphire wire -->
+  <text x="600" y="590"
+        text-anchor="middle"
+        font-family="'JetBrains Mono','SF Mono',monospace"
+        font-size="14" font-weight="500" letter-spacing="4"
+        fill="#3050a0" opacity=".5">HYPERWEAVE.DEV</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- L6: FRAME — ANGULAR CORNER BRACKETS     -->
+  <!-- ═══════════════════════════════════════ -->
+  <g stroke="#4070e0" stroke-width="1.3" fill="none" opacity=".28">
+    <path d="M52,28 L28,28 L28,52"/>
+    <path d="M1148,28 L1172,28 L1172,52"/>
+    <path d="M52,602 L28,602 L28,578"/>
+    <path d="M1148,602 L1172,602 L1172,578"/>
+  </g>
+</svg>

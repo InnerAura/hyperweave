@@ -1,0 +1,128 @@
+---
+title: "Compose Your First Badge"
+description: "A step-by-step tutorial that walks you through composing a badge with HyperWeave, exploring genomes, states, glyphs, and motion."
+---
+
+This tutorial takes you from zero to a fully customized badge in about 5 minutes. You will compose badges with different states, add glyphs, apply motion, and switch genomes.
+
+## Prerequisites
+
+- Python 3.12+
+- HyperWeave installed (`uv add hyperweave` or `pip install hyperweave`)
+
+## Step 1: Your First Badge
+
+The simplest badge needs a frame type, a label, and a value:
+
+```bash
+hyperweave compose badge "build" "passing" -o badge.svg
+```
+
+This produces a two-panel badge with "build" on the left and "passing" on the right, using the default genome (`brutalist-emerald`) and no motion.
+
+Open `badge.svg` in a browser or embed it in markdown:
+
+```markdown
+![build: passing](./badge.svg)
+```
+
+## Step 2: Change the State
+
+The `--state` flag controls the status indicator color. HyperWeave has 7 states:
+
+| State | Meaning | Color Signal |
+|---|---|---|
+| `active` | Default, neutral | Accent |
+| `passing` | Success | Green |
+| `building` | In progress | Yellow pulse |
+| `warning` | Needs attention | Amber |
+| `critical` | Below threshold | Orange |
+| `failing` | Broken | Red |
+| `offline` | Unavailable | Gray |
+
+```bash
+hyperweave compose badge "tests" "failing" --state failing -o badge-failing.svg
+hyperweave compose badge "coverage" "92%" --state passing -o badge-passing.svg
+hyperweave compose badge "deploy" "building" --state building -o badge-building.svg
+```
+
+## Step 3: Add a Glyph
+
+Glyphs are 97 SVG icons (91 from Simple Icons + 6 geometric shapes). Add one with `--glyph`:
+
+```bash
+hyperweave compose badge "build" "passing" --glyph github -o badge-glyph.svg
+```
+
+Control how the glyph renders with `--glyph-mode`:
+
+| Mode | Effect |
+|---|---|
+| `auto` | Inferred from genome and glyph category |
+| `fill` | Solid fill with genome ink color |
+| `wire` | Outline stroke only |
+| `none` | Suppress glyph even if specified |
+
+```bash
+hyperweave compose badge "build" "passing" --glyph github --glyph-mode wire -o badge-wire.svg
+```
+
+## Step 4: Apply Motion
+
+Border motions add SMIL animation overlays to badges. There are 5 border motions:
+
+```bash
+# Chromatic pulse: cycling color shift on the border
+hyperweave compose badge "build" "passing" -m chromatic-pulse -o badge-pulse.svg
+
+# Corner trace: animated path tracing the corners
+hyperweave compose badge "build" "passing" -m corner-trace -o badge-trace.svg
+
+# Dual orbit: two particles orbiting the border
+hyperweave compose badge "build" "passing" -m dual-orbit -o badge-orbit.svg
+```
+
+All 5 border motions: `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun`.
+
+<Warning>
+  Border motions use SMIL animation, which renders correctly on GitHub and in browsers. Under the `normal` policy regime, only CIM-compliant motions are allowed. Use `--regime permissive` to enable all border motions.
+</Warning>
+
+## Step 5: Switch Genomes
+
+The same badge renders differently in each genome:
+
+```bash
+# Sharp corners, emerald accent, monospace typography
+hyperweave compose badge "build" "passing" -g brutalist-emerald -o badge-be.svg
+
+# Smooth curves, metallic blue, chrome mapping
+hyperweave compose badge "build" "passing" -g chrome-horizon -o badge-ch.svg
+```
+
+Compare the two files -- same content, completely different visual identity. That is the power of the genome system.
+
+## Step 6: Combine Everything
+
+```bash
+hyperweave compose badge "stars" "2.9k" \
+  --genome chrome-horizon \
+  --state passing \
+  --glyph github \
+  --motion chromatic-pulse \
+  --regime permissive \
+  -o badge-full.svg
+```
+
+## What You Learned
+
+- Badges are composed with `hyperweave compose badge <label> <value>`
+- States control the visual status indicator
+- Glyphs add icons from a 97-glyph library
+- Border motions add SMIL animation overlays
+- Genomes completely change the visual identity without changing content
+- The `--regime` flag controls which motions are allowed
+
+<Card title="Next: Build an Artifact Kit" icon="arrow-right" href="/tutorials/build-an-artifact-kit">
+  Compose a complete artifact set in one command.
+</Card>

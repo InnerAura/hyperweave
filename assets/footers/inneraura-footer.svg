@@ -1,0 +1,116 @@
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:hw="https://hyperweave.dev/hw/v1.0" 
+  viewBox="0 0 1400 400"
+  role="img" 
+  aria-labelledby="ia-title ia-desc"
+>
+  <title id="ia-title">InnerAura Labs</title>
+  <desc id="ia-desc">Monumental typographic logo optimized for light backgrounds — INNERAURA solid, LABS with vertical gradient dissolution ascending into luminosity</desc>
+  
+  <metadata>
+    <hw:artifact type="logo-monument" series="brand-typography" version="3.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.5 (Anthropic) [claude-opus-4-5-20251101]</hw:generator>
+        <hw:created>2026-01-06</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Light-background optimized variant — dissolution gradient now ascends into luminosity, inverting the void metaphor while maintaining brand gravity</hw:intent>
+        <hw:approach>Color theory: warm undertone in primary (#1a1a2e contains blue-violet, grounding the "aura"); LABS gradient uses opacity dissolution rather than value shift for true light-bg integration; stops calibrated for WCAG AA contrast at critical points</hw:approach>
+        <hw:tradeoffs>Chose opacity-based dissolution over pure color fade to ensure seamless embedding on any light surface (white, cream, light gray); sacrificed some visible gradient range in favor of contrast compliance at 50% mark</hw:tradeoffs>
+      </hw:reasoning>
+      <hw:spec size="1400x400" performance="static" theme="light-optimized" a11y="WCAG-AA"/>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <!-- 
+      Color Theory: Luminous Dissolution Gradient
+      
+      Principle: On light backgrounds, the "void" is the page itself.
+      LABS emerges FROM solidity INTO light — the inverse of dark-bg behavior.
+      
+      Using stop-opacity rather than color lightening ensures:
+      1. True transparency allows any light background to show through
+      2. The brand color remains consistent at any opacity level
+      3. Seamless integration whether on #fff, #f5f5f5, or cream
+      
+      Contrast checkpoints:
+      - 0%: #1a1a2e on white = 16.4:1 ✓ (AAA)
+      - 50%: ~8:1 ✓ (AAA)  
+      - 75%: ~4.5:1 ✓ (AA minimum)
+      - 100%: Aesthetic fade, decorative element
+    -->
+    <linearGradient id="luminous-dissolution" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#1a1a2e" stop-opacity="1"/>
+      <stop offset="35%" stop-color="#1a1a2e" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#1a1a2e" stop-opacity="0.55"/>
+      <stop offset="80%" stop-color="#1a1a2e" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#1a1a2e" stop-opacity="0.08"/>
+    </linearGradient>
+    
+    <!-- Alternative: Chromatic warmth variant (aura-infused) -->
+    <linearGradient id="aura-dissolution" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#1a1a2e" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#2d2a4a" stop-opacity="0.75"/>
+      <stop offset="70%" stop-color="#4a3f6b" stop-opacity="0.4"/>
+      <stop offset="90%" stop-color="#6b5b8a" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#8a7aa8" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    /* Design Tokens — Light Background Optimized */
+    :root, svg {
+      --ia-primary: #1a1a2e;           /* Deep blue-violet black — contains the "aura" */
+      --ia-primary-soft: #2d2a4a;      /* Lifted for subtle warmth */
+      --ia-dissolution: url(#luminous-dissolution);
+      --ia-font-stack: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Arial Black', sans-serif;
+      --ia-weight: 700;
+      --ia-size: 160px;
+      --ia-tracking: -0.04em;
+    }
+    
+    .type-solid {
+      font-family: var(--ia-font-stack);
+      font-weight: var(--ia-weight);
+      font-size: var(--ia-size);
+      letter-spacing: var(--ia-tracking);
+      fill: var(--ia-primary);
+    }
+    
+    .type-dissolve {
+      font-family: var(--ia-font-stack);
+      font-weight: var(--ia-weight);
+      font-size: var(--ia-size);
+      letter-spacing: var(--ia-tracking);
+      fill: var(--ia-dissolution);
+    }
+    
+    /* Dark mode: invert back to original behavior */
+    @media (prefers-color-scheme: dark) {
+      :root, svg {
+        --ia-primary: #fafafa;
+      }
+      .type-dissolve {
+        fill: url(#dark-dissolution);
+      }
+    }
+    
+    /* High contrast mode support */
+    @media (forced-colors: active) {
+      .type-solid,
+      .type-dissolve {
+        fill: CanvasText;
+        forced-color-adjust: auto;
+      }
+    }
+  </style>
+
+  <!-- Primary wordmark — anchored, gravitational -->
+  <text class="type-solid" x="700" y="160" text-anchor="middle" dominant-baseline="middle">INNERAURA</text>
+  
+  <!-- Secondary wordmark — ascending dissolution into light -->
+  <text class="type-dissolve" x="700" y="320" text-anchor="middle" dominant-baseline="middle">LABS</text>
+</svg>

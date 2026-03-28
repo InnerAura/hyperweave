@@ -1,0 +1,26 @@
+id: chrome
+name: Chrome
+fonts:
+  title: "'Impact', 'Arial Black', system-ui, sans-serif"
+  value: "'Impact', 'Arial Black', system-ui, sans-serif"
+  mono: "'Courier New', monospace"
+identity_size: 14
+identity_weight: 600
+identity_letter_spacing: "0em"
+value_size: 18
+value_weight: 700
+label_size: 8
+label_weight: 500
+label_letter_spacing: "0.08em"
+badge_value_size: 11
+badge_value_weight: 700
+strip_corner: 0
+badge_corner: 0
+strip_accent_width: 6
+strip_metric_pitch: 107
+strip_divider_mode: minimal
+badge_frame_height: 22
+glyph_backing: square
+glyph_backing_rx: 2
+status_shape: square
+easing: "cubic-bezier(0.4, 0, 0.2, 1)"

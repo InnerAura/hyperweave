@@ -1,0 +1,246 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.dev/hw/v8.0"
+     role="img"
+     aria-labelledby="hw-653dc54d-title hw-653dc54d-desc"
+     viewBox="0 0 64 64"
+     width="64" height="64"
+     data-hw-id="653dc54d-5918-4f1c-85fd-68374a5add62"
+     data-hw-type="icon"
+     data-hw-frame="icon"
+     data-hw-genome="chrome-horizon"
+     data-hw-status="active"
+     data-hw-profile="chrome"
+     data-hw-motion="static"
+     data-hw-generation="1"
+     data-hw-contract="653dc54d-5918-4f1c-85fd-68374a5add62"
+     data-hw-variant="default"
+     data-hw-regime="normal"
+     data-hw-glyph="x"
+     data-hw-chromatic="chrome-horizon">
+  <title id="hw-653dc54d-title">x</title>
+  <desc id="hw-653dc54d-desc">A icon artifact, using chrome-horizon genome.</desc>
+  <metadata>
+  <hw:artifact id="653dc54d-5918-4f1c-85fd-68374a5add62" type="icon" series="core" version="0.1.0"
+               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:provenance>
+      <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-03-27T22:38:03.163684+00:00</hw:created>
+      <hw:human-directed>true</hw:human-directed>
+    </hw:provenance>
+    <hw:spec size="64x64" performance="composite-only"
+             theme="dark" a11y="WCAG-AA" platform="web"/>
+  </hw:artifact>
+  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:frame>icon</hw:frame>
+    <hw:genome>chrome-horizon@0.1.0</hw:genome>
+    <hw:profile>chrome</hw:profile>
+    <hw:slots>
+    </hw:slots>
+    <hw:environment platform="web" motion="static" status="active"/>
+  </hw:composition>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:title>x</dc:title>
+      <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-03-27T22:38:03.163684+00:00</dc:date>
+      <dc:rights>CC BY 4.0</dc:rights>
+    </rdf:Description>
+  </rdf:RDF>
+  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:chromatic system="chrome-horizon" space="oklch"
+                  palette="" contrast-ratio="4.5:1"/>
+    <hw:motion vocabulary="static" physics="none"
+               timing="phi" duration-base="2.618s"
+               stagger-regime="contemplative" cim-compliant="true"/>
+    <hw:geometry form-language="geometric" corner-radius="5px"
+                 grid="auto" proportional-system="phi"
+                 mathematical-basis="golden-ratio" symmetry="bilateral"/>
+    <hw:typography stack="" hierarchy="11/18/8"
+                   weight-range="500-900" metrics-method="lut"/>
+    <hw:material surface="genome-native" depth="deep" texture="none"/>
+  </hw:aesthetic>
+  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:intent></hw:intent>
+    <hw:approach></hw:approach>
+    <hw:tradeoffs></hw:tradeoffs>
+    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>64x64 (1.00), left-to-right</hw:spatial-notes>
+  </hw:reasoning>
+</metadata>
+  <style>svg, :root {
+  --dna-surface: #000A14;
+  --dna-surface-alt: #0C1E2E;
+  --dna-surface-deep: #06101A;
+  --dna-ink-primary: #E0ECF6;
+  --dna-ink-muted: #7A9AB8;
+  --dna-ink-on-accent: #000A14;
+  --dna-ink-bright: #E0ECF6;
+  --dna-ink-sub: #7A9AB8;
+  --dna-signal: #5BA3D4;
+  --dna-signal-dim: #8A7355;
+  --dna-border: #060810;
+  --dna-border-tint: #0A1E2E;
+  --dna-shadow-color: #000000;
+  --dna-shadow-opacity: 0.30;
+  --dna-glow: 0px;
+  --dna-corner: 4px;
+  --dna-rhythm-base: 6s;
+  --dna-bg: #000A14;
+  --dna-bg-alt: #0C1E2E;
+  --dna-brand-text: #E0ECF6;
+  --dna-font-display: 'Impact','Arial Black',system-ui,sans-serif;
+  --dna-font-mono: 'Courier New',monospace;
+  --dna-sep: #060810;
+  --dna-status-delta-positive: #22C55E;
+  --dna-status-delta-negative: #DC2626;
+}
+@media (prefers-color-scheme: light) {
+  svg {
+    --dna-surface: #F8FAFC;
+    --dna-surface-top: #F8FAFC;
+    --dna-surface-alt: #F1F5F9;
+    --dna-surface-deep: #E2E8F0;
+    --dna-bg: #F8FAFC;
+    --dna-bg-alt: #F1F5F9;
+    --dna-ink: #1E293B;
+    --dna-ink-primary: #1E293B;
+    --dna-ink-dark: #1E293B;
+    --dna-ink-muted: #64748B;
+    --dna-ink-sub: #64748B;
+    --dna-ink-ghost: #CBD5E1;
+    --dna-border: #CBD5E1;
+    --dna-border-div: #CBD5E1;
+    --dna-sep: #CBD5E1;
+  }
+}
+/* === HyperWeave Bridge Classes ===
+ * Maps semantic class names (hw-*) to genome DNA custom properties (--dna-*).
+ * Genome-agnostic: works with ANY genome that defines the --dna-* contract.
+ */
+
+/* ── Surface fills ── */
+.hw-surface      { fill: var(--dna-surface); }
+.hw-surface-deep { fill: var(--dna-surface-deep); }
+.hw-bg           { fill: var(--dna-bg); }
+.hw-bg-alt       { fill: var(--dna-bg-alt); }
+
+/* ── Signal / Accent ── */
+.hw-signal       { fill: var(--dna-signal); }
+.hw-signal-stroke { stroke: var(--dna-signal); }
+.hw-signal-dim   { fill: var(--dna-signal-dim); }
+
+/* ── Ink / Typography ── */
+.hw-ink          { fill: var(--dna-ink-primary); }
+.hw-ink-muted    { fill: var(--dna-ink-muted); }
+.hw-ink-sub      { fill: var(--dna-ink-sub); }
+.hw-ink-bright   { fill: var(--dna-ink-bright); }
+.hw-ink-on-accent { fill: var(--dna-ink-on-accent); }
+
+/* ── Border / Separator ── */
+.hw-border       { stroke: var(--dna-border); }
+.hw-sep          { stroke: var(--dna-sep); }
+
+/* ── Status ── */
+.hw-status-pass  { fill: var(--dna-status-passing-core); }
+.hw-status-warn  { fill: var(--dna-status-warning-core); }
+.hw-status-fail  { fill: var(--dna-status-failing-core); }
+.hw-delta-pos    { fill: var(--dna-status-delta-positive); }
+.hw-delta-neg    { fill: var(--dna-status-delta-negative); }
+
+/* ── Extended ── */
+.hw-glow         { flood-color: var(--dna-glow); }
+.hw-brand-text   { fill: var(--dna-brand-text); }
+.hw-metric-text  { fill: var(--dna-metric-text); }
+.hw-border-tint  { stroke: var(--dna-border-tint); }
+.hw-glyph-inner  { fill: var(--dna-glyph-inner); }
+.hw-seam-gap     { fill: var(--dna-seam-gap); }
+.hw-label-txt    { fill: var(--dna-label-text); }
+
+/* === HyperWeave Accessibility Layer ===
+ * Non-negotiable media queries for motion, color scheme, and forced colors.
+ * Included in EVERY artifact.
+ *
+ * CAMO NOTE: @media (prefers-color-scheme) and @media (forced-colors: active)
+ * are INERT when served through GitHub Camo as img tags. The img element
+ * creates an isolated browsing context — the parent document's color scheme
+ * and forced-colors mode do not propagate into it. Artifacts will always
+ * render in their default (dark) theme on GitHub READMEs.
+ *
+ * These queries DO activate when the SVG is embedded directly (svg inline,
+ * object, or opened as a standalone document). This is a known accepted
+ * tradeoff: dark-default through Camo, adaptive in direct embed.
+ */
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hw-logic-bit { animation: none !important; opacity: .8; }
+  .hw-scanner { animation: none; opacity: 0; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  animate, animateTransform, animateMotion, set {
+    display: none !important;
+  }
+}
+
+/* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
+/* Genome-provided light_mode alleles are injected by the CSS assembler
+   into a separate @media (prefers-color-scheme: light) block per artifact.
+   This placeholder is intentionally empty; it exists as documentation. */
+
+/* ── Forced Colors (Windows High Contrast) ── */
+@media (forced-colors: active) {
+  text { fill: CanvasText !important; }
+  rect, path, circle, ellipse, polygon, polyline, line {
+    stroke: CanvasText;
+  }
+  .hw-frame-bg { fill: Canvas !important; }
+  .hw-accent-bar { fill: Highlight !important; }
+  .hw-signal { fill: Highlight !important; }
+  .hw-logic-bit { fill: Highlight !important; }
+}
+</style>
+  <defs>
+  <linearGradient id="hw-653dc54d-env" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="#000A14"/>
+    <stop offset="12%" stop-color="#0A2540"/>
+    <stop offset="25%" stop-color="#1A4A6E"/>
+    <stop offset="36%" stop-color="#3A7EA8"/>
+    <stop offset="44%" stop-color="#6AACC8"/>
+    <stop offset="50%" stop-color="#C8DAE6"/>
+    <stop offset="56%" stop-color="#B8A888"/>
+    <stop offset="64%" stop-color="#6A5840"/>
+    <stop offset="75%" stop-color="#2A2218"/>
+    <stop offset="88%" stop-color="#100E0A"/>
+    <stop offset="100%" stop-color="#060810"/>
+  </linearGradient>
+  <filter id="hw-653dc54d-sh" x="-6%" y="-4%" width="112%" height="114%">
+    <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
+  </filter>
+  <radialGradient id="hw-653dc54d-well" cx="0.5" cy="0.45" r="0.55">
+    <stop offset="0%" stop-color="#0C1E2E"/>
+    <stop offset="100%" stop-color="#06101A"/>
+  </radialGradient>
+  <clipPath id="hw-653dc54d-top-clip"><rect x="14" y="2" width="36" height="16"/></clipPath>
+  </defs>
+
+
+<circle cx="32" cy="32" r="28" fill="none" stroke="url(#hw-653dc54d-env)" stroke-width="3" filter="url(#hw-653dc54d-sh)"/>
+<circle cx="32" cy="32" r="26.5" fill="url(#hw-653dc54d-well)"/>
+<circle cx="32" cy="32" r="26.5" fill="none" stroke="#000510" stroke-width="0.5"/>
+<g clip-path="url(#hw-653dc54d-top-clip)">
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#6AACC8" stroke-width="0.8" opacity="0.15"/>
+</g>
+
+<g transform="translate(17,17)">
+  <svg viewBox="0 0 24 24" width="30" height="30">
+    <path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z" fill="#E0ECF6"/>
+  </svg>
+</g>
+
+
+
+</svg>

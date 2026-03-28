@@ -1,0 +1,18 @@
+{# HyperWeave Metric Cell Component — single metric for strip frame.
+   Expects: metric_x (translate x), metric_label, metric_value,
+            metric_pitch (cell width center), metric_delta (optional) #}
+{% set pitch = metric_pitch | default(53) %}
+<g data-hw-zone="metric-{{ metric_index }}" transform="translate({{ metric_x }},0)">
+  <text x="{{ pitch }}" y="18" text-anchor="middle"
+        font-family="'SF Mono','JetBrains Mono',monospace"
+        font-size="7" font-weight="800"
+        fill="var(--dna-ink-muted)" letter-spacing="0.25em">{{ metric_label | upper }}</text>
+  <text x="{{ pitch }}" y="37" text-anchor="middle"
+        font-family="'Inter',-apple-system,system-ui,sans-serif"
+        font-size="18" font-weight="900"
+        fill="var(--dna-metric-text)" letter-spacing="-0.02em">{{ metric_value }}</text>
+{% if metric_delta %}
+  <text x="{{ pitch }}" y="48" text-anchor="middle"
+        class="hw-delta hw-delta--{{ metric_delta_dir | default('neutral') }}">{{ metric_delta }}</text>
+{% endif %}
+</g>

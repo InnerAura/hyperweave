@@ -1,0 +1,179 @@
+/* === HyperWeave Expression Layer ===
+ * CSS state machine driven by data-hw-* attributes.
+ * Genome-agnostic: all colors via --dna-* custom properties.
+ */
+
+/* ── Typography ── */
+.hw-title {
+  font-family: var(--dna-font-display, 'Inter', -apple-system, system-ui, sans-serif);
+  font-size: 13px; font-weight: 600;
+  fill: var(--dna-ink, #E4E4E7);
+  letter-spacing: -0.01em;
+}
+.hw-value {
+  font-family: var(--dna-font-display, 'Inter', -apple-system, system-ui, sans-serif);
+  font-size: 15px; font-weight: 700;
+  fill: var(--dna-ink, #E4E4E7);
+  letter-spacing: -0.02em;
+}
+.hw-label {
+  font-family: var(--dna-font-mono, 'SF Mono', 'JetBrains Mono', monospace);
+  font-size: 8px; font-weight: 600;
+  fill: var(--dna-ink-muted, #A1A1AA);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.hw-delta {
+  font-family: var(--dna-font-mono, 'SF Mono', 'JetBrains Mono', monospace);
+  font-size: 10px; font-weight: 600;
+}
+.hw-delta--positive { fill: var(--dna-status-delta-positive, #22C55E); }
+.hw-delta--negative { fill: var(--dna-status-delta-negative, #DC2626); }
+.hw-delta--neutral  { fill: var(--dna-ink-muted, #A1A1AA); }
+
+/* ── Structural ── */
+.hw-frame-bg {
+  fill: var(--dna-surface, var(--dna-bg, #1C1C1C));
+  rx: var(--dna-corner, 5px);
+}
+.hw-frame-edge {
+  fill: none;
+  stroke: rgba(255,255,255,0.07);
+  stroke-width: 1;
+}
+.hw-divider {
+  stroke: var(--dna-border, var(--dna-sep, #3F3F46));
+  stroke-width: 1;
+}
+.hw-accent-bar {
+  fill: var(--dna-signal, #B31B1B);
+}
+
+/* ── Status ── */
+.hw-status-ring {
+  fill: none;
+  stroke: var(--dna-border, var(--dna-sep, #3F3F46));
+  stroke-width: 1.2;
+}
+.hw-status-core {
+  fill: var(--dna-status-color, var(--dna-status-passing-core, #22C55E));
+  will-change: opacity;
+}
+
+/* ── Glyph ── */
+.hw-glyph {
+  fill: none;
+  stroke: var(--dna-signal, #B31B1B);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* === Status Phenotype === */
+[data-hw-status="active"]   { --dna-status-color: var(--dna-status-passing-core, #22C55E); }
+[data-hw-status="passing"]  { --dna-status-color: var(--dna-status-passing-core, #22C55E); }
+[data-hw-status="building"] { --dna-status-color: var(--dna-signal, #3B82F6); }
+[data-hw-status="warning"]  { --dna-status-color: var(--dna-status-warning-core, #F59E0B); }
+[data-hw-status="critical"] { --dna-status-color: var(--dna-status-failing-core, #EF4444); }
+[data-hw-status="failing"]  { --dna-status-color: var(--dna-status-failing-core, #EF4444); }
+[data-hw-status="offline"]  { --dna-status-color: var(--dna-ink-muted, #A1A1AA); }
+
+svg[data-hw-status="warning"]  { filter: drop-shadow(0 0 4px rgba(245,158,11,0.3)); }
+svg[data-hw-status="critical"],
+svg[data-hw-status="failing"]  { filter: drop-shadow(0 0 5px rgba(220,38,38,0.4)); }
+svg[data-hw-status="offline"]  { opacity: .65; filter: grayscale(45%); }
+
+/* === Badge State Machine v2 === */
+[data-hw-status="active"], [data-hw-status="passing"] {
+  --hw-state-core: var(--dna-badge-pass-core, var(--dna-signal));
+  --hw-state-sep: var(--dna-badge-pass-sep, var(--dna-signal));
+  --hw-state-ring: var(--dna-badge-pass-sep, var(--dna-signal));
+  --hw-state-value: var(--dna-badge-value-text, var(--dna-brand-text));
+  --hw-state-signal: var(--dna-signal);
+  --hw-state-specular: var(--dna-signal);
+  --hw-state-sweep: var(--dna-signal);
+}
+
+[data-hw-status="warning"] {
+  --hw-state-core: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-sep: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-ring: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-value: #FDE68A;
+  --hw-state-signal: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-specular: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+  --hw-state-sweep: var(--dna-badge-warn-color, var(--dna-status-warning-core));
+}
+
+[data-hw-status="critical"], [data-hw-status="failing"] {
+  --hw-state-core: var(--dna-status-failing-core);
+  --hw-state-sep: var(--dna-status-failing-core);
+  --hw-state-ring: var(--dna-status-failing-core);
+  --hw-state-value: #FCA5A5;
+  --hw-state-signal: var(--dna-status-failing-core);
+  --hw-state-specular: var(--dna-status-failing-core);
+  --hw-state-sweep: var(--dna-status-failing-core);
+}
+
+/* Default (neutral/offline/building) */
+svg:not([data-hw-status="active"]):not([data-hw-status="passing"]):not([data-hw-status="warning"]):not([data-hw-status="critical"]):not([data-hw-status="failing"]) {
+  --hw-state-core: var(--dna-signal);
+  --hw-state-sep: var(--dna-signal);
+  --hw-state-ring: var(--dna-signal);
+  --hw-state-value: var(--dna-badge-value-text, var(--dna-brand-text));
+  --hw-state-signal: var(--dna-signal);
+  --hw-state-specular: var(--dna-signal);
+  --hw-state-sweep: var(--dna-signal);
+}
+
+/* === Badge Element Classes === */
+.hw-label-text {
+  fill: var(--dna-metric-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.hw-value-text { fill: var(--hw-state-value); }
+.hw-sep-signal { fill: var(--hw-state-sep); }
+.hw-sep-shadow { fill: var(--dna-sep); }
+.hw-indicator-ring {
+  stroke: var(--hw-state-ring);
+  stroke-width: 1.2;
+  fill: none;
+}
+.hw-logic-bit {
+  fill: var(--hw-state-core);
+  will-change: opacity;
+}
+.hw-scanner {
+  fill: var(--hw-state-sweep);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* State tint overlay on right panel */
+.hw-state-tint { fill: transparent; opacity: 0; }
+[data-hw-status="warning"] .hw-state-tint {
+  fill: var(--hw-state-core);
+  opacity: 0.06;
+}
+[data-hw-status="critical"] .hw-state-tint,
+[data-hw-status="failing"] .hw-state-tint {
+  fill: var(--hw-state-core);
+  opacity: 0.08;
+}
+
+/* === Living Value: Threshold State Machine === */
+[data-hw-value^="9"], [data-hw-value^="8"] {
+  --dna-status-color: var(--dna-status-passing-core, #22C55E);
+}
+[data-hw-value^="7"], [data-hw-value^="6"] {
+  --dna-status-color: var(--dna-status-warning-core, #F59E0B);
+}
+[data-hw-value^="5"], [data-hw-value^="4"],
+[data-hw-value^="3"], [data-hw-value^="2"],
+[data-hw-value^="1"], [data-hw-value^="0"] {
+  --dna-status-color: var(--dna-status-failing-core, #EF4444);
+}
+[data-hw-value] .hw-living { fill: var(--dna-status-color); }

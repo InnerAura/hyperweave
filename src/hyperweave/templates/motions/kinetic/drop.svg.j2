@@ -1,0 +1,21 @@
+{# Kinetic typography: drop -- per-letter 3-layer chromatic fall.
+   Specimen: banner_drop.svg
+   Outputs ONLY: per-character animated text elements (3 layers: back/mid/front),
+   a horizontal rule reveal, and a subtitle label.
+   NO background rects, NO structural elements.
+   Context: uid, title, cx, cy, fs, w, h, ty, layers (list of layer dicts with name + chars) #}
+<g text-anchor="middle">
+{% for layer in layers %}
+{% for ch in layer.chars %}
+  <text class="hw-motion-drop-{{ layer.name }} hw-motion-drop-c" x="{{ ch.x }}" y="{{ ty }}"
+        font-family="'Inter','SF Pro Display',system-ui,sans-serif"
+        font-size="{{ fs }}" font-weight="800" letter-spacing="-0.04em"
+        style="--d:{{ ch.delay }}s;--dur:{{ layer.dur }};--dr-peak:{{ layer.peak }};--dr-end:{{ layer.end }}">{{ ch.ch }}</text>
+{% endfor %}
+{% endfor %}
+  <rect class="hw-motion-drop-rule" x="{{ (cx - w * 0.4) | int }}" y="{{ ty + 12 }}"
+        width="{{ (w * 0.8) | int }}" height="2" fill="var(--dna-signal)"/>
+  <text class="hw-motion-drop-label" x="{{ cx }}" y="{{ ty + 36 }}"
+        text-anchor="middle" font-family="'SF Mono','JetBrains Mono',monospace"
+        font-size="13" fill="var(--dna-signal)" letter-spacing="0.2em">{{ subtitle | default('') }}</text>
+</g>

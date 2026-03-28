@@ -1,0 +1,36 @@
+{# Border motion: entanglement — entangled gradient + dual dash layers.
+   Context: uid, w, h, rx, perim, dash, half, quarter #}
+{% set defs %}
+<linearGradient id="{{ uid }}-entangle" x1="0%" y1="0%" x2="100%" y2="0%">
+  <stop offset="0%" stop-color="var(--dna-signal)">
+    <animate attributeName="stop-color"
+             values="var(--dna-signal);var(--dna-status-failing-core);var(--dna-signal)"
+             dur="2s" repeatCount="indefinite"/>
+  </stop>
+  <stop offset="50%" stop-color="#FFFFFF" stop-opacity="1">
+    <animate attributeName="stop-opacity"
+             values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </stop>
+  <stop offset="100%" stop-color="var(--dna-status-failing-core)">
+    <animate attributeName="stop-color"
+             values="var(--dna-status-failing-core);var(--dna-signal);var(--dna-status-failing-core)"
+             dur="2s" repeatCount="indefinite"/>
+  </stop>
+</linearGradient>
+{% endset %}
+{% set overlay %}
+<rect x=".5" y=".5" width="{{ w - 1 }}" height="{{ h - 1 }}" rx="{{ rx }}"
+      fill="none" stroke="url(#{{ uid }}-entangle)" stroke-width="2"
+      stroke-dasharray="{{ dash }}">
+  <animate attributeName="stroke-dashoffset"
+           values="0;-{{ half }}" dur="2s" repeatCount="indefinite"/>
+</rect>
+<rect x=".5" y=".5" width="{{ w - 1 }}" height="{{ h - 1 }}" rx="{{ rx }}"
+      fill="none" stroke="url(#{{ uid }}-entangle)" stroke-width="2"
+      opacity="0.7" stroke-dasharray="{{ dash }}"
+      stroke-dashoffset="-{{ quarter }}">
+  <animate attributeName="stroke-dashoffset"
+           values="-{{ quarter }};-{{ quarter + half }}" dur="2s"
+           repeatCount="indefinite"/>
+</rect>
+{% endset %}

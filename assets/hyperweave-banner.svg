@@ -1,0 +1,781 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 1200 420" overflow="visible" role="img" aria-labelledby="t11 d11"
+     data-hw-component="banner" data-hw-chromatic="cobalt-sapphire-deep"
+     data-hw-variant="v11-formidable-flow" data-protocol="hw-v1">
+  <title id="t11">HyperWeave — Where Vectors Meet Vision</title>
+  <desc id="d11">V11 Cobalt Sapphire Formidable. Graph-theoretic construction with
+    deep sapphire light flow — refracted luminance channels along edges, caustic vertex
+    accumulation, crystal-interior glow. Transparent substrate. Adaptive light/dark
+    typography. Enlarged type balanced 50/50 with glyph. Formidable severity.</desc>
+
+  <metadata>
+    <hw:artifact id="hw-v11-formidable" type="banner" series="hyperweave-brand" version="11.2.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.6 (InnerAura Labs) [claude-opus-4-6-20260210]</hw:generator>
+        <hw:created>2026-02-21</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:spec size="1200x420" performance="composite-only" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:aesthetic>
+      <hw:chromatic system="cobalt-sapphire-deep" space="oklch" contrast-ratio="15.1:1"/>
+      <hw:motion vocabulary="vertex-scale,edge-clip-draw,core-scale,ring-opacity,sapphire-refraction,caustic-pulse,luminance-flow"
+                 physics="graph-construction+sapphire-optics+phi-cascade"
+                 timing="material-deceleration+phi" cim-compliant="true"/>
+      <hw:geometry form-language="octahedral-angular" proportional-system="phi"
+                   mathematical-basis="graph-theory+sapphire-refraction+formidable-geometry"
+                   symmetry="4-fold-rotational"/>
+      <hw:material surface="sapphire-crystal" depth="deep"/>
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>Formidable brand banner with sapphire crystal light flow. The geometry
+        is a precision instrument, not decoration. Light moves THROUGH the structure like
+        a sapphire diffracting incident photons — accumulating at vertices (caustics),
+        channeling along edges (waveguides), and refracting through face planes.</hw:intent>
+      <hw:approach>Layout: 50/50 visual weight balance. Glyph at x=230 (19.2%) with
+        scale 1.85 = 296px visual diameter. Typography at 94px bold italic = ~560px wide.
+        Text anchor x=470. Gap: 44px (3.7%). Transparent substrate with full CSS custom
+        property system for light/dark adaptive text. Formidable severity: condensed mono
+        for secondary type, uppercase tracking, surgical accent color.</hw:approach>
+      <hw:tradeoffs>Transparent background means glyph must carry its own luminance —
+        filter chain is heavier (3-tier glow) to ensure self-luminous presence on any
+        surface. Text adaptive system adds CSS complexity but guarantees readability on
+        both light and dark substrates. Typography at 94px risks overwhelming glyph —
+        compensated by increased glyph scale (1.85) and deeper glow radius. Face fills
+        added at 0.05 opacity as sapphire crystal interior planes — technically breaks
+        pure wireframe but essential for light-refraction illusion.</hw:tradeoffs>
+      <hw:spatial-notes>Glyph center (230,210) = 19.2%×50%. Glyph visual extent: 82-378px
+        horizontal (296px). Text block: 470-1080px (610px). Vertical: title y=232 (55.2%),
+        tagline y=276 (65.7%), lab y=306 (72.9%). Typography cascade: 94→13→10.5px with
+        44px/30px steps. Negative space: left margin 82px (6.8%), right margin 120px (10%),
+        glyph-text gap 44px (3.7%). Aspect 20:7.</hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+
+  <defs>
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- SAPPHIRE REFRACTION CHROMATIC SYSTEM                        -->
+    <!-- Light enters at 0%, refracts through cobalt crystal, exits  -->
+    <!-- at 100% with spectral dispersion. Phi-frequency cycling.    -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <!-- PRIMARY SAPPHIRE EDGE GRADIENT — 6-stop refraction spectrum -->
+    <linearGradient id="s-edge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <!-- Entry face — deep sapphire -->
+      <stop offset="0%" stop-color="#0a0838">
+        <animate attributeName="stop-color"
+                 values="#0a0838;#141070;#0a0838"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <!-- First refraction — cobalt brightening -->
+      <stop offset="18%" stop-color="#1838b0">
+        <animate attributeName="stop-color"
+                 values="#1838b0;#2850d8;#1030a0;#2048c8;#1838b0"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Crystal core — peak luminance -->
+      <stop offset="42%" stop-color="#4080ff">
+        <animate attributeName="stop-color"
+                 values="#4080ff;#60a0ff;#3070f0;#5090ff;#4080ff"
+                 dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Internal caustic — white-blue flash -->
+      <stop offset="55%" stop-color="#d0e4ff">
+        <animate attributeName="stop-color"
+                 values="#d0e4ff;#e8f0ff;#b8d4ff;#dce8ff;#d0e4ff"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Exit refraction — violet dispersion -->
+      <stop offset="78%" stop-color="#5848d8">
+        <animate attributeName="stop-color"
+                 values="#5848d8;#7060f0;#4838c0;#6858e8;#5848d8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <!-- Exit face — deep indigo -->
+      <stop offset="100%" stop-color="#120860">
+        <animate attributeName="stop-color"
+                 values="#120860;#1c1088;#0c0650;#120860"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="13.708s"
+                        repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- VERTEX CAUSTIC — light accumulation at graph nodes -->
+    <radialGradient id="s-caus" cx="30%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#e8f0ff" stop-opacity="1">
+        <animate attributeName="stop-opacity"
+                 values="1;.8;1" dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="25%" stop-color="#6090ff" stop-opacity=".7">
+        <animate attributeName="stop-color"
+                 values="#6090ff;#80b0ff;#5080f0;#6090ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#1838a0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- ORBITAL PARTICLE — sapphire shard -->
+    <radialGradient id="s-part" cx="35%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#d0e8ff" stop-opacity=".95">
+        <animate attributeName="stop-color"
+                 values="#d0e8ff;#b0d0ff;#e0f0ff;#d0e8ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#3060d0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- FACE INTERIOR — sapphire crystal planes -->
+    <linearGradient id="s-f1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3060e0" stop-opacity=".07">
+        <animate attributeName="stop-opacity"
+                 values=".07;.13;.04;.10;.07"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#1838a0" stop-opacity=".02"/>
+    </linearGradient>
+    <linearGradient id="s-f2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5050d8" stop-opacity=".05">
+        <animate attributeName="stop-opacity"
+                 values=".05;.10;.03;.08;.05"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#2848c0" stop-opacity=".01"/>
+    </linearGradient>
+
+    <!-- ATMOSPHERIC NEBULA -->
+    <radialGradient id="s-neb" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2848c0" stop-opacity=".14">
+        <animate attributeName="stop-opacity"
+                 values=".14;.20;.10;.17;.14"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="35%" stop-color="#1838a0" stop-opacity=".07"/>
+      <stop offset="100%" stop-color="#0c1060" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="s-neb2" cx="40%" cy="60%" r="40%">
+      <stop offset="0%" stop-color="#4050d0" stop-opacity=".09">
+        <animate attributeName="stop-opacity"
+                 values=".09;.14;.06;.11;.09"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#2838b0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- TYPOGRAPHY GRADIENTS — sapphire-infused -->
+    <linearGradient id="s-hyp" x1="0%" y1="0%" x2="100%" y2="10%">
+      <stop offset="0%" stop-color="var(--hw-t1a)"/>
+      <stop offset="40%" stop-color="var(--hw-t1b)"/>
+      <stop offset="100%" stop-color="var(--hw-t1c)"/>
+    </linearGradient>
+    <linearGradient id="s-wev" x1="0%" y1="0%" x2="100%" y2="10%">
+      <stop offset="0%" stop-color="var(--hw-t2a)">
+        <animate attributeName="stop-color"
+                 values="var(--hw-t2a);var(--hw-t2b);var(--hw-t2a)"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="50%" stop-color="var(--hw-t2b)">
+        <animate attributeName="stop-color"
+                 values="var(--hw-t2b);var(--hw-t2c);var(--hw-t2b)"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="var(--hw-t2c)"/>
+    </linearGradient>
+
+    <!-- SKELETON -->
+    <linearGradient id="s-sk" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="var(--hw-skel)" stop-opacity=".20"/>
+      <stop offset="60%" stop-color="var(--hw-skel)" stop-opacity=".06"/>
+      <stop offset="100%" stop-color="var(--hw-skel)" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- CORNER BRACKETS -->
+    <linearGradient id="s-cn" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="var(--hw-bracket)" stop-opacity=".40"/>
+      <stop offset="100%" stop-color="var(--hw-bracket)" stop-opacity=".10"/>
+    </linearGradient>
+
+    <!-- ════════════════════════════════════ -->
+    <!-- FILTER CHAIN — SAPPHIRE LIGHT DEPTH -->
+    <!-- ════════════════════════════════════ -->
+
+    <!-- CORE GLOW — sapphire interior luminance -->
+    <filter id="f-core" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b1">
+        <animate attributeName="stdDeviation"
+                 values="3.5;4.5;3;4;3.5"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </feGaussianBlur>
+      <feColorMatrix in="b1" type="matrix"
+                     values="0.15 0 0.6 0 0.06
+                             0.08 0.12 0.5 0 0.03
+                             0.25 0.1 1.2 0 0.10
+                             0 0 0 0.65 0" result="t1"/>
+      <feMerge>
+        <feMergeNode in="t1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- EDGE HALO — secondary sapphire bloom -->
+    <filter id="f-halo" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b2"/>
+      <feColorMatrix in="b2" type="matrix"
+                     values="0.10 0 0.45 0 0.03
+                             0.06 0.08 0.35 0 0.01
+                             0.18 0.05 0.90 0 0.06
+                             0 0 0 0.22 0" result="t2"/>
+      <feMerge>
+        <feMergeNode in="t2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- AMBIENT BLOOM — outermost atmospheric field -->
+    <filter id="f-amb" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="16"/>
+      <feColorMatrix type="matrix"
+                     values="0.06 0 0.30 0 0.02
+                             0.04 0.05 0.22 0 0.01
+                             0.10 0.03 0.65 0 0.04
+                             0 0 0 0.12 0"/>
+    </filter>
+
+    <!-- CAUSTIC NODE — vertex light accumulation -->
+    <filter id="f-caus" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="cb"/>
+      <feColorMatrix in="cb" type="matrix"
+                     values="0.2 0 0.55 0 0.10
+                             0.12 0.15 0.45 0 0.06
+                             0.25 0.08 1.1 0 0.14
+                             0 0 0 0.75 0" result="ct"/>
+      <feMerge>
+        <feMergeNode in="ct"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- TEXT SAPPHIRE GLOW -->
+    <filter id="f-txt" x="-8%" y="-20%" width="116%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="tb"/>
+      <feFlood flood-color="#3060e0" flood-opacity=".12" result="tc"/>
+      <feComposite in="tc" in2="tb" operator="in" result="ts"/>
+      <feMerge>
+        <feMergeNode in="ts"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    /* ═══════════════════════════════════════════════════ */
+    /* ADAPTIVE CHROMATIC SYSTEM — SELF-CONTAINED         */
+    /* Transparent substrate. Text adapts. Glyph glows.   */
+    /* ═══════════════════════════════════════════════════ */
+
+    svg {
+      /* DARK MODE (default — formidable default is dark) */
+      --hw-tag: #8898c8;
+      --hw-lab: #5868d8;
+      --hw-div: #3050c0;
+      --hw-skel: #3060d0;
+      --hw-bracket: #4070e0;
+      --hw-grid: #2040a0;
+
+      /* Typography: "Hyper" */
+      --hw-t1a: #a0b8f0;
+      --hw-t1b: #e0e8ff;
+      --hw-t1c: #90a8e0;
+
+      /* Typography: "Weave" */
+      --hw-t2a: #5858e0;
+      --hw-t2b: #7878f8;
+      --hw-t2c: #4848c8;
+    }
+
+    @media (prefers-color-scheme: light) {
+      svg {
+        --hw-tag: #3a4878;
+        --hw-lab: #3840a8;
+        --hw-div: #5070d0;
+        --hw-skel: #5078d8;
+        --hw-bracket: #5880e8;
+        --hw-grid: #4868c0;
+
+        --hw-t1a: #0c1848;
+        --hw-t1b: #1a2868;
+        --hw-t1c: #101c50;
+
+        --hw-t2a: #2838a8;
+        --hw-t2b: #3848c0;
+        --hw-t2c: #2030a0;
+      }
+    }
+
+    /* ═══════════════════════════════════ */
+    /* CONSTRUCTION — V → E → Core → Ring */
+    /* ═══════════════════════════════════ */
+
+    /* P1: VERTICES — 0-0.3s */
+    .v { will-change: transform, opacity; opacity: 0; }
+    @keyframes vf {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .v-c { transform-origin: 0 0; animation: vf .26s cubic-bezier(.4,0,.2,1) 0s both; }
+    .v-n { transform-origin: 0 -80px; animation: vf .26s cubic-bezier(.4,0,.2,1) .05s both; }
+    .v-e { transform-origin: 80px 0; animation: vf .26s cubic-bezier(.4,0,.2,1) .10s both; }
+    .v-s { transform-origin: 0 80px; animation: vf .26s cubic-bezier(.4,0,.2,1) .15s both; }
+    .v-w { transform-origin: -80px 0; animation: vf .26s cubic-bezier(.4,0,.2,1) .20s both; }
+
+    /* P2: EDGES — 0.28-0.62s */
+    .e { will-change: clip-path, opacity; clip-path: inset(0 100% 0 0); opacity: 0; }
+    @keyframes ed {
+      from { clip-path: inset(0 100% 0 0); opacity: 0; }
+      to { clip-path: inset(0 0% 0 0); opacity: .92; }
+    }
+    .e0 { animation: ed .26s cubic-bezier(.4,0,.2,1) .28s both; }
+    .e1 { animation: ed .26s cubic-bezier(.4,0,.2,1) .32s both; }
+    .e2 { animation: ed .26s cubic-bezier(.4,0,.2,1) .36s both; }
+    .e3 { animation: ed .26s cubic-bezier(.4,0,.2,1) .40s both; }
+    .e4 { animation: ed .26s cubic-bezier(.4,0,.2,1) .44s both; }
+    .e5 { animation: ed .26s cubic-bezier(.4,0,.2,1) .48s both; }
+    .e6 { animation: ed .26s cubic-bezier(.4,0,.2,1) .52s both; }
+    .e7 { animation: ed .26s cubic-bezier(.4,0,.2,1) .56s both; }
+
+    /* P3: FACE FILLS — 0.60s */
+    .ff { will-change: opacity; opacity: 0;
+      animation: ffi .25s cubic-bezier(.4,0,.2,1) .60s both; }
+    @keyframes ffi { from { opacity: 0; } to { opacity: .08; } }
+
+    /* P4: CORE OCTAGON — 0.68s */
+    .cor { will-change: transform, opacity; opacity: 0; transform-origin: 0 0;
+      animation: cf .32s cubic-bezier(.4,0,.2,1) .68s both; }
+    @keyframes cf {
+      from { transform: scale(.12); opacity: 0; }
+      to { transform: scale(1); opacity: .92; }
+    }
+
+    /* P5: RING — 0.88s */
+    .rng { will-change: opacity; opacity: 0;
+      animation: rf .28s cubic-bezier(.4,0,.2,1) .88s both; }
+    @keyframes rf { from { opacity: 0; } to { opacity: .6; } }
+
+    /* P6: SPECULAR + WIRE — 1.0s */
+    .spc { will-change: opacity; opacity: 0;
+      animation: sp .2s cubic-bezier(.4,0,.2,1) 1.0s both; }
+    @keyframes sp { from { opacity: 0; } to { opacity: .55; } }
+
+    .wir { will-change: opacity; opacity: 0;
+      animation: wf .22s cubic-bezier(.4,0,.2,1) 1.05s both; }
+    @keyframes wf { from { opacity: 0; } to { opacity: .4; } }
+
+    .vhi { will-change: opacity; opacity: 0;
+      animation: vh .18s cubic-bezier(.4,0,.2,1) 1.1s both; }
+    @keyframes vh { from { opacity: 0; } to { opacity: .6; } }
+
+    /* P7: PARTICLES — 1.15s */
+    .ptc { will-change: opacity; opacity: 0;
+      animation: pf .25s cubic-bezier(.4,0,.2,1) 1.15s both; }
+    @keyframes pf { from { opacity: 0; } to { opacity: .85; } }
+
+    /* P8: AMBIENT — 0.9s */
+    .agl { will-change: opacity; opacity: 0;
+      animation: ag .4s cubic-bezier(.4,0,.2,1) .9s both; }
+    @keyframes ag { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ═══════════════════════ */
+    /* TEXT CONSTRUCTION       */
+    /* ═══════════════════════ */
+    .wm { will-change: transform, opacity; opacity: 0;
+      animation: wi .45s cubic-bezier(.4,0,.2,1) 1.25s both; }
+    @keyframes wi {
+      from { transform: translateY(16px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .dv { will-change: transform, opacity; opacity: 0; transform-origin: left center;
+      animation: di .3s cubic-bezier(.4,0,.2,1) 1.55s both; }
+    @keyframes di {
+      from { transform: scaleX(0); opacity: 0; }
+      to { transform: scaleX(1); opacity: .22; }
+    }
+
+    .tg { will-change: opacity; opacity: 0;
+      animation: ti .3s cubic-bezier(.4,0,.2,1) 1.70s both; }
+    @keyframes ti { from { opacity: 0; } to { opacity: 1; } }
+
+    .lb { will-change: opacity; opacity: 0;
+      animation: li .25s cubic-bezier(.4,0,.2,1) 1.85s both; }
+    @keyframes li { from { opacity: 0; } to { opacity: .7; } }
+
+    /* CORNERS */
+    .cn { will-change: opacity; opacity: 0; }
+    @keyframes ci { from { opacity: 0; } to { opacity: var(--hw-cn, .32); } }
+    .c1 { animation: ci .18s cubic-bezier(.4,0,.2,1) 1.95s both; }
+    .c2 { animation: ci .18s cubic-bezier(.4,0,.2,1) 2.0s both; }
+    .c3 { animation: ci .18s cubic-bezier(.4,0,.2,1) 2.05s both; }
+    .c4 { animation: ci .18s cubic-bezier(.4,0,.2,1) 2.1s both; }
+
+    /* SKELETON */
+    .sk { will-change: transform, opacity; opacity: 0; transform-origin: left center;
+      animation: skf .35s cubic-bezier(.4,0,.2,1) .08s both; }
+    @keyframes skf {
+      from { opacity: 0; transform: scaleX(0); }
+      to { opacity: 1; transform: scaleX(1); }
+    }
+
+    /* ═════════════════════════════════════════════ */
+    /* POST-CONSTRUCTION LIFE — SAPPHIRE RESONANCE  */
+    /* ═════════════════════════════════════════════ */
+
+    .gb { will-change: transform; transform-origin: 0 0;
+      animation: br 8.472s ease-in-out 2.5s infinite; }
+    @keyframes br {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.014) rotate(.5deg); }
+      50% { transform: scale(1.022) rotate(0deg); }
+      75% { transform: scale(1.014) rotate(-.5deg); }
+    }
+
+    .neb { will-change: opacity; }
+    @keyframes nb1 {
+      0%, 100% { opacity: .10; }
+      50% { opacity: .16; }
+    }
+    @keyframes nb2 {
+      0%, 100% { opacity: .07; }
+      50% { opacity: .13; }
+    }
+    .neb1 { animation: nb1 13.708s ease-in-out 2s infinite; }
+    .neb2 { animation: nb2 8.472s ease-in-out 3s infinite; }
+
+    /* ═════════════════════════ */
+    /* REDUCED MOTION            */
+    /* ═════════════════════════ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+      .v { transform: scale(1); opacity: 1; }
+      .e { clip-path: inset(0 0% 0 0); opacity: .92; }
+      .ff { opacity: .08; }
+      .cor { transform: scale(1); opacity: .92; }
+      .rng { opacity: .6; }
+      .spc { opacity: .55; }
+      .wir { opacity: .4; }
+      .vhi { opacity: .6; }
+      .ptc { opacity: .85; }
+      .agl { opacity: 1; }
+      .wm { transform: translateY(0); opacity: 1; }
+      .tg { opacity: 1; }
+      .lb { opacity: .7; }
+      .dv { transform: scaleX(1); opacity: .22; }
+      .sk { opacity: 1; transform: scaleX(1); }
+      .cn { opacity: .32; }
+      .neb1, .neb2 { opacity: .12; }
+      .gb { animation: none !important; }
+    }
+  </style>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- L0: TRANSPARENT SUBSTRATE                   -->
+  <!-- No background rect. Artifact floats.        -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <!-- L1: STRUCTURAL GRID — faint precision scaffolding -->
+  <g opacity=".025" stroke="var(--hw-grid)" stroke-width=".5">
+    <line x1="230" y1="0" x2="230" y2="420"/>
+    <line x1="470" y1="0" x2="470" y2="420"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+  </g>
+
+  <!-- SKELETON GUIDE LINES -->
+  <line class="sk" x1="450" y1="220" x2="1120" y2="220" stroke="url(#s-sk)" stroke-width=".7" opacity=".07"/>
+  <line class="sk" x1="470" y1="264" x2="1000" y2="264" stroke="url(#s-sk)" stroke-width=".35" opacity=".04"/>
+
+  <!-- L2: ATMOSPHERIC NEBULA FIELD -->
+  <ellipse class="neb neb1" cx="230" cy="210" rx="240" ry="180" fill="url(#s-neb)"/>
+  <ellipse class="neb neb2" cx="200" cy="240" rx="175" ry="140" fill="url(#s-neb2)"/>
+
+  <!-- L3: AMBIENT BLOOM (outermost glow layer) -->
+  <g class="agl" transform="translate(230,210) scale(1.85)">
+    <path d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z"
+          fill="none" stroke="url(#s-edge)" stroke-width="9" filter="url(#f-amb)"
+          stroke-linejoin="round" stroke-linecap="round" opacity=".5"/>
+    <circle cx="0" cy="0" r="82" fill="none" stroke="url(#s-edge)" stroke-width="3.5"
+            filter="url(#f-amb)" opacity=".25"/>
+  </g>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- L4: MAIN GLYPH — GRAPH CONSTRUCTION     -->
+  <!-- ════════════════════════════════════════ -->
+  <g transform="translate(230,210) scale(1.85)">
+    <g class="gb">
+
+      <!-- P1: VERTICES — caustic accumulation nodes -->
+      <g class="v v-c" filter="url(#f-caus)">
+        <circle cx="0" cy="0" r="5.5" fill="url(#s-caus)" opacity=".95">
+          <animate attributeName="r" values="5.5;7;5.5" dur="3.236s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+      </g>
+      <g class="v v-n" filter="url(#f-caus)">
+        <circle cx="0" cy="-80" r="4" fill="url(#s-caus)" opacity=".88">
+          <animate attributeName="r" values="4;5.2;4" dur="5.236s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+      </g>
+      <g class="v v-e" filter="url(#f-caus)">
+        <circle cx="80" cy="0" r="4" fill="url(#s-caus)" opacity=".88">
+          <animate attributeName="r" values="4;4.8;4" dur="8.472s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+      </g>
+      <g class="v v-s" filter="url(#f-caus)">
+        <circle cx="0" cy="80" r="4" fill="url(#s-caus)" opacity=".88">
+          <animate attributeName="r" values="4;5.5;4" dur="13.708s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+      </g>
+      <g class="v v-w" filter="url(#f-caus)">
+        <circle cx="-80" cy="0" r="4" fill="url(#s-caus)" opacity=".88">
+          <animate attributeName="r" values="4;4.6;4" dur="3.236s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+      </g>
+
+      <!-- P2: EDGES — sapphire light waveguides -->
+      <g filter="url(#f-halo)">
+        <path class="e e0" d="M0,-80 C0,-40 0,-10 0,0 C10,0 40,0 80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <path class="e e1" d="M0,-80 C0,-40 0,-10 0,0 C-10,0 -40,0 -80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <path class="e e2" d="M0,80 C0,40 0,10 0,0 C10,0 40,0 80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <path class="e e3" d="M0,80 C0,40 0,10 0,0 C-10,0 -40,0 -80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <path class="e e4" d="M0,-80 C20,-60 60,-20 80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <path class="e e5" d="M0,-80 C-20,-60 -60,-20 -80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <path class="e e6" d="M0,80 C20,60 60,20 80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+        <path class="e e7" d="M0,80 C-20,60 -60,20 -80,0" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+      </g>
+
+      <!-- P3: FACE FILLS — sapphire crystal interior planes -->
+      <g class="ff">
+        <path d="M0,-80 L80,0 L0,0 Z" fill="url(#s-f1)"/>
+        <path d="M0,-80 L-80,0 L0,0 Z" fill="url(#s-f2)"/>
+        <path d="M0,80 L80,0 L0,0 Z" fill="url(#s-f2)"/>
+        <path d="M0,80 L-80,0 L0,0 Z" fill="url(#s-f1)"/>
+      </g>
+
+      <!-- P4: CORE OCTAGON — primary structural identity -->
+      <path class="cor"
+            d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z"
+            fill="none" stroke="url(#s-edge)" stroke-width="6.5"
+            stroke-linejoin="round" stroke-linecap="round" filter="url(#f-core)">
+        <animate attributeName="stroke-width" values="6.5;7.5;6;7;6.5"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </path>
+
+      <!-- P5: RING BOUNDARY -->
+      <circle class="rng" cx="0" cy="0" r="80" fill="none"
+              stroke="url(#s-edge)" stroke-width="2.2" filter="url(#f-halo)">
+        <animate attributeName="opacity" values=".6;.75;.5;.68;.6"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </circle>
+
+      <!-- P6: SPECULAR HIGHLIGHTS — sapphire surface reflections -->
+      <g class="spc" stroke="#d0e4ff" fill="none" stroke-linecap="round">
+        <path d="M-15,-60 L-45,-30" stroke-width="1.2">
+          <animate attributeName="opacity" values=".55;.75;.45;.65;.55"
+                   dur="5.236s" repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        </path>
+        <path d="M15,-60 L45,-30" stroke-width="1.1">
+          <animate attributeName="opacity" values=".55;.65;.40;.58;.55"
+                   dur="8.472s" repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        </path>
+        <path d="M-45,30 C-55,18 -58,6 -58,0" stroke-width=".8" opacity=".35"/>
+        <path d="M45,30 C55,18 58,6 58,0" stroke-width=".8" opacity=".30"/>
+        <path d="M-15,60 L-45,30" stroke-width=".7" opacity=".25"/>
+        <path d="M15,60 L45,30" stroke-width=".7" opacity=".22"/>
+      </g>
+
+      <!-- WIRE OVERLAY — internal structure traces -->
+      <g class="wir" stroke="#b0c8ff" stroke-width=".8" fill="none" stroke-linecap="round">
+        <path d="M0,-80 C0,-40 0,-10 0,0"/>
+        <path d="M0,-80 C20,-60 60,-20 80,0"/>
+        <path d="M0,-80 C-20,-60 -60,-20 -80,0"/>
+        <path d="M0,80 C0,40 0,10 0,0" opacity=".7"/>
+        <path d="M0,80 C20,60 60,20 80,0" opacity=".6"/>
+        <path d="M0,80 C-20,60 -60,20 -80,0" opacity=".6"/>
+      </g>
+
+      <!-- VERTEX HIGHLIGHTS — caustic peaks -->
+      <g class="vhi" fill="#e0ecff">
+        <circle cx="0" cy="0" r="2.5">
+          <animate attributeName="r" values="2.5;3.5;2.5" dur="3.236s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+        <circle cx="0" cy="-80" r="1.5">
+          <animate attributeName="r" values="1.5;2.2;1.5" dur="5.236s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+        <circle cx="80" cy="0" r="1.5">
+          <animate attributeName="r" values="1.5;2.0;1.5" dur="8.472s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+        <circle cx="0" cy="80" r="1.5">
+          <animate attributeName="r" values="1.5;2.1;1.5" dur="13.708s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+        <circle cx="-80" cy="0" r="1.5">
+          <animate attributeName="r" values="1.5;1.9;1.5" dur="3.236s"
+                   repeatCount="indefinite" calcMode="spline"
+                   keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </circle>
+      </g>
+
+      <!-- P7: ORBITAL PARTICLES — sapphire shards -->
+      <g class="ptc">
+        <circle r="2.8" fill="url(#s-part)" filter="url(#f-caus)">
+          <animateMotion path="M0,-84 C84,0 0,84 -84,0 Z" dur="8.472s"
+                         repeatCount="indefinite"/>
+          <animate attributeName="r" values="2.8;2.0;3.5;2.2;2.8"
+                   dur="8.472s" repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        </circle>
+        <circle r="2" fill="url(#s-part)" filter="url(#f-caus)">
+          <animateMotion path="M84,0 C0,-84 -84,0 0,84 Z" dur="13.708s"
+                         repeatCount="indefinite"/>
+          <animate attributeName="r" values="2;2.6;1.5;2.2;2"
+                   dur="13.708s" repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        </circle>
+        <circle r="1.6" fill="url(#s-part)" filter="url(#f-caus)" opacity=".75">
+          <animateMotion path="M-42,-42 L42,-42 L42,42 L-42,42 Z" dur="5.236s"
+                         repeatCount="indefinite"/>
+          <animate attributeName="r" values="1.6;2.4;1.2;1.9;1.6"
+                   dur="5.236s" repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        </circle>
+        <circle r="1.1" fill="#d0e4ff" opacity=".55">
+          <animateMotion path="M0,-64 C64,0 0,64 -64,0 Z" dur="3.236s"
+                         repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".55;.85;.35;.65;.55"
+                   dur="3.236s" repeatCount="indefinite"
+                   calcMode="spline"
+                   keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+        </circle>
+      </g>
+
+    </g><!-- /gb -->
+  </g><!-- /glyph -->
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- L5: TYPOGRAPHY — ENLARGED, FORMIDABLE       -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <!-- Brand wordmark — 94px, commanding, equal visual weight with glyph -->
+  <g class="wm">
+    <text x="470" y="242"
+          font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+          font-size="113" font-weight="900" font-style="italic"
+          letter-spacing="-3.5" filter="url(#f-txt)">
+      <tspan fill="url(#s-hyp)">Hyper</tspan><tspan fill="url(#s-wev)">Weave</tspan>
+    </text>
+  </g>
+
+  <!-- DIVIDER — surgical precision -->
+  <line class="dv" x1="470" y1="260" x2="960" y2="260"
+        stroke="var(--hw-div)" stroke-width=".9"/>
+
+  <!-- TAGLINE — formidable condensed tracking -->
+  <g class="tg">
+    <text x="473" y="286"
+          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="15" font-weight="500" letter-spacing="7"
+          fill="var(--hw-tag)">WHERE VECTORS MEET VISION</text>
+  </g>
+
+  <!-- LAB ATTRIBUTION — uppercase disciplined -->
+  <g class="lb">
+    <text x="473" y="316"
+          font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="12" font-weight="600" letter-spacing="6"
+          fill="var(--hw-lab)">INNERAURA LABS</text>
+  </g>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- L6: FRAME — ANGULAR CORNER BRACKETS     -->
+  <!-- ═══════════════════════════════════════ -->
+  <g class="cn c1" stroke="url(#s-cn)" stroke-width="1.3" fill="none">
+    <path d="M52,28 L28,28 L28,52"/>
+  </g>
+  <g class="cn c2" stroke="url(#s-cn)" stroke-width="1.3" fill="none">
+    <path d="M1148,28 L1172,28 L1172,52"/>
+  </g>
+  <g class="cn c3" stroke="url(#s-cn)" stroke-width="1.3" fill="none">
+    <path d="M52,392 L28,392 L28,368"/>
+  </g>
+  <g class="cn c4" stroke="url(#s-cn)" stroke-width="1.3" fill="none">
+    <path d="M1148,392 L1172,392 L1172,368"/>
+  </g>
+</svg>

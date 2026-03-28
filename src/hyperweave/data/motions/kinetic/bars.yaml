@@ -1,0 +1,63 @@
+id: bars
+name: Bars
+category: css
+specimen: specs/motion/motion-kinetic-typography/banner_bars.svg
+cim_compliant: true
+animated_properties:
+  - transform
+  - opacity
+applies_to:
+  - banner
+timing:
+  bar_slide_duration: "0.5s"
+  bar_slide_easing: "cubic-bezier(.4,0,1,1)"
+  stagger_interval: "0.13s"
+  stagger_base: "0.05s"
+  label_delay: "1.55s"
+  accent_delay: "1.6s"
+  accent_pulse_delay: "2.0s"
+  accent_pulse_duration: "3s"
+structure:
+  bars: 8
+  bar_height_px: 28
+  direction_alternating: true
+  label_fade_up: "8px"
+  accent_bar: true
+keyframes:
+  bar_slide_r:
+    "0%": "transform: translateX(0)"
+    "100%": "transform: translateX(860px)"
+  bar_slide_l:
+    "0%": "transform: translateX(0)"
+    "100%": "transform: translateX(-860px)"
+  label_up:
+    "0%": "opacity: 0; transform: translateY(8px)"
+    "100%": "opacity: 1; transform: translateY(0)"
+  accent_fadein:
+    "100%": "opacity: 1"
+  accent_pulse:
+    "0%, 100%": "opacity: 1"
+    "50%": "opacity: 0.3"
+css: |
+  .hw-motion-bars-text {
+    will-change: opacity; opacity: 0;
+    animation: hw-motion-bars-reveal 0.6s cubic-bezier(.4,0,1,1) 0.3s forwards;
+  }
+  @keyframes hw-motion-bars-reveal { to { opacity: 1; } }
+  .hw-motion-bars-label {
+    will-change: opacity, transform; opacity: 0; transform: translateY(8px);
+    animation: hw-motion-bars-up 0.5s cubic-bezier(.33,1,.68,1) 1.55s forwards;
+  }
+  @keyframes hw-motion-bars-up { to { opacity: 1; transform: translateY(0); } }
+  .hw-motion-bars-accent {
+    will-change: opacity; opacity: 0;
+    animation: hw-motion-bars-fadein 0.4s ease-out 1.6s both, hw-motion-bars-pulse 3s ease-in-out 2.0s infinite;
+  }
+  @keyframes hw-motion-bars-fadein { to { opacity: 1; } }
+  @keyframes hw-motion-bars-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-bars-text { animation: none; opacity: 1; }
+    .hw-motion-bars-label { animation: none; opacity: 1; transform: none; }
+    .hw-motion-bars-accent { animation: none; opacity: 1; }
+  }
+description: "Blackout bar reveal: 8 horizontal bars alternate L/R slide at 0.13s stagger intervals, revealing content beneath. Label fades up at 1.55s, accent bar pulses. CIM-compliant (transform + opacity only)."

@@ -1,0 +1,264 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
+     role="img"
+     aria-labelledby="hw-cs-x-title hw-cs-x-desc"
+     viewBox="0 0 64 64"
+     width="64" height="64"
+     data-hw-type="icon"
+     data-hw-frame="icon"
+     data-hw-genome="cobalt-sapphire-deep"
+     data-hw-status="active"
+     data-hw-motion="ambient"
+     data-hw-glyph="x"
+     data-hw-chromatic="cobalt-sapphire-deep">
+  <title id="hw-cs-x-title">X — Cobalt Sapphire</title>
+  <desc id="hw-cs-x-desc">X social icon with cobalt-sapphire-deep DNA.
+    Sapphire refraction ring, caustic crystal well, dark glyph silhouette
+    with luminous edge refraction, orbital particles. Phi-timed SMIL.</desc>
+
+  <metadata>
+    <hw:artifact id="hw-cs-x-cobalt" type="icon" series="social" version="1.0.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.6 (InnerAura Labs) [claude-opus-4-6-20260210]</hw:generator>
+        <hw:created>2026-03-27</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:spec size="64x64" performance="composite-only" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:aesthetic>
+      <hw:chromatic system="cobalt-sapphire-deep" space="oklch" contrast-ratio="12.8:1"/>
+      <hw:motion vocabulary="ring-rotation,caustic-pulse,stop-color-cycle,orbital-particle"
+                 physics="sapphire-refraction+phi-cascade"
+                 timing="phi" cim-compliant="true"/>
+      <hw:geometry form-language="circular" proportional-system="phi"
+                   mathematical-basis="sapphire-refraction"
+                   symmetry="radial"/>
+      <hw:material surface="sapphire-crystal" depth="deep"/>
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>X icon carrying cobalt-sapphire-deep DNA from the HyperWeave
+        V11 formidable banner. Ring is sapphire waveguide, well is crystal interior,
+        glyph is a solid form refracting light at its boundary.</hw:intent>
+      <hw:approach>Dark void glyph (#0a0838) with sapphire edge stroke (#4080ff).
+        Halo filter on glyph creates luminous boundary refraction. Filters scaled
+        for 64px context. Two counter-orbiting particles at phi durations.</hw:approach>
+      <hw:tradeoffs>3-tier filter chain heavy for 64px — accepted for DNA family
+        coherence. No construction sequence — ambient life only. Single glyph path
+        from SimpleIcons preserves recognizability. Dark glyph sacrifices the
+        original platform brand color for sapphire DNA fidelity.</hw:tradeoffs>
+      <hw:spatial-notes>Center (32,32). Ring r=28 (87.5%). Well r=26.5 (82.8%).
+        Glyph 30x30 at (17,17). Particles orbit at r~30. 1:1 aspect.</hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+
+  <defs>
+    <linearGradient id="cs-x-edge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0838">
+        <animate attributeName="stop-color"
+                 values="#0a0838;#141070;#0a0838"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="18%" stop-color="#1838b0">
+        <animate attributeName="stop-color"
+                 values="#1838b0;#2850d8;#1030a0;#2048c8;#1838b0"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="42%" stop-color="#4080ff">
+        <animate attributeName="stop-color"
+                 values="#4080ff;#60a0ff;#3070f0;#5090ff;#4080ff"
+                 dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="55%" stop-color="#d0e4ff">
+        <animate attributeName="stop-color"
+                 values="#d0e4ff;#e8f0ff;#b8d4ff;#dce8ff;#d0e4ff"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="78%" stop-color="#5848d8">
+        <animate attributeName="stop-color"
+                 values="#5848d8;#7060f0;#4838c0;#6858e8;#5848d8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#120860">
+        <animate attributeName="stop-color"
+                 values="#120860;#1c1088;#0c0650;#120860"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="13.708s"
+                        repeatCount="indefinite"/>
+    </linearGradient>
+
+    <radialGradient id="cs-x-caus" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#e8f0ff" stop-opacity="1">
+        <animate attributeName="stop-opacity"
+                 values="1;.75;1" dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="30%" stop-color="#4080ff" stop-opacity=".5">
+        <animate attributeName="stop-color"
+                 values="#4080ff;#60a0ff;#3070f0;#4080ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#0a0838" stop-opacity="1"/>
+    </radialGradient>
+
+    <radialGradient id="cs-x-part" cx="35%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#d0e8ff" stop-opacity=".95">
+        <animate attributeName="stop-color"
+                 values="#d0e8ff;#b0d0ff;#e0f0ff;#d0e8ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#3060d0" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="cs-x-neb" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2848c0" stop-opacity=".18">
+        <animate attributeName="stop-opacity"
+                 values=".18;.28;.12;.22;.18"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="40%" stop-color="#1838a0" stop-opacity=".08"/>
+      <stop offset="100%" stop-color="#0a0838" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="cs-x-f-core" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="b1">
+        <animate attributeName="stdDeviation"
+                 values="1.5;2.2;1.2;1.8;1.5"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </feGaussianBlur>
+      <feColorMatrix in="b1" type="matrix"
+                     values="0.15 0 0.6 0 0.06
+                             0.08 0.12 0.5 0 0.03
+                             0.25 0.1 1.2 0 0.10
+                             0 0 0 0.55 0" result="t1"/>
+      <feMerge>
+        <feMergeNode in="t1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="cs-x-f-halo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b2"/>
+      <feColorMatrix in="b2" type="matrix"
+                     values="0.10 0 0.45 0 0.03
+                             0.06 0.08 0.35 0 0.01
+                             0.18 0.05 0.90 0 0.06
+                             0 0 0 0.18 0" result="t2"/>
+      <feMerge>
+        <feMergeNode in="t2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="cs-x-f-amb" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5"/>
+      <feColorMatrix type="matrix"
+                     values="0.06 0 0.30 0 0.02
+                             0.04 0.05 0.22 0 0.01
+                             0.10 0.03 0.65 0 0.04
+                             0 0 0 0.10 0"/>
+    </filter>
+
+    <clipPath id="cs-x-top-clip"><rect x="14" y="2" width="36" height="16"/></clipPath>
+  </defs>
+
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      animate, animateTransform, animateMotion, set {
+        display: none !important;
+      }
+    }
+    @media (forced-colors: active) {
+      text { fill: CanvasText !important; }
+      rect, path, circle, ellipse { stroke: CanvasText; }
+    }
+  </style>
+
+  <!-- ATMOSPHERIC NEBULA -->
+  <circle cx="32" cy="32" r="30" fill="url(#cs-x-neb)" opacity=".7"/>
+
+  <!-- AMBIENT BLOOM -->
+  <circle cx="32" cy="32" r="28" fill="none" stroke="url(#cs-x-edge)"
+          stroke-width="4" filter="url(#cs-x-f-amb)" opacity=".4"/>
+
+  <!-- RING — sapphire refraction waveguide -->
+  <circle cx="32" cy="32" r="28" fill="none"
+          stroke="url(#cs-x-edge)" stroke-width="3"
+          filter="url(#cs-x-f-core)">
+    <animate attributeName="stroke-width" values="3;3.5;2.8;3.2;3"
+             dur="8.472s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+  </circle>
+
+  <!-- WELL — sapphire crystal interior -->
+  <circle cx="32" cy="32" r="26.5" fill="url(#cs-x-caus)"/>
+  <circle cx="32" cy="32" r="26.5" fill="none" stroke="#0a0838" stroke-width="0.5"/>
+
+  <!-- TOP-CLIP SPECULAR -->
+  <g clip-path="url(#cs-x-top-clip)">
+    <circle cx="32" cy="32" r="26" fill="none" stroke="#4080ff"
+            stroke-width="0.8" opacity="0.2">
+      <animate attributeName="opacity" values=".2;.35;.15;.28;.2"
+               dur="5.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+  </g>
+
+  <!-- GLYPH — dark silhouette with sapphire edge refraction -->
+  <g transform="translate(17,17)" filter="url(#cs-x-f-halo)">
+    <svg viewBox="0 0 24 24" width="30" height="30">
+      <path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"
+            fill="#0a0838" stroke="#4080ff" stroke-width="0.35"/>
+    </svg>
+  </g>
+
+  <!-- ORBITAL PARTICLES -->
+  <circle r="1.8" fill="url(#cs-x-part)" filter="url(#cs-x-f-core)">
+    <animateMotion path="M32,2 C62,32 32,62 2,32 S32,2 32,2" dur="8.472s"
+                   repeatCount="indefinite"/>
+    <animate attributeName="r" values="1.8;1.2;2.2;1.5;1.8"
+             dur="8.472s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    <animate attributeName="opacity" values=".85;.55;.95;.65;.85"
+             dur="8.472s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+  </circle>
+  <circle r="1.1" fill="#d0e4ff" opacity=".5">
+    <animateMotion path="M62,32 C32,62 2,32 32,2 S62,32 62,32" dur="13.708s"
+                   repeatCount="indefinite"/>
+    <animate attributeName="opacity" values=".5;.8;.3;.6;.5"
+             dur="13.708s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+  </circle>
+
+</svg>

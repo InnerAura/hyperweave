@@ -1,5 +1,5 @@
-"""
-HyperWeave MCP Server.
+"""MCP server -- FastMCP v3 tools and resources."""
 
-Model Context Protocol server for HyperWeave Living Artifact generation.
-"""
+from hyperweave.mcp.server import mcp
+
+__all__ = ["mcp"]

@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:hw="https://hyperweave.dev/hw/v1.0"
+     viewBox="0 0 180 48"
+     role="img"
+     aria-labelledby="hw-nav-title"
+     data-hw-variant="navbar"
+     data-hw-regime="auto"
+     data-hw-chromatic="spectrum">
+  
+  <title id="hw-nav-title">HyperWeave</title>
+  
+  <metadata>
+    <hw:artifact type="navbar-logo" series="hyperweave" version="1.0">
+      <hw:provenance>
+        <hw:generator>Claude (Anthropic)</hw:generator>
+        <hw:created>2026-01-21</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+        <hw:protocol>HyperWeave v7.1</hw:protocol>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Compact navbar identity preserving full chromasonic evolution from banner</hw:intent>
+        <hw:approach>Surgical extraction of core transmitter geometry; SMIL chromatic cycling preserved at φ-ratio intervals; light/dark via CSS custom properties on text/wire elements only</hw:approach>
+        <hw:tradeoffs>Removed octahedron scaffold (too dense at 40px); kept 2 orbiting particles (reduced from 3); preserved all 5 gradient stop animations</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+  
+  <defs>
+    <!-- CHROMASONIC EVOLUTION - PRESERVED FROM BANNER -->
+    <!-- φ-ratio cascade: 2s, 3.236s, 5.236s, 8.472s, 13.708s -->
+    <linearGradient id="hw-chroma-nav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0A54">
+        <animate attributeName="stop-color" 
+                 values="#FF0A54;#0AFFEF;#845EF7;#B5179E;#FF477E;#FF0A54" 
+                 dur="2s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="25%" style="stop-color:#FF477E">
+        <animate attributeName="stop-color" 
+                 values="#FF477E;#845EF7;#B5179E;#0AFFEF;#FF0A54;#FF477E" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="50%" style="stop-color:#0AFFEF">
+        <animate attributeName="stop-color" 
+                 values="#0AFFEF;#B5179E;#FF0A54;#845EF7;#FF477E;#0AFFEF" 
+                 dur="5.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="75%" style="stop-color:#845EF7">
+        <animate attributeName="stop-color" 
+                 values="#845EF7;#FF0A54;#FF477E;#B5179E;#0AFFEF;#845EF7" 
+                 dur="8.472s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#B5179E">
+        <animate attributeName="stop-color" 
+                 values="#B5179E;#FF477E;#0AFFEF;#FF0A54;#845EF7;#B5179E" 
+                 dur="13.708s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- TEXT GRADIENT - Warmer spectrum for wordmark -->
+    <linearGradient id="hw-chroma-text" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF6B35">
+        <animate attributeName="stop-color" 
+                 values="#FF6B35;#F72585;#845EF7;#0AFFEF;#FF6B35" 
+                 dur="8.472s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#F72585">
+        <animate attributeName="stop-color" 
+                 values="#F72585;#845EF7;#0AFFEF;#FF6B35;#F72585" 
+                 dur="13.708s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- PARTICLE GLOW -->
+    <radialGradient id="hw-particle-nav" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0AFFEF;stop-opacity:0.9">
+        <animate attributeName="stop-color" 
+                 values="#0AFFEF;#FF0A54;#845EF7;#B5179E;#0AFFEF" 
+                 dur="8.472s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#0AFFEF;stop-opacity:0"/>
+    </radialGradient>
+    
+    <!-- GLOW FILTER -->
+    <filter id="hw-glow-nav" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5">
+        <animate attributeName="stdDeviation" 
+                 values="1.5;2.0;1.2;1.8;1.5" 
+                 dur="3.236s"
+                 repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.23 0.47 0.48 0.93;0.27 0.43 0.52 0.89;0.21 0.49 0.44 0.97;0.25 0.46 0.45 0.94"/>
+      </feGaussianBlur>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <style><![CDATA[
+    /* ─── REGIME: PEARL (Light) ─── */
+    .hw-text-base { fill: #1A1A1A; }
+    .hw-wire { stroke: #DDDDDD; }
+    
+    /* ─── REGIME: CARBON (Dark) ─── */
+    @media (prefers-color-scheme: dark) {
+      .hw-text-base { fill: #F8FAFC; }
+      .hw-wire { stroke: #3F3F46; }
+    }
+    
+    /* ─── ACCESSIBILITY ─── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  ]]></style>
+  
+  <!-- LOGO SYMBOL (scaled to 40x40, centered in 48px height) -->
+  <g data-hw-section="symbol" transform="translate(24, 24)">
+    
+    <!-- Bounding ring - regime-responsive -->
+    <circle class="hw-wire" cx="0" cy="0" r="20" fill="none" stroke-width="0.5" opacity="0.3">
+      <animate attributeName="opacity" 
+               values="0.3;0.4;0.25;0.35;0.3" 
+               dur="5.236s"
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+    
+    <!-- CORE TRANSMITTER SHAPE - scaled from banner -->
+    <path d="M -3.7,-14.3 
+             L -11.4,-7.1 
+             C -14.9,-3.4 -14.9,3.4 -11.4,7.1 
+             L -3.7,14.3 
+             L 3.7,14.3 
+             L 11.4,7.1 
+             C 14.9,3.4 14.9,-3.4 11.4,-7.1 
+             L 3.7,-14.3 
+             Z" 
+          fill="none" 
+          stroke="url(#hw-chroma-nav)" 
+          stroke-width="2.5" 
+          stroke-linejoin="round" 
+          stroke-linecap="round"
+          filter="url(#hw-glow-nav)">
+      <!-- BREATHING STROKE -->
+      <animate attributeName="stroke-width" 
+               values="2.5;3.0;2.3;3.2;2.5" 
+               dur="5.236s"
+               repeatCount="indefinite" 
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      <!-- SUBTLE ROTATION WOBBLE -->
+      <animateTransform attributeName="transform"
+                       type="rotate"
+                       values="0;1.5;-1.2;2.1;-0.8;0"
+                       dur="13.708s"
+                       repeatCount="indefinite"
+                       calcMode="spline"
+                       keySplines="0.23 0.47 0.48 0.93;0.27 0.43 0.52 0.89;0.21 0.49 0.44 0.97;0.29 0.41 0.56 0.87;0.25 0.45 0.50 0.91"/>
+    </path>
+    
+    <!-- INTERNAL CONNECTIONS -->
+    <g stroke="url(#hw-chroma-nav)" stroke-width="1" opacity="0.7" stroke-linecap="round">
+      <animate attributeName="opacity" 
+               values="0.7;0.5;0.8;0.6;0.7" 
+               dur="3.236s"
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      <line x1="-7" y1="-7" x2="7" y2="-7"/>
+      <line x1="-8.5" y1="-1" x2="8.5" y2="-1"/>
+      <line x1="-7" y1="5" x2="7" y2="5"/>
+    </g>
+    
+    <!-- CORNER NODES -->
+    <g fill="url(#hw-chroma-nav)">
+      <circle cx="-3.7" cy="-14.3" r="1.2"/>
+      <circle cx="3.7" cy="-14.3" r="1.2"/>
+      <circle cx="-11.4" cy="-7.1" r="1.2"/>
+      <circle cx="11.4" cy="-7.1" r="1.2"/>
+      <circle cx="-11.4" cy="7.1" r="1.2"/>
+      <circle cx="11.4" cy="7.1" r="1.2"/>
+      <circle cx="-3.7" cy="14.3" r="1.2"/>
+      <circle cx="3.7" cy="14.3" r="1.2"/>
+    </g>
+    
+    <!-- NEXUS POINT -->
+    <circle cx="0" cy="0" r="2" fill="url(#hw-chroma-nav)" filter="url(#hw-glow-nav)">
+      <animate attributeName="r" 
+               values="2;2.8;2" 
+               dur="2.618s"
+               repeatCount="indefinite" 
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+    
+    <!-- ORBITING PARTICLES -->
+    <circle r="1.2" fill="url(#hw-particle-nav)" filter="url(#hw-glow-nav)">
+      <animateMotion 
+        path="M0,-16 L16,0 L0,16 L-16,0 Z" 
+        dur="8.472s"
+        repeatCount="indefinite"/>
+      <animate attributeName="r" 
+               values="1.2;0.9;1.4;1.0;1.2" 
+               dur="8.472s" 
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+    
+    <circle r="0.9" fill="url(#hw-particle-nav)" filter="url(#hw-glow-nav)">
+      <animateMotion 
+        path="M10,-10 L10,10 L-10,10 L-10,-10 Z" 
+        dur="5.127s"
+        repeatCount="indefinite"/>
+      <animate attributeName="r" 
+               values="0.9;1.2;0.7;1.0;0.9" 
+               dur="5.127s" 
+               repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.24 0.47 0.46 0.93;0.28 0.43 0.50 0.89;0.22 0.49 0.44 0.95;0.25 0.46 0.45 0.94"/>
+    </circle>
+  </g>
+  
+  <!-- WORDMARK -->
+  <g data-hw-section="wordmark" transform="translate(52, 24)">
+    <text y="6" 
+          font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" 
+          font-size="18" 
+          font-weight="700">
+      <tspan class="hw-text-base">Hyper</tspan><tspan fill="url(#hw-chroma-text)">Weave</tspan>
+    </text>
+  </g>
+</svg>

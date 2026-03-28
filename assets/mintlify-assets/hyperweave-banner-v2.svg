@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:hw="https://hyperweave.dev/hw/v1.0"
+     viewBox="0 0 480 180"
+     role="img"
+     aria-labelledby="hw-title hw-desc"
+     data-hw-variant="banner"
+     data-hw-regime="auto"
+     data-hw-chromatic="spectrum">
+  
+  <title id="hw-title">HyperWeave Living Artifacts</title>
+  <desc id="hw-desc">Visual infrastructure for the agentic web. Self-adaptive banner with geometric logo and animated accents.</desc>
+  
+  <metadata>
+    <hw:artifact type="banner" series="hyperweave" version="2.0">
+      <hw:provenance>
+        <hw:generator>Claude (Anthropic)</hw:generator>
+        <hw:created>2026-01-21</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+        <hw:protocol>HyperWeave v7.1</hw:protocol>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Hero banner for HyperWeave landing—establishes brand identity with geometric precision and living motion</hw:intent>
+        <hw:approach>CIM-compliant CSS keyframes on transform/opacity/filter only; internal media queries for regime switching; expanded viewBox to prevent clipping</hw:approach>
+        <hw:tradeoffs>Removed all SMIL (r, stop-color, stroke-width animations) for GitHub compatibility; chromatic cycling replaced with static gradient + opacity pulse; particle orbits replaced with transform-based rotation</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+  
+  <defs>
+    <!-- CHROMATIC GRADIENTS - Static colors, motion via transform/opacity -->
+    <linearGradient id="hw-chroma-spectrum" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" class="hw-stop-1"/>
+      <stop offset="25%" class="hw-stop-2"/>
+      <stop offset="50%" class="hw-stop-3"/>
+      <stop offset="75%" class="hw-stop-4"/>
+      <stop offset="100%" class="hw-stop-5"/>
+    </linearGradient>
+    
+    <linearGradient id="hw-chroma-text" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" class="hw-text-stop-1"/>
+      <stop offset="100%" class="hw-text-stop-2"/>
+    </linearGradient>
+    
+    <radialGradient id="hw-particle-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" class="hw-particle-core"/>
+      <stop offset="100%" class="hw-particle-edge"/>
+    </radialGradient>
+    
+    <!-- ENERGY FIELD FILTER - CIM compliant (filter reference animatable) -->
+    <filter id="hw-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    
+    <filter id="hw-soft-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- OCTAHEDRON SYMBOL - Reusable geometric core -->
+    <symbol id="hw-octahedron" viewBox="-80 -80 160 160">
+      <g class="hw-octa-edges">
+        <!-- Upper pyramid -->
+        <line x1="0" y1="-70" x2="70" y2="0"/>
+        <line x1="0" y1="-70" x2="0" y2="0"/>
+        <line x1="0" y1="-70" x2="-70" y2="0"/>
+        <!-- Lower pyramid -->
+        <line x1="0" y1="70" x2="70" y2="0"/>
+        <line x1="0" y1="70" x2="0" y2="0"/>
+        <line x1="0" y1="70" x2="-70" y2="0"/>
+        <!-- Equator -->
+        <line x1="70" y1="0" x2="0" y2="0"/>
+        <line x1="0" y1="0" x2="-70" y2="0"/>
+      </g>
+      <g class="hw-octa-vertices">
+        <circle cx="0" cy="-70" r="2.5"/>
+        <circle cx="70" cy="0" r="2.5"/>
+        <circle cx="0" cy="70" r="2.5"/>
+        <circle cx="-70" cy="0" r="2.5"/>
+        <circle cx="0" cy="0" r="3.5" class="hw-nexus"/>
+      </g>
+    </symbol>
+    
+    <!-- MAIN LOGO SYMBOL -->
+    <symbol id="hw-logo-core" viewBox="-55 -55 110 110">
+      <path d="M -13,-50 
+               L -40,-25 
+               C -52,-12 -52,12 -40,25 
+               L -13,50 
+               L 13,50 
+               L 40,25 
+               C 52,12 52,-12 40,-25 
+               L 13,-50 
+               Z" 
+            class="hw-logo-stroke"
+            fill="none" 
+            stroke-width="4" 
+            stroke-linejoin="round" 
+            stroke-linecap="round"/>
+      <!-- Internal connections -->
+      <g class="hw-internal-lines">
+        <line x1="-25" y1="-25" x2="25" y2="-25"/>
+        <line x1="-30" y1="-4" x2="30" y2="-4"/>
+        <line x1="-25" y1="17" x2="25" y2="17"/>
+      </g>
+      <!-- Corner nodes -->
+      <g class="hw-corner-nodes">
+        <circle cx="-13" cy="-50" r="2"/>
+        <circle cx="13" cy="-50" r="2"/>
+        <circle cx="-40" cy="-25" r="2"/>
+        <circle cx="40" cy="-25" r="2"/>
+        <circle cx="-40" cy="25" r="2"/>
+        <circle cx="40" cy="25" r="2"/>
+        <circle cx="-13" cy="50" r="2"/>
+        <circle cx="13" cy="50" r="2"/>
+      </g>
+    </symbol>
+  </defs>
+  
+  <style><![CDATA[
+    /* ═══════════════════════════════════════════════════════════════
+       HYPERWEAVE BANNER v2.0 — STRATUM 2 CSS KEYFRAMES
+       CIM Compliant: transform, opacity, filter ONLY
+       ═══════════════════════════════════════════════════════════════ */
+    
+    /* ─── REGIME: PEARL (Light Mode Default) ─── */
+    :root {
+      --hw-bg: #F8FAFC;
+      --hw-text-primary: #1A1A1A;
+      --hw-text-secondary: #555555;
+      --hw-text-tertiary: #888888;
+      --hw-wire: #CCCCCC;
+      --hw-wire-opacity: 0.3;
+      
+      /* Spectrum chromatic */
+      --hw-c1: #FF0A54;
+      --hw-c2: #FF477E;
+      --hw-c3: #0AFFEF;
+      --hw-c4: #845EF7;
+      --hw-c5: #B5179E;
+      
+      /* Text gradient */
+      --hw-text-accent-1: #FF6B35;
+      --hw-text-accent-2: #F72585;
+    }
+    
+    /* ─── REGIME: CARBON (Dark Mode) ─── */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-bg: transparent;
+        --hw-text-primary: #F8FAFC;
+        --hw-text-secondary: #A1A1AA;
+        --hw-text-tertiary: #71717A;
+        --hw-wire: #3F3F46;
+        --hw-wire-opacity: 0.4;
+        
+        /* Brighter spectrum for dark */
+        --hw-c1: #FF3366;
+        --hw-c2: #FF6B9D;
+        --hw-c3: #22D3EE;
+        --hw-c4: #A78BFA;
+        --hw-c5: #E879F9;
+        
+        --hw-text-accent-1: #FB923C;
+        --hw-text-accent-2: #F472B6;
+      }
+    }
+    
+    /* ─── GRADIENT STOP CLASSES ─── */
+    .hw-stop-1 { stop-color: var(--hw-c1); }
+    .hw-stop-2 { stop-color: var(--hw-c2); }
+    .hw-stop-3 { stop-color: var(--hw-c3); }
+    .hw-stop-4 { stop-color: var(--hw-c4); }
+    .hw-stop-5 { stop-color: var(--hw-c5); }
+    
+    .hw-text-stop-1 { stop-color: var(--hw-text-accent-1); }
+    .hw-text-stop-2 { stop-color: var(--hw-text-accent-2); }
+    
+    .hw-particle-core { stop-color: var(--hw-c3); stop-opacity: 0.9; }
+    .hw-particle-edge { stop-color: var(--hw-c3); stop-opacity: 0; }
+    
+    /* ─── BASE ELEMENT STYLES ─── */
+    .hw-background {
+      fill: var(--hw-bg);
+    }
+    
+    .hw-bounding-sphere {
+      fill: none;
+      stroke: var(--hw-wire);
+      stroke-width: 0.5;
+      opacity: var(--hw-wire-opacity);
+    }
+    
+    .hw-reference-ring {
+      fill: none;
+      stroke: var(--hw-wire);
+      stroke-width: 0.5;
+      opacity: var(--hw-wire-opacity);
+    }
+    
+    .hw-octa-edges line {
+      stroke: url(#hw-chroma-spectrum);
+      stroke-width: 0.5;
+      opacity: 0.4;
+    }
+    
+    .hw-octa-vertices circle {
+      fill: url(#hw-chroma-spectrum);
+      opacity: 0.9;
+    }
+    
+    .hw-nexus {
+      filter: url(#hw-soft-glow);
+    }
+    
+    .hw-logo-stroke {
+      stroke: url(#hw-chroma-spectrum);
+      filter: url(#hw-glow);
+      will-change: transform, opacity;
+    }
+    
+    .hw-internal-lines line {
+      stroke: url(#hw-chroma-spectrum);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      opacity: 0.7;
+    }
+    
+    .hw-corner-nodes circle {
+      fill: url(#hw-chroma-spectrum);
+      opacity: 0.9;
+    }
+    
+    /* ─── TYPOGRAPHY ─── */
+    .hw-brand-base {
+      fill: var(--hw-text-primary);
+      font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+    }
+    
+    .hw-brand-accent {
+      fill: url(#hw-chroma-text);
+    }
+    
+    .hw-tagline-primary {
+      fill: var(--hw-text-secondary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 1.618px;
+    }
+    
+    .hw-tagline-secondary {
+      fill: var(--hw-text-tertiary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: 0.05em;
+    }
+    
+    /* ═══════════════════════════════════════════════════════════════
+       KINETIC LAYER — CIM COMPLIANT ANIMATIONS
+       Only: transform, opacity, filter
+       Timing: φ ratios (1.618s, 2.618s, 4.236s, 6.854s)
+       ═══════════════════════════════════════════════════════════════ */
+    
+    /* ─── LOGO BREATHING ─── */
+    @keyframes hw-breathe {
+      0%, 100% { 
+        transform: scale(1); 
+        opacity: 1;
+      }
+      50% { 
+        transform: scale(1.02); 
+        opacity: 0.95;
+      }
+    }
+    
+    .hw-logo-group {
+      animation: hw-breathe 4.236s ease-in-out infinite;
+      transform-origin: center;
+      will-change: transform, opacity;
+    }
+    
+    /* ─── NEXUS PULSE ─── */
+    @keyframes hw-nexus-pulse {
+      0%, 100% { 
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% { 
+        transform: scale(1.3);
+        opacity: 0.7;
+      }
+    }
+    
+    .hw-nexus {
+      animation: hw-nexus-pulse 2.618s ease-in-out infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+      will-change: transform, opacity;
+    }
+    
+    /* ─── REFERENCE RINGS PULSE ─── */
+    @keyframes hw-ring-pulse-1 {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.5; }
+    }
+    
+    @keyframes hw-ring-pulse-2 {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 0.4; }
+    }
+    
+    .hw-ring-inner {
+      animation: hw-ring-pulse-1 2.618s ease-in-out infinite;
+      will-change: opacity;
+    }
+    
+    .hw-ring-outer {
+      animation: hw-ring-pulse-2 4.236s ease-in-out infinite;
+      will-change: opacity;
+    }
+    
+    /* ─── ORBITING PARTICLES ─── */
+    @keyframes hw-orbit-1 {
+      from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+      to { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+    }
+    
+    @keyframes hw-orbit-2 {
+      from { transform: rotate(120deg) translateX(40px) rotate(-120deg); }
+      to { transform: rotate(480deg) translateX(40px) rotate(-480deg); }
+    }
+    
+    @keyframes hw-orbit-3 {
+      from { transform: rotate(240deg) translateX(60px) rotate(-240deg); }
+      to { transform: rotate(600deg) translateX(60px) rotate(-600deg); }
+    }
+    
+    .hw-particle-1 {
+      animation: hw-orbit-1 6.854s linear infinite;
+      transform-origin: center;
+      will-change: transform;
+    }
+    
+    .hw-particle-2 {
+      animation: hw-orbit-2 10.034s linear infinite;
+      transform-origin: center;
+      will-change: transform;
+    }
+    
+    .hw-particle-3 {
+      animation: hw-orbit-3 8.472s linear infinite reverse;
+      transform-origin: center;
+      will-change: transform;
+    }
+    
+    /* ─── EDGE OPACITY CASCADE ─── */
+    @keyframes hw-edge-breathe {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.6; }
+    }
+    
+    .hw-octa-edges {
+      animation: hw-edge-breathe 5.236s ease-in-out infinite;
+      will-change: opacity;
+    }
+    
+    /* ─── TAGLINE FADE ─── */
+    @keyframes hw-tagline-breathe {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.6; }
+    }
+    
+    .hw-tagline-primary {
+      animation: hw-tagline-breathe 6.854s ease-in-out infinite;
+      will-change: opacity;
+    }
+    
+    /* ═══════════════════════════════════════════════════════════════
+       ACCESSIBILITY — REDUCED MOTION
+       ═══════════════════════════════════════════════════════════════ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  ]]></style>
+  
+  <!-- BACKGROUND (respects regime) -->
+  <rect class="hw-background" width="480" height="180" rx="8"/>
+  
+  <!-- MAIN GEOMETRY SECTION -->
+  <!-- Adjusted: translate(85, 90) keeps geometry centered with 10px top margin -->
+  <g data-hw-section="identity" transform="translate(85, 95)">
+    
+    <!-- Bounding sphere -->
+    <circle class="hw-bounding-sphere" cx="0" cy="0" r="75"/>
+    
+    <!-- Reference rings with staggered pulse -->
+    <circle class="hw-reference-ring hw-ring-inner" cx="0" cy="0" r="35"/>
+    <circle class="hw-reference-ring hw-ring-outer" cx="0" cy="0" r="55"/>
+    
+    <!-- Octahedron wireframe -->
+    <use href="#hw-octahedron" x="-80" y="-80" width="160" height="160"/>
+    
+    <!-- Main logo shape with breathing animation -->
+    <g class="hw-logo-group">
+      <use href="#hw-logo-core" x="-55" y="-55" width="110" height="110"/>
+    </g>
+    
+    <!-- Orbiting particles (transform-based, CIM compliant) -->
+    <g data-hw-section="particles">
+      <circle class="hw-particle-1" r="2.2" fill="url(#hw-particle-glow)" filter="url(#hw-soft-glow)"/>
+      <circle class="hw-particle-2" r="1.8" fill="url(#hw-particle-glow)" filter="url(#hw-soft-glow)"/>
+      <circle class="hw-particle-3" r="1.5" fill="url(#hw-particle-glow)" filter="url(#hw-soft-glow)"/>
+    </g>
+  </g>
+  
+  <!-- TYPOGRAPHY SECTION -->
+  <g data-hw-section="typography" transform="translate(300, 55)">
+    <!-- Brand name -->
+    <text x="0" y="45" text-anchor="middle">
+      <tspan class="hw-brand-base">Hyper</tspan><tspan class="hw-brand-base hw-brand-accent">Weave</tspan>
+    </text>
+    
+    <!-- Primary tagline -->
+    <text class="hw-tagline-primary" x="0" y="77" text-anchor="middle">
+      WHERE VECTORS MEET VISION
+    </text>
+    
+    <!-- Secondary tagline -->
+    <text class="hw-tagline-secondary" x="0" y="98" text-anchor="middle">
+      Design at the intersection of math and mAGIc
+    </text>
+  </g>
+</svg>

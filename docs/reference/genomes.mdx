@@ -1,0 +1,109 @@
+---
+title: "Genomes Reference"
+description: "Complete reference for HyperWeave genomes -- aesthetic DNA specifications that control visual identity."
+---
+
+A genome is a portable, machine-readable aesthetic specification. It defines colors, shadows, glow, rhythm, and compatible motions. Every artifact inherits its visual identity from a genome.
+
+## Available Genomes
+
+### brutalist-emerald
+
+Dark field, emerald signal, sharp zero-radius corners, tectonic typography.
+
+| Property | Value | CSS Variable |
+|---|---|---|
+| Surface 0 | `#14532D` | `--dna-surface` |
+| Surface 1 | `#0D0D0D` | `--dna-surface-raised` |
+| Surface 2 | `#1A1A1A` | `--dna-surface-overlay` |
+| Ink | `#A7F3D0` | `--dna-ink-primary` |
+| Ink secondary | `#6EE7B7` | `--dna-ink-secondary` |
+| Accent | `#10B981` | `--dna-signal` |
+| Accent complement | `#059669` | `--dna-signal-complement` |
+| Stroke | `#333333` | `--dna-stroke` |
+| Corner | `0` | `--dna-corner` |
+| Rhythm base | `2.618s` | `--dna-rhythm-base` |
+| Profile | `brutalist` | -- |
+| Category | `dark` | -- |
+
+**Compatible motions**: `static`, `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun`, `bars`, `broadcast`, `cascade`, `collapse`, `converge`, `crash`, `drop`, `breach`, `pulse`
+
+### chrome-horizon
+
+Deep void, metallic blue, environmental chrome mapping, smooth curves.
+
+| Property | Value | CSS Variable |
+|---|---|---|
+| Surface 0 | `#000a14` | `--dna-surface` |
+| Surface 1 | `#0a1628` | `--dna-surface-raised` |
+| Surface 2 | `#12243c` | `--dna-surface-overlay` |
+| Ink | `#e0eaf4` | `--dna-ink-primary` |
+| Ink secondary | `#8cb4d4` | `--dna-ink-secondary` |
+| Accent | `#5ba3d4` | `--dna-signal` |
+| Corner | `4` | `--dna-corner` |
+| Rhythm base | `2.618s` | `--dna-rhythm-base` |
+| Profile | `chrome` | -- |
+| Category | `dark` | -- |
+
+**Compatible motions**: `static`, `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun`
+
+<Info>
+  chrome-horizon supports border motions only. Kinetic typography motions are not available because the banner specimen uses environment-mapped chrome, not text-split overlays.
+</Info>
+
+## Genome Specification Fields
+
+Every genome config contains these fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `str` | Unique identifier |
+| `name` | `str` | Display name |
+| `category` | `"dark" \| "light"` | Base theme |
+| `profile` | `str` | Structural profile reference |
+| `surface_0` | hex | Primary background |
+| `surface_1` | hex | Raised surface |
+| `surface_2` | hex | Overlay surface |
+| `ink` | hex | Primary text color |
+| `ink_secondary` | hex | Secondary text color |
+| `ink_on_accent` | hex | Text on accent backgrounds |
+| `accent` | hex | Signal/brand color |
+| `accent_complement` | hex | Secondary accent |
+| `accent_signal` | hex | Highlight signal |
+| `accent_warning` | hex | Warning state color |
+| `accent_error` | hex | Error state color |
+| `stroke` | hex | Border/line color |
+| `shadow_color` | hex | Shadow color |
+| `shadow_opacity` | `str` | Shadow alpha |
+| `corner` | `str` | Corner radius |
+| `rhythm_base` | `str` | Base animation timing |
+| `density` | `str` | Visual density factor |
+| `compatible_motions` | `list[str]` | Allowed motion primitives (must include `static`) |
+
+## CSS Variable Mapping
+
+Genome properties map to CSS custom properties via `genome_to_css()`:
+
+```
+surface_0    -> --dna-surface
+surface_1    -> --dna-surface-raised
+surface_2    -> --dna-surface-overlay
+ink          -> --dna-ink-primary
+ink_secondary -> --dna-ink-secondary
+accent       -> --dna-signal
+stroke       -> --dna-stroke
+corner       -> --dna-corner
+rhythm_base  -> --dna-rhythm-base
+```
+
+Templates use `var(--dna-*)` exclusively -- never hardcoded colors.
+
+## Rhythm System
+
+Timing uses the golden ratio (phi = 1.618):
+
+| Rhythm | Formula | brutalist-emerald |
+|---|---|---|
+| `rhythm_base` | Configured | `2.618s` |
+| `rhythm_slow` | `base * phi` | `~4.236s` |
+| `rhythm_fast` | `base / phi` | `~1.618s` |

@@ -1,0 +1,32 @@
+{# Kinetic typography: converge -- split-screen convergence reveal + center ring.
+   Specimen: banner_convergence.svg
+   Left/right halves approach from L/R with clip-path, ring expansion,
+   flash pulse, then label fade-up.
+   Right clip uses (w - cx) for width to cover the full right half.
+   Outputs ONLY: clipped text halves, ring, flash overlay, label.
+   Context: uid, title, cx, cy, fs, w, h, ty, txt_attrs, subtitle (optional) #}
+<defs>
+  <clipPath id="{{ uid }}-cv-clip-l"><rect x="0" y="0" width="{{ cx }}" height="{{ h }}"/></clipPath>
+  <clipPath id="{{ uid }}-cv-clip-r"><rect x="{{ cx }}" y="0" width="{{ w - cx }}" height="{{ h }}"/></clipPath>
+</defs>
+<g clip-path="url(#{{ uid }}-cv-clip-l)" class="hw-motion-converge-left">
+  <text {{ txt_attrs }} fill="var(--dna-ink-primary)">{{ title }}</text>
+</g>
+<g clip-path="url(#{{ uid }}-cv-clip-r)" class="hw-motion-converge-right">
+  <text {{ txt_attrs }} fill="var(--dna-ink-primary)">{{ title }}</text>
+</g>
+<circle class="hw-motion-converge-ring" cx="{{ cx }}" cy="{{ cy }}" r="88"
+        fill="none" stroke="var(--dna-signal)" stroke-width="2"
+        style="transform-origin:{{ cx }}px {{ cy }}px"/>
+<rect class="hw-motion-converge-flash" width="{{ w }}" height="{{ h }}"
+      fill="var(--dna-signal)" opacity="0" pointer-events="none"/>
+<line class="hw-motion-converge-center" x1="{{ cx }}" y1="{{ (h * 0.18) | int }}"
+      x2="{{ cx }}" y2="{{ (h * 0.82) | int }}"
+      stroke="var(--dna-signal)" stroke-width="1" opacity="0"/>
+<g class="hw-motion-converge-label">
+  <text x="{{ (w * 0.065) | int }}" y="{{ (h * 0.82) | int }}"
+        font-family="'SF Mono','JetBrains Mono',monospace" font-size="10"
+        fill="var(--dna-signal)" letter-spacing="0.3em" opacity=".5">{{ subtitle | default('') }}</text>
+</g>
+<rect class="hw-motion-converge-indicator" x="{{ w - 18 }}" y="12"
+      width="6" height="6" fill="var(--dna-signal)"/>

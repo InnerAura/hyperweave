@@ -1,0 +1,101 @@
+---
+title: "Set Up Claude Code Hooks"
+description: "Configure Claude Code hooks to automate HyperWeave artifact generation after sessions."
+---
+
+## The Problem
+
+You want HyperWeave to automatically generate session receipts or other artifacts when a Claude Code session ends, without manual intervention.
+
+## Automatic Installation
+
+The simplest method:
+
+```bash
+hyperweave install-hook
+```
+
+This modifies `~/.claude/settings.json` to add a `SessionEnd` hook. The command is idempotent -- running it again detects the existing hook and skips.
+
+## Manual Installation
+
+Edit `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hw session receipt",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## How the Hook Works
+
+1. Claude Code ends a session
+2. The `SessionEnd` event fires
+3. Claude Code pipes a JSON payload to stdin containing `transcript_path`
+4. `hw session receipt` reads the path from stdin
+5. The telemetry pipeline parses the transcript
+6. A receipt SVG is written to `.hyperweave/receipts/<session-id>.svg`
+7. A one-line cost summary is printed to stderr
+
+## Custom Hook Scripts
+
+You can create more complex hooks using shell scripts. HyperWeave's design (JSON output from `session parse`, SVG from `session receipt`) supports piping:
+
+```bash
+#!/usr/bin/env bash
+# custom-hook.sh -- Generate receipt + rhythm strip
+
+# Parse the transcript (reads stdin for hook JSON)
+hyperweave session receipt
+hyperweave session strip "$(cat | jq -r .transcript_path)" -o .hyperweave/strip.svg
+```
+
+Then in settings:
+
+```json
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./hooks/custom-hook.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Verifying the Hook
+
+After installation, run a Claude Code session. Check for output:
+
+```bash
+ls -la .hyperweave/receipts/
+```
+
+If no receipt appears, check:
+
+1. Is HyperWeave installed in your PATH? (`which hyperweave`)
+2. Is the hook in settings? (`cat ~/.claude/settings.json | jq .hooks`)
+3. Does the transcript exist? (Look in `.claude/projects/`)
+
+## Removing the Hook
+
+Edit `~/.claude/settings.json` and remove the HyperWeave entry from the `SessionEnd` array.

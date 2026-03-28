@@ -1,0 +1,19 @@
+{# Kinetic typography: broadcast -- text-only opacity strobe layers settle to final state.
+   Specimen: banner_broadcast.svg
+   Three phased text layers: normal (signal-colored text), inverse (surface-colored text),
+   final (settled ink text).  Strobe sequence via opacity, then settle.
+   NO full-canvas background rects -- only text elements and a small blink indicator.
+   Outputs: 3 text layers for strobe + blink rect.
+   Context: uid, title, cx, cy, fs, w, h, ty, txt_attrs, subtitle (optional) #}
+<text class="hw-motion-broadcast-normal" {{ txt_attrs }}
+      fill="var(--dna-signal)">{{ title }}</text>
+<text class="hw-motion-broadcast-inverse" {{ txt_attrs }}
+      fill="var(--dna-ink-primary)">{{ title }}</text>
+<g class="hw-motion-broadcast-final">
+  <text {{ txt_attrs }} fill="var(--dna-ink-primary)">{{ title }}</text>
+  <text x="{{ (w * 0.08) | int }}" y="{{ h - 10 }}"
+        font-family="'SF Mono','JetBrains Mono',monospace" font-size="10"
+        fill="var(--dna-signal)" letter-spacing="0.3em" opacity=".5">{{ subtitle | default('') }}</text>
+</g>
+<rect class="hw-motion-broadcast-blink" x="{{ w - 20 }}" y="12"
+      width="8" height="8" fill="var(--dna-signal)"/>

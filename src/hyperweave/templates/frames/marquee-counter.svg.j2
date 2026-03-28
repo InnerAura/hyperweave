@@ -1,0 +1,174 @@
+{# HyperWeave Counter-Scroll Marquee — 800x140 tri-band instrument.
+   3 rows with alternating R/L/R directions at unified speed.
+   Brutalist: 3-layer frame (outer fill → border → surface), accent bar,
+   corner rivets, status beacon, edge fades.
+   Specimen: brutalist-emerald-marquees-v5.html (counter-scroll tri-band).
+   Extends document.svg.j2.  Context: ComposeSpec dict. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+{% set cw = width | default(800) %}
+{% set ch = height | default(140) %}
+{% set si = surface_inset | default(5) %}
+{% set bz = bezel | default(4) %}
+{% set n_rows = rows | length | default(3) %}
+  {# Per-row clip paths #}
+{% for row in rows %}
+  <clipPath id="{{ uid }}-r{{ loop.index }}">
+    <rect x="{{ clip_x | default(6) }}" y="{{ row.row_y }}" width="{{ clip_w | default(788) }}" height="{{ row.row_h }}"/>
+  </clipPath>
+{% endfor %}
+  {# Edge fade gradients #}
+  <linearGradient id="{{ uid }}-fade-l" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="var(--dna-surface)" stop-opacity="1"/>
+    <stop offset="100%" stop-color="var(--dna-surface)" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="{{ uid }}-fade-r" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="var(--dna-surface)" stop-opacity="0"/>
+    <stop offset="100%" stop-color="var(--dna-surface)" stop-opacity="1"/>
+  </linearGradient>
+{% if is_chrome | default(false) and envelope_stops | default([]) %}
+  {# ── Chrome defs (specimen: chrome-horizon-marquees-v2) ── #}
+  <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="0" y2="1">
+  {% for stop in envelope_stops %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
+  </linearGradient>
+  <filter id="{{ uid }}-shadow" x="-1%" y="-4%" width="102%" height="112%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity=".35"/>
+  </filter>
+  <clipPath id="{{ uid }}-outer"><rect width="{{ cw }}" height="{{ ch }}" rx="4"/></clipPath>
+  <clipPath id="{{ uid }}-inner"><rect x="3" y="3" width="{{ cw - 6 }}" height="{{ ch - 6 }}" rx="2"/></clipPath>
+  <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
+    <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
+  </linearGradient>
+  <linearGradient id="{{ uid }}-specular" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="35%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="50%" stop-color="#fff" stop-opacity="{{ specular_sweep_peak | default('0.08') }}"/>
+    <stop offset="65%" stop-color="#fff" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    <animate attributeName="x1" values="-1;1;-1" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+    <animate attributeName="x2" values="0;2;0" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+  </linearGradient>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% set cw = width | default(800) %}
+{% set ch = height | default(140) %}
+{% set si = surface_inset | default(5) %}
+{% set bz = bezel | default(4) %}
+{% set fw = fade_width | default(36) %}
+
+{# ══════════════════════════════════════════════════════════════════
+   FRAME — 3-layer: outer fill → border stroke → inner surface
+   ══════════════════════════════════════════════════════════════════ #}
+{% if is_chrome | default(false) and envelope_stops | default([]) %}
+{# Chrome: env-map bezel → groove → well → specular (specimen: chrome-horizon-marquees-v2) #}
+<g clip-path="url(#{{ uid }}-outer)" filter="url(#{{ uid }}-shadow)">
+  <rect width="{{ cw }}" height="{{ ch }}" rx="4" fill="url(#{{ uid }}-envelope)"/>
+</g>
+<rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="3" fill="none" stroke="#000510" stroke-width=".6"/>
+<rect x="3" y="3" width="{{ cw - 6 }}" height="{{ ch - 6 }}" rx="2" fill="url(#{{ uid }}-well)"/>
+{# Specular sweep removed — causes text blur on chrome marquees #}
+<rect x="3" y="3" width="4" height="{{ ch - 6 }}" fill="url(#{{ uid }}-envelope)" opacity="0.7"/>
+<rect x="60" y="3" width="{{ cw - 120 }}" height=".5" fill="{{ specular_light | default('#6AACC8') }}" opacity=".1"/>
+{% else %}
+{# Brutalist 3-layer frame — filled rects for clean edges #}
+<rect width="{{ cw }}" height="{{ ch }}" fill="var(--dna-frame-fill, var(--dna-surface-deep))"/>
+<rect x="{{ bz // 2 }}" y="{{ bz // 2 }}" width="{{ cw - bz }}" height="{{ ch - bz }}"
+      fill="var(--dna-border)"/>
+<rect x="{{ si }}" y="{{ si }}" width="{{ cw - si * 2 }}" height="{{ ch - si * 2 }}"
+      fill="var(--dna-surface)"/>
+{# Left accent bar #}
+<rect x="{{ bz // 2 }}" y="{{ bz // 2 }}" width="{{ accent_bar_w | default(4) }}" height="{{ ch - bz }}"
+      fill="var(--dna-signal)"/>
+{% endif %}
+
+{# ═══ Row dividers ═══ #}
+{% for dy in divider_ys | default([44, 88]) %}
+{% if is_chrome | default(false) %}
+<line x1="10" y1="{{ dy }}" x2="{{ cw - 10 }}" y2="{{ dy }}"
+      stroke="var(--dna-signal)" stroke-width=".5" stroke-opacity=".12"/>
+{% else %}
+<line x1="{{ si + 1 }}" y1="{{ dy }}" x2="{{ cw - si - 1 }}" y2="{{ dy }}"
+      stroke="var(--dna-signal)" stroke-opacity=".2" stroke-width="1.5"/>
+{% endif %}
+{% endfor %}
+
+{# ═══ Scroll rows ═══ #}
+{% for row in rows %}
+{% set row_idx = loop.index %}
+{% set sd = row.scroll_distance | default(scroll_distance | default(1000)) %}
+{% set dur = row.scroll_dur | default(scroll_dur | default(11.09)) %}
+{% set dir = row.direction | default('rtl' if loop.index is odd else 'ltr') %}
+<g clip-path="url(#{{ uid }}-r{{ row_idx }})">
+  <g data-hw-zone="row-{{ row_idx }}">
+    <animateTransform attributeName="transform" type="translate"
+        from="{{ '-' ~ sd ~ ' 0' if dir == 'rtl' else '0 0' }}"
+        to="{{ '0 0' if dir == 'rtl' else '-' ~ sd ~ ' 0' }}"
+        dur="{{ dur }}s" repeatCount="indefinite"/>
+    {# Set A #}
+    <g transform="translate(0,0)">
+      <text y="{{ row.text_y }}"
+            font-family="{{ row.font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
+            font-size="{{ row.font_size | default(12) }}" font-weight="{{ row.font_weight | default('700') }}"
+            letter-spacing="{{ row.letter_spacing | default('2.5') }}">
+{% for item in row.cells %}
+        <tspan {% if loop.first %}x="{{ row.text_start_x | default(20) }}"{% else %}dx="{{ item.dx | default(row.gap | default(28)) }}"{% endif %}
+               fill="{{ item.color | default('var(--dna-signal)') }}"{% if item.font_size | default('') %} font-size="{{ item.font_size }}"{% endif %}{% if item.font_weight | default('') %} font-weight="{{ item.font_weight }}"{% endif %}{% if item.font_family | default('') %} font-family="{{ item.font_family }}"{% endif %}>{{ item.text }}</tspan>
+{% if not loop.last and row.separator %}
+        <tspan dx="{{ row.gap | default(28) }}" fill="{{ row.separator_color | default('var(--dna-border)') }}"{% if row.separator_opacity | default('') %} opacity="{{ row.separator_opacity }}"{% endif %}>{{ row.separator }}</tspan>
+{% endif %}
+{% endfor %}
+      </text>
+    </g>
+    {# Set B (seamless loop duplicate at +scroll_distance) #}
+    <g transform="translate({{ sd }},0)">
+      <text y="{{ row.text_y }}"
+            font-family="{{ row.font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
+            font-size="{{ row.font_size | default(12) }}" font-weight="{{ row.font_weight | default('700') }}"
+            letter-spacing="{{ row.letter_spacing | default('2.5') }}">
+{% for item in row.cells %}
+        <tspan {% if loop.first %}x="{{ row.text_start_x | default(20) }}"{% else %}dx="{{ item.dx | default(row.gap | default(28)) }}"{% endif %}
+               fill="{{ item.color | default('var(--dna-signal)') }}"{% if item.font_size | default('') %} font-size="{{ item.font_size }}"{% endif %}{% if item.font_weight | default('') %} font-weight="{{ item.font_weight }}"{% endif %}{% if item.font_family | default('') %} font-family="{{ item.font_family }}"{% endif %}>{{ item.text }}</tspan>
+{% if not loop.last and row.separator %}
+        <tspan dx="{{ row.gap | default(28) }}" fill="{{ row.separator_color | default('var(--dna-border)') }}"{% if row.separator_opacity | default('') %} opacity="{{ row.separator_opacity }}"{% endif %}>{{ row.separator }}</tspan>
+{% endif %}
+{% endfor %}
+      </text>
+    </g>
+  </g>
+</g>
+{% endfor %}
+
+{# ═══ Edge fades ═══ #}
+{% if is_chrome | default(false) %}
+<rect x="3" y="3" width="44" height="{{ ch - 6 }}" rx="2" fill="url(#{{ uid }}-fade-l)"/>
+<rect x="{{ cw - 47 }}" y="3" width="44" height="{{ ch - 6 }}" rx="2" fill="url(#{{ uid }}-fade-r)"/>
+{% else %}
+<rect x="{{ si }}" y="{{ si }}" width="{{ fw }}" height="{{ ch - si * 2 }}"
+      fill="url(#{{ uid }}-fade-l)"/>
+<rect x="{{ cw - si - fw }}" y="{{ si }}" width="{{ fw }}" height="{{ ch - si * 2 }}"
+      fill="url(#{{ uid }}-fade-r)"/>
+
+{# ═══ Corner rivets (square, brutalist only) ═══ #}
+{% set rs = rivet_size | default(6) %}
+{% set ri = si + 3 %}
+{% for pos in [(ri, ri), (cw - ri - rs, ri), (ri, ch - ri - rs), (cw - ri - rs, ch - ri - rs)] %}
+<rect x="{{ pos[0] }}" y="{{ pos[1] }}" width="{{ rs }}" height="{{ rs }}"
+      fill="var(--dna-signal)" opacity="{{ rivet_opacity | default(0.4) }}"/>
+{% endfor %}
+
+{# ═══ Status beacon (right edge, brutalist only) ═══ #}
+<rect x="{{ cw - 12 }}" y="{{ (ch - 16) // 2 }}" width="6" height="16"
+      fill="var(--dna-signal)">
+  <animate attributeName="opacity" values="1;.3;1" dur="{{ beacon_pulse_dur | default('2.618s') }}"
+           repeatCount="indefinite"/>
+</rect>
+{% endif %}
+
+{# Specular overlay removed from chrome marquees #}
+{% endblock %}

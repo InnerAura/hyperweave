@@ -1,0 +1,92 @@
+{# HyperWeave Catalog Frame — editorial layout for genome/asset showcases.
+   Variable height (800 wide). Multi-column grid with header, item cards,
+   and footer summary. Used for documentation and presentation artifacts.
+   Extends document.svg.j2.  Context: ComposeSpec dict. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+  <linearGradient id="{{ uid }}-bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-surface)"/>
+    <stop offset="100%" stop-color="var(--dna-surface-deep)"/>
+  </linearGradient>
+  {# Card hover shadow #}
+  <filter id="{{ uid }}-card-shadow">
+    <feDropShadow dx="0" dy="2" stdDeviation="4"
+                  flood-color="var(--dna-shadow-color, #000)"
+                  flood-opacity="var(--dna-shadow-opacity, 0.12)"/>
+  </filter>
+{% endblock %}
+
+{% block content %}
+{% set catw = width | default(800) %}
+{% set cath = height | default(600) %}
+{% set mx = catalog_margin | default(32) %}
+{% set content_w = catw - (mx * 2) %}
+{% set col_count = catalog_columns | default(3) %}
+{% set col_gap = 16 %}
+{% set col_w = ((content_w - (col_gap * (col_count - 1))) / col_count) | int %}
+{% set card_h = card_height | default(140) %}
+{% set card_gap = 16 %}
+
+{# === Background === #}
+<rect width="{{ catw }}" height="{{ cath }}" rx="6" fill="url(#{{ uid }}-bg)"/>
+<rect x="0.5" y="0.5" width="{{ catw - 1 }}" height="{{ cath - 1 }}"
+      rx="6" fill="none" stroke="var(--dna-border)" stroke-width="1"/>
+
+{# === Header === #}
+<g transform="translate({{ mx }}, {{ mx }})" data-hw-zone="catalog-header">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1.5px">{{ catalog_category | default('CATALOG') | upper }}</text>
+  <text class="s ink1" font-size="28" font-weight="800" y="28"
+        letter-spacing="-0.5px">{{ catalog_title }}</text>
+{% if catalog_subtitle %}
+  <text class="m ink3" font-size="11" y="46">{{ catalog_subtitle }}</text>
+{% endif %}
+</g>
+
+{# Divider #}
+{% set header_end_y = mx + 56 %}
+<line x1="{{ mx }}" y1="{{ header_end_y }}" x2="{{ catw - mx }}" y2="{{ header_end_y }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+
+{# === Item cards (grid layout) === #}
+{% set grid_start_y = header_end_y + 16 %}
+{% for item in catalog_items | default([]) %}
+{% set row = loop.index0 // col_count %}
+{% set col = loop.index0 % col_count %}
+{% set card_x = mx + (col * (col_w + col_gap)) %}
+{% set card_y = grid_start_y + (row * (card_h + card_gap)) %}
+<g transform="translate({{ card_x }}, {{ card_y }})" data-hw-zone="card-{{ loop.index0 }}"
+   filter="url(#{{ uid }}-card-shadow)">
+  {# Card background #}
+  <rect width="{{ col_w }}" height="{{ card_h }}" rx="4"
+        fill="var(--dna-surface-alt)"/>
+  <rect x="0.5" y="0.5" width="{{ col_w - 1 }}" height="{{ card_h - 1 }}"
+        rx="4" fill="none" stroke="var(--dna-border)" stroke-width="0.5"/>
+  {# Signal accent top bar #}
+  <rect width="{{ col_w }}" height="3" rx="4" fill="var(--dna-signal)" opacity="0.4"/>
+  {# Card content #}
+  <text class="m" font-size="9" font-weight="700" fill="var(--dna-signal)"
+        x="12" y="24">{{ item.label | default('') | upper }}</text>
+  <text class="s ink1" font-size="13" font-weight="600"
+        x="12" y="42">{{ item.title }}</text>
+{% if item.description %}
+  <text class="m ink3" font-size="9" x="12" y="60">{{ item.description }}</text>
+{% endif %}
+{% if item.meta %}
+  <text class="m ghost" font-size="8" x="12" y="{{ card_h - 12 }}">{{ item.meta }}</text>
+{% endif %}
+{% if item.badge_svg %}
+  <g transform="translate({{ col_w - 12 }}, 14)">
+    {{ item.badge_svg | safe }}
+  </g>
+{% endif %}
+</g>
+{% endfor %}
+
+{# === Footer summary === #}
+{% set footer_y = cath - 24 %}
+<text class="m ghost" font-size="9" x="{{ mx }}" y="{{ footer_y }}">{{ catalog_footer_left }}</text>
+<text class="m ghost" font-size="9" x="{{ catw - mx }}" y="{{ footer_y }}"
+      text-anchor="end">{{ catalog_footer_right }}</text>
+{% endblock %}

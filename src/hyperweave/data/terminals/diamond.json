@@ -1,0 +1,1 @@
+{"id":"diamond","name":"Diamond","width":24,"height":24,"svg_fragment":"<g class=\"hw-terminal\"><path d=\"M0,-10 L7,0 L0,10 L-7,0 Z\" class=\"hw-signal\" fill-opacity=\"0.8\"/><path d=\"M0,-5 L3.5,0 L0,5 L-3.5,0 Z\" fill=\"var(--dna-surface)\" opacity=\"0.6\"/><circle r=\"2\" class=\"hw-logic-bit\"/></g>"}

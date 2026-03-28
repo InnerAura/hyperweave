@@ -1,0 +1,135 @@
+---
+title: "Metadata Tiers"
+description: "How HyperWeave embeds semantic metadata in SVG artifacts across 5 progressively verbose tiers."
+---
+
+## Why Metadata in SVG?
+
+Every HyperWeave artifact is more than pixels. Embedded metadata lets agents read, reason about, and transform artifacts without parsing SVG visuals. A downstream agent can inspect an artifact's genome, frame type, state, and even the reasoning behind its creation.
+
+## The Five Tiers
+
+| Tier | Name | What's Included | Use Case |
+|---|---|---|---|
+| 0 | Silent | Nothing | Maximum stealth, minimal file size |
+| 1 | Minimal | Type, genome, dimensions | Basic identification |
+| 2 | Standard | + state, motion, glyph, profile | Programmatic queries |
+| 3 | Resonant | + RDF/Dublin Core, creation timestamp, generation count | Agent reasoning, provenance |
+| 4 | Reasoning | + intent, approach, tradeoffs (>20 chars) | Full audit trail |
+
+The default tier is **3 (Resonant)** -- enough for agent interoperability without exposing reasoning data.
+
+## Tier 0: Silent
+
+No metadata element in the SVG. The artifact is visually identical but opaque to programmatic inspection.
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20">
+  <!-- No metadata block -->
+  ...
+</svg>
+```
+
+## Tier 1: Minimal
+
+Basic identification fields:
+
+```xml
+<metadata>
+  <hw:artifact type="badge" genome="brutalist-emerald" width="120" height="20"/>
+</metadata>
+```
+
+## Tier 2: Standard
+
+Adds appearance and composition parameters:
+
+```xml
+<metadata>
+  <hw:artifact
+    type="badge"
+    genome="brutalist-emerald"
+    profile="brutalist"
+    state="passing"
+    motion="static"
+    glyph="github"
+    glyph_mode="auto"
+  />
+</metadata>
+```
+
+## Tier 3: Resonant (Default)
+
+Adds provenance and semantic web metadata:
+
+```xml
+<metadata>
+  <rdf:RDF>
+    <rdf:Description>
+      <dc:title>build: passing</dc:title>
+      <dc:creator>HyperWeave v0.1.0</dc:creator>
+      <dc:date>2026-03-24T10:00:00Z</dc:date>
+      <hw:genome>brutalist-emerald</hw:genome>
+      <hw:frame>badge</hw:frame>
+      <hw:generation>1</hw:generation>
+      <hw:state>passing</hw:state>
+    </rdf:Description>
+  </rdf:RDF>
+</metadata>
+```
+
+## Tier 4: Reasoning
+
+Adds the agent's decision rationale. Requires `tradeoffs` field with >20 characters:
+
+```xml
+<metadata>
+  <rdf:RDF>
+    <rdf:Description>
+      <!-- ...tier 3 fields... -->
+      <hw:reasoning>
+        <hw:intent>Status badge for CI pipeline visibility</hw:intent>
+        <hw:approach>Two-panel layout with glyph for repository identification</hw:approach>
+        <hw:tradeoffs>Chose static motion over chromatic-pulse for GitHub Camo compatibility in this context</hw:tradeoffs>
+      </hw:reasoning>
+    </rdf:Description>
+  </rdf:RDF>
+</metadata>
+```
+
+## Setting the Tier
+
+### CLI
+
+Metadata tier is not directly exposed on CLI (defaults to 3). Use the Python API for control:
+
+```python
+spec = ComposeSpec(type="badge", metadata_tier=4, ...)
+```
+
+### HTTP API
+
+Include in POST body:
+
+```json
+{"type": "badge", "metadata_tier": 0, ...}
+```
+
+### MCP
+
+The `metadata_tier` parameter is not exposed on MCP tools (defaults to 3).
+
+## Implementation
+
+Metadata is rendered via Jinja2 template (`templates/components/metadata.xml.j2`), not Python string construction. The template receives the metadata tier and conditionally includes sections.
+
+The `ReasoningFields` model validates tier 4 content:
+
+```python
+class ReasoningFields(FrozenModel):
+    intent: str
+    approach: str
+    tradeoffs: str = Field(min_length=21)  # >20 chars enforced
+```
+
+This validation happens at metadata emission time, not at ComposeSpec construction -- so programmatic construction with empty reasoning is allowed.

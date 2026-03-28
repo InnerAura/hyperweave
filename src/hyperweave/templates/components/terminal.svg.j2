@@ -1,0 +1,7 @@
+{# HyperWeave Divider Terminal Component.
+   Renders terminal geometry at divider endpoints.
+   Expects: terminal_id, terminal_x, terminal_y, terminal_svg #}
+<g data-hw-zone="terminal-{{ terminal_side | default('left') }}"
+   transform="translate({{ terminal_x }},{{ terminal_y }})">
+  {{ terminal_svg | safe }}
+</g>

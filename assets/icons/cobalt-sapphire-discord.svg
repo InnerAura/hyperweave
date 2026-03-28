@@ -1,0 +1,264 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
+     role="img"
+     aria-labelledby="hw-cs-discord-title hw-cs-discord-desc"
+     viewBox="0 0 64 64"
+     width="64" height="64"
+     data-hw-type="icon"
+     data-hw-frame="icon"
+     data-hw-genome="cobalt-sapphire-deep"
+     data-hw-status="active"
+     data-hw-motion="ambient"
+     data-hw-glyph="discord"
+     data-hw-chromatic="cobalt-sapphire-deep">
+  <title id="hw-cs-discord-title">Discord — Cobalt Sapphire</title>
+  <desc id="hw-cs-discord-desc">Discord social icon with cobalt-sapphire-deep DNA.
+    Sapphire refraction ring, caustic crystal well, dark glyph silhouette
+    with luminous edge refraction, orbital particles. Phi-timed SMIL.</desc>
+
+  <metadata>
+    <hw:artifact id="hw-cs-discord-cobalt" type="icon" series="social" version="1.0.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.6 (InnerAura Labs) [claude-opus-4-6-20260210]</hw:generator>
+        <hw:created>2026-03-27</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:spec size="64x64" performance="composite-only" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:aesthetic>
+      <hw:chromatic system="cobalt-sapphire-deep" space="oklch" contrast-ratio="12.8:1"/>
+      <hw:motion vocabulary="ring-rotation,caustic-pulse,stop-color-cycle,orbital-particle"
+                 physics="sapphire-refraction+phi-cascade"
+                 timing="phi" cim-compliant="true"/>
+      <hw:geometry form-language="circular" proportional-system="phi"
+                   mathematical-basis="sapphire-refraction"
+                   symmetry="radial"/>
+      <hw:material surface="sapphire-crystal" depth="deep"/>
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>Discord icon carrying cobalt-sapphire-deep DNA from the HyperWeave
+        V11 formidable banner. Ring is sapphire waveguide, well is crystal interior,
+        glyph is a solid form refracting light at its boundary.</hw:intent>
+      <hw:approach>Dark void glyph (#0a0838) with sapphire edge stroke (#4080ff).
+        Halo filter on glyph creates luminous boundary refraction. Filters scaled
+        for 64px context. Two counter-orbiting particles at phi durations.</hw:approach>
+      <hw:tradeoffs>3-tier filter chain heavy for 64px — accepted for DNA family
+        coherence. No construction sequence — ambient life only. Single glyph path
+        from SimpleIcons preserves recognizability. Dark glyph sacrifices the
+        original platform brand color for sapphire DNA fidelity.</hw:tradeoffs>
+      <hw:spatial-notes>Center (32,32). Ring r=28 (87.5%). Well r=26.5 (82.8%).
+        Glyph 30x30 at (17,17). Particles orbit at r~30. 1:1 aspect.</hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+
+  <defs>
+    <linearGradient id="cs-discord-edge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0838">
+        <animate attributeName="stop-color"
+                 values="#0a0838;#141070;#0a0838"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="18%" stop-color="#1838b0">
+        <animate attributeName="stop-color"
+                 values="#1838b0;#2850d8;#1030a0;#2048c8;#1838b0"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="42%" stop-color="#4080ff">
+        <animate attributeName="stop-color"
+                 values="#4080ff;#60a0ff;#3070f0;#5090ff;#4080ff"
+                 dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="55%" stop-color="#d0e4ff">
+        <animate attributeName="stop-color"
+                 values="#d0e4ff;#e8f0ff;#b8d4ff;#dce8ff;#d0e4ff"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="78%" stop-color="#5848d8">
+        <animate attributeName="stop-color"
+                 values="#5848d8;#7060f0;#4838c0;#6858e8;#5848d8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#120860">
+        <animate attributeName="stop-color"
+                 values="#120860;#1c1088;#0c0650;#120860"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="13.708s"
+                        repeatCount="indefinite"/>
+    </linearGradient>
+
+    <radialGradient id="cs-discord-caus" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#e8f0ff" stop-opacity="1">
+        <animate attributeName="stop-opacity"
+                 values="1;.75;1" dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="30%" stop-color="#4080ff" stop-opacity=".5">
+        <animate attributeName="stop-color"
+                 values="#4080ff;#60a0ff;#3070f0;#4080ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#0a0838" stop-opacity="1"/>
+    </radialGradient>
+
+    <radialGradient id="cs-discord-part" cx="35%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#d0e8ff" stop-opacity=".95">
+        <animate attributeName="stop-color"
+                 values="#d0e8ff;#b0d0ff;#e0f0ff;#d0e8ff"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="100%" stop-color="#3060d0" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="cs-discord-neb" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2848c0" stop-opacity=".18">
+        <animate attributeName="stop-opacity"
+                 values=".18;.28;.12;.22;.18"
+                 dur="13.708s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="40%" stop-color="#1838a0" stop-opacity=".08"/>
+      <stop offset="100%" stop-color="#0a0838" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="cs-discord-f-core" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="b1">
+        <animate attributeName="stdDeviation"
+                 values="1.5;2.2;1.2;1.8;1.5"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </feGaussianBlur>
+      <feColorMatrix in="b1" type="matrix"
+                     values="0.15 0 0.6 0 0.06
+                             0.08 0.12 0.5 0 0.03
+                             0.25 0.1 1.2 0 0.10
+                             0 0 0 0.55 0" result="t1"/>
+      <feMerge>
+        <feMergeNode in="t1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="cs-discord-f-halo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b2"/>
+      <feColorMatrix in="b2" type="matrix"
+                     values="0.10 0 0.45 0 0.03
+                             0.06 0.08 0.35 0 0.01
+                             0.18 0.05 0.90 0 0.06
+                             0 0 0 0.18 0" result="t2"/>
+      <feMerge>
+        <feMergeNode in="t2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="cs-discord-f-amb" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5"/>
+      <feColorMatrix type="matrix"
+                     values="0.06 0 0.30 0 0.02
+                             0.04 0.05 0.22 0 0.01
+                             0.10 0.03 0.65 0 0.04
+                             0 0 0 0.10 0"/>
+    </filter>
+
+    <clipPath id="cs-discord-top-clip"><rect x="14" y="2" width="36" height="16"/></clipPath>
+  </defs>
+
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      animate, animateTransform, animateMotion, set {
+        display: none !important;
+      }
+    }
+    @media (forced-colors: active) {
+      text { fill: CanvasText !important; }
+      rect, path, circle, ellipse { stroke: CanvasText; }
+    }
+  </style>
+
+  <!-- ATMOSPHERIC NEBULA -->
+  <circle cx="32" cy="32" r="30" fill="url(#cs-discord-neb)" opacity=".7"/>
+
+  <!-- AMBIENT BLOOM -->
+  <circle cx="32" cy="32" r="28" fill="none" stroke="url(#cs-discord-edge)"
+          stroke-width="4" filter="url(#cs-discord-f-amb)" opacity=".4"/>
+
+  <!-- RING — sapphire refraction waveguide -->
+  <circle cx="32" cy="32" r="28" fill="none"
+          stroke="url(#cs-discord-edge)" stroke-width="3"
+          filter="url(#cs-discord-f-core)">
+    <animate attributeName="stroke-width" values="3;3.5;2.8;3.2;3"
+             dur="8.472s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+  </circle>
+
+  <!-- WELL — sapphire crystal interior -->
+  <circle cx="32" cy="32" r="26.5" fill="url(#cs-discord-caus)"/>
+  <circle cx="32" cy="32" r="26.5" fill="none" stroke="#0a0838" stroke-width="0.5"/>
+
+  <!-- TOP-CLIP SPECULAR -->
+  <g clip-path="url(#cs-discord-top-clip)">
+    <circle cx="32" cy="32" r="26" fill="none" stroke="#4080ff"
+            stroke-width="0.8" opacity="0.2">
+      <animate attributeName="opacity" values=".2;.35;.15;.28;.2"
+               dur="5.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+  </g>
+
+  <!-- GLYPH — dark silhouette with sapphire edge refraction -->
+  <g transform="translate(17,17)" filter="url(#cs-discord-f-halo)">
+    <svg viewBox="0 0 24 24" width="30" height="30">
+      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"
+            fill="#0a0838" stroke="#4080ff" stroke-width="0.3"/>
+    </svg>
+  </g>
+
+  <!-- ORBITAL PARTICLES -->
+  <circle r="1.8" fill="url(#cs-discord-part)" filter="url(#cs-discord-f-core)">
+    <animateMotion path="M32,2 C62,32 32,62 2,32 S32,2 32,2" dur="8.472s"
+                   repeatCount="indefinite"/>
+    <animate attributeName="r" values="1.8;1.2;2.2;1.5;1.8"
+             dur="8.472s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    <animate attributeName="opacity" values=".85;.55;.95;.65;.85"
+             dur="8.472s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+  </circle>
+  <circle r="1.1" fill="#d0e4ff" opacity=".5">
+    <animateMotion path="M62,32 C32,62 2,32 32,2 S62,32 62,32" dur="13.708s"
+                   repeatCount="indefinite"/>
+    <animate attributeName="opacity" values=".5;.8;.3;.6;.5"
+             dur="13.708s" repeatCount="indefinite"
+             calcMode="spline"
+             keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+  </circle>
+
+</svg>

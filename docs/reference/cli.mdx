@@ -1,0 +1,144 @@
+---
+title: "CLI Reference"
+description: "Complete reference for the HyperWeave command-line interface."
+---
+
+The HyperWeave CLI is built with Typer. All commands output SVG to stdout by default (pipe-friendly) or to a file with `-o`.
+
+```bash
+hyperweave --help
+```
+
+## Commands
+
+### `compose`
+
+Compose a single artifact.
+
+```bash
+hyperweave compose <frame_type> [title] [value] [options]
+```
+
+| Argument | Description |
+|---|---|
+| `frame_type` | Frame: `badge`, `strip`, `banner`, `icon`, `divider`, `marquee-horizontal`, `marquee-vertical`, `marquee-counter` |
+| `title` | Primary text (label for badge, identity for strip) |
+| `value` | Secondary text (value for badge, metrics for strip) |
+
+| Option | Short | Default | Description |
+|---|---|---|---|
+| `--genome` | `-g` | `brutalist-emerald` | Genome slug |
+| `--state` | `-s` | `active` | Semantic status |
+| `--motion` | `-m` | `static` | Motion primitive |
+| `--glyph` | | `""` | Glyph ID |
+| `--glyph-mode` | | `auto` | Glyph rendering mode |
+| `--regime` | | `normal` | Policy regime |
+| `--variant` | | `default` | Frame variant |
+| `--divider-variant` | | `zeropoint` | Divider visual variant |
+| `--direction` | | `ltr` | Marquee scroll direction |
+| `--rows` | | `3` | Marquee counter rows |
+| `--metrics` | | `""` | Strip metrics (overrides value) |
+| `--output` | `-o` | stdout | Output file path |
+
+**Examples:**
+
+```bash
+hyperweave compose badge "build" "passing" -g brutalist-emerald -s passing
+hyperweave compose strip "readme-ai" "" -g brutalist-emerald --metrics "STARS:2.9k,FORKS:278"
+hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
+hyperweave compose icon "" "" --glyph github -g brutalist-emerald
+hyperweave compose divider "" "" --divider-variant void -g brutalist-emerald
+```
+
+### `kit`
+
+Compose a full artifact kit.
+
+```bash
+hyperweave kit [kit_type] [options]
+```
+
+| Option | Short | Default | Description |
+|---|---|---|---|
+| `kit_type` | | `readme` | Kit type |
+| `--genome` | `-g` | `brutalist-emerald` | Genome slug |
+| `--project` | | `""` | Project name (used in banner) |
+| `--badges` | | `""` | Badge pairs: `"build:passing,version:v0.1.0"` |
+| `--social` | | `""` | Social icons: `"github,discord,x"` |
+| `--output` | `-o` | `.` | Output directory |
+
+### `render`
+
+Render a telemetry artifact from a data contract.
+
+```bash
+hyperweave render --template <name> --data <path> [-o output]
+```
+
+| Option | Description |
+|---|---|
+| `--template` | Template name: `receipt`, `rhythm-strip`, `master-card` |
+| `--data` | Path to data contract JSON file |
+| `--output` / `-o` | Output file path (stdout if omitted) |
+
+### `session`
+
+Session telemetry: parse transcripts, render receipts and rhythm strips.
+
+```bash
+hyperweave session <action> [transcript_path] [-o output]
+```
+
+| Action | Description |
+|---|---|
+| `receipt` | Parse transcript and render a receipt card |
+| `strip` | Parse transcript and render a rhythm strip |
+| `parse` | Parse transcript and output JSON to stdout |
+
+When invoked as a Claude Code hook, reads `transcript_path` from stdin JSON.
+
+### `live`
+
+Compose a badge with live data from a provider.
+
+```bash
+hyperweave live <provider> <identifier> <metric> [options]
+```
+
+| Argument | Description |
+|---|---|
+| `provider` | `github`, `pypi`, `npm`, `arxiv`, `huggingface`, `docker` |
+| `identifier` | Resource ID (`owner/repo`, `package-name`, `paper-id`) |
+| `metric` | Metric name (`stars`, `forks`, `version`, `downloads`) |
+
+### `genomes`
+
+List or inspect genomes.
+
+```bash
+hyperweave genomes [genome_id] [--ids-only]
+```
+
+### `serve`
+
+Start the HTTP server.
+
+```bash
+hyperweave serve [--port 8000] [--host 0.0.0.0] [--reload]
+```
+
+### `install-hook`
+
+Install the SessionEnd hook into Claude Code settings.
+
+```bash
+hyperweave install-hook
+```
+
+### `version`
+
+Print the HyperWeave version.
+
+```bash
+hyperweave version
+```

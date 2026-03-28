@@ -1,0 +1,16 @@
+id: static
+name: Static
+category: none
+cim_compliant: true
+animated_properties: []
+applies_to:
+  - badge
+  - strip
+  - banner
+  - icon
+  - divider
+  - marquee-horizontal
+  - marquee-vertical
+  - marquee-counter
+css: ""
+description: "No animation. Default state."

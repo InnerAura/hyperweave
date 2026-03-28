@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:hw="https://hyperweave.dev/hw/v1.0"
+     viewBox="0 0 32 32"
+     role="img"
+     aria-label="HyperWeave">
+  
+  <metadata>
+    <hw:artifact type="favicon" series="hyperweave" version="1.0">
+      <hw:provenance>
+        <hw:generator>Claude (Anthropic)</hw:generator>
+        <hw:created>2026-01-21</hw:created>
+        <hw:protocol>HyperWeave v7.1</hw:protocol>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Minimal brand mark for browser tabs and bookmarks</hw:intent>
+        <hw:approach>Extracted transmitter silhouette only; single gradient with full chromatic cycle; no particles at this scale</hw:approach>
+        <hw:tradeoffs>Removed internal lines (illegible at 16-32px); removed particles; kept stroke breathing for subtle life</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+  
+  <defs>
+    <linearGradient id="hw-fav-chroma" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0A54">
+        <animate attributeName="stop-color" 
+                 values="#FF0A54;#0AFFEF;#845EF7;#B5179E;#FF0A54" 
+                 dur="2s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="50%" style="stop-color:#0AFFEF">
+        <animate attributeName="stop-color" 
+                 values="#0AFFEF;#845EF7;#FF0A54;#B5179E;#0AFFEF" 
+                 dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#845EF7">
+        <animate attributeName="stop-color" 
+                 values="#845EF7;#B5179E;#0AFFEF;#FF0A54;#845EF7" 
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+    </linearGradient>
+    
+    <filter id="hw-fav-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- TRANSMITTER CORE -->
+  <g transform="translate(16, 16)">
+    <path d="M -2,-10 
+             L -7.5,-5 
+             C -9.5,-2.5 -9.5,2.5 -7.5,5 
+             L -2,10 
+             L 2,10 
+             L 7.5,5 
+             C 9.5,2.5 9.5,-2.5 7.5,-5 
+             L 2,-10 
+             Z" 
+          fill="none" 
+          stroke="url(#hw-fav-chroma)" 
+          stroke-width="2" 
+          stroke-linejoin="round" 
+          stroke-linecap="round"
+          filter="url(#hw-fav-glow)">
+      <animate attributeName="stroke-width" 
+               values="2;2.5;2" 
+               dur="2.618s" repeatCount="indefinite" 
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </path>
+    
+    <!-- NEXUS -->
+    <circle cx="0" cy="0" r="1.5" fill="url(#hw-fav-chroma)">
+      <animate attributeName="r" 
+               values="1.5;2;1.5" 
+               dur="2.618s" repeatCount="indefinite" 
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+  </g>
+</svg>

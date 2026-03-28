@@ -1,0 +1,90 @@
+id: rimrun
+name: Rim Runner
+category: smil
+specimen: specs/motion/motion-border-frames/rim-runners.svg
+cim_compliant: false
+cim_waiver: "Animates stroke-dashoffset (paint), filter baseFrequency/scale (paint), gradient rotation (paint), and specular light position (paint) for frosted prism glass effect with counter-rotating rim runners."
+animated_properties:
+  - stroke-dashoffset
+  - baseFrequency
+  - scale
+  - gradientTransform
+  - x
+applies_to:
+  - badge
+timing:
+  duration_runner_1: "2.7s"
+  duration_runner_2: "3.2s"
+  duration_refraction: "6s"
+  duration_glare: "8s"
+  duration_gradient_rotation: "18s"
+  easing: "linear"
+  repeat: "indefinite"
+stroke_topology:
+  path_length: 100
+  layers: 2
+  runner_1:
+    dash_pattern: "9 91"
+    direction: "clockwise"
+    dur: "2.7s"
+    opacity: 0.9
+  runner_2:
+    dash_pattern: "7 93"
+    direction: "counter-clockwise"
+    dur: "3.2s"
+    opacity: 0.8
+keyframes:
+  runner_1_dashoffset:
+    values: "0;-100"
+    dur: "2.7s"
+  runner_2_dashoffset:
+    values: "0;100"
+    dur: "3.2s"
+  refraction_freq:
+    values: "0.022;0.028;0.022"
+    dur: "6s"
+  refraction_scale:
+    values: "1.8;2.6;1.8"
+    dur: "6s"
+  specular_x:
+    values: "12;78;12"
+    dur: "7s"
+  glare_x:
+    values: "-140;110;-140"
+    dur: "8s"
+  gradient_rotation:
+    type: "rotate"
+    from: "0 .5 .5"
+    to: "360 .5 .5"
+    dur: "18s"
+smil: |
+  <!-- Runner 1 (clockwise, 9px segment) -->
+  <animate attributeName="stroke-dashoffset"
+           values="0;-100" dur="2.7s" repeatCount="indefinite"/>
+  <!-- Runner 2 (counter-clockwise, 7px segment) -->
+  <animate attributeName="stroke-dashoffset"
+           values="0;100" dur="3.2s" repeatCount="indefinite"/>
+  <!-- Refraction turbulence oscillation -->
+  <animate attributeName="baseFrequency"
+           values="0.022;0.028;0.022" dur="6s" repeatCount="indefinite"/>
+  <animate attributeName="scale"
+           values="1.8;2.6;1.8" dur="6s" repeatCount="indefinite"/>
+  <!-- Specular light sweep -->
+  <animate attributeName="x" values="12;78;12"
+           dur="7s" repeatCount="indefinite"/>
+  <!-- Glare mask sweep -->
+  <animate attributeName="x" values="-140;110;-140"
+           dur="8s" repeatCount="indefinite"/>
+  <!-- Prism gradient rotation -->
+  <animateTransform attributeName="gradientTransform" type="rotate"
+                    from="0 .5 .5" to="360 .5 .5"
+                    dur="18s" repeatCount="indefinite"/>
+css: |
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-rimrun,
+    .hw-motion-rimrun * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+description: "Frosted prism glass with counter-rotating rim runners. Badge-sized (90x20). Two pathLength=100 runners at 2.7s/3.2s with prism gradient, plus refraction filter (turbulence + displacement + specular lighting), glare mask, and 18s gradient rotation. 7+ SMIL animations."

@@ -1,0 +1,11 @@
+{# Border motion: corner-trace — single runner tracing the perimeter.
+   Context: uid, w, h, rx, perim, vis, gap #}
+{% set defs %}{% endset %}
+{% set overlay %}
+<rect x=".5" y=".5" width="{{ w - 1 }}" height="{{ h - 1 }}" rx="{{ rx }}"
+      fill="none" stroke="var(--dna-signal)" stroke-width="2"
+      stroke-dasharray="{{ vis }} {{ gap }}">
+  <animate attributeName="stroke-dashoffset"
+           values="0;-{{ perim }}" dur="4s" repeatCount="indefinite"/>
+</rect>
+{% endset %}

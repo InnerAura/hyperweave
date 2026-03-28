@@ -1,0 +1,34 @@
+# Tool name → color mapping for telemetry visualizations.
+# Claude Code emits these exact tool names.
+# Templates look up colors from this file.
+tools:
+  Read:
+    color: "var(--dna-signal)"
+    label: "Read"
+  Write:
+    color: "var(--dna-status-passing-core)"
+    label: "Write"
+  Edit:
+    color: "var(--dna-status-passing-core)"
+    label: "Edit"
+  Bash:
+    color: "var(--dna-status-warning-core)"
+    label: "Bash"
+  Glob:
+    color: "var(--dna-signal-dim)"
+    label: "Glob"
+  Grep:
+    color: "var(--dna-signal-dim)"
+    label: "Grep"
+  Agent:
+    color: "var(--dna-status-failing-core)"
+    label: "Agent"
+  WebSearch:
+    color: "var(--dna-ink-muted)"
+    label: "WebSearch"
+  WebFetch:
+    color: "var(--dna-ink-muted)"
+    label: "WebFetch"
+  NotebookEdit:
+    color: "var(--dna-status-passing-core)"
+    label: "NotebookEdit"

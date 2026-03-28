@@ -1,0 +1,15 @@
+{
+  "id": "permissive",
+  "name": "Permissive",
+  "description": "CIM enforced. WCAG relaxed to A. Motion limits raised.",
+  "cim_enforced": true,
+  "wcag_level": "A",
+  "min_contrast_ratio": 3.0,
+  "reduced_motion_required": false,
+  "color_scheme_required": false,
+  "forced_colors_required": false,
+  "allowed_animated_properties": ["transform", "opacity", "filter", "mix-blend-mode", "clip-path", "fill", "stroke"],
+  "forbidden_animated_properties": ["cx", "cy", "r", "d", "width", "height", "x", "y", "rx", "ry", "viewBox"],
+  "max_animation_duration_s": 120,
+  "on_violation": "warn"
+}

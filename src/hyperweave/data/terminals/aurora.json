@@ -1,0 +1,1 @@
+{"id":"aurora","name":"Aurora","width":24,"height":24,"svg_fragment":"<g class=\"hw-terminal\"><circle r=\"6\" fill=\"none\" stroke=\"var(--dna-signal)\" stroke-width=\"0.8\" opacity=\"0.3\"/><circle r=\"3.5\" fill=\"none\" stroke=\"var(--dna-signal)\" stroke-width=\"1\" opacity=\"0.6\"/><circle r=\"2\" class=\"hw-logic-bit\"/></g>"}

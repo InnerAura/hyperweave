@@ -1,0 +1,266 @@
+---
+title: "HTTP API Reference"
+description: "Complete reference for the HyperWeave FastAPI HTTP endpoints, URL grammar, and namespace routes."
+---
+
+The HTTP API is served by FastAPI. Start it with:
+
+```bash
+hyperweave serve --port 8000
+```
+
+## URL Grammar Routes
+
+All URL grammar routes return `image/svg+xml` responses with ETag caching.
+
+### Badge
+
+```
+GET /v1/badge/{title}/{value}/{genome}.{motion}
+```
+
+| Parameter | Location | Description |
+|---|---|---|
+| `title` | path | Left panel text |
+| `value` | path | Right panel text |
+| `genome` | path | Genome slug |
+| `motion` | path | Motion primitive (default: `static`) |
+| `glyph` | query | Glyph ID |
+| `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
+| `state` | query | Semantic status |
+| `regime` | query | Policy regime |
+| `variant` | query | Frame variant |
+
+```bash
+curl localhost:8000/v1/badge/build/passing/brutalist-emerald.chromatic-pulse?glyph=github
+```
+
+### Strip
+
+```
+GET /v1/strip/{title}/{genome}.{motion}
+```
+
+| Parameter | Location | Description |
+|---|---|---|
+| `title` | path | Strip identity text |
+| `value` | query | Metric pairs: `STARS:2.9k,FORKS:278` |
+| `live` | query | Live data: `provider:id:metric,provider:id:metric` (concurrent fetch) |
+| `glyph` | query | Glyph ID |
+| `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
+| `state` | query | Semantic status |
+| `variant` | query | Frame variant |
+| `regime` | query | Policy regime |
+
+```bash
+# Static metrics
+curl localhost:8000/v1/strip/readme-ai/brutalist-emerald.rimrun?value=STARS:2.9k,FORKS:278
+
+# Live multi-provider metrics (fetched concurrently)
+curl "localhost:8000/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars,pypi:fastmcp:version"
+```
+
+When `live` is provided, its resolved values override `value`. Cache TTL is the minimum across all provider responses.
+
+### Banner
+
+```
+GET /v1/banner/{title}/{genome}.{motion}
+```
+
+| Parameter | Location | Description |
+|---|---|---|
+| `title` | path | Banner title text |
+| `value` | query | Subtitle text |
+| `variant` | query | `default` or `compact` |
+| `glyph` | query | Glyph ID |
+| `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
+| `state` | query | Semantic status |
+| `regime` | query | Policy regime |
+
+### Icon
+
+```
+GET /v1/icon/{glyph}/{genome}.{motion}
+```
+
+| Parameter | Location | Description |
+|---|---|---|
+| `glyph` | path | Glyph ID |
+| `variant` | query | Frame variant |
+| `state` | query | Semantic status |
+| `regime` | query | Policy regime |
+
+### Divider
+
+```
+GET /v1/divider/{variant}/{genome}.{motion}
+```
+
+Variants: `block`, `current`, `takeoff`, `void`, `zeropoint`.
+
+### Marquee
+
+```
+GET /v1/marquee/{title}/{genome}.{motion}
+```
+
+| Parameter | Location | Description |
+|---|---|---|
+| `direction` | query | `ltr`, `rtl`, `up`, `down` |
+| `rows` | query | Counter rows (>1 = counter type) |
+| `speeds` | query | Scroll speed values |
+| `state` | query | Semantic status |
+| `regime` | query | Policy regime |
+
+### Live Data Badge
+
+```
+GET /v1/live/{provider}/{identifier}/{metric}/{genome}.{motion}
+```
+
+The `{identifier}` uses path-type matching to support slashes (e.g., `owner/repo`).
+
+| Parameter | Location | Description |
+|---|---|---|
+| `glyph` | query | Glyph ID |
+| `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
+
+## Health Check
+
+```
+GET /health
+```
+
+Returns `{"status": "ok"}`. Use this for readiness probes and uptime monitoring.
+
+## POST Endpoints
+
+### Compose
+
+```
+POST /v1/compose
+```
+
+Full ComposeSpec as JSON body. Returns SVG.
+
+```json
+{
+  "type": "badge",
+  "genome": "brutalist-emerald",
+  "title": "build",
+  "value": "passing",
+  "state": "passing",
+  "motion": "static"
+}
+```
+
+### Kit
+
+```
+POST /v1/kit/readme
+```
+
+Returns JSON dict of SVG strings keyed by artifact name.
+
+```json
+{
+  "genome": "brutalist-emerald",
+  "project": "my-project",
+  "badges": "build:passing,version:v0.1.0",
+  "social": "github,discord"
+}
+```
+
+## Discovery Endpoints
+
+All discovery endpoints return JSON with `Cache-Control: public, max-age=3600`.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /v1/frames` | All frame types with URL patterns and available query params |
+| `GET /v1/genomes` | All genomes with id, name, category |
+| `GET /v1/genomes/{genome_id}` | Full genome config JSON |
+| `GET /v1/motions` | All motions with CIM compliance |
+| `GET /v1/glyphs` | Sorted list of glyph IDs |
+
+### `/v1/frames` Response
+
+```json
+[
+  {
+    "type": "badge",
+    "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
+    "query_params": ["glyph", "glyph_mode", "state", "regime", "variant"]
+  },
+  {
+    "type": "strip",
+    "pattern": "/v1/strip/{title}/{genome}.{motion}",
+    "query_params": ["value", "live", "glyph", "glyph_mode", "state", "variant", "regime"]
+  }
+]
+```
+
+### `/v1/genomes` Response
+
+```json
+[
+  {"id": "brutalist-emerald", "name": "Brutalist Emerald", "category": "dark"},
+  {"id": "chrome-horizon", "name": "Chrome Horizon", "category": "dark"}
+]
+```
+
+## Namespace Routes
+
+### `/g/` -- Genome Registry
+
+```
+GET /g/{genome_slug}
+```
+
+Returns genome DNA as JSON. Cache: 24h with stale-while-revalidate.
+
+### `/a/` -- Artifact Store
+
+```
+GET /a/inneraura              # List all specimens
+GET /a/inneraura/{slug}       # Serve specimen SVG
+GET /a/inneraura/{slug}/meta.json  # Specimen metadata
+```
+
+Editorial specimens from the `specs/` directory. Cache: immutable (1 year).
+
+### `/d/` -- Drop Events
+
+```
+GET /d/{drop_id}
+```
+
+Returns drop event metadata with links to genome and catalog.
+
+## Response Headers
+
+All SVG responses include Camo-hardening headers:
+
+| Header | Value |
+|---|---|
+| `Access-Control-Allow-Origin` | `*` |
+| `Vary` | `Accept` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Content-Security-Policy` | `default-src 'none'; style-src 'unsafe-inline'` |
+| `ETag` | SHA-256 of ComposeSpec (16 chars) |
+| `Cache-Control` | Varies by endpoint tier |
+
+## ETag / 304 Negotiation
+
+All composition endpoints support conditional requests. The ETag is derived from the ComposeSpec JSON hash (deterministic). Send `If-None-Match` to skip recomposition:
+
+```bash
+# First request
+curl -v localhost:8000/v1/badge/build/passing/brutalist-emerald
+# Note the ETag header
+
+# Conditional request
+curl -H 'If-None-Match: "abc123"' localhost:8000/v1/badge/build/passing/brutalist-emerald
+# Returns 304 if unchanged
+```

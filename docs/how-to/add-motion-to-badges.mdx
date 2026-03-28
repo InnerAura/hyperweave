@@ -1,0 +1,89 @@
+---
+title: "Add Motion to Badges"
+description: "Apply SMIL border animations and CSS kinetic typography to your artifacts."
+---
+
+## The Problem
+
+You want animated badges and banners for visual interest, but need to understand which motions work where and what the compliance rules are.
+
+## Border Motions (Badge and Strip)
+
+Border motions are SMIL animation overlays that animate the border of badges and strips. There are 5 border motions:
+
+| Motion | Effect |
+|---|---|
+| `chromatic-pulse` | Cycling color shift on the border |
+| `corner-trace` | Animated path tracing the corners |
+| `dual-orbit` | Two particles orbiting the perimeter |
+| `entanglement` | Paired quantum-like border oscillation |
+| `rimrun` | Continuous border trace with glow |
+
+```bash
+hyperweave compose badge "build" "passing" -m chromatic-pulse -g brutalist-emerald
+hyperweave compose strip "readme-ai" "STARS:2.9k" -m dual-orbit -g brutalist-emerald
+```
+
+## Kinetic Typography (Banner Only)
+
+Kinetic motions are CSS/SMIL text animations applied to banners. There are 9 kinetic motions:
+
+| Motion | Effect |
+|---|---|
+| `bars` | Horizontal bar sweep reveal |
+| `broadcast` | Radiating signal pulse |
+| `cascade` | Cascading letter stagger |
+| `collapse` | Implosion toward center |
+| `converge` | Letters converging from edges |
+| `crash` | Impact collision effect |
+| `drop` | Gravity drop with bounce |
+| `breach` | Breaking through barrier |
+| `pulse` | Rhythmic scale pulse |
+
+```bash
+hyperweave compose banner "HYPERWEAVE" -m cascade -g brutalist-emerald
+hyperweave compose banner "HYPERWEAVE" -m drop -g brutalist-emerald
+```
+
+<Warning>
+  Kinetic typography is only available for `brutalist-emerald`. The `chrome-horizon` genome uses environment-mapped chrome for banners, not text-split overlays.
+</Warning>
+
+## CIM Compliance
+
+The Compositional Integrity Model (CIM) governs which motions are allowed. Under the `normal` regime, only CIM-compliant motions are permitted:
+
+**CIM-compliant**: `static`, `bars`, `broadcast`, `cascade`, `drop`, `crash`
+
+**Non-CIM (require `permissive` regime)**: all 5 border motions + `converge`, `breach`, `pulse`, `collapse`
+
+```bash
+# This works under normal regime
+hyperweave compose banner "HYPERWEAVE" -m cascade
+
+# This requires permissive regime
+hyperweave compose badge "build" "passing" -m dual-orbit --regime permissive
+```
+
+Under `normal` regime, non-CIM motions are silently downgraded to `static`.
+
+## HTTP API
+
+Motion is specified in the URL grammar using dot notation:
+
+```
+/v1/badge/{title}/{value}/{genome}.{motion}
+/v1/banner/{title}/{genome}.{motion}
+```
+
+```bash
+curl localhost:8000/v1/badge/build/passing/brutalist-emerald.chromatic-pulse
+curl localhost:8000/v1/banner/HYPERWEAVE/brutalist-emerald.cascade
+```
+
+## Genome Compatibility
+
+Each genome declares which motions it supports in its config:
+
+- **brutalist-emerald**: All 5 border + all 9 kinetic
+- **chrome-horizon**: All 5 border only (no kinetic typography)

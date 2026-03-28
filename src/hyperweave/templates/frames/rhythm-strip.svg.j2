@@ -1,0 +1,87 @@
+{# HyperWeave Rhythm Strip — 800x60 mid-session loop detector.
+   Structure: left stats → divider → rhythm bars + phase strip → divider → loop status.
+   Border color encodes loop state. Updates every ~10 tool calls.
+   Extends document.svg.j2.  Context: ComposeSpec dict. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+  {# Per-phase gradients (bottom-up) #}
+{% for tc in ['explore', 'execute', 'mutate', 'coordinate'] %}
+  <linearGradient id="{{ uid }}-{{ tc }}" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="var(--dna-tool-{{ tc }})" stop-opacity="0.65"/>
+    <stop offset="100%" stop-color="var(--dna-tool-{{ tc }})" stop-opacity="0.15"/>
+  </linearGradient>
+{% endfor %}
+{% endblock %}
+
+{% block content %}
+{% set sw = width | default(800) %}
+{% set sh = height | default(60) %}
+{% set stats_w = 180 %}
+{% set right_w = 140 %}
+{% set bar_x = stats_w + 8 %}
+{% set bar_w = sw - stats_w - right_w - 16 %}
+{% set div_y1 = 8 %}
+{% set div_y2 = sh - 8 %}
+
+{# === Background — border color changes on loop detection === #}
+<rect width="{{ sw }}" height="{{ sh }}" rx="3" fill="var(--dna-surface)"/>
+{% set border_color = 'var(--dna-status-failing-core)' if loop_detected else 'var(--dna-status-warning-core)' if loop_elevated else 'var(--dna-border)' %}
+<rect x="0.5" y="0.5" width="{{ sw - 1 }}" height="{{ sh - 1 }}"
+      rx="3" fill="none" stroke="{{ border_color }}" stroke-width="1"/>
+
+{# === Left stats block === #}
+<g transform="translate(12, 12)" data-hw-zone="stats-left">
+  <text class="m ink1" font-size="11" font-weight="700">{{ session_id_short }}</text>
+  <text class="m ink3" font-size="9" y="16">call {{ call_number }} · {{ elapsed_label }}</text>
+  <text class="m ghost" font-size="8" y="30">{{ token_summary }}</text>
+</g>
+
+{# Velocity indicator #}
+<g transform="translate(140, 12)" data-hw-zone="velocity">
+  <text class="m ghost" font-size="7" letter-spacing="1px">VEL</text>
+  <text class="m ink2" font-size="11" font-weight="600" y="16">{{ velocity_value }}</text>
+  <text class="m ghost" font-size="7" y="30">tok/min</text>
+</g>
+
+{# Vertical divider #}
+<line x1="{{ stats_w }}" y1="{{ div_y1 }}" x2="{{ stats_w }}" y2="{{ div_y2 }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+
+{# === Rhythm bars === #}
+<g transform="translate({{ bar_x }}, {{ div_y1 }})" data-hw-zone="rhythm-bars">
+{% for stage in stages %}
+  <rect x="{{ stage.x }}" y="{{ stage.y }}"
+        width="{{ stage.w }}" height="{{ stage.h }}"
+        rx="{{ 2 if stage.h > 30 else 1 }}"
+        fill="url(#{{ uid }}-{{ stage.tool_class }})"/>
+{% endfor %}
+  {# Active cursor (current position) #}
+{% if cursor_x is defined %}
+  <rect x="{{ cursor_x }}" y="0" width="2" height="42" rx="1"
+        fill="var(--dna-signal)" opacity="0.4"/>
+{% endif %}
+  {# Phase strip (3px below bars) #}
+{% for stage in stages %}
+  <rect x="{{ stage.x }}" y="44" width="{{ stage.w }}" height="3" rx="1"
+        fill="var(--dna-tool-{{ stage.tool_class }})" opacity="0.4"/>
+{% endfor %}
+</g>
+
+{# Vertical divider #}
+{% set right_div_x = sw - right_w %}
+<line x1="{{ right_div_x }}" y1="{{ div_y1 }}"
+      x2="{{ right_div_x }}" y2="{{ div_y2 }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+
+{# === Right: loop status + profile === #}
+<g transform="translate({{ right_div_x + 12 }}, 12)" data-hw-zone="loop-status">
+  {% set status_color = 'var(--dna-status-failing-core)' if loop_detected else 'var(--dna-status-warning-core)' if loop_elevated else 'var(--dna-status-passing-core)' %}
+  <circle cx="4" cy="4" r="4" fill="{{ status_color }}" opacity="0.8"/>
+  <text class="m" font-size="9" font-weight="600" fill="{{ status_color }}"
+        x="14">{{ loop_label | default('NOMINAL') }}</text>
+  <text class="m ghost" font-size="8" y="16">{{ loop_detail | default('no loop') }}</text>
+  <text class="m" font-size="8" font-weight="500" fill="var(--dna-signal)"
+        y="30">{{ profile_label | default('') }}</text>
+</g>
+{% endblock %}

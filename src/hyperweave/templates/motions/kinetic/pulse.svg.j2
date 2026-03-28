@@ -1,0 +1,10 @@
+{# Kinetic typography: pulse -- letter-spacing breathing via SMIL.
+   Specimen: specs/motion/motion-kinetic-typography/pulse.svg
+   Context: uid, title, cx, cy, fs, w, h, ty, txt_attrs, subtitle #}
+<text class="hw-motion-pulse-headline" {{ txt_attrs }}
+      fill="var(--dna-ink-primary)">{{ title }}
+  <animate attributeName="letter-spacing" values="4;8;4" dur="4s" repeatCount="indefinite"/>
+</text>
+<text x="{{ cx }}" y="{{ ty + 36 }}" text-anchor="middle"
+      font-family="'Courier New',monospace" font-size="16"
+      fill="var(--dna-ink-primary)" opacity="0.75">{{ subtitle | default('') }}</text>

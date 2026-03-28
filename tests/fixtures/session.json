@@ -1,0 +1,123 @@
+{
+  "session": {
+    "id": "session-001",
+    "start": "2026-03-18T10:00:00+00:00",
+    "end": "2026-03-18T10:45:30+00:00",
+    "duration_minutes": 45.5,
+    "model": "claude-opus-4-6",
+    "git_branch": "main"
+  },
+  "profile": {
+    "total_input_tokens": 400800,
+    "total_output_tokens": 23930,
+    "total_cache_creation_tokens": 4390,
+    "total_cache_read_tokens": 349000,
+    "total_cost": 8.412562,
+    "turns": 25,
+    "model": "claude-opus-4-6"
+  },
+  "tools": {
+    "Bash": {
+      "count": 5,
+      "total_tokens": 132540,
+      "tool_class": "execute",
+      "success": 4,
+      "blocked": 0,
+      "errors": 1
+    },
+    "Write": {
+      "count": 11,
+      "total_tokens": 182190,
+      "tool_class": "mutate",
+      "success": 11,
+      "blocked": 0,
+      "errors": 0
+    },
+    "Read": {
+      "count": 5,
+      "total_tokens": 61200,
+      "tool_class": "explore",
+      "success": 5,
+      "blocked": 0,
+      "errors": 0
+    },
+    "Grep": {
+      "count": 1,
+      "total_tokens": 9300,
+      "tool_class": "explore",
+      "success": 1,
+      "blocked": 0,
+      "errors": 0
+    },
+    "Edit": {
+      "count": 2,
+      "total_tokens": 39500,
+      "tool_class": "mutate",
+      "success": 2,
+      "blocked": 0,
+      "errors": 0
+    }
+  },
+  "files_accessed": [
+    "pyproject.toml",
+    "src/hyperweave/core/models.py",
+    "src/hyperweave/core/__init__.py",
+    "src/hyperweave/core/schema.py",
+    "tests/test_models.py",
+    "tests/conftest.py",
+    "tests/test_schema.py",
+    "src/hyperweave/connectors/base.py",
+    "src/hyperweave/connectors/__init__.py",
+    "src/hyperweave/connectors/github.py",
+    "src/hyperweave/connectors/cache.py"
+  ],
+  "stages": [
+    {
+      "label": "implementation",
+      "dominant_class": "mutate",
+      "start": "2026-03-18T10:00:30+00:00",
+      "end": "2026-03-18T10:12:30+00:00",
+      "tools": 10,
+      "boundary_score": 0.7
+    },
+    {
+      "label": "implementation",
+      "dominant_class": "mutate",
+      "start": "2026-03-18T10:18:00+00:00",
+      "end": "2026-03-18T10:32:00+00:00",
+      "tools": 9,
+      "boundary_score": 0.7
+    },
+    {
+      "label": "implementation",
+      "dominant_class": "mutate",
+      "start": "2026-03-18T10:40:00+00:00",
+      "end": "2026-03-18T10:45:30+00:00",
+      "tools": 5,
+      "boundary_score": 1.0
+    }
+  ],
+  "corrections": [
+    {
+      "category": "correction",
+      "preview": "Now create the core models module",
+      "confidence": "low"
+    },
+    {
+      "category": "correction",
+      "preview": "Let me review the models before we continue",
+      "confidence": "low"
+    },
+    {
+      "category": "correction",
+      "preview": "Good. Now write the tests",
+      "confidence": "low"
+    },
+    {
+      "category": "correction",
+      "preview": "Run the tests",
+      "confidence": "low"
+    }
+  ],
+  "agents": []
+}

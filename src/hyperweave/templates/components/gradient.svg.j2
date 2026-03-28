@@ -1,0 +1,28 @@
+{# HyperWeave Reusable Gradient Defs.
+   Generates common gradients used across frames.
+   Expects: uid (unique prefix), frame_type #}
+
+{# Badge value background gradient #}
+{% if frame_type == 'badge' %}
+<linearGradient id="{{ uid }}-val-bg" x1="0" x2="1" y1="0" y2="0">
+  <stop offset="0%" style="stop-color: var(--dna-border-tint)"/>
+  <stop offset="100%" style="stop-color: var(--dna-surface-deep)"/>
+</linearGradient>
+{% endif %}
+
+{# Strip plate gradient (vertical) #}
+{% if frame_type == 'strip' %}
+<linearGradient id="{{ uid }}-plate" x1="0" x2="0" y1="0" y2="1">
+  <stop offset="0%" style="stop-color: var(--dna-surface)"/>
+  <stop offset="40%" style="stop-color: var(--dna-surface-alt)"/>
+  <stop offset="100%" style="stop-color: var(--dna-surface-deep)"/>
+</linearGradient>
+{% endif %}
+
+{# Banner background gradient #}
+{% if frame_type == 'banner' %}
+<linearGradient id="{{ uid }}-bg" x1="0" x2="0" y1="0" y2="1">
+  <stop offset="0%" style="stop-color: var(--dna-surface)"/>
+  <stop offset="100%" style="stop-color: var(--dna-surface-deep)"/>
+</linearGradient>
+{% endif %}

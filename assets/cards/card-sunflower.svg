@@ -1,0 +1,150 @@
+<!-- 2. CLI (SUNFLOWER) - YELLOW MONOCHROMATIC -->
+<svg id="hw-grid-cli" viewBox="0 0 600 600" width="100%" height="100%"
+     preserveAspectRatio="xMidYMid slice"
+     style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"
+     xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <metadata>
+    <hw:artifact id="urn:uuid:22222222-3333-4444-5555-666666666666" type="composite"
+                 series="core" version="0.1.0">
+      <hw:provenance>
+        <hw:generator>HyperWeave Compositor</hw:generator>
+      </hw:provenance>
+      <hw:spec size="600x600" performance="composite-only" theme="adaptive"
+               a11y="WCAG-AA" />
+    </hw:artifact>
+    <hw:composition>
+      <hw:frame>composite</hw:frame>
+      <hw:genome>monochrome-yellow@0.1</hw:genome>
+      <hw:slots>
+        <hw:slot zone="badge" value="CLI" />
+      </hw:slots>
+      <hw:environment platform="web" motion="fluid" status="passing" />
+    </hw:composition>
+    <hw:aesthetic>
+      <hw:chromatic system="yellow" space="oklch" palette="yellow,gold"
+                    contrast-ratio="8.0" />
+      <hw:motion vocabulary="rotate" physics="none" timing="linear" duration-base="40s"
+                 stagger-regime="none" cim-compliant="true" />
+      <hw:geometry form-language="geometric" corner-radius="16px" grid="1x1"
+                   proportional-system="phi" mathematical-basis="radial-symmetry"
+                   symmetry="radial" />
+      <hw:typography stack="system-ui" hierarchy="label" weight-range="900" />
+      <hw:material surface="matte" depth="flat" texture="none" />
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>Create a high-performance, beautiful sunflower representing the CLI
+        node.</hw:intent>
+      <hw:approach>Used an inverted 10x-performance GPU pattern mask over a continuous
+        rotating geometry to form halftone seeds.</hw:approach>
+      <hw:tradeoffs>Avoided individual DOM elements for dots, using high-performance SVG
+        pattern masking instead to maintain 60 FPS.</hw:tradeoffs>
+      <hw:constraints-applied>10x-performance, monochromatic</hw:constraints-applied>
+      <hw:spatial-notes>600x600 viewBox, center weighted radial
+        spiral.</hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+  <defs>
+    <style>
+      @keyframes cli-spin-cw {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes cli-spin-ccw {
+        0% {
+          transform: rotate(360deg);
+        }
+
+        100% {
+          transform: rotate(0deg);
+        }
+      }
+
+      .cli-layer-slow {
+        transform-origin: 300px 300px;
+        animation: cli-spin-cw 60s linear infinite;
+      }
+
+      .cli-layer-fast {
+        transform-origin: 300px 300px;
+        animation: cli-spin-ccw 40s linear infinite;
+      }
+    </style>
+    <linearGradient id="cli-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D0A00" />
+      <stop offset="100%" stop-color="#1A1400" />
+    </linearGradient>
+    <pattern id="cli-dot-pattern" x="0" y="0" width="12" height="12"
+             patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="6" r="4.5" fill="white" />
+    </pattern>
+    <mask id="cli-mask">
+      <rect width="600" height="600" fill="url(#cli-dot-pattern)" />
+    </mask>
+    <linearGradient id="cli-petal-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD700" />
+      <stop offset="100%" stop-color="#FF8C00" />
+    </linearGradient>
+    <g id="cli-petal">
+      <ellipse cx="300" cy="140" rx="18" ry="70" fill="url(#cli-petal-grad)" />
+    </g>
+    <filter id="cli-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="25" flood-color="#000000"
+                    flood-opacity="0.8" />
+    </filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#cli-bg)" />
+  <g mask="url(#cli-mask)">
+    <g class="cli-layer-slow">
+      <use href="#cli-petal" transform="rotate(0 300 300)" />
+      <use href="#cli-petal" transform="rotate(30 300 300)" />
+      <use href="#cli-petal" transform="rotate(60 300 300)" />
+      <use href="#cli-petal" transform="rotate(90 300 300)" />
+      <use href="#cli-petal" transform="rotate(120 300 300)" />
+      <use href="#cli-petal" transform="rotate(150 300 300)" />
+      <use href="#cli-petal" transform="rotate(180 300 300)" />
+      <use href="#cli-petal" transform="rotate(210 300 300)" />
+      <use href="#cli-petal" transform="rotate(240 300 300)" />
+      <use href="#cli-petal" transform="rotate(270 300 300)" />
+      <use href="#cli-petal" transform="rotate(300 300 300)" />
+      <use href="#cli-petal" transform="rotate(330 300 300)" />
+      <g opacity="0.8">
+        <use href="#cli-petal" transform="rotate(15 300 300)" />
+        <use href="#cli-petal" transform="rotate(45 300 300)" />
+        <use href="#cli-petal" transform="rotate(75 300 300)" />
+        <use href="#cli-petal" transform="rotate(105 300 300)" />
+        <use href="#cli-petal" transform="rotate(135 300 300)" />
+        <use href="#cli-petal" transform="rotate(165 300 300)" />
+        <use href="#cli-petal" transform="rotate(195 300 300)" />
+        <use href="#cli-petal" transform="rotate(225 300 300)" />
+        <use href="#cli-petal" transform="rotate(255 300 300)" />
+        <use href="#cli-petal" transform="rotate(285 300 300)" />
+        <use href="#cli-petal" transform="rotate(315 300 300)" />
+        <use href="#cli-petal" transform="rotate(345 300 300)" />
+      </g>
+    </g>
+    <g class="cli-layer-fast">
+      <circle cx="300" cy="300" r="150" fill="#3D2600" />
+      <circle cx="300" cy="300" r="130" stroke="#FFD700" stroke-width="20" fill="none"
+              opacity="0.9" />
+      <circle cx="300" cy="300" r="100" stroke="#FFB300" stroke-width="16" fill="none"
+              opacity="0.7" />
+      <circle cx="300" cy="300" r="75" stroke="#FF8C00" stroke-width="14" fill="none"
+              opacity="0.5" />
+      <circle cx="300" cy="300" r="50" stroke="#FF6600" stroke-width="12" fill="none"
+              opacity="0.3" />
+    </g>
+  </g>
+  <g filter="url(#cli-shadow)">
+    <rect x="230" y="230" width="140" height="140" rx="40" fill="#07090c"
+          fill-opacity="0.8" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+    <text x="300" y="312" fill="white"
+          font-family="system-ui, -apple-system, sans-serif" font-size="36"
+          font-weight="900" text-anchor="middle" letter-spacing="-1">CLI</text>
+  </g>
+</svg>

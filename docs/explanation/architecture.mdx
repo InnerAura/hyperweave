@@ -1,0 +1,161 @@
+---
+title: "Architecture"
+description: "How HyperWeave's composition pipeline works -- from ComposeSpec input to self-contained SVG output."
+---
+
+## Design Principles
+
+1. **Python never touches SVG** -- engine.py builds context dicts, Jinja2 builds SVG
+2. **YAML defines config, not Python** -- zero hardcoded mappings
+3. **Telemetry never imports render** -- clean dependency boundary
+4. **ComposeSpec is the abstraction boundary** -- single input, single output
+5. **Genomes and profiles are pure config** -- zero rendering logic
+
+## The Three Layers
+
+```
+LAYER 1: Python (logic)     -- engine.py, resolver.py, assembler.py
+LAYER 2: YAML/JSON (config) -- data/genomes/, data/motions/, data/telemetry/
+LAYER 3: Jinja2 (SVG)       -- templates/frames/, templates/motions/
+```
+
+These layers never mix. Python never constructs SVG strings. Templates never contain business logic. Config never contains rendering code.
+
+## The Composition Pipeline
+
+```
+ComposeSpec (Pydantic model)
+    |
+    v
+compose/engine.py
+    |-- 1. RESOLVE: genome JSON + profile YAML + frame type
+    |-- 2. COMPUTE: dimensions, layout positions, zone coordinates
+    |-- 3. ASSEMBLE: CSS bundle (frame-aware, only relevant CSS)
+    |-- 4. ENFORCE: policy lane (CIM compliance, WCAG contrast)
+    |-- 5. BUILD: template context dict
+    |
+    v
+render/templates.py (Jinja2)
+    |-- document.svg.j2 wraps frames/badge.svg.j2
+    |-- + components/glyph.svg.j2
+    |-- + motions/border/pulse.svg.j2
+    |
+    v
+ComposeResult { svg, width, height, metadata }
+```
+
+Engine.py is an 81-LOC thin dispatcher. The actual context building lives in `compose/context.py` (401 LOC).
+
+## Module Structure
+
+```
+src/hyperweave/
+  compose/          # Composition pipeline
+    engine.py       # Entry point: compose(spec) -> ComposeResult
+    context.py      # Context builder (frame-specific logic)
+    resolver.py     # Frame resolvers (badge pixel math, strip metrics)
+    assembler.py    # CSS bundle assembler
+    lanes.py        # Policy lane validation
+  render/           # SVG rendering
+    templates.py    # Jinja2 environment and rendering
+    glyphs.py       # Glyph loading and resolution
+    motion.py       # Motion loading, CSS/SMIL builders
+  core/             # Domain models and utilities
+    models.py       # ComposeSpec, ComposeResult, FrozenModel
+    enums.py        # StrEnum: FrameType, GenomeId, MotionId, etc.
+    schema.py       # GenomeSpec model
+    text.py         # Text width measurement (LUT-based)
+    color.py        # Color math (contrast ratio, WCAG AA)
+    contracts.py    # Dimension contracts (badge_width, strip_width)
+    thresholds.py   # Threshold-based state resolution
+  config/           # Configuration loading
+    loader.py       # YAML/JSON config loader with @lru_cache
+    settings.py     # Pydantic Settings (HW_ env prefix)
+  connectors/       # Live data providers
+    base.py         # SSRF protection, circuit breaker, HTTP client
+    cache.py        # In-memory TTL cache
+    github.py       # GitHub API connector
+    arxiv.py        # arXiv Atom XML connector
+    rest.py         # PyPI, npm, HuggingFace, Docker connectors
+  telemetry/        # Session telemetry (no render imports)
+    parser.py       # 5-pass JSONL parser
+    stages.py       # 3-signal stage detector
+    corrections.py  # Dual-signal correction classifier
+    contract.py     # Thin orchestration glue (<50 lines)
+    models.py       # Pydantic models for telemetry data
+  serve/            # HTTP server
+    app.py          # FastAPI application
+  mcp/              # MCP interface
+    server.py       # FastMCP v3 server
+  cli.py            # Typer CLI
+  kit.py            # Kit composer
+  templates/        # Jinja2 SVG templates
+  data/             # YAML/JSON configuration
+```
+
+## Key Design Decisions
+
+### Why Jinja2 for SVG?
+
+SVG is XML. Jinja2 is a mature template engine designed for XML-like output. This gives us:
+- Parameterized genome colors via `var(--dna-*)`
+- Conditional sections (e.g., glyph inclusion, motion overlays)
+- Template inheritance (document wrapper + frame-specific content)
+- StrictUndefined mode catches missing variables at render time
+
+### Why FrozenModel?
+
+All domain models inherit from FrozenModel (Pydantic with `frozen=True`, `extra="forbid"`). This ensures:
+- Immutability after construction (no accidental mutation)
+- No extra fields slip through (catches typos in config)
+- Clear validation errors with source location
+
+### Why StrEnum?
+
+All enums are StrEnum so that `"badge" == FrameType.BADGE` holds True. This preserves backward compatibility with YAML configs, Jinja2 templates, and string comparisons.
+
+### Why Separate Genome and Profile?
+
+Genome = aesthetic DNA (colors, shadows, rhythm). Profile = structural skeleton (corner radii, typography scale, glyph backing). Multiple genomes can share a profile. This separation means a new genome only needs color definitions, not structural rewriting.
+
+## Serving Infrastructure
+
+### The Request Path
+
+```
+User's README -> GitHub Camo -> Cloudflare CDN -> Fly.io (uvicorn) -> Connectors
+```
+
+When a user embeds `<img src="https://hyperweave.app/v1/badge/build/passing/brutalist-emerald">` in a README:
+
+1. **GitHub Camo** proxies the image (strips JS, re-serves with its own headers)
+2. **Cloudflare** (CDN layer) caches based on `Cache-Control` and `ETag`
+3. **Fly.io** runs uvicorn on port 8080 in the `iad` (Ashburn) region -- same campus as Camo's US-East origin, minimizing latency
+4. **Connectors** fetch live data from GitHub API, PyPI, etc. (only for `/v1/live/` and `?live=` routes)
+
+### Container Configuration
+
+The Dockerfile uses `python:3.12-slim` with `uv` for dependency management. The `fly.toml` configures:
+
+- **Region**: `iad` (US-East, co-located with GitHub Camo)
+- **Resources**: `shared-cpu-1x`, 256MB RAM
+- **Auto-scaling**: `auto_stop_machines = "stop"`, `min_machines_running = 1`
+- **Health check**: `GET /health` every 30s (returns `{"status": "ok"}`)
+
+### Deploy Workflow
+
+Pushes to `main` trigger `.github/workflows/deploy.yml`, which runs `flyctl deploy --remote-only` using the `FLY_API_TOKEN` secret. Live data connectors (GitHub API) use `HW_GITHUB_TOKENS` set as Fly secrets.
+
+### Settings
+
+All settings are configurable via environment variables with the `HW_` prefix (managed by `pydantic-settings`):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `HW_PORT` | `8000` | Server port (Dockerfile overrides to 8080) |
+| `HW_DATA_CACHE_TTL` | `300` | Cache TTL for composed artifacts (seconds) |
+| `HW_GENOME_CACHE_TTL` | `86400` | Cache TTL for genome registry (seconds) |
+| `HW_STATIC_CACHE_TTL` | `31536000` | Cache TTL for editorial specimens (seconds) |
+| `HW_GITHUB_TOKENS` | `[]` | Comma-separated GitHub API tokens for rotation |
+| `HW_CONNECT_TIMEOUT` | `10.0` | HTTP connector connect timeout (seconds) |
+| `HW_TOTAL_TIMEOUT` | `15.0` | HTTP connector total timeout (seconds) |

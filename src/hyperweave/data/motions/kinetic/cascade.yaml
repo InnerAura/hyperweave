@@ -1,0 +1,62 @@
+id: cascade
+name: Cascade
+category: css
+specimen: specs/motion/motion-kinetic-typography/banner_cascade.svg
+cim_compliant: true
+animated_properties:
+  - transform
+  - opacity
+applies_to:
+  - banner
+timing:
+  column_slide_duration: "0.4s"
+  column_slide_easing: "cubic-bezier(.55,.06,.68,.19)"
+  stagger_interval: "0.07s"
+  stagger_base: "0.00s"
+  label_delay: "1.1s"
+  accent_delay: "1.0s"
+  accent_pulse_delay: "1.4s"
+  accent_pulse_duration: "3s"
+structure:
+  columns: 8
+  column_width_px: 100
+  direction_alternating: true
+  slide_distance: "240px"
+  label_fade_up: "6px"
+  accent_bar: true
+keyframes:
+  column_drop:
+    "0%": "transform: translateY(0)"
+    "100%": "transform: translateY(240px)"
+  column_rise:
+    "0%": "transform: translateY(0)"
+    "100%": "transform: translateY(-240px)"
+  label_in:
+    "0%": "opacity: 0; transform: translateY(6px)"
+    "100%": "opacity: 1; transform: translateY(0)"
+  accent_pulse:
+    "0%, 100%": "opacity: 1"
+    "50%": "opacity: 0.3"
+css: |
+  .hw-motion-cascade-text {
+    will-change: opacity; opacity: 0;
+    animation: hw-motion-cascade-reveal 0.5s cubic-bezier(.55,.06,.68,.19) 0.2s forwards;
+  }
+  @keyframes hw-motion-cascade-reveal { to { opacity: 1; } }
+  .hw-motion-cascade-label {
+    will-change: opacity, transform; opacity: 0; transform: translateY(6px);
+    animation: hw-motion-cascade-label-in 0.5s cubic-bezier(.33,1,.68,1) 1.1s forwards;
+  }
+  @keyframes hw-motion-cascade-label-in { to { opacity: 1; transform: translateY(0); } }
+  .hw-motion-cascade-accent {
+    will-change: opacity; opacity: 0;
+    animation: hw-motion-cascade-accent-in 0.4s ease-out 1.0s both, hw-motion-cascade-pulse 3s ease-in-out 1.4s infinite;
+  }
+  @keyframes hw-motion-cascade-accent-in { to { opacity: 1; } }
+  @keyframes hw-motion-cascade-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-cascade-text { animation: none; opacity: 1; }
+    .hw-motion-cascade-label { animation: none; opacity: 1; transform: none; }
+    .hw-motion-cascade-accent { animation: none; opacity: 1; }
+  }
+description: "Vertical column reveal: 8 columns alternate up/down slide at 0.07s stagger intervals, revealing content beneath. Label fades up at 1.1s, accent bar pulses. CIM-compliant (transform + opacity only)."

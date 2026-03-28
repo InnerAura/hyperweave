@@ -1,0 +1,74 @@
+id: chromatic-pulse
+name: Chromatic Pulse
+category: smil
+specimen: specs/motion/motion-border-frames/002-chromatic-pulse.svg
+cim_compliant: false
+cim_waiver: "Animates stop-color (paint), stroke-width (layout), and opacity (compositor). stop-color and stroke-width are non-CIM properties required for chromatic gradient rotation effect."
+animated_properties:
+  - stop-color
+  - stroke-width
+  - opacity
+applies_to:
+  - badge
+  - strip
+  - banner
+  - icon
+timing:
+  duration_gradient: "4s"
+  duration_stroke: "2.5s"
+  easing: "linear"
+  easing_stroke: "spline"
+  key_splines: "0.4 0 0.6 1; 0.4 0 0.6 1"
+  repeat: "indefinite"
+keyframes:
+  gradient_stop_0:
+    values: "#FF0A54;#0AFFEF;#845EF7;#FF0A54"
+    dur: "4s"
+  gradient_stop_1:
+    values: "#0AFFEF;#845EF7;#FF0A54;#0AFFEF"
+    dur: "4s"
+  gradient_stop_2:
+    values: "#845EF7;#FF0A54;#0AFFEF;#845EF7"
+    dur: "4s"
+  stroke_width:
+    values: "2;5;2"
+    dur: "2.5s"
+    calc_mode: "spline"
+    key_splines: "0.4 0 0.6 1; 0.4 0 0.6 1"
+  opacity:
+    values: "0.7;1;0.7"
+    dur: "2.5s"
+smil: |
+  <!-- Gradient: 3-stop rotating chromatic cycle -->
+  <linearGradient id="{{uid}}-chromatic" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="var(--dna-signal)">
+      <animate attributeName="stop-color"
+               values="var(--dna-signal);var(--dna-accent);var(--dna-highlight);var(--dna-signal)"
+               dur="4s" repeatCount="indefinite"/>
+    </stop>
+    <stop offset="50%" stop-color="var(--dna-accent)">
+      <animate attributeName="stop-color"
+               values="var(--dna-accent);var(--dna-highlight);var(--dna-signal);var(--dna-accent)"
+               dur="4s" repeatCount="indefinite"/>
+    </stop>
+    <stop offset="100%" stop-color="var(--dna-highlight)">
+      <animate attributeName="stop-color"
+               values="var(--dna-highlight);var(--dna-signal);var(--dna-accent);var(--dna-highlight)"
+               dur="4s" repeatCount="indefinite"/>
+    </stop>
+  </linearGradient>
+  <!-- Border rect: stroke-width pulsation + opacity modulation -->
+  <animate attributeName="stroke-width"
+           values="2;5;2" dur="2.5s" repeatCount="indefinite"
+           calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+  <animate attributeName="opacity"
+           values="0.7;1;0.7" dur="2.5s" repeatCount="indefinite"/>
+css: |
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-chromatic-pulse,
+    .hw-motion-chromatic-pulse * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+description: "Spectral modulation dynamics: 3-stop gradient cycles through chromatic space while stroke-width pulses 2-5px with phi-timed easing. 5 SMIL animations, dual timing layers (4s gradient, 2.5s stroke)."

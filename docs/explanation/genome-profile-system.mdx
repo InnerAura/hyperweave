@@ -1,0 +1,111 @@
+---
+title: "Genome & Profile System"
+description: "How genomes and profiles work together to produce visually distinct yet structurally consistent artifacts."
+---
+
+## The Problem
+
+When an agent says "build me a badge," it has zero memory of visual identity. Every generation starts from zero. Themes are inadequate -- they only control colors. What about corner radii? Typography? Glyph rendering? Status indicator shapes? Animation timing?
+
+## Genome = Aesthetic DNA
+
+A genome is a complete aesthetic specification in a single JSON file. It defines everything an agent needs to produce on-brand output:
+
+- **Colors**: Surface, ink, accent, warning, error (13+ values)
+- **Shadows**: Color, opacity, spread
+- **Glow**: Bloom parameters for accent effects
+- **Rhythm**: Animation timing based on golden ratio (phi)
+- **Material**: Surface treatment (matte, chrome, glass)
+- **Compatible motions**: Which animations this genome supports
+
+Genome properties map to CSS custom properties (`--dna-*`) that templates consume via `var()`.
+
+## Profile = Structural Skeleton
+
+A profile defines the structural decisions that shape how frames look, independent of color:
+
+| Property | brutalist | chrome |
+|---|---|---|
+| `badge_corner` | 0 (sharp) | 4 (rounded) |
+| `badge_frame_height` | 20px | 22px |
+| `strip_accent_width` | 6px | 4px |
+| `glyph_backing` | square | circle |
+| `status_shape` | square | diamond |
+| `fonts.title` | SF Mono, monospace | Inter, sans-serif |
+
+Multiple genomes can share a profile. The separation means creating a new genome only requires defining colors, not rewriting structural templates.
+
+## How They Connect
+
+```
+GENOME (JSON)                    PROFILE (YAML)
+brutalist-emerald  ──references──> brutalist
+chrome-horizon     ──references──> chrome
+```
+
+The mapping is declared in the genome config:
+
+```json
+{
+  "id": "brutalist-emerald",
+  "profile": "brutalist",
+  "surface_0": "#14532D",
+  "accent": "#10B981",
+  ...
+}
+```
+
+And enforced in code:
+
+```python
+_GENOME_PROFILE_MAP = {
+    "brutalist-emerald": "brutalist",
+    "chrome-horizon": "chrome",
+}
+```
+
+ComposeSpec auto-resolves `profile_id` from `genome_id` via a model validator.
+
+## The Rendering Path
+
+When a badge is composed:
+
+1. ComposeSpec specifies `genome_id="brutalist-emerald"`
+2. Engine resolves genome JSON and profile YAML
+3. Genome colors become CSS variables (`--dna-surface`, `--dna-signal`)
+4. Profile values become template context (`badge_corner=0`, `badge_frame_height=20`)
+5. Jinja2 template uses both: `border-radius: {{ badge_corner }}px; fill: var(--dna-surface);`
+
+The same template produces visually distinct output for each genome because the CSS variables and structural values are different.
+
+## Specimen-First Rule
+
+Genomes are not invented -- they are extracted from finished specimen SVGs. The process:
+
+1. Design specimen SVGs for every frame type in the new aesthetic
+2. Extract structural decisions (corners, accent widths, typography) into a profile
+3. Check if an existing profile matches -- reuse or create new
+4. Extract colors, shadows, glow into a genome JSON
+5. Write Jinja2 templates that reproduce the specimens faithfully
+
+**If there are no specimens, the genome does not ship.** This is why v0.1 has exactly two genomes -- they are the only ones with complete specimen sets.
+
+## Chrome-Horizon Specifics
+
+chrome-horizon uses a fundamentally different rendering approach for some frames:
+
+- **Banner**: Environment-mapped chrome gradient (not text-split overlays like brutalist)
+- **Strip**: Chrome gradient text fill
+- **Icon**: Circle and square variants with metallic treatment
+
+This means chrome-horizon has completely separate template paths for these frames. You cannot use a brutalist template and "swap colors" -- the structural DNA is different.
+
+## Adding a New Genome (v0.2+)
+
+1. Create full specimen set in `specs/genomes/<new-genome>/`
+2. Determine if existing profile applies or create new one
+3. Add genome JSON to `data/genomes/`
+4. Add `GenomeId` enum variant
+5. Update `_GENOME_PROFILE_MAP`
+6. Write or adapt templates for any profile-specific rendering
+7. Generate proof set and verify against specimens

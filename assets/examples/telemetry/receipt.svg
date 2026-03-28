@@ -1,0 +1,415 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:hw="https://hyperweave.dev/hw/v8.0"
+     role="img"
+     aria-labelledby="hw-10369559-title hw-10369559-desc"
+     viewBox="0 0 800 400"
+     width="800" height="400"
+     data-hw-id="10369559-8aaf-42c2-9bf3-0b7cdae1c057"
+     data-hw-type="receipt"
+     data-hw-frame="receipt"
+     data-hw-genome="brutalist-emerald"
+     data-hw-status="active"
+     data-hw-profile="brutalist"
+     data-hw-motion="static"
+     data-hw-generation="1"
+     data-hw-contract="10369559-8aaf-42c2-9bf3-0b7cdae1c057"
+     data-hw-variant="default"
+     data-hw-regime="normal"
+     data-hw-chromatic="brutalist-emerald">
+  <title id="hw-10369559-title">HyperWeave receipt artifact</title>
+  <desc id="hw-10369559-desc">A receipt artifact, using brutalist-emerald genome.</desc>
+  <metadata>
+  <hw:artifact id="10369559-8aaf-42c2-9bf3-0b7cdae1c057" type="receipt" series="core" version="0.1.0"
+               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:provenance>
+      <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-03-23T20:50:27.710148+00:00</hw:created>
+      <hw:human-directed>true</hw:human-directed>
+    </hw:provenance>
+    <hw:spec size="800x400" performance="composite-only"
+             theme="dark" a11y="WCAG-AA" platform="web"/>
+  </hw:artifact>
+  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:frame>receipt</hw:frame>
+    <hw:genome>brutalist-emerald@0.1.0</hw:genome>
+    <hw:profile>brutalist</hw:profile>
+    <hw:slots>
+    </hw:slots>
+    <hw:environment platform="web" motion="static" status="active"/>
+  </hw:composition>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:title>HyperWeave receipt artifact</dc:title>
+      <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-03-23T20:50:27.710148+00:00</dc:date>
+      <dc:rights>CC BY 4.0</dc:rights>
+    </rdf:Description>
+  </rdf:RDF>
+  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:chromatic system="brutalist-emerald" space="oklch"
+                  palette="" contrast-ratio="4.5:1"/>
+    <hw:motion vocabulary="static" physics="none"
+               timing="phi" duration-base="2.618s"
+               stagger-regime="contemplative" cim-compliant="true"/>
+    <hw:geometry form-language="geometric" corner-radius="5px"
+                 grid="auto" proportional-system="phi"
+                 mathematical-basis="golden-ratio" symmetry="bilateral"/>
+    <hw:typography stack="" hierarchy="11/18/8"
+                   weight-range="500-900" metrics-method="lut"/>
+    <hw:material surface="genome-native" depth="deep" texture="none"/>
+  </hw:aesthetic>
+  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:intent></hw:intent>
+    <hw:approach></hw:approach>
+    <hw:tradeoffs></hw:tradeoffs>
+    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>800x400 (2.00), left-to-right</hw:spatial-notes>
+  </hw:reasoning>
+</metadata>
+  <style>svg, :root {
+  --dna-surface: #0c0c10;
+  --dna-surface-alt: #101014;
+  --dna-surface-deep: #08080c;
+  --dna-ink-primary: #e4e4e7;
+  --dna-ink-muted: #a1a1aa;
+  --dna-ink-on-accent: #0c0c10;
+  --dna-ink-bright: #e4e4e7;
+  --dna-ink-sub: #71717a;
+  --dna-signal: #6366f1;
+  --dna-signal-dim: #4f46e5;
+  --dna-border: #1e1e24;
+  --dna-border-tint: #27272a;
+  --dna-shadow-color: #000000;
+  --dna-shadow-opacity: 0.2;
+  --dna-glow: 0px;
+  --dna-corner: 4;
+  --dna-rhythm-base: 2s;
+  --dna-bg: #0c0c10;
+  --dna-bg-alt: #101014;
+  --dna-brand-text: #e4e4e7;
+  --dna-status-passing-core: #10b981;
+  --dna-status-warning-core: #f59e0b;
+  --dna-status-failing-core: #ef4444;
+  --dna-ink-tertiary: #71717a;
+  --dna-ink-ghost: #52525b;
+  --dna-border-div: #27272a;
+  --dna-tool-explore: #3b9fd4;
+  --dna-tool-execute: #34c790;
+  --dna-tool-mutate: #e5a832;
+  --dna-tool-coordinate: #9b6cd4;
+  --dna-tool-reflect: #d45c8a;
+  --dna-font-display: 'SF Pro Display','Inter',system-ui,sans-serif;
+  --dna-font-mono: 'SF Mono','JetBrains Mono','Fira Code',monospace;
+  --dna-sep: #1e1e24;
+  --dna-status-delta-positive: #22C55E;
+  --dna-status-delta-negative: #DC2626;
+}
+@media (prefers-color-scheme: light) {
+  svg {
+    --dna-surface: #fafafa;
+    --dna-surface-top: #fafafa;
+    --dna-surface-alt: #f5f5f5;
+    --dna-surface-deep: #f0f0f0;
+    --dna-bg: #fafafa;
+    --dna-bg-alt: #f5f5f5;
+    --dna-ink: #18181b;
+    --dna-ink-primary: #18181b;
+    --dna-ink-dark: #18181b;
+    --dna-ink-muted: #3f3f46;
+    --dna-ink-sub: #3f3f46;
+    --dna-ink-ghost: #a1a1aa;
+    --dna-border: #e4e4e7;
+    --dna-border-div: #e4e4e7;
+    --dna-sep: #d4d4d8;
+  }
+}
+/* === HyperWeave Accessibility Layer ===
+ * Non-negotiable media queries for motion, color scheme, and forced colors.
+ * Included in EVERY artifact.
+ */
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hw-logic-bit { animation: none !important; opacity: .8; }
+  .hw-scanner { animation: none; opacity: 0; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  animate, animateTransform, animateMotion, set {
+    display: none !important;
+  }
+}
+
+/* ── Dark Mode (genome values already target dark) ── */
+@media (prefers-color-scheme: dark) {
+  /* Genome --dna-* values are dark-first; no overrides needed */
+}
+
+/* ── Light Mode Override ── */
+@media (prefers-color-scheme: light) {
+  /* Light mode: override only when genome provides light-mode alleles */
+  /* Individual genomes may provide --dna-light-* variables */
+}
+
+/* ── Forced Colors (Windows High Contrast) ── */
+@media (forced-colors: active) {
+  text { fill: CanvasText !important; }
+  rect, path, circle, ellipse, polygon, polyline, line {
+    stroke: CanvasText;
+  }
+  .hw-frame-bg { fill: Canvas !important; }
+  .hw-accent-bar { fill: Highlight !important; }
+  .hw-signal { fill: Highlight !important; }
+  .hw-logic-bit { fill: Highlight !important; }
+}
+
+/* === HyperWeave Telemetry Utility Classes ===
+ * Specimen: specs/telemetry-artifacts/receipt.svg (lines 126-163)
+ * Used by receipt, rhythm-strip, and master-card templates.
+ */
+
+/* Typography shorthand */
+.m { font-family: var(--dna-font-mono); }
+.s { font-family: var(--dna-font-display); }
+
+/* Ink tiers */
+.ink1 { fill: var(--dna-ink-primary); }
+.ink2 { fill: var(--dna-ink-muted); }
+.ink3 { fill: var(--dna-ink-tertiary); }
+.ghost { fill: var(--dna-ink-ghost); }
+.signal { fill: var(--dna-signal); }
+
+/* Structural */
+.div { stroke: var(--dna-border-div); stroke-width: 1; }
+
+/* Treemap cell classes */
+.cell-name { font-weight: 600; fill: var(--dna-ink-primary); }
+.cell-meta { fill: var(--dna-ink-ghost); }
+.cell-error { fill: var(--dna-status-failing-core); opacity: 0.85; }
+
+/* Phase color classes */
+.phase-explore { fill: var(--dna-tool-explore); opacity: 0.5; }
+.phase-execute { fill: var(--dna-tool-execute); opacity: 0.5; }
+.phase-mutate { fill: var(--dna-tool-mutate); opacity: 0.5; }
+.phase-coordinate { fill: var(--dna-tool-coordinate); opacity: 0.5; }
+
+/* Heatmap intensity classes */
+.heat-0 { fill: var(--dna-border); opacity: 0.3; }
+.heat-1 { fill: var(--dna-signal); opacity: 0.2; }
+.heat-2 { fill: var(--dna-signal); opacity: 0.4; }
+.heat-3 { fill: var(--dna-signal); opacity: 0.6; }
+.heat-4 { fill: var(--dna-signal); opacity: 0.85; }
+.heat-write { fill: var(--dna-tool-mutate); }
+
+/* Skill state classes */
+.skill-mastered { fill: var(--dna-status-passing-core); }
+.skill-learning { fill: var(--dna-tool-explore); }
+.skill-asking { fill: var(--dna-status-warning-core); }
+
+/* Forced colors / high contrast */
+@media (forced-colors: active) {
+  text { fill: CanvasText; }
+  .div { stroke: CanvasText; }
+}
+</style>
+  <defs>
+  <linearGradient id="hw-10369559-bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-surface)"/>
+    <stop offset="100%" stop-color="var(--dna-surface-deep)"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-explore" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-tool-explore)" stop-opacity="0.18"/>
+    <stop offset="100%" stop-color="var(--dna-tool-explore)" stop-opacity="0.04"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-execute" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-tool-execute)" stop-opacity="0.18"/>
+    <stop offset="100%" stop-color="var(--dna-tool-execute)" stop-opacity="0.04"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-mutate" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.18"/>
+    <stop offset="100%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.04"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-coordinate" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.18"/>
+    <stop offset="100%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.04"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-rh-explore" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="var(--dna-tool-explore)" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="var(--dna-tool-explore)" stop-opacity="0.12"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-rh-execute" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="var(--dna-tool-execute)" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="var(--dna-tool-execute)" stop-opacity="0.12"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-rh-mutate" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.12"/>
+  </linearGradient>
+  <linearGradient id="hw-10369559-rh-coordinate" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.12"/>
+  </linearGradient>
+  </defs>
+
+<rect width="800" height="400" rx="4" fill="url(#hw-10369559-bg)"/>
+<rect x="0.5" y="0.5" width="799" height="399"
+      rx="4" fill="none" stroke="var(--dna-border)" stroke-width="1"/>
+
+<g transform="translate(24, 18)" data-hw-zone="hero">
+  <text class="m" font-size="9" font-weight="500" letter-spacing="1.5px"
+        fill="var(--dna-signal)">SESSION</text>
+  <text class="s ink1" font-size="26" font-weight="700" y="28"
+        letter-spacing="-0.5px">26.4K tokens · $0.42</text>
+  <text class="m ink3" font-size="10" y="44">claude-opus-4-6 · 32.2m · 99 calls</text>
+  <g transform="translate(752, 0)" text-anchor="end">
+    <text class="m ghost" font-size="9" letter-spacing="1px">SESSION</text>
+    <text class="m ink2" font-size="10" y="16">23.8K in / 2.6K out</text>
+    <text class="m ink2" font-size="10" y="30">+284 / -31 loc</text>
+  </g>
+</g>
+
+<line x1="24" y1="76" x2="776" y2="76" class="div"/>
+
+<g transform="translate(24, 84)" data-hw-zone="treemap">
+  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">TOKEN MAP</text>
+  <circle cx="96" cy="-3" r="3"
+          fill="var(--dna-tool-coordinate)"/>
+  <text class="m ink3" font-size="9"
+        x="103">coordinate</text>
+  <circle cx="160" cy="-3" r="3"
+          fill="var(--dna-tool-execute)"/>
+  <text class="m ink3" font-size="9"
+        x="167">execute</text>
+  <circle cx="224" cy="-3" r="3"
+          fill="var(--dna-tool-explore)"/>
+  <text class="m ink3" font-size="9"
+        x="231">explore</text>
+  <circle cx="288" cy="-3" r="3"
+          fill="var(--dna-tool-mutate)"/>
+  <text class="m ink3" font-size="9"
+        x="295">mutate</text>
+
+  <g transform="translate(0, 10)">
+    <rect width="752" height="88" rx="3"
+          fill="url(#hw-10369559-explore)"
+          stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <text class="m cell-name" font-size="13" x="12" y="22">Read</text>
+    <text class="m" font-size="32" font-weight="700" fill="var(--dna-tool-explore)" x="12" y="58">38%</text>
+    <text class="m cell-meta" font-size="10" x="12" y="74">38 calls</text>
+  </g>
+  <g transform="translate(0, 102)">
+    <rect width="340" height="32" rx="2"
+          fill="url(#hw-10369559-execute)"
+          stroke="var(--dna-tool-execute)" stroke-opacity="0.2" stroke-width="1"/>
+    <text class="m cell-name" font-size="9" x="10" y="20">Bash</text>
+    <text class="m cell-meta" font-size="8" x="40" y="20">22 calls</text>
+  </g>
+  <g transform="translate(344, 102)">
+    <rect width="215" height="32" rx="2"
+          fill="url(#hw-10369559-explore)"
+          stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <text class="m cell-name" font-size="9" x="10" y="20">Grep</text>
+    <text class="m cell-meta" font-size="8" x="40" y="20">14 calls</text>
+  </g>
+  <g transform="translate(563, 102)">
+    <rect width="184" height="32" rx="2"
+          fill="url(#hw-10369559-coordinate)"
+          stroke="var(--dna-tool-coordinate)" stroke-opacity="0.2" stroke-width="1"/>
+    <text class="m cell-name" font-size="9" x="10" y="20">Task</text>
+    <text class="m cell-meta" font-size="8" x="40" y="20">12 calls</text>
+  </g>
+  <g transform="translate(0, 138)">
+    <rect width="180" height="24" rx="2"
+          fill="url(#hw-10369559-mutate)"
+          stroke="var(--dna-tool-mutate)" stroke-opacity="0.2" stroke-width="1"/>
+    <text class="m cell-name" font-size="9" x="10" y="20">Write</text>
+    <text class="m cell-meta" font-size="8" x="10" y="16">8</text>
+  </g>
+  <g transform="translate(184, 138)">
+    <rect width="180" height="24" rx="2"
+          fill="url(#hw-10369559-mutate)"
+          stroke="var(--dna-tool-mutate)" stroke-opacity="0.2" stroke-width="1"/>
+    <text class="m cell-name" font-size="9" x="10" y="20">Edit</text>
+    <text class="m cell-meta" font-size="8" x="10" y="16">5</text>
+  </g>
+
+  <text class="m" font-size="8" font-weight="700" fill="var(--dna-signal)" y="174">AREA</text>
+  <text class="m ghost" font-size="8" x="30" y="174">= token share</text>
+  <text class="m" font-size="8" font-weight="700" fill="var(--dna-signal)" x="140" y="174">HUE</text>
+  <text class="m ghost" font-size="8" x="164" y="174">= tool class</text>
+</g>
+
+<line x1="24" y1="270" x2="776" y2="270" class="div"/>
+
+<g transform="translate(24, 278)" data-hw-zone="rhythm">
+  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">
+    SESSION RHYTHM (6 STAGES)</text>
+  <text class="m ink3" font-size="8" y="18">0m</text>
+  <text class="m ink3" font-size="8" x="376" y="18"
+        text-anchor="middle">16m</text>
+  <text class="m ink3" font-size="8" x="752" y="18"
+        text-anchor="end">32m</text>
+
+  <g transform="translate(0, 24)">
+    <rect x="0" y="12" width="300" height="48"
+          rx="2"
+          fill="url(#hw-10369559-rh-explore)"/>
+    <rect x="302" y="30" width="188" height="30"
+          rx="1"
+          fill="url(#hw-10369559-rh-execute)"/>
+    <rect x="492" y="42" width="112" height="18"
+          rx="1"
+          fill="url(#hw-10369559-rh-mutate)"/>
+    <rect x="606" y="48" width="75" height="12"
+          rx="1"
+          fill="url(#hw-10369559-rh-mutate)"/>
+    <rect x="683" y="52" width="37" height="8"
+          rx="1"
+          fill="url(#hw-10369559-rh-coordinate)"/>
+    <rect x="722" y="52" width="37" height="8"
+          rx="1"
+          fill="url(#hw-10369559-rh-explore)"/>
+  </g>
+
+  <g transform="translate(0, 88)">
+    <rect x="0" width="300" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="302" width="188" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="492" width="112" height="4" rx="1"
+          fill="var(--dna-tool-mutate)" opacity="0.5"/>
+    <rect x="606" width="75" height="4" rx="1"
+          fill="var(--dna-tool-mutate)" opacity="0.5"/>
+    <rect x="683" width="37" height="4" rx="1"
+          fill="var(--dna-tool-coordinate)" opacity="0.5"/>
+    <rect x="722" width="37" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+  </g>
+
+  <g transform="translate(0, 98)">
+    <rect x="0" y="0" width="6" height="6" rx="1"
+          fill="var(--dna-tool-coordinate)" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="10" y="5">coord</text>
+    <rect x="52" y="0" width="6" height="6" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="62" y="5">execu</text>
+    <rect x="104" y="0" width="6" height="6" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="114" y="5">explo</text>
+    <rect x="156" y="0" width="6" height="6" rx="1"
+          fill="var(--dna-tool-mutate)" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="166" y="5">mutat</text>
+    <text class="m" font-size="9" font-weight="600" fill="var(--dna-signal)"
+          x="752" y="6" text-anchor="end"
+          letter-spacing="0.5px">READ (40%)</text>
+  </g>
+</g>
+
+<text class="m ghost" font-size="9" x="24" y="393">hyperweave.dev</text>
+<text class="m ghost" font-size="9" x="776" y="393"
+      text-anchor="end">claude-opus-4-6</text>
+</svg>

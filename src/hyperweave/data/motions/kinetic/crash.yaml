@@ -1,0 +1,26 @@
+id: crash
+name: Crash
+category: css
+specimen: specs/motion/motion-kinetic-typography/crash.svg
+cim_compliant: true
+animated_properties:
+  - transform
+  - opacity
+applies_to:
+  - banner
+css: |
+  .hw-motion-crash-c {
+    font-weight: 900; opacity: 0;
+    animation: hw-motion-crash-slam 1s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+  }
+  @keyframes hw-motion-crash-slam {
+    0% { transform: scale(3); opacity: 0; }
+    50% { transform: scale(1); opacity: 1; }
+    55% { transform: translate(var(--x, 0), var(--y, 0)); }
+    60% { transform: translate(0, 0); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-crash-c { animation: none; opacity: 1; transform: none; }
+  }
+description: "Chromatic crash: 3-layer whole-text slam with mix-blend-mode:screen. Plays ONCE then settles to static (hero banner). RGB layers (red/blue/green) slam from scale(3) with staggered delays. CIM-compliant."

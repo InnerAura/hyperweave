@@ -1,0 +1,15 @@
+{
+  "id": "normal",
+  "name": "Compliant",
+  "description": "CIM enforced, WCAG AA, reduced-motion, color-scheme, forced-colors.",
+  "cim_enforced": true,
+  "wcag_level": "AA",
+  "min_contrast_ratio": 4.5,
+  "reduced_motion_required": true,
+  "color_scheme_required": true,
+  "forced_colors_required": true,
+  "allowed_animated_properties": ["transform", "opacity", "filter", "mix-blend-mode", "clip-path"],
+  "forbidden_animated_properties": ["cx", "cy", "r", "d", "width", "height", "x", "y", "rx", "ry", "viewBox"],
+  "max_animation_duration_s": 30,
+  "on_violation": "correct"
+}

@@ -1,0 +1,1 @@
+{"id":"chevron","name":"Chevron","width":20,"height":24,"svg_fragment":"<g class=\"hw-terminal\"><polyline points=\"-6,-8 0,0 -6,8\" fill=\"none\" stroke=\"var(--dna-signal)\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><polyline points=\"-2,-8 4,0 -2,8\" fill=\"none\" stroke=\"var(--dna-signal)\" stroke-width=\"1.5\" stroke-linecap=\"round\" opacity=\"0.5\"/></g>"}

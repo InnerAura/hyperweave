@@ -1,0 +1,15 @@
+{
+  "id": "ungoverned",
+  "name": "Ungoverned",
+  "description": "No constraints. CIM violations allowed. Use for experimental output.",
+  "cim_enforced": false,
+  "wcag_level": "none",
+  "min_contrast_ratio": 0,
+  "reduced_motion_required": false,
+  "color_scheme_required": false,
+  "forced_colors_required": false,
+  "allowed_animated_properties": ["*"],
+  "forbidden_animated_properties": [],
+  "max_animation_duration_s": 999999,
+  "on_violation": "pass"
+}

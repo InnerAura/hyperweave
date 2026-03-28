@@ -1,0 +1,11 @@
+{# Kinetic typography: crash -- 3-layer chromatic slam with screen blend.
+   Specimen: specs/motion/motion-kinetic-typography/crash.svg
+   Context: uid, title, cx, cy, fs, w, h, ty, txt_attrs #}
+<g style="mix-blend-mode: screen">
+  <text class="hw-motion-crash-c" {{ txt_attrs }}
+        fill="#ff0a54" style="--x: -10px; --y: -5px">{{ title }}</text>
+  <text class="hw-motion-crash-c" {{ txt_attrs }}
+        fill="#3b82f6" style="--x: 10px; --y: 5px; animation-delay: 0.05s">{{ title }}</text>
+  <text class="hw-motion-crash-c" {{ txt_attrs }}
+        fill="#10b981" style="--x: 0px; --y: 10px; animation-delay: 0.1s">{{ title }}</text>
+</g>

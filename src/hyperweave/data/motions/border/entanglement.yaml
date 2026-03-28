@@ -1,0 +1,78 @@
+id: entanglement
+name: Quantum Entanglement
+category: smil
+specimen: specs/motion/motion-border-frames/020-quantum-entanglement.svg
+cim_compliant: false
+cim_waiver: "Animates stop-color (paint), gradient stop opacity (paint), and stroke-dashoffset (paint) for coupled chromatic-kinetic border effect."
+animated_properties:
+  - stop-color
+  - opacity
+  - stroke-dashoffset
+applies_to:
+  - badge
+  - strip
+  - banner
+  - icon
+timing:
+  duration: "2s"
+  easing: "linear"
+  repeat: "indefinite"
+stroke_topology:
+  perimeter: 680
+  layers: 2
+  dash_pattern: "85 85 85 85"
+  layer_2_offset: -170
+keyframes:
+  gradient_stop_0:
+    property: stop-color
+    values: "#FF00FF;#00FFFF;#FF00FF"
+    dur: "2s"
+  gradient_stop_1:
+    property: opacity
+    values: "1;0.3;1"
+    dur: "2s"
+  gradient_stop_2:
+    property: stop-color
+    values: "#00FFFF;#FF00FF;#00FFFF"
+    dur: "2s"
+  layer_1_dashoffset:
+    values: "0;-340"
+    dur: "2s"
+  layer_2_dashoffset:
+    initial: -170
+    values: "-170;-510"
+    dur: "2s"
+    opacity: 0.7
+smil: |
+  <!-- Entangled gradient: magenta <-> cyan chromatic cycling -->
+  <linearGradient id="{{uid}}-entangle" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="var(--dna-signal)">
+      <animate attributeName="stop-color"
+               values="var(--dna-signal);var(--dna-accent);var(--dna-signal)"
+               dur="2s" repeatCount="indefinite"/>
+    </stop>
+    <stop offset="50%" stop-color="#FFFFFF">
+      <animate attributeName="opacity"
+               values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+    </stop>
+    <stop offset="100%" stop-color="var(--dna-accent)">
+      <animate attributeName="stop-color"
+               values="var(--dna-accent);var(--dna-signal);var(--dna-accent)"
+               dur="2s" repeatCount="indefinite"/>
+    </stop>
+  </linearGradient>
+  <!-- Layer 1: dash 85-85-85-85, offset 0 -> -340 -->
+  <animate attributeName="stroke-dashoffset"
+           values="0;-340" dur="2s" repeatCount="indefinite"/>
+  <!-- Layer 2: same dash, initial offset -170, opacity 0.7 -->
+  <animate attributeName="stroke-dashoffset"
+           values="-170;-510" dur="2s" repeatCount="indefinite"/>
+css: |
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-entanglement,
+    .hw-motion-entanglement * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+description: "Non-local correlation state: two dash-segmented stroke layers (85 85 85 85) with entangled magenta-cyan gradient cycling. 5 SMIL animations coupling chromatic shift with kinetic traversal. 2s period."

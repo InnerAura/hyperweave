@@ -1,0 +1,142 @@
+---
+title: "Quick Start"
+description: "Install HyperWeave and compose your first artifact in under 2 minutes."
+---
+
+## Install
+
+<CodeGroup>
+```bash uv (recommended)
+uv add hyperweave
+```
+
+```bash pip
+pip install hyperweave
+```
+</CodeGroup>
+
+Requires Python 3.12+.
+
+## Compose a Badge
+
+<Tabs>
+  <Tab title="CLI">
+    ```bash
+    hyperweave compose badge "build" "passing" --genome brutalist-emerald
+    ```
+    Outputs SVG to stdout. Pipe to a file:
+    ```bash
+    hyperweave compose badge "build" "passing" -g brutalist-emerald -o badge.svg
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    spec = ComposeSpec(
+        type="badge",
+        genome_id="brutalist-emerald",
+        title="build",
+        value="passing",
+        state="passing",
+    )
+    result = compose(spec)
+    print(result.svg)  # Self-contained SVG string
+    ```
+  </Tab>
+  <Tab title="HTTP">
+    ```bash
+    # Start the server
+    hyperweave serve --port 8000
+
+    # URL grammar
+    curl http://localhost:8000/v1/badge/build/passing/brutalist-emerald.static
+
+    # POST
+    curl -X POST http://localhost:8000/v1/compose \
+      -H "Content-Type: application/json" \
+      -d '{"type":"badge","title":"build","value":"passing"}'
+    ```
+  </Tab>
+  <Tab title="MCP">
+    Add to your MCP configuration:
+    ```json
+    {
+      "mcpServers": {
+        "hyperweave": {
+          "command": "hyperweave",
+          "args": ["mcp"]
+        }
+      }
+    }
+    ```
+    Then call the tool:
+    ```
+    hw_compose(type="badge", title="build", value="passing", genome="brutalist-emerald")
+    ```
+  </Tab>
+</Tabs>
+
+## Add Motion
+
+Apply a border animation to badges and strips:
+
+```bash
+hyperweave compose badge "build" "passing" -g brutalist-emerald -m chromatic-pulse
+```
+
+Apply kinetic typography to banners:
+
+```bash
+hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
+```
+
+## Switch Genomes
+
+Every artifact renders in any genome. Same content, different aesthetic:
+
+```bash
+# Brutalist-emerald: dark field, emerald signal, sharp corners
+hyperweave compose badge "build" "passing" -g brutalist-emerald
+
+# Chrome-horizon: deep void, metallic blue, smooth curves
+hyperweave compose badge "build" "passing" -g chrome-horizon
+```
+
+## Compose an Artifact Kit
+
+Generate an entire artifact set in one call:
+
+```bash
+hyperweave kit readme \
+  -g brutalist-emerald \
+  --project "my-project" \
+  --badges "build:passing,version:v0.1.0,coverage:95%" \
+  --social "github,discord"
+```
+
+This produces: banner, badge-build, badge-version, badge-coverage, strip, divider, icon-github, icon-discord.
+
+## Live Data Badges
+
+Fetch real-time data from providers and render as badges:
+
+```bash
+hyperweave live github anthropics/claude-code stars -g brutalist-emerald
+hyperweave live pypi fastmcp version -g chrome-horizon
+hyperweave live npm express version
+```
+
+Supported providers: GitHub, PyPI, npm, arXiv, HuggingFace, Docker Hub.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Tutorial: Compose Your First Badge" icon="graduation-cap" href="/tutorials/compose-your-first-badge">
+    Step-by-step walkthrough of badge composition with every option explained.
+  </Card>
+  <Card title="Reference: ComposeSpec" icon="book" href="/reference/compose-spec">
+    Full parameter reference for the composition API.
+  </Card>
+</CardGroup>

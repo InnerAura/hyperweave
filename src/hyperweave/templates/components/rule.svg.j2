@@ -1,0 +1,26 @@
+{# HyperWeave Divider Rule Component.
+   Renders the line style between terminals.
+   Expects: rule_id, rule_x1, rule_y, rule_x2, rule_svg (for complex rules) #}
+{% if rule_id == 'straight' %}
+<line x1="{{ rule_x1 }}" y1="{{ rule_y }}" x2="{{ rule_x2 }}" y2="{{ rule_y }}"
+      stroke="var(--dna-signal)" stroke-width="1.5" stroke-opacity="0.6"
+      data-hw-zone="rule"/>
+{% elif rule_id == 'dashed' %}
+<line x1="{{ rule_x1 }}" y1="{{ rule_y }}" x2="{{ rule_x2 }}" y2="{{ rule_y }}"
+      stroke="var(--dna-signal)" stroke-width="1.5" stroke-opacity="0.6"
+      stroke-dasharray="8 4" data-hw-zone="rule"/>
+{% elif rule_id == 'wave' %}
+<path d="M{{ rule_x1 }},{{ rule_y }} {% for i in range(((rule_x2 - rule_x1) / 20) | int) %}C{{ rule_x1 + i * 20 + 5 }},{{ rule_y - 4 }} {{ rule_x1 + i * 20 + 15 }},{{ rule_y + 4 }} {{ rule_x1 + (i + 1) * 20 }},{{ rule_y }} {% endfor %}"
+      fill="none" stroke="var(--dna-signal)" stroke-width="1.5"
+      stroke-opacity="0.6" data-hw-zone="rule"/>
+{% elif rule_id == 'bar' %}
+<rect x="{{ rule_x1 }}" y="{{ rule_y - 2 }}" width="{{ rule_x2 - rule_x1 }}" height="4"
+      fill="var(--dna-signal)" opacity="0.15" data-hw-zone="rule"/>
+<line x1="{{ rule_x1 }}" y1="{{ rule_y }}" x2="{{ rule_x2 }}" y2="{{ rule_y }}"
+      stroke="var(--dna-signal)" stroke-width="1" stroke-opacity="0.6"/>
+{% else %}
+{# Fallback: straight line #}
+<line x1="{{ rule_x1 }}" y1="{{ rule_y }}" x2="{{ rule_x2 }}" y2="{{ rule_y }}"
+      stroke="var(--dna-signal)" stroke-width="1.5" stroke-opacity="0.6"
+      data-hw-zone="rule"/>
+{% endif %}

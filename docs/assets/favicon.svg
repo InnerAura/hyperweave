@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 32 32"
+     role="img"
+     aria-label="HyperWeave"
+     data-hw-component="favicon"
+     data-hw-chromatic="cobalt-sapphire-deep">
+
+  <metadata>
+    <hw:artifact type="favicon" series="hyperweave-brand" version="11.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 4.6 (InnerAura Labs)</hw:generator>
+        <hw:created>2026-03-25</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:aesthetic>
+        <hw:chromatic system="cobalt-sapphire-deep" space="oklch"/>
+        <hw:motion physics="sapphire-breathing" timing="phi"/>
+      </hw:aesthetic>
+      <hw:reasoning>
+        <hw:intent>Minimal brand mark for browser tabs — sapphire crystal edition</hw:intent>
+        <hw:approach>Transmitter silhouette with 3-stop sapphire refraction; sapphire-tinted feColorMatrix glow; nexus caustic point</hw:approach>
+        <hw:tradeoffs>Reduced to 3 gradient stops (from banner's 6) for 32px legibility; removed particles and scaffold; kept breathing stroke for subtle life</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+
+  <defs>
+    <!-- SAPPHIRE REFRACTION — 3-stop for favicon scale -->
+    <linearGradient id="s-fav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1838b0">
+        <animate attributeName="stop-color"
+                 values="#1838b0;#4080ff;#1838b0"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      </stop>
+      <stop offset="50%" stop-color="#d0e4ff">
+        <animate attributeName="stop-color"
+                 values="#d0e4ff;#e8f0ff;#b8d4ff;#d0e4ff"
+                 dur="8.472s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" stop-color="#5848d8">
+        <animate attributeName="stop-color"
+                 values="#5848d8;#7060f0;#4838c0;#5848d8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <animateTransform attributeName="gradientTransform" type="rotate"
+                        from="0 .5 .5" to="360 .5 .5" dur="13.708s"
+                        repeatCount="indefinite"/>
+    </linearGradient>
+
+    <!-- SAPPHIRE GLOW — blue-channel dominant feColorMatrix -->
+    <filter id="f-fav" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="b">
+        <animate attributeName="stdDeviation"
+                 values="0.8;1.2;0.6;1.0;0.8"
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </feGaussianBlur>
+      <feColorMatrix in="b" type="matrix"
+                     values="0.15 0 0.5  0 0.04
+                             0.08 0.12 0.4 0 0.02
+                             0.2  0.08 1.0 0 0.08
+                             0    0    0   0.6 0" result="t"/>
+      <feMerge>
+        <feMergeNode in="t"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+
+  <!-- TRANSMITTER CORE -->
+  <g transform="translate(16, 16)">
+    <path d="M -2,-10
+             L -7.5,-5
+             C -9.5,-2.5 -9.5,2.5 -7.5,5
+             L -2,10
+             L 2,10
+             L 7.5,5
+             C 9.5,2.5 9.5,-2.5 7.5,-5
+             L 2,-10
+             Z"
+          fill="none"
+          stroke="url(#s-fav)"
+          stroke-width="2"
+          stroke-linejoin="round"
+          stroke-linecap="round"
+          filter="url(#f-fav)">
+      <animate attributeName="stroke-width"
+               values="2;2.5;1.8;2.3;2"
+               dur="5.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </path>
+
+    <!-- NEXUS — sapphire caustic -->
+    <circle cx="0" cy="0" r="1.5" fill="#d0e4ff">
+      <animate attributeName="r"
+               values="1.5;2.2;1.5"
+               dur="3.236s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+      <animate attributeName="fill"
+               values="#d0e4ff;#e8f0ff;#b8d4ff;#d0e4ff"
+               dur="8.472s" repeatCount="indefinite"
+               calcMode="spline"
+               keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+    </circle>
+  </g>
+</svg>

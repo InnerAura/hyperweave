@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:hw="https://hyperweave.dev/hw/v1.0"
+     viewBox="0 0 160 40"
+     role="img"
+     aria-hidden="true"
+     data-hw-variant="icon-set">
+  
+  <metadata>
+    <hw:artifact type="icon-set" series="hyperweave" version="1.0">
+      <hw:provenance>
+        <hw:generator>Claude (Anthropic)</hw:generator>
+        <hw:created>2026-01-21</hw:created>
+        <hw:protocol>HyperWeave v7.1</hw:protocol>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Callout/alert icons for docs - tip, info, warning, danger with brand-aligned aesthetics</hw:intent>
+        <hw:approach>Each icon uses brand geometry (transmitter-derived shapes) with semantic color coding; minimal SMIL for subtle life; designed for use as individual symbols via fragment identifiers</hw:approach>
+        <hw:tradeoffs>Simplified from full chromatic cycling to static colors for semantic clarity; each icon distinct at 16-24px; can be extracted individually via symbol refs</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+  
+  <defs>
+    <!-- COLOR TOKENS -->
+    <!-- Tip: Emerald -->
+    <linearGradient id="hw-icon-tip" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+    
+    <!-- Info: Azure -->
+    <linearGradient id="hw-icon-info" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#2563EB"/>
+    </linearGradient>
+    
+    <!-- Warning: Amber -->
+    <linearGradient id="hw-icon-warn" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B"/>
+      <stop offset="100%" style="stop-color:#D97706"/>
+    </linearGradient>
+    
+    <!-- Danger: Crimson -->
+    <linearGradient id="hw-icon-danger" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#EF4444"/>
+      <stop offset="100%" style="stop-color:#DC2626"/>
+    </linearGradient>
+    
+    <!-- GLOW -->
+    <filter id="hw-icon-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- ═══════════════════════════════════════════════════════════
+         SYMBOL DEFINITIONS - Use via #hw-tip, #hw-info, etc.
+         ═══════════════════════════════════════════════════════════ -->
+    
+    <!-- TIP ICON: Lightbulb-transmitter hybrid -->
+    <symbol id="hw-tip" viewBox="0 0 24 24">
+      <title>Tip</title>
+      <g transform="translate(12, 12)">
+        <!-- Outer ring -->
+        <circle cx="0" cy="0" r="10" fill="none" stroke="url(#hw-icon-tip)" stroke-width="1.5" opacity="0.3">
+          <animate attributeName="opacity" values="0.3;0.5;0.3" dur="2.618s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Bulb shape (transmitter-derived) -->
+        <path d="M -4,-6 
+                 L -6,-2 
+                 C -6.5,1 -5,4 -3,5 
+                 L 3,5 
+                 C 5,4 6.5,1 6,-2 
+                 L 4,-6 
+                 Z" 
+              fill="url(#hw-icon-tip)" 
+              filter="url(#hw-icon-glow)">
+          <animate attributeName="opacity" values="1;0.8;1" dur="1.618s" repeatCount="indefinite"/>
+        </path>
+        <!-- Filament lines -->
+        <g stroke="url(#hw-icon-tip)" stroke-width="1" opacity="0.8">
+          <line x1="-2" y1="5" x2="-2" y2="7"/>
+          <line x1="2" y1="5" x2="2" y2="7"/>
+          <line x1="-1.5" y1="7.5" x2="1.5" y2="7.5"/>
+        </g>
+        <!-- Central glow -->
+        <circle cx="0" cy="-1" r="2" fill="#FFFFFF" opacity="0.6">
+          <animate attributeName="r" values="2;2.5;2" dur="1.618s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </symbol>
+    
+    <!-- INFO ICON: i-transmitter -->
+    <symbol id="hw-info" viewBox="0 0 24 24">
+      <title>Info</title>
+      <g transform="translate(12, 12)">
+        <!-- Hexagonal frame -->
+        <path d="M 0,-10 L 8.7,-5 L 8.7,5 L 0,10 L -8.7,5 L -8.7,-5 Z" 
+              fill="none" 
+              stroke="url(#hw-icon-info)" 
+              stroke-width="1.5" 
+              opacity="0.4">
+          <animate attributeName="opacity" values="0.4;0.6;0.4" dur="2.618s" repeatCount="indefinite"/>
+        </path>
+        <!-- Info "i" -->
+        <circle cx="0" cy="-4" r="1.5" fill="url(#hw-icon-info)"/>
+        <rect x="-1.5" y="-1" width="3" height="7" rx="0.5" fill="url(#hw-icon-info)" filter="url(#hw-icon-glow)"/>
+      </g>
+    </symbol>
+    
+    <!-- WARNING ICON: Alert triangle-transmitter -->
+    <symbol id="hw-warning" viewBox="0 0 24 24">
+      <title>Warning</title>
+      <g transform="translate(12, 13)">
+        <!-- Triangle frame -->
+        <path d="M 0,-9 L 10,7 L -10,7 Z" 
+              fill="none" 
+              stroke="url(#hw-icon-warn)" 
+              stroke-width="1.5" 
+              stroke-linejoin="round"
+              opacity="0.4">
+          <animate attributeName="opacity" values="0.4;0.7;0.4" dur="1.618s" repeatCount="indefinite"/>
+        </path>
+        <!-- Exclamation -->
+        <rect x="-1.5" y="-5" width="3" height="6" rx="0.5" fill="url(#hw-icon-warn)" filter="url(#hw-icon-glow)">
+          <animate attributeName="opacity" values="1;0.7;1" dur="0.8s" repeatCount="indefinite"/>
+        </rect>
+        <circle cx="0" cy="4" r="1.5" fill="url(#hw-icon-warn)">
+          <animate attributeName="opacity" values="1;0.7;1" dur="0.8s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </symbol>
+    
+    <!-- DANGER ICON: Broken transmitter / error state -->
+    <symbol id="hw-danger" viewBox="0 0 24 24">
+      <title>Danger</title>
+      <g transform="translate(12, 12)">
+        <!-- Octagon frame -->
+        <path d="M -4,-10 L 4,-10 L 10,-4 L 10,4 L 4,10 L -4,10 L -10,4 L -10,-4 Z" 
+              fill="none" 
+              stroke="url(#hw-icon-danger)" 
+              stroke-width="1.5"
+              opacity="0.4">
+          <animate attributeName="opacity" values="0.4;0.8;0.4" dur="1s" repeatCount="indefinite"/>
+        </path>
+        <!-- X mark -->
+        <g stroke="url(#hw-icon-danger)" stroke-width="2.5" stroke-linecap="round" filter="url(#hw-icon-glow)">
+          <line x1="-4" y1="-4" x2="4" y2="4">
+            <animate attributeName="opacity" values="1;0.6;1" dur="0.618s" repeatCount="indefinite"/>
+          </line>
+          <line x1="4" y1="-4" x2="-4" y2="4">
+            <animate attributeName="opacity" values="1;0.6;1" dur="0.618s" repeatCount="indefinite"/>
+          </line>
+        </g>
+      </g>
+    </symbol>
+  </defs>
+  
+  <style><![CDATA[
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+    }
+  ]]></style>
+  
+  <!-- PREVIEW ROW (for reference) -->
+  <use href="#hw-tip" x="0" y="0" width="40" height="40"/>
+  <use href="#hw-info" x="40" y="0" width="40" height="40"/>
+  <use href="#hw-warning" x="80" y="0" width="40" height="40"/>
+  <use href="#hw-danger" x="120" y="0" width="40" height="40"/>
+</svg>

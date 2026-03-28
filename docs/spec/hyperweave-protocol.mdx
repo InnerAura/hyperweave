@@ -1,0 +1,150 @@
+---
+title: "HyperWeave Protocol v2.0"
+description: "Formal specification for Self-Executing Semantic Artifacts -- the protocol that defines how HyperWeave artifacts are composed, served, and consumed."
+---
+
+## Overview
+
+The HyperWeave Protocol defines how self-contained SVG artifacts are composed from semantic parameters, served through three interfaces, and consumed by humans and AI agents.
+
+## Core Composition Formula
+
+```
+ARTIFACT = FRAME x PROFILE x GENOME x SLOTS x MOTION x ENVIRONMENT
+```
+
+Every artifact is fully determined by these six dimensions. No ambient state, no implicit defaults beyond what ComposeSpec declares.
+
+## ComposeSpec
+
+The sole input to the composition pipeline. A frozen Pydantic model with:
+
+- **Core identity**: `type` (FrameType), `genome_id` (GenomeId), `profile_id` (auto-resolved)
+- **Content**: `title`, `value`, `slots` (structured zone content)
+- **Appearance**: `state`, `motion`, `glyph`, `glyph_mode`, `variant`
+- **Governance**: `regime`, `metadata_tier`, `generation`
+- **Frame-specific**: `divider_variant`, `direction`, `rows`
+- **Telemetry**: `telemetry_data` (contract dict for receipt/rhythm-strip/master-card)
+
+## Frame Types
+
+12 frame types, each with a distinct Jinja2 template:
+
+| Frame | Dimensions | Content Model |
+|---|---|---|
+| `badge` | Dynamic width x 20-22px | Two-panel: label + value |
+| `strip` | 530px+ x 36px | Identity + up to 4 metric cells |
+| `banner` | 800px x 200px | Title + optional subtitle |
+| `icon` | 64x64px | Single glyph frame |
+| `divider` | 800px x variable | 5 specimen-faithful variants |
+| `marquee-horizontal` | 800px x variable | SMIL scroll animation |
+| `marquee-vertical` | 800px x variable | Vertical SMIL scroll |
+| `marquee-counter` | 800px x variable | Multi-row counter scroll |
+| `receipt` | Variable | Session telemetry card |
+| `rhythm-strip` | Variable | Tool call density timeline |
+| `master-card` | Variable | Comprehensive session analysis |
+| `catalog` | Variable | Genome catalog page |
+
+## Genome Specification
+
+A genome declares:
+
+```yaml
+id: brutalist-emerald
+name: Brutalist Emerald
+category: dark
+profile: brutalist
+surface_0: "#14532D"     # --dna-surface
+surface_1: "#0D0D0D"     # --dna-surface-raised
+accent: "#10B981"        # --dna-signal
+ink: "#A7F3D0"           # --dna-ink-primary
+corner: "0"              # --dna-corner
+rhythm_base: "2.618s"    # --dna-rhythm-base (phi-derived)
+compatible_motions: [static, chromatic-pulse, bars, cascade, ...]
+```
+
+All genome properties map to CSS custom properties (`--dna-*`) consumed by templates via `var()`.
+
+## Profile Specification
+
+A profile declares structural decisions:
+
+```yaml
+id: brutalist
+badge_corner: 0
+badge_frame_height: 20
+strip_accent_width: 6
+glyph_backing: square
+status_shape: square
+fonts:
+  title: "SF Mono, monospace"
+```
+
+## Motion System
+
+Three motion categories:
+
+1. **Static**: No animation (always CIM-compliant)
+2. **Border** (5 motions): SMIL overlays on badge/strip borders
+3. **Kinetic typography** (9 motions): CSS/SMIL text animations on banners
+
+Motion templates live in `templates/motions/` and produce pure SVG animation elements.
+
+## Metadata Tiers
+
+5 progressively verbose metadata levels (default: Tier 3 Resonant):
+
+| Tier | Name | Includes |
+|---|---|---|
+| 0 | Silent | Nothing |
+| 1 | Minimal | Type, genome, dimensions |
+| 2 | Standard | + state, motion, glyph, profile |
+| 3 | Resonant | + RDF/Dublin Core, provenance |
+| 4 | Reasoning | + intent, approach, tradeoffs |
+
+## Policy Lanes
+
+Three governance regimes:
+
+| Regime | CIM | Contrast | Validation |
+|---|---|---|---|
+| `normal` | Enforced | WCAG AA checked | Full |
+| `permissive` | Waived | Warning only | Partial |
+| `ungoverned` | Off | Off | None |
+
+## URL Namespaces
+
+Four serving namespaces plus infrastructure:
+
+| Namespace | Purpose | Cache |
+|---|---|---|
+| `/v1/` | Composition API (badge, strip, banner, live, compose, discovery) | 300s data-bound, 3600s discovery |
+| `/g/` | Genome registry (DNA as JSON) | 24h + stale-while-revalidate |
+| `/a/` | Artifact store (editorial specimens) | Immutable (1 year) |
+| `/d/` | Drop events (genome launch metadata) | Variable |
+| `/health` | Liveness probe (container orchestration) | None |
+
+## Self-Containment Contract
+
+Every HyperWeave artifact satisfies:
+
+1. **Zero external references**: No `xlink:href`, `@import`, `<image>` pointing outside the SVG
+2. **Inline CSS only**: All styles in `<style>` blocks
+3. **No JavaScript**: Pure declarative SVG + CSS + SMIL
+4. **Embedded glyphs**: Path data inline, not referenced
+5. **Valid XML**: Well-formed SVG 1.1 / SVG 2.0
+
+## Invariants
+
+These invariants are enforced by CI and code review:
+
+```bash
+# Zero f-string SVG in Python
+grep -rn 'f"<' hyperweave/ --include="*.py"  # must return nothing
+
+# No phantom genomes
+grep -rl "clinical-ivory\|glass-aurora\|stencil-midnight" hyperweave/  # must return nothing
+
+# No substrate references
+grep -rn "substrate" hyperweave/ --include="*.py" --include="*.j2" | grep -v "# deferred"  # must return nothing
+```

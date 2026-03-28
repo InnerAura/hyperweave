@@ -1,0 +1,19 @@
+# Stage detector tuning knobs.
+# Loaded by telemetry/stages.py at import time.
+# Algorithm stays in Python; these are the dials.
+window_size: 6
+
+weights:
+  temporal: 0.3
+  tool_class: 0.4
+  explicit: 0.3
+
+boundary_threshold: 0.6
+temporal_gap_multiplier: 3.0
+
+explicit_marker_tools:
+  - Task
+  - EnterPlanMode
+  - ExitPlanMode
+  - TeamCreate
+  - Skill

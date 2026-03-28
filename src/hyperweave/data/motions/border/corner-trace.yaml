@@ -1,0 +1,38 @@
+id: corner-trace
+name: Corner Trace
+category: smil
+specimen: specs/motion/motion-border-frames/003-corner-trace.svg
+cim_compliant: false
+cim_waiver: "Animates stroke-dashoffset (paint) for perimeter traversal. Required for the single-runner trace effect."
+animated_properties:
+  - stroke-dashoffset
+applies_to:
+  - badge
+  - strip
+  - banner
+  - icon
+timing:
+  duration: "4s"
+  easing: "linear"
+  repeat: "indefinite"
+stroke_topology:
+  perimeter: 680
+  layers: 1
+  dash_pattern: "140 540"
+keyframes:
+  stroke_dashoffset:
+    values: "0;-680"
+    dur: "4s"
+smil: |
+  <!-- Single runner: 140px visible segment on 680px perimeter -->
+  <animate attributeName="stroke-dashoffset"
+           values="0;-680" dur="4s" repeatCount="indefinite"/>
+css: |
+  @media (prefers-reduced-motion: reduce) {
+    .hw-motion-corner-trace,
+    .hw-motion-corner-trace * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+description: "Perimeter traversal algorithm: single 140px runner traces a 680px rectangular perimeter at constant linear velocity. 1 SMIL animation, 4s period."

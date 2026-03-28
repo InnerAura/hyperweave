@@ -1,0 +1,116 @@
+---
+title: "Motions Reference"
+description: "Complete reference for HyperWeave motion primitives -- SMIL border overlays and CSS kinetic typography."
+---
+
+Motion primitives add animation to artifacts. There are three categories: static (no motion), border (SMIL overlays for badge/strip), and kinetic typography (CSS for banner).
+
+## Motion Categories
+
+### Static
+
+| ID | CIM | Applies To |
+|---|---|---|
+| `static` | Yes | All frames |
+
+### Border Motions (SMIL)
+
+Border motions are SVG-native SMIL animations that overlay the border of badges and strips.
+
+| ID | CIM | Description |
+|---|---|---|
+| `chromatic-pulse` | No | Cycling color shift on the border |
+| `corner-trace` | No | Animated path tracing the corners |
+| `dual-orbit` | No | Two particles orbiting the perimeter |
+| `entanglement` | No | Paired quantum-like border oscillation |
+| `rimrun` | No | Continuous border trace with glow |
+
+**Applies to**: `badge`, `strip`
+
+### Kinetic Typography (CSS/SMIL)
+
+Kinetic motions are text animation overlays applied to banner frames.
+
+| ID | CIM | Description |
+|---|---|---|
+| `bars` | Yes | Horizontal bar sweep reveal |
+| `broadcast` | Yes | Radiating signal pulse |
+| `cascade` | Yes | Cascading letter stagger |
+| `collapse` | No | Implosion toward center |
+| `converge` | No | Letters converging from edges |
+| `crash` | Yes | Impact collision effect |
+| `drop` | Yes | Gravity drop with bounce |
+| `breach` | No | Breaking through barrier |
+| `pulse` | No | Rhythmic scale pulse |
+
+**Applies to**: `banner` (brutalist-emerald only)
+
+## CIM Compliance
+
+The Compositional Integrity Model (CIM) defines which motions are safe for use in governed contexts.
+
+**CIM-compliant motions** (allowed under `normal` regime):
+`static`, `bars`, `broadcast`, `cascade`, `drop`, `crash`
+
+**Non-CIM motions** (require `permissive` or `ungoverned` regime):
+`chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun`, `converge`, `breach`, `pulse`, `collapse`
+
+### Regime Behavior
+
+| Regime | CIM Enforced | Non-CIM Motion Behavior |
+|---|---|---|
+| `normal` | Yes | Silently downgraded to `static` |
+| `permissive` | No | All motions allowed (with waiver) |
+| `ungoverned` | No | All motions allowed, no validation |
+
+## Genome Compatibility
+
+| Genome | Border (5) | Kinetic (9) |
+|---|---|---|
+| brutalist-emerald | All 5 | All 9 |
+| chrome-horizon | All 5 | None |
+
+## Template Structure
+
+Motion templates live in `templates/motions/`:
+
+```
+templates/motions/
+  border/
+    chromatic-pulse.svg.j2
+    corner-trace.svg.j2
+    dual-orbit.svg.j2
+    entanglement.svg.j2
+    rimrun.svg.j2
+  kinetic/
+    bars.svg.j2
+    broadcast.svg.j2
+    cascade.svg.j2
+    ...
+```
+
+Border motions produce SMIL `<animate>` elements. Kinetic motions produce `<style>` blocks with CSS keyframes.
+
+## Motion YAML Config
+
+Each motion has a YAML config in `data/motions/`:
+
+```yaml
+# data/motions/border/chromatic-pulse.yaml
+id: chromatic-pulse
+name: Chromatic Pulse
+type: border
+cim_compliant: false
+applies_to: [badge, strip]
+```
+
+The `static.yaml` config is at the root of `data/motions/`.
+
+## Seam Handling
+
+Border motions need to know the frame geometry for accurate overlays:
+
+| Frame | Seam Variable |
+|---|---|
+| Badge | `left_panel_width`, `right_panel_x` |
+| Strip | `first_divider_x` |

@@ -1,0 +1,25 @@
+{# HyperWeave Glyph Component — unified renderer.
+   Modes: auto (genome-dependent), fill (solid), wire (stroke-only).
+   Expects: glyph_path, glyph_viewbox, glyph_mode, glyph_scale,
+            glyph_cx, glyph_cy (center point) #}
+{% set mode = glyph_mode | default('auto') %}
+{% set vb = glyph_viewbox | default('0 0 640 640') %}
+{% set vb_parts = vb.split(' ') %}
+{% set vb_cx = vb_parts[2] | float / 2 %}
+{% set vb_cy = vb_parts[3] | float / 2 %}
+{% set scale = glyph_scale | default(0.0219) %}
+<g data-hw-zone="glyph" transform="translate({{ glyph_cx }},{{ glyph_cy }})">
+{% if mode == 'wire' %}
+  {# Wire mode: stroke-only, no fill #}
+  <g transform="scale({{ scale }}) translate(-{{ vb_cx }},-{{ vb_cy }})">
+    <path d="{{ glyph_path }}" fill="none"
+          stroke="var(--dna-signal)" stroke-width="16"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+{% elif mode == 'fill' or mode == 'auto' %}
+  {# Fill mode: solid fill with genome signal color #}
+  <g transform="scale({{ scale }}) translate(-{{ vb_cx }},-{{ vb_cy }})">
+    <path d="{{ glyph_path }}" fill="var(--dna-signal)" stroke="none"/>
+  </g>
+{% endif %}
+</g>

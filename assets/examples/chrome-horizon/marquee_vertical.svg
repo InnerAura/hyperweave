@@ -1,0 +1,447 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.dev/hw/v8.0"
+     role="img"
+     aria-labelledby="hw-f3c10714-title hw-f3c10714-desc"
+     viewBox="0 0 400 268"
+     width="400" height="268"
+     data-hw-id="f3c10714-e129-4c2a-9c65-7eeca04adc81"
+     data-hw-type="marquee-vertical"
+     data-hw-frame="marquee-vertical"
+     data-hw-genome="chrome-horizon"
+     data-hw-status="active"
+     data-hw-profile="chrome"
+     data-hw-motion="static"
+     data-hw-generation="1"
+     data-hw-contract="f3c10714-e129-4c2a-9c65-7eeca04adc81"
+     data-hw-variant="default"
+     data-hw-regime="normal"
+     data-hw-chromatic="chrome-horizon">
+  <title id="hw-f3c10714-title">HYPERWEAVE</title>
+  <desc id="hw-f3c10714-desc">A marquee-vertical artifact, using chrome-horizon genome.</desc>
+  <metadata>
+  <hw:artifact id="f3c10714-e129-4c2a-9c65-7eeca04adc81" type="marquee-vertical" series="core" version="0.1.0"
+               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:provenance>
+      <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-03-27T22:38:03.157036+00:00</hw:created>
+      <hw:human-directed>true</hw:human-directed>
+    </hw:provenance>
+    <hw:spec size="400x268" performance="composite-only"
+             theme="dark" a11y="WCAG-AA" platform="web"/>
+  </hw:artifact>
+  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:frame>marquee-vertical</hw:frame>
+    <hw:genome>chrome-horizon@0.1.0</hw:genome>
+    <hw:profile>chrome</hw:profile>
+    <hw:slots>
+    </hw:slots>
+    <hw:environment platform="web" motion="static" status="active"/>
+  </hw:composition>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:title>HYPERWEAVE</dc:title>
+      <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-03-27T22:38:03.157036+00:00</dc:date>
+      <dc:rights>CC BY 4.0</dc:rights>
+    </rdf:Description>
+  </rdf:RDF>
+  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:chromatic system="chrome-horizon" space="oklch"
+                  palette="" contrast-ratio="4.5:1"/>
+    <hw:motion vocabulary="static" physics="none"
+               timing="phi" duration-base="2.618s"
+               stagger-regime="contemplative" cim-compliant="true"/>
+    <hw:geometry form-language="geometric" corner-radius="5px"
+                 grid="auto" proportional-system="phi"
+                 mathematical-basis="golden-ratio" symmetry="bilateral"/>
+    <hw:typography stack="" hierarchy="11/18/8"
+                   weight-range="500-900" metrics-method="lut"/>
+    <hw:material surface="genome-native" depth="deep" texture="none"/>
+  </hw:aesthetic>
+  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:intent></hw:intent>
+    <hw:approach></hw:approach>
+    <hw:tradeoffs></hw:tradeoffs>
+    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>400x268 (1.49), left-to-right</hw:spatial-notes>
+  </hw:reasoning>
+</metadata>
+  <style>svg, :root {
+  --dna-surface: #000A14;
+  --dna-surface-alt: #0C1E2E;
+  --dna-surface-deep: #06101A;
+  --dna-ink-primary: #E0ECF6;
+  --dna-ink-muted: #7A9AB8;
+  --dna-ink-on-accent: #000A14;
+  --dna-ink-bright: #E0ECF6;
+  --dna-ink-sub: #7A9AB8;
+  --dna-signal: #5BA3D4;
+  --dna-signal-dim: #8A7355;
+  --dna-border: #060810;
+  --dna-border-tint: #0A1E2E;
+  --dna-shadow-color: #000000;
+  --dna-shadow-opacity: 0.30;
+  --dna-glow: 0px;
+  --dna-corner: 4px;
+  --dna-rhythm-base: 6s;
+  --dna-bg: #000A14;
+  --dna-bg-alt: #0C1E2E;
+  --dna-brand-text: #E0ECF6;
+  --dna-status-passing-core: #22C55E;
+  --dna-status-warning-core: #F59E0B;
+  --dna-status-failing-core: #EF4444;
+  --dna-ink-secondary: #7A9AB8;
+  --dna-ink-on-accent: #000A14;
+  --dna-label-text: #5BA3D4;
+  --dna-font-display: 'Impact','Arial Black',system-ui,sans-serif;
+  --dna-font-mono: 'Courier New',monospace;
+  --dna-sep: #060810;
+  --dna-status-delta-positive: #22C55E;
+  --dna-status-delta-negative: #DC2626;
+}
+@media (prefers-color-scheme: light) {
+  svg {
+    --dna-surface: #F8FAFC;
+    --dna-surface-top: #F8FAFC;
+    --dna-surface-alt: #F1F5F9;
+    --dna-surface-deep: #E2E8F0;
+    --dna-bg: #F8FAFC;
+    --dna-bg-alt: #F1F5F9;
+    --dna-ink: #1E293B;
+    --dna-ink-primary: #1E293B;
+    --dna-ink-dark: #1E293B;
+    --dna-ink-muted: #64748B;
+    --dna-ink-sub: #64748B;
+    --dna-ink-ghost: #CBD5E1;
+    --dna-border: #CBD5E1;
+    --dna-border-div: #CBD5E1;
+    --dna-sep: #CBD5E1;
+  }
+}
+/* === HyperWeave Accessibility Layer ===
+ * Non-negotiable media queries for motion, color scheme, and forced colors.
+ * Included in EVERY artifact.
+ *
+ * CAMO NOTE: @media (prefers-color-scheme) and @media (forced-colors: active)
+ * are INERT when served through GitHub Camo as img tags. The img element
+ * creates an isolated browsing context — the parent document's color scheme
+ * and forced-colors mode do not propagate into it. Artifacts will always
+ * render in their default (dark) theme on GitHub READMEs.
+ *
+ * These queries DO activate when the SVG is embedded directly (svg inline,
+ * object, or opened as a standalone document). This is a known accepted
+ * tradeoff: dark-default through Camo, adaptive in direct embed.
+ */
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hw-logic-bit { animation: none !important; opacity: .8; }
+  .hw-scanner { animation: none; opacity: 0; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  animate, animateTransform, animateMotion, set {
+    display: none !important;
+  }
+}
+
+/* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
+/* Genome-provided light_mode alleles are injected by the CSS assembler
+   into a separate @media (prefers-color-scheme: light) block per artifact.
+   This placeholder is intentionally empty; it exists as documentation. */
+
+/* ── Forced Colors (Windows High Contrast) ── */
+@media (forced-colors: active) {
+  text { fill: CanvasText !important; }
+  rect, path, circle, ellipse, polygon, polyline, line {
+    stroke: CanvasText;
+  }
+  .hw-frame-bg { fill: Canvas !important; }
+  .hw-accent-bar { fill: Highlight !important; }
+  .hw-signal { fill: Highlight !important; }
+  .hw-logic-bit { fill: Highlight !important; }
+}
+</style>
+  <defs>
+  <linearGradient id="hw-f3c10714-fade-top" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#0C1E2E" stop-opacity="1"/>
+    <stop offset="100%" stop-color="#0C1E2E" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="hw-f3c10714-fade-bot" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#06101A" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#06101A" stop-opacity="1"/>
+  </linearGradient>
+  <clipPath id="hw-f3c10714-scroll-clip">
+    <rect x="5" y="38"
+          width="390"
+          height="222"/>
+  </clipPath>
+  <linearGradient id="hw-f3c10714-envelope" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="#000A14"/>
+    <stop offset="12%" stop-color="#0A2540"/>
+    <stop offset="25%" stop-color="#1A4A6E"/>
+    <stop offset="36%" stop-color="#3A7EA8"/>
+    <stop offset="44%" stop-color="#6AACC8"/>
+    <stop offset="50%" stop-color="#C8DAE6"/>
+    <stop offset="56%" stop-color="#B8A888"/>
+    <stop offset="64%" stop-color="#6A5840"/>
+    <stop offset="75%" stop-color="#2A2218"/>
+    <stop offset="88%" stop-color="#100E0A"/>
+    <stop offset="100%" stop-color="#060810"/>
+  </linearGradient>
+  <filter id="hw-f3c10714-shadow" x="-2%" y="-2%" width="104%" height="106%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity=".35"/>
+  </filter>
+  <linearGradient id="hw-f3c10714-well" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="#0C1E2E"/>
+    <stop offset="100%" stop-color="#06101A"/>
+  </linearGradient>
+  <linearGradient id="hw-f3c10714-hdr" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#1A4A6E"/>
+    <stop offset="30%" stop-color="#3A7EA8"/>
+    <stop offset="50%" stop-color="#6AACC8"/>
+    <stop offset="70%" stop-color="#3A7EA8"/>
+    <stop offset="100%" stop-color="#1A4A6E"/>
+  </linearGradient>
+  <clipPath id="hw-f3c10714-outer"><rect width="400" height="268" rx="4"/></clipPath>
+  <clipPath id="hw-f3c10714-inner"><rect x="3" y="3" width="394" height="262" rx="2"/></clipPath>
+  </defs>
+
+<g clip-path="url(#hw-f3c10714-outer)" filter="url(#hw-f3c10714-shadow)">
+  <rect width="400" height="268" rx="4" fill="url(#hw-f3c10714-envelope)"/>
+</g>
+<rect x="2" y="2" width="396" height="264" rx="3" fill="none" stroke="#000510" stroke-width=".6"/>
+<rect x="3" y="3" width="394" height="262" rx="2" fill="url(#hw-f3c10714-well)"/>
+<rect x="3" y="3" width="394" height="33" rx="2" fill="url(#hw-f3c10714-hdr)"/>
+<rect x="3" y="33" width="394" height="6" fill="url(#hw-f3c10714-hdr)"/>
+<rect x="40" y="3" width="320" height=".5" fill="#6AACC8" opacity=".08"/>
+
+<text x="16" y="25"
+      font-family="'Inter',system-ui,sans-serif" font-size="11" font-weight="800"
+      fill="var(--dna-surface, #000A14)" letter-spacing="2">SYSTEM TELEMETRY</text>
+<text x="358" y="23" text-anchor="end"
+      font-family="var(--dna-font-mono, 'Courier New', monospace)"
+      font-size="8" font-weight="700" fill="var(--dna-surface, #000A14)">LIVE</text>
+<rect x="364" y="15" width="8" height="8" rx="1"
+      fill="var(--dna-surface, #000A14)">
+  <animate attributeName="opacity" values="1;.15;1" dur="2.618s"
+           repeatCount="indefinite"/>
+</rect>
+
+<line x1="3" y1="36" x2="397" y2="36"
+      stroke="var(--dna-signal)" stroke-width=".5" stroke-opacity=".25"/>
+
+<g clip-path="url(#hw-f3c10714-scroll-clip)">
+  <g data-hw-zone="scroll-track">
+    <animateTransform attributeName="transform" type="translate"
+        from="0 0" to="0 -360"
+        dur="23.42s" repeatCount="indefinite"/>
+
+    <circle cx="14" cy="54" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="57"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:04</tspan><tspan dx="8">compositor.compose() → badge</tspan></text>
+    <text x="384" y="57" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="84" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="87"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:10</tspan><tspan dx="8">genome.load("brutalist-emerald")</tspan></text>
+    <text x="384" y="87" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="114" r="2"
+            fill="var(--dna-signal)"/>
+    <text x="26" y="117"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:18</tspan><tspan dx="8">frame.render(strip, 560×52)</tspan></text>
+    <text x="384" y="117" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-ink-primary)">2.1KB</text>
+    <circle cx="14" cy="144" r="2"
+            fill="var(--dna-signal-dim)"/>
+    <text x="26" y="147"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal-dim)">00:22</tspan><tspan dx="8">cache.miss("cdn-edge-sjc")</tspan></text>
+    <text x="384" y="147" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-signal-dim)">WARN</text>
+    <circle cx="14" cy="174" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="177"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:28</tspan><tspan dx="8">mcp.tool_call("compose_badge")</tspan></text>
+    <text x="384" y="177" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="204" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="207"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:36</tspan><tspan dx="8">validator.cim_check() → PASS</tspan></text>
+    <text x="384" y="207" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="234" r="2"
+            fill="var(--dna-signal)"/>
+    <text x="26" y="237"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:40</tspan><tspan dx="8">metadata.tier("resonant")</tspan></text>
+    <text x="384" y="237" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-ink-primary)">T2</text>
+    <circle cx="14" cy="264" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="267"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:46</tspan><tspan dx="8">a11y.wcag_aa() → 4.7:1</tspan></text>
+    <text x="384" y="267" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">PASS</text>
+    <circle cx="14" cy="294" r="2"
+            fill="var(--dna-status-failing-core)"/>
+    <text x="26" y="297"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-status-failing-core)">00:54</tspan><tspan dx="8">animate.cx() → CIM VIOLATION</tspan></text>
+    <text x="384" y="297" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-failing-core)">ERR</text>
+    <circle cx="14" cy="324" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="327"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:58</tspan><tspan dx="8">compositor.compose() → banner</tspan></text>
+    <text x="384" y="327" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="354" r="2"
+            fill="var(--dna-signal)"/>
+    <text x="26" y="357"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">01:04</tspan><tspan dx="8">cdn.purge("edge-*") → 14ms</tspan></text>
+    <text x="384" y="357" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-ink-primary)">14ms</text>
+    <circle cx="14" cy="384" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="387"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">01:12</tspan><tspan dx="8">genome.register("tokyo-street")</tspan></text>
+    <text x="384" y="387" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+
+    <circle cx="14" cy="414" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="417"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:04</tspan><tspan dx="8">compositor.compose() → badge</tspan></text>
+    <text x="384" y="417" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="444" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="447"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:10</tspan><tspan dx="8">genome.load("brutalist-emerald")</tspan></text>
+    <text x="384" y="447" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="474" r="2"
+            fill="var(--dna-signal)"/>
+    <text x="26" y="477"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:18</tspan><tspan dx="8">frame.render(strip, 560×52)</tspan></text>
+    <text x="384" y="477" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-ink-primary)">2.1KB</text>
+    <circle cx="14" cy="504" r="2"
+            fill="var(--dna-signal-dim)"/>
+    <text x="26" y="507"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal-dim)">00:22</tspan><tspan dx="8">cache.miss("cdn-edge-sjc")</tspan></text>
+    <text x="384" y="507" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-signal-dim)">WARN</text>
+    <circle cx="14" cy="534" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="537"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:28</tspan><tspan dx="8">mcp.tool_call("compose_badge")</tspan></text>
+    <text x="384" y="537" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="564" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="567"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:36</tspan><tspan dx="8">validator.cim_check() → PASS</tspan></text>
+    <text x="384" y="567" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="594" r="2"
+            fill="var(--dna-signal)"/>
+    <text x="26" y="597"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:40</tspan><tspan dx="8">metadata.tier("resonant")</tspan></text>
+    <text x="384" y="597" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-ink-primary)">T2</text>
+    <circle cx="14" cy="624" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="627"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:46</tspan><tspan dx="8">a11y.wcag_aa() → 4.7:1</tspan></text>
+    <text x="384" y="627" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">PASS</text>
+    <circle cx="14" cy="654" r="2"
+            fill="var(--dna-status-failing-core)"/>
+    <text x="26" y="657"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-status-failing-core)">00:54</tspan><tspan dx="8">animate.cx() → CIM VIOLATION</tspan></text>
+    <text x="384" y="657" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-failing-core)">ERR</text>
+    <circle cx="14" cy="684" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="687"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">00:58</tspan><tspan dx="8">compositor.compose() → banner</tspan></text>
+    <text x="384" y="687" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+    <circle cx="14" cy="714" r="2"
+            fill="var(--dna-signal)"/>
+    <text x="26" y="717"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">01:04</tspan><tspan dx="8">cdn.purge("edge-*") → 14ms</tspan></text>
+    <text x="384" y="717" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-ink-primary)">14ms</text>
+    <circle cx="14" cy="744" r="2"
+            fill="var(--dna-status-passing-core)"/>
+    <text x="26" y="747"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="10" fill="var(--dna-ink-secondary, var(--dna-ink-muted))"><tspan font-weight="700" fill="var(--dna-signal)">01:12</tspan><tspan dx="8">genome.register("tokyo-street")</tspan></text>
+    <text x="384" y="747" text-anchor="end"
+          font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+          font-size="9" fill="var(--dna-status-passing-core)">OK</text>
+  </g>
+</g>
+
+<rect x="5" y="38" width="390" height="18"
+      fill="url(#hw-f3c10714-fade-top)"/>
+<rect x="5" y="242" width="390" height="18"
+      fill="url(#hw-f3c10714-fade-bot)"/>
+
+<rect x="40" y="261" width="320" height=".5"
+      fill="#6AACC8" opacity=".12"/>
+
+</svg>

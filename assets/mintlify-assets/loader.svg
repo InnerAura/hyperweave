@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:hw="https://hyperweave.dev/hw/v1.0"
+     viewBox="0 0 64 64"
+     role="img"
+     aria-label="Loading"
+     data-hw-variant="loader"
+     data-hw-status="loading"
+     data-hw-regime="auto">
+  
+  <metadata>
+    <hw:artifact type="loader" series="hyperweave" version="1.0">
+      <hw:provenance>
+        <hw:generator>Claude (Anthropic)</hw:generator>
+        <hw:created>2026-01-21</hw:created>
+        <hw:protocol>HyperWeave v7.1</hw:protocol>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Async state indicator for docs site - maintains brand presence during loading</hw:intent>
+        <hw:approach>Triple orbital ring with particles at φ-ratio speeds; simplified transmitter core pulses; regime-responsive track colors</hw:approach>
+        <hw:tradeoffs>No full transmitter shape (too complex for loader context); particles are the motion focus; core nexus provides anchor point</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+  
+  <defs>
+    <!-- CHROMASONIC GRADIENT -->
+    <linearGradient id="hw-load-chroma" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF0A54">
+        <animate attributeName="stop-color" 
+                 values="#FF0A54;#0AFFEF;#845EF7;#B5179E;#FF0A54" 
+                 dur="2s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="50%" style="stop-color:#0AFFEF">
+        <animate attributeName="stop-color" 
+                 values="#0AFFEF;#845EF7;#B5179E;#FF0A54;#0AFFEF" 
+                 dur="3.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#845EF7">
+        <animate attributeName="stop-color" 
+                 values="#845EF7;#B5179E;#FF0A54;#0AFFEF;#845EF7" 
+                 dur="5.236s" repeatCount="indefinite"
+                 calcMode="spline"
+                 keySplines="0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94;0.25 0.46 0.45 0.94"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- PARTICLE GRADIENTS -->
+    <radialGradient id="hw-load-particle-1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FF0A54;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#FF0A54;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="hw-load-particle-2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0AFFEF;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0AFFEF;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="hw-load-particle-3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#845EF7;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#845EF7;stop-opacity:0"/>
+    </radialGradient>
+    
+    <!-- GLOW -->
+    <filter id="hw-load-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <style><![CDATA[
+    .hw-track { stroke: #E5E5E5; }
+    @media (prefers-color-scheme: dark) {
+      .hw-track { stroke: #3F3F46; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+    }
+  ]]></style>
+  
+  <g transform="translate(32, 32)">
+    
+    <!-- ORBITAL TRACKS (regime-responsive) -->
+    <circle class="hw-track" cx="0" cy="0" r="12" fill="none" stroke-width="1" opacity="0.3"/>
+    <circle class="hw-track" cx="0" cy="0" r="20" fill="none" stroke-width="1" opacity="0.2"/>
+    <circle class="hw-track" cx="0" cy="0" r="28" fill="none" stroke-width="1" opacity="0.15"/>
+    
+    <!-- ORBIT 1 - Inner, fastest (φ^0 = 1.0s) -->
+    <circle r="3" fill="url(#hw-load-particle-1)" filter="url(#hw-load-glow)">
+      <animateMotion path="M12,0 A12,12 0 1,1 -12,0 A12,12 0 1,1 12,0" dur="1s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3;2.5;3.5;3" dur="1s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- ORBIT 2 - Middle (φ^1 = 1.618s) -->
+    <circle r="2.5" fill="url(#hw-load-particle-2)" filter="url(#hw-load-glow)">
+      <animateMotion path="M20,0 A20,20 0 1,1 -20,0 A20,20 0 1,1 20,0" dur="1.618s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2.5;3;2;2.5" dur="1.618s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- ORBIT 3 - Outer, slowest (φ^2 = 2.618s) -->
+    <circle r="2" fill="url(#hw-load-particle-3)" filter="url(#hw-load-glow)">
+      <animateMotion path="M28,0 A28,28 0 1,1 -28,0 A28,28 0 1,1 28,0" dur="2.618s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2;2.8;1.8;2" dur="2.618s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- NEXUS CORE -->
+    <circle cx="0" cy="0" r="4" fill="url(#hw-load-chroma)" filter="url(#hw-load-glow)">
+      <animate attributeName="r" values="4;5;4" dur="1.618s" repeatCount="indefinite"
+               calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+    </circle>
+    
+  </g>
+</svg>

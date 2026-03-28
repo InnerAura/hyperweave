@@ -1,0 +1,451 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:hw="https://hyperweave.dev/hw/v8.0"
+     role="img"
+     aria-labelledby="hw-f0617ab9-title hw-f0617ab9-desc"
+     viewBox="0 0 800 900"
+     width="800" height="900"
+     data-hw-id="f0617ab9-ca72-4251-a6c4-ac1fb47c9ac2"
+     data-hw-type="master-card"
+     data-hw-frame="master-card"
+     data-hw-genome="brutalist-emerald"
+     data-hw-status="active"
+     data-hw-profile="brutalist"
+     data-hw-motion="static"
+     data-hw-generation="1"
+     data-hw-contract="f0617ab9-ca72-4251-a6c4-ac1fb47c9ac2"
+     data-hw-variant="default"
+     data-hw-regime="normal"
+     data-hw-chromatic="brutalist-emerald">
+  <title id="hw-f0617ab9-title">HyperWeave master-card artifact</title>
+  <desc id="hw-f0617ab9-desc">A master-card artifact, using brutalist-emerald genome.</desc>
+  <metadata>
+  <hw:artifact id="f0617ab9-ca72-4251-a6c4-ac1fb47c9ac2" type="master-card" series="core" version="0.1.0"
+               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:provenance>
+      <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-03-23T20:50:27.724684+00:00</hw:created>
+      <hw:human-directed>true</hw:human-directed>
+    </hw:provenance>
+    <hw:spec size="800x900" performance="composite-only"
+             theme="dark" a11y="WCAG-AA" platform="web"/>
+  </hw:artifact>
+  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:frame>master-card</hw:frame>
+    <hw:genome>brutalist-emerald@0.1.0</hw:genome>
+    <hw:profile>brutalist</hw:profile>
+    <hw:slots>
+    </hw:slots>
+    <hw:environment platform="web" motion="static" status="active"/>
+  </hw:composition>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:title>HyperWeave master-card artifact</dc:title>
+      <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-03-23T20:50:27.724684+00:00</dc:date>
+      <dc:rights>CC BY 4.0</dc:rights>
+    </rdf:Description>
+  </rdf:RDF>
+  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:chromatic system="brutalist-emerald" space="oklch"
+                  palette="" contrast-ratio="4.5:1"/>
+    <hw:motion vocabulary="static" physics="none"
+               timing="phi" duration-base="2.618s"
+               stagger-regime="contemplative" cim-compliant="true"/>
+    <hw:geometry form-language="geometric" corner-radius="5px"
+                 grid="auto" proportional-system="phi"
+                 mathematical-basis="golden-ratio" symmetry="bilateral"/>
+    <hw:typography stack="" hierarchy="11/18/8"
+                   weight-range="500-900" metrics-method="lut"/>
+    <hw:material surface="genome-native" depth="deep" texture="none"/>
+  </hw:aesthetic>
+  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+    <hw:intent></hw:intent>
+    <hw:approach></hw:approach>
+    <hw:tradeoffs></hw:tradeoffs>
+    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>800x900 (0.89), left-to-right</hw:spatial-notes>
+  </hw:reasoning>
+</metadata>
+  <style>svg, :root {
+  --dna-surface: #0c0c10;
+  --dna-surface-alt: #101014;
+  --dna-surface-deep: #08080c;
+  --dna-ink-primary: #e4e4e7;
+  --dna-ink-muted: #a1a1aa;
+  --dna-ink-on-accent: #0c0c10;
+  --dna-ink-bright: #e4e4e7;
+  --dna-ink-sub: #71717a;
+  --dna-signal: #6366f1;
+  --dna-signal-dim: #4f46e5;
+  --dna-border: #1e1e24;
+  --dna-border-tint: #27272a;
+  --dna-shadow-color: #000000;
+  --dna-shadow-opacity: 0.2;
+  --dna-glow: 0px;
+  --dna-corner: 4;
+  --dna-rhythm-base: 2s;
+  --dna-bg: #0c0c10;
+  --dna-bg-alt: #101014;
+  --dna-brand-text: #e4e4e7;
+  --dna-status-passing-core: #10b981;
+  --dna-status-warning-core: #f59e0b;
+  --dna-status-failing-core: #ef4444;
+  --dna-ink-tertiary: #71717a;
+  --dna-ink-ghost: #52525b;
+  --dna-border-div: #27272a;
+  --dna-tool-explore: #3b9fd4;
+  --dna-tool-execute: #34c790;
+  --dna-tool-mutate: #e5a832;
+  --dna-tool-coordinate: #9b6cd4;
+  --dna-tool-reflect: #d45c8a;
+  --dna-font-display: 'SF Pro Display','Inter',system-ui,sans-serif;
+  --dna-font-mono: 'SF Mono','JetBrains Mono','Fira Code',monospace;
+  --dna-sep: #1e1e24;
+  --dna-status-delta-positive: #22C55E;
+  --dna-status-delta-negative: #DC2626;
+}
+@media (prefers-color-scheme: light) {
+  svg {
+    --dna-surface: #fafafa;
+    --dna-surface-top: #fafafa;
+    --dna-surface-alt: #f5f5f5;
+    --dna-surface-deep: #f0f0f0;
+    --dna-bg: #fafafa;
+    --dna-bg-alt: #f5f5f5;
+    --dna-ink: #18181b;
+    --dna-ink-primary: #18181b;
+    --dna-ink-dark: #18181b;
+    --dna-ink-muted: #3f3f46;
+    --dna-ink-sub: #3f3f46;
+    --dna-ink-ghost: #a1a1aa;
+    --dna-border: #e4e4e7;
+    --dna-border-div: #e4e4e7;
+    --dna-sep: #d4d4d8;
+  }
+}
+/* === HyperWeave Accessibility Layer ===
+ * Non-negotiable media queries for motion, color scheme, and forced colors.
+ * Included in EVERY artifact.
+ */
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hw-logic-bit { animation: none !important; opacity: .8; }
+  .hw-scanner { animation: none; opacity: 0; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  animate, animateTransform, animateMotion, set {
+    display: none !important;
+  }
+}
+
+/* ── Dark Mode (genome values already target dark) ── */
+@media (prefers-color-scheme: dark) {
+  /* Genome --dna-* values are dark-first; no overrides needed */
+}
+
+/* ── Light Mode Override ── */
+@media (prefers-color-scheme: light) {
+  /* Light mode: override only when genome provides light-mode alleles */
+  /* Individual genomes may provide --dna-light-* variables */
+}
+
+/* ── Forced Colors (Windows High Contrast) ── */
+@media (forced-colors: active) {
+  text { fill: CanvasText !important; }
+  rect, path, circle, ellipse, polygon, polyline, line {
+    stroke: CanvasText;
+  }
+  .hw-frame-bg { fill: Canvas !important; }
+  .hw-accent-bar { fill: Highlight !important; }
+  .hw-signal { fill: Highlight !important; }
+  .hw-logic-bit { fill: Highlight !important; }
+}
+
+/* === HyperWeave Telemetry Utility Classes ===
+ * Specimen: specs/telemetry-artifacts/receipt.svg (lines 126-163)
+ * Used by receipt, rhythm-strip, and master-card templates.
+ */
+
+/* Typography shorthand */
+.m { font-family: var(--dna-font-mono); }
+.s { font-family: var(--dna-font-display); }
+
+/* Ink tiers */
+.ink1 { fill: var(--dna-ink-primary); }
+.ink2 { fill: var(--dna-ink-muted); }
+.ink3 { fill: var(--dna-ink-tertiary); }
+.ghost { fill: var(--dna-ink-ghost); }
+.signal { fill: var(--dna-signal); }
+
+/* Structural */
+.div { stroke: var(--dna-border-div); stroke-width: 1; }
+
+/* Treemap cell classes */
+.cell-name { font-weight: 600; fill: var(--dna-ink-primary); }
+.cell-meta { fill: var(--dna-ink-ghost); }
+.cell-error { fill: var(--dna-status-failing-core); opacity: 0.85; }
+
+/* Phase color classes */
+.phase-explore { fill: var(--dna-tool-explore); opacity: 0.5; }
+.phase-execute { fill: var(--dna-tool-execute); opacity: 0.5; }
+.phase-mutate { fill: var(--dna-tool-mutate); opacity: 0.5; }
+.phase-coordinate { fill: var(--dna-tool-coordinate); opacity: 0.5; }
+
+/* Heatmap intensity classes */
+.heat-0 { fill: var(--dna-border); opacity: 0.3; }
+.heat-1 { fill: var(--dna-signal); opacity: 0.2; }
+.heat-2 { fill: var(--dna-signal); opacity: 0.4; }
+.heat-3 { fill: var(--dna-signal); opacity: 0.6; }
+.heat-4 { fill: var(--dna-signal); opacity: 0.85; }
+.heat-write { fill: var(--dna-tool-mutate); }
+
+/* Skill state classes */
+.skill-mastered { fill: var(--dna-status-passing-core); }
+.skill-learning { fill: var(--dna-tool-explore); }
+.skill-asking { fill: var(--dna-status-warning-core); }
+
+/* Forced colors / high contrast */
+@media (forced-colors: active) {
+  text { fill: CanvasText; }
+  .div { stroke: CanvasText; }
+}
+</style>
+  <defs>
+  <linearGradient id="hw-f0617ab9-bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-surface)"/>
+    <stop offset="100%" stop-color="var(--dna-surface-deep)"/>
+  </linearGradient>
+  <linearGradient id="hw-f0617ab9-burn-fill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0.25"/>
+    <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0.02"/>
+  </linearGradient>
+  </defs>
+
+<rect width="800" height="900" rx="4" fill="url(#hw-f0617ab9-bg)"/>
+<rect x="0.5" y="0.5" width="799" height="899"
+      rx="4" fill="none" stroke="var(--dna-border)" stroke-width="1"/>
+
+<g transform="translate(24, 18)" data-hw-zone="hero">
+  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">MASTER CARD</text>
+  <text class="s ink1" font-size="24" font-weight="700" y="26"
+        letter-spacing="-0.5px">26.4K tokens · $0.42</text>
+  <text class="m ink3" font-size="10" y="42">claude-opus-4-6 · 10 sessions</text>
+  <g transform="translate(752, 0)" text-anchor="end">
+    <text class="m ghost" font-size="9" letter-spacing="1px">LIFETIME</text>
+    <text class="m ink2" font-size="10" y="16">99 calls</text>
+    <text class="m ink2" font-size="10" y="30">$0.42 total</text>
+    <text class="m ink2" font-size="10" y="44">10 sessions</text>
+  </g>
+</g>
+<line x1="24" y1="76" x2="776" y2="76" class="div"/>
+
+<g transform="translate(24, 84)" data-hw-zone="history">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">SESSION HISTORY (10)</text>
+  <text class="m ink3" font-size="8" x="752" text-anchor="end">bar height = tokens</text>
+
+  <g transform="translate(0, 16)">
+    <rect x="0" y="142" width="72" height="2"
+          fill="var(--dna-signal)" opacity="0.6" rx="1"/>
+    <rect x="75" y="85" width="72" height="59"
+          fill="var(--dna-status-warning-core)" opacity="0.5" rx="1"/>
+    <rect x="150" y="72" width="72" height="72"
+          fill="var(--dna-signal)" opacity="0.6" rx="1"/>
+    <rect x="225" y="131" width="72" height="13"
+          fill="var(--dna-status-warning-core)" opacity="0.5" rx="1"/>
+    <rect x="300" y="140" width="72" height="4"
+          fill="var(--dna-signal)" opacity="0.6" rx="1"/>
+    <rect x="375" y="138" width="72" height="6"
+          fill="var(--dna-signal)" opacity="0.6" rx="1"/>
+    <rect x="450" y="136" width="72" height="8"
+          fill="var(--dna-signal)" opacity="0.6" rx="1"/>
+    <rect x="525" y="51" width="72" height="93"
+          fill="var(--dna-status-warning-core)" opacity="0.5" rx="1"/>
+    <rect x="600" y="0" width="72" height="144"
+          fill="var(--dna-status-failing-core)" opacity="0.6" rx="1"/>
+    <rect x="675" y="101" width="72" height="43"
+          fill="var(--dna-status-warning-core)" opacity="0.5" rx="1"/>
+  </g>
+</g>
+<line x1="24" y1="260" x2="776" y2="260" class="div"/>
+
+<g transform="translate(24, 268)" data-hw-zone="burn">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">TOKEN BURN — claude-opus-4-6</text>
+  <text class="m ghost" font-size="10" y="120" x="376" text-anchor="middle">Burn curve data pending</text>
+</g>
+<line x1="24" y1="500" x2="776" y2="500" class="div"/>
+
+<g transform="translate(24, 508)" data-hw-zone="heatmap">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">CODEBASE HEATMAP (8 FILES)</text>
+  <text class="m ink3" font-size="8" x="752" text-anchor="end">reads = blue intensity · writes = amber dots</text>
+
+  <g transform="translate(0, 20)">
+    <text class="m ghost" font-size="7" letter-spacing="1px">FILE</text>
+    <text class="m ghost" font-size="7" x="380" letter-spacing="1px">READS</text>
+    <text class="m ghost" font-size="7" x="620" letter-spacing="1px">WRITES</text>
+    <text class="m ghost" font-size="7" x="690" letter-spacing="1px">LAST</text>
+  </g>
+  <g transform="translate(0, 36)">
+    <text class="m ink2" font-size="9" y="10">compose/engine.py</text>
+    <rect x="380" y="2" width="200" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.8"/>
+    <text class="m ghost" font-size="8" x="584" y="10">42</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="636" cy="25" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="646" cy="43" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="656" cy="61" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="666" cy="79" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="680" y="10">8</text>
+    <text class="m ghost" font-size="8" x="690" y="10">today</text>
+    <text class="m ink2" font-size="9" y="28">core/models.py</text>
+    <rect x="380" y="20" width="180" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.6499999999999999"/>
+    <text class="m ghost" font-size="8" x="564" y="28">38</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="636" cy="25" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="646" cy="43" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="656" cy="61" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="666" cy="79" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="680" y="28">6</text>
+    <text class="m ghost" font-size="8" x="690" y="28">today</text>
+    <text class="m ink2" font-size="9" y="46">render/templates.py</text>
+    <rect x="380" y="38" width="147" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.5"/>
+    <text class="m ghost" font-size="8" x="531" y="46">31</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="636" cy="25" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="646" cy="43" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="656" cy="61" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="670" y="46">4</text>
+    <text class="m ghost" font-size="8" x="690" y="46">yest</text>
+    <text class="m ink2" font-size="9" y="64">core/text.py</text>
+    <rect x="380" y="56" width="114" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.5"/>
+    <text class="m ghost" font-size="8" x="498" y="64">24</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="636" cy="25" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="646" cy="43" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="660" y="64">3</text>
+    <text class="m ghost" font-size="8" x="690" y="64">yest</text>
+    <text class="m ink2" font-size="9" y="82">frames/badge.svg.j2</text>
+    <rect x="380" y="74" width="104" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.5"/>
+    <text class="m ghost" font-size="8" x="488" y="82">22</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="636" cy="25" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="646" cy="43" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="656" cy="61" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="666" cy="79" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="680" y="82">7</text>
+    <text class="m ghost" font-size="8" x="690" y="82">today</text>
+    <text class="m ink2" font-size="9" y="100">frames/strip.svg.j2</text>
+    <rect x="380" y="92" width="85" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.35"/>
+    <text class="m ghost" font-size="8" x="469" y="100">18</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="636" cy="25" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="646" cy="43" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="656" cy="61" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="666" cy="79" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="680" y="100">5</text>
+    <text class="m ghost" font-size="8" x="690" y="100">today</text>
+    <text class="m ink2" font-size="9" y="118">config/loader.py</text>
+    <rect x="380" y="110" width="71" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.35"/>
+    <text class="m ghost" font-size="8" x="455" y="118">15</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <circle cx="636" cy="25" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="650" y="118">2</text>
+    <text class="m ghost" font-size="8" x="690" y="118">yest</text>
+    <text class="m ink2" font-size="9" y="136">genomes/brutalist.json</text>
+    <rect x="380" y="128" width="66" height="10" rx="1"
+          fill="var(--dna-signal)" opacity="0.35"/>
+    <text class="m ghost" font-size="8" x="450" y="136">14</text>
+    <circle cx="626" cy="7" r="3"
+            fill="var(--dna-tool-mutate)" opacity="0.7"/>
+    <text class="m ghost" font-size="8" x="640" y="136">1</text>
+    <text class="m ghost" font-size="8" x="690" y="136">Feb 17</text>
+  </g>
+</g>
+<line x1="24" y1="720" x2="776" y2="720" class="div"/>
+
+<g transform="translate(24, 728)" data-hw-zone="skills">
+  <text class="m ghost" font-size="9" font-weight="600"
+        letter-spacing="1px">SKILL TRACKER</text>
+  <text class="m" font-size="7" fill="var(--dna-status-warning-core)"
+        x="752" text-anchor="end"
+        letter-spacing="0.5px">EXPERIMENTAL</text>
+
+  <g transform="translate(0, 22)">
+    <rect x="0" y="0" width="4" height="28" rx="1" fill="var(--dna-tool-explore)" opacity="0.7"/>
+    <text class="m ink2" font-size="10" x="14" y="12">SVG template authoring</text>
+    <text class="m ghost" font-size="8" x="14" y="24">Jinja2 · 24 attempts</text>
+    <rect x="280" y="4" width="336" height="8" rx="2" fill="var(--dna-border)" opacity="0.3"/>
+    <rect x="280" y="4" width="294" height="8" rx="2" fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="624" y="12">87.5%</text>
+    <text class="m ghost" font-size="8" x="672" y="12">21/24</text>
+  </g>
+  <g transform="translate(0, 60)">
+    <rect x="0" y="0" width="4" height="28" rx="1" fill="var(--dna-status-passing-core)" opacity="0.7"/>
+    <text class="m ink2" font-size="10" x="14" y="12">Pydantic model design</text>
+    <text class="m ghost" font-size="8" x="14" y="24">Python · 12 attempts</text>
+    <rect x="280" y="4" width="336" height="8" rx="2" fill="var(--dna-border)" opacity="0.3"/>
+    <rect x="280" y="4" width="308" height="8" rx="2" fill="var(--dna-status-passing-core)" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="624" y="12">91.7%</text>
+    <text class="m ghost" font-size="8" x="672" y="12">11/12</text>
+  </g>
+  <g transform="translate(0, 98)">
+    <rect x="0" y="0" width="4" height="28" rx="1" fill="var(--dna-tool-explore)" opacity="0.7"/>
+    <text class="m ink2" font-size="10" x="14" y="12">Test writing</text>
+    <text class="m ghost" font-size="8" x="14" y="24">Python · 8 attempts</text>
+    <rect x="280" y="4" width="336" height="8" rx="2" fill="var(--dna-border)" opacity="0.3"/>
+    <rect x="280" y="4" width="210" height="8" rx="2" fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <text class="m ink3" font-size="8" x="624" y="12">62.5%</text>
+    <text class="m ghost" font-size="8" x="672" y="12">5/8</text>
+  </g>
+
+</g>
+
+<line x1="24" y1="860" x2="776" y2="860" class="div"/>
+
+<text class="m ghost" font-size="9" x="24" y="886">hyperweave.dev</text>
+<text class="m ghost" font-size="9" x="776" y="886"
+      text-anchor="end">claude-opus-4-6</text>
+</svg>

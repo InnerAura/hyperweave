@@ -1,0 +1,18 @@
+{# Kinetic typography: cascade -- staggered opacity reveal on title text (vertical variant).
+   Specimen: banner_cascade.svg
+   The "column reveal" effect is simulated by the text appearing with a staggered
+   opacity animation.  NO opaque covering columns -- the editorial grid must stay
+   visible underneath.
+   Outputs: title text + subtitle label + accent bar.
+   Context: uid, title, cx, cy, fs, w, h, ty, subtitle (optional) #}
+<text class="hw-motion-cascade-text" x="{{ cx }}" y="{{ ty }}" text-anchor="middle"
+      font-family="'Inter','SF Pro Display',system-ui,sans-serif"
+      font-size="{{ fs }}" font-weight="800" letter-spacing="-0.04em"
+      fill="var(--dna-ink-primary)">{{ title }}</text>
+<g class="hw-motion-cascade-label">
+  <text x="{{ (w * 0.085) | int }}" y="{{ h - 14 }}"
+        font-family="'SF Mono','JetBrains Mono',monospace" font-size="10"
+        fill="var(--dna-signal)" letter-spacing="0.3em" opacity=".5">{{ subtitle | default('') }}</text>
+</g>
+<rect x="0" y="{{ (h * 0.13) | int }}" width="4" height="{{ (h * 0.74) | int }}"
+      fill="var(--dna-signal)" class="hw-motion-cascade-accent"/>
