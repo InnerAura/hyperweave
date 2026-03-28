@@ -3,19 +3,19 @@
      data-hw-component="banner" data-hw-chromatic="cobalt-sapphire-deep"
      data-hw-variant="v11-formidable-flow" data-protocol="hw-v1">
   <title id="t11">HyperWeave — Where Vectors Meet Vision</title>
-  <desc id="d11">V11 Cobalt Sapphire Formidable. Mobile-fixed: Safari color-scheme defined, display property resets applied, and typography consolidated to native CSS class switching.</desc>
+  <desc id="d11">V11 Cobalt Sapphire Formidable. Mobile-fixed: Safari WebKit text blur resolved, pure white contrast enforced.</desc>
 
   <metadata>
-    <hw:artifact id="hw-v11-formidable-fixed" type="banner" series="hyperweave-brand" version="11.3.1">
+    <hw:artifact id="hw-v11-formidable-fixed" type="banner" series="hyperweave-brand" version="11.3.2">
       <hw:provenance>
         <hw:generator>Gemini 3.1 Pro</hw:generator>
         <hw:created>2026-03-28</hw:created>
         <hw:human-directed>true</hw:human-directed>
       </hw:provenance>
       <hw:reasoning>
-        <hw:intent>Fix mobile Safari rendering bugs preventing dynamic text color changes in dark/light mode while preserving 3D depth and glassmorphic caustics.</hw:intent>
-        <hw:approach>Added 'color-scheme: light dark' to root SVG style. Replaced hazardous 'display: inline' on SVG elements with 'display: unset'. Consolidated typography nodes to utilize native CSS class switching instead of hardcoded duplications.</hw:approach>
-        <hw:tradeoffs>Kept duplicate nodes for url() gradients (corners, skeleton) to ensure legacy mobile compatibility, prioritizing functional layout over strict DRY principles.</hw:tradeoffs>
+        <hw:intent>Resolve iOS Safari SVG rasterization blur and force absolute white text contrast in dark mode.</hw:intent>
+        <hw:approach>Removed 'will-change: transform' from all typography classes to prevent WebKit from converting vector text into low-res bitmaps during animation. Applied pure #ffffff with !important to text classes to override any specificity conflicts in the browser engine.</hw:approach>
+        <hw:tradeoffs>Removing 'will-change' might slightly increase initial animation paint time on very old devices, but it guarantees crisp vector rendering on modern high-DPI mobile screens.</hw:tradeoffs>
       </hw:reasoning>
     </hw:artifact>
   </metadata>
@@ -138,48 +138,6 @@
       <stop offset="100%" stop-color="#2838b0" stop-opacity="0"/>
     </radialGradient>
 
-    <linearGradient id="s-hyp-dk" x1="0%" y1="0%" x2="100%" y2="10%">
-      <stop offset="0%" stop-color="#a0b8f0"/>
-      <stop offset="40%" stop-color="#e0e8ff"/>
-      <stop offset="100%" stop-color="#90a8e0"/>
-    </linearGradient>
-    <linearGradient id="s-wev-dk" x1="0%" y1="0%" x2="100%" y2="10%">
-      <stop offset="0%" stop-color="#5858e0">
-        <animate attributeName="stop-color"
-                 values="#5858e0;#7878f8;#5858e0"
-                 dur="8.472s" repeatCount="indefinite"
-                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
-      <stop offset="50%" stop-color="#7878f8">
-        <animate attributeName="stop-color"
-                 values="#7878f8;#4848c8;#7878f8"
-                 dur="5.236s" repeatCount="indefinite"
-                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
-      <stop offset="100%" stop-color="#4848c8"/>
-    </linearGradient>
-
-    <linearGradient id="s-hyp-lt" x1="0%" y1="0%" x2="100%" y2="10%">
-      <stop offset="0%" stop-color="#0c1848"/>
-      <stop offset="40%" stop-color="#1a2868"/>
-      <stop offset="100%" stop-color="#101c50"/>
-    </linearGradient>
-    <linearGradient id="s-wev-lt" x1="0%" y1="0%" x2="100%" y2="10%">
-      <stop offset="0%" stop-color="#2838a8">
-        <animate attributeName="stop-color"
-                 values="#2838a8;#3848c0;#2838a8"
-                 dur="8.472s" repeatCount="indefinite"
-                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
-      <stop offset="50%" stop-color="#3848c0">
-        <animate attributeName="stop-color"
-                 values="#3848c0;#2030a0;#3848c0"
-                 dur="5.236s" repeatCount="indefinite"
-                 calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
-      <stop offset="100%" stop-color="#2030a0"/>
-    </linearGradient>
-
     <linearGradient id="s-sk-dk" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#3060d0" stop-opacity=".20"/>
       <stop offset="60%" stop-color="#3060d0" stop-opacity=".06"/>
@@ -231,13 +189,6 @@
                      values="0.2 0 0.55 0 0.10  0.12 0.15 0.45 0 0.06  0.25 0.08 1.1 0 0.14  0 0 0 0.75 0" result="ct"/>
       <feMerge><feMergeNode in="ct"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-
-    <filter id="f-txt" x="-8%" y="-20%" width="116%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" result="tb"/>
-      <feFlood flood-color="#3060e0" flood-opacity=".12" result="tc"/>
-      <feComposite in="tc" in2="tb" operator="in" result="ts"/>
-      <feMerge><feMergeNode in="ts"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
 
   <style>
@@ -254,30 +205,34 @@
     .grid-line { stroke: #2040a0; }
     .sk-line-dk { stroke: url(#s-sk-dk); }
     .sk-line-lt { stroke: url(#s-sk-lt); }
-    .tag-text { fill: #8898c8; }
-    .lab-text { fill: #5868d8; }
     .div-line { stroke: #3050c0; }
     .cn-dk { stroke: url(#s-cn-dk); }
     .cn-lt { stroke: url(#s-cn-lt); }
 
-    /* WORDMARK — solid fills */
-    .hyper-fill { fill: #e0e8ff; }
-    .weave-fill { fill: #7070f0; }
+    /* TYPOGRAPHY FILLS - Pure White Enforced for Dark Mode */
+    .hyper-fill { fill: #ffffff !important; }
+    .weave-fill { fill: #7888ff !important; }
+    .tag-text { fill: #ffffff !important; opacity: 0.85; }
+    .lab-text { fill: #ffffff !important; opacity: 0.95; }
 
     @media (prefers-color-scheme: light) {
       .lt { display: unset; }
       .dk { display: none; }
       .grid-line { stroke: #4868c0; }
-      .tag-text { fill: #3a4878; }
-      .lab-text { fill: #3840a8; }
       .div-line { stroke: #5070d0; }
-      .hyper-fill { fill: #0c1848; }
-      .weave-fill { fill: #2838a8; }
+      
+      /* Light mode overrides */
+      .hyper-fill { fill: #0c1848 !important; }
+      .weave-fill { fill: #2838a8 !important; }
+      .tag-text { fill: #3a4878 !important; opacity: 1; }
+      .lab-text { fill: #3840a8 !important; opacity: 1; }
     }
 
     /* ═══════════════════════════════════ */
     /* CONSTRUCTION ANIMATIONS             */
     /* ═══════════════════════════════════ */
+    
+    /* Graphic Elements */
     .v { will-change: transform, opacity; opacity: 0; }
     @keyframes vf { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .v-c { transform-origin: 0 0; animation: vf .26s cubic-bezier(.4,0,.2,1) 0s both; }
@@ -300,8 +255,7 @@
     .ff { will-change: opacity; opacity: 0; animation: ffi .25s cubic-bezier(.4,0,.2,1) .60s both; }
     @keyframes ffi { from { opacity: 0; } to { opacity: .08; } }
 
-    .cor { will-change: transform, opacity; opacity: 0; transform-origin: 0 0;
-      animation: cf .32s cubic-bezier(.4,0,.2,1) .68s both; }
+    .cor { will-change: transform, opacity; opacity: 0; transform-origin: 0 0; animation: cf .32s cubic-bezier(.4,0,.2,1) .68s both; }
     @keyframes cf { from { transform: scale(.12); opacity: 0; } to { transform: scale(1); opacity: .92; } }
 
     .rng { will-change: opacity; opacity: 0; animation: rf .28s cubic-bezier(.4,0,.2,1) .88s both; }
@@ -322,20 +276,18 @@
     .agl { will-change: opacity; opacity: 0; animation: ag .4s cubic-bezier(.4,0,.2,1) .9s both; }
     @keyframes ag { from { opacity: 0; } to { opacity: 1; } }
 
-    /* TEXT */
-    .wm { will-change: transform, opacity; opacity: 0;
-      animation: wi .45s cubic-bezier(.4,0,.2,1) 1.25s both; }
+    /* TEXT - Removed 'will-change' to prevent Safari rasterization blur */
+    .wm { opacity: 0; animation: wi .45s cubic-bezier(.4,0,.2,1) 1.25s both; }
     @keyframes wi { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-    .dv { will-change: transform, opacity; opacity: 0; transform-origin: left center;
-      animation: di .3s cubic-bezier(.4,0,.2,1) 1.55s both; }
+    .dv { opacity: 0; transform-origin: left center; animation: di .3s cubic-bezier(.4,0,.2,1) 1.55s both; }
     @keyframes di { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); opacity: .22; } }
 
-    .tg { will-change: opacity; opacity: 0; animation: ti .3s cubic-bezier(.4,0,.2,1) 1.70s both; }
+    .tg { opacity: 0; animation: ti .3s cubic-bezier(.4,0,.2,1) 1.70s both; }
     @keyframes ti { from { opacity: 0; } to { opacity: 1; } }
 
-    .lb { will-change: opacity; opacity: 0; animation: li .25s cubic-bezier(.4,0,.2,1) 1.85s both; }
-    @keyframes li { from { opacity: 0; } to { opacity: .7; } }
+    .lb { opacity: 0; animation: li .25s cubic-bezier(.4,0,.2,1) 1.85s both; }
+    @keyframes li { from { opacity: 0; } to { opacity: 1; } }
 
     .cn { will-change: opacity; opacity: 0; }
     @keyframes ci { from { opacity: 0; } to { opacity: .32; } }
@@ -344,13 +296,11 @@
     .c3 { animation: ci .18s cubic-bezier(.4,0,.2,1) 2.05s both; }
     .c4 { animation: ci .18s cubic-bezier(.4,0,.2,1) 2.1s both; }
 
-    .sk { will-change: transform, opacity; opacity: 0; transform-origin: left center;
-      animation: skf .35s cubic-bezier(.4,0,.2,1) .08s both; }
+    .sk { will-change: transform, opacity; opacity: 0; transform-origin: left center; animation: skf .35s cubic-bezier(.4,0,.2,1) .08s both; }
     @keyframes skf { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
 
     /* POST-CONSTRUCTION LIFE */
-    .gb { will-change: transform; transform-origin: 0 0;
-      animation: br 8.472s ease-in-out 2.5s infinite; }
+    .gb { will-change: transform; transform-origin: 0 0; animation: br 8.472s ease-in-out 2.5s infinite; }
     @keyframes br {
       0%, 100% { transform: scale(1) rotate(0deg); }
       25% { transform: scale(1.014) rotate(.5deg); }
@@ -377,7 +327,7 @@
       .rng { opacity: .6; } .spc { opacity: .55; } .wir { opacity: .4; }
       .vhi { opacity: .6; } .ptc { opacity: .85; } .agl { opacity: 1; }
       .wm { transform: translateY(0); opacity: 1; }
-      .tg { opacity: 1; } .lb { opacity: .7; }
+      .tg { opacity: 1; } .lb { opacity: 1; }
       .dv { transform: scaleX(1); opacity: .22; }
       .sk { opacity: 1; transform: scaleX(1); }
       .cn { opacity: .32; }
@@ -524,7 +474,7 @@
     <text x="470" y="242"
           font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
           font-size="113" font-weight="900" font-style="italic"
-          letter-spacing="-3.5">
+          letter-spacing="-3.5" style="-webkit-font-smoothing: antialiased;">
       <tspan class="hyper-fill">Hyper</tspan><tspan class="weave-fill">Weave</tspan>
     </text>
   </g>
@@ -534,13 +484,13 @@
   <g class="tg">
     <text class="tag-text" x="473" y="286"
           font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
-          font-size="15" font-weight="500" letter-spacing="7">WHERE VECTORS MEET VISION</text>
+          font-size="15" font-weight="500" letter-spacing="7" style="-webkit-font-smoothing: antialiased;">WHERE VECTORS MEET VISION</text>
   </g>
 
   <g class="lb">
     <text class="lab-text" x="473" y="316"
           font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
-          font-size="12" font-weight="600" letter-spacing="6">INNERAURA LABS</text>
+          font-size="12" font-weight="600" letter-spacing="6" style="-webkit-font-smoothing: antialiased;">INNERAURA LABS</text>
   </g>
 
   <g class="cn c1 dk" stroke="url(#s-cn-dk)" stroke-width="1.3" fill="none"><path d="M52,28 L28,28 L28,52"/></g>

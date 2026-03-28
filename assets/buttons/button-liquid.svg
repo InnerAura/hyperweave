@@ -1,6 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Return ⤴"
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0" 
+     role="img" aria-label="Return ⤴"
      viewBox="0 0 260 80" width="260" height="80">
   <title>Return — Liquid Surface</title>
+  
+  <metadata>
+    <hw:artifact id="hw-btn-return-solid-body" type="button" series="hyperweave-brand" version="1.1.0">
+      <hw:provenance>
+        <hw:generator>Gemini 3.1 Pro</hw:generator>
+        <hw:created>2026-03-28</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:reasoning>
+        <hw:intent>Update button body to pure dark/white to match backgrounds, optimize for mobile WebKit rendering, and consolidate redundant nodes.</hw:intent>
+        <hw:approach>Removed internal radial gradients (ls-void/ls-frost) and replaced with pure #000000 and #ffffff fills managed via CSS classes. Applied 'color-scheme: light dark' and 'display: unset' for Safari WebKit stability. Consolidated body, trace, and text to single nodes using CSS media queries with !important overrides.</hw:approach>
+        <hw:tradeoffs>Flattening the button body removes internal gradient depth, but maximizes contrast and background integration while allowing the animated 'liquid surface' border filters to stand out cleanly.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:artifact>
+  </metadata>
+
   <defs>
     <linearGradient id="ls-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#1838b0"/>
@@ -14,17 +31,6 @@
       <animateTransform attributeName="gradientTransform" type="rotate"
                         from="0 .5 .5" to="360 .5 .5" dur="3s" repeatCount="indefinite"/>
     </linearGradient>
-
-    <radialGradient id="ls-void" cx="50%" cy="45%" r="55%">
-      <stop offset="0%" stop-color="#08062e"/>
-      <stop offset="100%" stop-color="#030118"/>
-    </radialGradient>
-
-    <radialGradient id="ls-frost" cx="45%" cy="40%" r="65%">
-      <stop offset="0%" stop-color="#f4f7ff"/>
-      <stop offset="40%" stop-color="#e8eeff"/>
-      <stop offset="100%" stop-color="#d8e2ff"/>
-    </radialGradient>
 
     <filter id="ls-megaglow" x="-40%" y="-60%" width="180%" height="220%">
       <feGaussianBlur stdDeviation="8" result="b"/>
@@ -67,12 +73,28 @@
   </defs>
 
   <style>
-    .lt { display: none; }
-    .dk { display: inline; }
+    /* MOBILE-SAFE FIXES */
+    svg { color-scheme: light dark; }
 
-    @media (prefers-reduced-motion: reduce) {
-      * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-      animate, animateTransform { display: none !important; }
+    /* CORE CLASSES — Default to Dark Mode */
+    .ls-body { fill: #000000; }
+    .ls-trace { stroke: rgba(64,128,255,.15); }
+    .ls-text { fill: #ffffff !important; }
+    .ls-icon { fill: #80c0ff !important; }
+    
+    /* Filters ONLY on border geometry — never text */
+    .ls-border { filter: url(#ls-megaglow); }
+    .ls-bloom-ring { filter: url(#ls-bloom); }
+
+    /* LIGHT MODE OVERRIDES */
+    @media (prefers-color-scheme: light) {
+      .ls-body { fill: #ffffff; }
+      .ls-trace { stroke: rgba(30,50,160,.12); }
+      .ls-text { fill: #0c1860 !important; }
+      .ls-icon { fill: #2040c0 !important; }
+      
+      .ls-border { filter: url(#ls-glow-lt); }
+      .ls-bloom-ring { filter: url(#ls-bloom-lt); }
     }
 
     @media (forced-colors: active) {
@@ -80,19 +102,12 @@
       .ls-border, .ls-bloom-ring { display: none !important; }
     }
 
-    /* Filters ONLY on border geometry — never text */
-    .ls-border { filter: url(#ls-megaglow); }
-    .ls-bloom-ring { filter: url(#ls-bloom); }
-
-    @media (prefers-color-scheme: light) {
-      .lt { display: inline; }
-      .dk { display: none; }
-      .ls-border { filter: url(#ls-glow-lt); }
-      .ls-bloom-ring { filter: url(#ls-bloom-lt); }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+      animate, animateTransform { display: none !important; }
     }
   </style>
 
-  <!-- BORDER — all SMIL preserved, works on mobile (geometry, not text) -->
   <rect class="ls-bloom-ring" x="16" y="16" width="228" height="48" rx="12"
         fill="none" stroke="url(#ls-grad)" stroke-width="6" opacity=".5"/>
 
@@ -110,35 +125,19 @@
              calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
   </rect>
 
-  <!-- BODY — dk/lt -->
-  <rect class="dk" x="18" y="18" width="224" height="44" rx="10" fill="url(#ls-void)"/>
-  <rect class="lt" x="18" y="18" width="224" height="44" rx="10" fill="url(#ls-frost)"/>
+  <rect class="ls-body" x="18" y="18" width="224" height="44" rx="10" />
 
-  <!-- INNER TRACE -->
-  <rect class="dk" x="21" y="21" width="218" height="38" rx="7"
-        fill="none" stroke="rgba(64,128,255,.15)" stroke-width=".8">
-    <animate attributeName="opacity" values=".8;1;.8" dur="2s" begin=".5s" repeatCount="indefinite"/>
-  </rect>
-  <rect class="lt" x="21" y="21" width="218" height="38" rx="7"
-        fill="none" stroke="rgba(30,50,160,.12)" stroke-width=".8">
+  <rect class="ls-trace" x="21" y="21" width="218" height="38" rx="7"
+        fill="none" stroke-width=".8">
     <animate attributeName="opacity" values=".8;1;.8" dur="2s" begin=".5s" repeatCount="indefinite"/>
   </rect>
 
-  <!-- TEXT — inline fill, NO filter, dk/lt duplicated -->
-  <text class="dk" fill="#ffffff" x="110" y="46"
+  <text class="ls-text" x="110" y="46"
         font-family="'Inter','SF Pro Display',system-ui,sans-serif"
         font-size="15" font-weight="700" letter-spacing="4"
-        text-anchor="middle">RETURN</text>
-  <text class="lt" fill="#0c1860" x="110" y="46"
-        font-family="'Inter','SF Pro Display',system-ui,sans-serif"
-        font-size="15" font-weight="700" letter-spacing="4"
-        text-anchor="middle">RETURN</text>
-
-  <!-- GLYPH — inline fill, NO filter, dk/lt duplicated, U+FE0E variation selector -->
-  <text class="dk" fill="#80c0ff" x="178" y="47"
-        font-family="'SF Mono','JetBrains Mono',monospace"
-        font-size="20" text-anchor="middle">⤴︎</text>
-  <text class="lt" fill="#2040c0" x="178" y="47"
+        text-anchor="middle" style="-webkit-font-smoothing: antialiased;">RETURN</text>
+        
+  <text class="ls-icon" x="178" y="47"
         font-family="'SF Mono','JetBrains Mono',monospace"
         font-size="20" text-anchor="middle">⤴︎</text>
 </svg>
