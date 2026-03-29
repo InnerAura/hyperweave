@@ -340,31 +340,30 @@ def resolve_icon(
 ) -> dict[str, Any]:
     """Resolve icon dimensions.
 
-    Icon label is derived from the glyph ID (e.g. 'github' -> 'GITHUB').
-    Template renders it in the bottom label panel.
+    Four frame variants selected by icon_variant:
+      - brutalist-circular: concentric rings, glyph-dominant, no label
+      - brutalist-square: top accent bar, heavy border, no label
+      - binary-circular: chrome envelope ring, circle frame
+      - binary-square: chrome envelope fill, rounded-rect frame
 
-    Three distinct frame systems selected by icon_variant:
-      - (empty): default tectonic frame (brutalist uses border strips)
-      - binary-circular: radial energy field, circle frame (clinical/glass/chrome)
-      - binary-square: angular energy field, rounded-rect frame (stencil/instrument)
-
-    Selection priority: genome config > profile-based default.
+    Shape selection: profile defines supported shapes, spec.shape overrides.
     """
     icon_label = spec.glyph or spec.title or ""
     profile_id = profile.get("id", "brutalist")
 
     # Genome-aware shape defaults (specimen-backed only)
     _PROFILE_SHAPES: dict[str, tuple[list[str], str]] = {
-        "brutalist": (["square"], "square"),
+        "brutalist": (["circle", "square"], "square"),
         "chrome": (["square", "circle"], "circle"),
     }
     supported, default_shape = _PROFILE_SHAPES.get(profile_id, (["square", "circle"], "square"))
     raw_shape = spec.shape if spec.shape else default_shape
     shape = raw_shape if raw_shape in supported else default_shape
 
-    # Map shape -> icon_variant for template branching
+    # Map (profile, shape) -> icon_variant for template branching
+    _BRUTALIST_VARIANT = {"circle": "brutalist-circular", "square": "brutalist-square"}
     if profile_id == ProfileId.BRUTALIST:
-        icon_variant = ""  # tectonic frame
+        icon_variant = _BRUTALIST_VARIANT[shape]
     elif shape == "circle":
         icon_variant = "binary-circular"
     else:

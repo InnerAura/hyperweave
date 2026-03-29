@@ -151,15 +151,6 @@
 </g>
 {% endif %}
 
-{# Status indicator (top-right) #}
-{% if is_full %}
-<g data-hw-zone="status" transform="translate({{ bw - 60 }},40)">
-  <circle r="5" fill="none" stroke="#3d7fad" stroke-width="1.2"/>
-  <circle class="hw-logic-bit" r="2.5"
-          fill="var(--dna-status-color, #22C55E)"/>
-</g>
-{% endif %}
-
 {% else %}
 {# ════════════════════════════════════════════════════════════════════
    STANDARD BANNER — Editorial grid + triple-layer hero text

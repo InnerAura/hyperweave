@@ -162,7 +162,7 @@ def _ctx_banner(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, st
 
 def _ctx_icon(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
     ctx, _uid, _aid = _base_context(spec, resolved, css)
-    ctx["icon_variant"] = ""
+    ctx["icon_variant"] = "brutalist-square"  # safe default; resolver overrides
     ctx["glyph_svg_inline"] = ""
     ctx.update(resolved.frame_context)
     return ctx

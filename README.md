@@ -136,20 +136,29 @@ Why genome and not theme? Brand isn't a design problem &mdash; it's an infrastru
 <td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1&direction=up"/></td>
 </tr>
 <tr>
-<td align="center"><strong>Icons</strong></td>
+<td align="center"><strong>Icons<br/>(circle)</strong></td>
 <td>
-  <img src="https://hyperweave.app/v1/icon/discord/brutalist-emerald.static" alt="discord" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/youtube/brutalist-emerald.static" alt="youtube" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/notion/brutalist-emerald.static" alt="notion" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/reddit/brutalist-emerald.static" alt="reddit" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/spotify/brutalist-emerald.static" alt="spotify" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist-emerald.static?shape=circle" alt="discord" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/github/brutalist-emerald.static?shape=circle" alt="github" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/bluesky/brutalist-emerald.static?shape=circle" alt="bluesky" width="64"/>
 </td>
 <td>
-  <img src="https://hyperweave.app/v1/icon/github/chrome-horizon.static" alt="github" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/x/chrome-horizon.static" alt="x" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/bluesky/chrome-horizon.static" alt="bluesky" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/instagram/chrome-horizon.static" alt="instagram" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/mastodon/chrome-horizon.static" alt="mastodon" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/youtube/chrome-horizon.static?shape=circle" alt="youtube" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/notion/chrome-horizon.static?shape=circle" alt="notion" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/reddit/chrome-horizon.static?shape=circle" alt="reddit" width="64"/>
+</td>
+</tr>
+<tr>
+<td align="center"><strong>Icons<br/>(square)</strong></td>
+<td>
+  <img src="https://hyperweave.app/v1/icon/x/brutalist-emerald.static?shape=square" alt="x" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/brutalist-emerald.static?shape=square" alt="spotify" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/linkedin/brutalist-emerald.static?shape=square" alt="linkedin" width="64"/>
+</td>
+<td>
+  <img src="https://hyperweave.app/v1/icon/mastodon/chrome-horizon.static?shape=square" alt="mastodon" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/npm/chrome-horizon.static?shape=square" alt="npm" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/instagram/chrome-horizon.static?shape=square" alt="instagram" width="64"/>
 </td>
 </tr>
 <tr>

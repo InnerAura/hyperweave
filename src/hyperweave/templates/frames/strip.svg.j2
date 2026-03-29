@@ -156,8 +156,7 @@
         font-family="var(--dna-font-mono, 'SF Mono', monospace)"
         font-size="{{ 11 if is_chrome else 11 }}" font-weight="{{ 700 if is_chrome else 900 }}"
         fill="{{ 'var(--dna-label-text)' if is_chrome else 'var(--dna-brand-text)' }}"
-        letter-spacing="{{ '0.10em' if is_chrome else '0.18em' }}"
-        {% if is_chrome %}filter="url(#{{ uid }}-txt)"{% endif %}>{{ identity | upper }}</text>
+        letter-spacing="{{ '0.10em' if is_chrome else '0.18em' }}">{{ identity | upper }}</text>
 </g>
 
 {# === Metric cells with dividers === #}
@@ -179,13 +178,13 @@
         font-family="var(--dna-font-mono, 'SF Mono', monospace)"
         font-size="{{ 10 if is_chrome else 7 }}" font-weight="700"
         fill="{{ 'var(--dna-signal)' if is_chrome else 'var(--dna-ink-muted)' }}"
-        letter-spacing="{{ '0.14em' if is_chrome else '0.2em' }}"
-        {% if is_chrome %}filter="url(#{{ uid }}-txt)"{% endif %}>{{ metric.label | upper }}</text>
+        letter-spacing="{{ '0.14em' if is_chrome else '0.2em' }}">{{ metric.label | upper }}</text>
   <text x="{{ metric_pitch // 2 }}" y="{{ 38 if is_chrome else 36 }}" text-anchor="middle"
         font-family="var(--dna-font-display, 'Inter', system-ui)"
         font-size="{{ 18 if is_chrome else 18 }}" font-weight="{{ 800 if is_chrome else 900 }}"
-        fill="{{ 'url(#' ~ uid ~ '-chrome-text)' if is_chrome and chrome_text_gradient else 'var(--dna-ink-primary)' }}"
-        letter-spacing="-0.01em">{{ metric.value }}</text>
+        fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}"
+        letter-spacing="-0.01em"
+        transform="skewX(-8)">{{ metric.value }}</text>
 {% if metric.delta %}
   <text x="{{ metric_pitch // 2 }}" y="48" text-anchor="middle"
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>

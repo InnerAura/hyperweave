@@ -104,12 +104,13 @@
       font-family="var(--dna-font-mono)" font-size="8" font-weight="600"
       letter-spacing="0.16em" fill="var(--dna-signal)">{{ label_display | default(label) | upper }}</text>
 
-{# Value — chrome text gradient, Impact italic #}
-<text data-hw-zone="value"
-      x="{{ value_x }}" y="{{ h / 2 }}"
-      text-anchor="middle" dominant-baseline="central"
-      font-family="var(--dna-font-display)" font-size="11" font-weight="700"
-      fill="{{ 'url(#' ~ uid ~ '-ct)' if chrome_text_gradient else 'var(--dna-ink-primary)' }}" letter-spacing=".4">{{ value }}</text>
+{# Value — solid fill + skew for crisp chrome rendering (gradient forces WebKit software rasterization) #}
+<g transform="translate({{ value_x }},{{ h / 2 }}) skewX(-8)">
+  <text data-hw-zone="value" x="0" y="0"
+        text-anchor="middle" dominant-baseline="central"
+        font-family="'Impact','Arial Black',system-ui,sans-serif" font-size="11" font-weight="700"
+        fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}" letter-spacing=".4">{{ value }}</text>
+</g>
 
 {# Diamond status — recessed housing + status LED (specimen: badge-diamond-final.svg) #}
 {% if show_indicator | default(true) %}

@@ -422,8 +422,8 @@ async def test_icon_with_shape(client: AsyncClient, mock_compose: Any) -> None:
     assert resp.status_code == 200
 
 
-async def test_icon_shape_fallback(client: AsyncClient, mock_compose: Any) -> None:
-    """Unsupported shape silently falls back to genome default."""
+async def test_icon_brutalist_circle_shape(client: AsyncClient, mock_compose: Any) -> None:
+    """Brutalist genome supports both circle and square icon shapes."""
     resp = await client.get("/v1/icon/terminal/brutalist-emerald.static?shape=circle")
     assert resp.status_code == 200
 
