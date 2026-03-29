@@ -160,7 +160,10 @@ def resolve_badge(
     # Right panel sized so value text centers with gaps around indicator
     val_pad_l = 4
     val_min_gap = 5
-    total_w = round(left_panel + sep_w + seam_w + val_pad_l + vw + 2 * val_min_gap + indicator_size + ind_pad_r)
+    # Chrome value text has letter-spacing .4 — add overshoot buffer
+    ls_extra = len(value_raw) * 0.4 if is_chrome and value_raw else 0
+    right_panel = val_pad_l + vw + ls_extra + 2 * val_min_gap + indicator_size + ind_pad_r
+    total_w = round(left_panel + sep_w + seam_w + right_panel)
     total_w = max(total_w, 60)
 
     # Derived positions

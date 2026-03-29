@@ -68,7 +68,7 @@
       <stop offset="0%" stop-color="#030712" />
       <stop offset="100%" stop-color="#0A152A" />
     </linearGradient>
-    <path id="api-wave" class="api-w flow-anim"
+    <path id="api-wave" class="api-w"
           d="M -100 300 C 100 100, 200 500, 400 300 C 600 100, 700 500, 900 300" />
     <filter id="api-shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="20" stdDeviation="25" flood-color="#000000"
@@ -77,17 +77,17 @@
   </defs>
   <rect width="600" height="600" fill="url(#api-bg)" />
   <g>
-    <use href="#api-wave" y="-200" stroke="#00FFFF" stroke-width="12" opacity="0.1" />
-    <use href="#api-wave" y="-160" stroke="#00E5FF" stroke-width="14" opacity="0.2" />
-    <use href="#api-wave" y="-120" stroke="#00BFFF" stroke-width="16" opacity="0.4" />
-    <use href="#api-wave" y="-80" stroke="#0080FF" stroke-width="18" opacity="0.6" />
-    <use href="#api-wave" y="-40" stroke="#0040FF" stroke-width="20" opacity="0.8" />
-    <use href="#api-wave" y="0" stroke="#0000FF" stroke-width="22" opacity="1" />
-    <use href="#api-wave" y="40" stroke="#4000FF" stroke-width="20" opacity="0.8" />
-    <use href="#api-wave" y="80" stroke="#8000FF" stroke-width="18" opacity="0.6" />
-    <use href="#api-wave" y="120" stroke="#BF00FF" stroke-width="16" opacity="0.4" />
-    <use href="#api-wave" y="160" stroke="#FF00FF" stroke-width="14" opacity="0.2" />
-    <use href="#api-wave" y="200" stroke="#FF00FF" stroke-width="12" opacity="0.1" />
+    <use href="#api-wave" y="-200" stroke="#00FFFF" stroke-width="12" opacity="0.1" class="flow-anim" />
+    <use href="#api-wave" y="-160" stroke="#00E5FF" stroke-width="14" opacity="0.2" class="flow-anim" />
+    <use href="#api-wave" y="-120" stroke="#00BFFF" stroke-width="16" opacity="0.4" class="flow-anim" />
+    <use href="#api-wave" y="-80" stroke="#0080FF" stroke-width="18" opacity="0.6" class="flow-anim" />
+    <use href="#api-wave" y="-40" stroke="#0040FF" stroke-width="20" opacity="0.8" class="flow-anim" />
+    <use href="#api-wave" y="0" stroke="#0000FF" stroke-width="22" opacity="1" class="flow-anim" />
+    <use href="#api-wave" y="40" stroke="#4000FF" stroke-width="20" opacity="0.8" class="flow-anim" />
+    <use href="#api-wave" y="80" stroke="#8000FF" stroke-width="18" opacity="0.6" class="flow-anim" />
+    <use href="#api-wave" y="120" stroke="#BF00FF" stroke-width="16" opacity="0.4" class="flow-anim" />
+    <use href="#api-wave" y="160" stroke="#FF00FF" stroke-width="14" opacity="0.2" class="flow-anim" />
+    <use href="#api-wave" y="200" stroke="#FF00FF" stroke-width="12" opacity="0.1" class="flow-anim" />
   </g>
   <g filter="url(#api-shadow)">
     <rect x="230" y="230" width="140" height="140" rx="40" fill="#07090c"
