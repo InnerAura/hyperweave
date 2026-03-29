@@ -417,8 +417,14 @@ async def test_badge_with_regime(client: AsyncClient, mock_compose: Any) -> None
     assert resp.status_code == 200
 
 
-async def test_icon_with_variant(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/icon/terminal/brutalist-emerald.static?variant=hexagon")
+async def test_icon_with_shape(client: AsyncClient, mock_compose: Any) -> None:
+    resp = await client.get("/v1/icon/terminal/chrome-horizon.static?shape=circle")
+    assert resp.status_code == 200
+
+
+async def test_icon_shape_fallback(client: AsyncClient, mock_compose: Any) -> None:
+    """Unsupported shape silently falls back to genome default."""
+    resp = await client.get("/v1/icon/terminal/brutalist-emerald.static?shape=circle")
     assert resp.status_code == 200
 
 

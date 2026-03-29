@@ -35,6 +35,7 @@ def compose(
     glyph_mode: Annotated[str, typer.Option("--glyph-mode")] = "auto",
     regime: Annotated[str, typer.Option("--regime")] = "normal",
     variant: Annotated[str, typer.Option("--variant")] = "default",
+    shape: Annotated[str, typer.Option("--shape", help="Icon shape: square, circle")] = "",
     # Divider options
     divider_variant: Annotated[str, typer.Option("--divider-variant")] = "zeropoint",
     # Marquee options
@@ -61,6 +62,7 @@ def compose(
         glyph_mode=glyph_mode,
         regime=regime,
         variant=variant,
+        shape=shape,
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_rows=rows,

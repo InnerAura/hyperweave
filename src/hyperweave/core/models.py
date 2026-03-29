@@ -84,6 +84,7 @@ class ComposeSpec(FrozenModel):
     glyph_mode: GlyphMode = Field(default=GlyphMode.AUTO, description="Glyph rendering mode: auto, fill, wire, none")
     custom_glyph_svg: str = Field(default="", description="Raw SVG for custom glyphs")
     variant: str = Field(default="default", description="Frame variant: default, compact")
+    shape: str = Field(default="", description="Icon frame shape: square, circle")
 
     # -- Governance --
     regime: Regime = Field(default=Regime.NORMAL, description="Policy lane: normal, permissive, ungoverned")

@@ -3,6 +3,13 @@
  * Genome-agnostic: all colors via --dna-* custom properties.
  */
 
+/* ── Text Rendering (iOS/WebKit blur mitigation) ── */
+text {
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  shape-rendering: geometricPrecision;
+}
+
 /* ── Typography ── */
 .hw-title {
   font-family: var(--dna-font-display, 'Inter', -apple-system, system-ui, sans-serif);

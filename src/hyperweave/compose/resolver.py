@@ -300,12 +300,24 @@ def resolve_banner(
     version = "V0.1"
     footer = f"{version} · {genome_name.upper()}"
 
+    from hyperweave.core.text import measure_text
+
+    title = spec.title or "HYPERWEAVE"
+    base_fs = 42 if compact else 160
+    max_width = (w - 80) if compact else (w - 120)  # margin each side
+
+    # Scale font size down if title overflows available width
+    text_w = measure_text(title, font_size=base_fs, bold=True)
+    ls_reduction = 0.04 * base_fs * max(len(title) - 1, 0)  # -0.04em letter-spacing
+    effective_w = text_w - ls_reduction
+    title_fs = max(int(base_fs * max_width / effective_w), 42) if effective_w > max_width else base_fs
+
     ctx: dict[str, Any] = {
-        "banner_title": spec.title or "HYPERWEAVE",
+        "banner_title": title,
         "banner_subtitle": spec.value or "",
         "banner_label": footer,
         "banner_variant": "compact" if compact else "full",
-        "title_font_size": 42 if compact else 160,
+        "title_font_size": title_fs,
     }
     ctx.update(_chrome_visual_context(genome, profile))
 
@@ -335,22 +347,29 @@ def resolve_icon(
 
     Selection priority: genome config > profile-based default.
     """
-    shape = spec.variant if spec.variant in ("squircle", "circle", "hexagon") else "squircle"
     icon_label = spec.glyph or spec.title or ""
     profile_id = profile.get("id", "brutalist")
 
-    # Determine icon_variant: genome config takes priority, then profile default
-    genome_variant = genome.get("icon_variant", "")
+    # Genome-aware shape defaults (specimen-backed only)
+    _PROFILE_SHAPES: dict[str, tuple[list[str], str]] = {
+        "brutalist": (["square"], "square"),
+        "chrome": (["square", "circle"], "circle"),
+    }
+    supported, default_shape = _PROFILE_SHAPES.get(profile_id, (["square", "circle"], "square"))
+    raw_shape = spec.shape if spec.shape else default_shape
+    shape = raw_shape if raw_shape in supported else default_shape
 
-    # Migrate legacy name to new split variants
-    if genome_variant == "binary-opposition":
-        genome_variant = _binary_variant_for_profile(profile_id)
-
-    icon_variant = genome_variant or _binary_variant_for_profile(profile_id)
+    # Map shape -> icon_variant for template branching
+    if profile_id == ProfileId.BRUTALIST:
+        icon_variant = ""  # tectonic frame
+    elif shape == "circle":
+        icon_variant = "binary-circular"
+    else:
+        icon_variant = "binary-square"
 
     ctx: dict[str, Any] = {
         "icon_shape": shape,
-        "icon_rx": 12 if shape == "squircle" else 0,
+        "icon_rx": 0,
         "icon_label": icon_label,
         "icon_variant": icon_variant,
         # Raw genome hex colors for gradient stops (CSS var() doesn't work in SVG stops)
@@ -368,17 +387,6 @@ def resolve_icon(
         "template": "frames/icon.svg.j2",
         "context": ctx,
     }
-
-
-def _binary_variant_for_profile(profile_id: str) -> str:
-    """Map profile to its default icon frame shape.
-
-    Shipped profiles: brutalist (tectonic), chrome (clean circle).
-    Custom profiles default to binary-circular.
-    """
-    if profile_id == ProfileId.BRUTALIST:
-        return ""  # tectonic frame
-    return "binary-circular"  # clean frame for chrome + any custom
 
 
 def resolve_divider(
@@ -437,6 +445,55 @@ def resolve_marquee(
     return _resolve_horizontal(spec, chrome_ctx)
 
 
+def _measure_row_content_width(row: dict[str, Any]) -> float:
+    """Estimate the pixel width of a marquee row's content stream.
+
+    Accounts for text width, letter-spacing, gaps, and separators.
+    Used to set scroll_distance so Set B aligns seamlessly with Set A.
+    """
+    from hyperweave.core.text import measure_text
+
+    fs = float(row.get("font_size", 12))
+    ls_px = float(row.get("letter_spacing", "0") or "0")
+    gap = float(row.get("gap", 28))
+    is_mono = "mono" in row.get("font_family", "").lower()
+    start_x = float(row.get("text_start_x", 20))
+    sep = row.get("separator", "")
+
+    total = start_x
+    for i, cell in enumerate(row.get("cells", [])):
+        text = cell.get("text", "")
+        cell_fs = float(cell.get("font_size", fs))
+        cell_mono = is_mono and "font_family" not in cell
+        cell_bold = int(cell.get("font_weight", row.get("font_weight", "400")) or "400") >= 700
+        w = measure_text(text, font_size=cell_fs, bold=cell_bold, monospace=cell_mono)
+        # Add letter-spacing between characters
+        if len(text) > 1:
+            w += ls_px * (len(text) - 1)
+        total += w
+
+        # Add gap/dx before this cell (except first)
+        if i > 0:
+            total += float(cell.get("dx", gap))
+
+        # Add separator + gap after cell (if separator between cells)
+        if sep and i < len(row.get("cells", [])) - 1:
+            sep_w = measure_text(sep, font_size=fs, monospace=cell_mono)
+            total += gap + sep_w
+
+    return total
+
+
+def _apply_content_aware_scroll(rows: list[dict[str, Any]], base_speed: float, speed: float, frame_width: int) -> None:
+    """Set scroll_distance and scroll_dur per row based on actual content width."""
+    for row in rows:
+        content_w = _measure_row_content_width(row)
+        # Ensure scroll_distance >= frame_width for seamless looping
+        sd = max(content_w, float(frame_width))
+        row["scroll_distance"] = int(sd)
+        row["scroll_dur"] = round(sd / (base_speed * speed), 2)
+
+
 def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str, Any]:
     """Counter-scroll tri-band: 3 rows with distinct content types.
 
@@ -446,11 +503,9 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
     """
     is_chrome = chrome_ctx.get("is_chrome", False)
     width, height = 800, 140
-    scroll_distance = 1000
     base_speed = 90.2  # px/s (1000 / 11.09)
     # Speed override: marquee_speeds[0] scales all rows uniformly
     speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
-    scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
     # Parse brand items from title (pipe-separated for phrases, fallback to space-split)
     title_raw = spec.title or ""
@@ -534,8 +589,8 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
         all_rows = [
             {
                 "cells": row1_cells,
-                "scroll_distance": scroll_distance,
-                "scroll_dur": scroll_dur,
+                "scroll_distance": 0,
+                "scroll_dur": 0,
                 "direction": "rtl",
                 "separator": "●",
                 "separator_color": "var(--dna-signal)",
@@ -552,8 +607,8 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
             },
             {
                 "cells": row2_cells,
-                "scroll_distance": scroll_distance,
-                "scroll_dur": scroll_dur,
+                "scroll_distance": 0,
+                "scroll_dur": 0,
                 "direction": "ltr",
                 "separator": "",
                 "separator_color": "",
@@ -570,8 +625,8 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
             },
             {
                 "cells": status_items,
-                "scroll_distance": scroll_distance,
-                "scroll_dur": scroll_dur,
+                "scroll_distance": 0,
+                "scroll_dur": 0,
                 "direction": "rtl",
                 "separator": "",
                 "separator_color": "",
@@ -644,8 +699,8 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
         all_rows = [
             {
                 "cells": row1_cells,
-                "scroll_distance": scroll_distance,
-                "scroll_dur": scroll_dur,
+                "scroll_distance": 0,
+                "scroll_dur": 0,
                 "direction": "rtl",
                 "separator": "■",
                 "separator_color": "var(--dna-border)",
@@ -662,8 +717,8 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
             },
             {
                 "cells": row2_cells,
-                "scroll_distance": scroll_distance,
-                "scroll_dur": scroll_dur,
+                "scroll_distance": 0,
+                "scroll_dur": 0,
                 "direction": "ltr",
                 "separator": "",
                 "separator_color": "",
@@ -680,8 +735,8 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
             },
             {
                 "cells": status_items,
-                "scroll_distance": scroll_distance,
-                "scroll_dur": scroll_dur,
+                "scroll_distance": 0,
+                "scroll_dur": 0,
                 "direction": "rtl",
                 "separator": "",
                 "separator_color": "",
@@ -701,6 +756,14 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
 
     n_rows = spec.marquee_rows if spec.marquee_rows > 1 else 3
     all_rows = all_rows[:n_rows]
+
+    # Calculate per-row scroll_distance from actual content width
+    _apply_content_aware_scroll(all_rows, base_speed, speed, width)
+
+    # Use the widest row's scroll_distance as the global fallback
+    _sds: list[int] = [r["scroll_distance"] for r in all_rows]  # type: ignore[misc]
+    scroll_distance = max(_sds) if _sds else 1000
+    scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
     ctx: dict[str, Any] = {
         "rows": all_rows,
@@ -893,7 +956,7 @@ def _build_vertical_rows(raw_items: list[str], *, is_chrome: bool = False) -> li
     default_events = [
         ("ok", "compositor.compose() → badge", "OK"),
         ("ok", 'genome.load("brutalist-emerald")', "OK"),
-        ("info", "frame.render(strip, 560×52)", "2.1KB"),
+        ("info", "frame.render(strip, 560x52)", "2.1KB"),
         ("warn", 'cache.miss("cdn-edge-sjc")', "WARN"),
         ("ok", 'mcp.tool_call("compose_badge")', "OK"),
         ("ok", "validator.cim_check() → PASS", "OK"),

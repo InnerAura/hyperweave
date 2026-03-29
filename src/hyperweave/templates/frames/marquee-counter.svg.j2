@@ -43,15 +43,7 @@
     <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
     <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
   </linearGradient>
-  <linearGradient id="{{ uid }}-specular" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
-    <stop offset="35%" stop-color="#fff" stop-opacity="0"/>
-    <stop offset="50%" stop-color="#fff" stop-opacity="{{ specular_sweep_peak | default('0.08') }}"/>
-    <stop offset="65%" stop-color="#fff" stop-opacity="0"/>
-    <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-    <animate attributeName="x1" values="-1;1;-1" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
-    <animate attributeName="x2" values="0;2;0" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
-  </linearGradient>
+  {# Specular sweep removed -- mobile WebKit text blur #}
 {% endif %}
 {% endblock %}
 

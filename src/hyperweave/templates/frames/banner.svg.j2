@@ -9,16 +9,14 @@
 {% block defs %}
 {% if is_chrome and envelope_stops %}
   {# Chrome env-map gradient (HDRI simulation, animated y1/y2) #}
-  <linearGradient id="{{ uid }}-chrome-env" x1="0" x2="0" y1="0" y2="1">
+  <linearGradient id="{{ uid }}-chrome-env" x1="0" x2="0" y1="-0.1" y2="0.9">
   {% for stop in envelope_stops %}
     <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
   {% endfor %}
-    <animate attributeName="y1" values="-0.3;0.1;-0.3" dur="6s"
-             repeatCount="indefinite" calcMode="spline"
-             keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
-    <animate attributeName="y2" values="0.7;1.1;0.7" dur="6s"
-             repeatCount="indefinite" calcMode="spline"
-             keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+    <animateTransform attributeName="gradientTransform" type="translate"
+      values="0 -0.2; 0 0.2; 0 -0.2" dur="6s"
+      repeatCount="indefinite" calcMode="spline"
+      keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
   </linearGradient>
   {# Edge glow filter — accent-colored bloom #}
   <filter id="{{ uid }}-glow" x="-15%" y="-15%" width="130%" height="130%">

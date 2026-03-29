@@ -36,6 +36,7 @@ async def hw_compose(
     glyph_mode: str = "auto",
     regime: str = "normal",
     variant: str = "default",
+    shape: str = "",
     divider_variant: str = "zeropoint",
     direction: str = "ltr",
     rows: int = 3,
@@ -67,7 +68,8 @@ async def hw_compose(
 
     state: active | passing | building | warning | critical | failing | offline
     glyph_mode: auto | fill | wire | none
-    variant: default | compact (banner), squircle | circle | hexagon (icon)
+    variant: default | compact (banner)
+    shape: square | circle (icon frame shape, genome-dependent)
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -83,6 +85,7 @@ async def hw_compose(
         glyph_mode=glyph_mode,
         regime=regime,
         variant=variant,
+        shape=shape,
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_rows=rows,

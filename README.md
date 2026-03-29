@@ -107,55 +107,55 @@ Why genome and not theme? Brand isn't a design problem &mdash; it's an infrastru
 <tr>
 <td align="center"><strong>Signals</strong></td>
 <td>
-  <img src="./assets/examples/brutalist-emerald/badge_passing.svg" alt="passing"/>
-  <img src="./assets/examples/brutalist-emerald/badge_warning.svg" alt="warning"/>
-  <img src="./assets/examples/brutalist-emerald/badge_critical.svg" alt="critical"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/passing/brutalist-emerald.static?state=passing" alt="passing"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist-emerald.static?state=warning" alt="warning"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist-emerald.static?state=critical" alt="critical"/>
 </td>
 <td>
-  <img src="./assets/examples/chrome-horizon/badge_passing.svg" alt="passing"/>
-  <img src="./assets/examples/chrome-horizon/badge_warning.svg" alt="warning"/>
-  <img src="./assets/examples/chrome-horizon/badge_critical.svg" alt="critical"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/passing/chrome-horizon.static?state=passing" alt="passing"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/warning/chrome-horizon.static?state=warning" alt="warning"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/critical/chrome-horizon.static?state=critical" alt="critical"/>
 </td>
 </tr>
 <tr>
 <td align="center"><strong>Dashboard</strong></td>
-<td><img src="./assets/examples/brutalist-emerald/strip.svg"/></td>
-<td><img src="./assets/examples/chrome-horizon/strip.svg"/></td>
+<td><img src="https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278"/></td>
+<td><img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?value=STARS:2.9k,FORKS:278"/></td>
 </tr>
 <tr>
 <td rowspan="3" align="center"><strong>Marquee</strong></td>
-<td><img src="./assets/examples/brutalist-emerald/marquee_horizontal.svg"/></td>
-<td><img src="./assets/examples/chrome-horizon/marquee_horizontal.svg"/></td>
+<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1"/></td>
+<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1"/></td>
 </tr>
 <tr>
-<td><img src="./assets/examples/brutalist-emerald/marquee_counter.svg"/></td>
-<td><img src="./assets/examples/chrome-horizon/marquee_counter.svg"/></td>
+<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%7CLIVING%20ARTIFACTS%7CAI-NATIVE%20SVG%7CCOMPOSITOR%20API/brutalist-emerald.static?rows=3"/></td>
+<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%7CLIVING%20ARTIFACTS%7CAI-NATIVE%20SVG%7CCOMPOSITOR%20API/chrome-horizon.static?rows=3"/></td>
 </tr>
 <tr>
-<td><img src="./assets/examples/brutalist-emerald/marquee_vertical.svg"/></td>
-<td><img src="./assets/examples/chrome-horizon/marquee_vertical.svg"/></td>
+<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1&direction=up"/></td>
+<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1&direction=up"/></td>
 </tr>
 <tr>
 <td align="center"><strong>Icons</strong></td>
 <td>
-  <img src="./assets/examples/brutalist-emerald/icons/discord.svg" alt="discord" width="64"/>
-  <img src="./assets/examples/brutalist-emerald/icons/youtube.svg" alt="youtube" width="64"/>
-  <img src="./assets/examples/brutalist-emerald/icons/notion.svg" alt="notion" width="64"/>
-  <img src="./assets/examples/brutalist-emerald/icons/reddit.svg" alt="reddit" width="64"/>
-  <img src="./assets/examples/brutalist-emerald/icons/spotify.svg" alt="spotify" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist-emerald.static" alt="discord" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/youtube/brutalist-emerald.static" alt="youtube" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/notion/brutalist-emerald.static" alt="notion" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/reddit/brutalist-emerald.static" alt="reddit" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/brutalist-emerald.static" alt="spotify" width="64"/>
 </td>
 <td>
-  <img src="./assets/examples/chrome-horizon/icons/github.svg" alt="github" width="64"/>
-  <img src="./assets/examples/chrome-horizon/icons/x.svg" alt="x" width="64"/>
-  <img src="./assets/examples/chrome-horizon/icons/bluesky.svg" alt="bluesky" width="64"/>
-  <img src="./assets/examples/chrome-horizon/icons/instagram.svg" alt="instagram" width="64"/>
-  <img src="./assets/examples/chrome-horizon/icons/mastodon.svg" alt="mastodon" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/github/chrome-horizon.static" alt="github" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/x/chrome-horizon.static" alt="x" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/bluesky/chrome-horizon.static" alt="bluesky" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/instagram/chrome-horizon.static" alt="instagram" width="64"/>
+  <img src="https://hyperweave.app/v1/icon/mastodon/chrome-horizon.static" alt="mastodon" width="64"/>
 </td>
 </tr>
 <tr>
 <td align="center"><strong>Banner</strong></td>
-<td><img src="./assets/examples/brutalist-emerald/banner.svg"/></td>
-<td><img src="./assets/examples/chrome-horizon/banner.svg"/></td>
+<td><img src="https://hyperweave.app/v1/banner/HYPERWEAVE/brutalist-emerald.static"/></td>
+<td><img src="https://hyperweave.app/v1/banner/HYPERWEAVE/chrome-horizon.static"/></td>
 </tr>
 </table>
 
@@ -232,40 +232,40 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
 -->
 
 <p align="center">
-  <img src="assets/footers/inneraura-footer.svg" alt="InnerAura Labs" width="100%"/>
+  <img src="assets/footers/inneraura-footer-liquid.svg" alt="InnerAura Labs" width="100%"/>
 </p>
 
 <p align="center">
   <!-- <a href="https://github.com/InnerAura/hyperweave">
-  <img src="./assets/icons/cobalt-sapphire-github.svg" width="24" alt="GitHub"/>
+  <img src="./assets/icons/cobalt-sapphire-github.svg" width="48" alt="GitHub"/>
   </a>
   &nbsp; -->
   <a href="https://discord.gg/wVmcAZPQZ8">
-  <img src="./assets/icons/cobalt-sapphire-discord.svg" width="24" alt="Discord"/>
+  <img src="./assets/icons/cobalt-sapphire-discord.svg" width="48" alt="Discord"/>
   </a>
   &nbsp;
   <a href="https://www.instagram.com/hyperweave.ai/">
-  <img src="./assets/icons/cobalt-sapphire-instagram.svg" width="24" alt="Instagram"/>
+  <img src="./assets/icons/cobalt-sapphire-instagram.svg" width="48" alt="Instagram"/>
   </a>
   &nbsp;
   <a href="https://www.linkedin.com/company/inneraura">
-  <img src="./assets/icons/cobalt-sapphire-linkedin.svg" width="24" alt="LinkedIn"/>
+  <img src="./assets/icons/cobalt-sapphire-linkedin.svg" width="48" alt="LinkedIn"/>
   </a>
   &nbsp;
   <a href="https://www.tiktok.com/@hyperweave.ai">
-  <img src="./assets/icons/cobalt-sapphire-tiktok.svg" width="24" alt="TikTok"/>
+  <img src="./assets/icons/cobalt-sapphire-tiktok.svg" width="48" alt="TikTok"/>
   </a>
   &nbsp;
   <a href="https://x.com/InnerAuraLabs">
-  <img src="./assets/icons/cobalt-sapphire-x.svg" width="24" alt="X"/>
+  <img src="./assets/icons/cobalt-sapphire-x.svg" width="48" alt="X"/>
   </a>
   &nbsp;
   <a href="https://www.youtube.com/@InnerAuraLabs">
-  <img src="./assets/icons/cobalt-sapphire-youtube.svg" width="24" alt="YouTube"/>
+  <img src="./assets/icons/cobalt-sapphire-youtube.svg" width="48" alt="YouTube"/>
   </a>
   <!-- &nbsp;
   <a href="https://hyperweave.readthedocs.io/">
-  <img src="./assets/icons/cobalt-sapphire-docs.svg" width="24" alt="Docs"/>
+  <img src="./assets/icons/cobalt-sapphire-docs.svg" width="48" alt="Docs"/>
   </a> -->
 </p>
 

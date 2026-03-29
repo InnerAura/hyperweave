@@ -57,6 +57,7 @@ class ComposeRequest(BaseModel):
     glyph_mode: str = "auto"
     regime: str = "normal"
     variant: str = "default"
+    shape: str = ""
     metadata_tier: int = 3
     divider_variant: str = "zeropoint"
     direction: str = "ltr"
@@ -192,11 +193,12 @@ async def compose_icon_url(
     glyph: str,
     genome_motion: str,
     glyph_mode: Annotated[str, Query()] = "auto",
+    shape: Annotated[str, Query()] = "",
     variant: Annotated[str, Query()] = "default",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
 ) -> Response:
-    """Compose an icon: /v1/icon/{glyph}/{genome}.{motion}"""
+    """Compose an icon: /v1/icon/{glyph}/{genome}.{motion}?shape=circle"""
     genome, motion = _parse_genome_motion(genome_motion)
 
     from hyperweave.core.models import ComposeSpec
@@ -208,6 +210,7 @@ async def compose_icon_url(
         glyph=glyph,
         glyph_mode=glyph_mode,
         motion=motion,
+        shape=shape,
         variant=variant,
         state=state,
         regime=regime,
@@ -370,6 +373,7 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         glyph_mode=req.glyph_mode,
         regime=req.regime,
         variant=req.variant,
+        shape=req.shape,
         metadata_tier=req.metadata_tier,
         divider_variant=req.divider_variant,
         marquee_direction=req.direction,
@@ -415,7 +419,7 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
     },
     "icon": {
         "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
-        "query_params": ["glyph_mode", "variant", "state", "regime"],
+        "query_params": ["glyph_mode", "shape", "state", "regime"],
     },
     "divider": {
         "pattern": "/v1/divider/{variant}/{genome}.{motion}",
