@@ -20,7 +20,7 @@
 </p>
 -->
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?live=github:InnerAura/hyperweave:stars,github:InnerAura/hyperweave:forks,pypi:hyperweave:version,github:InnerAura/hyperweave:license&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?live=github:InnerAura/hyperweave:build,pypi:hyperweave:version,github:InnerAura/hyperweave:license&glyph=github" alt="strip"/>
 </p>
 
 ---

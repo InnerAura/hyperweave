@@ -182,9 +182,9 @@
   <text x="{{ metric_pitch // 2 }}" y="{{ 38 if is_chrome else 36 }}" text-anchor="middle"
         font-family="var(--dna-font-display, 'Inter', system-ui)"
         font-size="{{ 18 if is_chrome else 18 }}" font-weight="{{ 800 if is_chrome else 900 }}"
-        fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}"
+        fill="{{ glyph_fill | default('var(--dna-ink-primary)') if is_chrome else 'var(--dna-ink-primary)' }}"
         letter-spacing="-0.01em"
-        transform="skewX(-8)">{{ metric.value }}</text>
+        {% if is_chrome %}transform="skewX(-8)"{% endif %}>{{ metric.value }}</text>
 {% if metric.delta %}
   <text x="{{ metric_pitch // 2 }}" y="48" text-anchor="middle"
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>
