@@ -97,12 +97,12 @@
 </g>
 {% endif %}
 
-{# Label — Courier New, signal blue #}
+{# Label — monospace, signal blue, +1px nudge to align with larger value font #}
 <text data-hw-zone="label"
-      x="{{ label_x }}" y="{{ h / 2 }}"
+      x="{{ label_x }}" y="{{ (h / 2) + 1 }}"
       text-anchor="middle" dominant-baseline="central"
       font-family="var(--dna-font-mono)" font-size="8" font-weight="600"
-      letter-spacing="0.16em" fill="var(--dna-signal)">{{ label_display | default(label) | upper }}</text>
+      letter-spacing="0.10em" fill="var(--dna-signal)">{{ label_display | default(label) | upper }}</text>
 
 {# Value — solid fill + skew for crisp chrome rendering (gradient forces WebKit software rasterization) #}
 <g transform="translate({{ value_x }},{{ h / 2 }}) skewX(-8)">

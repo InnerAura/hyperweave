@@ -44,8 +44,8 @@
   "badge_warn_color": "#F59E0B",
   "material_specular": "0.4",
   "material_roughness": "0.3",
-  "font_display": "'Impact','Arial Black',system-ui,sans-serif",
-  "font_mono": "'Courier New',monospace",
+  "font_display": "Impact,'Arial Black',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",
+  "font_mono": "ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace",
   "envelope_stops": [
     {"offset": "0%", "color": "#000A14"},
     {"offset": "12%", "color": "#0A2540"},

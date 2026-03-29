@@ -94,13 +94,13 @@ def resolve_badge(
     font_size = 11
     accent_w = 4
     glyph_size = 14
-    glyph_gap = 3
+    glyph_gap = 4
 
     # Profile-specific layout
     if is_chrome:
         sep_w, seam_w = 1, 0
         indicator_size = 10
-        ind_pad_r = 8
+        ind_pad_r = 5
         inset = 2
     else:
         sep_w, seam_w = 2, 3
@@ -139,7 +139,7 @@ def resolve_badge(
 
     # Glyph pixel position
     if has_glyph:
-        glyph_x = (inset + accent_w + 3) if is_chrome else (accent_w + 3)
+        glyph_x = (inset + accent_w + 4) if is_chrome else (accent_w + 3)
         glyph_y = round((height - glyph_size) / 2, 1)
     else:
         glyph_x, glyph_y = 0, 0.0
@@ -148,7 +148,7 @@ def resolve_badge(
     label_start = (glyph_x + glyph_size + glyph_gap) if has_glyph else (accent_w + 6)
 
     # Left panel width
-    label_pad_r = 9 if use_mono else 12
+    label_pad_r = 9 if use_mono else 8
     left_panel = round(label_start + lw + label_pad_r)
     left_panel = max(left_panel, 30)
 
@@ -158,8 +158,8 @@ def resolve_badge(
 
     # Total width: left + sep/seam + right panel
     # Right panel sized so value text centers with gaps around indicator
-    val_pad_l = 4
-    val_min_gap = 5
+    val_pad_l = 3
+    val_min_gap = 3
     # Chrome value text has letter-spacing .4 — add overshoot buffer
     ls_extra = len(value_raw) * 0.4 if is_chrome and value_raw else 0
     right_panel = val_pad_l + vw + ls_extra + 2 * val_min_gap + indicator_size + ind_pad_r

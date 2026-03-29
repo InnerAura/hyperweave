@@ -670,12 +670,12 @@ async def _fetch_live_metrics(live: str, *, fallback: str = "") -> tuple[str, in
     min_ttl = 300
     for (_p, _i, m), result in zip(segments, results, strict=True):
         if isinstance(result, BaseException):
-            live_metrics.append(f"{m}: error")
+            live_metrics.append(f"{m.upper()}:--")
         else:
-            live_metrics.append(f"{m}: {result.get('value', 'n/a')}")
+            live_metrics.append(f"{m.upper()}:{result.get('value', 'n/a')}")
             min_ttl = min(min_ttl, result.get("ttl", 300))
 
-    return " | ".join(live_metrics), min_ttl
+    return ",".join(live_metrics), min_ttl
 
 
 def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
