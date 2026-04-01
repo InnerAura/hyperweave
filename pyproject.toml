@@ -29,13 +29,6 @@ classifiers = [
     "Topic :: Multimedia :: Graphics",
     "Typing :: Typed",
 ]
-
-[project.urls]
-# Documentation = "https://hyperweave.app/docs"
-Repository = "https://github.com/InnerAura/hyperweave"
-Issues = "https://github.com/InnerAura/hyperweave/issues"
-Discord = "https://discord.gg/wVmcAZPQZ8"
-
 dependencies = [
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
@@ -47,6 +40,12 @@ dependencies = [
     "fastmcp>=3.0",
     "pyyaml>=6.0",
 ]
+
+[project.urls]
+# Documentation = "https://hyperweave.app/docs"
+Repository = "https://github.com/InnerAura/hyperweave"
+Issues = "https://github.com/InnerAura/hyperweave/issues"
+Discord = "https://discord.gg/wVmcAZPQZ8"
 
 [project.scripts]
 hyperweave = "hyperweave.cli:app"

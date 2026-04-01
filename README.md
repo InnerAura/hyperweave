@@ -37,7 +37,9 @@ HyperWeave is that primitive. Semantic SVGs with embedded CSS state machines, ac
 
 A genome is a portable, machine-readable aesthetic specification. It encodes the complete visual identity &mdash; chromatic system, surface material, motion vocabulary, geometric form language &mdash; as a set of CSS custom properties that any agent can consume and apply consistently across every artifact type.
 
+<!--
 Why genome and not theme? Because brand isn't a design problem, it's an infrastructure problem. When an agent says "build me a status page," it has zero memory of visual identity. A genome solves that: define once, express everywhere, from a 90px badge to a full-width banner. The same genome produces different artifacts that feel like they came from the same hand.
+-->
 
 <table>
 <tr>
