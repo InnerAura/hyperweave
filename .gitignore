@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+src/hyperweave/_version.py
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
@@ -24,7 +25,7 @@ htmlcov/
 
 # inneraura/hyperweave
 archive/
-# .claude/
+.claude/
 # CLAUDE.md
 outputs/
 scripts/

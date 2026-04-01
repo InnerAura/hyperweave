@@ -1,12 +1,40 @@
 [project]
 name = "hyperweave"
-version = "0.1.0"
-description = "Compositor API for self-contained SVG artifacts from semantic parameters."
+dynamic = ["version"]
+description = "Headless visual design system for AI agents. One API call → self-contained SVG."
 requires-python = ">=3.12"
-license = "MIT"
+license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]
 readme = "README.md"
-keywords = ["svg", "compositor", "badges", "artifacts", "mcp"]
+keywords = [
+    "svg",
+    "svg-generation",
+    "design-system",
+    "ai-agents",
+    "generative-ui",
+    "mcp-server",
+    "mcp",
+    "developer-tools",
+    "fastapi",
+    "claude-code",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Multimedia :: Graphics",
+    "Typing :: Typed",
+]
+
+[project.urls]
+# Documentation = "https://hyperweave.app/docs"
+Repository = "https://github.com/InnerAura/hyperweave"
+Issues = "https://github.com/InnerAura/hyperweave/issues"
+Discord = "https://discord.gg/wVmcAZPQZ8"
 
 dependencies = [
     "pydantic>=2.0",
@@ -24,8 +52,14 @@ dependencies = [
 hyperweave = "hyperweave.cli:app"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/hyperweave/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/hyperweave"]

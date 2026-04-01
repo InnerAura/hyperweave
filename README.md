@@ -6,8 +6,8 @@
 
 <p align="center">
   <strong>Headless visual design system for AI agents.</strong><br/>
-  One API call composes self-contained SVG &mdash; from status badges to telemetry strips to full branded component kits.<br/>
-  Zero dependencies. Living CSS state machines. Renders anywhere an <code>&lt;img&gt;</code> tag works.
+  One API call &rarr; self-contained SVG. No JavaScript. No dependencies. No runtime.<br/>
+  Works everywhere an <code>&lt;img&gt;</code> tag works.
 </p>
 
 <!--
@@ -25,83 +25,19 @@
 
 ---
 
-## What is HyperWeave?
+## The Problem
 
-A compositional visual intelligence system. Every artifact is the output of a single formula:
+When an AI agent needs visual output, it generates React code or HTML that breaks across platforms, carries no brand identity, and is illegible to the next agent in the chain. There's no portable, reliable visual primitive for agents.
 
-```
-ARTIFACT = FRAME x PROFILE x GENOME x SLOTS x MOTION x ENVIRONMENT
-```
-
-HyperWeave produces semantic SVGs with embedded CSS state machines &mdash; artifacts stay live, stay on-brand, and stay legible to the next agent in the chain. 12 frame types, 2 genomes, 15 motion primitives, 97 glyphs. All SVG through Jinja2 templates. Zero f-string SVG in Python.
-
-> *"Agent-generated visuals are disposable &mdash; no state, no brand, no memory. HyperWeave produces semantic SVGs with embedded reasoning and CSS-driven state machines, so artifacts stay live, stay on-brand, and stay legible to the next agent in the chain."*
-
-Every surface that renders an `<img>` tag is a HyperWeave surface: GitHub READMEs, Notion, Slack, documentation sites, CI/CD summaries, VS Code, email, terminal. The artifact is the portable visual unit for the entire tool-and-document ecosystem.
-
-## Install
-
-```bash
-uv add hyperweave
-# or
-pip install hyperweave
-```
-
-Requires Python 3.12+. Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
-
-## Quick Start
-
-### CLI
-
-```bash
-# Badge
-hyperweave compose badge "build" "passing" --genome brutalist-emerald
-
-# Strip with metrics
-hyperweave compose strip "readme-ai" "STARS:2.9k,FORKS:278" -g brutalist-emerald
-
-# Banner with kinetic motion
-hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
-
-# Artifact kit
-hyperweave kit readme -g brutalist-emerald --badges "build:passing,version:v0.1.0" --social "github,discord"
-```
-
-### HTTP API
-
-```bash
-hyperweave serve --port 8000
-
-# URL grammar
-curl localhost:8000/v1/badge/build/passing/brutalist-emerald.chromatic-pulse
-
-# Live data
-curl localhost:8000/v1/live/github/anthropics/claude-code/stars/chrome-horizon
-
-# POST compose
-curl -X POST localhost:8000/v1/compose \
-  -H "Content-Type: application/json" \
-  -d '{"type":"badge","title":"build","value":"passing"}'
-```
-
-### MCP
-
-```json
-{ "mcpServers": { "hyperweave": { "command": "hyperweave", "args": ["mcp"] } } }
-```
-
-```
-hw_compose(type="badge", title="build", value="passing", genome="brutalist-emerald")
-hw_live(provider="github", identifier="anthropics/claude-code", metric="stars")
-hw_kit(type="readme", genome="brutalist-emerald", badges="build:passing")
-hw_discover(what="all")
-```
+HyperWeave is that primitive. Semantic SVGs with embedded CSS state machines, accessibility markup, and machine-readable metadata. The artifact stays live, stays on-brand, and stays legible &mdash; whether it's rendered in a GitHub README, Slack, Notion, documentation site, email, VS Code, or terminal. Every surface that renders an `<img>` tag is a HyperWeave surface.
 
 ---
 
-## Genomes
+## Genomes &mdash; Aesthetic DNA
 
-Why genome and not theme? Brand isn't a design problem &mdash; it's an infrastructure problem. When an agent says "build me a landing page," it has zero memory of visual identity. A genome solves that: a portable, machine-readable aesthetic specification any agent can consume and apply consistently.
+A genome is a portable, machine-readable aesthetic specification. It encodes the complete visual identity &mdash; chromatic system, surface material, motion vocabulary, geometric form language &mdash; as a set of CSS custom properties that any agent can consume and apply consistently across every artifact type.
+
+Why genome and not theme? Because brand isn't a design problem, it's an infrastructure problem. When an agent says "build me a status page," it has zero memory of visual identity. A genome solves that: define once, express everywhere, from a 90px badge to a full-width banner. The same genome produces different artifacts that feel like they came from the same hand.
 
 <table>
 <tr>
@@ -171,9 +107,89 @@ Why genome and not theme? Brand isn't a design problem &mdash; it's an infrastru
 
 ---
 
+## Install
+
+```bash
+uv add hyperweave
+# or
+pip install hyperweave
+```
+
+Requires Python 3.12+.
+
+---
+
+## Entry Points
+
+Four interfaces, one pipeline. Every path produces the same artifact through the same compositor.
+
+<p align="center">
+  <a href="https://hyperweave.app/docs/mcp">
+    <img src="./assets/cards/card-butterfly.svg" alt="MCP" width="48%">
+  </a>
+  <a href="https://hyperweave.app/docs/cli">
+    <img src="./assets/cards/card-sunflower.svg" alt="CLI" width="48%">
+  </a>
+  <br/>
+  <a href="https://hyperweave.app/docs/api">
+    <img src="./assets/cards/card-waves.svg" alt="HTTP API" width="48%">
+  </a>
+  <a href="https://hyperweave.app/docs/python">
+    <img src="./assets/cards/card-python.svg" alt="Python SDK" width="48%">
+  </a>
+</p>
+
+### MCP
+
+```json
+{ "mcpServers": { "hyperweave": { "command": "hyperweave", "args": ["mcp"] } } }
+```
+
+```
+hw_compose(type="badge", title="build", value="passing", genome="brutalist-emerald")
+hw_live(provider="github", identifier="anthropics/claude-code", metric="stars")
+hw_kit(type="readme", genome="brutalist-emerald", badges="build:passing")
+hw_discover(what="all")
+```
+
+### CLI
+
+```bash
+# Badge
+hyperweave compose badge "build" "passing" --genome brutalist-emerald
+
+# Strip with metrics
+hyperweave compose strip "readme-ai" "STARS:2.9k,FORKS:278" -g brutalist-emerald
+
+# Banner with kinetic motion
+hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
+
+# Artifact kit
+hyperweave kit readme -g brutalist-emerald --badges "build:passing,version:v0.1.0" --social "github,discord"
+```
+
+### HTTP API
+
+```bash
+hyperweave serve --port 8000
+
+# URL grammar: /v1/{type}/{title}/{value}/{genome}.{motion}
+curl localhost:8000/v1/badge/build/passing/brutalist-emerald.chromatic-pulse
+
+# Live data binding
+curl localhost:8000/v1/live/github/anthropics/claude-code/stars/chrome-horizon
+
+# POST compose
+curl -X POST localhost:8000/v1/compose \
+  -H "Content-Type: application/json" \
+  -d '{"type":"badge","title":"build","value":"passing"}'
+```
+
+---
+
 ## Session Telemetry
 
-HyperWeave parses Claude Code transcripts into visual receipts — cost, tokens, tool distribution, cognitive phases.
+HyperWeave parses Claude Code transcripts into visual receipts &mdash; cost, tokens, tool distribution, cognitive phases. The artifact isn't a visualization of data. It *is* the record.
 
 ```bash
 # Manual
@@ -199,23 +215,26 @@ After `install-hook`, every Claude Code session automatically drops a receipt SV
 
 ---
 
-## Entry Points
+## How It Works
 
-<p align="center">
-  <img src="./assets/cards/card-butterfly.svg" alt="MCP" width="48%">
-  <img src="./assets/cards/card-sunflower.svg" alt="CLI" width="48%">
-  <br/>
-  <img src="./assets/cards/card-waves.svg" alt="HTTP API" width="48%">
-  <img src="./assets/cards/card-python.svg" alt="Python" width="48%">
-</p>
-
-## Architecture
+Every artifact is the output of a single composition formula:
 
 ```
-ComposeSpec -> engine.py -> assembler.py (CSS) -> lanes.py (validate) -> templates.py (Jinja2) -> SVG
+ARTIFACT = FRAME × PROFILE × GENOME × SLOTS × MOTION × ENVIRONMENT
 ```
 
-Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. YAML defines config. Three layers, no mixing.
+Python builds context dicts. Jinja2 builds SVG. YAML defines config. Three layers, no mixing. Zero f-string SVG in Python.
+
+```
+ComposeSpec → engine.py → assembler.py (CSS) → lanes.py (validate) → templates.py (Jinja2) → SVG
+```
+
+Every artifact ships with:
+
+- **Semantic metadata** &mdash; provenance, reasoning, spatial trace, aesthetic DNA. Machine-readable context so the next agent in the chain knows what it's looking at and why.
+- **CSS state machines** &mdash; `data-hw-status`, `data-hw-state`, `data-hw-regime` drive visual transitions through the Custom Property Bridge. No JavaScript.
+- **Pure CSS/SMIL animation** &mdash; all motion uses compositor-safe properties (`transform`, `opacity`, `filter`). No script tags. Works inside GitHub's Camo proxy, email clients, Notion embeds &mdash; anywhere SVGs render.
+- **Accessibility** &mdash; WCAG AA, `prefers-reduced-motion`, `prefers-color-scheme`, `forced-colors`, ARIA markup. Structural, not decorative.
 
 | Dimension | Count |
 |---|---|
@@ -226,23 +245,29 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
 | Divider variants | 5 (block, current, takeoff, void, zeropoint) |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
 
+Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
+
 ---
 
-<!--
-<p align="center">
-  <img src="./assets/marquees/badge-showcase-triple.svg" alt="genome marquee" width="100%"/>
+## Roadmap
+
+<p>
+  <img src="assets/timelines/hyperweave-roadmap.svg" alt="roadmap" width="100%"/>
 </p>
--->
+
+---
+
+## Contributing
+
+HyperWeave is early. If you're interested in building genomes, extending frame types, or just seeing what this looks like in your own README &mdash; [join the Discord](https://discord.gg/wVmcAZPQZ8).
+
+---
 
 <p align="center">
   <img src="assets/footers/inneraura-footer-liquid.svg" alt="InnerAura Labs" width="100%"/>
 </p>
 
 <p align="center">
-  <!-- <a href="https://github.com/InnerAura/hyperweave">
-  <img src="./assets/icons/cobalt-sapphire-github.svg" width="48" alt="GitHub"/>
-  </a>
-  &nbsp; -->
   <a href="https://discord.gg/wVmcAZPQZ8">
   <img src="./assets/icons/cobalt-sapphire-discord.svg" width="48" alt="Discord"/>
   </a>
@@ -266,10 +291,6 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
   <a href="https://www.youtube.com/@InnerAuraLabs">
   <img src="./assets/icons/cobalt-sapphire-youtube.svg" width="48" alt="YouTube"/>
   </a>
-  <!-- &nbsp;
-  <a href="https://hyperweave.readthedocs.io/">
-  <img src="./assets/icons/cobalt-sapphire-docs.svg" width="48" alt="Docs"/>
-  </a> -->
 </p>
 
 <div align="center">
@@ -277,12 +298,6 @@ Three interfaces, one pipeline. Python builds context dicts. Jinja2 builds SVG. 
 [![][return-top]](#top)
 
 </div>
-
-<!--
-<p align="center">
-  <sub>Built by <a href="https://inneraura.ai/">InnerAura Labs</a></sub>
-</p>
--->
 
 <!-- REFERENCE LINKS -->
 [inneraura.ai]: https://inneraura.ai/

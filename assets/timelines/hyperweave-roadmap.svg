@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="560" viewBox="0 0 660 560">
+  <defs>
+    <linearGradient id="hw-node-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4080ff"/>
+      <stop offset="100%" stop-color="#1838b0"/>
+    </linearGradient>
+    <linearGradient id="hw-node-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3870e8"/>
+      <stop offset="100%" stop-color="#1530a0"/>
+    </linearGradient>
+    <linearGradient id="hw-node-3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3060d0"/>
+      <stop offset="100%" stop-color="#122890"/>
+    </linearGradient>
+    <linearGradient id="hw-node-lo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2850b8"/>
+      <stop offset="100%" stop-color="#0f2080"/>
+    </linearGradient>
+
+    <filter id="hw-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0 0 0.4 0 0.05
+                0 0 0.3 0 0.02
+                0 0 1.0 0 0.15
+                0 0 0 0.35 0" result="g"/>
+      <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <style>
+      @keyframes hw-pulse{0%,100%{opacity:.85}50%{opacity:1}}
+      @keyframes hw-flow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+      .hw-active{animation:hw-pulse 2.5s ease-in-out infinite}
+      .hw-path{stroke-dasharray:4 6;animation:hw-flow 1.8s linear infinite}
+      @media(prefers-reduced-motion:reduce){
+        .hw-active,.hw-path{animation:none}
+        .hw-path{stroke-dasharray:none}
+      }
+    </style>
+  </defs>
+
+  <!-- NODE 1 — AI Genome Generation (active) -->
+  <circle cx="32" cy="32" r="24" fill="url(#hw-node-1)" filter="url(#hw-glow)" class="hw-active"/>
+  <text x="32" y="38" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">1</text>
+  <path d="M32 56v50" stroke="#4080ff" stroke-width="2.5" stroke-linecap="round" class="hw-path"/>
+
+  <text x="76" y="24" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="17" font-weight="600" fill="#1838b0">AI Genome Generation</text>
+  <text x="76" y="46" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="12.5" fill="#6080b8">Natural language or image → custom genome</text>
+
+  <!-- NODE 2 — Polling Mutator -->
+  <g transform="translate(0,98)">
+    <circle cx="32" cy="32" r="24" fill="url(#hw-node-1)" filter="url(#hw-glow)"/>
+    <text x="32" y="38" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">2</text>
+    <path d="M32 56v50" stroke="#3870e8" stroke-width="2.5" stroke-linecap="round" class="hw-path"/>
+
+    <text x="76" y="24" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="17" font-weight="600" fill="#1838b0">Polling Mutator</text>
+    <text x="76" y="46" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="12.5" fill="#6080b8">Self-updating artifacts · snapshot → live instrument</text>
+  </g>
+
+  <!-- NODE 3 — Genome Expansion -->
+  <g transform="translate(0,196)">
+    <circle cx="32" cy="32" r="24" fill="url(#hw-node-2)" filter="url(#hw-glow)"/>
+    <text x="32" y="38" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">3</text>
+    <path d="M32 56v50" stroke="#3060d0" stroke-width="2.5" stroke-linecap="round" class="hw-path"/>
+
+    <text x="76" y="24" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="17" font-weight="600" fill="#1838b0">Genome Expansion</text>
+    <text x="76" y="46" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="12.5" fill="#6080b8">New genomes on a drop cadence · new profile types</text>
+  </g>
+
+  <!-- NODE 4 — Extended Frames -->
+  <g transform="translate(0,294)">
+    <circle cx="32" cy="32" r="24" fill="url(#hw-node-3)" filter="url(#hw-glow)"/>
+    <text x="32" y="38" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">4</text>
+    <path d="M32 56v50" stroke="#2850b8" stroke-width="2.5" stroke-linecap="round" class="hw-path"/>
+
+    <text x="76" y="24" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="17" font-weight="600" fill="#1838b0">Extended Frames</text>
+    <text x="76" y="46" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="12.5" fill="#6080b8">Buttons, brand icons, diagrams, timelines, new artifact classes</text>
+  </g>
+
+  <!-- NODE 5 — Telemetry Completion -->
+  <g transform="translate(0,392)">
+    <circle cx="32" cy="32" r="24" fill="url(#hw-node-lo)" filter="url(#hw-glow)"/>
+    <text x="32" y="38" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">5</text>
+    <path d="M32 56v50" stroke="#2048a8" stroke-width="2.5" stroke-linecap="round" class="hw-path"/>
+
+    <text x="76" y="24" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="17" font-weight="600" fill="#1838b0">Telemetry Completion</text>
+    <text x="76" y="46" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="12.5" fill="#6080b8">Velocity · loop detection · sparklines · heatmap</text>
+  </g>
+
+  <!-- NODE 6 — Motion Polish -->
+  <g transform="translate(0,490)">
+    <circle cx="32" cy="32" r="24" fill="url(#hw-node-lo)" filter="url(#hw-glow)"/>
+    <text x="32" y="38" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">6</text>
+    <!-- No path after last node -->
+
+    <text x="76" y="24" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="17" font-weight="600" fill="#1838b0">Motion Polish</text>
+    <text x="76" y="46" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="12.5" fill="#6080b8">Kinetic typography · border choreography</text>
+  </g>
+
+</svg>
