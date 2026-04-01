@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="./assets/hyperweave-banner.svg" alt="HyperWeave" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/hyperweave-banner.svg" alt="HyperWeave" width="800"/>
 </p>
 
 <p align="center">
@@ -127,17 +127,17 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
 
 <p align="center">
   <a href="https://hyperweave.app/docs/mcp">
-    <img src="./assets/cards/card-butterfly.svg" alt="MCP" width="48%">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-butterfly.svg" alt="MCP" width="48%">
   </a>
   <a href="https://hyperweave.app/docs/cli">
-    <img src="./assets/cards/card-sunflower.svg" alt="CLI" width="48%">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-sunflower.svg" alt="CLI" width="48%">
   </a>
   <br/>
   <a href="https://hyperweave.app/docs/api">
-    <img src="./assets/cards/card-waves.svg" alt="HTTP API" width="48%">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-waves.svg" alt="HTTP API" width="48%">
   </a>
   <a href="https://hyperweave.app/docs/python">
-    <img src="./assets/cards/card-python.svg" alt="Python SDK" width="48%">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-python.svg" alt="Python SDK" width="48%">
   </a>
 </p>
 
@@ -204,14 +204,14 @@ hyperweave install-hook
 After `install-hook`, every Claude Code session automatically drops a receipt SVG into `.hyperweave/receipts/`. No config, no server, no manual step.
 
 <p align="center">
-  <img src="./assets/examples/telemetry/receipt.svg" alt="session receipt" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/examples/telemetry/receipt.svg" alt="session receipt" width="800"/>
 </p>
 <p align="center">
-  <img src="./assets/examples/telemetry/rhythm_strip.svg" alt="rhythm strip" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/examples/telemetry/rhythm_strip.svg" alt="rhythm strip" width="800"/>
 </p>
 <!--
 <p align="center">
-  <img src="./assets/examples/telemetry/master_card.svg" alt="master card" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/examples/telemetry/master_card.svg" alt="master card" width="800"/>
 </p>
 -->
 
@@ -254,7 +254,7 @@ Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 ## Roadmap
 
 <p>
-  <img src="assets/timelines/hyperweave-roadmap.svg" alt="roadmap" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/timelines/hyperweave-roadmap.svg" alt="roadmap" width="100%"/>
 </p>
 
 ---
@@ -266,32 +266,32 @@ HyperWeave is early. If you're interested in building genomes, extending frame t
 ---
 
 <p align="center">
-  <img src="assets/footers/inneraura-footer-liquid.svg" alt="InnerAura Labs" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/footers/inneraura-footer-liquid.svg" alt="InnerAura Labs" width="100%"/>
 </p>
 
 <p align="center">
   <a href="https://discord.gg/wVmcAZPQZ8">
-  <img src="./assets/icons/cobalt-sapphire-discord.svg" width="48" alt="Discord"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/icons/cobalt-sapphire-discord.svg" width="48" alt="Discord"/>
   </a>
   &nbsp;
   <a href="https://www.instagram.com/hyperweave.ai/">
-  <img src="./assets/icons/cobalt-sapphire-instagram.svg" width="48" alt="Instagram"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/icons/cobalt-sapphire-instagram.svg" width="48" alt="Instagram"/>
   </a>
   &nbsp;
   <a href="https://www.linkedin.com/company/inneraura">
-  <img src="./assets/icons/cobalt-sapphire-linkedin.svg" width="48" alt="LinkedIn"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/icons/cobalt-sapphire-linkedin.svg" width="48" alt="LinkedIn"/>
   </a>
   &nbsp;
   <a href="https://www.tiktok.com/@hyperweave.ai">
-  <img src="./assets/icons/cobalt-sapphire-tiktok.svg" width="48" alt="TikTok"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/icons/cobalt-sapphire-tiktok.svg" width="48" alt="TikTok"/>
   </a>
   &nbsp;
   <a href="https://x.com/InnerAuraLabs">
-  <img src="./assets/icons/cobalt-sapphire-x.svg" width="48" alt="X"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/icons/cobalt-sapphire-x.svg" width="48" alt="X"/>
   </a>
   &nbsp;
   <a href="https://www.youtube.com/@InnerAuraLabs">
-  <img src="./assets/icons/cobalt-sapphire-youtube.svg" width="48" alt="YouTube"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/icons/cobalt-sapphire-youtube.svg" width="48" alt="YouTube"/>
   </a>
 </p>
 
@@ -312,4 +312,4 @@ HyperWeave is early. If you're interested in building genomes, extending frame t
 [x]: https://x.com/InnerAuraLabs
 [youtube]: https://www.youtube.com/@InnerAuraLabs
 
-[return-top]: ./assets/buttons/button-liquid.svg
+[return-top]: https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/buttons/button-liquid.svg
