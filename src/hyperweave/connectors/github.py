@@ -40,9 +40,7 @@ async def _fetch_build_status(identifier: str) -> dict[str, Any]:
     default_branch = repo_data.get("default_branch", "main")
 
     # 1. Check Runs API (GitHub Actions, modern CI)
-    checks_url = (
-        f"https://api.github.com/repos/{identifier}/commits/{default_branch}/check-runs"
-    )
+    checks_url = f"https://api.github.com/repos/{identifier}/commits/{default_branch}/check-runs"
     checks_data = await fetch_json(checks_url, provider=PROVIDER)
     check_runs: list[dict[str, Any]] = checks_data.get("check_runs", [])
 
@@ -55,9 +53,7 @@ async def _fetch_build_status(identifier: str) -> dict[str, Any]:
             value = "failing"
         elif "cancelled" in conclusions:
             value = "cancelled"
-        elif all(c == "success" for c in conclusions if c is not None) and all(
-            s == "completed" for s in statuses
-        ):
+        elif all(c == "success" for c in conclusions if c is not None) and all(s == "completed" for s in statuses):
             value = "passing"
         elif any(s in ("queued", "in_progress") for s in statuses):
             value = "building"
@@ -65,9 +61,7 @@ async def _fetch_build_status(identifier: str) -> dict[str, Any]:
             value = "failing"
     else:
         # 2. Fallback: legacy Status API (Travis, etc.)
-        status_url = (
-            f"https://api.github.com/repos/{identifier}/commits/{default_branch}/status"
-        )
+        status_url = f"https://api.github.com/repos/{identifier}/commits/{default_branch}/status"
         status_data = await fetch_json(status_url, provider=PROVIDER)
         state = status_data.get("state", "unknown")
         total = status_data.get("total_count", 0)
