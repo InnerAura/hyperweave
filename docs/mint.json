@@ -26,12 +26,12 @@
   "topbarLinks": [
     {
       "name": "GitHub",
-      "url": "https://github.com/eli64s/hyperweave"
+      "url": "https://github.com/InnerAura/hyperweave"
     }
   ],
   "topbarCtaButton": {
     "name": "Install",
-    "url": "https://github.com/eli64s/hyperweave#install"
+    "url": "https://github.com/InnerAura/hyperweave#install"
   },
   "anchors": [
     {
@@ -42,7 +42,7 @@
     {
       "name": "GitHub",
       "icon": "github",
-      "url": "https://github.com/eli64s/hyperweave"
+      "url": "https://github.com/InnerAura/hyperweave"
     }
   ],
   "navigation": [
@@ -95,6 +95,6 @@
     }
   ],
   "footerSocials": {
-    "github": "https://github.com/eli64s/hyperweave"
+    "github": "https://github.com/InnerAura/hyperweave"
   }
 }

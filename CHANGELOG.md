@@ -5,6 +5,21 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-04-01
+
+### Added
+- PyPI publishing workflow via trusted publishing (OIDC, no API tokens)
+- Tag-driven versioning via hatch-vcs (replaces hardcoded version)
+- Build status connector queries GitHub Checks API (GitHub Actions support)
+
+### Fixed
+- Docker build: create `src/hyperweave/` directory before `uv sync` so hatch-vcs can write `_version.py`
+- Deploy workflow: convert `git describe` output to PEP 440 format
+- CI: `fetch-depth: 0` for hatch-vcs tag discovery
+- `pyproject.toml`: move `dependencies` above `[project.urls]` to fix TOML scoping bug
+- Build status badge: query Checks API first, fall back to legacy Status API (fixes perpetual "building" state)
+- README: relative image paths replaced with absolute URLs for PyPI rendering
+
 ## [0.1.0] - 2026-03-27
 
 Clean-room rewrite. Specimen-first compositor for self-contained SVG artifacts.

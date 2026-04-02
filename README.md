@@ -173,18 +173,19 @@ hyperweave kit readme -g brutalist-emerald --badges "build:passing,version:v0.1.
 ### HTTP API
 
 ```bash
-hyperweave serve --port 8000
-
 # URL grammar: /v1/{type}/{title}/{value}/{genome}.{motion}
-curl localhost:8000/v1/badge/build/passing/brutalist-emerald.chromatic-pulse
+curl https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278
 
 # Live data binding
-curl localhost:8000/v1/live/github/anthropics/claude-code/stars/chrome-horizon
+curl https://hyperweave.app/v1/live/github/anthropics/claude-code/stars/chrome-horizon
 
 # POST compose
-curl -X POST localhost:8000/v1/compose \
+curl -X POST https://hyperweave.app/v1/compose \
   -H "Content-Type: application/json" \
-  -d '{"type":"badge","title":"build","value":"passing"}'
+  -d '{"type":"banner","title":"HYPERWEAVE","genome":"brutalist-emerald","motion":"drop"}'
+
+# Local server
+hyperweave serve --port 8000
 ```
 
 ---
