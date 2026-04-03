@@ -19,7 +19,7 @@
      data-hw-variant="{{ variant | default('default') }}"
 {% if regime %}     data-hw-regime="{{ regime }}"
 {% endif %}
-{% if glyph_id %}     data-hw-glyph="{{ glyph_id }}"
+{% if has_glyph | default(false) %}     data-hw-glyph="{{ glyph_id }}"
 {% endif %}
 {% if terminal_id %}     data-hw-terminal="{{ terminal_id }}"
 {% endif %}

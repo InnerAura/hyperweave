@@ -343,7 +343,7 @@ def _inject_motion(ctx: dict[str, Any], spec: ComposeSpec, resolved: ResolvedArt
             banner_fs = 160 if is_full else 42
             text_cx = w // 2
             text_cy = h // 2
-            banner_subtitle = ctx.get("banner_label", ctx.get("banner_subtitle", ""))
+            banner_subtitle = ctx.get("banner_subtitle", "")
             motion_svg = build_kinetic_motion_svg(
                 motion_id,
                 uid,

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>Headless visual design system for AI agents.</strong><br/>
+  <strong>Headless visual output layer for AI agents.</strong><br/>
   One API call &rarr; self-contained SVG. No JavaScript. No dependencies. No runtime.<br/>
   Works everywhere an <code>&lt;img&gt;</code> tag works.
 </p>

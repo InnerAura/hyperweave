@@ -297,11 +297,10 @@ def resolve_banner(
     """
     compact = spec.variant == "compact"
     w = 800 if compact else 1200
-    h = 220 if compact else 600
+    h = 220 if compact else 400
 
     genome_name = genome.get("name", spec.genome_id)
-    version = "V0.1"
-    footer = f"{version} · {genome_name.upper()}"
+    footer = genome_name.upper()
 
     from hyperweave.core.text import measure_text
 
@@ -317,7 +316,7 @@ def resolve_banner(
 
     ctx: dict[str, Any] = {
         "banner_title": title,
-        "banner_subtitle": spec.value or "",
+        "banner_subtitle": spec.value or "subtitle",
         "banner_label": footer,
         "banner_variant": "compact" if compact else "full",
         "title_font_size": title_fs,

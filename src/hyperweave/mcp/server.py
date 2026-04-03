@@ -164,7 +164,7 @@ async def hw_discover(
 ) -> dict[str, Any]:
     """Discover available HyperWeave components.
 
-    what: all | genomes | motions | glyphs | frames
+    what: all | genomes | motions | glyphs | frames | url_grammar
     Returns structured data about available options for hw_compose.
     """
     from hyperweave.config.loader import get_loader
@@ -202,6 +202,75 @@ async def hw_discover(
 
     if what in ("all", "frames"):
         result["frames"] = [ft.value for ft in FrameType]
+
+    if what in ("all", "url_grammar"):
+        result["url_grammar"] = {
+            "badge": {
+                "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
+                "query_params": {
+                    "glyph": "Glyph identifier (e.g. github, python)",
+                    "glyph_mode": "auto | fill | wire | none",
+                    "state": "active | passing | building | warning | critical | failing | offline",
+                    "regime": "normal | permissive | ungoverned",
+                    "t": "Title override (use when title contains slashes)",
+                },
+                "example": "/v1/badge/build/passing/brutalist-emerald.static",
+            },
+            "strip": {
+                "pattern": "/v1/strip/{title}/{genome}.{motion}",
+                "query_params": {
+                    "value": "Metrics text: STARS:2.9k,FORKS:278",
+                    "live": "Live data: github:owner/repo:stars,pypi:pkg:version",
+                    "glyph": "Glyph identifier",
+                    "state": "Semantic state",
+                    "t": "Title override (use when title contains slashes)",
+                },
+                "example": "/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k",
+            },
+            "banner": {
+                "pattern": "/v1/banner/{title}/{genome}.{motion}",
+                "query_params": {
+                    "subtitle": "Banner subtitle text",
+                    "value": "Alias for subtitle",
+                    "glyph": "Glyph identifier",
+                    "state": "Semantic state",
+                    "t": "Title override (use when title contains slashes)",
+                },
+                "example": "/v1/banner/HYPERWEAVE/brutalist-emerald.cascade?subtitle=Living+Artifacts",
+            },
+            "icon": {
+                "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
+                "query_params": {
+                    "shape": "square | circle",
+                    "glyph_mode": "auto | fill | wire | none",
+                    "state": "Semantic state",
+                },
+                "example": "/v1/icon/github/chrome-horizon.static?shape=circle",
+            },
+            "divider": {
+                "pattern": "/v1/divider/{variant}/{genome}",
+                "query_params": {},
+                "example": "/v1/divider/void/brutalist-emerald",
+            },
+            "marquee": {
+                "pattern": "/v1/marquee/{title}/{genome}.{motion}",
+                "query_params": {
+                    "direction": "ltr | rtl | up | down",
+                    "rows": "Number of rows (counter variant uses 3)",
+                    "speeds": "Comma-separated speed multipliers per row",
+                    "t": "Title override (use when title contains slashes)",
+                },
+                "example": "/v1/marquee/HYPERWEAVE/brutalist-emerald.static?rows=3",
+            },
+            "live": {
+                "pattern": "/v1/live/{provider}/{identifier}/{metric}/{genome}.{motion}",
+                "query_params": {
+                    "glyph": "Glyph identifier",
+                    "state": "Semantic state",
+                },
+                "example": "/v1/live/github/eli64s/readme-ai/stars/brutalist-emerald.static",
+            },
+        }
 
     return result
 

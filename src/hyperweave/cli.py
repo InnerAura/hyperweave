@@ -316,15 +316,25 @@ def install_hook() -> None:
         if not isinstance(entry_hooks, list):
             continue
         for h in entry_hooks:
-            if isinstance(h, dict) and "hw session" in str(h.get("command", "")):
+            if isinstance(h, dict) and "hyperweave session" in str(h.get("command", "")):
                 typer.echo("Hook already installed.")
                 return
 
-    hook_entry = {"hooks": [{"type": "command", "command": "hw session receipt", "timeout": 10}]}
+    hook_entry = {"hooks": [{"type": "command", "command": "hyperweave session receipt", "timeout": 10}]}
     session_end.append(hook_entry)
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
     typer.echo(f"Installed SessionEnd hook in {settings_path}")
+
+
+@app.command()
+def mcp(
+    transport: Annotated[str, typer.Option("--transport")] = "stdio",
+) -> None:
+    """Start the HyperWeave MCP server."""
+    from hyperweave.mcp.server import mcp as mcp_server
+
+    mcp_server.run(transport=transport)
 
 
 @app.command()

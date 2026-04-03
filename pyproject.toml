@@ -1,7 +1,7 @@
 [project]
 name = "hyperweave"
 dynamic = ["version"]
-description = "Headless visual design system for AI agents. One API call → self-contained SVG."
+description = "Headless visual output layer for AI agents. One API call → self-contained SVG."
 requires-python = ">=3.12"
 license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]
@@ -49,6 +49,7 @@ Discord = "https://discord.gg/wVmcAZPQZ8"
 
 [project.scripts]
 hyperweave = "hyperweave.cli:app"
+hw = "hyperweave.cli:app"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

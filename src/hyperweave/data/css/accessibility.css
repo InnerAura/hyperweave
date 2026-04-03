@@ -28,9 +28,7 @@
 }
 
 /* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
-/* Genome-provided light_mode alleles are injected by the CSS assembler
-   into a separate @media (prefers-color-scheme: light) block per artifact.
-   This placeholder is intentionally empty; it exists as documentation. */
+/* Light mode: genome alleles injected by CSS assembler into per-artifact @media block. */
 
 /* ── Forced Colors (Windows High Contrast) ── */
 @media (forced-colors: active) {

@@ -40,6 +40,10 @@ _INFERENCE_MAP: dict[str, str] = {
     "reddit": "reddit",
     "mastodon": "mastodon",
     "bluesky": "bluesky",
+    "linkedin": "linkedin",
+    "email": "email",
+    "gmail": "email",
+    "mail": "email",
     # Dev ecosystems
     "python": "python",
     "pypi": "pypi",

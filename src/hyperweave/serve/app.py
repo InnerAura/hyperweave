@@ -77,6 +77,7 @@ async def compose_badge_url(
     title: str,
     value: str,
     genome_motion: str,
+    t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
     glyph: Annotated[str, Query()] = "",
     glyph_mode: Annotated[str, Query()] = "auto",
     state: Annotated[str, Query()] = "active",
@@ -91,7 +92,7 @@ async def compose_badge_url(
     spec = ComposeSpec(
         type="badge",
         genome_id=genome,
-        title=title,
+        title=t or title,
         value=value,
         state=state,
         motion=motion,
@@ -111,6 +112,7 @@ async def compose_strip_url(
     request: Request,
     title: str,
     genome_motion: str,
+    t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
     value: Annotated[str, Query()] = "",
     live: Annotated[str, Query()] = "",
     glyph: Annotated[str, Query()] = "",
@@ -134,7 +136,7 @@ async def compose_strip_url(
     spec = ComposeSpec(
         type="strip",
         genome_id=genome,
-        title=title,
+        title=t or title,
         value=final_value,
         state=state,
         motion=motion,
@@ -157,6 +159,8 @@ async def compose_banner_url(
     request: Request,
     title: str,
     genome_motion: str,
+    t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
+    subtitle: Annotated[str, Query()] = "",
     value: Annotated[str, Query()] = "",
     glyph: Annotated[str, Query()] = "",
     glyph_mode: Annotated[str, Query()] = "auto",
@@ -164,7 +168,7 @@ async def compose_banner_url(
     variant: Annotated[str, Query()] = "default",
     regime: Annotated[str, Query()] = "normal",
 ) -> Response:
-    """Compose a banner: /v1/banner/{title}/{genome}.{motion}"""
+    """Compose a banner: /v1/banner/{title}/{genome}.{motion}?subtitle="""
     genome, motion = _parse_genome_motion(genome_motion)
 
     from hyperweave.core.models import ComposeSpec
@@ -172,8 +176,8 @@ async def compose_banner_url(
     spec = ComposeSpec(
         type="banner",
         genome_id=genome,
-        title=title,
-        value=value,
+        title=t or title,
+        value=subtitle or value,
         motion=motion,
         glyph=glyph,
         glyph_mode=glyph_mode,
@@ -249,6 +253,7 @@ async def compose_marquee_url(
     request: Request,
     title: str,
     genome_motion: str,
+    t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
     direction: Annotated[str, Query()] = "ltr",
     rows: Annotated[int, Query()] = 3,
     speeds: Annotated[str, Query()] = "",
@@ -279,7 +284,7 @@ async def compose_marquee_url(
     spec = ComposeSpec(
         type=mtype,
         genome_id=genome,
-        title=title,
+        title=t or title,
         motion=motion,
         marquee_direction=direction,
         marquee_rows=rows,
