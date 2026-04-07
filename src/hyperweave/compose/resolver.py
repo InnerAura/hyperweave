@@ -11,6 +11,9 @@ from hyperweave.core.enums import (
     ProfileId,
     Regime,
 )
+
+# NOTE: ProfileId import kept for icon resolver (BRUTALIST variant mapping).
+# Marquee resolvers no longer reference ProfileId directly.
 from hyperweave.core.models import ResolvedArtifact
 
 if TYPE_CHECKING:
@@ -87,8 +90,8 @@ def resolve_badge(
 
     height = profile.get("badge_frame_height", 20)
     profile_id = profile.get("id", "brutalist")
-    is_chrome = profile_id == ProfileId.CHROME
-    use_mono = profile_id == ProfileId.BRUTALIST
+    use_mono = profile.get("badge_use_mono", True)
+    label_uppercase = profile.get("badge_label_uppercase", True)
 
     # Layout constants
     font_size = 11
@@ -96,29 +99,24 @@ def resolve_badge(
     glyph_size = 14
     glyph_gap = 4
 
-    # Profile-specific layout
-    if is_chrome:
-        sep_w, seam_w = 1, 0
-        indicator_size = 10
-        ind_pad_r = 5
-        inset = 2
-    else:
-        sep_w, seam_w = 2, 3
-        indicator_size = 8
-        ind_pad_r = 8
-        inset = 0
+    sep_w = profile.get("badge_sep_width", 2)
+    seam_w = profile.get("badge_seam_width", 3)
+    indicator_size = profile.get("badge_indicator_size", 8)
+    ind_pad_r = profile.get("badge_indicator_pad_r", 8)
+    inset = profile.get("badge_inset", 0)
+    text_y_factor = profile.get("badge_text_y_factor", 0.69)
 
     # Text content
     label_raw = spec.title or ""
     value_raw = spec.value or ""
-    label_display = label_raw.upper() if not is_chrome else label_raw
+    label_display = label_raw.upper() if label_uppercase else label_raw
 
     # Measure rendered text widths
     lw = (
         measure_text(
             label_display,
             font_size=font_size,
-            bold=is_chrome,
+            bold=not use_mono,
             monospace=use_mono,
         )
         if label_display
@@ -130,7 +128,7 @@ def resolve_badge(
     if use_mono and label_display:
         lw += len(label_display) * font_size * 0.06
 
-    # System fonts (chrome) are wider than the Inter LUT
+    # System fonts (non-mono) are wider than the Inter LUT
     if not use_mono:
         lw *= 1.15
         vw *= 1.10
@@ -139,7 +137,7 @@ def resolve_badge(
 
     # Glyph pixel position
     if has_glyph:
-        glyph_x = (inset + accent_w + 4) if is_chrome else (accent_w + 3)
+        glyph_x = (inset + accent_w + 4) if inset else (accent_w + 3)
         glyph_y = round((height - glyph_size) / 2, 1)
     else:
         glyph_x, glyph_y = 0, 0.0
@@ -153,15 +151,14 @@ def resolve_badge(
     left_panel = max(left_panel, 30)
 
     # Label text center (midpoint of label area)
-    label_area_end = left_panel - (6 if not is_chrome else 0)
+    label_area_end = left_panel - (6 if label_uppercase else 0)
     label_x = round((label_start + label_area_end) / 2, 1)
 
     # Total width: left + sep/seam + right panel
-    # Right panel sized so value text centers with gaps around indicator
     val_pad_l = 3
     val_min_gap = 3
-    # Chrome value text has letter-spacing .4 — add overshoot buffer
-    ls_extra = len(value_raw) * 0.4 if is_chrome and value_raw else 0
+    # Non-mono value text has letter-spacing .4 — add overshoot buffer
+    ls_extra = len(value_raw) * 0.4 if not use_mono and value_raw else 0
     right_panel = val_pad_l + vw + ls_extra + 2 * val_min_gap + indicator_size + ind_pad_r
     total_w = round(left_panel + sep_w + seam_w + right_panel)
     total_w = max(total_w, 60)
@@ -170,20 +167,10 @@ def resolve_badge(
     right_x = left_panel + sep_w + seam_w
     indicator_x = total_w - ind_pad_r - indicator_size
     value_x = round((right_x + val_pad_l + indicator_x) / 2, 1)
-    text_y = round(height * 0.69, 1) if not is_chrome else round(height / 2, 1)
+    text_y = round(height * text_y_factor, 1)
 
-    # Chrome-specific rendering context
-    chrome_ctx = _chrome_visual_context(genome, profile)
-    if is_chrome:
-        # Badge-only extras (bevel lighting, rhythm, light mode)
-        chrome_ctx.update(
-            {
-                "bevel_spec_constant": "0.8",
-                "bevel_spec_exponent": "25.0",
-                "chrome_rhythm": genome.get("rhythm_base", "6s"),
-                "light_mode": genome.get("light_mode"),
-            }
-        )
+    # Profile-specific rendering context (envelope, well, specular, etc.)
+    profile_ctx = _profile_visual_context(genome, profile)
 
     return {
         "width": total_w,
@@ -208,11 +195,10 @@ def resolve_badge(
             "accent_bar_width": accent_w,
             "has_glyph": has_glyph,
             "show_indicator": True,
-            "is_chrome": is_chrome,
             "use_mono": use_mono,
-            "label_uppercase": not is_chrome,
+            "label_uppercase": label_uppercase,
             "inset": inset,
-            **chrome_ctx,
+            **profile_ctx,
         },
     }
 
@@ -273,8 +259,23 @@ def resolve_strip(
         "accent_width": profile.get("strip_accent_width", 0),
         "divider_mode": profile.get("strip_divider_mode", "full"),
         "has_accent": profile.get("strip_accent_width", 0) > 0,
+        "strip_glyph_size": profile.get("strip_glyph_size", 20),
+        "strip_glyph_fill": profile.get("strip_glyph_fill", "var(--dna-signal)"),
+        "strip_identity_weight": profile.get("strip_identity_weight", 900),
+        "strip_identity_fill": profile.get("strip_identity_fill", "var(--dna-brand-text)"),
+        "strip_identity_letter_spacing": profile.get("strip_identity_letter_spacing", "0.18em"),
+        "strip_metric_label_size": profile.get("strip_metric_label_size", 7),
+        "strip_metric_label_fill": profile.get("strip_metric_label_fill", "var(--dna-ink-muted)"),
+        "strip_metric_label_letter_spacing": profile.get("strip_metric_label_letter_spacing", "0.2em"),
+        "strip_metric_label_y": profile.get("strip_metric_label_y", 18),
+        "strip_metric_value_weight": profile.get("strip_metric_value_weight", 900),
+        "strip_metric_value_fill": profile.get("strip_metric_value_fill", "var(--dna-ink-primary)"),
+        "strip_metric_value_y": profile.get("strip_metric_value_y", 36),
+        "strip_metric_value_skew": profile.get("strip_metric_value_skew", 0),
+        "strip_identity_font": profile.get("strip_identity_font", "var(--dna-font-mono, 'SF Mono', monospace)"),
+        "strip_metric_label_font": profile.get("strip_metric_label_font", "var(--dna-font-mono, 'SF Mono', monospace)"),
     }
-    ctx.update(_chrome_visual_context(genome, profile))
+    ctx.update(_profile_visual_context(genome, profile))
 
     return {
         "width": width,
@@ -297,7 +298,7 @@ def resolve_banner(
     """
     compact = spec.variant == "compact"
     w = 800 if compact else 1200
-    h = 220 if compact else 400
+    h = 220 if compact else profile.get("banner_height", 600)
 
     genome_name = genome.get("name", spec.genome_id)
     footer = genome_name.upper()
@@ -321,7 +322,7 @@ def resolve_banner(
         "banner_variant": "compact" if compact else "full",
         "title_font_size": title_fs,
     }
-    ctx.update(_chrome_visual_context(genome, profile))
+    ctx.update(_profile_visual_context(genome, profile))
 
     return {
         "width": w,
@@ -380,7 +381,7 @@ def resolve_icon(
         "genome_border": genome.get("stroke", "#000000"),
         "genome_signal_dim": genome.get("accent_complement", "#A78BFA"),
     }
-    ctx.update(_chrome_visual_context(genome, profile))
+    ctx.update(_profile_visual_context(genome, profile))
 
     return {
         "width": 64,
@@ -412,7 +413,7 @@ def resolve_divider(
         "divider_variant": variant,
         "divider_label": spec.value or "",
     }
-    ctx.update(_chrome_visual_context(genome, profile))
+    ctx.update(_profile_visual_context(genome, profile))
 
     return {
         "width": w,
@@ -435,15 +436,18 @@ def resolve_marquee(
       vertical   — 400x268, telemetry feed with timestamped events
       horizontal — 800x40,  LIVE ticker with brand items
     """
-    chrome_ctx = _chrome_visual_context(genome, profile)
+    chrome_ctx = _profile_visual_context(genome, profile)
+    # Resolved hex colors for gradient stops (var() is unreliable inside <stop>)
+    chrome_ctx["signal_hex"] = genome.get("accent", "#10B981")
+    chrome_ctx["surface_hex"] = genome.get("surface_0", genome.get("surface", "#0A0A0A"))
 
     if spec.type == FrameType.MARQUEE_COUNTER:
-        return _resolve_counter(spec, chrome_ctx)
+        return _resolve_counter(spec, chrome_ctx, profile)
 
     if spec.type == FrameType.MARQUEE_VERTICAL:
-        return _resolve_vertical(spec, chrome_ctx)
+        return _resolve_vertical(spec, chrome_ctx, profile)
 
-    return _resolve_horizontal(spec, chrome_ctx)
+    return _resolve_horizontal(spec, chrome_ctx, profile)
 
 
 def _measure_row_content_width(row: dict[str, Any]) -> float:
@@ -461,6 +465,16 @@ def _measure_row_content_width(row: dict[str, Any]) -> float:
     start_x = float(row.get("text_start_x", 20))
     sep = row.get("separator", "")
 
+    # Display/serif fonts (Georgia, Impact, Arial Black) are wider than the Inter LUT.
+    # Scale measured widths to match actual rendering. Mono fonts are already calibrated.
+    font_family_raw = row.get("font_family", "").lower()
+    if is_mono:
+        font_scale = 1.0  # mono LUT already calibrated at 7.2px
+    elif "display" in font_family_raw or "serif" in font_family_raw or "impact" in font_family_raw:
+        font_scale = 1.30  # display/serif fonts are ~30% wider than Inter
+    else:
+        font_scale = 1.15  # system-ui / sans-serif are ~15% wider than Inter
+
     total = start_x
     for i, cell in enumerate(row.get("cells", [])):
         text = cell.get("text", "")
@@ -468,7 +482,10 @@ def _measure_row_content_width(row: dict[str, Any]) -> float:
         cell_mono = is_mono and "font_family" not in cell
         cell_bold = int(cell.get("font_weight", row.get("font_weight", "400")) or "400") >= 700
         w = measure_text(text, font_size=cell_fs, bold=cell_bold, monospace=cell_mono)
-        # Add letter-spacing between characters
+        # Apply font-family-aware scale for non-mono fonts
+        if not cell_mono:
+            w *= font_scale
+        # Add letter-spacing between characters (applied per-tspan, not parent <text>)
         if len(text) > 1:
             w += ls_px * (len(text) - 1)
         total += w
@@ -478,6 +495,7 @@ def _measure_row_content_width(row: dict[str, Any]) -> float:
             total += float(cell.get("dx", gap))
 
         # Add separator + gap after cell (if separator between cells)
+        # Separator tspans have NO letter-spacing (architectural fix: ls on word tspans only)
         if sep and i < len(row.get("cells", [])) - 1:
             sep_w = measure_text(sep, font_size=fs, monospace=cell_mono)
             total += gap + sep_w
@@ -486,23 +504,31 @@ def _measure_row_content_width(row: dict[str, Any]) -> float:
 
 
 def _apply_content_aware_scroll(rows: list[dict[str, Any]], base_speed: float, speed: float, frame_width: int) -> None:
-    """Set scroll_distance and scroll_dur per row based on actual content width."""
+    """Set scroll_distance and scroll_dur per row based on actual content width.
+
+    scroll_distance = content_width + trailing_gap. The trailing gap creates
+    breathing room between the end of Set A and the start of Set B. Without it,
+    the last word of Set A and the first word of Set B are immediately adjacent
+    and overlap during the scroll animation.
+    """
     for row in rows:
         content_w = _measure_row_content_width(row)
-        # Ensure scroll_distance >= frame_width for seamless looping
-        sd = max(content_w, float(frame_width))
+        trailing_gap = float(row.get("gap", 28)) * 2
+        sd = max(content_w + trailing_gap, float(frame_width))
         row["scroll_distance"] = int(sd)
         row["scroll_dur"] = round(sd / (base_speed * speed), 2)
 
 
-def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str, Any]:
+def _resolve_counter(
+    spec: ComposeSpec, chrome_ctx: dict[str, Any], profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Counter-scroll tri-band: 3 rows with distinct content types.
 
     Brutalist and chrome genomes produce different aesthetic DNA:
     - Brutalist: monospace, ■ separators, bold accent colors, thick dividers
     - Chrome: display+mono mix, ● separators at 25% opacity, muted palette, thin hairlines
     """
-    is_chrome = chrome_ctx.get("is_chrome", False)
+    _prof = profile or {}
     width, height = 800, 140
     base_speed = 90.2  # px/s (1000 / 11.09)
     # Speed override: marquee_speeds[0] scales all rows uniformly
@@ -518,242 +544,131 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
 
     metric_items = _parse_counter_metrics(spec.value or "")
 
-    if is_chrome:
-        # Chrome aesthetic: display font for brand, mono for metrics, ● separators
-        row_ys = [5, 48, 91]
-        row_hs = [40, 40, 40]
-        text_ys = [30, 74, 117]
-        clip_x = 8
-        clip_w = 784
+    # ── Profile-driven layout parameters ──
+    brand_color_even = _prof.get("marquee_counter_brand_color_even", "var(--dna-signal)")
+    brand_color_odd = _prof.get("marquee_counter_brand_color_odd", "var(--dna-ink-primary)")
+    metric_label_color = _prof.get("marquee_counter_metric_label_color", "var(--dna-label-text, var(--dna-signal-dim))")
+    metric_value_font = _prof.get("marquee_counter_metric_value_font", "")
+    row_ys = _prof.get("marquee_counter_row_ys", [6, 48, 90])
+    row_hs = _prof.get("marquee_counter_row_hs", [36, 36, 38])
+    text_ys = _prof.get("marquee_counter_text_ys", [30, 72, 115])
+    divider_ys = _prof.get("marquee_counter_divider_ys", [44, 88])
+    gap_r1 = _prof.get("marquee_counter_gap_r1", 28)
+    letter_spacing_r1 = _prof.get("marquee_counter_letter_spacing_r1", "4")
+    letter_spacing_r2 = _prof.get("marquee_counter_letter_spacing_r2", "1.5")
+    letter_spacing_r3 = _prof.get("marquee_counter_letter_spacing_r3", "1")
+    text_start_x = _prof.get("marquee_counter_text_start_x", 20)
+    separator = _prof.get("marquee_separator", "■")
+    separator_color = _prof.get("marquee_separator_color", "var(--dna-border)")
+    separator_opacity = _prof.get("marquee_separator_opacity", "")
+    font_family = _prof.get("marquee_font_family", "var(--dna-font-mono, ui-monospace, monospace)")
+    mono_font = f"var(--dna-font-mono, {_prof.get('fonts', {}).get('mono', 'monospace')})"
 
-        row1_cells: list[dict[str, Any]] = []
-        for i, text in enumerate(brand_items):
-            row1_cells.append(
-                {
-                    "text": text,
-                    "color": "var(--dna-ink-primary)"
-                    if i % 2 == 0
-                    else "var(--dna-ink-secondary, var(--dna-ink-muted))",
-                }
-            )
-
-        row2_cells: list[dict[str, Any]] = []
-        for m in metric_items:
-            row2_cells.append(
-                {
-                    "text": m["label"],
-                    "color": "var(--dna-signal)",
-                    "font_weight": "700",
-                }
-            )
-            row2_cells.append(
-                {
-                    "text": m["value"],
-                    "color": "var(--dna-ink-primary)",
-                    "font_size": "15",
-                    "font_weight": "800",
-                    "font_family": "var(--dna-font-display, 'Inter', system-ui, sans-serif)",
-                    "dx": "6",
-                }
-            )
-            if m.get("delta"):
-                arrow = "▲" if m.get("delta_dir") == "positive" else "▼"
-                color = (
-                    "var(--dna-status-passing-core)"
-                    if m.get("delta_dir") == "positive"
-                    else "var(--dna-status-failing-core)"
-                )
-                row2_cells.append(
-                    {
-                        "text": f"{arrow}{m['delta']}",
-                        "color": color,
-                        "font_size": "9",
-                        "dx": "4",
-                    }
-                )
-
-        status_items: list[dict[str, Any]] = [
-            {"text": "●", "color": "var(--dna-signal)", "dx": "16"},
-            {"text": "COMPOSITOR ONLINE", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "dx": "6"},
-            {"text": "●", "color": "var(--dna-signal)", "dx": "24"},
-            {"text": "CDN EDGE 14ms", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "dx": "6"},
-            {"text": "●", "color": "var(--dna-signal)", "dx": "24"},
-            {"text": "MCP SERVER v0.1.0", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "dx": "6"},
-            {"text": "◆", "color": "var(--dna-signal-dim)", "dx": "24"},
-            {"text": "GENOME REGISTRY 12/12", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "dx": "6"},
-            {"text": "◆", "color": "var(--dna-signal-dim)", "dx": "24"},
-            {"text": "CIM COMPLIANT", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "dx": "6"},
-            {"text": "◆", "color": "var(--dna-signal-dim)", "dx": "24"},
-            {"text": "WCAG AA PASS", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "dx": "6"},
-        ]
-
-        all_rows = [
+    # ── Row 1: Brand items ──
+    row1_cells: list[dict[str, Any]] = []
+    for i, text in enumerate(brand_items):
+        row1_cells.append(
             {
-                "cells": row1_cells,
-                "scroll_distance": 0,
-                "scroll_dur": 0,
-                "direction": "rtl",
-                "separator": "●",
-                "separator_color": "var(--dna-signal)",
-                "separator_opacity": ".25",
-                "gap": 20,
-                "font_size": 14,
-                "font_weight": "800",
-                "letter_spacing": "3",
-                "font_family": "var(--dna-font-display, 'Inter', system-ui, sans-serif)",
-                "text_start_x": 16,
-                "row_y": row_ys[0],
-                "row_h": row_hs[0],
-                "text_y": text_ys[0],
-            },
+                "text": text,
+                "color": brand_color_even if i % 2 == 0 else brand_color_odd,
+            }
+        )
+
+    # ── Row 2: Metric label/value pairs ──
+    row2_cells: list[dict[str, Any]] = []
+    for m in metric_items:
+        row2_cells.append(
             {
-                "cells": row2_cells,
-                "scroll_distance": 0,
-                "scroll_dur": 0,
-                "direction": "ltr",
-                "separator": "",
-                "separator_color": "",
-                "separator_opacity": "",
-                "gap": 32,
-                "font_size": 11,
+                "text": m["label"],
+                "color": metric_label_color,
                 "font_weight": "700",
-                "letter_spacing": "1",
-                "font_family": "var(--dna-font-mono, 'Courier New', monospace)",
-                "text_start_x": 16,
-                "row_y": row_ys[1],
-                "row_h": row_hs[1],
-                "text_y": text_ys[1],
-            },
-            {
-                "cells": status_items,
-                "scroll_distance": 0,
-                "scroll_dur": 0,
-                "direction": "rtl",
-                "separator": "",
-                "separator_color": "",
-                "separator_opacity": "",
-                "gap": 24,
-                "font_size": 10,
-                "font_weight": "500",
-                "letter_spacing": ".5",
-                "font_family": "var(--dna-font-mono, 'Courier New', monospace)",
-                "text_start_x": 16,
-                "row_y": row_ys[2],
-                "row_h": row_hs[2],
-                "text_y": text_ys[2],
-            },
-        ]
-        divider_ys = [46, 90]
-    else:
-        # Brutalist aesthetic: monospace, ■ separators, bold accent colors
-        row_ys = [6, 48, 90]
-        row_hs = [36, 36, 38]
-        text_ys = [30, 72, 115]
-        clip_x = 6
-        clip_w = 788
-
-        row1_cells = []
-        for i, text in enumerate(brand_items):
-            row1_cells.append(
-                {
-                    "text": text,
-                    "color": "var(--dna-signal)" if i % 2 == 0 else "var(--dna-ink-primary)",
-                }
-            )
-
-        row2_cells = []
-        for m in metric_items:
-            row2_cells.append(
-                {
-                    "text": m["label"],
-                    "color": "var(--dna-label-text, var(--dna-signal-dim))",
-                    "font_weight": "700",
-                }
+            }
+        )
+        value_cell: dict[str, Any] = {
+            "text": m["value"],
+            "color": "var(--dna-ink-primary)",
+            "font_size": "15",
+            "font_weight": "800",
+            "dx": "6",
+        }
+        if metric_value_font:
+            value_cell["font_family"] = metric_value_font
+        row2_cells.append(value_cell)
+        if m.get("delta"):
+            arrow = "▲" if m.get("delta_dir") == "positive" else "▼"
+            color = (
+                "var(--dna-status-passing-core)"
+                if m.get("delta_dir") == "positive"
+                else "var(--dna-status-failing-core)"
             )
             row2_cells.append(
                 {
-                    "text": m["value"],
-                    "color": "var(--dna-ink-primary)",
-                    "font_size": "15",
-                    "font_weight": "800",
-                    "dx": "6",
+                    "text": f"{arrow}{m['delta']}",
+                    "color": color,
+                    "font_size": "9",
+                    "dx": "4",
                 }
             )
-            if m.get("delta"):
-                arrow = "▲" if m.get("delta_dir") == "positive" else "▼"
-                color = (
-                    "var(--dna-status-passing-core)"
-                    if m.get("delta_dir") == "positive"
-                    else "var(--dna-status-failing-core)"
-                )
-                row2_cells.append(
-                    {
-                        "text": f"{arrow}{m['delta']}",
-                        "color": color,
-                        "font_size": "9",
-                        "dx": "4",
-                    }
-                )
 
-        status_items = _build_counter_status_items(spec)
+    # ── Row 3: Status indicators ──
+    status_items = _build_counter_status_items(spec, _prof)
 
-        all_rows = [
-            {
-                "cells": row1_cells,
-                "scroll_distance": 0,
-                "scroll_dur": 0,
-                "direction": "rtl",
-                "separator": "■",
-                "separator_color": "var(--dna-border)",
-                "separator_opacity": "",
-                "gap": 28,
-                "font_size": 14,
-                "font_weight": "800",
-                "letter_spacing": "4",
-                "font_family": "var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)",
-                "text_start_x": 20,
-                "row_y": row_ys[0],
-                "row_h": row_hs[0],
-                "text_y": text_ys[0],
-            },
-            {
-                "cells": row2_cells,
-                "scroll_distance": 0,
-                "scroll_dur": 0,
-                "direction": "ltr",
-                "separator": "",
-                "separator_color": "",
-                "separator_opacity": "",
-                "gap": 32,
-                "font_size": 11,
-                "font_weight": "700",
-                "letter_spacing": "1.5",
-                "font_family": "var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)",
-                "text_start_x": 20,
-                "row_y": row_ys[1],
-                "row_h": row_hs[1],
-                "text_y": text_ys[1],
-            },
-            {
-                "cells": status_items,
-                "scroll_distance": 0,
-                "scroll_dur": 0,
-                "direction": "rtl",
-                "separator": "",
-                "separator_color": "",
-                "separator_opacity": "",
-                "gap": 24,
-                "font_size": 10,
-                "font_weight": "500",
-                "letter_spacing": "1",
-                "font_family": "var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)",
-                "text_start_x": 20,
-                "row_y": row_ys[2],
-                "row_h": row_hs[2],
-                "text_y": text_ys[2],
-            },
-        ]
-        divider_ys = [44, 88]
+    all_rows = [
+        {
+            "cells": row1_cells,
+            "scroll_distance": 0,
+            "scroll_dur": 0,
+            "direction": "rtl",
+            "separator": separator,
+            "separator_color": separator_color,
+            "separator_opacity": separator_opacity,
+            "gap": gap_r1,
+            "font_size": 14,
+            "font_weight": "800",
+            "letter_spacing": letter_spacing_r1,
+            "font_family": font_family,
+            "text_start_x": text_start_x,
+            "row_y": row_ys[0],
+            "row_h": row_hs[0],
+            "text_y": text_ys[0],
+        },
+        {
+            "cells": row2_cells,
+            "scroll_distance": 0,
+            "scroll_dur": 0,
+            "direction": "ltr",
+            "separator": "",
+            "separator_color": "",
+            "separator_opacity": "",
+            "gap": 32,
+            "font_size": 11,
+            "font_weight": "700",
+            "letter_spacing": letter_spacing_r2,
+            "font_family": mono_font,
+            "text_start_x": text_start_x,
+            "row_y": row_ys[1],
+            "row_h": row_hs[1],
+            "text_y": text_ys[1],
+        },
+        {
+            "cells": status_items,
+            "scroll_distance": 0,
+            "scroll_dur": 0,
+            "direction": "rtl",
+            "separator": "",
+            "separator_color": "",
+            "separator_opacity": "",
+            "gap": 24,
+            "font_size": 10,
+            "font_weight": "500",
+            "letter_spacing": letter_spacing_r3,
+            "font_family": mono_font,
+            "text_start_x": text_start_x,
+            "row_y": row_ys[2],
+            "row_h": row_hs[2],
+            "text_y": text_ys[2],
+        },
+    ]
 
     n_rows = spec.marquee_rows if spec.marquee_rows > 1 else 3
     all_rows = all_rows[:n_rows]
@@ -766,6 +681,22 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
     scroll_distance = max(_sds) if _sds else 1000
     scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
+    # ── Data-driven parametric vars (profile YAML) ──
+    divider_x_inset = _prof.get("marquee_counter_divider_x_inset", 6)
+    divider_x1 = divider_x_inset
+    divider_x2 = width - divider_x_inset
+    divider_stroke_width = _prof.get("marquee_counter_divider_stroke_width", "1.5")
+    divider_stroke_opacity = _prof.get("marquee_counter_divider_stroke_opacity", ".2")
+    fade_inset = _prof.get("marquee_counter_fade_inset", 5)
+    fade_x = fade_inset
+    fade_y = fade_inset
+    fade_w = _prof.get("marquee_counter_fade_w", 36)
+    fade_h = height - fade_inset * 2
+    fade_right_x = width - fade_inset - fade_w
+    fade_rx = _prof.get("marquee_counter_fade_rx", "")
+    show_rivets = _prof.get("marquee_counter_show_rivets", True)
+    show_beacon = _prof.get("marquee_counter_show_beacon", True)
+
     ctx: dict[str, Any] = {
         "rows": all_rows,
         "scroll_distance": scroll_distance,
@@ -775,24 +706,37 @@ def _resolve_counter(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str,
         "accent_bar_w": 4,
         "rivet_size": 6,
         "rivet_opacity": 0.4,
-        "fade_width": 36,
+        "fade_width": fade_w,
         "beacon_pulse_dur": "2.618s",
         "divider_ys": divider_ys[: n_rows - 1],
-        "clip_x": clip_x if is_chrome else 6,
-        "clip_w": clip_w if is_chrome else 788,
+        "clip_x": _prof.get("marquee_clip_x", 6),
+        "clip_w": _prof.get("marquee_clip_w", 788),
         "direction": spec.marquee_direction,
+        # Data-driven parametric vars for profile-dispatched template
+        "divider_x1": divider_x1,
+        "divider_x2": divider_x2,
+        "divider_stroke_width": divider_stroke_width,
+        "divider_stroke_opacity": divider_stroke_opacity,
+        "fade_x": fade_x,
+        "fade_y": fade_y,
+        "fade_h": fade_h,
+        "fade_right_x": fade_right_x,
+        "fade_rx": fade_rx,
+        "show_rivets": show_rivets,
+        "show_beacon": show_beacon,
     }
     ctx.update(chrome_ctx)
     return {"width": width, "height": height, "template": "frames/marquee-counter.svg.j2", "context": ctx}
 
 
-def _resolve_vertical(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str, Any]:
+def _resolve_vertical(
+    spec: ComposeSpec, chrome_ctx: dict[str, Any], profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Vertical telemetry feed: timestamped event rows with status indicators.
 
-    Chrome: circles for dots, horizon-band header, hairline accent, Courier New font.
-    Brutalist: square dots, solid header, 3px accent bar, ui-monospace.
+    Dot shape, status colors, and accent styling read from profile YAML.
     """
-    is_chrome = chrome_ctx.get("is_chrome", False)
+    _prof = profile or {}
     width, height = 400, 268
     header_h = 33
     row_height = 30
@@ -802,7 +746,11 @@ def _resolve_vertical(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str
     fade_h = 18
 
     raw_items = [s.strip() for s in (spec.title or "").split() if s.strip()] or ["HYPERWEAVE"]
-    scroll_rows = _build_vertical_rows(raw_items, is_chrome=is_chrome)
+    scroll_rows = _build_vertical_rows(
+        raw_items,
+        warn_color=_prof.get("marquee_vertical_warn_color", "var(--dna-status-warning-core)"),
+        status_ts_color=_prof.get("marquee_vertical_status_ts_color", "var(--dna-label-text, var(--dna-signal-dim))"),
+    )
     item_count = len(scroll_rows)
     content_h = item_count * row_height
 
@@ -819,29 +767,32 @@ def _resolve_vertical(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str
         "content_h": content_h,
         "scroll_dur": scroll_dur,
         "fade_h": fade_h,
-        "dot_shape": "circle" if is_chrome else "rect",
+        "dot_shape": _prof.get("marquee_dot_shape", "rect"),
         "dot_size": 4,
         "dot_x": 14,
         "text_x": 26,
-        "status_label_x": width - 16 if is_chrome else width - 18,
+        "status_label_x": width - _prof.get("marquee_vertical_status_label_offset", 18),
         "bottom_accent_h": 3,
         "live_dot_size": 8,
         "pulse_dur": "2.618s",
         "divider_y": header_h + 5,
         "bezel": 4,
         "surface_inset": 5,
+        # Data-driven parametric var for profile-dispatched template
+        "bottom_accent_type": _prof.get("marquee_vertical_bottom_accent_type", "bar"),
     }
     ctx.update(chrome_ctx)
     return {"width": width, "height": height, "template": "frames/marquee-vertical.svg.j2", "context": ctx}
 
 
-def _resolve_horizontal(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[str, Any]:
+def _resolve_horizontal(
+    spec: ComposeSpec, chrome_ctx: dict[str, Any], profile: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Horizontal LIVE ticker: brand items scrolling left.
 
-    Chrome: dark well LIVE + diamond indicator + ● separators + display font.
-    Brutalist: gradient LIVE + ■ separators + monospace.
+    Separator, font family, and colors read from profile YAML.
     """
-    is_chrome = chrome_ctx.get("is_chrome", False)
+    _prof = profile or {}
     width, height = 800, 40
     scroll_distance = 1000
     base_speed = 90.2
@@ -853,32 +804,29 @@ def _resolve_horizontal(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[s
     if not raw_items:
         raw_items = [items_text] if items_text else ["HYPERWEAVE"]
 
-    if is_chrome:
-        scroll_items = [
-            {
-                "text": t,
-                "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
-                "font_weight": "700" if i == 0 else "",
-            }
-            for i, t in enumerate(raw_items)
-        ]
-        separator = "●"
-        separator_color = "var(--dna-signal)"
-        separator_opacity = ".25"
-        font_family = "var(--dna-font-display, 'Inter', system-ui, sans-serif)"
-    else:
-        scroll_items = [
-            {
-                "text": t,
-                "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
-                "font_weight": "700" if i % 2 == 0 else "",
-            }
-            for i, t in enumerate(raw_items)
-        ]
-        separator = "■"
-        separator_color = "var(--dna-border)"
-        separator_opacity = ""
-        font_family = "var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+    bold_pattern = _prof.get("marquee_horizontal_bold_pattern", "even")
+    separator = _prof.get("marquee_separator", "■")
+    separator_color = _prof.get("marquee_separator_color", "var(--dna-border)")
+    separator_opacity = _prof.get("marquee_separator_opacity", "")
+    font_family = _prof.get("marquee_font_family", "var(--dna-font-mono, ui-monospace, monospace)")
+
+    scroll_items = [
+        {
+            "text": t,
+            "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
+            "font_weight": (
+                "700"
+                if (bold_pattern == "first" and i == 0) or (bold_pattern == "even" and i % 2 == 0)
+                else ""
+            ),
+        }
+        for i, t in enumerate(raw_items)
+    ]
+
+    # Data-driven parametric vars for profile-dispatched template
+    clip_inset_y = _prof.get("marquee_horizontal_clip_inset_y", 4)
+    clip_inset_x = _prof.get("marquee_horizontal_clip_inset_x", 4)
+    show_accent_lines = _prof.get("marquee_horizontal_show_accent_lines", True)
 
     ctx: dict[str, Any] = {
         "direction": spec.marquee_direction,
@@ -897,6 +845,10 @@ def _resolve_horizontal(spec: ComposeSpec, chrome_ctx: dict[str, Any]) -> dict[s
         "item_dx": 20,
         "item_start_x": 148,
         "scroll_font_family": font_family,
+        # Data-driven parametric vars for profile-dispatched template
+        "clip_inset_y": clip_inset_y,
+        "clip_inset_x": clip_inset_x,
+        "show_accent_lines": show_accent_lines,
     }
     ctx.update(chrome_ctx)
     return {"width": width, "height": height, "template": "frames/marquee-horizontal.svg.j2", "context": ctx}
@@ -923,26 +875,31 @@ def _parse_counter_metrics(value: str) -> list[dict[str, str]]:
     return metrics or [{"label": "STATUS", "value": "NOMINAL"}]
 
 
-def _build_counter_status_items(spec: ComposeSpec) -> list[dict[str, Any]]:
+def _build_counter_status_items(
+    spec: ComposeSpec, profile: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     """Build status indicator items for counter row 3."""
+    _prof = profile or {}
+    dot_color = _prof.get("marquee_counter_status_dot_color", "var(--dna-status-passing-core)")
+    diamond_color = _prof.get("marquee_counter_status_diamond_color", "var(--dna-signal)")
     return [
-        {"text": "●", "color": "var(--dna-status-passing-core)", "font_weight": "700", "dx": "20"},
+        {"text": "●", "color": dot_color, "font_weight": "700", "dx": "20"},
         {"text": "ONLINE", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "font_weight": "500", "dx": "6"},
-        {"text": "●", "color": "var(--dna-status-passing-core)", "font_weight": "700", "dx": "24"},
+        {"text": "●", "color": dot_color, "font_weight": "700", "dx": "24"},
         {
             "text": "CDN EDGE 14ms",
             "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
             "font_weight": "500",
             "dx": "6",
         },
-        {"text": "◆", "color": "var(--dna-signal)", "font_weight": "700", "dx": "24"},
+        {"text": "◆", "color": diamond_color, "font_weight": "700", "dx": "24"},
         {
             "text": "CIM COMPLIANT",
             "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
             "font_weight": "500",
             "dx": "6",
         },
-        {"text": "◆", "color": "var(--dna-signal)", "font_weight": "700", "dx": "24"},
+        {"text": "◆", "color": diamond_color, "font_weight": "700", "dx": "24"},
         {
             "text": "WCAG AA PASS",
             "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
@@ -952,7 +909,12 @@ def _build_counter_status_items(spec: ComposeSpec) -> list[dict[str, Any]]:
     ]
 
 
-def _build_vertical_rows(raw_items: list[str], *, is_chrome: bool = False) -> list[dict[str, Any]]:
+def _build_vertical_rows(
+    raw_items: list[str],
+    *,
+    warn_color: str = "var(--dna-status-warning-core)",
+    status_ts_color: str = "var(--dna-label-text, var(--dna-signal-dim))",
+) -> list[dict[str, Any]]:
     """Build structured telemetry rows from raw text items."""
     default_events = [
         ("ok", "compositor.compose() → badge", "OK"),
@@ -969,9 +931,6 @@ def _build_vertical_rows(raw_items: list[str], *, is_chrome: bool = False) -> li
         ("ok", 'genome.register("tokyo-street")', "OK"),
     ]
 
-    # Chrome uses accent_complement (#8A7355) for WARN, brutalist uses standard warning color
-    warn_color = "var(--dna-signal-dim)" if is_chrome else "var(--dna-status-warning-core)"
-
     _status_dot = {
         "ok": "var(--dna-status-passing-core)",
         "info": "var(--dna-signal)",
@@ -979,8 +938,8 @@ def _build_vertical_rows(raw_items: list[str], *, is_chrome: bool = False) -> li
         "err": "var(--dna-status-failing-core)",
     }
     _status_ts = {
-        "ok": "var(--dna-signal)" if is_chrome else "var(--dna-label-text, var(--dna-signal-dim))",
-        "info": "var(--dna-signal)" if is_chrome else "var(--dna-label-text, var(--dna-signal-dim))",
+        "ok": status_ts_color,
+        "info": status_ts_color,
         "warn": warn_color,
         "err": "var(--dna-status-failing-core)",
     }
@@ -1058,7 +1017,9 @@ def resolve_receipt(
     # ── Derive numeric values ──
     total_input = profile_data.get("total_input_tokens", 0)
     total_output = profile_data.get("total_output_tokens", 0)
-    total_tok = total_input + total_output
+    total_cache_read = profile_data.get("total_cache_read_tokens", 0)
+    total_cache_create = profile_data.get("total_cache_creation_tokens", 0)
+    total_tok = total_input + total_output + total_cache_read + total_cache_create
     total_cost = profile_data.get("total_cost", 0)
     duration_m = session.get("duration_minutes", 0)
     model = session.get("model", profile_data.get("model", "Claude Session"))
@@ -1096,6 +1057,8 @@ def resolve_receipt(
     hero_right = [
         f"{_fmt_tok(total_input)} in / {_fmt_tok(total_output)} out",
     ]
+    if total_cache_read or total_cache_create:
+        hero_right.append(f"{_fmt_tok(total_cache_read)} cached / {_fmt_tok(total_cache_create)} written")
     if n_corrections:
         hero_right.append(f"{n_corrections} correction{'s' if n_corrections != 1 else ''}")
 
@@ -1201,7 +1164,7 @@ def resolve_receipt(
         footer_parts.append(f"{n_corrections} corrections")
     if n_agents:
         footer_parts.append(f"{n_agents} agents")
-    footer_left = " · ".join(footer_parts) if footer_parts else "hyperweave.dev"
+    footer_left = " · ".join(footer_parts) if footer_parts else "hyperweave.app"
     footer_right = f"transcript · {model}"
 
     return {
@@ -1265,7 +1228,9 @@ def resolve_rhythm_strip(
 
     total_input = profile_data.get("total_input_tokens", 0)
     total_output = profile_data.get("total_output_tokens", 0)
-    total_tok = total_input + total_output
+    total_cache_read = profile_data.get("total_cache_read_tokens", 0)
+    total_cache_create = profile_data.get("total_cache_creation_tokens", 0)
+    total_tok = total_input + total_output + total_cache_read + total_cache_create
     total_cost = profile_data.get("total_cost", 0)
     duration_m = session.get("duration_minutes", 0)
     calls = sum(t.get("count", 0) for t in tools)
@@ -1426,7 +1391,7 @@ def resolve_master_card(
             "heatmap_file_count": len(files),
             "heatmap_rows": heatmap_rows,
             "skills": skill_bars,
-            "footer_left": "hyperweave.dev",
+            "footer_left": "hyperweave.app",
             "footer_right": f"{model}",
         },
     }
@@ -1610,33 +1575,38 @@ def _load_rule(rule_id: str) -> dict[str, Any]:
         return {"id": rule_id, "svg_fragment": ""}
 
 
-def _chrome_visual_context(genome: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
-    """Build chrome-specific rendering context from genome data.
+def _profile_visual_context(genome: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+    """Build profile-specific visual rendering context from genome data.
 
-    Used by all frame resolvers when profile is 'chrome' to enable
-    envelope gradients, specular highlights, and bevel effects.
+    Returns envelope, well, specular, and material properties that the genome
+    defines. Templates guard on data presence ({% if envelope_stops %}), not
+    on profile identity. A genome without envelope_stops gets no envelope —
+    regardless of which profile it belongs to.
     """
-    if profile.get("id") != ProfileId.CHROME:
-        return {"is_chrome": False}
-
     env_stops = genome.get("envelope_stops", [])
     corner_raw = str(genome.get("corner", "4px")).replace("px", "")
-    return {
-        "is_chrome": True,
+    ctx = {
         "envelope_stops": env_stops,
-        "well_top": genome.get("well_top", genome.get("surface_1", "#0C1E2E")),
-        "well_bottom": genome.get("well_bottom", genome.get("surface_2", "#06101A")),
-        "specular_light": genome.get("highlight_color", "#6AACC8"),
-        "specular_sweep_dur": genome.get("specular_sweep_dur", "12s"),
-        "specular_sweep_peak": genome.get("specular_sweep_peak", "0.08"),
-        "highlight_opacity": genome.get("highlight_opacity", "0.08"),
-        "bevel_shadow_opacity": genome.get("shadow_opacity", "0.30"),
+        "well_top": genome.get("well_top", ""),
+        "well_bottom": genome.get("well_bottom", ""),
+        "specular_light": genome.get("highlight_color", ""),
+        "specular_sweep_dur": genome.get("specular_sweep_dur", ""),
+        "specular_sweep_peak": genome.get("specular_sweep_peak", ""),
+        "highlight_opacity": genome.get("highlight_opacity", ""),
+        "bevel_shadow_opacity": genome.get("shadow_opacity", ""),
         "chrome_corner": corner_raw,
         "chrome_text_gradient": genome.get("chrome_text_gradient", []),
-        "chrome_rhythm": genome.get("rhythm_base", "6s"),
-        "glyph_fill": genome.get("glyph_inner", "#E0ECF6"),
+        "chrome_rhythm": genome.get("rhythm_base", ""),
+        "glyph_fill": genome.get("glyph_inner", ""),
         "light_mode": genome.get("light_mode"),
     }
+    # Badge bevel extras -- only when genome provides bevel config
+    if genome.get("highlight_color"):
+        ctx["bevel_spec_constant"] = genome.get("bevel_spec_constant", "0.8")
+        ctx["bevel_spec_exponent"] = genome.get("bevel_spec_exponent", "25.0")
+        ctx["chrome_rhythm"] = genome.get("rhythm_base", "6s")
+        ctx["light_mode"] = genome.get("light_mode")
+    return ctx
 
 
 def _lighten_hex(hex_color: str) -> str:

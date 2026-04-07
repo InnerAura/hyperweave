@@ -160,6 +160,10 @@ def session(
             pass
 
     if not transcript_path or not transcript_path.exists():
+        # Graceful no-op for non-conversational sessions (e.g., `claude update`)
+        # that fire SessionEnd without producing a transcript.
+        if not sys.stdin.isatty():
+            return
         typer.echo("Error: no transcript found (pass path or pipe hook JSON on stdin)", err=True)
         raise typer.Exit(1)
 
@@ -198,7 +202,12 @@ def session(
         # One-line summary to stderr
         profile = contract.get("profile", {})
         cost = profile.get("total_cost", 0)
-        total_tok = profile.get("total_input_tokens", 0) + profile.get("total_output_tokens", 0)
+        total_tok = (
+            profile.get("total_input_tokens", 0)
+            + profile.get("total_output_tokens", 0)
+            + profile.get("total_cache_read_tokens", 0)
+            + profile.get("total_cache_creation_tokens", 0)
+        )
         dur = contract.get("session", {}).get("duration_minutes", 0)
         tok_label = f"{total_tok / 1000:.1f}K" if total_tok >= 1000 else str(total_tok)
         typer.echo(f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}", err=True)
@@ -308,23 +317,103 @@ def install_hook() -> None:
     if not isinstance(raw_session_end, list):
         hooks["SessionEnd"] = session_end
 
-    # Check if already installed
+    # Remove stale "hw" hooks (0A bug: hw binary never existed)
+    cleaned = []
+    already_installed = False
     for entry in session_end:
         if not isinstance(entry, dict):
+            cleaned.append(entry)
             continue
         entry_hooks = entry.get("hooks", [])
         if not isinstance(entry_hooks, list):
+            cleaned.append(entry)
             continue
-        for h in entry_hooks:
-            if isinstance(h, dict) and "hyperweave session" in str(h.get("command", "")):
-                typer.echo("Hook already installed.")
-                return
+        cmds = [str(h.get("command", "")) for h in entry_hooks if isinstance(h, dict)]
+        if any("hw session" in c and "hyperweave" not in c for c in cmds):
+            continue  # drop stale hw hook
+        if any("hyperweave session" in c for c in cmds):
+            already_installed = True
+        cleaned.append(entry)
+    hooks["SessionEnd"] = cleaned
+    session_end = cleaned
+
+    if already_installed:
+        typer.echo("Hook already installed.")
+        settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+        return
 
     hook_entry = {"hooks": [{"type": "command", "command": "hyperweave session receipt", "timeout": 10}]}
     session_end.append(hook_entry)
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
     typer.echo(f"Installed SessionEnd hook in {settings_path}")
+
+
+@app.command("validate-genome")
+def validate_genome(
+    genome_path: Annotated[Path, typer.Argument(help="Path to genome JSON file")],
+    profile: Annotated[str, typer.Option("--profile", help="Profile to validate against")] = "",
+) -> None:
+    """Validate a genome JSON against a profile contract schema."""
+    import json
+
+    from hyperweave.core.color import contrast_ratio
+
+    if not genome_path.exists():
+        typer.echo(f"Error: {genome_path} not found", err=True)
+        raise typer.Exit(1)
+
+    genome = json.loads(genome_path.read_text())
+    profile_id = profile or genome.get("profile", "brutalist")
+
+    # Load contract schema
+    contract_path = Path(__file__).parent / "data" / "profiles" / f"{profile_id}.contract.json"
+    if not contract_path.exists():
+        typer.echo(f"Error: no contract schema for profile '{profile_id}'", err=True)
+        raise typer.Exit(1)
+
+    contract = json.loads(contract_path.read_text())
+    errors: list[str] = []
+
+    # Check required DNA vars have corresponding genome keys
+    for var_name, var_spec in contract.get("required_dna_vars", {}).items():
+        source_key = var_spec.get("source", "")
+        if source_key and not genome.get(source_key):
+            errors.append(f"MISSING: {var_name} (genome key '{source_key}' not set)")
+
+    # Check chrome-specific requirements
+    for key, key_spec in contract.get("chrome_required", {}).items():
+        val = genome.get(key)
+        if not val:
+            errors.append(f"MISSING: chrome required field '{key}'")
+        elif key_spec.get("type") == "array" and isinstance(val, list):
+            min_items = key_spec.get("min_items", 1)
+            if len(val) < min_items:
+                errors.append(f"INVALID: '{key}' has {len(val)} items, needs >= {min_items}")
+
+    # WCAG contrast checks
+    for pair in contract.get("contrast_pairs", []):
+        fg = genome.get(pair["foreground"], "")
+        bg = genome.get(pair["background"], "")
+        if not fg or not bg or not fg.startswith("#") or not bg.startswith("#"):
+            continue
+        try:
+            ratio = contrast_ratio(fg, bg)
+            min_ratio = pair["min_ratio"]
+            if ratio < min_ratio:
+                errors.append(f"WCAG FAIL: {pair['label']} — {ratio:.1f}:1 < {min_ratio}:1 ({fg} on {bg})")
+            else:
+                typer.echo(f"  PASS: {pair['label']} — {ratio:.1f}:1 >= {min_ratio}:1")
+        except (ValueError, TypeError):
+            errors.append(f"INVALID COLOR: {pair['label']} — cannot parse {fg} or {bg}")
+
+    if errors:
+        typer.echo(f"\nValidation FAILED for {genome_path.name} against {profile_id}:")
+        for e in errors:
+            typer.echo(f"  {e}", err=True)
+        raise typer.Exit(1)
+    else:
+        typer.echo(f"\nValidation PASSED: {genome_path.name} is a valid {profile_id} genome.")
 
 
 @app.command()

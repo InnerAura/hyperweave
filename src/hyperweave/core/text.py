@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-# Monospace character width at 11px (SF Mono / JetBrains Mono average).
-_MONO_CHAR_WIDTH_11PX: float = 6.6
+# Monospace character width at 11px.
+# Calibrated for the widest common monospace face at bold weight:
+# SF Mono ~6.6, JetBrains Mono ~6.8, Menlo ~7.0, Consolas ~7.2.
+# Using 7.2 ensures no overlap on any platform. Slightly over-measures
+# on SF Mono, which creates extra breathing room — acceptable tradeoff.
+_MONO_CHAR_WIDTH_11PX: float = 7.2
 
 # Width table for Inter Regular at 11px, in tenths-of-pixels.
 # Derived from font metrics extraction. Missing characters use the

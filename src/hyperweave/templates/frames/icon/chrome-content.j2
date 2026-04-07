@@ -1,0 +1,41 @@
+{# Chrome icon content: satin envelope, well, top highlight, bright glyph.
+   Specimens: icon-circle-v2.svg, icon-square-v2.svg
+   Chrome ring -> inner border -> well -> top highlight -> bright glyph.
+   No label. No glow filter. Crisp silhouette.
+   Variant keyed on icon_variant, not profile identity. #}
+
+{% if icon_variant | default('binary-circular') == 'binary-square' %}
+{# -- Square variant (specimen: icon-square-v2.svg) -- #}
+<g clip-path="url(#{{ uid }}-clip)">
+  <rect width="64" height="64" rx="14" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-sh)"/>
+</g>
+<rect x="3.5" y="3.5" width="57" height="57" rx="11" fill="none" stroke="#000510" stroke-width="0.8"/>
+<rect x="4" y="4" width="56" height="56" rx="10" fill="url(#{{ uid }}-well)"/>
+<rect x="10" y="4" width="44" height="0.8" rx="0.4" fill="{{ specular_light | default('#6AACC8') }}" opacity="0.12"/>
+
+{% if glyph_path %}
+<g transform="translate(16,16)">
+  <svg viewBox="{{ glyph_viewbox }}" width="32" height="32">
+    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default('#E0ECF6') }}"/>
+  </svg>
+</g>
+{% endif %}
+
+{% else %}
+{# -- Circle variant (specimen: icon-circle-v2.svg) -- #}
+<circle cx="32" cy="32" r="28" fill="none" stroke="url(#{{ uid }}-env)" stroke-width="3" filter="url(#{{ uid }}-sh)"/>
+<circle cx="32" cy="32" r="26.5" fill="url(#{{ uid }}-well)"/>
+<circle cx="32" cy="32" r="26.5" fill="none" stroke="#000510" stroke-width="0.5"/>
+<g clip-path="url(#{{ uid }}-top-clip)">
+  <circle cx="32" cy="32" r="26" fill="none" stroke="{{ specular_light | default('#6AACC8') }}" stroke-width="0.8" opacity="0.15"/>
+</g>
+
+{% if glyph_path %}
+<g transform="translate(17,17)">
+  <svg viewBox="{{ glyph_viewbox }}" width="30" height="30">
+    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default('#E0ECF6') }}"/>
+  </svg>
+</g>
+{% endif %}
+
+{% endif %}

@@ -1,0 +1,18 @@
+{# Brutalist horizontal-marquee content: 3-layer frame, LIVE block, divider, label.
+   Layer order: outer fill -> border -> surface -> LIVE block -> divider -> label. #}
+<rect width="{{ mw }}" height="{{ mh }}" fill="var(--dna-frame-fill, var(--dna-surface-deep))"/>
+<rect x="2" y="2" width="{{ mw - 4 }}" height="{{ mh - 4 }}"
+      fill="none" stroke="var(--dna-border)" stroke-width="3"/>
+<rect x="4" y="4" width="{{ mw - 8 }}" height="{{ mh - 8 }}"
+      fill="var(--dna-surface)"/>
+{# LIVE block — inside frame #}
+<rect x="4" y="4" width="{{ lp_w - 4 }}" height="{{ mh - 8 }}" fill="url(#{{ uid }}-accent)"/>
+{# Divider between LIVE and scroll #}
+<rect x="{{ lp_w }}" y="4" width="{{ divider_w | default(2) }}" height="{{ mh - 8 }}"
+      fill="var(--dna-frame-fill, var(--dna-surface-deep))"/>
+
+{# LIVE label — brutalist style #}
+<text x="{{ lp_w // 2 }}" y="{{ mh // 2 }}" text-anchor="middle" dominant-baseline="central"
+      font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
+      font-size="12" font-weight="800"
+      fill="#fff" letter-spacing="3">{{ marquee_label | default('LIVE') | upper }}</text>

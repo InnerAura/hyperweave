@@ -1,0 +1,25 @@
+{# Chrome icon defs: satin envelope, shadow filter, well gradient, clip path.
+   Guard on data presence (envelope_stops), not profile identity.
+   Variant-dependent: binary-square uses linear well + rect clip,
+   binary-circular uses radial well + top-clip. #}
+<linearGradient id="{{ uid }}-env" x1="0" x2="0" y1="0" y2="1">
+{% for stop in envelope_stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+<filter id="{{ uid }}-sh" x="-6%" y="-4%" width="112%" height="114%">
+  <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
+</filter>
+{% if icon_variant | default('binary-circular') == 'binary-square' %}
+<linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
+  <stop offset="0%" stop-color="{{ well_top | default('#0A1822') }}"/>
+  <stop offset="100%" stop-color="{{ well_bottom | default('#060E16') }}"/>
+</linearGradient>
+<clipPath id="{{ uid }}-clip"><rect width="64" height="64" rx="14"/></clipPath>
+{% else %}
+<radialGradient id="{{ uid }}-well" cx="0.5" cy="0.45" r="0.55">
+  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
+  <stop offset="100%" stop-color="{{ well_bottom | default('#060E16') }}"/>
+</radialGradient>
+<clipPath id="{{ uid }}-top-clip"><rect x="14" y="2" width="36" height="16"/></clipPath>
+{% endif %}

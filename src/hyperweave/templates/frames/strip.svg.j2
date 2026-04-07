@@ -1,74 +1,22 @@
-{# HyperWeave Strip Frame — 52px horizontal telemetry instrument.
-   Zone layout: plate bg → border stroke → accent bar → glyph →
+{# HyperWeave Strip Frame — Profile-dispatched, 52px horizontal telemetry instrument.
+   Templates never check genome identity. Data presence drives rendering:
+     envelope_stops present  → chrome defs/frame/separator/status
+     envelope_stops absent   → brutalist defs/frame/separator/status
+   Zone layout: plate bg → border → accent bar → glyph →
    identity text → [divider → metric cell]* → divider → status indicator.
-   Extends document.svg.j2.  Context: ComposeSpec dict.
-   Metric cells are repeating at ~106px pitch.
-   Chrome profile: 2-ring frame (outer chrome rim + inner dark well),
-   animated env-map gradient, chrome separator strokes, specular sweep. #}
+   Metric cells repeat at ~106px pitch.
+   Extends document.svg.j2. #}
 {% extends "document.svg.j2" %}
 
 {% block defs %}
-{% if is_chrome and envelope_stops %}
-  {# Chrome env-map gradient (11-stop HDRI simulation, animated y1/y2) #}
-  <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="-0.1" y2="0.9">
-  {% for stop in envelope_stops %}
-    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-  {% endfor %}
-    <animateTransform attributeName="gradientTransform" type="translate"
-      values="0 -0.2; 0 0.2; 0 -0.2" dur="6s"
-      repeatCount="indefinite" calcMode="spline"
-      keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
-  </linearGradient>
-  {# Specular sweep removed -- mobile WebKit text blur #}
-  {# Chrome separator — reduced opacity per satin specimens #}
-  <linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#001a33" stop-opacity="0.2"/>
-    <stop offset="45%" stop-color="#5ba3d4" stop-opacity="0.35"/>
-    <stop offset="50%" stop-color="#a8d4f0" stop-opacity="0.45"/>
-    <stop offset="55%" stop-color="#6b5a3f" stop-opacity="0.35"/>
-    <stop offset="100%" stop-color="#0a0a0a" stop-opacity="0.2"/>
-  </linearGradient>
-  {# Well gradient (lightened per satin specimens) #}
-  <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
-    <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
-  </linearGradient>
-  {# Product-weight bevel — shadow + light specular at strip scale #}
-  <filter id="{{ uid }}-bevel" x="-2%" y="-4%" width="104%" height="110%">
-    <feDropShadow dx="0" dy="1.5" stdDeviation="2.5"
-                  flood-color="#000" flood-opacity="{{ bevel_shadow_opacity | default('0.30') }}"/>
-    <feSpecularLighting in="SourceAlpha" surfaceScale="1.0"
-                        specularConstant="0.4" specularExponent="30"
-                        lighting-color="{{ specular_light | default('#6AACC8') }}" result="s">
-      <feDistantLight azimuth="225" elevation="50"/>
-    </feSpecularLighting>
-    <feComposite in="s" in2="SourceAlpha" operator="in" result="sc"/>
-    <feComposite in="SourceGraphic" in2="sc" operator="arithmetic"
-                 k1="0" k2="1" k3="0.12" k4="0"/>
-  </filter>
-  {# Chrome text gradient for metric values #}
-{% if chrome_text_gradient %}
-  <linearGradient id="{{ uid }}-chrome-text" x1="0" y1="0" x2="1" y2="0">
-{% for stop in chrome_text_gradient %}
-    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-{% endfor %}
-  </linearGradient>
-{% endif %}
-  {# Text shadow for legibility on chrome surfaces #}
-  <filter id="{{ uid }}-txt" x="-6%" y="-18%" width="112%" height="136%">
-    <feDropShadow dx="0" dy="0" stdDeviation="0.6" flood-color="var(--dna-surface, #000A14)" flood-opacity="0.9"/>
-  </filter>
+{% if envelope_stops | default([]) %}
+{% include "frames/strip/chrome-defs.j2" %}
 {% else %}
-  {# Standard plate gradient (vertical: surface → surface-alt → surface-deep) #}
-  <linearGradient id="{{ uid }}-plate" x1="0" x2="0" y1="0" y2="1">
-    <stop offset="0%" style="stop-color: var(--dna-surface)"/>
-    <stop offset="40%" style="stop-color: var(--dna-surface-alt)"/>
-    <stop offset="100%" style="stop-color: var(--dna-surface-deep)"/>
-  </linearGradient>
+{% include "frames/strip/brutalist-defs.j2" %}
 {% endif %}
-  <clipPath id="{{ uid }}-clip">
-    <rect width="{{ width }}" height="{{ height }}"/>
-  </clipPath>
+<clipPath id="{{ uid }}-clip">
+  <rect width="{{ width }}" height="{{ height }}"/>
+</clipPath>
 {% endblock %}
 
 {% block content %}
@@ -83,64 +31,24 @@
 {% set div_y1 = 12 %}
 {% set div_y2 = strip_h - 12 %}
 
-{% if is_chrome and envelope_stops %}
-{# === Chrome 2-ring frame (specimen: strip-chrome.svg / strip_cross_provider.svg) === #}
-
-{# Outer rim: full-size rect filled with animated chrome env-map + bevel filter #}
-<rect width="{{ width }}" height="{{ strip_h }}" rx="{{ chrome_corner }}"
-      fill="url(#{{ uid }}-envelope)" filter="url(#{{ uid }}-bevel)"/>
-{# Inset stroke — subtle per satin specimens #}
-<rect x="0.5" y="0.5" width="{{ width - 1 }}" height="{{ strip_h - 1 }}"
-      rx="{{ chrome_corner }}" fill="none"
-      stroke="rgba(255,255,255,0.07)" stroke-width="0.6"/>
-{# Inner well edge — dark stroke per satin specimens #}
-<rect x="2.5" y="2.5" width="{{ width - 5 }}" height="{{ strip_h - 5 }}"
-      rx="2.5" fill="none"
-      stroke="#000510" stroke-width="0.8"/>
-{# Inner well: dark recessed content area #}
-<rect x="3" y="3" width="{{ width - 6 }}" height="{{ strip_h - 6 }}"
-      rx="2" fill="url(#{{ uid }}-well)"/>
-{# Chrome accent bar: left edge env-map stripe #}
-<rect x="3" y="3" width="{{ accent_w }}" height="{{ strip_h - 6 }}"
-      fill="url(#{{ uid }}-envelope)"/>
-{# Specular sweep removed -- mobile WebKit text blur #}
-
+{# === Frame structure (profile-dispatched) === #}
+{% if envelope_stops | default([]) %}
+{% include "frames/strip/chrome-content.j2" %}
 {% else %}
-{# === Standard background plate === #}
-<g clip-path="url(#{{ uid }}-clip)">
-  <rect width="{{ width }}" height="{{ strip_h }}"
-        fill="url(#{{ uid }}-plate)"/>
-  {# Border stroke #}
-  <rect x="1" y="1" width="{{ width - 2 }}" height="{{ strip_h - 2 }}"
-        fill="none" stroke="var(--dna-border-tint)" stroke-width="2"/>
-  {# Accent bar — left edge #}
-  <rect width="{{ accent_w }}" height="{{ strip_h }}" class="hw-signal"/>
-</g>
+{% include "frames/strip/brutalist-content.j2" %}
 {% endif %}
 
-{# === Glyph zone === #}
+{# === Glyph zone (profile-parametric: size and fill from profile YAML) === #}
 {% if glyph_path %}
-{% if is_chrome %}
-{# Chrome: smaller glyph, bright solid fill (specimen: #E0ECF6), no backing rect #}
-{% set gs = 16 %}
+{% set gs = strip_glyph_size | default(20) %}
+{% set gf = strip_glyph_fill | default('var(--dna-signal)') %}
 <g data-hw-zone="glyph" transform="translate({{ glyph_cx }},{{ glyph_cy }})">
   <svg x="{{ -(gs // 2) }}" y="{{ -(gs // 2) }}"
        width="{{ gs }}" height="{{ gs }}"
        viewBox="{{ glyph_viewbox }}">
-    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default('#E0ECF6') }}"/>
+    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default(gf) }}"/>
   </svg>
 </g>
-{% else %}
-{# Standard: glyph path only, no backing rect (matches badge rendering) #}
-{% set gs = 20 %}
-<g data-hw-zone="glyph" transform="translate({{ glyph_cx }},{{ glyph_cy }})">
-  <svg x="{{ -(gs // 2) }}" y="{{ -(gs // 2) }}"
-       width="{{ gs }}" height="{{ gs }}"
-       viewBox="{{ glyph_viewbox }}">
-    <path d="{{ glyph_path }}" fill="var(--dna-signal)"/>
-  </svg>
-</g>
-{% endif %}
 {% endif %}
 
 {# === Identity text (clipped to zone before first divider) === #}
@@ -153,16 +61,17 @@
 <g clip-path="url(#{{ uid }}-id-clip)">
   <text data-hw-zone="identity"
         x="{{ identity_x }}" y="{{ (strip_h // 2) + 4 }}"
-        font-family="var(--dna-font-mono, 'SF Mono', monospace)"
-        font-size="{{ 11 if is_chrome else 11 }}" font-weight="{{ 700 if is_chrome else 900 }}"
-        fill="{{ 'var(--dna-label-text)' if is_chrome else 'var(--dna-brand-text)' }}"
-        letter-spacing="{{ '0.10em' if is_chrome else '0.18em' }}">{{ identity | upper }}</text>
+        font-family="{{ strip_identity_font | default('var(--dna-font-mono, SF Mono, monospace)') }}"
+        font-size="11" font-weight="{{ strip_identity_weight | default(900) }}"
+        fill="{{ strip_identity_fill | default('var(--dna-brand-text)') }}"
+        letter-spacing="{{ strip_identity_letter_spacing | default('0.18em') }}">{{ identity | upper }}</text>
 </g>
 
 {# === Metric cells with dividers === #}
 {% set first_div_x = first_divider_x | default(143) %}
 {% set cell_start = first_div_x + 12 %}
-{% if is_chrome and envelope_stops %}
+{# First divider — data-driven: envelope_stops → gradient separator, else → class #}
+{% if envelope_stops | default([]) %}
 <line x1="{{ first_div_x }}" y1="{{ div_y1 }}"
       x2="{{ first_div_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
@@ -174,17 +83,17 @@
 {% for metric in metrics %}
 {% set cell_x = cell_start + (loop.index0 * metric_pitch) %}
 <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ cell_x }},0)">
-  <text x="{{ metric_pitch // 2 }}" y="{{ 17 if is_chrome else 18 }}" text-anchor="middle"
-        font-family="var(--dna-font-mono, 'SF Mono', monospace)"
-        font-size="{{ 10 if is_chrome else 7 }}" font-weight="700"
-        fill="{{ 'var(--dna-signal)' if is_chrome else 'var(--dna-ink-muted)' }}"
-        letter-spacing="{{ '0.14em' if is_chrome else '0.2em' }}">{{ metric.label | upper }}</text>
-  <text x="{{ metric_pitch // 2 }}" y="{{ 38 if is_chrome else 36 }}" text-anchor="middle"
+  <text x="{{ metric_pitch // 2 }}" y="{{ strip_metric_label_y | default(18) }}" text-anchor="middle"
+        font-family="{{ strip_metric_label_font | default('var(--dna-font-mono, SF Mono, monospace)') }}"
+        font-size="{{ strip_metric_label_size | default(7) }}" font-weight="700"
+        fill="{{ strip_metric_label_fill | default('var(--dna-ink-muted)') }}"
+        letter-spacing="{{ strip_metric_label_letter_spacing | default('0.2em') }}">{{ metric.label | upper }}</text>
+  <text x="{{ metric_pitch // 2 }}" y="{{ strip_metric_value_y | default(36) }}" text-anchor="middle"
         font-family="var(--dna-font-display, 'Inter', system-ui)"
-        font-size="{{ 18 if is_chrome else 18 }}" font-weight="{{ 800 if is_chrome else 900 }}"
-        fill="{{ glyph_fill | default('var(--dna-ink-primary)') if is_chrome else 'var(--dna-ink-primary)' }}"
+        font-size="18" font-weight="{{ strip_metric_value_weight | default(900) }}"
+        fill="{{ strip_metric_value_fill | default(glyph_fill | default('var(--dna-ink-primary)')) }}"
         letter-spacing="-0.01em"
-        {% if is_chrome %}transform="skewX(-8)"{% endif %}>{{ metric.value }}</text>
+        {% if strip_metric_value_skew | default(0) %}transform="skewX({{ strip_metric_value_skew }})"{% endif %}>{{ metric.value }}</text>
 {% if metric.delta %}
   <text x="{{ metric_pitch // 2 }}" y="48" text-anchor="middle"
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>
@@ -192,7 +101,7 @@
 </g>
 {# Trailing divider after each metric #}
 {% set trail_x = cell_start + (loop.index * metric_pitch) %}
-{% if is_chrome and envelope_stops %}
+{% if envelope_stops | default([]) %}
 <line x1="{{ trail_x }}" y1="{{ div_y1 }}"
       x2="{{ trail_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
@@ -202,38 +111,19 @@
 {% endif %}
 {% endfor %}
 
-{# === Status indicator — centered in status zone === #}
-{# Status zone starts after last trailing divider. Center = midpoint of remaining width. #}
+{# === Status indicator (profile-dispatched) === #}
 {% set last_seam_x = (first_divider_x | default(143)) + 12 + (metrics | length | default(1)) * metric_pitch %}
 {% set status_x = (last_seam_x + width) // 2 %}
 {% set status_cy = strip_h // 2 %}
 <g data-hw-zone="status" transform="translate({{ status_x }},{{ status_cy }})">
-{% if profile_id == 'brutalist' %}
-  {# Brutalist: square frame + animated inner square #}
-  <rect x="{{ -(indicator_size // 2) }}" y="{{ -(indicator_size // 2) }}"
-        width="{{ indicator_size }}" height="{{ indicator_size }}"
-        fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="1.5"/>
-  <rect class="hw-logic-bit"
-        x="{{ -(indicator_size // 2) + 3 }}" y="{{ -(indicator_size // 2) + 3 }}"
-        width="{{ indicator_size - 6 }}" height="{{ indicator_size - 6 }}"
-        fill="var(--hw-state-core, var(--dna-signal))"/>
-{% elif is_chrome %}
-  {# Chrome: recessed diamond housing — unified with badge (specimen: badge-diamond-final.svg) #}
-  <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-        transform="rotate(45)" fill="#040C14"/>
-  <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-        transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width="0.5"/>
-  <rect class="hw-logic-bit" x="-2.2" y="-2.2" width="4.4" height="4.4" rx="0.3"
-        transform="rotate(45)" fill="var(--dna-status-color, var(--dna-status-passing-core))"/>
+{% if envelope_stops | default([]) %}
+{% include "frames/strip/chrome-status.j2" %}
 {% else %}
-  <circle r="{{ indicator_size // 2 }}" fill="none"
-          stroke="var(--dna-status-color, var(--dna-status-passing-core))" stroke-width="1.5"/>
-  <circle class="hw-logic-bit" r="{{ indicator_size // 4 }}"
-          fill="var(--dna-status-color, var(--dna-status-passing-core))"/>
+{% include "frames/strip/brutalist-status.j2" %}
 {% endif %}
 </g>
 
-{# ── Border motion SMIL overlay (chromatic-pulse, corner-trace, etc.) ── #}
+{# ── Border motion SMIL overlay (shared across all profiles) ── #}
 {% if motion_border_defs | default('') %}
 <defs>{{ motion_border_defs | safe }}</defs>
 {% endif %}

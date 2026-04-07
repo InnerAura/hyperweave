@@ -1,0 +1,34 @@
+{
+  "profile_id": "brutalist",
+  "description": "Flat, dense, monospace-forward. Sharp corners, square status indicators, accent bars.",
+  "required_dna_vars": {
+    "--dna-surface": {"type": "color", "source": "surface_0"},
+    "--dna-surface-deep": {"type": "color", "source": "surface_2"},
+    "--dna-surface-alt": {"type": "color", "source": "surface_1"},
+    "--dna-ink-primary": {"type": "color", "source": "ink", "contrast_against": "--dna-surface", "min_ratio": 4.5},
+    "--dna-ink-muted": {"type": "color", "source": "ink_secondary"},
+    "--dna-signal": {"type": "color", "source": "accent", "contrast_against": "--dna-surface", "min_ratio": 3.0},
+    "--dna-signal-dim": {"type": "color", "source": "accent_complement"},
+    "--dna-border": {"type": "color", "source": "stroke"},
+    "--dna-status-passing-core": {"type": "color", "source": "accent_signal"},
+    "--dna-status-warning-core": {"type": "color", "source": "accent_warning"},
+    "--dna-status-failing-core": {"type": "color", "source": "accent_error"}
+  },
+  "optional_dna_vars": {
+    "--dna-border-tint": {"type": "color", "source": "border_tint"},
+    "--dna-brand-text": {"type": "color", "source": "brand_text"},
+    "--dna-label-text": {"type": "color", "source": "label_text"},
+    "--dna-metric-text": {"type": "color", "source": "metric_text"},
+    "--dna-seam-gap": {"type": "color", "source": "seam_gap"},
+    "--dna-font-mono": {"type": "font-family", "source": "font_mono"},
+    "--dna-font-display": {"type": "font-family", "source": "font_display"}
+  },
+  "contrast_pairs": [
+    {"foreground": "ink", "background": "surface_0", "min_ratio": 4.5, "label": "ink vs surface (normal text)"},
+    {"foreground": "ink_secondary", "background": "surface_0", "min_ratio": 3.0, "label": "ink_secondary vs surface (muted text)"},
+    {"foreground": "accent", "background": "surface_0", "min_ratio": 3.0, "label": "accent vs surface (UI components)"},
+    {"foreground": "accent_signal", "background": "surface_2", "min_ratio": 3.0, "label": "status-passing vs surface-deep"},
+    {"foreground": "accent_warning", "background": "surface_2", "min_ratio": 3.0, "label": "status-warning vs surface-deep"},
+    {"foreground": "accent_error", "background": "surface_2", "min_ratio": 3.0, "label": "status-failing vs surface-deep"}
+  ]
+}

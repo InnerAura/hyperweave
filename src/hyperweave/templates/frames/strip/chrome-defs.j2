@@ -1,0 +1,50 @@
+{# Chrome strip defs: env-map gradient, bevel filter, well gradient, separator gradient, text shadow.
+   Guard on data presence (envelope_stops), not profile identity. #}
+{# Chrome env-map gradient (11-stop HDRI simulation, animated y1/y2) #}
+<linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="-0.1" y2="0.9">
+{% for stop in envelope_stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+  <animateTransform attributeName="gradientTransform" type="translate"
+    values="0 -0.2; 0 0.2; 0 -0.2" dur="6s"
+    repeatCount="indefinite" calcMode="spline"
+    keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+</linearGradient>
+{# Chrome separator gradient — derived from genome highlight + well colors #}
+<linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}" stop-opacity="0.2"/>
+  <stop offset="45%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.35"/>
+  <stop offset="50%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.45"/>
+  <stop offset="55%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.25"/>
+  <stop offset="100%" stop-color="{{ well_bottom | default('#060606') }}" stop-opacity="0.2"/>
+</linearGradient>
+{# Well gradient #}
+<linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
+  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
+  <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
+</linearGradient>
+{# Product-weight bevel — shadow + light specular at strip scale #}
+<filter id="{{ uid }}-bevel" x="-2%" y="-4%" width="104%" height="110%">
+  <feDropShadow dx="0" dy="1.5" stdDeviation="2.5"
+                flood-color="#000" flood-opacity="{{ bevel_shadow_opacity | default('0.30') }}"/>
+  <feSpecularLighting in="SourceAlpha" surfaceScale="1.0"
+                      specularConstant="0.4" specularExponent="30"
+                      lighting-color="{{ specular_light | default('#6AACC8') }}" result="s">
+    <feDistantLight azimuth="225" elevation="50"/>
+  </feSpecularLighting>
+  <feComposite in="s" in2="SourceAlpha" operator="in" result="sc"/>
+  <feComposite in="SourceGraphic" in2="sc" operator="arithmetic"
+               k1="0" k2="1" k3="0.12" k4="0"/>
+</filter>
+{# Chrome text gradient for metric values #}
+{% if chrome_text_gradient %}
+<linearGradient id="{{ uid }}-chrome-text" x1="0" y1="0" x2="1" y2="0">
+{% for stop in chrome_text_gradient %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{% endif %}
+{# Text shadow for legibility on chrome surfaces #}
+<filter id="{{ uid }}-txt" x="-6%" y="-18%" width="112%" height="136%">
+  <feDropShadow dx="0" dy="0" stdDeviation="0.6" flood-color="var(--dna-surface, #000A14)" flood-opacity="0.9"/>
+</filter>

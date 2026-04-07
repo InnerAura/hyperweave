@@ -72,12 +72,14 @@
     <rect width="{{ cell.w }}" height="{{ cell.h }}" rx="{{ 3 if cell.tier == 1 else 2 }}"
           fill="url(#{{ uid }}-{{ cell.tool_class }})"
           stroke="var(--dna-tool-{{ cell.tool_class }})" stroke-opacity="0.2" stroke-width="1"/>
-    <text class="m cell-name" font-size="{{ 13 if cell.tier == 1 else 9 }}" x="{{ 12 if cell.tier == 1 else 10 }}" y="{{ 22 if cell.tier == 1 else 20 }}">{{ cell.name }}</text>
+    <text class="m cell-name" font-size="{{ 13 if cell.tier == 1 else 9 }}" x="{{ 12 if cell.tier == 1 else 10 }}" y="{{ 22 if cell.tier == 1 else (20 if cell.tier == 2 else 12) }}">{{ cell.name }}</text>
 {% if cell.tier == 1 %}
     <text class="m" font-size="32" font-weight="700" fill="var(--dna-tool-{{ cell.tool_class }})" x="12" y="58">{{ cell.pct }}%</text>
     <text class="m cell-meta" font-size="10" x="12" y="74">{{ cell.detail }}</text>
+{% elif cell.tier == 2 %}
+    <text class="m cell-meta" font-size="8" x="40" y="20">{{ cell.detail }}</text>
 {% else %}
-    <text class="m cell-meta" font-size="8" x="{{ 40 if cell.tier == 2 else 10 }}" y="{{ 20 if cell.tier == 2 else 16 }}">{{ cell.detail }}</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">{{ cell.detail }}</text>
 {% endif %}
   </g>
 {% endfor %}

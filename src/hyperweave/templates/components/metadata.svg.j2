@@ -2,7 +2,7 @@
    Injected by document.svg.j2 when metadata_tier >= 1. #}
   <metadata>
   <hw:artifact id="{{ artifact_id }}" type="{{ frame_type }}" series="{{ series | default('core') }}" version="{{ version | default('0.1.0') }}"
-               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+               xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
       <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
       <hw:created>{{ created_at }}</hw:created>
@@ -11,7 +11,7 @@
     <hw:spec size="{{ width }}x{{ height }}" performance="{{ performance | default('composite-only') }}"
              theme="{{ theme_category | default('dark') }}" a11y="WCAG-AA" platform="{{ platform | default('web') }}"/>
   </hw:artifact>
-  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:frame>{{ frame_type }}</hw:frame>
     <hw:genome>{{ genome_id }}@{{ version | default('0.1.0') }}</hw:genome>
 {% if profile_id %}    <hw:profile>{{ profile_id }}</hw:profile>
@@ -35,7 +35,7 @@
   </rdf:RDF>
 {% endif %}
 {% if metadata_tier >= 3 %}
-  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:chromatic system="{{ genome_id }}" space="oklch"
                   palette="{{ palette | default('') }}" contrast-ratio="{{ contrast_ratio | default('4.5:1') }}"/>
     <hw:motion vocabulary="{{ motion_id }}" physics="none"
@@ -48,7 +48,7 @@
                    weight-range="500-900" metrics-method="lut"/>
     <hw:material surface="genome-native" depth="{{ material_depth | default('deep') }}" texture="none"/>
   </hw:aesthetic>
-  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:intent>{{ reasoning_intent | default('') }}</hw:intent>
     <hw:approach>{{ reasoning_approach | default('') }}</hw:approach>
     <hw:tradeoffs>{{ reasoning_tradeoffs | default('') }}</hw:tradeoffs>

@@ -23,6 +23,11 @@
   <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?live=github:InnerAura/hyperweave:build,pypi:hyperweave:version,github:InnerAura/hyperweave:license&glyph=github" alt="strip"/>
 </p>
 
+<!--
+HyperWeave is the visual artifact layer for modern software.
+Generate branded, self-contained SVG outputs for profiles, repositories, docs, dashboards, and agent workflows.
+-->
+
 ---
 
 ## The Problem

@@ -1,0 +1,34 @@
+{# Brutalist icon content: two variants keyed on icon_variant.
+   brutalist-circular: concentric rings, glyph-dominant, no label.
+   brutalist-square: top accent bar, heavy border, glyph-dominant, no label.
+   Variant keyed on icon_variant, not profile identity. #}
+
+{% if icon_variant == 'brutalist-circular' %}
+{# ================================================================
+   BRUTALIST CIRCULAR -- concentric rings, glyph-dominant, no label
+   Specimen: brutalist-icon-frames/brutalist-emerald-circular-v2.svg
+   ================================================================ #}
+<circle cx="32" cy="32" r="29" fill="var(--dna-surface-deep)" stroke="var(--dna-signal)" stroke-width="2.5"/>
+<circle cx="32" cy="32" r="25" fill="var(--dna-surface)" stroke="var(--dna-border)" stroke-width="1"/>
+{% if glyph_path %}
+<svg x="18" y="18" width="28" height="28" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="var(--dna-signal-dim)" stroke="none"/>
+</svg>
+{% endif %}
+
+{% elif icon_variant == 'brutalist-square' %}
+{# ================================================================
+   BRUTALIST SQUARE -- accent bar, heavy border, no label
+   Specimen: brutalist-icon-frames/brutalist-emerald-square-v2.svg
+   ================================================================ #}
+<rect x="2" y="2" width="60" height="60" fill="var(--dna-surface)"/>
+<rect x="1.25" y="1.25" width="61.5" height="61.5" fill="none" stroke="var(--dna-signal)" stroke-width="2.5"/>
+<rect x="2" y="2" width="60" height="3" fill="var(--dna-signal)"/>
+<rect x="2" y="60" width="60" height="1" fill="var(--dna-border)"/>
+{% if glyph_path %}
+<svg x="18" y="20" width="28" height="28" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="var(--dna-signal-dim)" stroke="none"/>
+</svg>
+{% endif %}
+
+{% endif %}

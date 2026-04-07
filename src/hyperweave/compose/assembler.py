@@ -69,9 +69,9 @@ def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, 
     else:
         css["status"] = ""
 
-    # Telemetry utility classes — only for telemetry frames
+    # Telemetry utility classes + phase color defaults — only for telemetry frames
     if frame_type in _TELEMETRY_FRAMES:
-        css["telemetry"] = _load_css_file("telemetry.css")
+        css["telemetry"] = _load_css_file("phase-colors.css") + "\n" + _load_css_file("telemetry.css")
     else:
         css["telemetry"] = ""
 

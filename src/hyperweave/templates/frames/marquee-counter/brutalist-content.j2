@@ -1,0 +1,10 @@
+{# Brutalist counter-marquee content: 3-layer frame, accent bar.
+   Layer order: outer fill -> border -> surface -> left accent bar. #}
+<rect width="{{ cw }}" height="{{ ch }}" fill="var(--dna-frame-fill, var(--dna-surface-deep))"/>
+<rect x="{{ bz // 2 }}" y="{{ bz // 2 }}" width="{{ cw - bz }}" height="{{ ch - bz }}"
+      fill="var(--dna-border)"/>
+<rect x="{{ si }}" y="{{ si }}" width="{{ cw - si * 2 }}" height="{{ ch - si * 2 }}"
+      fill="var(--dna-surface)"/>
+{# Left accent bar #}
+<rect x="{{ bz // 2 }}" y="{{ bz // 2 }}" width="{{ accent_bar_w | default(4) }}" height="{{ ch - bz }}"
+      fill="var(--dna-signal)"/>

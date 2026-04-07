@@ -1,0 +1,23 @@
+{# Chrome horizontal-marquee defs: envelope, shadow, well, separator gradient.
+   Specimen: chrome-horizon-marquees-v2.
+   Guard on data presence (envelope_stops), not profile identity. #}
+  <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="0" y2="1">
+  {% for stop in envelope_stops %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
+  </linearGradient>
+  <filter id="{{ uid }}-shadow" x="-1%" y="-4%" width="102%" height="112%">
+    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity="0.25"/>
+  </filter>
+  <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
+    <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
+  </linearGradient>
+  <linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0"/>
+    <stop offset="30%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.25"/>
+    <stop offset="50%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.35"/>
+    <stop offset="70%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.25"/>
+    <stop offset="100%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0"/>
+  </linearGradient>
+  {# Specular sweep removed per v2 spec — chrome horizontal is specular-free #}

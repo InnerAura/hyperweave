@@ -1,61 +1,16 @@
-{# HyperWeave Badge Frame.
-   Two rendering modes driven by `is_chrome` context flag:
-     standard  -- two-panel (surface + gradient), sep signal + seam gap
-     chrome    -- satin envelope, well, separator line, diamond status
+{# HyperWeave Badge Frame — Profile-dispatched.
+   Templates never check genome identity. Data presence drives rendering:
+     envelope_stops present  → chrome defs/content
+     envelope_stops absent   → brutalist defs/content
    Specimens: badge-final.svg (chrome), badge_*.svg (brutalist).
    Extends document.svg.j2. #}
 {% extends "document.svg.j2" %}
 
 {% block defs %}
-{% if is_chrome | default(false) %}
-{# ── Satin chrome envelope (animated y1/y2) ── #}
-<linearGradient id="{{ uid }}-env" x1="0" x2="0" y1="-0.1" y2="0.9">
-{% for stop in envelope_stops | default([]) %}
-  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-{% endfor %}
-  <animateTransform attributeName="gradientTransform" type="translate"
-    values="0 -0.2; 0 0.2; 0 -0.2" dur="{{ chrome_rhythm | default('6s') }}"
-    repeatCount="indefinite" calcMode="spline"
-    keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
-</linearGradient>
-{# ── Product-weight shadow (no specular at badge scale) ── #}
-<filter id="{{ uid }}-sh" x="-3%" y="-4%" width="106%" height="112%">
-  <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#000" flood-opacity="{{ bevel_shadow_opacity | default('0.35') }}"/>
-</filter>
-{# ── Well gradient ── #}
-<linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
-  <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
-</linearGradient>
-{# ── Chrome text gradient for value ── #}
-{% if chrome_text_gradient %}
-<linearGradient id="{{ uid }}-ct" x1="0" y1="0" x2="1" y2="0">
-{% for stop in chrome_text_gradient %}
-  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-{% endfor %}
-</linearGradient>
-{% endif %}
-{# ── Separator gradient ── #}
-<linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0"/>
-  <stop offset="30%" stop-color="var(--dna-signal)" stop-opacity="0.35"/>
-  <stop offset="50%" stop-color="{{ specular_light | default('#6AACC8') }}" stop-opacity="0.45"/>
-  <stop offset="70%" stop-color="var(--dna-signal)" stop-opacity="0.35"/>
-  <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0"/>
-</linearGradient>
-{# Specular sweep removed -- mobile WebKit text blur #}
-<clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}" rx="{{ chrome_corner | default('4') }}"/></clipPath>
-
-
+{% if envelope_stops | default([]) %}
+{% include "frames/badge/chrome-defs.j2" %}
 {% else %}
-{# ── Standard defs (brutalist) ── #}
-<linearGradient id="{{ uid }}-val-bg" x1="0" x2="1" y1="0" y2="0">
-  <stop offset="0%" style="stop-color: var(--dna-border-tint)"/>
-  <stop offset="100%" style="stop-color: var(--dna-surface-deep)"/>
-</linearGradient>
-<clipPath id="{{ uid }}-clip">
-  <rect width="{{ width }}" height="{{ height }}"/>
-</clipPath>
+{% include "frames/badge/brutalist-defs.j2" %}
 {% endif %}
 {% endblock %}
 
@@ -67,128 +22,13 @@
 {% set ind_size = indicator_size | default(8) %}
 {% set lp_w = left_panel_width | default(60) %}
 
-{% if is_chrome | default(false) %}
-{# ══════════════════════════════════════════════════════════════════
-   CHROME BADGE — specimen: badge-final.svg
-   Layer order: envelope → inner stroke → well → chrome bleed → specular
-   ══════════════════════════════════════════════════════════════════ #}
-{% set rx = chrome_corner | default('4') %}
-
-{# Chrome envelope #}
-<g clip-path="url(#{{ uid }}-clip)">
-  <rect width="{{ width }}" height="{{ h }}" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-sh)"/>
-  <rect x="1" y="1" width="{{ width - 2 }}" height="{{ h - 2 }}" rx="{{ rx | int - 1 }}" fill="none" stroke="#000510" stroke-width="0.6"/>
-  <rect class="hw-well" x="2" y="2" width="{{ width - 4 }}" height="{{ h - 4 }}" rx="2" fill="url(#{{ uid }}-well)"/>
-  <rect x="2" y="2" width="4" height="{{ h - 4 }}" fill="url(#{{ uid }}-env)" opacity="0.7"/>
-</g>
-
-{# Specular sweep removed -- mobile WebKit text blur #}
-
-{# Top highlight #}
-<rect x="8" y="2" width="{{ width - 16 }}" height="0.5" rx="0.25" fill="{{ specular_light | default('#6AACC8') }}" opacity="{{ highlight_opacity | default('0.1') }}"/>
-
-{# Separator line #}
-<line x1="{{ lp_w }}" y1="5" x2="{{ lp_w }}" y2="{{ h - 5 }}" stroke="url(#{{ uid }}-sep)" stroke-width="0.75"/>
-
-{# Glyph — bright solid, no halo #}
-{% if has_glyph | default(false) and glyph_svg %}
-<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y | default(5) }})">
-  {{ glyph_svg | safe }}
-</g>
-{% endif %}
-
-{# Label — monospace, signal blue, +1px nudge to align with larger value font #}
-<text data-hw-zone="label"
-      x="{{ label_x }}" y="{{ (h / 2) + 1 }}"
-      text-anchor="middle" dominant-baseline="central"
-      font-family="var(--dna-font-mono)" font-size="8" font-weight="600"
-      letter-spacing="0.10em" fill="var(--dna-signal)">{{ label_display | default(label) | upper }}</text>
-
-{# Value — solid fill + skew for crisp chrome rendering (gradient forces WebKit software rasterization) #}
-<g transform="translate({{ value_x }},{{ h / 2 }}) skewX(-8)">
-  <text data-hw-zone="value" x="0" y="0"
-        text-anchor="middle" dominant-baseline="central"
-        font-family="'Impact','Arial Black',system-ui,sans-serif" font-size="11" font-weight="700"
-        fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}" letter-spacing=".4">{{ value }}</text>
-</g>
-
-{# Diamond status — recessed housing + status LED (specimen: badge-diamond-final.svg) #}
-{% if show_indicator | default(true) %}
-<g data-hw-zone="status" transform="translate({{ indicator_x + ind_size // 2 }},{{ h // 2 }})">
-  {# Recess — dark inset, machined pocket in well #}
-  <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-        transform="rotate(45)" fill="#040C14"/>
-  {# Housing edge — border-weight seam #}
-  <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-        transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width="0.5"/>
-  {# Status core — the only colored element, animated #}
-  <rect class="hw-logic-bit" x="-2.2" y="-2.2" width="4.4" height="4.4" rx="0.3"
-        transform="rotate(45)" fill="var(--dna-status-color, var(--dna-status-passing-core))"/>
-</g>
-{% endif %}
-
+{% if envelope_stops | default([]) %}
+{% include "frames/badge/chrome-content.j2" %}
 {% else %}
-{# ══════════════════════════════════════════════════════════════════
-   STANDARD PROFILE — two-panel, sharp separator
-   ══════════════════════════════════════════════════════════════════ #}
-{% set right_x = lp_w + sep_w_val + seam_w_val %}
-{% set right_w = width - right_x %}
-
-<g clip-path="url(#{{ uid }}-clip)">
-  <rect width="{{ lp_w }}" height="{{ h }}" fill="var(--dna-surface)"/>
-  <rect x="{{ right_x - 1 }}" width="{{ right_w + 1 }}" height="{{ h }}" fill="url(#{{ uid }}-val-bg)"/>
-</g>
-<rect x=".5" y=".5" width="{{ width - 1 }}" height="{{ h - 1 }}" fill="none" stroke="var(--dna-ink-primary)" stroke-opacity="0.06"/>
-<rect x="0" y="0" width="{{ accent_w }}" height="{{ h }}" fill="var(--dna-signal)" data-hw-zone="accent-bar"/>
-<rect x="{{ lp_w }}" y="0" width="{{ sep_w_val }}" height="{{ h }}" fill="var(--hw-state-sep, var(--dna-signal))"/>
-{% if seam_w_val > 0 %}
-<rect x="{{ lp_w + sep_w_val }}" y="0" width="{{ seam_w_val }}" height="{{ h }}" fill="var(--dna-seam-gap, var(--dna-surface-deep))"/>
+{% include "frames/badge/brutalist-content.j2" %}
 {% endif %}
 
-{# Glyph #}
-{% if has_glyph | default(false) and glyph_svg %}
-<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y | default(3) }})">
-  {{ glyph_svg | safe }}
-</g>
-{% endif %}
-
-{# Label #}
-<text data-hw-zone="label"
-      x="{{ label_x }}" y="{{ text_y }}"
-      text-anchor="middle"
-      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
-      font-size="11" font-weight="600"
-      fill="var(--dna-label-text)"
-      letter-spacing="0.06em">{{ label_display | default(label | upper) }}</text>
-
-{# Value #}
-<text data-hw-zone="value"
-      x="{{ value_x }}" y="{{ text_y }}"
-      text-anchor="middle"
-      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
-      font-size="11" font-weight="700"
-      fill="var(--hw-state-value, var(--dna-brand-text))">{{ value }}</text>
-
-{# Status indicator #}
-{% if show_indicator | default(true) %}
-{% set ind_y = (h - ind_size) // 2 %}
-<g data-hw-zone="status" transform="translate({{ indicator_x }},{{ ind_y }})">
-  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="1.2" width="{{ ind_size }}" height="{{ ind_size }}"/>
-  {% set inner_w = ind_size // 2 %}
-  {% set inner_off = (ind_size - inner_w) / 2 %}
-  <rect class="hw-logic-bit" x="{{ inner_off }}" y="{{ inner_off }}" width="{{ inner_w }}" height="{{ inner_w }}"
-        fill="var(--dna-status-color, var(--dna-signal))"/>
-</g>
-{% endif %}
-
-{# State tint overlay #}
-{% set right_x_val = lp_w + sep_w_val + seam_w_val %}
-<rect class="hw-state-tint" x="{{ right_x_val }}" y="0"
-      width="{{ width - right_x_val }}" height="{{ h }}"
-      pointer-events="none"/>
-{% endif %}
-
-{# Border motion SMIL overlay #}
+{# Border motion SMIL overlay (shared across all profiles) #}
 {% if motion_border_defs | default('') %}
 <defs>{{ motion_border_defs | safe }}</defs>
 {% endif %}

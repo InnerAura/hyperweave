@@ -1,6 +1,9 @@
 {# HyperWeave Horizontal Marquee — 800x40 LIVE ticker.
-   Structure: LIVE label block (left) → divider → clip-masked scroll → edge fades.
-   Specimen: brutalist-emerald-marquees-v5.html (single-row live ticker).
+   Profile-dispatched: data presence drives rendering, not profile identity.
+     envelope_stops present  -> chrome defs/content
+     envelope_stops absent   -> brutalist defs/content
+   Structure: LIVE label block (left) -> divider -> clip-masked scroll -> edge fades.
+   Specimens: chrome-horizon-marquees-v2 (chrome), brutalist-emerald-marquees-v5 (brutalist).
    Extends document.svg.j2.  Context: ComposeSpec dict. #}
 {% extends "document.svg.j2" %}
 
@@ -9,46 +12,28 @@
 {% set mh = height | default(40) %}
 {% set lp_w = label_panel_width | default(130) %}
 {% set cx = clip_x | default(132) %}
-  {# LIVE block gradient #}
+  {# LIVE block gradient — resolved hex (var() unreliable inside <stop>) #}
   <linearGradient id="{{ uid }}-accent" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="var(--dna-signal)"/>
-    <stop offset="100%" stop-color="var(--dna-status-passing-core, var(--dna-signal-dim))"/>
+    <stop offset="0%" stop-color="{{ signal_hex | default('#10B981') }}" stop-opacity="0.95"/>
+    <stop offset="100%" stop-color="{{ signal_hex | default('#10B981') }}" stop-opacity="0.65"/>
   </linearGradient>
-  {# Scroll clip — inset by frame for brutalist, flush for chrome #}
+  {# Scroll clip — parametric via clip_inset_y / clip_inset_x #}
   <clipPath id="{{ uid }}-scroll-clip">
-    <rect x="{{ cx }}" y="{{ 4 if not (is_chrome | default(false)) else 0 }}" width="{{ mw - cx - (4 if not (is_chrome | default(false)) else 0) }}" height="{{ mh - (8 if not (is_chrome | default(false)) else 0) }}"/>
+    <rect x="{{ cx }}" y="{{ clip_inset_y | default(4) }}" width="{{ mw - cx - (clip_inset_x | default(4)) }}" height="{{ mh - (clip_inset_y | default(4)) * 2 }}"/>
   </clipPath>
   {# Edge fades #}
   <linearGradient id="{{ uid }}-fade-l" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="var(--dna-surface)" stop-opacity="1"/>
-    <stop offset="100%" stop-color="var(--dna-surface)" stop-opacity="0"/>
+    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
+    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
   </linearGradient>
   <linearGradient id="{{ uid }}-fade-r" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="var(--dna-surface)" stop-opacity="0"/>
-    <stop offset="100%" stop-color="var(--dna-surface)" stop-opacity="1"/>
+    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
   </linearGradient>
-{% if is_chrome | default(false) and envelope_stops | default([]) %}
-  {# ── Satin chrome defs ── #}
-  <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="0" y2="1">
-  {% for stop in envelope_stops %}
-    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-  {% endfor %}
-  </linearGradient>
-  <filter id="{{ uid }}-shadow" x="-1%" y="-4%" width="102%" height="112%">
-    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity="0.25"/>
-  </filter>
-  <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
-    <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
-  </linearGradient>
-  <linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#3A7EA8" stop-opacity="0"/>
-    <stop offset="30%" stop-color="#3A7EA8" stop-opacity="0.25"/>
-    <stop offset="50%" stop-color="#6AACC8" stop-opacity="0.35"/>
-    <stop offset="70%" stop-color="#3A7EA8" stop-opacity="0.25"/>
-    <stop offset="100%" stop-color="#3A7EA8" stop-opacity="0"/>
-  </linearGradient>
-  {# Specular sweep removed per v2 spec — chrome horizontal is specular-free #}
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee-horizontal/chrome-defs.j2" %}
+{% else %}
+{% include "frames/marquee-horizontal/brutalist-defs.j2" %}
 {% endif %}
 {% endblock %}
 
@@ -64,55 +49,12 @@
 {% set start_x = item_start_x | default(148) %}
 
 {# ══════════════════════════════════════════════════════════════════
-   FRAME
+   FRAME + LIVE LABEL — dispatched to profile partials
    ══════════════════════════════════════════════════════════════════ #}
-{% if is_chrome | default(false) and envelope_stops | default([]) %}
-{# Chrome: env-map bezel → groove → well → specular → thin accent (specimen: chrome-horizon-marquees-v2) #}
-<g filter="url(#{{ uid }}-shadow)">
-  <rect width="{{ mw }}" height="{{ mh }}" rx="4" fill="url(#{{ uid }}-envelope)"/>
-</g>
-<rect x="1.5" y="1.5" width="{{ mw - 3 }}" height="{{ mh - 3 }}" rx="3" fill="none" stroke="#000510" stroke-width=".6"/>
-<rect x="2" y="2" width="{{ mw - 4 }}" height="{{ mh - 4 }}" rx="2" fill="url(#{{ uid }}-well)"/>
-{# Specular sweep removed per v2 spec #}
-{# Thin left chrome accent strip — 4px env-map #}
-<rect x="2" y="2" width="4" height="{{ mh - 4 }}" fill="url(#{{ uid }}-envelope)" opacity=".7"/>
-{# Top specular catch #}
-<rect x="8" y="2" width="{{ mw - 16 }}" height=".5" fill="{{ specular_light | default('#6AACC8') }}" opacity=".08"/>
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee-horizontal/chrome-content.j2" %}
 {% else %}
-{# Brutalist 3-layer frame (matches counter/vertical) #}
-<rect width="{{ mw }}" height="{{ mh }}" fill="var(--dna-frame-fill, var(--dna-surface-deep))"/>
-<rect x="2" y="2" width="{{ mw - 4 }}" height="{{ mh - 4 }}"
-      fill="none" stroke="var(--dna-border)" stroke-width="3"/>
-<rect x="4" y="4" width="{{ mw - 8 }}" height="{{ mh - 8 }}"
-      fill="var(--dna-surface)"/>
-{# LIVE block — inside frame #}
-<rect x="4" y="4" width="{{ lp_w - 4 }}" height="{{ mh - 8 }}" fill="url(#{{ uid }}-accent)"/>
-{# Divider between LIVE and scroll #}
-<rect x="{{ lp_w }}" y="4" width="{{ divider_w | default(2) }}" height="{{ mh - 8 }}"
-      fill="var(--dna-frame-fill, var(--dna-surface-deep))"/>
-{% endif %}
-
-{# ═══ LIVE label ═══ #}
-{% if is_chrome | default(false) %}
-<text x="70" y="{{ mh // 2 }}" text-anchor="middle" dominant-baseline="central"
-      font-family="var(--dna-font-display)" font-size="12" font-weight="800"
-      fill="var(--dna-ink-primary, #E0ECF6)" letter-spacing="3">{{ marquee_label | default('LIVE') | upper }}</text>
-{# Diamond status indicator (matches badge diamond) #}
-<g transform="translate(116,{{ mh // 2 }})">
-  <rect x="-3.5" y="-3.5" width="7" height="7" rx=".5" transform="rotate(45)" fill="#040C14"/>
-  <rect x="-3.5" y="-3.5" width="7" height="7" rx=".5" transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width=".4"/>
-  <rect x="-2" y="-2" width="4" height="4" rx=".3" transform="rotate(45)" fill="var(--dna-signal)">
-    <animate attributeName="opacity" values=".3;1;.3" dur="2s" repeatCount="indefinite"/>
-  </rect>
-</g>
-{# Separator — chrome gradient fade #}
-<line x1="{{ lp_w }}" y1="5" x2="{{ lp_w }}" y2="{{ mh - 5 }}"
-      stroke="url(#{{ uid }}-sep)" stroke-width=".75"/>
-{% else %}
-<text x="{{ lp_w // 2 }}" y="{{ mh // 2 }}" text-anchor="middle" dominant-baseline="central"
-      font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
-      font-size="12" font-weight="800"
-      fill="#fff" letter-spacing="3">{{ marquee_label | default('LIVE') | upper }}</text>
+{% include "frames/marquee-horizontal/brutalist-content.j2" %}
 {% endif %}
 
 {# ═══ Scrolling content ═══ #}
@@ -121,13 +63,13 @@
     <animateTransform attributeName="transform" type="translate"
         from="0 0" to="-{{ sd }} 0"
         dur="{{ dur }}s" repeatCount="indefinite"/>
-    {# Set A #}
+    {# Set A — letter-spacing on word tspans only (not separators) for accurate measurement #}
     <text y="{{ mh // 2 }}" dominant-baseline="central"
           font-family="{{ scroll_font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
-          font-size="13" letter-spacing=".5">
+          font-size="13">
 {% for item in scroll_items %}
       <tspan {% if loop.first %}x="{{ start_x }}"{% else %}dx="{{ dx }}"{% endif %}
-             fill="{{ item.color | default('var(--dna-ink-primary)') }}"
+             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
              {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
       >{{ item.text }}</tspan>
 {% if not loop.last %}
@@ -138,10 +80,10 @@
     {# Set B (seamless loop at +scroll_distance) #}
     <text y="{{ mh // 2 }}" dominant-baseline="central"
           font-family="{{ scroll_font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
-          font-size="13" letter-spacing=".5">
+          font-size="13">
 {% for item in scroll_items %}
       <tspan {% if loop.first %}x="{{ start_x + sd }}"{% else %}dx="{{ dx }}"{% endif %}
-             fill="{{ item.color | default('var(--dna-ink-primary)') }}"
+             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
              {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
       >{{ item.text }}</tspan>
 {% if not loop.last %}
@@ -158,8 +100,8 @@
 <rect x="{{ mw - fw }}" y="0" width="{{ fw }}" height="{{ mh }}"
       fill="url(#{{ uid }}-fade-r)"/>
 
-{# ═══ Top/bottom accent lines ═══ #}
-{% if not is_chrome | default(false) %}
+{# ═══ Top/bottom accent lines (guard on data) ═══ #}
+{% if show_accent_lines | default(false) %}
 <rect x="{{ cx }}" y="0" width="{{ mw - cx }}" height="1"
       fill="var(--dna-signal)" opacity="{{ accent_line_opacity | default(0.2) }}"/>
 <rect x="{{ cx }}" y="{{ mh - 1 }}" width="{{ mw - cx }}" height="1"

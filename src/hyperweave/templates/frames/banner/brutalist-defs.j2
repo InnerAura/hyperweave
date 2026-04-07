@@ -1,0 +1,11 @@
+{# Brutalist banner defs: noise texture filter, glow filter. #}
+{# Noise texture filter #}
+<filter id="{{ uid }}-noise">
+  <feTurbulence type="fractalNoise" baseFrequency="0.55"
+                numOctaves="5" seed="{{ noise_seed | default(55) }}"/>
+  <feColorMatrix type="saturate" values="0"/>
+</filter>
+{# Glow filter for text layer 1 #}
+<filter id="{{ uid }}-glow">
+  <feGaussianBlur stdDeviation="{{ glow_radius | default(16) }}"/>
+</filter>

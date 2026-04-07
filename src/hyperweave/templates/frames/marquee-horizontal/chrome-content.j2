@@ -1,0 +1,29 @@
+{# Chrome horizontal-marquee content: env-map bezel, well, accent strip, separator.
+   Specimen: chrome-horizon-marquees-v2.
+   Layer order: envelope -> groove -> well -> left accent -> top specular catch -> LIVE label -> diamond -> separator. #}
+<g filter="url(#{{ uid }}-shadow)">
+  <rect width="{{ mw }}" height="{{ mh }}" rx="4" fill="url(#{{ uid }}-envelope)"/>
+</g>
+<rect x="1.5" y="1.5" width="{{ mw - 3 }}" height="{{ mh - 3 }}" rx="3" fill="none" stroke="#000510" stroke-width=".6"/>
+<rect x="2" y="2" width="{{ mw - 4 }}" height="{{ mh - 4 }}" rx="2" fill="url(#{{ uid }}-well)"/>
+{# Specular sweep removed per v2 spec #}
+{# Thin left chrome accent strip — 4px env-map #}
+<rect x="2" y="2" width="4" height="{{ mh - 4 }}" fill="url(#{{ uid }}-envelope)" opacity=".7"/>
+{# Top specular catch #}
+<rect x="8" y="2" width="{{ mw - 16 }}" height=".5" fill="{{ specular_light | default('#6AACC8') }}" opacity=".08"/>
+
+{# LIVE label — chrome style #}
+<text x="70" y="{{ mh // 2 }}" text-anchor="middle" dominant-baseline="central"
+      font-family="var(--dna-font-display)" font-size="12" font-weight="800"
+      fill="var(--dna-ink-primary, #E0ECF6)" letter-spacing="3">{{ marquee_label | default('LIVE') | upper }}</text>
+{# Diamond status indicator (matches badge diamond) #}
+<g transform="translate(116,{{ mh // 2 }})">
+  <rect x="-3.5" y="-3.5" width="7" height="7" rx=".5" transform="rotate(45)" fill="#040C14"/>
+  <rect x="-3.5" y="-3.5" width="7" height="7" rx=".5" transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width=".4"/>
+  <rect x="-2" y="-2" width="4" height="4" rx=".3" transform="rotate(45)" fill="var(--dna-signal)">
+    <animate attributeName="opacity" values=".3;1;.3" dur="2s" repeatCount="indefinite"/>
+  </rect>
+</g>
+{# Separator — chrome gradient fade #}
+<line x1="{{ lp_w }}" y1="5" x2="{{ lp_w }}" y2="{{ mh - 5 }}"
+      stroke="url(#{{ uid }}-sep)" stroke-width=".75"/>

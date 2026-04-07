@@ -1,0 +1,10 @@
+{# Brutalist strip frame: simple plate gradient, border stroke, accent bar. #}
+<g clip-path="url(#{{ uid }}-clip)">
+  <rect width="{{ width }}" height="{{ strip_h }}"
+        fill="url(#{{ uid }}-plate)"/>
+  {# Border stroke #}
+  <rect x="1" y="1" width="{{ width - 2 }}" height="{{ strip_h - 2 }}"
+        fill="none" stroke="var(--dna-border-tint)" stroke-width="2"/>
+  {# Accent bar — left edge #}
+  <rect width="{{ accent_w }}" height="{{ strip_h }}" class="hw-signal"/>
+</g>

@@ -24,3 +24,80 @@ glyph_backing: square
 glyph_backing_rx: 2
 status_shape: square
 easing: "cubic-bezier(0.4, 0, 0.2, 1)"
+
+# ── Banner ──
+banner_height: 320
+
+# ── Badge layout (parametric, from Tier 1A audit) ──
+badge_sep_width: 1
+badge_seam_width: 0
+badge_inset: 2
+badge_indicator_size: 10
+badge_indicator_pad_r: 5
+badge_label_uppercase: false
+badge_use_mono: false
+badge_text_y_factor: 0.5
+
+# ── Strip parametric (Tier 1A) ──
+strip_glyph_size: 16
+strip_glyph_fill: "var(--dna-ink-primary)"
+strip_identity_weight: 700
+strip_identity_fill: "var(--dna-label-text)"
+strip_identity_letter_spacing: "0.10em"
+strip_metric_label_size: 10
+strip_metric_label_fill: "var(--dna-signal)"
+strip_metric_label_letter_spacing: "0.14em"
+strip_metric_label_y: 17
+strip_metric_value_weight: 800
+strip_metric_value_fill: "var(--dna-ink-primary)"
+strip_metric_value_y: 38
+strip_metric_value_skew: -8
+strip_identity_font: "var(--dna-font-mono, 'Courier New', monospace)"
+strip_metric_label_font: "var(--dna-font-mono, 'Courier New', monospace)"
+
+# ── Marquee parametric (Tier 1A) ──
+marquee_separator: "●"
+marquee_separator_color: "var(--dna-signal)"
+marquee_separator_opacity: ".25"
+marquee_divider_width: 0.5
+marquee_dot_shape: circle
+marquee_clip_x: 8
+marquee_clip_w: 784
+marquee_font_family: "var(--dna-font-display, system-ui, sans-serif)"
+
+# ── Counter marquee (Tier 1A closure) ──
+marquee_counter_row_ys: [5, 48, 91]
+marquee_counter_row_hs: [40, 40, 40]
+marquee_counter_text_ys: [30, 74, 117]
+marquee_counter_divider_ys: [46, 90]
+marquee_counter_brand_color_even: "var(--dna-ink-primary)"
+marquee_counter_brand_color_odd: "var(--dna-ink-secondary, var(--dna-ink-muted))"
+marquee_counter_metric_label_color: "var(--dna-signal)"
+marquee_counter_metric_value_font: "var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+marquee_counter_gap_r1: 20
+marquee_counter_letter_spacing_r1: "3"
+marquee_counter_letter_spacing_r2: "1"
+marquee_counter_letter_spacing_r3: ".5"
+marquee_counter_text_start_x: 16
+marquee_counter_status_dot_color: "var(--dna-signal)"
+marquee_counter_status_diamond_color: "var(--dna-signal-dim)"
+marquee_counter_divider_x_inset: 10
+marquee_counter_divider_stroke_width: ".5"
+marquee_counter_divider_stroke_opacity: ".12"
+marquee_counter_fade_inset: 3
+marquee_counter_fade_w: 44
+marquee_counter_fade_rx: "2"
+marquee_counter_show_rivets: false
+marquee_counter_show_beacon: false
+
+# ── Horizontal marquee (Tier 1A closure) ──
+marquee_horizontal_clip_inset_y: 0
+marquee_horizontal_clip_inset_x: 0
+marquee_horizontal_show_accent_lines: false
+marquee_horizontal_bold_pattern: "first"
+
+# ── Vertical marquee (Tier 1A closure) ──
+marquee_vertical_status_label_offset: 16
+marquee_vertical_bottom_accent_type: "hairline"
+marquee_vertical_warn_color: "var(--dna-signal-dim)"
+marquee_vertical_status_ts_color: "var(--dna-signal)"

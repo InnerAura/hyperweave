@@ -116,19 +116,35 @@ def _check_motion_cim(motion_id: str) -> list[str]:
 
 
 def _check_contrast(context: dict[str, Any], violations: list[str]) -> None:
+    """WCAG AA contrast check against raw genome color pairs."""
     try:
         from hyperweave.core.color import contrast_ratio
 
-        genome = context.get("genome_css", "")
-        # Extract surface and ink colors from genome CSS (simple heuristic)
-        # Full implementation would parse the CSS properties
-        # For now, we check the genome dict directly
-        profile = context.get("profile", {})
+        genome = context.get("_genome_raw", {})
+        if not genome:
+            return
 
-        # This is a placeholder for full contrast checking
-        # Real implementation would extract colors and check all text/bg pairs
-        _ = contrast_ratio, genome, profile
-    except (ImportError, Exception):
+        # Color pairs to check: (foreground_key, background_key, min_ratio, label)
+        pairs = [
+            ("ink", "surface_0", 4.5, "ink vs surface"),
+            ("ink_secondary", "surface_0", 3.0, "ink_secondary vs surface"),
+            ("accent", "surface_0", 3.0, "accent vs surface"),
+            ("accent_signal", "surface_2", 3.0, "status-passing vs surface-deep"),
+            ("accent_warning", "surface_2", 3.0, "status-warning vs surface-deep"),
+            ("accent_error", "surface_2", 3.0, "status-failing vs surface-deep"),
+        ]
+        for fg_key, bg_key, threshold, label in pairs:
+            fg = genome.get(fg_key, "")
+            bg = genome.get(bg_key, "")
+            if not fg or not bg or not fg.startswith("#") or not bg.startswith("#"):
+                continue
+            try:
+                ratio = contrast_ratio(fg, bg)
+                if ratio < threshold:
+                    violations.append(f"WCAG: {label} contrast {ratio:.1f}:1 < {threshold}:1 ({fg} on {bg})")
+            except (ValueError, TypeError):
+                continue
+    except ImportError:
         pass
 
 

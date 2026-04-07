@@ -1,0 +1,8 @@
+{# Brutalist status indicator: square frame + animated inner square. #}
+<rect x="{{ -(indicator_size // 2) }}" y="{{ -(indicator_size // 2) }}"
+      width="{{ indicator_size }}" height="{{ indicator_size }}"
+      fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="1.5"/>
+<rect class="hw-logic-bit"
+      x="{{ -(indicator_size // 2) + 3 }}" y="{{ -(indicator_size // 2) + 3 }}"
+      width="{{ indicator_size - 6 }}" height="{{ indicator_size - 6 }}"
+      fill="var(--hw-state-core, var(--dna-signal))"/>

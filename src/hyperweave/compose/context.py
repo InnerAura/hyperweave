@@ -69,7 +69,10 @@ def _base_context(
         css_bundle.get("telemetry", ""),
         css_bundle.get("motion", ""),
     ]
-    css_assembled = "\n".join(p for p in css_parts if p)
+    # Debug comment listing included CSS modules (Tier 1B)
+    module_names = [k for k, v in css_bundle.items() if v]
+    css_debug = f"/* hw:css-modules: {','.join(module_names)} */"
+    css_assembled = css_debug + "\n" + "\n".join(p for p in css_parts if p)
 
     profile = resolved.profile
 
@@ -81,6 +84,7 @@ def _base_context(
         "frame_type": spec.type,
         "genome_id": spec.genome_id,
         "profile_id": resolved.profile_id,
+        "_genome_raw": resolved.genome,
         "divider_variant": spec.divider_variant,
         "status": spec.state,
         "state": spec.state,
@@ -122,7 +126,7 @@ def _base_context(
         # Metadata / accessibility
         "title_text": _aria_title(spec),
         "desc_text": _aria_desc(spec),
-        "metadata_xml": _build_metadata_xml(spec, resolved, artifact_id),
+
         # Document-level attributes (used by document.svg.j2 base template)
         "terminal_id": "",
         "rule_id": "",
@@ -402,33 +406,3 @@ def _aria_desc(spec: ComposeSpec) -> str:
     return ", ".join(parts) + "."
 
 
-def _build_metadata_xml(
-    spec: ComposeSpec,
-    resolved: ResolvedArtifact,
-    artifact_id: str,
-) -> str:
-    if spec.metadata_tier == 0:
-        return ""
-    from hyperweave.render.templates import render_template
-
-    context = {
-        "artifact_id": artifact_id,
-        "spec_type": spec.type,
-        "series": spec.series,
-        "now": datetime.now(UTC).isoformat(),
-        "width": resolved.width,
-        "height": resolved.height,
-        "category": resolved.category,
-        "genome_id": spec.genome_id,
-        "profile_id": resolved.profile_id,
-        "divider_variant": spec.divider_variant,
-        "platform": spec.platform,
-        "motion": resolved.motion,
-        "state": spec.state,
-        "regime": spec.regime,
-        "metadata_tier": spec.metadata_tier,
-        "intent": spec.intent,
-        "approach": spec.approach,
-        "tradeoffs": spec.tradeoffs,
-    }
-    return render_template("components/metadata.xml.j2", context)

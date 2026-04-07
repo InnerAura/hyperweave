@@ -1,6 +1,9 @@
 {# HyperWeave Vertical Marquee — 400x268 telemetry feed.
-   Structure: 3-layer frame → header bar (LIVE) → divider → clipped scroll → fades → bottom accent.
-   Specimen: brutalist-emerald-marquees-v5.html (vertical telemetry feed).
+   Profile-dispatched: data presence drives rendering, not profile identity.
+     envelope_stops present  -> chrome defs/content
+     envelope_stops absent   -> brutalist defs/content
+   Structure: 3-layer frame -> header bar (LIVE) -> divider -> clipped scroll -> fades -> bottom accent.
+   Specimens: chrome-horizon-marquees-v2 (chrome), brutalist-emerald-marquees-v5 (brutalist).
    Extends document.svg.j2.  Context: ComposeSpec dict. #}
 {% extends "document.svg.j2" %}
 
@@ -9,11 +12,11 @@
 {% set vh = height | default(268) %}
 {% set si = surface_inset | default(5) %}
 {% set hh = header_h | default(33) %}
-  {# Fade gradients — chrome uses well colors, brutalist uses surface #}
-{% if is_chrome | default(false) %}
+  {# Fade gradients — use well colors when present, surface otherwise #}
+{% if well_top | default('') %}
   <linearGradient id="{{ uid }}-fade-top" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}" stop-opacity="1"/>
-    <stop offset="100%" stop-color="{{ well_top | default('#0C1E2E') }}" stop-opacity="0"/>
+    <stop offset="0%" stop-color="{{ well_top }}" stop-opacity="1"/>
+    <stop offset="100%" stop-color="{{ well_top }}" stop-opacity="0"/>
   </linearGradient>
   <linearGradient id="{{ uid }}-fade-bot" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="{{ well_bottom | default('#06101A') }}" stop-opacity="0"/>
@@ -21,12 +24,12 @@
   </linearGradient>
 {% else %}
   <linearGradient id="{{ uid }}-fade-top" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="var(--dna-surface)" stop-opacity="1"/>
-    <stop offset="100%" stop-color="var(--dna-surface)" stop-opacity="0"/>
+    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
+    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
   </linearGradient>
   <linearGradient id="{{ uid }}-fade-bot" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="var(--dna-surface)" stop-opacity="0"/>
-    <stop offset="100%" stop-color="var(--dna-surface)" stop-opacity="1"/>
+    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
   </linearGradient>
 {% endif %}
   {# Scroll clip #}
@@ -35,31 +38,10 @@
           width="{{ vw - si * 2 }}"
           height="{{ vh - si - hh - si - (bottom_accent_h | default(3)) }}"/>
   </clipPath>
-{% if is_chrome | default(false) and envelope_stops | default([]) %}
-  {# ── Chrome defs (specimen: chrome-horizon-marquees-v2) ── #}
-  <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="0" y2="1">
-  {% for stop in envelope_stops %}
-    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-  {% endfor %}
-  </linearGradient>
-  <filter id="{{ uid }}-shadow" x="-2%" y="-2%" width="104%" height="106%">
-    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity=".35"/>
-  </filter>
-  <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-    <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
-    <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
-  </linearGradient>
-  {# Horizon-band header — HORIZONTAL gradient (chrome-horizon signature) #}
-  <linearGradient id="{{ uid }}-hdr" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="#1A4A6E"/>
-    <stop offset="30%" stop-color="#3A7EA8"/>
-    <stop offset="50%" stop-color="#6AACC8"/>
-    <stop offset="70%" stop-color="#3A7EA8"/>
-    <stop offset="100%" stop-color="#1A4A6E"/>
-  </linearGradient>
-  <clipPath id="{{ uid }}-outer"><rect width="{{ vw }}" height="{{ vh }}" rx="4"/></clipPath>
-  <clipPath id="{{ uid }}-inner"><rect x="3" y="3" width="{{ vw - 6 }}" height="{{ vh - 6 }}" rx="2"/></clipPath>
-  {# Specular sweep def removed from chrome marquees #}
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee-vertical/chrome-defs.j2" %}
+{% else %}
+{% include "frames/marquee-vertical/brutalist-defs.j2" %}
 {% endif %}
 {% endblock %}
 
@@ -81,77 +63,12 @@
 {% set scroll_top = si + hh %}
 
 {# ══════════════════════════════════════════════════════════════════
-   FRAME
+   FRAME + HEADER + DIVIDER — dispatched to profile partials
    ══════════════════════════════════════════════════════════════════ #}
-{% if is_chrome | default(false) and envelope_stops | default([]) %}
-{# Chrome: env-map bezel → groove → well → specular → horizon header (specimen: chrome-horizon-marquees-v2) #}
-<g clip-path="url(#{{ uid }}-outer)" filter="url(#{{ uid }}-shadow)">
-  <rect width="{{ vw }}" height="{{ vh }}" rx="4" fill="url(#{{ uid }}-envelope)"/>
-</g>
-<rect x="2" y="2" width="{{ vw - 4 }}" height="{{ vh - 4 }}" rx="3" fill="none" stroke="#000510" stroke-width=".6"/>
-<rect x="3" y="3" width="{{ vw - 6 }}" height="{{ vh - 6 }}" rx="2" fill="url(#{{ uid }}-well)"/>
-{# Specular sweep removed — causes text blur on chrome marquees #}
-{# Horizon-band header — single rect, flush to well top #}
-<rect x="3" y="3" width="{{ vw - 6 }}" height="{{ hh }}" rx="2" fill="url(#{{ uid }}-hdr)"/>
-<rect x="3" y="{{ hh }}" width="{{ vw - 6 }}" height="6" fill="url(#{{ uid }}-hdr)"/>
-{# Top specular catch #}
-<rect x="40" y="3" width="{{ vw - 80 }}" height=".5" fill="{{ specular_light | default('#6AACC8') }}" opacity=".08"/>
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee-vertical/chrome-content.j2" %}
 {% else %}
-{# Brutalist 3-layer frame — filled rects for clean edges #}
-<rect width="{{ vw }}" height="{{ vh }}" fill="var(--dna-frame-fill, var(--dna-surface-deep))"/>
-<rect x="{{ bz // 2 }}" y="{{ bz // 2 }}" width="{{ vw - bz }}" height="{{ vh - bz }}"
-      fill="var(--dna-border)"/>
-<rect x="{{ si }}" y="{{ si }}" width="{{ vw - si * 2 }}" height="{{ vh - si * 2 }}"
-      fill="var(--dna-surface)"/>
-{# Header bar — solid accent fill #}
-<rect x="{{ si }}" y="{{ si }}" width="{{ vw - si * 2 }}" height="{{ hh }}"
-      fill="var(--dna-signal)"/>
-{% endif %}
-
-{# ═══ Header content ═══ #}
-{% if is_chrome | default(false) %}
-<text x="16" y="25"
-      font-family="'Inter',system-ui,sans-serif" font-size="11" font-weight="800"
-      fill="var(--dna-surface, #000A14)" letter-spacing="2">{{ header_label | default('SYSTEM TELEMETRY') | upper }}</text>
-{% else %}
-<text x="{{ si + 11 }}" y="{{ si + hh - 11 }}"
-      font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
-      font-size="11" font-weight="800"
-      fill="var(--dna-ink-on-accent, #14532D)" letter-spacing="3">{{ header_label | default('SYSTEM TELEMETRY') | upper }}</text>
-{% endif %}
-{# LIVE text + pulsing indicator #}
-{% if is_chrome | default(false) %}
-<text x="358" y="23" text-anchor="end"
-      font-family="var(--dna-font-mono, 'Courier New', monospace)"
-      font-size="8" font-weight="700" fill="var(--dna-surface, #000A14)">{{ marquee_label | default('LIVE') }}</text>
-{% else %}
-<text x="{{ vw - 50 }}" y="{{ si + hh - 14 }}" text-anchor="end"
-      font-family="var(--dna-font-mono, ui-monospace, 'JetBrains Mono', monospace)"
-      font-size="8" font-weight="700" fill="var(--dna-ink-on-accent, #14532D)">{{ marquee_label | default('LIVE') }}</text>
-{% endif %}
-{# Pulsing dot #}
-{% if show_pulse | default(true) %}
-{% set lds = live_dot_size | default(8) %}
-{% if is_chrome | default(false) %}
-<rect x="364" y="15" width="{{ lds }}" height="{{ lds }}" rx="1"
-      fill="var(--dna-surface, #000A14)">
-{% else %}
-<rect x="{{ vw - 44 }}" y="{{ si + (hh - lds) // 2 - 1 }}"
-      width="{{ lds }}" height="{{ lds }}"
-      fill="var(--dna-ink-on-accent, #14532D)">
-{% endif %}
-  <animate attributeName="opacity" values="1;.15;1" dur="{{ pulse_dur | default('2.618s') }}"
-           repeatCount="indefinite"/>
-</rect>
-{% endif %}
-
-{# ═══ Divider below header ═══ #}
-{% if is_chrome | default(false) %}
-<line x1="3" y1="{{ scroll_top - 2 }}" x2="{{ vw - 3 }}" y2="{{ scroll_top - 2 }}"
-      stroke="var(--dna-signal)" stroke-width=".5" stroke-opacity=".25"/>
-{% else %}
-<line x1="{{ si }}" y1="{{ scroll_top }}" x2="{{ vw - si }}" y2="{{ scroll_top }}"
-      stroke="var(--dna-border)" stroke-width="2"/>
+{% include "frames/marquee-vertical/brutalist-content.j2" %}
 {% endif %}
 
 {# ═══ Scrolling content ═══ #}
@@ -205,8 +122,8 @@
 <rect x="{{ si }}" y="{{ vh - si - bah - fh }}" width="{{ vw - si * 2 }}" height="{{ fh }}"
       fill="url(#{{ uid }}-fade-bot)"/>
 
-{# ═══ Bottom accent ═══ #}
-{% if is_chrome | default(false) %}
+{# ═══ Bottom accent (data-driven) ═══ #}
+{% if bottom_accent_type | default('bar') == 'hairline' %}
 {# Chrome: thin hairline #}
 <rect x="40" y="{{ vh - 7 }}" width="{{ vw - 80 }}" height=".5"
       fill="{{ specular_light | default('#6AACC8') }}" opacity=".12"/>

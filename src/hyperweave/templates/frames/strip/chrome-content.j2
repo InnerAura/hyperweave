@@ -1,0 +1,20 @@
+{# Chrome strip frame: 2-ring frame (outer chrome rim + inner dark well).
+   Specimen: strip-chrome.svg / strip_cross_provider.svg #}
+
+{# Outer rim: full-size rect filled with animated chrome env-map + bevel filter #}
+<rect width="{{ width }}" height="{{ strip_h }}" rx="{{ chrome_corner }}"
+      fill="url(#{{ uid }}-envelope)" filter="url(#{{ uid }}-bevel)"/>
+{# Inset stroke #}
+<rect x="0.5" y="0.5" width="{{ width - 1 }}" height="{{ strip_h - 1 }}"
+      rx="{{ chrome_corner }}" fill="none"
+      stroke="rgba(255,255,255,0.07)" stroke-width="0.6"/>
+{# Inner well edge #}
+<rect x="2.5" y="2.5" width="{{ width - 5 }}" height="{{ strip_h - 5 }}"
+      rx="2.5" fill="none"
+      stroke="#000510" stroke-width="0.8"/>
+{# Inner well: dark recessed content area #}
+<rect x="3" y="3" width="{{ width - 6 }}" height="{{ strip_h - 6 }}"
+      rx="2" fill="url(#{{ uid }}-well)"/>
+{# Chrome accent bar: left edge env-map stripe #}
+<rect x="3" y="3" width="{{ accent_w }}" height="{{ strip_h - 6 }}"
+      fill="url(#{{ uid }}-envelope)"/>

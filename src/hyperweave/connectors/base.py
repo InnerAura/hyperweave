@@ -155,7 +155,7 @@ async def fetch(
         )
 
     merged_headers: dict[str, str] = {
-        "User-Agent": "HyperWeave/0.1.0 (https://hyperweave.dev)",
+        "User-Agent": "HyperWeave/0.1.0 (https://hyperweave.app)",
         "Accept": "application/json",
     }
     if headers:

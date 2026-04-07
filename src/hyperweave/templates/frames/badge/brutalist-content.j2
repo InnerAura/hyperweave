@@ -1,0 +1,56 @@
+{# Brutalist badge content: two-panel layout, sharp separator, square status indicator. #}
+{% set right_x = lp_w + sep_w_val + seam_w_val %}
+{% set right_w = width - right_x %}
+
+<g clip-path="url(#{{ uid }}-clip)">
+  <rect width="{{ lp_w }}" height="{{ h }}" fill="var(--dna-surface)"/>
+  <rect x="{{ right_x - 1 }}" width="{{ right_w + 1 }}" height="{{ h }}" fill="url(#{{ uid }}-val-bg)"/>
+</g>
+<rect x=".5" y=".5" width="{{ width - 1 }}" height="{{ h - 1 }}" fill="none" stroke="var(--dna-ink-primary)" stroke-opacity="0.06"/>
+<rect x="0" y="0" width="{{ accent_w }}" height="{{ h }}" fill="var(--dna-signal)" data-hw-zone="accent-bar"/>
+<rect x="{{ lp_w }}" y="0" width="{{ sep_w_val }}" height="{{ h }}" fill="var(--hw-state-sep, var(--dna-signal))"/>
+{% if seam_w_val > 0 %}
+<rect x="{{ lp_w + sep_w_val }}" y="0" width="{{ seam_w_val }}" height="{{ h }}" fill="var(--dna-seam-gap, var(--dna-surface-deep))"/>
+{% endif %}
+
+{# Glyph #}
+{% if has_glyph | default(false) and glyph_svg %}
+<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y | default(3) }})">
+  {{ glyph_svg | safe }}
+</g>
+{% endif %}
+
+{# Label #}
+<text data-hw-zone="label"
+      x="{{ label_x }}" y="{{ text_y }}"
+      text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" font-weight="600"
+      fill="var(--dna-label-text)"
+      letter-spacing="0.06em">{{ label_display | default(label | upper) }}</text>
+
+{# Value #}
+<text data-hw-zone="value"
+      x="{{ value_x }}" y="{{ text_y }}"
+      text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" font-weight="700"
+      fill="var(--hw-state-value, var(--dna-brand-text))">{{ value }}</text>
+
+{# Status indicator #}
+{% if show_indicator | default(true) %}
+{% set ind_y = (h - ind_size) // 2 %}
+<g data-hw-zone="status" transform="translate({{ indicator_x }},{{ ind_y }})">
+  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="1.2" width="{{ ind_size }}" height="{{ ind_size }}"/>
+  {% set inner_w = ind_size // 2 %}
+  {% set inner_off = (ind_size - inner_w) / 2 %}
+  <rect class="hw-logic-bit" x="{{ inner_off }}" y="{{ inner_off }}" width="{{ inner_w }}" height="{{ inner_w }}"
+        fill="var(--dna-status-color, var(--dna-signal))"/>
+</g>
+{% endif %}
+
+{# State tint overlay #}
+{% set right_x_val = lp_w + sep_w_val + seam_w_val %}
+<rect class="hw-state-tint" x="{{ right_x_val }}" y="0"
+      width="{{ width - right_x_val }}" height="{{ h }}"
+      pointer-events="none"/>
