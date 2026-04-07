@@ -259,10 +259,12 @@ class ProfileConfig(FrozenModel):
     strip_metric_value_y: int = Field(default=36, description="Strip metric value y position")
     strip_metric_value_skew: int = Field(default=0, description="Strip metric value skewX degrees")
     strip_identity_font: str = Field(
-        default="var(--dna-font-mono, 'SF Mono', monospace)", description="Strip identity font",
+        default="var(--dna-font-mono, 'SF Mono', monospace)",
+        description="Strip identity font",
     )
     strip_metric_label_font: str = Field(
-        default="var(--dna-font-mono, 'SF Mono', monospace)", description="Strip metric label font",
+        default="var(--dna-font-mono, 'SF Mono', monospace)",
+        description="Strip metric label font",
     )
 
     # -- Marquee parametric (Tier 1A) --
@@ -274,7 +276,8 @@ class ProfileConfig(FrozenModel):
     marquee_clip_x: int = Field(default=6, description="Marquee clip region x offset")
     marquee_clip_w: int = Field(default=788, description="Marquee clip region width")
     marquee_font_family: str = Field(
-        default="var(--dna-font-mono, ui-monospace, monospace)", description="Marquee scroll text font",
+        default="var(--dna-font-mono, ui-monospace, monospace)",
+        description="Marquee scroll text font",
     )
 
     # -- Counter marquee (Tier 1A closure) --
@@ -283,16 +286,20 @@ class ProfileConfig(FrozenModel):
     marquee_counter_text_ys: list[int] = Field(default=[30, 72, 115], description="Counter text Y positions")
     marquee_counter_divider_ys: list[int] = Field(default=[44, 88], description="Counter divider Y positions")
     marquee_counter_brand_color_even: str = Field(
-        default="var(--dna-signal)", description="Counter brand item color for even indices",
+        default="var(--dna-signal)",
+        description="Counter brand item color for even indices",
     )
     marquee_counter_brand_color_odd: str = Field(
-        default="var(--dna-ink-primary)", description="Counter brand item color for odd indices",
+        default="var(--dna-ink-primary)",
+        description="Counter brand item color for odd indices",
     )
     marquee_counter_metric_label_color: str = Field(
-        default="var(--dna-label-text, var(--dna-signal-dim))", description="Counter metric label color",
+        default="var(--dna-label-text, var(--dna-signal-dim))",
+        description="Counter metric label color",
     )
     marquee_counter_metric_value_font: str = Field(
-        default="", description="Counter metric value font family override (empty = inherit)",
+        default="",
+        description="Counter metric value font family override (empty = inherit)",
     )
     marquee_counter_gap_r1: int = Field(default=28, description="Counter row 1 gap in px")
     marquee_counter_letter_spacing_r1: str = Field(default="4", description="Counter row 1 letter spacing")
@@ -300,10 +307,12 @@ class ProfileConfig(FrozenModel):
     marquee_counter_letter_spacing_r3: str = Field(default="1", description="Counter row 3 letter spacing")
     marquee_counter_text_start_x: int = Field(default=20, description="Counter text start x offset")
     marquee_counter_status_dot_color: str = Field(
-        default="var(--dna-status-passing-core)", description="Counter status dot color",
+        default="var(--dna-status-passing-core)",
+        description="Counter status dot color",
     )
     marquee_counter_status_diamond_color: str = Field(
-        default="var(--dna-signal)", description="Counter status diamond color",
+        default="var(--dna-signal)",
+        description="Counter status diamond color",
     )
     marquee_counter_divider_x_inset: int = Field(default=6, description="Counter divider x inset")
     marquee_counter_divider_stroke_width: str = Field(default="1.5", description="Counter divider stroke width")
@@ -319,17 +328,21 @@ class ProfileConfig(FrozenModel):
     marquee_horizontal_clip_inset_x: int = Field(default=4, description="Horizontal marquee clip X inset")
     marquee_horizontal_show_accent_lines: bool = Field(default=True, description="Show horizontal accent lines")
     marquee_horizontal_bold_pattern: str = Field(
-        default="even", description="Horizontal bold pattern: 'even' or 'first'",
+        default="even",
+        description="Horizontal bold pattern: 'even' or 'first'",
     )
 
     # -- Vertical marquee (Tier 1A closure) --
     marquee_vertical_status_label_offset: int = Field(default=18, description="Vertical status label right offset")
     marquee_vertical_bottom_accent_type: str = Field(
-        default="bar", description="Vertical bottom accent: 'bar' or 'hairline'",
+        default="bar",
+        description="Vertical bottom accent: 'bar' or 'hairline'",
     )
     marquee_vertical_warn_color: str = Field(
-        default="var(--dna-status-warning-core)", description="Vertical warn status color",
+        default="var(--dna-status-warning-core)",
+        description="Vertical warn status color",
     )
     marquee_vertical_status_ts_color: str = Field(
-        default="var(--dna-label-text, var(--dna-signal-dim))", description="Vertical status timestamp color",
+        default="var(--dna-label-text, var(--dna-signal-dim))",
+        description="Vertical status timestamp color",
     )

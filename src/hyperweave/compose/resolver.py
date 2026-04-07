@@ -519,7 +519,9 @@ def _apply_content_aware_scroll(rows: list[dict[str, Any]], base_speed: float, s
 
 
 def _resolve_counter(
-    spec: ComposeSpec, chrome_ctx: dict[str, Any], profile: dict[str, Any] | None = None,
+    spec: ComposeSpec,
+    chrome_ctx: dict[str, Any],
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Counter-scroll tri-band: 3 rows with distinct content types.
 
@@ -729,7 +731,9 @@ def _resolve_counter(
 
 
 def _resolve_vertical(
-    spec: ComposeSpec, chrome_ctx: dict[str, Any], profile: dict[str, Any] | None = None,
+    spec: ComposeSpec,
+    chrome_ctx: dict[str, Any],
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Vertical telemetry feed: timestamped event rows with status indicators.
 
@@ -785,7 +789,9 @@ def _resolve_vertical(
 
 
 def _resolve_horizontal(
-    spec: ComposeSpec, chrome_ctx: dict[str, Any], profile: dict[str, Any] | None = None,
+    spec: ComposeSpec,
+    chrome_ctx: dict[str, Any],
+    profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Horizontal LIVE ticker: brand items scrolling left.
 
@@ -814,9 +820,7 @@ def _resolve_horizontal(
             "text": t,
             "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
             "font_weight": (
-                "700"
-                if (bold_pattern == "first" and i == 0) or (bold_pattern == "even" and i % 2 == 0)
-                else ""
+                "700" if (bold_pattern == "first" and i == 0) or (bold_pattern == "even" and i % 2 == 0) else ""
             ),
         }
         for i, t in enumerate(raw_items)
@@ -875,7 +879,8 @@ def _parse_counter_metrics(value: str) -> list[dict[str, str]]:
 
 
 def _build_counter_status_items(
-    spec: ComposeSpec, profile: dict[str, Any] | None = None,
+    spec: ComposeSpec,
+    profile: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Build status indicator items for counter row 3."""
     _prof = profile or {}

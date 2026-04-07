@@ -126,7 +126,6 @@ def _base_context(
         # Metadata / accessibility
         "title_text": _aria_title(spec),
         "desc_text": _aria_desc(spec),
-
         # Document-level attributes (used by document.svg.j2 base template)
         "terminal_id": "",
         "rule_id": "",
@@ -404,5 +403,3 @@ def _aria_desc(spec: ComposeSpec) -> str:
     if spec.state != ArtifactStatus.ACTIVE:
         parts.append(f"in {spec.state} state")
     return ", ".join(parts) + "."
-
-
