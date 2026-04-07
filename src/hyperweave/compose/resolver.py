@@ -89,7 +89,6 @@ def resolve_badge(
     from hyperweave.core.text import measure_text
 
     height = profile.get("badge_frame_height", 20)
-    profile_id = profile.get("id", "brutalist")
     use_mono = profile.get("badge_use_mono", True)
     label_uppercase = profile.get("badge_label_uppercase", True)
 

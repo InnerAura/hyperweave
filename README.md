@@ -149,7 +149,14 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
 ### MCP
 
 ```json
-{ "mcpServers": { "hyperweave": { "command": "hyperweave", "args": ["mcp"] } } }
+{
+  "mcpServers": {
+    "hyperweave": {
+      "command": "hyperweave",
+      "args": ["mcp"]
+    }
+  }
+}
 ```
 
 ```

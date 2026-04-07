@@ -324,7 +324,9 @@ class ProfileConfig(FrozenModel):
 
     # -- Vertical marquee (Tier 1A closure) --
     marquee_vertical_status_label_offset: int = Field(default=18, description="Vertical status label right offset")
-    marquee_vertical_bottom_accent_type: str = Field(default="bar", description="Vertical bottom accent: 'bar' or 'hairline'")
+    marquee_vertical_bottom_accent_type: str = Field(
+        default="bar", description="Vertical bottom accent: 'bar' or 'hairline'",
+    )
     marquee_vertical_warn_color: str = Field(
         default="var(--dna-status-warning-core)", description="Vertical warn status color",
     )
