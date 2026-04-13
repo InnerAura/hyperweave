@@ -5,6 +5,12 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-04-13
+
+### Fixed
+
+- **CI test job** was red on the v0.2.1 push because `tests/test_proofset.py` imports `scripts/generate_proofset.py`, but `scripts/` was excluded from version control by `.gitignore`. The three test runners saw `FileNotFoundError: No such file or directory: scripts/generate_proofset.py`. `scripts/` is now tracked (it is a dev-tools directory, not a runtime dependency, and remains excluded from the PyPI wheel by `[tool.hatch.build.targets.wheel].packages`).
+
 ## [0.2.1] - 2026-04-13
 
 Post-v0.2.0 stabilization: typography alignment, mobile rendering fix, and a streak computation correction.

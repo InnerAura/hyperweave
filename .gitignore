@@ -27,10 +27,10 @@ htmlcov/
 archive/
 .claude/
 # CLAUDE.md
-docs/_notes/  
+docs/_notes/
 outputs/
-scripts/
 specs/
+# scripts/ is version-controlled (tests/test_proofset.py imports generate_proofset.py)
 
 assets/cards/butterfly-mcp.svg
 assets/cards/card-moon.svg
