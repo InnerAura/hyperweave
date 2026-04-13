@@ -148,10 +148,17 @@ def resolve_badge(
     if use_mono and label_display:
         lw += len(label_display) * font_size * 0.06
 
-    # System fonts (non-mono) are wider than the Inter LUT
-    if not use_mono:
-        lw *= 1.15
-        vw *= 1.10
+    # Empirical width factors — the Inter/mono LUTs approximate actual rendered
+    # width, but genomes can override per-zone to match their declared fonts.
+    # chrome-horizon, for example, renders badge values in Orbitron (~1.35x
+    # Inter). New genomes should measure their display font and declare their
+    # own `text_metrics` to avoid value-zone overflow. Defaults preserve the
+    # pre-v0.2.3 behavior so existing genomes are unaffected.
+    tm = genome.get("text_metrics", {})
+    default_label_factor = 1.15 if not use_mono else 1.0
+    default_value_factor = 1.10 if not use_mono else 1.0
+    lw *= tm.get("badge_label_width_factor", default_label_factor)
+    vw *= tm.get("badge_value_width_factor", default_value_factor)
 
     has_glyph = bool(spec.glyph or spec.custom_glyph_svg)
 

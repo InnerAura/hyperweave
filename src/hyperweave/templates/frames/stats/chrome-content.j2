@@ -78,10 +78,12 @@
   <line x1="{{ (ch_start_x + q * ch_stride) | round(1) }}" y1="{{ ch_baseline + 1.5 }}" x2="{{ (ch_start_x + q * ch_stride) | round(1) }}" y2="{{ ch_baseline + 4 }}" stroke="#A8C0D0" stroke-width="0.4" opacity="0.5"/>
   {% endfor %}
 
-  {# Activity bars — 2-layer vector halo replaces feGaussianBlur so the bars
-     stay crisp when the SVG is scaled down on mobile (iOS Safari downsamples
-     filter-rasterized buffers, which fuzzed the 7px-wide bars). #}
-  <g data-hw-zone="activity-bars">
+  {# Activity bars — pure gradient rects, no halo. The magazine's light-cyan
+     top edge comes from the `ch-bar` gradient's first stop (#C8DAE6), not a
+     feGaussianBlur halo. On mobile, removing the filter eliminates the soft
+     blur from rasterized-buffer downsampling; on desktop, the gradient's top
+     stop alone carries the icy-highlight aesthetic. #}
+  <g data-hw-zone="activity-bars" fill="url(#{{ uid }}-bar)">
   {% for bar in activity_bars %}
     {# Zero-count weeks render as 2px stubs; non-zero weeks use sqrt scaling. #}
     {% if bar.count == 0 %}
@@ -89,17 +91,9 @@
     {% else %}
       {% set h = [4, ((bar.count / ch_peak) ** 0.5 * ch_max_h) | int] | max %}
     {% endif %}
-    {% set bx = (ch_start_x + loop.index0 * ch_stride) | round(1) %}
-    {% set by = ch_baseline - h %}
-    {# Outer halo — soft wide glow #}
-    <rect x="{{ bx - 2 }}" y="{{ by - 2 }}" width="{{ ch_bar_w + 4 }}" height="{{ h + 4 }}" rx="2"
-          fill="#A8D4F0" opacity="0.10"/>
-    {# Inner halo — tighter brighter glow #}
-    <rect x="{{ bx - 1 }}" y="{{ by - 1 }}" width="{{ ch_bar_w + 2 }}" height="{{ h + 2 }}" rx="1.5"
-          fill="#A8D4F0" opacity="0.22"/>
-    {# Bar body — gradient fill #}
-    <rect x="{{ bx }}" y="{{ by }}" width="{{ ch_bar_w }}" height="{{ h }}" rx="1"
-          fill="url(#{{ uid }}-bar)" shape-rendering="geometricPrecision"/>
+    <rect x="{{ (ch_start_x + loop.index0 * ch_stride) | round(1) }}" y="{{ ch_baseline - h }}"
+          width="{{ ch_bar_w }}" height="{{ h }}" rx="1"
+          shape-rendering="geometricPrecision"/>
   {% endfor %}
   </g>
 

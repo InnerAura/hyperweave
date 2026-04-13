@@ -45,15 +45,20 @@
   <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
 {% endfor %}
 </linearGradient>
-{# ── Typography (class-based, matches stats/chart pattern) ── #}
+{# ── Typography (class-based, scaled for 22px compositor badge).
+   Magazine specimen uses 11/17 label/value at 200×52; compositor badge is
+   125×22 (~40% of magazine scale), so sizes proportionally compress.
+   Design intent preserved: Orbitron replaces Impact for values, skew removed.
+   @font-face for bundled WOFF2 emitted so Orbitron actually loads. #}
 <style>
+{{ font_faces | safe }}
 .{{ uid }}-label {
   font-family: var(--dna-font-mono, 'JetBrains Mono', 'SF Mono', monospace);
-  font-size: 11px; font-weight: 600; letter-spacing: 0.10em;
+  font-size: 8px; font-weight: 600; letter-spacing: 0.10em;
 }
 .{{ uid }}-value {
   font-family: var(--dna-font-display, 'Orbitron', 'Space Grotesk', sans-serif);
-  font-size: 17px; font-weight: 900; letter-spacing: 0.02em;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.02em;
 }
 </style>
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}" rx="{{ chrome_corner | default('4') }}"/></clipPath>

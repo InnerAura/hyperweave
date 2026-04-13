@@ -5,6 +5,20 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-04-13
+
+### Added
+
+- **Genome-level `text_metrics` field.** Genomes can now declare per-zone text width multipliers (`badge_label_width_factor`, `badge_value_width_factor`) so the resolver sizes frames correctly for non-default display fonts. Defaults preserve pre-v0.2.3 behavior; new fonts (e.g. Orbitron on chrome-horizon) opt in without touching the resolver. Extensible to future zones without a schema change.
+- chrome-horizon ships `badge_value_width_factor = 1.35` to match Orbitron 900 glyph advances at the compositor badge scale.
+
+### Fixed
+
+- **Orbitron was not actually loading on badges and strips.** The v0.2.0 font bundler emits `@font-face` via a `{{ font_faces | safe }}` Jinja variable, but that variable was only rendered in `stats/chrome-defs.j2` and `chart/chrome-defs.j2` — badge and strip chrome-defs templates omitted it. As a result, v0.2.1's switch to `var(--dna-font-display)` fell through to the system-ui fallback instead of rendering Orbitron. `{{ font_faces | safe }}` is now emitted in `badge/chrome-defs.j2` and `strip/chrome-defs.j2` so the bundled WOFF2 actually loads.
+- **chrome-horizon badge typography overflow.** Compounded by the font-loading bug above, v0.2.1's badge font sizes (11/17 label/value) matched the magazine's 200x52 showcase badge but the compositor badge is 125x22 (~40% of magazine scale). Scaled to 8/11 and combined with the new `text_metrics` width factor so the value text and status diamond no longer collide.
+- **Activity bar vector halos produced visible "fat bar" artifacts on mobile.** The v0.2.1 fix replaced `feGaussianBlur` with 2-layer sibling-rect halos, but those expanded the visual width of each 7px bar by 4px total, which read as blurry on small viewports. The magazine specimen's light-cyan top highlight is carried by the `ch-bar` gradient's first stop (#C8DAE6) alone, not by any halo — so the halos are removed entirely. Bars render as crisp gradient rects at every scale.
+- `tier2/` added to ruff `extend-exclude` so `just fmt` no longer trips on internal research files.
+
 ## [0.2.2] - 2026-04-13
 
 ### Fixed

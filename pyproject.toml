@@ -94,6 +94,7 @@ markers = [
 line-length = 120
 target-version = "py312"
 src = ["src"]
+extend-exclude = ["tier2"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "TCH", "RUF"]

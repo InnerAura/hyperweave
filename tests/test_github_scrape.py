@@ -72,11 +72,11 @@ def test_parse_streak_grace_day_for_empty_today() -> None:
         '<td class="ContributionCalendar-day" data-date="2025-04-10" data-level="3">&nbsp;</td>'
         '<td class="ContributionCalendar-day" data-date="2025-04-11" data-level="4">&nbsp;</td>'
         '<td class="ContributionCalendar-day" data-date="2025-04-12" data-level="0">&nbsp;</td>'
-        '<tool-tip>No contributions on April 8</tool-tip>'
-        '<tool-tip>5 contributions on April 9</tool-tip>'
-        '<tool-tip>12 contributions on April 10</tool-tip>'
-        '<tool-tip>30 contributions on April 11</tool-tip>'
-        '<tool-tip>No contributions on April 12</tool-tip>'
+        "<tool-tip>No contributions on April 8</tool-tip>"
+        "<tool-tip>5 contributions on April 9</tool-tip>"
+        "<tool-tip>12 contributions on April 10</tool-tip>"
+        "<tool-tip>30 contributions on April 11</tool-tip>"
+        "<tool-tip>No contributions on April 12</tool-tip>"
     )
     parsed = parse_contribution_html(html)
     # Today (Apr 12) is empty → grace. Apr 11 (30), Apr 10 (12), Apr 9 (5) are
@@ -90,9 +90,9 @@ def test_parse_streak_two_consecutive_zeros_break() -> None:
         '<td class="ContributionCalendar-day" data-date="2025-04-10" data-level="3">&nbsp;</td>'
         '<td class="ContributionCalendar-day" data-date="2025-04-11" data-level="0">&nbsp;</td>'
         '<td class="ContributionCalendar-day" data-date="2025-04-12" data-level="0">&nbsp;</td>'
-        '<tool-tip>12 contributions on April 10</tool-tip>'
-        '<tool-tip>No contributions on April 11</tool-tip>'
-        '<tool-tip>No contributions on April 12</tool-tip>'
+        "<tool-tip>12 contributions on April 10</tool-tip>"
+        "<tool-tip>No contributions on April 11</tool-tip>"
+        "<tool-tip>No contributions on April 12</tool-tip>"
     )
     parsed = parse_contribution_html(html)
     # Today (Apr 12) is grace-zero, Apr 11 is also zero → streak breaks.

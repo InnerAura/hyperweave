@@ -211,6 +211,19 @@ class GenomeSpec(BaseModel):
         description="Material hints: surface (matte/gloss), depth, filter_chain",
     )
 
+    # -- Text metrics (optional, per-zone width factors for empirical calibration) --
+    # The text-measurement LUT is Inter-calibrated; genomes that render with wider
+    # fonts (e.g. Orbitron 900 for chrome-horizon badge values) declare a
+    # post-measurement multiplier per zone. Defaults preserve pre-v0.2.3 behavior
+    # (1.0 for mono, 1.10-1.15 for non-mono via the resolver fallback).
+    # Known zone keys: badge_label_width_factor, badge_value_width_factor.
+    # Future zones (strip_value_width_factor, banner_hero_width_factor, etc.) can
+    # be added without schema change.
+    text_metrics: dict[str, float] = Field(
+        default_factory=dict,
+        description="Per-zone text width multipliers (e.g. badge_value_width_factor=1.35 for Orbitron)",
+    )
+
     # -- Kinetic cascade (optional, motion timing + compatible vocab) --
     motion_config: dict[str, Any] = Field(
         default_factory=dict,
