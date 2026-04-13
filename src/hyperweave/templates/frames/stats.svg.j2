@@ -1,0 +1,18 @@
+{# HyperWeave Stats Frame — Paradigm-dispatched.
+
+   GitHub profile summary card. Paradigm dispatch chooses the layout:
+
+     "brutalist" → brutalist hero-left, 2x2 metric grid, activity bars (495x280)
+     "chrome"    → chrome material stack, 4 centered columns, gradient bars (495x260)
+
+   Custom genomes add new paradigms by dropping `frames/stats/{paradigm}-defs.j2`
+   and `frames/stats/{paradigm}-content.j2`. Extends document.svg.j2. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+{% include "frames/stats/" ~ (paradigm | default("brutalist")) ~ "-defs.j2" %}
+{% endblock %}
+
+{% block content %}
+{% include "frames/stats/" ~ (paradigm | default("brutalist")) ~ "-content.j2" %}
+{% endblock %}

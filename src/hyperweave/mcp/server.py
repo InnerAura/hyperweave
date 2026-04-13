@@ -10,9 +10,11 @@ from typing import Any
 
 from fastmcp import FastMCP
 
+from hyperweave import __version__
+
 mcp = FastMCP(
     name="HyperWeave",
-    version="0.1.0",
+    version=__version__,
     instructions=(
         "Compositor API for self-contained SVG artifacts from semantic parameters. "
         "Use hw_compose for any artifact type. Use hw_live for live-data badges. "
@@ -42,15 +44,25 @@ async def hw_compose(
     rows: int = 3,
     speeds: list[float] | None = None,
     telemetry_data: dict[str, Any] | None = None,
+    # ── Session 2A+2B parity ──
+    genome_override: dict[str, Any] | None = None,
+    connector_data: dict[str, Any] | None = None,
+    timeline_items: list[dict[str, Any]] | None = None,
+    stats_username: str = "",
+    chart_owner: str = "",
+    chart_repo: str = "",
 ) -> str:
     """Compose a HyperWeave artifact. Returns self-contained SVG.
 
     type: badge | strip | banner | icon | divider |
           marquee-horizontal | marquee-vertical | marquee-counter |
-          receipt | rhythm-strip | master-card | catalog
+          receipt | rhythm-strip | master-card | catalog |
+          stats | chart | timeline
 
     genome: brutalist-emerald (dark, sharp corners, emerald accent) |
             chrome-horizon (dark, metallic, blue-silver gradient)
+            — or pass ``genome_override`` as an inline genome dict to bypass
+              the built-in registry (equivalent to CLI ``--genome-file``).
 
     Content by frame type:
       badge:    title="build" value="passing" (two-panel badge)
@@ -60,6 +72,15 @@ async def hw_compose(
       divider:  divider_variant=block|current|takeoff|void|zeropoint
       marquee:  title="TEXT | MORE" (pipe-separated for counter rows)
       receipt:  telemetry_data={session data contract dict}
+      stats:    stats_username="eli64s" + connector_data={stars_total, ...}
+      chart:    chart_owner/chart_repo + connector_data={points, current_stars}
+      timeline: timeline_items=[{title, subtitle, status, date}, ...]
+
+    Network I/O for stats/chart is NOT done inside this tool — callers must
+    pre-fetch via hw_live or the connectors module and pass results through
+    ``connector_data`` (or ``timeline_items`` for the timeline frame). This
+    preserves the pure-function semantics of compose() and keeps the tool
+    deterministic for agents.
 
     motion (banner): cascade | drop | broadcast | bars | breach |
                      collapse | converge | crash | pulse
@@ -91,6 +112,12 @@ async def hw_compose(
         marquee_rows=rows,
         marquee_speeds=speeds,
         telemetry_data=telemetry_data,
+        genome_override=genome_override,
+        connector_data=connector_data,
+        timeline_items=timeline_items,
+        stats_username=stats_username,
+        chart_owner=chart_owner,
+        chart_repo=chart_repo,
     )
 
     result = compose(spec)

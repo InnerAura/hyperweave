@@ -25,6 +25,10 @@ class FrameType(StrEnum):
     RHYTHM_STRIP = "rhythm-strip"
     MASTER_CARD = "master-card"
     CATALOG = "catalog"
+    # Session 2A+2B — new frame types
+    STATS = "stats"
+    CHART = "chart"
+    TIMELINE = "timeline"
 
 
 class GenomeId(StrEnum):

@@ -18,7 +18,7 @@ The `kit` command composes a full artifact set. The `readme` type produces artif
 hyperweave kit readme \
   --genome brutalist-emerald \
   --project "my-project" \
-  --badges "build:passing,version:v0.1.0,coverage:95%,license:MIT" \
+  --badges "build:passing,version:v0.2.0,coverage:95%,license:MIT" \
   --social "github,discord,x" \
   --output ./assets/
 ```
@@ -29,7 +29,7 @@ This writes the following files to `./assets/`:
 |---|---|---|
 | `banner.svg` | banner | "MY-PROJECT" hero banner |
 | `badge-build.svg` | badge | "build: passing" (state: passing) |
-| `badge-version.svg` | badge | "version: v0.1.0" (state: active) |
+| `badge-version.svg` | badge | "version: v0.2.0" (state: active) |
 | `badge-coverage.svg` | badge | "coverage: 95%" (state: passing) |
 | `badge-license.svg` | badge | "license: MIT" (state: active) |
 | `strip.svg` | strip | 4-metric strip |
@@ -47,7 +47,7 @@ This writes the following files to `./assets/`:
 
 <p align="center">
   <img src="./assets/badge-build.svg" alt="build: passing"/>
-  <img src="./assets/badge-version.svg" alt="version: v0.1.0"/>
+  <img src="./assets/badge-version.svg" alt="version: v0.2.0"/>
   <img src="./assets/badge-coverage.svg" alt="coverage: 95%"/>
   <img src="./assets/badge-license.svg" alt="license: MIT"/>
 </p>
@@ -81,7 +81,7 @@ Regenerate the same kit with a different genome:
 hyperweave kit readme \
   -g chrome-horizon \
   --project "my-project" \
-  --badges "build:passing,version:v0.1.0" \
+  --badges "build:passing,version:v0.2.0" \
   --output ./assets-chrome/
 ```
 
@@ -99,7 +99,7 @@ curl -X POST http://localhost:8000/v1/kit/readme \
   -d '{
     "genome": "brutalist-emerald",
     "project": "my-project",
-    "badges": "build:passing,version:v0.1.0",
+    "badges": "build:passing,version:v0.2.0",
     "social": "github"
   }'
 ```
@@ -113,7 +113,7 @@ hw_kit(
   type="readme",
   genome="brutalist-emerald",
   project="my-project",
-  badges="build:passing,version:v0.1.0,coverage:95%",
+  badges="build:passing,version:v0.2.0,coverage:95%",
   social="github,discord"
 )
 ```

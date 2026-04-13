@@ -4,7 +4,7 @@
 
 <g clip-path="url(#{{ uid }}-clip)">
   <rect width="{{ lp_w }}" height="{{ h }}" fill="var(--dna-surface)"/>
-  <rect x="{{ right_x - 1 }}" width="{{ right_w + 1 }}" height="{{ h }}" fill="url(#{{ uid }}-val-bg)"/>
+  <rect x="{{ right_x - 1 }}" width="{{ right_w + 1 }}" height="{{ h }}" fill="var(--dna-surface-deep)"/>
 </g>
 <rect x=".5" y=".5" width="{{ width - 1 }}" height="{{ h - 1 }}" fill="none" stroke="var(--dna-ink-primary)" stroke-opacity="0.06"/>
 <rect x="0" y="0" width="{{ accent_w }}" height="{{ h }}" fill="var(--dna-signal)" data-hw-zone="accent-bar"/>
@@ -49,8 +49,6 @@
 </g>
 {% endif %}
 
-{# State tint overlay #}
-{% set right_x_val = lp_w + sep_w_val + seam_w_val %}
-<rect class="hw-state-tint" x="{{ right_x_val }}" y="0"
-      width="{{ width - right_x_val }}" height="{{ h }}"
-      pointer-events="none"/>
+{# No state tint overlay: brutalist paradigm keeps the value zone flat --dna-surface-deep
+   across all states. State color flows via text fill, separator bar, and status cube only —
+   "truth to materials" — no decorative background wash. #}

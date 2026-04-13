@@ -54,6 +54,8 @@ strip_metric_value_y: 36
 strip_metric_value_skew: 0
 strip_identity_font: "var(--dna-font-mono, 'SF Mono', monospace)"
 strip_metric_label_font: "var(--dna-font-mono, 'SF Mono', monospace)"
+strip_divider_color: "var(--dna-border-tint)"
+strip_divider_opacity: 0.4
 
 # ── Marquee parametric (Tier 1A) ──
 marquee_separator: "■"

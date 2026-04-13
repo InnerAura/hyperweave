@@ -25,10 +25,20 @@ def version() -> None:
 
 @app.command()
 def compose(
-    frame_type: Annotated[str, typer.Argument(help="Frame: badge, strip, banner, icon, divider, marquee-*")],
-    title: Annotated[str, typer.Argument(help="Primary text (label for badge, identity for strip)")] = "",
-    value: Annotated[str, typer.Argument(help="Secondary text (value for badge, metrics for strip)")] = "",
+    frame_type: Annotated[
+        str,
+        typer.Argument(help="Frame: badge, strip, banner, icon, divider, marquee-*, stats, chart, timeline"),
+    ],
+    title: Annotated[str, typer.Argument(help="Primary text (label, identity, username, owner/repo, ...)")] = "",
+    value: Annotated[str, typer.Argument(help="Secondary text or chart subtype (e.g. 'stars')")] = "",
     genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist-emerald",
+    genome_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--genome-file",
+            help="Path to a local genome JSON file (bypasses built-in registry)",
+        ),
+    ] = None,
     state: Annotated[str, typer.Option("--state", "-s")] = "active",
     motion: Annotated[str, typer.Option("--motion", "-m")] = "static",
     glyph: Annotated[str, typer.Option("--glyph")] = "",
@@ -41,19 +51,93 @@ def compose(
     # Marquee options
     direction: Annotated[str, typer.Option("--direction")] = "ltr",
     rows: Annotated[int, typer.Option("--rows")] = 3,
+    # Timeline options
+    data: Annotated[
+        Path | None,
+        typer.Option("--data", help="Path to JSON data file (timeline items, stats mock data, etc.)"),
+    ] = None,
     # Output
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
     metrics: Annotated[str, typer.Option("--metrics", help="Strip metrics: 'STARS:2.9k,FORKS:278'")] = "",
 ) -> None:
-    """Compose a single HyperWeave artifact."""
+    """Compose a single HyperWeave artifact.
+
+    For the new Session 2A+2B frames:
+
+    \b
+      hyperweave compose stats <username>                    [fetches GitHub data]
+      hyperweave compose chart stars <owner/repo>            [fetches star history]
+      hyperweave compose timeline --data ./items.json        [POST-style items]
+      hyperweave compose <any-frame> --genome-file ./x.json  [custom genome]
+    """
+    import asyncio
+    import json
+
     from hyperweave.compose.engine import compose as do_compose
     from hyperweave.core.models import ComposeSpec
 
+    # ── Optional custom genome loaded from file ──────────────────────
+    genome_override: dict[str, object] | None = None
+    if genome_file is not None:
+        from hyperweave.config.genome_validator import load_and_validate_genome_file
+
+        try:
+            genome_override, errors = load_and_validate_genome_file(genome_file)
+        except FileNotFoundError as exc:
+            typer.echo(f"Error: {exc}", err=True)
+            raise typer.Exit(2) from exc
+        except json.JSONDecodeError as exc:
+            typer.echo(f"Error: {genome_file} is not valid JSON: {exc}", err=True)
+            raise typer.Exit(2) from exc
+        if errors:
+            typer.echo(f"Genome file validation failed for {genome_file.name}:", err=True)
+            for err in errors:
+                typer.echo(f"  {err}", err=True)
+            raise typer.Exit(2)
+        # Update the genome slug to match the loaded file (so data-hw-genome is correct).
+        genome = str(genome_override.get("id", genome))
+
+    # ── Frame-type-specific argument interpretation + connector fetch ──
+    connector_data: dict[str, object] | None = None
+    timeline_items: list[dict[str, object]] | None = None
+    stats_username = ""
+    chart_owner = ""
+    chart_repo = ""
     final_value = metrics if metrics else value
+
+    if frame_type == "stats":
+        # First positional arg = username. Fetch full stats card data.
+        stats_username = title
+        if stats_username:
+            try:
+                from hyperweave.connectors.github import fetch_user_stats
+
+                connector_data = asyncio.run(fetch_user_stats(stats_username))
+            except Exception as exc:  # network or parse error → graceful degradation
+                typer.echo(f"(warning) stats fetch failed for {stats_username}: {exc}", err=True)
+                connector_data = None
+    elif frame_type == "chart":
+        # `compose chart stars <owner/repo>` is the PRD-canonical form.
+        # title == chart subtype ("stars"), value == "owner/repo".
+        repo_spec = value
+        if "/" in repo_spec:
+            chart_owner, chart_repo = repo_spec.split("/", 1)
+        try:
+            from hyperweave.connectors.github import fetch_stargazer_history
+
+            connector_data = asyncio.run(fetch_stargazer_history(chart_owner, chart_repo))
+        except Exception as exc:
+            typer.echo(f"(warning) chart fetch failed for {chart_owner}/{chart_repo}: {exc}", err=True)
+            connector_data = None
+    elif frame_type == "timeline":
+        if data is not None and data.exists():
+            payload = json.loads(data.read_text())
+            timeline_items = payload.get("items") if isinstance(payload, dict) else payload
 
     spec = ComposeSpec(
         type=frame_type,
         genome_id=genome,
+        genome_override=genome_override,
         title=title,
         value=final_value,
         state=state,
@@ -66,6 +150,11 @@ def compose(
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_rows=rows,
+        stats_username=stats_username,
+        chart_owner=chart_owner,
+        chart_repo=chart_repo,
+        connector_data=connector_data,
+        timeline_items=timeline_items,
     )
 
     result = do_compose(spec)
@@ -180,6 +269,15 @@ def session(
         typer.echo(f"Unknown action '{action}'. Use: receipt, strip, parse", err=True)
         raise typer.Exit(1)
 
+    # Skip empty sessions — no tool calls and no cost produces a blank receipt
+    # (e.g. user opened Claude Code, did nothing, closed it; or a no-op SessionEnd).
+    # Hook mode silently no-ops; interactive mode reports why.
+    if not contract.get("tools") and contract.get("profile", {}).get("total_cost", 0) == 0:
+        if sys.stdin.isatty():
+            sid = contract.get("session", {}).get("id", "unknown")
+            typer.echo(f"Skipped empty session {sid}: no tool calls, no cost.", err=True)
+        return
+
     # Compose the telemetry artifact
     from hyperweave.compose.engine import compose as do_compose
     from hyperweave.core.models import ComposeSpec
@@ -209,7 +307,9 @@ def session(
             + profile.get("total_cache_creation_tokens", 0)
         )
         dur = contract.get("session", {}).get("duration_minutes", 0)
-        tok_label = f"{total_tok / 1000:.1f}K" if total_tok >= 1000 else str(total_tok)
+        from hyperweave.compose.resolver import _fmt_tok
+
+        tok_label = _fmt_tok(total_tok)
         typer.echo(f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}", err=True)
     else:
         # Strip: stdout by default
@@ -421,9 +521,19 @@ def mcp(
     transport: Annotated[str, typer.Option("--transport")] = "stdio",
 ) -> None:
     """Start the HyperWeave MCP server."""
+    from typing import Literal, cast
+
     from hyperweave.mcp.server import mcp as mcp_server
 
-    mcp_server.run(transport=transport)
+    # FastMCP's run() accepts a narrow Literal for transport. Cast after
+    # validating the input instead of changing the user-facing CLI type.
+    allowed: tuple[str, ...] = ("stdio", "http", "sse", "streamable-http")
+    if transport not in allowed:
+        typer.echo(f"Error: transport must be one of {allowed}, got {transport!r}", err=True)
+        raise typer.Exit(1)
+    mcp_server.run(
+        transport=cast("Literal['stdio', 'http', 'sse', 'streamable-http']", transport),
+    )
 
 
 @app.command()

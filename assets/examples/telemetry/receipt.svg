@@ -1,11 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink"
-     xmlns:hw="https://hyperweave.dev/hw/v8.0"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
      role="img"
-     aria-labelledby="hw-10369559-title hw-10369559-desc"
-     viewBox="0 0 800 400"
-     width="800" height="400"
-     data-hw-id="10369559-8aaf-42c2-9bf3-0b7cdae1c057"
+     aria-labelledby="hw-81de63d5-title hw-81de63d5-desc"
+     viewBox="0 0 800 500"
+     width="800" height="500"
+     data-hw-id="81de63d5-3a64-4214-ab0f-f12cfbf1f0be"
      data-hw-type="receipt"
      data-hw-frame="receipt"
      data-hw-genome="brutalist-emerald"
@@ -13,24 +12,25 @@
      data-hw-profile="brutalist"
      data-hw-motion="static"
      data-hw-generation="1"
-     data-hw-contract="10369559-8aaf-42c2-9bf3-0b7cdae1c057"
+     data-hw-contract="81de63d5-3a64-4214-ab0f-f12cfbf1f0be"
      data-hw-variant="default"
+     data-hw-fonts="self-contained"
      data-hw-regime="normal"
      data-hw-chromatic="brutalist-emerald">
-  <title id="hw-10369559-title">HyperWeave receipt artifact</title>
-  <desc id="hw-10369559-desc">A receipt artifact, using brutalist-emerald genome.</desc>
+  <title id="hw-81de63d5-title">HyperWeave receipt artifact</title>
+  <desc id="hw-81de63d5-desc">A receipt artifact, using brutalist-emerald genome.</desc>
   <metadata>
-  <hw:artifact id="10369559-8aaf-42c2-9bf3-0b7cdae1c057" type="receipt" series="core" version="0.1.0"
-               xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <hw:artifact id="81de63d5-3a64-4214-ab0f-f12cfbf1f0be" type="receipt" series="core" version="0.1.0"
+               xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
       <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
-      <hw:created>2026-03-23T20:50:27.710148+00:00</hw:created>
+      <hw:created>2026-04-13T03:07:47.030569+00:00</hw:created>
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
-    <hw:spec size="800x400" performance="composite-only"
+    <hw:spec size="800x500" performance="composite-only"
              theme="dark" a11y="WCAG-AA" platform="web"/>
   </hw:artifact>
-  <hw:composition xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:frame>receipt</hw:frame>
     <hw:genome>brutalist-emerald@0.1.0</hw:genome>
     <hw:profile>brutalist</hw:profile>
@@ -43,11 +43,11 @@
     <rdf:Description>
       <dc:title>HyperWeave receipt artifact</dc:title>
       <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
-      <dc:date>2026-03-23T20:50:27.710148+00:00</dc:date>
+      <dc:date>2026-04-13T03:07:47.030569+00:00</dc:date>
       <dc:rights>CC BY 4.0</dc:rights>
     </rdf:Description>
   </rdf:RDF>
-  <hw:aesthetic xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:chromatic system="brutalist-emerald" space="oklch"
                   palette="" contrast-ratio="4.5:1"/>
     <hw:motion vocabulary="static" physics="none"
@@ -60,15 +60,16 @@
                    weight-range="500-900" metrics-method="lut"/>
     <hw:material surface="genome-native" depth="deep" texture="none"/>
   </hw:aesthetic>
-  <hw:reasoning xmlns:hw="https://hyperweave.dev/hw/v8.0">
+  <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:intent></hw:intent>
     <hw:approach></hw:approach>
     <hw:tradeoffs></hw:tradeoffs>
     <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
-    <hw:spatial-notes>800x400 (2.00), left-to-right</hw:spatial-notes>
+    <hw:spatial-notes>800x500 (1.60), left-to-right</hw:spatial-notes>
   </hw:reasoning>
 </metadata>
-  <style>svg, :root {
+  <style>/* hw:css-modules: genome,accessibility,telemetry */
+svg, :root {
   --dna-surface: #0c0c10;
   --dna-surface-alt: #101014;
   --dna-surface-deep: #08080c;
@@ -128,6 +129,16 @@
 /* === HyperWeave Accessibility Layer ===
  * Non-negotiable media queries for motion, color scheme, and forced colors.
  * Included in EVERY artifact.
+ *
+ * CAMO NOTE: @media (prefers-color-scheme) and @media (forced-colors: active)
+ * are INERT when served through GitHub Camo as img tags. The img element
+ * creates an isolated browsing context — the parent document's color scheme
+ * and forced-colors mode do not propagate into it. Artifacts will always
+ * render in their default (dark) theme on GitHub READMEs.
+ *
+ * These queries DO activate when the SVG is embedded directly (svg inline,
+ * object, or opened as a standalone document). This is a known accepted
+ * tradeoff: dark-default through Camo, adaptive in direct embed.
  */
 
 /* ── Reduced Motion ── */
@@ -144,16 +155,8 @@
   }
 }
 
-/* ── Dark Mode (genome values already target dark) ── */
-@media (prefers-color-scheme: dark) {
-  /* Genome --dna-* values are dark-first; no overrides needed */
-}
-
-/* ── Light Mode Override ── */
-@media (prefers-color-scheme: light) {
-  /* Light mode: override only when genome provides light-mode alleles */
-  /* Individual genomes may provide --dna-light-* variables */
-}
+/* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
+/* Light mode: genome alleles injected by CSS assembler into per-artifact @media block. */
 
 /* ── Forced Colors (Windows High Contrast) ── */
 @media (forced-colors: active) {
@@ -165,6 +168,28 @@
   .hw-accent-bar { fill: Highlight !important; }
   .hw-signal { fill: Highlight !important; }
   .hw-logic-bit { fill: Highlight !important; }
+}
+
+/* === HyperWeave Telemetry Phase Colors ===
+ * Tool categories and cognitive phases for session telemetry.
+ */
+
+:root, svg {
+  /* Tool categories (tier 1: by operation type) */
+  --dna-tool-explore:    #3b9fd4;  /* Read, Glob, Grep, Search */
+  --dna-tool-mutate:     #e5a832;  /* Write, Edit */
+  --dna-tool-execute:    #34c790;  /* Bash, Run, Task */
+  --dna-tool-coordinate: #9b6cd4;  /* Agent, TodoWrite */
+
+  /* Cognitive phases (tier 2: session phase classification) */
+  --dna-phase-scaffold:  #6366f1;  /* Initial setup, planning */
+  --dna-phase-code:      #3b82f6;  /* Implementation, writing */
+  --dna-phase-test:      #10b981;  /* Testing, validation */
+  --dna-phase-debug:     #f59e0b;  /* Debugging, investigation */
+  --dna-phase-refactor:  #8b5cf6;  /* Refactoring, optimization */
+  --dna-phase-idle:      #52525b;  /* Idle, no activity */
+  --dna-phase-recon:     #3b9fd4;  /* Reconnaissance, reading */
+  --dna-phase-impl:      #10b981;  /* Active implementation */
 }
 
 /* === HyperWeave Telemetry Utility Classes ===
@@ -217,199 +242,419 @@
 }
 </style>
   <defs>
-  <linearGradient id="hw-10369559-bg" x1="0" y1="0" x2="0" y2="1">
+  <linearGradient id="hw-81de63d5-bg" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="var(--dna-surface)"/>
     <stop offset="100%" stop-color="var(--dna-surface-deep)"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-explore" x1="0" y1="0" x2="0" y2="1">
+  <linearGradient id="hw-81de63d5-explore" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="var(--dna-tool-explore)" stop-opacity="0.18"/>
     <stop offset="100%" stop-color="var(--dna-tool-explore)" stop-opacity="0.04"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-execute" x1="0" y1="0" x2="0" y2="1">
+  <linearGradient id="hw-81de63d5-execute" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="var(--dna-tool-execute)" stop-opacity="0.18"/>
     <stop offset="100%" stop-color="var(--dna-tool-execute)" stop-opacity="0.04"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-mutate" x1="0" y1="0" x2="0" y2="1">
+  <linearGradient id="hw-81de63d5-mutate" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.18"/>
     <stop offset="100%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.04"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-coordinate" x1="0" y1="0" x2="0" y2="1">
+  <linearGradient id="hw-81de63d5-coordinate" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.18"/>
     <stop offset="100%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.04"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-rh-explore" x1="0" y1="1" x2="0" y2="0">
+  <linearGradient id="hw-81de63d5-rh-explore" x1="0" y1="1" x2="0" y2="0">
     <stop offset="0%" stop-color="var(--dna-tool-explore)" stop-opacity="0.6"/>
     <stop offset="100%" stop-color="var(--dna-tool-explore)" stop-opacity="0.12"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-rh-execute" x1="0" y1="1" x2="0" y2="0">
+  <linearGradient id="hw-81de63d5-rh-execute" x1="0" y1="1" x2="0" y2="0">
     <stop offset="0%" stop-color="var(--dna-tool-execute)" stop-opacity="0.6"/>
     <stop offset="100%" stop-color="var(--dna-tool-execute)" stop-opacity="0.12"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-rh-mutate" x1="0" y1="1" x2="0" y2="0">
+  <linearGradient id="hw-81de63d5-rh-mutate" x1="0" y1="1" x2="0" y2="0">
     <stop offset="0%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.6"/>
     <stop offset="100%" stop-color="var(--dna-tool-mutate)" stop-opacity="0.12"/>
   </linearGradient>
-  <linearGradient id="hw-10369559-rh-coordinate" x1="0" y1="1" x2="0" y2="0">
+  <linearGradient id="hw-81de63d5-rh-coordinate" x1="0" y1="1" x2="0" y2="0">
     <stop offset="0%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.6"/>
     <stop offset="100%" stop-color="var(--dna-tool-coordinate)" stop-opacity="0.12"/>
   </linearGradient>
   </defs>
 
-<rect width="800" height="400" rx="4" fill="url(#hw-10369559-bg)"/>
-<rect x="0.5" y="0.5" width="799" height="399"
+<rect width="800" height="500" rx="4" fill="url(#hw-81de63d5-bg)"/>
+<rect x="0.5" y="0.5" width="799" height="499"
       rx="4" fill="none" stroke="var(--dna-border)" stroke-width="1"/>
 
 <g transform="translate(24, 18)" data-hw-zone="hero">
-  <text class="m" font-size="9" font-weight="500" letter-spacing="1.5px"
-        fill="var(--dna-signal)">SESSION</text>
-  <text class="s ink1" font-size="26" font-weight="700" y="28"
-        letter-spacing="-0.5px">26.4K tokens · $0.42</text>
-  <text class="m ink3" font-size="10" y="44">claude-opus-4-6 · 32.2m · 99 calls</text>
+  <rect x="0" y="-4" width="86" height="22"
+        fill="var(--dna-tool-execute)" fill-opacity="0.15"
+        stroke="var(--dna-tool-execute)" stroke-opacity="0.3" stroke-width="0.5"/>
+  <text class="m" font-size="9" font-weight="600" letter-spacing="1.2px"
+        fill="var(--dna-tool-execute)" x="8" y="12">VALIDATION</text>
+  <text class="s ink1" font-size="26" font-weight="700" y="50"
+        letter-spacing="-0.5px">53.4M tokens billed · $59.08</text>
+  <text class="m ink3" font-size="10" y="66">claude-opus-4-6 · 46m · 272 calls</text>
   <g transform="translate(752, 0)" text-anchor="end">
     <text class="m ghost" font-size="9" letter-spacing="1px">SESSION</text>
-    <text class="m ink2" font-size="10" y="16">23.8K in / 2.6K out</text>
-    <text class="m ink2" font-size="10" y="30">+284 / -31 loc</text>
+    <text class="m ink2" font-size="10" y="16">22.1K in / 76.4K out</text>
+    <text class="m ink2" font-size="10" y="30">48.0M cached / 5.3M written</text>
+    <text class="m ink2" font-size="10" y="44">36 corrections</text>
   </g>
 </g>
 
-<line x1="24" y1="76" x2="776" y2="76" class="div"/>
+<line x1="24" y1="96" x2="776" y2="96" class="div"/>
 
-<g transform="translate(24, 84)" data-hw-zone="treemap">
-  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">TOKEN MAP</text>
-  <circle cx="96" cy="-3" r="3"
+<g transform="translate(24, 104)" data-hw-zone="treemap">
+  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px" y="16">TOKEN MAP</text>
+  <circle cx="96" cy="13" r="3"
           fill="var(--dna-tool-coordinate)"/>
   <text class="m ink3" font-size="9"
-        x="103">coordinate</text>
-  <circle cx="160" cy="-3" r="3"
+        x="103" y="16">coordinate</text>
+  <circle cx="176" cy="13" r="3"
           fill="var(--dna-tool-execute)"/>
   <text class="m ink3" font-size="9"
-        x="167">execute</text>
-  <circle cx="224" cy="-3" r="3"
+        x="183" y="16">execute</text>
+  <circle cx="256" cy="13" r="3"
           fill="var(--dna-tool-explore)"/>
   <text class="m ink3" font-size="9"
-        x="231">explore</text>
-  <circle cx="288" cy="-3" r="3"
+        x="263" y="16">explore</text>
+  <circle cx="336" cy="13" r="3"
           fill="var(--dna-tool-mutate)"/>
   <text class="m ink3" font-size="9"
-        x="295">mutate</text>
+        x="343" y="16">mutate</text>
 
-  <g transform="translate(0, 10)">
+  <g transform="translate(0, 26)">
+    <clipPath id="hw-81de63d5-clip-0">
+      <rect width="752" height="88"/>
+    </clipPath>
     <rect width="752" height="88" rx="3"
-          fill="url(#hw-10369559-explore)"
+          fill="url(#hw-81de63d5-explore)"
           stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-0)">
     <text class="m cell-name" font-size="13" x="12" y="22">Read</text>
-    <text class="m" font-size="32" font-weight="700" fill="var(--dna-tool-explore)" x="12" y="58">38%</text>
-    <text class="m cell-meta" font-size="10" x="12" y="74">38 calls</text>
+    <text class="m" font-size="32" font-weight="700" fill="var(--dna-tool-explore)" x="12" y="58">27%</text>
+    <text class="m cell-meta" font-size="10" x="12" y="74">26.4K · 72 calls</text>
+    <text class="m cell-error" font-size="8" x="744"
+          y="22"
+          text-anchor="end">✗2</text>
+    </g>
   </g>
-  <g transform="translate(0, 102)">
-    <rect width="340" height="32" rx="2"
-          fill="url(#hw-10369559-execute)"
-          stroke="var(--dna-tool-execute)" stroke-opacity="0.2" stroke-width="1"/>
-    <text class="m cell-name" font-size="9" x="10" y="20">Bash</text>
-    <text class="m cell-meta" font-size="8" x="40" y="20">22 calls</text>
+  <g transform="translate(0, 118)">
+    <clipPath id="hw-81de63d5-clip-1">
+      <rect width="353" height="32"/>
+    </clipPath>
+    <rect width="353" height="32" rx="2"
+          fill="url(#hw-81de63d5-mutate)"
+          stroke="var(--dna-tool-mutate)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-1)">
+    <text class="m cell-name" font-size="9" x="10" y="13">Edit</text>
+    <text class="m cell-meta" font-size="8" x="10" y="25">25.3K · 36 calls</text>
+    <text class="m cell-error" font-size="8" x="345"
+          y="13"
+          text-anchor="end">✗2</text>
+    </g>
   </g>
-  <g transform="translate(344, 102)">
-    <rect width="215" height="32" rx="2"
-          fill="url(#hw-10369559-explore)"
+  <g transform="translate(357, 118)">
+    <clipPath id="hw-81de63d5-clip-2">
+      <rect width="233" height="32"/>
+    </clipPath>
+    <rect width="233" height="32" rx="2"
+          fill="url(#hw-81de63d5-explore)"
           stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
-    <text class="m cell-name" font-size="9" x="10" y="20">Grep</text>
-    <text class="m cell-meta" font-size="8" x="40" y="20">14 calls</text>
+    <g clip-path="url(#hw-81de63d5-clip-2)">
+    <text class="m cell-name" font-size="9" x="10" y="13">Grep</text>
+    <text class="m cell-meta" font-size="8" x="10" y="25">16.8K · 74 calls</text>
+    <text class="m cell-error" font-size="8" x="225"
+          y="13"
+          text-anchor="end">✗1</text>
+    </g>
   </g>
-  <g transform="translate(563, 102)">
-    <rect width="184" height="32" rx="2"
-          fill="url(#hw-10369559-coordinate)"
+  <g transform="translate(594, 118)">
+    <clipPath id="hw-81de63d5-clip-3">
+      <rect width="153" height="32"/>
+    </clipPath>
+    <rect width="153" height="32" rx="2"
+          fill="url(#hw-81de63d5-explore)"
+          stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-3)">
+    <text class="m cell-name" font-size="9" x="10" y="13">Agent</text>
+    <text class="m cell-meta" font-size="8" x="10" y="25">11.2K · 6 calls</text>
+    </g>
+  </g>
+  <g transform="translate(0, 154)">
+    <clipPath id="hw-81de63d5-clip-4">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-execute)"
+          stroke="var(--dna-tool-execute)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-4)">
+    <text class="m cell-name" font-size="9" x="10" y="12">Bash</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">63 calls</text>
+    <text class="m cell-error" font-size="8" x="72"
+          y="12"
+          text-anchor="end">✗1</text>
+    </g>
+  </g>
+  <g transform="translate(84, 154)">
+    <clipPath id="hw-81de63d5-clip-5">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-mutate)"
+          stroke="var(--dna-tool-mutate)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-5)">
+    <text class="m cell-name" font-size="9" x="10" y="12">Write</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">3 calls</text>
+    </g>
+  </g>
+  <g transform="translate(168, 154)">
+    <clipPath id="hw-81de63d5-clip-6">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-explore)"
+          stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-6)">
+    <text class="m cell-name" font-size="9" x="10" y="12">Glob</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">7 calls</text>
+    </g>
+  </g>
+  <g transform="translate(252, 154)">
+    <clipPath id="hw-81de63d5-clip-7">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-explore)"
+          stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-7)">
+    <text class="m cell-name" font-size="9" x="10" y="12">ToolSearch</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">4 calls</text>
+    </g>
+  </g>
+  <g transform="translate(336, 154)">
+    <clipPath id="hw-81de63d5-clip-8">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-coordinate)"
           stroke="var(--dna-tool-coordinate)" stroke-opacity="0.2" stroke-width="1"/>
-    <text class="m cell-name" font-size="9" x="10" y="20">Task</text>
-    <text class="m cell-meta" font-size="8" x="40" y="20">12 calls</text>
+    <g clip-path="url(#hw-81de63d5-clip-8)">
+    <text class="m cell-name" font-size="9" x="10" y="12">AskUserQuestion</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">1 calls</text>
+    </g>
   </g>
-  <g transform="translate(0, 138)">
-    <rect width="180" height="24" rx="2"
-          fill="url(#hw-10369559-mutate)"
-          stroke="var(--dna-tool-mutate)" stroke-opacity="0.2" stroke-width="1"/>
-    <text class="m cell-name" font-size="9" x="10" y="20">Write</text>
-    <text class="m cell-meta" font-size="8" x="10" y="16">8</text>
+  <g transform="translate(420, 154)">
+    <clipPath id="hw-81de63d5-clip-9">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-explore)"
+          stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-9)">
+    <text class="m cell-name" font-size="9" x="10" y="12">WebSearch</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">2 calls</text>
+    </g>
   </g>
-  <g transform="translate(184, 138)">
-    <rect width="180" height="24" rx="2"
-          fill="url(#hw-10369559-mutate)"
-          stroke="var(--dna-tool-mutate)" stroke-opacity="0.2" stroke-width="1"/>
-    <text class="m cell-name" font-size="9" x="10" y="20">Edit</text>
-    <text class="m cell-meta" font-size="8" x="10" y="16">5</text>
+  <g transform="translate(504, 154)">
+    <clipPath id="hw-81de63d5-clip-10">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-explore)"
+          stroke="var(--dna-tool-explore)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-10)">
+    <text class="m cell-name" font-size="9" x="10" y="12">WebFetch</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">2 calls</text>
+    </g>
+  </g>
+  <g transform="translate(588, 154)">
+    <clipPath id="hw-81de63d5-clip-11">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-coordinate)"
+          stroke="var(--dna-tool-coordinate)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-11)">
+    <text class="m cell-name" font-size="9" x="10" y="12">ExitPlanMode</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">1 calls</text>
+    </g>
+  </g>
+  <g transform="translate(672, 154)">
+    <clipPath id="hw-81de63d5-clip-12">
+      <rect width="80" height="24"/>
+    </clipPath>
+    <rect width="80" height="24" rx="2"
+          fill="url(#hw-81de63d5-coordinate)"
+          stroke="var(--dna-tool-coordinate)" stroke-opacity="0.2" stroke-width="1"/>
+    <g clip-path="url(#hw-81de63d5-clip-12)">
+    <text class="m cell-name" font-size="9" x="10" y="12">EnterPlanMode</text>
+    <text class="m cell-meta" font-size="8" x="10" y="22">1 calls</text>
+    </g>
   </g>
 
-  <text class="m" font-size="8" font-weight="700" fill="var(--dna-signal)" y="174">AREA</text>
-  <text class="m ghost" font-size="8" x="30" y="174">= token share</text>
-  <text class="m" font-size="8" font-weight="700" fill="var(--dna-signal)" x="140" y="174">HUE</text>
-  <text class="m ghost" font-size="8" x="164" y="174">= tool class</text>
 </g>
 
-<line x1="24" y1="270" x2="776" y2="270" class="div"/>
+<line x1="24" y1="290" x2="776" y2="290" class="div"/>
 
-<g transform="translate(24, 278)" data-hw-zone="rhythm">
+<g transform="translate(24, 306)" data-hw-zone="rhythm">
   <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">
-    SESSION RHYTHM (6 STAGES)</text>
+    SESSION RHYTHM (24 STAGES)</text>
   <text class="m ink3" font-size="8" y="18">0m</text>
   <text class="m ink3" font-size="8" x="376" y="18"
-        text-anchor="middle">16m</text>
+        text-anchor="middle">23m</text>
   <text class="m ink3" font-size="8" x="752" y="18"
-        text-anchor="end">32m</text>
+        text-anchor="end">46m</text>
 
-  <g transform="translate(0, 24)">
-    <rect x="0" y="12" width="300" height="48"
-          rx="2"
-          fill="url(#hw-10369559-rh-explore)"/>
-    <rect x="302" y="30" width="188" height="30"
+  <g transform="translate(0, 28)">
+    <rect x="0" y="84" width="7" height="8"
           rx="1"
-          fill="url(#hw-10369559-rh-execute)"/>
-    <rect x="492" y="42" width="112" height="18"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="9" y="84" width="7" height="8"
           rx="1"
-          fill="url(#hw-10369559-rh-mutate)"/>
-    <rect x="606" y="48" width="75" height="12"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="18" y="67" width="107" height="25"
           rx="1"
-          fill="url(#hw-10369559-rh-mutate)"/>
-    <rect x="683" y="52" width="37" height="8"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="127" y="84" width="6" height="8"
           rx="1"
-          fill="url(#hw-10369559-rh-coordinate)"/>
-    <rect x="722" y="52" width="37" height="8"
+          fill="url(#hw-81de63d5-rh-coordinate)"/>
+    <rect x="135" y="84" width="7" height="8"
           rx="1"
-          fill="url(#hw-10369559-rh-explore)"/>
+          fill="url(#hw-81de63d5-rh-mutate)"/>
+    <rect x="144" y="69" width="99" height="23"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="245" y="84" width="23" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="270" y="81" width="46" height="11"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="318" y="70" width="92" height="22"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="412" y="72" width="84" height="20"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="498" y="81" width="46" height="11"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="546" y="84" width="30" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-mutate)"/>
+    <rect x="578" y="84" width="7" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="587" y="84" width="15" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="604" y="84" width="7" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="613" y="84" width="7" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="622" y="84" width="7" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="631" y="72" width="84" height="20"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="717" y="84" width="6" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="725" y="84" width="6" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="733" y="84" width="6" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="741" y="83" width="38" height="9"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-execute)"/>
+    <rect x="781" y="84" width="30" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-explore)"/>
+    <rect x="813" y="84" width="6" height="8"
+          rx="1"
+          fill="url(#hw-81de63d5-rh-mutate)"/>
   </g>
 
-  <g transform="translate(0, 88)">
-    <rect x="0" width="300" height="4" rx="1"
-          fill="var(--dna-tool-explore)" opacity="0.5"/>
-    <rect x="302" width="188" height="4" rx="1"
+  <g transform="translate(0, 124)">
+    <rect x="0" width="7" height="4" rx="1"
           fill="var(--dna-tool-execute)" opacity="0.5"/>
-    <rect x="492" width="112" height="4" rx="1"
-          fill="var(--dna-tool-mutate)" opacity="0.5"/>
-    <rect x="606" width="75" height="4" rx="1"
-          fill="var(--dna-tool-mutate)" opacity="0.5"/>
-    <rect x="683" width="37" height="4" rx="1"
-          fill="var(--dna-tool-coordinate)" opacity="0.5"/>
-    <rect x="722" width="37" height="4" rx="1"
+    <rect x="9" width="7" height="4" rx="1"
           fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="18" width="107" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="127" width="6" height="4" rx="1"
+          fill="var(--dna-tool-coordinate)" opacity="0.5"/>
+    <rect x="135" width="7" height="4" rx="1"
+          fill="var(--dna-tool-mutate)" opacity="0.5"/>
+    <rect x="144" width="99" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="245" width="23" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="270" width="46" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="318" width="92" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="412" width="84" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="498" width="46" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="546" width="30" height="4" rx="1"
+          fill="var(--dna-tool-mutate)" opacity="0.5"/>
+    <rect x="578" width="7" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="587" width="15" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="604" width="7" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="613" width="7" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="622" width="7" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="631" width="84" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="717" width="6" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="725" width="6" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="733" width="6" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="741" width="38" height="4" rx="1"
+          fill="var(--dna-tool-execute)" opacity="0.5"/>
+    <rect x="781" width="30" height="4" rx="1"
+          fill="var(--dna-tool-explore)" opacity="0.5"/>
+    <rect x="813" width="6" height="4" rx="1"
+          fill="var(--dna-tool-mutate)" opacity="0.5"/>
   </g>
 
-  <g transform="translate(0, 98)">
+  <g transform="translate(0, 138)">
     <rect x="0" y="0" width="6" height="6" rx="1"
           fill="var(--dna-tool-coordinate)" opacity="0.5"/>
-    <text class="m ink3" font-size="8" x="10" y="5">coord</text>
-    <rect x="52" y="0" width="6" height="6" rx="1"
+    <text class="m ink3" font-size="8" x="10" y="5">coordinate</text>
+    <rect x="80" y="0" width="6" height="6" rx="1"
           fill="var(--dna-tool-execute)" opacity="0.5"/>
-    <text class="m ink3" font-size="8" x="62" y="5">execu</text>
-    <rect x="104" y="0" width="6" height="6" rx="1"
+    <text class="m ink3" font-size="8" x="90" y="5">execute</text>
+    <rect x="160" y="0" width="6" height="6" rx="1"
           fill="var(--dna-tool-explore)" opacity="0.5"/>
-    <text class="m ink3" font-size="8" x="114" y="5">explo</text>
-    <rect x="156" y="0" width="6" height="6" rx="1"
+    <text class="m ink3" font-size="8" x="170" y="5">explore</text>
+    <rect x="240" y="0" width="6" height="6" rx="1"
           fill="var(--dna-tool-mutate)" opacity="0.5"/>
-    <text class="m ink3" font-size="8" x="166" y="5">mutat</text>
+    <text class="m ink3" font-size="8" x="250" y="5">mutate</text>
     <text class="m" font-size="9" font-weight="600" fill="var(--dna-signal)"
           x="752" y="6" text-anchor="end"
-          letter-spacing="0.5px">READ (40%)</text>
+          letter-spacing="0.5px">RECONNAISSANCE (14%)</text>
   </g>
 </g>
 
-<text class="m ghost" font-size="9" x="24" y="393">hyperweave.dev</text>
-<text class="m ghost" font-size="9" x="776" y="393"
-      text-anchor="end">claude-opus-4-6</text>
+<text class="m ghost" font-size="8" x="24" y="470">hyperweave · main · .hyperweave/receipts/5015be81-1e88-495b-aaec-bff5ed8e409e.svg</text>
+<text class="m ghost" font-size="8" x="776" y="470"
+      text-anchor="end">session 5015be81 · started 2026-04-04 02:36</text>
+
+<text class="m ghost" font-size="9" x="24" y="490">36 corrections</text>
+<text class="m ghost" font-size="9" x="776" y="490"
+      text-anchor="end">hyperweave.app</text>
 </svg>

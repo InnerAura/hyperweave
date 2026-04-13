@@ -1,0 +1,22 @@
+{# HyperWeave Chart Frame — Paradigm-dispatched.
+
+   Standalone time-series chart frame for GitHub star history.
+   Chart engine (render/chart_engine.py) produces fragment strings
+   (area, polyline, markers, axes, gridlines, milestones) that paradigm
+   partials compose into a hero-title + chart-zone + footer layout.
+
+   Paradigms:
+     "brutalist" → brutalist angular polyline, square markers, solid area (900x500)
+     "chrome"    → chrome bezier curve, diamond markers, horizon glow (900x500)
+
+   Custom genomes add new paradigms by dropping `frames/chart/{paradigm}-defs.j2`
+   and `frames/chart/{paradigm}-content.j2`. Extends document.svg.j2. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+{% include "frames/chart/" ~ (paradigm | default("brutalist")) ~ "-defs.j2" %}
+{% endblock %}
+
+{% block content %}
+{% include "frames/chart/" ~ (paradigm | default("brutalist")) ~ "-content.j2" %}
+{% endblock %}

@@ -1,0 +1,115 @@
+{# Stats paradigm: brutalist.
+   Ported element-by-element from tier2/genomes/brutalist-emerald/brutalist-emerald-stat-card-v6.svg.
+   495x280, flat slab, grain, heavy structural rules, 2x2 metric grid, 52-week activity bars.
+   Monospace-only (JetBrains Mono), flipped label/value hierarchy. #}
+
+{% set sw = width | default(495) %}
+{% set sh = height | default(280) %}
+
+<g clip-path="url(#{{ uid }}-clip)">
+
+  {# L0: FLAT SLAB #}
+  <rect width="{{ sw }}" height="{{ sh }}" fill="var(--dna-surface)"/>
+
+  {# L1: PERIMETER — 2.5px structural border #}
+  <rect x="1.25" y="1.25" width="{{ sw - 2.5 }}" height="{{ sh - 2.5 }}" fill="none"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5"/>
+
+  {# L2: GRAIN #}
+  <rect x="3" y="3" width="{{ sw - 6 }}" height="{{ sh - 6 }}" filter="url(#{{ uid }}-grain)"/>
+
+  {# STRUCTURAL RULES #}
+  <line x1="3" y1="32" x2="{{ sw - 3 }}" y2="32"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5" opacity="0.6"/>
+  <line x1="3" y1="108" x2="{{ sw - 3 }}" y2="108"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5" opacity="0.6"/>
+  <line x1="3" y1="200" x2="{{ sw - 3 }}" y2="200"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5" opacity="0.6"/>
+  <line x1="3" y1="260" x2="{{ sw - 3 }}" y2="260"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="1.5" opacity="0.4"/>
+  <line x1="248" y1="108" x2="248" y2="200"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="1.5" opacity="0.35"/>
+
+  {# GRID COORDINATES #}
+  <text class="{{ uid }}-grid-coord" x="8" y="11">001</text>
+  <text class="{{ uid }}-grid-coord" x="8" y="42">002</text>
+  <text class="{{ uid }}-grid-coord" x="8" y="118">003</text>
+  <text class="{{ uid }}-grid-coord" x="8" y="210">004</text>
+  <text class="{{ uid }}-grid-coord" x="8" y="270">005</text>
+
+  {# ZONE 1: HEADER — y=3 to y=32 #}
+  <g data-hw-zone="header">
+    <g transform="translate(20, 10)">
+      <svg viewBox="0 0 24 24" width="14" height="14">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-ink-accent, #A7F3D0)"/>
+      </svg>
+    </g>
+    <text class="{{ uid }}-hdr-user" x="40" y="22">{{ stats_username | upper }}</text>
+    <text class="{{ uid }}-hdr-meta" x="120" y="22">{{ stats_repo_label }}</text>
+    <rect class="{{ uid }}-status-dot" x="472" y="14" width="8" height="8" fill="var(--dna-border, var(--dna-signal))"/>
+  </g>
+
+  {# ZONE 2: HERO — y=32 to y=108 #}
+  <g data-hw-zone="hero">
+    <text class="{{ uid }}-hero-label" x="24" y="58">TOTAL STARS</text>
+    <text class="{{ uid }}-hero-value" x="20" y="98">{{ stars_display }}</text>
+    <text class="{{ uid }}-field-value" x="478" y="58" text-anchor="end" font-size="9px" opacity="0.5">LIFETIME</text>
+  </g>
+
+  {# ZONE 3: STATS FORM — y=108 to y=200, 2x2 grid #}
+  <g data-hw-zone="stats-form">
+    <line x1="3" y1="154" x2="{{ sw - 3 }}" y2="154"
+          stroke="var(--dna-border, var(--dna-signal))" stroke-width="1" opacity="0.25"/>
+
+    {# Top-left: COMMITS #}
+    <text class="{{ uid }}-field-label" x="24" y="132">COMMITS</text>
+    <text class="{{ uid }}-field-value" x="230" y="132" text-anchor="end">{{ commits_display }}</text>
+
+    {# Bottom-left: PRS #}
+    <text class="{{ uid }}-field-label" x="24" y="178">PRS</text>
+    <text class="{{ uid }}-field-value" x="230" y="178" text-anchor="end">{{ prs_display }}</text>
+
+    {# Top-right: ISSUES #}
+    <text class="{{ uid }}-field-label" x="268" y="132">ISSUES</text>
+    <text class="{{ uid }}-field-value" x="476" y="132" text-anchor="end">{{ issues_display }}</text>
+
+    {# Bottom-right: STREAK #}
+    <text class="{{ uid }}-field-label" x="268" y="178">STREAK</text>
+    <text class="{{ uid }}-field-value" x="476" y="178" text-anchor="end">{{ streak_display }}</text>
+  </g>
+
+  {# ZONE 4: ACTIVITY — y=200 to y=260 #}
+  {% set bar_baseline = 255 %}
+  {% set bar_max_h = 34 %}
+  {% set bar_min_h = 6 %}
+  {% set bar_w = 7 %}
+  {% set bar_start_x = 18 %}
+  {% set bar_stride = 9 %}
+  {% set peak = activity_peak if activity_peak > 0 else 1 %}
+  <g data-hw-zone="activity">
+    <text class="{{ uid }}-act-label" x="24" y="214">ACTIVITY · 52W</text>
+    <text class="{{ uid }}-act-label" x="478" y="214" text-anchor="end">{% if activity_peak > 0 %}{{ activity_peak }} CONTRIB/WK PEAK{% endif %}</text>
+
+    <g fill="var(--dna-signal, #34D399)" opacity="0.7" shape-rendering="crispEdges">
+    {% for bar in activity_bars %}
+      {# Zero-count weeks render as 2px stubs; non-zero weeks use sqrt scaling
+         so low-activity weeks are visually distinct from empty weeks. #}
+      {% if bar.count == 0 %}
+        {% set h = 2 %}
+      {% else %}
+        {% set h = [4, ((bar.count / peak) ** 0.5 * bar_max_h) | int] | max %}
+      {% endif %}
+      <rect x="{{ bar_start_x + loop.index0 * bar_stride }}" y="{{ bar_baseline - h }}" width="{{ bar_w }}" height="{{ h }}"/>
+    {% endfor %}
+    </g>
+    <line x1="{{ bar_start_x }}" y1="{{ bar_baseline }}" x2="484" y2="{{ bar_baseline }}"
+          stroke="var(--dna-border, var(--dna-signal))" stroke-width="0.5" opacity="0.3"/>
+  </g>
+
+  {# ZONE 5: FOOTER — y=260 to y=280 #}
+  <g data-hw-zone="footer">
+    <text class="{{ uid }}-foot" x="24" y="274">github.com/{{ stats_username | lower }}</text>
+    <text class="{{ uid }}-foot-brand" x="478" y="274" text-anchor="end">HYPERWEAVE</text>
+  </g>
+
+</g>

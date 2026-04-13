@@ -18,7 +18,7 @@
 {% set sw = width | default(800) %}
 {% set sh = height | default(60) %}
 {% set stats_w = 180 %}
-{% set right_w = 140 %}
+{% set right_w = 120 %}
 {% set bar_x = stats_w + 8 %}
 {% set bar_w = sw - stats_w - right_w - 16 %}
 {% set div_y1 = 8 %}
@@ -32,13 +32,13 @@
 
 {# === Left stats block === #}
 <g transform="translate(12, 12)" data-hw-zone="stats-left">
-  <text class="m ink1" font-size="11" font-weight="700">{{ session_id_short }}</text>
+  <text class="m ink1" font-size="11" font-weight="700">session {{ session_id_short }}</text>
   <text class="m ink3" font-size="9" y="16">call {{ call_number }} · {{ elapsed_label }}</text>
   <text class="m ghost" font-size="8" y="30">{{ token_summary }}</text>
 </g>
 
-{# Velocity indicator #}
-<g transform="translate(140, 12)" data-hw-zone="velocity">
+{# Velocity indicator — right-aligned so long numbers (e.g. "1.2M") don't overflow the divider at x={{ stats_w }}. #}
+<g transform="translate({{ stats_w - 8 }}, 12)" data-hw-zone="velocity" text-anchor="end">
   <text class="m ghost" font-size="7" letter-spacing="1px">VEL</text>
   <text class="m ink2" font-size="11" font-weight="600" y="16">{{ velocity_value }}</text>
   <text class="m ghost" font-size="7" y="30">tok/min</text>
@@ -75,13 +75,13 @@
       stroke="var(--dna-border)" stroke-width="1"/>
 
 {# === Right: loop status + profile === #}
-<g transform="translate({{ right_div_x + 12 }}, 12)" data-hw-zone="loop-status">
+<g transform="translate({{ right_div_x + 10 }}, 10)" data-hw-zone="loop-status">
   {% set status_color = 'var(--dna-status-failing-core)' if loop_detected else 'var(--dna-status-warning-core)' if loop_elevated else 'var(--dna-status-passing-core)' %}
-  <circle cx="4" cy="4" r="4" fill="{{ status_color }}" opacity="0.8"/>
+  <circle cx="4" cy="5" r="4" fill="{{ status_color }}" opacity="0.8"/>
   <text class="m" font-size="9" font-weight="600" fill="{{ status_color }}"
-        x="14">{{ loop_label | default('NOMINAL') }}</text>
-  <text class="m ghost" font-size="8" y="16">{{ loop_detail | default('no loop') }}</text>
-  <text class="m" font-size="8" font-weight="500" fill="var(--dna-signal)"
-        y="30">{{ profile_label | default('') }}</text>
+        x="14" y="8">{{ loop_label | default('NOMINAL') }}</text>
+  <text class="m ghost" font-size="8" y="22">{{ loop_detail | default('no loop') }}</text>
+  <text class="m" font-size="8" font-weight="600" fill="var(--dna-signal)"
+        y="38" letter-spacing="0.5px">{{ profile_label | default('') }}</text>
 </g>
 {% endblock %}

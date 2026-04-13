@@ -1,17 +1,22 @@
-{# HyperWeave Badge Frame — Profile-dispatched.
-   Templates never check genome identity. Data presence drives rendering:
-     envelope_stops present  → chrome defs/content
-     envelope_stops absent   → brutalist defs/content
+{# HyperWeave Badge Frame — Paradigm-dispatched (Principle 26, Session 2A+2B).
+
+   Session 2A+2B migration: templates no longer check data presence or genome
+   identity. The genome declares `paradigms.badge = "default" | "chrome" | ...`
+   and the template resolves `frames/badge/{paradigm}-content.j2` directly.
+
+   Built-in paradigms:
+     "default" → brutalist partial (flat, two-panel, sharp separator)
+     "chrome"  → chrome partial (envelope gradient, well, bevel filter)
+
+   Custom genomes may declare their own paradigm slugs; the referenced partial
+   file must exist under `frames/badge/`.
+
    Specimens: badge-final.svg (chrome), badge_*.svg (brutalist).
    Extends document.svg.j2. #}
 {% extends "document.svg.j2" %}
 
 {% block defs %}
-{% if envelope_stops | default([]) %}
-{% include "frames/badge/chrome-defs.j2" %}
-{% else %}
-{% include "frames/badge/brutalist-defs.j2" %}
-{% endif %}
+{% include "frames/badge/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
@@ -22,13 +27,9 @@
 {% set ind_size = indicator_size | default(8) %}
 {% set lp_w = left_panel_width | default(60) %}
 
-{% if envelope_stops | default([]) %}
-{% include "frames/badge/chrome-content.j2" %}
-{% else %}
-{% include "frames/badge/brutalist-content.j2" %}
-{% endif %}
+{% include "frames/badge/" ~ (paradigm | default("default")) ~ "-content.j2" %}
 
-{# Border motion SMIL overlay (shared across all profiles) #}
+{# Border motion SMIL overlay (shared across all paradigms) #}
 {% if motion_border_defs | default('') %}
 <defs>{{ motion_border_defs | safe }}</defs>
 {% endif %}

@@ -53,5 +53,10 @@
     "ink_ghost": "#a1a1aa",
     "border": "#e4e4e7",
     "sep": "#d4d4d8"
-  }
+  },
+  "paradigms": {},
+  "structural": {},
+  "typography": {},
+  "material": {},
+  "motion_config": {}
 }

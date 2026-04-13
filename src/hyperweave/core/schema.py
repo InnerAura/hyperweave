@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from pydantic import (
     BaseModel,
@@ -156,7 +157,14 @@ class GenomeSpec(BaseModel):
     highlight_color: str = Field(default="", description="Top highlight line color")
     highlight_opacity: str = Field(default="0.08", description="Top highlight opacity")
     chrome_text_gradient: list[dict[str, str]] = Field(
-        default_factory=list, description="Chrome text gradient stops for metric values"
+        default_factory=list, description="Chrome text gradient stops for title text"
+    )
+    hero_text_gradient: list[dict[str, str]] = Field(
+        default_factory=list, description="Hero value text gradient stops (icy silver for chrome)"
+    )
+    fonts: list[str] = Field(
+        default_factory=lambda: ["jetbrains-mono"],
+        description="Font slugs to embed as base64 WOFF2 (e.g. 'orbitron', 'jetbrains-mono')",
     )
     light_mode: dict[str, str] | None = Field(default=None, description="Light mode color overrides")
 
@@ -173,6 +181,41 @@ class GenomeSpec(BaseModel):
     tool_mutate: str = Field(default="", description="Tool class color: mutate (Edit, Write)")
     tool_coordinate: str = Field(default="", description="Tool class color: coordinate (Agent, Task)")
     tool_reflect: str = Field(default="", description="Tool class color: reflect")
+
+    # -- Paradigm dispatch (Principle 26: three-layer taxonomy) --
+    # Maps FrameType enum value -> paradigm slug. Resolver uses this to pick
+    # templates/frames/{frame_type}/{paradigm}-content.j2 at render time.
+    # Missing entries default to "default". Grows freely within a profile.
+    paradigms: dict[str, str] = Field(
+        default_factory=dict,
+        description="Frame-type -> paradigm-name dispatch map (Principle 26)",
+    )
+
+    # -- Structural cascade (Principle 24: templates read these as context) --
+    # Values: stroke_linejoin, data_point_shape, data_layout, fill_density,
+    # shape_rendering, etc. Consumed by chart_engine + frame resolvers.
+    structural: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Structural rendering hints (stroke_linejoin, data_point_shape, etc.)",
+    )
+
+    # -- Typographic cascade (optional, nested override for font roles) --
+    typography: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Typography hints: hero_font, mono_font, weight_hierarchy, etc.",
+    )
+
+    # -- Material cascade (optional, surface/depth/filter hints) --
+    material: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Material hints: surface (matte/gloss), depth, filter_chain",
+    )
+
+    # -- Kinetic cascade (optional, motion timing + compatible vocab) --
+    motion_config: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Motion config: timing_base, energy_range, entrance, pulse",
+    )
 
     @field_validator("category")
     @classmethod

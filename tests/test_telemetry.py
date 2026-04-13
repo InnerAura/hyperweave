@@ -356,7 +356,8 @@ class TestCostCalculator:
             "cache_read_input_tokens": 1000,
         }
         cost = calculate_turn_cost(usage, "claude-opus-4-6")
-        assert abs(cost - 0.05775) < 1e-9
+        # Opus 4.6: $5/M input + $25/M output + 1.25x cache write + 0.1x cache read
+        assert abs(cost - 0.01925) < 1e-9
 
     def test_session_cost_sums_turns(self) -> None:
         turns: list[dict[str, Any]] = [
@@ -391,7 +392,7 @@ class TestCostCalculator:
             "cache_read_input_tokens": 0,
         }
         cost = calculate_turn_cost(usage, "claude-opus-4-6")
-        expected = 1.25 * 15.0
+        expected = 1.25 * 5.0  # Opus 4.6: $5/M input * 1.25x cache write
         assert abs(cost - expected) < 1e-9
 
     def test_cache_read_multiplier(self) -> None:
@@ -402,7 +403,7 @@ class TestCostCalculator:
             "cache_read_input_tokens": 1_000_000,
         }
         cost = calculate_turn_cost(usage, "claude-opus-4-6")
-        expected = 0.1 * 15.0
+        expected = 0.1 * 5.0  # Opus 4.6: $5/M input * 0.1x cache read
         assert abs(cost - expected) < 1e-9
 
     def test_unknown_model_uses_default_rates(self) -> None:
@@ -413,7 +414,7 @@ class TestCostCalculator:
             "cache_read_input_tokens": 0,
         }
         cost = calculate_turn_cost(usage, "unknown-model-xyz")
-        assert abs(cost - 15.0) < 1e-9
+        assert abs(cost - 5.0) < 1e-9  # Default rates: $5/M input (Opus 4.6)
 
 
 # =========================================================================

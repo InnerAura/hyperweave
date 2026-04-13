@@ -25,10 +25,12 @@ The sole input to the composition pipeline. A frozen Pydantic model with:
 - **Governance**: `regime`, `metadata_tier`, `generation`
 - **Frame-specific**: `divider_variant`, `direction`, `rows`
 - **Telemetry**: `telemetry_data` (contract dict for receipt/rhythm-strip/master-card)
+- **Connector frames (stats/chart/timeline)**: `stats_username`, `chart_owner`, `chart_repo`, `connector_data` (pre-fetched dict), `timeline_items` (list of milestone dicts)
+- **Custom genome**: `genome_override` (inline genome dict — bypasses the built-in registry, equivalent to the CLI `--genome-file` flag)
 
 ## Frame Types
 
-12 frame types, each with a distinct Jinja2 template:
+15 frame types, each with a distinct Jinja2 template:
 
 | Frame | Dimensions | Content Model |
 |---|---|---|
@@ -44,6 +46,9 @@ The sole input to the composition pipeline. A frozen Pydantic model with:
 | `rhythm-strip` | Variable | Tool call density timeline |
 | `master-card` | Variable | Comprehensive session analysis |
 | `catalog` | Variable | Genome catalog page |
+| `stats` | 900x500 | GitHub profile card with language breakdown, streak, and heatmap |
+| `chart` | 900x500 | Star-history time series (polyline + area + markers) |
+| `timeline` | Variable | Vertical milestone chain with dash-flow spine |
 
 ## Genome Specification
 

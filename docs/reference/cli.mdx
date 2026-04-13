@@ -21,13 +21,14 @@ hyperweave compose <frame_type> [title] [value] [options]
 
 | Argument | Description |
 |---|---|
-| `frame_type` | Frame: `badge`, `strip`, `banner`, `icon`, `divider`, `marquee-horizontal`, `marquee-vertical`, `marquee-counter` |
-| `title` | Primary text (label for badge, identity for strip) |
-| `value` | Secondary text (value for badge, metrics for strip) |
+| `frame_type` | Frame: `badge`, `strip`, `banner`, `icon`, `divider`, `marquee-horizontal`, `marquee-vertical`, `marquee-counter`, `stats`, `chart`, `timeline` |
+| `title` | Primary text (label for badge, identity for strip, username for stats, chart subtype for chart) |
+| `value` | Secondary text (value for badge, metrics for strip, `owner/repo` for chart) |
 
 | Option | Short | Default | Description |
 |---|---|---|---|
 | `--genome` | `-g` | `brutalist-emerald` | Genome slug |
+| `--genome-file` | | `None` | Path to a local genome JSON file (validated, bypasses built-in registry) |
 | `--state` | `-s` | `active` | Semantic status |
 | `--motion` | `-m` | `static` | Motion primitive |
 | `--glyph` | | `""` | Glyph ID |
@@ -38,6 +39,7 @@ hyperweave compose <frame_type> [title] [value] [options]
 | `--divider-variant` | | `zeropoint` | Divider visual variant |
 | `--direction` | | `ltr` | Marquee scroll direction |
 | `--rows` | | `3` | Marquee counter rows |
+| `--data` | | `None` | Path to JSON data file (timeline items, custom stats data) |
 | `--metrics` | | `""` | Strip metrics (overrides value) |
 | `--output` | `-o` | stdout | Output file path |
 
@@ -49,6 +51,14 @@ hyperweave compose strip "readme-ai" "" -g brutalist-emerald --metrics "STARS:2.
 hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
 hyperweave compose icon "" "" --glyph github -g brutalist-emerald
 hyperweave compose divider "" "" --divider-variant void -g brutalist-emerald
+
+# v0.2.0: live-data frames
+hyperweave compose stats eli64s -g chrome-horizon -o stats.svg
+hyperweave compose chart stars eli64s/readme-ai -g brutalist-emerald -o chart.svg
+hyperweave compose timeline --data ./items.json -g chrome-horizon -o timeline.svg
+
+# v0.2.0: custom genome from local JSON
+hyperweave compose badge "DEPLOY" "live" --genome-file ./my-genome.json
 ```
 
 ### `kit`
@@ -64,7 +74,7 @@ hyperweave kit [kit_type] [options]
 | `kit_type` | | `readme` | Kit type |
 | `--genome` | `-g` | `brutalist-emerald` | Genome slug |
 | `--project` | | `""` | Project name (used in banner) |
-| `--badges` | | `""` | Badge pairs: `"build:passing,version:v0.1.0"` |
+| `--badges` | | `""` | Badge pairs: `"build:passing,version:v0.2.0"` |
 | `--social` | | `""` | Social icons: `"github,discord,x"` |
 | `--output` | `-o` | `.` | Output directory |
 
@@ -135,6 +145,31 @@ Install the SessionEnd hook into Claude Code settings.
 ```bash
 hyperweave install-hook
 ```
+
+### `validate-genome`
+
+Validate a genome JSON file against its profile contract schema. Checks required `--dna-*` fields, type constraints, and WCAG AA contrast ratios.
+
+```bash
+hyperweave validate-genome <genome_path> [--profile <profile_id>]
+```
+
+| Option | Description |
+|---|---|
+| `genome_path` | Path to the genome JSON file to validate |
+| `--profile` | Profile to validate against (defaults to `genome.profile`) |
+
+### `mcp`
+
+Start the HyperWeave MCP server. Used when configuring the MCP client via the shipped binary.
+
+```bash
+hyperweave mcp [--transport stdio]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--transport` | `stdio` | Transport: `stdio`, `http`, `sse`, `streamable-http` |
 
 ### `version`
 

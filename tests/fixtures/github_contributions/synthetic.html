@@ -1,0 +1,51 @@
+<!--
+  Synthetic GitHub contribution calendar HTML fragment for offline parser tests.
+
+  Mirrors the structure github.com/users/{username}/contributions returns as of
+  April 2026: a <table class="ContributionCalendar-grid"> containing <td> cells
+  with data-date + data-level attributes, paired with <tool-tip> siblings that
+  carry the exact count text like "5 contributions on Monday, April 7, 2025".
+
+  This fixture covers the permutations we care about:
+    - "No contributions" tooltip → parsed as 0
+    - Single-digit counts → parsed verbatim
+    - Double-digit counts → parsed verbatim
+    - Four-digit counts (dense accounts like vercel) → parsed verbatim
+    - Mixed intensity levels (0-4) → level field preserved
+    - A trailing consecutive streak of 3 non-zero days → streak_days = 3
+
+  If GitHub ever changes the markup, update this fixture + the regex in
+  src/hyperweave/connectors/github.py together.
+-->
+<div class="js-calendar-graph-table">
+  <table class="ContributionCalendar-grid">
+    <tbody>
+      <tr>
+        <tool-tip>No contributions on Saturday, January 1, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-01" data-level="0">&nbsp;</td>
+        <tool-tip>2 contributions on Sunday, January 2, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-02" data-level="1">&nbsp;</td>
+        <tool-tip>7 contributions on Monday, January 3, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-03" data-level="2">&nbsp;</td>
+        <tool-tip>14 contributions on Tuesday, January 4, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-04" data-level="3">&nbsp;</td>
+        <tool-tip>32 contributions on Wednesday, January 5, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-05" data-level="4">&nbsp;</td>
+        <tool-tip>1203 contributions on Thursday, January 6, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-06" data-level="4">&nbsp;</td>
+      </tr>
+      <tr>
+        <tool-tip>No contributions on Friday, January 7, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-07" data-level="0">&nbsp;</td>
+        <tool-tip>No contributions on Saturday, January 8, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-08" data-level="0">&nbsp;</td>
+        <tool-tip>4 contributions on Sunday, January 9, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-09" data-level="1">&nbsp;</td>
+        <tool-tip>9 contributions on Monday, January 10, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-10" data-level="2">&nbsp;</td>
+        <tool-tip>11 contributions on Tuesday, January 11, 2025</tool-tip>
+        <td class="ContributionCalendar-day" data-date="2025-01-11" data-level="3">&nbsp;</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,7 +1,12 @@
-{# HyperWeave Strip Frame — Profile-dispatched, 52px horizontal telemetry instrument.
-   Templates never check genome identity. Data presence drives rendering:
-     envelope_stops present  → chrome defs/frame/separator/status
-     envelope_stops absent   → brutalist defs/frame/separator/status
+{# HyperWeave Strip Frame — Paradigm-dispatched (Principle 26, Session 2A+2B).
+
+   Session 2A+2B migration: templates dispatch by abstract paradigm name
+   declared in `genome.paradigms.strip`, not by data-presence or genome identity.
+
+   Built-in paradigms:
+     "default" → brutalist partial (flat plate, class-based separators)
+     "chrome"  → chrome partial (envelope gradient, well, url() separators)
+
    Zone layout: plate bg → border → accent bar → glyph →
    identity text → [divider → metric cell]* → divider → status indicator.
    Metric cells repeat at ~106px pitch.
@@ -9,11 +14,7 @@
 {% extends "document.svg.j2" %}
 
 {% block defs %}
-{% if envelope_stops | default([]) %}
-{% include "frames/strip/chrome-defs.j2" %}
-{% else %}
-{% include "frames/strip/brutalist-defs.j2" %}
-{% endif %}
+{% include "frames/strip/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 <clipPath id="{{ uid }}-clip">
   <rect width="{{ width }}" height="{{ height }}"/>
 </clipPath>
@@ -30,13 +31,10 @@
 {% set indicator_size = 14 %}
 {% set div_y1 = 12 %}
 {% set div_y2 = strip_h - 12 %}
+{% set paradigm_strip = paradigm | default("default") %}
 
-{# === Frame structure (profile-dispatched) === #}
-{% if envelope_stops | default([]) %}
-{% include "frames/strip/chrome-content.j2" %}
-{% else %}
-{% include "frames/strip/brutalist-content.j2" %}
-{% endif %}
+{# === Frame structure (paradigm-dispatched) === #}
+{% include "frames/strip/" ~ paradigm_strip ~ "-content.j2" %}
 
 {# === Glyph zone (profile-parametric: size and fill from profile YAML) === #}
 {% if glyph_path %}
@@ -70,14 +68,18 @@
 {# === Metric cells with dividers === #}
 {% set first_div_x = first_divider_x | default(143) %}
 {% set cell_start = first_div_x + 12 %}
-{# First divider — data-driven: envelope_stops → gradient separator, else → class #}
-{% if envelope_stops | default([]) %}
+{# First divider — paradigm-driven: chrome uses a gradient separator defined in chrome-defs,
+   other paradigms fall back to a class-based border. #}
+{% if paradigm_strip == "chrome" %}
 <line x1="{{ first_div_x }}" y1="{{ div_y1 }}"
       x2="{{ first_div_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
 {% else %}
 <line x1="{{ first_div_x }}" y1="{{ div_y1 }}"
-      x2="{{ first_div_x }}" y2="{{ div_y2 }}" class="hw-border"/>
+      x2="{{ first_div_x }}" y2="{{ div_y2 }}"
+      stroke="{{ strip_divider_color | default('var(--dna-border)') }}"
+      stroke-width="1"
+      opacity="{{ strip_divider_opacity | default(1.0) }}"/>
 {% endif %}
 
 {% for metric in metrics %}
@@ -99,31 +101,31 @@
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>
 {% endif %}
 </g>
-{# Trailing divider after each metric #}
+{# Trailing divider after each metric — paradigm-dispatched separator styling #}
 {% set trail_x = cell_start + (loop.index * metric_pitch) %}
-{% if envelope_stops | default([]) %}
+{% if paradigm_strip == "chrome" %}
 <line x1="{{ trail_x }}" y1="{{ div_y1 }}"
       x2="{{ trail_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
 {% else %}
 <line x1="{{ trail_x }}" y1="{{ div_y1 }}"
-      x2="{{ trail_x }}" y2="{{ div_y2 }}" class="hw-border"/>
+      x2="{{ trail_x }}" y2="{{ div_y2 }}"
+      stroke="{{ strip_divider_color | default('var(--dna-border)') }}"
+      stroke-width="1"
+      opacity="{{ strip_divider_opacity | default(1.0) }}"/>
 {% endif %}
 {% endfor %}
 
-{# === Status indicator (profile-dispatched) === #}
+{# === Status indicator (paradigm-dispatched) === #}
 {% set last_seam_x = (first_divider_x | default(143)) + 12 + (metrics | length | default(1)) * metric_pitch %}
 {% set status_x = (last_seam_x + width) // 2 %}
 {% set status_cy = strip_h // 2 %}
-<g data-hw-zone="status" transform="translate({{ status_x }},{{ status_cy }})">
-{% if envelope_stops | default([]) %}
-{% include "frames/strip/chrome-status.j2" %}
-{% else %}
-{% include "frames/strip/brutalist-status.j2" %}
-{% endif %}
+<g data-hw-zone="status" transform="translate({{ status_x }},{{ status_cy }})"
+   {% if paradigm_strip != "chrome" %}shape-rendering="crispEdges"{% endif %}>
+{% include "frames/strip/" ~ paradigm_strip ~ "-status.j2" %}
 </g>
 
-{# ── Border motion SMIL overlay (shared across all profiles) ── #}
+{# ── Border motion SMIL overlay (shared across all paradigms) ── #}
 {% if motion_border_defs | default('') %}
 <defs>{{ motion_border_defs | safe }}</defs>
 {% endif %}

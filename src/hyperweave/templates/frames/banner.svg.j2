@@ -1,18 +1,19 @@
-{# HyperWeave Banner Frame — Profile-dispatched.
-   Templates never check genome identity. Data presence drives rendering:
-     envelope_stops present  → chrome defs
-     envelope_stops absent   → brutalist defs
-   Content is shared; chrome overlay guarded by envelope_stops presence.
-   Specimens: chrome-horizon-banner.svg (chrome), banner.svg (brutalist).
+{# HyperWeave Banner Frame — Paradigm-dispatched (Principle 26, Session 2A+2B).
+
+   Session 2A+2B migration: banner now dispatches by `paradigm` name declared
+   in `genome.paradigms.banner`. Two built-in paradigms ship day 1:
+     "default" → editorial grid + triple-layer hero text (brutalist/emerald look)
+     "chrome"  → motorsport italic Impact, env-map fill, accent stripe labels
+
+   Banner also has a `variant` axis (compact/full) that controls font-size.
+   Paradigm is the structural axis; variant is the dimensional axis.
+
+   Specimens: chrome-horizon-banner.svg (chrome), banner.svg (default).
    Extends document.svg.j2. #}
 {% extends "document.svg.j2" %}
 
 {% block defs %}
-{% if envelope_stops | default([]) %}
-{% include "frames/banner/chrome-defs.j2" %}
-{% else %}
-{% include "frames/banner/brutalist-defs.j2" %}
-{% endif %}
+{% include "frames/banner/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
@@ -20,8 +21,9 @@
 {% set bh = height | default(600) %}
 {% set text_cx = bw // 2 %}
 {% set is_full = (banner_variant | default('full')) == 'full' %}
+{% set paradigm_banner = paradigm | default("default") %}
 
-{% if envelope_stops | default([]) %}
+{% if paradigm_banner == "chrome" %}
 {# ════════════════════════════════════════════════════════════════════
    CHROME BANNER — Motorsport typography (specimen: chrome-horizon-banner.svg)
    Transparent background, Impact italic, env-map fill, skewX(-10),

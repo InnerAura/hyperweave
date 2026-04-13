@@ -61,7 +61,13 @@ class ComposeSpec(FrozenModel):
     # -- Core identity --
     type: FrameType = Field(description="Frame type: badge, strip, banner, icon, divider, marquee-*, receipt, etc.")
     frame_id: str = Field(default="", description="Resolved frame identifier")
-    genome_id: GenomeId = Field(default=GenomeId.BRUTALIST_EMERALD, description="Genome slug")
+    # NOTE: relaxed from GenomeId StrEnum to str in Session 2A+2B so that
+    # --genome-file can load arbitrary genome slugs not in the built-in registry.
+    # GenomeId enum remains valid for internal defaults and type-hinting.
+    genome_id: str = Field(
+        default=GenomeId.BRUTALIST_EMERALD.value,
+        description="Genome slug (built-in or custom from --genome-file)",
+    )
     profile_id: str = Field(default="", description="Profile ID (resolved from genome if empty)")
 
     @model_validator(mode="before")
@@ -72,7 +78,12 @@ class ComposeSpec(FrozenModel):
             return data
         profile = data.get("profile_id", "")
         if not profile:
-            genome_raw = str(data.get("genome_id", GenomeId.BRUTALIST_EMERALD))
+            # Try map lookup; if genome_override has a profile field, use it.
+            override = data.get("genome_override") or {}
+            if isinstance(override, dict) and override.get("profile"):
+                data["profile_id"] = str(override["profile"])
+                return data
+            genome_raw = str(data.get("genome_id", GenomeId.BRUTALIST_EMERALD.value))
             data["profile_id"] = _GENOME_PROFILE_MAP.get(genome_raw, ProfileId.BRUTALIST)
         return data
 
@@ -123,12 +134,37 @@ class ComposeSpec(FrozenModel):
     marquee_rows: int = Field(default=1, description="Counter variant: number of rows")
     marquee_speeds: list[float] | None = Field(default=None, description="Counter: speed per row")
 
+    # -- Session 2A+2B additions --
+    # Inline genome dict that bypasses the built-in registry. Set by --genome-file.
+    # Resolver's _load_genome() checks this first before looking up genome_id.
+    genome_override: dict[str, Any] | None = Field(
+        default=None,
+        description="Inline genome dict (bypasses registry). Set by --genome-file.",
+    )
+    # Pre-fetched external data (GitHub API response, etc.). Network I/O happens
+    # at CLI/HTTP layer before compose() is called. Used by stats, chart frames.
+    connector_data: dict[str, Any] | None = Field(
+        default=None,
+        description="Pre-fetched external connector data (stats, chart, live)",
+    )
+    # Timeline frame items list.
+    timeline_items: list[dict[str, Any]] | None = Field(
+        default=None,
+        description="Timeline nodes: [{title, subtitle, status, date}, ...]",
+    )
+    # Stats/chart frame parameters.
+    stats_username: str = Field(default="", description="GitHub username for stats frame")
+    chart_owner: str = Field(default="", description="GitHub owner for chart frame")
+    chart_repo: str = Field(default="", description="GitHub repo for chart frame")
+
 
 class ArtifactMetadata(FrozenModel):
     """Resolved metadata returned in ComposeResult."""
 
     type: FrameType
-    genome: GenomeId
+    # Relaxed from GenomeId to str in Session 2A+2B to support custom genomes
+    # loaded via --genome-file that are not members of the built-in registry.
+    genome: str
     profile: str
     divider_variant: DividerVariant
     motion: str
@@ -265,6 +301,14 @@ class ProfileConfig(FrozenModel):
     strip_metric_label_font: str = Field(
         default="var(--dna-font-mono, 'SF Mono', monospace)",
         description="Strip metric label font",
+    )
+    strip_divider_color: str = Field(
+        default="var(--dna-border)",
+        description="Strip vertical divider stroke color",
+    )
+    strip_divider_opacity: float = Field(
+        default=1.0,
+        description="Strip vertical divider opacity (0.0-1.0)",
     )
 
     # -- Marquee parametric (Tier 1A) --

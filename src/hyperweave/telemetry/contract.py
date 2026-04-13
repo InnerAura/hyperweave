@@ -44,6 +44,7 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
             "duration_minutes": t.duration_minutes,
             "model": t.model or "",
             "git_branch": t.git_branch or "",
+            "project_path": t.project_path or "",
         },
         "profile": {
             "total_input_tokens": o.total_input_tokens,

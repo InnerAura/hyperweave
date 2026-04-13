@@ -22,7 +22,7 @@ Every artifact is the output of a single formula:
 ARTIFACT = FRAME x PROFILE x GENOME x SLOTS x MOTION x ENVIRONMENT
 ```
 
-- **Frame**: The structural type (badge, strip, banner, icon, divider, marquee, receipt)
+- **Frame**: The structural type (badge, strip, banner, icon, divider, marquee, receipt, stats, chart, timeline)
 - **Profile**: Structural skeleton (corner radii, accent widths, typography scale, glyph backing)
 - **Genome**: Aesthetic DNA (colors, shadows, glow, rhythm, compatible motions)
 - **Slots**: Content filling frame zones (labels, values, metrics, glyphs)
@@ -39,16 +39,18 @@ Agent-generated visuals are disposable -- no state, no brand, no memory. Every g
 - **Three interfaces** -- CLI, HTTP API, and MCP tools for any integration pattern
 - **Telemetry** -- parse Claude Code sessions into structured visual receipts
 
-## What Ships in v0.1
+## What Ships in v0.2
 
 | Dimension | Count |
 |---|---|
-| Frame types | 12 (badge, strip, banner, icon, divider, marquee-h/v/counter, receipt, rhythm-strip, master-card, catalog) |
+| Frame types | 15 (badge, strip, banner, icon, divider, marquee-h/v/counter, receipt, rhythm-strip, master-card, catalog, stats, chart, timeline) |
 | Genomes | 2 (brutalist-emerald, chrome-horizon) |
 | Motion configs | 16 (1 static + 5 border SMIL + 10 kinetic CSS) |
 | Glyphs | 97 (91 Simple Icons + 6 geometric) |
 | Divider variants | 5 (block, current, takeoff, void, zeropoint) |
 | Metadata tiers | 5 (Tier 0 silent through Tier 4 reasoning) |
+| Paradigms | 3 per frame (default, brutalist, chrome) -- per-frame dispatch from genome |
+| Bundled fonts | 2 (JetBrains Mono, Orbitron, base64-embedded) |
 
 ## Three Interfaces
 

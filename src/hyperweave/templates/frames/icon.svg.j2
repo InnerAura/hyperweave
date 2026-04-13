@@ -1,7 +1,14 @@
-{# HyperWeave Icon Frame — Profile-dispatched, 64x64.
-   Templates never check genome identity. Data presence drives rendering:
-     envelope_stops present  → chrome defs/content
-     envelope_stops absent   → brutalist defs/content
+{# HyperWeave Icon Frame — Paradigm-dispatched (Principle 26, Session 2A+2B).
+
+   Session 2A+2B migration: dispatch by `paradigm` name declared in
+   `genome.paradigms.icon`. Four `icon_variant` context values still select
+   the shape (circular vs square) and the paradigm selects the treatment
+   (brutalist flat vs chrome specular).
+
+   Built-in paradigms:
+     "default" → brutalist partial (flat, sharp frame)
+     "chrome"  → chrome partial (binary opposition, envelope gradient)
+
    FOUR frame variants selected by icon_variant context var:
      1. brutalist-circular  (specimen: brutalist-icon-frames/brutalist-emerald-circular-v2.svg)
      2. brutalist-square    (specimen: brutalist-icon-frames/brutalist-emerald-square-v2.svg)
@@ -11,24 +18,16 @@
 {% extends "document.svg.j2" %}
 
 {% block defs %}
-{% if envelope_stops | default([]) %}
-{% include "frames/icon/chrome-defs.j2" %}
-{% else %}
-{% include "frames/icon/brutalist-defs.j2" %}
-{% endif %}
+{% include "frames/icon/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
 {% set icon_size = width | default(64) %}
 {% set cx = icon_size / 2 %}
 
-{% if envelope_stops | default([]) %}
-{% include "frames/icon/chrome-content.j2" %}
-{% else %}
-{% include "frames/icon/brutalist-content.j2" %}
-{% endif %}
+{% include "frames/icon/" ~ (paradigm | default("default")) ~ "-content.j2" %}
 
-{# Border motion SMIL overlay (shared across all profiles) #}
+{# Border motion SMIL overlay (shared across all paradigms) #}
 {% if motion_border_defs | default('') %}
 <defs>{{ motion_border_defs | safe }}</defs>
 {% endif %}

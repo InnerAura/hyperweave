@@ -36,7 +36,7 @@
   "brand_text": "#E0ECF6",
   "metric_text": "#E0ECF6",
   "label_text": "#5BA3D4",
-  "border_tint": "#0A1E2E",
+  "border_tint": "rgba(91,163,212,0.18)",
   "glyph_inner": "#E0ECF6",
   "seam_gap": "#000A14",
   "badge_value_text": "#E0ECF6",
@@ -44,8 +44,9 @@
   "badge_warn_color": "#F59E0B",
   "material_specular": "0.4",
   "material_roughness": "0.3",
-  "font_display": "Impact,'Arial Black',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",
-  "font_mono": "ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace",
+  "fonts": ["orbitron", "jetbrains-mono"],
+  "font_display": "'Orbitron','Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif",
+  "font_mono": "'JetBrains Mono','Courier New','SF Mono',ui-monospace,monospace",
   "envelope_stops": [
     {"offset": "0%", "color": "#000A14"},
     {"offset": "12%", "color": "#0A2540"},
@@ -59,11 +60,11 @@
     {"offset": "88%", "color": "#100E0A"},
     {"offset": "100%", "color": "#060810"}
   ],
-  "well_top": "#0C1E2E",
-  "well_bottom": "#06101A",
+  "well_top": "#020617",
+  "well_bottom": "#0B1121",
   "specular_sweep_dur": "12s",
   "specular_sweep_peak": "0.08",
-  "highlight_color": "#6AACC8",
+  "highlight_color": "#A8D4F0",
   "highlight_opacity": "0.08",
   "chrome_text_gradient": [
     {"offset": "0%", "color": "#5A8AAA"},
@@ -73,6 +74,15 @@
     {"offset": "65%", "color": "#D8ECF8"},
     {"offset": "85%", "color": "#A8D4F0"},
     {"offset": "100%", "color": "#5A8AAA"}
+  ],
+  "hero_text_gradient": [
+    {"offset": "0%", "color": "#94A3B8"},
+    {"offset": "20%", "color": "#CBD5E1"},
+    {"offset": "40%", "color": "#F1F5F9"},
+    {"offset": "50%", "color": "#FFFFFF"},
+    {"offset": "60%", "color": "#F1F5F9"},
+    {"offset": "80%", "color": "#CBD5E1"},
+    {"offset": "100%", "color": "#94A3B8"}
   ],
   "icon_variant": "binary-opposition",
   "light_mode": {
@@ -84,5 +94,38 @@
     "ink_ghost": "#CBD5E1",
     "border": "#CBD5E1",
     "sep": "#CBD5E1"
+  },
+  "paradigms": {
+    "badge": "chrome",
+    "strip": "chrome",
+    "banner": "chrome",
+    "icon": "chrome",
+    "divider": "default",
+    "stats": "chrome",
+    "chart": "chrome",
+    "timeline": "default"
+  },
+  "structural": {
+    "stroke_linejoin": "round",
+    "data_point_shape": "diamond",
+    "data_point_size": 4,
+    "data_layout": "chrome",
+    "fill_density": "bezier-smooth",
+    "shape_rendering": "geometricPrecision"
+  },
+  "typography": {
+    "hero_font": "'Orbitron','Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif",
+    "mono_font": "'JetBrains Mono','Courier New','SF Mono',ui-monospace,monospace",
+    "hero_weight": 900,
+    "weight_hierarchy": "900/700/500/400"
+  },
+  "material": {
+    "surface": "metallic",
+    "depth": "deep",
+    "filter_chain": "specular-bevel"
+  },
+  "motion_config": {
+    "timing_base": "6s",
+    "energy_range": [0.3, 0.8]
   }
 }

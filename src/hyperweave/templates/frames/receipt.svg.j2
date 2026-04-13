@@ -1,6 +1,7 @@
-{# HyperWeave Receipt Frame — 800x400 session receipt.
+{# HyperWeave Receipt Frame — 800x500 session receipt (v0.4).
    Specimen: specs/telemetry-artifacts/receipt.svg
-   Three horizontal panels: hero row -> token treemap -> session rhythm.
+   Three horizontal panels: hero row -> token treemap -> session rhythm,
+   plus a metadata band (project/branch/path · session/started) above the footer.
    "The screenshot that gets posted" — answers "what happened?" in 2 seconds.
    Extends document.svg.j2.  Context: ComposeSpec dict. #}
 {% extends "document.svg.j2" %}
@@ -29,7 +30,7 @@
 
 {% block content %}
 {% set rw = width | default(800) %}
-{% set rh = height | default(400) %}
+{% set rh = height | default(500) %}
 {% set mx = 24 %}
 {% set content_w = rw - (mx * 2) %}
 
@@ -38,13 +39,20 @@
 <rect x="0.5" y="0.5" width="{{ rw - 1 }}" height="{{ rh - 1 }}"
       rx="4" fill="none" stroke="var(--dna-border)" stroke-width="1"/>
 
-{# === PANEL 1: HERO ROW (y:0-76) === #}
+{# === PANEL 1: HERO ROW (y:0-96) === #}
 <g transform="translate({{ mx }}, 18)" data-hw-zone="hero">
-  <text class="m" font-size="9" font-weight="500" letter-spacing="1.5px"
-        fill="var(--dna-signal)">{{ hero_profile | default('SESSION') | upper }}</text>
-  <text class="s ink1" font-size="26" font-weight="700" y="28"
+  {# Phase pill — colored by dominant tool class, width snug-fit to label.
+     Label length * ~7px per char (font-size 9 mono + 1.2px letter-spacing) + 16px padding. #}
+  {% set pill_label = hero_profile | default('SESSION') | upper %}
+  {% set pill_w = 16 + (pill_label | length) * 7 %}
+  <rect x="0" y="-4" width="{{ pill_w }}" height="22"
+        fill="var(--dna-tool-{{ hero_tool_class }})" fill-opacity="0.15"
+        stroke="var(--dna-tool-{{ hero_tool_class }})" stroke-opacity="0.3" stroke-width="0.5"/>
+  <text class="m" font-size="9" font-weight="600" letter-spacing="1.2px"
+        fill="var(--dna-tool-{{ hero_tool_class }})" x="8" y="12">{{ pill_label }}</text>
+  <text class="s ink1" font-size="26" font-weight="700" y="50"
         letter-spacing="-0.5px">{{ hero_headline }}</text>
-  <text class="m ink3" font-size="10" y="44">{{ hero_subline }}</text>
+  <text class="m ink3" font-size="10" y="66">{{ hero_subline }}</text>
   <g transform="translate({{ content_w }}, 0)" text-anchor="end">
     <text class="m ghost" font-size="9" letter-spacing="1px">SESSION</text>
 {% for stat in hero_right_stats | default([]) %}
@@ -53,50 +61,54 @@
   </g>
 </g>
 
-<line x1="{{ mx }}" y1="76" x2="{{ rw - mx }}" y2="76" class="div"/>
+<line x1="{{ mx }}" y1="96" x2="{{ rw - mx }}" y2="96" class="div"/>
 
-{# === PANEL 2: TOKEN MAP (y:84-260) === #}
-<g transform="translate({{ mx }}, 84)" data-hw-zone="treemap">
-  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">TOKEN MAP</text>
-  {# Legend dots #}
+{# === PANEL 2: TOKEN MAP (y:104-290) === #}
+<g transform="translate({{ mx }}, 104)" data-hw-zone="treemap">
+  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px" y="16">TOKEN MAP</text>
+  {# Legend dots — shifted down 16px to create breathing room below hero divider #}
 {% for legend in treemap_legend | default([]) %}
-  <circle cx="{{ 96 + (loop.index0 * 64) }}" cy="-3" r="3"
+  <circle cx="{{ 96 + (loop.index0 * 80) }}" cy="13" r="3"
           fill="var(--dna-tool-{{ legend.tool_class }})"/>
   <text class="m ink3" font-size="9"
-        x="{{ 103 + (loop.index0 * 64) }}">{{ legend.label }}</text>
+        x="{{ 103 + (loop.index0 * 80) }}" y="16">{{ legend.label }}</text>
 {% endfor %}
 
-  {# Treemap cells — computed by resolver, rendered here #}
+  {# Treemap cells — computed by resolver, rendered here.
+     clipPath per cell prevents text overflow into adjacent cells. #}
 {% for cell in treemap_cells | default([]) %}
   <g transform="translate({{ cell.x }}, {{ cell.y }})">
+    <clipPath id="{{ uid }}-clip-{{ loop.index0 }}">
+      <rect width="{{ cell.w }}" height="{{ cell.h }}"/>
+    </clipPath>
     <rect width="{{ cell.w }}" height="{{ cell.h }}" rx="{{ 3 if cell.tier == 1 else 2 }}"
           fill="url(#{{ uid }}-{{ cell.tool_class }})"
           stroke="var(--dna-tool-{{ cell.tool_class }})" stroke-opacity="0.2" stroke-width="1"/>
-    <text class="m cell-name" font-size="{{ 13 if cell.tier == 1 else 9 }}" x="{{ 12 if cell.tier == 1 else 10 }}" y="{{ 22 if cell.tier == 1 else (20 if cell.tier == 2 else 12) }}">{{ cell.name }}</text>
+    <g clip-path="url(#{{ uid }}-clip-{{ loop.index0 }})">
+    <text class="m cell-name" font-size="{{ 13 if cell.tier == 1 else 9 }}" x="{{ 12 if cell.tier == 1 else 10 }}" y="{{ 22 if cell.tier == 1 else (13 if cell.tier == 2 else 12) }}">{{ cell.name }}</text>
 {% if cell.tier == 1 %}
     <text class="m" font-size="32" font-weight="700" fill="var(--dna-tool-{{ cell.tool_class }})" x="12" y="58">{{ cell.pct }}%</text>
     <text class="m cell-meta" font-size="10" x="12" y="74">{{ cell.detail }}</text>
 {% elif cell.tier == 2 %}
-    <text class="m cell-meta" font-size="8" x="40" y="20">{{ cell.detail }}</text>
+    <text class="m cell-meta" font-size="8" x="10" y="25">{{ cell.detail }}</text>
 {% else %}
     <text class="m cell-meta" font-size="8" x="10" y="22">{{ cell.detail }}</text>
 {% endif %}
+{% if cell.errors %}
+    <text class="m cell-error" font-size="8" x="{{ cell.w - 8 }}"
+          y="{{ 22 if cell.tier == 1 else (13 if cell.tier == 2 else 12) }}"
+          text-anchor="end">✗{{ cell.errors }}</text>
+{% endif %}
+    </g>
   </g>
 {% endfor %}
 
-  {# Encoding key #}
-{% if treemap_cells %}
-  <text class="m" font-size="8" font-weight="700" fill="var(--dna-signal)" y="174">AREA</text>
-  <text class="m ghost" font-size="8" x="30" y="174">= token share</text>
-  <text class="m" font-size="8" font-weight="700" fill="var(--dna-signal)" x="140" y="174">HUE</text>
-  <text class="m ghost" font-size="8" x="164" y="174">= tool class</text>
-{% endif %}
 </g>
 
-<line x1="{{ mx }}" y1="270" x2="{{ rw - mx }}" y2="270" class="div"/>
+<line x1="{{ mx }}" y1="290" x2="{{ rw - mx }}" y2="290" class="div"/>
 
-{# === PANEL 3: SESSION RHYTHM (y:278-388) === #}
-<g transform="translate({{ mx }}, 278)" data-hw-zone="rhythm">
+{# === PANEL 3: SESSION RHYTHM (y:306+) — bar_area_h drives layout === #}
+<g transform="translate({{ mx }}, 306)" data-hw-zone="rhythm">
   <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">
     SESSION RHYTHM ({{ stage_count | default(0) }} STAGES)</text>
   {# Time axis #}
@@ -107,7 +119,7 @@
         text-anchor="end">{{ duration_minutes | default(0) }}m</text>
 
   {# Rhythm bars #}
-  <g transform="translate(0, 24)">
+  <g transform="translate(0, 28)">
 {% for bar in rhythm_bars | default([]) %}
     <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}"
           rx="{{ 2 if bar.h > 30 else 1 }}"
@@ -116,19 +128,19 @@
   </g>
 
   {# Phase strip (4px colored bar below rhythm) #}
-  <g transform="translate(0, 88)">
+  <g transform="translate(0, {{ bar_area_h + 32 }})">
 {% for bar in rhythm_bars | default([]) %}
     <rect x="{{ bar.x }}" width="{{ bar.w }}" height="4" rx="1"
           fill="var(--dna-tool-{{ bar.tool_class }})" opacity="0.5"/>
 {% endfor %}
   </g>
 
-  {# Phase legend #}
-  <g transform="translate(0, 98)">
+  {# Phase legend — full labels, 80px spacing #}
+  <g transform="translate(0, {{ bar_area_h + 46 }})">
 {% for p in phase_legend | default([]) %}
-    <rect x="{{ loop.index0 * 52 }}" y="0" width="6" height="6" rx="1"
+    <rect x="{{ loop.index0 * 80 }}" y="0" width="6" height="6" rx="1"
           fill="var(--dna-tool-{{ p.id }})" opacity="0.5"/>
-    <text class="m ink3" font-size="8" x="{{ loop.index0 * 52 + 10 }}" y="5">{{ p.label }}</text>
+    <text class="m ink3" font-size="8" x="{{ loop.index0 * 80 + 10 }}" y="5">{{ p.label }}</text>
 {% endfor %}
     <text class="m" font-size="9" font-weight="600" fill="var(--dna-signal)"
           x="{{ content_w }}" y="6" text-anchor="end"
@@ -136,8 +148,17 @@
   </g>
 </g>
 
+{# === Metadata band (v0.4) — provenance row above footer === #}
+{% if metadata_left %}
+<text class="m ghost" font-size="8" x="{{ mx }}" y="{{ rh - 30 }}">{{ metadata_left }}</text>
+{% endif %}
+{% if metadata_right %}
+<text class="m ghost" font-size="8" x="{{ rw - mx }}" y="{{ rh - 30 }}"
+      text-anchor="end">{{ metadata_right }}</text>
+{% endif %}
+
 {# === Footer === #}
-<text class="m ghost" font-size="9" x="{{ mx }}" y="{{ rh - 7 }}">{{ footer_left }}</text>
-<text class="m ghost" font-size="9" x="{{ rw - mx }}" y="{{ rh - 7 }}"
+<text class="m ghost" font-size="9" x="{{ mx }}" y="{{ rh - 10 }}">{{ footer_left }}</text>
+<text class="m ghost" font-size="9" x="{{ rw - mx }}" y="{{ rh - 10 }}"
       text-anchor="end">{{ footer_right }}</text>
 {% endblock %}

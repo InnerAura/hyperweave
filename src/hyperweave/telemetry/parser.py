@@ -281,17 +281,23 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
             except json.JSONDecodeError:
                 logger.warning("Skipping malformed line %d", line_num)
 
-    # -- Extract session metadata from first entry with sessionId --
+    # -- Extract session metadata --
+    # sessionId may appear on a bare `permission-mode` line first; cwd and gitBranch
+    # typically appear on a later user-message line. Fill each field from the first
+    # line that has it, independently.
     session_id = ""
     project_path = ""
-    git_branch = None
+    git_branch: str | None = None
     model = None
 
     for line in raw_lines:
-        if line.get("sessionId"):
+        if not session_id and line.get("sessionId"):
             session_id = line["sessionId"]
-            project_path = line.get("cwd", "")
-            git_branch = line.get("gitBranch")
+        if not project_path and line.get("cwd"):
+            project_path = line["cwd"]
+        if git_branch is None and line.get("gitBranch") is not None:
+            git_branch = line["gitBranch"]
+        if session_id and project_path and git_branch is not None:
             break
 
     # -- Pass 1: Extract all tool calls from assistant messages --

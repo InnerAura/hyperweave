@@ -1,0 +1,106 @@
+{# Chart paradigm: chrome.
+   Ported element-by-element from tier2/genomes/chrome-horizon/github-star-history-card-v6.svg.
+   900x500, material stack (envelope + well + rail), Catmull-Rom data curve with line glow,
+   diamond markers, scanlines, horizon glow, milestone diamonds.
+   Chart fragments (polyline, markers, milestones) come from chart_engine. #}
+
+{% set cw = width | default(900) %}
+{% set ch = height | default(500) %}
+{% set vx = chart_viewport_x | default(80) %}
+{% set vy = chart_viewport_y | default(160) %}
+{% set vw = chart_viewport_w | default(750) %}
+{% set vh = chart_viewport_h | default(250) %}
+
+{# MATERIAL STACK — canonical badge structure #}
+<g clip-path="url(#{{ uid }}-clip)">
+  <rect width="{{ cw }}" height="{{ ch }}" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-bevel)"/>
+  <rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="4.5" fill="none" stroke="#000510" stroke-width="0.8"/>
+  <rect x="4" y="4" width="{{ cw - 8 }}" height="{{ ch - 8 }}" rx="3" fill="url(#{{ uid }}-well)"/>
+  <rect x="4" y="4" width="6" height="{{ ch - 8 }}" fill="url(#{{ uid }}-env)" opacity="0.78"/>
+  <rect x="60" y="4" width="780" height="0.6" rx="0.3" fill="#6AACC8" opacity="0.14"/>
+  <rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="4.5" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
+</g>
+
+{# ZONE 1: HEADER #}
+<g data-hw-zone="glyph" transform="translate(24,22)">
+  <svg viewBox="0 0 24 24" width="16" height="16">
+    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="#E0ECF6"/>
+  </svg>
+</g>
+<text data-hw-zone="label" class="{{ uid }}-label" x="50" y="35">HYPERWEAVE · GITHUB</text>
+<text data-hw-zone="identity" class="{{ uid }}-identity" x="{{ cw - 24 }}" y="35" text-anchor="end">{{ chart_repo }}</text>
+
+<line x1="24" y1="60" x2="{{ cw - 24 }}" y2="60" stroke="url(#{{ uid }}-sep)" stroke-width="0.8"/>
+
+{# ZONE 2: TITLE + HERO #}
+<text data-hw-zone="title" class="{{ uid }}-title" x="28" y="115">STAR HISTORY</text>
+<text data-hw-zone="hero-value" class="{{ uid }}-hero" x="{{ cw - 24 }}" y="118" text-anchor="end">{{ chart_current_stars }}</text>
+
+{# RESOLVER-GAP: date_range_label ("LIFETIME GROWTH · JAN 2024 → PRESENT") needs min/max dates from point data #}
+<text data-hw-zone="subtitle" class="{{ uid }}-subtitle" x="28" y="138">LIFETIME GROWTH</text>
+<text data-hw-zone="hero-label" class="{{ uid }}-hero-label" x="{{ cw - 24 }}" y="138" text-anchor="end">TOTAL STARS · LIFETIME</text>
+
+<line x1="24" y1="148" x2="{{ cw - 24 }}" y2="148" stroke="url(#{{ uid }}-sep)" stroke-width="0.5" opacity="0.6"/>
+
+{# ZONE 3: CHART BODY #}
+<g data-hw-zone="chart">
+  {# Scanline texture in bottom 20% of chart for reflective-surface character #}
+  <g data-hw-zone="scanlines" stroke="#FFFFFF" stroke-width="0.5" opacity="0.06">
+    {% for i in range(12) %}
+    <line x1="{{ vx }}" y1="{{ vy + vh - 48 + i * 4 }}" x2="{{ vx + vw }}" y2="{{ vy + vh - 48 + i * 4 }}"/>
+    {% endfor %}
+  </g>
+
+  {# Gridlines #}
+  <g data-hw-zone="grid" stroke="#A8D4F0" stroke-width="0.4" opacity="0.18">
+    <line x1="{{ vx }}" y1="{{ vy + 10 }}" x2="{{ vx + vw }}" y2="{{ vy + 10 }}"/>
+    <line x1="{{ vx }}" y1="{{ (vy + vh * 0.36) | int }}" x2="{{ vx + vw }}" y2="{{ (vy + vh * 0.36) | int }}"/>
+    <line x1="{{ vx }}" y1="{{ (vy + vh * 0.68) | int }}" x2="{{ vx + vw }}" y2="{{ (vy + vh * 0.68) | int }}"/>
+  </g>
+  <line x1="{{ vx }}" y1="{{ vy + vh - 40 }}" x2="{{ vx + vw }}" y2="{{ vy + vh - 40 }}" stroke="#A8D4F0" stroke-width="0.4" opacity="0.1"/>
+
+  {# Y-axis labels #}
+  {# RESOLVER-GAP: y-axis text labels not provided by chart_engine. Hardcoded from target. #}
+  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh + 3 }}" text-anchor="end">0</text>
+  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 37 }}" text-anchor="end">0.5K</text>
+  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 77 }}" text-anchor="end">1K</text>
+  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 157 }}" text-anchor="end">2K</text>
+  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + 13 }}" text-anchor="end">3K</text>
+
+  {# Horizon glow — 2px cyan at x-axis baseline #}
+  <rect class="{{ uid }}-horizon" x="{{ vx }}" y="{{ vy + vh - 1 }}" width="{{ vw }}" height="2"
+        fill="#38BDF8" filter="url(#{{ uid }}-horizon-glow)"/>
+
+  {# Y-axis left rail #}
+  <line x1="{{ vx }}" y1="{{ vy }}" x2="{{ vx }}" y2="{{ vy + vh }}" stroke="#38BDF8" stroke-width="0.8" opacity="0.55"/>
+
+  {# Chart engine fragments #}
+  {{ chart_gridlines | safe }}
+  {{ chart_area | safe }}
+  {{ chart_polyline | safe }}
+  {{ chart_markers | safe }}
+  {{ chart_milestones | safe }}
+  {{ chart_axes | safe }}
+</g>
+
+<line x1="24" y1="420" x2="{{ cw - 24 }}" y2="420" stroke="url(#{{ uid }}-sep)" stroke-width="0.4" opacity="0.55"/>
+
+{# ZONE 4: X-AXIS LABELS #}
+{# RESOLVER-GAP: x-axis date labels not provided by chart_engine. Hardcoded from target. #}
+<g data-hw-zone="x-axis">
+  <text class="{{ uid }}-axis-x" x="{{ vx }}" y="442">EARLY '24</text>
+  <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.35) | int }}" y="442" text-anchor="middle">LATE '24</text>
+  <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.69) | int }}" y="442" text-anchor="middle">MID '25</text>
+  <text class="{{ uid }}-axis-x" x="{{ vx + vw }}" y="442" text-anchor="end">EARLY '26</text>
+</g>
+
+<line x1="24" y1="460" x2="{{ cw - 24 }}" y2="460" stroke="url(#{{ uid }}-sep)" stroke-width="0.4" opacity="0.55"/>
+
+{# ZONE 5: FOOTER #}
+<g data-hw-zone="status" transform="translate(32,482)">
+  <rect class="{{ uid }}-dia" x="-3.5" y="-3.5" width="7" height="7" rx="0.7"
+        transform="rotate(45)" fill="var(--hw-core, var(--dna-status-passing-core, #22C55E))"/>
+</g>
+
+<text data-hw-zone="subject-url" class="{{ uid }}-foot" x="46" y="485">github.com/{{ chart_repo }}</text>
+<text data-hw-zone="brand" class="{{ uid }}-brand" x="{{ cw - 24 }}" y="485" text-anchor="end">HYPERWEAVE · STAR HISTORY</text>

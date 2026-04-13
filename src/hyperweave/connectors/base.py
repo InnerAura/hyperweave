@@ -15,6 +15,12 @@ import httpx
 ALLOWED_HOSTS: frozenset[str] = frozenset(
     {
         "api.github.com",
+        # Session 2A+2B: contribution calendar HTML scraping (precedent:
+        # github-readme-streak-stats, ghchart.rshah.org, github-profile-summary-cards
+        # — all public OSS tools with thousands of stars scrape the same page).
+        # Username path segments are regex-sanitized in the scraper before
+        # interpolation; no arbitrary path injection is possible.
+        "github.com",
         "pypi.org",
         "registry.npmjs.org",
         "export.arxiv.org",
@@ -203,5 +209,8 @@ async def fetch_text(
     headers: dict[str, str] | None = None,
 ) -> str:
     """Fetch *url* and return raw text."""
-    response = await fetch(url, provider=provider, headers={**(headers or {}), "Accept": "text/xml"})
+    merged = {"Accept": "text/html"}
+    if headers:
+        merged.update(headers)
+    response = await fetch(url, provider=provider, headers=merged)
     return response.text

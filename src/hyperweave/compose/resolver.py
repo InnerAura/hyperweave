@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.core.enums import (
@@ -31,10 +33,16 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         genome = _load_genome("telemetry-void")
         profile = _load_profile(genome.get("profile", "brutalist"))
     else:
-        genome = _load_genome(spec.genome_id)
+        # Session 2A+2B: genome_override bypasses the registry (used by --genome-file).
+        genome = _load_genome(spec.genome_id, override=spec.genome_override)
         profile = _load_profile(genome.get("profile", spec.profile_id))
     glyph_data = _resolve_glyph(spec)
     motion = _resolve_motion(spec, genome)
+
+    # Session 2A+2B: new resolvers live in compose/resolvers/ per Invariant 10.
+    from hyperweave.compose.resolvers.chart import resolve_chart
+    from hyperweave.compose.resolvers.stats import resolve_stats
+    from hyperweave.compose.resolvers.timeline import resolve_timeline
 
     # Dispatch to frame-specific resolver
     frame_resolvers: dict[str, Any] = {
@@ -50,10 +58,23 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         "rhythm-strip": resolve_rhythm_strip,
         "master-card": resolve_master_card,
         "catalog": resolve_catalog,
+        "chart": resolve_chart,
+        "stats": resolve_stats,
+        "timeline": resolve_timeline,
     }
 
     resolver_fn = frame_resolvers.get(spec.type, resolve_badge)
     frame_result = resolver_fn(spec, genome, profile, glyph_data=glyph_data)
+
+    # Session 2A+2B: inject paradigm + structural hints into every frame_context
+    # (Principle 26 dispatch + Principle 24 template-genome interface).
+    # Templates read `paradigm` to resolve {frame_type}/{paradigm}-content.j2,
+    # and `structural` for per-frame layout hints (stroke_linejoin, etc.).
+    ctx = dict(frame_result.get("context", {}))
+    ctx.setdefault("paradigm", _resolve_paradigm(genome, spec.type, default="default"))
+    ctx.setdefault("structural", genome.get("structural") or {})
+    ctx.setdefault("genome_typography", genome.get("typography") or {})
+    ctx.setdefault("genome_material", genome.get("material") or {})
 
     return ResolvedArtifact(
         genome=genome,
@@ -63,7 +84,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         width=frame_result["width"],
         height=frame_result["height"],
         frame_template=frame_result["template"],
-        frame_context=frame_result.get("context", {}),
+        frame_context=ctx,
         motion=motion,
         glyph_id=glyph_data.get("id", ""),
         glyph_path=glyph_data.get("path", ""),
@@ -273,6 +294,8 @@ def resolve_strip(
         "strip_metric_value_skew": profile.get("strip_metric_value_skew", 0),
         "strip_identity_font": profile.get("strip_identity_font", "var(--dna-font-mono, 'SF Mono', monospace)"),
         "strip_metric_label_font": profile.get("strip_metric_label_font", "var(--dna-font-mono, 'SF Mono', monospace)"),
+        "strip_divider_color": profile.get("strip_divider_color", "var(--dna-border)"),
+        "strip_divider_opacity": profile.get("strip_divider_opacity", 1.0),
     }
     ctx.update(_profile_visual_context(genome, profile))
 
@@ -678,7 +701,7 @@ def _resolve_counter(
     _apply_content_aware_scroll(all_rows, base_speed, speed, width)
 
     # Use the widest row's scroll_distance as the global fallback
-    _sds: list[int] = [r["scroll_distance"] for r in all_rows]  # type: ignore[misc]
+    _sds: list[int] = [r["scroll_distance"] for r in all_rows]
     scroll_distance = max(_sds) if _sds else 1000
     scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
@@ -978,6 +1001,15 @@ def _build_vertical_rows(
     return rows
 
 
+def _fmt_tok(n: int) -> str:
+    """Format token count: 500 -> '500', 1500 -> '1.5K', 1500000 -> '1.5M'."""
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M"
+    if n >= 1000:
+        return f"{n / 1000:.1f}K"
+    return str(n)
+
+
 def resolve_receipt(
     spec: ComposeSpec,
     genome: dict[str, Any],
@@ -1045,17 +1077,12 @@ def resolve_receipt(
         "Send": "coordinate",
     }
 
-    # Format token counts
-    def _fmt_tok(n: int) -> str:
-        if n >= 1000:
-            return f"{n / 1000:.1f}K"
-        return str(n)
-
     # ── Hero row ──
-    hero_headline = f"{_fmt_tok(total_tok)} tokens · ${total_cost:.2f}"
+    hero_headline = f"{_fmt_tok(total_tok)} tokens billed · ${total_cost:.2f}"
     dur_label = f"{int(duration_m)}m" if duration_m else "—"
     hero_subline = f"{model} · {dur_label} · {calls} calls"
     hero_profile = stages[0]["label"].upper() if stages else "SESSION"
+    hero_tool_class = stages[0]["tool_class"] if stages else "explore"
     n_corrections = len(corrections)
     n_agents = len(agents)
     hero_right = [
@@ -1082,13 +1109,14 @@ def resolve_receipt(
             {
                 "tier": 1,
                 "x": 0,
-                "y": 10,
+                "y": 26,
                 "w": content_w,
                 "h": 88,
                 "name": top.get("name", ""),
                 "pct": pct,
                 "detail": f"{_fmt_tok(top_tokens)} · {top.get('count', 0)} calls",
                 "tool_class": tc,
+                "errors": top.get("blocked", 0) + top.get("errors", 0),
             }
         )
 
@@ -1106,13 +1134,14 @@ def resolve_receipt(
                     {
                         "tier": 2,
                         "x": x,
-                        "y": 102,
+                        "y": 118,
                         "w": w,
                         "h": 32,
                         "name": t.get("name", ""),
                         "pct": round(t_tokens / total_tool_tokens * 100),
                         "detail": f"{_fmt_tok(t_tokens)} · {t.get('count', 0)} calls",
                         "tool_class": tc,
+                        "errors": t.get("blocked", 0) + t.get("errors", 0),
                     }
                 )
                 x += w + 4
@@ -1128,13 +1157,14 @@ def resolve_receipt(
                     {
                         "tier": 3,
                         "x": x,
-                        "y": 138,
+                        "y": 154,
                         "w": min(w, 180),
                         "h": 24,
                         "name": t.get("name", ""),
                         "pct": 0,
                         "detail": f"{t.get('count', 0)} calls",
                         "tool_class": tc,
+                        "errors": t.get("blocked", 0) + t.get("errors", 0),
                     }
                 )
                 x += min(w, 180) + 4
@@ -1143,7 +1173,7 @@ def resolve_receipt(
     total_stage_pct = sum(s.get("pct", 0) for s in stages) or 100
     rhythm_bars: list[dict[str, Any]] = []
     rx = 0
-    bar_area_h = 60
+    bar_area_h = 92
     for s in stages:
         pct = s.get("pct", 0)
         w = max(int(content_w * pct / total_stage_pct), 6)
@@ -1162,22 +1192,53 @@ def resolve_receipt(
     dominant_label = dominant.get("label", dominant.get("name", ""))
     dominant_pct = dominant.get("pct", 0)
 
-    # ── Footer ──
+    # ── Metadata band (v0.4): provenance row between rhythm legend and footer ──
+    session_id = session.get("id", "")
+    session_id_short = session_id[:8].rstrip("-") if session_id else ""
+    git_branch = session.get("git_branch", "")
+    project_path = session.get("project_path", "")
+    project_name = Path(project_path).name if project_path else "session"
+    receipt_path = f".hyperweave/receipts/{session_id}.svg" if session_id else ""
+
+    start_iso = session.get("start", "")
+    start_formatted = ""
+    if start_iso:
+        try:
+            start_formatted = datetime.fromisoformat(start_iso).strftime("%Y-%m-%d %H:%M")
+        except ValueError:
+            start_formatted = ""
+
+    metadata_left_parts = [project_name]
+    if git_branch:
+        metadata_left_parts.append(git_branch)
+    if receipt_path:
+        metadata_left_parts.append(receipt_path)
+    metadata_left = " · ".join(metadata_left_parts)
+
+    metadata_right_parts = []
+    if session_id_short:
+        metadata_right_parts.append(f"session {session_id_short}")
+    if start_formatted:
+        metadata_right_parts.append(f"started {start_formatted}")
+    metadata_right = " · ".join(metadata_right_parts)
+
+    # ── Footer: session stats (left) + brand anchor (right) ──
     footer_parts = []
     if n_corrections:
         footer_parts.append(f"{n_corrections} corrections")
     if n_agents:
         footer_parts.append(f"{n_agents} agents")
-    footer_left = " · ".join(footer_parts) if footer_parts else "hyperweave.app"
-    footer_right = f"transcript · {model}"
+    footer_left = " · ".join(footer_parts) if footer_parts else ""
+    footer_right = "hyperweave.app"
 
     return {
         "width": 800,
-        "height": 400,
+        "height": 500,
         "template": "frames/receipt.svg.j2",
         "context": {
             "telemetry": tel,
             "hero_profile": hero_profile,
+            "hero_tool_class": hero_tool_class,
             "hero_headline": hero_headline,
             "hero_subline": hero_subline,
             "hero_right_stats": [{"text": t} for t in hero_right],
@@ -1186,8 +1247,11 @@ def resolve_receipt(
             "stage_count": len(stages),
             "duration_minutes": int(duration_m),
             "rhythm_bars": rhythm_bars,
-            "phase_legend": [{"id": tc, "label": tc[:5]} for tc in used_classes],
+            "bar_area_h": bar_area_h,
+            "phase_legend": [{"id": tc, "label": tc} for tc in used_classes],
             "dominant_profile": f"{dominant_label} ({dominant_pct}%)",
+            "metadata_left": metadata_left,
+            "metadata_right": metadata_right,
             "footer_left": footer_left,
             "footer_right": footer_right,
             "tools": tools,
@@ -1239,30 +1303,48 @@ def resolve_rhythm_strip(
     duration_m = session.get("duration_minutes", 0)
     calls = sum(t.get("count", 0) for t in tools)
 
-    def _fmt_tok(n: int) -> str:
-        return f"{n / 1000:.1f}K" if n >= 1000 else str(n)
-
-    # Rhythm bars — 452px wide area
-    bar_area_w = 452
+    # Rhythm bars — must match template bar_w = sw - stats_w - right_w - 16.
+    # With sw=800, stats_w=180, right_w=120: bar_area_w = 484.
+    # Budget accounts for 2px gaps between bars so many-stage sessions don't
+    # overflow into the right-side loop-status panel.
+    bar_area_w = 484
     bar_area_h = 42
+    gap_px = 2
+    n_stages = len(stages)
+    gap_budget = gap_px * max(n_stages - 1, 0)
+    available_w = max(bar_area_w - gap_budget, bar_area_w // 2)
+    min_bar_w = max(2, available_w // max(n_stages, 1) // 3) if n_stages else 6
     total_stage_pct = sum(s.get("pct", 0) for s in stages) or 100
-    rhythm_bars: list[dict[str, Any]] = []
-    rx = 0
+
+    raw_bars: list[dict[str, Any]] = []
     for s in stages:
         pct = s.get("pct", 0)
-        w = max(int(bar_area_w * pct / total_stage_pct), 6)
+        w = max(int(available_w * pct / total_stage_pct), min_bar_w)
         h = max(int(bar_area_h * (pct / 50)), 6)
         y = bar_area_h - h
         tc = s.get("tool_class", "explore")
-        rhythm_bars.append({"x": rx, "y": y, "w": w, "h": h, "tool_class": tc})
-        rx += w + 2
+        raw_bars.append({"w": w, "h": h, "y": y, "tool_class": tc})
+
+    # Post-hoc uniform scale if floor-pressure still exceeds budget
+    raw_total = sum(b["w"] for b in raw_bars)
+    if raw_total > available_w and raw_total > 0:
+        scale = available_w / raw_total
+        for b in raw_bars:
+            b["w"] = max(int(b["w"] * scale), 2)
+
+    rhythm_bars: list[dict[str, Any]] = []
+    rx = 0
+    for b in raw_bars:
+        rhythm_bars.append({"x": rx, "y": b["y"], "w": b["w"], "h": b["h"], "tool_class": b["tool_class"]})
+        rx += b["w"] + gap_px
 
     # Velocity estimate
     vel = int(total_tok / max(duration_m, 1)) if duration_m else 0
 
-    # Session ID
+    # Session ID (strip trailing hyphen so synthetic "session-001" renders as "session"
+    # rather than "session-", while UUIDs like "3449fc3d-030c-..." are unaffected)
     sid = session.get("id", "session")
-    sid_short = sid[:8] if len(sid) > 8 else sid
+    sid_short = sid[:8].rstrip("-") if len(sid) > 8 else sid
 
     # Dominant phase
     dominant = max(stages, key=lambda s: s.get("pct", 0)) if stages else {"name": "", "pct": 0}
@@ -1277,13 +1359,13 @@ def resolve_rhythm_strip(
             "call_number": calls,
             "elapsed_label": f"{int(duration_m)}m" if duration_m else "—",
             "token_summary": f"{_fmt_tok(total_tok)} tok · ${total_cost:.2f}",
-            "velocity_value": str(vel),
+            "velocity_value": _fmt_tok(vel),
             "stages": rhythm_bars,
             "loop_detected": False,
             "loop_elevated": False,
             "loop_label": "NOMINAL",
             "loop_detail": "no loop",
-            "profile_label": f"{dominant['name'][:5].upper()} {dominant['pct']}%" if dominant.get("name") else "",
+            "profile_label": f"{dominant['name'].upper()} {dominant['pct']}%" if dominant.get("name") else "",
         },
     }
 
@@ -1314,9 +1396,6 @@ def resolve_master_card(
     calls = sum(t.get("count", 0) for t in tools) if tools else 0
     n_sessions = len(sessions) if sessions else 1
     model = session.get("model", "Claude Session")
-
-    def _fmt_tok(n: int) -> str:
-        return f"{n / 1000:.1f}K" if n >= 1000 else str(n)
 
     # ── Session history sparkline bars (752px wide) ──
     content_w = 752
@@ -1419,7 +1498,16 @@ def resolve_catalog(
 # Helpers
 
 
-def _load_genome(genome_id: str) -> dict[str, Any]:
+def _load_genome(genome_id: str, override: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Load a genome dict by slug, or return the override if provided.
+
+    Session 2A+2B: when ``override`` is a dict, it is returned verbatim.
+    This is the ``--genome-file`` path — the CLI loads JSON, validates via
+    ``GenomeSpec``, and passes the resulting dict through ``ComposeSpec.genome_override``.
+    The resolver trusts the caller to have validated.
+    """
+    if override is not None:
+        return override
     try:
         from hyperweave.config.loader import get_loader
 
@@ -1427,6 +1515,18 @@ def _load_genome(genome_id: str) -> dict[str, Any]:
         return loader.genomes.get(genome_id, _default_genome(genome_id))
     except (ImportError, Exception):
         return _default_genome(genome_id)
+
+
+def _resolve_paradigm(genome: dict[str, Any], frame_type: str, default: str = "default") -> str:
+    """Return the paradigm slug for a frame type from the genome's paradigms dict.
+
+    Implements Principle 26 dispatch. Missing entries default to ``"default"``.
+    """
+    paradigms = genome.get("paradigms") or {}
+    if not isinstance(paradigms, dict):
+        return default
+    value = paradigms.get(frame_type, default)
+    return str(value) if value else default
 
 
 def _default_genome(genome_id: str) -> dict[str, Any]:

@@ -1,0 +1,47 @@
+{# Brutalist chart defs: grain filter, area-fade gradient, clip-path.
+   Ported from tier2/genomes/brutalist-emerald/brutalist-emerald-star-history-v4b.svg #}
+<filter id="{{ uid }}-grain" x="0%" y="0%" width="100%" height="100%">
+  <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="19" result="noise"/>
+  <feColorMatrix in="noise" type="luminanceToAlpha" result="alpha-noise"/>
+  <feColorMatrix in="alpha-noise" type="matrix" values="0 0 0 0 0.04
+                                                         0 0 0 0 0.16
+                                                         0 0 0 0 0.10
+                                                         0 0 0 0.14 0"/>
+</filter>
+<linearGradient id="{{ uid }}-area-fade" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="var(--dna-signal, #10B981)" stop-opacity="0.14"/>
+  <stop offset="100%" stop-color="var(--dna-signal, #10B981)" stop-opacity="0.02"/>
+</linearGradient>
+<clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
+{{ chart_defs | default("") | safe }}
+<style>
+  {{ font_faces | safe }}
+  text { font-family: var(--dna-font-mono, var(--dna-font-display, 'JetBrains Mono', monospace)); shape-rendering: geometricPrecision; }
+  .{{ uid }}-hdr-user { font-size: 12px; font-weight: 800; letter-spacing: 0.20em; fill: var(--dna-ink-accent, #A7F3D0); }
+  .{{ uid }}-hdr-meta { font-size: 9px; font-weight: 500; letter-spacing: 0.10em; fill: var(--dna-signal, #34D399); opacity: 0.6; }
+  .{{ uid }}-title-main { font-size: 40px; font-weight: 800; letter-spacing: 0.08em; fill: var(--dna-ink-primary, #D1FAE5); }
+  .{{ uid }}-title-sub { font-size: 8px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-signal, #34D399); opacity: 0.7; }
+  .{{ uid }}-hero-value { font-size: 52px; font-weight: 800; letter-spacing: -0.02em; fill: var(--dna-ink-primary, #D1FAE5); }
+  .{{ uid }}-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.26em; text-transform: uppercase; fill: var(--dna-signal, #34D399); opacity: 0.55; }
+  .{{ uid }}-axis-y { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; fill: var(--dna-ink-secondary, #6EE7B7); opacity: 0.85; }
+  .{{ uid }}-axis-x { font-size: 9px; font-weight: 800; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-ink-secondary, #6EE7B7); opacity: 0.75; }
+  .{{ uid }}-milestone { font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-ink-accent, #A7F3D0); }
+  .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-signal, #34D399); opacity: 0.22; }
+  .{{ uid }}-foot { font-size: 8px; font-weight: 500; letter-spacing: 0.12em; fill: var(--dna-signal, #34D399); opacity: 0.55; }
+  .{{ uid }}-foot-brand { font-size: 8px; font-weight: 700; letter-spacing: 0.26em; fill: var(--dna-signal, #34D399); opacity: 0.35; }
+  /* Chart engine fragment classes — brutalist aesthetic (match tier2 target) */
+  .hw-chart-axis { stroke: var(--dna-border, var(--dna-signal)); stroke-width: 2; fill: none; opacity: 0.5; }
+  .hw-chart-gridline { stroke: var(--dna-border, var(--dna-signal)); stroke-width: 0.5; opacity: 0.18; fill: none; shape-rendering: crispEdges; }
+  .hw-chart-line { stroke: var(--dna-signal, #10B981); stroke-width: 4; stroke-linejoin: miter; stroke-linecap: square; }
+  .{{ uid }}-bright-core .hw-chart-line { stroke: var(--dna-signal-dim, #34D399); stroke-width: 1.5; }
+  .hw-chart-area { fill: url(#{{ uid }}-area-fade); fill-opacity: 1; }
+  .hw-chart-area-smooth { fill: url(#{{ uid }}-area-fade); fill-opacity: 1; }
+  [data-hw-zone="markers"] { shape-rendering: crispEdges; }
+  .hw-chart-endpoint { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
+  .hw-chart-milestone-line { stroke: var(--dna-border, var(--dna-signal)); stroke-width: 0.5; opacity: 0.22; stroke-dasharray: 4 8; }
+  .hw-chart-milestone-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-ink-accent, #A7F3D0); }
+  @keyframes {{ uid }}-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .{{ uid }}-beacon { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
+  .{{ uid }}-status-dot { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
+  @media (prefers-reduced-motion: reduce) { .{{ uid }}-beacon, .{{ uid }}-status-dot { animation: none !important; opacity: 0.8; } }
+</style>

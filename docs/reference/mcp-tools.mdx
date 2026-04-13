@@ -40,18 +40,31 @@ Compose any HyperWeave artifact. Returns self-contained SVG string.
 | `rows` | `int` | `3` | Counter rows |
 | `speeds` | `list[float] \| None` | `None` | Per-row scroll speeds |
 | `telemetry_data` | `dict \| None` | `None` | Telemetry contract |
+| `stats_username` | `str` | `""` | GitHub username for `stats` frame |
+| `chart_owner` | `str` | `""` | GitHub owner for `chart` frame |
+| `chart_repo` | `str` | `""` | GitHub repo for `chart` frame |
+| `connector_data` | `dict \| None` | `None` | Pre-fetched connector payload for `stats`/`chart` frames |
+| `timeline_items` | `list[dict] \| None` | `None` | Milestone items for `timeline` frame |
+| `genome_override` | `dict \| None` | `None` | Inline genome dict (equivalent to CLI `--genome-file`) |
 
 **Content by frame type:**
 
-| Frame | `title` | `value` |
-|---|---|---|
-| badge | Left panel text | Right panel text |
-| strip | Identity text | Metrics: `"STARS:2.9k,FORKS:278"` |
-| banner | Title text | Subtitle |
-| icon | (unused) | (unused, use `glyph`) |
-| divider | (unused) | (unused, use `divider_variant`) |
-| marquee | Pipe-separated text | (unused) |
-| receipt | (unused) | (unused, use `telemetry_data`) |
+| Frame | `title` | `value` | Notes |
+|---|---|---|---|
+| badge | Left panel text | Right panel text | |
+| strip | Identity text | Metrics: `"STARS:2.9k,FORKS:278"` | |
+| banner | Title text | Subtitle | |
+| icon | (unused) | (unused, use `glyph`) | |
+| divider | (unused) | (unused, use `divider_variant`) | |
+| marquee | Pipe-separated text | (unused) | |
+| receipt | (unused) | (unused, use `telemetry_data`) | |
+| stats | (unused) | (unused) | Use `stats_username` + `connector_data` |
+| chart | (unused) | (unused) | Use `chart_owner`/`chart_repo` + `connector_data` |
+| timeline | (unused) | (unused) | Use `timeline_items` |
+
+<Note>
+Network I/O is intentionally excluded from `hw_compose`. For `stats`/`chart` frames, callers must pre-fetch data through `hw_live` or an out-of-band connector call and pass the result through `connector_data`. This preserves deterministic, pure-function semantics for agent workflows.
+</Note>
 
 ### `hw_live`
 
@@ -77,7 +90,7 @@ Compose a full artifact kit. Returns dict of SVG strings keyed by artifact name.
 | `type` | `str` | `"readme"` | Kit type |
 | `genome` | `str` | `"brutalist-emerald"` | Genome slug |
 | `project` | `str` | `""` | Project name |
-| `badges` | `str` | `""` | Badge pairs: `"build:passing,version:v0.1.0"` |
+| `badges` | `str` | `""` | Badge pairs: `"build:passing,version:v0.2.0"` |
 | `social` | `str` | `""` | Social glyph IDs: `"github,discord,x"` |
 
 ### `hw_discover`
@@ -86,7 +99,7 @@ Discover available HyperWeave components. Returns structured data about genomes,
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `what` | `str` | `"all"` | `all`, `genomes`, `motions`, `glyphs`, `frames` |
+| `what` | `str` | `"all"` | `all`, `genomes`, `motions`, `glyphs`, `frames`, `url_grammar` |
 
 ## Resources
 

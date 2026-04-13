@@ -19,7 +19,17 @@ from hyperweave.core.enums import ArtifactStatus, FrameType, MotionId
 if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec, ResolvedArtifact
 
+from hyperweave.render.fonts import load_font_face_css
+
 _CtxBuilder = Callable[["ComposeSpec", "ResolvedArtifact", dict[str, str]], dict[str, Any]]
+
+
+def _load_font_faces(genome: dict[str, Any]) -> str:
+    """Load embedded font CSS from the genome's ``fonts`` list."""
+    slugs = genome.get("fonts") or ["jetbrains-mono"]
+    if not isinstance(slugs, list):
+        slugs = ["jetbrains-mono"]
+    return load_font_face_css(slugs)
 
 
 def build_context(
@@ -41,6 +51,10 @@ def build_context(
         FrameType.RHYTHM_STRIP: _ctx_rhythm_strip,
         FrameType.MASTER_CARD: _ctx_master_card,
         FrameType.CATALOG: _ctx_catalog,
+        # Session 2A+2B additions
+        FrameType.STATS: _ctx_stats,
+        FrameType.CHART: _ctx_chart,
+        FrameType.TIMELINE: _ctx_timeline,
     }
     builder = _BUILDERS.get(spec.type, _ctx_badge)
     ctx = builder(spec, resolved, css_bundle)
@@ -138,6 +152,8 @@ def _base_context(
         # Timestamp
         "created": datetime.now(UTC).isoformat(),
         "created_at": datetime.now(UTC).isoformat(),
+        # Embedded fonts (base64 @font-face CSS)
+        "font_faces": _load_font_faces(resolved.genome),
     }
     return ctx, uid, artifact_id
 
@@ -225,6 +241,7 @@ def _ctx_marquee(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
 def _ctx_receipt(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
     ctx, _uid, _aid = _base_context(spec, resolved, css)
     ctx["hero_profile"] = ""
+    ctx["hero_tool_class"] = "explore"
     ctx["hero_headline"] = ""
     ctx["hero_subline"] = ""
     ctx["hero_right_stats"] = []
@@ -233,10 +250,13 @@ def _ctx_receipt(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
     ctx["stage_count"] = 0
     ctx["duration_minutes"] = 0
     ctx["rhythm_bars"] = []
+    ctx["bar_area_h"] = 92
     ctx["phase_legend"] = []
     ctx["dominant_profile"] = ""
     ctx["tools"] = []
     ctx["stages"] = []
+    ctx["metadata_left"] = ""
+    ctx["metadata_right"] = ""
     ctx["footer_left"] = ""
     ctx["footer_right"] = ""
     ctx["receipt_items"] = []
@@ -294,6 +314,70 @@ def _ctx_catalog(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
     ctx["catalog_items"] = []
     ctx["catalog_footer_left"] = ""
     ctx["catalog_footer_right"] = ""
+    ctx.update(resolved.frame_context)
+    return ctx
+
+
+# ── Session 2A+2B frames ─────────────────────────────────────────────
+
+
+def _ctx_chart(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
+    """Context builder for the ``chart`` frame (star history)."""
+    ctx, _uid, _aid = _base_context(spec, resolved, css)
+    # Pre-populate defaults so Jinja StrictUndefined never fires on missing
+    # connector data — resolver fills these when points are present.
+    ctx["chart_repo"] = ""
+    ctx["chart_title"] = "STAR HISTORY"
+    ctx["chart_current_stars"] = "0"
+    ctx["chart_viewport_x"] = 0
+    ctx["chart_viewport_y"] = 0
+    ctx["chart_viewport_w"] = 0
+    ctx["chart_viewport_h"] = 0
+    ctx["chart_defs"] = ""
+    ctx["chart_axes"] = ""
+    ctx["chart_gridlines"] = ""
+    ctx["chart_area"] = ""
+    ctx["chart_polyline"] = ""
+    ctx["chart_markers"] = ""
+    ctx["chart_milestones"] = ""
+    ctx["data_hw_status"] = "fresh"
+    ctx.update(resolved.frame_context)
+    return ctx
+
+
+def _ctx_stats(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
+    """Context builder for the ``stats`` frame (GitHub profile card)."""
+    ctx, _uid, _aid = _base_context(spec, resolved, css)
+    # Safe defaults for every field the stats templates may read.
+    ctx["stats_username"] = spec.stats_username or ""
+    ctx["stats_bio"] = ""
+    ctx["stats_repo_label"] = ""
+    ctx["stars_display"] = "—"
+    ctx["stars_delta_display"] = ""
+    ctx["commits_display"] = "—"
+    ctx["prs_display"] = "—"
+    ctx["issues_display"] = "—"
+    ctx["contrib_display"] = "—"
+    ctx["streak_display"] = "—"
+    ctx["languages"] = []
+    ctx["heatmap_grid"] = []
+    ctx["activity_bars"] = []
+    ctx["activity_peak"] = 0
+    ctx["data_hw_status"] = "fresh"
+    # Embedded compact chart fragments (populated for chrome paradigm).
+    ctx["embedded_chart_defs"] = ""
+    ctx["embedded_chart_area"] = ""
+    ctx["embedded_chart_polyline"] = ""
+    ctx["embedded_chart_markers"] = ""
+    ctx.update(resolved.frame_context)
+    return ctx
+
+
+def _ctx_timeline(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
+    """Context builder for the ``timeline`` frame (roadmap node chain)."""
+    ctx, _uid, _aid = _base_context(spec, resolved, css)
+    ctx["timeline_items"] = []
+    ctx["timeline_title"] = spec.title or "Roadmap"
     ctx.update(resolved.frame_context)
     return ctx
 

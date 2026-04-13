@@ -24,8 +24,24 @@
 </p>
 
 <!--
+Safe, Auditable, Drop-Anywhere Visuals for your Agents.
+
+---
+
+"Hyperweave is the visual protocol for autonomous agents. We give AI agents the ability to generate high-fidelity, brand-aligned UI artifacts—roadmaps, telemetry, and status cards—so humans can monitor and trust agentic workflows."
+
+---
+
 HyperWeave is the visual artifact layer for modern software.
 Generate branded, self-contained SVG outputs for profiles, repositories, docs, dashboards, and agent workflows.
+
+“runtime-free visual compiler for structured machine outputs”
+
+take structured state, compress it into an emotionally legible surface, and make it portable
+
+"In a post-Mythos world, letting autonomous agents generate executable UI code (React/JS) is a catastrophic security risk. HyperWeave is the secure, stateless, verifiable visual protocol for the Agentic Web."
+
+The Voiceover: "Agents don't need to generate heavy React apps that require hosting and runtimes. HyperWeave generates secure, zero-dependency SVG artifacts that travel to wherever your users actually work."
 -->
 
 ---
@@ -71,13 +87,22 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td><img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?value=STARS:2.9k,FORKS:278"/></td>
 </tr>
 <tr>
+<td rowspan="2" align="center"><strong>Profile&nbsp;cards</strong></td>
+<td><img src="assets/examples/brutalist-emerald/profile-cards/stats.svg" alt="stats" width="100%"/></td>
+<td><img src="assets/examples/chrome-horizon/profile-cards/stats.svg" alt="stats" width="100%"/></td>
+</tr>
+<tr>
+<td><img src="assets/examples/brutalist-emerald/profile-cards/chart_stars_full.svg" alt="star chart" width="100%"/></td>
+<td><img src="assets/examples/chrome-horizon/profile-cards/chart_stars_full.svg" alt="star chart" width="100%"/></td>
+</tr>
+<tr>
 <td rowspan="3" align="center"><strong>Marquee</strong></td>
 <td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1"/></td>
 <td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1"/></td>
 </tr>
 <tr>
-<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%7CLIVING%20ARTIFACTS%7CAI-NATIVE%20SVG%7CCOMPOSITOR%20API/brutalist-emerald.static?rows=3"/></td>
-<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%7CLIVING%20ARTIFACTS%7CAI-NATIVE%20SVG%7CCOMPOSITOR%20API/chrome-horizon.static?rows=3"/></td>
+<!-- <td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%7CLIVING%20ARTIFACTS%7CAI-NATIVE%20SVG%7CCOMPOSITOR%20API/brutalist-emerald.static?rows=3"/></td>
+<td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%7CLIVING%20ARTIFACTS%7CAI-NATIVE%20SVG%7CCOMPOSITOR%20API/chrome-horizon.static?rows=3"/></td> -->
 </tr>
 <tr>
 <td><img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1&direction=up"/></td>
@@ -179,7 +204,20 @@ hyperweave compose strip "readme-ai" "STARS:2.9k,FORKS:278" -g brutalist-emerald
 hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
 
 # Artifact kit
-hyperweave kit readme -g brutalist-emerald --badges "build:passing,version:v0.1.0" --social "github,discord"
+hyperweave kit readme -g brutalist-emerald --badges "build:passing,version:v0.2.0" --social "github,discord"
+
+# Profile card (live GitHub data)
+hyperweave compose stats eli64s -g chrome-horizon -o stats.svg
+
+# Star history chart
+hyperweave compose chart stars eli64s/readme-ai -g brutalist-emerald -o chart.svg
+
+# Timeline / roadmap from JSON items
+hyperweave compose timeline --data roadmap.json -g chrome-horizon -o timeline.svg
+
+# Custom genome from a local JSON file (validated against the profile contract)
+hyperweave compose badge "DEPLOY" "live" --genome-file ./my-genome.json
+hyperweave validate-genome ./my-genome.json
 ```
 
 ### HTTP API
@@ -217,10 +255,10 @@ hyperweave install-hook
 After `install-hook`, every Claude Code session automatically drops a receipt SVG into `.hyperweave/receipts/`. No config, no server, no manual step.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/examples/telemetry/receipt.svg" alt="session receipt" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt.svg" alt="session receipt" width="800"/>
 </p>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/examples/telemetry/rhythm_strip.svg" alt="rhythm strip" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/rhythm_strip.svg" alt="rhythm strip" width="800"/>
 </p>
 <!--
 <p align="center">
@@ -253,12 +291,14 @@ Every artifact ships with:
 
 | Dimension | Count |
 |---|---|
-| Frame types | 12 (badge, strip, banner, icon, divider, marquee-h/v/counter, receipt, rhythm-strip, master-card, catalog) |
+| Frame types | 15 (badge, strip, banner, icon, divider, marquee-h/v/counter, receipt, rhythm-strip, master-card, catalog, stats, chart, timeline) |
 | Genomes | 2 (brutalist-emerald, chrome-horizon) |
 | Motion configs | 16 (1 static + 5 border SMIL + 10 kinetic CSS) |
 | Glyphs | 97 (91 Simple Icons + 6 geometric) |
 | Divider variants | 5 (block, current, takeoff, void, zeropoint) |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
+| Paradigms | 3 per frame (default, brutalist, chrome) — per-frame dispatch from genome |
+| Bundled fonts | 2 (JetBrains Mono, Orbitron, base64-embedded) |
 
 Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 

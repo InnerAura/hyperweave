@@ -9,10 +9,12 @@ from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from hyperweave import __version__
+
 app = FastAPI(
     title="HyperWeave",
     description="Compositor API for self-contained SVG artifacts.",
-    version="0.1.0",
+    version=__version__,
 )
 
 
@@ -384,6 +386,119 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         marquee_direction=req.direction,
         marquee_rows=req.rows,
         marquee_speeds=req.speeds,
+    )
+    return _compose_and_respond(spec, request)
+
+
+# ── Session 2A+2B: Chart / Stats / Timeline routes ─────────────────────────
+
+
+@app.get(
+    "/v1/chart/stars/{owner}/{repo}/{genome_motion}",
+    response_class=Response,
+)
+async def compose_chart_stars(
+    request: Request,
+    owner: str,
+    repo: str,
+    genome_motion: str,
+) -> Response:
+    """Compose a star history chart: /v1/chart/stars/{owner}/{repo}/{genome}.{motion}.
+
+    Fetches sampled stargazer history from GitHub (cached 1h) and delegates
+    rendering to the chart frame. On fetch failure, renders a placeholder
+    series with ``data-hw-status="stale"`` (graceful degradation).
+    """
+    genome, motion = _parse_genome_motion(genome_motion)
+
+    connector_data: dict[str, Any] | None = None
+    try:
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        connector_data = await fetch_stargazer_history(owner, repo)
+    except Exception:
+        connector_data = None
+
+    from hyperweave.core.models import ComposeSpec
+
+    spec = ComposeSpec(
+        type="chart",
+        genome_id=genome,
+        chart_owner=owner,
+        chart_repo=repo,
+        motion=motion,
+        connector_data=connector_data,
+    )
+    return _compose_and_respond_with_ttl(spec, request, ttl=3600)
+
+
+@app.get(
+    "/v1/stats/{username}/{genome_motion}",
+    response_class=Response,
+)
+async def compose_stats(
+    request: Request,
+    username: str,
+    genome_motion: str,
+) -> Response:
+    """Compose a GitHub stats card: /v1/stats/{username}/{genome}.{motion}.
+
+    Fetches user profile + repos + commits + PRs + issues + contribution
+    calendar in parallel (cached 1h) and renders through the stats frame.
+    Graceful degradation: individual sub-fetch failures result in partial
+    data with ``data-hw-status="stale"`` only when ALL sub-fetches fail.
+    """
+    genome, motion = _parse_genome_motion(genome_motion)
+
+    connector_data: dict[str, Any] | None = None
+    try:
+        from hyperweave.connectors.github import fetch_user_stats
+
+        connector_data = await fetch_user_stats(username)
+    except Exception:
+        connector_data = None
+
+    from hyperweave.core.models import ComposeSpec
+
+    spec = ComposeSpec(
+        type="stats",
+        genome_id=genome,
+        stats_username=username,
+        motion=motion,
+        connector_data=connector_data,
+    )
+    return _compose_and_respond_with_ttl(spec, request, ttl=3600)
+
+
+class TimelineRequest(BaseModel):
+    """POST body for the timeline frame."""
+
+    items: list[dict[str, Any]]
+
+
+@app.post(
+    "/v1/timeline/{genome_motion}",
+    response_class=Response,
+)
+async def compose_timeline(
+    request: Request,
+    genome_motion: str,
+    body: TimelineRequest,
+) -> Response:
+    """Compose a roadmap/timeline frame from a POSTed items list.
+
+    POST /v1/timeline/{genome}.{motion} with JSON {"items": [{title, ...}, ...]}.
+    The resolver handles node shape, opacity cascade, and layout.
+    """
+    genome, motion = _parse_genome_motion(genome_motion)
+
+    from hyperweave.core.models import ComposeSpec
+
+    spec = ComposeSpec(
+        type="timeline",
+        genome_id=genome,
+        motion=motion,
+        timeline_items=body.items,
     )
     return _compose_and_respond(spec, request)
 

@@ -27,6 +27,14 @@ htmlcov/
 archive/
 .claude/
 # CLAUDE.md
+docs/_notes/  
 outputs/
 scripts/
 specs/
+
+assets/cards/butterfly-mcp.svg
+assets/cards/card-moon.svg
+assets/cards/cards-2x2-v2.svg
+assets/cards/cards-2x2-v3.svg
+assets/cards/cards-2x2.svg
+assets/cards/halftone-card-triangle.svg

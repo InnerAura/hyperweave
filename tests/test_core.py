@@ -108,7 +108,7 @@ def test_genome_spec_brutalist_emerald(sample_genome: GenomeSpec) -> None:
     assert sample_genome.id == "brutalist-emerald"
     assert sample_genome.category == "dark"
     assert sample_genome.profile == "brutalist"
-    assert sample_genome.surface_0 == "#14532D"
+    assert sample_genome.surface_0 == "#0A2218"
     assert sample_genome.accent == "#10B981"
     assert "static" in sample_genome.compatible_motions
 
@@ -124,7 +124,7 @@ def test_genome_spec_css_mapping(sample_genome: GenomeSpec) -> None:
 
 def test_genome_spec_css_vars(sample_genome: GenomeSpec) -> None:
     css_vars = sample_genome.to_css_vars()
-    assert css_vars["--dna-surface"] == "#14532D"
+    assert css_vars["--dna-surface"] == "#0A2218"
     assert css_vars["--dna-signal"] == "#10B981"
 
 
@@ -222,6 +222,56 @@ def test_genome_rhythm_computed(sample_genome: GenomeSpec) -> None:
     fast_val = float(sample_genome.rhythm_fast.rstrip("s"))
     assert 3.5 < slow_val < 5.0
     assert 1.2 < fast_val < 2.0
+
+
+def test_genome_spec_paradigm_fields_default_empty() -> None:
+    """New paradigm/structural dicts default to empty dicts (backward compat)."""
+    # Minimal genome without any of the new optional fields
+    genome = GenomeSpec(
+        id="test",
+        name="Test",
+        category="dark",
+        profile="brutalist",
+        surface_0="#000000",
+        surface_1="#111111",
+        surface_2="#080808",
+        ink="#FFFFFF",
+        ink_secondary="#CCCCCC",
+        ink_on_accent="#FFFFFF",
+        accent="#00FF00",
+        accent_complement="#00CC00",
+        accent_signal="#009900",
+        accent_warning="#FFCC00",
+        accent_error="#FF0000",
+        stroke="#333333",
+        shadow_color="#000000",
+        shadow_opacity="0.1",
+        corner="0",
+        rhythm_base="2s",
+        density="1.0",
+        compatible_motions=["static"],
+    )
+    assert genome.paradigms == {}
+    assert genome.structural == {}
+    assert genome.typography == {}
+    assert genome.material == {}
+    assert genome.motion_config == {}
+
+
+def test_genome_spec_brutalist_emerald_has_paradigms(sample_genome: GenomeSpec) -> None:
+    """The brutalist-emerald genome declares paradigms and structural dicts."""
+    # Paradigms dispatch map (Principle 26)
+    assert sample_genome.paradigms["badge"] == "default"
+    assert sample_genome.paradigms["stats"] == "brutalist"
+    assert sample_genome.paradigms["chart"] == "brutalist"
+    assert sample_genome.paradigms["timeline"] == "default"
+    # Structural cascade (Principle 24)
+    assert sample_genome.structural["stroke_linejoin"] == "miter"
+    assert sample_genome.structural["data_point_shape"] == "square"
+    # Typography
+    assert "JetBrains Mono" in sample_genome.typography["hero_font"]
+    # Material
+    assert sample_genome.material["surface"] == "matte"
 
 
 # ==========================================================================

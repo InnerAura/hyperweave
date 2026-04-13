@@ -1,0 +1,109 @@
+{# Chart paradigm: brutalist.
+   Ported element-by-element from tier2/genomes/brutalist-emerald/brutalist-emerald-star-history-v4b.svg.
+   900x500, flat slab, grain, heavy structural rules, polyline with area fill,
+   crosshair markers, nested-square milestones.
+   Chart fragments (area, polyline, markers, milestones) come from chart_engine. #}
+
+{% set cw = width | default(900) %}
+{% set ch = height | default(500) %}
+{% set vx = chart_viewport_x | default(80) %}
+{% set vy = chart_viewport_y | default(150) %}
+{% set vw = chart_viewport_w | default(760) %}
+{% set vh = chart_viewport_h | default(245) %}
+
+<g clip-path="url(#{{ uid }}-clip)">
+
+  {# L0: FLAT SLAB #}
+  <rect width="{{ cw }}" height="{{ ch }}" fill="var(--dna-surface)"/>
+
+  {# L1: PERIMETER #}
+  <rect x="1.25" y="1.25" width="{{ cw - 2.5 }}" height="{{ ch - 2.5 }}" fill="none"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5"/>
+
+  {# L2: GRAIN #}
+  <rect x="3" y="3" width="{{ cw - 6 }}" height="{{ ch - 6 }}" filter="url(#{{ uid }}-grain)"/>
+
+  {# STRUCTURAL RULES #}
+  <line x1="3" y1="46" x2="{{ cw - 3 }}" y2="46"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5" opacity="0.55"/>
+  <line x1="3" y1="140" x2="{{ cw - 3 }}" y2="140"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5" opacity="0.55"/>
+  <line x1="3" y1="440" x2="{{ cw - 3 }}" y2="440"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5" opacity="0.55"/>
+
+  {# Y-axis rail + baseline #}
+  <line x1="{{ vx }}" y1="{{ vy }}" x2="{{ vx }}" y2="{{ vy + vh }}"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2" opacity="0.5"/>
+  <line x1="{{ vx }}" y1="{{ vy + vh }}" x2="{{ vx + vw }}" y2="{{ vy + vh }}"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2" opacity="0.5"/>
+
+  {# Grid coordinates #}
+  <text class="{{ uid }}-grid-coord" x="{{ vx + 4 }}" y="{{ vy + 10 }}">001</text>
+  <text class="{{ uid }}-grid-coord" x="{{ vx + vw - 4 }}" y="{{ vy + 10 }}" text-anchor="end">002</text>
+  <text class="{{ uid }}-grid-coord" x="{{ vx + 4 }}" y="{{ vy + vh - 3 }}">003</text>
+  <text class="{{ uid }}-grid-coord" x="{{ vx + vw - 4 }}" y="{{ vy + vh - 3 }}" text-anchor="end">004</text>
+
+  {# ZONE 1: HEADER #}
+  <g data-hw-zone="header">
+    <g transform="translate(18, 16)">
+      <svg viewBox="0 0 24 24" width="16" height="16">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-ink-accent, #A7F3D0)"/>
+      </svg>
+    </g>
+    <text class="{{ uid }}-hdr-user" x="40" y="30">{{ chart_title }}</text>
+    {# RESOLVER-GAP: chart_url (e.g. "github.com/eli64s/readme-ai") not provided by resolver #}
+    <text class="{{ uid }}-hdr-meta" x="{{ cw - 22 }}" y="30" text-anchor="end">github.com/{{ chart_repo }}</text>
+    <rect class="{{ uid }}-status-dot" x="{{ cw - 26 }}" y="12" width="8" height="8" fill="var(--dna-border, var(--dna-signal))" shape-rendering="crispEdges"/>
+  </g>
+
+  {# ZONE 2: TITLE #}
+  <g data-hw-zone="title">
+    <text class="{{ uid }}-title-main" x="24" y="100">STAR HISTORY</text>
+    {# RESOLVER-GAP: date_range_label ("LIFETIME GROWTH · JAN 2024 → PRESENT") needs min/max dates from point data #}
+    <text class="{{ uid }}-title-sub" x="24" y="118">LIFETIME GROWTH</text>
+
+    <text class="{{ uid }}-hero-value" x="{{ cw - 22 }}" y="100" text-anchor="end">{{ chart_current_stars }}</text>
+    <text class="{{ uid }}-hero-label" x="{{ cw - 22 }}" y="118" text-anchor="end">TOTAL STARS · LIFETIME</text>
+  </g>
+
+  {# ZONE 3: CHART #}
+  <g data-hw-zone="chart">
+    {# RESOLVER-GAP: y-axis text labels (0, 1K, 2K, 3K) not provided by chart_engine.
+       Hardcoded from target SVG positions. #}
+    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh + 4 }}" text-anchor="end">0</text>
+    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 78 }}" text-anchor="end">1K</text>
+    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 159 }}" text-anchor="end">2K</text>
+    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + 4 }}" text-anchor="end">3K</text>
+
+    {# Chart engine fragments — brutalist 3-layer line effect from target SVG:
+       ghost line (faint shadow) → primary line (4px) → bright core (1.5px highlight) #}
+    {{ chart_gridlines | safe }}
+    {{ chart_area | safe }}
+    <g class="{{ uid }}-ghost-line" opacity="0.15">{{ chart_polyline | safe }}</g>
+    {{ chart_polyline | safe }}
+    <g class="{{ uid }}-bright-core">{{ chart_polyline | safe }}</g>
+    {{ chart_markers | safe }}
+    {{ chart_milestones | safe }}
+    {{ chart_axes | safe }}
+  </g>
+
+  {# X-AXIS LABELS #}
+  {# RESOLVER-GAP: x-axis date labels not provided by chart_engine.
+     Hardcoded from target SVG positions. #}
+  <g data-hw-zone="x-axis">
+    <text class="{{ uid }}-axis-x" x="{{ vx }}" y="420" text-anchor="middle">EARLY '24</text>
+    <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.25) | int }}" y="420" text-anchor="middle">LATE '24</text>
+    <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.50) | int }}" y="420" text-anchor="middle">MID '25</text>
+    <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.75) | int }}" y="420" text-anchor="middle">LATE '25</text>
+    <text class="{{ uid }}-axis-x" x="{{ vx + vw }}" y="420" text-anchor="middle">EARLY '26</text>
+  </g>
+
+  {# FOOTER #}
+  <g data-hw-zone="footer">
+    <rect x="18" y="454" width="8" height="8" fill="var(--dna-border, var(--dna-signal))" shape-rendering="crispEdges"/>
+    <rect class="{{ uid }}-status-dot" x="20" y="456" width="4" height="4" fill="var(--dna-signal, #34D399)" shape-rendering="crispEdges"/>
+    <text class="{{ uid }}-foot" x="34" y="462">github.com/{{ chart_repo }}</text>
+    <text class="{{ uid }}-foot-brand" x="{{ cw - 22 }}" y="462" text-anchor="end">HYPERWEAVE · STAR HISTORY</text>
+  </g>
+
+</g>

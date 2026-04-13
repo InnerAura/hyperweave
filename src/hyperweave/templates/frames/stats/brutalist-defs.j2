@@ -1,0 +1,28 @@
+{# Brutalist stats defs: grain filter, clip-path.
+   Ported from tier2/genomes/brutalist-emerald/brutalist-emerald-stat-card-v6.svg #}
+<filter id="{{ uid }}-grain" x="0%" y="0%" width="100%" height="100%">
+  <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" seed="7" result="noise"/>
+  <feColorMatrix in="noise" type="luminanceToAlpha" result="alpha-noise"/>
+  <feColorMatrix in="alpha-noise" type="matrix" values="0 0 0 0 0.06
+                                                         0 0 0 0 0.18
+                                                         0 0 0 0 0.12
+                                                         0 0 0 0.12 0"/>
+</filter>
+<clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
+<style>
+  {{ font_faces | safe }}
+  text { font-family: var(--dna-font-mono, var(--dna-font-display, 'JetBrains Mono', monospace)); shape-rendering: geometricPrecision; }
+  .{{ uid }}-field-label { font-size: 11px; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-ink-secondary, #6EE7B7); }
+  .{{ uid }}-field-value { font-size: 11px; font-weight: 400; letter-spacing: 0.06em; fill: var(--dna-signal, #34D399); }
+  .{{ uid }}-hero-value { font-size: 42px; font-weight: 800; letter-spacing: -0.02em; fill: var(--dna-ink-primary, #D1FAE5); }
+  .{{ uid }}-hero-label { font-size: 13px; font-weight: 800; letter-spacing: 0.36em; text-transform: uppercase; fill: var(--dna-ink-secondary, #6EE7B7); }
+  .{{ uid }}-hdr-user { font-size: 11px; font-weight: 800; letter-spacing: 0.22em; fill: var(--dna-ink-accent, #A7F3D0); }
+  .{{ uid }}-hdr-meta { font-size: 8px; font-weight: 400; letter-spacing: 0.12em; fill: var(--dna-signal, #34D399); opacity: 0.7; }
+  .{{ uid }}-act-label { font-size: 8px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-signal, #34D399); }
+  .{{ uid }}-foot { font-size: 7px; font-weight: 500; letter-spacing: 0.14em; fill: var(--dna-signal, #34D399); opacity: 0.6; }
+  .{{ uid }}-foot-brand { font-size: 7px; font-weight: 700; letter-spacing: 0.30em; fill: var(--dna-signal, #34D399); opacity: 0.4; }
+  .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-signal, #34D399); opacity: 0.25; }
+  @keyframes {{ uid }}-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .{{ uid }}-status-dot { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
+  @media (prefers-reduced-motion: reduce) { .{{ uid }}-status-dot { animation: none !important; opacity: 0.8; } }
+</style>
