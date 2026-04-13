@@ -14,6 +14,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
+from hyperweave import __version__
 from hyperweave.core.enums import ArtifactStatus, FrameType, MotionId
 
 if TYPE_CHECKING:
@@ -152,6 +153,8 @@ def _base_context(
         # Timestamp
         "created": datetime.now(UTC).isoformat(),
         "created_at": datetime.now(UTC).isoformat(),
+        # Version -- read by templates/components/metadata.svg.j2
+        "version": __version__,
         # Embedded fonts (base64 @font-face CSS)
         "font_faces": _load_font_faces(resolved.genome),
     }

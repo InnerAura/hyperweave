@@ -1,10 +1,10 @@
 {# HyperWeave Tier 3 Metadata Block (Resonant).
    Injected by document.svg.j2 when metadata_tier >= 1. #}
   <metadata>
-  <hw:artifact id="{{ artifact_id }}" type="{{ frame_type }}" series="{{ series | default('core') }}" version="{{ version | default('0.1.0') }}"
+  <hw:artifact id="{{ artifact_id }}" type="{{ frame_type }}" series="{{ series | default('core') }}" version="{{ version | default('0.2.4') }}"
                xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
-      <hw:generator>HyperWeave Compositor v0.1 (InnerAura Labs)</hw:generator>
+      <hw:generator>HyperWeave Compositor v{{ version | default('0.2.4') }} (InnerAura Labs)</hw:generator>
       <hw:created>{{ created_at }}</hw:created>
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
@@ -13,7 +13,7 @@
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:frame>{{ frame_type }}</hw:frame>
-    <hw:genome>{{ genome_id }}@{{ version | default('0.1.0') }}</hw:genome>
+    <hw:genome>{{ genome_id }}@{{ version | default('0.2.4') }}</hw:genome>
 {% if profile_id %}    <hw:profile>{{ profile_id }}</hw:profile>
 {% endif %}
     <hw:slots>
@@ -28,7 +28,7 @@
            xmlns:dc="http://purl.org/dc/elements/1.1/">
     <rdf:Description>
       <dc:title>{{ title_text }}</dc:title>
-      <dc:creator>HyperWeave Compositor v0.1 (InnerAura Labs)</dc:creator>
+      <dc:creator>HyperWeave Compositor v{{ version | default('0.2.4') }} (InnerAura Labs)</dc:creator>
       <dc:date>{{ created_at }}</dc:date>
       <dc:rights>CC BY 4.0</dc:rights>
     </rdf:Description>

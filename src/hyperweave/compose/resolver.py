@@ -249,9 +249,8 @@ def resolve_strip(
     height = 52
 
     metrics = _parse_metrics(spec)
-    metric_pitch = profile.get("strip_metric_pitch", 106)
+    min_metric_pitch = profile.get("strip_metric_pitch", 106)
     cell_offset = 12  # gap between first divider and first metric cell
-    status_zone = 56  # 14px indicator + padding
 
     # Glyph zone is ~36px (12 pad + 24 glyph + gap).  Collapse when absent.
     has_glyph = bool(glyph_data and glyph_data.get("path"))
@@ -267,6 +266,42 @@ def resolve_strip(
     # Account for letter-spacing 0.18em on identity text
     id_text_w += len(identity) * 11 * 0.18
     first_divider_x = max(int(identity_x + id_text_w + 14), 80)  # 14px right padding, min 80
+
+    # ── Adaptive cell pitch (preserves the slot grid) ──
+    # Uniform pitch adopts the widest metric's measured width so the slot
+    # grid stays consistent (every cell is the same size), but no metric's
+    # value overflows its cell. This is where adaptivity lives: `for metric
+    # in metrics` varies by payload, and each metric's value width drives
+    # the shared pitch upward when values are long. The status diamond
+    # lives in the dedicated right-edge ``status_zone``, not per-cell.
+    cell_pad = 20  # horizontal breathing room inside each cell
+
+    # Typography params for width measurement. For chrome paradigm these
+    # should match the CSS declared in strip/chrome-defs.j2 (Orbitron 17px
+    # 900 for value, JetBrains Mono 9px 600 for label). Other paradigms
+    # fall back to profile-declared sizes.
+    paradigm = (genome.get("paradigms") or {}).get("strip", "default")
+    if paradigm == "chrome":
+        value_size = 17
+        label_size = 9
+    else:
+        value_size = profile.get("strip_metric_value_size", 18)
+        label_size = profile.get("strip_metric_label_size", 7)
+
+    widest_cell = min_metric_pitch
+    for metric in metrics:
+        raw_value = str(metric.get("value", ""))
+        raw_label = str(metric.get("label", "")).upper()
+        value_w = measure_text(raw_value, font_size=value_size, bold=True, monospace=False)
+        label_w = measure_text(raw_label, font_size=label_size, bold=False, monospace=True)
+        cell_content_w = max(label_w, value_w)
+        needed = int(cell_content_w + cell_pad)
+        if needed > widest_cell:
+            widest_cell = needed
+
+    metric_pitch = widest_cell
+    status_zone = 56  # reserved for right-edge status diamond + padding
+
     n = max(len(metrics), 1)
     width = first_divider_x + cell_offset + n * metric_pitch + status_zone
 
@@ -1629,7 +1664,7 @@ def _resolve_motion(spec: ComposeSpec, genome: dict[str, Any]) -> str:
     return MotionId.STATIC
 
 
-def _parse_metrics(spec: ComposeSpec) -> list[dict[str, str]]:
+def _parse_metrics(spec: ComposeSpec) -> list[dict[str, Any]]:
     metrics: list[dict[str, str]] = []
 
     # Try slots first

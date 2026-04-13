@@ -78,12 +78,16 @@
   <line x1="{{ (ch_start_x + q * ch_stride) | round(1) }}" y1="{{ ch_baseline + 1.5 }}" x2="{{ (ch_start_x + q * ch_stride) | round(1) }}" y2="{{ ch_baseline + 4 }}" stroke="#A8C0D0" stroke-width="0.4" opacity="0.5"/>
   {% endfor %}
 
-  {# Activity bars — pure gradient rects, no halo. The magazine's light-cyan
-     top edge comes from the `ch-bar` gradient's first stop (#C8DAE6), not a
-     feGaussianBlur halo. On mobile, removing the filter eliminates the soft
-     blur from rasterized-buffer downsampling; on desktop, the gradient's top
-     stop alone carries the icy-highlight aesthetic. #}
-  <g data-hw-zone="activity-bars" fill="url(#{{ uid }}-bar)">
+  {# Activity bars — solid fill + crispEdges for mobile readability.
+     v0.2.4: gradient fill (#C8DAE6 → #000A14) muddied at mobile scales
+     because 7×N-pixel bars had insufficient vertical range for the 6-stop
+     gradient to resolve cleanly; the brutalist variant stays crisp with a
+     solid fill + crispEdges, so we port that pattern here. Icy-highlight
+     aesthetic is preserved via the horizon shelf-glow above the bars, not
+     per-bar gradient top-stops. Integer coords + crispEdges snap to pixel
+     grid on phones. #}
+  <g data-hw-zone="activity-bars" fill="var(--dna-signal, #5BA3D4)"
+     opacity="0.72" shape-rendering="crispEdges">
   {% for bar in activity_bars %}
     {# Zero-count weeks render as 2px stubs; non-zero weeks use sqrt scaling. #}
     {% if bar.count == 0 %}
@@ -91,9 +95,8 @@
     {% else %}
       {% set h = [4, ((bar.count / ch_peak) ** 0.5 * ch_max_h) | int] | max %}
     {% endif %}
-    <rect x="{{ (ch_start_x + loop.index0 * ch_stride) | round(1) }}" y="{{ ch_baseline - h }}"
-          width="{{ ch_bar_w }}" height="{{ h }}" rx="1"
-          shape-rendering="geometricPrecision"/>
+    <rect x="{{ (ch_start_x + loop.index0 * ch_stride) | round | int }}" y="{{ ch_baseline - h }}"
+          width="{{ ch_bar_w }}" height="{{ h }}"/>
   {% endfor %}
   </g>
 

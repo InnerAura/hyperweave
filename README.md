@@ -293,8 +293,8 @@ Every artifact ships with:
 |---|---|
 | Frame types | 15 (badge, strip, banner, icon, divider, marquee-h/v/counter, receipt, rhythm-strip, master-card, catalog, stats, chart, timeline) |
 | Genomes | 2 (brutalist-emerald, chrome-horizon) |
-| Motion configs | 16 (1 static + 5 border SMIL + 10 kinetic CSS) |
-| Glyphs | 97 (91 Simple Icons + 6 geometric) |
+| Motion configs | 15 (1 static + 5 border SMIL + 9 kinetic CSS) |
+| Glyphs | 99 (93 Simple Icons + 6 geometric) |
 | Divider variants | 5 (block, current, takeoff, void, zeropoint) |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
 | Paradigms | 3 per frame (default, brutalist, chrome) — per-frame dispatch from genome |

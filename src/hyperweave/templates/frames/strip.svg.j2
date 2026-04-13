@@ -84,10 +84,13 @@
 <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ cell_x }},0)">
   <text x="{{ metric_pitch // 2 }}" y="{{ strip_metric_label_y | default(18) }}" text-anchor="middle"
         class="{{ uid }}-metric-label">{{ metric.label | upper }}</text>
-  {# Metric value — chrome paradigm gets a translate+skew group so the skew
-     pivots around the text center. Other paradigms render upright. #}
-  {% if paradigm_strip == "chrome" %}
-  <g transform="translate({{ metric_pitch // 2 }},{{ strip_metric_value_y | default(36) }}) skewX(-8)">
+  {# Metric value — skew applied only when strip_metric_value_skew != 0
+     (was hardcoded to paradigm=chrome; now chrome.yaml sets skew=0 for badge
+     parity, removing the Impact-italic treatment that diverged from badge's
+     upright Orbitron). #}
+  {% set _skew = strip_metric_value_skew | default(0) %}
+  {% if _skew != 0 %}
+  <g transform="translate({{ metric_pitch // 2 }},{{ strip_metric_value_y | default(36) }}) skewX({{ _skew }})">
     <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
           class="{{ uid }}-metric-value">{{ metric.value }}</text>
   </g>
@@ -115,7 +118,11 @@
 {% endif %}
 {% endfor %}
 
-{# === Status indicator (paradigm-dispatched) === #}
+{# === Status indicator (paradigm-dispatched) ===
+   Single diamond at the right-edge status slot. The specimen anchors the
+   diamond here so the right edge reads as a deliberate terminus rather
+   than an isolated afterthought — the status_zone (56px) reserved by
+   resolve_strip gives it visual integration, not isolation. #}
 {% set last_seam_x = (first_divider_x | default(143)) + 12 + (metrics | length | default(1)) * metric_pitch %}
 {% set status_x = (last_seam_x + width) // 2 %}
 {% set status_cy = strip_h // 2 %}

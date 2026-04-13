@@ -5,6 +5,36 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-04-13
+
+### Added
+
+- **Truthful chart rendering.** Charts now reflect what the data actually says. When a GitHub fetch fails, the chart renders a clear `DATA UNAVAILABLE` overlay instead of a synthesized placeholder curve. Brand-new repos with zero stars render `NEW REPO · NO STARS YET`. Every chart carries a status attribute (`fresh`, `stale`, `empty`) that downstream consumers can read.
+- **Adaptive chart axes.** Y-tick values auto-generate from the data range using round numbers (1, 2, 5 × powers of 10), so labels agree with the curve at any scale. X-axis year labels come from actual point timestamps — the old hardcoded `EARLY '24` / `LATE '24` placeholders are gone.
+- **Single-page stargazer granularity.** Repos with ≤30 stars now render with individual stargazer timestamps instead of collapsed samples, so early-stage projects produce visible curves instead of flat lines.
+- **Adaptive strip metric cell pitch.** Strip cells size themselves to fit the widest metric, then propagate that pitch uniformly. Long values no longer overflow; the grid stays balanced.
+
+### Fixed
+
+- **Live state now reflects live data.** Badges, strips, and live routes across HTTP, CLI, and MCP auto-detect pass/fail/warning/critical state from fetched values. Previously this inference ran only inside `hw kit readme`, so a live badge fetching `build=failing` rendered as green ("active") instead of red. Explicit overrides (`?state=passing`, `--state failing`, MCP `state` argument) continue to win.
+- **Generated SVGs advertised the wrong version in their embedded metadata.** The `version` variable that feeds `<hw:artifact version="...">`, `<hw:generator>`, `<hw:genome>`, and `<dc:creator>` was never populated, so every SVG from v0.2.0–v0.2.3 declared itself as `0.1.0` regardless of installed version. The metadata now reflects the real release.
+- **Stats card activity bars blurred on mobile.** Bars now render with a solid fill and pixel-crisp edges rather than a multi-stop vertical gradient. The icy highlight lives in the horizon shelf-glow above the bars, so small-viewport rendering stays sharp.
+- **Strip chrome typography drifted from badge.** Chrome strip metric values render in Orbitron 17px upright, matching the chrome badge — replacing the previous Impact-italic treatment. Chrome strip and chrome badge now share one typographic system.
+- **Strip chrome filter stack caused mobile blur.** Removed specular lighting and the text-shadow filter, both of which rasterized poorly on small frames. Replaced the sheen with vector hairlines so highlights stay pixel-perfect at every size.
+- **Chart axis labels no longer hardcoded.** Both brutalist and chrome chart templates read axis labels from the chart engine; changing the data range updates the labels automatically.
+- **User-Agent header reported the wrong version.** Outbound HTTP requests identify as the installed HyperWeave version rather than a stale `0.1.0`.
+
+### Changed
+
+- **Chart resolver is a three-state machine.** `stale` (fetch failed), `empty` (zero-value repo), or `fresh` (real data). The previous behavior of synthesizing a placeholder curve on failure is removed — data truthfulness is now a rendering contract.
+- **Strip skew is profile-declared.** The hardcoded italic skew on chrome strips has been removed; profiles that want a skew opt in explicitly via a profile field.
+
+### Known follow-ups (not blocking v0.2.4)
+
+- **Chart hero strip placeholders.** The static repo slug and date-range label on charts are not yet data-driven; only the curve and axes are.
+- **Chart/stats data-provenance states lack dedicated styling.** Charts with failed fetches render a `stale` status, but no CSS rule matches it — the visual is covered by the text overlay rather than a distinct chrome color. Same for `empty`.
+- **`loop` artifact status is declared but unused.** The status enum includes `loop`, exposed via MCP schema, but no inference logic produces it and no CSS animation exists for it.
+
 ## [0.2.3] - 2026-04-13
 
 ### Added

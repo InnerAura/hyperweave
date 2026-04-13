@@ -59,13 +59,11 @@
   </g>
   <line x1="{{ vx }}" y1="{{ vy + vh - 40 }}" x2="{{ vx + vw }}" y2="{{ vy + vh - 40 }}" stroke="#A8D4F0" stroke-width="0.4" opacity="0.1"/>
 
-  {# Y-axis labels #}
-  {# RESOLVER-GAP: y-axis text labels not provided by chart_engine. Hardcoded from target. #}
-  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh + 3 }}" text-anchor="end">0</text>
-  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 37 }}" text-anchor="end">0.5K</text>
-  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 77 }}" text-anchor="end">1K</text>
-  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 157 }}" text-anchor="end">2K</text>
-  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + 13 }}" text-anchor="end">3K</text>
+  {# Y-axis labels — derived from data via chart_engine _nice_y_ticks.
+     The +3 y-offset matches the chrome baseline convention. #}
+  {% for label in chart_y_labels %}
+  <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ label.y + 3 }}" text-anchor="end">{{ label.text }}</text>
+  {% endfor %}
 
   {# Horizon glow — 2px cyan at x-axis baseline #}
   <rect class="{{ uid }}-horizon" x="{{ vx }}" y="{{ vy + vh - 1 }}" width="{{ vw }}" height="2"
@@ -81,17 +79,16 @@
   {{ chart_markers | safe }}
   {{ chart_milestones | safe }}
   {{ chart_axes | safe }}
+  {{ chart_empty_state | safe }}
 </g>
 
 <line x1="24" y1="420" x2="{{ cw - 24 }}" y2="420" stroke="url(#{{ uid }}-sep)" stroke-width="0.4" opacity="0.55"/>
 
-{# ZONE 4: X-AXIS LABELS #}
-{# RESOLVER-GAP: x-axis date labels not provided by chart_engine. Hardcoded from target. #}
+{# ZONE 4: X-AXIS LABELS — year numbers derived from data (star-history.com style). #}
 <g data-hw-zone="x-axis">
-  <text class="{{ uid }}-axis-x" x="{{ vx }}" y="442">EARLY '24</text>
-  <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.35) | int }}" y="442" text-anchor="middle">LATE '24</text>
-  <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.69) | int }}" y="442" text-anchor="middle">MID '25</text>
-  <text class="{{ uid }}-axis-x" x="{{ vx + vw }}" y="442" text-anchor="end">EARLY '26</text>
+  {% for label in chart_x_labels %}
+  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="442" text-anchor="{{ label.anchor | default('middle') }}">{{ label.text }}</text>
+  {% endfor %}
 </g>
 
 <line x1="24" y1="460" x2="{{ cw - 24 }}" y2="460" stroke="url(#{{ uid }}-sep)" stroke-width="0.4" opacity="0.55"/>

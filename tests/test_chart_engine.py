@@ -19,6 +19,9 @@ from hyperweave.render.chart_engine import (
     _build_markers,
     _build_milestones,
     _build_polyline_points,
+    _build_x_year_labels,
+    _format_y_tick,
+    _nice_y_ticks,
     _normalize_points,
     _project_points,
     build_chart_svg,
@@ -263,13 +266,30 @@ def test_build_chart_svg_round_smooth(
 
 
 def test_build_chart_svg_empty_points_safe(sample_viewport: Viewport) -> None:
-    """No points → all fragments empty strings, no exceptions."""
+    """No points → data fragments empty, but scaffolding (axes, gridlines, zero label) remains."""
     result = build_chart_svg([], sample_viewport, structural={})
     for key in ("area", "polyline", "markers"):
         assert result[key] == ""
     # Axes and gridlines are always drawn regardless of data.
     assert result["axes"] != ""
     assert result["gridlines"] != ""
+    # Empty-state: labels collapse to a single "0" on the baseline, no X labels,
+    # and no overlay message unless the caller requested one.
+    assert len(result["y_labels"]) == 1
+    assert result["y_labels"][0]["text"] == "0"
+    assert result["x_labels"] == []
+    assert result["empty_state"] == ""
+
+
+def test_build_chart_svg_empty_with_message_renders_overlay(
+    sample_viewport: Viewport,
+) -> None:
+    """Zero-data path with an empty_message renders a centered overlay label."""
+    result = build_chart_svg(
+        [], sample_viewport, structural={}, empty_message="NEW REPO · NO STARS YET"
+    )
+    assert "NEW REPO" in result["empty_state"]
+    assert 'data-hw-zone="empty-state"' in result["empty_state"]
 
 
 def test_build_chart_svg_respects_milestones(
@@ -284,3 +304,127 @@ def test_build_chart_svg_respects_milestones(
     )
     assert "milestones" in result
     assert result["milestones"] != ""
+
+
+# ── Nice ticks (Y-axis tick computation) ─────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "v_max,expected",
+    [
+        (0, [0]),
+        (1, [0, 1]),
+        (6, [0, 2, 4, 6]),
+        (30, [0, 10, 20, 30]),
+        (2850, [0, 1000, 2000, 3000]),
+        (15000, [0, 5000, 10000, 15000]),
+    ],
+)
+def test_nice_y_ticks_across_bands(v_max: int, expected: list[int]) -> None:
+    """Tick algorithm produces round values from 0 up to >= v_max across orders of magnitude."""
+    assert _nice_y_ticks(v_max) == expected
+
+
+def test_format_y_tick_integer_and_k_notation() -> None:
+    """< 1000 → integer; 1000..9999 → K notation with no trailing zeros; 10K+ → integer K."""
+    assert _format_y_tick(0) == "0"
+    assert _format_y_tick(6) == "6"
+    assert _format_y_tick(500) == "500"
+    assert _format_y_tick(1000) == "1K"
+    assert _format_y_tick(1500) == "1.5K"
+    assert _format_y_tick(2000) == "2K"
+    assert _format_y_tick(10000) == "10K"
+
+
+# ── X-axis year labels ────────────────────────────────────────────────
+
+
+def test_x_year_labels_single_year(sample_viewport: Viewport) -> None:
+    """Data entirely within one year → one label centered on the viewport."""
+    pts = _normalize_points(
+        [
+            {"date": "2025-01-15", "count": 1},
+            {"date": "2025-06-01", "count": 4},
+            {"date": "2025-11-20", "count": 6},
+        ]
+    )
+    labels = _build_x_year_labels(pts, sample_viewport)
+    assert labels == [
+        {
+            "x": sample_viewport.x + sample_viewport.w // 2,
+            "text": "2025",
+            "anchor": "middle",
+        }
+    ]
+
+
+def test_x_year_labels_multi_year_range(sample_viewport: Viewport) -> None:
+    """Three-year span → start year at left, interior years at jan-1 positions."""
+    pts = _normalize_points(
+        [
+            {"date": "2024-01-01", "count": 1},
+            {"date": "2025-06-01", "count": 100},
+            {"date": "2026-04-01", "count": 500},
+        ]
+    )
+    labels = _build_x_year_labels(pts, sample_viewport)
+    texts = [label["text"] for label in labels]
+    # Expect every year in the range represented exactly once.
+    assert texts == ["2024", "2025", "2026"]
+    # Start year anchored at left, subsequent labels middle/end.
+    assert labels[0]["anchor"] == "start"
+    assert labels[0]["x"] == sample_viewport.x
+
+
+def test_x_year_labels_empty_points() -> None:
+    """No points → no labels (caller should render an empty-state overlay instead)."""
+    vp = Viewport(x=0, y=0, w=100, h=50)
+    assert _build_x_year_labels([], vp) == []
+
+
+# ── Zero-time-span defense (bug 2 reproducer) ────────────────────────
+
+
+def test_project_points_identical_timestamps_distributes_by_index(
+    sample_viewport: Viewport,
+) -> None:
+    """All-same-timestamp points must not collapse to vp.x (bug 2 defense)."""
+    same_date = datetime(2025, 5, 1, tzinfo=UTC)
+    pts = [ChartPoint(date=same_date, value=i + 1) for i in range(4)]
+    projected = _project_points(pts, sample_viewport)
+    xs = [x for (x, _) in projected]
+    # All x coords must be distinct — evenly spread across the viewport width.
+    assert len(set(xs)) == 4
+    # First point at left edge, last at right edge.
+    assert xs[0] == sample_viewport.x
+    assert xs[-1] == sample_viewport.x + sample_viewport.w
+
+
+def test_project_points_v_min_override_uses_zero_baseline(
+    sample_viewport: Viewport,
+) -> None:
+    """v_min=0 override means low-value points sit partway up, not at the baseline."""
+    pts = _normalize_points(
+        [
+            {"date": "2025-01-01", "count": 100},
+            {"date": "2025-12-01", "count": 200},
+        ]
+    )
+    with_override = _project_points(pts, sample_viewport, v_min=0, v_max=1000)
+    without_override = _project_points(pts, sample_viewport)
+    # Without override: first point (value=100, data_min=100) sits at baseline.
+    assert without_override[0][1] == sample_viewport.y + sample_viewport.h
+    # With v_min=0, v_max=1000: value=100 is 10% of range, so sits 90% down from top.
+    assert with_override[0][1] < sample_viewport.y + sample_viewport.h
+    assert with_override[0][1] > sample_viewport.y
+
+
+# ── Zero-star truthfulness: no placeholder leakage ───────────────────
+
+
+def test_build_chart_svg_no_placeholder_1200_leak(sample_viewport: Viewport) -> None:
+    """Zero-data renders must never leak the old 120→1200 placeholder numbers."""
+    result = build_chart_svg([], sample_viewport, structural={})
+    rendered = "".join(str(v) for v in result.values())
+    assert "1200" not in rendered
+    assert "1,200" not in rendered

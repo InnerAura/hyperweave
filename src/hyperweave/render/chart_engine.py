@@ -23,6 +23,7 @@ Public API:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -94,12 +95,28 @@ def _normalize_points(raw: list[Any]) -> list[ChartPoint]:
 # ── Projection ─────────────────────────────────────────────────────────────
 
 
-def _project_points(points: list[ChartPoint], vp: Viewport) -> list[tuple[int, int]]:
+def _project_points(
+    points: list[ChartPoint],
+    vp: Viewport,
+    *,
+    v_min: int | None = None,
+    v_max: int | None = None,
+) -> list[tuple[int, int]]:
     """Project (date, value) points into pixel coordinates inside ``vp``.
 
     Returns a list of ``(x, y)`` int tuples. X is linear in time; Y is linear
     in value, flipped so y=vp.y is the top of the chart and y=vp.y+vp.h is the
-    baseline (value=0).
+    baseline.
+
+    By default the Y range is inferred from the data's min/max. Callers (like
+    :func:`build_chart_svg` for star charts) can override ``v_min=0`` and
+    ``v_max=nice_tick_max`` so the polyline shares the same coordinate basis as
+    the tick labels. Without that alignment the labels and curve would only
+    agree by coincidence.
+
+    When all timestamps are identical (``t_span == 0`` — a degenerate
+    single-page low-star case), points are distributed evenly across the
+    viewport width by index rather than collapsing to ``vp.x``.
     """
     if not points:
         return []
@@ -109,15 +126,22 @@ def _project_points(points: list[ChartPoint], vp: Viewport) -> list[tuple[int, i
 
     t0 = points[0].date.timestamp()
     t1 = points[-1].date.timestamp()
-    t_span = max(1.0, t1 - t0)
-    v_max = max(p.value for p in points)
-    v_min = min(p.value for p in points)
-    v_span = max(1, v_max - v_min)
+    t_span = t1 - t0
+    v_hi = v_max if v_max is not None else max(p.value for p in points)
+    v_lo = v_min if v_min is not None else min(p.value for p in points)
+    v_span = max(1, v_hi - v_lo)
 
     out: list[tuple[int, int]] = []
-    for p in points:
-        frac_t = (p.date.timestamp() - t0) / t_span
-        frac_v = (p.value - v_min) / v_span
+    n = len(points)
+    for i, p in enumerate(points):
+        # When all timestamps are identical (t_span <= 0), distribute points
+        # evenly by index rather than collapsing them all to vp.x.
+        frac_t = (
+            i / max(1, n - 1)
+            if t_span <= 0
+            else (p.date.timestamp() - t0) / t_span
+        )
+        frac_v = (p.value - v_lo) / v_span
         px = vp.x + round(frac_t * vp.w)
         py = vp.y + vp.h - round(frac_v * vp.h)
         out.append((px, py))
@@ -342,6 +366,148 @@ def _build_milestones(
     return "".join(out)
 
 
+# ── Axis label computation ─────────────────────────────────────────────────
+
+
+def _nice_y_ticks(v_max: int, target_count: int = 4) -> list[int]:
+    """Compute round tick values from ``0`` up to or just past ``v_max``.
+
+    Picks a "nice" step (1, 2, 5, or 10 scaled by a power of 10) so labels
+    land on round numbers regardless of the actual maximum. Used for both Y-axis text labels and
+    gridline positions, so labels and gridlines always agree.
+
+    Examples:
+        v_max=6    → [0, 2, 4, 6]
+        v_max=30   → [0, 10, 20, 30]
+        v_max=2850 → [0, 1000, 2000, 3000]
+        v_max=0    → [0]
+    """
+    if v_max <= 0:
+        return [0]
+    raw_step = max(v_max / target_count, 1.0)
+    exp = math.floor(math.log10(raw_step))
+    f = raw_step / (10**exp)
+    if f <= 1:
+        nf = 1.0
+    elif f <= 2:
+        nf = 2.0
+    elif f <= 5:
+        nf = 5.0
+    else:
+        nf = 10.0
+    step = max(1, int(nf * (10**exp)))
+    nice_max = int(math.ceil(v_max / step) * step)
+    return list(range(0, nice_max + 1, step))
+
+
+def _format_y_tick(value: int) -> str:
+    """Format tick value: ``< 1000`` → integer, ``>= 1000`` → K notation.
+
+    Examples: 0 → "0", 6 → "6", 1000 → "1K", 1500 → "1.5K", 10000 → "10K".
+    Sibling of the hero-value ``_format_compact`` in chart.py, but breaks at
+    1K instead of 10K since tick labels are tighter.
+    """
+    if value < 1000:
+        return str(value)
+    s = f"{value / 1000:.1f}".rstrip("0").rstrip(".")
+    return f"{s}K"
+
+
+def _build_y_labels(
+    ticks: list[int], v_min: int, v_max: int, vp: Viewport
+) -> list[dict[str, Any]]:
+    """Project tick values into ``{y, text}`` dicts for template consumption.
+
+    Uses the same (v_min, v_max) range the caller passes to
+    :func:`_project_points`, so the labels and data points share a coordinate
+    system. The template positions the X coordinate itself (paradigm-specific).
+    """
+    if not ticks:
+        return []
+    v_span = max(1, v_max - v_min)
+    out: list[dict[str, Any]] = []
+    for t in ticks:
+        frac_v = (t - v_min) / v_span
+        py = vp.y + vp.h - round(frac_v * vp.h)
+        out.append({"y": py, "text": _format_y_tick(t)})
+    return out
+
+
+def _build_x_year_labels(
+    points: list[ChartPoint], vp: Viewport
+) -> list[dict[str, Any]]:
+    """Return year-string labels positioned at jan-1 boundaries in the data range.
+
+    Matches star-history.com's convention: just year numbers (2024, 2025, 2026)
+    at the X positions where each year begins. No "EARLY '24", "MID '25", etc.
+
+    Single-year spans collapse to one label at the viewport center.
+    """
+    if not points:
+        return []
+    y_start = points[0].date.year
+    y_end = points[-1].date.year
+    if len(points) == 1 or y_start == y_end:
+        return [{"x": vp.x + vp.w // 2, "text": str(y_start), "anchor": "middle"}]
+
+    t0 = points[0].date.timestamp()
+    t1 = points[-1].date.timestamp()
+    t_span = max(1.0, t1 - t0)
+
+    labels: list[dict[str, Any]] = [
+        {"x": vp.x, "text": str(y_start), "anchor": "start"}
+    ]
+    for y in range(y_start + 1, y_end + 1):
+        jan1 = datetime(y, 1, 1, tzinfo=UTC).timestamp()
+        if t0 < jan1 <= t1:
+            frac = (jan1 - t0) / t_span
+            px = vp.x + round(frac * vp.w)
+            # Anchor at right-edge if within 20px of viewport right; else middle.
+            anchor = "end" if (vp.x + vp.w) - px < 20 else "middle"
+            labels.append({"x": px, "text": str(y), "anchor": anchor})
+    return labels
+
+
+def _build_empty_state(vp: Viewport, message: str) -> str:
+    """Overlay text centered in the viewport when there is no data to plot.
+
+    Used for zero-star repos ("NEW REPO · NO STARS YET") and upstream-failure
+    cases ("DATA UNAVAILABLE"). The template embeds this fragment after the
+    axes so it renders on top of the empty chart area.
+    """
+    if not message:
+        return ""
+    cx = vp.x + vp.w // 2
+    cy = vp.y + vp.h // 2
+    return (
+        f'<g data-hw-zone="empty-state">'
+        f'<text x="{cx}" y="{cy}" text-anchor="middle" '
+        f'class="hw-chart-empty-state" opacity="0.55" '
+        f'font-family="inherit" font-size="14" letter-spacing="0.18em">'
+        f"{message}</text>"
+        f"</g>"
+    )
+
+
+def _build_gridlines_from_ticks(
+    y_labels: list[dict[str, Any]], vp: Viewport
+) -> str:
+    """Horizontal gridlines at each Y-tick's Y-position.
+
+    Replaces the uniform ``_build_gridlines`` when real data is present — so
+    gridlines align to labels instead of floating at arbitrary
+    ``vp.h / (rows+1)`` positions.
+    """
+    lines: list[str] = []
+    for label in y_labels:
+        y = int(label["y"])
+        lines.append(
+            f'<line x1="{vp.x}" y1="{y}" x2="{vp.x + vp.w}" y2="{y}" '
+            f'class="hw-chart-gridline"/>'
+        )
+    return "".join(lines)
+
+
 # ── Public API ─────────────────────────────────────────────────────────────
 
 
@@ -351,8 +517,9 @@ def build_chart_svg(
     structural: dict[str, Any] | None = None,
     *,
     milestones: list[int] | None = None,
-) -> dict[str, str]:
-    """Render a set of time-series points into SVG fragment strings.
+    empty_message: str | None = None,
+) -> dict[str, Any]:
+    """Render a set of time-series points into SVG fragment strings + label data.
 
     Args:
         raw_points: connector-shaped point list (dicts or tuples). See
@@ -368,14 +535,38 @@ def build_chart_svg(
             - ``fill_density``: ``"solid-area"`` | ``"bezier-smooth"`` | ``"none"``.
               Default ``"solid-area"``.
         milestones: integer thresholds to mark on the chart (e.g. ``[500, 1000, 2000]``).
+        empty_message: when there is no data to plot, overlay this text in the
+            chart area (e.g. ``"NEW REPO · NO STARS YET"``). Ignored when points
+            are present.
 
     Returns:
-        Dict of SVG fragment strings keyed by zone name. All values are plain
-        strings (possibly empty). Templates compose these with ``{{ ... | safe }}``.
+        Dict keyed by zone name. String fragments: ``defs``, ``axes``,
+        ``gridlines``, ``area``, ``polyline``, ``markers``, ``milestones``,
+        ``empty_state``. Structured label data: ``y_labels`` (list of
+        ``{"y": int, "text": str}``), ``x_labels`` (list of
+        ``{"x": int, "text": str, "anchor": "start" | "middle" | "end"}``).
+        Templates compose string fragments with ``{{ ... | safe }}`` and loop
+        over label data.
     """
     structural = structural or {}
     points = _normalize_points(raw_points)
-    projected = _project_points(points, viewport)
+
+    # Compute nice ticks FIRST so label positions, gridlines, and the projected
+    # polyline all share the same coordinate basis. Without this the "0" label
+    # and the polyline's baseline only agree by coincidence.
+    if points:
+        v_max = max(p.value for p in points)
+        ticks = _nice_y_ticks(v_max)
+        effective_max = ticks[-1] if ticks else max(v_max, 1)
+        y_labels = _build_y_labels(ticks, 0, effective_max, viewport)
+        x_labels = _build_x_year_labels(points, viewport)
+        # Project with zero-baseline so the polyline aligns to the tick labels.
+        projected = _project_points(points, viewport, v_min=0, v_max=effective_max)
+    else:
+        projected = []
+        # Empty state: show a single "0" anchored at the baseline.
+        y_labels = [{"y": viewport.y + viewport.h, "text": "0"}]
+        x_labels = []
 
     linejoin = str(structural.get("stroke_linejoin", "miter"))
     shape = str(structural.get("data_point_shape", "square"))
@@ -420,8 +611,19 @@ def build_chart_svg(
 
     markers_fragment = _build_markers(projected, shape, point_size)
     axes_fragment = _build_axes(viewport)
-    gridlines_fragment = _build_gridlines(viewport, rows=4)
+    # Gridlines aligned to ticks when data exists; uniform fallback otherwise.
+    if points and y_labels:
+        gridlines_fragment = _build_gridlines_from_ticks(y_labels, viewport)
+    else:
+        gridlines_fragment = _build_gridlines(viewport, rows=4)
     milestones_fragment = _build_milestones(points, projected, viewport, milestones or [])
+
+    # Empty state overlay: only when there are no data points AND a message
+    # was provided. Without a message the chart degrades silently (useful for
+    # embedded charts in stats.py that don't need a user-facing label).
+    empty_state_fragment = (
+        _build_empty_state(viewport, empty_message or "") if not points else ""
+    )
 
     return {
         "defs": "",
@@ -431,4 +633,7 @@ def build_chart_svg(
         "polyline": polyline_fragment,
         "markers": markers_fragment,
         "milestones": milestones_fragment,
+        "y_labels": y_labels,
+        "x_labels": x_labels,
+        "empty_state": empty_state_fragment,
     }

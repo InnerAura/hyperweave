@@ -5,7 +5,8 @@ Uses real compose for integration coverage of the kit pipeline.
 
 from __future__ import annotations
 
-from hyperweave.kit import _infer_state, _parse_badge_string, compose_kit
+from hyperweave.core.state import infer_state
+from hyperweave.kit import _parse_badge_string, compose_kit
 
 # ===========================================================================
 # compose_kit
@@ -59,48 +60,48 @@ def test_compose_kit_artifact_count() -> None:
 
 
 # ===========================================================================
-# _infer_state
+# infer_state
 # ===========================================================================
 
 
-def test_infer_state_passing() -> None:
-    assert _infer_state("build", "passing") == "passing"
+def testinfer_state_passing() -> None:
+    assert infer_state("build", "passing") == "passing"
 
 
-def test_infer_state_success() -> None:
-    assert _infer_state("ci", "success") == "passing"
+def testinfer_state_success() -> None:
+    assert infer_state("ci", "success") == "passing"
 
 
-def test_infer_state_failing() -> None:
-    assert _infer_state("build", "failing") == "failing"
+def testinfer_state_failing() -> None:
+    assert infer_state("build", "failing") == "failing"
 
 
-def test_infer_state_error() -> None:
-    assert _infer_state("lint", "error") == "failing"
+def testinfer_state_error() -> None:
+    assert infer_state("lint", "error") == "failing"
 
 
-def test_infer_state_warning() -> None:
-    assert _infer_state("lint", "warning") == "warning"
+def testinfer_state_warning() -> None:
+    assert infer_state("lint", "warning") == "warning"
 
 
-def test_infer_state_building() -> None:
-    assert _infer_state("build", "running") == "building"
+def testinfer_state_building() -> None:
+    assert infer_state("build", "running") == "building"
 
 
-def test_infer_state_percentage_high() -> None:
-    assert _infer_state("coverage", "95%") == "passing"
+def testinfer_state_percentage_high() -> None:
+    assert infer_state("coverage", "95%") == "passing"
 
 
-def test_infer_state_percentage_mid() -> None:
-    assert _infer_state("coverage", "75%") == "warning"
+def testinfer_state_percentage_mid() -> None:
+    assert infer_state("coverage", "75%") == "warning"
 
 
-def test_infer_state_percentage_low() -> None:
-    assert _infer_state("coverage", "50%") == "critical"
+def testinfer_state_percentage_low() -> None:
+    assert infer_state("coverage", "50%") == "critical"
 
 
-def test_infer_state_default() -> None:
-    assert _infer_state("version", "v0.1.0") == "active"
+def testinfer_state_default() -> None:
+    assert infer_state("version", "v0.1.0") == "active"
 
 
 # ===========================================================================

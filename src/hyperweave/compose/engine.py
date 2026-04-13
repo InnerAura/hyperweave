@@ -11,6 +11,18 @@ def compose(spec: ComposeSpec) -> ComposeResult:
     """Compose an artifact from a ComposeSpec."""
     start = time.monotonic()
 
+    # ── 0. Infer state from value when the caller left the default ──
+    # Any explicit override (?state=failing, --state passing, MCP state arg,
+    # etc.) sets spec.state to something other than "active" and survives
+    # this step untouched. This is the single chokepoint covering HTTP,
+    # CLI, MCP, and kit.
+    if spec.state == "active" and spec.value:
+        from hyperweave.core.state import infer_state
+
+        inferred = infer_state(spec.title, spec.value)
+        if inferred != "active":
+            spec = spec.model_copy(update={"state": inferred})
+
     # ── 1. Resolve genome, profile, frame ──
     from hyperweave.compose.resolver import resolve
 

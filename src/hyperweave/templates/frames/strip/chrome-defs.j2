@@ -1,86 +1,67 @@
-{# Chrome strip defs: env-map gradient, bevel filter, well gradient, separator gradient, text shadow.
+{# Chrome strip defs — badge-parity material for mobile crispness.
+   v0.2.4 rewrite: removed feSpecularLighting (rasterizes + resamples → mobile blur)
+   and text-shadow filter (degrades glyph edges). Typography aligned to badge:
+   JetBrains Mono labels + Orbitron upright values, no Impact, no skew.
    Guard on data presence (envelope_stops), not profile identity. #}
+
 {# Chrome env-map gradient (11-stop HDRI simulation, animated y1/y2) #}
 <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="-0.1" y2="0.9">
 {% for stop in envelope_stops %}
   <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
 {% endfor %}
   <animateTransform attributeName="gradientTransform" type="translate"
-    values="0 -0.2; 0 0.2; 0 -0.2" dur="6s"
+    values="0 -0.2; 0 0.2; 0 -0.2" dur="{{ chrome_rhythm | default('6s') }}"
     repeatCount="indefinite" calcMode="spline"
     keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
 </linearGradient>
-{# Chrome separator gradient — derived from genome highlight + well colors #}
+
+{# Separator gradient — matches badge's signal-blue profile (not warm tones).
+   Provides continuity of material language between badge and strip. #}
 <linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}" stop-opacity="0.2"/>
-  <stop offset="45%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.35"/>
-  <stop offset="50%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.45"/>
-  <stop offset="55%" stop-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" stop-opacity="0.25"/>
-  <stop offset="100%" stop-color="{{ well_bottom | default('#060606') }}" stop-opacity="0.2"/>
+  <stop offset="0%"   stop-color="var(--dna-signal, #5BA3D4)" stop-opacity="0"/>
+  <stop offset="30%"  stop-color="var(--dna-signal, #5BA3D4)" stop-opacity="0.35"/>
+  <stop offset="50%"  stop-color="{{ specular_light | default('#6AACC8') }}" stop-opacity="0.45"/>
+  <stop offset="70%"  stop-color="var(--dna-signal, #5BA3D4)" stop-opacity="0.35"/>
+  <stop offset="100%" stop-color="var(--dna-signal, #5BA3D4)" stop-opacity="0"/>
 </linearGradient>
+
 {# Well gradient #}
 <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
+  <stop offset="0%"   stop-color="{{ well_top | default('#0C1E2E') }}"/>
   <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
 </linearGradient>
-{# Product-weight bevel — shadow + light specular at strip scale #}
-<filter id="{{ uid }}-bevel" x="-2%" y="-4%" width="104%" height="110%">
-  <feDropShadow dx="0" dy="1.5" stdDeviation="2.5"
-                flood-color="#000" flood-opacity="{{ bevel_shadow_opacity | default('0.30') }}"/>
-  <feSpecularLighting in="SourceAlpha" surfaceScale="1.0"
-                      specularConstant="0.4" specularExponent="30"
-                      lighting-color="{{ specular_light | default('#6AACC8') }}" result="s">
-    <feDistantLight azimuth="225" elevation="50"/>
-  </feSpecularLighting>
-  <feComposite in="s" in2="SourceAlpha" operator="in" result="sc"/>
-  <feComposite in="SourceGraphic" in2="sc" operator="arithmetic"
-               k1="0" k2="1" k3="0.12" k4="0"/>
+
+{# Product-weight shadow — badge parity (drop-shadow only, no specular).
+   Specular was rasterized at filter evaluation, then resampled by the
+   browser on small viewports; dropping it is what makes strip text sharp
+   on mobile. Frame still reads as recessed via shadow alone. #}
+<filter id="{{ uid }}-bevel" x="-3%" y="-4%" width="106%" height="112%">
+  <feDropShadow dx="0" dy="1.5" stdDeviation="2"
+                flood-color="#000"
+                flood-opacity="{{ bevel_shadow_opacity | default('0.35') }}"/>
 </filter>
-{# Chrome text gradient for metric values #}
-{% if chrome_text_gradient %}
-<linearGradient id="{{ uid }}-chrome-text" x1="0" y1="0" x2="1" y2="0">
-{% for stop in chrome_text_gradient %}
-  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-{% endfor %}
-</linearGradient>
-{% endif %}
-{# Text shadow for legibility on chrome surfaces #}
-<filter id="{{ uid }}-txt" x="-6%" y="-18%" width="112%" height="136%">
-  <feDropShadow dx="0" dy="0" stdDeviation="0.6" flood-color="var(--dna-surface, #000A14)" flood-opacity="0.9"/>
-</filter>
-{# Hero text gradient (silver — matches stats/chart hero values) #}
-<linearGradient id="{{ uid }}-ct-hero" x1="0" y1="0" x2="1" y2="0">
-{% for stop in hero_text_gradient | default([
-  {"offset":"0%","color":"#94A3B8"},
-  {"offset":"20%","color":"#CBD5E1"},
-  {"offset":"40%","color":"#F1F5F9"},
-  {"offset":"50%","color":"#FFFFFF"},
-  {"offset":"60%","color":"#F1F5F9"},
-  {"offset":"80%","color":"#CBD5E1"},
-  {"offset":"100%","color":"#94A3B8"}
-]) %}
-  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-{% endfor %}
-</linearGradient>
-{# Typography (class-based, matches stats/chart pattern).
-   Magazine specimen: strip identity + metric-label use JetBrains Mono; metric-value
-   keeps shields.io-style Impact+skew but with silver hero gradient fill tying it
-   visually to stats/chart hero numbers. #}
+
+{# Typography (class-based, badge-parity discipline).
+   Badge uses JetBrains Mono 8px for label + Orbitron 11px 900 for value
+   on a 22px canvas. Strip scales proportionally for 52px height:
+   identity 11px 700 (Mono), metric-label 9px 600 (Mono), metric-value 17px 900
+   (Orbitron, upright). Impact 22px italic removed — it was a shields.io-era
+   treatment that no longer matches the genome's geometric vocabulary. #}
 <style>
 {{ font_faces | safe }}
 .{{ uid }}-identity {
   font-family: var(--dna-font-mono, 'JetBrains Mono', monospace);
-  font-size: 11px; font-weight: 900; letter-spacing: 0.18em;
-  fill: var(--dna-brand-text);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+  fill: {{ glyph_fill | default('#E0ECF6') }};
 }
 .{{ uid }}-metric-label {
   font-family: var(--dna-font-mono, 'JetBrains Mono', monospace);
-  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.12em;
   fill: var(--dna-signal);
 }
 .{{ uid }}-metric-value {
-  font-family: 'Impact', 'Arial Black', system-ui, sans-serif;
-  font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
-  fill: url(#{{ uid }}-ct-hero);
+  font-family: var(--dna-font-display, 'Orbitron', 'Space Grotesk', sans-serif);
+  font-size: 17px; font-weight: 900; letter-spacing: 0.02em;
+  fill: {{ glyph_fill | default('#E0ECF6') }};
 }
 </style>

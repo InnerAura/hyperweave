@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 
 import httpx
 
+from hyperweave import __version__
+
 # SSRF Protection
 
 ALLOWED_HOSTS: frozenset[str] = frozenset(
@@ -161,7 +163,7 @@ async def fetch(
         )
 
     merged_headers: dict[str, str] = {
-        "User-Agent": "HyperWeave/0.1.0 (https://hyperweave.app)",
+        "User-Agent": f"HyperWeave/{__version__} (https://hyperweave.app)",
         "Accept": "application/json",
     }
     if headers:

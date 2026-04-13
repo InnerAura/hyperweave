@@ -16,7 +16,7 @@ badge_value_size: 11
 badge_value_weight: 700
 strip_corner: 0
 badge_corner: 0
-strip_accent_width: 6
+strip_accent_width: 4
 strip_metric_pitch: 107
 strip_divider_mode: minimal
 badge_frame_height: 22
@@ -51,7 +51,7 @@ strip_metric_label_y: 17
 strip_metric_value_weight: 800
 strip_metric_value_fill: "var(--dna-ink-primary)"
 strip_metric_value_y: 38
-strip_metric_value_skew: -8
+strip_metric_value_skew: 0
 strip_identity_font: "var(--dna-font-mono, 'Courier New', monospace)"
 strip_metric_label_font: "var(--dna-font-mono, 'Courier New', monospace)"
 

@@ -31,14 +31,14 @@ def _readme_kit(
     # Parse badges: "build:passing,version:v0.6.3,coverage:92%"
     badge_pairs = _parse_badge_string(badges)
 
-    # Generate badges
+    # Generate badges -- compose() infers state from value at the chokepoint,
+    # so we leave it at the default and let that logic fire.
     for label, value in badge_pairs:
         spec = ComposeSpec(
             type="badge",
             genome_id=genome,
             title=label,
             value=value,
-            state=_infer_state(label, value),
         )
         results[f"badge-{label.lower()}"] = compose(spec)
 
@@ -97,31 +97,3 @@ def _parse_badge_string(badges: str) -> list[tuple[str, str]]:
             k, v = pair.split(":", 1)
             pairs.append((k.strip(), v.strip()))
     return pairs
-
-
-def _infer_state(label: str, value: str) -> str:
-    label_lower = label.lower()
-    value_lower = value.lower()
-
-    if "pass" in value_lower or "success" in value_lower:
-        return "passing"
-    if "fail" in value_lower or "error" in value_lower:
-        return "failing"
-    if "warn" in value_lower:
-        return "warning"
-    if "build" in label_lower and "run" in value_lower:
-        return "building"
-
-    # Percentage-based threshold
-    if value.rstrip("%").replace(".", "").isdigit():
-        try:
-            num = float(value.rstrip("%"))
-            if num >= 90:
-                return "passing"
-            if num >= 70:
-                return "warning"
-            return "critical"
-        except ValueError:
-            pass
-
-    return "active"

@@ -68,12 +68,11 @@
 
   {# ZONE 3: CHART #}
   <g data-hw-zone="chart">
-    {# RESOLVER-GAP: y-axis text labels (0, 1K, 2K, 3K) not provided by chart_engine.
-       Hardcoded from target SVG positions. #}
-    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh + 4 }}" text-anchor="end">0</text>
-    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 78 }}" text-anchor="end">1K</text>
-    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + vh - 159 }}" text-anchor="end">2K</text>
-    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ vy + 4 }}" text-anchor="end">3K</text>
+    {# Y-axis labels — derived from data via chart_engine _nice_y_ticks.
+       The +4 y-offset matches the baseline convention from the target SVG. #}
+    {% for label in chart_y_labels %}
+    <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ label.y + 4 }}" text-anchor="end">{{ label.text }}</text>
+    {% endfor %}
 
     {# Chart engine fragments — brutalist 3-layer line effect from target SVG:
        ghost line (faint shadow) → primary line (4px) → bright core (1.5px highlight) #}
@@ -85,17 +84,14 @@
     {{ chart_markers | safe }}
     {{ chart_milestones | safe }}
     {{ chart_axes | safe }}
+    {{ chart_empty_state | safe }}
   </g>
 
-  {# X-AXIS LABELS #}
-  {# RESOLVER-GAP: x-axis date labels not provided by chart_engine.
-     Hardcoded from target SVG positions. #}
+  {# X-AXIS LABELS — year numbers derived from data (star-history.com style). #}
   <g data-hw-zone="x-axis">
-    <text class="{{ uid }}-axis-x" x="{{ vx }}" y="420" text-anchor="middle">EARLY '24</text>
-    <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.25) | int }}" y="420" text-anchor="middle">LATE '24</text>
-    <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.50) | int }}" y="420" text-anchor="middle">MID '25</text>
-    <text class="{{ uid }}-axis-x" x="{{ (vx + vw * 0.75) | int }}" y="420" text-anchor="middle">LATE '25</text>
-    <text class="{{ uid }}-axis-x" x="{{ vx + vw }}" y="420" text-anchor="middle">EARLY '26</text>
+    {% for label in chart_x_labels %}
+    <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="420" text-anchor="{{ label.anchor | default('middle') }}">{{ label.text }}</text>
+    {% endfor %}
   </g>
 
   {# FOOTER #}

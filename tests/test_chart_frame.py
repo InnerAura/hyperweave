@@ -65,7 +65,12 @@ def test_chart_compose_chrome_horizon_full() -> None:
 
 
 def test_chart_graceful_degradation_without_data() -> None:
-    """Missing connector_data → placeholder series + data-hw-status=stale."""
+    """Missing connector_data → truthful empty state, NOT a fabricated polyline.
+
+    After the bug-fix pass, the resolver no longer substitutes a placeholder
+    1200-star series for failed upstream fetches. Instead it renders a
+    "DATA UNAVAILABLE" overlay and still emits data-hw-status="stale".
+    """
     spec = ComposeSpec(
         type="chart",
         genome_id="brutalist-emerald",
@@ -75,8 +80,111 @@ def test_chart_graceful_degradation_without_data() -> None:
     )
     result = compose(spec)
     assert 'data-hw-status="stale"' in result.svg
-    # Placeholder still produces a chart (not an empty SVG).
-    assert "<polyline" in result.svg
+    # No fabricated polyline and no leak of the old placeholder numbers.
+    assert "<polyline" not in result.svg
+    assert "1200" not in result.svg and "1,200" not in result.svg
+    # Overlay communicates the truthful unavailable state.
+    assert "DATA UNAVAILABLE" in result.svg
+
+
+def test_chart_zero_stars_renders_empty_state() -> None:
+    """A repo with 0 real stars must render an empty state — no 1200 leak, no fake polyline."""
+    spec = ComposeSpec(
+        type="chart",
+        genome_id="brutalist-emerald",
+        chart_owner="jiahongc",
+        chart_repo="march-madness-prediction-market",
+        connector_data={
+            "points": [],
+            "current_stars": 0,
+            "repo": "jiahongc/march-madness-prediction-market",
+        },
+    )
+    svg = compose(spec).svg
+    assert 'data-hw-status="empty"' in svg
+    assert "NEW REPO" in svg
+    # No placeholder leakage.
+    assert "1200" not in svg and "1,200" not in svg
+    # No fabricated polyline.
+    assert "<polyline" not in svg
+    # Hero shows 0 stars truthfully (not a comma-formatted 1,200).
+    assert ">0</text>" in svg
+
+
+def test_chart_six_stars_renders_real_polyline_with_derived_labels() -> None:
+    """A repo with 6 real stars must render a real polyline + derived axis labels.
+
+    Covers bug 2 (low-star empty plot) at the compose level: the stargazer
+    timestamps yield distinct x-coordinates, and the derived Y ticks show
+    [0, 2, 4, 6] — never the hardcoded "3K".
+    """
+    points = [
+        {"date": f"2025-{m:02d}-01T00:00:00Z", "count": i + 1}
+        for i, m in enumerate((1, 3, 5, 7, 9, 11))
+    ]
+    spec = ComposeSpec(
+        type="chart",
+        genome_id="brutalist-emerald",
+        chart_owner="jiahongc",
+        chart_repo="cc-companion",
+        connector_data={
+            "points": points,
+            "current_stars": 6,
+            "repo": "jiahongc/cc-companion",
+        },
+    )
+    svg = compose(spec).svg
+    # Real polyline rendered.
+    assert "<polyline" in svg
+    # Derived Y-axis: 0/2/4/6 ticks — NOT 3K.
+    assert ">3K<" not in svg
+    assert ">0</text>" in svg
+    assert ">2</text>" in svg
+    assert ">4</text>" in svg
+    assert ">6</text>" in svg
+    # Derived X-axis: year numbers only, no EARLY/MID/LATE bucket words.
+    assert "2025" in svg
+    assert "EARLY" not in svg
+    assert "MID" not in svg
+    assert "LATE" not in svg
+
+
+@pytest.mark.asyncio
+async def test_fetch_stargazer_history_single_page_uses_per_stargazer_timestamps() -> None:
+    """Low-star repos (total_pages == 1) emit one point per stargazer entry.
+
+    Bug 2 fix: the previous logic took only the first starred_at per page and
+    appended a duplicate "now" point, collapsing the polyline's time range to
+    zero. This test verifies that each stargazer's real timestamp is used and
+    every point has a distinct date.
+    """
+    from hyperweave.connectors.cache import get_cache
+    from hyperweave.connectors.github import fetch_stargazer_history
+
+    get_cache().clear()
+
+    async def fake_fetch_json(url, provider="generic", headers=None):  # type: ignore[no-untyped-def]
+        if url.endswith("/repos/jiahongc/cc-companion"):
+            return {"stargazers_count": 6}
+        if "page=1" in url:
+            return [
+                {"starred_at": f"2025-0{m}-01T00:00:00Z"}
+                for m in range(1, 7)
+            ]
+        return {}
+
+    with patch(
+        "hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json
+    ):
+        result = await fetch_stargazer_history("jiahongc", "cc-companion")
+
+    assert result["current_stars"] == 6
+    assert len(result["points"]) == 6
+    # All points have distinct timestamps (bug 2 fix).
+    dates = [p["date"] for p in result["points"]]
+    assert len(set(dates)) == 6
+    # Cumulative counts are 1..6.
+    assert [p["count"] for p in result["points"]] == [1, 2, 3, 4, 5, 6]
 
 
 def test_chart_structural_differentiation_proves_not_color_swap() -> None:

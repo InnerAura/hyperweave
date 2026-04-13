@@ -117,6 +117,33 @@ def test_stats_compose_with_minimal_connector_data() -> None:
     assert 'data-hw-frame="stats"' in result.svg
 
 
+def test_stats_chrome_zero_stars_does_not_synthesize_placeholder() -> None:
+    """Zero-star user → embedded chart must not fabricate the old 1200-star series.
+
+    Regression guard: the previous `int(stars_total or 1200)` pattern silently
+    defaulted to a 1200-star synthetic curve whenever stars_total was falsy.
+    After the fix, zero stars yields an empty embedded chart — truthfully.
+    """
+    spec = ComposeSpec(
+        type="stats",
+        genome_id="chrome-horizon",
+        stats_username="newbie",
+        connector_data={
+            "username": "newbie",
+            "stars_total": 0,
+            "commits_total": 5,
+            "prs_total": 0,
+            "issues_total": 0,
+        },
+    )
+    svg = compose(spec).svg
+    # No placeholder leakage in the embedded chart.
+    assert "1200" not in svg
+    assert "1,200" not in svg
+    # Compose still completes successfully with data-hw-frame marker.
+    assert 'data-hw-frame="stats"' in svg
+
+
 # ── fetch_user_stats parallel aggregation ─────────────────────────────
 
 

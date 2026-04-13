@@ -1,14 +1,20 @@
 """Chart frame resolver — star history / time-series visualization.
 
 Reads pre-fetched connector data from ``spec.connector_data`` and delegates
-the actual SVG math to :mod:`hyperweave.render.chart_engine`. Graceful
-degradation: if ``connector_data`` is ``None`` (API failure upstream), renders
-with a short placeholder series and emits ``data-hw-status="stale"``.
+the actual SVG math to :mod:`hyperweave.render.chart_engine`.
+
+Three-state truthfulness contract:
+    - ``connector_data is None``         → ``data-hw-status="stale"``, "DATA UNAVAILABLE" overlay
+    - ``current_stars == 0`` (new repo)  → ``data-hw-status="empty"``, "NEW REPO · NO STARS YET" overlay
+    - real points + current_stars > 0    → ``data-hw-status="fresh"``, live chart
+
+The chart never fabricates data. There is no placeholder series — a zero-star
+repo is a legitimate state, and upstream failure is rendered truthfully as
+unavailable rather than masked with demo data.
 """
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.render.chart_engine import Viewport, build_chart_svg
@@ -19,24 +25,6 @@ if TYPE_CHECKING:
 
 # Default milestones for star charts (shown when values cross these thresholds).
 _DEFAULT_MILESTONES: list[int] = [500, 1000, 2000, 5000, 10000]
-
-
-def _placeholder_points() -> list[dict[str, Any]]:
-    """Six synthetic points spanning the last ~12 months.
-
-    Used when ``connector_data`` is missing or malformed so the template still
-    renders a readable chart shape. Templates set ``data-hw-status="stale"``
-    to mark this visually.
-    """
-    today = datetime.now(UTC)
-    return [
-        {"date": (today - timedelta(days=d)).isoformat(), "count": v}
-        for d, v in zip(
-            (360, 300, 240, 180, 120, 60, 0),
-            (120, 240, 380, 520, 720, 980, 1200),
-            strict=True,
-        )
-    ]
 
 
 def resolve_chart(
@@ -52,22 +40,44 @@ def resolve_chart(
     # date labels at bottom, and hero value at right.
     # Dimensions match the target SVGs in tier2/genomes/.
     paradigm = genome.get("paradigms", {}).get("chart", "brutalist")
-    vp = Viewport(x=80, y=160, w=750, h=250) if paradigm == "chrome" else Viewport(x=80, y=150, w=760, h=245)
+    vp = (
+        Viewport(x=80, y=160, w=750, h=250)
+        if paradigm == "chrome"
+        else Viewport(x=80, y=150, w=760, h=245)
+    )
 
-    # Extract raw point data from connector_data (injected at HTTP/CLI layer).
-    stale = False
-    connector = spec.connector_data or {}
-    raw_points = connector.get("points") or connector.get("star_history") or []
-    if not raw_points:
-        raw_points = _placeholder_points()
-        stale = True
-
-    current_stars = connector.get("current_stars") or connector.get("stars_total")
-    if current_stars is None and raw_points:
-        # Fall back to the last point's count.
-        last_entry = raw_points[-1]
-        if isinstance(last_entry, dict):
-            current_stars = last_entry.get("count", last_entry.get("value", 0))
+    # Three-state machine. "fresh" preserved (not renamed to "live") for
+    # backward compat with the existing data-hw-status contract; "empty" is
+    # new and specifically marks a truthful zero-star state.
+    connector = spec.connector_data
+    raw_points: list[Any]
+    empty_message: str | None
+    if connector is None:
+        # Upstream API failure — no data to trust.
+        status = "stale"
+        raw_points = []
+        current_stars = 0
+        empty_message = "DATA UNAVAILABLE"
+    else:
+        current_stars = int(
+            connector.get("current_stars") or connector.get("stars_total") or 0
+        )
+        raw_points = list(
+            connector.get("points") or connector.get("star_history") or []
+        )
+        if current_stars == 0:
+            # Truthful zero-star state (brand-new repo) — render empty, don't fabricate.
+            status = "empty"
+            raw_points = []
+            empty_message = "NEW REPO · NO STARS YET"
+        elif not raw_points:
+            # Has stars but no history — shouldn't happen after the connector
+            # fix, but degrade truthfully rather than synthesize.
+            status = "stale"
+            empty_message = "HISTORY UNAVAILABLE"
+        else:
+            status = "fresh"
+            empty_message = None
 
     # Structural hints come from the resolver injection in compose/resolver.py,
     # but we also read directly from the genome here because this file is
@@ -79,13 +89,15 @@ def resolve_chart(
         vp,
         structural,
         milestones=_DEFAULT_MILESTONES,
+        empty_message=empty_message,
     )
 
-    repo = connector.get("repo") or f"{spec.chart_owner}/{spec.chart_repo}".strip("/")
+    repo = connector.get("repo") if connector else None
+    repo = repo or f"{spec.chart_owner}/{spec.chart_repo}".strip("/")
 
     # Hero identity strings shown at top + right of the standalone chart.
     title_upper = (repo or "star history").upper()
-    current_display = _format_compact(int(current_stars or 0))
+    current_display = _format_compact(int(current_stars))
 
     ctx: dict[str, Any] = {
         "chart_repo": repo,
@@ -102,13 +114,15 @@ def resolve_chart(
         "chart_polyline": chart_fragments["polyline"],
         "chart_markers": chart_fragments["markers"],
         "chart_milestones": chart_fragments["milestones"],
-        "data_hw_status": "stale" if stale else "fresh",
+        "chart_y_labels": chart_fragments["y_labels"],
+        "chart_x_labels": chart_fragments["x_labels"],
+        "chart_empty_state": chart_fragments["empty_state"],
+        "data_hw_status": status,
     }
-    # Surface stale state via the document-level data-hw-status attribute as
-    # well as the chart-specific data_hw_status. This is the PRD-mandated
-    # graceful-degradation marker consumed by clients/tests.
-    if stale:
-        ctx["status"] = "stale"
+    # Surface non-fresh states via the document-level data-hw-status attribute.
+    # "fresh" stays implicit (live data is the default, no status marker needed).
+    if status != "fresh":
+        ctx["status"] = status
 
     return {
         "width": width,

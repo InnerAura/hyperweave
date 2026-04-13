@@ -124,11 +124,18 @@ def resolve_stats(
     paradigm = genome.get("paradigms", {}).get("stats", "brutalist")
     if paradigm == "chrome":
         embed_vp = Viewport(x=240, y=170, w=220, h=70)
-        chart_points = (
-            connector.get("points")
-            or connector.get("star_history")
-            or _synthetic_series_from_total(int(stars_total or 1200))
-        )
+        # Zero-guard: never default to a 1200-star synthetic curve. When
+        # stars_total is zero, the truthful state is an empty embedded chart.
+        stars_int = int(stars_total or 0)
+        real_points = connector.get("points") or connector.get("star_history")
+        if real_points:
+            chart_points: list[dict[str, Any]] = list(real_points)
+        elif stars_int > 0:
+            # Only synthesize when we know the total — this approximates a
+            # plausible growth curve rather than fabricating it from nothing.
+            chart_points = _synthetic_series_from_total(stars_int)
+        else:
+            chart_points = []
         embed = build_chart_svg(
             chart_points,
             embed_vp,

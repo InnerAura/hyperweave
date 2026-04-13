@@ -185,6 +185,37 @@ async def fetch_stargazer_history(
 
     # Step 2: compute total pages
     total_pages = max(1, math.ceil(total_stars / _STARGAZER_PAGE_SIZE))
+
+    # Single-page case: repo has ≤ 30 stars. The "first starred_at of the page"
+    # sampling trick would otherwise collapse to a single aggregated point plus
+    # a duplicate-date "now" point, producing a zero time-range polyline. Use
+    # each stargazer's own timestamp instead — the whole page fits in one call.
+    if total_pages == 1:
+        single_page_url = (
+            f"https://api.github.com/repos/{identifier}/stargazers"
+            f"?per_page={_STARGAZER_PAGE_SIZE}&page=1"
+        )
+        page_payload = await fetch_json(
+            single_page_url,
+            provider=PROVIDER,
+            headers={"Accept": _STARGAZER_ACCEPT_HEADER},
+        )
+        single_page_points: list[dict[str, Any]] = []
+        if isinstance(page_payload, list):
+            for idx, entry in enumerate(page_payload):
+                if isinstance(entry, dict) and entry.get("starred_at"):
+                    single_page_points.append(
+                        {"date": entry["starred_at"], "count": idx + 1}
+                    )
+        single_page_result: dict[str, Any] = {
+            "points": single_page_points,
+            "current_stars": total_stars,
+            "repo": identifier,
+            "ttl": STARGAZER_HISTORY_TTL,
+        }
+        cache.set(cache_key, single_page_result, STARGAZER_HISTORY_TTL)
+        return single_page_result
+
     # Cap the sample count at the number of available pages.
     sample_count = min(sample_pages, total_pages)
 
