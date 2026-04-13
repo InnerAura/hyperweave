@@ -59,10 +59,7 @@
 <g clip-path="url(#{{ uid }}-id-clip)">
   <text data-hw-zone="identity"
         x="{{ identity_x }}" y="{{ (strip_h // 2) + 4 }}"
-        font-family="{{ strip_identity_font | default('var(--dna-font-mono, SF Mono, monospace)') }}"
-        font-size="11" font-weight="{{ strip_identity_weight | default(900) }}"
-        fill="{{ strip_identity_fill | default('var(--dna-brand-text)') }}"
-        letter-spacing="{{ strip_identity_letter_spacing | default('0.18em') }}">{{ identity | upper }}</text>
+        class="{{ uid }}-identity">{{ identity | upper }}</text>
 </g>
 
 {# === Metric cells with dividers === #}
@@ -86,16 +83,18 @@
 {% set cell_x = cell_start + (loop.index0 * metric_pitch) %}
 <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ cell_x }},0)">
   <text x="{{ metric_pitch // 2 }}" y="{{ strip_metric_label_y | default(18) }}" text-anchor="middle"
-        font-family="{{ strip_metric_label_font | default('var(--dna-font-mono, SF Mono, monospace)') }}"
-        font-size="{{ strip_metric_label_size | default(7) }}" font-weight="700"
-        fill="{{ strip_metric_label_fill | default('var(--dna-ink-muted)') }}"
-        letter-spacing="{{ strip_metric_label_letter_spacing | default('0.2em') }}">{{ metric.label | upper }}</text>
+        class="{{ uid }}-metric-label">{{ metric.label | upper }}</text>
+  {# Metric value — chrome paradigm gets a translate+skew group so the skew
+     pivots around the text center. Other paradigms render upright. #}
+  {% if paradigm_strip == "chrome" %}
+  <g transform="translate({{ metric_pitch // 2 }},{{ strip_metric_value_y | default(36) }}) skewX(-8)">
+    <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
+          class="{{ uid }}-metric-value">{{ metric.value }}</text>
+  </g>
+  {% else %}
   <text x="{{ metric_pitch // 2 }}" y="{{ strip_metric_value_y | default(36) }}" text-anchor="middle"
-        font-family="var(--dna-font-display, 'Inter', system-ui)"
-        font-size="18" font-weight="{{ strip_metric_value_weight | default(900) }}"
-        fill="{{ strip_metric_value_fill | default(glyph_fill | default('var(--dna-ink-primary)')) }}"
-        letter-spacing="-0.01em"
-        {% if strip_metric_value_skew | default(0) %}transform="skewX({{ strip_metric_value_skew }})"{% endif %}>{{ metric.value }}</text>
+        class="{{ uid }}-metric-value">{{ metric.value }}</text>
+  {% endif %}
 {% if metric.delta %}
   <text x="{{ metric_pitch // 2 }}" y="48" text-anchor="middle"
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>

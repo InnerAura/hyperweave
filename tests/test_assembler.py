@@ -55,5 +55,4 @@ def test_non_stateful_frame_omits_status_and_expression() -> None:
     assert ".hw-value" not in css, "Divider should not include expression layer"
 
     # Bridge classes should NOT be present (divider is not in bridge frames)
-    assert ".hw-frame-bg" not in css or "divider" in css, \
-        "Divider should not include bridge classes"
+    assert ".hw-frame-bg" not in css or "divider" in css, "Divider should not include bridge classes"

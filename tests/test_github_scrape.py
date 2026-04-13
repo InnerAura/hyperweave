@@ -58,6 +58,47 @@ def test_parse_streak_walks_backwards(synthetic_html: str) -> None:
     assert parsed["streak_days"] == 3
 
 
+def test_parse_streak_grace_day_for_empty_today() -> None:
+    """The most-recent cell may be zero without breaking the streak.
+
+    GitHub renders today's empty cell at the rightmost position before the
+    user has committed today. A morning stats check on an otherwise active
+    contributor should NOT report streak=0 just because today hasn't happened
+    yet. Subsequent zeros still break the streak.
+    """
+    html = (
+        '<td class="ContributionCalendar-day" data-date="2025-04-08" data-level="0">&nbsp;</td>'
+        '<td class="ContributionCalendar-day" data-date="2025-04-09" data-level="2">&nbsp;</td>'
+        '<td class="ContributionCalendar-day" data-date="2025-04-10" data-level="3">&nbsp;</td>'
+        '<td class="ContributionCalendar-day" data-date="2025-04-11" data-level="4">&nbsp;</td>'
+        '<td class="ContributionCalendar-day" data-date="2025-04-12" data-level="0">&nbsp;</td>'
+        '<tool-tip>No contributions on April 8</tool-tip>'
+        '<tool-tip>5 contributions on April 9</tool-tip>'
+        '<tool-tip>12 contributions on April 10</tool-tip>'
+        '<tool-tip>30 contributions on April 11</tool-tip>'
+        '<tool-tip>No contributions on April 12</tool-tip>'
+    )
+    parsed = parse_contribution_html(html)
+    # Today (Apr 12) is empty → grace. Apr 11 (30), Apr 10 (12), Apr 9 (5) are
+    # all non-zero → streak = 3. Apr 8 is zero → break.
+    assert parsed["streak_days"] == 3
+
+
+def test_parse_streak_two_consecutive_zeros_break() -> None:
+    """Grace applies to the single most-recent cell only, not cumulative."""
+    html = (
+        '<td class="ContributionCalendar-day" data-date="2025-04-10" data-level="3">&nbsp;</td>'
+        '<td class="ContributionCalendar-day" data-date="2025-04-11" data-level="0">&nbsp;</td>'
+        '<td class="ContributionCalendar-day" data-date="2025-04-12" data-level="0">&nbsp;</td>'
+        '<tool-tip>12 contributions on April 10</tool-tip>'
+        '<tool-tip>No contributions on April 11</tool-tip>'
+        '<tool-tip>No contributions on April 12</tool-tip>'
+    )
+    parsed = parse_contribution_html(html)
+    # Today (Apr 12) is grace-zero, Apr 11 is also zero → streak breaks.
+    assert parsed["streak_days"] == 0
+
+
 def test_parse_chronological_order(synthetic_html: str) -> None:
     parsed = parse_contribution_html(synthetic_html)
     dates = [c["date"] for c in parsed["heatmap_grid"]]

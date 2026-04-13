@@ -260,8 +260,7 @@ def test_receipt_tier2_vertical_stacking() -> None:
     assert len(tier2_cells) >= 2, f"Expected >=2 tier-2 cells, got {len(tier2_cells)}"
     for name_y, name, meta_y in tier2_cells:
         assert name_y != meta_y, (
-            f"Tier-2 cell '{name}' has name_y={name_y} == meta_y={meta_y} — "
-            f"text collision (stacking regression)"
+            f"Tier-2 cell '{name}' has name_y={name_y} == meta_y={meta_y} — text collision (stacking regression)"
         )
 
 
@@ -287,9 +286,7 @@ def test_receipt_treemap_error_annotations() -> None:
 
     # Every tool with errors must have a matching annotation
     for name, count in expected_errors.items():
-        assert str(count) in error_annotations, (
-            f"Expected ✗{count} for {name}, got annotations: {error_annotations}"
-        )
+        assert str(count) in error_annotations, f"Expected ✗{count} for {name}, got annotations: {error_annotations}"
 
     # No extra annotations beyond what the fixture defines
     assert len(error_annotations) == len(expected_errors), (
@@ -300,4 +297,4 @@ def test_receipt_treemap_error_annotations() -> None:
     for m in re.finditer(r'<g clip-path="[^"]*">(.*?)</g>', svg, re.DOTALL):
         clip_content = m.group(1)
         if "cell-error" in clip_content:
-            assert "text-anchor=\"end\"" in clip_content, "Error text must be right-aligned"
+            assert 'text-anchor="end"' in clip_content, "Error text must be right-aligned"

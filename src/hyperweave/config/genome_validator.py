@@ -69,9 +69,7 @@ def load_and_validate_genome_file(
             ratio = contrast_ratio(fg, bg)
             min_ratio = pair["min_ratio"]
             if ratio < min_ratio:
-                errors.append(
-                    f"WCAG FAIL: {pair['label']} — {ratio:.1f}:1 < {min_ratio}:1 ({fg} on {bg})"
-                )
+                errors.append(f"WCAG FAIL: {pair['label']} — {ratio:.1f}:1 < {min_ratio}:1 ({fg} on {bg})")
         except (ValueError, TypeError):
             errors.append(f"INVALID COLOR: {pair['label']} — cannot parse {fg} or {bg}")
 

@@ -98,15 +98,13 @@
   </feMerge>
 </filter>
 
-<filter id="{{ uid }}-barglow" x="-5%" y="-20%" width="110%" height="140%">
-  <feGaussianBlur in="SourceAlpha" stdDeviation="0.8" result="blur"/>
-  <feFlood flood-color="#A8D4F0" flood-opacity="0.35"/>
-  <feComposite in2="blur" operator="in" result="glow"/>
-  <feMerge>
-    <feMergeNode in="glow"/>
-    <feMergeNode in="SourceGraphic"/>
-  </feMerge>
-</filter>
+{# NOTE: the magazine specimen uses an feGaussianBlur-based `barglow` filter
+   for the activity bars. That filter rasterizes to a pixel buffer and then
+   resamples when the SVG is downscaled on mobile, which produces a soft,
+   blurry appearance on small viewports. The stats card is commonly embedded
+   in README profiles viewed on phones, so we replace the filter with a
+   pure-vector 2-layer halo (sibling rects at decreasing opacity) — same
+   cyan halo aesthetic, crisp at every scale. #}
 
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}" rx="6"/></clipPath>
 

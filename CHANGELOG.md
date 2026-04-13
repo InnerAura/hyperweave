@@ -5,6 +5,18 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-13
+
+Post-v0.2.0 stabilization: typography alignment, mobile rendering fix, and a streak computation correction.
+
+### Fixed
+
+- **Stats card "streak" reports 0d for active contributors.** The contribution-calendar parser walked backwards from the latest cell and broke on the first zero, which is always today's empty cell before the user has committed. The streak calculator now treats the most-recent cell as a single grace day — if today hasn't happened yet, the streak continues from yesterday. Any zero day after the first one still breaks the streak as before.
+- **Activity bars blur on mobile.** The `barglow` filter on the stats card's 52-week activity bars used `feGaussianBlur`, which rasterizes to a pixel buffer and gets downsampled when the SVG is scaled to smaller mobile viewports — producing soft, fuzzy bars. Replaced with a pure-vector 2-layer halo (sibling rects at decreasing opacity). Same cyan halo aesthetic from the chrome-horizon magazine specimen, but crisp at every scale. The `{uid}-barglow` filter definition was removed from `stats/chrome-defs.j2`.
+- **chrome-horizon badge and strip typography** now match the stats and chart cards introduced in v0.2.0. Badge values render in Orbitron (the bundled display font) instead of the prior Impact+skew treatment; strip metric values keep the shields.io-style Impact+skew but gain the silver `ct-hero` gradient fill, tying them visually to the hero numbers on the stats and chart frames. Identity and metric labels render in JetBrains Mono at the sizes and letter-spacing used by the chrome-horizon magazine specimen.
+- Badge and strip chrome templates migrated to the same class-based `<style>` pattern stats and chart already use (`.{uid}-label`, `.{uid}-value`, `.{uid}-identity`, `.{uid}-metric-label`, `.{uid}-metric-value`). Inline `font-family` / `font-size` / `font-weight` attributes removed from `strip.svg.j2`, `badge/chrome-content.j2`, and replaced with class references defined in each paradigm's `*-defs.j2` file. This is chrome-paradigm-only — brutalist-emerald output is unchanged.
+- Applied `ruff format` to three files added in v0.2.0 (`config/genome_validator.py`, `connectors/github.py`, `render/chart_engine.py`). No behavior change — CI's `ruff format --check` job runs separately from `ruff check` and was the only thing red on the v0.2.0 push.
+
 ## [0.2.0] - 2026-04-12
 
 Live-data profile artifacts. HyperWeave can now render GitHub profile cards, star-history charts, and milestone timelines directly from a single API call, the CLI, or an MCP tool. Genomes gain a per-frame paradigm layer so two genomes on the same profile can diverge structurally, not just chromatically. Custom genomes can be loaded from a local JSON file and validated against a profile contract. Fonts are bundled as base64 WOFF2 for fully self-contained SVGs. Test suite: 435 passing.

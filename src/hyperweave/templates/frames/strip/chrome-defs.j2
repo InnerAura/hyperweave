@@ -48,3 +48,38 @@
 <filter id="{{ uid }}-txt" x="-6%" y="-18%" width="112%" height="136%">
   <feDropShadow dx="0" dy="0" stdDeviation="0.6" flood-color="var(--dna-surface, #000A14)" flood-opacity="0.9"/>
 </filter>
+{# Hero text gradient (silver — matches stats/chart hero values) #}
+<linearGradient id="{{ uid }}-ct-hero" x1="0" y1="0" x2="1" y2="0">
+{% for stop in hero_text_gradient | default([
+  {"offset":"0%","color":"#94A3B8"},
+  {"offset":"20%","color":"#CBD5E1"},
+  {"offset":"40%","color":"#F1F5F9"},
+  {"offset":"50%","color":"#FFFFFF"},
+  {"offset":"60%","color":"#F1F5F9"},
+  {"offset":"80%","color":"#CBD5E1"},
+  {"offset":"100%","color":"#94A3B8"}
+]) %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{# Typography (class-based, matches stats/chart pattern).
+   Magazine specimen: strip identity + metric-label use JetBrains Mono; metric-value
+   keeps shields.io-style Impact+skew but with silver hero gradient fill tying it
+   visually to stats/chart hero numbers. #}
+<style>
+.{{ uid }}-identity {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px; font-weight: 900; letter-spacing: 0.18em;
+  fill: var(--dna-brand-text);
+}
+.{{ uid }}-metric-label {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+  fill: var(--dna-signal);
+}
+.{{ uid }}-metric-value {
+  font-family: 'Impact', 'Arial Black', system-ui, sans-serif;
+  font-size: 22px; font-weight: 800; letter-spacing: -0.01em;
+  fill: url(#{{ uid }}-ct-hero);
+}
+</style>

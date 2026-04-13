@@ -24,20 +24,20 @@
 </g>
 {% endif %}
 
-{# Label #}
+{# Label — class-styled for chrome paradigm (matches stats/chart typography) #}
 <text data-hw-zone="label"
       x="{{ label_x }}" y="{{ (h / 2) + 1 }}"
       text-anchor="middle" dominant-baseline="central"
-      font-family="var(--dna-font-mono)" font-size="8" font-weight="600"
-      letter-spacing="0.10em" fill="var(--dna-signal)">{{ label_display | default(label) | upper }}</text>
+      class="{{ uid }}-label"
+      fill="var(--dna-signal)">{{ label_display | default(label) | upper }}</text>
 
-{# Value #}
-<g transform="translate({{ value_x }},{{ h / 2 }}) skewX(-8)">
-  <text data-hw-zone="value" x="0" y="0"
-        text-anchor="middle" dominant-baseline="central"
-        font-family="'Impact','Arial Black',system-ui,sans-serif" font-size="11" font-weight="700"
-        fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}" letter-spacing=".4">{{ value }}</text>
-</g>
+{# Value — class-styled, no skew. Magazine specimen uses Orbitron here for
+   geometric clarity at small sizes; Impact+skew was the pre-v0.2.2 treatment. #}
+<text data-hw-zone="value"
+      x="{{ value_x }}" y="{{ h / 2 }}"
+      text-anchor="middle" dominant-baseline="central"
+      class="{{ uid }}-value"
+      fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}">{{ value }}</text>
 
 {# Diamond status indicator #}
 {% if show_indicator | default(true) %}

@@ -247,7 +247,7 @@ _CELL_RE = re.compile(
     r'<td(?=[^>]*\bclass="[^"]*ContributionCalendar-day[^"]*")'
     r'(?=[^>]*\bdata-date="(?P<date>\d{4}-\d{2}-\d{2})")'
     r'(?=[^>]*\bdata-level="(?P<level>\d+)")'
-    r'[^>]*>',
+    r"[^>]*>",
     re.IGNORECASE,
 )
 
@@ -257,7 +257,7 @@ _CELL_RE = re.compile(
 # format, not ISO, so we do NOT try to extract the date from the tooltip —
 # instead we pair tooltips and cells positionally in document order.
 _COUNT_TOOLTIP_RE = re.compile(
-    r'<tool-tip[^>]*>\s*(?P<count>\d+|No)\s+contributions?',
+    r"<tool-tip[^>]*>\s*(?P<count>\d+|No)\s+contributions?",
     re.IGNORECASE,
 )
 
@@ -298,11 +298,18 @@ def parse_contribution_html(html: str) -> dict[str, Any]:
 
     contrib_total = sum(c["count"] for c in cells)
 
-    # Streak: walk backwards from the latest cell, counting consecutive non-zero days.
+    # Streak: walk backwards from the latest cell, counting consecutive
+    # non-zero days. The most recent cell (today) is allowed to be zero
+    # as a grace day — GitHub renders today's empty cell before the user
+    # has committed today, and we don't want a morning stats check to
+    # report a false 0d streak for an otherwise active contributor.
+    # Any zero day AFTER the first one still breaks the streak.
     streak = 0
-    for cell in reversed(cells):
+    for i, cell in enumerate(reversed(cells)):
         if cell["count"] > 0:
             streak += 1
+        elif i == 0:
+            continue
         else:
             break
 

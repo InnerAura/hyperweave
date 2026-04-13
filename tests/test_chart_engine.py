@@ -161,7 +161,7 @@ def test_build_markers_square_emits_crosshair() -> None:
     out = _build_markers([(50, 50), (100, 200)], shape="square", size=10)
     assert "<rect" in out
     # Non-final marker: translate-centered group with crosshair lines.
-    assert 'translate(50,50)' in out
+    assert "translate(50,50)" in out
     assert 'width="10"' in out
     assert "<line" in out  # crosshair lines present
     # Final marker: endpoint beacon (nested squares).
@@ -236,7 +236,7 @@ def test_build_chart_svg_miter_angular(
         },
     )
     assert "<polyline" in result["polyline"]
-    assert "stroke-linejoin=\"miter\"" in result["polyline"]
+    assert 'stroke-linejoin="miter"' in result["polyline"]
     assert "<polygon" in result["area"]
     assert "<rect" in result["markers"]
 

@@ -198,7 +198,7 @@ def _marker_rect(x: int, y: int, size: int) -> str:
         f'stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>'
         f'<line x1="0" y1="-{cross}" x2="0" y2="{cross}" '
         f'stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>'
-        f'</g>'
+        f"</g>"
     )
 
 
@@ -210,10 +210,7 @@ def _marker_circle(x: int, y: int, size: int) -> str:
 def _marker_diamond(x: int, y: int, size: int) -> str:
     """Chrome diamond marker: white-filled rotated rect with dark stroke."""
     half = size // 2
-    return (
-        f'<rect x="-{half}" y="-{half}" width="{size}" height="{size}" '
-        f'transform="translate({x} {y}) rotate(45)"/>'
-    )
+    return f'<rect x="-{half}" y="-{half}" width="{size}" height="{size}" transform="translate({x} {y}) rotate(45)"/>'
 
 
 _MARKER_BUILDERS = {
@@ -238,7 +235,7 @@ def _marker_endpoint_rect(x: int, y: int, size: int) -> str:
         f'fill="var(--dna-surface)"/>'
         f'<rect x="{x - h3}" y="{y - h3}" width="{s3}" height="{s3}" '
         f'fill="var(--dna-ink-primary,#D1FAE5)"/>'
-        f'</g>'
+        f"</g>"
     )
 
 
@@ -254,7 +251,7 @@ def _marker_endpoint_diamond(x: int, y: int, size: int) -> str:
         f'fill="#38BDF8"/>'
         f'<rect x="-{h2}" y="-{h2}" width="{s2}" height="{s2}" rx="0.4" '
         f'transform="rotate(45)" fill="#FFFFFF" stroke="#000A14" stroke-width="1"/>'
-        f'</g>'
+        f"</g>"
     )
 
 
@@ -308,10 +305,7 @@ def _build_gridlines(vp: Viewport, rows: int = 4) -> str:
     lines: list[str] = []
     for i in range(1, rows + 1):
         y = vp.y + round(vp.h * i / (rows + 1))
-        lines.append(
-            f'<line x1="{vp.x}" y1="{y}" x2="{vp.x + vp.w}" y2="{y}" '
-            f'class="hw-chart-gridline"/>'
-        )
+        lines.append(f'<line x1="{vp.x}" y1="{y}" x2="{vp.x + vp.w}" y2="{y}" class="hw-chart-gridline"/>')
     return "".join(lines)
 
 
@@ -415,15 +409,13 @@ def build_chart_svg(
         pts = _build_area_polygon_points(projected, baseline_y)
         if pts:
             area_fragment = (
-                f'<polygon points="{pts}" fill="var(--dna-signal)" '
-                f'fill-opacity="0.65" class="hw-chart-area"/>'
+                f'<polygon points="{pts}" fill="var(--dna-signal)" fill-opacity="0.65" class="hw-chart-area"/>'
             )
     elif fill_density == "bezier-smooth":
         path_d = _build_area_path(projected, baseline_y)
         if path_d:
             area_fragment = (
-                f'<path d="{path_d}" fill="var(--dna-signal)" '
-                f'fill-opacity="0.12" class="hw-chart-area-smooth"/>'
+                f'<path d="{path_d}" fill="var(--dna-signal)" fill-opacity="0.12" class="hw-chart-area-smooth"/>'
             )
 
     markers_fragment = _build_markers(projected, shape, point_size)

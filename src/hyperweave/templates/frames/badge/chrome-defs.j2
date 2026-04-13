@@ -35,4 +35,25 @@
   <stop offset="70%" stop-color="var(--dna-signal)" stop-opacity="0.35"/>
   <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0"/>
 </linearGradient>
+{# ── Hero text gradient (silver, matches stats/chart hero values) ── #}
+<linearGradient id="{{ uid }}-ct-hero" x1="0" y1="0" x2="1" y2="0">
+{% for stop in hero_text_gradient | default([
+  {"offset":"0%","color":"#94A3B8"},
+  {"offset":"50%","color":"#FFFFFF"},
+  {"offset":"100%","color":"#94A3B8"}
+]) %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{# ── Typography (class-based, matches stats/chart pattern) ── #}
+<style>
+.{{ uid }}-label {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.10em;
+}
+.{{ uid }}-value {
+  font-family: var(--dna-font-display, 'Orbitron', 'Space Grotesk', sans-serif);
+  font-size: 17px; font-weight: 900; letter-spacing: 0.02em;
+}
+</style>
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}" rx="{{ chrome_corner | default('4') }}"/></clipPath>

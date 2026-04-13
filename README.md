@@ -88,12 +88,12 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </tr>
 <tr>
 <td rowspan="2" align="center"><strong>Profile&nbsp;cards</strong></td>
-<td><img src="assets/examples/brutalist-emerald/profile-cards/stats.svg" alt="stats" width="100%"/></td>
-<td><img src="assets/examples/chrome-horizon/profile-cards/stats.svg" alt="stats" width="100%"/></td>
+<td><img src="https://hyperweave.app/v1/stats/eli64s/brutalist-emerald.static" alt="stats" width="100%"/></td>
+<td><img src="https://hyperweave.app/v1/stats/eli64s/chrome-horizon.static" alt="stats" width="100%"/></td>
 </tr>
 <tr>
-<td><img src="assets/examples/brutalist-emerald/profile-cards/chart_stars_full.svg" alt="star chart" width="100%"/></td>
-<td><img src="assets/examples/chrome-horizon/profile-cards/chart_stars_full.svg" alt="star chart" width="100%"/></td>
+<td><img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist-emerald.static" alt="star chart" width="100%"/></td>
+<td><img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/chrome-horizon.static" alt="star chart" width="100%"/></td>
 </tr>
 <tr>
 <td rowspan="3" align="center"><strong>Marquee</strong></td>
