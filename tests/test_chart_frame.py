@@ -118,10 +118,7 @@ def test_chart_six_stars_renders_real_polyline_with_derived_labels() -> None:
     timestamps yield distinct x-coordinates, and the derived Y ticks show
     [0, 2, 4, 6] — never the hardcoded "3K".
     """
-    points = [
-        {"date": f"2025-{m:02d}-01T00:00:00Z", "count": i + 1}
-        for i, m in enumerate((1, 3, 5, 7, 9, 11))
-    ]
+    points = [{"date": f"2025-{m:02d}-01T00:00:00Z", "count": i + 1} for i, m in enumerate((1, 3, 5, 7, 9, 11))]
     spec = ComposeSpec(
         type="chart",
         genome_id="brutalist-emerald",
@@ -167,15 +164,10 @@ async def test_fetch_stargazer_history_single_page_uses_per_stargazer_timestamps
         if url.endswith("/repos/jiahongc/cc-companion"):
             return {"stargazers_count": 6}
         if "page=1" in url:
-            return [
-                {"starred_at": f"2025-0{m}-01T00:00:00Z"}
-                for m in range(1, 7)
-            ]
+            return [{"starred_at": f"2025-0{m}-01T00:00:00Z"} for m in range(1, 7)]
         return {}
 
-    with patch(
-        "hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json
-    ):
+    with patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json):
         result = await fetch_stargazer_history("jiahongc", "cc-companion")
 
     assert result["current_stars"] == 6

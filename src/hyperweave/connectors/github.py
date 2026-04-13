@@ -191,10 +191,7 @@ async def fetch_stargazer_history(
     # a duplicate-date "now" point, producing a zero time-range polyline. Use
     # each stargazer's own timestamp instead — the whole page fits in one call.
     if total_pages == 1:
-        single_page_url = (
-            f"https://api.github.com/repos/{identifier}/stargazers"
-            f"?per_page={_STARGAZER_PAGE_SIZE}&page=1"
-        )
+        single_page_url = f"https://api.github.com/repos/{identifier}/stargazers?per_page={_STARGAZER_PAGE_SIZE}&page=1"
         page_payload = await fetch_json(
             single_page_url,
             provider=PROVIDER,
@@ -204,9 +201,7 @@ async def fetch_stargazer_history(
         if isinstance(page_payload, list):
             for idx, entry in enumerate(page_payload):
                 if isinstance(entry, dict) and entry.get("starred_at"):
-                    single_page_points.append(
-                        {"date": entry["starred_at"], "count": idx + 1}
-                    )
+                    single_page_points.append({"date": entry["starred_at"], "count": idx + 1})
         single_page_result: dict[str, Any] = {
             "points": single_page_points,
             "current_stars": total_stars,

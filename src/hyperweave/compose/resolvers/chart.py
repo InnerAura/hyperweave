@@ -40,11 +40,7 @@ def resolve_chart(
     # date labels at bottom, and hero value at right.
     # Dimensions match the target SVGs in tier2/genomes/.
     paradigm = genome.get("paradigms", {}).get("chart", "brutalist")
-    vp = (
-        Viewport(x=80, y=160, w=750, h=250)
-        if paradigm == "chrome"
-        else Viewport(x=80, y=150, w=760, h=245)
-    )
+    vp = Viewport(x=80, y=160, w=750, h=250) if paradigm == "chrome" else Viewport(x=80, y=150, w=760, h=245)
 
     # Three-state machine. "fresh" preserved (not renamed to "live") for
     # backward compat with the existing data-hw-status contract; "empty" is
@@ -59,12 +55,8 @@ def resolve_chart(
         current_stars = 0
         empty_message = "DATA UNAVAILABLE"
     else:
-        current_stars = int(
-            connector.get("current_stars") or connector.get("stars_total") or 0
-        )
-        raw_points = list(
-            connector.get("points") or connector.get("star_history") or []
-        )
+        current_stars = int(connector.get("current_stars") or connector.get("stars_total") or 0)
+        raw_points = list(connector.get("points") or connector.get("star_history") or [])
         if current_stars == 0:
             # Truthful zero-star state (brand-new repo) — render empty, don't fabricate.
             status = "empty"

@@ -5,6 +5,12 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-04-13
+
+### Fixed
+
+- **Chart bezier regression on certain data ranges.** The chrome chart bezier path used horizontal tangents at every anchor, which produced a smooth curve only when input points were widely and evenly spaced. On tighter or uneven distributions — common with real GitHub stargazer data — the curve degenerated into flat-then-vertical segments. Replaced with Fritsch-Carlson monotonic cubic interpolation (the same algorithm D3's `curveMonotoneX` uses), which guarantees the curve passes through every anchor, never overshoots between points, and handles any point spacing robustly.
+
 ## [0.2.4] - 2026-04-13
 
 ### Added

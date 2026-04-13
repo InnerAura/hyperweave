@@ -140,6 +140,45 @@ def test_build_bezier_path_starts_with_M() -> None:
     assert "C" in out  # cubic bezier control points present
 
 
+def test_build_bezier_path_no_degenerate_segments_on_close_points() -> None:
+    """When adjacent anchors are close in x, control handles must not cross.
+
+    Regression for the chrome "flat-then-vertical" bug: the previous
+    horizontal-handle implementation used ``dx = max(4, (x_cur - x_prev) // 3)``,
+    which produced ``c2.x < c1.x`` when points were close. Catmull-Rom tangents
+    scale with local chord length and avoid this.
+    """
+    import re
+
+    # Points clustered tightly in x (simulates slow-growth early period).
+    points = [(80, 410), (81, 390), (88, 368), (103, 348), (128, 325), (830, 169)]
+    path = _build_bezier_path(points)
+    segments = re.findall(r"C(\d+),(\d+) (\d+),(\d+) (\d+),(\d+)", path)
+    assert len(segments) == len(points) - 1
+    for c1x, _, c2x, _, _, _ in segments:
+        assert int(c2x) >= int(c1x), f"degenerate segment: c1x={c1x}, c2x={c2x} (c2 must not precede c1)"
+
+
+def test_build_bezier_path_tangents_follow_neighbor_slope() -> None:
+    """Tangents should respect data slope — not force horizontal tangent at every anchor.
+
+    With the old horizontal-handle approach, the first segment's c1 always had
+    ``c1.y == y_prev``. For data that rises, the new Catmull-Rom code shifts c1
+    toward the next point's y, producing a non-horizontal start.
+    """
+    # Rising data: y decreases (flipped SVG coords mean smaller y = higher on chart).
+    points = [(0, 400), (100, 300), (200, 200), (300, 100)]
+    path = _build_bezier_path(points)
+    import re
+
+    first_segment = re.match(r"M0,400 C(\d+),(\d+)", path)
+    assert first_segment is not None
+    c1y = int(first_segment.group(2))
+    # Old code produced c1y == 400 (horizontal tangent). New code should
+    # tilt toward y_next=300, so c1y < 400.
+    assert c1y < 400, f"expected tangent to tilt upward, got c1y={c1y}"
+
+
 def test_build_area_polygon_closes_to_baseline() -> None:
     pts = [(10, 50), (30, 30), (50, 20)]
     out = _build_area_polygon_points(pts, baseline_y=100)
@@ -285,9 +324,7 @@ def test_build_chart_svg_empty_with_message_renders_overlay(
     sample_viewport: Viewport,
 ) -> None:
     """Zero-data path with an empty_message renders a centered overlay label."""
-    result = build_chart_svg(
-        [], sample_viewport, structural={}, empty_message="NEW REPO · NO STARS YET"
-    )
+    result = build_chart_svg([], sample_viewport, structural={}, empty_message="NEW REPO · NO STARS YET")
     assert "NEW REPO" in result["empty_state"]
     assert 'data-hw-zone="empty-state"' in result["empty_state"]
 

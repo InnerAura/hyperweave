@@ -1,0 +1,31 @@
+# Runs `ruff check` + `ruff format` automatically on every `git commit`.
+# Mirrors the two lint steps CI enforces in .github/workflows/ci.yml so CI
+# never surfaces formatting or lint failures that local commits should catch.
+#
+# One-time setup after cloning:
+#   uv sync --group dev
+#   uv run pre-commit install
+#
+# Manual run across the whole repo:
+#   uv run pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.svg$
+      - id: end-of-file-fixer
+        exclude: \.(svg|b64)$
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]

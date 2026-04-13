@@ -136,11 +136,7 @@ def _project_points(
     for i, p in enumerate(points):
         # When all timestamps are identical (t_span <= 0), distribute points
         # evenly by index rather than collapsing them all to vp.x.
-        frac_t = (
-            i / max(1, n - 1)
-            if t_span <= 0
-            else (p.date.timestamp() - t0) / t_span
-        )
+        frac_t = i / max(1, n - 1) if t_span <= 0 else (p.date.timestamp() - t0) / t_span
         frac_v = (p.value - v_lo) / v_span
         px = vp.x + round(frac_t * vp.w)
         py = vp.y + vp.h - round(frac_v * vp.h)
@@ -157,30 +153,100 @@ def _build_polyline_points(projected: list[tuple[int, int]]) -> str:
 
 
 def _build_bezier_path(projected: list[tuple[int, int]]) -> str:
-    """Build a smooth cubic bezier path string through the projected points.
+    """Build a smooth cubic bezier path using Fritsch-Carlson monotonic cubic interpolation.
 
-    Uses the "Catmull-Rom-ish" trick: each segment's control points are at
-    one third of the previous/next delta. This produces a visually smooth
-    curve without cornering at every data point — matches the chrome-horizon
-    mockup's bezier style.
+    This is the same curve D3 renders via ``curveMonotoneX``. For data with
+    monotonically increasing x-coordinates (e.g. any time-series chart like
+    star history), the curve is guaranteed to:
+
+    - Pass through every anchor point (C0 continuity).
+    - Be C1-continuous (smooth tangent at every anchor).
+    - Be monotonic wherever the input is monotonic (no dips between rising
+      points).
+    - Not overshoot — control handles stay within their segment in x,
+      regardless of uneven x-spacing.
+
+    The previous implementation placed horizontal control handles at every
+    anchor (``c1y = y_prev``, ``c2y = y_cur``). That shape produced two
+    visual artifacts on real data:
+
+    1. **Flat-then-vertical** for bursty growth — horizontal tangents forced
+       each segment into a plateau → S-curve → plateau shape, so the chart
+       read as flat sections punctuated by sharp rises.
+
+    2. **Self-intersecting segments** when two adjacent anchors were close
+       in x — the hard-coded ``dx = max(4, (x_cur - x_prev) // 3)`` produced
+       ``c2.x < c1.x``, rasterizing badly on mobile/Camo.
+
+    Fritsch-Carlson solves both by computing per-segment slopes, deriving a
+    tangent at each point from the neighboring slopes, and then rescaling
+    tangent magnitudes with the ``α² + β² > 9`` test so control handles
+    never extend past their segment.
+
+    References:
+        Fritsch, F. N.; Carlson, R. E. (1980). "Monotone Piecewise Cubic
+        Interpolation". SIAM Journal on Numerical Analysis. 17 (2): 238-246.
     """
-    if not projected:
+    n = len(projected)
+    if n == 0:
         return ""
-    if len(projected) == 1:
+    if n == 1:
         x, y = projected[0]
         return f"M{x},{y}"
+    if n == 2:
+        # Two points → straight-line bezier (no interior tangents to compute).
+        x0, y0 = projected[0]
+        x1, y1 = projected[1]
+        dx = (x1 - x0) / 3
+        c1x, c1y = round(x0 + dx), y0
+        c2x, c2y = round(x1 - dx), y1
+        return f"M{x0},{y0} C{c1x},{c1y} {c2x},{c2y} {x1},{y1}"
 
+    # 1. Per-segment slopes m_i = (y_{i+1} - y_i) / (x_{i+1} - x_i).
+    slopes: list[float] = []
+    for i in range(n - 1):
+        sx = projected[i + 1][0] - projected[i][0]
+        sy = projected[i + 1][1] - projected[i][1]
+        slopes.append(sy / sx if sx != 0 else 0.0)
+
+    # 2. Initial tangents at each anchor. Endpoints use the one adjacent slope;
+    # interior points use the average of the two adjacent slopes, but set to 0
+    # at turning points (where the two slopes have opposite sign).
+    tangents: list[float] = [0.0] * n
+    tangents[0] = slopes[0]
+    tangents[-1] = slopes[-1]
+    for i in range(1, n - 1):
+        if slopes[i - 1] * slopes[i] > 0:
+            tangents[i] = (slopes[i - 1] + slopes[i]) / 2
+        # else: turning point → tangent stays 0
+
+    # 3. Fritsch-Carlson overshoot prevention. For each segment, if the
+    # (alpha, beta) pair falls outside the monotonicity circle of radius 3,
+    # rescale both tangents by tau = 3 / sqrt(alpha^2 + beta^2).
+    for i in range(n - 1):
+        if slopes[i] == 0:
+            tangents[i] = 0.0
+            tangents[i + 1] = 0.0
+            continue
+        alpha = tangents[i] / slopes[i]
+        beta = tangents[i + 1] / slopes[i]
+        if alpha * alpha + beta * beta > 9:
+            tau = 3.0 / (alpha * alpha + beta * beta) ** 0.5
+            tangents[i] = tau * alpha * slopes[i]
+            tangents[i + 1] = tau * beta * slopes[i]
+
+    # 4. Convert tangents to Bezier control points. For each segment, the
+    # control x-offset is 1/3 of segment width; the y-offset is that same
+    # 1/3 width scaled by the anchor's tangent (slope).
     parts: list[str] = [f"M{projected[0][0]},{projected[0][1]}"]
-    n = len(projected)
-    for i in range(1, n):
-        x_prev, y_prev = projected[i - 1]
-        x_cur, y_cur = projected[i]
-        # Horizontal offset for control handles — one third of segment width.
-        dx = max(4, (x_cur - x_prev) // 3)
-        c1x = x_prev + dx
-        c1y = y_prev
-        c2x = x_cur - dx
-        c2y = y_cur
+    for i in range(n - 1):
+        x_prev, y_prev = projected[i]
+        x_cur, y_cur = projected[i + 1]
+        seg_dx = (x_cur - x_prev) / 3
+        c1x = round(x_prev + seg_dx)
+        c1y = round(y_prev + tangents[i] * seg_dx)
+        c2x = round(x_cur - seg_dx)
+        c2y = round(y_cur - tangents[i + 1] * seg_dx)
         parts.append(f"C{c1x},{c1y} {c2x},{c2y} {x_cur},{y_cur}")
     return " ".join(parts)
 
@@ -413,9 +479,7 @@ def _format_y_tick(value: int) -> str:
     return f"{s}K"
 
 
-def _build_y_labels(
-    ticks: list[int], v_min: int, v_max: int, vp: Viewport
-) -> list[dict[str, Any]]:
+def _build_y_labels(ticks: list[int], v_min: int, v_max: int, vp: Viewport) -> list[dict[str, Any]]:
     """Project tick values into ``{y, text}`` dicts for template consumption.
 
     Uses the same (v_min, v_max) range the caller passes to
@@ -433,9 +497,7 @@ def _build_y_labels(
     return out
 
 
-def _build_x_year_labels(
-    points: list[ChartPoint], vp: Viewport
-) -> list[dict[str, Any]]:
+def _build_x_year_labels(points: list[ChartPoint], vp: Viewport) -> list[dict[str, Any]]:
     """Return year-string labels positioned at jan-1 boundaries in the data range.
 
     Matches star-history.com's convention: just year numbers (2024, 2025, 2026)
@@ -454,9 +516,7 @@ def _build_x_year_labels(
     t1 = points[-1].date.timestamp()
     t_span = max(1.0, t1 - t0)
 
-    labels: list[dict[str, Any]] = [
-        {"x": vp.x, "text": str(y_start), "anchor": "start"}
-    ]
+    labels: list[dict[str, Any]] = [{"x": vp.x, "text": str(y_start), "anchor": "start"}]
     for y in range(y_start + 1, y_end + 1):
         jan1 = datetime(y, 1, 1, tzinfo=UTC).timestamp()
         if t0 < jan1 <= t1:
@@ -489,9 +549,7 @@ def _build_empty_state(vp: Viewport, message: str) -> str:
     )
 
 
-def _build_gridlines_from_ticks(
-    y_labels: list[dict[str, Any]], vp: Viewport
-) -> str:
+def _build_gridlines_from_ticks(y_labels: list[dict[str, Any]], vp: Viewport) -> str:
     """Horizontal gridlines at each Y-tick's Y-position.
 
     Replaces the uniform ``_build_gridlines`` when real data is present — so
@@ -501,10 +559,7 @@ def _build_gridlines_from_ticks(
     lines: list[str] = []
     for label in y_labels:
         y = int(label["y"])
-        lines.append(
-            f'<line x1="{vp.x}" y1="{y}" x2="{vp.x + vp.w}" y2="{y}" '
-            f'class="hw-chart-gridline"/>'
-        )
+        lines.append(f'<line x1="{vp.x}" y1="{y}" x2="{vp.x + vp.w}" y2="{y}" class="hw-chart-gridline"/>')
     return "".join(lines)
 
 
@@ -621,9 +676,7 @@ def build_chart_svg(
     # Empty state overlay: only when there are no data points AND a message
     # was provided. Without a message the chart degrades silently (useful for
     # embedded charts in stats.py that don't need a user-facing label).
-    empty_state_fragment = (
-        _build_empty_state(viewport, empty_message or "") if not points else ""
-    )
+    empty_state_fragment = _build_empty_state(viewport, empty_message or "") if not points else ""
 
     return {
         "defs": "",
