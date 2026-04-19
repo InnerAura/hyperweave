@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 
 from hyperweave.core.models import ProfileConfig
+from hyperweave.core.paradigm import ParadigmSpec
 from hyperweave.core.schema import GenomeSpec
 
 # Default data directory (relative to package)
@@ -58,6 +59,28 @@ def load_profiles() -> dict[str, ProfileConfig]:
         raw = _read_yaml(path)
         profile = ProfileConfig(**raw)
         result[profile.id] = profile
+
+    return result
+
+
+def load_paradigms() -> dict[str, ParadigmSpec]:
+    """Load all paradigm YAML files from data/paradigms/.
+
+    Paradigms declare frame-level layout/typography config and the set of
+    genome fields that must be non-empty for any genome that opts into
+    them (see ``ParadigmSpec.requires_genome_fields``). Missing paradigm
+    slugs resolve to ``default`` at dispatch time.
+    """
+    paradigms_dir = _data_path("paradigms")
+    result: dict[str, ParadigmSpec] = {}
+
+    if not paradigms_dir.exists():
+        return result
+
+    for path in sorted(paradigms_dir.glob("*.yaml")):
+        raw = _read_yaml(path)
+        paradigm = ParadigmSpec(**raw)
+        result[paradigm.id] = paradigm
 
     return result
 
@@ -177,6 +200,7 @@ class ConfigLoader:
         self.genome_specs: dict[str, GenomeSpec] = {}
         self.profiles: dict[str, dict[str, Any]] = {}
         self.profile_configs: dict[str, ProfileConfig] = {}
+        self.paradigms: dict[str, ParadigmSpec] = {}
         self.glyphs: dict[str, dict[str, Any]] = {}
         self.motions: dict[str, dict[str, Any]] = {}
         self.terminals: dict[str, dict[str, Any]] = {}
@@ -201,6 +225,16 @@ class ConfigLoader:
         for pid, profile in validated_profiles.items():
             self.profile_configs[pid] = profile
             self.profiles[pid] = profile.model_dump()
+
+        self.paradigms = load_paradigms()
+
+        # Cross-validate: every genome must declare the genome fields
+        # required by the paradigms it opts into. Raises at load time so
+        # chrome-defs templates can drop their specimen-color fallbacks.
+        from hyperweave.compose.validate_paradigms import validate_genome_against_paradigms
+
+        for genome_spec in self.genome_specs.values():
+            validate_genome_against_paradigms(genome_spec, self.paradigms)
 
         self.glyphs = load_glyphs()
         self.motions = load_motions()

@@ -19,17 +19,17 @@
     <stop offset="100%" stop-color="{{ well_top }}" stop-opacity="0"/>
   </linearGradient>
   <linearGradient id="{{ uid }}-fade-bot" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="{{ well_bottom | default('#06101A') }}" stop-opacity="0"/>
-    <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}" stop-opacity="1"/>
+    <stop offset="0%" stop-color="{{ well_bottom }}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{{ well_bottom }}" stop-opacity="1"/>
   </linearGradient>
 {% else %}
   <linearGradient id="{{ uid }}-fade-top" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
-    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
+    <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
+    <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
   </linearGradient>
   <linearGradient id="{{ uid }}-fade-bot" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
-    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
+    <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
   </linearGradient>
 {% endif %}
   {# Scroll clip #}
@@ -126,7 +126,7 @@
 {% if bottom_accent_type | default('bar') == 'hairline' %}
 {# Chrome: thin hairline #}
 <rect x="40" y="{{ vh - 7 }}" width="{{ vw - 80 }}" height=".5"
-      fill="{{ specular_light | default('#6AACC8') }}" opacity=".12"/>
+      fill="{{ specular_light }}" opacity=".12"/>
 {% else %}
 {# Brutalist: solid accent bar #}
 <rect x="{{ si }}" y="{{ vh - si - bah }}" width="{{ vw - si * 2 }}" height="{{ bah }}"

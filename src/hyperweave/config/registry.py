@@ -15,12 +15,14 @@ from hyperweave.config.loader import (
     load_genomes,
     load_glyphs,
     load_motions,
+    load_paradigms,
     load_policies,
     load_profiles,
     load_terminal_rules,
     load_terminals,
 )
 from hyperweave.core.models import ProfileConfig  # noqa: TC001 (runtime return type)
+from hyperweave.core.paradigm import ParadigmSpec  # noqa: TC001 (runtime return type)
 from hyperweave.core.schema import GenomeSpec  # noqa: TC001 (runtime return type)
 
 
@@ -84,12 +86,19 @@ def get_font_metrics() -> dict[str, dict[str, Any]]:
     return load_font_metrics()
 
 
+@functools.lru_cache(maxsize=1)
+def get_paradigms() -> dict[str, ParadigmSpec]:
+    """Paradigm specs, keyed by slug (``chrome``, ``brutalist``, ``default``, ...)."""
+    return load_paradigms()
+
+
 def reset_registry() -> None:
     """Clear all registry caches. For testing."""
     get_genome_specs.cache_clear()
     get_genomes.cache_clear()
     get_profile_configs.cache_clear()
     get_profiles.cache_clear()
+    get_paradigms.cache_clear()
     get_glyphs.cache_clear()
     get_motions.cache_clear()
     get_terminals.cache_clear()

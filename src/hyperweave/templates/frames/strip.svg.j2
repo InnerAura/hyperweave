@@ -33,7 +33,7 @@
 {% set div_y2 = strip_h - 12 %}
 {% set paradigm_strip = paradigm | default("default") %}
 
-{# === Frame structure (paradigm-dispatched) === #}
+{# === Frame structure (paradigm-dispatched via include — polymorphism, not a branch) === #}
 {% include "frames/strip/" ~ paradigm_strip ~ "-content.j2" %}
 
 {# === Glyph zone (profile-parametric: size and fill from profile YAML) === #}
@@ -65,9 +65,11 @@
 {# === Metric cells with dividers === #}
 {% set first_div_x = first_divider_x | default(143) %}
 {% set cell_start = first_div_x + 12 %}
-{# First divider — paradigm-driven: chrome uses a gradient separator defined in chrome-defs,
-   other paradigms fall back to a class-based border. #}
-{% if paradigm_strip == "chrome" %}
+{# First divider — stroke sourced from resolver-injected context:
+   divider_render_mode = "gradient" → chrome-defs url(#...-sep) gradient
+   divider_render_mode = "class"    → profile-declared flat color.
+   Decision lives in paradigm YAML, not in a template branch on slug. #}
+{% if divider_render_mode == "gradient" %}
 <line x1="{{ first_div_x }}" y1="{{ div_y1 }}"
       x2="{{ first_div_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
@@ -103,9 +105,9 @@
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>
 {% endif %}
 </g>
-{# Trailing divider after each metric — paradigm-dispatched separator styling #}
+{# Trailing divider after each metric — same divider_render_mode as above. #}
 {% set trail_x = cell_start + (loop.index * metric_pitch) %}
-{% if paradigm_strip == "chrome" %}
+{% if divider_render_mode == "gradient" %}
 <line x1="{{ trail_x }}" y1="{{ div_y1 }}"
       x2="{{ trail_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
@@ -127,7 +129,7 @@
 {% set status_x = (last_seam_x + width) // 2 %}
 {% set status_cy = strip_h // 2 %}
 <g data-hw-zone="status" transform="translate({{ status_x }},{{ status_cy }})"
-   {% if paradigm_strip != "chrome" %}shape-rendering="crispEdges"{% endif %}>
+   {% if status_shape_rendering != "geometricPrecision" %}shape-rendering="{{ status_shape_rendering }}"{% endif %}>
 {% include "frames/strip/" ~ paradigm_strip ~ "-status.j2" %}
 </g>
 

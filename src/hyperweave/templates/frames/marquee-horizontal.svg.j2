@@ -14,8 +14,8 @@
 {% set cx = clip_x | default(132) %}
   {# LIVE block gradient — resolved hex (var() unreliable inside <stop>) #}
   <linearGradient id="{{ uid }}-accent" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="{{ signal_hex | default('#10B981') }}" stop-opacity="0.95"/>
-    <stop offset="100%" stop-color="{{ signal_hex | default('#10B981') }}" stop-opacity="0.65"/>
+    <stop offset="0%" stop-color="{{ signal_hex }}" stop-opacity="0.95"/>
+    <stop offset="100%" stop-color="{{ signal_hex }}" stop-opacity="0.65"/>
   </linearGradient>
   {# Scroll clip — parametric via clip_inset_y / clip_inset_x #}
   <clipPath id="{{ uid }}-scroll-clip">
@@ -23,12 +23,12 @@
   </clipPath>
   {# Edge fades #}
   <linearGradient id="{{ uid }}-fade-l" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
-    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
+    <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
+    <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
   </linearGradient>
   <linearGradient id="{{ uid }}-fade-r" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="0"/>
-    <stop offset="100%" stop-color="{{ surface_hex | default('#0A0A0A') }}" stop-opacity="1"/>
+    <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
   </linearGradient>
 {% if envelope_stops | default([]) %}
 {% include "frames/marquee-horizontal/chrome-defs.j2" %}

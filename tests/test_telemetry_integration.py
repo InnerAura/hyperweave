@@ -298,3 +298,74 @@ def test_receipt_treemap_error_annotations() -> None:
         clip_content = m.group(1)
         if "cell-error" in clip_content:
             assert 'text-anchor="end"' in clip_content, "Error text must be right-aligned"
+
+
+# ── SessionEnd hook: graceful no-op for non-conversational sessions ──
+# Claude Code fires SessionEnd for non-conversational actions (e.g.
+# `claude update`, `claude config`) with non-TTY stdin but no valid JSONL
+# transcript. `hyperweave session receipt` must silently exit 0 instead of
+# surfacing "Error: no transcript found" to the user's terminal.
+#
+# typer's CliRunner provides non-TTY stdin by default, so no monkeypatching
+# of sys.stdin.isatty() is needed to simulate hook mode. The TTY/interactive
+# error branch is intentionally uncovered here — CliRunner's stdin redirection
+# makes it impractical to test, and that path is pre-existing behavior.
+
+
+def test_hook_mode_silent_on_empty_stdin() -> None:
+    """`claude update` scenario: SessionEnd with empty stdin → graceful no-op."""
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["session", "receipt"], input="")
+
+    assert result.exit_code == 0, (
+        f"Hook-mode empty stdin must exit 0 gracefully. exit={result.exit_code}, output={result.output!r}"
+    )
+
+
+def test_hook_mode_silent_on_invalid_json() -> None:
+    """Malformed stdin JSON must not crash the hook."""
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["session", "receipt"], input="not{valid}json")
+
+    assert result.exit_code == 0, (
+        f"Invalid JSON on stdin must not fail the hook. exit={result.exit_code}, output={result.output!r}"
+    )
+
+
+def test_hook_mode_silent_when_transcript_path_absent_from_payload() -> None:
+    """Valid JSON without transcript_path key → graceful no-op."""
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app
+
+    runner = CliRunner()
+    payload = json.dumps({"hook_event_name": "SessionEnd"})
+    result = runner.invoke(app, ["session", "receipt"], input=payload)
+
+    assert result.exit_code == 0, (
+        f"Missing transcript_path key must not fail the hook. exit={result.exit_code}, output={result.output!r}"
+    )
+
+
+def test_hook_mode_silent_when_transcript_path_does_not_exist(tmp_path: Path) -> None:
+    """Hook references a path that no longer exists → graceful no-op."""
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app
+
+    ghost = tmp_path / "never-existed.jsonl"
+    runner = CliRunner()
+    payload = json.dumps({"transcript_path": str(ghost)})
+    result = runner.invoke(app, ["session", "receipt"], input=payload)
+
+    assert result.exit_code == 0, (
+        f"Nonexistent transcript path must not fail the hook. exit={result.exit_code}, output={result.output!r}"
+    )

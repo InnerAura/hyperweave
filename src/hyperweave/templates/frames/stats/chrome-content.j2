@@ -6,57 +6,72 @@
 {% set sw = width | default(495) %}
 {% set sh = height | default(260) %}
 
-{# MATERIAL STACK — canonical badge structure #}
+{# MATERIAL STACK — every color below is genome-driven via CSS vars or
+   template params plumbed through compose/resolver._profile_visual_context.
+   Fallbacks preserve chrome-horizon's appearance when a genome omits a
+   field, so the specimen card still renders identically. #}
 <g clip-path="url(#{{ uid }}-clip)">
   <rect width="{{ sw }}" height="{{ sh }}" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-bevel)"/>
-  <rect x="2" y="2" width="{{ sw - 4 }}" height="{{ sh - 4 }}" rx="4.5" fill="none" stroke="#000510" stroke-width="0.8"/>
+  <rect x="2" y="2" width="{{ sw - 4 }}" height="{{ sh - 4 }}" rx="4.5" fill="none"
+        stroke="var(--dna-surface-deep, #000510)" stroke-width="0.8"/>
   <rect x="4" y="4" width="{{ sw - 8 }}" height="{{ sh - 8 }}" rx="3" fill="url(#{{ uid }}-well)"/>
   <rect x="4" y="4" width="6" height="{{ sh - 8 }}" fill="url(#{{ uid }}-env)" opacity="0.78"/>
-  <rect x="40" y="4" width="415" height="0.6" rx="0.3" fill="#6AACC8" opacity="0.14"/>
-  <rect x="2" y="2" width="{{ sw - 4 }}" height="{{ sh - 4 }}" rx="4.5" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
+  <rect x="40" y="4" width="415" height="0.6" rx="0.3" fill="var(--dna-border-tint, rgba(91,163,212,0.14))" opacity="0.9"/>
+  <rect x="2" y="2" width="{{ sw - 4 }}" height="{{ sh - 4 }}" rx="4.5" fill="none"
+        stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
 </g>
 
 {# ZONE 1: HERO #}
 <g data-hw-zone="glyph" transform="translate(22,22)">
   <svg viewBox="0 0 24 24" width="14" height="14">
-    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="#E0ECF6"/>
+    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-ink-primary)"/>
   </svg>
 </g>
-<text data-hw-zone="identity" class="{{ uid }}-identity" x="42" y="33">{{ stats_username }}</text>
+<text data-hw-zone="identity" class="{{ uid }}-identity" x="42" y="33"
+  {%- if identity_text_length %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ stats_username }}</text>
 
 <text data-hw-zone="hero-value" class="{{ uid }}-hero" x="24" y="98">{{ stars_display }}</text>
 <text data-hw-zone="hero-label" class="{{ uid }}-hero-label" x="26" y="114">TOTAL STARS · LIFETIME</text>
 
 <line x1="22" y1="120" x2="473" y2="120" stroke="url(#{{ uid }}-sep)" stroke-width="0.8"/>
 
-{# ZONE 2: METRICS — 4 centered columns #}
+{# ZONE 2: METRICS — 4 centered columns, adaptive textLength per value.
+   Column centers at 62/186/309/433, budget 112px (124px - 12px gutter).
+   commits/prs/issues/streak_text_length is 0 when the value fits naturally,
+   or the budget value when it would overflow — resolver computes this
+   from a measure_text() call so the template just reads the decision. #}
 <g data-hw-zone="metrics">
   <g data-hw-zone="metric-0">
     <text class="{{ uid }}-mlabel" x="62" y="135" text-anchor="middle">COMMITS</text>
-    <text class="{{ uid }}-mval"   x="62" y="158" text-anchor="middle">{{ commits_display }}</text>
+    <text class="{{ uid }}-mval"   x="62" y="158" text-anchor="middle"
+      {%- if commits_text_length %} textLength="{{ commits_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ commits_display }}</text>
   </g>
   <line x1="124" y1="128" x2="124" y2="162" stroke="var(--dna-border-tint, rgba(91,163,212,0.18))" stroke-width="0.4"/>
 
   <g data-hw-zone="metric-1">
     <text class="{{ uid }}-mlabel" x="186" y="135" text-anchor="middle">PRS</text>
-    <text class="{{ uid }}-mval"   x="186" y="158" text-anchor="middle">{{ prs_display }}</text>
+    <text class="{{ uid }}-mval"   x="186" y="158" text-anchor="middle"
+      {%- if prs_text_length %} textLength="{{ prs_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ prs_display }}</text>
   </g>
   <line x1="248" y1="128" x2="248" y2="162" stroke="var(--dna-border-tint, rgba(91,163,212,0.18))" stroke-width="0.4"/>
 
   <g data-hw-zone="metric-2">
     <text class="{{ uid }}-mlabel" x="309" y="135" text-anchor="middle">ISSUES</text>
-    <text class="{{ uid }}-mval"   x="309" y="158" text-anchor="middle">{{ issues_display }}</text>
+    <text class="{{ uid }}-mval"   x="309" y="158" text-anchor="middle"
+      {%- if issues_text_length %} textLength="{{ issues_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ issues_display }}</text>
   </g>
   <line x1="371" y1="128" x2="371" y2="162" stroke="var(--dna-border-tint, rgba(91,163,212,0.18))" stroke-width="0.4"/>
 
   <g data-hw-zone="metric-3">
     <text class="{{ uid }}-mlabel" x="433" y="135" text-anchor="middle">STREAK</text>
-    <text class="{{ uid }}-mval"   x="433" y="158" text-anchor="middle">{{ streak_display }}</text>
+    <text class="{{ uid }}-mval"   x="433" y="158" text-anchor="middle"
+      {%- if streak_text_length %} textLength="{{ streak_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ streak_display }}</text>
   </g>
 </g>
 
-{# Horizon glow (2px cyan shelf between metrics and activity) #}
-<rect class="{{ uid }}-horizon" x="22" y="167" width="451" height="2" fill="#38BDF8"
+{# Horizon glow — genome highlight or signal. #}
+<rect class="{{ uid }}-horizon" x="22" y="167" width="451" height="2"
+      fill="{{ specular_light }}"
       filter="url(#{{ uid }}-horizon-glow)"/>
 
 {# ZONE 3: 52-WEEK ACTIVITY — bars from real heatmap_grid data #}
@@ -73,9 +88,9 @@
 
   <line x1="22" y1="{{ ch_baseline + 0.4 }}" x2="473" y2="{{ ch_baseline + 0.4 }}" stroke="var(--dna-border-tint, rgba(91,163,212,0.18))" stroke-width="0.4"/>
 
-  {# Week markers at 13-week intervals #}
+  {# Week markers at 13-week intervals — genome ink_muted for subtle tick presence. #}
   {% for q in [13, 26, 39] %}
-  <line x1="{{ (ch_start_x + q * ch_stride) | round(1) }}" y1="{{ ch_baseline + 1.5 }}" x2="{{ (ch_start_x + q * ch_stride) | round(1) }}" y2="{{ ch_baseline + 4 }}" stroke="#A8C0D0" stroke-width="0.4" opacity="0.5"/>
+  <line x1="{{ (ch_start_x + q * ch_stride) | round(1) }}" y1="{{ ch_baseline + 1.5 }}" x2="{{ (ch_start_x + q * ch_stride) | round(1) }}" y2="{{ ch_baseline + 4 }}" stroke="var(--dna-ink-muted)" stroke-width="0.4" opacity="0.5"/>
   {% endfor %}
 
   {# Activity bars — solid fill + crispEdges for mobile readability.
@@ -102,7 +117,7 @@
 
   {% if activity_bars %}
   <g data-hw-zone="activity-present" transform="translate({{ (ch_start_x + (activity_bars | length) * ch_stride) | round(1) }},{{ ch_baseline - ch_min_h }})">
-    <rect class="{{ uid }}-present" x="-1" y="0" width="2" height="4" rx="0.6" fill="#38BDF8"/>
+    <rect class="{{ uid }}-present" x="-1" y="0" width="2" height="4" rx="0.6" fill="{{ specular_light }}"/>
   </g>
   {% endif %}
 </g>

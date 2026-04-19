@@ -1,152 +1,65 @@
-"""Shields.io-grade text width measurement."""
+"""Text width measurement backed by per-font LUTs.
+
+Deterministic width estimation for the shipped supported ASCII glyph set,
+using per-codepoint advance widths scaled linearly by font size.
+Kerning ignored. Ligatures ignored. Non-ASCII codepoints fall back to the
+font's declared ``fallback_width``. Unknown font families fall back to
+Inter metrics with a one-shot warning log per family — never to
+genome-specific multipliers.
+
+Add a new font LUT by running::
+
+    uv run python scripts/extract_font_metrics.py <slug>
+
+which writes ``src/hyperweave/data/font-metrics/<slug>.json``. The
+:class:`hyperweave.core.font_metrics.FontRegistry` picks it up on the
+next process start (or after :func:`hyperweave.core.font_metrics.reset_registry`).
+"""
 
 from __future__ import annotations
 
-# Monospace character width at 11px.
-# Calibrated for the widest common monospace face at bold weight:
-# SF Mono ~6.6, JetBrains Mono ~6.8, Menlo ~7.0, Consolas ~7.2.
-# Using 7.2 ensures no overlap on any platform. Slightly over-measures
-# on SF Mono, which creates extra breathing room — acceptable tradeoff.
-_MONO_CHAR_WIDTH_11PX: float = 7.2
-
-# Width table for Inter Regular at 11px, in tenths-of-pixels.
-# Derived from font metrics extraction. Missing characters use the
-# fallback width. This set covers ASCII printable + common symbols.
-_INTER_11_WIDTHS: dict[str, int] = {
-    " ": 29,
-    "!": 30,
-    '"': 41,
-    "#": 67,
-    "$": 58,
-    "%": 76,
-    "&": 72,
-    "'": 23,
-    "(": 33,
-    ")": 33,
-    "*": 49,
-    "+": 58,
-    ",": 26,
-    "-": 38,
-    ".": 27,
-    "/": 38,
-    "0": 62,
-    "1": 47,
-    "2": 56,
-    "3": 57,
-    "4": 62,
-    "5": 58,
-    "6": 60,
-    "7": 55,
-    "8": 61,
-    "9": 60,
-    ":": 26,
-    ";": 26,
-    "<": 58,
-    "=": 58,
-    ">": 58,
-    "?": 49,
-    "@": 92,
-    "A": 67,
-    "B": 65,
-    "C": 66,
-    "D": 71,
-    "E": 58,
-    "F": 55,
-    "G": 71,
-    "H": 72,
-    "I": 27,
-    "J": 46,
-    "K": 64,
-    "L": 55,
-    "M": 85,
-    "N": 72,
-    "O": 74,
-    "P": 62,
-    "Q": 74,
-    "R": 64,
-    "S": 57,
-    "T": 58,
-    "U": 71,
-    "V": 63,
-    "W": 92,
-    "X": 62,
-    "Y": 59,
-    "Z": 59,
-    "[": 32,
-    "\\": 38,
-    "]": 32,
-    "^": 55,
-    "_": 48,
-    "`": 38,
-    "a": 57,
-    "b": 61,
-    "c": 51,
-    "d": 61,
-    "e": 57,
-    "f": 35,
-    "g": 61,
-    "h": 60,
-    "i": 26,
-    "j": 26,
-    "k": 56,
-    "l": 26,
-    "m": 91,
-    "n": 60,
-    "o": 60,
-    "p": 61,
-    "q": 61,
-    "r": 38,
-    "s": 49,
-    "t": 38,
-    "u": 60,
-    "v": 53,
-    "w": 79,
-    "x": 53,
-    "y": 53,
-    "z": 49,
-    "{": 36,
-    "|": 27,
-    "}": 36,
-    "~": 58,
-}
-
-# Fallback width for characters not in the LUT (tenths of pixels)
-_FALLBACK_WIDTH: int = 60
-
-# Bold expansion factor (Inter Bold is roughly 7% wider than Regular)
-_BOLD_FACTOR: float = 1.07
-
-# Font size scaling (LUT is calibrated at 11px)
-_LUT_FONT_SIZE: float = 11.0
+from hyperweave.core.font_metrics import get_registry
 
 
 def measure_text(
     text: str,
-    font_family: str = "Inter",  # reserved for future font LUTs
+    *,
+    font_family: str = "Inter",
     font_size: float = 11.0,
-    bold: bool = False,
-    monospace: bool = False,
+    font_weight: int = 400,
+    letter_spacing_em: float = 0.0,
 ) -> float:
-    """Measure the rendered width of text in pixels.
+    """Estimate the rendered width of ``text`` in pixels.
 
-    For monospace fonts, uses a fixed character width (bold does not
-    change width in a true monospace face).
+    The text measurement pipeline:
+
+    1. Resolve ``font_family`` to a :class:`FontMetrics` LUT via the
+       :class:`FontRegistry` (falls back to Inter + one-shot warning on
+       unknown families).
+    2. For monospace fonts, width = ``len(text) * char_width_px``
+       scaled linearly by ``font_size / baseline_size_px``.
+       For proportional fonts, sum per-codepoint advance widths (tenths
+       of pixels at ``baseline_size_px``), divide by 10, scale by size.
+    3. Apply ``bold_expansion_factor`` when ``font_weight >= 700`` for
+       non-monospace fonts (true monospace has no bold width change).
+    4. Absorb letter-spacing: add ``max(0, len(text) - 1) *
+       font_size * letter_spacing_em`` so callers don't repeat the
+       arithmetic themselves.
     """
-    if monospace:
-        return len(text) * _MONO_CHAR_WIDTH_11PX * (font_size / _LUT_FONT_SIZE)
+    metrics = get_registry().get(font_family)
+    baseline = metrics.baseline_size_px
 
-    total_tenths = 0
-    for ch in text:
-        total_tenths += _INTER_11_WIDTHS.get(ch, _FALLBACK_WIDTH)
+    if metrics.is_monospace:
+        base_px = len(text) * metrics.char_width_px * (font_size / baseline)
+    else:
+        total_tenths = 0.0
+        for ch in text:
+            total_tenths += metrics.widths.get(ch, metrics.fallback_width)
+        base_px = (total_tenths / 10.0) * (font_size / baseline)
+        if font_weight >= 700:
+            base_px *= metrics.bold_expansion_factor
 
-    width = total_tenths / 10.0
+    if text and letter_spacing_em:
+        base_px += max(0, len(text) - 1) * font_size * letter_spacing_em
 
-    # Scale for font size
-    if font_size != _LUT_FONT_SIZE:
-        width *= font_size / _LUT_FONT_SIZE
-
-    # Apply bold expansion
-    if bold:
-        width *= _BOLD_FACTOR
-
-    return width
+    return base_px

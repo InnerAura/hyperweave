@@ -6,8 +6,11 @@
 </linearGradient>
 {# Typography (class-based, preserves pre-v0.2.2 brutalist strip rendering).
    strip.svg.j2 emits class names on identity / metric text; this block defines
-   what those classes look like under the default/brutalist paradigm. #}
+   what those classes look like under the default/brutalist paradigm.
+   Embeds genome fonts via @font-face so measured-vs-rendered widths agree
+   in viewers that don't respect system font fallbacks (v0.3.1 fix). #}
 <style>
+{{ font_faces | safe }}
 .{{ uid }}-identity {
   font-family: var(--dna-font-mono, 'SF Mono', monospace);
   font-size: 11px; font-weight: 900; letter-spacing: 0.18em;

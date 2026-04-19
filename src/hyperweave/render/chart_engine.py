@@ -330,7 +330,13 @@ def _marker_endpoint_rect(x: int, y: int, size: int) -> str:
 
 
 def _marker_endpoint_diamond(x: int, y: int, size: int) -> str:
-    """Chrome endpoint diamond: larger diamond with glow class."""
+    """Chrome endpoint diamond: larger diamond with glow class.
+
+    All three colors route through CSS vars so custom chrome genomes
+    (obsidian-prism, liquid-mercury, rose-titanium, etc.) skin the
+    endpoint marker from their own palette instead of inheriting
+    chrome-horizon's cyan + white + near-black.
+    """
     s1 = size + 10
     s2 = size + 5
     h1, h2 = s1 // 2, s2 // 2
@@ -338,9 +344,10 @@ def _marker_endpoint_diamond(x: int, y: int, size: int) -> str:
         f'<g data-hw-zone="endpoint" transform="translate({x},{y})">'
         f'<rect class="hw-chart-endpoint" x="-{h1}" y="-{h1}" '
         f'width="{s1}" height="{s1}" rx="0.6" transform="rotate(45)" '
-        f'fill="#38BDF8"/>'
+        f'fill="var(--dna-signal)"/>'
         f'<rect x="-{h2}" y="-{h2}" width="{s2}" height="{s2}" rx="0.4" '
-        f'transform="rotate(45)" fill="#FFFFFF" stroke="#000A14" stroke-width="1"/>'
+        f'transform="rotate(45)" fill="var(--dna-ink-primary)" '
+        f'stroke="var(--dna-surface-deep)" stroke-width="1"/>'
         f"</g>"
     )
 

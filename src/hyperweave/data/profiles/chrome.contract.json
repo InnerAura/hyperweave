@@ -29,8 +29,6 @@
   },
   "chrome_optional": {
     "chrome_text_gradient": {"type": "array", "description": "Text gradient stops"},
-    "specular_sweep_dur": {"type": "duration", "description": "Specular animation duration"},
-    "specular_sweep_peak": {"type": "number", "description": "Specular peak opacity"},
     "light_mode": {"type": "object", "description": "Light mode color overrides"}
   },
   "contrast_pairs": [

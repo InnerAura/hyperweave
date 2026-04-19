@@ -31,16 +31,21 @@ def resolve_chart(
     spec: ComposeSpec,
     genome: dict[str, Any],
     profile: dict[str, Any],
+    paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve the ``chart`` frame into width/height/template/context."""
     width, height = 900, 500
 
-    # Viewport insets: leave room for hero title at top, axis labels on left,
-    # date labels at bottom, and hero value at right.
-    # Dimensions match the target SVGs in tier2/genomes/.
-    paradigm = genome.get("paradigms", {}).get("chart", "brutalist")
-    vp = Viewport(x=80, y=160, w=750, h=250) if paradigm == "chrome" else Viewport(x=80, y=150, w=760, h=245)
+    # Viewport dimensions now live in data/paradigms/{slug}.yaml — chrome
+    # and brutalist paradigms each declare their own inset rectangle to
+    # leave room for hero title (top), axis labels (left), date labels
+    # (bottom), and hero value (right).
+    if paradigm_spec is not None:
+        cc = paradigm_spec.chart
+        vp = Viewport(x=cc.viewport_x, y=cc.viewport_y, w=cc.viewport_w, h=cc.viewport_h)
+    else:
+        vp = Viewport(x=80, y=150, w=760, h=245)
 
     # Three-state machine. "fresh" preserved (not renamed to "live") for
     # backward compat with the existing data-hw-status contract; "empty" is
@@ -91,6 +96,9 @@ def resolve_chart(
     title_upper = (repo or "star history").upper()
     current_display = _format_compact(int(current_stars))
 
+    # Profile visual context (envelope/well/specular/chrome text gradients)
+    # is injected universally by the dispatcher at resolver.resolve(), so
+    # this resolver only builds chart-specific context.
     ctx: dict[str, Any] = {
         "chart_repo": repo,
         "chart_title": title_upper,

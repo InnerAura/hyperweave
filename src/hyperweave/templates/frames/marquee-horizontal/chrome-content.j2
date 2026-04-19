@@ -10,7 +10,7 @@
 {# Thin left chrome accent strip — 4px env-map #}
 <rect x="2" y="2" width="4" height="{{ mh - 4 }}" fill="url(#{{ uid }}-envelope)" opacity=".7"/>
 {# Top specular catch #}
-<rect x="8" y="2" width="{{ mw - 16 }}" height=".5" fill="{{ specular_light | default('#6AACC8') }}" opacity=".08"/>
+<rect x="8" y="2" width="{{ mw - 16 }}" height=".5" fill="{{ specular_light }}" opacity=".08"/>
 
 {# LIVE label — chrome style #}
 <text x="70" y="{{ mh // 2 }}" text-anchor="middle" dominant-baseline="central"

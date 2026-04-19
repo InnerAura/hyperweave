@@ -11,20 +11,24 @@
 {% set vw = chart_viewport_w | default(750) %}
 {% set vh = chart_viewport_h | default(250) %}
 
-{# MATERIAL STACK — canonical badge structure #}
+{# MATERIAL STACK — every color genome-driven via CSS vars + _profile_visual_context
+   template params. Fallbacks preserve chrome-horizon specimen fidelity. #}
 <g clip-path="url(#{{ uid }}-clip)">
   <rect width="{{ cw }}" height="{{ ch }}" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-bevel)"/>
-  <rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="4.5" fill="none" stroke="#000510" stroke-width="0.8"/>
+  <rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="4.5" fill="none"
+        stroke="var(--dna-surface-deep, #000510)" stroke-width="0.8"/>
   <rect x="4" y="4" width="{{ cw - 8 }}" height="{{ ch - 8 }}" rx="3" fill="url(#{{ uid }}-well)"/>
   <rect x="4" y="4" width="6" height="{{ ch - 8 }}" fill="url(#{{ uid }}-env)" opacity="0.78"/>
-  <rect x="60" y="4" width="780" height="0.6" rx="0.3" fill="#6AACC8" opacity="0.14"/>
-  <rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="4.5" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
+  <rect x="60" y="4" width="780" height="0.6" rx="0.3"
+        fill="var(--dna-border-tint, rgba(91,163,212,0.14))" opacity="0.9"/>
+  <rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="4.5" fill="none"
+        stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
 </g>
 
 {# ZONE 1: HEADER #}
 <g data-hw-zone="glyph" transform="translate(24,22)">
   <svg viewBox="0 0 24 24" width="16" height="16">
-    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="#E0ECF6"/>
+    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-ink-primary)"/>
   </svg>
 </g>
 <text data-hw-zone="label" class="{{ uid }}-label" x="50" y="35">HYPERWEAVE · GITHUB</text>
@@ -44,20 +48,22 @@
 
 {# ZONE 3: CHART BODY #}
 <g data-hw-zone="chart">
-  {# Scanline texture in bottom 20% of chart for reflective-surface character #}
-  <g data-hw-zone="scanlines" stroke="#FFFFFF" stroke-width="0.5" opacity="0.06">
+  {# Scanline texture in bottom 20% of chart for reflective-surface character.
+     Scanlines use the genome's declared highlight_color (specular_light)
+     which for chrome paradigm is a required field. #}
+  <g data-hw-zone="scanlines" stroke="{{ specular_light }}" stroke-width="0.5" opacity="0.06">
     {% for i in range(12) %}
     <line x1="{{ vx }}" y1="{{ vy + vh - 48 + i * 4 }}" x2="{{ vx + vw }}" y2="{{ vy + vh - 48 + i * 4 }}"/>
     {% endfor %}
   </g>
 
-  {# Gridlines #}
-  <g data-hw-zone="grid" stroke="#A8D4F0" stroke-width="0.4" opacity="0.18">
+  {# Gridlines — genome ink_muted for subtle presence. #}
+  <g data-hw-zone="grid" stroke="var(--dna-ink-muted)" stroke-width="0.4" opacity="0.18">
     <line x1="{{ vx }}" y1="{{ vy + 10 }}" x2="{{ vx + vw }}" y2="{{ vy + 10 }}"/>
     <line x1="{{ vx }}" y1="{{ (vy + vh * 0.36) | int }}" x2="{{ vx + vw }}" y2="{{ (vy + vh * 0.36) | int }}"/>
     <line x1="{{ vx }}" y1="{{ (vy + vh * 0.68) | int }}" x2="{{ vx + vw }}" y2="{{ (vy + vh * 0.68) | int }}"/>
   </g>
-  <line x1="{{ vx }}" y1="{{ vy + vh - 40 }}" x2="{{ vx + vw }}" y2="{{ vy + vh - 40 }}" stroke="#A8D4F0" stroke-width="0.4" opacity="0.1"/>
+  <line x1="{{ vx }}" y1="{{ vy + vh - 40 }}" x2="{{ vx + vw }}" y2="{{ vy + vh - 40 }}" stroke="var(--dna-ink-muted)" stroke-width="0.4" opacity="0.1"/>
 
   {# Y-axis labels — derived from data via chart_engine _nice_y_ticks.
      The +3 y-offset matches the chrome baseline convention. #}
@@ -65,12 +71,13 @@
   <text class="{{ uid }}-axis-y" x="{{ vx - 8 }}" y="{{ label.y + 3 }}" text-anchor="end">{{ label.text }}</text>
   {% endfor %}
 
-  {# Horizon glow — 2px cyan at x-axis baseline #}
+  {# Horizon glow — 2px highlight band at x-axis baseline. Genome specular_light
+     drives the hue (obsidian-prism → lavender, liquid-mercury → silver-white). #}
   <rect class="{{ uid }}-horizon" x="{{ vx }}" y="{{ vy + vh - 1 }}" width="{{ vw }}" height="2"
-        fill="#38BDF8" filter="url(#{{ uid }}-horizon-glow)"/>
+        fill="{{ specular_light }}" filter="url(#{{ uid }}-horizon-glow)"/>
 
-  {# Y-axis left rail #}
-  <line x1="{{ vx }}" y1="{{ vy }}" x2="{{ vx }}" y2="{{ vy + vh }}" stroke="#38BDF8" stroke-width="0.8" opacity="0.55"/>
+  {# Y-axis left rail — genome signal accent. #}
+  <line x1="{{ vx }}" y1="{{ vy }}" x2="{{ vx }}" y2="{{ vy + vh }}" stroke="var(--dna-signal)" stroke-width="0.8" opacity="0.55"/>
 
   {# Chart engine fragments #}
   {{ chart_gridlines | safe }}

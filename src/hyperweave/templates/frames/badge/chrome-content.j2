@@ -12,7 +12,7 @@
 </g>
 
 {# Top highlight #}
-<rect x="8" y="2" width="{{ width - 16 }}" height="0.5" rx="0.25" fill="{{ specular_light | default('#6AACC8') }}" opacity="{{ highlight_opacity | default('0.1') }}"/>
+<rect x="8" y="2" width="{{ width - 16 }}" height="0.5" rx="0.25" fill="{{ specular_light }}" opacity="{{ highlight_opacity | default('0.1') }}"/>
 
 {# Separator line #}
 <line x1="{{ lp_w }}" y1="5" x2="{{ lp_w }}" y2="{{ h - 5 }}" stroke="url(#{{ uid }}-sep)" stroke-width="0.75"/>

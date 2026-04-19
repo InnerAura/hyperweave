@@ -17,6 +17,9 @@ keywords = [
     "developer-tools",
     "fastapi",
     "claude-code",
+    "badges",
+    "github-profile",
+    "profile-readme",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -78,6 +81,8 @@ dev = [
     "mypy>=1.14",
     "types-pyyaml>=6.0.12.20250915",
     "pre-commit>=4.0",
+    "fonttools>=4.62.1",
+    "brotli>=1.2.0",
 ]
 
 [tool.pytest.ini_options]

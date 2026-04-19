@@ -13,7 +13,7 @@
 {# Edge glow filter — accent-colored bloom #}
 <filter id="{{ uid }}-glow" x="-15%" y="-15%" width="130%" height="130%">
   <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
-  <feFlood flood-color="{{ highlight_color | default(specular_light | default('#6AACC8')) }}" flood-opacity="0.4"/>
+  <feFlood flood-color="{{ specular_light }}" flood-opacity="0.4"/>
   <feComposite in2="blur" operator="in" result="glow"/>
   <feMerge>
     <feMergeNode in="glow"/>
@@ -29,7 +29,7 @@
 <filter id="{{ uid }}-bevel" x="-2%" y="-4%" width="104%" height="110%">
   <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#000" flood-opacity="{{ bevel_shadow_opacity | default('0.30') }}"/>
   <feSpecularLighting in="SourceAlpha" surfaceScale="1.0" specularConstant="0.4"
-                      specularExponent="30" lighting-color="{{ specular_light | default('#6AACC8') }}" result="s">
+                      specularExponent="30" lighting-color="{{ specular_light }}" result="s">
     <feDistantLight azimuth="225" elevation="50"/>
   </feSpecularLighting>
   <feComposite in="s" in2="SourceAlpha" operator="in" result="sc"/>
@@ -37,6 +37,6 @@
 </filter>
 {# Well gradient (lightened per satin specimens) #}
 <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
-  <stop offset="100%" stop-color="{{ well_bottom | default('#06101A') }}"/>
+  <stop offset="0%" stop-color="{{ well_top }}"/>
+  <stop offset="100%" stop-color="{{ well_bottom }}"/>
 </linearGradient>

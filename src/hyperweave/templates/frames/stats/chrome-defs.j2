@@ -1,93 +1,64 @@
-{# Chrome stats defs: canonical 11-stop envelope, well, text gradients, bar gradient,
-   rim sweep, bevel/glow filters, clip-path.
-   Ported from tier2/genomes/chrome-horizon/github-profile-stats-card-v6.svg #}
+{# Chrome stats defs: envelope + well + text gradients + rim + filters.
+   Ported from tier2/genomes/chrome-horizon/github-profile-stats-card-v6.svg,
+   then refactored (v0.2.6) so every color comes from the genome via the
+   shared _profile_visual_context. chrome-horizon's 11-stop envelope is
+   preserved as the fallback when a genome doesn't declare envelope_stops —
+   but any chrome genome that does will override it cleanly. #}
 
-{# Canonical 11-stop chrome envelope #}
+{# Envelope — genome-declared. Required field for chrome paradigm;
+   enforced at load time by validate_genome_against_paradigms so this
+   template never needs a specimen-color fallback. #}
 <linearGradient id="{{ uid }}-env" x1="0" x2="0" y1="-0.1" y2="0.9">
-  <stop offset="0%" stop-color="#000A14"/>
-  <stop offset="12%" stop-color="#0A2540"/>
-  <stop offset="25%" stop-color="#1A4A6E"/>
-  <stop offset="36%" stop-color="#3A7EA8"/>
-  <stop offset="44%" stop-color="#6AACC8"/>
-  <stop offset="50%" stop-color="#C8DAE6"/>
-  <stop offset="56%" stop-color="#B8A888"/>
-  <stop offset="64%" stop-color="#6A5840"/>
-  <stop offset="75%" stop-color="#2A2218"/>
-  <stop offset="88%" stop-color="#100E0A"/>
-  <stop offset="100%" stop-color="#060810"/>
+{% for stop in envelope_stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
   <animateTransform attributeName="gradientTransform" type="translate"
-    values="0 -0.2; 0 0.2; 0 -0.2" dur="6s"
+    values="0 -0.2; 0 0.2; 0 -0.2" dur="{{ chrome_rhythm | default('6s') }}"
     repeatCount="indefinite" calcMode="spline"
     keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
 </linearGradient>
 
-{# Dark well #}
+{# Well — genome-declared (required field for chrome paradigm). #}
 <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-  <stop offset="0%" stop-color="#020617"/>
-  <stop offset="100%" stop-color="#0B1121"/>
+  <stop offset="0%"   stop-color="{{ well_top }}"/>
+  <stop offset="100%" stop-color="{{ well_bottom }}"/>
 </linearGradient>
 
-{# Chrome blue title gradient (unused in stats hero but available for consistency) #}
-<linearGradient id="{{ uid }}-ct-title" x1="0" y1="0" x2="1" y2="0">
-  <stop offset="0%" stop-color="#5A8AAA"/>
-  <stop offset="15%" stop-color="#A8D4F0"/>
-  <stop offset="35%" stop-color="#D8ECF8"/>
-  <stop offset="50%" stop-color="#FFFFFF"/>
-  <stop offset="65%" stop-color="#D8ECF8"/>
-  <stop offset="85%" stop-color="#A8D4F0"/>
-  <stop offset="100%" stop-color="#5A8AAA"/>
-</linearGradient>
-
-{# Icy silver gradient for hero value #}
+{# Hero value gradient — genome hero_text_gradient (required field
+   for chrome paradigm). chrome_text_gradient is an optional cascade
+   step retained for genomes that only declare the title gradient and
+   want it reused for the hero zone. #}
 <linearGradient id="{{ uid }}-ct-hero" x1="0" y1="0" x2="1" y2="0">
-  <stop offset="0%" stop-color="#94A3B8"/>
-  <stop offset="20%" stop-color="#CBD5E1"/>
-  <stop offset="40%" stop-color="#F1F5F9"/>
-  <stop offset="50%" stop-color="#FFFFFF"/>
-  <stop offset="60%" stop-color="#F1F5F9"/>
-  <stop offset="80%" stop-color="#CBD5E1"/>
-  <stop offset="100%" stop-color="#94A3B8"/>
+{% for stop in (hero_text_gradient if hero_text_gradient else chrome_text_gradient) %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
 </linearGradient>
 
-{# Cyan divider gradient #}
+{# Separator — genome-derived accent, opacity-ramped. specular_light
+   sourced from genome.highlight_color (required for chrome paradigm). #}
 <linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="1" y2="0">
-  <stop offset="0%" stop-color="#5BA3D4" stop-opacity="0"/>
-  <stop offset="30%" stop-color="#5BA3D4" stop-opacity="0.35"/>
-  <stop offset="50%" stop-color="#A8D4F0" stop-opacity="0.5"/>
-  <stop offset="70%" stop-color="#5BA3D4" stop-opacity="0.35"/>
-  <stop offset="100%" stop-color="#5BA3D4" stop-opacity="0"/>
+  <stop offset="0%"   stop-color="var(--dna-signal)" stop-opacity="0"/>
+  <stop offset="30%"  stop-color="var(--dna-signal)" stop-opacity="0.35"/>
+  <stop offset="50%"  stop-color="{{ specular_light }}" stop-opacity="0.5"/>
+  <stop offset="70%"  stop-color="var(--dna-signal)" stop-opacity="0.35"/>
+  <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0"/>
 </linearGradient>
 
-{# Cool-only chrome bar gradient #}
-<linearGradient id="{{ uid }}-bar" x1="0" y1="187" x2="0" y2="222" gradientUnits="userSpaceOnUse">
-  <stop offset="0%" stop-color="#C8DAE6"/>
-  <stop offset="18%" stop-color="#6AACC8"/>
-  <stop offset="38%" stop-color="#3A7EA8"/>
-  <stop offset="62%" stop-color="#1A4A6E"/>
-  <stop offset="82%" stop-color="#0A2540"/>
-  <stop offset="100%" stop-color="#000A14"/>
-</linearGradient>
-
-{# Rim sweep #}
+{# Rim sweep — genome highlight_color drives the shimmer band. #}
 <linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="1" y2="0">
-  <stop offset="0%"  stop-color="#A8D4F0" stop-opacity="0"/>
-  <stop offset="35%" stop-color="#A8D4F0" stop-opacity="0"/>
-  <stop offset="46%" stop-color="#C8DAE6" stop-opacity="0.3"/>
-  <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.6"/>
-  <stop offset="54%" stop-color="#C8DAE6" stop-opacity="0.3"/>
-  <stop offset="65%" stop-color="#A8D4F0" stop-opacity="0"/>
-  <stop offset="100%" stop-color="#A8D4F0" stop-opacity="0"/>
+  <stop offset="0%"   stop-color="{{ specular_light }}" stop-opacity="0"/>
+  <stop offset="35%"  stop-color="{{ specular_light }}" stop-opacity="0"/>
+  <stop offset="46%"  stop-color="{{ specular_light }}" stop-opacity="0.3"/>
+  <stop offset="50%"  stop-color="#FFFFFF" stop-opacity="0.6"/>
+  <stop offset="54%"  stop-color="{{ specular_light }}" stop-opacity="0.3"/>
+  <stop offset="65%"  stop-color="{{ specular_light }}" stop-opacity="0"/>
+  <stop offset="100%" stop-color="{{ specular_light }}" stop-opacity="0"/>
   <animate attributeName="x1" values="-0.4;1.0;-0.4" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
-  <animate attributeName="x2" values="0.4;1.8;0.4" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
+  <animate attributeName="x2" values="0.4;1.8;0.4"  dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
 </linearGradient>
 
 <filter id="{{ uid }}-bevel" x="-3%" y="-4%" width="106%" height="112%">
-  <feDropShadow dx="0" dy="2.5" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
-  <feSpecularLighting in="SourceAlpha" surfaceScale="1.8" specularConstant="0.6" specularExponent="22" lighting-color="#A8D4F0" result="spec">
-    <feDistantLight azimuth="225" elevation="45"/>
-  </feSpecularLighting>
-  <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
-  <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="0.2" k4="0"/>
+  <feDropShadow dx="0" dy="2.5" stdDeviation="4" flood-color="#000000" flood-opacity="{{ bevel_shadow_opacity | default('0.5') }}"/>
 </filter>
 
 <filter id="{{ uid }}-horizon-glow" x="-5%" y="-400%" width="110%" height="900%">
@@ -98,34 +69,26 @@
   </feMerge>
 </filter>
 
-{# NOTE: the magazine specimen uses an feGaussianBlur-based `barglow` filter
-   for the activity bars. That filter rasterizes to a pixel buffer and then
-   resamples when the SVG is downscaled on mobile, which produces a soft,
-   blurry appearance on small viewports. The stats card is commonly embedded
-   in README profiles viewed on phones, so we replace the filter with a
-   pure-vector 2-layer halo (sibling rects at decreasing opacity) — same
-   cyan halo aesthetic, crisp at every scale. #}
-
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}" rx="6"/></clipPath>
 
 <style>
   {{ font_faces | safe }}
   text { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); shape-rendering: geometricPrecision; }
-  .{{ uid }}-identity { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; fill: #E0ECF6; }
-  .{{ uid }}-hero { font-family: var(--dna-font-display, 'Orbitron', sans-serif); font-size: 44px; font-weight: 900; letter-spacing: -0.01em; fill: url(#{{ uid }}-ct-hero); }
-  .{{ uid }}-hero-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7.5px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: #A8D4F0; opacity: 0.9; }
-  .{{ uid }}-mval { font-family: var(--dna-font-display, 'Orbitron', sans-serif); font-size: 20px; font-weight: 900; letter-spacing: 0.01em; fill: #E0ECF6; }
-  .{{ uid }}-mlabel { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; fill: #A8C0D0; }
-  .{{ uid }}-act-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7.5px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; fill: #A8C0D0; opacity: 0.95; }
-  .{{ uid }}-foot { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7px; font-weight: 600; letter-spacing: 0.14em; fill: var(--dna-ink-muted, #7A9AB8); opacity: 0.8; }
-  .{{ uid }}-brand { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7px; font-weight: 700; letter-spacing: 0.28em; fill: var(--dna-ink-muted, #7A9AB8); opacity: 0.65; }
+  .{{ uid }}-identity   { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-hero       { font-family: var(--dna-font-display, 'Orbitron', sans-serif); font-size: 44px; font-weight: 900; letter-spacing: -0.01em; fill: url(#{{ uid }}-ct-hero); }
+  .{{ uid }}-hero-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7.5px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-ink-muted); opacity: 0.9; }
+  .{{ uid }}-mval       { font-family: var(--dna-font-display, 'Orbitron', sans-serif); font-size: 20px; font-weight: 900; letter-spacing: 0.01em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-mlabel     { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; fill: var(--dna-ink-muted); }
+  .{{ uid }}-act-label  { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7.5px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-ink-muted); opacity: 0.95; }
+  .{{ uid }}-foot       { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7px; font-weight: 600; letter-spacing: 0.14em; fill: var(--dna-ink-muted); opacity: 0.8; }
+  .{{ uid }}-brand      { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 7px; font-weight: 700; letter-spacing: 0.28em; fill: var(--dna-ink-muted); opacity: 0.65; }
   [data-hw-status="active"], [data-hw-status="passing"] { --hw-core: var(--dna-status-passing-core, #22C55E); }
   [data-hw-status="warning"] { --hw-core: var(--dna-status-warning-core, #F59E0B); }
   [data-hw-status="critical"], [data-hw-status="failing"] { --hw-core: var(--dna-status-failing-core, #EF4444); }
-  @keyframes {{ uid }}-breathe { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+  @keyframes {{ uid }}-breathe       { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
   @keyframes {{ uid }}-horizon-pulse { 0%,100% { opacity: 0.75; } 50% { opacity: 1; } }
   .{{ uid }}-dia, .{{ uid }}-present { animation: {{ uid }}-breathe 2.618s ease-in-out infinite; will-change: opacity; }
-  .{{ uid }}-horizon { animation: {{ uid }}-horizon-pulse 4.236s ease-in-out infinite; will-change: opacity; }
+  .{{ uid }}-horizon                 { animation: {{ uid }}-horizon-pulse 4.236s ease-in-out infinite; will-change: opacity; }
   @media (prefers-reduced-motion: reduce) {
     .{{ uid }}-dia, .{{ uid }}-present, .{{ uid }}-horizon { animation: none !important; opacity: 0.85; }
     animate, animateTransform { display: none !important; }

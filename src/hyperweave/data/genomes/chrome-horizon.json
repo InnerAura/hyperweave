@@ -62,8 +62,6 @@
   ],
   "well_top": "#020617",
   "well_bottom": "#0B1121",
-  "specular_sweep_dur": "12s",
-  "specular_sweep_peak": "0.08",
   "highlight_color": "#A8D4F0",
   "highlight_opacity": "0.08",
   "chrome_text_gradient": [
@@ -118,10 +116,6 @@
     "mono_font": "'JetBrains Mono','Courier New','SF Mono',ui-monospace,monospace",
     "hero_weight": 900,
     "weight_hierarchy": "900/700/500/400"
-  },
-  "text_metrics": {
-    "badge_value_width_factor": 1.35,
-    "badge_label_width_factor": 1.0
   },
   "material": {
     "surface": "metallic",

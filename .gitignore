@@ -27,7 +27,6 @@ htmlcov/
 archive/
 .claude/
 # CLAUDE.md
-docs/_notes/
 outputs/
 specs/
 # scripts/ is version-controlled (tests/test_proofset.py imports generate_proofset.py)

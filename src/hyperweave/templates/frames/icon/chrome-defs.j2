@@ -12,14 +12,14 @@
 </filter>
 {% if icon_variant | default('binary-circular') == 'binary-square' %}
 <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-  <stop offset="0%" stop-color="{{ well_top | default('#0A1822') }}"/>
-  <stop offset="100%" stop-color="{{ well_bottom | default('#060E16') }}"/>
+  <stop offset="0%" stop-color="{{ well_top }}"/>
+  <stop offset="100%" stop-color="{{ well_bottom }}"/>
 </linearGradient>
 <clipPath id="{{ uid }}-clip"><rect width="64" height="64" rx="14"/></clipPath>
 {% else %}
 <radialGradient id="{{ uid }}-well" cx="0.5" cy="0.45" r="0.55">
-  <stop offset="0%" stop-color="{{ well_top | default('#0C1E2E') }}"/>
-  <stop offset="100%" stop-color="{{ well_bottom | default('#060E16') }}"/>
+  <stop offset="0%" stop-color="{{ well_top }}"/>
+  <stop offset="100%" stop-color="{{ well_bottom }}"/>
 </radialGradient>
 <clipPath id="{{ uid }}-top-clip"><rect x="14" y="2" width="36" height="16"/></clipPath>
 {% endif %}

@@ -1,0 +1,46 @@
+id: default
+name: Default
+description: >
+  Baseline paradigm. The default partials alias the brutalist partials
+  (see templates/frames/*/default-*.j2), so rendering is monospace-first
+  via var(--dna-font-mono). Font families declared here MUST match what
+  the templates actually render or resolve_badge's width math drifts
+  from the browser's layout — the ~9% narrower Inter measurement vs
+  actual JetBrains Mono caused value text to run into the status
+  indicator (v0.3.1 regression fix).
+requires_genome_fields: []
+
+badge:
+  label_font_family: JetBrains Mono
+  value_font_family: JetBrains Mono
+  label_font_size: 11
+  value_font_size: 11
+  value_font_weight: 700
+
+strip:
+  value_font_size: 18
+  value_font_family: JetBrains Mono
+  label_font_size: 7
+  label_font_family: JetBrains Mono
+  divider_render_mode: class
+  status_shape_rendering: crispEdges
+
+banner:
+  hero_font_family: JetBrains Mono
+  hero_font_weight: 800
+  hero_skew_deg: 0.0
+  hero_italic: false
+
+chart:
+  viewport_x: 80
+  viewport_y: 150
+  viewport_w: 760
+  viewport_h: 245
+
+stats:
+  card_height: 260
+  embeds_chart: false
+
+icon:
+  supported_shapes: [square, circle]
+  default_shape: square

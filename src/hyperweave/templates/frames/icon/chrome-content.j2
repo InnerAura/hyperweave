@@ -11,12 +11,12 @@
 </g>
 <rect x="3.5" y="3.5" width="57" height="57" rx="11" fill="none" stroke="#000510" stroke-width="0.8"/>
 <rect x="4" y="4" width="56" height="56" rx="10" fill="url(#{{ uid }}-well)"/>
-<rect x="10" y="4" width="44" height="0.8" rx="0.4" fill="{{ specular_light | default('#6AACC8') }}" opacity="0.12"/>
+<rect x="10" y="4" width="44" height="0.8" rx="0.4" fill="{{ specular_light }}" opacity="0.12"/>
 
 {% if glyph_path %}
 <g transform="translate(16,16)">
   <svg viewBox="{{ glyph_viewbox }}" width="32" height="32">
-    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default('#E0ECF6') }}"/>
+    <path d="{{ glyph_path }}" fill="{{ glyph_fill }}"/>
   </svg>
 </g>
 {% endif %}
@@ -27,13 +27,13 @@
 <circle cx="32" cy="32" r="26.5" fill="url(#{{ uid }}-well)"/>
 <circle cx="32" cy="32" r="26.5" fill="none" stroke="#000510" stroke-width="0.5"/>
 <g clip-path="url(#{{ uid }}-top-clip)">
-  <circle cx="32" cy="32" r="26" fill="none" stroke="{{ specular_light | default('#6AACC8') }}" stroke-width="0.8" opacity="0.15"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="{{ specular_light }}" stroke-width="0.8" opacity="0.15"/>
 </g>
 
 {% if glyph_path %}
 <g transform="translate(17,17)">
   <svg viewBox="{{ glyph_viewbox }}" width="30" height="30">
-    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default('#E0ECF6') }}"/>
+    <path d="{{ glyph_path }}" fill="{{ glyph_fill }}"/>
   </svg>
 </g>
 {% endif %}

@@ -1,0 +1,42 @@
+id: brutalist
+name: Brutalist
+description: >
+  Flat plate, class-based separators, sharp geometric typography.
+  Used by brutalist-emerald's stats/chart frames (and by any future
+  flat-matte genome). No chrome-material requirements.
+requires_genome_fields: []
+
+badge:
+  label_font_family: JetBrains Mono
+  value_font_family: JetBrains Mono
+  label_font_size: 11
+  value_font_size: 11
+  value_font_weight: 700
+
+strip:
+  value_font_size: 18
+  value_font_family: Inter
+  label_font_size: 7
+  label_font_family: JetBrains Mono
+  divider_render_mode: class
+  status_shape_rendering: crispEdges
+
+banner:
+  hero_font_family: Inter
+  hero_font_weight: 900
+  hero_skew_deg: 0.0
+  hero_italic: false
+
+chart:
+  viewport_x: 80
+  viewport_y: 150
+  viewport_w: 760
+  viewport_h: 245
+
+stats:
+  card_height: 280
+  embeds_chart: false
+
+icon:
+  supported_shapes: [circle, square]
+  default_shape: square

@@ -64,13 +64,34 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     }
 
     resolver_fn = frame_resolvers.get(spec.type, resolve_badge)
-    frame_result = resolver_fn(spec, genome, profile, glyph_data=glyph_data)
+
+    # Resolve the paradigm spec for this frame type and hand it to the
+    # resolver as a typed kwarg. Phase 4A: eliminates in-resolver
+    # ``if paradigm == "chrome"`` string comparisons — resolvers read
+    # ``paradigm_spec.{frame}.{key}`` directly. A genome's paradigms dict
+    # routes the frame type to a paradigm slug; unknown slugs fall back
+    # to the ``default`` paradigm so compose never crashes on a typo.
+    from hyperweave.config.registry import get_paradigms
+
+    paradigm_slug = _resolve_paradigm(genome, spec.type, default="default")
+    all_paradigms = get_paradigms()
+    paradigm_spec = all_paradigms.get(paradigm_slug) or all_paradigms["default"]
+    frame_result = resolver_fn(spec, genome, profile, glyph_data=glyph_data, paradigm_spec=paradigm_spec)
 
     # Session 2A+2B: inject paradigm + structural hints into every frame_context
     # (Principle 26 dispatch + Principle 24 template-genome interface).
     # Templates read `paradigm` to resolve {frame_type}/{paradigm}-content.j2,
     # and `structural` for per-frame layout hints (stroke_linejoin, etc.).
     ctx = dict(frame_result.get("context", {}))
+    # v0.2.6 centralization: profile visual context (envelope/well/specular/
+    # chrome+hero text gradients) applied universally at the dispatcher.
+    # Replaces 8 manual _genome_material_context(...) calls previously scattered
+    # across badge/strip/banner/icon/divider/marquee/stats/chart resolvers —
+    # the forgetting of which caused Bug D (stats + chart rendered chrome-horizon
+    # envelopes regardless of genome). setdefault semantics: a frame resolver
+    # that legitimately pre-computes one of these keys still wins.
+    for _k, _v in _genome_material_context(genome, profile).items():
+        ctx.setdefault(_k, _v)
     ctx.setdefault("paradigm", _resolve_paradigm(genome, spec.type, default="default"))
     ctx.setdefault("structural", genome.get("structural") or {})
     ctx.setdefault("genome_typography", genome.get("typography") or {})
@@ -99,6 +120,7 @@ def resolve_badge(
     spec: ComposeSpec,
     genome: dict[str, Any],
     profile: dict[str, Any],
+    paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve badge dimensions and layout.
@@ -131,34 +153,38 @@ def resolve_badge(
     value_raw = spec.value or ""
     label_display = label_raw.upper() if label_uppercase else label_raw
 
-    # Measure rendered text widths
+    # Per-zone font family comes from paradigm config — chrome paradigm
+    # specifies JetBrains Mono for labels + Orbitron for values, matching
+    # the CSS the template applies. brutalist/default specify JBMono or
+    # Inter. font_weight pulled from paradigm config for the value zone.
+    _label_family = paradigm_spec.badge.label_font_family if paradigm_spec else "Inter"
+    _value_family = paradigm_spec.badge.value_font_family if paradigm_spec else "Inter"
+    _value_weight = paradigm_spec.badge.value_font_weight if paradigm_spec else 700
+
     lw = (
         measure_text(
             label_display,
+            font_family=_label_family,
             font_size=font_size,
-            bold=not use_mono,
-            monospace=use_mono,
+            font_weight=400 if use_mono else 700,
         )
         if label_display
         else 0.0
     )
-    vw = measure_text(value_raw, font_size=font_size, bold=True, monospace=use_mono) if value_raw else 0.0
+    vw = (
+        measure_text(
+            value_raw,
+            font_family=_value_family,
+            font_size=font_size,
+            font_weight=_value_weight,
+        )
+        if value_raw
+        else 0.0
+    )
 
-    # Monospace labels get letter-spacing 0.06em
+    # Monospace labels get letter-spacing 0.06em (CSS declared in chrome-defs).
     if use_mono and label_display:
         lw += len(label_display) * font_size * 0.06
-
-    # Empirical width factors — the Inter/mono LUTs approximate actual rendered
-    # width, but genomes can override per-zone to match their declared fonts.
-    # chrome-horizon, for example, renders badge values in Orbitron (~1.35x
-    # Inter). New genomes should measure their display font and declare their
-    # own `text_metrics` to avoid value-zone overflow. Defaults preserve the
-    # pre-v0.2.3 behavior so existing genomes are unaffected.
-    tm = genome.get("text_metrics", {})
-    default_label_factor = 1.15 if not use_mono else 1.0
-    default_value_factor = 1.10 if not use_mono else 1.0
-    lw *= tm.get("badge_label_width_factor", default_label_factor)
-    vw *= tm.get("badge_value_width_factor", default_value_factor)
 
     has_glyph = bool(spec.glyph or spec.custom_glyph_svg)
 
@@ -196,9 +222,9 @@ def resolve_badge(
     value_x = round((right_x + val_pad_l + indicator_x) / 2, 1)
     text_y = round(height * text_y_factor, 1)
 
-    # Profile-specific rendering context (envelope, well, specular, etc.)
-    profile_ctx = _profile_visual_context(genome, profile)
-
+    # Profile visual context (envelope, well, specular, chrome text gradients)
+    # is now applied universally by the dispatcher at resolve() via
+    # _genome_material_context — no per-resolver call needed.
     return {
         "width": total_w,
         "height": height,
@@ -225,7 +251,6 @@ def resolve_badge(
             "use_mono": use_mono,
             "label_uppercase": label_uppercase,
             "inset": inset,
-            **profile_ctx,
         },
     }
 
@@ -236,6 +261,7 @@ def resolve_strip(
     profile: dict[str, Any],
     *,
     glyph_data: dict[str, Any] | None = None,
+    paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve strip dimensions and layout.
@@ -262,7 +288,7 @@ def resolve_strip(
     identity = spec.title or ""
     from hyperweave.core.text import measure_text
 
-    id_text_w = measure_text(identity.upper(), font_size=11, bold=True, monospace=True)
+    id_text_w = measure_text(identity.upper(), font_family="JetBrains Mono", font_size=11, font_weight=700)
     # Account for letter-spacing 0.18em on identity text
     id_text_w += len(identity) * 11 * 0.18
     first_divider_x = max(int(identity_x + id_text_w + 14), 80)  # 14px right padding, min 80
@@ -276,24 +302,27 @@ def resolve_strip(
     # lives in the dedicated right-edge ``status_zone``, not per-cell.
     cell_pad = 20  # horizontal breathing room inside each cell
 
-    # Typography params for width measurement. For chrome paradigm these
-    # should match the CSS declared in strip/chrome-defs.j2 (Orbitron 17px
-    # 900 for value, JetBrains Mono 9px 600 for label). Other paradigms
-    # fall back to profile-declared sizes.
-    paradigm = (genome.get("paradigms") or {}).get("strip", "default")
-    if paradigm == "chrome":
-        value_size = 17
-        label_size = 9
+    # Typography params sourced from paradigm config — font sizes, families,
+    # and weights come from data/paradigms/{slug}.yaml so adding a new
+    # paradigm requires zero Python edits.
+    strip_cfg = paradigm_spec.strip if paradigm_spec else None
+    if strip_cfg is not None:
+        value_size = strip_cfg.value_font_size
+        label_size = strip_cfg.label_font_size
+        value_family = strip_cfg.value_font_family
+        label_family = strip_cfg.label_font_family
     else:
         value_size = profile.get("strip_metric_value_size", 18)
         label_size = profile.get("strip_metric_label_size", 7)
+        value_family = "Inter"
+        label_family = "JetBrains Mono"
 
     widest_cell = min_metric_pitch
     for metric in metrics:
         raw_value = str(metric.get("value", ""))
         raw_label = str(metric.get("label", "")).upper()
-        value_w = measure_text(raw_value, font_size=value_size, bold=True, monospace=False)
-        label_w = measure_text(raw_label, font_size=label_size, bold=False, monospace=True)
+        value_w = measure_text(raw_value, font_family=value_family, font_size=value_size, font_weight=700)
+        label_w = measure_text(raw_label, font_family=label_family, font_size=label_size, font_weight=400)
         cell_content_w = max(label_w, value_w)
         needed = int(cell_content_w + cell_pad)
         if needed > widest_cell:
@@ -339,7 +368,16 @@ def resolve_strip(
         "strip_divider_color": profile.get("strip_divider_color", "var(--dna-border)"),
         "strip_divider_opacity": profile.get("strip_divider_opacity", 1.0),
     }
-    ctx.update(_profile_visual_context(genome, profile))
+    # Phase 4A: surface paradigm-driven divider/status rendering context so
+    # templates branch on resolved values (``divider_render_mode``,
+    # ``status_shape_rendering``) instead of comparing ``paradigm == "chrome"``.
+    if strip_cfg is not None:
+        ctx["divider_render_mode"] = strip_cfg.divider_render_mode
+        ctx["status_shape_rendering"] = strip_cfg.status_shape_rendering
+    else:
+        ctx["divider_render_mode"] = "class"
+        ctx["status_shape_rendering"] = "crispEdges"
+    # Profile visual context now injected centrally by the dispatcher.
 
     return {
         "width": width,
@@ -353,6 +391,7 @@ def resolve_banner(
     spec: ComposeSpec,
     genome: dict[str, Any],
     profile: dict[str, Any],
+    paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve banner dimensions.
@@ -374,7 +413,7 @@ def resolve_banner(
     max_width = (w - 80) if compact else (w - 120)  # margin each side
 
     # Scale font size down if title overflows available width
-    text_w = measure_text(title, font_size=base_fs, bold=True)
+    text_w = measure_text(title, font_family="Inter", font_size=base_fs, font_weight=700)
     ls_reduction = 0.04 * base_fs * max(len(title) - 1, 0)  # -0.04em letter-spacing
     effective_w = text_w - ls_reduction
     title_fs = max(int(base_fs * max_width / effective_w), 42) if effective_w > max_width else base_fs
@@ -386,7 +425,7 @@ def resolve_banner(
         "banner_variant": "compact" if compact else "full",
         "title_font_size": title_fs,
     }
-    ctx.update(_profile_visual_context(genome, profile))
+    # Profile visual context now injected centrally by the dispatcher.
 
     return {
         "width": w,
@@ -400,6 +439,7 @@ def resolve_icon(
     spec: ComposeSpec,
     genome: dict[str, Any],
     profile: dict[str, Any],
+    paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve icon dimensions.
@@ -410,17 +450,20 @@ def resolve_icon(
       - binary-circular: chrome envelope ring, circle frame
       - binary-square: chrome envelope fill, rounded-rect frame
 
-    Shape selection: profile defines supported shapes, spec.shape overrides.
+    Shape selection: paradigm declares supported shapes and default;
+    ``spec.shape`` overrides the default when valid.
     """
     icon_label = spec.glyph or spec.title or ""
     profile_id = profile.get("id", "brutalist")
 
-    # Genome-aware shape defaults (specimen-backed only)
-    _PROFILE_SHAPES: dict[str, tuple[list[str], str]] = {
-        "brutalist": (["circle", "square"], "square"),
-        "chrome": (["square", "circle"], "circle"),
-    }
-    supported, default_shape = _PROFILE_SHAPES.get(profile_id, (["square", "circle"], "square"))
+    # Shape availability + default now live in data/paradigms/{slug}.yaml —
+    # no more hardcoded profile→shapes map in Python.
+    if paradigm_spec is not None:
+        supported = list(paradigm_spec.icon.supported_shapes)
+        default_shape = paradigm_spec.icon.default_shape
+    else:
+        supported = ["square", "circle"]
+        default_shape = "square"
     raw_shape = spec.shape if spec.shape else default_shape
     shape = raw_shape if raw_shape in supported else default_shape
 
@@ -445,7 +488,7 @@ def resolve_icon(
         "genome_border": genome.get("stroke", "#000000"),
         "genome_signal_dim": genome.get("accent_complement", "#A78BFA"),
     }
-    ctx.update(_profile_visual_context(genome, profile))
+    # Profile visual context now injected centrally by the dispatcher.
 
     return {
         "width": 64,
@@ -477,7 +520,7 @@ def resolve_divider(
         "divider_variant": variant,
         "divider_label": spec.value or "",
     }
-    ctx.update(_profile_visual_context(genome, profile))
+    # Profile visual context now injected centrally by the dispatcher.
 
     return {
         "width": w,
@@ -500,10 +543,14 @@ def resolve_marquee(
       vertical   — 400x268, telemetry feed with timestamped events
       horizontal — 800x40,  LIVE ticker with brand items
     """
-    chrome_ctx = _profile_visual_context(genome, profile)
-    # Resolved hex colors for gradient stops (var() is unreliable inside <stop>)
-    chrome_ctx["signal_hex"] = genome.get("accent", "#10B981")
-    chrome_ctx["surface_hex"] = genome.get("surface_0", genome.get("surface", "#0A0A0A"))
+    # Marquee sub-resolvers only need signal_hex/surface_hex as hex-resolved
+    # carriers for <stop> attributes (var() is unreliable inside SVG stops).
+    # The rest of the profile visual context (envelope/well/etc.) is merged
+    # universally by the dispatcher, so no longer needed here.
+    chrome_ctx: dict[str, Any] = {
+        "signal_hex": genome.get("accent", "#10B981"),
+        "surface_hex": genome.get("surface_0", genome.get("surface", "#0A0A0A")),
+    }
 
     if spec.type == FrameType.MARQUEE_COUNTER:
         return _resolve_counter(spec, chrome_ctx, profile)
@@ -525,30 +572,25 @@ def _measure_row_content_width(row: dict[str, Any]) -> float:
     fs = float(row.get("font_size", 12))
     ls_px = float(row.get("letter_spacing", "0") or "0")
     gap = float(row.get("gap", 28))
-    is_mono = "mono" in row.get("font_family", "").lower()
+    row_family_raw = row.get("font_family", "")
     start_x = float(row.get("text_start_x", 20))
     sep = row.get("separator", "")
 
-    # Display/serif fonts (Georgia, Impact, Arial Black) are wider than the Inter LUT.
-    # Scale measured widths to match actual rendering. Mono fonts are already calibrated.
-    font_family_raw = row.get("font_family", "").lower()
-    if is_mono:
-        font_scale = 1.0  # mono LUT already calibrated at 7.2px
-    elif "display" in font_family_raw or "serif" in font_family_raw or "impact" in font_family_raw:
-        font_scale = 1.30  # display/serif fonts are ~30% wider than Inter
-    else:
-        font_scale = 1.15  # system-ui / sans-serif are ~15% wider than Inter
-
+    # Row family is passed directly to measure_text; unknown families fall
+    # back to Inter + one-shot warning via FontRegistry — no manual
+    # font_scale heuristic. When cells override font_family, their value wins.
     total = start_x
     for i, cell in enumerate(row.get("cells", [])):
         text = cell.get("text", "")
         cell_fs = float(cell.get("font_size", fs))
-        cell_mono = is_mono and "font_family" not in cell
+        cell_family = cell.get("font_family", row_family_raw) or "Inter"
         cell_bold = int(cell.get("font_weight", row.get("font_weight", "400")) or "400") >= 700
-        w = measure_text(text, font_size=cell_fs, bold=cell_bold, monospace=cell_mono)
-        # Apply font-family-aware scale for non-mono fonts
-        if not cell_mono:
-            w *= font_scale
+        w = measure_text(
+            text,
+            font_family=cell_family,
+            font_size=cell_fs,
+            font_weight=700 if cell_bold else 400,
+        )
         # Add letter-spacing between characters (applied per-tspan, not parent <text>)
         if len(text) > 1:
             w += ls_px * (len(text) - 1)
@@ -561,7 +603,7 @@ def _measure_row_content_width(row: dict[str, Any]) -> float:
         # Add separator + gap after cell (if separator between cells)
         # Separator tspans have NO letter-spacing (architectural fix: ls on word tspans only)
         if sep and i < len(row.get("cells", [])) - 1:
-            sep_w = measure_text(sep, font_size=fs, monospace=cell_mono)
+            sep_w = measure_text(sep, font_family=cell_family, font_size=fs)
             total += gap + sep_w
 
     return total
@@ -1721,38 +1763,35 @@ def _load_rule(rule_id: str) -> dict[str, Any]:
         return {"id": rule_id, "svg_fragment": ""}
 
 
-def _profile_visual_context(genome: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
-    """Build profile-specific visual rendering context from genome data.
+def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+    """Project the genome's material/chromatic fields into template context.
 
-    Returns envelope, well, specular, and material properties that the genome
-    defines. Templates guard on data presence ({% if envelope_stops %}), not
-    on profile identity. A genome without envelope_stops gets no envelope —
-    regardless of which profile it belongs to.
+    After the Phase 2 strict-fallback refactor, every chrome-paradigm
+    required field (envelope_stops, well_top, well_bottom,
+    chrome_text_gradient, hero_text_gradient, highlight_color) is
+    validated at load time for genomes that opt into the chrome
+    paradigm, so chrome-defs templates no longer carry specimen-color
+    ``| default(...)`` fallbacks. Non-chrome genomes simply don't
+    route through chrome templates, so empty values here are benign.
+
+    Renamed from ``_profile_visual_context`` — the function has always
+    read from ``genome``, not ``profile``. The old name was misleading.
     """
-    env_stops = genome.get("envelope_stops", [])
     corner_raw = str(genome.get("corner", "4px")).replace("px", "")
-    ctx = {
-        "envelope_stops": env_stops,
+    return {
+        "envelope_stops": genome.get("envelope_stops", []),
         "well_top": genome.get("well_top", ""),
         "well_bottom": genome.get("well_bottom", ""),
         "specular_light": genome.get("highlight_color", ""),
-        "specular_sweep_dur": genome.get("specular_sweep_dur", ""),
-        "specular_sweep_peak": genome.get("specular_sweep_peak", ""),
         "highlight_opacity": genome.get("highlight_opacity", ""),
         "bevel_shadow_opacity": genome.get("shadow_opacity", ""),
         "chrome_corner": corner_raw,
         "chrome_text_gradient": genome.get("chrome_text_gradient", []),
+        "hero_text_gradient": genome.get("hero_text_gradient", []),
         "chrome_rhythm": genome.get("rhythm_base", ""),
         "glyph_fill": genome.get("glyph_inner", ""),
         "light_mode": genome.get("light_mode"),
     }
-    # Badge bevel extras -- only when genome provides bevel config
-    if genome.get("highlight_color"):
-        ctx["bevel_spec_constant"] = genome.get("bevel_spec_constant", "0.8")
-        ctx["bevel_spec_exponent"] = genome.get("bevel_spec_exponent", "25.0")
-        ctx["chrome_rhythm"] = genome.get("rhythm_base", "6s")
-        ctx["light_mode"] = genome.get("light_mode")
-    return ctx
 
 
 def _lighten_hex(hex_color: str) -> str:

@@ -24,11 +24,16 @@ if TYPE_CHECKING:
 
 
 _STATS_WIDTH = 495
-_STATS_HEIGHTS: dict[str, int] = {"brutalist": 280, "chrome": 260}
 
 
 def _format_count(n: int) -> str:
-    """Compact integer formatting: 2850 → '2,850', 12847 → '12.8K', 1203 → '1,203'."""
+    """Compact integer formatting with K/M/B cascade.
+
+    0..9,999       → '2,850'   (comma-grouped)
+    10K..999,999   → '12.8K'
+    1M..999M       → '45.3M'
+    1B+            → '2.1B'
+    """
     if n is None:
         return "—"
     try:
@@ -37,8 +42,12 @@ def _format_count(n: int) -> str:
         return "—"
     if n <= 0:
         return "0"
-    if n >= 10000:
-        return f"{n / 1000:.1f}K".rstrip("0").rstrip(".")
+    if n >= 1_000_000_000:
+        return f"{n / 1_000_000_000:.1f}B".rstrip("0").rstrip(".")
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M".rstrip("0").rstrip(".")
+    if n >= 10_000:
+        return f"{n / 1_000:.1f}K".rstrip("0").rstrip(".")
     return f"{n:,}"
 
 
@@ -70,6 +79,7 @@ def resolve_stats(
     spec: ComposeSpec,
     genome: dict[str, Any],
     profile: dict[str, Any],
+    paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
     """Build the stats card context for the chosen paradigm."""
@@ -118,12 +128,50 @@ def resolve_stats(
         stats_context["data_hw_status"] = "stale"
         stats_context["status"] = "stale"
 
-    # Embedded compact chart for the chrome paradigm (and any future
-    # paradigm that wants one). The chart engine is pure — no I/O — so we
-    # can call it inside the resolver without violating Invariant 1.
-    paradigm = genome.get("paradigms", {}).get("stats", "brutalist")
-    if paradigm == "chrome":
-        embed_vp = Viewport(x=240, y=170, w=220, h=70)
+    # Profile visual context (envelope/well/chrome+hero text gradients) is
+    # now injected universally by the dispatcher at resolver.resolve(), so
+    # per-frame resolvers no longer need to call _genome_material_context.
+
+    # Spatial layout math: measure each metric value at the nominal font
+    # size (20px Orbitron, bold) and cap with SVG textLength when a value
+    # would overflow its column budget. Prevents "409457.1K" from blowing
+    # past the PRS column on torvalds-tier accounts. Budget = column_width
+    # minus 12px breathing room (124px columns, 112px interior).
+    from hyperweave.core.text import measure_text
+
+    _VALUE_FONT_SIZE = 20
+    _COLUMN_BUDGET = 112
+    # Stats value font family comes from paradigm config (chrome → Orbitron,
+    # brutalist → Inter). Phase 3 extended measure_text to be font-aware;
+    # Phase 4A routes the decision through paradigm_spec instead of an
+    # inline ``genome.paradigms.stats == "chrome"`` branch.
+    _stats_value_family = "Inter"
+    if paradigm_spec is not None:
+        # Chrome paradigm declares Orbitron for its hero value size zone.
+        # For paradigms without a dedicated stats.value_font_family we use
+        # the badge value font family as a sensible proxy (same display font).
+        _stats_value_family = paradigm_spec.badge.value_font_family
+    for key in ("commits", "prs", "issues", "streak"):
+        display = stats_context[f"{key}_display"]
+        natural = measure_text(
+            display,
+            font_family=_stats_value_family,
+            font_size=_VALUE_FONT_SIZE,
+            font_weight=700,
+        )
+        stats_context[f"{key}_text_length"] = _COLUMN_BUDGET if natural > _COLUMN_BUDGET else 0
+    # Username identity (13px, bold) — same overflow guard for the header. Always Inter.
+    identity_natural = measure_text(username, font_family="Inter", font_size=13, font_weight=700)
+    stats_context["identity_text_length"] = 260 if identity_natural > 260 else 0
+
+    # Embedded compact chart — enablement flag + viewport sourced from
+    # paradigm YAML. Chrome paradigm embeds; brutalist does not. Zero
+    # string comparisons in Python; adding a new paradigm that also wants
+    # an embed is purely a YAML change.
+    embeds_chart = bool(paradigm_spec.stats.embeds_chart) if paradigm_spec is not None else False
+    if embeds_chart:
+        ec = paradigm_spec.stats
+        embed_vp = Viewport(x=ec.embed_viewport_x, y=ec.embed_viewport_y, w=ec.embed_viewport_w, h=ec.embed_viewport_h)
         # Zero-guard: never default to a 1200-star synthetic curve. When
         # stars_total is zero, the truthful state is an empty embedded chart.
         stars_int = int(stars_total or 0)
@@ -150,9 +198,10 @@ def resolve_stats(
         stats_context["embedded_chart_viewport_w"] = embed_vp.w
         stats_context["embedded_chart_viewport_h"] = embed_vp.h
 
+    card_height = paradigm_spec.stats.card_height if paradigm_spec is not None else 260
     return {
         "width": _STATS_WIDTH,
-        "height": _STATS_HEIGHTS.get(paradigm, 260),
+        "height": card_height,
         "template": "frames/stats.svg.j2",
         "context": stats_context,
     }

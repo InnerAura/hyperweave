@@ -4,6 +4,9 @@
   "units": "tenths_of_pixels",
   "bold_expansion_factor": 1.07,
   "fallback_width": 60,
+  "aliases": ["inter", "system-ui", "sans-serif", "-apple-system", "blinkmacsystemfont", "segoe ui"],
+  "is_monospace": false,
+  "char_width_px": 0.0,
   "widths": {
     " ": 29,
     "!": 30,

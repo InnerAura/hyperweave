@@ -1,0 +1,54 @@
+id: chrome
+name: Chrome
+description: >
+  Specular/envelope material paradigm. Renders an HDRI-style envelope
+  gradient with animated light sweep, inset well, and chrome-silver text
+  gradients. Any genome opting into this paradigm must declare its own
+  envelope/well/gradient colors — chrome templates no longer carry
+  specimen-color fallbacks.
+requires_genome_fields:
+  - envelope_stops
+  - well_top
+  - well_bottom
+  - chrome_text_gradient
+  - hero_text_gradient
+  - highlight_color
+
+badge:
+  label_font_family: JetBrains Mono
+  value_font_family: Orbitron
+  label_font_size: 11
+  value_font_size: 11
+  value_font_weight: 900
+
+strip:
+  value_font_size: 17
+  value_font_family: Orbitron
+  label_font_size: 9
+  label_font_family: JetBrains Mono
+  divider_render_mode: gradient
+  status_shape_rendering: geometricPrecision
+
+banner:
+  hero_font_family: Impact
+  hero_font_weight: 900
+  hero_skew_deg: -10
+  hero_italic: true
+
+chart:
+  viewport_x: 80
+  viewport_y: 160
+  viewport_w: 750
+  viewport_h: 250
+
+stats:
+  card_height: 260
+  embeds_chart: true
+  embed_viewport_x: 240
+  embed_viewport_y: 170
+  embed_viewport_w: 220
+  embed_viewport_h: 70
+
+icon:
+  supported_shapes: [square, circle]
+  default_shape: circle

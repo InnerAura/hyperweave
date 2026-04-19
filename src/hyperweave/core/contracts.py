@@ -36,8 +36,8 @@ class ArtifactContract:
         profile: ProfileConfig | None = None,
     ) -> int:
         """Compute badge total width in pixels."""
-        label_w = measure_text(label, font_size=BADGE_FONT_SIZE)
-        value_w = measure_text(value, font_size=BADGE_FONT_SIZE, bold=True)
+        label_w = measure_text(label, font_family="Inter", font_size=BADGE_FONT_SIZE)
+        value_w = measure_text(value, font_family="Inter", font_size=BADGE_FONT_SIZE, font_weight=700)
 
         # Left segment: pad + [accent_bar] + [glyph + gap] + label + pad
         accent_w = 0.0
@@ -81,7 +81,7 @@ class ArtifactContract:
             accent_w = profile.strip_accent_width
 
         # Identity section: accent + glyph(24) + gap(8) + title + gap(16)
-        title_w = measure_text(title, font_size=14.0, bold=True)
+        title_w = measure_text(title, font_family="Inter", font_size=14.0, font_weight=700)
         identity_w = accent_w + 24 + 8 + title_w + 16
 
         # Metric cells

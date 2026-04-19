@@ -4,26 +4,30 @@
    removed bevel filter's specular dependency (see chrome-defs.j2 rewrite).
    Mirror of badge/chrome-content.j2 at strip scale. #}
 
-{# Outer rim: full-size rect filled with animated chrome env-map + shadow filter #}
-<rect width="{{ width }}" height="{{ strip_h }}" rx="{{ chrome_corner }}"
-      fill="url(#{{ uid }}-envelope)" filter="url(#{{ uid }}-bevel)"/>
+{# Material stack clipped to frame bounds (badge/stats parity, v0.2.5).
+   Top highlight stays outside the clip — matches badge/chrome-content.j2. #}
+<g clip-path="url(#{{ uid }}-clip)">
+  {# Outer rim: full-size rect filled with animated chrome env-map + shadow filter #}
+  <rect width="{{ width }}" height="{{ strip_h }}" rx="{{ chrome_corner }}"
+        fill="url(#{{ uid }}-envelope)" filter="url(#{{ uid }}-bevel)"/>
 
-{# Thin inset stroke (badge parity: 0.6px interior shading line) #}
-<rect x="1" y="1" width="{{ width - 2 }}" height="{{ strip_h - 2 }}"
-      rx="{{ chrome_corner }}" fill="none"
-      stroke="#000510" stroke-width="0.6"/>
+  {# Thin inset stroke (badge parity: 0.6px interior shading line) #}
+  <rect x="1" y="1" width="{{ width - 2 }}" height="{{ strip_h - 2 }}"
+        rx="{{ chrome_corner }}" fill="none"
+        stroke="#000510" stroke-width="0.6"/>
 
-{# Inner well: dark recessed content area. 2px inset matches badge's well inset
-   ratio (2/22 ≈ 0.09 on badge → ~4.7px on strip; we use 2 for crisper edges). #}
-<rect x="2" y="2" width="{{ width - 4 }}" height="{{ strip_h - 4 }}"
-      rx="2" fill="url(#{{ uid }}-well)"/>
+  {# Inner well: dark recessed content area. 2px inset matches badge's well inset
+     ratio (2/22 ≈ 0.09 on badge → ~4.7px on strip; we use 2 for crisper edges). #}
+  <rect x="2" y="2" width="{{ width - 4 }}" height="{{ strip_h - 4 }}"
+        rx="2" fill="url(#{{ uid }}-well)"/>
 
-{# Chrome accent bar: 4px wide at 0.7 opacity — identical to badge line 11 #}
-<rect x="2" y="2" width="{{ accent_w }}" height="{{ strip_h - 4 }}"
-      fill="url(#{{ uid }}-envelope)" opacity="0.7"/>
+  {# Chrome accent bar: 4px wide at 0.7 opacity — identical to badge line 11 #}
+  <rect x="2" y="2" width="{{ accent_w }}" height="{{ strip_h - 4 }}"
+        fill="url(#{{ uid }}-envelope)" opacity="0.7"/>
+</g>
 
 {# Top highlight — hairline specular line, badge parity.
    Fully vector (no filter), so it stays pixel-crisp on mobile. #}
 <rect x="8" y="2" width="{{ width - 16 }}" height="0.5" rx="0.25"
-      fill="{{ specular_light | default('#6AACC8') }}"
+      fill="{{ specular_light }}"
       opacity="{{ highlight_opacity | default('0.1') }}"/>

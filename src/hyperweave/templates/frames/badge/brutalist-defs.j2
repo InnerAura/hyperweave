@@ -1,5 +1,9 @@
-{# Brutalist badge defs: clip path only. Value zone uses a flat var(--dna-surface-deep)
-   fill in brutalist-content.j2 — brutalist Μ mandates zero gradients on data surfaces. #}
+{# Brutalist badge defs: clip path + @font-face so JetBrains Mono renders
+   at its measured width in viewers that don't respect system font
+   fallbacks. Without the embedded font, system monospace fallback
+   (wider than JBMono) runs the value text into the status indicator —
+   the v0.3.1 regression the Phase 3 font-metrics audit surfaced. #}
 <clipPath id="{{ uid }}-clip">
   <rect width="{{ width }}" height="{{ height }}"/>
 </clipPath>
+<style>{{ font_faces | safe }}</style>

@@ -311,9 +311,43 @@ def test_measure_text_longer_is_wider() -> None:
 
 
 def test_measure_text_bold_is_wider() -> None:
-    normal = measure_text("build", bold=False)
-    bold = measure_text("build", bold=True)
+    normal = measure_text("build", font_weight=400)
+    bold = measure_text("build", font_weight=700)
     assert bold > normal
+
+
+def test_measure_text_orbitron_wider_than_inter_at_same_size() -> None:
+    """Orbitron is a display font with wider glyph advances than Inter."""
+    inter = measure_text("100", font_family="Inter", font_size=20)
+    orbitron = measure_text("100", font_family="Orbitron", font_size=20)
+    assert orbitron > inter
+
+
+def test_measure_text_monospace_flat_width() -> None:
+    """JetBrains Mono is a true monospace — every char has the same advance."""
+    narrow = measure_text("i", font_family="JetBrains Mono", font_size=11)
+    wide = measure_text("W", font_family="JetBrains Mono", font_size=11)
+    assert abs(wide - narrow) < 0.01
+
+
+def test_measure_text_letter_spacing_absorbed() -> None:
+    """Letter-spacing kwarg adds the expected (n-1) * size * em offset."""
+    plain = measure_text("abc", font_family="Inter", font_size=11)
+    spaced = measure_text("abc", font_family="Inter", font_size=11, letter_spacing_em=0.1)
+    expected_add = (3 - 1) * 11 * 0.1
+    assert abs((spaced - plain) - expected_add) < 0.01
+
+
+def test_measure_text_unknown_family_falls_back_to_inter(caplog: pytest.LogCaptureFixture) -> None:
+    """Unknown families fall back to Inter metrics with a warning — never crash."""
+    from hyperweave.core.font_metrics import reset_registry
+
+    reset_registry()  # clear warned-families memo so this test can assert the warning
+    width_inter = measure_text("abc", font_family="Inter", font_size=11)
+    with caplog.at_level("WARNING"):
+        width_unknown = measure_text("abc", font_family="DefinitelyNotARealFont", font_size=11)
+    assert width_unknown == width_inter
+    assert any("definitelynotarealfont" in rec.message.lower() for rec in caplog.records)
 
 
 def test_measure_text_font_size_scaling() -> None:

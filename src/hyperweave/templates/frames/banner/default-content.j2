@@ -1,0 +1,114 @@
+{# Default banner content — editorial grid + triple-layer hero text
+   (brutalist/emerald look). Extracted verbatim from the legacy
+   banner.svg.j2 inline default branch. #}
+
+{# === Scale factor: all geometry proportional to canvas === #}
+{% set scale = bw / 1200.0 %}
+{% set margin = (60 * scale) | int %}
+{% set inner_w = bw - margin * 2 %}
+{% set inner_h = bh - margin * 2 %}
+{% set fs = title_font_size | default(160 if is_full else 42) %}
+{% set col_w = (240 * scale) | int %}
+{% set col_x1 = margin + col_w %}
+{% set col_x2 = margin + inner_w - col_w %}
+{% set header_h = (80 * scale) | int %}
+{% set row_y1 = margin + header_h %}
+{% set footer_h = (140 * scale) | int %}
+{% set row_y2 = margin + inner_h - footer_h %}
+{% set text_y = (row_y1 + row_y2) // 2 + (fs * 0.44) | int %}
+
+{# === Background layers === #}
+<rect width="{{ bw }}" height="{{ bh }}" fill="var(--dna-surface)"/>
+<rect width="{{ bw }}" height="{{ bh }}" filter="url(#{{ uid }}-noise)"
+      opacity="0.1" style="mix-blend-mode:overlay"/>
+
+{# === Editorial grid (scales with canvas) === #}
+{# Inner panel #}
+<rect x="{{ margin }}" y="{{ margin }}" width="{{ inner_w }}" height="{{ inner_h }}"
+      fill="var(--dna-surface-alt)"/>
+{# Header bar #}
+<rect x="{{ margin }}" y="{{ margin }}" width="{{ inner_w }}" height="{{ header_h }}"
+      fill="var(--dna-surface-deep)"/>
+{# Left sidebar panel #}
+<rect x="{{ margin }}" y="{{ row_y1 }}" width="{{ col_w }}" height="{{ row_y2 - row_y1 }}"
+      fill="var(--dna-surface-deep)"/>
+{# Bottom-left recess #}
+<rect x="{{ margin }}" y="{{ row_y2 }}" width="{{ col_w }}" height="{{ bh - margin - row_y2 }}"
+      fill="var(--dna-surface-deep)"/>
+{# Bottom-right recess #}
+<rect x="{{ col_x2 }}" y="{{ row_y2 }}" width="{{ col_w }}" height="{{ bh - margin - row_y2 }}"
+      fill="var(--dna-surface-alt)"/>
+
+{# Signal accent bars (top + bottom of inner frame) #}
+<rect x="{{ margin }}" y="{{ margin }}" width="{{ inner_w }}" height="3"
+      fill="var(--dna-signal)"/>
+<rect x="{{ margin }}" y="{{ bh - margin - 3 }}" width="{{ inner_w }}" height="3"
+      fill="var(--dna-signal)"/>
+
+{# Grid lines #}
+<line x1="{{ margin }}" y1="{{ row_y1 }}"
+      x2="{{ margin + inner_w }}" y2="{{ row_y1 }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="{{ margin }}" y1="{{ row_y2 }}"
+      x2="{{ margin + inner_w }}" y2="{{ row_y2 }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="{{ col_x1 }}" y1="{{ margin }}"
+      x2="{{ col_x1 }}" y2="{{ bh - margin }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="{{ col_x2 }}" y1="{{ margin }}"
+      x2="{{ col_x2 }}" y2="{{ bh - margin }}"
+      stroke="var(--dna-border)" stroke-width="1"/>
+
+{# === Triple-layer text stack === #}
+<g data-hw-zone="title"{% if motion_id and motion_id != 'static' %} class="hw-motion-target"{% endif %}>
+{% if motion_id and motion_id != 'static' %}
+  {{ motion_svg | safe }}
+{% else %}
+  {# Layer 1: Glow (blurred, low opacity) #}
+  <text x="{{ text_cx }}" y="{{ text_y }}" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="{{ fs }}" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="var(--dna-signal)" filter="url(#{{ uid }}-glow)"
+        opacity="0.2">{{ banner_title | default(title_text) }}</text>
+  {# Layer 2: Ghost (stroke-only) #}
+  <text x="{{ text_cx }}" y="{{ text_y }}" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="{{ fs }}" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="none" stroke="var(--dna-signal-dim)" stroke-width="0.5"
+        opacity="0.1">{{ banner_title | default(title_text) }}</text>
+  {# Layer 3: Main solid #}
+  <text x="{{ text_cx }}" y="{{ text_y }}" text-anchor="middle"
+        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-size="{{ fs }}" font-weight="800"
+        letter-spacing="-0.04em"
+        fill="var(--dna-ink-muted)">{{ banner_title | default(title_text) }}</text>
+{% endif %}
+</g>
+
+{# === Status indicator (top-right corner) === #}
+<g data-hw-zone="status" transform="translate({{ bw - margin - (40 * scale) | int }},{{ margin + (20 * scale) | int }})">
+  <rect x="-5" y="-5" width="10" height="10"
+        fill="var(--dna-signal)"/>
+  <rect class="hw-logic-bit" x="-3" y="-3" width="6" height="6"
+        fill="var(--dna-signal-dim)"/>
+</g>
+
+{# === Subtitle === #}
+{% if banner_subtitle %}
+{% set sub_fs = [(11 * scale) | int, 8] | max %}
+<text x="{{ text_cx }}" y="{{ text_y + (fs * 0.4) | int }}" text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="{{ sub_fs }}" fill="var(--dna-signal-dim)"
+      letter-spacing="0.2em" opacity="0.6">{{ banner_subtitle | upper }}</text>
+{% endif %}
+
+{# === Footer label === #}
+{% if banner_label %}
+{% set footer_fs = [(11 * scale) | int, 8] | max %}
+<text x="{{ margin + 20 }}" y="{{ bh - margin + (25 * scale) | int }}"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="{{ footer_fs }}" fill="var(--dna-signal-dim)"
+      letter-spacing="0.3em" opacity="0.3">{{ banner_label }}</text>
+{% endif %}

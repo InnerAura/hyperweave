@@ -1,4 +1,4 @@
-{# Brutalist banner defs: noise texture filter, glow filter. #}
+{# Brutalist banner defs: noise texture filter, glow filter, embedded fonts. #}
 {# Noise texture filter #}
 <filter id="{{ uid }}-noise">
   <feTurbulence type="fractalNoise" baseFrequency="0.55"
@@ -9,3 +9,4 @@
 <filter id="{{ uid }}-glow">
   <feGaussianBlur stdDeviation="{{ glow_radius | default(16) }}"/>
 </filter>
+<style>{{ font_faces | safe }}</style>

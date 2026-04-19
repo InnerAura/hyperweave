@@ -24,6 +24,12 @@
 </p>
 
 <!--
+HyperWeave is the generative visual identity system for the agentic era. A user defines a genome — their aesthetic DNA — and HyperWeave renders coherent visual artifacts across any surface, for any context, from any data. Badges for repos. Banners for profiles. Cards for stats. Charts for data. Artifact sets for research papers. Release kits for product launches. Marketing assets for startups. Static when static. Live when live. Generated when generative. Their brand, as infrastructure, for everything their agents will ever need to render.
+
+The list in the middle ("Badges for repos. Banners for profiles. Cards for stats...") reads long. It proves the surface area is broad but it also reads like a features list. Investors skim past enumeration. You could collapse it: "Every surface agents render on, from repos to research papers to product launches." The breadth lands harder when it's a claim than when it's a list.
+
+HyperWeave is the brand agent for engineering teams. Define your identity once; every artifact your team ships carries it wherever their work appears.
+
 Safe, Auditable, Drop-Anywhere Visuals for your Agents.
 
 ---

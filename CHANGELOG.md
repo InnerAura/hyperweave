@@ -5,6 +5,41 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-04-19
+
+### Added
+
+- **Font-aware text measurement.** `measure_text` dispatches to per-font LUTs via a `FontRegistry` (Inter, Orbitron, JetBrains Mono). Callers pass `font_family`, `font_size`, `font_weight`, `letter_spacing_em` — no more `bold` / `monospace` booleans. `scripts/extract_font_metrics.py` decodes base64 WOFF2 sources via fontTools and emits JSON matching the existing `inter.json` schema. The measurement contract (ASCII glyph set, linear size scaling, kerning and ligatures ignored, unknown family falls back to Inter with a one-shot warning) is documented verbatim at the top of `core/font_metrics.py`.
+- **Paradigm config files.** `data/paradigms/{default,chrome,brutalist}.yaml` carry per-paradigm layout and typography config. `ParadigmSpec` Pydantic model with nested frame configs (`badge`, `strip`, `banner`, `chart`, `stats`, `icon`) in `core/paradigm.py`. Loader + registry parity via `load_paradigms()` and `get_paradigms()`.
+- **Paradigm/genome cross-validation.** `compose/validate_paradigms.py::validate_genome_against_paradigms()` runs at `ConfigLoader.load`. Genomes that opt into a paradigm must declare every field in its `requires_genome_fields` or load raises `ValueError` with a structured message listing every missing `(paradigm, field)` pair. Kept out of `GenomeSpec` as a `@model_validator` to avoid a circular loader dependency.
+- **Invariant 11** (CLAUDE.md Verify block): no specimen colors in template fallbacks. `grep "default('#"` in templates must be zero.
+- **Invariant 12** (CLAUDE.md Verify block): adding a new paradigm within the existing frame contract requires zero Python edits. `grep 'paradigm == "'` in `.py` files and `grep '{% if paradigm'` in templates must both be zero.
+- Six extensibility-proof tests in `tests/test_paradigm_extensibility.py`. `tests/helpers.py::build_partial_genome_for_testing` provides an explicit test-only bypass for the validator.
+- `PROFILE_CONTRACTS.md` documents the paradigm contract: required genome fields per paradigm, how the dispatcher routes through `_resolve_paradigm` and `load_paradigms`, how to add a new paradigm from YAML + templates alone.
+
+### Fixed
+
+- **Brutalist badge value text collided with the status indicator.** The pre-v0.2.6 resolver measured monospace text at a cross-platform-safe 7.2 px/char; per-font LUTs measure JetBrains Mono at its accurate 6.6 px/char, so the old safety margin is gone. Brutalist badge, strip, and banner defs now embed `@font-face` declarations via `{{ font_faces | safe }}` so rendered widths equal measured widths in any viewer — not just those that happen to have the system font installed. `default.yaml` font_family declarations corrected to JetBrains Mono to match what the default partials (which alias brutalist) actually render.
+- **Chrome templates no longer carry chrome-horizon's palette as fallback.** Every `| default('#hex')` specimen-leak chain is stripped from stats, chart, strip, banner, badge, icon, and all three marquee chrome templates. A future chrome genome that omits `envelope_stops`, `well_top`, `well_bottom`, `chrome_text_gradient`, `hero_text_gradient`, or `highlight_color` now fails at load time instead of silently inheriting chrome-horizon's cyan.
+
+### Changed
+
+- **`banner.svg.j2` split.** 224-line monolith with inline `{% if paradigm_banner == "chrome" %}` branches replaced by a 23-line dispatcher plus `frames/banner/{chrome,default}-content.j2` partials. Banner now matches the partial-dispatch pattern used by strip, badge, stats, and chart.
+- **Resolvers consume `paradigm_spec` directly.** `resolve_badge`, `resolve_strip`, `resolve_chart`, `resolve_stats`, `resolve_icon`, and `resolve_banner` read `paradigm_spec.{frame}.{key}` instead of comparing the paradigm slug inline. `_PROFILE_SHAPES` and `_STATS_HEIGHTS` dicts are gone; their content lives in the paradigm YAMLs.
+- **Strip inline paradigm branches replaced with context vars.** `divider_render_mode` and `status_shape_rendering` are injected by the resolver from paradigm config; the template branches on resolved values, not on slug strings.
+- `_profile_visual_context` renamed to `_genome_material_context` — it has always read from `genome`, not `profile`.
+- `measure_text` signature is now keyword-only after the leading `text` positional. `bold` and `monospace` kwargs removed.
+
+### Removed
+
+- `text_metrics` field on `GenomeSpec`. The per-zone width multiplier (`badge_value_width_factor: 1.35` on chrome-horizon) was a workaround for the Inter-only LUT; with per-font LUTs it is redundant.
+- `font_scale` heuristic in the marquee row-width helper. Replaced by font-family-aware measurement.
+- Dead `specular_sweep_dur` and `specular_sweep_peak` fields from `GenomeSpec`, `chrome.contract.json`, and `chrome-horizon.json`. `highlight_opacity` is retained — it has live consumers in badge and strip chrome content.
+
+### Dev dependencies
+
+- `fontTools` and `brotli` added so the font-metrics extraction script can decode WOFF2.
+
 ## [0.2.5] - 2026-04-13
 
 ### Fixed
