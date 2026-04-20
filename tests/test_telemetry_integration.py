@@ -30,7 +30,7 @@ def test_contract_structure(fixture_transcript: Path) -> None:
     assert "profile" in contract
     assert "tools" in contract
     assert "stages" in contract
-    assert "corrections" in contract
+    assert "user_events" in contract
     assert "agents" in contract
 
     # Session fields
@@ -200,7 +200,7 @@ _STRESS_TELEMETRY: dict[str, object] = {
         {"name": "impl", "label": "IMPL", "pct": 60, "tool_class": "mutate"},
         {"name": "recon", "label": "RECON", "pct": 40, "tool_class": "explore"},
     ],
-    "corrections": [],
+    "user_events": [],
     "agents": [],
 }
 
@@ -298,6 +298,170 @@ def test_receipt_treemap_error_annotations() -> None:
         clip_content = m.group(1)
         if "cell-error" in clip_content:
             assert 'text-anchor="end"' in clip_content, "Error text must be right-aligned"
+
+
+# ── Hero/footer label split (§2.1) + ✗N legend (§2.7) ──
+
+
+def test_receipt_splits_user_turns_and_tool_errors() -> None:
+    """Hero and footer emit user-turn + tool-error counts as distinct labels.
+
+    Reconciles two channels the old "N corrections" string conflated: user-event
+    count (how often a human pushed back) vs. tool-failure count (how often a
+    tool call returned blocked/error). The ✗N marks on the treemap reconcile
+    to `n_tool_errors`, not to `len(user_events)`.
+    """
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "sess", "duration_minutes": 60, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 10_000, "total_output_tokens": 5_000, "total_cost": 1.0},
+        "tools": {
+            "Edit": {"total_tokens": 1000, "count": 10, "tool_class": "mutate", "errors": 3, "blocked": 0},
+            "Bash": {"total_tokens": 500, "count": 5, "tool_class": "execute", "errors": 0, "blocked": 2},
+        },
+        "stages": [{"name": "impl", "label": "IMPL", "pct": 100, "tool_class": "mutate"}],
+        # 4 non-continuation user events → 4 user turns.
+        "user_events": [
+            {"category": "correction", "preview": "x", "confidence": "high"},
+            {"category": "redirection", "preview": "x", "confidence": "high"},
+            {"category": "elaboration", "preview": "x", "confidence": "high"},
+            {"category": "correction", "preview": "x", "confidence": "high"},
+        ],
+        "agents": [],
+    }
+    spec = ComposeSpec(type="receipt", telemetry_data=tel)
+    svg = compose(spec).svg
+
+    # Hero-right shows both labels, split.
+    assert "4 user turns" in svg
+    assert "5 tool errors" in svg  # 3 Edit errors + 2 Bash blocked
+    # Red tint on the tool-errors label only (failing-core CSS var).
+    assert 'fill="var(--dna-status-failing-core)"' in svg
+    # The legacy single "N corrections" string is gone.
+    assert "corrections" not in svg.lower()
+
+    # Footer carries the same split.
+    assert "4 user turns · 5 tool errors" in svg
+
+
+def test_receipt_singular_user_turn_pluralization() -> None:
+    """One user event → "1 user turn" (no plural s)."""
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "s", "duration_minutes": 10, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 1, "total_output_tokens": 1, "total_cost": 0.01},
+        "tools": {"Read": {"total_tokens": 10, "count": 1, "tool_class": "explore"}},
+        "stages": [{"name": "e", "label": "E", "pct": 100, "tool_class": "explore"}],
+        "user_events": [{"category": "correction", "preview": "x", "confidence": "high"}],
+        "agents": [],
+    }
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    assert "1 user turn" in svg
+    assert "1 user turns" not in svg  # singular form, no trailing s
+
+
+def test_receipt_renders_failed_tool_calls_legend() -> None:
+    """Treemap header shows the ✗N legend so ✗8 marks aren't ambiguous."""
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=_STRESS_TELEMETRY)).svg
+    assert "✗N = failed tool calls" in svg
+
+
+def test_treemap_field_is_errors_not_error_count() -> None:
+    """Both receipt template and the treemap component read cell.errors.
+
+    Prior drift: templates/frames/receipt.svg.j2 used `cell.errors` while the
+    orphan templates/components/treemap.svg.j2 used `cell.error_count`. Both
+    should now read `cell.errors` so the resolver's single emission key wins.
+    """
+    from pathlib import Path
+
+    templates_root = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "templates"
+    for path in templates_root.rglob("*.j2"):
+        text = path.read_text()
+        assert "error_count" not in text, f"Stale cell.error_count reference in {path}"
+
+
+# ── Hero dominant phase (§2.3) — not stages[0], MIXED when < 20% ──
+
+
+def test_hero_uses_dominant_stage_not_first_stage() -> None:
+    """When stages[0] is small and a later stage dominates, hero shows the dominant.
+
+    Old bug: hero_profile = stages[0]["label"].upper() always picked the first
+    stage, even when it was a 2-minute "validation" spike preceding 180 minutes
+    of implementation. The hero badge lied about the session character.
+    """
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "s", "duration_minutes": 210, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 1000, "total_output_tokens": 1000, "total_cost": 1.0},
+        "tools": {"Edit": {"total_tokens": 100, "count": 10, "tool_class": "mutate"}},
+        "stages": [
+            # First stage: small, "validation" — the old stages[0] winner.
+            {"label": "VALIDATION", "dominant_class": "explore", "tools": 2},
+            # Dominant: "IMPLEMENTATION" with 45 tool calls (~95% share).
+            {"label": "IMPLEMENTATION", "dominant_class": "mutate", "tools": 45},
+        ],
+        "user_events": [],
+        "agents": [],
+    }
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+
+    # Hero pill (rect + text with letter-spacing="1.2px" at y=12) shows the
+    # dominant label, not the first-stage label.
+    pill_match = re.search(r'letter-spacing="1\.2px"[^>]*>([A-Z\s]+)</text>', svg)
+    assert pill_match is not None
+    assert "IMPLEMENTATION" in pill_match.group(1)
+    assert "VALIDATION" not in pill_match.group(1)
+
+
+def test_hero_falls_back_to_mixed_when_no_stage_dominates() -> None:
+    """79 fragmented stages, none at >= 20% share → hero shows "MIXED"."""
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "s", "duration_minutes": 209, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 1000, "total_output_tokens": 1000, "total_cost": 1.0},
+        "tools": {"Edit": {"total_tokens": 100, "count": 10, "tool_class": "mutate"}},
+        # 79 equal-share stages → max pct = round(1/79 * 100) = 1 → well below 20.
+        "stages": [
+            {"label": f"STAGE{i}", "dominant_class": "explore" if i % 2 else "mutate", "tools": 1} for i in range(79)
+        ],
+        "user_events": [],
+        "agents": [],
+    }
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+
+    pill_match = re.search(r'letter-spacing="1\.2px"[^>]*>([A-Z\s]+)</text>', svg)
+    assert pill_match is not None
+    assert "MIXED" in pill_match.group(1)
+
+
+def test_hero_defaults_to_session_when_no_stages() -> None:
+    """Empty stages → hero pill shows "SESSION" (still a valid composition)."""
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "s", "duration_minutes": 0, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 0, "total_output_tokens": 0, "total_cost": 0},
+        "tools": {},
+        "stages": [],
+        "user_events": [],
+        "agents": [],
+    }
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    assert "SESSION" in svg
 
 
 # ── SessionEnd hook: graceful no-op for non-conversational sessions ──

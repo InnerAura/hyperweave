@@ -199,39 +199,63 @@ def test_build_area_path_closes_with_L_commands() -> None:
 
 
 def test_build_markers_square_emits_crosshair() -> None:
-    """Square markers produce crosshair groups (rect + two lines) per target SVG."""
+    """Square (rect) markers carry crosshair geometry (half + cross) in the render dict."""
     out = _build_markers([(50, 50), (100, 200)], shape="square", size=10)
-    assert "<rect" in out
-    # Non-final marker: translate-centered group with crosshair lines.
-    assert "translate(50,50)" in out
-    assert 'width="10"' in out
-    assert "<line" in out  # crosshair lines present
-    # Final marker: endpoint beacon (nested squares).
-    assert 'data-hw-zone="endpoint"' in out
+    # "square" is a legacy alias for "rect"; non-endpoint marker gets crosshair fields.
+    assert out[0] == {
+        "shape": "rect",
+        "x": 50,
+        "y": 50,
+        "size": 10,
+        "is_endpoint": False,
+        "half": 5,
+        "cross": 2,
+    }
+    # Final marker is the endpoint beacon (3-nested-square variant).
+    assert out[-1]["is_endpoint"] is True
+    assert out[-1]["shape"] == "rect"
+    assert {"s1", "s2", "s3", "h1", "h2", "h3"} <= set(out[-1])
 
 
-def test_build_markers_circle_emits_circle() -> None:
+def test_build_markers_circle_emits_circle_radius() -> None:
     out = _build_markers([(50, 50), (100, 200)], shape="circle", size=6)
-    assert "<circle" in out
-    assert 'r="3"' in out
+    # Non-endpoint circle carries r = size // 2, clamped >= 1.
+    assert out[0] == {
+        "shape": "circle",
+        "x": 50,
+        "y": 50,
+        "size": 6,
+        "is_endpoint": False,
+        "r": 3,
+    }
+    # Circle has no dedicated endpoint partial; falls back to rect endpoint.
+    assert out[-1]["shape"] == "rect"
+    assert out[-1]["is_endpoint"] is True
 
 
-def test_build_markers_diamond_emits_rotated_rect() -> None:
-    """Diamond markers produce translate+rotate centered rects per target SVG."""
+def test_build_markers_diamond_emits_rotation_geometry() -> None:
+    """Diamond markers carry half for the rotated-rect partial."""
     out = _build_markers([(50, 50), (100, 200)], shape="diamond", size=4)
-    assert "<rect" in out
-    # Non-final diamond centered with translate + rotate.
-    assert "translate(50 50) rotate(45)" in out
-    # Final diamond: endpoint beacon with glow class.
-    assert 'data-hw-zone="endpoint"' in out
+    assert out[0]["shape"] == "diamond"
+    assert out[0]["is_endpoint"] is False
+    assert out[0]["half"] == 2
+    # Final diamond is the endpoint (chrome 2-layer rotated rects).
+    assert out[-1]["shape"] == "diamond"
+    assert out[-1]["is_endpoint"] is True
+    assert {"s1", "s2", "h1", "h2"} <= set(out[-1])
 
 
-def test_build_markers_endpoint_is_structurally_different() -> None:
-    """The last marker uses a different builder — it's the 'now' beacon."""
+def test_build_markers_endpoint_is_last_only() -> None:
+    """Only the final entry is the endpoint; the rest are regular markers."""
     out = _build_markers([(10, 10), (20, 20), (30, 30)], shape="square", size=10)
-    # Endpoint has nested rects (3 concentric squares for brutalist).
-    assert 'data-hw-zone="endpoint"' in out
-    assert out.count('data-hw-zone="endpoint"') == 1
+    assert len(out) == 3
+    assert sum(1 for m in out if m["is_endpoint"]) == 1
+    assert out[-1]["is_endpoint"] is True
+    assert all(not m["is_endpoint"] for m in out[:-1])
+
+
+def test_build_markers_empty_returns_empty_list() -> None:
+    assert _build_markers([], shape="rect", size=5) == []
 
 
 # ── Milestones ────────────────────────────────────────────────────────
@@ -280,7 +304,10 @@ def test_build_chart_svg_miter_angular(
     assert "<polyline" in result["polyline"]
     assert 'stroke-linejoin="miter"' in result["polyline"]
     assert "<polygon" in result["area"]
-    assert "<rect" in result["markers"]
+    # markers is now a structured list; confirm shape + non-empty.
+    assert isinstance(result["markers"], list)
+    assert result["markers"]
+    assert all(m["shape"] == "rect" for m in result["markers"])
 
 
 def test_build_chart_svg_round_smooth(
@@ -299,7 +326,8 @@ def test_build_chart_svg_round_smooth(
         },
     )
     assert "<path" in result["polyline"]
-    assert "rotate(45" in result["markers"]
+    assert isinstance(result["markers"], list)
+    assert all(m["shape"] == "diamond" for m in result["markers"])
     # Smooth area path ends with Z (closed).
     assert "Z" in result["area"]
 
@@ -307,8 +335,9 @@ def test_build_chart_svg_round_smooth(
 def test_build_chart_svg_empty_points_safe(sample_viewport: Viewport) -> None:
     """No points → data fragments empty, but scaffolding (axes, gridlines, zero label) remains."""
     result = build_chart_svg([], sample_viewport, structural={})
-    for key in ("area", "polyline", "markers"):
+    for key in ("area", "polyline"):
         assert result[key] == ""
+    assert result["markers"] == []
     # Axes and gridlines are always drawn regardless of data.
     assert result["axes"] != ""
     assert result["gridlines"] != ""

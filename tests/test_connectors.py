@@ -7,6 +7,8 @@ parsing for all six providers, and the TTL cache.
 from __future__ import annotations
 
 import time
+from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -826,3 +828,123 @@ class TestUnifiedDispatcher:
 
             with pytest.raises(ValueError, match="Unknown GitHub metric"):
                 await fetch_metric("github", "eli64s/readme-ai", "bogus_metric")
+
+
+# =========================================================================
+# GitHub Token Pool Rotation (§1.1)
+# =========================================================================
+
+
+class TestGitHubTokenPool:
+    """Verify HW_GITHUB_TOKENS round-robin rotation and fallback chain.
+
+    The pool is read by ``_get_github_token`` in ``connectors.base``; a
+    module-level ``_token_index`` advances on each call so six calls across
+    a 3-token pool return the pool twice in order.
+    """
+
+    def setup_method(self) -> None:
+        from hyperweave.connectors import base
+
+        base._token_index = 0
+
+    def test_rotates_through_pool(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "tok_a,tok_b,tok_c")
+        from hyperweave.connectors.base import _get_github_token
+
+        assert [_get_github_token() for _ in range(6)] == [
+            "tok_a",
+            "tok_b",
+            "tok_c",
+            "tok_a",
+            "tok_b",
+            "tok_c",
+        ]
+
+    def test_strips_whitespace_and_empty_entries(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HW_GITHUB_TOKENS", " tok_a , ,tok_b,")
+        from hyperweave.connectors.base import _get_github_token
+
+        assert _get_github_token() == "tok_a"
+        assert _get_github_token() == "tok_b"
+
+    def test_falls_back_to_single_github_token(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("HW_GITHUB_TOKENS", raising=False)
+        monkeypatch.setenv("GITHUB_TOKEN", "tok_solo")
+        from hyperweave.connectors.base import _get_github_token
+
+        assert _get_github_token() == "tok_solo"
+
+    def test_returns_none_when_no_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("HW_GITHUB_TOKENS", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        from hyperweave.connectors.base import _get_github_token
+
+        assert _get_github_token() is None
+
+
+# =========================================================================
+# Stargazer History Pagination (§1.4)
+# =========================================================================
+
+
+class TestStargazerPagination:
+    """Verify the 400-page clamp and current-UTC now-point."""
+
+    @pytest.fixture(autouse=True)
+    def _reset(self) -> None:
+        reset_breakers()
+        get_cache().clear()
+
+    @pytest.mark.asyncio
+    async def test_mega_repo_uses_page_clamp(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """357k-star repo → total_pages≈3570 but sampling clamps at 400."""
+        captured_pages: list[int] = []
+
+        async def fake_fetch_json(url: str, **_kw: Any) -> Any:
+            if "/stargazers" in url:
+                # Extract the page query parameter to assert the clamp
+                page = int(url.split("page=")[-1])
+                captured_pages.append(page)
+                # Return an ancient starred_at so we can verify the now-point
+                # isn't sourced from fetched timestamps.
+                return [{"starred_at": "2015-01-01T00:00:00Z"}]
+            # Repo metadata request
+            return {"stargazers_count": 357_000}
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_json", fake_fetch_json)
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("torvalds", "linux")
+
+        # No page > 400 even though total_stars / 100 = 3570.
+        assert captured_pages, "expected at least one stargazer fetch"
+        assert max(captured_pages) <= 400
+
+        # Now-point uses current UTC, not the 2015 mock date.
+        assert result["points"], "expected at least one point"
+        now_year = str(datetime.now(UTC).year)
+        assert result["points"][-1]["date"].startswith(now_year)
+        # Real star total preserved on the now-point.
+        assert result["points"][-1]["count"] == 357_000
+
+    @pytest.mark.asyncio
+    async def test_small_repo_samples_full_range(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """500-star repo: total_pages=5, clamp doesn't truncate sampling."""
+        captured_pages: list[int] = []
+
+        async def fake_fetch_json(url: str, **_kw: Any) -> Any:
+            if "/stargazers" in url:
+                page = int(url.split("page=")[-1])
+                captured_pages.append(page)
+                return [{"starred_at": "2024-06-01T00:00:00Z"}]
+            return {"stargazers_count": 500}
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_json", fake_fetch_json)
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        await fetch_stargazer_history("small", "repo")
+
+        # All requested pages within the actual total-pages range (5).
+        assert captured_pages, "expected at least one stargazer fetch"
+        assert max(captured_pages) <= 5

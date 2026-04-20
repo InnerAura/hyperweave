@@ -27,6 +27,12 @@ def infer_state(label: str, value: str) -> str:
         return "failing"
     if "warn" in value_lower:
         return "warning"
+    # Explicit set match (not substring) so values like "rebuild required"
+    # or "build failure" don't get miscategorized as "building" state.
+    # Only the three literal tokens below qualify; any richer phrase should
+    # route via the percent-threshold or default-active fall-throughs.
+    if value_lower in {"building", "rebuilding", "build"}:
+        return "building"
     if "build" in label_lower and "run" in value_lower:
         return "building"
 

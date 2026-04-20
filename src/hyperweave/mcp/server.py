@@ -297,6 +297,28 @@ async def hw_discover(
                 },
                 "example": "/v1/live/github/eli64s/readme-ai/stars/brutalist-emerald.static",
             },
+            "stats": {
+                "pattern": "/v1/stats/{username}/{genome}.{motion}",
+                "query_params": {
+                    "glyph": "Glyph identifier",
+                    "state": "Semantic state",
+                },
+                "example": "/v1/stats/jiahongc/chrome-horizon.static",
+            },
+            "chart": {
+                "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
+                "query_params": {
+                    "state": "Semantic state",
+                },
+                "example": "/v1/chart/stars/torvalds/linux/brutalist-emerald.static",
+            },
+            "timeline": {
+                "pattern": "/v1/timeline/{genome}.{motion}",
+                "method": "POST",
+                "body": 'JSON: {"items": [{"title": str, "subtitle": str, "date": str, "status": str}, ...]}',
+                "query_params": {},
+                "example": "POST /v1/timeline/chrome-horizon.static with items payload",
+            },
         }
 
     return result

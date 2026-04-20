@@ -45,6 +45,28 @@ def test_compose_infers_building_from_combined_signal() -> None:
     assert _metadata_state("build", "running") == "building"
 
 
+def test_compose_infers_building_from_value_alone() -> None:
+    """§7.1: value="building" (or "rebuilding" / "build") triggers building state
+    without needing "build" in the label. Closes the gap where ``infer_state("ci",
+    "building")`` previously returned "active".
+    """
+    assert _metadata_state("ci", "building") == "building"
+    assert _metadata_state("deploy", "rebuilding") == "building"
+    assert _metadata_state("status", "build") == "building"
+
+
+def test_compose_does_not_infer_building_from_building_substrings() -> None:
+    """Explicit set match (not substring) — 'rebuild required' or 'build failure'
+    must not collapse to 'building'. They fall through to the default 'active'
+    state (or a matching stronger rule like 'fail' → 'failing')."""
+    # "rebuild required" contains neither "pass/success", "fail/error", nor
+    # "warn", and isn't in the literal set — falls through to "active".
+    assert _metadata_state("ci", "rebuild required") == "active"
+    # "build failure" triggers "failing" via the earlier "fail" value check,
+    # not "building" — proves the order of rules is preserved.
+    assert _metadata_state("ci", "build failure") == "failing"
+
+
 def test_compose_infers_from_percentage_high() -> None:
     assert _metadata_state("coverage", "95%") == "passing"
 

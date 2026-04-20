@@ -93,6 +93,29 @@ async def test_hw_discover_frames() -> None:
     assert "banner" in result["frames"]
 
 
+async def test_hw_discover_url_grammar_includes_stats_chart_timeline() -> None:
+    """§7.2: url_grammar advertises stats, chart, timeline for MCP clients.
+
+    These routes shipped in Session 2A/2B but hw_discover didn't list them,
+    so LLM clients couldn't self-serve the URL shape.
+    """
+    result = await hw_discover(what="url_grammar")
+    grammar = result["url_grammar"]
+    for key in ("stats", "chart", "timeline"):
+        assert key in grammar, f"Missing {key} entry in url_grammar"
+        entry = grammar[key]
+        assert "pattern" in entry
+        assert entry["pattern"].startswith("/v1/")
+        assert "example" in entry
+
+    # Route-shape assertions lock the patterns against the HTTP route source of truth.
+    assert grammar["stats"]["pattern"] == "/v1/stats/{username}/{genome}.{motion}"
+    assert grammar["chart"]["pattern"] == "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}"
+    assert grammar["timeline"]["pattern"] == "/v1/timeline/{genome}.{motion}"
+    # Timeline is POST-only (body carries items); grammar must flag it.
+    assert grammar["timeline"].get("method") == "POST"
+
+
 # ===========================================================================
 # Resources
 # ===========================================================================

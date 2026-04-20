@@ -273,113 +273,77 @@ def _build_area_path(projected: list[tuple[int, int]], baseline_y: int) -> str:
     return f"{curve} L{last_x},{baseline_y} L{first_x},{baseline_y} Z"
 
 
-# ── Marker builders ────────────────────────────────────────────────────────
+# ── Marker builders (structured output; rendered by Jinja partials) ────────
+#
+# Per Invariant 6 (zero f-string SVG in Python), marker geometry is emitted
+# as structured dicts and rendered by partials under
+# ``templates/components/chart-markers/{shape}.svg.j2``. Template dispatch
+# via slug interpolation matches Invariant 12's include pattern:
+#
+#   {% set partial = 'endpoint-' ~ m.shape if m.is_endpoint else m.shape %}
+#   {% include "components/chart-markers/" ~ partial ~ ".svg.j2" %}
+#
+# Each dict carries pre-computed derived dimensions so partials stay pure
+# substitution — no arithmetic lives in the template.
+
+_MARKER_SHAPES: frozenset[str] = frozenset({"square", "rect", "circle", "diamond"})
 
 
-def _marker_rect(x: int, y: int, size: int) -> str:
-    """Brutalist crosshair marker: slab-filled rect with cross lines."""
-    half = size // 2
-    cross = max(2, size // 5)
-    return (
-        f'<g transform="translate({x},{y})">'
-        f'<rect x="-{half}" y="-{half}" width="{size}" height="{size}" '
-        f'fill="var(--dna-surface)" stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>'
-        f'<line x1="-{cross}" y1="0" x2="{cross}" y2="0" '
-        f'stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>'
-        f'<line x1="0" y1="-{cross}" x2="0" y2="{cross}" '
-        f'stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>'
-        f"</g>"
-    )
+def _marker_spec(shape: str, x: int, y: int, size: int, *, is_endpoint: bool) -> dict[str, Any]:
+    """Build the render dict for a single marker.
 
-
-def _marker_circle(x: int, y: int, size: int) -> str:
-    r = max(1, size // 2)
-    return f'<circle cx="{x}" cy="{y}" r="{r}"/>'
-
-
-def _marker_diamond(x: int, y: int, size: int) -> str:
-    """Chrome diamond marker: white-filled rotated rect with dark stroke."""
-    half = size // 2
-    return f'<rect x="-{half}" y="-{half}" width="{size}" height="{size}" transform="translate({x} {y}) rotate(45)"/>'
-
-
-_MARKER_BUILDERS = {
-    "square": _marker_rect,
-    "rect": _marker_rect,
-    "circle": _marker_circle,
-    "diamond": _marker_diamond,
-}
-
-
-def _marker_endpoint_rect(x: int, y: int, size: int) -> str:
-    """Brutalist endpoint beacon: 3 nested squares with pulse class."""
-    s1 = size + 8
-    s2 = size + 2
-    s3 = max(4, size - 4)
-    h1, h2, h3 = s1 // 2, s2 // 2, s3 // 2
-    return (
-        f'<g data-hw-zone="endpoint" shape-rendering="crispEdges">'
-        f'<rect class="hw-chart-endpoint" x="{x - h1}" y="{y - h1}" '
-        f'width="{s1}" height="{s1}" fill="var(--dna-signal)"/>'
-        f'<rect x="{x - h2}" y="{y - h2}" width="{s2}" height="{s2}" '
-        f'fill="var(--dna-surface)"/>'
-        f'<rect x="{x - h3}" y="{y - h3}" width="{s3}" height="{s3}" '
-        f'fill="var(--dna-ink-primary,#D1FAE5)"/>'
-        f"</g>"
-    )
-
-
-def _marker_endpoint_diamond(x: int, y: int, size: int) -> str:
-    """Chrome endpoint diamond: larger diamond with glow class.
-
-    All three colors route through CSS vars so custom chrome genomes
-    (obsidian-prism, liquid-mercury, rose-titanium, etc.) skin the
-    endpoint marker from their own palette instead of inheriting
-    chrome-horizon's cyan + white + near-black.
+    Normalizes legacy aliases (``"square"`` → ``"rect"``), pre-computes the
+    dimensions each partial needs, and flags the endpoint variant. Unknown
+    shapes fall back to ``"rect"`` to preserve the old ``_MARKER_BUILDERS.get``
+    behavior.
     """
-    s1 = size + 10
-    s2 = size + 5
-    h1, h2 = s1 // 2, s2 // 2
-    return (
-        f'<g data-hw-zone="endpoint" transform="translate({x},{y})">'
-        f'<rect class="hw-chart-endpoint" x="-{h1}" y="-{h1}" '
-        f'width="{s1}" height="{s1}" rx="0.6" transform="rotate(45)" '
-        f'fill="var(--dna-signal)"/>'
-        f'<rect x="-{h2}" y="-{h2}" width="{s2}" height="{s2}" rx="0.4" '
-        f'transform="rotate(45)" fill="var(--dna-ink-primary)" '
-        f'stroke="var(--dna-surface-deep)" stroke-width="1"/>'
-        f"</g>"
-    )
+    # Aliases + unknown-shape fallback (parity with the old dispatch dicts).
+    if shape == "square" or shape not in _MARKER_SHAPES:
+        shape = "rect"
+    # Circle endpoint has no dedicated partial in the old code either — the
+    # endpoint dispatch only covered rect/diamond. Fall back to rect so a
+    # genome with data_point_shape="circle" still gets a visible endpoint.
+    if is_endpoint and shape == "circle":
+        shape = "rect"
 
+    spec: dict[str, Any] = {"shape": shape, "x": x, "y": y, "size": size, "is_endpoint": is_endpoint}
 
-_ENDPOINT_BUILDERS = {
-    "square": _marker_endpoint_rect,
-    "rect": _marker_endpoint_rect,
-    "diamond": _marker_endpoint_diamond,
-}
+    # Pre-compute derived dimensions per shape so the partials are pure
+    # substitution — no arithmetic in Jinja.
+    if shape == "circle":
+        spec["r"] = max(1, size // 2)
+    elif is_endpoint and shape == "rect":
+        # 3 nested squares (brutalist endpoint beacon).
+        s1, s2, s3 = size + 8, size + 2, max(4, size - 4)
+        spec.update({"s1": s1, "s2": s2, "s3": s3, "h1": s1 // 2, "h2": s2 // 2, "h3": s3 // 2})
+    elif is_endpoint and shape == "diamond":
+        # 2-layer rotated rects (chrome endpoint diamond).
+        s1, s2 = size + 10, size + 5
+        spec.update({"s1": s1, "s2": s2, "h1": s1 // 2, "h2": s2 // 2})
+    else:
+        # rect + diamond (non-endpoint): crosshair geometry.
+        spec.update({"half": size // 2, "cross": max(2, size // 5)})
+    return spec
 
 
 def _build_markers(
     projected: list[tuple[int, int]],
     shape: str,
     size: int,
-) -> str:
-    """Return an SVG ``<g>`` of marker shapes at each projected point.
+) -> list[dict[str, Any]]:
+    """Return a list of marker render dicts for each projected point.
 
-    Regular data points use the standard marker builder. The final point
-    uses a special endpoint builder (nested squares for brutalist, larger
-    glowing diamond for chrome) to visually mark "now."
+    Regular data points use the standard marker for ``shape``. The final
+    point uses the endpoint variant (nested squares for rect, larger
+    glowing diamond for diamond) to visually mark "now." Templates loop
+    this list and ``{% include %}`` the appropriate partial per entry.
     """
-    builder = _MARKER_BUILDERS.get(shape, _marker_rect)
-    endpoint_builder = _ENDPOINT_BUILDERS.get(shape, _marker_endpoint_rect)
     if not projected:
-        return ""
-    # Regular markers for all points except the last.
-    inner = "".join(builder(x, y, size) for x, y in projected[:-1])
-    # Endpoint marker for the last point.
+        return []
+    markers = [_marker_spec(shape, x, y, size, is_endpoint=False) for x, y in projected[:-1]]
     x_last, y_last = projected[-1]
-    inner += endpoint_builder(x_last, y_last, size)
-    return f'<g data-hw-zone="markers">{inner}</g>'
+    markers.append(_marker_spec(shape, x_last, y_last, size, is_endpoint=True))
+    return markers
 
 
 # ── Axes + gridlines + milestones ──────────────────────────────────────────

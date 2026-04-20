@@ -214,9 +214,10 @@ async def test_fetch_stargazer_history_samples_pages() -> None:
     get_cache().clear()
 
     # Mock JSON responses: repo metadata + stargazer page data.
+    # Use 400 stars so 400/100=4 pages are available for a 4-sample request.
     async def fake_fetch_json(url, provider="generic", headers=None):  # type: ignore[no-untyped-def]
         if url.endswith("/repos/eli64s/readme-ai"):
-            return {"stargazers_count": 120}
+            return {"stargazers_count": 400}
         # stargazers page URL ends with ?page=N
         if "page=" in url:
             page = int(url.split("page=")[-1])
@@ -227,11 +228,10 @@ async def test_fetch_stargazer_history_samples_pages() -> None:
     with patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json):
         result = await fetch_stargazer_history("eli64s", "readme-ai", sample_pages=4)
 
-    assert result["current_stars"] == 120
+    assert result["current_stars"] == 400
     assert result["repo"] == "eli64s/readme-ai"
-    # We asked for 4 samples; with 120 stars @ 30/page = 4 pages total,
-    # the sampler picks all 4, and we also append a synthetic "now" point,
-    # so we expect at least 4 points (may include the trailing duplicate date).
+    # 400 stars @ 100/page = 4 pages total. sample_pages=4 picks all 4;
+    # plus a synthetic "now" point at the current timestamp → ≥ 4 points.
     assert len(result["points"]) >= 4
     # All points are sorted chronologically.
     dates = [p["date"] for p in result["points"]]

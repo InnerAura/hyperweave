@@ -37,7 +37,11 @@ class HyperWeaveSettings(BaseSettings):
     data_cache_ttl: int = Field(default=300, description="Data-bound artifact max-age (5 min)")
 
     # -- Connectors --
-    github_tokens: list[str] = Field(default_factory=list, description="GitHub API tokens for rotation")
+    # NOTE: GitHub token rotation lives in ``connectors.base._get_github_token``,
+    # which reads ``HW_GITHUB_TOKENS`` as a plain comma-separated string directly
+    # from ``os.environ``. Do NOT add a ``github_tokens`` Pydantic field here —
+    # Pydantic Settings would auto-map the same env var and try to JSON-parse
+    # the CSV value, crashing app startup.
     connect_timeout: float = Field(default=10.0, description="HTTP connect timeout in seconds")
     total_timeout: float = Field(default=15.0, description="HTTP total timeout in seconds")
 

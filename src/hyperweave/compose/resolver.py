@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.rhythm import layout_rhythm_bars
 from hyperweave.core.enums import (
     FrameType,
     GlyphMode,
@@ -1112,7 +1113,7 @@ def resolve_receipt(
     profile_data: dict[str, Any] = tel.get("profile", {})
     tools_raw = tel.get("tools", {})
     stages_raw: list[dict[str, Any]] = tel.get("stages", [])
-    corrections: list[dict[str, Any]] = tel.get("corrections", [])
+    user_events: list[dict[str, Any]] = tel.get("user_events", [])
     agents: list[dict[str, Any]] = tel.get("agents", [])
 
     # ── Normalize tools: contract produces dict keyed by name, templates need list ──
@@ -1122,7 +1123,8 @@ def resolve_receipt(
         tools = list(tools_raw)
 
     # ── Normalize stages: contract produces {label, dominant_class, start, end, tools} ──
-    # Templates need {name, pct, tool_class} with percentage proportions
+    # Templates need {name, pct, tool_class}; start/end are preserved so
+    # :func:`layout_rhythm_bars` can lay out time-proportional x/w.
     total_stage_tools = sum(s.get("tools", 1) for s in stages_raw) or 1
     stages: list[dict[str, Any]] = [
         {
@@ -1130,6 +1132,8 @@ def resolve_receipt(
             "pct": round(s.get("tools", 1) / total_stage_tools * 100),
             "label": s.get("label", ""),
             "tool_class": s.get("dominant_class", "explore"),
+            "start": s.get("start"),
+            "end": s.get("end"),
         }
         for s in stages_raw
     ]
@@ -1161,21 +1165,43 @@ def resolve_receipt(
         "Send": "coordinate",
     }
 
+    # ── Dominant phase (drives hero badge + bottom-right phase label) ──
+    # Using stages[0] was the old bug — for a session where the first 2-minute
+    # stage classified as "validation" but the dominant (45% of tool calls)
+    # was "implementation", the hero badge lied. When no single stage owns
+    # at least 20% of the tool calls, fall back to "MIXED" to avoid
+    # overclaiming a dominant phase that doesn't exist.
+    dominant = max(stages, key=lambda s: s.get("pct", 0)) if stages else None
+    dominant_label = (dominant.get("label") or dominant.get("name") or "") if dominant else ""
+    dominant_pct = dominant.get("pct", 0) if dominant else 0
+
     # ── Hero row ──
     hero_headline = f"{_fmt_tok(total_tok)} tokens billed · ${total_cost:.2f}"
     dur_label = f"{int(duration_m)}m" if duration_m else "—"
     hero_subline = f"{model} · {dur_label} · {calls} calls"
-    hero_profile = stages[0]["label"].upper() if stages else "SESSION"
-    hero_tool_class = stages[0]["tool_class"] if stages else "explore"
-    n_corrections = len(corrections)
+    if not dominant:
+        hero_profile = "SESSION"
+    elif dominant_pct < 20:
+        hero_profile = "MIXED"
+    else:
+        hero_profile = dominant_label.upper()
+    hero_tool_class = dominant["tool_class"] if dominant else "explore"
+    # Split "pushbacks" into distinct signals so the card stops labeling them
+    # as one opaque "N corrections" lie. user_events counts every non-continuation
+    # user turn (corrections + redirects + elaborations); tool errors count
+    # failing/blocked tool calls (the red ✗N cell marks reconcile to this).
+    n_user_turns = len(user_events)
+    n_tool_errors = sum(t.get("errors", 0) + t.get("blocked", 0) for t in tools)
     n_agents = len(agents)
-    hero_right = [
-        f"{_fmt_tok(total_input)} in / {_fmt_tok(total_output)} out",
+    hero_right: list[dict[str, str]] = [
+        {"text": f"{_fmt_tok(total_input)} in / {_fmt_tok(total_output)} out"},
     ]
     if total_cache_read or total_cache_create:
-        hero_right.append(f"{_fmt_tok(total_cache_read)} cached / {_fmt_tok(total_cache_create)} written")
-    if n_corrections:
-        hero_right.append(f"{n_corrections} correction{'s' if n_corrections != 1 else ''}")
+        hero_right.append({"text": f"{_fmt_tok(total_cache_read)} cached / {_fmt_tok(total_cache_create)} written"})
+    if n_user_turns:
+        hero_right.append({"text": f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}"})
+    if n_tool_errors:
+        hero_right.append({"text": f"{n_tool_errors} tool errors", "accent": "failing"})
 
     # ── Treemap layout (3-tier, 752px wide, token-proportional) ──
     content_w = 752
@@ -1253,28 +1279,15 @@ def resolve_receipt(
                 )
                 x += min(w, 180) + 4
 
-    # ── Rhythm bars (scale stages to 752px) ──
-    total_stage_pct = sum(s.get("pct", 0) for s in stages) or 100
-    rhythm_bars: list[dict[str, Any]] = []
-    rx = 0
+    # ── Rhythm bars ──
+    # Delegated to the shared helper so receipt + rhythm-strip can't drift.
+    # See src/hyperweave/compose/rhythm.py for the two-pass algorithm.
     bar_area_h = 92
-    for s in stages:
-        pct = s.get("pct", 0)
-        w = max(int(content_w * pct / total_stage_pct), 6)
-        h = max(int(bar_area_h * (pct / 50)), 8)
-        y = bar_area_h - h
-        tc = s.get("tool_class", s.get("name", "explore"))
-        rhythm_bars.append({"x": rx, "y": y, "w": w, "h": h, "tool_class": tc})
-        rx += w + 2
+    rhythm_bars = layout_rhythm_bars(stages, area_w=content_w, area_h=bar_area_h)
 
     # ── Legend entries ──
     used_classes = sorted({c["tool_class"] for c in treemap_cells}) if treemap_cells else ["explore"]
     treemap_legend = [{"tool_class": tc, "label": tc} for tc in used_classes]
-
-    # ── Dominant phase ──
-    dominant = max(stages, key=lambda s: s.get("pct", 0)) if stages else {"name": "", "pct": 0}
-    dominant_label = dominant.get("label", dominant.get("name", ""))
-    dominant_pct = dominant.get("pct", 0)
 
     # ── Metadata band (v0.4): provenance row between rhythm legend and footer ──
     session_id = session.get("id", "")
@@ -1307,11 +1320,14 @@ def resolve_receipt(
     metadata_right = " · ".join(metadata_right_parts)
 
     # ── Footer: session stats (left) + brand anchor (right) ──
+    # Same split as hero so nothing in the card claims "corrections" anymore.
     footer_parts = []
-    if n_corrections:
-        footer_parts.append(f"{n_corrections} corrections")
+    if n_user_turns:
+        footer_parts.append(f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}")
+    if n_tool_errors:
+        footer_parts.append(f"{n_tool_errors} tool error{'s' if n_tool_errors != 1 else ''}")
     if n_agents:
-        footer_parts.append(f"{n_agents} agents")
+        footer_parts.append(f"{n_agents} agent{'s' if n_agents != 1 else ''}")
     footer_left = " · ".join(footer_parts) if footer_parts else ""
     footer_right = "hyperweave.app"
 
@@ -1325,7 +1341,7 @@ def resolve_receipt(
             "hero_tool_class": hero_tool_class,
             "hero_headline": hero_headline,
             "hero_subline": hero_subline,
-            "hero_right_stats": [{"text": t} for t in hero_right],
+            "hero_right_stats": hero_right,
             "treemap_legend": treemap_legend,
             "treemap_cells": treemap_cells,
             "stage_count": len(stages),
@@ -1368,12 +1384,16 @@ def resolve_rhythm_strip(
         tools = list(tools_raw)
 
     # ── Normalize stages ──
+    # start/end preserved so :func:`layout_rhythm_bars` can lay out
+    # time-proportional widths when the contract carries them.
     total_stage_tools = sum(s.get("tools", 1) for s in stages_raw) or 1
     stages: list[dict[str, Any]] = [
         {
             "name": s.get("dominant_class", s.get("label", "explore")),
             "pct": round(s.get("tools", 1) / total_stage_tools * 100),
             "tool_class": s.get("dominant_class", "explore"),
+            "start": s.get("start"),
+            "end": s.get("end"),
         }
         for s in stages_raw
     ]
@@ -1389,38 +1409,10 @@ def resolve_rhythm_strip(
 
     # Rhythm bars — must match template bar_w = sw - stats_w - right_w - 16.
     # With sw=800, stats_w=180, right_w=120: bar_area_w = 484.
-    # Budget accounts for 2px gaps between bars so many-stage sessions don't
-    # overflow into the right-side loop-status panel.
+    # Delegated to the shared helper — see src/hyperweave/compose/rhythm.py.
     bar_area_w = 484
     bar_area_h = 42
-    gap_px = 2
-    n_stages = len(stages)
-    gap_budget = gap_px * max(n_stages - 1, 0)
-    available_w = max(bar_area_w - gap_budget, bar_area_w // 2)
-    min_bar_w = max(2, available_w // max(n_stages, 1) // 3) if n_stages else 6
-    total_stage_pct = sum(s.get("pct", 0) for s in stages) or 100
-
-    raw_bars: list[dict[str, Any]] = []
-    for s in stages:
-        pct = s.get("pct", 0)
-        w = max(int(available_w * pct / total_stage_pct), min_bar_w)
-        h = max(int(bar_area_h * (pct / 50)), 6)
-        y = bar_area_h - h
-        tc = s.get("tool_class", "explore")
-        raw_bars.append({"w": w, "h": h, "y": y, "tool_class": tc})
-
-    # Post-hoc uniform scale if floor-pressure still exceeds budget
-    raw_total = sum(b["w"] for b in raw_bars)
-    if raw_total > available_w and raw_total > 0:
-        scale = available_w / raw_total
-        for b in raw_bars:
-            b["w"] = max(int(b["w"] * scale), 2)
-
-    rhythm_bars: list[dict[str, Any]] = []
-    rx = 0
-    for b in raw_bars:
-        rhythm_bars.append({"x": rx, "y": b["y"], "w": b["w"], "h": b["h"], "tool_class": b["tool_class"]})
-        rx += b["w"] + gap_px
+    rhythm_bars = layout_rhythm_bars(stages, area_w=bar_area_w, area_h=bar_area_h)
 
     # Velocity estimate
     vel = int(total_tok / max(duration_m, 1)) if duration_m else 0

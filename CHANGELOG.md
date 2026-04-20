@@ -5,6 +5,30 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-04-20
+
+### Fixed
+
+- **Star history charts now end at the current date.** On very large repositories (40k+ stars), GitHub caps stargazer pagination at roughly the first 40,000 stars, so the latest sample pulled from the API was often years old and the polyline terminated in the past. The chart now always appends a final data point stamped at the current time, while still reporting the real total star count. Small repos are unaffected.
+- **Session receipt labels are honest again.** The "N corrections" line previously counted every user turn — any pushback, redirect, or elaboration — and rendered them next to tool-failure marks (`✗N`) on the token treemap, which created the impression that the two numbers should reconcile. They're now split into "N user turns" and "N tool errors", with tool-error counts tinted red to match the cell marks. A new legend — `✗N = failed tool calls` — appears above the token map so the red marks are self-explanatory.
+- **Session receipt hero no longer misreports the dominant work phase.** The hero badge previously showed the label of the first detected stage, even when that stage lasted two minutes and a later stage dominated the session. It now uses the stage with the largest share of tool calls, and falls back to `MIXED` when no single stage exceeds 20%.
+- **Rhythm bars stop overflowing their track on long sessions.** On sessions with many stages (~30+), the rightmost rhythm bar on the receipt could render hundreds of pixels past the track's right edge. Receipt and rhythm-strip now share a single layout routine with a proper gap budget and a post-hoc rescale, so bars always fit the track regardless of stage count.
+- **Rhythm bars encode time, not tool-call share.** When the telemetry contract carries start and end timestamps per stage, bar widths are now proportional to stage duration, so the time-axis labels (`0m · 104m · 209m`) actually correspond to bar positions. Bar heights are now uniform; the previous height scaling was effectively noise because most bars hit the minimum-height floor.
+- **Live badges now recognize `building` as a state.** A badge with `value="building"` (or `"rebuilding"` / `"build"`) now renders as the building state instead of falling through to the default `active`. Longer phrases containing the word "build" are not affected — only those three exact tokens.
+- **Deploying `HW_GITHUB_TOKENS` no longer crashes the app.** A vestigial `github_tokens` field on the settings schema was trying to parse the environment variable as JSON on startup, so setting the plain comma-separated secret that the token-rotation code actually expects caused a 500. The field has been removed; the connector reads the secret directly, and plain comma-separated deployments now work as documented.
+
+### Added
+
+- **`hw_discover` advertises the `stats`, `chart`, and `timeline` routes.** MCP clients calling `hw_discover(what="url_grammar")` now receive URL patterns, example URLs, and method hints for the three routes that shipped in v0.2.0 but were missing from discovery.
+
+### Changed
+
+- **Chart markers render through template partials.** Marker shapes (rect, circle, diamond, and their endpoint variants) now live as Jinja partials under `templates/components/chart-markers/`, matching how the rest of the rendering pipeline handles SVG. No visual change; output is byte-identical for the shipped genomes.
+
+### Dev
+
+- GitHub token pool rotation is now covered by unit tests (`HW_GITHUB_TOKENS` comma-separated list, `GITHUB_TOKEN` single-token fallback, whitespace tolerance, empty-env behavior).
+
 ## [0.2.6] - 2026-04-19
 
 ### Added

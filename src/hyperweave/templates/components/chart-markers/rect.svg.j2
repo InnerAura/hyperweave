@@ -1,0 +1,12 @@
+{#
+  Brutalist crosshair marker: slab-filled rect with a centered cross.
+  Context: {x, y, size, half, cross}. Invoked via chart_markers loop.
+#}
+<g transform="translate({{ m.x }},{{ m.y }})">
+  <rect x="-{{ m.half }}" y="-{{ m.half }}" width="{{ m.size }}" height="{{ m.size }}"
+        fill="var(--dna-surface)" stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>
+  <line x1="-{{ m.cross }}" y1="0" x2="{{ m.cross }}" y2="0"
+        stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>
+  <line x1="0" y1="-{{ m.cross }}" x2="0" y2="{{ m.cross }}"
+        stroke="var(--dna-signal-dim,var(--dna-signal))" stroke-width="1"/>
+</g>

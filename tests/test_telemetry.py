@@ -468,9 +468,9 @@ class TestContractBuilder:
             assert "dominant_class" in stage
             assert "boundary_score" in stage
 
-    def test_has_corrections(self, contract: dict[str, Any]) -> None:
-        assert "corrections" in contract
-        assert isinstance(contract["corrections"], list)
+    def test_has_user_events(self, contract: dict[str, Any]) -> None:
+        assert "user_events" in contract
+        assert isinstance(contract["user_events"], list)
 
     def test_has_agents(self, contract: dict[str, Any]) -> None:
         assert "agents" in contract

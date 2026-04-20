@@ -26,10 +26,10 @@
   <text class="m cell-meta" font-size="{{ tier.meta_size | default(10) }}"
         x="{{ cell.x + 12 }}" y="{{ tier.meta_y | default(74) }}">{{ cell.meta }}</text>
 {% endif %}
-{% if cell.error_count %}
+{% if cell.errors %}
   <text class="m cell-error" font-size="8"
         x="{{ cell.x + cell.w - 10 }}" y="{{ tier.name_y | default(17) }}"
-        text-anchor="end">{{ cell.error_symbol | default('x') }}{{ cell.error_count }}</text>
+        text-anchor="end">{{ cell.error_symbol | default('x') }}{{ cell.errors }}</text>
 {% endif %}
 {% endfor %}
 </g>

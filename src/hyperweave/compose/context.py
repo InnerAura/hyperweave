@@ -341,7 +341,7 @@ def _ctx_chart(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     ctx["chart_gridlines"] = ""
     ctx["chart_area"] = ""
     ctx["chart_polyline"] = ""
-    ctx["chart_markers"] = ""
+    ctx["chart_markers"] = []
     ctx["chart_milestones"] = ""
     ctx["data_hw_status"] = "fresh"
     ctx.update(resolved.frame_context)
@@ -371,7 +371,7 @@ def _ctx_stats(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     ctx["embedded_chart_defs"] = ""
     ctx["embedded_chart_area"] = ""
     ctx["embedded_chart_polyline"] = ""
-    ctx["embedded_chart_markers"] = ""
+    ctx["embedded_chart_markers"] = []
     ctx.update(resolved.frame_context)
     return ctx
 

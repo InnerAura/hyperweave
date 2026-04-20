@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import math
 import re
+from datetime import UTC, datetime
 from typing import Any
 
 from hyperweave.connectors.base import fetch_json, fetch_text
@@ -134,7 +135,13 @@ async def fetch_metric(identifier: str, metric: str) -> dict[str, Any]:
 # ── Session 2A+2B: star history sampling ───────────────────────────────────
 
 
-_STARGAZER_PAGE_SIZE = 30
+_STARGAZER_PAGE_SIZE = 100
+# GitHub hard-caps deep pagination on /stargazers at ~400 pages.
+# With per_page=100 that gives ~40k stargazer visibility per repo; we still
+# report the real total_stars in the "now" point, we just can't sample past
+# this wall. For mega-repos (100k+ stars) we therefore sample within a fixed
+# window and mark the final point with the current timestamp.
+_STARGAZER_PAGE_CAP = 400
 _STARGAZER_ACCEPT_HEADER = "application/vnd.github.v3.star+json"
 
 
@@ -183,8 +190,9 @@ async def fetch_stargazer_history(
         cache.set(cache_key, empty_result, STARGAZER_HISTORY_TTL)
         return empty_result
 
-    # Step 2: compute total pages
+    # Step 2: compute total pages (clamped at GitHub's deep-pagination cap)
     total_pages = max(1, math.ceil(total_stars / _STARGAZER_PAGE_SIZE))
+    effective_pages = min(total_pages, _STARGAZER_PAGE_CAP)
 
     # Single-page case: repo has ≤ 30 stars. The "first starred_at of the page"
     # sampling trick would otherwise collapse to a single aggregated point plus
@@ -211,14 +219,14 @@ async def fetch_stargazer_history(
         cache.set(cache_key, single_page_result, STARGAZER_HISTORY_TTL)
         return single_page_result
 
-    # Cap the sample count at the number of available pages.
-    sample_count = min(sample_pages, total_pages)
+    # Cap the sample count at the number of reachable pages.
+    sample_count = min(sample_pages, effective_pages)
 
     # Step 3: pick evenly distributed page numbers (always include first + last).
     if sample_count == 1:
         page_numbers: list[int] = [1]
     else:
-        step = (total_pages - 1) / (sample_count - 1)
+        step = (effective_pages - 1) / (sample_count - 1)
         page_numbers = sorted({max(1, round(1 + step * i)) for i in range(sample_count)})
 
     async def _fetch_page(page: int) -> tuple[int, list[dict[str, Any]]]:
@@ -247,10 +255,13 @@ async def fetch_stargazer_history(
             cumulative = 1  # first starred timestamp → at least 1 star
         points.append({"date": starred_at, "count": cumulative})
 
-    # Always append the "now" point with the current total.
+    # Append an honest "now" point: real current star total at real current
+    # timestamp. For mega-repos where sampling is capped at page 400, the
+    # deepest reachable starred_at may be years old — using that as the
+    # terminal timestamp produced polylines that ended in the past. The count
+    # is still the real stargazers_count; only the timestamp becomes "now".
     if points:
-        latest_date = max(p["date"] for p in points)
-        points.append({"date": latest_date, "count": total_stars})
+        points.append({"date": datetime.now(UTC).isoformat(), "count": total_stars})
     points.sort(key=lambda p: p["date"])
 
     result: dict[str, Any] = {

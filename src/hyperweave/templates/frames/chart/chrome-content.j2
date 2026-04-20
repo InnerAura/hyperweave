@@ -83,7 +83,12 @@
   {{ chart_gridlines | safe }}
   {{ chart_area | safe }}
   {{ chart_polyline | safe }}
-  {{ chart_markers | safe }}
+  <g data-hw-zone="markers">
+  {%- for m in chart_markers %}
+    {%- set partial = 'endpoint-' ~ m.shape if m.is_endpoint else m.shape %}
+    {%- include "components/chart-markers/" ~ partial ~ ".svg.j2" %}
+  {%- endfor %}
+  </g>
   {{ chart_milestones | safe }}
   {{ chart_axes | safe }}
   {{ chart_empty_state | safe }}

@@ -78,7 +78,7 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
             }
             for s in t.stages
         ],
-        "corrections": [
+        "user_events": [
             {"category": e.category.value, "preview": e.message_preview, "confidence": e.confidence.value}
             for e in t.user_events
             if e.category.value != "continuation"

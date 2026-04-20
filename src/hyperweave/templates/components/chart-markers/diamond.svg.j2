@@ -1,0 +1,7 @@
+{#
+  Chrome diamond marker: white-filled rotated rect.
+  Fill/stroke are supplied by the enclosing paradigm CSS class.
+  Context: {x, y, size, half}.
+#}
+<rect x="-{{ m.half }}" y="-{{ m.half }}" width="{{ m.size }}" height="{{ m.size }}"
+      transform="translate({{ m.x }} {{ m.y }}) rotate(45)"/>

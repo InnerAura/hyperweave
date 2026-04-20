@@ -56,7 +56,8 @@
   <g transform="translate({{ content_w }}, 0)" text-anchor="end">
     <text class="m ghost" font-size="9" letter-spacing="1px">SESSION</text>
 {% for stat in hero_right_stats | default([]) %}
-    <text class="m ink2" font-size="10" y="{{ 16 + (loop.index0 * 14) }}">{{ stat.text }}</text>
+    <text class="m ink2" font-size="10" y="{{ 16 + (loop.index0 * 14) }}"
+          {% if stat.get('accent') == 'failing' %}fill="var(--dna-status-failing-core)" font-weight="600"{% endif %}>{{ stat.text }}</text>
 {% endfor %}
   </g>
 </g>
@@ -73,6 +74,11 @@
   <text class="m ink3" font-size="9"
         x="{{ 103 + (loop.index0 * 80) }}" y="16">{{ legend.label }}</text>
 {% endfor %}
+  {# ✗N legend — right-aligned, failing-red. Tells the reader that the
+     tiny marks on treemap cells mean "failed tool calls," not "typos". #}
+  <text class="m" font-size="9" font-weight="600" letter-spacing="0.5px"
+        fill="var(--dna-status-failing-core)"
+        x="{{ content_w }}" y="16" text-anchor="end">✗N = failed tool calls</text>
 
   {# Treemap cells — computed by resolver, rendered here.
      clipPath per cell prevents text overflow into adjacent cells. #}
