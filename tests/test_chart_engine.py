@@ -19,7 +19,7 @@ from hyperweave.render.chart_engine import (
     _build_markers,
     _build_milestones,
     _build_polyline_points,
-    _build_x_year_labels,
+    _build_x_date_labels,
     _format_y_tick,
     _nice_y_ticks,
     _normalize_points,
@@ -457,8 +457,8 @@ def test_format_y_tick_integer_and_k_notation() -> None:
 # ── X-axis year labels ────────────────────────────────────────────────
 
 
-def test_x_year_labels_single_year(sample_viewport: Viewport) -> None:
-    """Data entirely within one year → one label centered on the viewport."""
+def test_x_date_labels_monthly_granularity_for_year_one_span(sample_viewport: Viewport) -> None:
+    """Data spanning ~10 months → monthly format ("Mon Year"), not yearly."""
     pts = _normalize_points(
         [
             {"date": "2025-01-15", "count": 1},
@@ -466,18 +466,18 @@ def test_x_year_labels_single_year(sample_viewport: Viewport) -> None:
             {"date": "2025-11-20", "count": 6},
         ]
     )
-    labels = _build_x_year_labels(pts, sample_viewport)
-    assert labels == [
-        {
-            "x": sample_viewport.x + sample_viewport.w // 2,
-            "text": "2025",
-            "anchor": "middle",
-        }
-    ]
+    labels = _build_x_date_labels(pts, sample_viewport)
+    # All labels should use "Mon YYYY" format (e.g., "Jan 2025", "Apr 2025").
+    assert labels, "expected at least one label for a 10-month span"
+    for label in labels:
+        # Match "Abc 2025" pattern — three-letter month followed by space + year.
+        parts = label["text"].split()
+        assert len(parts) == 2
+        assert parts[1] == "2025"
 
 
-def test_x_year_labels_multi_year_range(sample_viewport: Viewport) -> None:
-    """Three-year span → start year at left, interior years at jan-1 positions."""
+def test_x_date_labels_yearly_for_multi_year_range(sample_viewport: Viewport) -> None:
+    """Three-year span → yearly format (2024, 2025, 2026)."""
     pts = _normalize_points(
         [
             {"date": "2024-01-01", "count": 1},
@@ -485,19 +485,109 @@ def test_x_year_labels_multi_year_range(sample_viewport: Viewport) -> None:
             {"date": "2026-04-01", "count": 500},
         ]
     )
-    labels = _build_x_year_labels(pts, sample_viewport)
+    labels = _build_x_date_labels(pts, sample_viewport)
     texts = [label["text"] for label in labels]
-    # Expect every year in the range represented exactly once.
-    assert texts == ["2024", "2025", "2026"]
-    # Start year anchored at left, subsequent labels middle/end.
+    # Every label is a 4-digit year.
+    for text in texts:
+        assert text.isdigit() and len(text) == 4
+    # First and last are the endpoints of the data.
     assert labels[0]["anchor"] == "start"
     assert labels[0]["x"] == sample_viewport.x
+    # Data starts in 2024 and ends in 2026; endpoints must reflect that.
+    assert texts[0] == "2024"
+    assert texts[-1] == "2026"
 
 
-def test_x_year_labels_empty_points() -> None:
+def test_x_date_labels_daily_for_viral_two_week_span(sample_viewport: Viewport) -> None:
+    """2-week span (caveman case) → daily format ("Apr 05", "Apr 12"...).
+
+    This is the regression test that locks in the fix for the
+    JuliusBrussee/caveman rendering — the old year-only labels showed a
+    single lonely "2026" mid-axis; daily granularity makes the 2-week
+    adoption curve legible.
+    """
+    pts = _normalize_points(
+        [
+            {"date": "2026-04-05T00:00:00Z", "count": 1},
+            {"date": "2026-04-10T00:00:00Z", "count": 15_000},
+            {"date": "2026-04-19T00:00:00Z", "count": 40_000},
+        ]
+    )
+    labels = _build_x_date_labels(pts, sample_viewport)
+    # Every label uses "Mon DD" format — no year suffix, no single "2026".
+    for label in labels:
+        parts = label["text"].split()
+        assert len(parts) == 2, f"expected 'Mon DD' format, got {label['text']!r}"
+        # Day portion is zero-padded 2-digit integer.
+        assert parts[1].isdigit() and len(parts[1]) == 2
+
+
+def test_x_date_labels_every_other_year_for_ancient_repo(sample_viewport: Viewport) -> None:
+    """Repo spanning >10 years → every-other-year ticks to keep the axis readable."""
+    pts = _normalize_points(
+        [
+            {"date": "2010-06-01", "count": 1},
+            {"date": "2026-06-01", "count": 500_000},
+        ]
+    )
+    labels = _build_x_date_labels(pts, sample_viewport)
+    texts = [label["text"] for label in labels]
+    # Endpoints always preserved.
+    assert texts[0] == "2010"
+    # Endpoint is dropped/merged into the last-kept if too close; 2026 should be present.
+    assert "2026" in texts
+
+
+def test_x_date_labels_deoverlap_drops_clustered_middles(sample_viewport: Viewport) -> None:
+    """De-overlap pass: temporally-close middle labels are dropped; endpoints preserved.
+
+    With a narrow viewport (just 80px wide) and a 3-year span, the yearly
+    labels at jan-1 boundaries would collide. Only endpoints survive.
+    """
+    narrow_vp = Viewport(x=0, y=0, w=80, h=50)
+    pts = _normalize_points(
+        [
+            {"date": "2024-01-01", "count": 1},
+            {"date": "2025-06-01", "count": 100},
+            {"date": "2026-04-01", "count": 500},
+        ]
+    )
+    labels = _build_x_date_labels(pts, narrow_vp)
+    # Under severe width pressure, only the endpoints survive.
+    assert len(labels) <= 2
+    texts = [label["text"] for label in labels]
+    assert "2024" in texts
+    assert "2026" in texts
+
+
+def test_x_date_labels_preserve_endpoints_unconditionally(sample_viewport: Viewport) -> None:
+    """Even when middle labels are dropped, first and last labels persist."""
+    pts = _normalize_points(
+        [
+            {"date": "2024-01-01", "count": 1},
+            {"date": "2026-04-01", "count": 500},
+        ]
+    )
+    labels = _build_x_date_labels(pts, sample_viewport)
+    # Two-point input with wide viewport keeps both endpoints.
+    assert len(labels) >= 2
+    assert labels[0]["anchor"] == "start"
+    assert labels[-1]["anchor"] == "end"
+
+
+def test_x_date_labels_single_point_full_date(sample_viewport: Viewport) -> None:
+    """Single data point → one centered full-date label ("Apr 05, 2026")."""
+    pts = _normalize_points([{"date": "2026-04-05", "count": 1}])
+    labels = _build_x_date_labels(pts, sample_viewport)
+    assert len(labels) == 1
+    assert labels[0]["text"] == "Apr 05, 2026"
+    assert labels[0]["anchor"] == "middle"
+
+
+def test_x_date_labels_empty_points() -> None:
     """No points → no labels (caller should render an empty-state overlay instead)."""
     vp = Viewport(x=0, y=0, w=100, h=50)
-    assert _build_x_year_labels([], vp) == []
+    assert _build_x_date_labels([], vp) == []
 
 
 # ── Zero-time-span defense (bug 2 reproducer) ────────────────────────

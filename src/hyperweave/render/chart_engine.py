@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 # ── Data types ─────────────────────────────────────────────────────────────
@@ -513,35 +513,95 @@ def _build_y_labels(ticks: list[int], v_min: int, v_max: int, vp: Viewport) -> l
     return out
 
 
-def _build_x_year_labels(points: list[ChartPoint], vp: Viewport) -> list[dict[str, Any]]:
-    """Return year-string labels positioned at jan-1 boundaries in the data range.
+# Minimum horizontal pixel gap between two x-axis labels. Year labels (4 chars)
+# need a bit more room than milestone labels (40 px); 48 px keeps well-spaced
+# "2023" / "2024" / "2025" readable without forcing unnecessary drops.
+_X_LABEL_MIN_GAP_PX: int = 48
 
-    Matches star-history.com's convention: just year numbers (2024, 2025, 2026)
-    at the X positions where each year begins. No "EARLY '24", "MID '25", etc.
 
-    Single-year spans collapse to one label at the viewport center.
+def _build_x_date_labels(points: list[ChartPoint], vp: Viewport) -> list[dict[str, Any]]:
+    """Adaptive x-axis date labels — granularity follows the data's temporal span.
+
+    Tick formats:
+        < 14 days  → daily   ("Apr 05")
+        < 90 days  → weekly  ("Apr 05" at 7-day steps)
+        < 2 years  → monthly ("Apr 2026")
+        < 10 years → yearly  ("2026")
+        else       → every other year ("2012", "2014", ...)
+
+    A single-point input renders one centered label with full "%b %d, %Y".
+    After candidate generation, a min-gap de-overlap pass removes any middle
+    label within ``_X_LABEL_MIN_GAP_PX`` of a previously-kept one. The first
+    and last labels are preserved unconditionally because they're the
+    temporal endpoints a reader expects to see.
     """
     if not points:
         return []
-    y_start = points[0].date.year
-    y_end = points[-1].date.year
-    if len(points) == 1 or y_start == y_end:
-        return [{"x": vp.x + vp.w // 2, "text": str(y_start), "anchor": "middle"}]
+    if len(points) == 1:
+        p = points[0]
+        return [{"x": vp.x + vp.w // 2, "text": p.date.strftime("%b %d, %Y"), "anchor": "middle"}]
 
-    t0 = points[0].date.timestamp()
-    t1 = points[-1].date.timestamp()
-    t_span = max(1.0, t1 - t0)
+    t0 = points[0].date
+    t1 = points[-1].date
+    span = t1 - t0
 
-    labels: list[dict[str, Any]] = [{"x": vp.x, "text": str(y_start), "anchor": "start"}]
-    for y in range(y_start + 1, y_end + 1):
-        jan1 = datetime(y, 1, 1, tzinfo=UTC).timestamp()
-        if t0 < jan1 <= t1:
-            frac = (jan1 - t0) / t_span
-            px = vp.x + round(frac * vp.w)
-            # Anchor at right-edge if within 20px of viewport right; else middle.
-            anchor = "end" if (vp.x + vp.w) - px < 20 else "middle"
-            labels.append({"x": px, "text": str(y), "anchor": anchor})
-    return labels
+    # Select granularity + format from the actual span.
+    if span < timedelta(days=14):
+        format_str = "%b %d"
+        step = timedelta(days=1)
+    elif span < timedelta(days=90):
+        format_str = "%b %d"
+        step = timedelta(days=7)
+    elif span < timedelta(days=730):
+        format_str = "%b %Y"
+        step = timedelta(days=30)  # ≈ 1 month
+    elif span < timedelta(days=3650):
+        format_str = "%Y"
+        step = timedelta(days=365)
+    else:
+        format_str = "%Y"
+        step = timedelta(days=730)  # every other year
+
+    # Generate candidate ticks, projecting each to pixel x via the same scale
+    # as the polyline so labels sit directly under their corresponding data.
+    t_span_s = max(span.total_seconds(), 1.0)
+    candidates: list[dict[str, Any]] = []
+    cursor = t0
+    while cursor <= t1:
+        frac_t = (cursor - t0).total_seconds() / t_span_s
+        px = vp.x + round(frac_t * vp.w)
+        candidates.append({"x": px, "text": cursor.strftime(format_str), "anchor": "middle"})
+        cursor = cursor + step
+
+    # Ensure the terminal endpoint is in the candidate set (may not land on a
+    # step boundary otherwise).
+    last_px = vp.x + vp.w
+    if not candidates or candidates[-1]["x"] < last_px - 2:
+        candidates.append({"x": last_px, "text": t1.strftime(format_str), "anchor": "end"})
+
+    # First label flush with the y-axis for a cleaner left edge.
+    candidates[0]["anchor"] = "start"
+
+    # De-overlap: preserve first + last; drop any middle label within min-gap
+    # of a previously-kept one. Same algorithm as _build_milestones.
+    if len(candidates) <= 2:
+        return candidates
+    kept: list[dict[str, Any]] = [candidates[0]]
+    for label in candidates[1:-1]:
+        if label["x"] - kept[-1]["x"] >= _X_LABEL_MIN_GAP_PX:
+            kept.append(label)
+    # The terminal endpoint is always included. If it's too close to the
+    # last-kept middle label, or has identical text (e.g. yearly granularity
+    # where the last jan-1 tick and the terminal point both read "2026"),
+    # replace that middle label with the terminal rather than duplicating.
+    last_candidate = candidates[-1]
+    too_close = last_candidate["x"] - kept[-1]["x"] < _X_LABEL_MIN_GAP_PX
+    same_text = last_candidate["text"] == kept[-1]["text"]
+    if too_close or same_text:
+        kept[-1] = last_candidate
+    else:
+        kept.append(last_candidate)
+    return kept
 
 
 def _build_empty_state(vp: Viewport, message: str) -> dict[str, Any] | None:
@@ -611,7 +671,7 @@ def build_chart_svg(
         ticks = _nice_y_ticks(v_max)
         effective_max = ticks[-1] if ticks else max(v_max, 1)
         y_labels = _build_y_labels(ticks, 0, effective_max, viewport)
-        x_labels = _build_x_year_labels(points, viewport)
+        x_labels = _build_x_date_labels(points, viewport)
         # Project with zero-baseline so the polyline aligns to the tick labels.
         projected = _project_points(points, viewport, v_min=0, v_max=effective_max)
     else:

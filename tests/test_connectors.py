@@ -6,6 +6,7 @@ parsing for all six providers, and the TTL cache.
 
 from __future__ import annotations
 
+import asyncio
 import time
 from datetime import UTC, datetime
 from typing import Any
@@ -1101,7 +1102,14 @@ class TestFetchGraphQL:
 
 
 class TestStargazerGraphQL:
-    """Verify the GraphQL-primary star-history pipeline + REST fallback."""
+    """Verify the GraphQL cursor-offset star-history pipeline + REST fallback.
+
+    Post-v0.2.9: the primary GraphQL path samples N stargazer timestamps at
+    evenly-distributed cursor offsets (bypassing REST's 400-page cap). The
+    mock below decodes the ``after`` cursor to recover the target offset and
+    returns the timestamp assigned to that offset by the fixture, matching
+    production behavior where ``base64("cursor:<N-1>")`` fetches star #N.
+    """
 
     @pytest.fixture(autouse=True)
     def _reset(self) -> None:
@@ -1113,54 +1121,64 @@ class TestStargazerGraphQL:
 
     @staticmethod
     def _make_graphql_mock(
-        pages: list[list[str]],
+        timestamps_by_offset: dict[int, str],
         total_stars: int,
         captured: list[dict[str, Any]] | None = None,
     ) -> Any:
-        """Return a mock fetch_graphql that serves `pages` one at a time.
+        """Return a mock ``fetch_graphql`` that resolves cursor-offset queries.
 
-        Each inner list is a page of starredAt timestamps (ASC order). Earlier
-        indices in ``pages`` are served first (most-recent-stargazers first);
-        subsequent calls serve deeper pages. ``hasPreviousPage`` is False on
-        the final page.
+        ``timestamps_by_offset`` maps 1-indexed stargazer offset → ISO timestamp.
+        For each mock call the ``after`` cursor (or ``None`` for offset 1) is
+        decoded to its offset; the matching timestamp is returned as a single
+        edge. ``captured`` receives every incoming variables dict so tests
+        can assert on the offset distribution.
         """
-        page_idx = {"n": 0}
+        import base64 as _b64
+
+        def _offset_from_cursor(cursor: str | None) -> int:
+            if cursor is None:
+                return 1
+            try:
+                decoded = _b64.b64decode(cursor).decode()
+            except Exception:  # pragma: no cover — malformed cursor would be a test bug
+                return 1
+            if decoded.startswith("cursor:"):
+                try:
+                    return int(decoded[len("cursor:") :]) + 1
+                except ValueError:  # pragma: no cover
+                    return 1
+            return 1
 
         async def fake(query: str, variables: dict[str, Any], **_kw: Any) -> dict[str, Any]:
-            i = page_idx["n"]
-            page_idx["n"] += 1
             if captured is not None:
                 captured.append(dict(variables))
-            if i >= len(pages):
-                # Exhausted supplied pages — return no-more signal
-                return {
-                    "data": {
-                        "repository": {
-                            "stargazerCount": total_stars,
-                            "stargazers": {
-                                "pageInfo": {"startCursor": None, "hasPreviousPage": False},
-                                "edges": [],
-                            },
-                        }
-                    }
-                }
-            edges = [{"starredAt": ts} for ts in pages[i]]
+            offset = _offset_from_cursor(variables.get("cursor"))
+            starred_at = timestamps_by_offset.get(offset)
+            edges = [{"starredAt": starred_at}] if starred_at is not None else []
             return {
                 "data": {
                     "repository": {
                         "stargazerCount": total_stars,
-                        "stargazers": {
-                            "pageInfo": {
-                                "startCursor": f"cursor-{i}",
-                                "hasPreviousPage": i < len(pages) - 1,
-                            },
-                            "edges": edges,
-                        },
+                        "stargazers": {"edges": edges},
                     }
                 }
             }
 
         return fake
+
+    # ── cursor construction (pure unit) ──
+
+    def test_cursor_for_offset_encoding(self) -> None:
+        from hyperweave.connectors.github import _cursor_for_offset
+
+        assert _cursor_for_offset(1) is None
+        assert _cursor_for_offset(0) is None  # defensive: also treated as "no cursor"
+        # btoa("cursor:1") == "Y3Vyc29yOjE="
+        assert _cursor_for_offset(2) == "Y3Vyc29yOjE="
+        # btoa("cursor:99") == "Y3Vyc29yOjk5"
+        assert _cursor_for_offset(100) == "Y3Vyc29yOjk5"
+
+    # ── dispatcher routing (token → GraphQL; no token → REST) ──
 
     @pytest.mark.asyncio
     async def test_primary_path_with_token_uses_graphql_not_rest(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1171,10 +1189,10 @@ class TestStargazerGraphQL:
             rest_calls["n"] += 1
             raise AssertionError("REST path should not be called when GraphQL succeeds")
 
-        pages = [["2026-04-01T00:00:00Z", "2026-04-02T00:00:00Z", "2026-04-03T00:00:00Z"]]
+        timestamps = {1: "2026-04-01T00:00:00Z", 2: "2026-04-02T00:00:00Z", 3: "2026-04-03T00:00:00Z"}
         monkeypatch.setattr(
             "hyperweave.connectors.github.fetch_graphql",
-            self._make_graphql_mock(pages, total_stars=3),
+            self._make_graphql_mock(timestamps, total_stars=3),
         )
         monkeypatch.setattr("hyperweave.connectors.github.fetch_json", fail_rest)
 
@@ -1184,7 +1202,8 @@ class TestStargazerGraphQL:
 
         assert rest_calls["n"] == 0
         assert result["current_stars"] == 3
-        assert len(result["points"]) == 4  # 3 stargazers + now-point
+        # 3 sampled stargazers (small repo, clamps sample_count to total) + now-point
+        assert len(result["points"]) == 4
 
     @pytest.mark.asyncio
     async def test_no_token_skips_graphql_uses_rest(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1233,79 +1252,145 @@ class TestStargazerGraphQL:
 
         result = await fetch_stargazer_history("owner", "repo")
 
-        assert rest_called["n"] >= 1  # REST was actually invoked
+        assert rest_called["n"] >= 1
         assert result["current_stars"] == 42
 
+    # ── cursor-offset sampling correctness ──
+
     @pytest.mark.asyncio
-    async def test_mega_repo_stops_at_max_pages(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """361k-star repo: GraphQL should stop after _GRAPHQL_MAX_PAGES (20 pages)."""
+    async def test_cursor_offset_samples_at_even_positions(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """N=12 offsets across 10,000 stars fetches one point per offset.
+
+        Verifies the offset distribution is even and each point's count
+        matches its cursor offset (not a derived interpolation).
+        """
         monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
-        # 25 synthetic pages available, but we should only fetch 20 before stopping
-        pages = [[f"2026-{(i % 12) + 1:02d}-01T00:00:00Z"] * 100 for i in range(25)]
+        # Synthesize timestamps for every possible offset — mock returns
+        # whichever one the dispatcher asks for.
+        timestamps = {i: f"2024-{((i - 1) % 12) + 1:02d}-15T00:00:00Z" for i in range(1, 10_001)}
         captured: list[dict[str, Any]] = []
         monkeypatch.setattr(
             "hyperweave.connectors.github.fetch_graphql",
-            self._make_graphql_mock(pages, total_stars=361_000, captured=captured),
-        )
-
-        from hyperweave.connectors.github import fetch_stargazer_history
-
-        result = await fetch_stargazer_history("openclaw", "openclaw")
-
-        assert len(captured) == 20  # hit the max-pages wall
-        assert result["current_stars"] == 361_000
-
-    @pytest.mark.asyncio
-    async def test_small_repo_exhausts_history_before_max_pages(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Repo with 250 stars completes in 3 pages, not 20."""
-        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
-        # 3 pages of real stargazers, then the mock returns empty (hasPreviousPage=False on page 3)
-        pages = [
-            [f"2025-12-{i:02d}T00:00:00Z" for i in range(1, 51)],
-            [f"2025-11-{i:02d}T00:00:00Z" for i in range(1, 51)],
-            [f"2025-10-{i:02d}T00:00:00Z" for i in range(1, 51)],
-        ]
-        captured: list[dict[str, Any]] = []
-        monkeypatch.setattr(
-            "hyperweave.connectors.github.fetch_graphql",
-            self._make_graphql_mock(pages, total_stars=250, captured=captured),
-        )
-
-        from hyperweave.connectors.github import fetch_stargazer_history
-
-        result = await fetch_stargazer_history("owner", "small-repo")
-
-        assert len(captured) == 3  # stopped at hasPreviousPage=False
-        assert result["current_stars"] == 250
-
-    @pytest.mark.asyncio
-    async def test_downsamples_to_configured_sample_count(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """2000 accumulated timestamps → sample_pages=12 → 12 points + now-point."""
-        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
-        # 20 pages x 100 stamps = 2000 distinct timestamps, all in the past
-        # (real stargazers can only star in the past, never the future).
-        pages = [[f"2024-{(i % 12) + 1:02d}-{(j % 28) + 1:02d}T00:00:00Z" for j in range(100)] for i in range(20)]
-        monkeypatch.setattr(
-            "hyperweave.connectors.github.fetch_graphql",
-            self._make_graphql_mock(pages, total_stars=10_000),
+            self._make_graphql_mock(timestamps, total_stars=10_000, captured=captured),
         )
 
         from hyperweave.connectors.github import fetch_stargazer_history
 
         result = await fetch_stargazer_history("owner", "repo", sample_pages=12)
 
-        # 12 downsampled stargazer points + 1 now-point = 13 total
+        # 12 offset samples + 1 now-point = 13 total
         assert len(result["points"]) == 13
-        # Last point (chronologically) is the now-point with the real total
+        # Last point is the now-point with the real total.
         assert result["points"][-1]["count"] == 10_000
+        # Counts on the sampled points should span ~[1, 10000] — no flat cluster.
+        sampled_counts = [p["count"] for p in result["points"][:-1]]
+        assert min(sampled_counts) == 1  # offset 1 always included
+        assert max(sampled_counts) == 10_000  # offset N always included
+
+    @pytest.mark.asyncio
+    async def test_mega_repo_samples_spread_across_full_lifetime(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """361K-star repo: 12 samples span stars #1 through #361K, not the recent 2K."""
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        # Fixture: star #1 is in Jan 2015; star #361,000 is in Dec 2026.
+        # Spread evenly across 11 years (2015..2026 inclusive, 12 bucket-years).
+        timestamps: dict[int, str] = {}
+        for off in range(1, 361_001):
+            year_frac = (off - 1) / (361_000 - 1)  # 0..1 inclusive
+            year = 2015 + min(11, int(year_frac * 12))
+            month = min(12, 1 + int(((off - 1) * 12 / 361_000) % 12))
+            timestamps[off] = f"{year:04d}-{month:02d}-15T00:00:00Z"
+        captured: list[dict[str, Any]] = []
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(timestamps, total_stars=361_000, captured=captured),
+        )
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("openclaw", "openclaw", sample_pages=12)
+
+        assert result["current_stars"] == 361_000
+        sampled_years = [int(p["date"][:4]) for p in result["points"][:-1]]
+        # Must cover the full lifetime — oldest point is in 2015, newest in 2026.
+        assert min(sampled_years) == 2015
+        assert max(sampled_years) == 2026
+        # Not a flat cluster near total_stars: the 12 sampled counts should span
+        # at least 90% of the repo's lifetime (1 → 361K).
+        sampled_counts = [p["count"] for p in result["points"][:-1]]
+        assert max(sampled_counts) - min(sampled_counts) >= 324_000  # 0.9 * 361K
+
+    @pytest.mark.asyncio
+    async def test_small_repo_clamps_sample_count_to_total_stars(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """5-star repo with sample_pages=12 fetches only 5 points, not 12 duplicates."""
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        timestamps = {i: f"2026-04-{i:02d}T00:00:00Z" for i in range(1, 6)}
+        captured: list[dict[str, Any]] = []
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(timestamps, total_stars=5, captured=captured),
+        )
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "tiny-repo", sample_pages=12)
+
+        # 5 stargazer points (one per star) + 1 now-point = 6 total
+        assert len(result["points"]) == 6
+        # Total GraphQL calls: 1 initial (for total_stars) + up to 4 additional
+        # (offset 1 reuses the initial response). Capped well below sample_pages=12.
+        assert len(captured) <= 5
+
+    @pytest.mark.asyncio
+    async def test_bounded_concurrency_limits_inflight_requests(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """_GRAPHQL_CONCURRENCY caps parallel in-flight requests to avoid abuse-detection.
+
+        Uses an awaitable barrier: if more than _GRAPHQL_CONCURRENCY requests
+        enter simultaneously, the test fails.
+        """
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        from hyperweave.connectors import github as gh_mod
+
+        timestamps = {i: f"2024-{((i - 1) % 12) + 1:02d}-15T00:00:00Z" for i in range(1, 1001)}
+        in_flight = {"count": 0, "peak": 0}
+
+        async def throttle_observing_mock(query: str, variables: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+            in_flight["count"] += 1
+            in_flight["peak"] = max(in_flight["peak"], in_flight["count"])
+            await asyncio.sleep(0.02)  # simulate network latency so concurrency is observable
+            in_flight["count"] -= 1
+            offset = 1
+            if variables.get("cursor"):
+                import base64 as _b64
+
+                decoded = _b64.b64decode(variables["cursor"]).decode()
+                if decoded.startswith("cursor:"):
+                    offset = int(decoded[len("cursor:") :]) + 1
+            return {
+                "data": {
+                    "repository": {
+                        "stargazerCount": 1000,
+                        "stargazers": {"edges": [{"starredAt": timestamps[offset]}]},
+                    }
+                }
+            }
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_graphql", throttle_observing_mock)
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        await fetch_stargazer_history("owner", "repo", sample_pages=12)
+
+        # Never more than _GRAPHQL_CONCURRENCY in flight at once.
+        assert in_flight["peak"] <= gh_mod._GRAPHQL_CONCURRENCY
 
     @pytest.mark.asyncio
     async def test_now_point_uses_current_utc(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Even with ancient fixture timestamps, the terminal point is stamped "now"."""
         monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
-        pages = [["2020-01-01T00:00:00Z"]]  # ancient timestamp
+        timestamps = {1: "2020-01-01T00:00:00Z"}  # single ancient star
         monkeypatch.setattr(
             "hyperweave.connectors.github.fetch_graphql",
-            self._make_graphql_mock(pages, total_stars=1),
+            self._make_graphql_mock(timestamps, total_stars=1),
         )
 
         from hyperweave.connectors.github import fetch_stargazer_history
@@ -1317,10 +1402,11 @@ class TestStargazerGraphQL:
 
     @pytest.mark.asyncio
     async def test_empty_repo_returns_empty_points(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Zero-star repo → no sampling attempted, empty points list."""
         monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
         monkeypatch.setattr(
             "hyperweave.connectors.github.fetch_graphql",
-            self._make_graphql_mock(pages=[[]], total_stars=0),
+            self._make_graphql_mock(timestamps_by_offset={}, total_stars=0),
         )
 
         from hyperweave.connectors.github import fetch_stargazer_history

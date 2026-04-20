@@ -5,6 +5,17 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-04-21
+
+### Fixed
+
+- **Star history charts now render an authentic growth curve for any repo size.** v0.2.8 fetched only the most-recent 2,000 stargazers for any repo with more than ~2,000 stars, which meant both the 361,000-star `openclaw/openclaw` and the 40,000-star `JuliusBrussee/caveman` rendered as flat horizontal lines near their total-star value — the captured window's variation was invisible on the full-range Y-axis. Star history now uses GraphQL cursor-offset sampling to pull 12 real stargazer timestamps evenly distributed across the repository's full lifetime, regardless of whether the repo has 30 stars or 500,000. The resulting curve shows actual adoption shape — slow-early, explosive-middle, tapering-late — rather than either a hockey-stick or a flat line.
+- **X-axis date labels adapt to the repository's lifetime.** A viral repo that went from 0 to 40K stars in two weeks was being labeled with a single "2026" at the center of its axis; a mature repo with 10 years of history showed the same year-only format. The axis now selects granularity from the actual temporal span — daily labels ("Apr 05", "Apr 12") when the span is under two weeks, weekly under 90 days, month-plus-year under two years, yearly up to ten years, and every-other-year beyond. Labels maintain a minimum 48-pixel horizontal gap so they never collide — the "202324" pileup is gone.
+
+### Changed
+
+- **Parallel GraphQL dispatch is now bounded.** Cold fetches fan out twelve cursor-offset queries across four concurrent in-flight requests via `asyncio.Semaphore`. This keeps cold-fetch latency under ~1 second while staying well below per-minute abuse-detection thresholds that bursty same-token parallelism could otherwise trip.
+
 ## [0.2.8] - 2026-04-20
 
 ### Fixed
