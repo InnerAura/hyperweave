@@ -79,19 +79,33 @@
   {# Y-axis left rail — genome signal accent. #}
   <line x1="{{ vx }}" y1="{{ vy }}" x2="{{ vx }}" y2="{{ vy + vh }}" stroke="var(--dna-signal)" stroke-width="0.8" opacity="0.55"/>
 
-  {# Chart engine fragments #}
-  {{ chart_gridlines | safe }}
-  {{ chart_area | safe }}
-  {{ chart_polyline | safe }}
+  {# Chart engine fragments — structured data rendered through Jinja partials. #}
+  {%- for gl in chart_gridlines %}
+    {%- include "components/chart-gridlines.svg.j2" %}
+  {%- endfor %}
+  {%- if chart_area %}
+    {%- include "components/chart-area.svg.j2" %}
+  {%- endif %}
+  {%- if chart_polyline %}
+    {%- include "components/chart-polyline.svg.j2" %}
+  {%- endif %}
   <g data-hw-zone="markers">
   {%- for m in chart_markers %}
     {%- set partial = 'endpoint-' ~ m.shape if m.is_endpoint else m.shape %}
     {%- include "components/chart-markers/" ~ partial ~ ".svg.j2" %}
   {%- endfor %}
   </g>
-  {{ chart_milestones | safe }}
-  {{ chart_axes | safe }}
-  {{ chart_empty_state | safe }}
+  <g data-hw-zone="milestones">
+  {%- for ms in chart_milestones %}
+    {%- include "components/chart-milestone.svg.j2" %}
+  {%- endfor %}
+  </g>
+  {%- for ax in chart_axes %}
+    {%- include "components/chart-axes.svg.j2" %}
+  {%- endfor %}
+  {%- if chart_empty_state %}
+    {%- include "components/chart-empty-state.svg.j2" %}
+  {%- endif %}
 </g>
 
 <line x1="24" y1="420" x2="{{ cw - 24 }}" y2="420" stroke="url(#{{ uid }}-sep)" stroke-width="0.4" opacity="0.55"/>

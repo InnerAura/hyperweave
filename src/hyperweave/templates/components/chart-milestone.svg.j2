@@ -1,0 +1,7 @@
+{# Single milestone: vertical tick + label above the crossing point.
+   Context: ms = {x, y, bottom_y, label, value}. Looped by chart content.
+   De-overlap is applied upstream in the engine (MILESTONE_MIN_GAP_PX). #}
+<line x1="{{ ms.x }}" y1="{{ ms.y }}" x2="{{ ms.x }}" y2="{{ ms.bottom_y }}"
+      class="hw-chart-milestone-line"/>
+<text x="{{ ms.x }}" y="{{ ms.y - 6 }}" text-anchor="middle"
+      class="hw-chart-milestone-label">{{ ms.label }}</text>

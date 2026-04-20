@@ -272,15 +272,59 @@ def test_build_milestones_marks_crossings(sample_viewport: Viewport) -> None:
     )
     projected = _project_points(pts, sample_viewport)
     out = _build_milestones(pts, projected, sample_viewport, thresholds=[500, 1000, 2000])
-    assert ">500</text>" in out or ">5" in out  # tolerant of compact label format
-    assert ">1K</text>" in out
-    assert ">2K</text>" in out
+    assert isinstance(out, list)
+    labels = [ms["label"] for ms in out]
+    # With sample_viewport ~600px wide and points spread across 4 timestamps, all
+    # three thresholds cross at well-spaced x positions → none get de-overlapped.
+    assert "500" in labels
+    assert "1K" in labels
+    assert "2K" in labels
+    # Structural guarantees every milestone dict needs
+    for ms in out:
+        assert {"x", "y", "bottom_y", "label", "value"} <= set(ms)
 
 
 def test_build_milestones_empty_when_no_thresholds(sample_viewport: Viewport) -> None:
     pts = _normalize_points([{"date": "2025-01-01", "count": 100}])
     projected = _project_points(pts, sample_viewport)
-    assert _build_milestones(pts, projected, sample_viewport, thresholds=[]) == ""
+    assert _build_milestones(pts, projected, sample_viewport, thresholds=[]) == []
+
+
+def test_build_milestones_deoverlaps_clustered_crossings(sample_viewport: Viewport) -> None:
+    """When multiple thresholds cross on nearly-adjacent x positions, only the
+    first one in each cluster survives — prevents the openclaw-style
+    '500/1K/5K/10K all stacked on top of each other' illegibility."""
+    # Two data points very close in x so all crossings cluster in the gap.
+    pts = _normalize_points(
+        [
+            {"date": "2025-01-01", "count": 100},
+            {"date": "2025-01-02", "count": 20000},  # one-day jump through all thresholds
+        ],
+    )
+    projected = _project_points(pts, sample_viewport)
+    thresholds = [500, 1000, 2000, 5000, 10000, 15000]
+    out = _build_milestones(pts, projected, sample_viewport, thresholds=thresholds)
+    # All 6 crossings happen in one tight cluster; de-overlap keeps ≤ 2 labels.
+    assert 1 <= len(out) <= 2
+    # The surviving label(s) must be the first crossing (lowest threshold
+    # value) — we keep oldest, drop the pileup following it.
+    assert out[0]["value"] == 500
+
+
+def test_build_milestones_keeps_all_when_well_spaced(sample_viewport: Viewport) -> None:
+    """Milestones spread out beyond 40px pixel gap should all survive de-overlap."""
+    # Four data points, one per crossing, evenly spaced across the viewport.
+    pts = _normalize_points(
+        [
+            {"date": "2025-01-01", "count": 100},
+            {"date": "2025-04-01", "count": 600},  # crosses 500
+            {"date": "2025-07-01", "count": 1200},  # crosses 1000
+            {"date": "2025-10-01", "count": 2500},  # crosses 2000
+        ],
+    )
+    projected = _project_points(pts, sample_viewport)
+    out = _build_milestones(pts, projected, sample_viewport, thresholds=[500, 1000, 2000])
+    assert len(out) == 3  # all three crossings survive
 
 
 # ── build_chart_svg (public entry point) ──────────────────────────────
@@ -301,10 +345,13 @@ def test_build_chart_svg_miter_angular(
             "fill_density": "solid-area",
         },
     )
-    assert "<polyline" in result["polyline"]
-    assert 'stroke-linejoin="miter"' in result["polyline"]
-    assert "<polygon" in result["area"]
-    # markers is now a structured list; confirm shape + non-empty.
+    # polyline is now a structured dict; miter selects polyline kind.
+    assert result["polyline"]["kind"] == "polyline"
+    assert "points" in result["polyline"]
+    # area is structured too; solid-area selects polygon kind.
+    assert result["area"]["kind"] == "polygon"
+    assert "points" in result["area"]
+    # markers stays list[dict] (v0.2.7 contract unchanged).
     assert isinstance(result["markers"], list)
     assert result["markers"]
     assert all(m["shape"] == "rect" for m in result["markers"])
@@ -325,37 +372,41 @@ def test_build_chart_svg_round_smooth(
             "fill_density": "bezier-smooth",
         },
     )
-    assert "<path" in result["polyline"]
+    # Round linejoin → path kind; smooth fill → path area too.
+    assert result["polyline"]["kind"] == "path"
+    assert "d" in result["polyline"]
+    assert result["area"]["kind"] == "path"
+    assert "Z" in result["area"]["d"]  # closed path
     assert isinstance(result["markers"], list)
     assert all(m["shape"] == "diamond" for m in result["markers"])
-    # Smooth area path ends with Z (closed).
-    assert "Z" in result["area"]
 
 
 def test_build_chart_svg_empty_points_safe(sample_viewport: Viewport) -> None:
-    """No points → data fragments empty, but scaffolding (axes, gridlines, zero label) remains."""
+    """No points → data specs are None/empty, but scaffolding still present."""
     result = build_chart_svg([], sample_viewport, structural={})
-    for key in ("area", "polyline"):
-        assert result[key] == ""
+    assert result["area"] is None
+    assert result["polyline"] is None
     assert result["markers"] == []
     # Axes and gridlines are always drawn regardless of data.
-    assert result["axes"] != ""
-    assert result["gridlines"] != ""
+    assert len(result["axes"]) == 2  # L-frame = 2 lines
+    assert len(result["gridlines"]) > 0
     # Empty-state: labels collapse to a single "0" on the baseline, no X labels,
-    # and no overlay message unless the caller requested one.
+    # and no overlay unless the caller requested one.
     assert len(result["y_labels"]) == 1
     assert result["y_labels"][0]["text"] == "0"
     assert result["x_labels"] == []
-    assert result["empty_state"] == ""
+    assert result["empty_state"] is None
 
 
 def test_build_chart_svg_empty_with_message_renders_overlay(
     sample_viewport: Viewport,
 ) -> None:
-    """Zero-data path with an empty_message renders a centered overlay label."""
+    """Zero-data path with an empty_message emits a structured empty-state dict."""
     result = build_chart_svg([], sample_viewport, structural={}, empty_message="NEW REPO · NO STARS YET")
-    assert "NEW REPO" in result["empty_state"]
-    assert 'data-hw-zone="empty-state"' in result["empty_state"]
+    assert result["empty_state"] is not None
+    assert result["empty_state"]["text"] == "NEW REPO · NO STARS YET"
+    assert "x" in result["empty_state"]
+    assert "y" in result["empty_state"]
 
 
 def test_build_chart_svg_respects_milestones(
@@ -369,7 +420,8 @@ def test_build_chart_svg_respects_milestones(
         milestones=[500, 1000, 2000],
     )
     assert "milestones" in result
-    assert result["milestones"] != ""
+    assert isinstance(result["milestones"], list)
+    assert len(result["milestones"]) >= 1
 
 
 # ── Nice ticks (Y-axis tick computation) ─────────────────────────────

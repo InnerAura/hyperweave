@@ -5,6 +5,25 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2026-04-20
+
+### Fixed
+
+- **Star history charts now render readably on large repositories.** Previously, repos with more than ~40,000 stars produced a flat-then-vertical "hockey stick" because GitHub's stargazer REST endpoint hard-caps deep pagination, so the only data reachable was a small cluster of early-history stars followed by a single jump to today. Star history now sources from GitHub's GraphQL API and adapts its sampling window to the repo: small repos continue to get full lifetime views, large repos get a detailed recent-growth curve similar to the one star-history.com shows.
+- **Star-count milestone labels no longer stack on top of each other.** When sampled points clustered temporally, the milestone labels (`500`, `1K`, `5K`, `10K`, ...) would render in a single illegible pile on top of the crossing point. Milestones now maintain a minimum 40-pixel horizontal gap; any labels that would overlap with an already-placed one are dropped in favor of the first (lowest-threshold) milestone in the cluster.
+
+### Changed
+
+- **All chart rendering now flows through template partials.** The chart engine's remaining rendering paths — axes, gridlines, polyline, area fill, milestones, and the empty-state overlay — joined the marker layer in Jinja. The engine module returns structured Python data; Jinja partials under `templates/components/` produce the final SVG. No visual change; output is byte-identical for the shipped genomes on unchanged inputs.
+
+### Added
+
+- **`fetch_graphql` connector primitive.** New async helper in the connector layer that handles POST with JSON bodies, GitHub bearer-token rotation, circuit-breaker coordination, and SSRF validation — mirroring the existing `fetch_json` contract. This unlocks future migration of the stats card's six REST sub-fetches to a single GraphQL call, and keeps a single canonical place for authenticated-POST plumbing.
+
+### Dev
+
+- GraphQL stargazer pipeline is covered by unit tests for the primary path, REST fallback on failure, no-token skip, mega-repo window cap, small-repo history exhaustion, downsampling correctness, and current-UTC now-point stamping.
+
 ## [0.2.7] - 2026-04-20
 
 ### Fixed

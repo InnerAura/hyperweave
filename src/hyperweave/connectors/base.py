@@ -216,3 +216,66 @@ async def fetch_text(
         merged.update(headers)
     response = await fetch(url, provider=provider, headers=merged)
     return response.text
+
+
+# GraphQL POST
+
+_GITHUB_GRAPHQL_URL: str = "https://api.github.com/graphql"
+
+
+async def fetch_graphql(
+    query: str,
+    variables: dict[str, Any] | None = None,
+    *,
+    provider: str = "github",
+    url: str = _GITHUB_GRAPHQL_URL,
+) -> dict[str, Any]:
+    """POST a GraphQL query and return the parsed JSON response.
+
+    Mirrors :func:`fetch_json`'s contract (SSRF validation, per-provider
+    circuit breaker, timeouts, GitHub Bearer-token injection) but speaks
+    POST with a JSON body. The single GraphQL endpoint for GitHub is
+    baked into the default URL so callers don't have to remember it.
+
+    GraphQL always returns HTTP 200 with a ``data`` field and an optional
+    ``errors`` list — HTTP-level failures trip the breaker, but query-level
+    errors (invalid field, missing perms) come through as response body
+    and are the caller's responsibility to inspect.
+    """
+    validate_url(url)
+
+    breaker = get_breaker(provider)
+    if not breaker.allow_request():
+        raise CircuitOpenError(
+            f"Circuit breaker open for provider {provider!r}. Retry after {breaker.recovery_timeout}s."
+        )
+
+    merged_headers: dict[str, str] = {
+        "User-Agent": f"HyperWeave/{__version__} (https://hyperweave.app)",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    if provider == "github":
+        token = _get_github_token()
+        if token:
+            merged_headers["Authorization"] = f"Bearer {token}"
+
+    timeout = httpx.Timeout(
+        connect=CONNECT_TIMEOUT,
+        read=TOTAL_TIMEOUT,
+        write=TOTAL_TIMEOUT,
+        pool=TOTAL_TIMEOUT,
+    )
+
+    body: dict[str, Any] = {"query": query, "variables": variables or {}}
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(url, headers=merged_headers, json=body)
+            response.raise_for_status()
+            breaker.record_success()
+            data: dict[str, Any] = response.json()
+            return data
+    except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+        breaker.record_failure()
+        raise ConnectorError(f"GraphQL fetch failed for {provider!r}: {exc}") from exc

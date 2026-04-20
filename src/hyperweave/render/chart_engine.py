@@ -4,21 +4,28 @@ This module is the shared rendering kernel for the ``chart`` frame (standalone
 star history) and the embedded chart zone inside the ``stats`` frame's
 ``chrome`` paradigm. It takes a list of data points, a viewport rect, and a
 small dict of structural hints (``stroke_linejoin``, ``data_point_shape``,
-``fill_density``) and returns a dict of SVG fragment strings ready for
-templates to concatenate.
+``fill_density``) and returns a dict of structured render data ready for
+Jinja templates to iterate + include.
 
 Architectural rules (Invariants 1 + 6):
     - Zero network I/O. Fetching happens at the CLI/HTTP layer before compose.
     - Zero CSS. Colors are passed as ``var(--dna-*)`` references by callers.
-    - Zero f-string SVG for user data — templates produce the final SVG wrapper,
-      this module emits small path/markup fragments via careful string joins.
+    - Zero SVG string assembly. Every visual element returns as structured
+      Python data (dicts / list[dict]); templates under
+      ``templates/components/chart-*.svg.j2`` render the final markup.
     - Pure functions. No classes, no state.
 
 Public API:
-    :func:`build_chart_svg` is the single entry point. It returns a dict with
-    keys ``defs``, ``axes``, ``gridlines``, ``area``, ``polyline``, ``markers``,
-    ``milestones`` — each a string fragment (possibly empty). Templates decide
-    which fragments to render and in what order.
+    :func:`build_chart_svg` is the single entry point. It returns a dict:
+
+        - ``axes``, ``gridlines``, ``markers``, ``milestones`` → ``list[dict]``
+        - ``area``, ``polyline``, ``empty_state`` → ``dict`` or ``None``
+        - ``y_labels``, ``x_labels`` → ``list[dict]`` for axis tick labels
+        - ``defs`` → ``str`` (reserved for future per-chart CSS/filters)
+
+    Templates iterate the lists and guard the optional dicts with ``{% if %}``;
+    each element maps to a small Jinja partial such as
+    ``components/chart-polyline.svg.j2``.
 """
 
 from __future__ import annotations
@@ -346,28 +353,49 @@ def _build_markers(
     return markers
 
 
-# ── Axes + gridlines + milestones ──────────────────────────────────────────
+# ── Axes + gridlines + milestones (structured data; rendered by Jinja) ────
+#
+# Per Invariant 6, every visual element here returns a dict or list[dict]
+# instead of a pre-rendered SVG string. Chart content templates consume the
+# shapes via ``{% include %}`` partials under ``templates/components/``.
+
+# Minimum horizontal pixel gap between two milestone labels. Clustered
+# crossings (e.g. mega-repos where 500, 1K, 5K, 10K all happen in the same
+# early-history window) would otherwise render labels stacked on top of each
+# other. We keep only the first milestone in any cluster.
+MILESTONE_MIN_GAP_PX: int = 40
 
 
-def _build_axes(vp: Viewport) -> str:
+def _build_axes(vp: Viewport) -> list[dict[str, Any]]:
     """L-frame axes at the viewport's left and bottom edges."""
-    return (
-        f'<line x1="{vp.x}" y1="{vp.y + vp.h}" x2="{vp.x + vp.w}" y2="{vp.y + vp.h}" '
-        f'class="hw-chart-axis"/>'
-        f'<line x1="{vp.x}" y1="{vp.y}" x2="{vp.x}" y2="{vp.y + vp.h}" '
-        f'class="hw-chart-axis"/>'
-    )
+    bottom_y = vp.y + vp.h
+    return [
+        {"x1": vp.x, "y1": bottom_y, "x2": vp.x + vp.w, "y2": bottom_y},
+        {"x1": vp.x, "y1": vp.y, "x2": vp.x, "y2": bottom_y},
+    ]
 
 
-def _build_gridlines(vp: Viewport, rows: int = 4) -> str:
-    """Horizontal gridlines across the viewport."""
+def _build_gridlines(vp: Viewport, rows: int = 4) -> list[dict[str, Any]]:
+    """Horizontal gridlines evenly spaced across the viewport."""
     if rows <= 0:
-        return ""
-    lines: list[str] = []
+        return []
+    lines: list[dict[str, Any]] = []
     for i in range(1, rows + 1):
         y = vp.y + round(vp.h * i / (rows + 1))
-        lines.append(f'<line x1="{vp.x}" y1="{y}" x2="{vp.x + vp.w}" y2="{y}" class="hw-chart-gridline"/>')
-    return "".join(lines)
+        lines.append({"x1": vp.x, "y1": y, "x2": vp.x + vp.w, "y2": y})
+    return lines
+
+
+def _build_gridlines_from_ticks(
+    y_labels: list[dict[str, Any]],
+    vp: Viewport,
+) -> list[dict[str, Any]]:
+    """Horizontal gridlines at each Y-tick's Y-position.
+
+    Used when real data is present — gridlines align to tick labels
+    instead of floating at arbitrary ``vp.h / (rows + 1)`` positions.
+    """
+    return [{"x1": vp.x, "y1": int(label["y"]), "x2": vp.x + vp.w, "y2": int(label["y"])} for label in y_labels]
 
 
 def _build_milestones(
@@ -375,32 +403,49 @@ def _build_milestones(
     projected: list[tuple[int, int]],
     vp: Viewport,
     thresholds: list[int],
-) -> str:
+) -> list[dict[str, Any]]:
     """Vertical marker lines at points where value crosses a threshold.
 
     Walks the series in order and emits a marker the first time a point's
-    value meets or exceeds each threshold. Thresholds already crossed by the
-    series' starting value are skipped.
+    value meets or exceeds each threshold. After all crossings are found,
+    applies de-overlap: milestones within ``MILESTONE_MIN_GAP_PX`` of an
+    already-kept milestone are dropped so labels never stack (e.g. the
+    openclaw mega-repo's ``500``/``1K``/``5K``/``10K`` cluster that
+    rendered as an illegible pile before this fix).
     """
     if not points or not projected or not thresholds:
-        return ""
+        return []
+
+    bottom_y = vp.y + vp.h
     # Start one below the first value so we only mark *crossings*, not the
     # initial position. This mirrors how github-readme-stats draws milestones.
     last_val = points[0].value - 1
-    out: list[str] = []
+    raw: list[dict[str, Any]] = []
     for idx, p in enumerate(points):
         px, py = projected[idx]
         for t in thresholds:
             if last_val < t <= p.value:
                 label = f"{t // 1000}K" if t >= 1000 else str(t)
-                out.append(
-                    f'<line x1="{px}" y1="{py}" x2="{px}" y2="{vp.y + vp.h}" '
-                    f'class="hw-chart-milestone-line"/>'
-                    f'<text x="{px}" y="{py - 6}" text-anchor="middle" '
-                    f'class="hw-chart-milestone-label">{label}</text>'
+                raw.append(
+                    {
+                        "x": px,
+                        "y": py,
+                        "bottom_y": bottom_y,
+                        "label": label,
+                        "value": t,
+                    }
                 )
         last_val = p.value
-    return "".join(out)
+
+    # De-overlap: keep only the first crossing in any x-cluster so labels
+    # stay legible when the polyline climbs rapidly through many thresholds.
+    kept: list[dict[str, Any]] = []
+    last_x = -(10**9)
+    for ms in sorted(raw, key=lambda m: m["x"]):
+        if ms["x"] - last_x >= MILESTONE_MIN_GAP_PX:
+            kept.append(ms)
+            last_x = ms["x"]
+    return kept
 
 
 # ── Axis label computation ─────────────────────────────────────────────────
@@ -499,39 +544,20 @@ def _build_x_year_labels(points: list[ChartPoint], vp: Viewport) -> list[dict[st
     return labels
 
 
-def _build_empty_state(vp: Viewport, message: str) -> str:
-    """Overlay text centered in the viewport when there is no data to plot.
+def _build_empty_state(vp: Viewport, message: str) -> dict[str, Any] | None:
+    """Return structured data for the centered empty-state overlay, or None.
 
     Used for zero-star repos ("NEW REPO · NO STARS YET") and upstream-failure
-    cases ("DATA UNAVAILABLE"). The template embeds this fragment after the
-    axes so it renders on top of the empty chart area.
+    cases ("DATA UNAVAILABLE"). Templates render the ``<g data-hw-zone>``
+    wrapper and text element from the fields below.
     """
     if not message:
-        return ""
-    cx = vp.x + vp.w // 2
-    cy = vp.y + vp.h // 2
-    return (
-        f'<g data-hw-zone="empty-state">'
-        f'<text x="{cx}" y="{cy}" text-anchor="middle" '
-        f'class="hw-chart-empty-state" opacity="0.55" '
-        f'font-family="inherit" font-size="14" letter-spacing="0.18em">'
-        f"{message}</text>"
-        f"</g>"
-    )
-
-
-def _build_gridlines_from_ticks(y_labels: list[dict[str, Any]], vp: Viewport) -> str:
-    """Horizontal gridlines at each Y-tick's Y-position.
-
-    Replaces the uniform ``_build_gridlines`` when real data is present — so
-    gridlines align to labels instead of floating at arbitrary
-    ``vp.h / (rows+1)`` positions.
-    """
-    lines: list[str] = []
-    for label in y_labels:
-        y = int(label["y"])
-        lines.append(f'<line x1="{vp.x}" y1="{y}" x2="{vp.x + vp.w}" y2="{y}" class="hw-chart-gridline"/>')
-    return "".join(lines)
+        return None
+    return {
+        "x": vp.x + vp.w // 2,
+        "y": vp.y + vp.h // 2,
+        "text": message,
+    }
 
 
 # ── Public API ─────────────────────────────────────────────────────────────
@@ -601,63 +627,51 @@ def build_chart_svg(
 
     baseline_y = viewport.y + viewport.h
 
-    # Polyline vs bezier
+    # Polyline vs bezier — structured for the chart-polyline partial.
+    polyline_spec: dict[str, Any] | None = None
     if linejoin == "round":
         polyline_attr = _build_bezier_path(projected)
-        polyline_fragment = (
-            f'<path d="{polyline_attr}" fill="none" stroke="var(--dna-signal)" '
-            f'stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" '
-            f'class="hw-chart-line"/>'
-            if polyline_attr
-            else ""
-        )
+        if polyline_attr:
+            polyline_spec = {"kind": "path", "d": polyline_attr}
     else:
         polyline_attr = _build_polyline_points(projected)
-        polyline_fragment = (
-            f'<polyline points="{polyline_attr}" fill="none" stroke="var(--dna-signal)" '
-            f'stroke-width="2.5" stroke-linejoin="miter" class="hw-chart-line"/>'
-            if polyline_attr
-            else ""
-        )
+        if polyline_attr:
+            polyline_spec = {"kind": "polyline", "points": polyline_attr}
 
-    # Area fill
-    area_fragment = ""
+    # Area fill — structured for the chart-area partial.
+    area_spec: dict[str, Any] | None = None
     if fill_density == "solid-area":
         pts = _build_area_polygon_points(projected, baseline_y)
         if pts:
-            area_fragment = (
-                f'<polygon points="{pts}" fill="var(--dna-signal)" fill-opacity="0.65" class="hw-chart-area"/>'
-            )
+            area_spec = {"kind": "polygon", "points": pts}
     elif fill_density == "bezier-smooth":
         path_d = _build_area_path(projected, baseline_y)
         if path_d:
-            area_fragment = (
-                f'<path d="{path_d}" fill="var(--dna-signal)" fill-opacity="0.12" class="hw-chart-area-smooth"/>'
-            )
+            area_spec = {"kind": "path", "d": path_d}
 
-    markers_fragment = _build_markers(projected, shape, point_size)
-    axes_fragment = _build_axes(viewport)
+    markers = _build_markers(projected, shape, point_size)
+    axes = _build_axes(viewport)
     # Gridlines aligned to ticks when data exists; uniform fallback otherwise.
     if points and y_labels:
-        gridlines_fragment = _build_gridlines_from_ticks(y_labels, viewport)
+        gridlines = _build_gridlines_from_ticks(y_labels, viewport)
     else:
-        gridlines_fragment = _build_gridlines(viewport, rows=4)
-    milestones_fragment = _build_milestones(points, projected, viewport, milestones or [])
+        gridlines = _build_gridlines(viewport, rows=4)
+    milestones_list = _build_milestones(points, projected, viewport, milestones or [])
 
     # Empty state overlay: only when there are no data points AND a message
     # was provided. Without a message the chart degrades silently (useful for
     # embedded charts in stats.py that don't need a user-facing label).
-    empty_state_fragment = _build_empty_state(viewport, empty_message or "") if not points else ""
+    empty_state = _build_empty_state(viewport, empty_message or "") if not points else None
 
     return {
         "defs": "",
-        "axes": axes_fragment,
-        "gridlines": gridlines_fragment,
-        "area": area_fragment,
-        "polyline": polyline_fragment,
-        "markers": markers_fragment,
-        "milestones": milestones_fragment,
+        "axes": axes,
+        "gridlines": gridlines,
+        "area": area_spec,
+        "polyline": polyline_spec,
+        "markers": markers,
+        "milestones": milestones_list,
         "y_labels": y_labels,
         "x_labels": x_labels,
-        "empty_state": empty_state_fragment,
+        "empty_state": empty_state,
     }

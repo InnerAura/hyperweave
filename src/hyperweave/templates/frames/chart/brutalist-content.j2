@@ -76,20 +76,34 @@
 
     {# Chart engine fragments — brutalist 3-layer line effect from target SVG:
        ghost line (faint shadow) → primary line (4px) → bright core (1.5px highlight) #}
-    {{ chart_gridlines | safe }}
-    {{ chart_area | safe }}
-    <g class="{{ uid }}-ghost-line" opacity="0.15">{{ chart_polyline | safe }}</g>
-    {{ chart_polyline | safe }}
-    <g class="{{ uid }}-bright-core">{{ chart_polyline | safe }}</g>
+    {%- for gl in chart_gridlines %}
+      {%- include "components/chart-gridlines.svg.j2" %}
+    {%- endfor %}
+    {%- if chart_area %}
+      {%- include "components/chart-area.svg.j2" %}
+    {%- endif %}
+    {%- if chart_polyline %}
+    <g class="{{ uid }}-ghost-line" opacity="0.15">{% include "components/chart-polyline.svg.j2" %}</g>
+    {% include "components/chart-polyline.svg.j2" %}
+    <g class="{{ uid }}-bright-core">{% include "components/chart-polyline.svg.j2" %}</g>
+    {%- endif %}
     <g data-hw-zone="markers">
     {%- for m in chart_markers %}
       {%- set partial = 'endpoint-' ~ m.shape if m.is_endpoint else m.shape %}
       {%- include "components/chart-markers/" ~ partial ~ ".svg.j2" %}
     {%- endfor %}
     </g>
-    {{ chart_milestones | safe }}
-    {{ chart_axes | safe }}
-    {{ chart_empty_state | safe }}
+    <g data-hw-zone="milestones">
+    {%- for ms in chart_milestones %}
+      {%- include "components/chart-milestone.svg.j2" %}
+    {%- endfor %}
+    </g>
+    {%- for ax in chart_axes %}
+      {%- include "components/chart-axes.svg.j2" %}
+    {%- endfor %}
+    {%- if chart_empty_state %}
+      {%- include "components/chart-empty-state.svg.j2" %}
+    {%- endif %}
   </g>
 
   {# X-AXIS LABELS — year numbers derived from data (star-history.com style). #}

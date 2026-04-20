@@ -337,12 +337,16 @@ def _ctx_chart(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     ctx["chart_viewport_w"] = 0
     ctx["chart_viewport_h"] = 0
     ctx["chart_defs"] = ""
-    ctx["chart_axes"] = ""
-    ctx["chart_gridlines"] = ""
-    ctx["chart_area"] = ""
-    ctx["chart_polyline"] = ""
+    # Post-v0.2.8: axes / gridlines / milestones / markers all return structured
+    # lists; polyline / area / empty_state are dicts or None so templates can
+    # use ``{% if %}`` to guard includes without a StrictUndefined trap.
+    ctx["chart_axes"] = []
+    ctx["chart_gridlines"] = []
+    ctx["chart_area"] = None
+    ctx["chart_polyline"] = None
     ctx["chart_markers"] = []
-    ctx["chart_milestones"] = ""
+    ctx["chart_milestones"] = []
+    ctx["chart_empty_state"] = None
     ctx["data_hw_status"] = "fresh"
     ctx.update(resolved.frame_context)
     return ctx

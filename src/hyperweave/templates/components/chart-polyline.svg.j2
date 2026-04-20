@@ -1,0 +1,10 @@
+{# Chart polyline / smooth bezier path.
+   Context: chart_polyline = {kind: "polyline" | "path", points | d}.
+   Kind "polyline" uses miter joins (brutalist); kind "path" uses smooth rounds (chrome). #}
+{%- if chart_polyline.kind == "path" %}
+<path d="{{ chart_polyline.d }}" fill="none" stroke="var(--dna-signal)"
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hw-chart-line"/>
+{%- elif chart_polyline.kind == "polyline" %}
+<polyline points="{{ chart_polyline.points }}" fill="none" stroke="var(--dna-signal)"
+          stroke-width="2.5" stroke-linejoin="miter" class="hw-chart-line"/>
+{%- endif %}

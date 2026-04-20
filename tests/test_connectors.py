@@ -948,3 +948,384 @@ class TestStargazerPagination:
         # All requested pages within the actual total-pages range (5).
         assert captured_pages, "expected at least one stargazer fetch"
         assert max(captured_pages) <= 5
+
+
+# =========================================================================
+# fetch_graphql (POST + Bearer + breaker + SSRF)
+# =========================================================================
+
+
+class TestFetchGraphQL:
+    """Verify the GraphQL POST primitive mirrors fetch_json semantics."""
+
+    @pytest.fixture(autouse=True)
+    def _reset(self) -> None:
+        reset_breakers()
+        from hyperweave.connectors import base
+
+        base._token_index = 0
+
+    @staticmethod
+    def _mock_client(response_json: Any, capture: dict[str, Any] | None = None) -> Any:
+        """Build an AsyncMock that intercepts client.post and records the call."""
+        mock_response = httpx.Response(
+            200,
+            json=response_json,
+            request=httpx.Request("POST", "https://api.github.com/graphql"),
+        )
+
+        instance = AsyncMock()
+
+        async def _capturing_post(url: str, **kwargs: Any) -> httpx.Response:
+            if capture is not None:
+                capture["url"] = url
+                capture["headers"] = kwargs.get("headers", {})
+                capture["json"] = kwargs.get("json", {})
+            return mock_response
+
+        instance.post = _capturing_post
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=None)
+        return instance
+
+    @pytest.mark.asyncio
+    async def test_posts_query_and_variables_as_json_body(self) -> None:
+        capture: dict[str, Any] = {}
+        instance = self._mock_client({"data": {"ok": True}}, capture=capture)
+
+        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
+            mock_client.return_value = instance
+            from hyperweave.connectors.base import fetch_graphql
+
+            result = await fetch_graphql(
+                query="query { viewer { login } }",
+                variables={"owner": "eli64s"},
+            )
+
+        assert result == {"data": {"ok": True}}
+        assert capture["url"] == "https://api.github.com/graphql"
+        assert capture["json"] == {"query": "query { viewer { login } }", "variables": {"owner": "eli64s"}}
+        assert capture["headers"]["Content-Type"] == "application/json"
+
+    @pytest.mark.asyncio
+    async def test_sends_bearer_token_for_github(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test_token")
+        capture: dict[str, Any] = {}
+        instance = self._mock_client({"data": {}}, capture=capture)
+
+        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
+            mock_client.return_value = instance
+            from hyperweave.connectors.base import fetch_graphql
+
+            await fetch_graphql(query="{ viewer { login } }")
+
+        assert capture["headers"]["Authorization"] == "Bearer ghp_test_token"
+
+    @pytest.mark.asyncio
+    async def test_omits_auth_without_token_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("HW_GITHUB_TOKENS", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        capture: dict[str, Any] = {}
+        instance = self._mock_client({"data": {}}, capture=capture)
+
+        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
+            mock_client.return_value = instance
+            from hyperweave.connectors.base import fetch_graphql
+
+            await fetch_graphql(query="{ viewer { login } }")
+
+        assert "Authorization" not in capture["headers"]
+
+    @pytest.mark.asyncio
+    async def test_reuses_token_rotation(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Pool rotation: two calls should use different tokens in order."""
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "tok_a,tok_b,tok_c")
+        captures: list[dict[str, Any]] = [{}, {}]
+
+        async def _run_call(idx: int) -> None:
+            instance = self._mock_client({"data": {}}, capture=captures[idx])
+            with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
+                mock_client.return_value = instance
+                from hyperweave.connectors.base import fetch_graphql
+
+                await fetch_graphql(query="{ viewer { login } }")
+
+        await _run_call(0)
+        await _run_call(1)
+
+        assert captures[0]["headers"]["Authorization"] == "Bearer tok_a"
+        assert captures[1]["headers"]["Authorization"] == "Bearer tok_b"
+
+    @pytest.mark.asyncio
+    async def test_http_failure_trips_breaker(self) -> None:
+        instance = AsyncMock()
+        instance.post = AsyncMock(side_effect=httpx.RequestError("connection refused"))
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
+            mock_client.return_value = instance
+            from hyperweave.connectors.base import fetch_graphql
+
+            breaker = get_breaker("github")
+            with pytest.raises(ConnectorError):
+                await fetch_graphql(query="{ viewer { login } }")
+            assert breaker._failure_count == 1
+
+    @pytest.mark.asyncio
+    async def test_rejects_non_allowlisted_host(self) -> None:
+        from hyperweave.connectors.base import fetch_graphql
+
+        with pytest.raises(SSRFError):
+            await fetch_graphql(
+                query="{ viewer { login } }",
+                url="https://evil.example.com/graphql",
+            )
+
+    @pytest.mark.asyncio
+    async def test_open_breaker_raises_without_posting(self) -> None:
+        """When breaker is already OPEN, the call should fail fast with no HTTP attempt."""
+        breaker = get_breaker("github")
+        breaker._state = CircuitState.OPEN
+        breaker._last_failure_time = time.monotonic()
+
+        from hyperweave.connectors.base import fetch_graphql
+
+        with pytest.raises(CircuitOpenError):
+            await fetch_graphql(query="{ viewer { login } }")
+
+
+# =========================================================================
+# GraphQL Stargazer History (adaptive recent-window sampling)
+# =========================================================================
+
+
+class TestStargazerGraphQL:
+    """Verify the GraphQL-primary star-history pipeline + REST fallback."""
+
+    @pytest.fixture(autouse=True)
+    def _reset(self) -> None:
+        reset_breakers()
+        get_cache().clear()
+        from hyperweave.connectors import base
+
+        base._token_index = 0
+
+    @staticmethod
+    def _make_graphql_mock(
+        pages: list[list[str]],
+        total_stars: int,
+        captured: list[dict[str, Any]] | None = None,
+    ) -> Any:
+        """Return a mock fetch_graphql that serves `pages` one at a time.
+
+        Each inner list is a page of starredAt timestamps (ASC order). Earlier
+        indices in ``pages`` are served first (most-recent-stargazers first);
+        subsequent calls serve deeper pages. ``hasPreviousPage`` is False on
+        the final page.
+        """
+        page_idx = {"n": 0}
+
+        async def fake(query: str, variables: dict[str, Any], **_kw: Any) -> dict[str, Any]:
+            i = page_idx["n"]
+            page_idx["n"] += 1
+            if captured is not None:
+                captured.append(dict(variables))
+            if i >= len(pages):
+                # Exhausted supplied pages — return no-more signal
+                return {
+                    "data": {
+                        "repository": {
+                            "stargazerCount": total_stars,
+                            "stargazers": {
+                                "pageInfo": {"startCursor": None, "hasPreviousPage": False},
+                                "edges": [],
+                            },
+                        }
+                    }
+                }
+            edges = [{"starredAt": ts} for ts in pages[i]]
+            return {
+                "data": {
+                    "repository": {
+                        "stargazerCount": total_stars,
+                        "stargazers": {
+                            "pageInfo": {
+                                "startCursor": f"cursor-{i}",
+                                "hasPreviousPage": i < len(pages) - 1,
+                            },
+                            "edges": edges,
+                        },
+                    }
+                }
+            }
+
+        return fake
+
+    @pytest.mark.asyncio
+    async def test_primary_path_with_token_uses_graphql_not_rest(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        rest_calls = {"n": 0}
+
+        async def fail_rest(*args: Any, **kwargs: Any) -> Any:
+            rest_calls["n"] += 1
+            raise AssertionError("REST path should not be called when GraphQL succeeds")
+
+        pages = [["2026-04-01T00:00:00Z", "2026-04-02T00:00:00Z", "2026-04-03T00:00:00Z"]]
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(pages, total_stars=3),
+        )
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_json", fail_rest)
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "repo")
+
+        assert rest_calls["n"] == 0
+        assert result["current_stars"] == 3
+        assert len(result["points"]) == 4  # 3 stargazers + now-point
+
+    @pytest.mark.asyncio
+    async def test_no_token_skips_graphql_uses_rest(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("HW_GITHUB_TOKENS", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        graphql_calls = {"n": 0}
+
+        async def fail_graphql(*args: Any, **kwargs: Any) -> Any:
+            graphql_calls["n"] += 1
+            raise AssertionError("GraphQL path should not be called without a token")
+
+        async def fake_rest(url: str, **_kw: Any) -> Any:
+            if "/stargazers" not in url:
+                return {"stargazers_count": 50}
+            return [{"starred_at": "2026-04-01T00:00:00Z"}]
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_graphql", fail_graphql)
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_json", fake_rest)
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "repo")
+
+        assert graphql_calls["n"] == 0
+        assert result["current_stars"] == 50
+
+    @pytest.mark.asyncio
+    async def test_graphql_failure_falls_back_to_rest(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+
+        async def failing_graphql(*args: Any, **kwargs: Any) -> Any:
+            raise ConnectorError("simulated GraphQL failure")
+
+        rest_called = {"n": 0}
+
+        async def fake_rest(url: str, **_kw: Any) -> Any:
+            rest_called["n"] += 1
+            if "/stargazers" not in url:
+                return {"stargazers_count": 42}
+            return [{"starred_at": "2026-03-01T00:00:00Z"}]
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_graphql", failing_graphql)
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_json", fake_rest)
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "repo")
+
+        assert rest_called["n"] >= 1  # REST was actually invoked
+        assert result["current_stars"] == 42
+
+    @pytest.mark.asyncio
+    async def test_mega_repo_stops_at_max_pages(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """361k-star repo: GraphQL should stop after _GRAPHQL_MAX_PAGES (20 pages)."""
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        # 25 synthetic pages available, but we should only fetch 20 before stopping
+        pages = [[f"2026-{(i % 12) + 1:02d}-01T00:00:00Z"] * 100 for i in range(25)]
+        captured: list[dict[str, Any]] = []
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(pages, total_stars=361_000, captured=captured),
+        )
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("openclaw", "openclaw")
+
+        assert len(captured) == 20  # hit the max-pages wall
+        assert result["current_stars"] == 361_000
+
+    @pytest.mark.asyncio
+    async def test_small_repo_exhausts_history_before_max_pages(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Repo with 250 stars completes in 3 pages, not 20."""
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        # 3 pages of real stargazers, then the mock returns empty (hasPreviousPage=False on page 3)
+        pages = [
+            [f"2025-12-{i:02d}T00:00:00Z" for i in range(1, 51)],
+            [f"2025-11-{i:02d}T00:00:00Z" for i in range(1, 51)],
+            [f"2025-10-{i:02d}T00:00:00Z" for i in range(1, 51)],
+        ]
+        captured: list[dict[str, Any]] = []
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(pages, total_stars=250, captured=captured),
+        )
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "small-repo")
+
+        assert len(captured) == 3  # stopped at hasPreviousPage=False
+        assert result["current_stars"] == 250
+
+    @pytest.mark.asyncio
+    async def test_downsamples_to_configured_sample_count(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """2000 accumulated timestamps → sample_pages=12 → 12 points + now-point."""
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        # 20 pages x 100 stamps = 2000 distinct timestamps, all in the past
+        # (real stargazers can only star in the past, never the future).
+        pages = [[f"2024-{(i % 12) + 1:02d}-{(j % 28) + 1:02d}T00:00:00Z" for j in range(100)] for i in range(20)]
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(pages, total_stars=10_000),
+        )
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "repo", sample_pages=12)
+
+        # 12 downsampled stargazer points + 1 now-point = 13 total
+        assert len(result["points"]) == 13
+        # Last point (chronologically) is the now-point with the real total
+        assert result["points"][-1]["count"] == 10_000
+
+    @pytest.mark.asyncio
+    async def test_now_point_uses_current_utc(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        pages = [["2020-01-01T00:00:00Z"]]  # ancient timestamp
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(pages, total_stars=1),
+        )
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "repo")
+
+        now_year = str(datetime.now(UTC).year)
+        assert result["points"][-1]["date"].startswith(now_year)
+
+    @pytest.mark.asyncio
+    async def test_empty_repo_returns_empty_points(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HW_GITHUB_TOKENS", "ghp_test")
+        monkeypatch.setattr(
+            "hyperweave.connectors.github.fetch_graphql",
+            self._make_graphql_mock(pages=[[]], total_stars=0),
+        )
+
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        result = await fetch_stargazer_history("owner", "brand-new-repo")
+
+        assert result["points"] == []
+        assert result["current_stars"] == 0

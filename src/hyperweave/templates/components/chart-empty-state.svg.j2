@@ -1,0 +1,8 @@
+{# Empty-state overlay. Context: chart_empty_state = {x, y, text} or None.
+   Rendered centered in the viewport when no data is available
+   (e.g. "NEW REPO · NO STARS YET", "DATA UNAVAILABLE"). #}
+<g data-hw-zone="empty-state">
+  <text x="{{ chart_empty_state.x }}" y="{{ chart_empty_state.y }}" text-anchor="middle"
+        class="hw-chart-empty-state" opacity="0.55"
+        font-family="inherit" font-size="14" letter-spacing="0.18em">{{ chart_empty_state.text }}</text>
+</g>
