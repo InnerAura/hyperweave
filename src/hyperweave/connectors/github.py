@@ -3,17 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import math
 import re
 from datetime import UTC, datetime
 from typing import Any
 
 from hyperweave.connectors.base import (
-    CircuitOpenError,
-    ConnectorError,
-    _get_github_token,
-    fetch_graphql,
     fetch_json,
     fetch_text,
 )
@@ -149,49 +144,19 @@ _STARGAZER_PAGE_SIZE = 100
 # report the real total_stars in the "now" point, we just can't sample past
 # this wall. For mega-repos (100k+ stars) we therefore sample within a fixed
 # window and mark the final point with the current timestamp.
+#
+# v0.2.10 removed an earlier GraphQL cursor-offset sampler (v0.2.8/v0.2.9)
+# that was based on a false assumption: GitHub's stargazer cursor decodes to
+# ``cursor:v2:<MessagePack binary>`` — not ``cursor:<N>`` as documented in
+# the removed code. Constructed ``cursor:<N-1>`` anchors were rejected by
+# GitHub with ``INVALID_CURSOR_ARGUMENTS``, or (worse) silently returned a
+# recent stargazer for a handful of offsets, so mega-repo charts collapsed
+# into flat lines. The unit tests mocked the cursor decoder to match the
+# broken assumption, so they passed green. REST sampling is now the only
+# path — it is bounded at 40K but produces honest, evenly-spaced samples
+# (star-history.com is bounded by the same cap and uses the same strategy).
 _STARGAZER_PAGE_CAP = 400
 _STARGAZER_ACCEPT_HEADER = "application/vnd.github.v3.star+json"
-
-# GraphQL cursor-offset sampling constants.
-#
-# GitHub's GraphQL cursors decode to the literal text ``cursor:<N>`` where
-# N is a 0-indexed offset into the stargazer list. By Base64-encoding
-# ``cursor:<N-1>`` we can construct an ``after:`` anchor that lets ``first: 1``
-# return exactly the Nth stargazer. This bypasses GitHub's 400-page REST cap
-# and lets us sample any offset in a 500K-star repo cheaply.
-#
-# 12 offsets * 1 node per call = 12 GraphQL points per cold fetch.
-# ``asyncio.Semaphore(_GRAPHQL_CONCURRENCY)`` caps fan-out so bursty
-# same-token parallelism doesn't trigger GitHub's per-minute abuse detection.
-_DEFAULT_SAMPLE_COUNT = 12
-_GRAPHQL_CONCURRENCY = 4
-
-_CURSOR_OFFSET_QUERY = """
-query StargazerAtOffset($owner: String!, $repo: String!, $cursor: String) {
-  repository(owner: $owner, name: $repo) {
-    stargazerCount
-    stargazers(first: 1, after: $cursor) {
-      edges { starredAt }
-    }
-  }
-}
-"""
-
-
-def _cursor_for_offset(offset: int) -> str | None:
-    """Return the Base64-encoded cursor for a 1-indexed stargazer position.
-
-    GitHub's GraphQL cursors decode to ``cursor:<N>`` where N is 0-indexed.
-    Constructing them lets us sample any offset within a repo's stargazer
-    list, bypassing both the REST 400-page cap and the cost of walking
-    every page via cursor pagination.
-
-    Returns None for ``offset <= 1`` (no cursor needed — this IS the first
-    entry; passing ``after: None`` to GraphQL starts from the beginning).
-    """
-    if offset <= 1:
-        return None
-    return base64.b64encode(f"cursor:{offset - 1}".encode()).decode()
 
 
 async def fetch_stargazer_history(
@@ -201,10 +166,11 @@ async def fetch_stargazer_history(
 ) -> dict[str, Any]:
     """Fetch sampled star history for ``owner/repo`` as cumulative data points.
 
-    Public dispatcher. Prefers GraphQL when a token is available (unlocks the
-    recent-growth window on mega-repos beyond GitHub's 400-page REST cap);
-    falls back to REST sampling on GraphQL failure or missing token. Caches
-    successful results under ``github:{owner}/{repo}:stargazer-history``.
+    Samples evenly across pages ``[1, min(total_pages, 400)]`` via REST and
+    stamps the now-point with the current UTC timestamp. Bounded by GitHub's
+    400-page deep-pagination cap: produces a truthful but limited view of
+    mega-repos (first ~40K stars + real now-point). Caches successful results
+    under ``github:{owner}/{repo}:stargazer-history``.
 
     Returns a dict with keys ``points`` (list of ``{date, count}``),
     ``current_stars``, ``repo``, ``ttl``. Raises ``ValueError`` on invalid
@@ -220,138 +186,9 @@ async def fetch_stargazer_history(
     if cached is not None:
         return cached  # type: ignore[no-any-return]
 
-    result: dict[str, Any] | None = None
-
-    # Primary path: GraphQL cursor-offset sampling (requires auth). Constructs
-    # cursors for N evenly-distributed stargazer offsets across [1, total_stars]
-    # and fetches one stargazer per offset. Bypasses GitHub's 400-page REST cap,
-    # so a 361K-star repo gets 12 real points across its full lifetime instead
-    # of a hockey-stick or flat line.
-    if _get_github_token():
-        try:
-            result = await _fetch_stargazer_history_graphql(owner, repo, sample_pages)
-        except (ConnectorError, CircuitOpenError):
-            result = None  # fall through to REST
-
-    if result is None:
-        # Fallback path: REST sampling. Works unauth at 60 req/hr but caps at
-        # ~40k stars on mega-repos (GitHub's deep-pagination wall).
-        result = await _fetch_stargazer_history_rest(owner, repo, sample_pages)
-
+    result = await _fetch_stargazer_history_rest(owner, repo, sample_pages)
     cache.set(cache_key, result, STARGAZER_HISTORY_TTL)
     return result
-
-
-async def _fetch_stargazer_history_graphql(
-    owner: str,
-    repo: str,
-    sample_count: int = _DEFAULT_SAMPLE_COUNT,
-) -> dict[str, Any]:
-    """Sample N stargazer timestamps at evenly-distributed cursor offsets.
-
-    Strategy: given a repo's ``total_stars``, fetch one stargazer at each of
-    N evenly-spaced offsets across ``[1, total_stars]``. Each offset maps to
-    a constructed cursor (``base64("cursor:<N-1>")``); GraphQL returns that
-    stargazer's ``starred_at``. Pair with the known offset to form a
-    ``{date, count}`` point. Appends a now-point at ``total_stars``.
-
-    Works for any repo size — 30 stars, 2938 stars, 361k stars — because
-    cursor-offset sampling is not subject to GitHub's 400-page REST cap.
-
-    Concurrency is bounded at ``_GRAPHQL_CONCURRENCY`` to avoid tripping
-    per-minute abuse-detection heuristics on bursty parallel fan-out.
-    """
-    identifier = f"{owner}/{repo}"
-
-    # First query: learn total_stars and pick up the first stargazer's
-    # timestamp in the same round-trip (offset 1 uses no cursor anyway).
-    first_response = await fetch_graphql(
-        _CURSOR_OFFSET_QUERY,
-        {"owner": owner, "repo": repo, "cursor": None},
-        provider=PROVIDER,
-    )
-    repo_data = (first_response.get("data") or {}).get("repository")
-    if not repo_data:
-        return _empty_stargazer_result(identifier)
-
-    total_stars = int(repo_data.get("stargazerCount", 0))
-    if total_stars == 0:
-        return _empty_stargazer_result(identifier)
-
-    first_edges = (repo_data.get("stargazers") or {}).get("edges") or []
-    first_starred_at: str | None = None
-    if first_edges and isinstance(first_edges[0], dict):
-        first_starred_at = first_edges[0].get("starredAt")
-
-    # Clamp sample count to total_stars — small repos get every star sampled
-    # (no point requesting 12 offsets from a 5-star repo).
-    effective_samples = min(sample_count, total_stars)
-
-    # Compute evenly-distributed offsets across the full stargazer list.
-    # Always includes position 1 (oldest) and position total_stars (newest).
-    if effective_samples <= 1:
-        offsets = [1]
-    else:
-        step = (total_stars - 1) / (effective_samples - 1)
-        offsets = sorted({max(1, round(1 + step * i)) for i in range(effective_samples)})
-
-    # Bounded concurrent fan-out: semaphore throttles to _GRAPHQL_CONCURRENCY
-    # in-flight requests at a time. For 12 offsets at concurrency 4, that's
-    # 3 waves of ≤4 calls each → ~1s cold-fetch latency.
-    sem = asyncio.Semaphore(_GRAPHQL_CONCURRENCY)
-
-    async def _fetch_one(offset: int) -> tuple[int, str | None]:
-        # Offset 1 is already in hand from the total_stars lookup.
-        if offset == 1 and first_starred_at is not None:
-            return offset, first_starred_at
-        cursor = _cursor_for_offset(offset)
-        async with sem:
-            resp = await fetch_graphql(
-                _CURSOR_OFFSET_QUERY,
-                {"owner": owner, "repo": repo, "cursor": cursor},
-                provider=PROVIDER,
-            )
-        edges_data = (((resp.get("data") or {}).get("repository") or {}).get("stargazers") or {}).get("edges") or []
-        starred_at: str | None = None
-        if edges_data and isinstance(edges_data[0], dict):
-            starred_at = edges_data[0].get("starredAt")
-        return offset, starred_at
-
-    results = await asyncio.gather(
-        *[_fetch_one(off) for off in offsets],
-        return_exceptions=True,
-    )
-
-    points: list[dict[str, Any]] = []
-    for item in results:
-        if isinstance(item, BaseException):
-            continue
-        offset, starred_at = item
-        if starred_at is None:
-            continue
-        points.append({"date": starred_at, "count": offset})
-
-    # Append the honest now-point: current timestamp at the real total count.
-    if points:
-        points.append({"date": datetime.now(UTC).isoformat(), "count": total_stars})
-    points.sort(key=lambda p: p["date"])
-
-    return {
-        "points": points,
-        "current_stars": total_stars,
-        "repo": identifier,
-        "ttl": STARGAZER_HISTORY_TTL,
-    }
-
-
-def _empty_stargazer_result(identifier: str) -> dict[str, Any]:
-    """Shared empty-state shape for zero-star or missing-repo cases."""
-    return {
-        "points": [],
-        "current_stars": 0,
-        "repo": identifier,
-        "ttl": STARGAZER_HISTORY_TTL,
-    }
 
 
 async def _fetch_stargazer_history_rest(
@@ -359,12 +196,11 @@ async def _fetch_stargazer_history_rest(
     repo: str,
     sample_pages: int = 12,
 ) -> dict[str, Any]:
-    """REST-based stargazer sampling — the v0.2.7 behavior preserved as fallback.
+    """REST-based stargazer sampling implementation.
 
-    Used when no ``HW_GITHUB_TOKENS`` is set or when the GraphQL path fails.
     Samples evenly across pages ``[1, min(total_pages, 400)]`` and stamps the
-    now-point with the current UTC timestamp. Bounded by GitHub's 400-page
-    deep-pagination cap: produces a truthful but limited view of mega-repos.
+    now-point with the current UTC timestamp. Works unauth at 60 req/hr but
+    caps at ~40k stars on mega-repos (GitHub's deep-pagination wall).
     """
     identifier = f"{owner}/{repo}"
 

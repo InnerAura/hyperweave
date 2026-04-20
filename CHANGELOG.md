@@ -5,6 +5,22 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.10] - 2026-04-20
+
+### Fixed
+
+- **Star history charts are readable at every repo size.** v0.2.8 introduced a GraphQL cursor-offset sampler that constructed `base64("cursor:<N-1>")` anchors to fetch the Nth stargazer at arbitrary offsets. The assumption was that GitHub's stargazer cursors decode to the literal text `cursor:<N>` — they don't. Real cursors are opaque `cursor:v2:<MessagePack binary>` pointers. For most constructed offsets GitHub returned `INVALID_CURSOR_ARGUMENTS`; for a handful it silently returned a recent stargazer instead. The result: charts collapsed into one of three broken shapes — a flat-then-spike (`eli64s/readme-ai`, 2.9K stars), a flat horizontal line at the total (`JuliusBrussee/caveman`, 40K stars), or a single-diagonal with stacked markers at the origin (`openclaw/openclaw`, 361K stars). v0.2.10 removes the broken sampler entirely; REST sampling is now the only path. For the same three repos, charts now show genuine growth curves — the 3-year S-curve for readme-ai, the 16-day viral logistic for caveman, and the first-40K detail + now-point for openclaw (bounded by GitHub's 400-page REST cap, which `star-history.com` also hits).
+- **Milestone label stacking is gone as a side-effect of the above.** The v0.2.8 milestone x-gap de-overlap was functioning correctly all along; what the user saw as stacked markers were the *data-point markers* themselves, clustering at a single x because the broken GraphQL sampler returned the same timestamp for many offsets. Genuine sampling distributes markers naturally.
+
+### Removed
+
+- `_fetch_stargazer_history_graphql`, `_cursor_for_offset`, `_CURSOR_OFFSET_QUERY`, `_DEFAULT_SAMPLE_COUNT`, `_GRAPHQL_CONCURRENCY` from `connectors/github.py`. The `fetch_graphql` primitive in `connectors/base.py` remains for future callers.
+- `TestStargazerGraphQL` test class. Its mocks encoded the same false cursor-format assumption as the production code, so the suite passed green while shipping broken charts — a textbook "mock agrees with the thing being verified" trap. Replaced by `TestStargazerRESTSampling` which exercises the real REST path and includes a regression gate asserting the broken helpers are not re-introduced.
+
+### Dev
+
+- `scripts/probe_star_history.py` — ad-hoc diagnostic probe that calls `fetch_stargazer_history` against real repos and dumps the shape. Used during this investigation; kept for future parity checks against `star-history.com`.
+
 ## [0.2.9] - 2026-04-21
 
 ### Fixed
