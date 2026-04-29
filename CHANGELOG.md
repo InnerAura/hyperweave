@@ -5,6 +5,26 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.12] - 2026-04-28
+
+Post-deploy hotfix for three rendering issues surfaced in live v0.2.11 README artifacts. All three are user-visible regressions that the local proof set did not exercise: the proof set composes through Python directly, bypassing the HTTP surface where two of the bugs lived.
+
+### Fixed
+
+- **Cellular badge label bled into the pattern strip when no glyph was supplied.** `resolve_badge` computed `label_start = accent_w + 6` in the no-glyph branch, ignoring the paradigm's `glyph_left_offset` (cellular: 18) that reserves the left-edge decoration zone for the 3-cell pattern strip. Cellular badges without a glyph rendered the label text overlapping the pattern. The fix applies `glyph_left_offset` uniformly across both glyph and no-glyph branches: `label_start = accent_w + 6 + glyph_left_offset` when `has_glyph=False`. Brutalist and chrome are unaffected — their `glyph_left_offset` is 0, so the arithmetic is identical to the prior behavior. PYPI badge width on automata grew from 96 to 114 to fit the reserved decoration zone.
+- **Strip HTTP route had no path to set the `eli64s/readme-ai` subtitle that the cellular strip resolver expected.** `resolve_strip` reads `connector_data.repo_slug` for the subtitle line beneath the identity, but the proofset was the only caller that populated it — the HTTP surface had no equivalent. Added `?subtitle=` query parameter to `/v1/strip/{title}/{genome}.{motion}`; the route builds `connector_data={"repo_slug": subtitle}` when the param is non-empty, and leaves `connector_data=None` otherwise so paradigms that do not opt into subtitles (brutalist, chrome) stay unaffected.
+- **Universal SVG error fallback rendered as a broken-image icon in GitHub README despite the server producing a valid SMPTE SVG.** GitHub's Camo image proxy refuses to forward 4xx image responses (security: prevents content-confusion attacks where an image URL secretly returns an HTML error page), so v0.2.11's `status_code=404` envelope killed the fallback at the proxy. All five `_error_badge` call sites in `serve/app.py` now return HTTP 200 with the SMPTE SVG body; the original error class travels in a new `X-HW-Error-Code` response header (`404` / `422` / `500`) and is also embedded in the SVG as `data-hw-status-code` plus the `ERR_NNN` value slab. Programmatic consumers can read either; browsers and Camo proxies render the fallback successfully. Three `tests/test_serve.py` cases that asserted the 4xx HTTP envelope were updated to assert `status_code == 200` plus the `X-HW-Error-Code` header — semantic equivalence preserved, contract clarified.
+
+### Documentation
+
+- **README Genomes section pivoted from 3-column cross-genome table to stacked-per-genome layout.** Each genome now has its own `<h3>` section with a 2-column artifact table (label | image+url-caption); the prior 3-column-per-frame-type table compressed each artifact to ~33% of viewport width, which made the stats cards and star charts unreadable on narrower viewports. The new layout puts each artifact at full available width minus the label gutter, and the genome roster at the top (`<kbd>` chips linking to anchors) gives a fast-jump nav. Comparison table at the bottom is preserved.
+- README PYPI badge URLs now include `?glyph=python` so the cellular pattern strip is paired with a glyph rather than crowded against an empty zone. Visually parallels the chrome-horizon and brutalist-emerald BUILD badges.
+- README automata strip URL now includes `&subtitle=eli64s/readme-ai` so the rendered strip matches the proofset reference and the cellular paradigm's `show_subtitle: true` declaration.
+
+### Notes
+
+- **Stat/chart card heights differ across genome columns and this is not a regression.** Brutalist `card_height: 280` vs chrome/cellular `260`, and cellular `chart_height: 600` vs brutalist/chrome `500` are paradigm-specimen-correct dimensions declared in `data/paradigms/*.yaml`. The README's three-column table renders them at uniform width via `width="100%"`, so the heights visibly differ. Standardizing the dimensions would crop content on the cellular chart (which uses the bottom 66px for the flank/footer) and the brutalist stats card (which uses the top header strip). Treated as design surface, not a v0.2.12 fix.
+
 ## [0.2.11] - 2026-04-28
 
 Adds the third production genome (`automata`) and the cellular paradigm that powers it, hardens the GitHub stats pipeline against silent zeroing under quota exhaustion, and lands a stack of cellular-paradigm rendering fixes.

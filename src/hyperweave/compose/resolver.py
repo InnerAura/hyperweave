@@ -237,8 +237,13 @@ def resolve_badge(
     else:
         glyph_x, glyph_y = 0, 0.0
 
-    # Label area starts after glyph (or after accent)
-    label_start = (glyph_x + glyph_size + glyph_gap) if has_glyph else (accent_w + 6)
+    # Label area starts after glyph (or after accent + paradigm left-edge decoration).
+    # When a paradigm declares ``glyph_left_offset`` (cellular: 18 default, 12 compact)
+    # it reserves a left-edge zone for decoration (cellular pattern strip at x=2..~20).
+    # The with-glyph branch already clears that zone via glyph_x. The no-glyph
+    # branch must also respect it — otherwise label text overlaps the decoration.
+    # Brutalist/chrome are unaffected: glyph_left_offset=0.
+    label_start = (glyph_x + glyph_size + glyph_gap) if has_glyph else (accent_w + 6 + glyph_left_offset)
 
     # Left panel width
     label_pad_r = 9 if use_mono else 8

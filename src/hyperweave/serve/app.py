@@ -126,8 +126,12 @@ async def compose_strip_url(
     variant: Annotated[str, Query()] = "default",
     regime: Annotated[str, Query()] = "normal",
     family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+    subtitle: Annotated[
+        str,
+        Query(description="Strip subtitle (e.g. 'eli64s/readme-ai'). Cellular paradigm renders under identity."),
+    ] = "",
 ) -> Response:
-    """Compose a strip: /v1/strip/{title}/{genome}.{motion}?value=&live="""
+    """Compose a strip: /v1/strip/{title}/{genome}.{motion}?value=&live=&subtitle="""
     genome, motion = _parse_genome_motion(genome_motion)
 
     ttl = 300
@@ -136,6 +140,12 @@ async def compose_strip_url(
     # Live data: ?live=github:owner/repo:stars,pypi:pkg:version
     if live:
         final_value, ttl = await _fetch_live_metrics(live, fallback=value)
+
+    # Subtitle wires through connector_data.repo_slug — the same field
+    # resolve_strip reads when generate_proofset.py passes connector_data
+    # explicitly. Empty subtitle leaves connector_data=None so paradigms
+    # that don't opt into subtitles (brutalist, chrome) stay unaffected.
+    connector_data: dict[str, Any] | None = {"repo_slug": subtitle} if subtitle else None
 
     from hyperweave.core.models import ComposeSpec
 
@@ -151,6 +161,7 @@ async def compose_strip_url(
         variant=variant,
         regime=regime,
         family=family,
+        connector_data=connector_data,
     )
 
     if live:
@@ -373,8 +384,15 @@ async def compose_live_badge(
         return Response(
             content=_error_badge(str(exc), status_code=status_code),
             media_type="image/svg+xml",
-            status_code=status_code,
-            headers={"Cache-Control": "max-age=60"},
+            # HTTP 200 — Camo refuses to proxy 4xx image responses, which would
+            # cause the README to render a broken-image icon despite the server
+            # producing a valid SMPTE SVG. The error class travels in the SVG
+            # (``data-hw-status-code``, ``ERR_NNN`` slab) and the response header.
+            status_code=200,
+            headers={
+                "Cache-Control": "max-age=60",
+                "X-HW-Error-Code": str(status_code),
+            },
         )
 
 
@@ -661,7 +679,8 @@ async def serve_specimen(slug: str) -> Response:
         return Response(
             content=_error_badge(f"Specimen '{slug}' not found", status_code=404),
             media_type="image/svg+xml",
-            status_code=404,
+            status_code=200,
+            headers={"X-HW-Error-Code": "404"},
         )
 
     import pathlib
@@ -672,7 +691,8 @@ async def serve_specimen(slug: str) -> Response:
         return Response(
             content=_error_badge(f"File not found: {rel_path}", status_code=404),
             media_type="image/svg+xml",
-            status_code=404,
+            status_code=200,
+            headers={"X-HW-Error-Code": "404"},
         )
 
     from hyperweave.config.settings import get_settings
@@ -857,8 +877,15 @@ def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
         return Response(
             content=_error_badge(str(exc), status_code=status_code),
             media_type="image/svg+xml",
-            status_code=status_code,
-            headers={"Cache-Control": "max-age=60"},
+            # HTTP 200 — Camo refuses to proxy 4xx image responses, which would
+            # cause the README to render a broken-image icon despite the server
+            # producing a valid SMPTE SVG. The error class travels in the SVG
+            # (``data-hw-status-code``, ``ERR_NNN`` slab) and the response header.
+            status_code=200,
+            headers={
+                "Cache-Control": "max-age=60",
+                "X-HW-Error-Code": str(status_code),
+            },
         )
 
 
@@ -897,8 +924,15 @@ def _compose_and_respond_with_ttl(spec: Any, request: Request | None, ttl: int) 
         return Response(
             content=_error_badge(str(exc), status_code=status_code),
             media_type="image/svg+xml",
-            status_code=status_code,
-            headers={"Cache-Control": "max-age=60"},
+            # HTTP 200 — Camo refuses to proxy 4xx image responses, which would
+            # cause the README to render a broken-image icon despite the server
+            # producing a valid SMPTE SVG. The error class travels in the SVG
+            # (``data-hw-status-code``, ``ERR_NNN`` slab) and the response header.
+            status_code=200,
+            headers={
+                "Cache-Control": "max-age=60",
+                "X-HW-Error-Code": str(status_code),
+            },
         )
 
 
@@ -949,13 +983,21 @@ def _error_badge(message: str, status_code: int = 500) -> str:
 
 
 def _classify_compose_exception(exc: BaseException) -> int:
-    """Map a compose-pipeline exception to the HTTP status the API should return.
+    """Map a compose-pipeline exception to the HTTP status code the SVG should
+    encode in its ``ERR_NNN`` value slab and ``data-hw-status-code`` attribute.
 
     GenomeNotFoundError -> 404 (the URL named a genome the registry doesn't have).
     Pydantic ``ValidationError`` -> 422 (a field value is structurally invalid).
     Anything else -> 500 (unexpected failure -- template missing, render error, ...).
-    The caller passes the same status_code into ``_error_badge`` so the rendered
-    SVG and the HTTP envelope agree.
+
+    NOTE: This is the *SVG-internal* status code, not the HTTP envelope code.
+    Error responses always return HTTP 200 so GitHub Camo proxies and browser
+    ``<img>`` elements actually render the SMPTE NO SIGNAL fallback body —
+    Camo refuses to forward 4xx image responses, which would cause the
+    README to show a broken-image icon despite the server producing a valid
+    SVG. Programmatic consumers that need the underlying error class can
+    read ``data-hw-status-code`` from the SVG attributes or the
+    ``X-HW-Error-Code`` response header.
     """
     from hyperweave.compose.resolver import GenomeNotFoundError
 

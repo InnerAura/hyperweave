@@ -76,29 +76,166 @@ Three production genomes ship today. Custom genome generation via AI skill files
 Why genome and not theme? Because brand isn't a design problem, it's an infrastructure problem. When an agent says "build me a status page," it has zero memory of visual identity. A genome solves that: define once, express everywhere, from a 90px badge to a full-width banner. The same genome produces different artifacts that feel like they came from the same hand.
 -->
 
+<p align="center">
+  <a href="#automata"><kbd> automata </kbd></a>
+  &middot;
+  <a href="#chrome-horizon"><kbd> chrome-horizon </kbd></a>
+  &middot;
+  <a href="#brutalist-emerald"><kbd> brutalist-emerald </kbd></a>
+</p>
+
+<h3 id="automata">automata</h3>
+<sub><b>cellular paradigm &middot; bifamily teal &times; amethyst &middot; abyssal-cyber chromatics</b></sub>
+
 <table>
 <tr>
-<td></td>
-<td align="center"><strong>automata</strong></td>
-<td align="center"><strong>chrome-horizon</strong></td>
-<td align="center"><strong>brutalist-emerald</strong></td>
+<th align="left" width="160">Signals<br/><sub>chromatic variant</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=blue" alt="pypi teal"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=purple" alt="pypi amethyst"/>
+  <br/>
+  <sub><code>/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family={blue|purple}</code></sub>
+</td>
 </tr>
 <tr>
-<td align="center"><strong>Signals</strong></td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?family=blue" alt="pypi teal"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?family=purple" alt="pypi amethyst"/>
+<th align="left">Dashboard<br/><sub>strip &middot; bifamily</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai&family=bifamily" alt="strip"/>
   <br/>
-  <sub><code>/v1/badge/PYPI/v0.2.11/automata.static?family={blue|purple}</code></sub>
+  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&family=bifamily</code></sub>
 </td>
-<td align="center">
+</tr>
+<tr>
+<th align="left">Profile<br/><sub>stats card</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static" alt="stats" width="100%"/>
+  <br/>
+  <sub><code>/v1/stats/eli64s/automata.static</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Star Chart<br/><sub>star history</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static" alt="star chart" width="100%"/>
+  <br/>
+  <sub><code>/v1/chart/stars/eli64s/readme-ai/automata.static</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&family=bifamily" alt="marquee horizontal"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&direction=up&family=bifamily" alt="marquee vertical"/>
+  <br/>
+  <sub><code>/v1/marquee/{text}/automata.static?rows=1&family=bifamily</code> &mdash; add <code>&direction=up</code> for vertical</sub>
+</td>
+</tr>
+<tr>
+<th align="left">Icons<br/><sub>circle + square</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&family=blue" alt="python" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&family=blue" alt="docker" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&family=purple" alt="huggingface" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&family=purple" alt="jupyter" width="56"/>
+  <br/>
+  <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&family={blue|purple}</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Banner<br/><sub>bifamily wordmark</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/automata.static?family=bifamily" alt="banner"/>
+  <br/>
+  <sub><code>/v1/banner/HYPERWEAVE/automata.static?family=bifamily</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Divider<br/><sub>cellular-dissolve</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/divider/cellular-dissolve/automata.static?family=bifamily" alt="divider"/>
+  <br/>
+  <sub><code>/v1/divider/cellular-dissolve/automata.static?family=bifamily</code></sub>
+</td>
+</tr>
+</table>
+
+<h3 id="chrome-horizon">chrome-horizon</h3>
+<sub><b>chrome paradigm &middot; metallic env-mapping &middot; smooth corner radii</b></sub>
+
+<table>
+<tr>
+<th align="left" width="160">Signals<br/><sub>state machine</sub></th>
+<td>
   <img src="https://hyperweave.app/v1/badge/BUILD/passing/chrome-horizon.static?state=passing" alt="passing"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/warning/chrome-horizon.static?state=warning" alt="warning"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/critical/chrome-horizon.static?state=critical" alt="critical"/>
   <br/>
   <sub><code>/v1/badge/BUILD/{state}/chrome-horizon.static</code></sub>
 </td>
-<td align="center">
+</tr>
+<tr>
+<th align="left">Dashboard<br/><sub>strip</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?value=STARS:2.9k,FORKS:278" alt="strip"/>
+  <br/>
+  <sub><code>/v1/strip/readme-ai/chrome-horizon.static</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Profile<br/><sub>stats card</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/stats/eli64s/chrome-horizon.static" alt="stats" width="100%"/>
+  <br/>
+  <sub><code>/v1/stats/eli64s/chrome-horizon.static</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Star Chart<br/><sub>star history</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/chrome-horizon.static" alt="star chart" width="100%"/>
+  <br/>
+  <sub><code>/v1/chart/stars/eli64s/readme-ai/chrome-horizon.static</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1" alt="marquee horizontal"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1&direction=up" alt="marquee vertical"/>
+  <br/>
+  <sub><code>/v1/marquee/{text}/chrome-horizon.static?rows=1</code> &mdash; add <code>&direction=up</code> for vertical</sub>
+</td>
+</tr>
+<tr>
+<th align="left">Icons<br/><sub>circle + square</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/icon/youtube/chrome-horizon.static?shape=circle" alt="youtube" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/notion/chrome-horizon.static?shape=circle" alt="notion" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/npm/chrome-horizon.static?shape=square" alt="npm" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/instagram/chrome-horizon.static?shape=square" alt="instagram" width="56"/>
+  <br/>
+  <sub><code>/v1/icon/{glyph}/chrome-horizon.static?shape={circle|square}</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Banner<br/><sub>wordmark</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/chrome-horizon.static" alt="banner"/>
+  <br/>
+  <sub><code>/v1/banner/HYPERWEAVE/chrome-horizon.static</code></sub>
+</td>
+</tr>
+</table>
+
+<h3 id="brutalist-emerald">brutalist-emerald</h3>
+<sub><b>brutalist paradigm &middot; sharp zero-radius &middot; full 14-motion roster</b></sub>
+
+<table>
+<tr>
+<th align="left" width="160">Signals<br/><sub>state machine</sub></th>
+<td>
   <img src="https://hyperweave.app/v1/badge/BUILD/passing/brutalist-emerald.static?state=passing" alt="passing"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist-emerald.static?state=warning" alt="warning"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist-emerald.static?state=critical" alt="critical"/>
@@ -107,133 +244,53 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 <tr>
-<td align="center"><strong>Dashboard</strong></td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?value=STARS:2.9k,FORKS:278&family=bifamily" alt="strip"/>
-  <br/>
-  <sub><code>/v1/strip/readme-ai/automata.static?family=bifamily</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?value=STARS:2.9k,FORKS:278" alt="strip"/>
-  <br/>
-  <sub><code>/v1/strip/readme-ai/chrome-horizon.static</code></sub>
-</td>
-<td align="center">
+<th align="left">Dashboard<br/><sub>strip</sub></th>
+<td>
   <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278" alt="strip"/>
   <br/>
   <sub><code>/v1/strip/readme-ai/brutalist-emerald.static</code></sub>
 </td>
 </tr>
 <tr>
-<td rowspan="2" align="center"><strong>Profile&nbsp;cards</strong></td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static" alt="stats" width="100%"/>
-  <br/>
-  <sub><code>/v1/stats/eli64s/automata.static</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/stats/eli64s/chrome-horizon.static" alt="stats" width="100%"/>
-  <br/>
-  <sub><code>/v1/stats/eli64s/chrome-horizon.static</code></sub>
-</td>
-<td align="center">
+<th align="left">Profile<br/><sub>stats card</sub></th>
+<td>
   <img src="https://hyperweave.app/v1/stats/eli64s/brutalist-emerald.static" alt="stats" width="100%"/>
   <br/>
   <sub><code>/v1/stats/eli64s/brutalist-emerald.static</code></sub>
 </td>
 </tr>
 <tr>
-<td align="center">
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static" alt="star chart" width="100%"/>
-  <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/automata.static</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/chrome-horizon.static" alt="star chart" width="100%"/>
-  <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/chrome-horizon.static</code></sub>
-</td>
-<td align="center">
+<th align="left">Star Chart<br/><sub>star history</sub></th>
+<td>
   <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist-emerald.static" alt="star chart" width="100%"/>
   <br/>
   <sub><code>/v1/chart/stars/eli64s/readme-ai/brutalist-emerald.static</code></sub>
 </td>
 </tr>
 <tr>
-<td rowspan="2" align="center"><strong>Marquee</strong></td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&family=bifamily" alt="marquee horizontal"/>
-  <br/>
-  <sub><code>/v1/marquee/{title}/automata.static?rows=1&family=bifamily</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1" alt="marquee horizontal"/>
-  <br/>
-  <sub><code>/v1/marquee/{title}/chrome-horizon.static?rows=1</code></sub>
-</td>
-<td align="center">
+<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
+<td>
   <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1" alt="marquee horizontal"/>
   <br/>
-  <sub><code>/v1/marquee/{title}/brutalist-emerald.static?rows=1</code></sub>
-</td>
-</tr>
-<tr>
-<td align="center">
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&direction=up&family=bifamily" alt="marquee vertical"/>
-  <br/>
-  <sub><code>&hellip;/automata.static?rows=1&direction=up&family=bifamily</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1&direction=up" alt="marquee vertical"/>
-  <br/>
-  <sub><code>&hellip;/chrome-horizon.static?rows=1&direction=up</code></sub>
-</td>
-<td align="center">
   <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1&direction=up" alt="marquee vertical"/>
   <br/>
-  <sub><code>&hellip;/brutalist-emerald.static?rows=1&direction=up</code></sub>
+  <sub><code>/v1/marquee/{text}/brutalist-emerald.static?rows=1</code> &mdash; add <code>&direction=up</code> for vertical</sub>
 </td>
 </tr>
 <tr>
-<td align="center"><strong>Icons</strong></td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&family=blue" alt="python" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&family=purple" alt="huggingface" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&family=blue" alt="docker" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&family=purple" alt="jupyter" width="64"/>
-  <br/>
-  <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&family={blue|purple}</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/icon/youtube/chrome-horizon.static?shape=circle" alt="youtube" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/notion/chrome-horizon.static?shape=circle" alt="notion" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/npm/chrome-horizon.static?shape=square" alt="npm" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/instagram/chrome-horizon.static?shape=square" alt="instagram" width="64"/>
-  <br/>
-  <sub><code>/v1/icon/{glyph}/chrome-horizon.static?shape={circle|square}</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/icon/discord/brutalist-emerald.static?shape=circle" alt="discord" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/github/brutalist-emerald.static?shape=circle" alt="github" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/x/brutalist-emerald.static?shape=square" alt="x" width="64"/>
-  <img src="https://hyperweave.app/v1/icon/spotify/brutalist-emerald.static?shape=square" alt="spotify" width="64"/>
+<th align="left">Icons<br/><sub>circle + square</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist-emerald.static?shape=circle" alt="discord" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/brutalist-emerald.static?shape=circle" alt="github" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/x/brutalist-emerald.static?shape=square" alt="x" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/brutalist-emerald.static?shape=square" alt="spotify" width="56"/>
   <br/>
   <sub><code>/v1/icon/{glyph}/brutalist-emerald.static?shape={circle|square}</code></sub>
 </td>
 </tr>
 <tr>
-<td align="center"><strong>Banner</strong></td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/automata.static?family=bifamily" alt="banner"/>
-  <br/>
-  <sub><code>/v1/banner/HYPERWEAVE/automata.static?family=bifamily</code></sub>
-</td>
-<td align="center">
-  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/chrome-horizon.static" alt="banner"/>
-  <br/>
-  <sub><code>/v1/banner/HYPERWEAVE/chrome-horizon.static</code></sub>
-</td>
-<td align="center">
+<th align="left">Banner<br/><sub>wordmark</sub></th>
+<td>
   <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/brutalist-emerald.static" alt="banner"/>
   <br/>
   <sub><code>/v1/banner/HYPERWEAVE/brutalist-emerald.static</code></sub>

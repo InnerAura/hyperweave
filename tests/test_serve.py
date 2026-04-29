@@ -281,7 +281,12 @@ async def test_list_specimens(client: AsyncClient) -> None:
 async def test_serve_specimen_not_found(client: AsyncClient) -> None:
     with patch("hyperweave.serve.app._load_specimens_registry", return_value={}):
         resp = await client.get("/a/inneraura/nonexistent")
-        assert resp.status_code == 404
+        # HTTP 200 with X-HW-Error-Code header — Camo refuses to proxy 4xx
+        # image responses, so the error class travels in the header instead.
+        # See _classify_compose_exception docstring.
+        assert resp.status_code == 200
+        assert resp.headers["x-hw-error-code"] == "404"
+        assert "image/svg+xml" in resp.headers["content-type"]
 
 
 async def test_specimen_meta_not_found(client: AsyncClient) -> None:
@@ -347,7 +352,9 @@ async def test_compose_error_returns_500_svg(client: AsyncClient) -> None:
         patch("hyperweave.serve.app._error_badge", return_value=error_svg),
     ):
         resp = await client.get("/v1/badge/build/passing/brutalist-emerald")
-        assert resp.status_code == 500
+        # HTTP 200 with X-HW-Error-Code: 500 — see _classify_compose_exception.
+        assert resp.status_code == 200
+        assert resp.headers["x-hw-error-code"] == "500"
         assert "image/svg+xml" in resp.headers["content-type"]
 
 
@@ -404,12 +411,16 @@ def test_error_badge_uid_isolates_dom_ids() -> None:
 
 async def test_unknown_genome_returns_404_smpte_pattern(client: AsyncClient) -> None:
     resp = await client.get("/v1/badge/TEST/value/nonexistent-genome.static")
-    assert resp.status_code == 404
+    # HTTP envelope is 200 (Camo-friendly); the 404 lives in the X-HW-Error-Code
+    # header and the SVG body (ERR_404 slab + data-hw-status-code attribute).
+    assert resp.status_code == 200
+    assert resp.headers["x-hw-error-code"] == "404"
     assert "image/svg+xml" in resp.headers["content-type"]
     body = resp.text
     assert "ERR_404" in body
     assert "NO SIGNAL" in body
     assert 'data-hw-class="error-state"' in body
+    assert 'data-hw-status-code="404"' in body
 
 
 # ===========================================================================
