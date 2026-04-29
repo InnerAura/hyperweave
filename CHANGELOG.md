@@ -5,6 +5,18 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.13] - 2026-04-29
+
+Hotfix for a cascade bug exposed by v0.2.12. v0.2.12 changed the SMPTE error fallback's HTTP envelope from 4xx to 200 so GitHub Camo would proxy the body — but the body itself contained an HTML entity (`&middot;` in the `<title>` element) that strict XML/SVG parsers reject. While the server returned valid bytes, *every* SVG renderer (browsers, markdown previewers, image proxies) refused to construct a DOM and fell back to broken-image. The bug was hidden by v0.2.11's 4xx envelope (renderers never tried to parse 4xx responses) and surfaced only after v0.2.12 made the body reachable.
+
+### Fixed
+
+- **SMPTE error fallback now parses as valid XML.** `templates/error-badge.svg.j2` line 40 had `<title>NO SIGNAL &middot; ERR_NNN</title>`. SVG is XML, not HTML — only the five XML predefined entities (`&amp; &lt; &gt; &quot; &apos;`) are recognized. `&middot;` is an HTML extension that triggers `Entity 'middot' not defined` in any conforming XML parser, which causes the renderer to abandon DOM construction and show the broken-image icon. Replaced with the literal Unicode character `·` (U+00B7) — same glyph, no entity-resolution required. Verified end-to-end: `xml.etree.ElementTree.fromstring(_error_badge("test", 404))` now succeeds; `open` of the rendered SVG file shows the SMPTE bars in macOS Preview and Chrome.
+
+### Notes
+
+- **Lesson for future SVG templates.** SVG templates must use literal Unicode characters or numeric entities (`&#xB7;`), never HTML named entities. A grep gate for HTML entities in `templates/**/*.j2` is a candidate Invariant if this class of bug recurs.
+
 ## [0.2.12] - 2026-04-28
 
 Post-deploy hotfix for three rendering issues surfaced in live v0.2.11 README artifacts. All three are user-visible regressions that the local proof set did not exercise: the proof set composes through Python directly, bypassing the HTTP surface where two of the bugs lived.

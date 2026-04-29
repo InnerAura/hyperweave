@@ -77,88 +77,12 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 -->
 
 <p align="center">
-  <a href="#automata"><kbd> automata </kbd></a>
-  &middot;
   <a href="#chrome-horizon"><kbd> chrome-horizon </kbd></a>
   &middot;
   <a href="#brutalist-emerald"><kbd> brutalist-emerald </kbd></a>
+  &middot;
+  <a href="#automata"><kbd> automata </kbd></a>
 </p>
-
-<h3 id="automata">automata</h3>
-<sub><b>cellular paradigm &middot; bifamily teal &times; amethyst &middot; abyssal-cyber chromatics</b></sub>
-
-<table>
-<tr>
-<th align="left" width="160">Signals<br/><sub>chromatic variant</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=blue" alt="pypi teal"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=purple" alt="pypi amethyst"/>
-  <br/>
-  <sub><code>/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family={blue|purple}</code></sub>
-</td>
-</tr>
-<tr>
-<th align="left">Dashboard<br/><sub>strip &middot; bifamily</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai&family=bifamily" alt="strip"/>
-  <br/>
-  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&family=bifamily</code></sub>
-</td>
-</tr>
-<tr>
-<th align="left">Profile<br/><sub>stats card</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static" alt="stats" width="100%"/>
-  <br/>
-  <sub><code>/v1/stats/eli64s/automata.static</code></sub>
-</td>
-</tr>
-<tr>
-<th align="left">Star Chart<br/><sub>star history</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static" alt="star chart" width="100%"/>
-  <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/automata.static</code></sub>
-</td>
-</tr>
-<tr>
-<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&family=bifamily" alt="marquee horizontal"/>
-  <br/>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&direction=up&family=bifamily" alt="marquee vertical"/>
-  <br/>
-  <sub><code>/v1/marquee/{text}/automata.static?rows=1&family=bifamily</code> &mdash; add <code>&direction=up</code> for vertical</sub>
-</td>
-</tr>
-<tr>
-<th align="left">Icons<br/><sub>circle + square</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&family=blue" alt="python" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&family=blue" alt="docker" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&family=purple" alt="huggingface" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&family=purple" alt="jupyter" width="56"/>
-  <br/>
-  <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&family={blue|purple}</code></sub>
-</td>
-</tr>
-<tr>
-<th align="left">Banner<br/><sub>bifamily wordmark</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/automata.static?family=bifamily" alt="banner"/>
-  <br/>
-  <sub><code>/v1/banner/HYPERWEAVE/automata.static?family=bifamily</code></sub>
-</td>
-</tr>
-<tr>
-<th align="left">Divider<br/><sub>cellular-dissolve</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/divider/cellular-dissolve/automata.static?family=bifamily" alt="divider"/>
-  <br/>
-  <sub><code>/v1/divider/cellular-dissolve/automata.static?family=bifamily</code></sub>
-</td>
-</tr>
-</table>
 
 <h3 id="chrome-horizon">chrome-horizon</h3>
 <sub><b>chrome paradigm &middot; metallic env-mapping &middot; smooth corner radii</b></sub>
@@ -298,13 +222,89 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </tr>
 </table>
 
-| | automata | chrome-horizon | brutalist-emerald |
+<h3 id="automata">automata</h3>
+<sub><b>cellular paradigm &middot; bifamily teal &times; amethyst &middot; abyssal-cyber chromatics</b></sub>
+
+<table>
+<tr>
+<th align="left" width="160">Signals<br/><sub>chromatic variant</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=blue" alt="pypi teal"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=purple" alt="pypi amethyst"/>
+  <br/>
+  <sub><code>/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family={blue|purple}</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Dashboard<br/><sub>strip &middot; bifamily</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai&family=bifamily" alt="strip"/>
+  <br/>
+  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&family=bifamily</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Profile<br/><sub>stats card</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static" alt="stats" width="100%"/>
+  <br/>
+  <sub><code>/v1/stats/eli64s/automata.static</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Star Chart<br/><sub>star history</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static" alt="star chart" width="100%"/>
+  <br/>
+  <sub><code>/v1/chart/stars/eli64s/readme-ai/automata.static</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&family=bifamily" alt="marquee horizontal"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&direction=up&family=bifamily" alt="marquee vertical"/>
+  <br/>
+  <sub><code>/v1/marquee/{text}/automata.static?rows=1&family=bifamily</code> &mdash; add <code>&direction=up</code> for vertical</sub>
+</td>
+</tr>
+<tr>
+<th align="left">Icons<br/><sub>circle + square</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&family=blue" alt="python" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&family=blue" alt="docker" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&family=purple" alt="huggingface" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&family=purple" alt="jupyter" width="56"/>
+  <br/>
+  <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&family={blue|purple}</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Banner<br/><sub>bifamily wordmark</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/automata.static?family=bifamily" alt="banner"/>
+  <br/>
+  <sub><code>/v1/banner/HYPERWEAVE/automata.static?family=bifamily</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Divider<br/><sub>cellular-dissolve</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/divider/cellular-dissolve/automata.static?family=bifamily" alt="divider"/>
+  <br/>
+  <sub><code>/v1/divider/cellular-dissolve/automata.static?family=bifamily</code></sub>
+</td>
+</tr>
+</table>
+
+| | chrome-horizon | brutalist-emerald | automata |
 |---|---|---|---|
-| Surface | `#04060A` void | `#000a14` deep void | `#14532D` dark field |
-| Signal | `#1E849A` teal &middot; `#6B3B8A` amethyst | `#5ba3d4` metallic blue | `#10B981` emerald |
-| Profile | brutalist (cellular paradigm) | chrome (smooth, env-mapped) | brutalist (sharp, zero-radius) |
-| Chromatic variant | `blue` / `purple` / `bifamily` | &mdash; | &mdash; |
-| Motions | static, chromatic-pulse, rimrun, corner-trace | 5 border SMIL | 5 border + 9 kinetic |
+| Surface | `#000a14` deep void | `#14532D` dark field | `#04060A` void |
+| Signal | `#5ba3d4` metallic blue | `#10B981` emerald | `#1E849A` teal &middot; `#6B3B8A` amethyst |
+| Profile | chrome (smooth, env-mapped) | brutalist (sharp, zero-radius) | brutalist (cellular paradigm) |
+| Chromatic variant | &mdash; | &mdash; | `blue` / `purple` / `bifamily` |
+| Motions | 5 border SMIL | 5 border + 9 kinetic | static, chromatic-pulse, rimrun, corner-trace |
 
 <sub>The two automata signal badges share a URL and differ only in the chromatic variant: <code>?family=blue</code> renders the teal palette, <code>?family=purple</code> the amethyst, <code>?family=bifamily</code> both. The parameter name is provisional and likely to be renamed to <code>?variant=</code> once brutalist skin variants land &mdash; treat the surface as unstable.</sub>
 
@@ -313,11 +313,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 Every broken `<img>` URL renders the SMPTE RP 219 test pattern with `ERR_NNN` matching the HTTP status, instead of a browser broken-image icon.
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/TEST/value/nonexistent-genome.static" alt="404 error fallback (intentionally broken URL)"/>
+  <img src="https://hyperweave.app/v1/badge/TEST/value/unknown-genome.static" alt="404 error fallback (intentionally broken URL)"/>
 </p>
 
 <p align="center">
-  <sub><code>/v1/badge/TEST/value/nonexistent-genome.static</code> &mdash; unknown genome &rarr; HTTP 404, value slab reads <code>ERR_404</code>.</sub>
+  <sub><code>/v1/badge/TEST/value/unknown-genome.static</code> &mdash; unknown genome &rarr; HTTP 404, value slab reads <code>ERR_404</code>.</sub>
 </p>
 
 ---
