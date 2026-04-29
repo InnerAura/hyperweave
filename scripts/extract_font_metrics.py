@@ -129,6 +129,14 @@ FONT_CONFIGS: dict[str, dict[str, object]] = {
         # char_width_px populated below from extracted widths (median).
         "char_width_px": 0.0,
     },
+    "chakra-petch": {
+        "family": "Chakra Petch",
+        "baseline_size_px": 12,  # dominant rendered size in automata badge value text
+        "bold_expansion_factor": 1.04,
+        "aliases": ["chakra petch", "chakra-petch"],
+        "is_monospace": False,
+        "char_width_px": 0.0,
+    },
 }
 
 

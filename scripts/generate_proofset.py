@@ -104,16 +104,8 @@ MOCK_TELEMETRY: dict[str, Any] = {
 
 LIVE_SPECS: list[dict[str, Any]] = [
     {"provider": "github", "id": "eli64s/readme-ai", "metric": "stars", "frame": "badge", "title": "STARS"},
-    {
-        "provider": "github",
-        "id": "eli64s/readme-ai",
-        "metric": "stars,forks",
-        "frame": "strip",
-        "title": "readme-ai",
-    },
     {"provider": "pypi", "id": "readmeai", "metric": "downloads", "frame": "badge", "title": "DOWNLOADS"},
-    {"provider": "docker", "id": "zeroxeli/readme-ai", "metric": "pulls", "frame": "badge", "title": "PULLS"},
-    {"provider": "npm", "id": "express", "metric": "downloads", "frame": "badge", "title": "DOWNLOADS"},
+    {"provider": "docker", "id": "zeroxeli/readme-ai", "metric": "pull_count", "frame": "badge", "title": "PULLS"},
 ]
 
 
@@ -130,7 +122,9 @@ def _compose(
     glyph_mode: str = "auto",
     divider_variant: str = "zeropoint",
     variant: str = "default",
+    family: str = "",
     telemetry_data: dict[str, Any] | None = None,
+    connector_data: dict[str, Any] | None = None,
 ) -> str:
     spec = ComposeSpec(
         type=frame_type,
@@ -144,7 +138,9 @@ def _compose(
         glyph_mode=glyph_mode,
         divider_variant=divider_variant,
         variant=variant,
+        family=family,
         telemetry_data=telemetry_data,
+        connector_data=connector_data,
     )
     return compose(spec).svg
 
@@ -168,7 +164,20 @@ def generate_static() -> int:
         _write(base / "badge.svg", svg)
         total += 1
 
-        svg = _compose("strip", genome, "readme-ai", "STARS:12.4k,FORKS:1.2k,VERSION:v0.6.9", "active", "github")
+        # Strip subtitle — resolver reads connector_data.repo_slug to render
+        # the grayish "eli64s/readme-ai" under the identity line (cellular
+        # paradigm opts in via strip.show_subtitle=true). Proof-set calls
+        # that omit connector_data get an empty subtitle zone, which is
+        # correct for paradigms that don't opt in.
+        svg = _compose(
+            "strip",
+            genome,
+            "readme-ai",
+            "STARS:12.4k,FORKS:1.2k,VERSION:v0.6.9",
+            "active",
+            "github",
+            connector_data={"repo_slug": "eli64s/readme-ai"},
+        )
         _write(base / "strip.svg", svg)
         total += 1
 
@@ -185,13 +194,59 @@ def generate_static() -> int:
         total += 1
 
         for dv in DividerVariant:
+            # cellular-dissolve is automata-only; the other 5 variants
+            # (block/current/takeoff/void/zeropoint) are generic inneraura-
+            # namespace dividers shared across all genomes.
+            if dv == DividerVariant.CELLULAR_DISSOLVE and genome != GenomeId.AUTOMATA:
+                continue
             svg = _compose("divider", genome, divider_variant=dv)
             _write(base / f"divider_{dv}.svg", svg)
             total += 1
 
-        for mtype in ("marquee-horizontal", "marquee-vertical", "marquee-counter"):
-            svg = _compose(mtype, genome, "HYPERWEAVE LIVING ARTIFACTS AI-NATIVE SVG COMPOSITOR")
+        # All three marquee variants now have cellular templates (vertical and
+        # counter shipped alongside the horizontal as part of the cellular
+        # bifamily-tspan vocabulary — hairline-bridge chrome with teal/amethyst
+        # palette alternation per the paradigm marquee config).
+        _marquee_types = ("marquee-horizontal", "marquee-vertical", "marquee-counter")
+        for mtype in _marquee_types:
+            # Pipe-separated items so resolver splits into discrete tokens;
+            # cellular paradigm cycles colors per-item from its tspan palette
+            # (teal/amethyst alternation), others render as a single-color run.
+            svg = _compose(mtype, genome, "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL")
             _write(base / f"{mtype.replace('-', '_')}.svg", svg)
+            total += 1
+
+        # ── 1b. Automata-specific family-axis coverage (blue/purple x default/compact) ──
+        if genome == GenomeId.AUTOMATA:
+            fam_dir = gdir / "families"
+            for fam in ("blue", "purple"):
+                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", family=fam)
+                _write(fam_dir / f"badge_pypi_{fam}_default.svg", svg)
+                total += 1
+                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", family=fam, variant="compact")
+                _write(fam_dir / f"badge_pypi_{fam}_compact.svg", svg)
+                total += 1
+                svg = _compose("icon", genome, glyph="github", family=fam)
+                _write(fam_dir / f"icon_github_{fam}.svg", svg)
+                total += 1
+            # Bifamily strip + banner + cellular-dissolve divider
+            svg = _compose(
+                "strip",
+                genome,
+                "readme-ai",
+                "STARS:12.4k,VERSION:v0.6.9,BUILD:passing",
+                "passing",
+                "github",
+                family="bifamily",
+                connector_data={"repo_slug": "eli64s/readme-ai"},
+            )
+            _write(fam_dir / "strip_bifamily.svg", svg)
+            total += 1
+            svg = _compose("banner", genome, "AUTOMATA", "Living Artifacts", family="bifamily", variant="compact")
+            _write(fam_dir / "banner_bifamily_compact.svg", svg)
+            total += 1
+            svg = _compose("divider", genome, divider_variant="cellular-dissolve")
+            _write(fam_dir / "divider_cellular_dissolve.svg", svg)
             total += 1
 
         # ── 2. State machine -- badges ──
@@ -216,6 +271,7 @@ def generate_static() -> int:
                 "STARS:12.4k,COVERAGE:94%",
                 status,
                 "github",
+                connector_data={"repo_slug": "eli64s/readme-ai"},
             )
             _write(states / f"strip_{status}.svg", svg)
             total += 1
@@ -254,6 +310,7 @@ def generate_static() -> int:
                 "active",
                 motion=mid,
                 regime=Regime.PERMISSIVE,
+                connector_data={"repo_slug": "eli64s/readme-ai"},
             )
             _write(border / f"strip_{mid}.svg", svg)
             total += 1
@@ -458,17 +515,161 @@ async def generate_live() -> int:
                 total += 1
             elif spec["frame"] == "strip":
                 desc = ",".join(f"{k.upper()}:{v}" for k, v in data.items() if k != "provider")
-                svg = _compose("strip", genome, spec["title"], desc, "active")
+                # For github-scoped live specs, spec["id"] is already "owner/repo" —
+                # pass through as repo_slug so cellular subtitle renders correctly.
+                _conn: dict[str, Any] = {"repo_slug": spec["id"]} if spec["provider"] == "github" else {}
+                svg = _compose(
+                    "strip",
+                    genome,
+                    spec["title"],
+                    desc,
+                    "active",
+                    connector_data=_conn or None,
+                )
                 _write(live_dir / f"{spec['provider']}_{spec['id'].replace('/', '_')}_strip.svg", svg)
                 total += 1
         except Exception as e:
             print(f"  SKIP {spec['provider']}/{spec['id']}: {e}")
 
+    # ── Connector-strip adaptivity proof ──
+    # Renders the SAME repo identity across three providers (GitHub, PyPI,
+    # DockerHub) per genome, exercising strip construction against varied
+    # metric counts (2 vs 3), value lengths (short '23', medium '12.4k',
+    # long 'v0.6.9'), and provider-specific label vocabularies. Stale
+    # sub-fetches surface as em-dash via _format_count's None sentinel.
+    total += await _generate_connector_strips(live_dir.parent)
     return total
 
 
+# ── Connector strip adaptivity proof ──
+
+
+_CONNECTOR_STRIP_PROVIDERS: list[dict[str, Any]] = [
+    {
+        "provider": "github",
+        "ident": "eli64s/readme-ai",
+        "title": "readme-ai",
+        "glyph": "github",
+        "subtitle": "eli64s/readme-ai",
+        "metrics": [("STARS", "stars"), ("FORKS", "forks"), ("ISSUES", "issues")],
+        "filename_stem": "github_eli64s_readme-ai",
+    },
+    {
+        "provider": "pypi",
+        "ident": "readmeai",
+        "title": "readmeai",
+        "glyph": "pypi",
+        "subtitle": "pypi.org/project/readmeai",
+        "metrics": [("VERSION", "version"), ("DOWNLOADS", "downloads")],
+        "filename_stem": "pypi_readmeai",
+    },
+    {
+        "provider": "docker",
+        "ident": "zeroxeli/readme-ai",
+        "title": "readme-ai",
+        "glyph": "docker",
+        "subtitle": "zeroxeli/readme-ai",
+        "metrics": [("PULLS", "pull_count"), ("STARS", "star_count")],
+        "filename_stem": "docker_zeroxeli_readme-ai",
+    },
+    # Multi-connector stress test — 5 metrics aggregated from GitHub +
+    # PyPI + Docker. Stresses per-cell adaptive width logic against the
+    # widest plausible label ("DOWNLOADS", 9 chars) and a heterogeneous
+    # value vocabulary (count, version-string, K-cascade). Sources are
+    # listed as ``(provider, ident, label, metric_key)`` tuples.
+    {
+        "provider": "multi",
+        "ident": "eli64s/readme-ai",
+        "title": "readme-ai",
+        "glyph": "github",
+        "subtitle": "eli64s/readme-ai",
+        "metric_sources": [
+            ("github", "eli64s/readme-ai", "STARS", "stars"),
+            ("github", "eli64s/readme-ai", "FORKS", "forks"),
+            ("pypi", "readmeai", "VERSION", "version"),
+            ("pypi", "readmeai", "DOWNLOADS", "downloads"),
+            ("docker", "zeroxeli/readme-ai", "PULLS", "pull_count"),
+        ],
+        "filename_stem": "multi_readme-ai_5metric",
+    },
+]
+
+
+async def _generate_connector_strips(proofset_root: Path) -> int:
+    """Fetch real connector data and render adaptivity-proof strips per genome.
+
+    For each provider in _CONNECTOR_STRIP_PROVIDERS, fetch the configured
+    metrics in parallel, format them via _format_count, and render one strip
+    per genome. Failed sub-fetches become "—" so partial failure doesn't
+    suppress the whole strip.
+    """
+    from hyperweave.compose.resolvers.stats import _format_count
+    from hyperweave.connectors import fetch_metric
+
+    async def _safe_fetch_value(provider: str, ident: str, metric: str) -> Any:
+        try:
+            data = await fetch_metric(provider, ident, metric)
+            return data.get("value")
+        except Exception as exc:
+            print(f"  SKIP connector strip metric {provider}:{ident}:{metric} ({exc})")
+            return None
+
+    # Build resolved specs (one network round-trip per metric per provider).
+    # Comma is the metric-list separator in spec.value (`STARS:12k,FORKS:5k`),
+    # so values themselves must NOT contain commas. _format_count emits
+    # comma-grouped digits for n < 10K (e.g. "2,896"); we strip those commas
+    # so the parser doesn't fragment "2,896" into a phantom metric.
+    def _format_metric_value(raw: Any, metric_key: str) -> str:
+        if metric_key == "version":
+            return str(raw) if raw else "—"
+        formatted = _format_count(raw if isinstance(raw, int) else None)
+        return formatted.replace(",", "")
+
+    resolved: list[dict[str, Any]] = []
+    for spec in _CONNECTOR_STRIP_PROVIDERS:
+        metric_entries: list[dict[str, str]] = []
+        if "metric_sources" in spec:
+            # Multi-connector spec: each metric pulls from its own provider.
+            for src_provider, src_ident, label, metric_key in spec["metric_sources"]:
+                raw = await _safe_fetch_value(src_provider, src_ident, metric_key)
+                metric_entries.append({"label": label, "value": _format_metric_value(raw, metric_key)})
+        else:
+            for label, metric_key in spec["metrics"]:
+                raw = await _safe_fetch_value(spec["provider"], spec["ident"], metric_key)
+                metric_entries.append({"label": label, "value": _format_metric_value(raw, metric_key)})
+        resolved.append({**spec, "metric_entries": metric_entries})
+
+    total = 0
+    for genome in GenomeId:
+        gdir = proofset_root / genome / "connectors"
+        for spec in resolved:
+            metrics_str = ",".join(f"{m['label']}:{m['value']}" for m in spec["metric_entries"])
+            svg = _compose(
+                "strip",
+                genome,
+                spec["title"],
+                metrics_str,
+                "active",
+                spec["glyph"],
+                connector_data={"repo_slug": spec["subtitle"]},
+            )
+            _write(gdir / f"{spec['filename_stem']}.svg", svg)
+            total += 1
+    return total
+
+
+def _connector_strip_filenames() -> list[str]:
+    """Return the per-provider strip filename stems for README inlining."""
+    return [spec["filename_stem"] for spec in _CONNECTOR_STRIP_PROVIDERS]
+
+
 def generate_readme(total: int, live_total: int) -> None:
-    """Generate outputs/README.md with image references."""
+    """Generate outputs/README.md with image references.
+
+    Each genome gets its complete artifact suite inline — base frames,
+    states, stats, chart, timeline, motions, and (for automata) the
+    family-axis coverage. Telemetry lives at the bottom (genome-independent).
+    """
     lines = ["# HyperWeave Proof Set", ""]
 
     for genome in GenomeId:
@@ -490,8 +691,52 @@ def generate_readme(total: int, live_total: int) -> None:
         for dv in DividerVariant:
             lines.append(f"![divider {dv}](proofset/{g}/base/divider_{dv}.svg)")
             lines.append("")
-        for mt in ("marquee_horizontal", "marquee_vertical", "marquee_counter"):
+        # All three marquee variants ship for every genome now that automata's
+        # cellular vertical + counter templates exist (mirrors the loop at
+        # _marquee_types above).
+        _readme_marquees = ("marquee_horizontal", "marquee_vertical", "marquee_counter")
+        for mt in _readme_marquees:
             lines.append(f"![{mt}](proofset/{g}/base/{mt}.svg)")
+            lines.append("")
+
+        # Connector-strip adaptivity (only present when --live was run; the
+        # files live alongside per-genome dirs so the section is genome-local).
+        connector_dir = OUT / "proofset" / g / "connectors"
+        if connector_dir.exists() and any(connector_dir.iterdir()):
+            lines.extend(["### Connector Adaptivity (live)", ""])
+            lines.append(
+                "Real-data strips for the same project across three providers — "
+                "exercising varied metric counts, value lengths, and label "
+                "vocabularies through a single strip resolver."
+            )
+            lines.append("")
+            for stem in _connector_strip_filenames():
+                lines.append(f"![{stem}](proofset/{g}/connectors/{stem}.svg)")
+                lines.append("")
+
+        # Automata-specific family axis (blue/purple x default/compact)
+        if genome == GenomeId.AUTOMATA:
+            lines.extend(["### Family Axis (blue / purple x default / compact)", ""])
+            lines.append(
+                "Automata's bifamily chromatic axis: badges + icons pick "
+                "`--family blue|purple`; strip/banner/divider render both simultaneously."
+            )
+            lines.append("")
+            for fam in ("blue", "purple"):
+                lines.append(f"**Family: `{fam}`**")
+                lines.append("")
+                lines.append(f"![badge pypi {fam} default](proofset/{g}/families/badge_pypi_{fam}_default.svg) ")
+                lines.append(f"![badge pypi {fam} compact](proofset/{g}/families/badge_pypi_{fam}_compact.svg)")
+                lines.append("")
+                lines.append(f"![icon github {fam}](proofset/{g}/families/icon_github_{fam}.svg)")
+                lines.append("")
+            lines.append("**Bifamily compositions:**")
+            lines.append("")
+            lines.append(f"![strip bifamily](proofset/{g}/families/strip_bifamily.svg)")
+            lines.append("")
+            lines.append(f"![banner bifamily compact](proofset/{g}/families/banner_bifamily_compact.svg)")
+            lines.append("")
+            lines.append(f"![divider cellular-dissolve](proofset/{g}/families/divider_cellular_dissolve.svg)")
             lines.append("")
 
         # States
@@ -507,6 +752,19 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append("")
         for s in (ArtifactStatus.ACTIVE, ArtifactStatus.WARNING, ArtifactStatus.CRITICAL):
             lines.append(f"![strip {s}](proofset/{g}/states/strip_{s}.svg)")
+        lines.append("")
+
+        # Stats card + Star chart + Timeline inline per genome
+        lines.extend(["### Profile Card (stats)", ""])
+        lines.append(f"![stats {g}](proofset/{g}/session-2a2b/stats.svg)")
+        lines.append("")
+
+        lines.extend(["### Star History Chart", ""])
+        lines.append(f"![chart full {g}](proofset/{g}/session-2a2b/chart_stars_full.svg)")
+        lines.append("")
+
+        lines.extend(["### Timeline / Roadmap", ""])
+        lines.append(f"![timeline {g}](proofset/{g}/session-2a2b/timeline.svg)")
         lines.append("")
 
         # Policy lanes
@@ -531,54 +789,12 @@ def generate_readme(total: int, live_total: int) -> None:
 
         lines.extend(["---", ""])
 
-    # Telemetry (genome-independent)
+    # Telemetry (genome-independent, bottom of page)
     lines.extend(["## Telemetry", ""])
     lines.append("*Telemetry frames use their own built-in palette (no genome skinning).*")
     lines.append("")
     for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD):
         lines.append(f"![{ft}](proofset/telemetry/{ft.value.replace('-', '_')}.svg)")
-        lines.append("")
-
-    # ── Session 2A+2B sections ──
-    lines.extend(["---", "", "## Stats Cards (Session 2A+2B)", ""])
-    lines.append(
-        "Profile summary cards with live GitHub data. Each genome's `paradigms.stats` "
-        "field selects a layout variant — the two shown here render from the SAME "
-        "data dict but produce structurally different output (Principle 26)."
-    )
-    lines.append("")
-    for genome in GenomeId:
-        g = genome.value
-        lines.append(f"### {g}")
-        lines.append("")
-        lines.append(f"![stats {g}](proofset/{g}/session-2a2b/stats.svg)")
-        lines.append("")
-
-    lines.extend(["## Star Charts (Session 2A+2B)", ""])
-    lines.append(
-        "Star history charts using the shared chart engine. `paradigms.chart` "
-        "dispatches between `brutalist` (angular polyline + square markers) "
-        "and `chrome` (bezier + diamond markers)."
-    )
-    lines.append("")
-    for genome in GenomeId:
-        g = genome.value
-        lines.append(f"### {g}")
-        lines.append("")
-        lines.append(f"![chart full {g}](proofset/{g}/session-2a2b/chart_stars_full.svg)")
-        lines.append("")
-
-    lines.extend(["## Timeline / Roadmap (Session 2A+2B)", ""])
-    lines.append(
-        "Vertical node chain with opacity cascade + dash-flow spine animation. "
-        "Node shape is dispatched from `genome.structural.data_point_shape`."
-    )
-    lines.append("")
-    for genome in GenomeId:
-        g = genome.value
-        lines.append(f"### {g}")
-        lines.append("")
-        lines.append(f"![timeline {g}](proofset/{g}/session-2a2b/timeline.svg)")
         lines.append("")
 
     if live_total > 0:

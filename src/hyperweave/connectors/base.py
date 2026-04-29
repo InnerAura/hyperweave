@@ -24,6 +24,12 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         # interpolation; no arbitrary path injection is possible.
         "github.com",
         "pypi.org",
+        # PyPI's JSON API stopped exposing download counts in 2016, so the
+        # downloads metric routes through pypistats.org (the source the
+        # official `pypistats` CLI uses). Listed separately so version /
+        # license stay on pypi.org and a pypistats outage doesn't trip
+        # the breaker that fronts pypi.org.
+        "pypistats.org",
         "registry.npmjs.org",
         "export.arxiv.org",
         "huggingface.co",
@@ -109,6 +115,11 @@ class CircuitBreaker:
 
 # GitHub Token Rotation
 
+# Three breaker-isolated provider names. The literal ``"github"`` is no longer
+# accepted (kept off the list intentionally) — bare references are caught by
+# the grep gate in CLAUDE.md. See connectors/github.py for the full rationale.
+_GITHUB_PROVIDERS: frozenset[str] = frozenset({"github-core", "github-search", "github-graphql"})
+
 _token_index: int = 0
 
 
@@ -169,8 +180,11 @@ async def fetch(
     if headers:
         merged_headers.update(headers)
 
-    # GitHub token injection
-    if provider == "github":
+    # GitHub token injection. Provider name is also the breaker key, so we
+    # split into three failure domains (core REST / search REST / GraphQL)
+    # to keep search-API rate limit 403s from tripping badge or chart
+    # endpoints. See connectors/github.py for the rename rationale.
+    if provider in _GITHUB_PROVIDERS:
         token = _get_github_token()
         if token:
             merged_headers["Authorization"] = f"Bearer {token}"
@@ -227,7 +241,7 @@ async def fetch_graphql(
     query: str,
     variables: dict[str, Any] | None = None,
     *,
-    provider: str = "github",
+    provider: str = "github-graphql",
     url: str = _GITHUB_GRAPHQL_URL,
 ) -> dict[str, Any]:
     """POST a GraphQL query and return the parsed JSON response.
@@ -255,7 +269,7 @@ async def fetch_graphql(
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-    if provider == "github":
+    if provider in _GITHUB_PROVIDERS:
         token = _get_github_token()
         if token:
             merged_headers["Authorization"] = f"Bearer {token}"

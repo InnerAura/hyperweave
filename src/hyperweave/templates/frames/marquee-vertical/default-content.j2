@@ -1,0 +1,6 @@
+{# Marquee-vertical "default" paradigm content — envelope_stops fallback. #}
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee-vertical/chrome-content.j2" %}
+{% else %}
+{% include "frames/marquee-vertical/brutalist-content.j2" %}
+{% endif %}

@@ -30,11 +30,7 @@
     <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
     <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
   </linearGradient>
-{% if envelope_stops | default([]) %}
-{% include "frames/marquee-horizontal/chrome-defs.j2" %}
-{% else %}
-{% include "frames/marquee-horizontal/brutalist-defs.j2" %}
-{% endif %}
+{% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
@@ -49,13 +45,9 @@
 {% set start_x = item_start_x | default(148) %}
 
 {# ══════════════════════════════════════════════════════════════════
-   FRAME + LIVE LABEL — dispatched to profile partials
+   FRAME + LIVE LABEL — paradigm-dispatched per genome.paradigms
    ══════════════════════════════════════════════════════════════════ #}
-{% if envelope_stops | default([]) %}
-{% include "frames/marquee-horizontal/chrome-content.j2" %}
-{% else %}
-{% include "frames/marquee-horizontal/brutalist-content.j2" %}
-{% endif %}
+{% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-content.j2" %}
 
 {# ═══ Scrolling content ═══ #}
 <g clip-path="url(#{{ uid }}-scroll-clip)">

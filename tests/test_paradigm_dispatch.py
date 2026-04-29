@@ -135,11 +135,22 @@ def test_load_genome_falls_back_to_registry_without_override() -> None:
     assert result["accent"] == "#10B981"  # brutalist-emerald accent from JSON
 
 
-def test_load_genome_default_for_unknown_slug() -> None:
-    """Unknown slug returns the safe default genome (does not raise)."""
-    result = _load_genome("definitely-not-a-real-genome")
-    assert "id" in result
-    assert "compatible_motions" in result
+def test_load_genome_raises_for_unknown_slug() -> None:
+    """Unknown slug raises GenomeNotFoundError so the HTTP layer can map to 404.
+
+    The previous behavior silently substituted a default genome dict, which
+    masked broken URLs as successful renders. The HTTP layer now classifies
+    this exception via :func:`_classify_compose_exception` and returns the
+    SMPTE NO SIGNAL fallback badge with an ``ERR_404`` value slab.
+    """
+    from hyperweave.compose.resolver import GenomeNotFoundError
+
+    with pytest.raises(GenomeNotFoundError) as excinfo:
+        _load_genome("definitely-not-a-real-genome")
+    assert excinfo.value.genome_id == "definitely-not-a-real-genome"
+    # Backward-compat: GenomeNotFoundError inherits from KeyError, so
+    # legacy callers that catch KeyError still catch the new exception.
+    assert isinstance(excinfo.value, KeyError)
 
 
 # ============================================================================

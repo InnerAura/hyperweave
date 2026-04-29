@@ -1,0 +1,6 @@
+{# Marquee-horizontal "default" paradigm content — envelope_stops fallback. #}
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee-horizontal/chrome-content.j2" %}
+{% else %}
+{% include "frames/marquee-horizontal/brutalist-content.j2" %}
+{% endif %}

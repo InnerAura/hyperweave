@@ -1,10 +1,29 @@
 {# Chart polyline / smooth bezier path.
    Context: chart_polyline = {kind: "polyline" | "path", points | d}.
-   Kind "polyline" uses miter joins (brutalist); kind "path" uses smooth rounds (chrome). #}
+   Kind "polyline" uses miter joins (brutalist); kind "path" uses smooth rounds (chrome).
+
+   When chart_line_animate is true (cellular paradigm), the path is given
+   pathLength="1" + stroke-dasharray="1" + the hw-chart-line-draw class. CSS
+   in the paradigm defs animates stroke-dashoffset from 1 to 0, drawing the
+   line in as an arriving signal. pathLength="1" normalizes the effective
+   length so the same animation works regardless of point count.
+
+   Static state is dashoffset=0 (line visible) so renderers that don't run
+   CSS animation (some VS Code previews, image processors) still show the
+   curve. The @keyframes "from{stroke-dashoffset:1}" overrides during the
+   animation run in CSS-supporting renderers, so the draw-in effect still
+   plays. Animating *to* the static state, not *from* default-invisible,
+   is the standard progressive-enhancement pattern for static-renderable
+   SVG (see CLAUDE.md note on renderer independence). #}
+{%- set _animate = chart_line_animate | default(false) %}
+{%- set _anim_class = " hw-chart-line-draw" if _animate else "" %}
+{%- set _anim_attrs = ' pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"' if _animate else "" %}
 {%- if chart_polyline.kind == "path" %}
 <path d="{{ chart_polyline.d }}" fill="none" stroke="var(--dna-signal)"
-      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hw-chart-line"/>
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+      class="hw-chart-line{{ _anim_class }}"{{ _anim_attrs | safe }}/>
 {%- elif chart_polyline.kind == "polyline" %}
 <polyline points="{{ chart_polyline.points }}" fill="none" stroke="var(--dna-signal)"
-          stroke-width="2.5" stroke-linejoin="miter" class="hw-chart-line"/>
+          stroke-width="2.5" stroke-linejoin="miter"
+          class="hw-chart-line{{ _anim_class }}"{{ _anim_attrs | safe }}/>
 {%- endif %}

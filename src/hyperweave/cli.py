@@ -46,6 +46,13 @@ def compose(
     regime: Annotated[str, typer.Option("--regime")] = "normal",
     variant: Annotated[str, typer.Option("--variant")] = "default",
     shape: Annotated[str, typer.Option("--shape", help="Icon shape: square, circle")] = "",
+    family: Annotated[
+        str,
+        typer.Option(
+            "--family",
+            help="Chromatic family (automata): blue, purple, bifamily. Empty = frame default.",
+        ),
+    ] = "",
     # Divider options
     divider_variant: Annotated[str, typer.Option("--divider-variant")] = "zeropoint",
     # Marquee options
@@ -147,6 +154,7 @@ def compose(
         regime=regime,
         variant=variant,
         shape=shape,
+        family=family,
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_rows=rows,

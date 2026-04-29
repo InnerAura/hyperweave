@@ -1,0 +1,20 @@
+{# Cellular icon defs — single-family rim gradient + pattern pulse CSS. #}
+{% set fam = "purple" if family == "purple" else "blue" %}
+{% if fam == "blue" %}
+  {% set rim_stops = family_blue_rim_stops %}
+{% else %}
+  {% set rim_stops = family_purple_rim_stops %}
+{% endif %}
+<linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="0" y2="1">
+{% for stop in rim_stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+<style>{{ font_faces | safe }}
+.si1{opacity:.45;animation:sip {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite}
+.si2{opacity:.45;animation:sip {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 2s}
+.si3{opacity:.45;animation:sip {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4s}
+.sid{opacity:.12}
+@keyframes sip{0%,100%{opacity:.08}30%{opacity:.7}60%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){.si1,.si2,.si3{animation:none!important;opacity:.35!important}}
+</style>

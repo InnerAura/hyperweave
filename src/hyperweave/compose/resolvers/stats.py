@@ -26,13 +26,17 @@ if TYPE_CHECKING:
 _STATS_WIDTH = 495
 
 
-def _format_count(n: int) -> str:
+def _format_count(n: int | None) -> str:
     """Compact integer formatting with K/M/B cascade.
 
     0..9,999       → '2,850'   (comma-grouped)
     10K..999,999   → '12.8K'
     1M..999M       → '45.3M'
     1B+            → '2.1B'
+
+    ``None`` is the staleness sentinel: it renders as ``"—"`` (em dash) so
+    a failed sub-fetch surfaces visibly instead of being misrepresented as
+    a real zero.
     """
     if n is None:
         return "—"
@@ -84,25 +88,105 @@ def resolve_stats(
 ) -> dict[str, Any]:
     """Build the stats card context for the chosen paradigm."""
     connector = spec.connector_data or {}
-    stale = not bool(connector)
+    # ``_stale_fields`` is populated by ``fetch_user_stats`` when sub-fetches
+    # fail (rate limits, breaker open, network errors). Stale fields render
+    # as ``—`` rather than misrepresenting failure as a real ``0`` — the bug
+    # that produced v0.2.10's silent COMMITS=0/PRS=0 readings under search-
+    # API quota exhaustion. Empty list / missing key → fully live data.
+    stale_fields: set[str] = set(connector.get("_stale_fields") or ())
+    stale = not bool(connector) or bool(stale_fields)
 
-    stars_total = connector.get("stars_total")
-    commits_total = connector.get("commits_total")
-    prs_total = connector.get("prs_total")
-    issues_total = connector.get("issues_total")
-    contrib_total = connector.get("contrib_total")
-    streak_days = connector.get("streak_days")
+    def _value_or_none(field: str) -> Any:
+        """Pass through ``None`` for stale fields, raw value otherwise.
+
+        ``_format_count(None)`` already returns ``"—"``, so this is the only
+        change needed at the formatting layer to surface staleness visually.
+        """
+        if field in stale_fields:
+            return None
+        return connector.get(field)
+
+    stars_total = _value_or_none("stars_total")
+    commits_total = _value_or_none("commits_total")
+    prs_total = _value_or_none("prs_total")
+    issues_total = _value_or_none("issues_total")
+    contrib_total = _value_or_none("contrib_total")
+    streak_days = _value_or_none("streak_days")
+
+    # Stars delta annotation — production cellular stat card shows
+    # "▲ 2,431 /yr" beside the hero STARS value to communicate momentum.
+    # Source priority:
+    #   1. ``connector["stars_last_year"]`` — explicit value from connector
+    #   2. ``connector["points"]`` — diff latest count vs the earliest
+    #      point inside the last 365 days
+    # When neither is available the delta annotation renders blank, which
+    # matches the "no data" edge case rather than fabricating zero growth.
+    stars_delta_raw = connector.get("stars_last_year")
+    if stars_delta_raw is None:
+        pts = connector.get("points") or connector.get("star_history") or []
+        if pts:
+            from datetime import datetime, timedelta
+
+            now = datetime.now(UTC)
+            cutoff = now - timedelta(days=365)
+            try:
+                # Points are typically sorted oldest→newest; the latest point
+                # is the current cumulative star count. Find the earliest
+                # point on/after the cutoff to compute the year-over-year
+                # delta. Defensive parsing handles ISO dates with or without
+                # timezone, and tolerates plain YYYY-MM-DD strings.
+                latest_count = int(pts[-1].get("count", 0))
+                older_count = latest_count
+                for p in pts:
+                    raw_date = p.get("date")
+                    if not isinstance(raw_date, str):
+                        continue
+                    try:
+                        d = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
+                    except ValueError:
+                        continue
+                    if d.tzinfo is None:
+                        d = d.replace(tzinfo=UTC)
+                    if d >= cutoff:
+                        older_count = int(p.get("count", 0))
+                        break
+                stars_delta_raw = max(latest_count - older_count, 0)
+            except (TypeError, KeyError, ValueError):
+                stars_delta_raw = None
+    stars_delta_display = _format_count(stars_delta_raw) if stars_delta_raw else ""
 
     languages_raw = connector.get("language_breakdown") or _placeholder_languages()
     heatmap_grid = connector.get("heatmap_grid") or []
     username = connector.get("username") or spec.stats_username or "anonymous"
     bio = connector.get("bio") or ""
     top_language = connector.get("top_language") or ""
-    repo_count = connector.get("repo_count") or 0
+    repo_count_raw = _value_or_none("repo_count")
+    repo_count = repo_count_raw if isinstance(repo_count_raw, int) else 0
 
     # Aggregate 365 daily cells into 52 weekly totals for the activity bar chart.
     activity_bars = _build_activity_bars(heatmap_grid)
     activity_peak = max((b["count"] for b in activity_bars), default=0)
+
+    # Heatmap year label — cellular "CONTRIBUTIONS YYYY" caption. Prefer the
+    # tail of the heatmap_grid (most recent cell date) so the label stays
+    # truthful when the connector returns a back-dated series. Falls back
+    # to current calendar year when the grid is empty or unparseable.
+    import contextlib
+    from datetime import datetime
+
+    heatmap_year = datetime.now(UTC).year
+    if heatmap_grid:
+        tail = heatmap_grid[-1]
+        if isinstance(tail, dict):
+            tail_date = tail.get("date")
+            if isinstance(tail_date, str) and len(tail_date) >= 4:
+                with contextlib.suppress(ValueError):
+                    heatmap_year = int(tail_date[:4])
+
+    # Streak rendering: ``"47d"`` for live, ``"—"`` for stale. Don't coerce
+    # ``None`` to ``0`` — that's the silent-zero anti-pattern this whole
+    # change exists to eliminate.
+    streak_display = "—" if streak_days is None else f"{int(streak_days)}d"
 
     stats_context: dict[str, Any] = {
         "stats_username": username,
@@ -110,18 +194,20 @@ def resolve_stats(
         "stats_top_language": top_language,
         "stats_repo_count": repo_count,
         "stats_repo_label": f"{top_language} / {repo_count} repos" if top_language else "",
-        "stars_display": _format_count(stars_total or 0),
-        "stars_raw": int(stars_total or 0),
-        "stars_delta_display": "",
-        "commits_display": _format_count(commits_total or 0),
-        "prs_display": _format_count(prs_total or 0),
-        "issues_display": _format_count(issues_total or 0),
-        "contrib_display": _format_count(contrib_total or 0),
-        "streak_display": f"{int(streak_days or 0)}d",
+        "stars_display": _format_count(stars_total),
+        "stars_raw": int(stars_total) if isinstance(stars_total, int) else 0,
+        "stars_delta_display": stars_delta_display,
+        "commits_display": _format_count(commits_total),
+        "prs_display": _format_count(prs_total),
+        "issues_display": _format_count(issues_total),
+        "contrib_display": _format_count(contrib_total),
+        "streak_display": streak_display,
         "languages": languages_raw[:4],
         "heatmap_grid": heatmap_grid,
+        "stats_heatmap_year": str(heatmap_year),
         "activity_bars": activity_bars,
         "activity_peak": activity_peak,
+        "stale_fields": sorted(stale_fields),
     }
 
     if stale:
@@ -174,11 +260,14 @@ def resolve_stats(
         embed_vp = Viewport(x=ec.embed_viewport_x, y=ec.embed_viewport_y, w=ec.embed_viewport_w, h=ec.embed_viewport_h)
         # Zero-guard: never default to a 1200-star synthetic curve. When
         # stars_total is zero, the truthful state is an empty embedded chart.
-        stars_int = int(stars_total or 0)
+        # Stale-guard: when ``stars_total`` is ``None`` (sub-fetch failed),
+        # the embedded chart is empty too — synthesizing a curve from a
+        # known-bad value would compound the silent-zero misrepresentation.
+        stars_int = int(stars_total) if isinstance(stars_total, int) else 0
         real_points = connector.get("points") or connector.get("star_history")
         if real_points:
             chart_points: list[dict[str, Any]] = list(real_points)
-        elif stars_int > 0:
+        elif stars_int > 0 and "stars_total" not in stale_fields:
             # Only synthesize when we know the total — this approximates a
             # plausible growth curve rather than fabricating it from nothing.
             chart_points = _synthetic_series_from_total(stars_int)

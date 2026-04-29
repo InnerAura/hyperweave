@@ -83,6 +83,16 @@
     {"offset": "100%", "color": "#94A3B8"}
   ],
   "icon_variant": "binary-opposition",
+  "state_passing_core": "#34D399",
+  "state_passing_bright": "#A7F3D0",
+  "state_warning_core": "#FBBF24",
+  "state_warning_bright": "#FDE68A",
+  "state_critical_core": "#F87171",
+  "state_critical_bright": "#FECACA",
+  "state_building_core": "#A78BFA",
+  "state_building_bright": "#DDD6FE",
+  "state_offline_core": "#94A3B8",
+  "state_offline_bright": "#CBD5E1",
   "light_mode": {
     "surface": "#F8FAFC",
     "surface_alt": "#F1F5F9",

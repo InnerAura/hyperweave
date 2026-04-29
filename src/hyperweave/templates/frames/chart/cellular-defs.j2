@@ -1,0 +1,45 @@
+{# Cellular chart defs — bifamily flank pulse + chart palette overrides.
+
+   Chart engine (render/chart_engine.py) emits fragment strings (area,
+   polyline, markers, milestones) as SVG classes keyed off CSS vars.
+   Cellular overrides those classes to use the teal family palette;
+   bifamily flanks are rendered in cellular-content.j2 outside the
+   chart viewport. #}
+<clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
+<linearGradient id="{{ uid }}-area-fade" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" stop-opacity="0.25"/>
+  <stop offset="60%" stop-color="{{ family_blue_pattern_cells[1] | default('#104052') }}" stop-opacity="0.08"/>
+  <stop offset="100%" stop-color="{{ surface_0 | default('#04060A') }}" stop-opacity="0"/>
+</linearGradient>
+{{ chart_defs | default("") | safe }}
+<style>{{ font_faces | safe }}
+text{font-family:'JetBrains Mono',monospace;shape-rendering:geometricPrecision}
+.cc1{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite;will-change:opacity}
+.cc2{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 1.5s;will-change:opacity}
+.cc3{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 3s;will-change:opacity}
+.cc4{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
+.ccf{animation:ccp {{ cellular_pulse_fast_duration | default('3s') }} ease-in-out infinite 0.5s;will-change:opacity}
+.ccd{opacity:.07}
+@keyframes ccp{0%,100%{opacity:.05}30%{opacity:.8}50%{opacity:.3}70%{opacity:.65}}
+.{{ uid }}-hdr-user{font-size:13px;font-weight:700;letter-spacing:0.04em;fill:{{ family_purple_seam_mid | default('#A88AD4') }}}
+.{{ uid }}-title-main{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:700;letter-spacing:0.16em;fill:{{ family_blue_pattern_cells[0] | default('#1E849A') }}}
+.{{ uid }}-title-sub{font-size:9px;font-weight:500;letter-spacing:0.28em;fill:{{ family_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.45}
+.{{ uid }}-hero-value{font-family:'Chakra Petch',sans-serif;font-size:56px;font-weight:700;fill:{{ ink_bright | default('#ededed') }};letter-spacing:-0.02em}
+.{{ uid }}-hero-label{font-size:10px;font-weight:600;letter-spacing:0.28em;fill:{{ family_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.7}
+.{{ uid }}-axis-y{font-size:11px;font-weight:600;fill:{{ family_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.72}
+.{{ uid }}-axis-x{font-size:11px;font-weight:500;fill:#808898}
+.{{ uid }}-foot{font-size:11px;font-weight:500;letter-spacing:0.06em;fill:#808898}
+.hw-chart-axis{stroke:{{ family_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:0.5;opacity:0.5;fill:none}
+.hw-chart-gridline{stroke:{{ family_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:0.5;opacity:0.1;fill:none}
+.hw-chart-line{stroke:{{ family_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:2.5;stroke-linejoin:miter;stroke-linecap:square}
+.hw-chart-line-draw{animation:hw-line-draw 2.618s cubic-bezier(.25,.85,.35,1) forwards;will-change:stroke-dashoffset}
+@keyframes hw-line-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.hw-chart-area{fill:url(#{{ uid }}-area-fade)}
+.hw-chart-area-smooth{fill:url(#{{ uid }}-area-fade)}
+[data-hw-zone="markers"]{shape-rendering:crispEdges}
+.hw-chart-endpoint{animation:{{ uid }}-pulse 2.618s ease-in-out infinite;will-change:opacity}
+.hw-chart-milestone-line{stroke:{{ family_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:1;opacity:0.3;stroke-dasharray:4 4}
+.hw-chart-milestone-label{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;fill:{{ family_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.6}
+@keyframes {{ uid }}-pulse{0%,100%{opacity:0.4}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.cc1,.cc2,.cc3,.cc4,.ccf{animation:none!important;opacity:.3!important}.hw-chart-endpoint{animation:none!important;opacity:0.8}.hw-chart-line-draw{animation:none!important;stroke-dashoffset:0!important}}
+</style>

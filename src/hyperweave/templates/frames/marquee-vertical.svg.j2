@@ -38,11 +38,7 @@
           width="{{ vw - si * 2 }}"
           height="{{ vh - si - hh - si - (bottom_accent_h | default(3)) }}"/>
   </clipPath>
-{% if envelope_stops | default([]) %}
-{% include "frames/marquee-vertical/chrome-defs.j2" %}
-{% else %}
-{% include "frames/marquee-vertical/brutalist-defs.j2" %}
-{% endif %}
+{% include "frames/marquee-vertical/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
@@ -63,13 +59,9 @@
 {% set scroll_top = si + hh %}
 
 {# ══════════════════════════════════════════════════════════════════
-   FRAME + HEADER + DIVIDER — dispatched to profile partials
+   FRAME + HEADER + DIVIDER — paradigm-dispatched per genome.paradigms
    ══════════════════════════════════════════════════════════════════ #}
-{% if envelope_stops | default([]) %}
-{% include "frames/marquee-vertical/chrome-content.j2" %}
-{% else %}
-{% include "frames/marquee-vertical/brutalist-content.j2" %}
-{% endif %}
+{% include "frames/marquee-vertical/" ~ (paradigm | default("default")) ~ "-content.j2" %}
 
 {# ═══ Scrolling content ═══ #}
 <g clip-path="url(#{{ uid }}-scroll-clip)">

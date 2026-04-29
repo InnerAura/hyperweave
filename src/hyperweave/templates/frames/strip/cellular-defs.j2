@@ -1,0 +1,20 @@
+{# Cellular strip defs — pattern-pulse CSS + state-signal cascade.
+
+   The outer strip.svg.j2 renders a clip-path defs; here we add the living
+   cell pulse animation classes (same phi offsets as the badge paradigm) and
+   inline the state-signal cascade so metric-state cells can route through
+   --hw-state-signal / --hw-state-value CSS vars. #}
+<style>{{ font_faces | safe }}
+.cz1{animation:czp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite;will-change:opacity}
+.cz2{animation:czp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 1.5s;will-change:opacity}
+.cz3{animation:czp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 3s;will-change:opacity}
+.cz4{animation:czp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
+.czf{animation:czp {{ cellular_pulse_fast_duration | default('3s') }} ease-in-out infinite 0.5s;will-change:opacity}
+.czd{opacity:.07}
+@keyframes czp{0%,100%{opacity:.05}30%{opacity:.8}50%{opacity:.3}70%{opacity:.65}}
+@media(prefers-reduced-motion:reduce){.cz1,.cz2,.cz3,.cz4,.czf{animation:none!important;opacity:.35!important}}
+.{{ uid }}-identity{font-family:'Orbitron',sans-serif;font-size:{{ identity_font_size | default(8) }}px;font-weight:700;fill:{{ brand_text | default('var(--dna-brand-text)') }};letter-spacing:0.14em}
+.{{ uid }}-metric-label{font-family:'JetBrains Mono',monospace;font-size:{{ strip_metric_label_size | default(5.5) }}px;fill:{{ label_text | default('var(--dna-label-text)') }};letter-spacing:0.22em;opacity:0.9}
+.{{ uid }}-metric-value{font-family:'Chakra Petch',sans-serif;font-size:16px;font-weight:700;fill:{{ metric_text | default('var(--dna-metric-text)') }}}
+{% include "partials/state-signal-cascade.j2" %}
+</style>

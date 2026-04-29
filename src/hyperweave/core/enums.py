@@ -36,6 +36,7 @@ class GenomeId(StrEnum):
 
     BRUTALIST_EMERALD = "brutalist-emerald"
     CHROME_HORIZON = "chrome-horizon"
+    AUTOMATA = "automata"
 
 
 class ProfileId(StrEnum):
@@ -104,6 +105,7 @@ class DividerVariant(StrEnum):
     TAKEOFF = "takeoff"
     VOID = "void"
     ZEROPOINT = "zeropoint"
+    CELLULAR_DISSOLVE = "cellular-dissolve"
 
 
 class GlyphMode(StrEnum):

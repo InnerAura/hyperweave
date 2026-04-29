@@ -1,0 +1,66 @@
+{# State-signal CSS cascade — shared across cellular paradigm artifacts.
+
+   Binds `data-hw-status` attribute values to two CSS custom properties:
+     --hw-state-signal (core color, ring stroke / bit fill)
+     --hw-state-value  (bright color, value-text fill)
+
+   The core/bright pairs come from the genome's state_{status}_{core,bright}
+   fields (backfilled on every shipped genome in Phase 1). Three phi-timed
+   animation clocks encode severity: breathe (active/passing), pulse
+   (warning), strobe (critical), slow-breathe (building), dim (offline).
+
+   Consumers include this via:
+     {% include "partials/state-signal-cascade.j2" %}
+
+   then use `var(--hw-state-signal)` / `var(--hw-state-value)` in their
+   own class rules, and animate `.hw-bit` with phi-timed keyframes. #}
+[data-hw-status="active"],
+[data-hw-status="passing"] {
+  --hw-state-signal: {{ state_passing_core }};
+  --hw-state-value: {{ state_passing_bright }};
+}
+[data-hw-status="warning"] {
+  --hw-state-signal: {{ state_warning_core }};
+  --hw-state-value: {{ state_warning_bright }};
+}
+[data-hw-status="critical"],
+[data-hw-status="failing"] {
+  --hw-state-signal: {{ state_critical_core }};
+  --hw-state-value: {{ state_critical_bright }};
+}
+[data-hw-status="building"] {
+  --hw-state-signal: {{ state_building_core }};
+  --hw-state-value: {{ state_building_bright }};
+}
+[data-hw-status="offline"] {
+  --hw-state-signal: {{ state_offline_core }};
+  --hw-state-value: {{ state_offline_bright }};
+}
+svg[data-hw-status="offline"] {
+  opacity: .78;
+  filter: grayscale(25%);
+}
+[data-hw-status="passing"] .hw-bit,
+[data-hw-status="active"] .hw-bit {
+  animation: hw-breathe 2.618s ease-in-out infinite;
+}
+[data-hw-status="warning"] .hw-bit {
+  animation: hw-pulse 0.9s ease-in-out infinite;
+}
+[data-hw-status="critical"] .hw-bit,
+[data-hw-status="failing"] .hw-bit {
+  animation: hw-strobe 0.35s steps(1) infinite;
+}
+[data-hw-status="building"] .hw-bit {
+  animation: hw-breathe 1.5s ease-in-out infinite;
+}
+[data-hw-status="offline"] .hw-bit {
+  animation: none;
+  opacity: 0.4;
+}
+@keyframes hw-breathe { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
+@keyframes hw-pulse   { 0%, 100% { opacity: .25 } 50% { opacity: 1 } }
+@keyframes hw-strobe  { 0%, 49% { opacity: 1 } 50%, 100% { opacity: .1 } }
+@media (prefers-reduced-motion: reduce) {
+  .hw-bit { animation: none !important; opacity: .85 !important; }
+}

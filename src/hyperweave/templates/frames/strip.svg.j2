@@ -23,22 +23,68 @@
 {% block content %}
 {% set strip_h = height | default(52) %}
 {% set accent_w = accent_bar_width | default(6) %}
-{% set glyph_size = 24 %}
-{% set glyph_cx = accent_w + 12 + (glyph_size // 2) %}
-{% set glyph_cy = strip_h // 2 %}
-{% set identity_x = (glyph_cx + (glyph_size // 2) + 9) if glyph_path else (accent_w + 14) %}
+{# glyph_zone_x_offset: paradigm-supplied push-right for paradigms that
+   render decoration on the left edge (cellular bifamily flanks).
+   brutalist/chrome leave it 0. #}
+{% set _gz_offset = glyph_zone_x_offset | default(0) %}
+{% set _show_icon_box = show_icon_box | default(false) %}
+{% set _icon_box_size = icon_box_size | default(28) %}
+{% set _icon_box_pad = icon_box_pad | default(8) %}
+{# Icon box geometry: paradigm opts in (cellular). When a glyph is present the
+   box renders at flank_end+pad with the glyph centered inside; identity text
+   sits at box_right+8. When no glyph is present the entire glyph zone
+   collapses — no box, no reserved padding — and identity text sits flush at
+   accent_w + _icon_box_pad. This removes the empty 28×28 pocket that
+   previously appeared on glyphless strips (border-motion proofs, agent
+   prompts that omit `glyph=`). Other paradigms (brutalist/chrome) leave the
+   glyph floating bare in either case. #}
+{% if _show_icon_box and glyph_path %}
+  {% set _icon_box_x = _gz_offset + accent_w + _icon_box_pad %}
+  {% set _icon_box_y = (strip_h - _icon_box_size) // 2 %}
+  {% set glyph_size = _icon_box_size - 10 %}
+  {% set glyph_cx = _icon_box_x + _icon_box_size // 2 %}
+  {% set glyph_cy = _icon_box_y + _icon_box_size // 2 %}
+  {% set identity_x = _icon_box_x + _icon_box_size + 8 %}
+{% elif _show_icon_box %}
+  {# Glyph absent: collapse the entire glyph zone. Identity sits flush after
+     the accent bar + standard pad, no box-shaped void. #}
+  {% set _icon_box_x = 0 %}
+  {% set _icon_box_y = 0 %}
+  {% set glyph_size = 0 %}
+  {% set glyph_cx = 0 %}
+  {% set glyph_cy = 0 %}
+  {% set identity_x = _gz_offset + accent_w + _icon_box_pad %}
+{% else %}
+  {% set glyph_size = 24 %}
+  {% set glyph_cx = _gz_offset + accent_w + 12 + (glyph_size // 2) %}
+  {% set glyph_cy = strip_h // 2 %}
+  {% set identity_x = (glyph_cx + (glyph_size // 2) + 9) if glyph_path else (_gz_offset + accent_w + 14) %}
+{% endif %}
 {% set metric_pitch = metric_pitch | default(106) %}
 {% set indicator_size = 14 %}
-{% set div_y1 = 12 %}
-{% set div_y2 = strip_h - 12 %}
+{% set div_y1 = 8 %}
+{% set div_y2 = strip_h - 8 %}
 {% set paradigm_strip = paradigm | default("default") %}
 
 {# === Frame structure (paradigm-dispatched via include — polymorphism, not a branch) === #}
 {% include "frames/strip/" ~ paradigm_strip ~ "-content.j2" %}
 
-{# === Glyph zone (profile-parametric: size and fill from profile YAML) === #}
+{# === Icon box (paradigm opts in via show_icon_box) ===
+   Render only when an actual glyph is provided. Without this gate, calling
+   `compose("strip", ..., glyph="")` produces an EMPTY 28×28 dark box flush
+   against the bifamily flank — visible structural debt on every glyphless
+   strip (border-motion proofs, agent prompts that omit `glyph=`). The
+   reserved layout coordinate (identity_x = _icon_box_x + box_size + 8) is
+   unchanged, so the identity text still sits at the same x-position; the
+   box-shaped pocket between flank and identity simply renders as void. #}
+{% if _show_icon_box and glyph_path %}
+<rect x="{{ _icon_box_x }}" y="{{ _icon_box_y }}" width="{{ _icon_box_size }}" height="{{ _icon_box_size }}" fill="{{ icon_box_fill | default('#0a0e14') }}"/>
+<rect x="{{ _icon_box_x }}" y="{{ _icon_box_y }}" width="{{ _icon_box_size }}" height="{{ _icon_box_size }}" fill="none" stroke="{{ icon_box_stroke | default('var(--dna-signal)') }}" stroke-width="0.5" opacity="0.4"/>
+{% endif %}
+
+{# === Glyph zone === #}
 {% if glyph_path %}
-{% set gs = strip_glyph_size | default(20) %}
+{% set gs = glyph_size %}
 {% set gf = strip_glyph_fill | default('var(--dna-signal)') %}
 <g data-hw-zone="glyph" transform="translate({{ glyph_cx }},{{ glyph_cy }})">
   <svg x="{{ -(gs // 2) }}" y="{{ -(gs // 2) }}"
@@ -49,22 +95,33 @@
 </g>
 {% endif %}
 
-{# === Identity text (clipped to zone before first divider) === #}
+{# === Identity text + optional subtitle (paradigm-driven stack).
+       clipped to zone before first divider. === #}
 {% set first_div_x = first_divider_x | default(143) %}
 <defs>
   <clipPath id="{{ uid }}-id-clip">
-    <rect x="{{ accent_w }}" y="0" width="{{ first_div_x - accent_w }}" height="{{ strip_h }}"/>
+    <rect x="{{ accent_w + _gz_offset }}" y="0" width="{{ first_div_x - accent_w - _gz_offset }}" height="{{ strip_h }}"/>
   </clipPath>
 </defs>
 <g clip-path="url(#{{ uid }}-id-clip)">
-  <text data-hw-zone="identity"
-        x="{{ identity_x }}" y="{{ (strip_h // 2) + 4 }}"
-        class="{{ uid }}-identity">{{ identity | upper }}</text>
+  {% if show_subtitle | default(false) %}
+    {# Two-line stack: identity top, subtitle bottom, centered vertically. #}
+    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ (strip_h // 2) - 4 }}" class="{{ uid }}-identity">{{ identity | upper }}</text>
+    <text data-hw-zone="subtitle" x="{{ identity_x }}" y="{{ (strip_h // 2) + 9 }}" font-family="'{{ subtitle_font_family }}',monospace" font-size="{{ subtitle_font_size }}" fill="{{ ink_sub | default('#7e93a6') }}" letter-spacing="{{ subtitle_letter_spacing_em }}em">{{ subtitle_text | default('') }}</text>
+  {% else %}
+    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ (strip_h // 2) + 4 }}" class="{{ uid }}-identity">{{ identity | upper }}</text>
+  {% endif %}
 </g>
 
 {# === Metric cells with dividers === #}
+{# Cell layout: every cell's group sits AT its left divider seam. Text inside
+   uses paradigm-supplied x_local (cellular: 12 from start anchor; brutalist
+   /chrome: cell_w//2 from middle anchor). All cells get the SAME left gutter,
+   eliminating the cell-0 asymmetry that shifted "12.4k" 24px from its left
+   divider while "1.2k" sat at 12. cell_widths[i] is the full seam-to-seam
+   distance (resolver: content + 20 pad). #}
 {% set first_div_x = first_divider_x | default(143) %}
-{% set cell_start = first_div_x + 12 %}
+{% set cell_start = first_div_x %}
 {# First divider — stroke sourced from resolver-injected context:
    divider_render_mode = "gradient" → chrome-defs url(#...-sep) gradient
    divider_render_mode = "class"    → profile-declared flat color.
@@ -81,10 +138,25 @@
       opacity="{{ strip_divider_opacity | default(1.0) }}"/>
 {% endif %}
 
+{# Metric cell typography — every coordinate comes pre-resolved from the
+   resolver via cell_layouts[i] (built by core.cell_layout.compute_cell_layout).
+   The template renders the dict's values verbatim:
+     - _layout.cell_w     → cell pitch (seam-to-seam distance)
+     - _layout.label_x    → in-cell text x for the label
+     - _layout.value_x    → in-cell text x for the value (== label_x today)
+     - _layout.text_anchor → "start" | "middle" | "end"
+   No template-side arithmetic; no paradigm-specific branching. Adding a
+   new paradigm with a different alignment is a YAML edit only. #}
+{% set _layouts = cell_layouts | default([]) %}
+{% set _ns = namespace(cx=cell_start) %}
 {% for metric in metrics %}
-{% set cell_x = cell_start + (loop.index0 * metric_pitch) %}
-<g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ cell_x }},0)">
-  <text x="{{ metric_pitch // 2 }}" y="{{ strip_metric_label_y | default(18) }}" text-anchor="middle"
+{% set _layout = _layouts[loop.index0] %}
+{% set _cell_w = _layout.cell_w %}
+{% set _lx = _layout.label_x %}
+{% set _vx = _layout.value_x %}
+{% set _mta = _layout.text_anchor %}
+<g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ _ns.cx }},0)">
+  <text x="{{ _lx }}" y="{{ strip_metric_label_y | default(18) }}" text-anchor="{{ _mta }}"
         class="{{ uid }}-metric-label">{{ metric.label | upper }}</text>
   {# Metric value — skew applied only when strip_metric_value_skew != 0
      (was hardcoded to paradigm=chrome; now chrome.yaml sets skew=0 for badge
@@ -92,28 +164,29 @@
      upright Orbitron). #}
   {% set _skew = strip_metric_value_skew | default(0) %}
   {% if _skew != 0 %}
-  <g transform="translate({{ metric_pitch // 2 }},{{ strip_metric_value_y | default(36) }}) skewX({{ _skew }})">
-    <text x="0" y="0" text-anchor="middle" dominant-baseline="central"
+  <g transform="translate({{ _vx }},{{ strip_metric_value_y | default(36) }}) skewX({{ _skew }})">
+    <text x="0" y="0" text-anchor="{{ _mta }}" dominant-baseline="central"
           class="{{ uid }}-metric-value">{{ metric.value }}</text>
   </g>
   {% else %}
-  <text x="{{ metric_pitch // 2 }}" y="{{ strip_metric_value_y | default(36) }}" text-anchor="middle"
+  <text x="{{ _vx }}" y="{{ strip_metric_value_y | default(36) }}" text-anchor="{{ _mta }}"
         class="{{ uid }}-metric-value">{{ metric.value }}</text>
   {% endif %}
 {% if metric.delta %}
-  <text x="{{ metric_pitch // 2 }}" y="48" text-anchor="middle"
+  <text x="{{ _vx }}" y="48" text-anchor="{{ _mta }}"
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>
 {% endif %}
 </g>
-{# Trailing divider after each metric — same divider_render_mode as above. #}
-{% set trail_x = cell_start + (loop.index * metric_pitch) %}
+{# Trailing divider after each metric — anchored to this cell's right edge
+   via running cumulative offset (per-cell, not multiplicative). #}
+{% set _ns.cx = _ns.cx + _cell_w %}
 {% if divider_render_mode == "gradient" %}
-<line x1="{{ trail_x }}" y1="{{ div_y1 }}"
-      x2="{{ trail_x }}" y2="{{ div_y2 }}"
+<line x1="{{ _ns.cx }}" y1="{{ div_y1 }}"
+      x2="{{ _ns.cx }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
 {% else %}
-<line x1="{{ trail_x }}" y1="{{ div_y1 }}"
-      x2="{{ trail_x }}" y2="{{ div_y2 }}"
+<line x1="{{ _ns.cx }}" y1="{{ div_y1 }}"
+      x2="{{ _ns.cx }}" y2="{{ div_y2 }}"
       stroke="{{ strip_divider_color | default('var(--dna-border)') }}"
       stroke-width="1"
       opacity="{{ strip_divider_opacity | default(1.0) }}"/>
@@ -121,12 +194,17 @@
 {% endfor %}
 
 {# === Status indicator (paradigm-dispatched) ===
-   Single diamond at the right-edge status slot. The specimen anchors the
-   diamond here so the right edge reads as a deliberate terminus rather
-   than an isolated afterthought — the status_zone (56px) reserved by
-   resolve_strip gives it visual integration, not isolation. #}
-{% set last_seam_x = (first_divider_x | default(143)) + 12 + (metrics | length | default(1)) * metric_pitch %}
-{% set status_x = (last_seam_x + width) // 2 %}
+   Prefers the resolver-supplied status_x (flank-aware for cellular strips);
+   falls back to the legacy (last_seam + width) / 2 derivation for genomes
+   whose resolvers don't populate status_x. status_cy stays at the vertical
+   midpoint so the indicator lines up with the metric band. #}
+{% if status_x is defined and status_x is number and status_x > 0 %}
+{% set _status_x = status_x %}
+{% else %}
+{% set _last_seam_x = (first_divider_x | default(143)) + 12 + (metrics | length | default(1)) * metric_pitch %}
+{% set _status_x = (_last_seam_x + width) // 2 %}
+{% endif %}
+{% set status_x = _status_x %}
 {% set status_cy = strip_h // 2 %}
 <g data-hw-zone="status" transform="translate({{ status_x }},{{ status_cy }})"
    {% if status_shape_rendering != "geometricPrecision" %}shape-rendering="{{ status_shape_rendering }}"{% endif %}>

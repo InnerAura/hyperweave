@@ -28,11 +28,7 @@
     <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
     <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
   </linearGradient>
-{% if envelope_stops | default([]) %}
-{% include "frames/marquee-counter/chrome-defs.j2" %}
-{% else %}
-{% include "frames/marquee-counter/brutalist-defs.j2" %}
-{% endif %}
+{% include "frames/marquee-counter/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
@@ -43,13 +39,9 @@
 {% set fw = fade_width | default(36) %}
 
 {# ══════════════════════════════════════════════════════════════════
-   FRAME — dispatched to profile partials
+   FRAME — paradigm-dispatched per genome.paradigms
    ══════════════════════════════════════════════════════════════════ #}
-{% if envelope_stops | default([]) %}
-{% include "frames/marquee-counter/chrome-content.j2" %}
-{% else %}
-{% include "frames/marquee-counter/brutalist-content.j2" %}
-{% endif %}
+{% include "frames/marquee-counter/" ~ (paradigm | default("default")) ~ "-content.j2" %}
 
 {# ═══ Row dividers (data-driven: divider_stroke_width, divider_stroke_opacity) ═══ #}
 {% for dy in divider_ys | default([44, 88]) %}

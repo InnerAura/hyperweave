@@ -1,0 +1,174 @@
+id: cellular
+name: Cellular
+description: >
+  Bifamily chromatic paradigm used by the `automata` genome. Two parallel
+  palettes (blue/teal + purple/amethyst) share a common structural
+  architecture: 7-stop metallic rim bezel, 3-cell pattern pulse strip,
+  refined seam gradient, and label/value slabs. Monofamily artifacts
+  (badge, icon) pick one family via ComposeSpec.family; bifamily artifacts
+  (strip, banner, marquee, divider) render both simultaneously.
+
+  Any genome opting into this paradigm must declare both family palettes
+  plus bifamily-bridge fields plus cellular-pulse config. The shared
+  state-signal cascade partial (templates/partials/state-signal-cascade.j2)
+  reads state_{status}_{core,bright} fields from the genome.
+
+requires_genome_fields:
+  - family_blue_rim_stops
+  - family_blue_pattern_cells
+  - family_blue_seam_mid
+  - family_blue_label_slab_fill
+  - family_blue_label_text
+  - family_blue_value_text
+  - family_blue_canvas_top
+  - family_blue_canvas_bottom
+  - family_purple_rim_stops
+  - family_purple_pattern_cells
+  - family_purple_seam_mid
+  - family_purple_label_slab_fill
+  - family_purple_label_text
+  - family_purple_value_text
+  - family_purple_canvas_top
+  - family_purple_canvas_bottom
+  - bifamily_bridge_teal_mid
+  - bifamily_bridge_teal_deep
+  - bifamily_bridge_amethyst_core
+  - bifamily_bridge_amethyst_bright
+  - cellular_pulse_base_duration
+  - cellular_pattern_opacity
+  - state_passing_core
+  - state_passing_bright
+  - state_warning_core
+  - state_warning_bright
+  - state_critical_core
+  - state_critical_bright
+  - state_building_core
+  - state_building_bright
+  - state_offline_core
+  - state_offline_bright
+
+frame_family_defaults:
+  badge: blue
+  icon: blue
+  strip: bifamily
+  banner: bifamily
+  marquee-horizontal: bifamily
+  divider: bifamily
+
+badge:
+  label_font_family: Orbitron
+  value_font_family: Chakra Petch
+  label_font_size: 9
+  value_font_size: 12
+  value_font_weight: 700
+  show_indicator: true
+  frame_height: 32
+  frame_height_compact: 20
+  glyph_offset_left: 18
+  glyph_offset_left_compact: 12
+  glyph_size: 12
+  glyph_size_compact: 8
+  text_y_factor: 0.656
+
+strip:
+  # Specimen cellular-automata-strip-v10.svg is 48px tall (not 52px default).
+  strip_height: 48
+  value_font_family: Chakra Petch
+  value_font_size: 16
+  label_font_family: JetBrains Mono
+  label_font_size: 5.5
+  # Identity zone: Orbitron 8px 700 0.14em per specimen.
+  # Resolver measures with these exact values so first_divider_x matches
+  # actual render width.
+  identity_font_family: Orbitron
+  identity_font_size: 8
+  identity_font_weight: 700
+  identity_letter_spacing_em: 0.14
+  # Subtitle under identity: "eli64s/readme-ai" in JBMono 6.5px.
+  show_subtitle: true
+  subtitle_font_family: JetBrains Mono
+  subtitle_font_size: 6.5
+  subtitle_letter_spacing_em: 0.04
+  # Icon box — 28x28 frame at flank_end + 8px padding, glyph inset 6px inside.
+  show_icon_box: true
+  icon_box_size: 28
+  icon_box_pad: 8
+  divider_render_mode: class
+  status_shape_rendering: geometricPrecision
+  show_status_indicator: true
+  flank_width: 36
+  flank_cell_size: 12
+  # Cell layout inherits the default centered alignment from
+  # ParadigmStripConfig (metric_text_anchor=middle, metric_text_x=0) —
+  # cellular has no reason to diverge from brutalist/chrome on
+  # alignment, since centered metrics read as the canonical strip
+  # vocabulary across all three paradigms.
+  #
+  # Cell width sizing IS paradigm-specific: every parameter that
+  # affects rendered pixel width (family, size, weight, letter-spacing)
+  # must be declared so compute_cell_layout sizes cells to render-truth.
+  # Mirror cellular-defs.j2:17 EXACTLY — letter-spacing:0.22em, no
+  # font-weight declared (browser default 400). If the CSS class adds
+  # letter-spacing, that value MUST appear here too — otherwise long
+  # labels (DOWNLOADS, COMMITS) bleed past the right divider.
+  label_font_weight: 400
+  label_letter_spacing_em: 0.22
+  value_font_weight: 700
+  value_letter_spacing_em: 0.0
+  cell_pad: 20
+  cell_min_width: 0
+
+banner:
+  hero_font_family: Orbitron
+  hero_font_weight: 900
+  hero_skew_deg: 0.0
+  hero_italic: false
+  # Specimen cellular-automata-hero-banner-v2.svg is 800×220 for both
+  # variants. There is no "full" cellular banner size — the specimen is
+  # already specimen-dense at 800×220.
+  width_default: 800
+  height_default: 220
+  width_compact: 800
+  height_compact: 220
+
+icon:
+  supported_shapes: [square]
+  default_shape: square
+
+marquee:
+  # Bifamily-tspan palette: scroll items alternate teal/amethyst.
+  # Specimen cellular-automata-marquee-current.svg uses these exact hexes
+  # for tspan fills; sourcing from the genome chromosomes is intentional
+  # (resolver routes them via family_blue_seam_mid / family_purple_seam_mid
+  # rather than re-stating them here, but the palette length tells the
+  # resolver how many cycle slots exist).
+  tspan_palette: ["#3A9FB8", "#A88AD4"]
+  # Separator glyph between scroll items. Specimen uses diamonds (◆) at
+  # 60% gray (#606878) instead of brutalist's filled square (■).
+  separator_glyph: "◆"
+  separator_color: "#606878"
+  # Cellular bifamily marquee has NO LIVE label panel — chrome is just
+  # the bifamily hairlines top/bottom and the scrolling tspans. Suppressing
+  # the LIVE block tells the shared template to give the scroll track the
+  # full width and start items at x=20.
+  suppress_live_block: true
+
+chart:
+  # Cellular star chart specimen is 900×600 with chart viewport at (130, 140)
+  # size 640×340 (leaves 66px flank margins + 66px bottom footer).
+  viewport_x: 130
+  viewport_y: 140
+  viewport_w: 640
+  viewport_h: 340
+  chart_width: 900
+  chart_height: 600
+  # One-shot stroke-dashoffset draw animation on the polyline. Cellular
+  # specimen renders the data line as an arriving signal rather than a
+  # printed plot; gated by prefers-reduced-motion at the CSS layer.
+  line_animate: true
+
+stats:
+  card_height: 260
+  embeds_chart: false
+  # Cellular stat card specimen is 495×260 soulcard layout:
+  # HEADER(12-44) → HERO(52-106) → SECONDARY(116-162) → HEATMAP(172-224) → FOOTER(228-250)

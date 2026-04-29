@@ -1,0 +1,54 @@
+{# Cellular badge defs — per-family rim/seam/canvas gradients + pattern pulse.
+
+   Invariant 11: zero specimen hex fallbacks. All colors flow from genome
+   fields validated at load time by validate_genome_against_paradigms.
+   Invariant 12: family is resolved via slug interpolation, never string
+   comparison in Python. This template uses {% if family == ... %} which
+   is paradigm-scoped template logic (not the forbidden pattern). #}
+<clipPath id="{{ uid }}-clip">
+  <rect width="{{ width }}" height="{{ height }}"/>
+</clipPath>
+{% set fam = "purple" if family == "purple" else "blue" %}
+{% if fam == "blue" %}
+  {% set rim_stops = family_blue_rim_stops %}
+  {% set seam_mid = family_blue_seam_mid %}
+  {% set seam_anchor = family_blue_pattern_cells[0] %}
+  {% set canvas_top = family_blue_canvas_top %}
+  {% set canvas_bottom = family_blue_canvas_bottom %}
+{% else %}
+  {% set rim_stops = family_purple_rim_stops %}
+  {% set seam_mid = family_purple_seam_mid %}
+  {% set seam_anchor = family_purple_pattern_cells[0] %}
+  {% set canvas_top = family_purple_canvas_top %}
+  {% set canvas_bottom = family_purple_canvas_bottom %}
+{% endif %}
+<linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="0" y2="1">
+  {% for stop in rim_stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
+</linearGradient>
+<linearGradient id="{{ uid }}-vb" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="{{ canvas_top }}"/>
+  <stop offset="100%" stop-color="{{ canvas_bottom }}"/>
+</linearGradient>
+<linearGradient id="{{ uid }}-seam" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%"   stop-color="{{ seam_anchor }}" stop-opacity="0"/>
+  <stop offset="18%"  stop-color="{{ seam_anchor }}" stop-opacity="0.55"/>
+  <stop offset="50%"  stop-color="{{ seam_mid }}" stop-opacity="0.82"/>
+  <stop offset="82%"  stop-color="{{ seam_anchor }}" stop-opacity="0.55"/>
+  <stop offset="100%" stop-color="{{ seam_anchor }}" stop-opacity="0"/>
+</linearGradient>
+<filter id="{{ uid }}-lift" x="-4%" y="-12%" width="108%" height="130%">
+  <feDropShadow dx="0" dy="{{ 0.4 if compact else 0.5 }}" stdDeviation="{{ 0.4 if compact else 0.6 }}" flood-color="#000000" flood-opacity="0.32"/>
+</filter>
+<style>{{ font_faces | safe }}
+.cz1{animation:czp {{ cellular_pulse_base_duration }} ease-in-out infinite;will-change:opacity}
+.cz2{animation:czp {{ cellular_pulse_base_duration }} ease-in-out infinite 1.5s;will-change:opacity}
+.cz3{animation:czp {{ cellular_pulse_base_duration }} ease-in-out infinite 3s;will-change:opacity}
+.cz4{animation:czp {{ cellular_pulse_base_duration }} ease-in-out infinite 4.5s;will-change:opacity}
+.czf{animation:czp {{ cellular_pulse_fast_duration }} ease-in-out infinite 0.5s;will-change:opacity}
+.czd{opacity:.07}
+@keyframes czp{0%,100%{opacity:.04}30%{opacity:.7}50%{opacity:.2}70%{opacity:.55}}
+@media(prefers-reduced-motion:reduce){.cz1,.cz2,.cz3,.cz4,.czf{animation:none!important;opacity:.25!important}}
+{% if is_state_badge %}{% include "partials/state-signal-cascade.j2" %}{% endif %}
+</style>

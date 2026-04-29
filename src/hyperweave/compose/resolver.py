@@ -132,14 +132,31 @@ def resolve_badge(
     """
     from hyperweave.core.text import measure_text
 
-    height = profile.get("badge_frame_height", 20)
+    # Height + size class: paradigm-driven default or compact variant.
+    # Cellular badges render at 32px default / 20px compact; brutalist/chrome
+    # stay at 20px. ``compact`` flows into text-measurement scaling and
+    # template pattern-cell geometry.
+    compact = spec.variant == "compact"
+    badge_cfg_for_height = paradigm_spec.badge if paradigm_spec else None
+    if badge_cfg_for_height is not None:
+        height = badge_cfg_for_height.frame_height_compact if compact else badge_cfg_for_height.frame_height
+    else:
+        height = profile.get("badge_frame_height", 20)
     use_mono = profile.get("badge_use_mono", True)
     label_uppercase = profile.get("badge_label_uppercase", True)
 
     # Layout constants
-    font_size = 11
+    font_size = 11  # kept for letter-spacing math (chrome/brutalist default)
     accent_w = 4
-    glyph_size = 14
+    # Glyph-size: paradigm-driven, compact variant may override.
+    badge_cfg_for_glyph_size = paradigm_spec.badge if paradigm_spec else None
+    if badge_cfg_for_glyph_size is not None:
+        if compact and badge_cfg_for_glyph_size.glyph_size_compact > 0:
+            glyph_size = badge_cfg_for_glyph_size.glyph_size_compact
+        else:
+            glyph_size = badge_cfg_for_glyph_size.glyph_size
+    else:
+        glyph_size = 14
     glyph_gap = 4
 
     sep_w = profile.get("badge_sep_width", 2)
@@ -147,26 +164,37 @@ def resolve_badge(
     indicator_size = profile.get("badge_indicator_size", 8)
     ind_pad_r = profile.get("badge_indicator_pad_r", 8)
     inset = profile.get("badge_inset", 0)
-    text_y_factor = profile.get("badge_text_y_factor", 0.69)
+    # text_y_factor from paradigm (cellular uses 0.656 matching spec y=21 at
+    # h=32; brutalist/chrome use 0.69 baseline). One place drives the math.
+    text_y_factor = (
+        badge_cfg_for_glyph_size.text_y_factor
+        if badge_cfg_for_glyph_size is not None
+        else profile.get("badge_text_y_factor", 0.69)
+    )
 
     # Text content
     label_raw = spec.title or ""
     value_raw = spec.value or ""
     label_display = label_raw.upper() if label_uppercase else label_raw
 
-    # Per-zone font family comes from paradigm config — chrome paradigm
-    # specifies JetBrains Mono for labels + Orbitron for values, matching
-    # the CSS the template applies. brutalist/default specify JBMono or
-    # Inter. font_weight pulled from paradigm config for the value zone.
+    # Per-zone font family + size come from paradigm config. Compact variant
+    # scales sizes down by ~78% (matches cellular sm-vs-xl specimen ratio).
+    # chrome paradigm: JetBrains Mono + Orbitron @ 11/11; cellular: Orbitron
+    # + Chakra Petch @ 9/12 (default) or 7/9 (compact).
     _label_family = paradigm_spec.badge.label_font_family if paradigm_spec else "Inter"
     _value_family = paradigm_spec.badge.value_font_family if paradigm_spec else "Inter"
     _value_weight = paradigm_spec.badge.value_font_weight if paradigm_spec else 700
+    _label_size = paradigm_spec.badge.label_font_size if paradigm_spec else font_size
+    _value_size = paradigm_spec.badge.value_font_size if paradigm_spec else font_size
+    if compact:
+        _label_size = max(round(_label_size * 0.78), 6)
+        _value_size = max(round(_value_size * 0.78), 7)
 
     lw = (
         measure_text(
             label_display,
             font_family=_label_family,
-            font_size=font_size,
+            font_size=_label_size,
             font_weight=400 if use_mono else 700,
         )
         if label_display
@@ -176,7 +204,7 @@ def resolve_badge(
         measure_text(
             value_raw,
             font_family=_value_family,
-            font_size=font_size,
+            font_size=_value_size,
             font_weight=_value_weight,
         )
         if value_raw
@@ -189,9 +217,22 @@ def resolve_badge(
 
     has_glyph = bool(spec.glyph or spec.custom_glyph_svg)
 
+    # Glyph-left offset: paradigms that render decoration on the left edge
+    # (cellular pattern strip at x=2..~20) need the glyph pushed rightward so
+    # it doesn't overlap. Brutalist/chrome declare 0 (no offset).
+    badge_cfg_for_glyph = paradigm_spec.badge if paradigm_spec else None
+    if badge_cfg_for_glyph is not None:
+        if compact and badge_cfg_for_glyph.glyph_offset_left_compact > 0:
+            glyph_left_offset = badge_cfg_for_glyph.glyph_offset_left_compact
+        else:
+            glyph_left_offset = badge_cfg_for_glyph.glyph_offset_left
+    else:
+        glyph_left_offset = 0
+
     # Glyph pixel position
     if has_glyph:
         glyph_x = (inset + accent_w + 4) if inset else (accent_w + 3)
+        glyph_x += glyph_left_offset
         glyph_y = round((height - glyph_size) / 2, 1)
     else:
         glyph_x, glyph_y = 0, 0.0
@@ -208,12 +249,24 @@ def resolve_badge(
     label_area_end = left_panel - (6 if label_uppercase else 0)
     label_x = round((label_start + label_area_end) / 2, 1)
 
+    # Indicator zone: reserved ONLY when this is a state-mode badge. Even
+    # when the paradigm opts into indicators (show_indicator=True), version-
+    # mode badges (pypi v0.2.5, etc.) don't render a ring+bit — reserving
+    # the 16px allocation creates dead black space on the right side.
+    # State-mode badges get the full allocation.
+    badge_cfg = paradigm_spec.badge if paradigm_spec else None
+    show_indicator = badge_cfg.show_indicator if badge_cfg is not None else True
+    # State-mode inference happens below; pre-compute for indicator_alloc.
+    state_set = {"passing", "warning", "critical", "building", "offline", "failing"}
+    _is_state = spec.state in state_set and (not value_raw or value_raw == spec.state)
+    indicator_alloc = (indicator_size + ind_pad_r) if (show_indicator and _is_state) else 0
+
     # Total width: left + sep/seam + right panel
     val_pad_l = 3
     val_min_gap = 3
     # Non-mono value text has letter-spacing .4 — add overshoot buffer
     ls_extra = len(value_raw) * 0.4 if not use_mono and value_raw else 0
-    right_panel = val_pad_l + vw + ls_extra + 2 * val_min_gap + indicator_size + ind_pad_r
+    right_panel = val_pad_l + vw + ls_extra + 2 * val_min_gap + indicator_alloc
     total_w = round(left_panel + sep_w + seam_w + right_panel)
     total_w = max(total_w, 60)
 
@@ -222,6 +275,27 @@ def resolve_badge(
     indicator_x = total_w - ind_pad_r - indicator_size
     value_x = round((right_x + val_pad_l + indicator_x) / 2, 1)
     text_y = round(height * text_y_factor, 1)
+    # Indicator vertical center — pinned to value-text visual midline.
+    # Cap height ≈ 70% of font size across Chakra Petch, Inter, and Orbitron
+    # (validated against font metrics in data/font-metrics/), so the visual
+    # center of uppercase glyphs = baseline (text_y) - 0.3 * font_size. The
+    # indicator box is square; its top-y = visual_center - size/2. Computing
+    # here (resolver) instead of in each paradigm template means every new
+    # paradigm inherits correct vertical centering without re-deriving.
+    indicator_y = round(text_y - _value_size * 0.3 - indicator_size / 2, 1)
+
+    # State-badge inference: when state matches an ArtifactStatus and value
+    # canonically mirrors state (value == state or empty), the badge is in
+    # state-mode. Cellular templates branch on is_state_badge to render the
+    # ring+bit indicator block and route value text through the state cascade.
+    state_set = {"passing", "warning", "critical", "building", "offline", "failing"}
+    is_state_badge = spec.state in state_set and (not value_raw or value_raw == spec.state)
+
+    # Family resolution: user wins; empty falls back to paradigm default.
+    resolved_family = spec.family
+    if not resolved_family and paradigm_spec is not None:
+        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
+        resolved_family = family_defaults.get(spec.type, "")
 
     # Profile visual context (envelope, well, specular, chrome text gradients)
     # is now applied universally by the dispatcher at resolve() via
@@ -243,15 +317,19 @@ def resolve_badge(
             "label_x": label_x,
             "value_x": value_x,
             "indicator_x": indicator_x,
+            "indicator_y": indicator_y,
             "sep_width": sep_w,
             "seam_width": seam_w,
             "indicator_size": indicator_size,
             "accent_bar_width": accent_w,
             "has_glyph": has_glyph,
-            "show_indicator": True,
+            "show_indicator": show_indicator,
             "use_mono": use_mono,
             "label_uppercase": label_uppercase,
             "inset": inset,
+            "family": resolved_family,
+            "is_state_badge": is_state_badge,
+            "compact": spec.variant == "compact",
         },
     }
 
@@ -273,90 +351,324 @@ def resolve_strip(
     When no glyph is present, the glyph zone (~36px) collapses and all
     downstream positions shift left so there's no dead space.
     """
-    height = 52
+    # Inline imports follow the convention in this file (see resolve_badge,
+    # resolve_banner, resolve_marquee): each resolver pulls only what it
+    # needs at the call site.
+    from dataclasses import asdict
 
-    metrics = _parse_metrics(spec)
-    min_metric_pitch = profile.get("strip_metric_pitch", 106)
-    cell_offset = 12  # gap between first divider and first metric cell
-
-    # Glyph zone is ~36px (12 pad + 24 glyph + gap).  Collapse when absent.
-    has_glyph = bool(glyph_data and glyph_data.get("path"))
-    accent_w = profile.get("strip_accent_width", 0)
-    glyph_zone = 36 if has_glyph else 0
-    identity_x = accent_w + glyph_zone + 14
-
-    # Compute identity zone width from actual text content (algorithmic, not hardcoded)
-    identity = spec.title or ""
+    from hyperweave.core.cell_layout import TextSpec, compute_cell_layout
     from hyperweave.core.text import measure_text
 
-    id_text_w = measure_text(identity.upper(), font_family="JetBrains Mono", font_size=11, font_weight=700)
-    # Account for letter-spacing 0.18em on identity text
-    id_text_w += len(identity) * 11 * 0.18
-    first_divider_x = max(int(identity_x + id_text_w + 14), 80)  # 14px right padding, min 80
+    # Strip paradigm config is read here (once) so every downstream
+    # measurement — identity, subtitle, metric labels, metric values —
+    # uses the SAME paradigm fonts. No hardcoded fonts in this resolver.
+    strip_cfg = paradigm_spec.strip if paradigm_spec else None
+    height = strip_cfg.strip_height if strip_cfg else 52
 
-    # ── Adaptive cell pitch (preserves the slot grid) ──
-    # Uniform pitch adopts the widest metric's measured width so the slot
-    # grid stays consistent (every cell is the same size), but no metric's
-    # value overflows its cell. This is where adaptivity lives: `for metric
-    # in metrics` varies by payload, and each metric's value width drives
-    # the shared pitch upward when values are long. The status diamond
-    # lives in the dedicated right-edge ``status_zone``, not per-cell.
-    cell_pad = 20  # horizontal breathing room inside each cell
+    metrics = _parse_metrics(spec)
+    # min_metric_pitch is the brutalist-era aesthetic floor (106px) that
+    # prevents cells from collapsing when metrics are short. When a paradigm
+    # declares show_icon_box, it has its own structural chrome and font
+    # discipline (cellular specimen: 82px widest cell at label 5.5 + value
+    # 16), so the brutalist floor overshoots. Per-cell measurement plus the
+    # 20px cell_pad below guarantees visual breathing in paradigms that opt
+    # out of the legacy floor.
+    show_icon_box_early = strip_cfg.show_icon_box if strip_cfg else False
+    min_metric_pitch = 0 if show_icon_box_early else profile.get("strip_metric_pitch", 106)
+    # Cell layout: every cell's group origin sits AT its left divider seam, so
+    # the text inside (rendered at x_local=12 for cellular flush-left or
+    # x_local=cell_w//2 for centered paradigms) gets a uniform gutter from
+    # the seam. cell_widths[i] is the FULL seam-to-seam distance, content +
+    # 20px pad split as 12 left + 8 right. There is NO extra cell-0 offset
+    # — that bug shifted cell-0's text 24px past seam[0] while cells 1+ had
+    # only 12px, producing visibly more black space on the left of the first
+    # metric than the rest.
+    cell_offset = 0
+
+    # Glyph zone layout:
+    #   paradigm opts into icon box (cellular):
+    #     icon_box at (flank_end + icon_box_pad), size icon_box_size
+    #     glyph centered inside icon box
+    #   otherwise (brutalist/chrome): glyph floats at (accent_w + 12 + glyph_size/2)
+    has_glyph = bool(glyph_data and glyph_data.get("path"))
+    show_icon_box = strip_cfg.show_icon_box if strip_cfg else False
+    icon_box_size = strip_cfg.icon_box_size if strip_cfg else 28
+    icon_box_pad = strip_cfg.icon_box_pad if strip_cfg else 8
+    # Accent bar vs. icon box are mutually exclusive identity-zone chromes:
+    # a paradigm that opts into show_icon_box (cellular) uses the 28px box
+    # as left-edge structural chrome; the 6px accent bar from the parent
+    # profile (brutalist) would be phantom reserved width that shifts every
+    # downstream coordinate by 6px without rendering anything.
+    accent_w = 0 if show_icon_box else profile.get("strip_accent_width", 0)
+    if show_icon_box and has_glyph:
+        # Icon box renders: pad + box + 8px post-box gap. Mirrors the
+        # template's coordinate flow at strip.svg.j2:38-43, so the divider
+        # x sits a consistent 14px past identity-text-end regardless of
+        # whether the resolver or the template was the source of truth.
+        glyph_zone = icon_box_pad + icon_box_size + 8
+    elif show_icon_box:
+        # No glyph: collapse the entire icon-box reservation; identity sits
+        # flush at accent_w + icon_box_pad. Removes the empty 28x28 pocket
+        # that used to render on glyphless cellular strips.
+        glyph_zone = icon_box_pad
+    elif has_glyph:
+        glyph_zone = 36  # legacy brutalist/chrome: 12 pad + 24 glyph + gap
+    else:
+        glyph_zone = 0
+    identity_x = accent_w + glyph_zone + (0 if show_icon_box else 14)
+
+    # Compute identity zone width from actual text content. measure_text
+    # absorbs letter-spacing via its ``letter_spacing_em`` kwarg using the
+    # correct (N-1)-gap math; the previous "measure then add len * em"
+    # idiom over-counted by one gap and silently disagreed with the
+    # rendered width by ~1 char of letter-spacing.
+    identity = spec.title or ""
+
+    _id_family = strip_cfg.identity_font_family if strip_cfg else "JetBrains Mono"
+    _id_size = strip_cfg.identity_font_size if strip_cfg else 11
+    _id_weight = strip_cfg.identity_font_weight if strip_cfg else 700
+    _id_ls_em = strip_cfg.identity_letter_spacing_em if strip_cfg else 0.18
+    id_text_w = measure_text(
+        identity.upper(),
+        font_family=_id_family,
+        font_size=_id_size,
+        font_weight=_id_weight,
+        letter_spacing_em=_id_ls_em,
+    )
+
+    # Subtitle (paradigm opts in): measured to potentially push identity
+    # zone wider if subtitle is longer than identity.
+    show_subtitle = strip_cfg.show_subtitle if strip_cfg else False
+    subtitle_raw = ""
+    subtitle_w = 0.0
+    if show_subtitle and strip_cfg is not None:
+        # Subtitle comes from connector_data.repo_slug / spec.value fallback.
+        conn = spec.connector_data or {}
+        subtitle_raw = str(conn.get("repo_slug") or conn.get("repo") or "")
+        if subtitle_raw:
+            _sub_size = strip_cfg.subtitle_font_size
+            subtitle_w = measure_text(
+                subtitle_raw,
+                font_family=strip_cfg.subtitle_font_family,
+                font_size=_sub_size,
+                font_weight=400,
+                letter_spacing_em=strip_cfg.subtitle_letter_spacing_em,
+            )
+
+    identity_zone_w = max(id_text_w, subtitle_w)
+    first_divider_x = max(int(identity_x + identity_zone_w + 14), 80)  # 14px right padding, min 80
+
+    # ── Per-cell adaptive widths via core/cell_layout.py ──
+    # Single source of truth: every parameter that affects rendered cell
+    # width (font family, size, weight, letter-spacing, cell_pad,
+    # min_cell_w, anchor, text_inset) is read from the paradigm YAML and
+    # passed once to ``compute_cell_layout``. The legacy split — where
+    # the resolver measured at weight=700 and ls=0 while the template
+    # rendered at weight=900 and ls=0.22em via CSS class — is removed.
+    # Adding a new paradigm now requires zero Python edits to keep cells
+    # sized to render-truth (Invariant 12).
+    #
+    # Each ``CellLayout`` carries the cell's pitch and the in-cell text x
+    # for the configured anchor. Templates render coordinates verbatim;
+    # no template-side ``cell_w // 2`` arithmetic.
 
     # Typography params sourced from paradigm config — font sizes, families,
-    # and weights come from data/paradigms/{slug}.yaml so adding a new
-    # paradigm requires zero Python edits.
-    strip_cfg = paradigm_spec.strip if paradigm_spec else None
+    # weights, letter-spacing, padding, and aesthetic floor all come from
+    # data/paradigms/{slug}.yaml. The legacy fallback (no strip_cfg) keeps
+    # brutalist behavior: weight 700 labels, weight 900 values, no
+    # letter-spacing, 20px pad, 106px floor.
     if strip_cfg is not None:
         value_size = strip_cfg.value_font_size
         label_size = strip_cfg.label_font_size
         value_family = strip_cfg.value_font_family
         label_family = strip_cfg.label_font_family
+        label_weight = strip_cfg.label_font_weight
+        label_ls_em = strip_cfg.label_letter_spacing_em
+        value_weight = strip_cfg.value_font_weight
+        value_ls_em = strip_cfg.value_letter_spacing_em
+        cell_pad = strip_cfg.cell_pad
+        cell_min_w = strip_cfg.cell_min_width
+        text_anchor = strip_cfg.metric_text_anchor
+        text_inset = strip_cfg.metric_text_x
     else:
         value_size = profile.get("strip_metric_value_size", 18)
         label_size = profile.get("strip_metric_label_size", 7)
         value_family = "Inter"
         label_family = "JetBrains Mono"
+        label_weight = 700
+        label_ls_em = 0.2
+        value_weight = 900
+        value_ls_em = -0.01
+        cell_pad = 20
+        cell_min_w = min_metric_pitch
+        text_anchor = "middle"
+        text_inset = 0
 
-    widest_cell = min_metric_pitch
+    cell_layouts_records: list[dict[str, Any]] = []
     for metric in metrics:
         raw_value = str(metric.get("value", ""))
         raw_label = str(metric.get("label", "")).upper()
-        value_w = measure_text(raw_value, font_family=value_family, font_size=value_size, font_weight=700)
-        label_w = measure_text(raw_label, font_family=label_family, font_size=label_size, font_weight=400)
-        cell_content_w = max(label_w, value_w)
-        needed = int(cell_content_w + cell_pad)
-        if needed > widest_cell:
-            widest_cell = needed
+        layout = compute_cell_layout(
+            label=TextSpec(
+                text=raw_label,
+                font_family=label_family,
+                font_size=label_size,
+                font_weight=label_weight,
+                letter_spacing_em=label_ls_em,
+            ),
+            value=TextSpec(
+                text=raw_value,
+                font_family=value_family,
+                font_size=value_size,
+                font_weight=value_weight,
+                letter_spacing_em=value_ls_em,
+            ),
+            cell_pad=cell_pad,
+            anchor=text_anchor,
+            text_inset=text_inset,
+            min_cell_w=cell_min_w,
+        )
+        cell_layouts_records.append(asdict(layout))
 
-    metric_pitch = widest_cell
-    status_zone = 56  # reserved for right-edge status diamond + padding
+    # Backward-compatible scalar lists. ``cell_widths`` feeds the seam
+    # cumulator below; ``metric_pitch`` is the widest-cell scalar kept
+    # for any consumer that wants a uniform fallback.
+    cell_widths: list[int] = [rec["cell_w"] for rec in cell_layouts_records]
+    metric_pitch = max(cell_widths) if cell_widths else max(min_metric_pitch, cell_min_w)
+
+    # Status-indicator zone: tight-fit around the 14px indicator geometry.
+    # Algorithmic sizing (pre_gap + indicator_size + post_gap) replaces the
+    # former hardcoded 56px reserve, which left ~26px of dead black space
+    # between the indicator and the right flank. Now: 16 pre-gap (matches
+    # spec strip v10: last_seam=400 → frame_x=416) + 14 indicator + 4 post-gap.
+    show_status_indicator = strip_cfg.show_status_indicator if strip_cfg else True
+    _indicator_size = 14
+    _indicator_pre_gap = 16
+    # Post-indicator breathing. Paradigms with icon-boxes (cellular) now
+    # mirror the pre-gap so the 14px indicator sits centered inside its
+    # 46px status_zone — a consequence of dropping the ACTIVE text subtitle,
+    # which previously required 29px of clearance for its 21px-wide glyphs.
+    # Brutalist/chrome bare-diamond strips keep the tight 4px trailing gap.
+    _indicator_post_gap = 16 if show_icon_box else 4
+    status_zone = (_indicator_pre_gap + _indicator_size + _indicator_post_gap) if show_status_indicator else 0
+
+    # Bifamily flank zones: paradigm declares flank_width > 0 when chromatic
+    # flanking cells render at left/right edges (automata strips: 36px of
+    # teal cells left, 36px amethyst right). Zero disables.
+    flank_width = strip_cfg.flank_width if strip_cfg else 0
+    flank_cell_size = strip_cfg.flank_cell_size if strip_cfg else 12
+    has_flanks = flank_width > 0
+    # Family resolution: user-specified ``--family`` wins; empty falls back
+    # to paradigm's frame_family_defaults (cellular → bifamily for strip).
+    resolved_family = spec.family
+    if not resolved_family and paradigm_spec is not None:
+        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
+        resolved_family = family_defaults.get(spec.type, "")
 
     n = max(len(metrics), 1)
-    width = first_divider_x + cell_offset + n * metric_pitch + status_zone
+    # If flanks are present, metric zones shift right by flank_width on each side
+    # (flanks live OUTSIDE the content panel; width grows accordingly).
+    flank_total = 2 * flank_width if has_flanks else 0
+    metrics_zone_w = sum(cell_widths) if cell_widths else n * metric_pitch
+    width = first_divider_x + cell_offset + metrics_zone_w + status_zone + flank_total
 
-    # Seam positions: all vertical divider x-coordinates for rimrun multi-seam tracing
-    seams = [first_divider_x]
-    cell_start = first_divider_x + cell_offset
-    for i in range(n):
-        seams.append(cell_start + (i + 1) * metric_pitch)
+    # Seam positions: cumulative cell-edge x-coordinates for rimrun multi-seam tracing
+    # AND for the per-cell trailing-divider lines emitted in strip.svg.j2. With
+    # per-cell widths, seams are NOT evenly spaced; iterate cumulative widths.
+    seam_offset = flank_width if has_flanks else 0
+    seams = [first_divider_x + seam_offset]
+    cell_start = first_divider_x + cell_offset + seam_offset
+    _running = 0
+    for cw in cell_widths:
+        _running += cw
+        seams.append(cell_start + _running)
+    # Pad seams when cell_widths is empty (zero-metric strips) to preserve the
+    # legacy single-divider seam list and avoid IndexError downstream.
+    if not cell_widths:
+        seams.append(cell_start + metric_pitch)
+
+    # Status-indicator x-position: spec cellular-automata-strip-v10 places
+    # the hw-state-frame at last_seam + 16 (NOT centered between last_seam
+    # and content_right — that would leave a wide black gap in the flanked
+    # layout). For genomes without flanks, last_seam + 16 still reads as
+    # anchored-to-right-edge-of-metrics. content_right stays in context for
+    # templates that want flank-boundary awareness for other uses.
+    last_seam_x = seams[-1] if seams else first_divider_x
+    content_right = width - (flank_width if has_flanks else 0)
+    status_x = last_seam_x + 16 if show_status_indicator else 0
+
+    # Glyph-zone x-offset: when bifamily flanks are present, the glyph must
+    # be pushed past the left flank so it doesn't overlap pattern cells.
+    # brutalist/chrome strips have flank_width=0 → no offset → unchanged.
+    glyph_zone_x_offset = flank_width if has_flanks else 0
 
     ctx: dict[str, Any] = {
         "identity": identity,
+        "identity_font_family": _id_family,
+        "identity_font_size": _id_size,
+        "identity_letter_spacing_em": _id_ls_em,
+        "subtitle_text": subtitle_raw,
+        "show_subtitle": show_subtitle,
+        "subtitle_font_family": strip_cfg.subtitle_font_family if strip_cfg else "JetBrains Mono",
+        "subtitle_font_size": strip_cfg.subtitle_font_size if strip_cfg else 6.5,
+        "subtitle_letter_spacing_em": strip_cfg.subtitle_letter_spacing_em if strip_cfg else 0.0,
+        "show_icon_box": show_icon_box,
+        "icon_box_size": icon_box_size,
+        "icon_box_pad": icon_box_pad,
         "metrics": metrics,
         "metric_pitch": metric_pitch,
-        "first_divider_x": first_divider_x,
+        # Per-cell adaptive widths — sized to each metric's own content
+        # (value or label, whichever is wider) + cell_pad. The strip
+        # template iterates this list with a running x-offset so cells
+        # sit flush-left against their content rather than padded inside
+        # a uniform widest-cell pitch. See resolver.py per-cell-widths
+        # section for rationale.
+        "cell_widths": cell_widths,
+        # Resolved per-cell layout records (one dict per metric, keyed by
+        # CellLayout fields: cell_w, label_x, value_x, text_anchor, label_w,
+        # value_w, content_w). The template renders these coordinates
+        # verbatim — no template-side ``cell_w // 2`` arithmetic, no
+        # paradigm-specific text-x branching. Adding a new paradigm with a
+        # different text alignment is YAML-only.
+        "cell_layouts": cell_layouts_records,
+        # Shift into flank-shifted space so templates that render identity,
+        # dividers, and metric cells all operate in the same coordinate system.
+        # Seams already include the offset; first_divider_x previously didn't,
+        # which caused the first divider to slice through the identity text
+        # in bifamily strips (identity rendered at _gz_offset + accent + ...
+        # in the template, but first_divider_x stayed flank-less). Adding
+        # seam_offset reconciles both returns to the same frame-of-reference.
+        "first_divider_x": first_divider_x + seam_offset,
         "seam_positions": seams,
+        "status_x": status_x,
+        "content_right": content_right,
+        "glyph_zone_x_offset": glyph_zone_x_offset,
+        "family": resolved_family,
+        "show_status_indicator": show_status_indicator,
+        "has_flanks": has_flanks,
+        "flank_width": flank_width,
+        "flank_cell_size": flank_cell_size,
         "strip_corner": profile.get("strip_corner", 5),
-        "accent_width": profile.get("strip_accent_width", 0),
+        # accent_width/accent_bar_width/has_accent reflect the same rule as
+        # the local accent_w above: paradigms with show_icon_box zero out
+        # the accent bar so downstream template math (identity_x, icon_box_x)
+        # stays aligned with the specimen.
+        "accent_width": accent_w,
+        "accent_bar_width": accent_w,
         "divider_mode": profile.get("strip_divider_mode", "full"),
-        "has_accent": profile.get("strip_accent_width", 0) > 0,
+        "has_accent": accent_w > 0,
         "strip_glyph_size": profile.get("strip_glyph_size", 20),
         "strip_glyph_fill": profile.get("strip_glyph_fill", "var(--dna-signal)"),
         "strip_identity_weight": profile.get("strip_identity_weight", 900),
         "strip_identity_fill": profile.get("strip_identity_fill", "var(--dna-brand-text)"),
         "strip_identity_letter_spacing": profile.get("strip_identity_letter_spacing", "0.18em"),
-        "strip_metric_label_size": profile.get("strip_metric_label_size", 7),
+        # Paradigm-driven label size (cellular: 5.5) takes precedence over
+        # the profile default (brutalist: 7). The resolver MEASURES at this
+        # size too (line ~442) — keeping a single source of truth prevents
+        # measurement/render drift that overflows cells.
+        "strip_metric_label_size": (
+            strip_cfg.label_font_size if strip_cfg else profile.get("strip_metric_label_size", 7)
+        ),
         "strip_metric_label_fill": profile.get("strip_metric_label_fill", "var(--dna-ink-muted)"),
         "strip_metric_label_letter_spacing": profile.get("strip_metric_label_letter_spacing", "0.2em"),
         "strip_metric_label_y": profile.get("strip_metric_label_y", 18),
@@ -364,6 +676,12 @@ def resolve_strip(
         "strip_metric_value_fill": profile.get("strip_metric_value_fill", "var(--dna-ink-primary)"),
         "strip_metric_value_y": profile.get("strip_metric_value_y", 36),
         "strip_metric_value_skew": profile.get("strip_metric_value_skew", 0),
+        # Metric cell alignment — paradigm declares the text-anchor + x-offset
+        # so the shared metric loop in strip.svg.j2 doesn't need per-paradigm
+        # branches. Cellular → flush-left via ``start`` + inset 12;
+        # brutalist/chrome → centered via ``middle`` + fallback x (pitch//2).
+        "strip_metric_text_x": (strip_cfg.metric_text_x if strip_cfg else 0),
+        "strip_metric_text_anchor": (strip_cfg.metric_text_anchor if strip_cfg else "middle"),
         "strip_identity_font": profile.get("strip_identity_font", "var(--dna-font-mono, 'SF Mono', monospace)"),
         "strip_metric_label_font": profile.get("strip_metric_label_font", "var(--dna-font-mono, 'SF Mono', monospace)"),
         "strip_divider_color": profile.get("strip_divider_color", "var(--dna-border)"),
@@ -401,8 +719,15 @@ def resolve_banner(
     Compact variant: 800x220, no grid, 42px text.
     """
     compact = spec.variant == "compact"
-    w = 800 if compact else 1200
-    h = 220 if compact else profile.get("banner_height", 600)
+    # Banner dims: paradigm-driven (cellular specimen is 800x220 for both
+    # variants; brutalist/chrome keep 1200x600 full / 800x220 compact).
+    banner_cfg = paradigm_spec.banner if paradigm_spec else None
+    if banner_cfg is not None:
+        w = banner_cfg.width_compact if compact else banner_cfg.width_default
+        h = banner_cfg.height_compact if compact else banner_cfg.height_default
+    else:
+        w = 800 if compact else 1200
+        h = 220 if compact else profile.get("banner_height", 600)
 
     genome_name = genome.get("name", spec.genome_id)
     footer = genome_name.upper()
@@ -419,12 +744,19 @@ def resolve_banner(
     effective_w = text_w - ls_reduction
     title_fs = max(int(base_fs * max_width / effective_w), 42) if effective_w > max_width else base_fs
 
+    # Family resolution (cellular banner: bifamily default).
+    resolved_family = spec.family
+    if not resolved_family and paradigm_spec is not None:
+        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
+        resolved_family = family_defaults.get(spec.type, "")
+
     ctx: dict[str, Any] = {
         "banner_title": title,
         "banner_subtitle": spec.value or "subtitle",
         "banner_label": footer,
         "banner_variant": "compact" if compact else "full",
         "title_font_size": title_fs,
+        "family": resolved_family,
     }
     # Profile visual context now injected centrally by the dispatcher.
 
@@ -477,11 +809,18 @@ def resolve_icon(
     else:
         icon_variant = "binary-square"
 
+    # Family resolution (cellular icon: monofamily, default blue).
+    resolved_family = spec.family
+    if not resolved_family and paradigm_spec is not None:
+        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
+        resolved_family = family_defaults.get(spec.type, "")
+
     ctx: dict[str, Any] = {
         "icon_shape": shape,
         "icon_rx": 0,
         "icon_label": icon_label,
         "icon_variant": icon_variant,
+        "family": resolved_family,
         # Raw genome hex colors for gradient stops (CSS var() doesn't work in SVG stops)
         "genome_signal": genome.get("accent", "#845ef7"),
         "genome_surface": genome.get("surface_0", "#000000"),
@@ -506,7 +845,7 @@ def resolve_divider(
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve divider dimensions using specimen variants."""
-    _specimen_variants = {"block", "current", "takeoff", "void", "zeropoint"}
+    _specimen_variants = {"block", "current", "takeoff", "void", "zeropoint", "cellular-dissolve"}
     variant = spec.divider_variant if spec.divider_variant in _specimen_variants else "zeropoint"
     variant_dims: dict[str, tuple[int, int]] = {
         "block": (700, 80),
@@ -514,12 +853,14 @@ def resolve_divider(
         "takeoff": (700, 100),
         "void": (700, 40),
         "zeropoint": (700, 30),
+        "cellular-dissolve": (800, 28),
     }
     w, h = variant_dims.get(variant, (700, 30))
 
     ctx: dict[str, Any] = {
         "divider_variant": variant,
         "divider_label": spec.value or "",
+        "family": spec.family or "bifamily",
     }
     # Profile visual context now injected centrally by the dispatcher.
 
@@ -535,6 +876,7 @@ def resolve_marquee(
     spec: ComposeSpec,
     genome: dict[str, Any],
     profile: dict[str, Any],
+    paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve marquee dimensions and content.
@@ -544,22 +886,40 @@ def resolve_marquee(
       vertical   — 400x268, telemetry feed with timestamped events
       horizontal — 800x40,  LIVE ticker with brand items
     """
+    # Family resolution (cellular marquee-horizontal: bifamily default).
+    resolved_family = spec.family
+    if not resolved_family and paradigm_spec is not None:
+        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
+        resolved_family = family_defaults.get(spec.type, "")
+
     # Marquee sub-resolvers only need signal_hex/surface_hex as hex-resolved
     # carriers for <stop> attributes (var() is unreliable inside SVG stops).
     # The rest of the profile visual context (envelope/well/etc.) is merged
-    # universally by the dispatcher, so no longer needed here.
+    # universally by the dispatcher, so no longer needed here. Bifamily
+    # cellular marquees additionally carry family-specific info hexes so
+    # _resolve_horizontal can generate tspan-alternation scroll_items.
     chrome_ctx: dict[str, Any] = {
         "signal_hex": genome.get("accent", "#10B981"),
         "surface_hex": genome.get("surface_0", genome.get("surface", "#0A0A0A")),
+        "family": resolved_family,
+        "family_blue_info": genome.get("family_blue_seam_mid", ""),
+        "family_purple_info": genome.get("family_purple_seam_mid", ""),
     }
 
+    # Paradigm-declared marquee config — separator glyph, palette, live-block
+    # suppression. Routed through ParadigmMarqueeConfig (defaults match the
+    # historic brutalist/chrome behavior, so paradigms that don't declare
+    # marquee config still render correctly). All three sub-resolvers read
+    # from this config, not from hardcoded paradigm-coupled values.
+    marquee_cfg = paradigm_spec.marquee if paradigm_spec is not None else None
+
     if spec.type == FrameType.MARQUEE_COUNTER:
-        return _resolve_counter(spec, chrome_ctx, profile)
+        return _resolve_counter(spec, chrome_ctx, profile, marquee_cfg)
 
     if spec.type == FrameType.MARQUEE_VERTICAL:
-        return _resolve_vertical(spec, chrome_ctx, profile)
+        return _resolve_vertical(spec, chrome_ctx, profile, marquee_cfg)
 
-    return _resolve_horizontal(spec, chrome_ctx, profile)
+    return _resolve_horizontal(spec, chrome_ctx, profile, marquee_cfg)
 
 
 def _measure_row_content_width(row: dict[str, Any]) -> float:
@@ -630,12 +990,15 @@ def _resolve_counter(
     spec: ComposeSpec,
     chrome_ctx: dict[str, Any],
     profile: dict[str, Any] | None = None,
+    marquee_cfg: Any = None,
 ) -> dict[str, Any]:
     """Counter-scroll tri-band: 3 rows with distinct content types.
 
     Brutalist and chrome genomes produce different aesthetic DNA:
     - Brutalist: monospace, ■ separators, bold accent colors, thick dividers
     - Chrome: display+mono mix, ● separators at 25% opacity, muted palette, thin hairlines
+    - Cellular bifamily: tspan_palette teal/amethyst alternation, ◆ separators
+      at #606878, hairline row dividers (no thick rule chrome).
     """
     _prof = profile or {}
     width, height = 800, 140
@@ -673,29 +1036,45 @@ def _resolve_counter(
     font_family = _prof.get("marquee_font_family", "var(--dna-font-mono, ui-monospace, monospace)")
     mono_font = f"var(--dna-font-mono, {_prof.get('fonts', {}).get('mono', 'monospace')})"
 
+    # Bifamily palette dispatch — when family == "bifamily" and the paradigm
+    # declares a tspan_palette, the three rows alternate teal/amethyst/teal
+    # so the tri-band reads as a cellular substrate rather than three
+    # discrete telemetry feeds. Brutalist/chrome rows keep the original
+    # ink-primary/ink-secondary alternation.
+    fam = chrome_ctx.get("family", "")
+    teal_info = chrome_ctx.get("family_blue_info", "")
+    amethyst_info = chrome_ctx.get("family_purple_info", "")
+    is_bifamily = (
+        fam == "bifamily"
+        and bool(teal_info)
+        and bool(amethyst_info)
+        and marquee_cfg is not None
+        and bool(marquee_cfg.tspan_palette)
+    )
+    # Per-row dominant color when bifamily: teal → amethyst → teal.
+    row_palette = [teal_info, amethyst_info, teal_info] if is_bifamily else [None, None, None]
+
     # ── Row 1: Brand items ──
     row1_cells: list[dict[str, Any]] = []
     for i, text in enumerate(brand_items):
-        row1_cells.append(
-            {
-                "text": text,
-                "color": brand_color_even if i % 2 == 0 else brand_color_odd,
-            }
-        )
+        cell_color = row_palette[0] if is_bifamily else (brand_color_even if i % 2 == 0 else brand_color_odd)
+        row1_cells.append({"text": text, "color": cell_color})
 
     # ── Row 2: Metric label/value pairs ──
     row2_cells: list[dict[str, Any]] = []
     for m in metric_items:
+        row2_label_color = row_palette[1] if is_bifamily else metric_label_color
+        row2_value_color = row_palette[1] if is_bifamily else "var(--dna-ink-primary)"
         row2_cells.append(
             {
                 "text": m["label"],
-                "color": metric_label_color,
+                "color": row2_label_color,
                 "font_weight": "700",
             }
         )
         value_cell: dict[str, Any] = {
             "text": m["value"],
-            "color": "var(--dna-ink-primary)",
+            "color": row2_value_color,
             "font_size": "15",
             "font_weight": "800",
             "dx": "6",
@@ -705,10 +1084,18 @@ def _resolve_counter(
         row2_cells.append(value_cell)
         if m.get("delta"):
             arrow = "▲" if m.get("delta_dir") == "positive" else "▼"
+            # In bifamily, deltas keep their amethyst row color rather than
+            # switching to passing/failing greens — chromatic family wins
+            # over status semantics in cellular counter (consistent with
+            # vertical's row palette override).
             color = (
-                "var(--dna-status-passing-core)"
-                if m.get("delta_dir") == "positive"
-                else "var(--dna-status-failing-core)"
+                row_palette[1]
+                if is_bifamily
+                else (
+                    "var(--dna-status-passing-core)"
+                    if m.get("delta_dir") == "positive"
+                    else "var(--dna-status-failing-core)"
+                )
             )
             row2_cells.append(
                 {
@@ -721,6 +1108,19 @@ def _resolve_counter(
 
     # ── Row 3: Status indicators ──
     status_items = _build_counter_status_items(spec, _prof)
+    if is_bifamily:
+        # Override every status cell color to row_palette[2] (teal). The
+        # cellular counter doesn't render distinct ●/◆ chromatic accents —
+        # the rhythm is row-level, not cell-level.
+        for cell in status_items:
+            cell["color"] = row_palette[2]
+
+    # Paradigm-declared separator (cellular: ◆ / #606878). Falls back to
+    # profile-driven separator for brutalist/chrome.
+    paradigm_sep_glyph = marquee_cfg.separator_glyph if marquee_cfg is not None else "■"
+    paradigm_sep_color = marquee_cfg.separator_color if marquee_cfg is not None else ""
+    resolved_sep_r1 = paradigm_sep_glyph if (is_bifamily and paradigm_sep_glyph != "■") else separator
+    resolved_sep_color_r1 = paradigm_sep_color if (is_bifamily and paradigm_sep_color) else separator_color
 
     all_rows = [
         {
@@ -728,8 +1128,8 @@ def _resolve_counter(
             "scroll_distance": 0,
             "scroll_dur": 0,
             "direction": "rtl",
-            "separator": separator,
-            "separator_color": separator_color,
+            "separator": resolved_sep_r1,
+            "separator_color": resolved_sep_color_r1,
             "separator_opacity": separator_opacity,
             "gap": gap_r1,
             "font_size": 14,
@@ -794,8 +1194,15 @@ def _resolve_counter(
     divider_x_inset = _prof.get("marquee_counter_divider_x_inset", 6)
     divider_x1 = divider_x_inset
     divider_x2 = width - divider_x_inset
-    divider_stroke_width = _prof.get("marquee_counter_divider_stroke_width", "1.5")
-    divider_stroke_opacity = _prof.get("marquee_counter_divider_stroke_opacity", ".2")
+    # Cellular bifamily counter uses a thinner, more transparent row divider
+    # so the rhythm reads as instrument-grade chrome rather than brutalist
+    # rule-bars. 0.5px @ 0.15 opacity matches the hairline vocabulary.
+    if is_bifamily:
+        divider_stroke_width = "0.5"
+        divider_stroke_opacity = "0.15"
+    else:
+        divider_stroke_width = _prof.get("marquee_counter_divider_stroke_width", "1.5")
+        divider_stroke_opacity = _prof.get("marquee_counter_divider_stroke_opacity", ".2")
     fade_inset = _prof.get("marquee_counter_fade_inset", 5)
     fade_x = fade_inset
     fade_y = fade_inset
@@ -803,8 +1210,14 @@ def _resolve_counter(
     fade_h = height - fade_inset * 2
     fade_right_x = width - fade_inset - fade_w
     fade_rx = _prof.get("marquee_counter_fade_rx", "")
-    show_rivets = _prof.get("marquee_counter_show_rivets", True)
-    show_beacon = _prof.get("marquee_counter_show_beacon", True)
+    # Cellular bifamily marquee has no rivets/beacon — pure hairline chrome
+    # per the no-edge-cell-slabbing rule. Brutalist/chrome retain rivets.
+    if is_bifamily:
+        show_rivets = False
+        show_beacon = False
+    else:
+        show_rivets = _prof.get("marquee_counter_show_rivets", True)
+        show_beacon = _prof.get("marquee_counter_show_beacon", True)
 
     ctx: dict[str, Any] = {
         "rows": all_rows,
@@ -842,10 +1255,13 @@ def _resolve_vertical(
     spec: ComposeSpec,
     chrome_ctx: dict[str, Any],
     profile: dict[str, Any] | None = None,
+    marquee_cfg: Any = None,
 ) -> dict[str, Any]:
     """Vertical telemetry feed: timestamped event rows with status indicators.
 
     Dot shape, status colors, and accent styling read from profile YAML.
+    Cellular bifamily marquees alternate row dot/label colors using the
+    paradigm's tspan_palette (teal/amethyst) — read from ``marquee_cfg``.
     """
     _prof = profile or {}
     width, height = 400, 268
@@ -862,6 +1278,24 @@ def _resolve_vertical(
         warn_color=_prof.get("marquee_vertical_warn_color", "var(--dna-status-warning-core)"),
         status_ts_color=_prof.get("marquee_vertical_status_ts_color", "var(--dna-label-text, var(--dna-signal-dim))"),
     )
+
+    # Bifamily palette dispatch — when family == "bifamily" AND the paradigm
+    # declares a non-empty tspan_palette, override per-row dot/label/timestamp
+    # colors with the genome's family info hexes (teal/amethyst). Status
+    # semantics (passing/warning/err) become subordinate to chromatic family
+    # in this paradigm: state is encoded via the message text, not color.
+    fam = chrome_ctx.get("family", "")
+    teal_info = chrome_ctx.get("family_blue_info", "")
+    amethyst_info = chrome_ctx.get("family_purple_info", "")
+    has_tspan_palette = bool(marquee_cfg is not None and marquee_cfg.tspan_palette)
+    if fam == "bifamily" and teal_info and amethyst_info and has_tspan_palette:
+        palette = [teal_info, amethyst_info]
+        for i, row in enumerate(scroll_rows):
+            color = palette[i % len(palette)]
+            row["dot_color"] = color
+            row["timestamp_color"] = color
+            row["label_color"] = color
+
     item_count = len(scroll_rows)
     content_h = item_count * row_height
 
@@ -900,10 +1334,14 @@ def _resolve_horizontal(
     spec: ComposeSpec,
     chrome_ctx: dict[str, Any],
     profile: dict[str, Any] | None = None,
+    marquee_cfg: Any = None,
 ) -> dict[str, Any]:
     """Horizontal LIVE ticker: brand items scrolling left.
 
-    Separator, font family, and colors read from profile YAML.
+    Separator glyph, separator color, and live-block suppression are read
+    from ``marquee_cfg`` (ParadigmMarqueeConfig). Per-item color cycle
+    (bifamily tspan palette) is sourced from the genome's family info hexes
+    when ``family == "bifamily"`` and the paradigm declares a tspan_palette.
     """
     _prof = profile or {}
     width, height = 800, 40
@@ -923,18 +1361,56 @@ def _resolve_horizontal(
     separator_opacity = _prof.get("marquee_separator_opacity", "")
     font_family = _prof.get("marquee_font_family", "var(--dna-font-mono, ui-monospace, monospace)")
 
-    scroll_items = [
-        {
-            "text": t,
-            "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
-            "font_weight": (
-                "700" if (bold_pattern == "first" and i == 0) or (bold_pattern == "even" and i % 2 == 0) else ""
-            ),
-        }
-        for i, t in enumerate(raw_items)
-    ]
+    # Bifamily palette dispatch — when family == "bifamily" AND the paradigm
+    # declares a non-empty tspan_palette, scroll items cycle through that
+    # palette. Specimen cellular-automata-marquee-current.svg cycles
+    # teal/amethyst info hexes; the palette is sourced from genome
+    # chromosomes (family_blue_seam_mid / family_purple_seam_mid) so a
+    # genome-level chromatic change propagates without paradigm edits.
+    fam = chrome_ctx.get("family", "")
+    teal_info = chrome_ctx.get("family_blue_info", "")
+    amethyst_info = chrome_ctx.get("family_purple_info", "")
+    has_tspan_palette = bool(marquee_cfg is not None and marquee_cfg.tspan_palette)
+    if fam == "bifamily" and teal_info and amethyst_info and has_tspan_palette:
+        # Genome-sourced palette wins over paradigm-declared palette so
+        # chromatic identity stays in genome chromosomes (Invariant 11).
+        # Paradigm tspan_palette length signals "bifamily-tspan capable" —
+        # the actual hex values come from the genome.
+        palette = [teal_info, amethyst_info]
+        scroll_items = [
+            {
+                "text": t,
+                "color": palette[i % len(palette)],
+                "font_weight": "700",
+            }
+            for i, t in enumerate(raw_items)
+        ]
+    else:
+        scroll_items = [
+            {
+                "text": t,
+                "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
+                "font_weight": (
+                    "700" if (bold_pattern == "first" and i == 0) or (bold_pattern == "even" and i % 2 == 0) else ""
+                ),
+            }
+            for i, t in enumerate(raw_items)
+        ]
 
-    # Data-driven parametric vars for profile-dispatched template
+    # Live-block suppression and separator glyph come from ParadigmMarqueeConfig.
+    # Defaults (bool False, glyph "■", color "") preserve the historic
+    # brutalist/chrome behavior, so paradigms without a marquee block render
+    # exactly as before.
+    suppress_live_block = bool(marquee_cfg.suppress_live_block) if marquee_cfg is not None else False
+    paradigm_sep_glyph = marquee_cfg.separator_glyph if marquee_cfg is not None else "■"
+    paradigm_sep_color = marquee_cfg.separator_color if marquee_cfg is not None else ""
+    # Resolved separator: paradigm declaration (when non-default) wins over
+    # profile YAML; this lets cellular force ◆ without each genome restating
+    # marquee_separator in its profile config.
+    resolved_sep = paradigm_sep_glyph if paradigm_sep_glyph != "■" else separator
+    resolved_sep_color = paradigm_sep_color or separator_color
+
+    # Data-driven parametric vars for profile-dispatched template.
     clip_inset_y = _prof.get("marquee_horizontal_clip_inset_y", 4)
     clip_inset_x = _prof.get("marquee_horizontal_clip_inset_x", 4)
     show_accent_lines = _prof.get("marquee_horizontal_show_accent_lines", True)
@@ -944,17 +1420,18 @@ def _resolve_horizontal(
         "scroll_items": scroll_items,
         "scroll_distance": scroll_distance,
         "scroll_dur": scroll_dur,
-        "label_panel_width": 130,
-        "clip_x": 132,
-        "divider_w": 2,
-        "fade_width": 24,
-        "accent_line_opacity": 0.2,
-        "separator": separator,
-        "separator_color": separator_color,
+        "label_panel_width": 0 if suppress_live_block else 130,
+        "clip_x": 0 if suppress_live_block else 132,
+        "divider_w": 0 if suppress_live_block else 2,
+        "fade_width": 80 if suppress_live_block else 24,
+        "accent_line_opacity": 0.0 if suppress_live_block else 0.2,
+        "separator": resolved_sep,
+        "separator_color": resolved_sep_color,
         "separator_opacity": separator_opacity,
-        "marquee_label": "LIVE",
+        "marquee_label": "" if suppress_live_block else "LIVE",
+        "suppress_live_block": suppress_live_block,
         "item_dx": 20,
-        "item_start_x": 148,
+        "item_start_x": 20 if suppress_live_block else 148,
         "scroll_font_family": font_family,
         # Data-driven parametric vars for profile-dispatched template
         "clip_inset_y": clip_inset_y,
@@ -1574,6 +2051,25 @@ def resolve_catalog(
 # Helpers
 
 
+class GenomeNotFoundError(KeyError):
+    """Raised when a genome ID is requested but not registered.
+
+    Distinct from generic ``KeyError`` so the HTTP layer can map it to a
+    404 SVG fallback (see :func:`hyperweave.serve.app._classify_compose_exception`).
+    Inherits from ``KeyError`` so callers that already write ``except KeyError``
+    continue to catch it -- existing silent-fallback contracts that rely on
+    Mapping-style ``.get()`` semantics still hold by walking through
+    ``override`` or by handling ``KeyError`` explicitly.
+    """
+
+    def __init__(self, genome_id: str) -> None:
+        super().__init__(genome_id)
+        self.genome_id = genome_id
+
+    def __str__(self) -> str:
+        return f"Genome {self.genome_id!r} not found"
+
+
 def _load_genome(genome_id: str, override: dict[str, Any] | None = None) -> dict[str, Any]:
     """Load a genome dict by slug, or return the override if provided.
 
@@ -1581,16 +2077,28 @@ def _load_genome(genome_id: str, override: dict[str, Any] | None = None) -> dict
     This is the ``--genome-file`` path — the CLI loads JSON, validates via
     ``GenomeSpec``, and passes the resulting dict through ``ComposeSpec.genome_override``.
     The resolver trusts the caller to have validated.
+
+    Raises:
+        GenomeNotFoundError: when ``genome_id`` is not registered and no
+            override is supplied. The HTTP layer maps this to a 404 SVG
+            fallback via the SMPTE NO SIGNAL error badge so a broken
+            ``<img>`` URL renders as a branded error state instead of a
+            browser broken-image icon.
     """
     if override is not None:
         return override
     try:
         from hyperweave.config.loader import get_loader
-
-        loader = get_loader()
-        return loader.genomes.get(genome_id, _default_genome(genome_id))
-    except (ImportError, Exception):
+    except ImportError:
+        # Bootstrap-only path: loader can't be imported (partial install /
+        # circular dep during early startup). Fall back to the safe default
+        # so the bootstrap continues; production paths always have a loader.
         return _default_genome(genome_id)
+    loader = get_loader()
+    genome = loader.genomes.get(genome_id)
+    if genome is None:
+        raise GenomeNotFoundError(genome_id)
+    return genome
 
 
 def _resolve_paradigm(genome: dict[str, Any], frame_type: str, default: str = "default") -> str:
@@ -1699,18 +2207,35 @@ def _resolve_motion(spec: ComposeSpec, genome: dict[str, Any]) -> str:
 
 
 def _parse_metrics(spec: ComposeSpec) -> list[dict[str, Any]]:
-    metrics: list[dict[str, str]] = []
+    """Parse metric slots from ComposeSpec.
 
-    # Try slots first
+    Slot zones understood:
+      ``metric``        — regular numeric/text metric (label + value)
+      ``metric-state``  — hybrid cell where the value is itself a status
+                          word (passing/warning/etc.). Carries an optional
+                          ``state`` key populated from ``slot.data['state']``
+                          or falling back to ``spec.state``. Consumed by the
+                          cellular paradigm strip for the BUILD-style cell.
+
+    Falls back to comma-separated ``spec.value`` when no metric slots are
+    present (``"STARS:2.9k,FORKS:278"`` pattern).
+    """
+    metrics: list[dict[str, Any]] = []
+
+    # Try slots first. Both ``metric`` and ``metric-state`` produce entries;
+    # the latter carries an optional ``state`` field so templates can branch
+    # on whether this is a state-carrier cell.
     for slot in spec.slots:
         if slot.zone.startswith("metric"):
             parts = slot.value.split(":", 1) if ":" in slot.value else [slot.zone, slot.value]
-            metrics.append(
-                {
-                    "label": parts[0].upper(),
-                    "value": parts[1] if len(parts) > 1 else slot.value,
-                }
-            )
+            entry: dict[str, Any] = {
+                "label": parts[0].upper(),
+                "value": parts[1] if len(parts) > 1 else slot.value,
+            }
+            if slot.zone == "metric-state":
+                slot_data = slot.data or {}
+                entry["state"] = str(slot_data.get("state", spec.state))
+            metrics.append(entry)
 
     # Fallback: parse from description
     if not metrics and spec.value:
@@ -1727,10 +2252,12 @@ def _parse_metrics(spec: ComposeSpec) -> list[dict[str, Any]]:
                     }
                 )
 
-    # Ensure all metrics have delta fields
+    # Ensure all metrics have delta fields (and a default empty state key so
+    # templates can check ``metric.state`` without Jinja2 StrictUndefined errors).
     for m in metrics:
         m.setdefault("delta", "")
         m.setdefault("delta_dir", "neutral")
+        m.setdefault("state", "")
 
     return metrics
 
@@ -1783,6 +2310,41 @@ def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) ->
         "chrome_rhythm": genome.get("rhythm_base", ""),
         "glyph_fill": genome.get("glyph_inner", ""),
         "light_mode": genome.get("light_mode"),
+        # Automata bifamily palettes (surfaced for cellular paradigm templates).
+        "family_blue_rim_stops": genome.get("family_blue_rim_stops", []),
+        "family_blue_pattern_cells": genome.get("family_blue_pattern_cells", []),
+        "family_blue_seam_mid": genome.get("family_blue_seam_mid", ""),
+        "family_blue_label_slab_fill": genome.get("family_blue_label_slab_fill", ""),
+        "family_blue_label_text": genome.get("family_blue_label_text", ""),
+        "family_blue_value_text": genome.get("family_blue_value_text", ""),
+        "family_blue_canvas_top": genome.get("family_blue_canvas_top", ""),
+        "family_blue_canvas_bottom": genome.get("family_blue_canvas_bottom", ""),
+        "family_purple_rim_stops": genome.get("family_purple_rim_stops", []),
+        "family_purple_pattern_cells": genome.get("family_purple_pattern_cells", []),
+        "family_purple_seam_mid": genome.get("family_purple_seam_mid", ""),
+        "family_purple_label_slab_fill": genome.get("family_purple_label_slab_fill", ""),
+        "family_purple_label_text": genome.get("family_purple_label_text", ""),
+        "family_purple_value_text": genome.get("family_purple_value_text", ""),
+        "family_purple_canvas_top": genome.get("family_purple_canvas_top", ""),
+        "family_purple_canvas_bottom": genome.get("family_purple_canvas_bottom", ""),
+        "bifamily_bridge_teal_mid": genome.get("bifamily_bridge_teal_mid", ""),
+        "bifamily_bridge_teal_deep": genome.get("bifamily_bridge_teal_deep", ""),
+        "bifamily_bridge_amethyst_core": genome.get("bifamily_bridge_amethyst_core", ""),
+        "bifamily_bridge_amethyst_bright": genome.get("bifamily_bridge_amethyst_bright", ""),
+        "cellular_pulse_base_duration": genome.get("cellular_pulse_base_duration", "6s"),
+        "cellular_pulse_fast_duration": genome.get("cellular_pulse_fast_duration", "3s"),
+        "cellular_pattern_opacity": genome.get("cellular_pattern_opacity", "0.78"),
+        # State palette (consumed by templates/partials/state-signal-cascade.j2).
+        "state_passing_core": genome.get("state_passing_core", ""),
+        "state_passing_bright": genome.get("state_passing_bright", ""),
+        "state_warning_core": genome.get("state_warning_core", ""),
+        "state_warning_bright": genome.get("state_warning_bright", ""),
+        "state_critical_core": genome.get("state_critical_core", ""),
+        "state_critical_bright": genome.get("state_critical_bright", ""),
+        "state_building_core": genome.get("state_building_core", ""),
+        "state_building_bright": genome.get("state_building_bright", ""),
+        "state_offline_core": genome.get("state_offline_core", ""),
+        "state_offline_bright": genome.get("state_offline_bright", ""),
     }
 
 

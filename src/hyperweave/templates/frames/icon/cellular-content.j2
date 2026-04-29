@@ -1,0 +1,44 @@
+{# Cellular icon content: 64x64 viewBox, 4x4 monofamily cell grid +
+   inner frame with family-colored stroke + centered glyph.
+
+   Family resolution: ComposeSpec.family or cellular paradigm default (blue).
+   Bifamily caller falls back to blue for icon (monofamily invariant). #}
+{% set fam = "purple" if family == "purple" else "blue" %}
+{% if fam == "blue" %}
+  {% set pattern_trio = family_blue_pattern_cells %}
+  {% set frame_stroke = family_blue_seam_mid %}
+  {% set alt_color = family_blue_seam_mid %}
+{% else %}
+  {% set pattern_trio = family_purple_pattern_cells %}
+  {% set frame_stroke = family_purple_seam_mid %}
+  {% set alt_color = family_purple_seam_mid %}
+{% endif %}
+
+{# Void ground #}
+<rect width="64" height="64" fill="{{ surface_0 | default('#04060A') }}"/>
+
+{# 4x4 cell grid (16px cells) with phi-offset pulse classes. Color picked from
+   the family's 3-color trio via (col+row) parity. #}
+{% set class_pool = ["si1", "si2", "si3", "sid", "sid"] %}
+<g opacity="0.7">
+{% for row in range(4) %}
+  {% for col in range(4) %}
+  {% set cidx = (row * 4 + col) % 3 %}
+  {% set clsidx = (row * 4 + col) % 5 %}
+  <rect x="{{ col * 16 }}" y="{{ row * 16 }}" width="16" height="16" fill="{{ pattern_trio[cidx] }}" class="{{ class_pool[clsidx] }}"/>
+  {% endfor %}
+{% endfor %}
+</g>
+
+{# Inner canvas — reduces pattern visibility to a frame-edge effect. #}
+<rect x="8" y="8" width="48" height="48" fill="{{ surface_0 | default('#04060A') }}" opacity="0.78"/>
+<rect x="8" y="8" width="48" height="48" fill="none" stroke="{{ frame_stroke }}" stroke-width="0.5" opacity="0.3"/>
+
+{# Glyph — centered at (20,20) with 24x24 size (inside 48x48 canvas). #}
+{% if glyph_path %}
+<g transform="translate(20,20)" fill="{{ alt_color }}" opacity="1">
+  <svg width="24" height="24" viewBox="{{ glyph_viewbox }}">
+    <path d="{{ glyph_path }}" fill="{{ alt_color }}"/>
+  </svg>
+</g>
+{% endif %}

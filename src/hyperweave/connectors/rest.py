@@ -49,16 +49,30 @@ def _require_slash(identifier: str, label: str) -> None:
 
 
 async def _pypi_extract(identifier: str, metric: str) -> Any:
+    # pypi.org/pypi/{pkg}/json hasn't carried download counts since 2016 —
+    # ``info.downloads.last_month`` returns -1 for every package. The
+    # downloads metric is routed through pypistats.org, the same source
+    # the official ``pypistats`` CLI uses. Provider name "pypistats"
+    # gives it its own circuit-breaker so a pypistats outage cannot trip
+    # the version/license/python_requires path that still hits pypi.org.
+    if metric == "downloads":
+        stats = await fetch_json(
+            f"https://pypistats.org/api/packages/{identifier}/recent",
+            provider="pypistats",
+        )
+        bucket: dict[str, Any] = stats.get("data", {})
+        return int(bucket.get("last_month", 0))
+
     data = await fetch_json(f"https://pypi.org/pypi/{identifier}/json", provider="pypi")
     info: dict[str, Any] = data.get("info", {})
     extractors: dict[str, Any] = {
         "version": info.get("version"),
-        "downloads": info.get("downloads", {}).get("last_month", -1),
         "license": info.get("license", "Unknown"),
         "python_requires": info.get("requires_python", "Unknown"),
     }
     if metric not in extractors:
-        raise ValueError(f"Unknown PyPI metric {metric!r}. Available: {', '.join(extractors)}")
+        available = [*extractors, "downloads"]
+        raise ValueError(f"Unknown PyPI metric {metric!r}. Available: {', '.join(available)}")
     return extractors[metric]
 
 

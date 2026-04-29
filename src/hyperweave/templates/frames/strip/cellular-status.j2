@@ -1,0 +1,19 @@
+{# Cellular strip status indicator: 14px frame + 6px inner bit.
+
+   The outer strip.svg.j2 transform anchors the indicator at
+   (status_x, strip_h/2). The frame's TOP-LEFT corner sits at the transform
+   origin (x=0, y=-size/2) so the 14x14 frame is vertically centered on the
+   strip's midline. Horizontal centering within the status_zone slot is
+   achieved by the resolver — pre_gap == post_gap (16px each for cellular,
+   producing a 46px zone with the indicator centered).
+
+   ACTIVE text subtitle removed: state is already encoded by the frame's
+   outline color (state_passing_core → green, etc.), so a redundant ACTIVE
+   label added noise without information. #}
+{% set inner_size = 6 %}
+<rect class="hw-state-frame" fill="none" stroke="var(--hw-state-signal, var(--dna-signal))" stroke-width="1"
+      x="0" y="{{ -(indicator_size // 2) }}"
+      width="{{ indicator_size }}" height="{{ indicator_size }}" opacity="0.65"/>
+<rect class="hw-bit" fill="var(--hw-state-signal, var(--dna-signal))"
+      x="4" y="{{ -(indicator_size // 2) + 4 }}"
+      width="{{ inner_size }}" height="{{ inner_size }}"/>

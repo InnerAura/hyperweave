@@ -331,7 +331,6 @@ class TestPyPIProvider:
                 "version": "0.6.3",
                 "license": "MIT",
                 "requires_python": ">=3.9",
-                "downloads": {"last_month": -1},
             }
         }
 
@@ -361,6 +360,47 @@ class TestPyPIProvider:
 
             result = await fetch_metric("readmeai", "python_requires")
             assert result["value"] == ">=3.9"
+
+    @pytest.mark.asyncio
+    async def test_downloads_metric_routes_through_pypistats(self) -> None:
+        # pypi.org/pypi/{pkg}/json hasn't carried download counts since 2016;
+        # the connector must hit pypistats.org/api/packages/{pkg}/recent and
+        # surface ``data.last_month`` as an integer.
+        pypistats_payload = {
+            "data": {"last_day": 12345, "last_week": 78901, "last_month": 234567},
+            "package": "readmeai",
+            "type": "recent_downloads",
+        }
+
+        captured_urls: list[str] = []
+
+        async def fake_fetch_json(url: str, **_kwargs: Any) -> Any:
+            captured_urls.append(url)
+            return pypistats_payload
+
+        with patch("hyperweave.connectors.rest.fetch_json", side_effect=fake_fetch_json):
+            from hyperweave.connectors.rest import pypi_fetch_metric as fetch_metric
+
+            result = await fetch_metric("readmeai", "downloads")
+
+        assert result["value"] == 234567
+        assert result["provider"] == "pypi"
+        assert captured_urls == ["https://pypistats.org/api/packages/readmeai/recent"]
+
+    @pytest.mark.asyncio
+    async def test_downloads_metric_zero_when_pypistats_payload_empty(self) -> None:
+        # pypistats may return ``data: {}`` for packages with no recorded
+        # history. The connector must coerce missing values to 0 instead
+        # of leaking ``None``/``-1`` into downstream formatters.
+        with patch(
+            "hyperweave.connectors.rest.fetch_json",
+            new_callable=AsyncMock,
+            return_value={"data": {}, "package": "ghost", "type": "recent_downloads"},
+        ):
+            from hyperweave.connectors.rest import pypi_fetch_metric as fetch_metric
+
+            result = await fetch_metric("ghost", "downloads")
+            assert result["value"] == 0
 
 
 # =========================================================================
@@ -1067,7 +1107,9 @@ class TestFetchGraphQL:
             mock_client.return_value = instance
             from hyperweave.connectors.base import fetch_graphql
 
-            breaker = get_breaker("github")
+            # Three breaker domains exist post-v0.2.11 (core / search / graphql);
+            # GraphQL traffic isolates from search-API rate-limit storms.
+            breaker = get_breaker("github-graphql")
             with pytest.raises(ConnectorError):
                 await fetch_graphql(query="{ viewer { login } }")
             assert breaker._failure_count == 1
@@ -1085,7 +1127,7 @@ class TestFetchGraphQL:
     @pytest.mark.asyncio
     async def test_open_breaker_raises_without_posting(self) -> None:
         """When breaker is already OPEN, the call should fail fast with no HTTP attempt."""
-        breaker = get_breaker("github")
+        breaker = get_breaker("github-graphql")
         breaker._state = CircuitState.OPEN
         breaker._last_failure_time = time.monotonic()
 

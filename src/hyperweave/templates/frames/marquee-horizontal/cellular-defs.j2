@@ -1,0 +1,13 @@
+{# Cellular marquee-horizontal defs.
+
+   The shared marquee-horizontal.svg.j2 outer defs block already provides
+   the uid-scroll-clip, uid-fade-l, uid-fade-r gradients using surface_hex
+   (= #04060A for automata). Cellular only needs font-face for Orbitron
+   and (optional) pattern-pulse classes. No cellular flanking cells per
+   NOTES.md no-edge-cell-slabbing rule — the marquee's rhythm IS the
+   tspan color alternation. #}
+<style>{{ font_faces | safe }}
+@media(prefers-reduced-motion:reduce){
+  [data-hw-zone="scroll-track"]{animation:none!important}
+}
+</style>

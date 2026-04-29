@@ -181,21 +181,53 @@ async def test_fetch_contribution_data_uses_cache(
 
 
 @pytest.mark.asyncio
-async def test_fetch_contribution_data_graceful_on_fetch_failure(
+async def test_fetch_contribution_data_returns_sentinel_on_connector_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Network failure → returns zeros, never raises."""
+    """Network failure surfaces as the ``_FETCH_FAILED`` sentinel, not zeros.
+
+    The old contract returned a zero-filled dict on failure (the silent-zero
+    anti-pattern fixed in v0.2.11). The new contract: typed connector errors
+    yield the module-level sentinel so callers' ``_stale_fields`` accumulation
+    sees the failure and short-caches the aggregate. Bugs (RuntimeError,
+    ValueError) propagate uncaught — only ``ConnectorError`` /
+    ``CircuitOpenError`` are coerced to the sentinel.
+    """
+    from hyperweave.connectors import cache as cache_module
+    from hyperweave.connectors import github as github_module
+    from hyperweave.connectors.base import ConnectorError
+
+    cache_module.get_cache().clear()
+
+    async def failing_fetch_text(url: str, provider: str = "", headers: dict[str, str] | None = None) -> str:
+        raise ConnectorError("network down")
+
+    monkeypatch.setattr(github_module, "fetch_text", failing_fetch_text)
+
+    result = await _fetch_contribution_data("eli64s")
+    assert result is github_module._FETCH_FAILED
+
+
+@pytest.mark.asyncio
+async def test_fetch_contribution_data_propagates_programming_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A ``RuntimeError`` (programming bug) must propagate, not be sentinelized.
+
+    The narrow ``except (ConnectorError, CircuitOpenError)`` clause exists so
+    bugs don't masquerade as upstream failures. Without this guard, a parser
+    bug would be indistinguishable from a network blip and silently produce
+    an em-dash where a real value should be.
+    """
     from hyperweave.connectors import cache as cache_module
     from hyperweave.connectors import github as github_module
 
     cache_module.get_cache().clear()
 
-    async def failing_fetch_text(url: str, provider: str = "", headers: dict[str, str] | None = None) -> str:
-        raise RuntimeError("network down")
+    async def buggy_fetch_text(url: str, provider: str = "", headers: dict[str, str] | None = None) -> str:
+        raise RuntimeError("downstream parser bug")
 
-    monkeypatch.setattr(github_module, "fetch_text", failing_fetch_text)
+    monkeypatch.setattr(github_module, "fetch_text", buggy_fetch_text)
 
-    result = await _fetch_contribution_data("eli64s")
-    assert result["contrib_total"] == 0
-    assert result["streak_days"] == 0
-    assert result["heatmap_grid"] == []
+    with pytest.raises(RuntimeError, match="downstream parser bug"):
+        await _fetch_contribution_data("eli64s")

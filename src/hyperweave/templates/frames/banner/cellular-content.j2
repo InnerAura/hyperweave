@@ -1,0 +1,72 @@
+{# Cellular banner: bifamily flank columns + data panel + kinetic title
+   with phantom-cursor + scanline. Matches specimen cellular-automata-hero-banner-v2.
+
+   Canvas is locked to 800×220 for both variants via paradigm config
+   (ParadigmBannerConfig.width_default = width_compact = 800; same for
+   height = 220). Font sizes are therefore specimen-fixed — NOT adaptive
+   on variant. This is a deliberate paradigm decision: the cellular hero
+   banner specimen IS dense at 800×220, not a wide canvas with overflow. #}
+{% set cell_size = 22 %}
+{% set flank_cols = 3 %}
+{% set flank_w = flank_cols * cell_size %}
+{% set n_rows = (bh + cell_size - 1) // cell_size %}
+{% set panel_x = flank_w %}
+{% set panel_w = bw - 2 * flank_w %}
+{% set hero_fs = 52 %}
+{% set sub_fs = 22 %}
+{% set label_fs = 7 %}
+
+{# Void ground #}
+<rect width="{{ bw }}" height="{{ bh }}" fill="{{ surface_0 | default('#04060A') }}"/>
+
+{# Left teal flank #}
+{% set blue_trio = family_blue_pattern_cells %}
+{% set blue_classes = ["cb1", "cbd", "cb3", "cb4", "cbd", "cbf", "cb2", "cbd"] %}
+<g opacity="0.6">
+{% for col in range(flank_cols) %}
+  {% for row in range(n_rows) %}
+  {% set cidx = (col + row) % 3 %}
+  {% set clsidx = (col * n_rows + row) % 8 %}
+  <rect x="{{ col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ blue_trio[cidx] }}" class="{{ blue_classes[clsidx] }}"/>
+  {% endfor %}
+{% endfor %}
+</g>
+
+{# Right amethyst flank #}
+{% set purple_trio = family_purple_pattern_cells %}
+{% set purple_classes = ["cb2", "cbd", "cbf", "cb3", "cb1", "cb4", "cbd", "cb2"] %}
+<g opacity="0.6">
+{% for col in range(flank_cols) %}
+  {% for row in range(n_rows) %}
+  {% set cidx = (col + row) % 3 %}
+  {% set clsidx = (col * n_rows + row) % 8 %}
+  <rect x="{{ bw - flank_w + col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ purple_trio[cidx] }}" class="{{ purple_classes[clsidx] }}"/>
+  {% endfor %}
+{% endfor %}
+</g>
+
+{# Data panel — interior between flanks #}
+<rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ bh - 12 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.93"/>
+<rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ bh - 12 }}" fill="none" stroke="{{ border_tint | default('#1E849A') }}" stroke-width="0.5" opacity="0.2"/>
+
+{# Horizontal scan line inside panel #}
+<g clip-path="url(#{{ uid }}-panel-clip)">
+  <rect class="hb-scan" x="{{ panel_x }}" y="0" width="{{ panel_w }}" height="2" fill="url(#{{ uid }}-tglow)"/>
+</g>
+
+{# Top-left header label #}
+<text x="{{ panel_x + 20 }}" y="30" font-family="'JetBrains Mono',monospace" font-size="{{ label_fs }}" fill="{{ brand_text | default('#5eead4') }}" letter-spacing="0.25em" opacity="0.55" class="hb-tag">INNERAURA LABS</text>
+<rect x="{{ panel_x + 20 }}" y="36" width="50" height="1.5" fill="{{ brand_text | default('#5eead4') }}" opacity="0.45" class="hb-line"/>
+
+{# Kinetic hero title (Orbitron 900, wipe-revealed).
+   Spec positions title at y=95 on 800×220 canvas. #}
+{% set title_y = 95 %}
+<text class="hb-title" x="{{ panel_x + 20 }}" y="{{ title_y }}" font-family="'Orbitron',sans-serif" font-size="{{ hero_fs }}" font-weight="900" fill="{{ ink_bright | default('#ededed') }}" letter-spacing="0.08em">{{ banner_title | default('HYPERWEAVE') }}</text>
+{# Phantom-text cursor — invisible copy of title ensures cursor sits at
+   the true right-edge regardless of font-metric drift. #}
+<text aria-hidden="true" class="hb-cursor-text" x="{{ panel_x + 20 }}" y="{{ title_y }}" font-family="'Orbitron',sans-serif" font-size="{{ hero_fs }}" font-weight="900" letter-spacing="0.08em"><tspan fill="transparent">{{ banner_title | default('HYPERWEAVE') }}</tspan><tspan class="hb-cursor" fill="{{ brand_text | default('#5eead4') }}" dx="0.18em" font-weight="400">|</tspan></text>
+
+{# Subtitle (Chakra Petch, info-layer teal) at y=128 per spec. #}
+{% if banner_subtitle and banner_subtitle != "subtitle" %}
+<text class="hb-sub" x="{{ panel_x + 20 }}" y="128" font-family="'Chakra Petch',sans-serif" font-size="{{ sub_fs }}" font-weight="600" fill="{{ brand_text | default('#5eead4') }}" letter-spacing="0.15em" opacity="0.82">{{ banner_subtitle | upper }}</text>
+{% endif %}

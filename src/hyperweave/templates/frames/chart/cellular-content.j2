@@ -1,0 +1,166 @@
+{# Cellular star chart — 900x600 instrument-grade, bifamily substrate.
+
+   Spec: cellular-automata-star-chart-xl.svg. Fragments (area/polyline/
+   markers/milestones/axes/y_labels/x_labels) come from chart_engine as
+   Python DICTS, not SVG strings — rendered via components/chart-*.svg.j2
+   partials (same architecture as brutalist-content.j2). Coordinates in
+   the fragments are already absolute (global SVG space), so there's NO
+   outer viewport translate — just emit them in place. #}
+
+{% set cw = width | default(900) %}
+{% set ch = height | default(600) %}
+{% set cell_size = 22 %}
+{% set flank_cols = 3 %}
+{% set flank_w = flank_cols * cell_size %}
+{% set n_rows = (ch + cell_size - 1) // cell_size %}
+{% set panel_x = flank_w %}
+{% set panel_w = cw - 2 * flank_w %}
+{% set vx = chart_viewport_x | default(130) %}
+{% set vy = chart_viewport_y | default(140) %}
+{% set vw = chart_viewport_w | default(640) %}
+{% set vh = chart_viewport_h | default(340) %}
+
+<g clip-path="url(#{{ uid }}-clip)">
+  {# Void ground #}
+  <rect width="{{ cw }}" height="{{ ch }}" fill="{{ surface_0 | default('#04060A') }}"/>
+
+  {# Left teal flank — 3 x n_rows bifamily substrate #}
+  {% set blue_trio = family_blue_pattern_cells %}
+  {% set blue_classes = ["cc1", "ccd", "cc3", "cc4", "ccd", "ccf", "cc2", "ccd", "cc1", "cc2", "cc3", "cc4"] %}
+  <g opacity="0.65">
+  {% for col in range(flank_cols) %}
+    {% for row in range(n_rows) %}
+    {% set cidx = (col + row) % 3 %}
+    {% set clsidx = (col * n_rows + row) % 12 %}
+    <rect x="{{ col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ blue_trio[cidx] }}" class="{{ blue_classes[clsidx] }}"/>
+    {% endfor %}
+  {% endfor %}
+  </g>
+
+  {# Right amethyst flank #}
+  {% set purple_trio = family_purple_pattern_cells %}
+  {% set purple_classes = ["cc2", "ccd", "ccf", "cc3", "cc1", "cc4", "ccd", "cc2", "ccf", "cc3", "cc1", "ccd"] %}
+  <g opacity="0.65">
+  {% for col in range(flank_cols) %}
+    {% for row in range(n_rows) %}
+    {% set cidx = (col + row) % 3 %}
+    {% set clsidx = (col * n_rows + row) % 12 %}
+    <rect x="{{ cw - flank_w + col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ purple_trio[cidx] }}" class="{{ purple_classes[clsidx] }}"/>
+    {% endfor %}
+  {% endfor %}
+  </g>
+
+  {# Data panel — 768x588 between flanks #}
+  <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ ch - 12 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.92"/>
+  <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ ch - 12 }}" fill="none" stroke="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.25"/>
+</g>
+
+{# HEADER — stacked: brand, title, accent rule, repo slug, hairline. #}
+<g data-hw-zone="header">
+  <text x="86" y="34" class="{{ uid }}-title-sub">INNERAURA LABS</text>
+  <text x="86" y="72" class="{{ uid }}-title-main">STAR HISTORY</text>
+  <rect x="86" y="82" width="62" height="3" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" opacity="0.6"/>
+  <text x="86" y="108" class="{{ uid }}-hdr-user">{{ chart_repo | default('repo') }}</text>
+  <line x1="86" y1="122" x2="814" y2="122" stroke="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.18"/>
+</g>
+
+{# HERO — total stars top-right. #}
+<g data-hw-zone="hero">
+  <text x="820" y="78" class="{{ uid }}-hero-value" text-anchor="end">{{ chart_current_stars | default('--') }}</text>
+  <text x="820" y="102" class="{{ uid }}-hero-label" text-anchor="end">TOTAL STARS</text>
+</g>
+
+{# CONWAY'S GLIDER — cellular-automaton lineage marker. #}
+<g data-hw-zone="glider" transform="translate(640, 26)" opacity="0.32">
+  <rect x="8"  y="0"  width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="16" y="8"  width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="0"  y="16" width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="8"  y="16" width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="16" y="16" width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
+</g>
+
+{# CHART — fragments emitted in absolute SVG coords (no outer translate).
+   Renders via the shared components/chart-*.svg.j2 partials. #}
+{% set _purple_furniture = family_purple_pattern_cells[0] | default('#6B3B8A') %}
+{% set _teal_furniture = family_blue_pattern_cells[0] | default('#1E849A') %}
+{% set _baseline_y = vy + vh %}
+<g data-hw-zone="chart">
+  {# Y-axis labels — the "0" baseline is drawn in the purple furniture tone
+     so the zero line reads as a family boundary (blue data sits above a
+     purple floor), not just another gridline. Non-zero labels inherit the
+     teal axis class from cellular-defs.j2. #}
+  {% for label in chart_y_labels %}
+  {% if label.text == "0" %}
+  <text x="{{ vx - 12 }}" y="{{ label.y + 4 }}" text-anchor="end" font-size="11" font-weight="600" fill="{{ _purple_furniture }}" opacity="0.78">{{ label.text }}</text>
+  {% else %}
+  <text class="{{ uid }}-axis-y" x="{{ vx - 12 }}" y="{{ label.y + 4 }}" text-anchor="end">{{ label.text }}</text>
+  {% endif %}
+  {% endfor %}
+
+  {# Horizontal gridlines — baseline (y == vy+vh) gets the purple furniture
+     tone at 1px/0.3 opacity to echo the zero label; upper gridlines keep
+     the faint teal hairline from .hw-chart-gridline. Inline emission here
+     instead of the shared partial so cellular can differentiate the
+     baseline without touching the partial's single-line contract. #}
+  {%- for gl in chart_gridlines %}
+    {%- if gl.y1 == _baseline_y %}
+  <line x1="{{ gl.x1 }}" y1="{{ gl.y1 }}" x2="{{ gl.x2 }}" y2="{{ gl.y2 }}" stroke="{{ _purple_furniture }}" stroke-width="1" opacity="0.3" fill="none"/>
+    {%- else %}
+  <line x1="{{ gl.x1 }}" y1="{{ gl.y1 }}" x2="{{ gl.x2 }}" y2="{{ gl.y2 }}" stroke="{{ _teal_furniture }}" stroke-width="0.5" opacity="0.1" fill="none"/>
+    {%- endif %}
+  {%- endfor %}
+
+  {# Area fill (teal→void fade) #}
+  {%- if chart_area %}
+    {%- include "components/chart-area.svg.j2" %}
+  {%- endif %}
+
+  {# Polyline (2.5px angular) #}
+  {%- if chart_polyline %}
+    {%- include "components/chart-polyline.svg.j2" %}
+  {%- endif %}
+
+  {# Data markers (square + endpoint pulse) #}
+  <g data-hw-zone="markers">
+  {%- for m in chart_markers %}
+    {%- set partial = 'endpoint-' ~ m.shape if m.is_endpoint else m.shape %}
+    {%- include "components/chart-markers/" ~ partial ~ ".svg.j2" %}
+  {%- endfor %}
+  </g>
+
+  {# Milestone markers (1K/2K dashed verticals + labels) #}
+  <g data-hw-zone="milestones">
+  {%- for ms in chart_milestones %}
+    {%- include "components/chart-milestone.svg.j2" %}
+  {%- endfor %}
+  </g>
+
+  {# Axes rails #}
+  {%- for ax in chart_axes %}
+    {%- include "components/chart-axes.svg.j2" %}
+  {%- endfor %}
+
+  {# Empty-state overlay (fresh repo / upstream failure) #}
+  {%- if chart_empty_state %}
+    {%- include "components/chart-empty-state.svg.j2" %}
+  {%- endif %}
+</g>
+
+{# X-axis — year labels from chart_engine #}
+<g data-hw-zone="x-axis">
+  {% for label in chart_x_labels %}
+  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ vy + vh + 28 }}" text-anchor="{{ label.anchor | default('middle') }}">{{ label.text }}</text>
+  {% endfor %}
+</g>
+
+{# FOOTER — date range · cellular matrix version · brand namespace.
+   Left text prefers the data-derived date range; falls back to repo slug
+   when raw_points is empty (stale/empty states). Middle uses the purple
+   furniture tone (not pennant seam_mid) so it matches production's muted
+   label color. Right is the canonical namespace "HYPERWEAVE::ABYSSAL". #}
+<g data-hw-zone="footer" transform="translate(130, {{ ch - 52 }})">
+  <line x1="0" y1="0" x2="640" y2="0" stroke="{{ _teal_furniture }}" stroke-width="0.5" opacity="0.2"/>
+  <text x="0" y="20" class="{{ uid }}-foot">{{ chart_date_range | default(chart_repo | default('')) }}</text>
+  <text x="320" y="20" class="{{ uid }}-foot" text-anchor="middle" fill="{{ _purple_furniture }}" letter-spacing="0.14em" opacity="0.85" font-weight="600">CELLULAR-MATRIX · 0.3.0</text>
+  <text x="640" y="20" class="{{ uid }}-foot" text-anchor="end" fill="{{ _teal_furniture }}" letter-spacing="0.15em" opacity="0.7" font-weight="600">HYPERWEAVE::ABYSSAL</text>
+</g>

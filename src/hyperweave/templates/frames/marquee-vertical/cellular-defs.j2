@@ -1,0 +1,14 @@
+{# Cellular vertical-marquee defs.
+
+   The shared marquee-vertical.svg.j2 outer defs block provides the
+   uid-fade-top, uid-fade-bot, uid-scroll-clip gradients using surface_hex
+   (= #04060A for automata). Cellular only needs font-face declarations for
+   any custom fonts used in the header band, plus a reduced-motion gate
+   for the scroll track (matching the horizontal cellular pattern). No
+   cellular flanking cells per the no-edge-cell-slabbing rule — the
+   marquee's rhythm IS the row-level palette alternation. #}
+<style>{{ font_faces | safe }}
+@media(prefers-reduced-motion:reduce){
+  [data-hw-zone="scroll-track"]{animation:none!important}
+}
+</style>

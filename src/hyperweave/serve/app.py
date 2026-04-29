@@ -60,6 +60,7 @@ class ComposeRequest(BaseModel):
     regime: str = "normal"
     variant: str = "default"
     shape: str = ""
+    family: str = ""
     metadata_tier: int = 3
     divider_variant: str = "zeropoint"
     direction: str = "ltr"
@@ -85,6 +86,7 @@ async def compose_badge_url(
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
     variant: Annotated[str, Query()] = "default",
+    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Compose a badge: /v1/badge/{title}/{value}/{genome}.{motion}"""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -102,6 +104,7 @@ async def compose_badge_url(
         glyph_mode=glyph_mode,
         regime=regime,
         variant=variant,
+        family=family,
     )
     return _compose_and_respond(spec, request)
 
@@ -122,6 +125,7 @@ async def compose_strip_url(
     state: Annotated[str, Query()] = "active",
     variant: Annotated[str, Query()] = "default",
     regime: Annotated[str, Query()] = "normal",
+    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Compose a strip: /v1/strip/{title}/{genome}.{motion}?value=&live="""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -146,6 +150,7 @@ async def compose_strip_url(
         glyph_mode=glyph_mode,
         variant=variant,
         regime=regime,
+        family=family,
     )
 
     if live:
@@ -169,6 +174,7 @@ async def compose_banner_url(
     state: Annotated[str, Query()] = "active",
     variant: Annotated[str, Query()] = "default",
     regime: Annotated[str, Query()] = "normal",
+    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Compose a banner: /v1/banner/{title}/{genome}.{motion}?subtitle="""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -186,6 +192,7 @@ async def compose_banner_url(
         state=state,
         variant=variant,
         regime=regime,
+        family=family,
     )
     return _compose_and_respond(spec, request)
 
@@ -203,6 +210,7 @@ async def compose_icon_url(
     variant: Annotated[str, Query()] = "default",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
+    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Compose an icon: /v1/icon/{glyph}/{genome}.{motion}?shape=circle"""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -220,6 +228,7 @@ async def compose_icon_url(
         variant=variant,
         state=state,
         regime=regime,
+        family=family,
     )
     return _compose_and_respond(spec, request)
 
@@ -232,6 +241,7 @@ async def compose_divider_url(
     request: Request,
     variant: str,
     genome_motion: str,
+    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Compose a divider: /v1/divider/{variant}/{genome}.{motion}"""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -243,6 +253,7 @@ async def compose_divider_url(
         genome_id=genome,
         motion=motion,
         divider_variant=variant,
+        family=family,
     )
     return _compose_and_respond(spec, request)
 
@@ -261,6 +272,7 @@ async def compose_marquee_url(
     speeds: Annotated[str, Query()] = "",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
+    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Compose a marquee: /v1/marquee/{title}/{genome}.{motion}"""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -293,6 +305,7 @@ async def compose_marquee_url(
         marquee_speeds=parsed_speeds,
         state=state,
         regime=regime,
+        family=family,
     )
     return _compose_and_respond(spec, request)
 
@@ -356,10 +369,11 @@ async def compose_live_badge(
             },
         )
     except Exception as exc:
+        status_code = _classify_compose_exception(exc)
         return Response(
-            content=_error_badge(str(exc)),
+            content=_error_badge(str(exc), status_code=status_code),
             media_type="image/svg+xml",
-            status_code=500,
+            status_code=status_code,
             headers={"Cache-Control": "max-age=60"},
         )
 
@@ -381,6 +395,7 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         regime=req.regime,
         variant=req.variant,
         shape=req.shape,
+        family=req.family,
         metadata_tier=req.metadata_tier,
         divider_variant=req.divider_variant,
         marquee_direction=req.direction,
@@ -644,7 +659,9 @@ async def serve_specimen(slug: str) -> Response:
     rel_path = registry.get(slug)
     if not rel_path:
         return Response(
-            content=_error_badge(f"Specimen '{slug}' not found"), media_type="image/svg+xml", status_code=404
+            content=_error_badge(f"Specimen '{slug}' not found", status_code=404),
+            media_type="image/svg+xml",
+            status_code=404,
         )
 
     import pathlib
@@ -653,7 +670,9 @@ async def serve_specimen(slug: str) -> Response:
     svg_path = specs_dir / rel_path
     if not svg_path.exists():
         return Response(
-            content=_error_badge(f"File not found: {rel_path}"), media_type="image/svg+xml", status_code=404
+            content=_error_badge(f"File not found: {rel_path}", status_code=404),
+            media_type="image/svg+xml",
+            status_code=404,
         )
 
     from hyperweave.config.settings import get_settings
@@ -834,10 +853,11 @@ def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
             },
         )
     except Exception as exc:
+        status_code = _classify_compose_exception(exc)
         return Response(
-            content=_error_badge(str(exc)),
+            content=_error_badge(str(exc), status_code=status_code),
             media_type="image/svg+xml",
-            status_code=500,
+            status_code=status_code,
             headers={"Cache-Control": "max-age=60"},
         )
 
@@ -873,10 +893,11 @@ def _compose_and_respond_with_ttl(spec: Any, request: Request | None, ttl: int) 
             },
         )
     except Exception as exc:
+        status_code = _classify_compose_exception(exc)
         return Response(
-            content=_error_badge(str(exc)),
+            content=_error_badge(str(exc), status_code=status_code),
             media_type="image/svg+xml",
-            status_code=500,
+            status_code=status_code,
             headers={"Cache-Control": "max-age=60"},
         )
 
@@ -900,8 +921,50 @@ def _load_specimens_registry() -> dict[str, str]:
     return _specimens_cache
 
 
-def _error_badge(message: str) -> str:
-    safe_msg = message[:80].replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+def _error_badge(message: str, status_code: int = 500) -> str:
+    """Render the universal SMPTE NO SIGNAL fallback SVG.
+
+    Routes through the same Jinja2 template pipeline as every composed
+    artifact (``render_template`` -> ``error-badge.svg.j2``). The status
+    code is embedded in the value slab (``ERR_404`` / ``ERR_422`` / ``ERR_500``);
+    the message goes into ``<title>``/``<desc>`` only. Each error badge gets
+    a stable per-message uid so two failures on the same README page don't
+    collide on gradient or clip-path IDs.
+    """
+    from hyperweave.render.fonts import load_font_face_css
     from hyperweave.render.templates import render_template
 
-    return render_template("error-badge.svg.j2", {"message": safe_msg})
+    truncated = (message or "compose failed")[:120]
+    uid = f"hw-err-{abs(hash(truncated)) % 100000:05d}"
+    font_faces = load_font_face_css(["chakra-petch", "orbitron"])
+    return render_template(
+        "error-badge.svg.j2",
+        {
+            "status_code": int(status_code),
+            "message": truncated,
+            "uid": uid,
+            "font_faces": font_faces,
+        },
+    )
+
+
+def _classify_compose_exception(exc: BaseException) -> int:
+    """Map a compose-pipeline exception to the HTTP status the API should return.
+
+    GenomeNotFoundError -> 404 (the URL named a genome the registry doesn't have).
+    Pydantic ``ValidationError`` -> 422 (a field value is structurally invalid).
+    Anything else -> 500 (unexpected failure -- template missing, render error, ...).
+    The caller passes the same status_code into ``_error_badge`` so the rendered
+    SVG and the HTTP envelope agree.
+    """
+    from hyperweave.compose.resolver import GenomeNotFoundError
+
+    if isinstance(exc, GenomeNotFoundError):
+        return 404
+    try:
+        from pydantic import ValidationError
+    except ImportError:
+        return 500
+    if isinstance(exc, ValidationError):
+        return 422
+    return 500

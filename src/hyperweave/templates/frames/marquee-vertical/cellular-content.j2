@@ -1,0 +1,44 @@
+{# Cellular vertical-marquee content — hairline-bridge bifamily chrome.
+
+   Spec vocabulary (extending cellular-automata-marquee-current.svg's
+   hairline language to the 90° axis): no frame box, no rivets, no LIVE
+   pulse. Just void ground + vertical edge hairlines (left teal, right
+   amethyst) + a bifamily-tspan header band + a horizontal hairline
+   divider below the header. The shared marquee-vertical.svg.j2 then
+   renders scroll rows whose dot/timestamp/label colors were already
+   alternated to teal/amethyst by _resolve_vertical for the bifamily
+   family. #}
+{% set teal_info = family_blue_seam_mid | default('#3A9FB8') %}
+{% set amethyst_info = family_purple_seam_mid | default('#A88AD4') %}
+
+{# Void ground — same #04060A as horizontal, sourced via surface_hex. #}
+<rect width="{{ vw }}" height="{{ vh }}" fill="{{ surface_hex | default('#04060A') }}"/>
+
+{# Left vertical hairline (teal). Anchored from the header top to the
+   bottom-accent zone so it doesn't intrude into the scroll-fade bands. #}
+<rect x="0" y="{{ si }}" width="0.5" height="{{ vh - si * 2 - bah }}"
+      fill="{{ teal_info }}" opacity="0.25"/>
+
+{# Right vertical hairline (amethyst) — mirrors the teal one across the
+   centerline so the bifamily reading is left-right symmetric. #}
+<rect x="{{ vw - 0.5 }}" y="{{ si }}" width="0.5" height="{{ vh - si * 2 - bah }}"
+      fill="{{ amethyst_info }}" opacity="0.25"/>
+
+{# Header band — bifamily-tspan title centered horizontally. The header
+   text uses Orbitron 9px to match the horizontal marquee's chrome
+   typography. tspan colors mirror the per-row palette for visual rhyme. #}
+<text x="{{ vw // 2 }}" y="{{ si + 18 }}" text-anchor="middle"
+      font-family="'Orbitron',sans-serif" font-size="9" font-weight="700"
+      letter-spacing="0.18em">
+  <tspan fill="{{ teal_info }}">LIVE</tspan>
+  <tspan dx="6" fill="#606878">·</tspan>
+  <tspan dx="6" fill="{{ amethyst_info }}">CELLULAR</tspan>
+</text>
+
+{# Horizontal hairline divider below the header — split-fill teal/amethyst
+   so the chromatic transition reads as a seam, not a stripe. Two 0.5px
+   bars meeting at vw//2 give the bifamily handoff inside a single line. #}
+<rect x="{{ si }}" y="{{ scroll_top - 0.25 }}" width="{{ (vw - si * 2) // 2 }}" height="0.5"
+      fill="{{ teal_info }}" opacity="0.4"/>
+<rect x="{{ vw // 2 }}" y="{{ scroll_top - 0.25 }}" width="{{ (vw - si * 2) // 2 }}" height="0.5"
+      fill="{{ amethyst_info }}" opacity="0.4"/>

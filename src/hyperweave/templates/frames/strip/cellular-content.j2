@@ -1,0 +1,52 @@
+{# Cellular strip frame: void canvas + bifamily flanking cells + content panel.
+
+   Flanking is bifamily-only (teal left, amethyst right). For monofamily
+   compositions (family=blue|purple), the strip resolver can set
+   flank_width=0 via a paradigm override; in this paradigm the default is
+   36px flanks when family=bifamily. Content panel spans the interior and
+   carries the identity + metric grid drawn by the outer strip.svg.j2. #}
+{% set bifamily = (family == "bifamily") and has_flanks %}
+
+<g clip-path="url(#{{ uid }}-clip)">
+  {# 1. Void ground #}
+  <rect width="{{ width }}" height="{{ strip_h }}" fill="{{ surface_0 | default('#04060A') }}"/>
+
+  {% if bifamily %}
+  {# 2. Left teal flank — 3 cols × (strip_h / flank_cell_size) rows of family_blue pattern cells.
+     Asymmetric phi offsets via cz1/cz2/cz3/cz4/czf/czd classes. #}
+  {% set fcs = flank_cell_size | default(12) %}
+  {% set n_rows = strip_h // fcs %}
+  {% set n_cols = (flank_width | default(36)) // fcs %}
+  {% set blue_trio = family_blue_pattern_cells %}
+  <g opacity="{{ cellular_pattern_opacity | default('0.7') }}">
+  {% for col in range(n_cols) %}
+    {% for row in range(n_rows) %}
+    {% set color_idx = (col + row * 2) % 3 %}
+    {% set class_idx = (col * 3 + row) % 5 %}
+    {% set classes = ["cz1", "cz2", "cz3", "cz4", "czf"] %}
+    <rect x="{{ col * fcs }}" y="{{ row * fcs }}" width="{{ fcs }}" height="{{ fcs }}" fill="{{ blue_trio[color_idx] }}" class="{{ classes[class_idx] }}"/>
+    {% endfor %}
+  {% endfor %}
+  </g>
+
+  {# 3. Right amethyst flank — mirror of left with family_purple palette. #}
+  {% set purple_trio = family_purple_pattern_cells %}
+  {% set right_flank_x = width - (flank_width | default(36)) %}
+  <g opacity="{{ cellular_pattern_opacity | default('0.7') }}">
+  {% for col in range(n_cols) %}
+    {% for row in range(n_rows) %}
+    {% set color_idx = (col + row * 2) % 3 %}
+    {% set class_idx = (col * 3 + row) % 5 %}
+    {% set classes = ["cz2", "cz3", "cz4", "cz1", "czf"] %}
+    <rect x="{{ right_flank_x + col * fcs }}" y="{{ row * fcs }}" width="{{ fcs }}" height="{{ fcs }}" fill="{{ purple_trio[color_idx] }}" class="{{ classes[class_idx] }}"/>
+    {% endfor %}
+  {% endfor %}
+  </g>
+  {% endif %}
+
+  {# 4. Content panel — interior between flanks #}
+  {% set panel_x = flank_width | default(0) if bifamily else 0 %}
+  {% set panel_w = width - (2 * (flank_width | default(0))) if bifamily else width %}
+  <rect x="{{ panel_x }}" y="2" width="{{ panel_w }}" height="{{ strip_h - 4 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.95"/>
+  <rect x="{{ panel_x }}" y="2" width="{{ panel_w }}" height="{{ strip_h - 4 }}" fill="none" stroke="{{ border_tint | default('var(--dna-border-tint)') }}" stroke-width="0.5" opacity="0.28"/>
+</g>

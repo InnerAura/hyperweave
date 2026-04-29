@@ -24,6 +24,13 @@ strip:
   label_font_family: JetBrains Mono
   divider_render_mode: class
   status_shape_rendering: crispEdges
+  # Cell-layout measurement params (default partials alias brutalist).
+  label_font_weight: 700
+  label_letter_spacing_em: 0.2
+  value_font_weight: 900
+  value_letter_spacing_em: -0.01
+  cell_pad: 20
+  cell_min_width: 106
 
 banner:
   hero_font_family: JetBrains Mono

@@ -1,0 +1,126 @@
+{# Cellular badge content — dynamic rim + pattern strip + slabs.
+
+   Geometry derives from the resolver-supplied width (measure_text-driven),
+   lp_w, sep_w_val, seam_w_val, ind_size. Pattern grid is 3 columns × 4 rows;
+   per-cell size scales from compact (4×4 at 4px pitch) to default (6×7 at
+   6px pitch). Family resolution: ComposeSpec.family or cellular paradigm's
+   frame_family_defaults.badge (= "blue").
+
+   State-mode badges (is_state_badge=True) render a ring+bit indicator on
+   the right; its fill is driven by the state-signal-cascade partial which
+   binds data-hw-status to --hw-state-signal / --hw-state-value. #}
+{% set fam = "purple" if family == "purple" else "blue" %}
+{% if fam == "blue" %}
+  {% set pattern_cells_trio = family_blue_pattern_cells %}
+  {% set label_slab_fill = family_blue_label_slab_fill %}
+  {% set label_text_fill = family_blue_label_text %}
+  {% set value_text_fill = family_blue_value_text %}
+  {% set top_highlight = family_blue_rim_stops[0].color %}
+{% else %}
+  {% set pattern_cells_trio = family_purple_pattern_cells %}
+  {% set label_slab_fill = family_purple_label_slab_fill %}
+  {% set label_text_fill = family_purple_label_text %}
+  {% set value_text_fill = family_purple_value_text %}
+  {% set top_highlight = family_purple_rim_stops[0].color %}
+{% endif %}
+{% set dark_lip = family_blue_rim_stops[-1].color if fam == "blue" else family_purple_rim_stops[-1].color %}
+
+{# Pattern grid geometry: 3 columns × 4 rows. Sizes compact ↔ default. #}
+{% set cell_w = 4 if compact else 6 %}
+{% set cell_h = 4 if compact else 7 %}
+{% set pattern_cols = 3 %}
+{% set pattern_rows = 4 %}
+{% set pattern_start_x = 2 %}
+{% set pattern_start_y = 2 %}
+
+{# Per-cell pulse class mapping (3×4 = 12 cells) — asymmetric phi offsets. #}
+{% set cell_class_grid = [
+  ["cz1","czd","cz3","czf"],
+  ["cz2","cz4","czd","cz1"],
+  ["czd","czf","cz2","czd"]
+] %}
+{% set cell_color_grid = [
+  [0,2,1,0],
+  [1,0,2,1],
+  [2,1,0,2]
+] %}
+
+<g clip-path="url(#{{ uid }}-clip)">
+  {# 1. Metallic rim — full viewBox, drop-shadow-lifted #}
+  <rect width="{{ width }}" height="{{ height }}" fill="url(#{{ uid }}-rim)" filter="url(#{{ uid }}-lift)"/>
+  {# 2. Dark lip — 1px inset stroke #}
+  <rect x="1" y="1" width="{{ width - 2 }}" height="{{ height - 2 }}" fill="none" stroke="{{ dark_lip }}" stroke-width="{{ 0.5 if compact else 0.7 }}"/>
+  {# 3. Inner canvas #}
+  <rect x="2" y="2" width="{{ width - 4 }}" height="{{ height - 4 }}" fill="{{ pattern_cells_trio[2] }}"/>
+  {# 4. Top highlight hairline (bright edge of rim) #}
+  <rect x="{{ pattern_cols * cell_w + 6 }}" y="2" width="{{ width - (pattern_cols * cell_w + 6) - 4 }}" height="1" fill="{{ top_highlight }}" opacity="0.22"/>
+  {# 5. Bottom ambient occlusion #}
+  <rect x="{{ pattern_cols * cell_w + 6 }}" y="{{ height - 2.5 }}" width="{{ width - (pattern_cols * cell_w + 6) - 4 }}" height="0.5" fill="{{ dark_lip }}" opacity="0.55"/>
+  {# 6. Label slab — family-colored deep fill. Starts at pattern_end (x=20)
+     with no gap: pattern_cols * cell_w + pattern_start_x = 3*6 + 2 = 20.
+     Earlier iterations used +4 which left a 2px dark canvas strip visible
+     on the left side that had no mirror on the right, producing asymmetric
+     gutters. Flush-to-pattern now matches production target. #}
+  <rect x="{{ pattern_cols * cell_w + 2 }}" y="2" width="{{ lp_w - (pattern_cols * cell_w + 2) }}" height="{{ height - 4 }}" fill="{{ label_slab_fill }}"/>
+  {# 7. Refined seam — 1px gradient + 2px shadow #}
+  <rect x="{{ lp_w }}" y="2" width="1" height="{{ height - 4 }}" fill="url(#{{ uid }}-seam)"/>
+  <rect x="{{ lp_w + 1 }}" y="2" width="{{ seam_w_val }}" height="{{ height - 4 }}" fill="#020308"/>
+  {# 8. Value slab — gradient canvas #}
+  <rect x="{{ lp_w + 1 + seam_w_val }}" y="2" width="{{ width - (lp_w + 1 + seam_w_val) - 2 }}" height="{{ height - 4 }}" fill="url(#{{ uid }}-vb)"/>
+  {# 9. Pattern strip — 3 × 4 living substrate on left edge #}
+  <g opacity="{{ cellular_pattern_opacity }}">
+  {% for col in range(pattern_cols) %}
+    {% for row in range(pattern_rows) %}
+    <rect x="{{ pattern_start_x + col * cell_w }}" y="{{ pattern_start_y + row * cell_h }}" width="{{ cell_w }}" height="{{ cell_h }}" fill="{{ pattern_cells_trio[cell_color_grid[col][row]] }}" class="{{ cell_class_grid[col][row] }}"/>
+    {% endfor %}
+  {% endfor %}
+  </g>
+</g>
+
+{# 10. Glyph — rebuilt inline from glyph_path + glyph_viewbox with
+      family-specific fill. The pre-baked glyph_svg has genome.glyph_inner
+      hardcoded (blue-family tint) and fixed dimensions that don't respect
+      the cellular paradigm's glyph_size override. Reconstructing here uses
+      the paradigm-driven glyph_render_size and picks fill from the family. #}
+{% set family_glyph_fill = family_blue_seam_mid if fam == "blue" else family_purple_seam_mid %}
+{% if has_glyph | default(false) and glyph_path %}
+<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y | default(3) }})">
+  <svg width="{{ glyph_render_size }}" height="{{ glyph_render_size }}" viewBox="{{ glyph_viewbox }}">
+    <path d="{{ glyph_path }}" fill="{{ family_glyph_fill }}"/>
+  </svg>
+</g>
+{% endif %}
+
+{# 11. Label text — Orbitron 700 per paradigm config #}
+<text data-hw-zone="label"
+      x="{{ label_x }}" y="{{ text_y }}"
+      text-anchor="middle"
+      font-family="'Orbitron',sans-serif"
+      font-size="{{ 7 if compact else 9 }}" font-weight="700"
+      fill="{{ label_text_fill }}"
+      letter-spacing="0.1em">{{ label_display | default(label | upper) }}</text>
+
+{# 12. Value text — Chakra Petch 700 per paradigm config.
+      State-mode: fill routed through --hw-state-value (CSS cascade). #}
+<text data-hw-zone="value"
+      x="{{ value_x }}" y="{{ text_y }}"
+      text-anchor="middle"
+      font-family="'Chakra Petch',sans-serif"
+      font-size="{{ 9 if compact else 12 }}" font-weight="700"
+      {% if is_state_badge %}class="hw-value-text" fill="var(--hw-state-value, {{ value_text_fill }})"{% else %}fill="{{ value_text_fill }}"{% endif %}>{{ value }}</text>
+
+{# 13. State indicator (ring + bit) — only in state-mode badges.
+      Uses indicator_y from the resolver: `text_y - font_size*0.3 - ind_size/2`,
+      where 0.3 reflects cap-height ≈ 70% of font size for all display fonts
+      in use. Centralizing the formula in resolve_badge means every paradigm
+      that adopts state-mode badges inherits correct vertical alignment
+      automatically — no per-template re-derivation. #}
+{% if is_state_badge and show_indicator %}
+<g data-hw-zone="status" transform="translate({{ indicator_x }},{{ indicator_y }})">
+  <rect class="hw-ring" fill="none" stroke="var(--hw-state-signal, {{ label_text_fill }})" stroke-width="1.2" width="{{ ind_size }}" height="{{ ind_size }}"/>
+  {% set inner_w = ind_size // 2 %}
+  {% set inner_off = (ind_size - inner_w) / 2 %}
+  <rect class="hw-bit" x="{{ inner_off }}" y="{{ inner_off }}" width="{{ inner_w }}" height="{{ inner_w }}"
+        fill="var(--hw-state-signal, {{ label_text_fill }})"/>
+</g>
+{% endif %}

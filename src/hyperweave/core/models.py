@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from hyperweave.core.enums import (
     DividerVariant,
@@ -52,7 +52,11 @@ class ReasoningFields(FrozenModel):
 _GENOME_PROFILE_MAP: dict[str, str] = {
     GenomeId.BRUTALIST_EMERALD: ProfileId.BRUTALIST,
     GenomeId.CHROME_HORIZON: ProfileId.CHROME,
+    GenomeId.AUTOMATA: ProfileId.BRUTALIST,
 }
+
+# Allowed values for ComposeSpec.family (empty = frame-type default resolved by paradigm).
+_ALLOWED_FAMILIES: frozenset[str] = frozenset({"", "blue", "purple", "bifamily"})
 
 
 class ComposeSpec(FrozenModel):
@@ -96,6 +100,18 @@ class ComposeSpec(FrozenModel):
     custom_glyph_svg: str = Field(default="", description="Raw SVG for custom glyphs")
     variant: str = Field(default="default", description="Frame variant: default, compact")
     shape: str = Field(default="", description="Icon frame shape: square, circle")
+    family: str = Field(
+        default="",
+        description="Chromatic family within genome: blue, purple, bifamily. Empty = frame default.",
+    )
+
+    @field_validator("family")
+    @classmethod
+    def _validate_family(cls, v: str) -> str:
+        if v not in _ALLOWED_FAMILIES:
+            msg = f"family must be one of {sorted(_ALLOWED_FAMILIES)}, got '{v}'"
+            raise ValueError(msg)
+        return v
 
     # -- Governance --
     regime: Regime = Field(default=Regime.NORMAL, description="Policy lane: normal, permissive, ungoverned")

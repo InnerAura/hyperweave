@@ -351,6 +351,67 @@ async def test_compose_error_returns_500_svg(client: AsyncClient) -> None:
         assert "image/svg+xml" in resp.headers["content-type"]
 
 
+def test_classify_compose_exception_genome_not_found_is_404() -> None:
+    from hyperweave.compose.resolver import GenomeNotFoundError
+    from hyperweave.serve.app import _classify_compose_exception
+
+    assert _classify_compose_exception(GenomeNotFoundError("xyz")) == 404
+
+
+def test_classify_compose_exception_validation_is_422() -> None:
+    from pydantic import BaseModel, ValidationError
+
+    from hyperweave.serve.app import _classify_compose_exception
+
+    class _M(BaseModel):
+        x: int
+
+    with pytest.raises(ValidationError) as excinfo:
+        _M(x="not-an-int")  # type: ignore[arg-type]
+    assert _classify_compose_exception(excinfo.value) == 422
+
+
+def test_classify_compose_exception_generic_is_500() -> None:
+    from hyperweave.serve.app import _classify_compose_exception
+
+    assert _classify_compose_exception(RuntimeError("kaboom")) == 500
+
+
+def test_error_badge_renders_smpte_template_with_status_code() -> None:
+    from hyperweave.serve.app import _error_badge
+
+    svg = _error_badge("genome 'xyz' not found", status_code=404)
+    assert svg.startswith("<svg")
+    assert "ERR_404" in svg
+    assert "NO SIGNAL" in svg
+    assert 'data-hw-genome="signal-loss"' in svg
+    assert 'data-hw-class="error-state"' in svg
+
+
+def test_error_badge_uid_isolates_dom_ids() -> None:
+    import re
+
+    from hyperweave.serve.app import _error_badge
+
+    svg_a = _error_badge("first error", status_code=404)
+    svg_b = _error_badge("second error totally different", status_code=500)
+    uids_a = set(re.findall(r"hw-err-\d{5}", svg_a))
+    uids_b = set(re.findall(r"hw-err-\d{5}", svg_b))
+    assert len(uids_a) == 1
+    assert len(uids_b) == 1
+    assert uids_a.isdisjoint(uids_b)
+
+
+async def test_unknown_genome_returns_404_smpte_pattern(client: AsyncClient) -> None:
+    resp = await client.get("/v1/badge/TEST/value/nonexistent-genome.static")
+    assert resp.status_code == 404
+    assert "image/svg+xml" in resp.headers["content-type"]
+    body = resp.text
+    assert "ERR_404" in body
+    assert "NO SIGNAL" in body
+    assert 'data-hw-class="error-state"' in body
+
+
 # ===========================================================================
 # Camo-hardening middleware
 # ===========================================================================

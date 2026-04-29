@@ -1,0 +1,6 @@
+{# Marquee-counter "default" paradigm defs — envelope_stops fallback. #}
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee-counter/chrome-defs.j2" %}
+{% else %}
+{% include "frames/marquee-counter/brutalist-defs.j2" %}
+{% endif %}

@@ -35,17 +35,18 @@ def resolve_chart(
     **_kw: Any,
 ) -> dict[str, Any]:
     """Resolve the ``chart`` frame into width/height/template/context."""
-    width, height = 900, 500
-
-    # Viewport dimensions now live in data/paradigms/{slug}.yaml — chrome
-    # and brutalist paradigms each declare their own inset rectangle to
-    # leave room for hero title (top), axis labels (left), date labels
-    # (bottom), and hero value (right).
+    # Chart dimensions + viewport now live in data/paradigms/{slug}.yaml.
+    # Cellular: 900x600 to fit specimen header + chart + footer; brutalist
+    # and chrome keep 900x500.
     if paradigm_spec is not None:
         cc = paradigm_spec.chart
+        width, height = cc.chart_width, cc.chart_height
         vp = Viewport(x=cc.viewport_x, y=cc.viewport_y, w=cc.viewport_w, h=cc.viewport_h)
+        line_animate = bool(cc.line_animate)
     else:
+        width, height = 900, 500
         vp = Viewport(x=80, y=150, w=760, h=245)
+        line_animate = False
 
     # Three-state machine. "fresh" preserved (not renamed to "live") for
     # backward compat with the existing data-hw-status contract; "empty" is
@@ -96,6 +97,12 @@ def resolve_chart(
     title_upper = (repo or "star history").upper()
     current_display = _format_compact(int(current_stars))
 
+    # Footer date range — "Mon YYYY — Mon YYYY" bookending the data we actually
+    # plotted. Cellular paradigm consumes this; other paradigms ignore it and
+    # fall back to repo slug via the template's | default chain. Empty string
+    # when we have no points (stale/empty states keep the repo slug).
+    date_range = _format_date_range(raw_points)
+
     # Profile visual context (envelope/well/specular/chrome text gradients)
     # is injected universally by the dispatcher at resolver.resolve(), so
     # this resolver only builds chart-specific context.
@@ -117,7 +124,9 @@ def resolve_chart(
         "chart_y_labels": chart_fragments["y_labels"],
         "chart_x_labels": chart_fragments["x_labels"],
         "chart_empty_state": chart_fragments["empty_state"],
+        "chart_date_range": date_range,
         "data_hw_status": status,
+        "chart_line_animate": line_animate,
     }
     # Surface non-fresh states via the document-level data-hw-status attribute.
     # "fresh" stays implicit (live data is the default, no status marker needed).
@@ -137,3 +146,33 @@ def _format_compact(n: int) -> str:
     if n >= 10000:
         return f"{n / 1000:.1f}K".rstrip("0").rstrip(".")
     return f"{n:,}"
+
+
+def _format_date_range(points: list[Any]) -> str:
+    """Derive a 'Mon YYYY — Mon YYYY' bookend string from the first and last
+    point dates.
+
+    Returns an empty string when points are missing or dates don't parse —
+    the template falls back to the repo slug in that case so the footer never
+    renders blank.
+    """
+    if not points:
+        return ""
+    from contextlib import suppress
+    from datetime import datetime
+
+    def _parse(p: Any) -> datetime | None:
+        if not isinstance(p, dict):
+            return None
+        d = p.get("date")
+        if not isinstance(d, str):
+            return None
+        with suppress(ValueError):
+            return datetime.fromisoformat(d.replace("Z", "+00:00"))
+        return None
+
+    first = _parse(points[0])
+    last = _parse(points[-1])
+    if first is None or last is None:
+        return ""
+    return f"{first.strftime('%b %Y')} — {last.strftime('%b %Y')}"

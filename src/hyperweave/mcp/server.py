@@ -39,6 +39,7 @@ async def hw_compose(
     regime: str = "normal",
     variant: str = "default",
     shape: str = "",
+    family: str = "",
     divider_variant: str = "zeropoint",
     direction: str = "ltr",
     rows: int = 3,
@@ -91,6 +92,7 @@ async def hw_compose(
     glyph_mode: auto | fill | wire | none
     variant: default | compact (banner)
     shape: square | circle (icon frame shape, genome-dependent)
+    family: blue | purple | bifamily (automata chromatic axis; empty = frame default)
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -107,6 +109,7 @@ async def hw_compose(
         regime=regime,
         variant=variant,
         shape=shape,
+        family=family,
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_rows=rows,

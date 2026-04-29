@@ -1,0 +1,83 @@
+"""Cellular paradigm — Phase 3 scaffolding validation.
+
+The cellular paradigm is the aesthetic vehicle for the automata genome.
+These tests verify the paradigm loads, declares the expected requirement
+set, and that automata satisfies every required field.
+"""
+
+from __future__ import annotations
+
+from hyperweave.compose.validate_paradigms import validate_genome_against_paradigms
+from hyperweave.config.registry import get_genome_specs, get_paradigms, reset_registry
+
+
+def test_cellular_paradigm_loads() -> None:
+    """data/paradigms/cellular.yaml loads as a valid ParadigmSpec."""
+    reset_registry()
+    paradigms = get_paradigms()
+    assert "cellular" in paradigms
+    spec = paradigms["cellular"]
+    assert spec.id == "cellular"
+    assert spec.name == "Cellular"
+
+
+def test_cellular_requires_bifamily_fields() -> None:
+    """Paradigm declares every automata-family chromatic field it needs."""
+    cellular = get_paradigms()["cellular"]
+    required = set(cellular.requires_genome_fields)
+    # Blue family
+    assert {
+        "family_blue_rim_stops",
+        "family_blue_pattern_cells",
+        "family_blue_label_text",
+        "family_blue_value_text",
+    }.issubset(required)
+    # Purple family
+    assert {
+        "family_purple_rim_stops",
+        "family_purple_pattern_cells",
+        "family_purple_label_text",
+        "family_purple_value_text",
+    }.issubset(required)
+    # Bifamily bridge
+    assert {
+        "bifamily_bridge_teal_mid",
+        "bifamily_bridge_amethyst_core",
+    }.issubset(required)
+    # State palette (used by the shared state-signal cascade partial)
+    assert {"state_passing_core", "state_passing_bright", "state_critical_core"}.issubset(required)
+
+
+def test_cellular_frame_family_defaults() -> None:
+    """Paradigm declares per-frame family defaults (data-driven, not Python)."""
+    cellular = get_paradigms()["cellular"]
+    assert cellular.frame_family_defaults.get("badge") == "blue"
+    assert cellular.frame_family_defaults.get("icon") == "blue"
+    assert cellular.frame_family_defaults.get("strip") == "bifamily"
+    assert cellular.frame_family_defaults.get("banner") == "bifamily"
+    assert cellular.frame_family_defaults.get("marquee-horizontal") == "bifamily"
+
+
+def test_cellular_strip_config_exposes_status_flags() -> None:
+    """Strip paradigm config exposes the new conditional-zone flags."""
+    cellular = get_paradigms()["cellular"]
+    assert cellular.strip.show_status_indicator is True
+    assert cellular.strip.flank_width == 36
+    assert cellular.strip.flank_cell_size == 12
+    assert cellular.strip.value_font_family == "Chakra Petch"
+
+
+def test_cellular_badge_config_exposes_indicator_flag() -> None:
+    """Badge paradigm config exposes show_indicator flag."""
+    cellular = get_paradigms()["cellular"]
+    assert cellular.badge.show_indicator is True
+    assert cellular.badge.value_font_family == "Chakra Petch"
+    assert cellular.badge.label_font_family == "Orbitron"
+
+
+def test_automata_satisfies_cellular_requirements() -> None:
+    """automata genome declares every field cellular paradigm requires."""
+    paradigms = get_paradigms()
+    automata = get_genome_specs()["automata"]
+    # Should not raise — every required field is populated.
+    validate_genome_against_paradigms(automata, paradigms)

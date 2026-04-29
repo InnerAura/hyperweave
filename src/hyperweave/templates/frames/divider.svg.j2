@@ -327,6 +327,47 @@
 </g>
 
 {# ═══════════════════════════════════════════════════════════
+   VARIANT: cellular-dissolve — Bifamily bridge, static-baked
+   Source: cellular-automata-divider.svg (800x28)
+   Palette: bifamily_bridge_* fields from genome (teal left terminal,
+            amethyst right terminal, dissolve via per-rect opacity).
+   NO <style>, NO animation — renderer-independent per feedback rule
+   feedback_static_rendering_renderer_independence + baked composite
+   colors for transparent artifacts.
+   ═══════════════════════════════════════════════════════════ #}
+{% elif divider_variant == 'cellular-dissolve' %}
+{% set teal_mid = bifamily_bridge_teal_mid | default('#147A90') %}
+{% set teal_deep = bifamily_bridge_teal_deep | default('#0D3E4E') %}
+{% set amethyst_core = bifamily_bridge_amethyst_core | default('#5A3278') %}
+{% set amethyst_bright = bifamily_bridge_amethyst_bright | default('#8B6DB5') %}
+{# Center line spans between terminals #}
+<line x1="48" y1="14" x2="{{ dw - 48 }}" y2="14" stroke="{{ teal_mid }}" stroke-width="0.6" opacity="0.45"/>
+{# Left terminal — 4 x 2 teal block grid at full opacity #}
+{% for col in range(4) %}
+  {% for row in range(2) %}
+  {% set tc = teal_mid if (col + row) % 2 == 0 else teal_deep %}
+  <rect x="{{ col * 12 }}" y="{{ 2 + row * 12 }}" width="12" height="12" fill="{{ tc }}"/>
+  {% endfor %}
+{% endfor %}
+{# Left scatter — baked teal with per-rect opacity dissolve (inward fade) #}
+{% set left_scatter = [(56, 7, 8, 0.85), (68, 10, 6, 0.7), (80, 5, 7, 0.55), (94, 11, 5, 0.45), (108, 8, 5, 0.3), (122, 12, 3, 0.2), (58, 17, 6, 0.7), (70, 18, 5, 0.55), (84, 16, 7, 0.4), (100, 15, 4, 0.25)] %}
+{% for pos in left_scatter %}
+<rect x="{{ pos[0] }}" y="{{ pos[1] }}" width="{{ pos[2] }}" height="{{ pos[2] }}" fill="{{ teal_mid }}" opacity="{{ pos[3] }}"/>
+{% endfor %}
+{# Right scatter — baked amethyst mirror (inward fade) #}
+{% set right_scatter = [(dw - 124, 12, 3, 0.2), (dw - 110, 8, 5, 0.3), (dw - 96, 11, 5, 0.45), (dw - 84, 5, 7, 0.55), (dw - 72, 10, 6, 0.7), (dw - 62, 7, 8, 0.85), (dw - 102, 15, 4, 0.25), (dw - 88, 18, 5, 0.4), (dw - 76, 16, 7, 0.55), (dw - 64, 17, 6, 0.7)] %}
+{% for pos in right_scatter %}
+<rect x="{{ pos[0] }}" y="{{ pos[1] }}" width="{{ pos[2] }}" height="{{ pos[2] }}" fill="{{ amethyst_core }}" opacity="{{ pos[3] }}"/>
+{% endfor %}
+{# Right terminal — 4 x 2 amethyst block grid at full opacity #}
+{% for col in range(4) %}
+  {% for row in range(2) %}
+  {% set ac = amethyst_core if (col + row) % 2 == 0 else amethyst_bright %}
+  <rect x="{{ dw - 48 + col * 12 }}" y="{{ 2 + row * 12 }}" width="12" height="12" fill="{{ ac }}"/>
+  {% endfor %}
+{% endfor %}
+
+{# ═══════════════════════════════════════════════════════════
    VARIANT: zeropoint — Aurora Nexus Beacon (default)
    Source: zeropoint_divider.svg (300x20)
    Palette: #0a0f1a dark / #1a2b49 / #00ff94 green / #4c8b8b teal
