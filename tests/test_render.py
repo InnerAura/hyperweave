@@ -478,7 +478,7 @@ class TestMotionLoading:
     def test_load_real_motions(self, motions: dict[str, dict[str, Any]]) -> None:
         assert len(motions) > 0
         assert "static" in motions
-        assert "bars" in motions
+        assert "rimrun" in motions
 
     def test_each_motion_has_id(self, motions: dict[str, dict[str, Any]]) -> None:
         for mid, data in motions.items():
@@ -511,12 +511,14 @@ class TestMotionCSS:
 
         assert get_motion_css("static", []) == ""
 
-    def test_bars_returns_keyframes(self) -> None:
+    def test_rimrun_loads_via_registry(self) -> None:
         from hyperweave.render.motion import get_motion_css
 
-        css = get_motion_css("bars", [])
-        assert "@keyframes hw-motion-bars" in css
-        assert ".hw-motion-bars" in css
+        # rimrun is a SMIL border motion: animation lives in <animate>
+        # elements injected by build_border_overlay, not CSS keyframes.
+        # Verify the registry resolves it without error.
+        css = get_motion_css("rimrun", [])
+        assert isinstance(css, str)
 
     def test_unknown_motion_returns_empty(self) -> None:
         from hyperweave.render.motion import get_motion_css
@@ -540,25 +542,25 @@ class TestMotionValidation:
     def test_compatible_motion_passes(self) -> None:
         from hyperweave.render.motion import validate_motion
 
-        assert validate_motion("bars", ["bars", "cascade"], "normal") == "bars"
+        assert validate_motion("rimrun", ["rimrun", "cascade"], "normal") == "rimrun"
 
     def test_incompatible_falls_back_to_static(self) -> None:
         from hyperweave.render.motion import validate_motion
 
-        result = validate_motion("bars", ["cascade", "drop"], "normal")
+        result = validate_motion("rimrun", ["cascade", "drop"], "normal")
         assert result == "static"
 
     def test_ungoverned_allows_anything(self) -> None:
         from hyperweave.render.motion import validate_motion
 
-        result = validate_motion("bars", ["cascade"], "ungoverned")
-        assert result == "bars"
+        result = validate_motion("rimrun", ["cascade"], "ungoverned")
+        assert result == "rimrun"
 
     def test_empty_genome_list_allows_all(self) -> None:
         from hyperweave.render.motion import validate_motion
 
-        result = validate_motion("bars", [], "normal")
-        assert result == "bars"
+        result = validate_motion("rimrun", [], "normal")
+        assert result == "rimrun"
 
 
 # ==========================================================================
@@ -576,24 +578,24 @@ class TestMotionFrameCompat:
         assert valid is True
         assert reason == ""
 
-    def test_bars_compatible_with_banner(self) -> None:
+    def test_rimrun_compatible_with_badge(self) -> None:
         from hyperweave.render.motion import validate_motion_compat
 
-        valid, _reason = validate_motion_compat("bars", "banner")
+        valid, _reason = validate_motion_compat("rimrun", "badge")
         assert valid is True
 
-    def test_bars_not_compatible_with_divider(self) -> None:
-        """bars.yaml applies_to does not include divider."""
+    def test_rimrun_not_compatible_with_divider(self) -> None:
+        """rimrun.yaml applies_to does not include divider."""
         from hyperweave.render.motion import validate_motion_compat
 
-        valid, reason = validate_motion_compat("bars", "divider", "normal")
+        valid, reason = validate_motion_compat("rimrun", "divider", "normal")
         assert valid is False
         assert "divider" in reason
 
     def test_permissive_allows_incompatible_frame(self) -> None:
         from hyperweave.render.motion import validate_motion_compat
 
-        valid, _reason = validate_motion_compat("bars", "divider", "permissive")
+        valid, _reason = validate_motion_compat("rimrun", "divider", "permissive")
         assert valid is True
 
     def test_unknown_motion_rejected(self) -> None:
@@ -617,15 +619,18 @@ class TestCIMCompliance:
 
         assert is_cim_compliant("static") is True
 
-    def test_bars_is_compliant(self) -> None:
+    def test_rimrun_is_not_cim_compliant(self) -> None:
         from hyperweave.render.motion import is_cim_compliant
 
-        assert is_cim_compliant("bars") is True
+        # rimrun is a SMIL border motion with cim_compliant: false in YAML.
+        # Non-CIM motions ship under regime waivers; the registry should
+        # report that compliance status accurately.
+        assert is_cim_compliant("rimrun") is False
 
-    def test_cascade_is_compliant(self) -> None:
+    def test_unknown_is_not_compliant(self) -> None:
         from hyperweave.render.motion import is_cim_compliant
 
-        assert is_cim_compliant("cascade") is True
+        assert is_cim_compliant("nonexistent_motion_xyz") is False
 
 
 # ==========================================================================
@@ -646,19 +651,18 @@ class TestBuildMotionContext:
         assert ctx["motion_valid"] is True
         assert ctx["motion_cim_compliant"] is True
 
-    def test_bars_context(self) -> None:
+    def test_rimrun_context(self) -> None:
         from hyperweave.render.motion import build_motion_context
 
-        ctx = build_motion_context("bars", "banner")
-        assert ctx["motion_id"] == "bars"
-        assert "@keyframes" in ctx["motion_css"]
-        assert ctx["motion_class"] == "hw-motion-bars"
+        ctx = build_motion_context("rimrun", "badge")
+        assert ctx["motion_id"] == "rimrun"
+        assert ctx["motion_class"] == "hw-motion-rimrun"
         assert ctx["motion_valid"] is True
 
     def test_incompatible_falls_back(self) -> None:
         from hyperweave.render.motion import build_motion_context
 
-        ctx = build_motion_context("bars", "divider", "normal")
+        ctx = build_motion_context("rimrun", "divider", "normal")
         assert ctx["motion_id"] == "static"
         assert ctx["motion_class"] == ""
 
@@ -715,7 +719,7 @@ class TestListMotions:
 
         ids = {m["id"] for m in list_motions()}
         assert "static" in ids
-        assert "bars" in ids
+        assert "rimrun" in ids
 
 
 # ==========================================================================

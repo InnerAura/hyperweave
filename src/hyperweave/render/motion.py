@@ -10,7 +10,6 @@ import yaml
 
 from hyperweave.core.enums import (
     BorderMotionId,
-    KineticMotionId,
     MotionId,
     Regime,
 )
@@ -26,21 +25,20 @@ def _load_motions_cached(motions_dir: str) -> dict[str, dict[str, Any]]:
     if not path.exists():
         return result
 
-    # Scan root + border/ + kinetic/ subdirs
+    # Scan root + border/ subdirs (kinetic/ removed in v0.2.14 with banner)
     for yaml_file in sorted(path.glob("*.yaml")):
         with yaml_file.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
             if data and "id" in data:
                 result[data["id"]] = data
 
-    for subdir in ("border", "kinetic"):
-        sub = path / subdir
-        if sub.is_dir():
-            for yaml_file in sorted(sub.glob("*.yaml")):
-                with yaml_file.open("r", encoding="utf-8") as f:
-                    data = yaml.safe_load(f)
-                    if data and "id" in data:
-                        result[data["id"]] = data
+    sub = path / "border"
+    if sub.is_dir():
+        for yaml_file in sorted(sub.glob("*.yaml")):
+            with yaml_file.open("r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+                if data and "id" in data:
+                    result[data["id"]] = data
 
     return result
 
@@ -223,7 +221,7 @@ def list_motions() -> list[dict[str, Any]]:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Border Motion Overlay — 5 SMIL motions for badge / strip / banner
+# Border Motion Overlay — 5 SMIL motions for badge / strip / icon
 # All SVG is produced by Jinja2 templates in templates/motions/border/.
 # Python computes numeric layout values; templates produce SVG markup.
 # ═══════════════════════════════════════════════════════════════════
@@ -328,119 +326,3 @@ def _extract_border_parts(
     if len(parts) == 2:
         return parts[0].strip(), parts[1].strip()
     return "", rendered.strip()
-
-
-# ═══════════════════════════════════════════════════════════════════
-# Kinetic Typography — 10 CSS motions for banner
-# All SVG is produced by Jinja2 templates in templates/motions/kinetic/.
-# Python computes per-character layout data; templates produce SVG markup.
-# ═══════════════════════════════════════════════════════════════════
-
-_KINETIC_TEMPLATES: frozenset[str] = frozenset(KineticMotionId)
-
-_FONT = "'Inter','SF Pro Display',system-ui,sans-serif"
-
-
-def build_kinetic_motion_svg(
-    motion_id: str,
-    uid: str,
-    title: str,
-    cx: int,
-    cy: int,
-    fs: int,
-    w: int,
-    h: int,
-    *,
-    subtitle: str = "",
-) -> str:
-    """Build the SVG content for kinetic typography banners.
-
-    Computes per-character layout data, then renders the appropriate
-    Jinja2 template.  Returns the SVG fragment for {{ motion_svg | safe }}.
-    """
-    if motion_id not in _KINETIC_TEMPLATES:
-        return ""
-
-    ty = cy + int(fs * 0.35)
-    txt_attrs = f'x="{cx}" y="{ty}" text-anchor="middle" font-family="{_FONT}" font-size="{fs}" font-weight="800"'
-
-    context: dict[str, Any] = {
-        "uid": uid,
-        "title": title,
-        "subtitle": subtitle,
-        "cx": cx,
-        "cy": cy,
-        "fs": fs,
-        "w": w,
-        "h": h,
-        "ty": ty,
-        "txt_attrs": txt_attrs,
-    }
-
-    # Motion-specific computed data
-    if motion_id == "bars":
-        n, bar_h = 8, 28
-        start_y = cy - (n * bar_h // 2)
-        context["bars"] = [
-            {
-                "y": start_y + i * bar_h,
-                "dir": "r" if i % 2 == 0 else "l",
-                "height": bar_h,
-            }
-            for i in range(n)
-        ]
-
-    elif motion_id == "cascade":
-        n = 8
-        col_w = w // n
-        context["cols"] = [
-            {
-                "x": i * col_w,
-                "dir": "down" if i % 2 == 0 else "up",
-                "col_w": col_w,
-            }
-            for i in range(n)
-        ]
-
-    elif motion_id == "drop":
-        context["layers"] = _build_per_letter_layers(title, cx, fs, ty, motion_id)
-
-    return _render_motion_template(f"motions/kinetic/{motion_id}.svg.j2", context)
-
-
-def _build_per_letter_layers(
-    title: str,
-    cx: int,
-    fs: int,
-    ty: int,
-    prefix: str,
-) -> list[dict[str, Any]]:
-    """Compute per-letter layout data for drop 3-layer motion."""
-    char_w = fs * 0.52  # Inter Black uppercase with letter-spacing -0.04em
-    start_x = cx - (len(title) * char_w) / 2
-    layers_cfg = [
-        ("back", "0.55s", "0.3", "0.15"),
-        ("mid", "0.52s", "0.7", "0.4"),
-        ("front", "0.55s", "1", "1"),
-    ]
-    layers = []
-    for layer_name, dur, peak, end in layers_cfg:
-        chars = []
-        for i, ch in enumerate(title):
-            chars.append(
-                {
-                    "ch": ch,
-                    "x": int(start_x + i * char_w + char_w / 2),  # center of slot
-                    "delay": round(i * 0.06, 2),
-                }
-            )
-        layers.append(
-            {
-                "name": layer_name,
-                "dur": dur,
-                "peak": peak,
-                "end": end,
-                "chars": chars,
-            }
-        )
-    return layers

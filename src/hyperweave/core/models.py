@@ -63,7 +63,12 @@ class ComposeSpec(FrozenModel):
     """Complete specification for composing an artifact."""
 
     # -- Core identity --
-    type: FrameType = Field(description="Frame type: badge, strip, banner, icon, divider, marquee-*, receipt, etc.")
+    type: FrameType = Field(
+        description=(
+            "Frame type: badge, strip, icon, divider, marquee-horizontal, "
+            "stats, chart, receipt, rhythm-strip, master-card, catalog"
+        ),
+    )
     frame_id: str = Field(default="", description="Resolved frame identifier")
     # NOTE: relaxed from GenomeId StrEnum to str in Session 2A+2B so that
     # --genome-file can load arbitrary genome slugs not in the built-in registry.
@@ -117,8 +122,8 @@ class ComposeSpec(FrozenModel):
     regime: Regime = Field(default=Regime.NORMAL, description="Policy lane: normal, permissive, ungoverned")
 
     # -- Text content --
-    title: str = Field(default="", description="Primary text (badge label, strip identity, banner title)")
-    value: str = Field(default="", description="Secondary text (badge value, strip metrics, banner subtitle)")
+    title: str = Field(default="", description="Primary text (badge label, strip identity, marquee scroll items)")
+    value: str = Field(default="", description="Secondary text (badge value, strip metrics)")
 
     # -- Reasoning (L4 metadata) --
     intent: str = Field(default="", description="Why this artifact was created")
@@ -146,9 +151,11 @@ class ComposeSpec(FrozenModel):
     )
 
     # -- Marquee-specific --
-    marquee_direction: str = Field(default="ltr", description="Scroll direction: ltr, rtl, up, down")
-    marquee_rows: int = Field(default=1, description="Counter variant: number of rows")
-    marquee_speeds: list[float] | None = Field(default=None, description="Counter: speed per row")
+    marquee_direction: str = Field(default="ltr", description="Scroll direction: ltr, rtl")
+    marquee_speeds: list[float] | None = Field(
+        default=None,
+        description="Scroll speed multipliers (only first entry used by marquee-horizontal)",
+    )
 
     # -- Session 2A+2B additions --
     # Inline genome dict that bypasses the built-in registry. Set by --genome-file.
@@ -163,15 +170,19 @@ class ComposeSpec(FrozenModel):
         default=None,
         description="Pre-fetched external connector data (stats, chart, live)",
     )
-    # Timeline frame items list.
-    timeline_items: list[dict[str, Any]] | None = Field(
-        default=None,
-        description="Timeline nodes: [{title, subtitle, status, date}, ...]",
-    )
     # Stats/chart frame parameters.
     stats_username: str = Field(default="", description="GitHub username for stats frame")
     chart_owner: str = Field(default="", description="GitHub owner for chart frame")
     chart_repo: str = Field(default="", description="GitHub repo for chart frame")
+
+    # Resolved data tokens from ?data= / --data / MCP data=. Populated by the
+    # transport layer (HTTP / CLI / MCP) before compose() runs; the resolver
+    # for marquee-horizontal consumes this directly. Other frames receive the
+    # formatted "K1:V1,K2:V2" string via spec.value instead.
+    data_tokens: list[Any] | None = Field(
+        default=None,
+        description="Resolved data tokens (list[ResolvedToken] from data_tokens.py)",
+    )
 
 
 class ArtifactMetadata(FrozenModel):
@@ -283,9 +294,6 @@ class ProfileConfig(FrozenModel):
     # -- Motion --
     easing: str = Field(description="CSS easing function")
 
-    # -- Banner (Tier 1A parametric) --
-    banner_height: int = Field(default=600, description="Full banner height in px")
-
     # -- Badge parametric (Tier 1A) --
     badge_sep_width: int = Field(default=2, description="Badge separator width in px")
     badge_seam_width: int = Field(default=3, description="Badge seam gap width in px")
@@ -340,49 +348,6 @@ class ProfileConfig(FrozenModel):
         description="Marquee scroll text font",
     )
 
-    # -- Counter marquee (Tier 1A closure) --
-    marquee_counter_row_ys: list[int] = Field(default=[6, 48, 90], description="Counter row Y positions")
-    marquee_counter_row_hs: list[int] = Field(default=[36, 36, 38], description="Counter row heights")
-    marquee_counter_text_ys: list[int] = Field(default=[30, 72, 115], description="Counter text Y positions")
-    marquee_counter_divider_ys: list[int] = Field(default=[44, 88], description="Counter divider Y positions")
-    marquee_counter_brand_color_even: str = Field(
-        default="var(--dna-signal)",
-        description="Counter brand item color for even indices",
-    )
-    marquee_counter_brand_color_odd: str = Field(
-        default="var(--dna-ink-primary)",
-        description="Counter brand item color for odd indices",
-    )
-    marquee_counter_metric_label_color: str = Field(
-        default="var(--dna-label-text, var(--dna-signal-dim))",
-        description="Counter metric label color",
-    )
-    marquee_counter_metric_value_font: str = Field(
-        default="",
-        description="Counter metric value font family override (empty = inherit)",
-    )
-    marquee_counter_gap_r1: int = Field(default=28, description="Counter row 1 gap in px")
-    marquee_counter_letter_spacing_r1: str = Field(default="4", description="Counter row 1 letter spacing")
-    marquee_counter_letter_spacing_r2: str = Field(default="1.5", description="Counter row 2 letter spacing")
-    marquee_counter_letter_spacing_r3: str = Field(default="1", description="Counter row 3 letter spacing")
-    marquee_counter_text_start_x: int = Field(default=20, description="Counter text start x offset")
-    marquee_counter_status_dot_color: str = Field(
-        default="var(--dna-status-passing-core)",
-        description="Counter status dot color",
-    )
-    marquee_counter_status_diamond_color: str = Field(
-        default="var(--dna-signal)",
-        description="Counter status diamond color",
-    )
-    marquee_counter_divider_x_inset: int = Field(default=6, description="Counter divider x inset")
-    marquee_counter_divider_stroke_width: str = Field(default="1.5", description="Counter divider stroke width")
-    marquee_counter_divider_stroke_opacity: str = Field(default=".2", description="Counter divider stroke opacity")
-    marquee_counter_fade_inset: int = Field(default=5, description="Counter fade gradient inset")
-    marquee_counter_fade_w: int = Field(default=36, description="Counter fade gradient width")
-    marquee_counter_fade_rx: str = Field(default="", description="Counter fade gradient corner radius")
-    marquee_counter_show_rivets: bool = Field(default=True, description="Show counter rivet decorations")
-    marquee_counter_show_beacon: bool = Field(default=True, description="Show counter beacon pulse")
-
     # -- Horizontal marquee (Tier 1A closure) --
     marquee_horizontal_clip_inset_y: int = Field(default=4, description="Horizontal marquee clip Y inset")
     marquee_horizontal_clip_inset_x: int = Field(default=4, description="Horizontal marquee clip X inset")
@@ -390,19 +355,4 @@ class ProfileConfig(FrozenModel):
     marquee_horizontal_bold_pattern: str = Field(
         default="even",
         description="Horizontal bold pattern: 'even' or 'first'",
-    )
-
-    # -- Vertical marquee (Tier 1A closure) --
-    marquee_vertical_status_label_offset: int = Field(default=18, description="Vertical status label right offset")
-    marquee_vertical_bottom_accent_type: str = Field(
-        default="bar",
-        description="Vertical bottom accent: 'bar' or 'hairline'",
-    )
-    marquee_vertical_warn_color: str = Field(
-        default="var(--dna-status-warning-core)",
-        description="Vertical warn status color",
-    )
-    marquee_vertical_status_ts_color: str = Field(
-        default="var(--dna-label-text, var(--dna-signal-dim))",
-        description="Vertical status timestamp color",
     )

@@ -105,18 +105,6 @@ def strip_compose_spec() -> ComposeSpec:
     )
 
 
-@pytest.fixture()
-def banner_compose_spec() -> ComposeSpec:
-    """Return a banner ComposeSpec for testing."""
-    return ComposeSpec(
-        type="banner",
-        genome_id="brutalist-emerald",
-        profile_id="brutalist",
-        title="HYPERWEAVE",
-        value="LIVING ARTIFACTS",
-    )
-
-
 # ---------------------------------------------------------------------------
 # Parametrize helpers
 # ---------------------------------------------------------------------------
@@ -124,12 +112,9 @@ def banner_compose_spec() -> ComposeSpec:
 FRAME_TYPES = [
     "badge",
     "strip",
-    "banner",
     "icon",
     "divider",
     "marquee-horizontal",
-    "marquee-vertical",
-    "marquee-counter",
 ]
 
 STATES = ["active", "passing", "warning", "critical", "failing", "building", "offline", "neutral"]

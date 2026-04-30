@@ -42,15 +42,6 @@ def _readme_kit(
         )
         results[f"badge-{label.lower()}"] = compose(spec)
 
-    # Generate banner
-    results["banner"] = compose(
-        ComposeSpec(
-            type="banner",
-            genome_id=genome,
-            title=project_name.upper(),
-        )
-    )
-
     # Generate strip
     if badge_pairs:
         metrics_str = ",".join(f"{k}:{v}" for k, v in badge_pairs[:4])

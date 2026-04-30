@@ -5,6 +5,42 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.14] - 2026-04-30
+
+Frame deletion + URL-grammar consolidation. Four frame types come out of the surface (banner, marquee-counter, marquee-vertical, timeline) along with the nine kinetic typography motions that only banners used. In their place: a single unified data-token grammar (`?data=` on HTTP, `--data` on CLI, `data=` on MCP) replaces the patchwork of `?live=` / `/v1/live/...` / per-frame ad-hoc inputs that had accumulated across data-bearing artifacts.
+
+### Removed
+
+- **Banner frame.** Templates (`templates/frames/banner.svg.j2` + paradigm partials), resolver (`resolve_banner`), context builder (`_ctx_banner`), `ParadigmBannerConfig`, `banner_height` profile field, kit composer banner block, MCP `hw_compose` banner mention, banner section in all four paradigm YAMLs, banner key in genome JSONs' `paradigms` map, banner-specific test cases. Banner returns when AI custom genome generation ships with the InnerAura golden-200 dataset for UI inspiration.
+- **Marquee-counter and marquee-vertical frames.** Templates (`templates/frames/marquee-counter*`, `templates/frames/marquee-vertical*`), resolvers (`_resolve_counter` ~262 LOC, `_resolve_vertical` ~78 LOC), helper functions (`_parse_counter_metrics`, `_build_counter_status_items`, `_build_vertical_rows`), counter / vertical profile fields, `marquee_rows` ComposeSpec field, the HTTP route's subtype-by-query-param dispatch (`?rows=` / `?direction=up`). Marquee-horizontal is now the single marquee frame.
+- **Timeline frame.** Template (`templates/frames/timeline*`), resolver (`compose/resolvers/timeline.py`), context builder (`_ctx_timeline`), `TimelineRequest` Pydantic model, `compose_timeline` HTTP route (POST `/v1/timeline/...`), `timeline_items` ComposeSpec field + matching MCP/CLI parameters, proofset timeline generation, `_MOCK_TIMELINE_ITEMS`. Timeline returns when there's an actual data source feeding milestones.
+- **Nine kinetic typography motions** (drop, cascade, breach, pulse, converge, crash, collapse, bars, broadcast). Templates (`templates/motions/kinetic/`), data configs (`data/motions/kinetic/`), Python builder (`build_kinetic_motion_svg`), `_KINETIC_TEMPLATES` frozenset, `KineticMotionId` enum class, `_build_per_letter_layers`, motion-injection branch in `_ctx*` infrastructure. Border motion YAMLs no longer list `banner` in `applies_to`.
+- **Legacy `/v1/live/{provider}/{identifier:path}/{metric}/{genome}.{motion}` HTTP route.** Replaced by the new 2-segment data-driven badge route (`/v1/badge/{title}/{genome}.{motion}?data=...`) plus the unified `?data=` grammar on every other data-bearing frame.
+- **Legacy `?live=` query parameter on `/v1/strip/...`.** Replaced by `?data=` with the same fan-out semantics.
+
+### Added
+
+- **Unified data-token grammar** (`src/hyperweave/serve/data_tokens.py`). Comma-separated DSL with three token kinds: `text:STRING` (raw display text), `kv:KEY=VALUE` (static literal, role-tagged), and `<provider>:<identifier>.<metric>` (live token resolved via `connectors.fetch_metric`). Providers: `gh` / `github` / `pypi` / `npm` / `hf` / `huggingface` / `arxiv` / `docker`. Embedded commas in text/kv payloads escape as `\,`; embedded backslashes as `\\`. The escape rule is positional and survives URL decoding (URL-encoding the comma as `%2C` does not work because URL decoding happens before the parser runs). Identifier-with-dots (e.g. `arxiv:2310.06825.citations`) parses correctly because the parser splits on the *last* dot.
+- **`?data=` HTTP query parameter on badge / strip / marquee routes.** Replaces `?live=` on strip; new on badge (via the 2-segment data-driven route shape) and marquee. Failed live fetches degrade to `value="--"` with a 60s TTL; successful fetches use the connector's reported TTL with `stale-while-revalidate` headers. Malformed `?data=` returns the SMPTE error SVG with HTTP 200 + `X-HW-Error-Code: 400` (so Camo proxies the response — same pattern as v0.2.12 fallbacks).
+- **New 2-segment data-driven badge route** (`/v1/badge/{title}/{genome}.{motion}?data=...`). Coexists with the existing 3-segment static route (`/v1/badge/{title}/{value}/{genome}.{motion}`) — FastAPI routes by path-segment count, so the two are unambiguous. Avoids requiring a throwaway placeholder in the path when the value comes from `?data=`.
+- **`--data` CLI option and `data=` MCP parameter.** Same token grammar across all three transports. `hw_live` MCP tool kept as a discoverable shortcut (delegates to `hw_compose` with the equivalent `data=` payload).
+- **`data_tokens` field on `ComposeSpec`** (`list[Any] | None`). Populated by the transport layer (HTTP / CLI / MCP) before `compose()` runs. Marquee-horizontal's resolver consumes this list directly to drive scroll items; other frames receive the formatted `"K1:V1,K2:V2"` string via `spec.value`.
+- **Marquee-horizontal data-token mode.** `_resolve_horizontal` now accepts either pipe-split title text (existing contract) or resolved data tokens — text tokens render their payload, kv/live tokens render `"LABEL VALUE"`. Cellular bifamily palette alternation applies uniformly across both modes.
+- **`tests/test_data_tokens.py`** — 26 unit tests covering single/multi-token parsing, comma-escape rules (with backslash-escape coverage), failure modes (unknown provider, malformed kv, missing dot, trailing backslash), and async resolution semantics (concurrent fetch, failure degradation, min-TTL aggregation).
+
+### Changed
+
+- **`KineticMotionId` enum removed; `MotionId` collapses to `STATIC | BorderMotionId`.** The remaining motion vocabulary is six primitives: static + 5 border SMIL (chromatic-pulse, corner-trace, dual-orbit, entanglement, rimrun).
+- **`hw_compose` MCP tool** parameters reshaped: dropped `rows`, `timeline_items`; added `data: str = ""`. Docstring rewritten around the data-token grammar; `hw://schema` URL-grammar resource updated to advertise both badge route shapes plus the data-bearing frames.
+- **`/v1/frames` discovery endpoint** lists 11 frame categories (badge, strip, icon, divider, marquee-horizontal, stats, chart, plus the four telemetry frames via POST `/v1/compose`); banner / marquee-counter / marquee-vertical / timeline are gone.
+- **README and `CLAUDE.md` documentation** scrubbed of banner / marquee-counter / marquee-vertical / timeline references; URL examples updated to the `?data=` grammar; frame-type and motion-type counts updated.
+
+### Notes
+
+- Historical CHANGELOG entries (v0.2.0 release notes mentioning timeline / banner) are intentionally preserved — they document past behavior, not current capabilities.
+- The CLI `--data` flag (previously a JSON-file path used only by the timeline command) is now repurposed for the data-token grammar. The transition is clean because the timeline branch was the only consumer of the old meaning, and it's also gone in this release.
+- Net change: ~600 LOC deleted across templates / Python / YAML; ~280 LOC added (parser + tests + per-frame integration). Files touched: 70+. The deletion footprint exceeds additions despite the new grammar layer.
+
 ## [0.2.13] - 2026-04-29
 
 Hotfix for a cascade bug exposed by v0.2.12. v0.2.12 changed the SMPTE error fallback's HTTP envelope from 4xx to 200 so GitHub Camo would proxy the body — but the body itself contained an HTML entity (`&middot;` in the `<title>` element) that strict XML/SVG parsers reject. While the server returned valid bytes, *every* SVG renderer (browsers, markdown previewers, image proxies) refused to construct a DOM and fell back to broken-image. The bug was hidden by v0.2.11's 4xx envelope (renderers never tried to parse 4xx responses) and surfaced only after v0.2.12 made the body reachable.

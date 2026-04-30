@@ -27,12 +27,7 @@
     "corner-trace",
     "dual-orbit",
     "entanglement",
-    "rimrun",
-    "bars",
-    "broadcast",
-    "cascade",
-    "drop",
-    "crash"
+    "rimrun"
   ],
   "bg": "#14532D",
   "bg_alt": "#0E2B20",
@@ -67,12 +62,10 @@
   "paradigms": {
     "badge": "default",
     "strip": "default",
-    "banner": "default",
     "icon": "default",
     "divider": "default",
     "stats": "brutalist",
-    "chart": "brutalist",
-    "timeline": "default"
+    "chart": "brutalist"
   },
   "structural": {
     "stroke_linejoin": "miter",

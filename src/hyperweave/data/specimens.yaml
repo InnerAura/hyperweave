@@ -1,6 +1,13 @@
 # Editorial specimen registry
-# Maps slug -> file path (relative to specs/ directory)
-# hw-compliant/ versions are preferred when available
+# Maps slug -> file path (relative to specs/ directory).
+# hw-compliant/ versions are preferred when available.
+#
+# v0.2.14: banner-holofoil-v1 and the 10 kinetic typography motion entries
+# (bars / broadcast / cascade / converge / drop / rubricate / impact / breach /
+# intake / collapse) were removed alongside the banner frame deletion. Surviving
+# 16 entries remain registered. The /a/inneraura/{slug} route currently 404s
+# on every slug because the specs/ directory it resolves against was relocated;
+# the route is preserved as scaffolding for the upcoming golden-200 dataset.
 
 # Dividers
 divider-block-v1: components/dividers/hw-compliant/block_divider.svg
@@ -13,27 +20,12 @@ divider-zeropoint-v1: components/dividers/hw-compliant/zeropoint_divider.svg
 icon-github-binary-circular-v1: components/icons/hw-compliant/github-binary-circular.svg
 icon-github-binary-square-v1: components/icons/hw-compliant/github-binary-square.svg
 
-# Banners
-banner-holofoil-v1: components/banners/hw-compliant/holofoil.svg
-
 # Border motions
 motion-chromatic-pulse-v1: motion/motion-border-frames/hw-compliant/002-chromatic-pulse.svg
 motion-corner-trace-v1: motion/motion-border-frames/hw-compliant/003-corner-trace.svg
 motion-dual-orbit-v1: motion/motion-border-frames/hw-compliant/004-dual-orbit.svg
 motion-entanglement-v1: motion/motion-border-frames/hw-compliant/020-quantum-entanglement.svg
 motion-rimrun-v1: motion/motion-border-frames/hw-compliant/rim-runners.svg
-
-# Kinetic typography motions
-motion-bars-v1: motion/motion-kinetic-typography/hw-compliant/banner_bars.svg
-motion-broadcast-v1: motion/motion-kinetic-typography/hw-compliant/banner_broadcast.svg
-motion-cascade-v1: motion/motion-kinetic-typography/hw-compliant/banner_cascade.svg
-motion-converge-v1: motion/motion-kinetic-typography/hw-compliant/banner_convergence.svg
-motion-drop-v1: motion/motion-kinetic-typography/hw-compliant/banner_drop.svg
-motion-rubricate-v1: motion/motion-kinetic-typography/hw-compliant/banner_rubricate.svg
-motion-impact-v1: motion/motion-kinetic-typography/hw-compliant/chromatic_impact_physics.svg
-motion-breach-v1: motion/motion-kinetic-typography/hw-compliant/quantum_tunneling_breach.svg
-motion-intake-v1: motion/motion-kinetic-typography/hw-compliant/user_input_data.svg
-motion-collapse-v1: motion/motion-kinetic-typography/hw-compliant/z_axis_illusion_via_exponential_scale_blur_convergence.svg
 
 # Telemetry artifacts
 telemetry-receipt-v1: telemetry-artifacts/receipt.svg

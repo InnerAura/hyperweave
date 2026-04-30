@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 
@@ -27,7 +27,7 @@ def version() -> None:
 def compose(
     frame_type: Annotated[
         str,
-        typer.Argument(help="Frame: badge, strip, banner, icon, divider, marquee-*, stats, chart, timeline"),
+        typer.Argument(help="Frame: badge, strip, icon, divider, marquee-horizontal, stats, chart"),
     ],
     title: Annotated[str, typer.Argument(help="Primary text (label, identity, username, owner/repo, ...)")] = "",
     value: Annotated[str, typer.Argument(help="Secondary text or chart subtype (e.g. 'stars')")] = "",
@@ -57,25 +57,32 @@ def compose(
     divider_variant: Annotated[str, typer.Option("--divider-variant")] = "zeropoint",
     # Marquee options
     direction: Annotated[str, typer.Option("--direction")] = "ltr",
-    rows: Annotated[int, typer.Option("--rows")] = 3,
-    # Timeline options
     data: Annotated[
-        Path | None,
-        typer.Option("--data", help="Path to JSON data file (timeline items, stats mock data, etc.)"),
-    ] = None,
+        str,
+        typer.Option(
+            "--data",
+            help=(
+                "Data tokens, comma-separated. Forms: text:STRING | kv:KEY=VALUE | "
+                "gh:owner/repo.metric | pypi:pkg.metric | npm:pkg.metric | "
+                "hf:org/model.metric | arxiv:id.metric | docker:owner/image.metric. "
+                "Embedded commas in text/kv payloads escape as \\,."
+            ),
+        ),
+    ] = "",
     # Output
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
     metrics: Annotated[str, typer.Option("--metrics", help="Strip metrics: 'STARS:2.9k,FORKS:278'")] = "",
 ) -> None:
     """Compose a single HyperWeave artifact.
 
-    For the new Session 2A+2B frames:
+    Examples:
 
     \b
-      hyperweave compose stats <username>                    [fetches GitHub data]
-      hyperweave compose chart stars <owner/repo>            [fetches star history]
-      hyperweave compose timeline --data ./items.json        [POST-style items]
-      hyperweave compose <any-frame> --genome-file ./x.json  [custom genome]
+      hyperweave compose stats <username>                          [fetches GitHub data]
+      hyperweave compose chart stars <owner/repo>                  [fetches star history]
+      hyperweave compose badge STARS --data gh:anthropics/claude-code.stars
+      hyperweave compose marquee-horizontal --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
+      hyperweave compose <any-frame> --genome-file ./x.json        [custom genome]
     """
     import asyncio
     import json
@@ -106,7 +113,6 @@ def compose(
 
     # ── Frame-type-specific argument interpretation + connector fetch ──
     connector_data: dict[str, object] | None = None
-    timeline_items: list[dict[str, object]] | None = None
     stats_username = ""
     chart_owner = ""
     chart_repo = ""
@@ -136,10 +142,31 @@ def compose(
         except Exception as exc:
             typer.echo(f"(warning) chart fetch failed for {chart_owner}/{chart_repo}: {exc}", err=True)
             connector_data = None
-    elif frame_type == "timeline":
-        if data is not None and data.exists():
-            payload = json.loads(data.read_text())
-            timeline_items = payload.get("items") if isinstance(payload, dict) else payload
+
+    # ── ?data= / --data: unified data-token grammar ──
+    # Marquee-horizontal consumes spec.data_tokens directly (the resolved list);
+    # other frames receive the formatted "K1:V1,K2:V2" string via spec.value.
+    data_tokens_resolved: list[Any] | None = None
+    if data:
+        from hyperweave.serve.data_tokens import (
+            format_for_value,
+            parse_data_tokens,
+            resolve_data_tokens,
+        )
+
+        try:
+            tokens = parse_data_tokens(data)
+            resolved, _ttl = asyncio.run(resolve_data_tokens(tokens))
+        except ValueError as exc:
+            typer.echo(f"Error: --data parse failed: {exc}", err=True)
+            raise typer.Exit(2) from exc
+
+        if frame_type == "marquee-horizontal":
+            data_tokens_resolved = list(resolved)
+        else:
+            formatted = format_for_value(resolved)
+            if formatted:
+                final_value = formatted
 
     spec = ComposeSpec(
         type=frame_type,
@@ -157,12 +184,11 @@ def compose(
         family=family,
         divider_variant=divider_variant,
         marquee_direction=direction,
-        marquee_rows=rows,
         stats_username=stats_username,
         chart_owner=chart_owner,
         chart_repo=chart_repo,
         connector_data=connector_data,
-        timeline_items=timeline_items,
+        data_tokens=data_tokens_resolved,
     )
 
     result = do_compose(spec)

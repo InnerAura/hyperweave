@@ -54,8 +54,9 @@ def test_cellular_frame_family_defaults() -> None:
     assert cellular.frame_family_defaults.get("badge") == "blue"
     assert cellular.frame_family_defaults.get("icon") == "blue"
     assert cellular.frame_family_defaults.get("strip") == "bifamily"
-    assert cellular.frame_family_defaults.get("banner") == "bifamily"
     assert cellular.frame_family_defaults.get("marquee-horizontal") == "bifamily"
+    # banner default removed in v0.2.14 with the banner frame type.
+    assert "banner" not in cellular.frame_family_defaults
 
 
 def test_cellular_strip_config_exposes_status_flags() -> None:

@@ -6,11 +6,8 @@ animated_properties: []
 applies_to:
   - badge
   - strip
-  - banner
   - icon
   - divider
   - marquee-horizontal
-  - marquee-vertical
-  - marquee-counter
 css: ""
 description: "No animation. Default state."

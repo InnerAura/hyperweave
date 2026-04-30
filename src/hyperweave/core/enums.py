@@ -15,20 +15,15 @@ class FrameType(StrEnum):
 
     BADGE = "badge"
     STRIP = "strip"
-    BANNER = "banner"
     ICON = "icon"
     DIVIDER = "divider"
     MARQUEE_HORIZONTAL = "marquee-horizontal"
-    MARQUEE_VERTICAL = "marquee-vertical"
-    MARQUEE_COUNTER = "marquee-counter"
     RECEIPT = "receipt"
     RHYTHM_STRIP = "rhythm-strip"
     MASTER_CARD = "master-card"
     CATALOG = "catalog"
-    # Session 2A+2B — new frame types
     STATS = "stats"
     CHART = "chart"
-    TIMELINE = "timeline"
 
 
 class GenomeId(StrEnum):
@@ -56,26 +51,12 @@ class BorderMotionId(StrEnum):
     RIMRUN = "rimrun"
 
 
-class KineticMotionId(StrEnum):
-    """CSS/SMIL kinetic typography motions for banner frames."""
-
-    BARS = "bars"
-    BROADCAST = "broadcast"
-    CASCADE = "cascade"
-    COLLAPSE = "collapse"
-    CONVERGE = "converge"
-    CRASH = "crash"
-    DROP = "drop"
-    BREACH = "breach"
-    PULSE = "pulse"
-
-
 class MotionId(StrEnum):
-    """All motion primitives -- union of static + border + kinetic.
+    """All motion primitives -- union of static + border.
 
-    Use BorderMotionId or KineticMotionId when the context constrains
-    which system applies. Use MotionId at API boundaries (ComposeSpec,
-    CLI, MCP) where the caller picks from the full vocabulary.
+    Use BorderMotionId when the context constrains which system applies.
+    Use MotionId at API boundaries (ComposeSpec, CLI, MCP) where the
+    caller picks from the full vocabulary.
     """
 
     STATIC = "static"
@@ -85,16 +66,6 @@ class MotionId(StrEnum):
     DUAL_ORBIT = "dual-orbit"
     ENTANGLEMENT = "entanglement"
     RIMRUN = "rimrun"
-    # Kinetic
-    BARS = "bars"
-    BROADCAST = "broadcast"
-    CASCADE = "cascade"
-    COLLAPSE = "collapse"
-    CONVERGE = "converge"
-    CRASH = "crash"
-    DROP = "drop"
-    BREACH = "breach"
-    PULSE = "pulse"
 
 
 class DividerVariant(StrEnum):

@@ -100,19 +100,6 @@ def test_compose_spec_connector_data_field() -> None:
     assert spec.connector_data["stars_total"] == 12847
 
 
-def test_compose_spec_timeline_items_field() -> None:
-    """timeline_items is a list slot for POST /v1/timeline body."""
-    spec = ComposeSpec(
-        type="timeline",
-        timeline_items=[
-            {"title": "v0.1", "status": "passing"},
-            {"title": "v0.2", "status": "active"},
-        ],
-    )
-    assert spec.timeline_items is not None
-    assert len(spec.timeline_items) == 2
-
-
 # ============================================================================
 # _load_genome override path
 # ============================================================================

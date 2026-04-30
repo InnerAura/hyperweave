@@ -99,15 +99,11 @@
   "paradigms": {
     "badge": "cellular",
     "strip": "cellular",
-    "banner": "cellular",
     "icon": "cellular",
     "marquee-horizontal": "cellular",
-    "marquee-vertical": "cellular",
-    "marquee-counter": "cellular",
     "divider": "default",
     "stats": "cellular",
-    "chart": "cellular",
-    "timeline": "default"
+    "chart": "cellular"
   },
   "structural": {
     "stroke_linejoin": "miter",

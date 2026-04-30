@@ -40,28 +40,23 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     glyph_data = _resolve_glyph(spec)
     motion = _resolve_motion(spec, genome)
 
-    # Session 2A+2B: new resolvers live in compose/resolvers/ per Invariant 10.
+    # Stats and chart resolvers live in compose/resolvers/ per Invariant 10.
     from hyperweave.compose.resolvers.chart import resolve_chart
     from hyperweave.compose.resolvers.stats import resolve_stats
-    from hyperweave.compose.resolvers.timeline import resolve_timeline
 
     # Dispatch to frame-specific resolver
     frame_resolvers: dict[str, Any] = {
         "badge": resolve_badge,
         "strip": resolve_strip,
-        "banner": resolve_banner,
         "icon": resolve_icon,
         "divider": resolve_divider,
         "marquee-horizontal": resolve_marquee,
-        "marquee-vertical": resolve_marquee,
-        "marquee-counter": resolve_marquee,
         "receipt": resolve_receipt,
         "rhythm-strip": resolve_rhythm_strip,
         "master-card": resolve_master_card,
         "catalog": resolve_catalog,
         "chart": resolve_chart,
         "stats": resolve_stats,
-        "timeline": resolve_timeline,
     }
 
     resolver_fn = frame_resolvers.get(spec.type, resolve_badge)
@@ -86,8 +81,8 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     ctx = dict(frame_result.get("context", {}))
     # v0.2.6 centralization: profile visual context (envelope/well/specular/
     # chrome+hero text gradients) applied universally at the dispatcher.
-    # Replaces 8 manual _genome_material_context(...) calls previously scattered
-    # across badge/strip/banner/icon/divider/marquee/stats/chart resolvers —
+    # Replaces manual _genome_material_context(...) calls previously scattered
+    # across badge/strip/icon/divider/marquee/stats/chart resolvers —
     # the forgetting of which caused Bug D (stats + chart rendered chrome-horizon
     # envelopes regardless of genome). setdefault semantics: a frame resolver
     # that legitimately pre-computes one of these keys still wins.
@@ -357,8 +352,7 @@ def resolve_strip(
     downstream positions shift left so there's no dead space.
     """
     # Inline imports follow the convention in this file (see resolve_badge,
-    # resolve_banner, resolve_marquee): each resolver pulls only what it
-    # needs at the call site.
+    # resolve_marquee): each resolver pulls only what it needs at the call site.
     from dataclasses import asdict
 
     from hyperweave.core.cell_layout import TextSpec, compute_cell_layout
@@ -711,68 +705,6 @@ def resolve_strip(
     }
 
 
-def resolve_banner(
-    spec: ComposeSpec,
-    genome: dict[str, Any],
-    profile: dict[str, Any],
-    paradigm_spec: Any = None,
-    **_kw: Any,
-) -> dict[str, Any]:
-    """Resolve banner dimensions.
-
-    Full variant: 1200x600, 3-column editorial grid, 160px hero text.
-    Compact variant: 800x220, no grid, 42px text.
-    """
-    compact = spec.variant == "compact"
-    # Banner dims: paradigm-driven (cellular specimen is 800x220 for both
-    # variants; brutalist/chrome keep 1200x600 full / 800x220 compact).
-    banner_cfg = paradigm_spec.banner if paradigm_spec else None
-    if banner_cfg is not None:
-        w = banner_cfg.width_compact if compact else banner_cfg.width_default
-        h = banner_cfg.height_compact if compact else banner_cfg.height_default
-    else:
-        w = 800 if compact else 1200
-        h = 220 if compact else profile.get("banner_height", 600)
-
-    genome_name = genome.get("name", spec.genome_id)
-    footer = genome_name.upper()
-
-    from hyperweave.core.text import measure_text
-
-    title = spec.title or "HYPERWEAVE"
-    base_fs = 42 if compact else 160
-    max_width = (w - 80) if compact else (w - 120)  # margin each side
-
-    # Scale font size down if title overflows available width
-    text_w = measure_text(title, font_family="Inter", font_size=base_fs, font_weight=700)
-    ls_reduction = 0.04 * base_fs * max(len(title) - 1, 0)  # -0.04em letter-spacing
-    effective_w = text_w - ls_reduction
-    title_fs = max(int(base_fs * max_width / effective_w), 42) if effective_w > max_width else base_fs
-
-    # Family resolution (cellular banner: bifamily default).
-    resolved_family = spec.family
-    if not resolved_family and paradigm_spec is not None:
-        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
-        resolved_family = family_defaults.get(spec.type, "")
-
-    ctx: dict[str, Any] = {
-        "banner_title": title,
-        "banner_subtitle": spec.value or "subtitle",
-        "banner_label": footer,
-        "banner_variant": "compact" if compact else "full",
-        "title_font_size": title_fs,
-        "family": resolved_family,
-    }
-    # Profile visual context now injected centrally by the dispatcher.
-
-    return {
-        "width": w,
-        "height": h,
-        "template": "frames/banner.svg.j2",
-        "context": ctx,
-    }
-
-
 def resolve_icon(
     spec: ComposeSpec,
     genome: dict[str, Any],
@@ -884,12 +816,12 @@ def resolve_marquee(
     paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
-    """Resolve marquee dimensions and content.
+    """Resolve marquee-horizontal dimensions and scroll content.
 
-    Three variants:
-      counter    — 800x140, tri-band R/L/R, per-row heterogeneous content
-      vertical   — 400x268, telemetry feed with timestamped events
-      horizontal — 800x40,  LIVE ticker with brand items
+    Single variant after v0.2.14: 800x40 LIVE ticker. The genome's family
+    palette (cellular: bifamily teal/amethyst) and the paradigm's marquee
+    config (separator glyph, live-block suppression) drive aesthetic dispatch
+    inside ``_resolve_horizontal``.
     """
     # Family resolution (cellular marquee-horizontal: bifamily default).
     resolved_family = spec.family
@@ -897,12 +829,12 @@ def resolve_marquee(
         family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
         resolved_family = family_defaults.get(spec.type, "")
 
-    # Marquee sub-resolvers only need signal_hex/surface_hex as hex-resolved
-    # carriers for <stop> attributes (var() is unreliable inside SVG stops).
+    # ``_resolve_horizontal`` only needs signal_hex/surface_hex as hex-resolved
+    # carriers for ``<stop>`` attributes (var() is unreliable inside SVG stops).
     # The rest of the profile visual context (envelope/well/etc.) is merged
-    # universally by the dispatcher, so no longer needed here. Bifamily
-    # cellular marquees additionally carry family-specific info hexes so
-    # _resolve_horizontal can generate tspan-alternation scroll_items.
+    # universally by the dispatcher. Bifamily cellular marquees additionally
+    # carry family-specific info hexes so ``_resolve_horizontal`` can generate
+    # tspan-alternation scroll_items.
     chrome_ctx: dict[str, Any] = {
         "signal_hex": genome.get("accent", "#10B981"),
         "surface_hex": genome.get("surface_0", genome.get("surface", "#0A0A0A")),
@@ -914,15 +846,8 @@ def resolve_marquee(
     # Paradigm-declared marquee config — separator glyph, palette, live-block
     # suppression. Routed through ParadigmMarqueeConfig (defaults match the
     # historic brutalist/chrome behavior, so paradigms that don't declare
-    # marquee config still render correctly). All three sub-resolvers read
-    # from this config, not from hardcoded paradigm-coupled values.
+    # marquee config still render correctly).
     marquee_cfg = paradigm_spec.marquee if paradigm_spec is not None else None
-
-    if spec.type == FrameType.MARQUEE_COUNTER:
-        return _resolve_counter(spec, chrome_ctx, profile, marquee_cfg)
-
-    if spec.type == FrameType.MARQUEE_VERTICAL:
-        return _resolve_vertical(spec, chrome_ctx, profile, marquee_cfg)
 
     return _resolve_horizontal(spec, chrome_ctx, profile, marquee_cfg)
 
@@ -991,350 +916,6 @@ def _apply_content_aware_scroll(rows: list[dict[str, Any]], base_speed: float, s
         row["scroll_dur"] = round(sd / (base_speed * speed), 2)
 
 
-def _resolve_counter(
-    spec: ComposeSpec,
-    chrome_ctx: dict[str, Any],
-    profile: dict[str, Any] | None = None,
-    marquee_cfg: Any = None,
-) -> dict[str, Any]:
-    """Counter-scroll tri-band: 3 rows with distinct content types.
-
-    Brutalist and chrome genomes produce different aesthetic DNA:
-    - Brutalist: monospace, ■ separators, bold accent colors, thick dividers
-    - Chrome: display+mono mix, ● separators at 25% opacity, muted palette, thin hairlines
-    - Cellular bifamily: tspan_palette teal/amethyst alternation, ◆ separators
-      at #606878, hairline row dividers (no thick rule chrome).
-    """
-    _prof = profile or {}
-    width, height = 800, 140
-    base_speed = 90.2  # px/s (1000 / 11.09)
-    # Speed override: marquee_speeds[0] scales all rows uniformly
-    speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
-
-    # Parse brand items from title (pipe-separated for phrases, fallback to space-split)
-    title_raw = spec.title or ""
-    if "|" in title_raw or "·" in title_raw:
-        brand_items = [s.strip() for s in title_raw.replace("·", "|").split("|") if s.strip()]
-    else:
-        brand_items = [s.strip() for s in title_raw.split() if s.strip()]
-    brand_items = brand_items or ["HYPERWEAVE"]
-
-    metric_items = _parse_counter_metrics(spec.value or "")
-
-    # ── Profile-driven layout parameters ──
-    brand_color_even = _prof.get("marquee_counter_brand_color_even", "var(--dna-signal)")
-    brand_color_odd = _prof.get("marquee_counter_brand_color_odd", "var(--dna-ink-primary)")
-    metric_label_color = _prof.get("marquee_counter_metric_label_color", "var(--dna-label-text, var(--dna-signal-dim))")
-    metric_value_font = _prof.get("marquee_counter_metric_value_font", "")
-    row_ys = _prof.get("marquee_counter_row_ys", [6, 48, 90])
-    row_hs = _prof.get("marquee_counter_row_hs", [36, 36, 38])
-    text_ys = _prof.get("marquee_counter_text_ys", [30, 72, 115])
-    divider_ys = _prof.get("marquee_counter_divider_ys", [44, 88])
-    gap_r1 = _prof.get("marquee_counter_gap_r1", 28)
-    letter_spacing_r1 = _prof.get("marquee_counter_letter_spacing_r1", "4")
-    letter_spacing_r2 = _prof.get("marquee_counter_letter_spacing_r2", "1.5")
-    letter_spacing_r3 = _prof.get("marquee_counter_letter_spacing_r3", "1")
-    text_start_x = _prof.get("marquee_counter_text_start_x", 20)
-    separator = _prof.get("marquee_separator", "■")
-    separator_color = _prof.get("marquee_separator_color", "var(--dna-border)")
-    separator_opacity = _prof.get("marquee_separator_opacity", "")
-    font_family = _prof.get("marquee_font_family", "var(--dna-font-mono, ui-monospace, monospace)")
-    mono_font = f"var(--dna-font-mono, {_prof.get('fonts', {}).get('mono', 'monospace')})"
-
-    # Bifamily palette dispatch — when family == "bifamily" and the paradigm
-    # declares a tspan_palette, the three rows alternate teal/amethyst/teal
-    # so the tri-band reads as a cellular substrate rather than three
-    # discrete telemetry feeds. Brutalist/chrome rows keep the original
-    # ink-primary/ink-secondary alternation.
-    fam = chrome_ctx.get("family", "")
-    teal_info = chrome_ctx.get("family_blue_info", "")
-    amethyst_info = chrome_ctx.get("family_purple_info", "")
-    is_bifamily = (
-        fam == "bifamily"
-        and bool(teal_info)
-        and bool(amethyst_info)
-        and marquee_cfg is not None
-        and bool(marquee_cfg.tspan_palette)
-    )
-    # Per-row dominant color when bifamily: teal → amethyst → teal.
-    row_palette = [teal_info, amethyst_info, teal_info] if is_bifamily else [None, None, None]
-
-    # ── Row 1: Brand items ──
-    row1_cells: list[dict[str, Any]] = []
-    for i, text in enumerate(brand_items):
-        cell_color = row_palette[0] if is_bifamily else (brand_color_even if i % 2 == 0 else brand_color_odd)
-        row1_cells.append({"text": text, "color": cell_color})
-
-    # ── Row 2: Metric label/value pairs ──
-    row2_cells: list[dict[str, Any]] = []
-    for m in metric_items:
-        row2_label_color = row_palette[1] if is_bifamily else metric_label_color
-        row2_value_color = row_palette[1] if is_bifamily else "var(--dna-ink-primary)"
-        row2_cells.append(
-            {
-                "text": m["label"],
-                "color": row2_label_color,
-                "font_weight": "700",
-            }
-        )
-        value_cell: dict[str, Any] = {
-            "text": m["value"],
-            "color": row2_value_color,
-            "font_size": "15",
-            "font_weight": "800",
-            "dx": "6",
-        }
-        if metric_value_font:
-            value_cell["font_family"] = metric_value_font
-        row2_cells.append(value_cell)
-        if m.get("delta"):
-            arrow = "▲" if m.get("delta_dir") == "positive" else "▼"
-            # In bifamily, deltas keep their amethyst row color rather than
-            # switching to passing/failing greens — chromatic family wins
-            # over status semantics in cellular counter (consistent with
-            # vertical's row palette override).
-            color = (
-                row_palette[1]
-                if is_bifamily
-                else (
-                    "var(--dna-status-passing-core)"
-                    if m.get("delta_dir") == "positive"
-                    else "var(--dna-status-failing-core)"
-                )
-            )
-            row2_cells.append(
-                {
-                    "text": f"{arrow}{m['delta']}",
-                    "color": color,
-                    "font_size": "9",
-                    "dx": "4",
-                }
-            )
-
-    # ── Row 3: Status indicators ──
-    status_items = _build_counter_status_items(spec, _prof)
-    if is_bifamily:
-        # Override every status cell color to row_palette[2] (teal). The
-        # cellular counter doesn't render distinct ●/◆ chromatic accents —
-        # the rhythm is row-level, not cell-level.
-        for cell in status_items:
-            cell["color"] = row_palette[2]
-
-    # Paradigm-declared separator (cellular: ◆ / #606878). Falls back to
-    # profile-driven separator for brutalist/chrome.
-    paradigm_sep_glyph = marquee_cfg.separator_glyph if marquee_cfg is not None else "■"
-    paradigm_sep_color = marquee_cfg.separator_color if marquee_cfg is not None else ""
-    resolved_sep_r1 = paradigm_sep_glyph if (is_bifamily and paradigm_sep_glyph != "■") else separator
-    resolved_sep_color_r1 = paradigm_sep_color if (is_bifamily and paradigm_sep_color) else separator_color
-
-    all_rows = [
-        {
-            "cells": row1_cells,
-            "scroll_distance": 0,
-            "scroll_dur": 0,
-            "direction": "rtl",
-            "separator": resolved_sep_r1,
-            "separator_color": resolved_sep_color_r1,
-            "separator_opacity": separator_opacity,
-            "gap": gap_r1,
-            "font_size": 14,
-            "font_weight": "800",
-            "letter_spacing": letter_spacing_r1,
-            "font_family": font_family,
-            "text_start_x": text_start_x,
-            "row_y": row_ys[0],
-            "row_h": row_hs[0],
-            "text_y": text_ys[0],
-        },
-        {
-            "cells": row2_cells,
-            "scroll_distance": 0,
-            "scroll_dur": 0,
-            "direction": "ltr",
-            "separator": "",
-            "separator_color": "",
-            "separator_opacity": "",
-            "gap": 32,
-            "font_size": 11,
-            "font_weight": "700",
-            "letter_spacing": letter_spacing_r2,
-            "font_family": mono_font,
-            "text_start_x": text_start_x,
-            "row_y": row_ys[1],
-            "row_h": row_hs[1],
-            "text_y": text_ys[1],
-        },
-        {
-            "cells": status_items,
-            "scroll_distance": 0,
-            "scroll_dur": 0,
-            "direction": "rtl",
-            "separator": "",
-            "separator_color": "",
-            "separator_opacity": "",
-            "gap": 24,
-            "font_size": 10,
-            "font_weight": "500",
-            "letter_spacing": letter_spacing_r3,
-            "font_family": mono_font,
-            "text_start_x": text_start_x,
-            "row_y": row_ys[2],
-            "row_h": row_hs[2],
-            "text_y": text_ys[2],
-        },
-    ]
-
-    n_rows = spec.marquee_rows if spec.marquee_rows > 1 else 3
-    all_rows = all_rows[:n_rows]
-
-    # Calculate per-row scroll_distance from actual content width
-    _apply_content_aware_scroll(all_rows, base_speed, speed, width)
-
-    # Use the widest row's scroll_distance as the global fallback
-    _sds: list[int] = [r["scroll_distance"] for r in all_rows]
-    scroll_distance = max(_sds) if _sds else 1000
-    scroll_dur = round(scroll_distance / (base_speed * speed), 2)
-
-    # ── Data-driven parametric vars (profile YAML) ──
-    divider_x_inset = _prof.get("marquee_counter_divider_x_inset", 6)
-    divider_x1 = divider_x_inset
-    divider_x2 = width - divider_x_inset
-    # Cellular bifamily counter uses a thinner, more transparent row divider
-    # so the rhythm reads as instrument-grade chrome rather than brutalist
-    # rule-bars. 0.5px @ 0.15 opacity matches the hairline vocabulary.
-    if is_bifamily:
-        divider_stroke_width = "0.5"
-        divider_stroke_opacity = "0.15"
-    else:
-        divider_stroke_width = _prof.get("marquee_counter_divider_stroke_width", "1.5")
-        divider_stroke_opacity = _prof.get("marquee_counter_divider_stroke_opacity", ".2")
-    fade_inset = _prof.get("marquee_counter_fade_inset", 5)
-    fade_x = fade_inset
-    fade_y = fade_inset
-    fade_w = _prof.get("marquee_counter_fade_w", 36)
-    fade_h = height - fade_inset * 2
-    fade_right_x = width - fade_inset - fade_w
-    fade_rx = _prof.get("marquee_counter_fade_rx", "")
-    # Cellular bifamily marquee has no rivets/beacon — pure hairline chrome
-    # per the no-edge-cell-slabbing rule. Brutalist/chrome retain rivets.
-    if is_bifamily:
-        show_rivets = False
-        show_beacon = False
-    else:
-        show_rivets = _prof.get("marquee_counter_show_rivets", True)
-        show_beacon = _prof.get("marquee_counter_show_beacon", True)
-
-    ctx: dict[str, Any] = {
-        "rows": all_rows,
-        "scroll_distance": scroll_distance,
-        "scroll_dur": scroll_dur,
-        "bezel": 4,
-        "surface_inset": 5,
-        "accent_bar_w": 4,
-        "rivet_size": 6,
-        "rivet_opacity": 0.4,
-        "fade_width": fade_w,
-        "beacon_pulse_dur": "2.618s",
-        "divider_ys": divider_ys[: n_rows - 1],
-        "clip_x": _prof.get("marquee_clip_x", 6),
-        "clip_w": _prof.get("marquee_clip_w", 788),
-        "direction": spec.marquee_direction,
-        # Data-driven parametric vars for profile-dispatched template
-        "divider_x1": divider_x1,
-        "divider_x2": divider_x2,
-        "divider_stroke_width": divider_stroke_width,
-        "divider_stroke_opacity": divider_stroke_opacity,
-        "fade_x": fade_x,
-        "fade_y": fade_y,
-        "fade_h": fade_h,
-        "fade_right_x": fade_right_x,
-        "fade_rx": fade_rx,
-        "show_rivets": show_rivets,
-        "show_beacon": show_beacon,
-    }
-    ctx.update(chrome_ctx)
-    return {"width": width, "height": height, "template": "frames/marquee-counter.svg.j2", "context": ctx}
-
-
-def _resolve_vertical(
-    spec: ComposeSpec,
-    chrome_ctx: dict[str, Any],
-    profile: dict[str, Any] | None = None,
-    marquee_cfg: Any = None,
-) -> dict[str, Any]:
-    """Vertical telemetry feed: timestamped event rows with status indicators.
-
-    Dot shape, status colors, and accent styling read from profile YAML.
-    Cellular bifamily marquees alternate row dot/label colors using the
-    paradigm's tspan_palette (teal/amethyst) — read from ``marquee_cfg``.
-    """
-    _prof = profile or {}
-    width, height = 400, 268
-    header_h = 33
-    row_height = 30
-    base_dur = 23.42  # default at speed=1.0
-    speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
-    scroll_dur = round(base_dur / speed, 2)
-    fade_h = 18
-
-    raw_items = [s.strip() for s in (spec.title or "").split() if s.strip()] or ["HYPERWEAVE"]
-    scroll_rows = _build_vertical_rows(
-        raw_items,
-        warn_color=_prof.get("marquee_vertical_warn_color", "var(--dna-status-warning-core)"),
-        status_ts_color=_prof.get("marquee_vertical_status_ts_color", "var(--dna-label-text, var(--dna-signal-dim))"),
-    )
-
-    # Bifamily palette dispatch — when family == "bifamily" AND the paradigm
-    # declares a non-empty tspan_palette, override per-row dot/label/timestamp
-    # colors with the genome's family info hexes (teal/amethyst). Status
-    # semantics (passing/warning/err) become subordinate to chromatic family
-    # in this paradigm: state is encoded via the message text, not color.
-    fam = chrome_ctx.get("family", "")
-    teal_info = chrome_ctx.get("family_blue_info", "")
-    amethyst_info = chrome_ctx.get("family_purple_info", "")
-    has_tspan_palette = bool(marquee_cfg is not None and marquee_cfg.tspan_palette)
-    if fam == "bifamily" and teal_info and amethyst_info and has_tspan_palette:
-        palette = [teal_info, amethyst_info]
-        for i, row in enumerate(scroll_rows):
-            color = palette[i % len(palette)]
-            row["dot_color"] = color
-            row["timestamp_color"] = color
-            row["label_color"] = color
-
-    item_count = len(scroll_rows)
-    content_h = item_count * row_height
-
-    ctx: dict[str, Any] = {
-        "direction": spec.marquee_direction,
-        "header_label": "SYSTEM TELEMETRY",
-        "header_right_label": "",
-        "marquee_label": "LIVE",
-        "scroll_rows": scroll_rows,
-        "scroll_items": [{"text": r["message"]} for r in scroll_rows],
-        "header_h": header_h,
-        "row_height": row_height,
-        "item_count": item_count,
-        "content_h": content_h,
-        "scroll_dur": scroll_dur,
-        "fade_h": fade_h,
-        "dot_shape": _prof.get("marquee_dot_shape", "rect"),
-        "dot_size": 4,
-        "dot_x": 14,
-        "text_x": 26,
-        "status_label_x": width - _prof.get("marquee_vertical_status_label_offset", 18),
-        "bottom_accent_h": 3,
-        "live_dot_size": 8,
-        "pulse_dur": "2.618s",
-        "divider_y": header_h + 5,
-        "bezel": 4,
-        "surface_inset": 5,
-        # Data-driven parametric var for profile-dispatched template
-        "bottom_accent_type": _prof.get("marquee_vertical_bottom_accent_type", "bar"),
-    }
-    ctx.update(chrome_ctx)
-    return {"width": width, "height": height, "template": "frames/marquee-vertical.svg.j2", "context": ctx}
-
-
 def _resolve_horizontal(
     spec: ComposeSpec,
     chrome_ctx: dict[str, Any],
@@ -1342,6 +923,19 @@ def _resolve_horizontal(
     marquee_cfg: Any = None,
 ) -> dict[str, Any]:
     """Horizontal LIVE ticker: brand items scrolling left.
+
+    Two input modes (mutually exclusive — ``data_tokens`` wins when both
+    are set):
+
+    1. **Data-token mode** (``spec.data_tokens`` non-empty): each
+       :class:`hyperweave.serve.data_tokens.ResolvedToken` becomes a
+       scroll item. ``text`` tokens render their payload; ``kv`` / ``live``
+       tokens render ``"LABEL VALUE"``. Genome chromatic conventions
+       (cellular bifamily palette, brutalist/chrome ink alternation) apply
+       uniformly across all roles in this PR — role-tagged label/value
+       splitting is a future enhancement.
+    2. **Raw text mode** (``spec.title`` only): ``title`` is split on
+       ``|`` (or ``·``) into bullets — historical contract preserved.
 
     Separator glyph, separator color, and live-block suppression are read
     from ``marquee_cfg`` (ParadigmMarqueeConfig). Per-item color cycle
@@ -1355,10 +949,21 @@ def _resolve_horizontal(
     speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
     scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
-    items_text = spec.title or ""
-    raw_items = [s.strip() for s in items_text.replace("·", "|").split("|") if s.strip()]
-    if not raw_items:
-        raw_items = [items_text] if items_text else ["HYPERWEAVE"]
+    if spec.data_tokens:
+        # Data-token mode: derive scroll strings from resolved tokens.
+        # For ``text`` tokens, render the payload directly; for ``kv`` / ``live``,
+        # render ``"LABEL VALUE"`` as one combined string per item.
+        from hyperweave.serve.data_tokens import format_for_marquee
+
+        formatted = format_for_marquee(spec.data_tokens)
+        raw_items = [item["text"] for item in formatted if item.get("text")]
+        if not raw_items:
+            raw_items = ["HYPERWEAVE"]
+    else:
+        items_text = spec.title or ""
+        raw_items = [s.strip() for s in items_text.replace("·", "|").split("|") if s.strip()]
+        if not raw_items:
+            raw_items = [items_text] if items_text else ["HYPERWEAVE"]
 
     bold_pattern = _prof.get("marquee_horizontal_bold_pattern", "even")
     separator = _prof.get("marquee_separator", "■")
@@ -1445,127 +1050,6 @@ def _resolve_horizontal(
     }
     ctx.update(chrome_ctx)
     return {"width": width, "height": height, "template": "frames/marquee-horizontal.svg.j2", "context": ctx}
-
-
-# ── Marquee content builders ──
-
-
-def _parse_counter_metrics(value: str) -> list[dict[str, str]]:
-    """Parse label:value pairs from value string for counter row 2."""
-    metrics: list[dict[str, str]] = []
-    if not value:
-        # Default metrics
-        return [
-            {"label": "STARS", "value": "2.9K", "delta": "340", "delta_dir": "positive"},
-            {"label": "FORKS", "value": "278"},
-            {"label": "COVERAGE", "value": "94.7%"},
-        ]
-    for pair in value.replace(";", ",").split(","):
-        pair = pair.strip()
-        if ":" in pair:
-            k, v = pair.split(":", 1)
-            metrics.append({"label": k.strip().upper(), "value": v.strip()})
-    return metrics or [{"label": "STATUS", "value": "NOMINAL"}]
-
-
-def _build_counter_status_items(
-    spec: ComposeSpec,
-    profile: dict[str, Any] | None = None,
-) -> list[dict[str, Any]]:
-    """Build status indicator items for counter row 3."""
-    _prof = profile or {}
-    dot_color = _prof.get("marquee_counter_status_dot_color", "var(--dna-status-passing-core)")
-    diamond_color = _prof.get("marquee_counter_status_diamond_color", "var(--dna-signal)")
-    return [
-        {"text": "●", "color": dot_color, "font_weight": "700", "dx": "20"},
-        {"text": "ONLINE", "color": "var(--dna-ink-secondary, var(--dna-ink-muted))", "font_weight": "500", "dx": "6"},
-        {"text": "●", "color": dot_color, "font_weight": "700", "dx": "24"},
-        {
-            "text": "CDN EDGE 14ms",
-            "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
-            "font_weight": "500",
-            "dx": "6",
-        },
-        {"text": "◆", "color": diamond_color, "font_weight": "700", "dx": "24"},
-        {
-            "text": "CIM COMPLIANT",
-            "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
-            "font_weight": "500",
-            "dx": "6",
-        },
-        {"text": "◆", "color": diamond_color, "font_weight": "700", "dx": "24"},
-        {
-            "text": "WCAG AA PASS",
-            "color": "var(--dna-ink-secondary, var(--dna-ink-muted))",
-            "font_weight": "500",
-            "dx": "6",
-        },
-    ]
-
-
-def _build_vertical_rows(
-    raw_items: list[str],
-    *,
-    warn_color: str = "var(--dna-status-warning-core)",
-    status_ts_color: str = "var(--dna-label-text, var(--dna-signal-dim))",
-) -> list[dict[str, Any]]:
-    """Build structured telemetry rows from raw text items."""
-    default_events = [
-        ("ok", "compositor.compose() → badge", "OK"),
-        ("ok", 'genome.load("brutalist-emerald")', "OK"),
-        ("info", "frame.render(strip, 560x52)", "2.1KB"),
-        ("warn", 'cache.miss("cdn-edge-sjc")', "WARN"),
-        ("ok", 'mcp.tool_call("compose_badge")', "OK"),
-        ("ok", "validator.cim_check() → PASS", "OK"),
-        ("info", 'metadata.tier("resonant")', "T2"),
-        ("ok", "a11y.wcag_aa() → 4.7:1", "PASS"),
-        ("err", "animate.cx() → CIM VIOLATION", "ERR"),
-        ("ok", "compositor.compose() → banner", "OK"),
-        ("info", 'cdn.purge("edge-*") → 14ms', "14ms"),
-        ("ok", 'genome.register("tokyo-street")', "OK"),
-    ]
-
-    _status_dot = {
-        "ok": "var(--dna-status-passing-core)",
-        "info": "var(--dna-signal)",
-        "warn": warn_color,
-        "err": "var(--dna-status-failing-core)",
-    }
-    _status_ts = {
-        "ok": status_ts_color,
-        "info": status_ts_color,
-        "warn": warn_color,
-        "err": "var(--dna-status-failing-core)",
-    }
-    _status_label_color = {
-        "ok": "var(--dna-status-passing-core)",
-        "info": "var(--dna-ink-primary)",
-        "warn": warn_color,
-        "err": "var(--dna-status-failing-core)",
-    }
-
-    # Use raw_items as event messages if they look like events, otherwise use defaults
-    if len(raw_items) >= 4 and any(c in " ".join(raw_items) for c in ["(", "→", "."]):
-        events = [("ok", item, "OK") for item in raw_items]
-    else:
-        events = default_events
-
-    rows: list[dict[str, Any]] = []
-    minute = 0
-    for i, (status, message, label) in enumerate(events):
-        minute += 4 + (i % 3) * 2
-        rows.append(
-            {
-                "status": status,
-                "timestamp": f"{minute // 60:02d}:{minute % 60:02d}",
-                "message": message,
-                "status_label": label,
-                "dot_color": _status_dot.get(status, _status_dot["ok"]),
-                "timestamp_color": _status_ts.get(status, _status_ts["ok"]),
-                "label_color": _status_label_color.get(status, _status_label_color["ok"]),
-            }
-        )
-    return rows
 
 
 def _fmt_tok(n: int) -> str:

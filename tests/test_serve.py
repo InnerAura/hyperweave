@@ -1,8 +1,9 @@
 """Tests for serve/app.py -- FastAPI HTTP endpoints.
 
-Covers URL grammar routes, POST /v1/compose, /v1/live/ (mocked),
-discovery endpoints, namespace routes (/g/, /a/, /d/), ETag 304
-negotiation, error badge rendering, and Camo-hardening middleware.
+Covers URL grammar routes, POST /v1/compose, the ?data= token-driven
+endpoints (badge data-route, strip, marquee), discovery endpoints,
+namespace routes (/g/, /a/, /d/), ETag 304 negotiation, error badge
+rendering, and Camo-hardening middleware.
 """
 
 from __future__ import annotations
@@ -123,12 +124,6 @@ async def test_strip_url_returns_svg(client: AsyncClient, mock_compose: Any) -> 
     assert "image/svg+xml" in resp.headers["content-type"]
 
 
-async def test_banner_url_returns_svg(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/banner/HYPERWEAVE/brutalist-emerald.cascade?value=Living+Artifacts")
-    assert resp.status_code == 200
-    assert "image/svg+xml" in resp.headers["content-type"]
-
-
 async def test_icon_url_returns_svg(client: AsyncClient, mock_compose: Any) -> None:
     resp = await client.get("/v1/icon/github/brutalist-emerald.static")
     assert resp.status_code == 200
@@ -140,18 +135,30 @@ async def test_divider_url_returns_svg(client: AsyncClient, mock_compose: Any) -
 
 
 async def test_marquee_horizontal(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/marquee/HYPERWEAVE/brutalist-emerald.static?direction=ltr&rows=1")
+    resp = await client.get("/v1/marquee/HYPERWEAVE/brutalist-emerald.static?direction=ltr")
     assert resp.status_code == 200
 
 
-async def test_marquee_vertical(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/marquee/HYPERWEAVE/brutalist-emerald.static?direction=up&rows=1")
-    assert resp.status_code == 200
+async def test_marquee_horizontal_with_data_tokens(client: AsyncClient) -> None:
+    """marquee-horizontal accepts ?data= and routes through the data-token pipeline."""
+    mock_data = {"value": 12345, "ttl": 300}
+    with (
+        patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
+        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
+    ):
+        resp = await client.get(
+            "/v1/marquee/SCROLL/brutalist-emerald.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars",
+        )
+        assert resp.status_code == 200
 
 
-async def test_marquee_counter(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/marquee/ROW1%7CROW2%7CROW3/brutalist-emerald.static?rows=3")
-    assert resp.status_code == 200
+async def test_marquee_horizontal_data_token_comma_escape(client: AsyncClient) -> None:
+    """text: payload preserves embedded commas via the \\, escape."""
+    with patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT):
+        resp = await client.get(
+            "/v1/marquee/SCROLL/brutalist-emerald.static?data=text:Hello%5C%2C%20world",
+        )
+        assert resp.status_code == 200
 
 
 # ===========================================================================
@@ -171,9 +178,41 @@ async def test_compose_post_badge(client: AsyncClient, mock_compose: Any) -> Non
 async def test_compose_post_strip(client: AsyncClient, mock_compose: Any) -> None:
     resp = await client.post(
         "/v1/compose",
-        json={"type": "strip", "title": "readme-ai", "value": "STARS:2.9k"},
+        json={"type": "strip", "title": "readme-ai", "value": "STARS:2.9k,FORKS:278"},
     )
     assert resp.status_code == 200
+
+
+async def test_badge_data_route_requires_data_param(client: AsyncClient) -> None:
+    """The 2-segment data-driven badge route returns a 400 SMPTE SVG when ?data= is missing."""
+    resp = await client.get("/v1/badge/STARS/brutalist-emerald.static")
+    # 200 to keep Camo happy; the error class travels in headers + SVG content
+    assert resp.status_code == 200
+    assert resp.headers.get("x-hw-error-code") == "400"
+
+
+async def test_badge_data_route_resolves_live_token(client: AsyncClient) -> None:
+    """The 2-segment data-driven badge route resolves a live token through the connector."""
+    mock_data = {"value": 12345, "ttl": 300}
+    with (
+        patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
+        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
+    ):
+        resp = await client.get(
+            "/v1/badge/STARS/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+        )
+        assert resp.status_code == 200
+        assert "image/svg+xml" in resp.headers["content-type"]
+        assert "stale-while-revalidate" in resp.headers.get("cache-control", "")
+
+
+async def test_badge_data_route_kv_token(client: AsyncClient) -> None:
+    """kv: tokens encode static literals through the same data-route shape as live ones."""
+    with patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT):
+        resp = await client.get(
+            "/v1/badge/VERSION/brutalist-emerald.static?data=kv:VERSION=0.6.9",
+        )
+        assert resp.status_code == 200
 
 
 async def test_compose_post_defaults(client: AsyncClient, mock_compose: Any) -> None:
@@ -183,30 +222,10 @@ async def test_compose_post_defaults(client: AsyncClient, mock_compose: Any) -> 
 
 
 # ===========================================================================
-# /v1/live/ (mocked connector)
+# Legacy /v1/live/ route is deleted in v0.2.14 — replaced by ?data= on the
+# 2-segment data-driven badge route. Live-data tests now live under
+# `test_badge_data_route_*` above.
 # ===========================================================================
-
-
-async def test_live_badge_success(client: AsyncClient) -> None:
-    mock_data = {"value": 5000, "ttl": 300}
-    with (
-        patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
-        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
-    ):
-        resp = await client.get("/v1/live/github/anthropics/claude-code/stars/brutalist-emerald.static")
-        assert resp.status_code == 200
-        assert resp.headers.get("x-hw-provider") == "github"
-        assert "stale-while-revalidate" in resp.headers.get("cache-control", "")
-
-
-async def test_live_badge_connector_error(client: AsyncClient) -> None:
-    with (
-        patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, side_effect=Exception("timeout")),
-        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
-    ):
-        resp = await client.get("/v1/live/github/anthropics/claude-code/stars/brutalist-emerald")
-        assert resp.status_code == 200
-        assert resp.headers.get("x-hw-cache-tier") == "error"
 
 
 # ===========================================================================
@@ -448,8 +467,8 @@ async def test_kit_post(client: AsyncClient) -> None:
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert "banner" in data
         assert "badge-build" in data
+        assert "divider" in data
 
 
 # ===========================================================================
@@ -500,34 +519,40 @@ async def test_icon_brutalist_circle_shape(client: AsyncClient, mock_compose: An
     assert resp.status_code == 200
 
 
-async def test_banner_with_state(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/banner/HYPERWEAVE/brutalist-emerald.static?state=passing&value=Living+Artifacts")
-    assert resp.status_code == 200
-
-
 # ===========================================================================
-# Strip live data
+# Strip data tokens (?data= replaces legacy ?live= in v0.2.14)
 # ===========================================================================
 
 
-async def test_strip_live_data(client: AsyncClient) -> None:
+async def test_strip_data_tokens(client: AsyncClient) -> None:
     mock_data = {"value": "2.9k", "ttl": 300}
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
         patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
     ):
-        resp = await client.get("/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars")
+        resp = await client.get(
+            "/v1/strip/readme-ai/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+        )
         assert resp.status_code == 200
         assert "stale-while-revalidate" in resp.headers.get("cache-control", "")
 
 
-async def test_strip_live_data_error(client: AsyncClient) -> None:
+async def test_strip_data_tokens_error(client: AsyncClient) -> None:
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, side_effect=Exception("timeout")),
         patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
     ):
-        resp = await client.get("/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars")
+        resp = await client.get(
+            "/v1/strip/readme-ai/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+        )
         assert resp.status_code == 200
+
+
+async def test_strip_data_tokens_malformed_returns_400_smpte(client: AsyncClient) -> None:
+    """Malformed ?data= returns a 400-class SMPTE SVG (HTTP 200 for Camo)."""
+    resp = await client.get("/v1/strip/readme-ai/brutalist-emerald.static?data=gh:no-dot-no-metric")
+    assert resp.status_code == 200
+    assert resp.headers.get("x-hw-error-code") == "400"
 
 
 # ===========================================================================

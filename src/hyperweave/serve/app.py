@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Annotated, Any
 
 from fastapi import FastAPI, Query, Request, Response
@@ -64,7 +63,6 @@ class ComposeRequest(BaseModel):
     metadata_tier: int = 3
     divider_variant: str = "zeropoint"
     direction: str = "ltr"
-    rows: int = 3
     speeds: list[float] | None = None
 
 
@@ -88,7 +86,11 @@ async def compose_badge_url(
     variant: Annotated[str, Query()] = "default",
     family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
-    """Compose a badge: /v1/badge/{title}/{value}/{genome}.{motion}"""
+    """Static badge: /v1/badge/{title}/{value}/{genome}.{motion}.
+
+    Three path segments. Use the 2-segment route below
+    (/v1/badge/{title}/{genome}.{motion}?data=...) for data-driven badges.
+    """
     genome, motion = _parse_genome_motion(genome_motion)
 
     from hyperweave.core.models import ComposeSpec
@@ -110,6 +112,77 @@ async def compose_badge_url(
 
 
 @app.get(
+    "/v1/badge/{title}/{genome_motion}",
+    response_class=Response,
+)
+async def compose_badge_data_url(
+    request: Request,
+    title: str,
+    genome_motion: str,
+    data: Annotated[
+        str,
+        Query(
+            description=(
+                "Required. Data tokens, comma-separated. Forms: text:STRING | "
+                "kv:KEY=VALUE | gh:owner/repo.metric | pypi:pkg.metric | etc. "
+                "Embedded commas in text/kv payloads escape as \\,."
+            )
+        ),
+    ] = "",
+    t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
+    glyph: Annotated[str, Query()] = "",
+    glyph_mode: Annotated[str, Query()] = "auto",
+    state: Annotated[str, Query()] = "active",
+    regime: Annotated[str, Query()] = "normal",
+    variant: Annotated[str, Query()] = "default",
+    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+) -> Response:
+    """Data-driven badge: /v1/badge/{title}/{genome}.{motion}?data=...
+
+    Requires ``?data=``. Returns 400 (as a SMPTE error SVG, HTTP 200 to
+    survive Camo) when ``?data=`` is missing or malformed. The token
+    grammar is shared across HTTP / CLI / MCP — see
+    :mod:`hyperweave.serve.data_tokens`.
+    """
+    genome, motion = _parse_genome_motion(genome_motion)
+
+    if not data:
+        return Response(
+            content=_error_badge("?data= required on this route", status_code=400),
+            media_type="image/svg+xml",
+            status_code=200,
+            headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+        )
+
+    try:
+        final_value, ttl = await _resolve_data_param(data)
+    except ValueError as exc:
+        return Response(
+            content=_error_badge(f"data parse: {exc}", status_code=400),
+            media_type="image/svg+xml",
+            status_code=200,
+            headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+        )
+
+    from hyperweave.core.models import ComposeSpec
+
+    spec = ComposeSpec(
+        type="badge",
+        genome_id=genome,
+        title=t or title,
+        value=final_value,
+        state=state,
+        motion=motion,
+        glyph=glyph,
+        glyph_mode=glyph_mode,
+        regime=regime,
+        variant=variant,
+        family=family,
+    )
+    return _compose_and_respond_with_ttl(spec, request, ttl)
+
+
+@app.get(
     "/v1/strip/{title}/{genome_motion}",
     response_class=Response,
 )
@@ -119,7 +192,16 @@ async def compose_strip_url(
     genome_motion: str,
     t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
     value: Annotated[str, Query()] = "",
-    live: Annotated[str, Query()] = "",
+    data: Annotated[
+        str,
+        Query(
+            description=(
+                "Data tokens, comma-separated. Forms: text:STRING | kv:KEY=VALUE | "
+                "gh:owner/repo.metric | pypi:pkg.metric | etc. Embedded commas in "
+                "text/kv payloads escape as \\,."
+            )
+        ),
+    ] = "",
     glyph: Annotated[str, Query()] = "",
     glyph_mode: Annotated[str, Query()] = "auto",
     state: Annotated[str, Query()] = "active",
@@ -131,15 +213,23 @@ async def compose_strip_url(
         Query(description="Strip subtitle (e.g. 'eli64s/readme-ai'). Cellular paradigm renders under identity."),
     ] = "",
 ) -> Response:
-    """Compose a strip: /v1/strip/{title}/{genome}.{motion}?value=&live=&subtitle="""
+    """Compose a strip: /v1/strip/{title}/{genome}.{motion}?value=&data=&subtitle=."""
     genome, motion = _parse_genome_motion(genome_motion)
 
     ttl = 300
     final_value = value
 
-    # Live data: ?live=github:owner/repo:stars,pypi:pkg:version
-    if live:
-        final_value, ttl = await _fetch_live_metrics(live, fallback=value)
+    # Data tokens: ?data=gh:owner/repo.stars,pypi:pkg.version
+    if data:
+        try:
+            final_value, ttl = await _resolve_data_param(data, fallback=value)
+        except ValueError as exc:
+            return Response(
+                content=_error_badge(f"data parse: {exc}", status_code=400),
+                media_type="image/svg+xml",
+                status_code=200,
+                headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+            )
 
     # Subtitle wires through connector_data.repo_slug — the same field
     # resolve_strip reads when generate_proofset.py passes connector_data
@@ -164,47 +254,8 @@ async def compose_strip_url(
         connector_data=connector_data,
     )
 
-    if live:
+    if data:
         return _compose_and_respond_with_ttl(spec, request, ttl)
-    return _compose_and_respond(spec, request)
-
-
-@app.get(
-    "/v1/banner/{title}/{genome_motion}",
-    response_class=Response,
-)
-async def compose_banner_url(
-    request: Request,
-    title: str,
-    genome_motion: str,
-    t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
-    subtitle: Annotated[str, Query()] = "",
-    value: Annotated[str, Query()] = "",
-    glyph: Annotated[str, Query()] = "",
-    glyph_mode: Annotated[str, Query()] = "auto",
-    state: Annotated[str, Query()] = "active",
-    variant: Annotated[str, Query()] = "default",
-    regime: Annotated[str, Query()] = "normal",
-    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
-) -> Response:
-    """Compose a banner: /v1/banner/{title}/{genome}.{motion}?subtitle="""
-    genome, motion = _parse_genome_motion(genome_motion)
-
-    from hyperweave.core.models import ComposeSpec
-
-    spec = ComposeSpec(
-        type="banner",
-        genome_id=genome,
-        title=t or title,
-        value=subtitle or value,
-        motion=motion,
-        glyph=glyph,
-        glyph_mode=glyph_mode,
-        state=state,
-        variant=variant,
-        regime=regime,
-        family=family,
-    )
     return _compose_and_respond(spec, request)
 
 
@@ -278,25 +329,34 @@ async def compose_marquee_url(
     title: str,
     genome_motion: str,
     t: Annotated[str, Query(description="Title override (use when title contains slashes)")] = "",
-    direction: Annotated[str, Query()] = "ltr",
-    rows: Annotated[int, Query()] = 3,
-    speeds: Annotated[str, Query()] = "",
+    data: Annotated[
+        str,
+        Query(
+            description=(
+                "Data tokens, comma-separated. Forms: text:STRING | kv:KEY=VALUE | "
+                "gh:owner/repo.metric | pypi:pkg.metric | etc. When set, the title "
+                "param is ignored as a data source — tokens drive the scroll. Embedded "
+                "commas in text/kv payloads escape as \\,."
+            )
+        ),
+    ] = "",
+    direction: Annotated[str, Query(description="Scroll direction: ltr or rtl")] = "ltr",
+    speeds: Annotated[str, Query(description="Scroll speed multiplier (single float)")] = "",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
     family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
 ) -> Response:
-    """Compose a marquee: /v1/marquee/{title}/{genome}.{motion}"""
+    """Marquee-horizontal: /v1/marquee/{title}/{genome}.{motion}.
+
+    Two input modes (mutually exclusive priority — ``data`` wins when both
+    are supplied):
+
+    - **Raw text mode:** ``title`` is split on ``|`` (or ``·``) into bullets.
+    - **Data-token mode:** ``?data=`` parses the unified token grammar and
+      drives the scroll with mixed text + live values.
+    """
     genome, motion = _parse_genome_motion(genome_motion)
 
-    # Determine marquee type from direction/rows
-    if rows > 1:
-        mtype = "marquee-counter"
-    elif direction in ("up", "down"):
-        mtype = "marquee-vertical"
-    else:
-        mtype = "marquee-horizontal"
-
-    # Parse speeds: comma-separated floats
     parsed_speeds: list[float] | None = None
     if speeds:
         try:
@@ -304,96 +364,45 @@ async def compose_marquee_url(
         except ValueError:
             parsed_speeds = None
 
+    # ``data_tokens`` populates spec.data_tokens (consumed by _resolve_horizontal).
+    data_tokens_resolved: list[Any] | None = None
+    ttl = 300
+    if data:
+        try:
+            from hyperweave.serve.data_tokens import (
+                parse_data_tokens,
+                resolve_data_tokens,
+            )
+
+            tokens = parse_data_tokens(data)
+            data_tokens_resolved_seq, ttl = await resolve_data_tokens(tokens)
+            data_tokens_resolved = list(data_tokens_resolved_seq)
+        except ValueError as exc:
+            return Response(
+                content=_error_badge(f"data parse: {exc}", status_code=400),
+                media_type="image/svg+xml",
+                status_code=200,
+                headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+            )
+
     from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(
-        type=mtype,
+        type="marquee-horizontal",
         genome_id=genome,
         title=t or title,
         motion=motion,
         marquee_direction=direction,
-        marquee_rows=rows,
         marquee_speeds=parsed_speeds,
         state=state,
         regime=regime,
         family=family,
+        data_tokens=data_tokens_resolved,
     )
+
+    if data:
+        return _compose_and_respond_with_ttl(spec, request, ttl)
     return _compose_and_respond(spec, request)
-
-
-@app.get(
-    "/v1/live/{provider}/{identifier:path}/{metric}/{genome_motion}",
-    response_class=Response,
-)
-async def compose_live_badge(
-    provider: str,
-    identifier: str,
-    metric: str,
-    genome_motion: str,
-    glyph: Annotated[str, Query()] = "",
-    glyph_mode: Annotated[str, Query()] = "auto",
-    state: Annotated[str, Query()] = "active",
-) -> Response:
-    """Compose a badge with live data: /v1/live/{provider}/{identifier}/{metric}/{genome}.{motion}"""
-    genome, motion = _parse_genome_motion(genome_motion)
-
-    label = metric
-    value = "n/a"
-    cache_tier = "connector"
-    ttl = 300
-    try:
-        from hyperweave.connectors import fetch_metric
-
-        data = await fetch_metric(provider, identifier, metric)
-        value = str(data.get("value", "n/a"))
-        ttl = data.get("ttl", 300)
-    except Exception:
-        value = "error"
-        cache_tier = "error"
-        ttl = 60
-
-    from hyperweave.core.models import ComposeSpec
-
-    spec = ComposeSpec(
-        type="badge",
-        genome_id=genome,
-        title=label,
-        value=value,
-        state=state,
-        motion=motion,
-        glyph=glyph,
-        glyph_mode=glyph_mode,
-    )
-    try:
-        from hyperweave.compose.engine import compose
-
-        result = compose(spec)
-        return Response(
-            content=result.svg,
-            media_type="image/svg+xml",
-            headers={
-                "Cache-Control": f"public, max-age={ttl}, stale-while-revalidate=3600",
-                "X-HW-Genome": genome,
-                "X-HW-Frame": "badge",
-                "X-HW-Cache-Tier": cache_tier,
-                "X-HW-Provider": provider,
-            },
-        )
-    except Exception as exc:
-        status_code = _classify_compose_exception(exc)
-        return Response(
-            content=_error_badge(str(exc), status_code=status_code),
-            media_type="image/svg+xml",
-            # HTTP 200 — Camo refuses to proxy 4xx image responses, which would
-            # cause the README to render a broken-image icon despite the server
-            # producing a valid SMPTE SVG. The error class travels in the SVG
-            # (``data-hw-status-code``, ``ERR_NNN`` slab) and the response header.
-            status_code=200,
-            headers={
-                "Cache-Control": "max-age=60",
-                "X-HW-Error-Code": str(status_code),
-            },
-        )
 
 
 @app.post("/v1/compose", response_class=Response)
@@ -417,13 +426,12 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         metadata_tier=req.metadata_tier,
         divider_variant=req.divider_variant,
         marquee_direction=req.direction,
-        marquee_rows=req.rows,
         marquee_speeds=req.speeds,
     )
     return _compose_and_respond(spec, request)
 
 
-# ── Session 2A+2B: Chart / Stats / Timeline routes ─────────────────────────
+# ── Chart / Stats routes ─────────────────────────────────────────────────────
 
 
 @app.get(
@@ -503,39 +511,6 @@ async def compose_stats(
     return _compose_and_respond_with_ttl(spec, request, ttl=3600)
 
 
-class TimelineRequest(BaseModel):
-    """POST body for the timeline frame."""
-
-    items: list[dict[str, Any]]
-
-
-@app.post(
-    "/v1/timeline/{genome_motion}",
-    response_class=Response,
-)
-async def compose_timeline(
-    request: Request,
-    genome_motion: str,
-    body: TimelineRequest,
-) -> Response:
-    """Compose a roadmap/timeline frame from a POSTed items list.
-
-    POST /v1/timeline/{genome}.{motion} with JSON {"items": [{title, ...}, ...]}.
-    The resolver handles node shape, opacity cascade, and layout.
-    """
-    genome, motion = _parse_genome_motion(genome_motion)
-
-    from hyperweave.core.models import ComposeSpec
-
-    spec = ComposeSpec(
-        type="timeline",
-        genome_id=genome,
-        motion=motion,
-        timeline_items=body.items,
-    )
-    return _compose_and_respond(spec, request)
-
-
 class KitRequest(BaseModel):
     """Kit compose request."""
 
@@ -558,37 +533,37 @@ async def compose_kit_post(req: KitRequest) -> dict[str, str]:
 
 
 _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
-    "badge": {
+    "badge (static)": {
         "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
-        "query_params": ["glyph", "glyph_mode", "state", "regime", "variant"],
+        "query_params": ["glyph", "glyph_mode", "state", "regime", "variant", "family"],
+    },
+    "badge (data-driven)": {
+        "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
+        "query_params": ["data", "glyph", "glyph_mode", "state", "regime", "variant", "family"],
     },
     "strip": {
         "pattern": "/v1/strip/{title}/{genome}.{motion}",
-        "query_params": ["value", "live", "glyph", "glyph_mode", "state", "variant", "regime"],
-    },
-    "banner": {
-        "pattern": "/v1/banner/{title}/{genome}.{motion}",
-        "query_params": ["value", "glyph", "glyph_mode", "state", "variant", "regime"],
+        "query_params": ["value", "data", "glyph", "glyph_mode", "state", "variant", "regime", "family", "subtitle"],
     },
     "icon": {
         "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
-        "query_params": ["glyph_mode", "shape", "state", "regime"],
+        "query_params": ["glyph_mode", "shape", "state", "regime", "family", "variant"],
     },
     "divider": {
         "pattern": "/v1/divider/{variant}/{genome}.{motion}",
-        "query_params": [],
+        "query_params": ["family"],
     },
     "marquee-horizontal": {
         "pattern": "/v1/marquee/{title}/{genome}.{motion}",
-        "query_params": ["direction", "rows", "speeds", "state", "regime"],
+        "query_params": ["data", "direction", "speeds", "state", "regime", "family"],
     },
-    "marquee-vertical": {
-        "pattern": "/v1/marquee/{title}/{genome}.{motion}?direction=up",
-        "query_params": ["direction", "rows", "speeds", "state", "regime"],
+    "chart-stars": {
+        "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
+        "query_params": [],
     },
-    "marquee-counter": {
-        "pattern": "/v1/marquee/{title}/{genome}.{motion}?rows=3",
-        "query_params": ["direction", "rows", "speeds", "state", "regime"],
+    "stats": {
+        "pattern": "/v1/stats/{username}/{genome}.{motion}",
+        "query_params": [],
     },
     "receipt": {"pattern": "POST /v1/compose", "query_params": []},
     "rhythm-strip": {"pattern": "POST /v1/compose", "query_params": []},
@@ -802,39 +777,29 @@ def _parse_genome_motion(gm: str) -> tuple[str, str]:
     return gm, "static"
 
 
-async def _fetch_live_metrics(live: str, *, fallback: str = "") -> tuple[str, int]:
-    """Parse ?live= param and fetch metrics concurrently.
+async def _resolve_data_param(data: str, *, fallback: str = "") -> tuple[str, int]:
+    """Parse ?data= param via the unified token grammar and format for ``value``.
 
-    Format: provider:identifier:metric,provider:identifier:metric
-    Returns (formatted_value, min_ttl).
+    Returns ``(formatted_value, min_ttl)``. Empty input returns the
+    fallback at the default TTL. Invalid token strings raise
+    ``ValueError`` so callers can surface a 400 to the user.
     """
-    from hyperweave.connectors import fetch_metric
+    from hyperweave.serve.data_tokens import (
+        format_for_value,
+        parse_data_tokens,
+        resolve_data_tokens,
+    )
 
-    segments: list[tuple[str, str, str]] = []
-    for seg in live.split(","):
-        seg = seg.strip()
-        if not seg:
-            continue
-        parts = seg.split(":", 2)
-        if len(parts) == 3:
-            segments.append((parts[0], parts[1], parts[2]))
-
-    if not segments:
+    if not data:
         return fallback, 300
 
-    tasks = [fetch_metric(p, i, m) for p, i, m in segments]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    tokens = parse_data_tokens(data)
+    if not tokens:
+        return fallback, 300
 
-    live_metrics: list[str] = []
-    min_ttl = 300
-    for (_p, _i, m), result in zip(segments, results, strict=True):
-        if isinstance(result, BaseException):
-            live_metrics.append(f"{m.upper()}:--")
-        else:
-            live_metrics.append(f"{m.upper()}:{result.get('value', 'n/a')}")
-            min_ttl = min(min_ttl, result.get("ttl", 300))
-
-    return ",".join(live_metrics), min_ttl
+    resolved, min_ttl = await resolve_data_tokens(tokens)
+    formatted = format_for_value(resolved)
+    return formatted or fallback, min_ttl
 
 
 def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:

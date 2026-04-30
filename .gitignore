@@ -28,8 +28,7 @@ archive/
 .claude/
 # CLAUDE.md
 outputs/
-specs/
-# scripts/ is version-controlled (tests/test_proofset.py imports generate_proofset.py)
+tier2/experiments/
 
 assets/cards/butterfly-mcp.svg
 assets/cards/card-moon.svg

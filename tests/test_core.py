@@ -59,7 +59,8 @@ def test_compose_spec_defaults() -> None:
     assert spec.generation == 1
     assert spec.regime == "normal"
     assert spec.divider_variant == "zeropoint"
-    assert spec.marquee_rows == 1
+    assert spec.marquee_direction == "ltr"
+    assert spec.data_tokens is None
 
 
 def test_compose_spec_frozen() -> None:
@@ -264,7 +265,10 @@ def test_genome_spec_brutalist_emerald_has_paradigms(sample_genome: GenomeSpec) 
     assert sample_genome.paradigms["badge"] == "default"
     assert sample_genome.paradigms["stats"] == "brutalist"
     assert sample_genome.paradigms["chart"] == "brutalist"
-    assert sample_genome.paradigms["timeline"] == "default"
+    # banner / marquee-counter / marquee-vertical / timeline paradigm keys were
+    # removed in v0.2.14 with the frame types themselves.
+    assert "banner" not in sample_genome.paradigms
+    assert "timeline" not in sample_genome.paradigms
     # Structural cascade (Principle 24)
     assert sample_genome.structural["stroke_linejoin"] == "miter"
     assert sample_genome.structural["data_point_shape"] == "square"
@@ -529,7 +533,9 @@ def test_load_glyphs() -> None:
 def test_load_motions() -> None:
     motions = load_motions()
     assert "static" in motions
-    assert "bars" in motions
+    # Border motions remain after v0.2.14; kinetic motions (bars, cascade,
+    # drop, etc.) were deleted with the banner frame.
+    assert "rimrun" in motions
     assert motions["static"]["cim_compliant"] is True
 
 

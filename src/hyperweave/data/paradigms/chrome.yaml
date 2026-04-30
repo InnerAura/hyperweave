@@ -36,12 +36,6 @@ strip:
   cell_pad: 20
   cell_min_width: 106
 
-banner:
-  hero_font_family: Impact
-  hero_font_weight: 900
-  hero_skew_deg: -10
-  hero_italic: true
-
 chart:
   viewport_x: 80
   viewport_y: 160

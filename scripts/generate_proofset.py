@@ -25,7 +25,6 @@ from hyperweave.core.enums import (
     DividerVariant,
     FrameType,
     GenomeId,
-    KineticMotionId,
     Regime,
 )
 from hyperweave.core.models import ComposeSpec
@@ -33,19 +32,18 @@ from hyperweave.core.models import ComposeSpec
 OUT = Path(__file__).resolve().parent.parent / "outputs"
 
 
-def _genome_motions(genome_id: str) -> tuple[list[str], list[str]]:
-    """Return (border_motions, kinetic_motions) compatible with a genome.
+def _genome_motions(genome_id: str) -> list[str]:
+    """Return border motions compatible with a genome.
 
     Intersects the genome's ``compatible_motions`` list from its JSON
-    config with the BorderMotionId and KineticMotionId enum sets.
-    Only motions that the genome has been tested with are returned.
+    config with the BorderMotionId enum set. Only motions that the
+    genome has been tested with are returned. Kinetic typography
+    motions were removed in v0.2.14 with the banner frame.
     """
     genomes = load_genomes()
     genome_cfg = genomes.get(genome_id)
     compatible: set[str] = set(genome_cfg.compatible_motions) if genome_cfg else {"static"}
-    border = [m for m in BorderMotionId if m.value in compatible]
-    kinetic = [m for m in KineticMotionId if m.value in compatible]
-    return border, kinetic
+    return [m for m in BorderMotionId if m.value in compatible]
 
 
 # ── Mock telemetry data for receipt / rhythm-strip / master-card ──
@@ -181,14 +179,6 @@ def generate_static() -> int:
         _write(base / "strip.svg", svg)
         total += 1
 
-        svg = _compose("banner", genome, "HYPERWEAVE", "Living SVG artifacts for agent interfaces")
-        _write(base / "banner_full.svg", svg)
-        total += 1
-
-        svg = _compose("banner", genome, "HYPERWEAVE", "Living Artifacts", variant="compact")
-        _write(base / "banner_compact.svg", svg)
-        total += 1
-
         svg = _compose("icon", genome, glyph="github")
         _write(base / "icon.svg", svg)
         total += 1
@@ -203,18 +193,14 @@ def generate_static() -> int:
             _write(base / f"divider_{dv}.svg", svg)
             total += 1
 
-        # All three marquee variants now have cellular templates (vertical and
-        # counter shipped alongside the horizontal as part of the cellular
-        # bifamily-tspan vocabulary — hairline-bridge chrome with teal/amethyst
-        # palette alternation per the paradigm marquee config).
-        _marquee_types = ("marquee-horizontal", "marquee-vertical", "marquee-counter")
-        for mtype in _marquee_types:
-            # Pipe-separated items so resolver splits into discrete tokens;
-            # cellular paradigm cycles colors per-item from its tspan palette
-            # (teal/amethyst alternation), others render as a single-color run.
-            svg = _compose(mtype, genome, "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL")
-            _write(base / f"{mtype.replace('-', '_')}.svg", svg)
-            total += 1
+        # marquee-horizontal — pipe-separated items split into discrete tokens.
+        # Cellular paradigm cycles colors per-item from its tspan palette
+        # (teal/amethyst alternation); brutalist/chrome render as single-color runs.
+        # Counter / vertical marquees were deleted in v0.2.14.
+        marquee_text = "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL"
+        svg = _compose("marquee-horizontal", genome, marquee_text)
+        _write(base / "marquee_horizontal.svg", svg)
+        total += 1
 
         # ── 1b. Automata-specific family-axis coverage (blue/purple x default/compact) ──
         if genome == GenomeId.AUTOMATA:
@@ -229,7 +215,7 @@ def generate_static() -> int:
                 svg = _compose("icon", genome, glyph="github", family=fam)
                 _write(fam_dir / f"icon_github_{fam}.svg", svg)
                 total += 1
-            # Bifamily strip + banner + cellular-dissolve divider
+            # Bifamily strip + cellular-dissolve divider
             svg = _compose(
                 "strip",
                 genome,
@@ -241,9 +227,6 @@ def generate_static() -> int:
                 connector_data={"repo_slug": "eli64s/readme-ai"},
             )
             _write(fam_dir / "strip_bifamily.svg", svg)
-            total += 1
-            svg = _compose("banner", genome, "AUTOMATA", "Living Artifacts", family="bifamily", variant="compact")
-            _write(fam_dir / "banner_bifamily_compact.svg", svg)
             total += 1
             svg = _compose("divider", genome, divider_variant="cellular-dissolve")
             _write(fam_dir / "divider_cellular_dissolve.svg", svg)
@@ -286,7 +269,7 @@ def generate_static() -> int:
         # ── 6. Border motions (genome-compatible only) ──
         # Border motions are non-CIM (SMIL stroke-dashoffset etc.) so we use
         # permissive regime to allow them without downgrading to static.
-        compat_border, compat_kinetic = _genome_motions(genome)
+        compat_border = _genome_motions(genome)
         border = gdir / "border-motions"
         for mid in compat_border:
             svg = _compose(
@@ -315,20 +298,7 @@ def generate_static() -> int:
             _write(border / f"strip_{mid}.svg", svg)
             total += 1
 
-        # ── 7. Kinetic typography (genome-compatible only) ──
-        kinetic = gdir / "kinetic-typography"
-        for mid in compat_kinetic:
-            svg = _compose(
-                "banner",
-                genome,
-                "HYPERWEAVE",
-                "Living Artifacts",
-                "active",
-                motion=mid,
-                regime=Regime.PERMISSIVE,
-            )
-            _write(kinetic / f"banner_{mid}.svg", svg)
-            total += 1
+        # ── 7. Kinetic typography removed in v0.2.14 with the banner frame ──
 
     # ── 8. Telemetry frames (genome-independent, generated once) ──
     telemetry_dir = OUT / "proofset" / "telemetry"
@@ -337,7 +307,7 @@ def generate_static() -> int:
         _write(telemetry_dir / f"{ftype.value.replace('-', '_')}.svg", svg)
         total += 1
 
-    # ── 9. Session 2A+2B new frames (stats, chart, timeline) ──
+    # ── 9. Stats / chart frames ──
     total += _generate_session_2a2b()
 
     return total
@@ -376,31 +346,22 @@ _MOCK_CHART_POINTS: list[dict[str, Any]] = [
     {"date": "2026-04-01T00:00:00Z", "count": 2850},
 ]
 
-_MOCK_TIMELINE_ITEMS: list[dict[str, Any]] = [
-    {"title": "v0.1", "subtitle": "Foundation", "status": "passing", "date": "2025-10"},
-    {"title": "v0.2", "subtitle": "Stats Card", "status": "active", "date": "2026-04"},
-    {"title": "v0.3", "subtitle": "Storage", "status": "building", "date": "2026-07"},
-    {"title": "v0.4", "subtitle": "Genome Blitz", "status": "warning", "date": "2026-09"},
-]
-
 
 def _compose_connector(
     frame_type: str,
     genome: str,
     *,
     connector_data: dict[str, Any] | None = None,
-    timeline_items: list[dict[str, Any]] | None = None,
     stats_username: str = "",
     chart_owner: str = "",
     chart_repo: str = "",
     genome_override: dict[str, Any] | None = None,
 ) -> str:
-    """Compose a Session 2A+2B frame with pre-fetched connector data."""
+    """Compose a stats/chart frame with pre-fetched connector data."""
     spec = ComposeSpec(
         type=frame_type,
         genome_id=genome,
         connector_data=connector_data,
-        timeline_items=timeline_items,
         stats_username=stats_username,
         chart_owner=chart_owner,
         chart_repo=chart_repo,
@@ -410,10 +371,12 @@ def _compose_connector(
 
 
 def _generate_session_2a2b() -> int:
-    """Generate stats, chart, and timeline artifacts for each built-in genome.
+    """Generate stats and chart artifacts for each built-in genome.
 
     Fetches real data from GitHub for eli64s / eli64s/readme-ai. Falls back to
     mock connector data if the API is unreachable (CI/offline environments).
+    Timeline removed in v0.2.14; the function name is preserved for git-history
+    continuity.
     """
     import asyncio
 
@@ -478,15 +441,6 @@ def _generate_session_2a2b() -> int:
             connector_data=chart_data,
         )
         _write(gdir / "chart_stars_full.svg", svg)
-        total += 1
-
-        # Timeline
-        svg = _compose_connector(
-            "timeline",
-            genome,
-            timeline_items=_MOCK_TIMELINE_ITEMS,
-        )
-        _write(gdir / "timeline.svg", svg)
         total += 1
 
     return total
@@ -667,8 +621,8 @@ def generate_readme(total: int, live_total: int) -> None:
     """Generate outputs/README.md with image references.
 
     Each genome gets its complete artifact suite inline — base frames,
-    states, stats, chart, timeline, motions, and (for automata) the
-    family-axis coverage. Telemetry lives at the bottom (genome-independent).
+    states, stats, chart, motions, and (for automata) the family-axis
+    coverage. Telemetry lives at the bottom (genome-independent).
     """
     lines = ["# HyperWeave Proof Set", ""]
 
@@ -682,22 +636,13 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append("")
         lines.append(f"![strip](proofset/{g}/base/strip.svg)")
         lines.append("")
-        lines.append(f"![banner full](proofset/{g}/base/banner_full.svg)")
-        lines.append("")
-        lines.append(f"![banner compact](proofset/{g}/base/banner_compact.svg)")
-        lines.append("")
         lines.append(f"![icon](proofset/{g}/base/icon.svg)")
         lines.append("")
         for dv in DividerVariant:
             lines.append(f"![divider {dv}](proofset/{g}/base/divider_{dv}.svg)")
             lines.append("")
-        # All three marquee variants ship for every genome now that automata's
-        # cellular vertical + counter templates exist (mirrors the loop at
-        # _marquee_types above).
-        _readme_marquees = ("marquee_horizontal", "marquee_vertical", "marquee_counter")
-        for mt in _readme_marquees:
-            lines.append(f"![{mt}](proofset/{g}/base/{mt}.svg)")
-            lines.append("")
+        lines.append(f"![marquee_horizontal](proofset/{g}/base/marquee_horizontal.svg)")
+        lines.append("")
 
         # Connector-strip adaptivity (only present when --live was run; the
         # files live alongside per-genome dirs so the section is genome-local).
@@ -719,7 +664,7 @@ def generate_readme(total: int, live_total: int) -> None:
             lines.extend(["### Family Axis (blue / purple x default / compact)", ""])
             lines.append(
                 "Automata's bifamily chromatic axis: badges + icons pick "
-                "`--family blue|purple`; strip/banner/divider render both simultaneously."
+                "`--family blue|purple`; strip/marquee-horizontal/divider render both simultaneously."
             )
             lines.append("")
             for fam in ("blue", "purple"):
@@ -733,8 +678,6 @@ def generate_readme(total: int, live_total: int) -> None:
             lines.append("**Bifamily compositions:**")
             lines.append("")
             lines.append(f"![strip bifamily](proofset/{g}/families/strip_bifamily.svg)")
-            lines.append("")
-            lines.append(f"![banner bifamily compact](proofset/{g}/families/banner_bifamily_compact.svg)")
             lines.append("")
             lines.append(f"![divider cellular-dissolve](proofset/{g}/families/divider_cellular_dissolve.svg)")
             lines.append("")
@@ -754,17 +697,13 @@ def generate_readme(total: int, live_total: int) -> None:
             lines.append(f"![strip {s}](proofset/{g}/states/strip_{s}.svg)")
         lines.append("")
 
-        # Stats card + Star chart + Timeline inline per genome
+        # Stats card + Star chart inline per genome
         lines.extend(["### Profile Card (stats)", ""])
         lines.append(f"![stats {g}](proofset/{g}/session-2a2b/stats.svg)")
         lines.append("")
 
         lines.extend(["### Star History Chart", ""])
         lines.append(f"![chart full {g}](proofset/{g}/session-2a2b/chart_stars_full.svg)")
-        lines.append("")
-
-        lines.extend(["### Timeline / Roadmap", ""])
-        lines.append(f"![timeline {g}](proofset/{g}/session-2a2b/timeline.svg)")
         lines.append("")
 
         # Policy lanes
@@ -774,18 +713,14 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append("")
 
         # Border motions (genome-compatible only)
-        compat_border, compat_kinetic = _genome_motions(g)
+        compat_border = _genome_motions(g)
         lines.extend(["### Border Motions", ""])
         for mid in compat_border:
             lines.append(f"![badge {mid}](proofset/{g}/border-motions/badge_{mid}.svg) ")
             lines.append(f"![strip {mid}](proofset/{g}/border-motions/strip_{mid}.svg)")
             lines.append("")
 
-        # Kinetic (genome-compatible only)
-        lines.extend(["### Kinetic Typography", ""])
-        for mid in compat_kinetic:
-            lines.append(f"![banner {mid}](proofset/{g}/kinetic-typography/banner_{mid}.svg)")
-            lines.append("")
+        # Kinetic typography removed in v0.2.14 with the banner frame.
 
         lines.extend(["---", ""])
 

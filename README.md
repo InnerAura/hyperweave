@@ -12,15 +12,15 @@
 
 <!--
 <p align="center">
-  <img src="https://hyperweave.app/v1/live/github/InnerAura/hyperweave/stars/chrome-horizon.static" alt="stars"/>
-  <img src="https://hyperweave.app/v1/live/github/InnerAura/hyperweave/forks/chrome-horizon.static" alt="forks"/>
-  <img src="https://hyperweave.app/v1/live/pypi/hyperweave/version/chrome-horizon.static" alt="version"/>
-  <img src="https://hyperweave.app/v1/live/github/InnerAura/hyperweave/license/chrome-horizon.static" alt="license"/>
-  <img src="https://hyperweave.app/v1/live/pypi/hyperweave/python_requires/chrome-horizon.static" alt="python"/>
+  <img src="https://hyperweave.app/v1/badge/STARS/chrome-horizon.static?data=gh:InnerAura/hyperweave.stars" alt="stars"/>
+  <img src="https://hyperweave.app/v1/badge/FORKS/chrome-horizon.static?data=gh:InnerAura/hyperweave.forks" alt="forks"/>
+  <img src="https://hyperweave.app/v1/badge/VERSION/chrome-horizon.static?data=pypi:hyperweave.version" alt="version"/>
+  <img src="https://hyperweave.app/v1/badge/LICENSE/chrome-horizon.static?data=gh:InnerAura/hyperweave.license" alt="license"/>
+  <img src="https://hyperweave.app/v1/badge/PYTHON/chrome-horizon.static?data=pypi:hyperweave.python_requires" alt="python"/>
 </p>
 -->
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?live=github:InnerAura/hyperweave:build,pypi:hyperweave:version,github:InnerAura/hyperweave:license&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?value=BUILD:passing,VERSION:v0.2.13,LICENSE:MIT&glyph=github" alt="strip"/>
 </p>
 
 <!--
@@ -30,9 +30,9 @@ Generate a cohesive visual identity layer for README, profile, status, and relea
 A brand agent for repos. Generate a cohesive visual identity — README, profile, metrics, releases — from a single genome.
 ---
 
-HyperWeave is the generative visual identity system for the agentic era. A user defines a genome — their aesthetic DNA — and HyperWeave renders coherent visual artifacts across any surface, for any context, from any data. Badges for repos. Banners for profiles. Cards for stats. Charts for data. Artifact sets for research papers. Release kits for product launches. Marketing assets for startups. Static when static. Live when live. Generated when generative. Their brand, as infrastructure, for everything their agents will ever need to render.
+HyperWeave is the generative visual identity system for the agentic era. A user defines a genome — their aesthetic DNA — and HyperWeave renders coherent visual artifacts across any surface, for any context, from any data. Badges for repos. Cards for stats. Charts for data. Artifact sets for research papers. Release kits for product launches. Marketing assets for startups. Static when static. Live when live. Generated when generative. Their brand, as infrastructure, for everything their agents will ever need to render.
 
-The list in the middle ("Badges for repos. Banners for profiles. Cards for stats...") reads long. It proves the surface area is broad but it also reads like a features list. Investors skim past enumeration. You could collapse it: "Every surface agents render on, from repos to research papers to product launches." The breadth lands harder when it's a claim than when it's a list.
+The list in the middle ("Badges for repos. Cards for stats. Charts for data...") reads long. It proves the surface area is broad but it also reads like a features list. Investors skim past enumeration. You could collapse it: "Every surface agents render on, from repos to research papers to product launches." The breadth lands harder when it's a claim than when it's a list.
 
 HyperWeave is the brand agent for engineering teams. Define your identity once; every artifact your team ships carries it wherever their work appears.
 
@@ -73,7 +73,7 @@ A genome is a portable, machine-readable aesthetic specification. It encodes the
 Three production genomes ship today. Custom genome generation via AI skill files coming soon.
 
 <!--
-Why genome and not theme? Because brand isn't a design problem, it's an infrastructure problem. When an agent says "build me a status page," it has zero memory of visual identity. A genome solves that: define once, express everywhere, from a 90px badge to a full-width banner. The same genome produces different artifacts that feel like they came from the same hand.
+Why genome and not theme? Because brand isn't a design problem, it's an infrastructure problem. When an agent says "build me a status page," it has zero memory of visual identity. A genome solves that: define once, express everywhere, from a 90px badge to a 900px star history chart. The same genome produces different artifacts that feel like they came from the same hand.
 -->
 
 <p align="center">
@@ -95,15 +95,15 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/badge/BUILD/warning/chrome-horizon.static?state=warning" alt="warning"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/critical/chrome-horizon.static?state=critical" alt="critical"/>
   <br/>
-  <sub><code>/v1/badge/BUILD/{state}/chrome-horizon.static</code></sub>
+  <sub><code>/v1/badge/{title}/{value}/chrome-horizon.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/chrome-horizon.static?data=gh:owner/repo.metric</code> for live values</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?value=STARS:2.9k,FORKS:278" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/chrome-horizon.static</code></sub>
+  <sub><code>/v1/strip/readme-ai/chrome-horizon.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
 </tr>
 <tr>
@@ -123,13 +123,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 <tr>
-<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
+<th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1" alt="marquee horizontal"/>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%7C%20LIVING%20ARTIFACTS%20%7C%20INNERAURA%20LABS/chrome-horizon.static" alt="marquee"/>
   <br/>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/chrome-horizon.static?rows=1&direction=up" alt="marquee vertical"/>
-  <br/>
-  <sub><code>/v1/marquee/{text}/chrome-horizon.static?rows=1</code> &mdash; add <code>&direction=up</code> for vertical</sub>
+  <sub><code>/v1/marquee/{text}/chrome-horizon.static</code> &mdash; or <code>?data=text:...,gh:owner/repo.metric,...</code> for live tickers</sub>
 </td>
 </tr>
 <tr>
@@ -143,18 +141,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <sub><code>/v1/icon/{glyph}/chrome-horizon.static?shape={circle|square}</code></sub>
 </td>
 </tr>
-<tr>
-<th align="left">Banner<br/><sub>wordmark</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/chrome-horizon.static" alt="banner"/>
-  <br/>
-  <sub><code>/v1/banner/HYPERWEAVE/chrome-horizon.static</code></sub>
-</td>
-</tr>
 </table>
 
 <h3 id="brutalist-emerald">brutalist-emerald</h3>
-<sub><b>brutalist paradigm &middot; sharp zero-radius &middot; full 14-motion roster</b></sub>
+<sub><b>brutalist paradigm &middot; sharp zero-radius &middot; 5 border SMIL motions</b></sub>
 
 <table>
 <tr>
@@ -164,15 +154,15 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist-emerald.static?state=warning" alt="warning"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist-emerald.static?state=critical" alt="critical"/>
   <br/>
-  <sub><code>/v1/badge/BUILD/{state}/brutalist-emerald.static</code></sub>
+  <sub><code>/v1/badge/{title}/{value}/brutalist-emerald.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/brutalist-emerald.static?data=gh:owner/repo.metric</code> for live values</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/brutalist-emerald.static</code></sub>
+  <sub><code>/v1/strip/readme-ai/brutalist-emerald.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
 </tr>
 <tr>
@@ -192,13 +182,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 <tr>
-<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
+<th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1" alt="marquee horizontal"/>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%7C%20LIVING%20ARTIFACTS%20%7C%20INNERAURA%20LABS/brutalist-emerald.static" alt="marquee"/>
   <br/>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/brutalist-emerald.static?rows=1&direction=up" alt="marquee vertical"/>
-  <br/>
-  <sub><code>/v1/marquee/{text}/brutalist-emerald.static?rows=1</code> &mdash; add <code>&direction=up</code> for vertical</sub>
+  <sub><code>/v1/marquee/{text}/brutalist-emerald.static</code> &mdash; or <code>?data=text:...,gh:owner/repo.metric,...</code> for live tickers</sub>
 </td>
 </tr>
 <tr>
@@ -212,14 +200,6 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <sub><code>/v1/icon/{glyph}/brutalist-emerald.static?shape={circle|square}</code></sub>
 </td>
 </tr>
-<tr>
-<th align="left">Banner<br/><sub>wordmark</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/brutalist-emerald.static" alt="banner"/>
-  <br/>
-  <sub><code>/v1/banner/HYPERWEAVE/brutalist-emerald.static</code></sub>
-</td>
-</tr>
 </table>
 
 <h3 id="automata">automata</h3>
@@ -229,10 +209,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left" width="160">Signals<br/><sub>chromatic variant</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=blue" alt="pypi teal"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family=purple" alt="pypi amethyst"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.13/automata.static?glyph=python&family=blue" alt="pypi teal"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.13/automata.static?glyph=python&family=purple" alt="pypi amethyst"/>
   <br/>
-  <sub><code>/v1/badge/PYPI/v0.2.11/automata.static?glyph=python&family={blue|purple}</code></sub>
+  <sub><code>/v1/badge/{title}/{value}/automata.static?glyph=python&family={blue|purple}</code> &mdash; or <code>/v1/badge/{title}/automata.static?data=pypi:hyperweave.version&family={blue|purple}</code> for live values</sub>
 </td>
 </tr>
 <tr>
@@ -240,7 +220,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai&family=bifamily" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&family=bifamily</code></sub>
+  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&family=bifamily</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
 </tr>
 <tr>
@@ -260,13 +240,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 <tr>
-<th align="left">Marquee<br/><sub>horizontal + vertical</sub></th>
+<th align="left">Marquee<br/><sub>horizontal ticker &middot; bifamily</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&family=bifamily" alt="marquee horizontal"/>
+  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%7C%20LIVING%20ARTIFACTS%20%7C%20INNERAURA%20LABS/automata.static?family=bifamily" alt="marquee"/>
   <br/>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%C2%B7%20LIVING%20ARTIFACTS%20%C2%B7%20INNERAURA%20LABS/automata.static?rows=1&direction=up&family=bifamily" alt="marquee vertical"/>
-  <br/>
-  <sub><code>/v1/marquee/{text}/automata.static?rows=1&family=bifamily</code> &mdash; add <code>&direction=up</code> for vertical</sub>
+  <sub><code>/v1/marquee/{text}/automata.static?family=bifamily</code> &mdash; or <code>?data=text:...,gh:owner/repo.metric,...</code> for live tickers</sub>
 </td>
 </tr>
 <tr>
@@ -278,14 +256,6 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&family=purple" alt="jupyter" width="56"/>
   <br/>
   <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&family={blue|purple}</code></sub>
-</td>
-</tr>
-<tr>
-<th align="left">Banner<br/><sub>bifamily wordmark</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/banner/HYPERWEAVE/automata.static?family=bifamily" alt="banner"/>
-  <br/>
-  <sub><code>/v1/banner/HYPERWEAVE/automata.static?family=bifamily</code></sub>
 </td>
 </tr>
 <tr>
@@ -304,7 +274,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 | Signal | `#5ba3d4` metallic blue | `#10B981` emerald | `#1E849A` teal &middot; `#6B3B8A` amethyst |
 | Profile | chrome (smooth, env-mapped) | brutalist (sharp, zero-radius) | brutalist (cellular paradigm) |
 | Chromatic variant | &mdash; | &mdash; | `blue` / `purple` / `bifamily` |
-| Motions | 5 border SMIL | 5 border + 9 kinetic | static, chromatic-pulse, rimrun, corner-trace |
+| Motions | 5 border SMIL | 5 border SMIL | static, chromatic-pulse, rimrun, corner-trace |
 
 <sub>The two automata signal badges share a URL and differ only in the chromatic variant: <code>?family=blue</code> renders the teal palette, <code>?family=purple</code> the amethyst, <code>?family=bifamily</code> both. The parameter name is provisional and likely to be renamed to <code>?variant=</code> once brutalist skin variants land &mdash; treat the surface as unstable.</sub>
 
@@ -368,8 +338,25 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
 ```
 
 ```
-hw_compose(type="badge", title="build", value="passing", genome="brutalist-emerald")
+# Static badge
+hw_compose(type="badge", title="BUILD", value="passing", genome="brutalist-emerald")
+
+# Data-driven badge — unified token grammar (gh:owner/repo.metric, pypi:pkg.metric, ...)
+hw_compose(type="badge", title="STARS", data="gh:anthropics/claude-code.stars", genome="brutalist-emerald")
+
+# Strip with multiple live metrics
+hw_compose(type="strip", title="readme-ai",
+           data="gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version",
+           genome="chrome-horizon")
+
+# Marquee with mixed text + live tokens
+hw_compose(type="marquee-horizontal",
+           data="text:NEW RELEASE,gh:anthropics/claude-code.stars,text:DOWNLOAD",
+           genome="brutalist-emerald")
+
+# Discoverable shortcut for single-metric live badges
 hw_live(provider="github", identifier="anthropics/claude-code", metric="stars")
+
 hw_kit(type="readme", genome="brutalist-emerald", badges="build:passing")
 hw_discover(what="all")
 ```
@@ -383,20 +370,20 @@ hyperweave compose badge "build" "passing" --genome brutalist-emerald
 # Strip with metrics
 hyperweave compose strip "readme-ai" "STARS:2.9k,FORKS:278" -g brutalist-emerald
 
-# Banner with kinetic motion
-hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
+# Live data through the unified --data token grammar
+hyperweave compose badge "STARS" --data 'gh:anthropics/claude-code.stars' -g brutalist-emerald
+
+# Marquee with mixed text + live tokens
+hyperweave compose marquee-horizontal --data 'text:NEW RELEASE,gh:owner/repo.stars,text:DOWNLOAD' -g brutalist-emerald
 
 # Artifact kit
 hyperweave kit readme -g brutalist-emerald --badges "build:passing,version:v0.2.0" --social "github,discord"
 
-# Profile card (live GitHub data)
+# Profile card (live GitHub data, path-segment identity)
 hyperweave compose stats eli64s -g chrome-horizon -o stats.svg
 
 # Star history chart
 hyperweave compose chart stars eli64s/readme-ai -g brutalist-emerald -o chart.svg
-
-# Timeline / roadmap from JSON items
-hyperweave compose timeline --data roadmap.json -g chrome-horizon -o timeline.svg
 
 # Custom genome from a local JSON file (validated against the profile contract)
 hyperweave compose badge "DEPLOY" "live" --genome-file ./my-genome.json
@@ -407,15 +394,17 @@ hyperweave validate-genome ./my-genome.json
 
 ```bash
 # URL grammar: /v1/{type}/{title}/{value}/{genome}.{motion}
-curl https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278
+curl 'https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278'
 
-# Live data binding
-curl https://hyperweave.app/v1/live/github/anthropics/claude-code/stars/chrome-horizon
+# Live data via the unified ?data= grammar (works on badge / strip / marquee)
+curl 'https://hyperweave.app/v1/badge/STARS/chrome-horizon.static?data=gh:anthropics/claude-code.stars'
+curl 'https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks'
+curl 'https://hyperweave.app/v1/marquee/SCROLL/brutalist-emerald.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars'
 
 # POST compose
 curl -X POST https://hyperweave.app/v1/compose \
   -H "Content-Type: application/json" \
-  -d '{"type":"banner","title":"HYPERWEAVE","genome":"brutalist-emerald","motion":"drop"}'
+  -d '{"type":"strip","title":"hyperweave","genome":"brutalist-emerald","value":"STARS:2.9k"}'
 
 # Local server
 hyperweave serve --port 8000
@@ -474,9 +463,9 @@ Every artifact ships with:
 
 | Dimension | Count |
 |---|---|
-| Frame types | 15 (badge, strip, banner, icon, divider, marquee-h/v/counter, receipt, rhythm-strip, master-card, catalog, stats, chart, timeline) |
+| Frame types | 9 (badge, strip, icon, divider, marquee-horizontal, stats, chart, receipt, rhythm-strip) |
 | Genomes | 3 (automata, brutalist-emerald, chrome-horizon) |
-| Motion configs | 15 (1 static + 5 border SMIL + 9 kinetic CSS) |
+| Motion configs | 6 (1 static + 5 border SMIL) |
 | Glyphs | 99 (93 Simple Icons + 6 geometric) |
 | Divider variants | 6 (block, cellular-dissolve, current, takeoff, void, zeropoint) |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
@@ -484,14 +473,6 @@ Every artifact ships with:
 | Bundled fonts | 3 (JetBrains Mono, Orbitron, Chakra Petch — base64-embedded) |
 
 Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
-
----
-
-## Roadmap
-
-<p>
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/timelines/hyperweave-roadmap.svg" alt="roadmap" width="100%"/>
-</p>
 
 ---
 

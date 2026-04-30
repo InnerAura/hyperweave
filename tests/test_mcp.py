@@ -57,8 +57,8 @@ async def test_hw_live_error_fallback() -> None:
 async def test_hw_kit_readme() -> None:
     result = await hw_kit(type="readme", genome="brutalist-emerald", project="test", badges="build:passing")
     assert isinstance(result, dict)
-    assert "banner" in result
     assert "badge-build" in result
+    assert "divider" in result
     assert all("<svg" in svg for svg in result.values())
 
 
@@ -90,30 +90,36 @@ async def test_hw_discover_frames() -> None:
     assert "frames" in result
     assert "badge" in result["frames"]
     assert "strip" in result["frames"]
-    assert "banner" in result["frames"]
+    assert "marquee-horizontal" in result["frames"]
+    # banner / marquee-counter / marquee-vertical / timeline removed in v0.2.14.
+    assert "banner" not in result["frames"]
+    assert "timeline" not in result["frames"]
 
 
-async def test_hw_discover_url_grammar_includes_stats_chart_timeline() -> None:
-    """§7.2: url_grammar advertises stats, chart, timeline for MCP clients.
+async def test_hw_discover_url_grammar_advertises_data_token_routes() -> None:
+    """url_grammar advertises both badge route shapes plus the data-bearing frames.
 
-    These routes shipped in Session 2A/2B but hw_discover didn't list them,
-    so LLM clients couldn't self-serve the URL shape.
+    Replaces the prior session-2A+2B test which exercised banner/timeline keys.
     """
     result = await hw_discover(what="url_grammar")
     grammar = result["url_grammar"]
-    for key in ("stats", "chart", "timeline"):
+    for key in ("badge (static)", "badge (data-driven)", "strip", "marquee-horizontal", "stats", "chart-stars"):
         assert key in grammar, f"Missing {key} entry in url_grammar"
         entry = grammar[key]
         assert "pattern" in entry
         assert entry["pattern"].startswith("/v1/")
         assert "example" in entry
+    # The data-driven shapes carry the unified `data` query param.
+    assert "data" in grammar["badge (data-driven)"]["query_params"]
+    assert "data" in grammar["strip"]["query_params"]
+    assert "data" in grammar["marquee-horizontal"]["query_params"]
 
     # Route-shape assertions lock the patterns against the HTTP route source of truth.
     assert grammar["stats"]["pattern"] == "/v1/stats/{username}/{genome}.{motion}"
-    assert grammar["chart"]["pattern"] == "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}"
-    assert grammar["timeline"]["pattern"] == "/v1/timeline/{genome}.{motion}"
-    # Timeline is POST-only (body carries items); grammar must flag it.
-    assert grammar["timeline"].get("method") == "POST"
+    assert grammar["chart-stars"]["pattern"] == "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}"
+    # Banner / timeline routes were deleted in v0.2.14.
+    assert "banner" not in grammar
+    assert "timeline" not in grammar
 
 
 # ===========================================================================

@@ -116,12 +116,6 @@ def test_new_paradigm_constructs_from_config_without_python_edits() -> None:
         "chart": {"viewport_x": 100, "viewport_y": 160, "viewport_w": 700, "viewport_h": 240},
         "stats": {"card_height": 270, "embeds_chart": False},
         "icon": {"supported_shapes": ["circle"], "default_shape": "circle"},
-        "banner": {
-            "hero_font_family": "Inter",
-            "hero_font_weight": 800,
-            "hero_skew_deg": 0.0,
-            "hero_italic": False,
-        },
     }
     spec = ParadigmSpec(**raw)
     assert spec.id == "vellum"

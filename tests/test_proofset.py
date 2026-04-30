@@ -27,18 +27,20 @@ def proofset_module() -> object:
     return module
 
 
-def test_generate_session_2a2b_writes_all_frames(proofset_module: object) -> None:
-    """Run the Session 2A+2B generator and verify every expected artifact exists."""
-    # The generator writes under OUT / "proofset" / genome / "session-2a2b".
-    # OUT is resolved inside the module and points to the real outputs/ directory.
-    # We call the private helper directly so we don't need to shell out.
+def test_generate_session_2a2b_writes_stats_and_chart(proofset_module: object) -> None:
+    """Run the stats + chart generator and verify every expected artifact exists.
+
+    Timeline was removed in v0.2.14; the section header retained its name
+    in the script for git-history continuity but only stats + chart artifacts
+    are emitted now.
+    """
     from hyperweave.core.enums import GenomeId
 
     count = proofset_module._generate_session_2a2b()  # type: ignore[attr-defined]
     assert count > 0, "generator should emit at least one artifact"
 
     out_dir = proofset_module.OUT  # type: ignore[attr-defined]
-    expected_files = ("stats.svg", "chart_stars_full.svg", "timeline.svg")
+    expected_files = ("stats.svg", "chart_stars_full.svg")
     for genome in GenomeId:
         gdir = out_dir / "proofset" / genome / "session-2a2b"
         for fname in expected_files:
@@ -49,21 +51,19 @@ def test_generate_session_2a2b_writes_all_frames(proofset_module: object) -> Non
 
 
 def test_generate_readme_includes_new_sections(proofset_module: object) -> None:
-    """After running the generators, README.md embeds stats/chart/timeline
-    inline under each genome section (v0.3.0 reorg — no longer bottom-of-page)."""
+    """README embeds stats + chart inline under each genome section."""
     proofset_module._generate_session_2a2b()  # type: ignore[attr-defined]
     proofset_module.generate_readme(100, 0)  # type: ignore[attr-defined]
 
     out_dir = proofset_module.OUT  # type: ignore[attr-defined]
     readme = (out_dir / "README.md").read_text()
-    # Each artifact class now lives as a H3 subsection within each genome
     assert "### Profile Card (stats)" in readme
     assert "### Star History Chart" in readme
-    assert "### Timeline / Roadmap" in readme
-    # Every genome's new section should have at least one SVG image reference.
     assert "session-2a2b/stats.svg" in readme
     assert "session-2a2b/chart_stars_full.svg" in readme
-    assert "session-2a2b/timeline.svg" in readme
+    # Timeline section removed in v0.2.14.
+    assert "### Timeline / Roadmap" not in readme
+    assert "timeline.svg" not in readme
     # Automata family-axis section
     assert "### Family Axis" in readme
     assert "families/badge_pypi_blue_default.svg" in readme

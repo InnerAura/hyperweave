@@ -106,12 +106,10 @@
   "paradigms": {
     "badge": "chrome",
     "strip": "chrome",
-    "banner": "chrome",
     "icon": "chrome",
     "divider": "default",
     "stats": "chrome",
-    "chart": "chrome",
-    "timeline": "default"
+    "chart": "chrome"
   },
   "structural": {
     "stroke_linejoin": "round",

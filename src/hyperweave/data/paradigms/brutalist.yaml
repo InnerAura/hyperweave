@@ -30,12 +30,6 @@ strip:
   cell_pad: 20
   cell_min_width: 106
 
-banner:
-  hero_font_family: Inter
-  hero_font_weight: 900
-  hero_skew_deg: 0.0
-  hero_italic: false
-
 chart:
   viewport_x: 80
   viewport_y: 150

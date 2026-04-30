@@ -13,12 +13,6 @@ from hyperweave.kit import _parse_badge_string, compose_kit
 # ===========================================================================
 
 
-def test_compose_kit_readme_has_banner() -> None:
-    results = compose_kit("readme", "brutalist-emerald", "TEST")
-    assert "banner" in results
-    assert "<svg" in results["banner"].svg
-
-
 def test_compose_kit_readme_has_divider() -> None:
     results = compose_kit("readme", "brutalist-emerald")
     assert "divider" in results
@@ -44,7 +38,6 @@ def test_compose_kit_readme_social_icons() -> None:
 
 def test_compose_kit_chrome_genome() -> None:
     results = compose_kit("readme", "chrome-horizon", "CHROME")
-    assert "banner" in results
     assert "divider" in results
 
 
@@ -54,9 +47,9 @@ def test_compose_kit_unknown_type_returns_empty() -> None:
 
 
 def test_compose_kit_artifact_count() -> None:
-    """Kit with badges+social should produce banner + divider + badges + strip + icons."""
+    """Kit with badges+social should produce divider + badges + strip + icons."""
     results = compose_kit("readme", "brutalist-emerald", "test", "build:passing,cov:95%", "github")
-    assert len(results) >= 5  # banner, divider, 2 badges, strip, 1 icon
+    assert len(results) >= 4  # divider, 2 badges, strip, 1 icon
 
 
 # ===========================================================================

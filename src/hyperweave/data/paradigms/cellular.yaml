@@ -6,7 +6,7 @@ description: >
   architecture: 7-stop metallic rim bezel, 3-cell pattern pulse strip,
   refined seam gradient, and label/value slabs. Monofamily artifacts
   (badge, icon) pick one family via ComposeSpec.family; bifamily artifacts
-  (strip, banner, marquee, divider) render both simultaneously.
+  (strip, marquee, divider) render both simultaneously.
 
   Any genome opting into this paradigm must declare both family palettes
   plus bifamily-bridge fields plus cellular-pulse config. The shared
@@ -51,7 +51,6 @@ frame_family_defaults:
   badge: blue
   icon: blue
   strip: bifamily
-  banner: bifamily
   marquee-horizontal: bifamily
   divider: bifamily
 
@@ -117,19 +116,6 @@ strip:
   value_letter_spacing_em: 0.0
   cell_pad: 20
   cell_min_width: 0
-
-banner:
-  hero_font_family: Orbitron
-  hero_font_weight: 900
-  hero_skew_deg: 0.0
-  hero_italic: false
-  # Specimen cellular-automata-hero-banner-v2.svg is 800×220 for both
-  # variants. There is no "full" cellular banner size — the specimen is
-  # already specimen-dense at 800×220.
-  width_default: 800
-  height_default: 220
-  width_compact: 800
-  height_compact: 220
 
 icon:
   supported_shapes: [square]

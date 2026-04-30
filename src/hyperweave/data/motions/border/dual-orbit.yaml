@@ -9,7 +9,6 @@ animated_properties:
 applies_to:
   - badge
   - strip
-  - banner
   - icon
 timing:
   duration: "3s"

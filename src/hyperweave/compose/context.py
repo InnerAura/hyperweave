@@ -42,20 +42,15 @@ def build_context(
     _BUILDERS: dict[str, _CtxBuilder] = {
         FrameType.BADGE: _ctx_badge,
         FrameType.STRIP: _ctx_strip,
-        FrameType.BANNER: _ctx_banner,
         FrameType.ICON: _ctx_icon,
         FrameType.DIVIDER: _ctx_divider,
         FrameType.MARQUEE_HORIZONTAL: _ctx_marquee,
-        FrameType.MARQUEE_VERTICAL: _ctx_marquee,
-        FrameType.MARQUEE_COUNTER: _ctx_marquee,
         FrameType.RECEIPT: _ctx_receipt,
         FrameType.RHYTHM_STRIP: _ctx_rhythm_strip,
         FrameType.MASTER_CARD: _ctx_master_card,
         FrameType.CATALOG: _ctx_catalog,
-        # Session 2A+2B additions
         FrameType.STATS: _ctx_stats,
         FrameType.CHART: _ctx_chart,
-        FrameType.TIMELINE: _ctx_timeline,
     }
     builder = _BUILDERS.get(spec.type, _ctx_badge)
     ctx = builder(spec, resolved, css_bundle)
@@ -176,12 +171,6 @@ def _ctx_strip(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     return ctx
 
 
-def _ctx_banner(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
-    ctx, _uid, _aid = _base_context(spec, resolved, css)
-    ctx.update(resolved.frame_context)
-    return ctx
-
-
 def _ctx_icon(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
     ctx, _uid, _aid = _base_context(spec, resolved, css)
     ctx["icon_variant"] = "brutalist-square"  # safe default; resolver overrides
@@ -197,46 +186,34 @@ def _ctx_divider(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
 
 
 def _ctx_marquee(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
+    """Context defaults for the marquee-horizontal frame.
+
+    Counter / vertical defaults removed in v0.2.14 along with those frame
+    types. Only horizontal-relevant keys are pre-populated; the resolver
+    overrides every value via ``resolved.frame_context``.
+    """
     ctx, _uid, _aid = _base_context(spec, resolved, css)
     ctx["scroll_items"] = []
-    ctx["scroll_rows"] = []
-    ctx["counter_rows"] = []
-    ctx["rows"] = []
-    ctx["header_right_label"] = ""
-    ctx["header_label"] = "SYSTEM TELEMETRY"
-    ctx["marquee_icon_svg"] = ""
     ctx["marquee_label"] = "LIVE"
     ctx["scroll_distance"] = 1000
     ctx["scroll_dur"] = 11.09
-    ctx["beacon_pulse_dur"] = "2.618s"
     ctx["separator"] = "■"
     ctx["separator_color"] = "var(--dna-border)"
-    ctx["bezel"] = 4
-    ctx["surface_inset"] = 5
-    ctx["fade_width"] = 36
-    ctx["header_h"] = 33
-    ctx["row_height"] = 30
-    ctx["content_h"] = 360
-    ctx["item_count"] = 12
-    ctx["fade_h"] = 18
-    ctx["dot_size"] = 4
-    ctx["dot_x"] = 14
-    ctx["text_x"] = 26
-    ctx["status_label_x"] = 382
-    ctx["bottom_accent_h"] = 3
-    ctx["live_dot_size"] = 8
-    ctx["pulse_dur"] = "2.618s"
-    ctx["divider_y"] = 38
+    ctx["separator_opacity"] = ""
+    ctx["fade_width"] = 24
     ctx["label_panel_width"] = 130
     ctx["clip_x"] = 132
     ctx["divider_w"] = 2
     ctx["accent_line_opacity"] = 0.2
     ctx["item_dx"] = 20
     ctx["item_start_x"] = 148
-    ctx["rivet_size"] = 6
-    ctx["rivet_opacity"] = 0.4
     ctx["accent_bar_w"] = 4
-    ctx["show_pulse"] = True
+    ctx["suppress_live_block"] = False
+    ctx["clip_inset_y"] = 4
+    ctx["clip_inset_x"] = 4
+    ctx["show_accent_lines"] = True
+    ctx["scroll_font_family"] = "var(--dna-font-mono, ui-monospace, monospace)"
+    ctx["direction"] = spec.marquee_direction
     ctx.update(resolved.frame_context)
     return ctx
 
@@ -380,15 +357,6 @@ def _ctx_stats(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     return ctx
 
 
-def _ctx_timeline(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
-    """Context builder for the ``timeline`` frame (roadmap node chain)."""
-    ctx, _uid, _aid = _base_context(spec, resolved, css)
-    ctx["timeline_items"] = []
-    ctx["timeline_title"] = spec.title or "Roadmap"
-    ctx.update(resolved.frame_context)
-    return ctx
-
-
 # ── Motion injection ─────────────────────────────────────────────────
 
 
@@ -399,7 +367,7 @@ def _inject_motion(ctx: dict[str, Any], spec: ComposeSpec, resolved: ResolvedArt
         return
 
     try:
-        from hyperweave.render.motion import build_border_overlay, build_kinetic_motion_svg
+        from hyperweave.render.motion import build_border_overlay
 
         uid = ctx["uid"]
         w = ctx["width"]
@@ -430,27 +398,6 @@ def _inject_motion(ctx: dict[str, Any], spec: ComposeSpec, resolved: ResolvedArt
         if defs_svg or overlay_svg:
             ctx["motion_border_defs"] = defs_svg
             ctx["motion_border_overlay"] = overlay_svg
-
-        # Kinetic typography (banner only)
-        if spec.type == FrameType.BANNER and not ctx.get("motion_border_overlay"):
-            is_full = resolved.frame_context.get("banner_variant", "full") == "full"
-            banner_fs = 160 if is_full else 42
-            text_cx = w // 2
-            text_cy = h // 2
-            banner_subtitle = ctx.get("banner_subtitle", "")
-            motion_svg = build_kinetic_motion_svg(
-                motion_id,
-                uid,
-                spec.title or "HYPERWEAVE",
-                text_cx,
-                text_cy,
-                banner_fs,
-                w,
-                h,
-                subtitle=banner_subtitle,
-            )
-            if motion_svg:
-                ctx["motion_svg"] = motion_svg
     except Exception:
         pass  # motion SVG generation must never break compose
 

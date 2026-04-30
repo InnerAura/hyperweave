@@ -313,19 +313,14 @@ def run_direct_tests() -> None:
             svg = direct_compose("icon", genome, glyph, "", "active", glyph)
             _save(svg, gdir / f"icon_{glyph}.svg", "direct", f"icon_{glyph}")
 
-        # Banner
-        svg = direct_compose("banner", genome, "HYPERWEAVE", "Living Artifacts for AI")
-        _save(svg, gdir / "banner.svg", "direct", "banner")
-
         # Dividers (specimen variants only)
         for var in DIVIDER_VARIANTS:
             svg = direct_compose("divider", genome, "", "", variant=var)
             _save(svg, gdir / f"divider_{var}.svg", "direct", f"divider_{var}")
 
-        # Marquees
-        for mtype in ["marquee-horizontal", "marquee-vertical", "marquee-counter"]:
-            svg = direct_compose(mtype, genome, "HYPERWEAVE LIVING ARTIFACTS AI-NATIVE")
-            _save(svg, gdir / f"{mtype}.svg", "direct", mtype)
+        # Marquee (horizontal-only since v0.2.14)
+        svg = direct_compose("marquee-horizontal", genome, "HYPERWEAVE LIVING ARTIFACTS AI-NATIVE")
+        _save(svg, gdir / "marquee-horizontal.svg", "direct", "marquee-horizontal")
 
         # Substrate matrix
         for sub in SUBSTRATES:
@@ -359,10 +354,6 @@ def run_cli_tests() -> None:
         svg = cli_compose("strip", genome, "readme-ai", "VERSION:v0.6.9,STARS:12.4k")
         _save(svg, gdir / "strip.svg", "cli", "strip")
 
-        # Banner
-        svg = cli_compose("banner", genome, "HYPERWEAVE", "Living Artifacts")
-        _save(svg, gdir / "banner.svg", "cli", "banner")
-
         # Icon
         svg = cli_compose("icon", genome, "github", "", "active", "github")
         _save(svg, gdir / "icon.svg", "cli", "icon")
@@ -387,9 +378,6 @@ def run_api_tests() -> None:
         svg = api_compose("strip", genome, "readme-ai", "VERSION:v0.6.9,STARS:12.4k")
         _save(svg, gdir / "strip.svg", "api", "strip")
 
-        svg = api_compose("banner", genome, "HYPERWEAVE", "Living Artifacts for AI")
-        _save(svg, gdir / "banner.svg", "api", "banner")
-
         svg = api_compose("icon", genome, "python", "", "active", "python")
         _save(svg, gdir / "icon.svg", "api", "icon")
 
@@ -408,10 +396,9 @@ def run_api_tests() -> None:
             ("/v1/compose/badge/build/passing/brutalist-emerald", "url_badge"),
             ("/v1/compose/badge/build/passing/chrome-horizon.breathe", "url_badge_motion"),
             ("/v1/compose/strip/readme-ai/STARS:12.4k/brutalist-emerald", "url_strip"),
-            ("/v1/compose/banner/HYPERWEAVE/chrome-horizon", "url_banner"),
             ("/v1/compose/icon/github/brutalist-emerald", "url_icon"),
             ("/v1/compose/divider/chrome-horizon?terminal=aurora&rule=wave", "url_divider"),
-            ("/v1/compose/marquee/horizontal/HYPERWEAVE/brutalist-emerald", "url_marquee"),
+            ("/v1/compose/marquee/HYPERWEAVE/brutalist-emerald", "url_marquee"),
         ]
 
         for url, label in url_tests:

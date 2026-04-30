@@ -173,25 +173,6 @@ class ParadigmBadgeConfig(FrozenModel):
     height=32), which aligns the indicator visually with the text center."""
 
 
-class ParadigmBannerConfig(FrozenModel):
-    """Banner frame config within a paradigm."""
-
-    hero_font_family: str = "Inter"
-    hero_font_weight: int = 800
-    hero_skew_deg: float = 0.0
-    hero_italic: bool = False
-    width_default: int = 1200
-    """Default banner width when ``variant != "compact"`` (1200 for brutalist/chrome).
-    Cellular specimen is 800x220 — the paradigm can override both variants
-    to the same specimen dims. Zero fallback to 1200."""
-    height_default: int = 600
-    """Default banner height when ``variant != "compact"`` (600 for brutalist/chrome)."""
-    width_compact: int = 800
-    """Compact-variant banner width (800 for brutalist/chrome; cellular too)."""
-    height_compact: int = 220
-    """Compact-variant banner height (220 for brutalist/chrome; cellular too)."""
-
-
 class ParadigmIconConfig(FrozenModel):
     """Icon frame config within a paradigm."""
 
@@ -242,7 +223,6 @@ class ParadigmSpec(FrozenModel):
 
     badge: ParadigmBadgeConfig = Field(default_factory=ParadigmBadgeConfig)
     strip: ParadigmStripConfig = Field(default_factory=ParadigmStripConfig)
-    banner: ParadigmBannerConfig = Field(default_factory=ParadigmBannerConfig)
     chart: ParadigmChartConfig = Field(default_factory=ParadigmChartConfig)
     stats: ParadigmStatsConfig = Field(default_factory=ParadigmStatsConfig)
     icon: ParadigmIconConfig = Field(default_factory=ParadigmIconConfig)
@@ -258,5 +238,5 @@ class ParadigmSpec(FrozenModel):
     """Per-frame default for ``ComposeSpec.family`` when the user leaves it
     empty. Cellular paradigm declares ``{badge: blue, strip: bifamily, ...}``
     so monofamily artifacts (badge/icon) pick blue by default and bifamily
-    artifacts (strip/banner/marquee/divider) show both palettes simultaneously.
+    artifacts (strip/marquee/divider) show both palettes simultaneously.
     Non-cellular paradigms leave this empty — resolvers fall back to ``blue``."""

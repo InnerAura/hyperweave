@@ -36,10 +36,6 @@ def test_strip_default_is_bifamily_under_cellular() -> None:
     assert _family_in_context("strip") == "bifamily"
 
 
-def test_banner_default_is_bifamily_under_cellular() -> None:
-    assert _family_in_context("banner") == "bifamily"
-
-
 def test_marquee_horizontal_default_is_bifamily() -> None:
     assert _family_in_context("marquee-horizontal") == "bifamily"
 

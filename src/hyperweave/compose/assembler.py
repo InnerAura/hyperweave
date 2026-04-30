@@ -14,19 +14,13 @@ if TYPE_CHECKING:
 _STATEFUL_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP})
 
 # Frame types that use bridge hw-* class mappings
-_BRIDGE_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP, FrameType.BANNER, FrameType.ICON})
+_BRIDGE_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP, FrameType.ICON})
 
 # Telemetry frame types — need tool-class + extra ink variables
 _TELEMETRY_FRAMES: frozenset[str] = frozenset({FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD})
 
 # Marquee frame types — need frame_fill, status colors, ink tiers
-_MARQUEE_FRAMES: frozenset[str] = frozenset(
-    {
-        FrameType.MARQUEE_HORIZONTAL,
-        FrameType.MARQUEE_VERTICAL,
-        FrameType.MARQUEE_COUNTER,
-    }
-)
+_MARQUEE_FRAMES: frozenset[str] = frozenset({FrameType.MARQUEE_HORIZONTAL})
 
 
 def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, str]:
@@ -34,8 +28,8 @@ def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, 
 
     Only includes CSS layers that the specific frame type actually uses:
     - genome DNA variables → ALL frames
-    - bridge classes → badge, strip, banner, icon
-    - expression layer → badge, strip (full); banner (typography only)
+    - bridge classes → badge, strip, icon
+    - expression layer → badge, strip
     - status animations → badge, strip only
     - accessibility → ALL frames
     - motion CSS → only when motion != static
@@ -140,18 +134,8 @@ def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
                 ("material_roughness", "--dna-material-roughness"),
             ]
         )
-    elif frame_type in ("banner",):
-        # Banner needs status colors for the indicator + rhythm
-        mapping.extend(
-            [
-                ("accent_signal", "--dna-status-passing-core"),
-                ("rhythm_slow", "--dna-rhythm-slow"),
-                ("metric_text", "--dna-metric-text"),
-                ("label_text", "--dna-label-text"),
-            ]
-        )
     elif frame_type in _MARQUEE_FRAMES:
-        # Marquees need frame fill, status colors (vertical feed), ink tiers
+        # marquee-horizontal needs frame fill, status colors, ink tiers
         mapping.extend(
             [
                 ("frame_fill", "--dna-frame-fill"),

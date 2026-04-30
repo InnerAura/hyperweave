@@ -42,66 +42,88 @@ async def hw_compose(
     family: str = "",
     divider_variant: str = "zeropoint",
     direction: str = "ltr",
-    rows: int = 3,
     speeds: list[float] | None = None,
+    data: str = "",
     telemetry_data: dict[str, Any] | None = None,
-    # ── Session 2A+2B parity ──
     genome_override: dict[str, Any] | None = None,
     connector_data: dict[str, Any] | None = None,
-    timeline_items: list[dict[str, Any]] | None = None,
     stats_username: str = "",
     chart_owner: str = "",
     chart_repo: str = "",
 ) -> str:
     """Compose a HyperWeave artifact. Returns self-contained SVG.
 
-    type: badge | strip | banner | icon | divider |
-          marquee-horizontal | marquee-vertical | marquee-counter |
-          receipt | rhythm-strip | master-card | catalog |
-          stats | chart | timeline
+    type: badge | strip | icon | divider | marquee-horizontal |
+          receipt | rhythm-strip | master-card | catalog | stats | chart
 
     genome: brutalist-emerald (dark, sharp corners, emerald accent) |
-            chrome-horizon (dark, metallic, blue-silver gradient)
+            chrome-horizon (dark, metallic, blue-silver gradient) |
+            automata (cellular bifamily; teal + amethyst)
             — or pass ``genome_override`` as an inline genome dict to bypass
               the built-in registry (equivalent to CLI ``--genome-file``).
 
     Content by frame type:
-      badge:    title="build" value="passing" (two-panel badge)
+      badge:    title="STARS" value="12345" (two-panel badge)
+                — or title="STARS" data="gh:owner/repo.stars" (data-driven)
       strip:    title="readme-ai" value="STARS:2.9k,FORKS:278" (metric strip)
-      banner:   title="HYPERWEAVE" value="Living Artifacts" (hero text)
+                — or strip with data="gh:owner/repo.stars,gh:owner/repo.forks"
       icon:     glyph="github" (64x64 icon frame)
-      divider:  divider_variant=block|current|takeoff|void|zeropoint
-      marquee:  title="TEXT | MORE" (pipe-separated for counter rows)
+      divider:  divider_variant=block|current|takeoff|void|zeropoint|cellular-dissolve
+      marquee:  title="ITEM1 | ITEM2" (pipe-separated for raw text)
+                — or data="text:NEW,gh:owner/repo.stars,text:DOWNLOAD"
       receipt:  telemetry_data={session data contract dict}
       stats:    stats_username="eli64s" + connector_data={stars_total, ...}
       chart:    chart_owner/chart_repo + connector_data={points, current_stars}
-      timeline: timeline_items=[{title, subtitle, status, date}, ...]
 
-    Network I/O for stats/chart is NOT done inside this tool — callers must
-    pre-fetch via hw_live or the connectors module and pass results through
-    ``connector_data`` (or ``timeline_items`` for the timeline frame). This
-    preserves the pure-function semantics of compose() and keeps the tool
-    deterministic for agents.
+    The ``data`` parameter is the unified data-token grammar. Forms:
+      text:STRING          — raw display text
+      kv:KEY=VALUE         — static literal, role-tagged
+      gh:owner/repo.metric — GitHub
+      pypi:pkg.metric      — PyPI
+      npm:pkg.metric / hf:org/model.metric / arxiv:id.metric / docker:owner/image.metric
 
-    motion (banner): cascade | drop | broadcast | bars | breach |
-                     collapse | converge | crash | pulse
-    motion (badge/strip): chromatic-pulse | corner-trace | dual-orbit |
-                          entanglement | rimrun
+    Multiple tokens are separated by ``,``. Embedded commas in text/kv
+    payloads escape as ``\\,``. When ``data`` is set, this tool fetches live
+    values inline (network I/O), so callers don't need to pre-fetch via
+    ``connector_data``. For stats/chart frames, ``connector_data`` remains
+    the pre-fetched payload pathway and is preferred when the caller already
+    has the data.
 
+    motion (badge/strip/icon): chromatic-pulse | corner-trace | dual-orbit |
+                                entanglement | rimrun
     state: active | passing | building | warning | critical | failing | offline
     glyph_mode: auto | fill | wire | none
-    variant: default | compact (banner)
+    variant: default | compact
     shape: square | circle (icon frame shape, genome-dependent)
     family: blue | purple | bifamily (automata chromatic axis; empty = frame default)
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
 
+    final_value = value
+    data_tokens_resolved: list[Any] | None = None
+
+    if data:
+        from hyperweave.serve.data_tokens import (
+            format_for_value,
+            parse_data_tokens,
+            resolve_data_tokens,
+        )
+
+        tokens = parse_data_tokens(data)
+        resolved, _ttl = await resolve_data_tokens(tokens)
+        if type == "marquee-horizontal":
+            data_tokens_resolved = list(resolved)
+        else:
+            formatted = format_for_value(resolved)
+            if formatted:
+                final_value = formatted
+
     spec = ComposeSpec(
         type=type,
         genome_id=genome,
         title=title,
-        value=value,
+        value=final_value,
         state=state,
         motion=motion,
         glyph=glyph,
@@ -112,15 +134,14 @@ async def hw_compose(
         family=family,
         divider_variant=divider_variant,
         marquee_direction=direction,
-        marquee_rows=rows,
         marquee_speeds=speeds,
         telemetry_data=telemetry_data,
         genome_override=genome_override,
         connector_data=connector_data,
-        timeline_items=timeline_items,
         stats_username=stats_username,
         chart_owner=chart_owner,
         chart_repo=chart_repo,
+        data_tokens=data_tokens_resolved,
     )
 
     result = compose(spec)
@@ -136,32 +157,22 @@ async def hw_live(
     glyph: str = "",
     state: str = "active",
 ) -> str:
-    """Compose a badge with live data fetched from a provider.
+    """Compose a data-driven badge — convenience wrapper over hw_compose.
 
-    provider: github | pypi | npm | arxiv | huggingface | docker
+    Equivalent to ``hw_compose(type="badge", title=metric.upper(),
+    data=f"{provider}:{identifier}.{metric}", ...)``. Kept as a separate
+    tool because the (provider, identifier, metric) triple is more
+    discoverable than the colon/dot DSL for first-time agents. New code
+    should prefer ``hw_compose`` with the unified ``data`` parameter.
+
+    provider: gh | github | pypi | npm | arxiv | huggingface | hf | docker
     identifier: owner/repo (github), package-name (pypi/npm), paper-id (arxiv)
     metric: stars | forks | version | downloads | likes | pull_count
-
-    Examples:
-      provider="github", identifier="anthropics/claude-code", metric="stars"
-      provider="pypi", identifier="fastmcp", metric="downloads"
-      provider="npm", identifier="fastmcp", metric="version"
     """
-    label = metric
-    value = "n/a"
-
-    try:
-        from hyperweave.connectors import fetch_metric
-
-        data = await fetch_metric(provider, identifier, metric)
-        value = str(data.get("value", "n/a"))
-    except Exception:
-        value = "error"
-
     return await hw_compose(
         type="badge",
-        title=label,
-        value=value,
+        title=metric.upper(),
+        data=f"{provider}:{identifier}.{metric}",
         genome=genome,
         glyph=glyph,
         state=state,
@@ -234,39 +245,54 @@ async def hw_discover(
         result["frames"] = [ft.value for ft in FrameType]
 
     if what in ("all", "url_grammar"):
+        data_grammar = (
+            "Comma-separated tokens: text:STRING | kv:KEY=VALUE | "
+            "gh:owner/repo.metric | pypi:pkg.metric | npm:pkg.metric | "
+            "hf:org/model.metric | arxiv:id.metric | docker:owner/image.metric. "
+            "Embedded commas in text/kv payloads escape as \\,."
+        )
         result["url_grammar"] = {
-            "badge": {
+            "badge (static)": {
                 "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
                 "query_params": {
                     "glyph": "Glyph identifier (e.g. github, python)",
                     "glyph_mode": "auto | fill | wire | none",
                     "state": "active | passing | building | warning | critical | failing | offline",
                     "regime": "normal | permissive | ungoverned",
+                    "variant": "default | compact",
+                    "family": "blue | purple | bifamily (automata)",
                     "t": "Title override (use when title contains slashes)",
                 },
                 "example": "/v1/badge/build/passing/brutalist-emerald.static",
             },
+            "badge (data-driven)": {
+                "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
+                "query_params": {
+                    "data": data_grammar,
+                    "glyph": "Glyph identifier",
+                    "glyph_mode": "auto | fill | wire | none",
+                    "state": "Semantic state",
+                    "regime": "normal | permissive | ungoverned",
+                    "variant": "default | compact",
+                    "family": "blue | purple | bifamily (automata)",
+                },
+                "example": "/v1/badge/STARS/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+            },
             "strip": {
                 "pattern": "/v1/strip/{title}/{genome}.{motion}",
                 "query_params": {
-                    "value": "Metrics text: STARS:2.9k,FORKS:278",
-                    "live": "Live data: github:owner/repo:stars,pypi:pkg:version",
+                    "value": "Static metrics: STARS:2.9k,FORKS:278",
+                    "data": data_grammar,
+                    "subtitle": "Subtitle under identity (cellular paradigm)",
                     "glyph": "Glyph identifier",
                     "state": "Semantic state",
+                    "family": "blue | purple | bifamily (automata)",
                     "t": "Title override (use when title contains slashes)",
                 },
-                "example": "/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k",
-            },
-            "banner": {
-                "pattern": "/v1/banner/{title}/{genome}.{motion}",
-                "query_params": {
-                    "subtitle": "Banner subtitle text",
-                    "value": "Alias for subtitle",
-                    "glyph": "Glyph identifier",
-                    "state": "Semantic state",
-                    "t": "Title override (use when title contains slashes)",
-                },
-                "example": "/v1/banner/HYPERWEAVE/brutalist-emerald.cascade?subtitle=Living+Artifacts",
+                "example": (
+                    "/v1/strip/readme-ai/brutalist-emerald.static"
+                    "?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks"
+                ),
             },
             "icon": {
                 "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
@@ -274,53 +300,40 @@ async def hw_discover(
                     "shape": "square | circle",
                     "glyph_mode": "auto | fill | wire | none",
                     "state": "Semantic state",
+                    "family": "blue | purple | bifamily (automata)",
                 },
                 "example": "/v1/icon/github/chrome-horizon.static?shape=circle",
             },
             "divider": {
-                "pattern": "/v1/divider/{variant}/{genome}",
-                "query_params": {},
-                "example": "/v1/divider/void/brutalist-emerald",
+                "pattern": "/v1/divider/{variant}/{genome}.{motion}",
+                "query_params": {
+                    "family": "blue | purple | bifamily (automata)",
+                },
+                "example": "/v1/divider/void/brutalist-emerald.static",
             },
-            "marquee": {
+            "marquee-horizontal": {
                 "pattern": "/v1/marquee/{title}/{genome}.{motion}",
                 "query_params": {
-                    "direction": "ltr | rtl | up | down",
-                    "rows": "Number of rows (counter variant uses 3)",
-                    "speeds": "Comma-separated speed multipliers per row",
+                    "data": data_grammar + " When set, drives the scroll directly and ignores title.",
+                    "direction": "ltr | rtl",
+                    "speeds": "Single float scroll speed multiplier",
+                    "family": "blue | purple | bifamily (automata)",
                     "t": "Title override (use when title contains slashes)",
                 },
-                "example": "/v1/marquee/HYPERWEAVE/brutalist-emerald.static?rows=3",
-            },
-            "live": {
-                "pattern": "/v1/live/{provider}/{identifier}/{metric}/{genome}.{motion}",
-                "query_params": {
-                    "glyph": "Glyph identifier",
-                    "state": "Semantic state",
-                },
-                "example": "/v1/live/github/eli64s/readme-ai/stars/brutalist-emerald.static",
+                "example": (
+                    "/v1/marquee/SCROLL/brutalist-emerald.static"
+                    "?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars"
+                ),
             },
             "stats": {
                 "pattern": "/v1/stats/{username}/{genome}.{motion}",
-                "query_params": {
-                    "glyph": "Glyph identifier",
-                    "state": "Semantic state",
-                },
-                "example": "/v1/stats/jiahongc/chrome-horizon.static",
-            },
-            "chart": {
-                "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
-                "query_params": {
-                    "state": "Semantic state",
-                },
-                "example": "/v1/chart/stars/torvalds/linux/brutalist-emerald.static",
-            },
-            "timeline": {
-                "pattern": "/v1/timeline/{genome}.{motion}",
-                "method": "POST",
-                "body": 'JSON: {"items": [{"title": str, "subtitle": str, "date": str, "status": str}, ...]}',
                 "query_params": {},
-                "example": "POST /v1/timeline/chrome-horizon.static with items payload",
+                "example": "/v1/stats/eli64s/chrome-horizon.static",
+            },
+            "chart-stars": {
+                "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
+                "query_params": {},
+                "example": "/v1/chart/stars/torvalds/linux/brutalist-emerald.static",
             },
         }
 
