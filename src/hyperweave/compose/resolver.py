@@ -949,21 +949,28 @@ def _resolve_horizontal(
     speed = spec.marquee_speeds[0] if spec.marquee_speeds else 1.0
     scroll_dur = round(scroll_distance / (base_speed * speed), 2)
 
+    # Two input modes produce a list of "structured items" with the same shape:
+    #   {role: "text"|"kv"|"live", label: str, value: str}
+    # The colorizer below assigns label_color/value_color/font_weight per item;
+    # the template renders one tspan when label is empty, two when label is set.
     if spec.data_tokens:
-        # Data-token mode: derive scroll strings from resolved tokens.
-        # For ``text`` tokens, render the payload directly; for ``kv`` / ``live``,
-        # render ``"LABEL VALUE"`` as one combined string per item.
         from hyperweave.serve.data_tokens import format_for_marquee
 
         formatted = format_for_marquee(spec.data_tokens)
-        raw_items = [item["text"] for item in formatted if item.get("text")]
-        if not raw_items:
-            raw_items = ["HYPERWEAVE"]
+        structured = [
+            {"role": item["role"], "label": item["label"], "value": item["raw_value"] or item["text"]}
+            for item in formatted
+            if item.get("text")
+        ]
+        if not structured:
+            structured = [{"role": "text", "label": "", "value": "HYPERWEAVE"}]
     else:
         items_text = spec.title or ""
         raw_items = [s.strip() for s in items_text.replace("·", "|").split("|") if s.strip()]
         if not raw_items:
             raw_items = [items_text] if items_text else ["HYPERWEAVE"]
+        # Title-mode items have no label/value split — every cell is text-role.
+        structured = [{"role": "text", "label": "", "value": t} for t in raw_items]
 
     bold_pattern = _prof.get("marquee_horizontal_bold_pattern", "even")
     separator = _prof.get("marquee_separator", "■")
@@ -981,31 +988,49 @@ def _resolve_horizontal(
     teal_info = chrome_ctx.get("family_blue_info", "")
     amethyst_info = chrome_ctx.get("family_purple_info", "")
     has_tspan_palette = bool(marquee_cfg is not None and marquee_cfg.tspan_palette)
-    if fam == "bifamily" and teal_info and amethyst_info and has_tspan_palette:
-        # Genome-sourced palette wins over paradigm-declared palette so
-        # chromatic identity stays in genome chromosomes (Invariant 11).
-        # Paradigm tspan_palette length signals "bifamily-tspan capable" —
-        # the actual hex values come from the genome.
-        palette = [teal_info, amethyst_info]
-        scroll_items = [
-            {
-                "text": t,
-                "color": palette[i % len(palette)],
-                "font_weight": "700",
-            }
-            for i, t in enumerate(raw_items)
-        ]
-    else:
-        scroll_items = [
-            {
-                "text": t,
-                "color": "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))",
-                "font_weight": (
-                    "700" if (bold_pattern == "first" and i == 0) or (bold_pattern == "even" and i % 2 == 0) else ""
-                ),
-            }
-            for i, t in enumerate(raw_items)
-        ]
+    bifamily_active = fam == "bifamily" and teal_info and amethyst_info and has_tspan_palette
+
+    # Two-stop chromatic for kv/live items: label in muted ink, value in primary
+    # ink (or info-hex when bifamily). Text-role items render a single tspan in
+    # the color cycle. The template branches on whether `label` is empty.
+    scroll_items: list[dict[str, Any]] = []
+    for i, item in enumerate(structured):
+        if bifamily_active:
+            palette = [teal_info, amethyst_info]
+            cycle_color = palette[i % len(palette)]
+            value_color = cycle_color
+            label_color = cycle_color  # bifamily collapses to single info-hex per cell
+            font_weight = "700"
+        else:
+            value_color = "var(--dna-ink-primary)" if i % 2 == 0 else "var(--dna-ink-secondary, var(--dna-ink-muted))"
+            label_color = "var(--dna-ink-muted)"
+            font_weight = (
+                "700" if (bold_pattern == "first" and i == 0) or (bold_pattern == "even" and i % 2 == 0) else ""
+            )
+
+        if item["role"] == "text":
+            # Single tspan: text-role uses the value color, no label.
+            scroll_items.append(
+                {
+                    "label": "",
+                    "label_color": "",
+                    "text": item["value"],
+                    "color": value_color,
+                    "font_weight": font_weight,
+                }
+            )
+        else:
+            # Two tspans: label muted, value bright. Template emits sibling
+            # tspans with a small dx between them.
+            scroll_items.append(
+                {
+                    "label": item["label"],
+                    "label_color": label_color,
+                    "text": item["value"],
+                    "color": value_color,
+                    "font_weight": font_weight,
+                }
+            )
 
     # Live-block suppression and separator glyph come from ParadigmMarqueeConfig.
     # Defaults (bool False, glyph "■", color "") preserve the historic

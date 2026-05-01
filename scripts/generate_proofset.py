@@ -492,6 +492,61 @@ async def generate_live() -> int:
     # long 'v0.6.9'), and provider-specific label vocabularies. Stale
     # sub-fetches surface as em-dash via _format_count's None sentinel.
     total += await _generate_connector_strips(live_dir.parent)
+    # ── Multi-provider data-token marquee ──
+    # Demonstrates the unified ?data= grammar mixing three providers in one
+    # marquee URL. Renders across all three genomes so each paradigm's
+    # treatment of the kv-pair scroll items is visible side-by-side.
+    total += await _generate_multi_provider_marquee(live_dir.parent)
+    return total
+
+
+# ── Multi-provider data-token marquee ──
+
+
+async def _generate_multi_provider_marquee(proofset_root: Path) -> int:
+    """Compose a single marquee URL fanning out across GitHub + PyPI + Docker.
+
+    Resolves five tokens from three providers via the unified ``?data=``
+    grammar, then composes ``marquee-horizontal`` for each of the three
+    genomes. The same resolved token list flows into all three composes —
+    only the genome (and its paradigm-specific styling) differs. This
+    isolates the genome-vs-data axis: same data, three skins.
+    """
+    from hyperweave.serve.data_tokens import parse_data_tokens, resolve_data_tokens
+
+    # Docker Hub's connector exposes `pull_count` (matching the upstream JSON
+    # field exactly), not `pulls`. The five tokens cross three providers:
+    # GitHub (stars + forks), PyPI (version + downloads), Docker (pull_count).
+    data_string = (
+        "gh:eli64s/readme-ai.stars,"
+        "gh:eli64s/readme-ai.forks,"
+        "pypi:readmeai.version,"
+        "pypi:readmeai.downloads,"
+        "docker:zeroxeli/readme-ai.pull_count"
+    )
+
+    try:
+        tokens = parse_data_tokens(data_string)
+        resolved, _ttl = await resolve_data_tokens(tokens)
+    except Exception as exc:
+        print(f"  multi-provider marquee resolve failed: {exc}")
+        return 0
+
+    total = 0
+    for genome in GenomeId:
+        spec = ComposeSpec(
+            type="marquee-horizontal",
+            genome_id=genome,
+            family="bifamily" if genome == GenomeId.AUTOMATA else "",
+            data_tokens=list(resolved),
+        )
+        try:
+            svg = compose(spec).svg
+        except Exception as exc:
+            print(f"  multi-provider marquee compose failed for {genome}: {exc}")
+            continue
+        _write(proofset_root / genome / "live-data" / "marquee_multi_provider.svg", svg)
+        total += 1
     return total
 
 
@@ -639,10 +694,28 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append(f"![icon](proofset/{g}/base/icon.svg)")
         lines.append("")
         for dv in DividerVariant:
+            # cellular-dissolve only renders for automata (mirror the guard
+            # in generate_static); skip the broken image link in other genomes.
+            if dv == DividerVariant.CELLULAR_DISSOLVE and genome != GenomeId.AUTOMATA:
+                continue
             lines.append(f"![divider {dv}](proofset/{g}/base/divider_{dv}.svg)")
             lines.append("")
-        lines.append(f"![marquee_horizontal](proofset/{g}/base/marquee_horizontal.svg)")
+        lines.append(f"![marquee_horizontal (custom text)](proofset/{g}/base/marquee_horizontal.svg)")
         lines.append("")
+        # Data-token marquee inline next to its custom-text sibling — same
+        # frame, same paradigm dispatch, different input mode (live `?data=`
+        # tokens vs raw pipe-split text). Only present when --live was run.
+        multi_path = OUT / "proofset" / g / "live-data" / "marquee_multi_provider.svg"
+        if multi_path.exists():
+            lines.append(
+                f"![marquee_horizontal (multi-provider data)](proofset/{g}/live-data/marquee_multi_provider.svg)"
+            )
+            lines.append("")
+            lines.append(
+                "<sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,"
+                "pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code></sub>"
+            )
+            lines.append("")
 
         # Connector-strip adaptivity (only present when --live was run; the
         # files live alongside per-genome dirs so the section is genome-local).
@@ -734,7 +807,13 @@ def generate_readme(total: int, live_total: int) -> None:
 
     if live_total > 0:
         lines.extend(["## Live Data (requires --live)", ""])
-        lines.append("*Artifacts in `proofset/live-data/`*")
+        lines.append(
+            "*Live artifacts render inline per-genome above: connector-strip adaptivity in each genome's "
+            "`### Connector Adaptivity (live)` subsection, and the multi-provider data-token marquee "
+            "(`?data=gh:...stars,gh:...forks,pypi:...version,pypi:...downloads,docker:...pull_count`) "
+            "next to the custom-text marquee in each `### Base Frames` block. Source files live under "
+            "`proofset/{genome}/live-data/`.*"
+        )
         lines.append("")
 
     (OUT / "README.md").write_text("\n".join(lines) + "\n")

@@ -15,6 +15,7 @@ import pytest
 from hyperweave.serve.data_tokens import (
     DataToken,
     ResolvedToken,
+    format_for_badge,
     format_for_marquee,
     format_for_value,
     parse_data_tokens,
@@ -220,6 +221,41 @@ async def test_resolve_min_ttl_across_multiple_live() -> None:
 # ===========================================================================
 # Output formatters
 # ===========================================================================
+
+
+def test_format_for_badge_returns_value_only_no_label() -> None:
+    """Badge has one value slot — title is in the path, value field renders just the value.
+
+    Regression guard: an earlier implementation routed badge through
+    ``format_for_value`` which rendered ``"VERSION:0.2.14"`` (label leaked
+    into the value slot). The badge data route uses ``format_for_badge``
+    instead, which strips the label.
+    """
+    resolved = [ResolvedToken(kind="live", label="VERSION", value="0.2.14", ttl=300)]
+    assert format_for_badge(resolved) == "0.2.14"
+
+
+def test_format_for_badge_kv_returns_value_only() -> None:
+    resolved = [ResolvedToken(kind="kv", label="STATUS", value="passing", ttl=0)]
+    assert format_for_badge(resolved) == "passing"
+
+
+def test_format_for_badge_text_returns_payload() -> None:
+    resolved = [ResolvedToken(kind="text", label="", value="HELLO", ttl=0)]
+    assert format_for_badge(resolved) == "HELLO"
+
+
+def test_format_for_badge_takes_first_token_only() -> None:
+    """Multiple tokens degrade to first-wins — badge has no slot for the rest."""
+    resolved = [
+        ResolvedToken(kind="live", label="STARS", value="1234", ttl=300),
+        ResolvedToken(kind="live", label="FORKS", value="56", ttl=300),
+    ]
+    assert format_for_badge(resolved) == "1234"
+
+
+def test_format_for_badge_empty_returns_empty_string() -> None:
+    assert format_for_badge([]) == ""
 
 
 def test_format_for_value_joins_kv_and_live() -> None:

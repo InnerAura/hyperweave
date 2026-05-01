@@ -266,6 +266,32 @@ def format_for_value(tokens: list[ResolvedToken]) -> str:
     return ",".join(parts)
 
 
+def format_for_badge(tokens: list[ResolvedToken]) -> str:
+    """Format resolved tokens for a badge's single-value slot.
+
+    Returns just the **value** of the first resolved token. Badge has one
+    value field (the title is in the path, the second slot is the rendered
+    string), so the ``LABEL:VALUE`` pair shape that ``format_for_value``
+    produces for strip's multi-cell layout would render as
+    ``"VERSION:0.2.14"`` in a badge — wrong twice (label leaks into the
+    value, and badges don't parse colon-pairs anyway).
+
+    If the caller passes multiple tokens to a badge, only the first
+    contributes — additional tokens are silently dropped because badge
+    has no slot for them. Callers wanting multi-metric output should
+    use strip instead.
+
+    Empty token list returns the empty string so the badge route can
+    fall back to a path-segment value.
+    """
+    for tok in tokens:
+        if tok.kind == "text":
+            return tok.value
+        # kv / live: drop the label, keep the resolved value.
+        return tok.value
+    return ""
+
+
 def format_for_marquee(tokens: list[ResolvedToken]) -> list[dict[str, Any]]:
     """Format resolved tokens as marquee-horizontal scroll items.
 
@@ -306,6 +332,7 @@ def format_for_marquee(tokens: list[ResolvedToken]) -> list[dict[str, Any]]:
 __all__ = [
     "DataToken",
     "ResolvedToken",
+    "format_for_badge",
     "format_for_marquee",
     "format_for_value",
     "parse_data_tokens",

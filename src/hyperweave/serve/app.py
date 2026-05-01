@@ -154,8 +154,19 @@ async def compose_badge_data_url(
             headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
         )
 
+    # Badge has a single value slot — title is in the path, value is the
+    # rendered string. format_for_badge extracts just the resolved value
+    # (no LABEL: prefix), unlike strip which uses format_for_value to
+    # produce "K1:V1,K2:V2" pairs for its multi-cell layout.
+    from hyperweave.serve.data_tokens import (
+        format_for_badge,
+        parse_data_tokens,
+        resolve_data_tokens,
+    )
+
     try:
-        final_value, ttl = await _resolve_data_param(data)
+        tokens = parse_data_tokens(data)
+        resolved, ttl = await resolve_data_tokens(tokens)
     except ValueError as exc:
         return Response(
             content=_error_badge(f"data parse: {exc}", status_code=400),
@@ -163,6 +174,8 @@ async def compose_badge_data_url(
             status_code=200,
             headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
         )
+
+    final_value = format_for_badge(resolved)
 
     from hyperweave.core.models import ComposeSpec
 

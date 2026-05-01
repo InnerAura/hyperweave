@@ -192,11 +192,24 @@ async def test_badge_data_route_requires_data_param(client: AsyncClient) -> None
 
 
 async def test_badge_data_route_resolves_live_token(client: AsyncClient) -> None:
-    """The 2-segment data-driven badge route resolves a live token through the connector."""
+    """The 2-segment data-driven badge route resolves a live token and renders just the value.
+
+    Regression guard: an earlier implementation rendered the full ``LABEL:VALUE``
+    pair (``"STARS:12345"``) into badge's value slot because it routed through
+    ``format_for_value`` (which is correct for strip's multi-cell layout but
+    wrong for badge's single-value slot). The route now uses ``format_for_badge``
+    which extracts the value only.
+    """
+    captured_specs: list[Any] = []
+
+    def _capture_spec(spec: Any) -> Any:
+        captured_specs.append(spec)
+        return MOCK_RESULT
+
     mock_data = {"value": 12345, "ttl": 300}
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
-        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
+        patch("hyperweave.compose.engine.compose", side_effect=_capture_spec),
     ):
         resp = await client.get(
             "/v1/badge/STARS/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
@@ -204,6 +217,11 @@ async def test_badge_data_route_resolves_live_token(client: AsyncClient) -> None
         assert resp.status_code == 200
         assert "image/svg+xml" in resp.headers["content-type"]
         assert "stale-while-revalidate" in resp.headers.get("cache-control", "")
+        # Value passed to compose() is the raw resolved value, not "LABEL:VALUE".
+        assert len(captured_specs) == 1
+        assert captured_specs[0].value == "12345", (
+            f"badge data route should render raw value '12345', not 'STARS:12345'; got {captured_specs[0].value!r}"
+        )
 
 
 async def test_badge_data_route_kv_token(client: AsyncClient) -> None:

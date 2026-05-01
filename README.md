@@ -20,7 +20,7 @@
 </p>
 -->
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?value=BUILD:passing,VERSION:v0.2.13,LICENSE:MIT&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=github" alt="strip"/>
 </p>
 
 <!--
@@ -101,7 +101,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
   <br/>
   <sub><code>/v1/strip/readme-ai/chrome-horizon.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
@@ -125,9 +125,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%7C%20LIVING%20ARTIFACTS%20%7C%20INNERAURA%20LABS/chrome-horizon.static" alt="marquee"/>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/chrome-horizon.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
   <br/>
-  <sub><code>/v1/marquee/{text}/chrome-horizon.static</code> &mdash; or <code>?data=text:...,gh:owner/repo.metric,...</code> for live tickers</sub>
+  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code> &mdash; five tokens, three providers, one URL</sub>
 </td>
 </tr>
 <tr>
@@ -160,7 +160,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
   <br/>
   <sub><code>/v1/strip/readme-ai/brutalist-emerald.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
@@ -184,9 +184,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%7C%20LIVING%20ARTIFACTS%20%7C%20INNERAURA%20LABS/brutalist-emerald.static" alt="marquee"/>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/brutalist-emerald.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
   <br/>
-  <sub><code>/v1/marquee/{text}/brutalist-emerald.static</code> &mdash; or <code>?data=text:...,gh:owner/repo.metric,...</code> for live tickers</sub>
+  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code> &mdash; five tokens, three providers, one URL</sub>
 </td>
 </tr>
 <tr>
@@ -209,8 +209,8 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left" width="160">Signals<br/><sub>chromatic variant</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.13/automata.static?glyph=python&family=blue" alt="pypi teal"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/v0.2.13/automata.static?glyph=python&family=purple" alt="pypi amethyst"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&family=blue" alt="pypi teal"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&family=purple" alt="pypi amethyst"/>
   <br/>
   <sub><code>/v1/badge/{title}/{value}/automata.static?glyph=python&family={blue|purple}</code> &mdash; or <code>/v1/badge/{title}/automata.static?data=pypi:hyperweave.version&family={blue|purple}</code> for live values</sub>
 </td>
@@ -218,7 +218,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Dashboard<br/><sub>strip &middot; bifamily</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?value=STARS:2.9k,FORKS:278&subtitle=eli64s/readme-ai&family=bifamily" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&family=bifamily&glyph=github" alt="strip"/>
   <br/>
   <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&family=bifamily</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
@@ -242,9 +242,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Marquee<br/><sub>horizontal ticker &middot; bifamily</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/HYPERWEAVE%20%7C%20LIVING%20ARTIFACTS%20%7C%20INNERAURA%20LABS/automata.static?family=bifamily" alt="marquee"/>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&family=bifamily" alt="marquee"/>
   <br/>
-  <sub><code>/v1/marquee/{text}/automata.static?family=bifamily</code> &mdash; or <code>?data=text:...,gh:owner/repo.metric,...</code> for live tickers</sub>
+  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&family=bifamily</code> &mdash; five tokens, three providers, bifamily palette</sub>
 </td>
 </tr>
 <tr>

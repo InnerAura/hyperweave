@@ -55,15 +55,29 @@
     <animateTransform attributeName="transform" type="translate"
         from="0 0" to="-{{ sd }} 0"
         dur="{{ dur }}s" repeatCount="indefinite"/>
-    {# Set A — letter-spacing on word tspans only (not separators) for accurate measurement #}
+    {# Set A — letter-spacing on word tspans only (not separators) for accurate measurement.
+       Each item renders as either ONE tspan (text-role: single value, no label) or
+       TWO sibling tspans (kv/live-role: label muted + value bright, separated by dx=6).
+       The first tspan in each item carries the position (`x` if loop.first, else `dx`);
+       the value tspan that follows a label uses dx=6 for the inter-tspan gap. #}
     <text y="{{ mh // 2 }}" dominant-baseline="central"
           font-family="{{ scroll_font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
           font-size="13">
 {% for item in scroll_items %}
+{% if item.label | default('') %}
+      <tspan {% if loop.first %}x="{{ start_x }}"{% else %}dx="{{ dx }}"{% endif %}
+             fill="{{ item.label_color | default('var(--dna-ink-muted)') }}" letter-spacing=".5"
+      >{{ item.label }}</tspan>
+      <tspan dx="6"
+             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
+             {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
+      >{{ item.text }}</tspan>
+{% else %}
       <tspan {% if loop.first %}x="{{ start_x }}"{% else %}dx="{{ dx }}"{% endif %}
              fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
              {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
       >{{ item.text }}</tspan>
+{% endif %}
 {% if not loop.last %}
       <tspan dx="{{ dx }}" fill="{{ separator_color | default('var(--dna-border)') }}"{% if separator_opacity | default('') %} opacity="{{ separator_opacity }}"{% endif %}>{{ separator | default('■') }}</tspan>
 {% endif %}
@@ -74,10 +88,20 @@
           font-family="{{ scroll_font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
           font-size="13">
 {% for item in scroll_items %}
+{% if item.label | default('') %}
+      <tspan {% if loop.first %}x="{{ start_x + sd }}"{% else %}dx="{{ dx }}"{% endif %}
+             fill="{{ item.label_color | default('var(--dna-ink-muted)') }}" letter-spacing=".5"
+      >{{ item.label }}</tspan>
+      <tspan dx="6"
+             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
+             {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
+      >{{ item.text }}</tspan>
+{% else %}
       <tspan {% if loop.first %}x="{{ start_x + sd }}"{% else %}dx="{{ dx }}"{% endif %}
              fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
              {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
       >{{ item.text }}</tspan>
+{% endif %}
 {% if not loop.last %}
       <tspan dx="{{ dx }}" fill="{{ separator_color | default('var(--dna-border)') }}"{% if separator_opacity | default('') %} opacity="{{ separator_opacity }}"{% endif %}>{{ separator | default('■') }}</tspan>
 {% endif %}

@@ -5,6 +5,34 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.15] - 2026-04-30
+
+Marquee data-token rendering + badge data-route bug fix + README live-data dogfood. The unified `?data=` grammar shipped in v0.2.14 was technically working but visually flat: marquee-horizontal flattened structured `(label, value)` token pairs into a single combined string before reaching the template, so `gh:repo.stars` rendered as one uniform `"STARS 1234"` instead of label-muted-value-bright. This release plumbs the structured fields through the resolver into the template's two-tspan rendering so kv/live tokens display the way the spec always intended. The badge data-route had a separate bug (renders `"VERSION:0.2.14"` instead of `"0.2.14"`) caused by routing through the multi-cell strip formatter; that's fixed too.
+
+### Added
+
+- **`format_for_badge(tokens) -> str`** in `src/hyperweave/serve/data_tokens.py`. Returns the first resolved token's value with no label prefix, so badges (single-value slot, title in path) get the raw value while strip continues to use `format_for_value` for its multi-cell `LABEL:VALUE` pair shape. Three formatters now exist as peers — one per consumer shape (badge / strip / marquee). Added to `__all__`.
+- **Two-tspan marquee rendering for kv/live tokens.** `_resolve_horizontal` now preserves the structured `role` / `label` / `value` fields from `format_for_marquee` (was: discarded after extracting the pre-flattened `text` field). Each scroll item carries optional `label` + `label_color` alongside the existing `text` + `color` + `font_weight`. Template branches on `item.label`: empty → single tspan (text-role, legacy behavior), non-empty → two sibling tspans (label muted in `var(--dna-ink-muted)`, value bright in primary ink, separated by `dx="6"`). Bifamily palette dispatch retained.
+- **Multi-provider data marquee in `outputs/README.md`.** New `_generate_multi_provider_marquee()` in `scripts/generate_proofset.py` renders the same five-token URL (`?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count`) across all three genomes. README inlines them next to each genome's custom-text marquee under `### Base Frames` so the genome-vs-data axis is visible side-by-side: same tokens, three paradigm skins.
+- **Five new unit tests** in `tests/test_data_tokens.py` covering `format_for_badge`: live-token returns value-only with regression-guard against the `"VERSION:0.2.14"` shape, kv-token returns value-only, text-token returns payload, multi-token first-wins, empty input returns empty string. Existing `test_badge_data_route_resolves_live_token` upgraded to capture the `ComposeSpec` passed to `compose()` and assert `spec.value == "12345"` (raw value), not `"STARS:12345"`.
+
+### Fixed
+
+- **Badge data-route renders `"VERSION:0.2.14"` when it should render `"0.2.14"`.** `compose_badge_data_url` was calling `_resolve_data_param` which uses `format_for_value` (correct for strip's multi-cell layout: `"K1:V1,K2:V2"`), but badge has a single value slot — title is in the path, value is the rendered string after the title. The label prefix was leaking. Route now calls `parse_data_tokens` + `resolve_data_tokens` + `format_for_badge` directly, bypassing `_resolve_data_param`. Strip's call site is unchanged.
+- **README cellular-dissolve broken-image links.** `generate_readme()` iterated `DividerVariant` and emitted image references unconditionally, while `generate_static()` (the loop that actually writes the SVGs) skipped `CELLULAR_DISSOLVE` for non-automata genomes. Result: brutalist-emerald and chrome-horizon README sections referenced files that didn't exist on disk. README generator now mirrors the static-generator's filter.
+
+### Changed
+
+- **`README.md` marquee URLs** in all three genome sections updated to use the live multi-provider data tokens (`?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count`). Replaces the previous static raw-text demo (`HYPERWEAVE | LIVING ARTIFACTS | INNERAURA LABS`). Three providers, five tokens, one URL — dogfoods the `?data=` grammar's composability claim. Subtitles updated to match.
+- **`outputs/README.md` Live Data section** consolidated. The bottom-of-page Multi-Provider Data Marquee subsection (with one image per genome) was removed because each genome's `### Base Frames` now contains both the custom-text marquee and the data-token marquee inline. The bottom Live Data section is now a single descriptive paragraph pointing readers at the inline placements.
+- **`scripts/generate_proofset.py`** + 83 LOC for the multi-provider marquee generator + README inline emission + cellular-dissolve filter mirror.
+
+### Notes
+
+- Net diff: +271 / -49 across 8 files. Inverse rhythm to v0.2.14's massive deletion: this release is depth-on-the-survivors. Same surface area, more polish per surface.
+- The bug class `format_for_value` was serving (one formatter, two consumer shapes) is closed by the new `format_for_badge` peer. Three explicit formatters — one per consumer shape (badge single-value, strip multi-cell, marquee scroll-items) — replace the prior overload. Adding a fourth consumer (e.g., a sparkline frame needing array values) becomes a one-function addition with no callers to refactor.
+- Docker Hub's connector exposes `pull_count` (matching the upstream API field exactly), not `pulls`. The proofset's multi-provider marquee data string and the README documentation use the correct metric name. PYPI's `pypistats.org` rate-limits aggressive fetches with HTTP 429 — failed live tokens degrade to `value="--"` per `resolve_data_tokens`'s contract; partial-failure rendering is itself part of the demo.
+
 ## [0.2.14] - 2026-04-30
 
 Frame deletion + URL-grammar consolidation. Four frame types come out of the surface (banner, marquee-counter, marquee-vertical, timeline) along with the nine kinetic typography motions that only banners used. In their place: a single unified data-token grammar (`?data=` on HTTP, `--data` on CLI, `data=` on MCP) replaces the patchwork of `?live=` / `/v1/live/...` / per-frame ad-hoc inputs that had accumulated across data-bearing artifacts.
