@@ -15,6 +15,7 @@ from hyperweave.connectors.base import (
     fetch_graphql,
     fetch_json,
     fetch_text,
+    pin_github_token,
 )
 from hyperweave.connectors.cache import get_cache
 
@@ -219,6 +220,50 @@ async def fetch_stargazer_history(
     return result
 
 
+_STARGAZER_COUNT_GRAPHQL_QUERY = """
+query($owner: String!, $repo: String!) {
+  repository(owner: $owner, name: $repo) {
+    stargazerCount
+  }
+}
+"""
+
+
+async def _fetch_stargazer_count_graphql(
+    owner: str,
+    repo: str,
+    auth_token: str | None,
+) -> int:
+    """Fetch ``stargazerCount`` for a repo via GraphQL — second source for
+    cross-validation against the REST ``/repos`` ``stargazers_count`` field.
+
+    Returns 0 on any failure (breaker open, network error, malformed payload,
+    repo not found, missing scope). The caller treats 0 as "couldn't verify"
+    and proceeds with REST data only — failure to cross-check should never
+    *block* the chart, only *warn* when both sources disagree.
+    """
+    try:
+        payload = await fetch_graphql(
+            _STARGAZER_COUNT_GRAPHQL_QUERY,
+            variables={"owner": owner, "repo": repo},
+            provider=_PROVIDER_GRAPHQL,
+            auth_token=auth_token,
+        )
+    except (ConnectorError, CircuitOpenError) as exc:
+        _LOGGER.warning(
+            "stargazerCount cross-check fetch failed: %s — proceeding with REST only",
+            exc,
+        )
+        return 0
+    repo_node = (payload.get("data") or {}).get("repository") if isinstance(payload, dict) else None
+    if not isinstance(repo_node, dict):
+        return 0
+    try:
+        return int(repo_node.get("stargazerCount") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 async def _fetch_stargazer_history_rest(
     owner: str,
     repo: str,
@@ -229,12 +274,27 @@ async def _fetch_stargazer_history_rest(
     Samples evenly across pages ``[1, min(total_pages, 400)]`` and stamps the
     now-point with the current UTC timestamp. Works unauth at 60 req/hr but
     caps at ~40k stars on mega-repos (GitHub's deep-pagination wall).
+
+    v0.2.16-fix3: token-pinned across all sub-requests so /repos and every
+    /stargazers?page=N call see a consistent view (pre-fix, token rotation
+    within a single fetch could land different sub-calls on different tokens
+    and pick up GitHub edge-cache disagreements). Also cross-checks
+    total_stars against a second source (GraphQL repository.stargazerCount);
+    if the two disagree by >2x, returns ``{points: [], current_stars: <max>}``
+    so the chart resolver renders the verified hero number with HISTORY
+    UNAVAILABLE in the chart body — never a wrong curve.
     """
     identifier = f"{owner}/{repo}"
 
-    # Step 1: total stars
+    # Pin one token for the entire operation so /repos and every /stargazers
+    # sub-call see a consistent view. Token rotation happens BETWEEN logical
+    # operations (e.g. between fetch_stargazer_history and fetch_user_stats),
+    # not within them.
+    pinned_token = pin_github_token()
+
+    # Step 1: total stars (REST source)
     repo_url = f"https://api.github.com/repos/{identifier}"
-    repo_data = await fetch_json(repo_url, provider=_PROVIDER_CORE)
+    repo_data = await fetch_json(repo_url, provider=_PROVIDER_CORE, auth_token=pinned_token)
     total_stars = int(repo_data.get("stargazers_count", 0))
     if total_stars == 0:
         return {
@@ -243,6 +303,32 @@ async def _fetch_stargazer_history_rest(
             "repo": identifier,
             "ttl": STARGAZER_HISTORY_TTL,
         }
+
+    # Step 1b: cross-check total_stars against a second source (GraphQL).
+    # GitHub's REST and GraphQL endpoints are served by different infrastructure
+    # with different cache layers — if BOTH report the same number, we have
+    # high confidence; if they disagree by >2x we trust neither curve and
+    # return an empty-state chart with the verified hero number.
+    cross_check_stars = await _fetch_stargazer_count_graphql(owner, repo, pinned_token)
+    if cross_check_stars > 0:
+        ratio = max(total_stars, cross_check_stars) / max(min(total_stars, cross_check_stars), 1)
+        if ratio > 2.0:
+            _LOGGER.warning(
+                "stargazer_count cross-check disagreement: REST=%d GraphQL=%d (%.1fx). "
+                "Returning empty-state chart with verified hero (max of the two) — never a wrong curve.",
+                total_stars,
+                cross_check_stars,
+                ratio,
+            )
+            return {
+                "points": [],
+                "current_stars": max(total_stars, cross_check_stars),
+                "repo": identifier,
+                "ttl": STARGAZER_HISTORY_TTL,
+            }
+        # Sources agree within 2x — trust the GraphQL number (more reliable
+        # for total counts) and proceed with REST sampling for history.
+        total_stars = cross_check_stars
 
     # Step 2: compute total pages (clamped at GitHub's deep-pagination cap)
     total_pages = max(1, math.ceil(total_stars / _STARGAZER_PAGE_SIZE))
@@ -258,6 +344,7 @@ async def _fetch_stargazer_history_rest(
             single_page_url,
             provider=_PROVIDER_CORE,
             headers={"Accept": _STARGAZER_ACCEPT_HEADER},
+            auth_token=pinned_token,
         )
         single_page_points: list[dict[str, Any]] = []
         if isinstance(page_payload, list):
@@ -283,7 +370,12 @@ async def _fetch_stargazer_history_rest(
 
     async def _fetch_page(page: int) -> tuple[int, list[dict[str, Any]]]:
         url = f"https://api.github.com/repos/{identifier}/stargazers?per_page={_STARGAZER_PAGE_SIZE}&page={page}"
-        data = await fetch_json(url, provider=_PROVIDER_CORE, headers={"Accept": _STARGAZER_ACCEPT_HEADER})
+        data = await fetch_json(
+            url,
+            provider=_PROVIDER_CORE,
+            headers={"Accept": _STARGAZER_ACCEPT_HEADER},
+            auth_token=pinned_token,
+        )
         if not isinstance(data, list):
             return page, []
         return page, data

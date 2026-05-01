@@ -1,23 +1,79 @@
-{# Chrome horizontal-marquee defs: envelope, shadow, well, separator gradient.
-   Specimen: chrome-horizon-marquees-v2.
+{# Chrome horizontal-marquee defs: embedded fonts, envelope (drift-animated),
+   well, env-rail, chrome-text gradient, rim sweep, bevel filter.
+   Specimen: chrome-horizon-marquees-v2 + production marquee-horizontal.svg.
+   v0.2.16: LIVE-block separator gradient deleted; bevel filter expanded with
+   feSpecularLighting (replaces basic drop-shadow), rim sweep added.
+   v0.2.16-fix: fonts embedded so Orbitron actually renders (was advertised
+   via data-hw-fonts="self-contained" but never emitted into the SVG).
+   Chrome-text gradient brightened from 7-stop with #5A8AAA edges to 3-stop
+   with #C8DAE6 edges so short words don't fade into the dim chrome.
    Guard on data presence (envelope_stops), not profile identity. #}
-  <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="0" y2="1">
+
+  {# Embed Orbitron + JetBrains Mono via @font-face base64 data URIs so the
+     marquee renders consistently in any context (Camo proxy, Finder Quick
+     Look, email) without depending on system-installed fonts. #}
+  <style>{{ font_faces | safe }}</style>
+
+  {# 11-stop chrome envelope · drift-animated 6.854s (φ⁴) on the body fill #}
+  <linearGradient id="{{ uid }}-envelope" x1="0" x2="0" y1="-0.05" y2="0.95">
+  {% for stop in envelope_stops %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
+    <animateTransform attributeName="gradientTransform" type="translate"
+      values="0 -0.15; 0 0.15; 0 -0.15" dur="6.854s"
+      repeatCount="indefinite" calcMode="spline"
+      keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+  </linearGradient>
+
+  {# Static env-rail · vertical sliver for the 6px left accent rail #}
+  <linearGradient id="{{ uid }}-env-rail" x1="0" x2="0" y1="0" y2="1">
   {% for stop in envelope_stops %}
     <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
   {% endfor %}
   </linearGradient>
-  <filter id="{{ uid }}-shadow" x="-1%" y="-4%" width="102%" height="112%">
-    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity="0.25"/>
-  </filter>
+
+  {# Well · dark card interior #}
   <linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
     <stop offset="0%" stop-color="{{ well_top }}"/>
     <stop offset="100%" stop-color="{{ well_bottom }}"/>
   </linearGradient>
-  <linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="{{ specular_light }}" stop-opacity="0"/>
-    <stop offset="30%" stop-color="{{ specular_light }}" stop-opacity="0.25"/>
-    <stop offset="50%" stop-color="{{ specular_light }}" stop-opacity="0.35"/>
-    <stop offset="70%" stop-color="{{ specular_light }}" stop-opacity="0.25"/>
-    <stop offset="100%" stop-color="{{ specular_light }}" stop-opacity="0"/>
+
+  {# Chrome-text gradient · the marquee scroll-text fill (text_fill_mode=gradient
+     in chrome paradigm yaml; resolver references this id via text_fill_gradient_id="ct").
+     v0.2.16-fix: brightened to 3-stop #C8DAE6 -> #FFFFFF -> #C8DAE6. The previous
+     7-stop with #5A8AAA edges made short words ("v0.2.16", "HYPERWEAVE") fade
+     to dim chrome at their edges, breaking aesthetic coherence with the strip's
+     solid-color values. The brighter gradient keeps the metallic shimmer feel
+     but stays bright enough to read like the rest of the chrome-horizon set. #}
+  <linearGradient id="{{ uid }}-ct" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"   stop-color="#C8DAE6"/>
+    <stop offset="50%"  stop-color="#FFFFFF"/>
+    <stop offset="100%" stop-color="#C8DAE6"/>
   </linearGradient>
-  {# Specular sweep removed per v2 spec — chrome horizontal is specular-free #}
+
+  {# Rim sweep · 17.944s phi-cubed travelling chrome highlight on the inner stroke #}
+  <linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%"   stop-color="{{ specular_light }}" stop-opacity="0"/>
+    <stop offset="38%"  stop-color="{{ specular_light }}" stop-opacity="0"/>
+    <stop offset="46%"  stop-color="#C8DAE6" stop-opacity="0.28"/>
+    <stop offset="50%"  stop-color="#FFFFFF" stop-opacity="0.55"/>
+    <stop offset="54%"  stop-color="#C8DAE6" stop-opacity="0.28"/>
+    <stop offset="62%"  stop-color="{{ specular_light }}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{{ specular_light }}" stop-opacity="0"/>
+    <animate attributeName="x1" values="-0.5;1.1;-0.5" dur="17.944s" repeatCount="indefinite"
+      calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
+    <animate attributeName="x2" values="0.5;2.1;0.5" dur="17.944s" repeatCount="indefinite"
+      calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
+  </linearGradient>
+
+  {# Specular bevel · feDropShadow + feSpecularLighting at azimuth 225° / elevation 45°
+     with arithmetic composite. Replaces the simple drop-shadow filter that
+     was {{ uid }}-shadow in v0.2.14 and earlier. #}
+  <filter id="{{ uid }}-bevel" x="-2%" y="-3%" width="104%" height="108%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.5"/>
+    <feSpecularLighting in="SourceAlpha" surfaceScale="1.2" specularConstant="0.5" specularExponent="22" lighting-color="{{ specular_light }}" result="spec">
+      <feDistantLight azimuth="225" elevation="45"/>
+    </feSpecularLighting>
+    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+    <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="0.2" k4="0"/>
+  </filter>

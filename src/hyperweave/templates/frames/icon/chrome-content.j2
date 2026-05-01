@@ -1,41 +1,58 @@
-{# Chrome icon content: satin envelope, well, top highlight, bright glyph.
-   Specimens: icon-circle-v2.svg, icon-square-v2.svg
-   Chrome ring -> inner border -> well -> top highlight -> bright glyph.
-   No label. No glow filter. Crisp silhouette.
-   Variant keyed on icon_variant, not profile identity. #}
+{# Chrome icon content: 5/6-layer chrome material stack.
+   Specimens: chrome-horizon-social-icon-circle-v2.svg + -square-v2.svg.
+   v0.2.16: full rewrite to match v2 specimens. Both variants render at
+   width=64 height=64 with viewBox=0 0 120 120 (chrome paradigm declares
+   icon.viewbox_w=120 in chrome.yaml). Internal coordinates are in 120-unit
+   space — every hairline, rail width, and bezel radius from v1's tuned
+   material discipline scales uniformly to 64px display.
 
+   Variant gating: icon_variant == 'binary-square' → card; else → circle.
+   icon_variant comes from resolve_icon (resolver.py:740-747); chrome
+   paradigm uses 'binary-circular' / 'binary-square' for circle / square.
+#}
 {% if icon_variant | default('binary-circular') == 'binary-square' %}
-{# -- Square variant (specimen: icon-square-v2.svg) -- #}
-<g clip-path="url(#{{ uid }}-clip)">
-  <rect width="64" height="64" rx="14" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-sh)"/>
-</g>
-<rect x="3.5" y="3.5" width="57" height="57" rx="11" fill="none" stroke="#000510" stroke-width="0.8"/>
-<rect x="4" y="4" width="56" height="56" rx="10" fill="url(#{{ uid }}-well)"/>
-<rect x="10" y="4" width="44" height="0.8" rx="0.4" fill="{{ specular_light }}" opacity="0.12"/>
-
+{# ─── Square variant ─── 96×96 rx=6 card at (12, 12) · 6-layer stack
+       Layer order (matches v2 spec):
+         1. envelope-fill rect with bevel filter (rx=6, full 96×96)
+         2. 0.7-unit inner hairline (inset 1.5, rx=4.5, stroke #000510)
+         3. 90×90 rx=3.2 icon-well (inset 3 from card edge, radial gradient)
+         4. 6-unit env-rail at (3, 3) · vertical envelope sliver · opacity 0.85
+         5. 76×0.6 top accent at (14, 3) · #6AACC8 milled-edge detail
+         6. 0.9-unit rim-sweep stroke on (1.5, 1.5, 93, 93) rx=4.5 · animated
+       Glyph inlined at local (30, 30) → canvas (42, 42), 36×36 centered. #}
+<g transform="translate(12, 12)">
+  <rect width="96" height="96" rx="6" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-bevel)"/>
+  <rect x="1.5" y="1.5" width="93" height="93" rx="4.5" fill="none" stroke="#000510" stroke-width="0.7"/>
+  <rect x="3" y="3" width="90" height="90" rx="3.2" fill="url(#{{ uid }}-well)"/>
+  <rect x="3" y="3" width="6" height="90" fill="url(#{{ uid }}-env-rail)" opacity="0.85"/>
+  <rect x="14" y="3" width="76" height="0.6" fill="#6AACC8" opacity="0.16"/>
+  <rect x="1.5" y="1.5" width="93" height="93" rx="4.5" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="0.9"/>
 {% if glyph_path %}
-<g transform="translate(16,16)">
-  <svg viewBox="{{ glyph_viewbox }}" width="32" height="32">
+  <svg viewBox="{{ glyph_viewbox }}" width="36" height="36" x="30" y="30" overflow="visible">
     <path d="{{ glyph_path }}" fill="{{ glyph_fill }}"/>
   </svg>
-</g>
 {% endif %}
+</g>
 
 {% else %}
-{# -- Circle variant (specimen: icon-circle-v2.svg) -- #}
-<circle cx="32" cy="32" r="28" fill="none" stroke="url(#{{ uid }}-env)" stroke-width="3" filter="url(#{{ uid }}-sh)"/>
-<circle cx="32" cy="32" r="26.5" fill="url(#{{ uid }}-well)"/>
-<circle cx="32" cy="32" r="26.5" fill="none" stroke="#000510" stroke-width="0.5"/>
-<g clip-path="url(#{{ uid }}-top-clip)">
-  <circle cx="32" cy="32" r="26" fill="none" stroke="{{ specular_light }}" stroke-width="0.8" opacity="0.15"/>
-</g>
-
+{# ─── Circle variant ─── 92-unit chrome ring centered at (60, 60) · 5-layer stack
+       Layer order (matches v2 spec):
+         1. 5-unit envelope-gradient bezel ring at radius 46 with bevel filter
+         2. radial icon-well at radius 42 · dark sky interior
+         3. 0.6-unit dark inner hairline at radius 42 · door-gap between bezel and well
+         4. 1.0-unit travelling rim-stroke at radius 42 · 17.944s phi³ sweep
+         5. (specular bevel applied via filter on layer 1)
+       Glyph inlined at local (-24, -24) → canvas (36, 36), 48×48 centered. #}
+<g transform="translate(60, 60)">
+  <circle r="46" fill="none" stroke="url(#{{ uid }}-env)" stroke-width="5" filter="url(#{{ uid }}-bevel)"/>
+  <circle r="42" fill="url(#{{ uid }}-well)"/>
+  <circle r="42" fill="none" stroke="#000510" stroke-width="0.6"/>
+  <circle r="42" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
 {% if glyph_path %}
-<g transform="translate(17,17)">
-  <svg viewBox="{{ glyph_viewbox }}" width="30" height="30">
+  <svg viewBox="{{ glyph_viewbox }}" width="48" height="48" x="-24" y="-24" overflow="visible">
     <path d="{{ glyph_path }}" fill="{{ glyph_fill }}"/>
   </svg>
-</g>
 {% endif %}
+</g>
 
 {% endif %}

@@ -176,6 +176,45 @@ def parse_data_tokens(data: str) -> list[DataToken]:
     return [_parse_one(seg) for seg in raw_segments if seg.strip()]
 
 
+# Metric-name to display-label mapping (v0.2.16-fix2).
+#
+# Connector authors expose API field names verbatim (Docker Hub: ``pull_count``,
+# GitHub: ``stargazers_count``) so the underlying connector code is grep-able
+# against the upstream API docs. But those raw field names look noisy in user-
+# facing labels — ``PULL_COUNT`` reads as a SQL column, not a metric. This map
+# normalizes common API field names to short uppercase display labels.
+#
+# Lives here (not in connectors/) because it's a presentation concern — the
+# connector should keep returning ``pull_count`` so the field name stays
+# greppable; only the marquee/badge/strip rendering needs the friendlier label.
+# Add new entries as connectors are added; missing entries fall back to the
+# raw uppercased metric name (current behavior, never breaks).
+_METRIC_DISPLAY_LABELS: dict[str, str] = {
+    "pull_count": "PULLS",
+    "stargazers": "STARS",
+    "stargazers_count": "STARS",
+    "forks_count": "FORKS",
+    "watchers_count": "WATCHERS",
+    "subscribers_count": "WATCHERS",
+    "open_issues": "ISSUES",
+    "open_issues_count": "ISSUES",
+    "latest_release": "VERSION",
+    "last_modified": "UPDATED",
+    "citation_count": "CITATIONS",
+    "citations_count": "CITATIONS",
+}
+
+
+def _display_label(metric: str) -> str:
+    """Map a connector's raw metric name to a user-facing display label.
+
+    Normalizes the lookup key (lowercase, strip), checks the table, and
+    falls back to the raw uppercased metric for any unmapped name.
+    """
+    key = (metric or "").strip().lower()
+    return _METRIC_DISPLAY_LABELS.get(key, key.upper())
+
+
 async def resolve_data_tokens(tokens: list[DataToken]) -> tuple[list[ResolvedToken], int]:
     """Resolve a list of tokens, fetching live values concurrently.
 
@@ -223,7 +262,7 @@ async def resolve_data_tokens(tokens: list[DataToken]) -> tuple[list[ResolvedTok
             resolved.append(
                 ResolvedToken(
                     kind="live",
-                    label=tok.metric.upper(),
+                    label=_display_label(tok.metric),
                     value="--",
                     ttl=_FAILURE_TTL,
                 )
@@ -236,7 +275,7 @@ async def resolve_data_tokens(tokens: list[DataToken]) -> tuple[list[ResolvedTok
         resolved.append(
             ResolvedToken(
                 kind="live",
-                label=tok.metric.upper(),
+                label=_display_label(tok.metric),
                 value=value,
                 ttl=ttl,
             )

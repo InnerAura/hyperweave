@@ -43,3 +43,37 @@ stats:
 icon:
   supported_shapes: [circle, square]
   default_shape: square
+
+marquee:
+  # Specimen: brutalist-emerald-marquee-v1.svg (720×32). Flat slab with 4px
+  # emerald accent bar; pure scroll band — no LIVE label panel after v0.2.16.
+  width: 720
+  height: 32
+  # JetBrains Mono at 12px/800 with 0.28em tracking. Mono + tight tracking
+  # is the brutalist voice (CTA scroll band) per the specimen's Page 9
+  # extraction.
+  font_size: 12
+  font_weight: "800"
+  letter_spacing: "0.28em"
+  font_family: "JetBrains Mono, 'SF Mono', Consolas, ui-monospace, monospace"
+  # Brutalism's K-override forbids physics-inspired separator glyphs; the
+  # specimen uses a 6×6 emerald square as a hard "bullet" between items.
+  separator_kind: rect
+  separator_size: 6
+  separator_color: "#10B981"
+  # Items rotate through [ink, info, ink, info, …] colors per position —
+  # the two-stop chromatic hierarchy the user codified (substrate vs info
+  # stops). Hardcoding these in paradigm yaml is the cleanest fit because
+  # only brutalist-emerald uses brutalist paradigm today; if a second
+  # genome adopts brutalist later, this should be migrated to genome
+  # chromosomes via a "genome-field-name" indirection.
+  text_fill_mode: cycle
+  text_fill_cycle: ["#D1FAE5", "#34D399"]
+  # Scroll-track clip: exclude the 4px emerald accent bar (left) and the 1px
+  # perimeter stroke (right/top/bottom). Sharp corners (rx=0) match the
+  # brutalist K-override (no rounded geometry).
+  clip_inset_left: 4
+  clip_inset_right: 1
+  clip_inset_top: 1
+  clip_inset_bottom: 1
+  clip_rx: 0

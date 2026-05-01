@@ -65,7 +65,8 @@
     "icon": "default",
     "divider": "default",
     "stats": "brutalist",
-    "chart": "brutalist"
+    "chart": "brutalist",
+    "marquee-horizontal": "brutalist"
   },
   "structural": {
     "stroke_linejoin": "miter",

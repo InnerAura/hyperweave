@@ -121,6 +121,7 @@ def _compose(
     divider_variant: str = "zeropoint",
     variant: str = "default",
     family: str = "",
+    shape: str = "",
     telemetry_data: dict[str, Any] | None = None,
     connector_data: dict[str, Any] | None = None,
 ) -> str:
@@ -137,6 +138,7 @@ def _compose(
         divider_variant=divider_variant,
         variant=variant,
         family=family,
+        shape=shape,
         telemetry_data=telemetry_data,
         connector_data=connector_data,
     )
@@ -183,6 +185,19 @@ def generate_static() -> int:
         _write(base / "icon.svg", svg)
         total += 1
 
+        # Per-shape icon variants (v0.2.16): chrome-horizon and brutalist-emerald
+        # ship both circle and square icons since their paradigms support both
+        # shapes and the v2 specimens are explicit about the per-shape material
+        # discipline. Other genomes (cellular, telemetry-void) keep the
+        # paradigm-default-shape icon only.
+        if genome in (GenomeId.CHROME_HORIZON, GenomeId.BRUTALIST_EMERALD):
+            svg = _compose("icon", genome, glyph="github", shape="circle")
+            _write(base / "icon_circle.svg", svg)
+            total += 1
+            svg = _compose("icon", genome, glyph="github", shape="square")
+            _write(base / "icon_square.svg", svg)
+            total += 1
+
         for dv in DividerVariant:
             # cellular-dissolve is automata-only; the other 5 variants
             # (block/current/takeoff/void/zeropoint) are generic inneraura-
@@ -194,10 +209,17 @@ def generate_static() -> int:
             total += 1
 
         # marquee-horizontal — pipe-separated items split into discrete tokens.
-        # Cellular paradigm cycles colors per-item from its tspan palette
-        # (teal/amethyst alternation); brutalist/chrome render as single-color runs.
-        # Counter / vertical marquees were deleted in v0.2.14.
-        marquee_text = "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL"
+        # v0.2.16: paradigm-driven dimensions (chrome 1040x56, brutalist 720x32,
+        # cellular 800x40), text-fill mode (chrome=gradient, brutalist=cycle,
+        # cellular=bifamily palette), and separator kind (chrome=glyph,
+        # brutalist=rect, cellular=glyph). Marquee text per genome matches its
+        # paradigm voice.
+        marquee_text_by_genome: dict[str, str] = {
+            GenomeId.CHROME_HORIZON: "HYPERWEAVE|CHROME HORIZON|LIVING SVG ARTIFACTS|v0.2.16",
+            GenomeId.BRUTALIST_EMERALD: "LIVING ARTIFACTS|SELF-CONTAINED SVG|AGENT INTERFACES",
+            GenomeId.AUTOMATA: "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL",
+        }
+        marquee_text = marquee_text_by_genome.get(genome, "HYPERWEAVE|LIVING ARTIFACTS|v0.2.16")
         svg = _compose("marquee-horizontal", genome, marquee_text)
         _write(base / "marquee_horizontal.svg", svg)
         total += 1
@@ -336,15 +358,10 @@ _MOCK_STATS_DATA: dict[str, Any] = {
     "heatmap_grid": [],
 }
 
-# Six-point star history curve for the mock chart data.
-_MOCK_CHART_POINTS: list[dict[str, Any]] = [
-    {"date": "2025-01-01T00:00:00Z", "count": 180},
-    {"date": "2025-04-01T00:00:00Z", "count": 410},
-    {"date": "2025-07-01T00:00:00Z", "count": 820},
-    {"date": "2025-10-01T00:00:00Z", "count": 1420},
-    {"date": "2026-01-01T00:00:00Z", "count": 2180},
-    {"date": "2026-04-01T00:00:00Z", "count": 2850},
-]
+# Note: a previous _MOCK_CHART_POINTS constant lived here. Removed in
+# v0.2.16-fix3 — chart artifacts now SKIP entirely on data fetch failure
+# rather than substitute fake history. A missing chart is honest; a
+# plausible-looking fake curve presented as real data is not.
 
 
 def _compose_connector(
@@ -400,22 +417,73 @@ def _generate_session_2a2b() -> int:
     except Exception as exc:
         print(f"  chart fetch failed ({exc}), using mock data")
 
-    # Fall back to mock data if fetch failed.
+    # Stats fallback: stats card has many cells, mock data keeps the showcase
+    # rendering even when GitHub is unreachable. The mock here is documented
+    # demo content for the proofset's structural showcase, not a substitute
+    # for real numbers we're claiming are real.
     if not stats_data:
         stats_data = dict(_MOCK_STATS_DATA)
+
+    # Chart fallback: NEVER substitute mock history for failed real data —
+    # a fake curve presented as real is the kind of dishonesty we refuse to
+    # ship. If the fetch failed (exception OR cross-check disagreement), we
+    # SKIP the chart artifact entirely. README image links break loudly,
+    # which is the right signal.
+    chart_skipped = False
     if not chart_data:
-        chart_data = {
-            "points": _MOCK_CHART_POINTS,
-            "current_stars": 2850,
-            "repo": "eli64s/readme-ai",
-        }
+        print("  ERROR: chart fetch returned no data — SKIPPING chart artifact")
+        chart_skipped = True
 
     # Cross-reference: if repos endpoint was rate-limited, stars_total may be 0.
     # Supplement from chart connector's current_stars (fetched via repo metadata).
-    if stats_data.get("stars_total", 0) == 0 and chart_data.get("current_stars"):
-        stats_data = dict(stats_data)
-        stats_data["stars_total"] = chart_data["current_stars"]
-        print(f"  patched stars_total from chart data: {chart_data['current_stars']}")
+    if not chart_skipped and chart_data is not None and stats_data.get("stars_total", 0) == 0:
+        chart_current = chart_data.get("current_stars")
+        if chart_current:
+            stats_data = dict(stats_data)
+            stats_data["stars_total"] = chart_current
+            print(f"  patched stars_total from chart data: {chart_current}")
+
+    # Cross-check sanity guard: the chart connector now does its own GraphQL/
+    # REST cross-check internally (v0.2.16-fix3, see fetch_stargazer_history)
+    # and returns an empty-state response when total_stars sources disagree.
+    # We add a second-level cross-check here against fetch_user_stats's
+    # stars_total (which uses an entirely different code path) for defense
+    # in depth. If they STILL disagree after retry, we SKIP the chart entirely
+    # rather than ship a misleading proofset artifact — a missing chart is
+    # honest (the README image link will be broken loudly), a fake chart is
+    # the kind of dishonesty we refuse to ship. NEVER substitute mock data
+    # for real data, no matter how plausible it would look.
+    chart_stars = int(chart_data.get("current_stars") or 0) if chart_data else 0
+    user_stars = int(stats_data.get("stars_total") or 0)
+    if chart_stars > 0 and user_stars > 0:
+        ratio = max(chart_stars, user_stars) / min(chart_stars, user_stars)
+        if ratio > 2.0:
+            print(
+                f"  WARN: chart current_stars={chart_stars} disagrees with "
+                f"stats stars_total={user_stars} by {ratio:.1f}x. Retrying chart fetch..."
+            )
+            try:
+                from hyperweave.connectors.cache import get_cache
+
+                # Drop the cached bad result before retrying.
+                get_cache().clear()
+                chart_data = asyncio.run(fetch_stargazer_history("eli64s", "readme-ai"))
+                chart_stars = int(chart_data.get("current_stars") or 0)
+                ratio = max(chart_stars, user_stars) / max(min(chart_stars, user_stars), 1)
+                print(f"  retry returned current_stars={chart_stars} (now {ratio:.1f}x)")
+                if ratio > 2.0:
+                    print(
+                        "  ERROR: retry STILL disagrees with stats. SKIPPING chart artifact "
+                        "rather than ship a misleading proofset. README image links for "
+                        "chart_stars_full.svg will be broken — that's intentional."
+                    )
+                    chart_skipped = True
+            except Exception as exc:
+                print(
+                    f"  ERROR: retry failed ({exc}). SKIPPING chart artifact rather than "
+                    "ship one with stale/uncertain data."
+                )
+                chart_skipped = True
 
     total = 0
 
@@ -432,7 +500,12 @@ def _generate_session_2a2b() -> int:
         _write(gdir / "stats.svg", svg)
         total += 1
 
-        # Star chart — single full size (900x500)
+        # Star chart — single full size (900x500). Skipped entirely when
+        # cross-check failed; a missing artifact is honest (README link breaks
+        # loudly) — a fake artifact would be dishonest.
+        if chart_skipped:
+            continue
+
         svg = _compose_connector(
             "chart",
             genome,
@@ -693,6 +766,13 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append("")
         lines.append(f"![icon](proofset/{g}/base/icon.svg)")
         lines.append("")
+        # Per-shape icon variants for chrome-horizon and brutalist-emerald
+        # (paradigms that ship both shapes per v0.2.16).
+        if genome in (GenomeId.CHROME_HORIZON, GenomeId.BRUTALIST_EMERALD):
+            lines.append(f"![icon circle](proofset/{g}/base/icon_circle.svg)")
+            lines.append("")
+            lines.append(f"![icon square](proofset/{g}/base/icon_square.svg)")
+            lines.append("")
         for dv in DividerVariant:
             # cellular-dissolve only renders for automata (mirror the guard
             # in generate_static); skip the broken image link in other genomes.

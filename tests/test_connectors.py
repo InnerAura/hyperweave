@@ -932,9 +932,21 @@ class TestStargazerPagination:
     """Verify the 400-page clamp and current-UTC now-point."""
 
     @pytest.fixture(autouse=True)
-    def _reset(self) -> None:
+    def _reset(self, monkeypatch: pytest.MonkeyPatch) -> None:
         reset_breakers()
         get_cache().clear()
+
+        # v0.2.16-fix3: fetch_stargazer_history now does a GraphQL second-source
+        # cross-check on stargazerCount. These tests mock /repos via fetch_json
+        # but not fetch_graphql, so the GraphQL call would either hit real HTTP
+        # (test pollution) or raise (test pass for the wrong reason). Mock
+        # fetch_graphql to a payload that returns 0 → cross-check helper
+        # treats 0 as "couldn't verify" and skips the cross-check, preserving
+        # the original test behavior of trusting the REST stargazers_count.
+        async def _stub_graphql(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+            return {"data": {"repository": None}}
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_graphql", _stub_graphql)
 
     @pytest.mark.asyncio
     async def test_mega_repo_uses_page_clamp(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1154,12 +1166,18 @@ class TestStargazerRESTSampling:
     """
 
     @pytest.fixture(autouse=True)
-    def _reset(self) -> None:
+    def _reset(self, monkeypatch: pytest.MonkeyPatch) -> None:
         reset_breakers()
         get_cache().clear()
         from hyperweave.connectors import base
 
         base._token_index = 0
+
+        # See TestStargazerPagination._reset: stub GraphQL cross-check.
+        async def _stub_graphql(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+            return {"data": {"repository": None}}
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_graphql", _stub_graphql)
 
     @pytest.mark.asyncio
     async def test_cursor_offset_helper_is_removed(self) -> None:

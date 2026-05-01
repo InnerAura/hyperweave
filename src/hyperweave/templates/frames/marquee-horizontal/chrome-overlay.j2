@@ -1,0 +1,27 @@
+{# Chrome horizontal-marquee OVERLAY layers — sit ABOVE the scroll-track text.
+   Renders the perimeter chrome elements that should occlude scrolling text
+   at the frame edges (so text appears to slide UNDER the perimeter instead
+   of over it). Specimen: chrome-horizon-marquees-v2.
+   Layer order (rendered on top of text):
+     3a. opaque backing rect at env-rail position (well gradient — matches
+         surrounding well so the env-rail blends seamlessly; this hides
+         text bleed-through under the 0.85-opacity env-rail above it)
+     3b. inner hairline rect (rx=3.2, inset 1px, stroke #000510 sw=0.8)
+     4.  6px env-rail at x=4 (vertical envelope sliver, opacity 0.85)
+     5.  0.6-unit top accent hairline (specular_light @ 0.16)
+     6.  rim-sweep stroke (rx=3.2, inset 1px, sw=1.0, animated)
+#}
+{# Opaque backing under env-rail. The env-rail at opacity 0.85 (preserved
+   from the v2 specimen for its metallic feel) lets 15% of any pixel behind
+   it show through — including scrolling text passing through x=4..10 on its
+   way to the clip boundary at x=4. Filling with the well gradient ensures
+   the env-rail's translucent blend matches the surrounding well visually
+   while completely occluding text. #}
+<rect x="4" y="4" width="6" height="{{ mh - 8 }}" fill="url(#{{ uid }}-well)"/>
+<rect x="1" y="1" width="{{ mw - 2 }}" height="{{ mh - 2 }}" rx="3.2" fill="none" stroke="#000510" stroke-width=".8"/>
+{# Left rail · 6px env-rail vertical sliver · card-family signature #}
+<rect x="4" y="4" width="6" height="{{ mh - 8 }}" fill="url(#{{ uid }}-env-rail)" opacity="0.85"/>
+{# Top accent hairline · milled-edge detail at the rail's right edge #}
+<rect x="24" y="4" width="{{ mw - 48 }}" height="0.6" fill="{{ specular_light }}" opacity="0.16"/>
+{# Rim sweep · animated travelling chrome highlight on the inner perimeter #}
+<rect x="1" y="1" width="{{ mw - 2 }}" height="{{ mh - 2 }}" rx="3.2" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>

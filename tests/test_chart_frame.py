@@ -160,14 +160,22 @@ async def test_fetch_stargazer_history_single_page_uses_per_stargazer_timestamps
 
     get_cache().clear()
 
-    async def fake_fetch_json(url, provider="generic", headers=None):  # type: ignore[no-untyped-def]
+    async def fake_fetch_json(url, provider="generic", headers=None, auth_token=None):  # type: ignore[no-untyped-def]
         if url.endswith("/repos/jiahongc/cc-companion"):
             return {"stargazers_count": 6}
         if "page=1" in url:
             return [{"starred_at": f"2025-0{m}-01T00:00:00Z"} for m in range(1, 7)]
         return {}
 
-    with patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json):
+    # v0.2.16-fix3: stub the GraphQL cross-check so it returns "couldn't verify"
+    # (helper sees data.repository == None and returns 0 → cross-check skipped).
+    async def fake_fetch_graphql(*_a, **_kw):  # type: ignore[no-untyped-def]
+        return {"data": {"repository": None}}
+
+    with (
+        patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json),
+        patch("hyperweave.connectors.github.fetch_graphql", side_effect=fake_fetch_graphql),
+    ):
         result = await fetch_stargazer_history("jiahongc", "cc-companion")
 
     assert result["current_stars"] == 6
@@ -215,7 +223,7 @@ async def test_fetch_stargazer_history_samples_pages() -> None:
 
     # Mock JSON responses: repo metadata + stargazer page data.
     # Use 400 stars so 400/100=4 pages are available for a 4-sample request.
-    async def fake_fetch_json(url, provider="generic", headers=None):  # type: ignore[no-untyped-def]
+    async def fake_fetch_json(url, provider="generic", headers=None, auth_token=None):  # type: ignore[no-untyped-def]
         if url.endswith("/repos/eli64s/readme-ai"):
             return {"stargazers_count": 400}
         # stargazers page URL ends with ?page=N
@@ -225,7 +233,14 @@ async def test_fetch_stargazer_history_samples_pages() -> None:
             return [{"starred_at": f"2025-01-{page:02d}T00:00:00Z"}]
         return {}
 
-    with patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json):
+    # v0.2.16-fix3: stub GraphQL cross-check (returns 0 → cross-check skipped).
+    async def fake_fetch_graphql(*_a, **_kw):  # type: ignore[no-untyped-def]
+        return {"data": {"repository": None}}
+
+    with (
+        patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json),
+        patch("hyperweave.connectors.github.fetch_graphql", side_effect=fake_fetch_graphql),
+    ):
         result = await fetch_stargazer_history("eli64s", "readme-ai", sample_pages=4)
 
     assert result["current_stars"] == 400
@@ -246,14 +261,149 @@ async def test_fetch_stargazer_history_handles_zero_stars() -> None:
 
     get_cache().clear()
 
-    async def fake_fetch_json(url, provider="generic", headers=None):  # type: ignore[no-untyped-def]
+    async def fake_fetch_json(url, provider="generic", headers=None, auth_token=None):  # type: ignore[no-untyped-def]
         return {"stargazers_count": 0}
 
-    with patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json):
+    # zero-stars short-circuits BEFORE the cross-check, so the GraphQL stub
+    # is defensive only. Stub it anyway so this test stays hermetic.
+    async def fake_fetch_graphql(*_a, **_kw):  # type: ignore[no-untyped-def]
+        return {"data": {"repository": None}}
+
+    with (
+        patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json),
+        patch("hyperweave.connectors.github.fetch_graphql", side_effect=fake_fetch_graphql),
+    ):
         result = await fetch_stargazer_history("someone", "empty-repo")
 
     assert result["points"] == []
     assert result["current_stars"] == 0
+
+
+@pytest.mark.asyncio
+async def test_fetch_stargazer_history_cross_check_disagreement_returns_empty_state() -> None:
+    """When REST /repos and GraphQL stargazerCount disagree by >2x, the
+    connector returns ``{points: [], current_stars: <max-of-both>}`` so the
+    chart resolver renders the verified hero number with HISTORY UNAVAILABLE
+    instead of a wrong curve. v0.2.16-fix3.
+    """
+    from hyperweave.connectors.cache import get_cache
+    from hyperweave.connectors.github import fetch_stargazer_history
+
+    get_cache().clear()
+
+    # REST says 400 stars (the bug pattern from the proofset incident); GraphQL
+    # says 2,894 (truth). 2,894 / 400 = 7.2x → way above the 2x threshold →
+    # empty-state response with the GraphQL number.
+    async def fake_fetch_json(url, provider="generic", headers=None, auth_token=None):  # type: ignore[no-untyped-def]
+        if url.endswith("/repos/eli64s/readme-ai"):
+            return {"stargazers_count": 400}
+        return [{"starred_at": "2025-01-01T00:00:00Z"}]
+
+    async def fake_fetch_graphql(*_a, **_kw):  # type: ignore[no-untyped-def]
+        return {"data": {"repository": {"stargazerCount": 2894}}}
+
+    with (
+        patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json),
+        patch("hyperweave.connectors.github.fetch_graphql", side_effect=fake_fetch_graphql),
+    ):
+        result = await fetch_stargazer_history("eli64s", "readme-ai")
+
+    # Empty points → chart resolver enters the "stale + HISTORY UNAVAILABLE" path.
+    assert result["points"] == []
+    # Verified hero number = max of the two sources (the truthful 2,894).
+    assert result["current_stars"] == 2894
+    assert result["repo"] == "eli64s/readme-ai"
+
+
+@pytest.mark.asyncio
+async def test_fetch_stargazer_history_cross_check_agreement_uses_graphql_count() -> None:
+    """When REST and GraphQL agree within 2x, the connector trusts the
+    GraphQL count (more reliable for total) and proceeds with REST sampling
+    for history. Verified hero matches GraphQL, points are non-empty."""
+    from hyperweave.connectors.cache import get_cache
+    from hyperweave.connectors.github import fetch_stargazer_history
+
+    get_cache().clear()
+
+    async def fake_fetch_json(url, provider="generic", headers=None, auth_token=None):  # type: ignore[no-untyped-def]
+        if url.endswith("/repos/owner/repo"):
+            return {"stargazers_count": 500}  # close to GraphQL's 510
+        if "page=" in url:
+            page = int(url.split("page=")[-1])
+            return [{"starred_at": f"2024-01-{page:02d}T00:00:00Z"}]
+        return {}
+
+    async def fake_fetch_graphql(*_a, **_kw):  # type: ignore[no-untyped-def]
+        return {"data": {"repository": {"stargazerCount": 510}}}  # 1.02x — agree
+
+    with (
+        patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json),
+        patch("hyperweave.connectors.github.fetch_graphql", side_effect=fake_fetch_graphql),
+    ):
+        result = await fetch_stargazer_history("owner", "repo", sample_pages=4)
+
+    # Points present (REST sampling proceeded normally).
+    assert len(result["points"]) > 0
+    # Hero adopts the GraphQL count (more reliable for total).
+    assert result["current_stars"] == 510
+
+
+@pytest.mark.asyncio
+async def test_fetch_stargazer_history_pins_one_token_for_all_subrequests() -> None:
+    """The /repos call and every /stargazers?page=N call inside one
+    fetch_stargazer_history operation must share a single token. Without
+    pinning, token rotation across sub-calls can pick up GitHub edge-cache
+    inconsistencies between tokens (root cause of the 400-vs-2894 incident).
+    v0.2.16-fix3.
+    """
+    from hyperweave.connectors import base
+    from hyperweave.connectors.cache import get_cache
+    from hyperweave.connectors.github import fetch_stargazer_history
+
+    get_cache().clear()
+    base.reset_breakers()
+    base._token_index = 0
+
+    captured_tokens: list[str | None] = []
+
+    async def fake_fetch_json(url, provider="generic", headers=None, auth_token=None):  # type: ignore[no-untyped-def]
+        captured_tokens.append(auth_token)
+        if url.endswith("/repos/owner/repo"):
+            return {"stargazers_count": 200}
+        if "page=" in url:
+            page = int(url.split("page=")[-1])
+            return [{"starred_at": f"2024-0{page}-01T00:00:00Z"}]
+        return {}
+
+    async def fake_fetch_graphql(*_a, **_kw):  # type: ignore[no-untyped-def]
+        return {"data": {"repository": {"stargazerCount": 200}}}
+
+    # Set two tokens so rotation WOULD pick different ones if not pinned.
+    monkeypatch_tokens = "tok_A,tok_B"
+    import os as _os
+
+    prev = _os.environ.get("HW_GITHUB_TOKENS")
+    _os.environ["HW_GITHUB_TOKENS"] = monkeypatch_tokens
+    try:
+        with (
+            patch("hyperweave.connectors.github.fetch_json", side_effect=fake_fetch_json),
+            patch("hyperweave.connectors.github.fetch_graphql", side_effect=fake_fetch_graphql),
+        ):
+            await fetch_stargazer_history("owner", "repo")
+    finally:
+        if prev is None:
+            _os.environ.pop("HW_GITHUB_TOKENS", None)
+        else:
+            _os.environ["HW_GITHUB_TOKENS"] = prev
+
+    # Every captured auth_token from fetch_json calls must be the SAME string —
+    # one token pinned across /repos + every /stargazers?page=N call.
+    assert captured_tokens, "expected at least one fetch_json call"
+    distinct_tokens = set(captured_tokens)
+    assert len(distinct_tokens) == 1, (
+        f"token rotation leaked across one logical operation: saw {distinct_tokens} "
+        "across /repos + /stargazers calls. Token pinning is broken."
+    )
 
 
 @pytest.mark.asyncio

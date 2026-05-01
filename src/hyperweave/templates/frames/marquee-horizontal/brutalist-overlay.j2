@@ -1,0 +1,12 @@
+{# Brutalist horizontal-marquee OVERLAY layers — sit ABOVE the scroll-track text.
+   Renders the perimeter stroke + 4px left accent bar so they occlude scrolling
+   text at the frame edges (text appears to slide UNDER the perimeter and
+   accent bar instead of over them). Specimen: brutalist-emerald-marquee-v1.svg.
+   Layer order (rendered on top of text):
+     1. 1px perimeter stroke (genome.signal_hex @ opacity 0.4)
+     2. 4px left accent bar (genome.signal_hex solid)
+   Brutalism's K-override: flat slab, sharp corners (rx=0), one accent bar.
+#}
+<rect x="0.5" y="0.5" width="{{ mw - 1 }}" height="{{ mh - 1 }}"
+      fill="none" stroke="{{ signal_hex }}" stroke-width="1" opacity="0.4"/>
+<rect x="0" y="0" width="4" height="{{ mh }}" fill="{{ signal_hex }}"/>

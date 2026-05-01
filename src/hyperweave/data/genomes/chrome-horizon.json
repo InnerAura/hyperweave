@@ -62,6 +62,8 @@
   ],
   "well_top": "#020617",
   "well_bottom": "#0B1121",
+  "icon_well_top": "#0C1E2E",
+  "icon_well_bottom": "#06101A",
   "highlight_color": "#A8D4F0",
   "highlight_opacity": "0.08",
   "chrome_text_gradient": [
@@ -109,7 +111,8 @@
     "icon": "chrome",
     "divider": "default",
     "stats": "chrome",
-    "chart": "chrome"
+    "chart": "chrome",
+    "marquee-horizontal": "chrome"
   },
   "structural": {
     "stroke_linejoin": "round",

@@ -1,21 +1,13 @@
-{# Cellular marquee-horizontal content — hairlines only.
+{# Cellular marquee-horizontal BACKGROUND — void ground only.
 
    Spec (cellular-automata-marquee-current.svg): no LIVE label panel,
    no frame plate; bifamily chrome is just a top-teal hairline + bottom-
-   amethyst hairline at the viewport edges. Scroll track + edge fades
-   are drawn by the shared marquee-horizontal.svg.j2 after this include.
+   amethyst hairline at the viewport edges. The hairlines now live in
+   cellular-overlay.j2 so they render above the scroll-track text — text
+   visually slides UNDER them at the top/bottom edges.
 
-   `suppress_live_block=True` (set in resolve_horizontal for bifamily
-   family) tells the shared template to use item_start_x=20 and
-   clip_x=0 so the scroll track uses full width. #}
-{% set teal_info = family_blue_seam_mid | default('#3A9FB8') %}
-{% set amethyst_info = family_purple_seam_mid | default('#A88AD4') %}
+   v0.2.16: LIVE-block infrastructure deleted entirely; cellular's full-
+   width scroll behavior is now the universal default, no flag needed. #}
 
 {# Void ground (matches shared surface) #}
 <rect width="{{ mw }}" height="{{ mh }}" fill="{{ surface_hex | default('#04060A') }}"/>
-
-{# Top hairline — abyssal-teal signature #}
-<rect x="0" y="0" width="{{ mw }}" height="0.5" fill="{{ teal_info }}" opacity="0.25"/>
-
-{# Bottom hairline — cyber-amethyst signature #}
-<rect x="0" y="{{ mh - 0.5 }}" width="{{ mw }}" height="0.5" fill="{{ amethyst_info }}" opacity="0.25"/>

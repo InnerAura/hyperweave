@@ -1,25 +1,68 @@
-{# Chrome icon defs: satin envelope, shadow filter, well gradient, clip path.
-   Guard on data presence (envelope_stops), not profile identity.
-   Variant-dependent: binary-square uses linear well + rect clip,
-   binary-circular uses radial well + top-clip. #}
-<linearGradient id="{{ uid }}-env" x1="0" x2="0" y1="0" y2="1">
+{# Chrome icon defs: drift-animated envelope, radial well, env-rail (square only),
+   rim-sweep gradient, specular bevel filter.
+   Specimens: chrome-horizon-social-icon-circle-v2.svg + -square-v2.svg.
+   v0.2.16: bevel filter expanded with feSpecularLighting (replaces basic
+   drop-shadow), rim sweep added, env gradient drift-animated, well converted
+   to radial. Top-clip and the simple shadow filter deleted (specular catch
+   replaced by bevel). Guard on data presence (envelope_stops). #}
+
+{# 11-stop chrome envelope · 6.854s (φ⁴) drift on the body fill #}
+<linearGradient id="{{ uid }}-env" x1="0" x2="0" y1="-0.05" y2="0.95">
+{% for stop in envelope_stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+  <animateTransform attributeName="gradientTransform" type="translate"
+    values="0 -0.15; 0 0.15; 0 -0.15" dur="6.854s"
+    repeatCount="indefinite" calcMode="spline"
+    keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+</linearGradient>
+
+{# Radial icon well · deep navy interior. cx=0.5 cy=0.4 r=0.6 puts the well's
+   bright center slightly above geometric center, matching the v2 specimen.
+   Uses icon_well_top/icon_well_bottom (v2 spec: #0C1E2E -> #06101A) which
+   the dispatcher fills from genome.icon_well_* with fallback to genome.well_*
+   for genomes that don't differentiate. The icon's small radial well needs
+   more saturated navy than the wider marquee/strip well to feel like deep
+   chrome rather than near-black slate. #}
+<radialGradient id="{{ uid }}-well" cx="0.5" cy="0.4" r="0.6">
+  <stop offset="0%"   stop-color="{{ icon_well_top }}"/>
+  <stop offset="100%" stop-color="{{ icon_well_bottom }}"/>
+</radialGradient>
+
+{# Travelling rim sweep · 17.944s (φ³) cycle on the inner stroke. Same gradient
+   shape as the marquee/badge rim sweep — paradigm-coherent material physics. #}
+<linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0%"   stop-color="{{ specular_light }}" stop-opacity="0"/>
+  <stop offset="38%"  stop-color="{{ specular_light }}" stop-opacity="0"/>
+  <stop offset="46%"  stop-color="#C8DAE6" stop-opacity="0.28"/>
+  <stop offset="50%"  stop-color="#FFFFFF" stop-opacity="0.55"/>
+  <stop offset="54%"  stop-color="#C8DAE6" stop-opacity="0.28"/>
+  <stop offset="62%"  stop-color="{{ specular_light }}" stop-opacity="0"/>
+  <stop offset="100%" stop-color="{{ specular_light }}" stop-opacity="0"/>
+  <animate attributeName="x1" values="-0.5;1.1;-0.5" dur="17.944s" repeatCount="indefinite"
+    calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
+  <animate attributeName="x2" values="0.5;2.1;0.5" dur="17.944s" repeatCount="indefinite"
+    calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
+</linearGradient>
+
+{# Specular bevel · feDropShadow + feSpecularLighting at azimuth 225° / elevation
+   45° with arithmetic composite. Same filter chain as marquee-horizontal/chrome —
+   chrome material is consistent across icon, marquee, badge, strip. #}
+<filter id="{{ uid }}-bevel" x="-8%" y="-8%" width="116%" height="116%">
+  <feDropShadow dx="0" dy="2.5" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
+  <feSpecularLighting in="SourceAlpha" surfaceScale="1.6" specularConstant="0.55" specularExponent="22" lighting-color="{{ specular_light }}" result="spec">
+    <feDistantLight azimuth="225" elevation="45"/>
+  </feSpecularLighting>
+  <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+  <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="0.2" k4="0"/>
+</filter>
+
+{% if icon_variant | default('binary-circular') == 'binary-square' %}
+{# Static env-rail · vertical gradient sliver for the 6-unit left rail in the
+   square card variant. Square only — circle variant has no rail. #}
+<linearGradient id="{{ uid }}-env-rail" x1="0" x2="0" y1="0" y2="1">
 {% for stop in envelope_stops %}
   <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
 {% endfor %}
 </linearGradient>
-<filter id="{{ uid }}-sh" x="-6%" y="-4%" width="112%" height="114%">
-  <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
-</filter>
-{% if icon_variant | default('binary-circular') == 'binary-square' %}
-<linearGradient id="{{ uid }}-well" x1="0" x2="0" y1="0" y2="1">
-  <stop offset="0%" stop-color="{{ well_top }}"/>
-  <stop offset="100%" stop-color="{{ well_bottom }}"/>
-</linearGradient>
-<clipPath id="{{ uid }}-clip"><rect width="64" height="64" rx="14"/></clipPath>
-{% else %}
-<radialGradient id="{{ uid }}-well" cx="0.5" cy="0.45" r="0.55">
-  <stop offset="0%" stop-color="{{ well_top }}"/>
-  <stop offset="100%" stop-color="{{ well_bottom }}"/>
-</radialGradient>
-<clipPath id="{{ uid }}-top-clip"><rect x="14" y="2" width="36" height="16"/></clipPath>
 {% endif %}

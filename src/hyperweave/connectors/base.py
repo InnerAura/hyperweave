@@ -158,13 +158,41 @@ CONNECT_TIMEOUT: float = 10.0
 TOTAL_TIMEOUT: float = 15.0
 
 
+def pin_github_token() -> str | None:
+    """Grab one GitHub token NOW for use across multiple correlated requests.
+
+    Token rotation via :func:`_get_github_token` advances the global index on
+    every call, so successive HTTP requests within a single logical operation
+    (e.g. ``/repos`` + N ``/stargazers?page=X``) land on different tokens and
+    can pick up data inconsistencies if any one token's response disagrees
+    (different cache age, different scope, or any per-token GitHub edge state).
+    Pin one token at the start of the operation, pass it explicitly to every
+    sub-call via ``fetch(..., auth_token=pinned)``, and the entire operation
+    sees a consistent view. Token rotation then happens BETWEEN logical
+    operations, not within them — which is the intent.
+
+    Returns ``None`` when ``HW_GITHUB_TOKENS`` is unset (caller should fall
+    back to whatever rate-limit-free behavior the unauth path provides).
+    """
+    return _get_github_token()
+
+
 async def fetch(
     url: str,
     *,
     provider: str = "generic",
     headers: dict[str, str] | None = None,
+    auth_token: str | None = None,
 ) -> httpx.Response:
-    """Fetch *url* with SSRF validation, circuit breaker, and timeouts."""
+    """Fetch *url* with SSRF validation, circuit breaker, and timeouts.
+
+    ``auth_token`` (optional): when provided AND ``provider`` is a GitHub
+    provider, use this exact token for the Authorization header instead of
+    rotating via :func:`_get_github_token`. Lets callers pin one token across
+    a multi-request logical operation — see :func:`pin_github_token` for the
+    rationale and :func:`hyperweave.connectors.github.fetch_stargazer_history`
+    for the canonical use site.
+    """
     validate_url(url)
 
     breaker = get_breaker(provider)
@@ -184,8 +212,10 @@ async def fetch(
     # split into three failure domains (core REST / search REST / GraphQL)
     # to keep search-API rate limit 403s from tripping badge or chart
     # endpoints. See connectors/github.py for the rename rationale.
+    # Pinned token (caller-provided) wins over rotation so multi-request
+    # logical operations see a consistent token view.
     if provider in _GITHUB_PROVIDERS:
-        token = _get_github_token()
+        token = auth_token if auth_token is not None else _get_github_token()
         if token:
             merged_headers["Authorization"] = f"Bearer {token}"
 
@@ -212,9 +242,13 @@ async def fetch_json(
     *,
     provider: str = "generic",
     headers: dict[str, str] | None = None,
+    auth_token: str | None = None,
 ) -> Any:
-    """Fetch *url* and return parsed JSON."""
-    response = await fetch(url, provider=provider, headers=headers)
+    """Fetch *url* and return parsed JSON.
+
+    See :func:`fetch` for the ``auth_token`` parameter — same semantics.
+    """
+    response = await fetch(url, provider=provider, headers=headers, auth_token=auth_token)
     return response.json()
 
 
@@ -243,6 +277,7 @@ async def fetch_graphql(
     *,
     provider: str = "github-graphql",
     url: str = _GITHUB_GRAPHQL_URL,
+    auth_token: str | None = None,
 ) -> dict[str, Any]:
     """POST a GraphQL query and return the parsed JSON response.
 
@@ -255,6 +290,8 @@ async def fetch_graphql(
     ``errors`` list — HTTP-level failures trip the breaker, but query-level
     errors (invalid field, missing perms) come through as response body
     and are the caller's responsibility to inspect.
+
+    See :func:`fetch` for the ``auth_token`` parameter — same semantics.
     """
     validate_url(url)
 
@@ -270,7 +307,7 @@ async def fetch_graphql(
         "Content-Type": "application/json",
     }
     if provider in _GITHUB_PROVIDERS:
-        token = _get_github_token()
+        token = auth_token if auth_token is not None else _get_github_token()
         if token:
             merged_headers["Authorization"] = f"Bearer {token}"
 

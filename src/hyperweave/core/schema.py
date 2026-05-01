@@ -152,6 +152,18 @@ class GenomeSpec(BaseModel):
     )
     well_top: str = Field(default="", description="Chrome well gradient top color")
     well_bottom: str = Field(default="", description="Chrome well gradient bottom color")
+    icon_well_top: str = Field(
+        default="",
+        description=(
+            "Icon-specific well gradient top color (v0.2.16+). Lets the icon's small "
+            "radial well use a more saturated navy than the wider marquee/strip well "
+            "without forcing the same hex on every frame. Empty falls back to well_top."
+        ),
+    )
+    icon_well_bottom: str = Field(
+        default="",
+        description="Icon-specific well gradient bottom color. Empty falls back to well_bottom.",
+    )
     highlight_color: str = Field(default="", description="Top highlight line color")
     highlight_opacity: str = Field(default="0.08", description="Top highlight opacity")
     chrome_text_gradient: list[dict[str, str]] = Field(

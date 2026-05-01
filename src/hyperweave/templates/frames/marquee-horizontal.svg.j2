@@ -1,128 +1,123 @@
-{# HyperWeave Horizontal Marquee — 800x40 LIVE ticker.
-   Profile-dispatched: data presence drives rendering, not profile identity.
-     envelope_stops present  -> chrome defs/content
-     envelope_stops absent   -> brutalist defs/content
-   Structure: LIVE label block (left) -> divider -> clip-masked scroll -> edge fades.
-   Specimens: chrome-horizon-marquees-v2 (chrome), brutalist-emerald-marquees-v5 (brutalist).
-   Extends document.svg.j2.  Context: ComposeSpec dict. #}
+{# HyperWeave Horizontal Marquee — paradigm-driven scrolling band.
+
+   v0.2.16: LIVE label panel removed entirely. The shared template now
+   renders ONLY the paradigm chrome (envelope/slab/perimeter — see
+   {paradigm}-content.j2) plus the scrolling track. Scroll items carry
+   ABSOLUTE x positions computed by the resolver from font metrics, so
+   text doesn't overlap regardless of content length or token source
+   (raw text, ?data= tokens). Set-A and Set-B duplicate the same items;
+   Set-B is offset by scroll_distance so the SMIL animateTransform
+   (translate from 0 to -scroll_distance) produces a seamless loop.
+
+   Profile-dispatched: paradigm context var routes
+     {paradigm}-defs.j2     — paradigm-specific gradients/filters
+     {paradigm}-content.j2  — paradigm-specific frame chrome (no LIVE block)
+
+   Extends document.svg.j2. Context: see compose/context.py:_ctx_marquee
+   for default keys; see compose/resolver.py:_resolve_horizontal for the
+   paradigm-driven values that override them.
+#}
 {% extends "document.svg.j2" %}
 
 {% block defs %}
 {% set mw = width | default(800) %}
 {% set mh = height | default(40) %}
-{% set lp_w = label_panel_width | default(130) %}
-{% set cx = clip_x | default(132) %}
-  {# LIVE block gradient — resolved hex (var() unreliable inside <stop>) #}
-  <linearGradient id="{{ uid }}-accent" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="{{ signal_hex }}" stop-opacity="0.95"/>
-    <stop offset="100%" stop-color="{{ signal_hex }}" stop-opacity="0.65"/>
-  </linearGradient>
-  {# Scroll clip — parametric via clip_inset_y / clip_inset_x #}
+  {# Scroll-track clip — paradigm-inset rect that excludes the perimeter
+     zones (chrome bezel, accent bar, hairlines). Combined with the layered
+     render order (background -> text -> overlay), this makes characters
+     disappear cleanly under the perimeter elements at the edges instead of
+     showing on top of them. clip_x/y/w/h/rx come from ParadigmMarqueeConfig
+     (defaults to full viewport for paradigms with no perimeter to mask). #}
   <clipPath id="{{ uid }}-scroll-clip">
-    <rect x="{{ cx }}" y="{{ clip_inset_y | default(4) }}" width="{{ mw - cx - (clip_inset_x | default(4)) }}" height="{{ mh - (clip_inset_y | default(4)) * 2 }}"/>
+    <rect x="{{ clip_x | default(0) }}" y="{{ clip_y | default(0) }}"
+          width="{{ clip_w | default(mw) }}" height="{{ clip_h | default(mh) }}"
+          rx="{{ clip_rx | default(0) }}"/>
   </clipPath>
-  {# Edge fades #}
-  <linearGradient id="{{ uid }}-fade-l" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
-    <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
-  </linearGradient>
-  <linearGradient id="{{ uid }}-fade-r" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%" stop-color="{{ surface_hex }}" stop-opacity="0"/>
-    <stop offset="100%" stop-color="{{ surface_hex }}" stop-opacity="1"/>
-  </linearGradient>
 {% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
 {% set mw = width | default(800) %}
 {% set mh = height | default(40) %}
-{% set lp_w = label_panel_width | default(130) %}
-{% set cx = clip_x | default(132) %}
 {% set sd = scroll_distance | default(1000) %}
 {% set dur = scroll_dur | default(11.09) %}
-{% set fw = fade_width | default(24) %}
-{% set dx = item_dx | default(20) %}
-{% set start_x = item_start_x | default(148) %}
+{% set fs = font_size | default(13) %}
+{% set fw = font_weight | default('') %}
+{% set ls = letter_spacing | default('.5') %}
+{% set ff = scroll_font_family | default('var(--dna-font-mono, ui-monospace, monospace)') %}
+{% set sk = separator_kind | default('glyph') %}
+{% set ssz = separator_size | default(6) %}
+{% set sg = separator_glyph | default('■') %}
+{% set sc = separator_color | default('var(--dna-border)') %}
+{% set tfid = text_fill_gradient_id | default('') %}
+{# Vertical centering: dominant-baseline=central + y=mh/2 puts text mid-height
+   regardless of font size. Separator rects are centered via (mh - ssz) / 2. #}
+{% set baseline_y = mh // 2 %}
+{% set sep_rect_y = ((mh - ssz) // 2) %}
 
-{# ══════════════════════════════════════════════════════════════════
-   FRAME + LIVE LABEL — paradigm-dispatched per genome.paradigms
-   ══════════════════════════════════════════════════════════════════ #}
+{# Frame chrome BACKGROUND — paradigm-dispatched. Renders the layers that
+   sit BELOW the scroll-track text (envelope-fill+well for chrome, flat slab
+   for brutalist, void ground for cellular). The PERIMETER layers (hairlines,
+   rail, accent bar, rim sweep) are rendered AFTER the scroll text via the
+   {paradigm}-overlay.j2 partial below — that split lets text visually scroll
+   UNDER the perimeter elements at the frame edges instead of overlapping
+   them with passing characters. No LIVE label panel after v0.2.16. #}
 {% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-content.j2" %}
 
-{# ═══ Scrolling content ═══ #}
+{# Scrolling track — clipped to scroll-clip; SMIL animateTransform translates
+   from 0 to -scroll_distance over scroll_dur seconds, infinite loop. Set-A
+   and Set-B are sibling groups; Set-B is offset by scroll_distance so it
+   trails Set-A and slides into the viewport as Set-A leaves. Same item list
+   rendered in both groups. #}
 <g clip-path="url(#{{ uid }}-scroll-clip)">
   <g data-hw-zone="scroll-track">
     <animateTransform attributeName="transform" type="translate"
         from="0 0" to="-{{ sd }} 0"
         dur="{{ dur }}s" repeatCount="indefinite"/>
-    {# Set A — letter-spacing on word tspans only (not separators) for accurate measurement.
-       Each item renders as either ONE tspan (text-role: single value, no label) or
-       TWO sibling tspans (kv/live-role: label muted + value bright, separated by dx=6).
-       The first tspan in each item carries the position (`x` if loop.first, else `dx`);
-       the value tspan that follows a label uses dx=6 for the inter-tspan gap. #}
-    <text y="{{ mh // 2 }}" dominant-baseline="central"
-          font-family="{{ scroll_font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
-          font-size="13">
-{% for item in scroll_items %}
-{% if item.label | default('') %}
-      <tspan {% if loop.first %}x="{{ start_x }}"{% else %}dx="{{ dx }}"{% endif %}
-             fill="{{ item.label_color | default('var(--dna-ink-muted)') }}" letter-spacing=".5"
-      >{{ item.label }}</tspan>
-      <tspan dx="6"
-             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
-             {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
-      >{{ item.text }}</tspan>
-{% else %}
-      <tspan {% if loop.first %}x="{{ start_x }}"{% else %}dx="{{ dx }}"{% endif %}
-             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
-             {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
-      >{{ item.text }}</tspan>
-{% endif %}
-{% if not loop.last %}
-      <tspan dx="{{ dx }}" fill="{{ separator_color | default('var(--dna-border)') }}"{% if separator_opacity | default('') %} opacity="{{ separator_opacity }}"{% endif %}>{{ separator | default('■') }}</tspan>
+
+    {# ── Set A ── items at their absolute x positions from the resolver ── #}
+    <g data-hw-zone="set-a">
+{% for entry in scroll_items %}
+{% if entry.type == 'text' %}
+{% set it = entry.item %}
+      <text x="{{ entry.x }}" y="{{ baseline_y }}" dominant-baseline="central"
+            font-family="{{ ff }}" font-size="{{ fs }}" letter-spacing="{{ ls }}"{% if it.font_weight %} font-weight="{{ it.font_weight }}"{% elif fw %} font-weight="{{ fw }}"{% endif %}>{% if it.label %}<tspan{% if it.label_color %} fill="{{ it.label_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.label }}</tspan><tspan dx="8"{% if it.value_color %} fill="{{ it.value_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% else %}<tspan{% if it.value_color %} fill="{{ it.value_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% endif %}</text>
+{% elif entry.type == 'separator-glyph' %}
+      <text x="{{ entry.x }}" y="{{ baseline_y }}" dominant-baseline="central"
+            font-family="{{ ff }}" font-size="{{ fs }}"
+            fill="{{ sc }}">{{ sg }}</text>
+{% elif entry.type == 'separator-rect' %}
+      <rect x="{{ entry.x }}" y="{{ sep_rect_y }}" width="{{ ssz }}" height="{{ ssz }}"
+            fill="{{ sc }}" shape-rendering="crispEdges"/>
 {% endif %}
 {% endfor %}
-    </text>
-    {# Set B (seamless loop at +scroll_distance) #}
-    <text y="{{ mh // 2 }}" dominant-baseline="central"
-          font-family="{{ scroll_font_family | default('var(--dna-font-mono, ui-monospace, monospace)') }}"
-          font-size="13">
-{% for item in scroll_items %}
-{% if item.label | default('') %}
-      <tspan {% if loop.first %}x="{{ start_x + sd }}"{% else %}dx="{{ dx }}"{% endif %}
-             fill="{{ item.label_color | default('var(--dna-ink-muted)') }}" letter-spacing=".5"
-      >{{ item.label }}</tspan>
-      <tspan dx="6"
-             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
-             {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
-      >{{ item.text }}</tspan>
-{% else %}
-      <tspan {% if loop.first %}x="{{ start_x + sd }}"{% else %}dx="{{ dx }}"{% endif %}
-             fill="{{ item.color | default('var(--dna-ink-primary)') }}" letter-spacing=".5"
-             {% if item.font_weight | default('') %}font-weight="{{ item.font_weight }}"{% endif %}
-      >{{ item.text }}</tspan>
-{% endif %}
-{% if not loop.last %}
-      <tspan dx="{{ dx }}" fill="{{ separator_color | default('var(--dna-border)') }}"{% if separator_opacity | default('') %} opacity="{{ separator_opacity }}"{% endif %}>{{ separator | default('■') }}</tspan>
+    </g>
+
+    {# ── Set B ── identical items shifted by scroll_distance for seamless loop ── #}
+    <g data-hw-zone="set-b" transform="translate({{ sd }}, 0)" aria-hidden="true">
+{% for entry in scroll_items %}
+{% if entry.type == 'text' %}
+{% set it = entry.item %}
+      <text x="{{ entry.x }}" y="{{ baseline_y }}" dominant-baseline="central"
+            font-family="{{ ff }}" font-size="{{ fs }}" letter-spacing="{{ ls }}"{% if it.font_weight %} font-weight="{{ it.font_weight }}"{% elif fw %} font-weight="{{ fw }}"{% endif %}>{% if it.label %}<tspan{% if it.label_color %} fill="{{ it.label_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.label }}</tspan><tspan dx="8"{% if it.value_color %} fill="{{ it.value_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% else %}<tspan{% if it.value_color %} fill="{{ it.value_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% endif %}</text>
+{% elif entry.type == 'separator-glyph' %}
+      <text x="{{ entry.x }}" y="{{ baseline_y }}" dominant-baseline="central"
+            font-family="{{ ff }}" font-size="{{ fs }}"
+            fill="{{ sc }}">{{ sg }}</text>
+{% elif entry.type == 'separator-rect' %}
+      <rect x="{{ entry.x }}" y="{{ sep_rect_y }}" width="{{ ssz }}" height="{{ ssz }}"
+            fill="{{ sc }}" shape-rendering="crispEdges"/>
 {% endif %}
 {% endfor %}
-    </text>
+    </g>
   </g>
 </g>
 
-{# ═══ Edge fades ═══ #}
-<rect x="{{ cx }}" y="0" width="{{ fw }}" height="{{ mh }}"
-      fill="url(#{{ uid }}-fade-l)"/>
-<rect x="{{ mw - fw }}" y="0" width="{{ fw }}" height="{{ mh }}"
-      fill="url(#{{ uid }}-fade-r)"/>
-
-{# ═══ Top/bottom accent lines (guard on data) ═══ #}
-{% if show_accent_lines | default(false) %}
-<rect x="{{ cx }}" y="0" width="{{ mw - cx }}" height="1"
-      fill="var(--dna-signal)" opacity="{{ accent_line_opacity | default(0.2) }}"/>
-<rect x="{{ cx }}" y="{{ mh - 1 }}" width="{{ mw - cx }}" height="1"
-      fill="var(--dna-signal)" opacity="{{ accent_line_opacity | default(0.2) }}"/>
-{% endif %}
-
-{# Specular sweep removed from horizontal per v2 spec #}
+{# Frame chrome OVERLAY — paradigm-dispatched. Renders the perimeter elements
+   (inner hairline, env-rail, top accent, rim sweep for chrome; perimeter +
+   accent bar for brutalist; top + bottom hairlines for cellular) ABOVE the
+   scroll-track so passing text visually slides UNDER them at the frame edges
+   instead of overlapping. The `ignore missing` lets paradigms that don't need
+   an overlay (default) opt out without an empty file. #}
+{% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-overlay.j2" ignore missing %}
 {% endblock %}

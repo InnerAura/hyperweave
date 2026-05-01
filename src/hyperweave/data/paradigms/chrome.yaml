@@ -53,3 +53,42 @@ stats:
 icon:
   supported_shapes: [square, circle]
   default_shape: circle
+  # Internal viewBox = 120 (the v2 specimens' tuned coordinate system) while
+  # rendered width/height stays at 64. Lets the chrome icon templates use the
+  # specimen's r=46/r=42 bezel, 96×96 card, 6-unit rail, 0.6-unit hairlines
+  # at compact 64px display. shape-rendering: geometricPrecision keeps the
+  # subpixel hairlines (0.6-unit → 0.32px) anti-aliasing as fine machined
+  # edge rather than visual bug.
+  viewbox_w: 120
+  viewbox_h: 120
+
+marquee:
+  # Specimen: chrome-horizon-marquee-horizontal.svg (1040×56). Pure scroll
+  # band — no LIVE label panel after v0.2.16 (LIVE block deleted entirely).
+  width: 1040
+  height: 56
+  # Orbitron at 22px/900 with 0.18em tracking is the marquee voice for chrome
+  # (the magazine page-8 ribbon of identity). Resolver converts em→px when
+  # measuring content width via measure_text.
+  font_size: 22
+  font_weight: "900"
+  letter_spacing: "0.18em"
+  font_family: "Orbitron, 'Space Grotesk', system-ui, sans-serif"
+  # Specimen separator is the middle-dot at #60E0FF (electric cyan) — a
+  # paradigm signature that ties this marquee to the chrome family.
+  separator_glyph: "·"
+  separator_color: "#60E0FF"
+  separator_kind: glyph
+  # Every scroll item uses the chrome-text gradient (#5A8AAA→…→#FFFFFF→…→
+  # #5A8AAA). The gradient itself lives in marquee-horizontal/chrome-defs.j2
+  # under id "{{ uid }}-ct"; the resolver constructs the full url(#…) string.
+  text_fill_mode: gradient
+  text_fill_gradient_id: ct
+  # Scroll-track clip: exclude the 4px chrome bezel zones at all four edges
+  # so scrolling text disappears under the bezel instead of rendering on top
+  # of it. rx=2.6 matches the well rect's rx for a clean clip boundary.
+  clip_inset_left: 4
+  clip_inset_right: 4
+  clip_inset_top: 4
+  clip_inset_bottom: 4
+  clip_rx: 2.6

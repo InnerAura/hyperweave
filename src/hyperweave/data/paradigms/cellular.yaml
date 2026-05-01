@@ -133,11 +133,16 @@ marquee:
   # 60% gray (#606878) instead of brutalist's filled square (■).
   separator_glyph: "◆"
   separator_color: "#606878"
-  # Cellular bifamily marquee has NO LIVE label panel — chrome is just
-  # the bifamily hairlines top/bottom and the scrolling tspans. Suppressing
-  # the LIVE block tells the shared template to give the scroll track the
-  # full width and start items at x=20.
-  suppress_live_block: true
+  # Cellular always renders without a LIVE label panel; v0.2.16 deleted the
+  # LIVE-block infrastructure entirely so this is now the universal default.
+  # Scroll-track clip: exclude the 0.5px top and bottom hairlines (no left/
+  # right rails to avoid). Hairlines are subtle but the clip prevents text
+  # from sitting visibly on top of them.
+  clip_inset_left: 0
+  clip_inset_right: 0
+  clip_inset_top: 1
+  clip_inset_bottom: 1
+  clip_rx: 0
 
 chart:
   # Cellular star chart specimen is 900×600 with chart viewport at (130, 140)

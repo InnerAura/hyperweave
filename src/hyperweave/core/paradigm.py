@@ -178,33 +178,96 @@ class ParadigmIconConfig(FrozenModel):
 
     supported_shapes: list[str] = Field(default_factory=lambda: ["square", "circle"])
     default_shape: str = "square"
+    viewbox_w: int = 0
+    """Internal coordinate system width for the icon's ``viewBox``. Zero means
+    "use the resolver's rendered ``width``" (default behavior — viewBox matches
+    rendered size). Chrome paradigm sets 120 so the chrome icon templates can
+    render the v2 specimen's 120-unit material discipline (r=46/r=42 bezel,
+    96x96 card, 6-unit rail, 0.6-unit hairlines) at a 64px rendered size."""
+    viewbox_h: int = 0
+    """Internal coordinate system height for the icon's ``viewBox``. Zero means
+    "use the resolver's rendered ``height``"."""
 
 
 class ParadigmMarqueeConfig(FrozenModel):
     """Marquee frame config within a paradigm.
 
     Captures the discrete values that a marquee in this paradigm uses for
-    separator glyphs, per-item color cycle (bifamily-tspan), and live-block
-    layout behavior. Resolvers read from this so adding a new bifamily-tspan
-    paradigm is a YAML change — never a Python edit.
+    dimensions, typography, separator rendering, and per-item text-fill
+    behavior. Resolvers read from this so adding a new paradigm is a YAML
+    change — never a Python edit.
 
-    Default values match the brutalist/chrome-era hardcoded behavior, so
+    Default values match the v0.2.14-era 800x40 brutalist/chrome behavior, so
     paradigms that don't declare marquee config still render correctly.
     """
 
+    width: int = 800
+    """Marquee canvas width in pixels. Chrome: 1040. Brutalist: 720."""
+    height: int = 40
+    """Marquee canvas height in pixels. Chrome: 56. Brutalist: 32."""
+    font_size: int = 13
+    """Scroll-text font size in pixels. Chrome: 22 (Orbitron). Brutalist: 12 (JBM)."""
+    font_weight: str = ""
+    """Scroll-text font weight. Empty string falls back to per-item override
+    (resolver's bold-pattern logic). Chrome: '900'. Brutalist: '800'."""
+    letter_spacing: str = ".5"
+    """Scroll-text letter-spacing as a CSS string. May be ``"<n>px"`` or
+    ``"<n>em"`` — the resolver converts em→px using ``font_size`` when
+    measuring content width via ``measure_text``. Chrome: '0.18em'.
+    Brutalist: '0.28em'."""
+    font_family: str = ""
+    """Scroll-text font-family CSS string. Empty falls back to profile's
+    ``marquee_font_family`` (typically a mono stack). Chrome: Orbitron stack.
+    Brutalist: JetBrains Mono stack."""
     tspan_palette: list[str] = Field(default_factory=list)
-    """Per-item color cycle for bifamily-tspan marquees. Resolver assigns
-    color = palette[i % len(palette)] for the i-th item. Empty list keeps
-    the default ``ink-primary/ink-secondary`` alternation."""
+    """Per-item color cycle for bifamily-tspan marquees (genome-sourced hexes
+    take priority — see resolver). Empty list keeps the default
+    ``ink-primary/ink-secondary`` alternation."""
     separator_glyph: str = "■"
-    """Separator character between scroll items. Cellular: ◆. Default: ■."""
+    """Separator character when ``separator_kind == "glyph"``. Cellular: ◆.
+    Chrome: ·. Default: ■."""
     separator_color: str = ""
     """Separator color (hex). Empty string falls back to the resolver's
     profile-driven ``var(--dna-border)`` default."""
-    suppress_live_block: bool = False
-    """When True, marquee-horizontal collapses the LIVE label block so the
-    scroll track uses full width. Cellular bifamily: True (specimen has no
-    LIVE panel — pure hairline chrome); brutalist/chrome: False."""
+    separator_kind: Literal["glyph", "rect"] = "glyph"
+    """How separators render: ``glyph`` emits a ``<tspan>`` of the
+    ``separator_glyph`` character; ``rect`` emits a square ``<rect>`` of size
+    ``separator_size`` x ``separator_size`` filled with ``separator_color``.
+    Brutalist target uses 6x6 emerald rects between scroll items."""
+    separator_size: int = 6
+    """Edge length in px for ``separator_kind == "rect"`` bullet squares.
+    Brutalist target: 6."""
+    text_fill_mode: Literal["per_item", "gradient", "cycle"] = "per_item"
+    """How scroll-text fill is computed: ``per_item`` lets the resolver assign
+    per-item colors via the existing bifamily/ink-alternation logic;
+    ``gradient`` applies a single gradient URL (``text_fill_gradient_id``) to
+    every item — chrome target uses this with the chrome-text gradient;
+    ``cycle`` rotates through ``text_fill_cycle`` colors per item position —
+    brutalist target uses this with ``[ink, info]`` alternation."""
+    text_fill_gradient_id: str = ""
+    """When ``text_fill_mode == "gradient"``, this gradient ID is referenced
+    by every scroll item's ``fill="url(#...)"``. Templates emit the gradient
+    in ``{paradigm}-defs.j2`` and the ID is paradigm-defined. Chrome: ``ct``
+    (chrome-text). The full ``url(#{{ uid }}-{{ text_fill_gradient_id }})``
+    construction happens in the resolver."""
+    text_fill_cycle: list[str] = Field(default_factory=list)
+    """When ``text_fill_mode == "cycle"``, items rotate through these hex
+    colors per position. Brutalist: ``["#D1FAE5", "#34D399"]`` (ink, info)."""
+    clip_inset_left: int = 0
+    """Left-edge clip inset for the scroll-track in pixels. Excludes the
+    perimeter zones from text rendering so scrolling characters can't appear
+    visibly on top of the frame chrome (env-rail, accent bar, bezel). Chrome
+    paradigm: 4 (chrome bezel width). Brutalist: 4 (accent bar width).
+    Default: 0 (no clip — full viewport)."""
+    clip_inset_right: int = 0
+    """Right-edge clip inset. Chrome: 4 (chrome bezel). Brutalist: 1 (perimeter)."""
+    clip_inset_top: int = 0
+    """Top-edge clip inset. Chrome: 4 (chrome bezel). Cellular: 1 (top hairline)."""
+    clip_inset_bottom: int = 0
+    """Bottom-edge clip inset. Chrome: 4 (chrome bezel). Cellular: 1 (bottom hairline)."""
+    clip_rx: float = 0
+    """Corner radius for the scroll-track clip rect. Chrome: 2.6 (matches well
+    rx). Brutalist/cellular: 0 (sharp corners)."""
 
 
 class ParadigmSpec(FrozenModel):

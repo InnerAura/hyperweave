@@ -188,31 +188,35 @@ def _ctx_divider(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
 def _ctx_marquee(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
     """Context defaults for the marquee-horizontal frame.
 
-    Counter / vertical defaults removed in v0.2.14 along with those frame
-    types. Only horizontal-relevant keys are pre-populated; the resolver
-    overrides every value via ``resolved.frame_context``.
+    v0.2.16: LIVE label panel removed entirely. The shared template now
+    expects paradigm-driven typography (font_size, font_weight,
+    letter_spacing, scroll_font_family) and structural separator config
+    (separator_kind, separator_size, separator_glyph, separator_color)
+    plus text-fill-mode dispatch (text_fill_mode, text_fill_gradient_id)
+    that mirror the keys emitted by ``_resolve_horizontal``. Defaults
+    here cover paradigms that don't declare ``marquee:`` in their YAML
+    (StrictUndefined would otherwise raise on the first missing key).
     """
     ctx, _uid, _aid = _base_context(spec, resolved, css)
     ctx["scroll_items"] = []
-    ctx["marquee_label"] = "LIVE"
     ctx["scroll_distance"] = 1000
     ctx["scroll_dur"] = 11.09
-    ctx["separator"] = "■"
-    ctx["separator_color"] = "var(--dna-border)"
-    ctx["separator_opacity"] = ""
-    ctx["fade_width"] = 24
-    ctx["label_panel_width"] = 130
-    ctx["clip_x"] = 132
-    ctx["divider_w"] = 2
-    ctx["accent_line_opacity"] = 0.2
-    ctx["item_dx"] = 20
-    ctx["item_start_x"] = 148
-    ctx["accent_bar_w"] = 4
-    ctx["suppress_live_block"] = False
-    ctx["clip_inset_y"] = 4
-    ctx["clip_inset_x"] = 4
-    ctx["show_accent_lines"] = True
+    ctx["scroll_start_x"] = 16
+    ctx["font_size"] = 13
+    ctx["font_weight"] = ""
+    ctx["letter_spacing"] = ".5"
     ctx["scroll_font_family"] = "var(--dna-font-mono, ui-monospace, monospace)"
+    ctx["separator_kind"] = "glyph"
+    ctx["separator_size"] = 6
+    ctx["separator_glyph"] = "■"
+    ctx["separator_color"] = "var(--dna-border)"
+    ctx["text_fill_mode"] = "per_item"
+    ctx["text_fill_gradient_id"] = ""
+    ctx["clip_x"] = 0
+    ctx["clip_y"] = 0
+    ctx["clip_w"] = 800
+    ctx["clip_h"] = 40
+    ctx["clip_rx"] = 0
     ctx["direction"] = spec.marquee_direction
     ctx.update(resolved.frame_context)
     return ctx

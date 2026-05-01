@@ -5,6 +5,51 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.16] - 2026-05-01
+
+Chrome icon + chrome/brutalist marquee templates rewritten against production specimens. Chrome icons (circle + square) render at 64×64 with the v2 specimen's 120-unit material discipline preserved (5/6-layer chrome bezel + bevel filter + rim sweep + embedded Orbitron). Chrome and brutalist marquees adopt their specimen dimensions (1040×56 / 720×32), drop the LIVE label panel entirely, and gain a layered render order so scrolling text disappears UNDER perimeter chrome at the edges instead of overlapping it. Marquee scroll loop is now seamless across all paradigms (content-aware repetition + trailing separators); cellular's bullet-text overlap from CSS-var font-measurement drift is fixed at the architectural boundary. Star history reliability hardened with token pinning + GraphQL cross-check against per-token GitHub edge-cache disagreement.
+
+### Added
+
+- **`ParadigmIconConfig.viewbox_w` / `viewbox_h`**: paradigm-driven `viewBox` override on `templates/document.svg.j2`. Chrome icons render the v2 specimen's 120-unit coordinate system at 64px output. Default `0` preserves prior behavior.
+- **`ParadigmMarqueeConfig` extended** with width/height, font_*/letter_spacing, separator_kind/separator_size, text_fill_mode/text_fill_gradient_id/text_fill_cycle, and clip_inset_*/clip_rx fields. Defaults match v0.2.15 behavior; chrome and brutalist paradigms declare specimen-derived overrides.
+- **Layered render for marquee**: new `{paradigm}-overlay.j2` partials (chrome / brutalist / cellular) render perimeter chrome ABOVE the scroll-track text. Shared template uses `{% include ... ignore missing %}` so paradigms without an overlay opt out without a stub file.
+- **`_layout_marquee_items` + `_resolve_font_for_measurement`** helpers in `compose/resolver.py`: per-item absolute x layout via `measure_text` with content-aware item repetition for short content, plus a CSS-var-to-actual-font resolver so paradigms using `var(--dna-font-mono)` defaults measure correctly instead of silently falling back to Inter.
+- **Token pinning** (`pin_github_token` + `auth_token` parameter on `fetch`/`fetch_json`/`fetch_graphql`) so multi-request operations like `fetch_stargazer_history` use ONE token across all sub-calls. GraphQL second-source cross-check on `stargazerCount` returns empty-state with verified hero when REST and GraphQL disagree by >2x.
+- **`icon_well_top` / `icon_well_bottom`** genome fields for the v2-specific deep-navy radial well in chrome icons. Falls back to `well_top` / `well_bottom` for genomes that don't declare them.
+- **Per-shape icon variants in proofset**: chrome-horizon and brutalist-emerald ship `base/icon_circle.svg` + `base/icon_square.svg` alongside the default-shape icon.
+- **Metric display label map** (`_METRIC_DISPLAY_LABELS` in `serve/data_tokens.py`): `pull_count → PULLS`, `star_count → STARS`, `pipeline_tag → TASK`, `library_name → LIBRARY`, `python_requires → PYTHON`, `last_updated → UPDATED`. Connector code keeps API field names verbatim; the display layer normalizes them at the marquee/badge render boundary.
+- **25 new tests** across `tests/test_marquee_v0_2_16.py` (paradigm-driven dimensions, LIVE-block residue, content-aware scroll, text-fill modes, viewBox override, loop-boundary smoothness) and `tests/test_chart_frame.py` (cross-check disagreement → empty-state, agreement → GraphQL count, token pinning across sub-requests).
+
+### Removed
+
+- **LIVE label panel infrastructure** entirely. `ParadigmMarqueeConfig.suppress_live_block` field, 15 LIVE-block context vars, the LIVE label `<text>` and status diamond `<g>` in chrome/brutalist content templates, and the edge-fade gradient defs. Three new grep gates (`suppress_live_block`, `marquee_label`, `label_panel_width`) added to prevent residue.
+- **`_MOCK_CHART_POINTS`** in `scripts/generate_proofset.py`. When chart fetch fails or cross-check disagrees, the artifact is SKIPPED rather than substituted with fake history. README image link breaks loudly — that's the intended signal.
+- **Old chrome icon filter** (`{{ uid }}-sh`, basic feDropShadow + clip paths). Replaced by the full bevel filter (`feDropShadow` + `feSpecularLighting` + arithmetic composite) — same chain as marquee/badge/strip.
+
+### Changed
+
+- **Chrome icon templates** (`icon/chrome-content.j2` + `chrome-defs.j2`) full rewrite to match v2 specimens. Five-layer circle (env stroke r=46 + radial well r=42 + dark hairline + rim sweep + bevel); six-layer square (96×96 card + 6px env-rail + top accent + rim sweep). Embedded fonts via `@font-face` data URIs.
+- **Chrome marquee templates** (`marquee-horizontal/{chrome-defs,chrome-content,chrome-overlay}.j2`): chrome material stack matching the 1040×56 specimen with embedded Orbitron and a brightened 3-stop chrome-text gradient. Opaque well backing under the env-rail prevents text bleed-through.
+- **Brutalist marquee templates**: 720×32 flat slab with rect bullets and `[ink, info]` text-fill cycle. Layered into content + overlay so text scrolls UNDER the accent bar.
+- **`templates/document.svg.j2`**: root SVG includes `shape-rendering="geometricPrecision"` and uses the paradigm `viewBox` override.
+- **`marquee-horizontal.svg.j2`** rewritten around absolute-x scroll items. Set-A and Set-B sibling groups under one SMIL `animateTransform`; Set-B at `translate(scroll_distance, 0)` for seamless wrap. Branches on `separator_kind` for glyph vs rect (structural data dispatch — Invariant 12 compliant).
+- **Genome JSON paradigms maps**: chrome-horizon and brutalist-emerald add `"marquee-horizontal"` routing entries.
+
+### Fixed
+
+- **Marquee scroll loop boundary** matches inter-item rhythm exactly. Trailing separator after every item + `scroll_distance = R × single_period` (with `R = ceil(viewport / single_period)` for short content) eliminates the perceptible "lag" at every cycle.
+- **Bullet-text overlap in cellular marquee**: `measure_text` was silently falling back to Inter while the rendered SVG used JetBrains Mono via CSS var, causing ~20-30% width drift. The new `_resolve_font_for_measurement` helper resolves CSS var() to the genome's actual font at the layout boundary.
+- **Wrong star history in chart artifacts** (e.g. 400 stars instead of 2,894): per-token GitHub edge-cache disagreement when `fetch_stargazer_history`'s sub-calls landed on different rotated tokens. Token pinning + GraphQL cross-check eliminate this; when sources disagree, chart shows verified hero with HISTORY UNAVAILABLE; when they agree, GraphQL count is trusted and REST sampling proceeds normally.
+- **Marquee text rendering ON TOP of perimeter chrome** at the frame edges. Layered render order (background → text → overlay) plus per-paradigm `clip_inset_*` insets eliminate it for all three paradigms.
+
+### Notes
+
+- 669 tests pass (was 644 pre-v0.2.16). Net diff: +1,778 / −451 across 29 files.
+- Chrome icon at 64×64 with `viewBox="0 0 120 120"` is a uniform-scale presentation of the v1 (120×120) specimen — coordinate system preserved. Subpixel hairlines (0.6-unit → 0.32px rendered) anti-alias as fine machined edges thanks to `shape-rendering: geometricPrecision`. If 64-native tuning is later required it ships as v3.
+- Marquee `text_fill_cycle` mode hardcodes `["#D1FAE5", "#34D399"]` in brutalist.yaml because brutalist-emerald is currently the only genome opting into brutalist paradigm. If a second genome adopts brutalist later, this should migrate to a "genome-field-name" indirection per Invariant 11.
+- Genome-design rules from this iteration are logged separately in `tier2/_genome_feedback_log.md` (rules 57-59).
+
 ## [0.2.15] - 2026-04-30
 
 Marquee data-token rendering + badge data-route bug fix + README live-data dogfood. The unified `?data=` grammar shipped in v0.2.14 was technically working but visually flat: marquee-horizontal flattened structured `(label, value)` token pairs into a single combined string before reaching the template, so `gh:repo.stars` rendered as one uniform `"STARS 1234"` instead of label-muted-value-bright. This release plumbs the structured fields through the resolver into the template's two-tspan rendering so kv/live tokens display the way the spec always intended. The badge data-route had a separate bug (renders `"VERSION:0.2.14"` instead of `"0.2.14"`) caused by routing through the multi-cell strip formatter; that's fixed too.
