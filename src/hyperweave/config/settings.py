@@ -32,9 +32,35 @@ class HyperWeaveSettings(BaseSettings):
     port: int = Field(default=8000, description="Server port")
 
     # -- Caching --
-    static_cache_ttl: int = Field(default=31536000, description="Static asset max-age (1 year)")
+    # Cache TTLs split by route role so static-compose artifacts (no upstream
+    # data) get a long Camo cache while data-bound artifacts get short cache
+    # plus stale-while-revalidate. Mismatched TTLs were the #1 cause of the
+    # README scatter-loading symptom: max-age=300 on a static badge forces
+    # Camo to refetch every 5 minutes against an origin with a cold cache,
+    # turning visible static content into a cold-start lottery.
+    static_cache_ttl: int = Field(default=31536000, description="Editorial specimen max-age (1 year — immutable)")
     genome_cache_ttl: int = Field(default=86400, description="Genome registry max-age (24 hours)")
-    data_cache_ttl: int = Field(default=300, description="Data-bound artifact max-age (5 min)")
+    compose_cache_ttl: int = Field(
+        default=86400,
+        description=(
+            "Pure-compose artifact max-age (24 hours). Used for routes with no "
+            "upstream data: static-state badges, icons, dividers, strips without "
+            "?data=. Long because the artifact only changes when HyperWeave version "
+            "ships — Camo refetches once daily."
+        ),
+    )
+    data_cache_ttl: int = Field(
+        default=300,
+        description="Data-bound artifact max-age (5 min — paired with stale-while-revalidate=3600)",
+    )
+    error_cache_ttl: int = Field(
+        default=5,
+        description=(
+            "Error-fallback (SMPTE NO SIGNAL) max-age (5 sec — paired with "
+            "stale-while-revalidate=60). Aggressive so a recovered origin "
+            "re-populates Camo in seconds, not the previous minute."
+        ),
+    )
 
     # -- Connectors --
     # NOTE: GitHub token rotation lives in ``connectors.base._get_github_token``,

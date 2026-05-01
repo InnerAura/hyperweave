@@ -151,7 +151,7 @@ async def compose_badge_data_url(
             content=_error_badge("?data= required on this route", status_code=400),
             media_type="image/svg+xml",
             status_code=200,
-            headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+            headers=_error_response_headers(400),
         )
 
     # Badge has a single value slot — title is in the path, value is the
@@ -172,7 +172,7 @@ async def compose_badge_data_url(
             content=_error_badge(f"data parse: {exc}", status_code=400),
             media_type="image/svg+xml",
             status_code=200,
-            headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+            headers=_error_response_headers(400),
         )
 
     final_value = format_for_badge(resolved)
@@ -241,7 +241,7 @@ async def compose_strip_url(
                 content=_error_badge(f"data parse: {exc}", status_code=400),
                 media_type="image/svg+xml",
                 status_code=200,
-                headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+                headers=_error_response_headers(400),
             )
 
     # Subtitle wires through connector_data.repo_slug — the same field
@@ -395,7 +395,7 @@ async def compose_marquee_url(
                 content=_error_badge(f"data parse: {exc}", status_code=400),
                 media_type="image/svg+xml",
                 status_code=200,
-                headers={"Cache-Control": "max-age=60", "X-HW-Error-Code": "400"},
+                headers=_error_response_headers(400),
             )
 
     from hyperweave.core.models import ComposeSpec
@@ -790,6 +790,24 @@ def _parse_genome_motion(gm: str) -> tuple[str, str]:
     return gm, "static"
 
 
+def _error_response_headers(status_code: int) -> dict[str, str]:
+    """Cache-Control + error-class headers for SMPTE error fallback responses.
+
+    Aggressive TTL (default 5s + stale-while-revalidate=60s, configurable via
+    HW_ERROR_CACHE_TTL) so a recovered origin re-populates Camo edge within
+    seconds rather than the previous minute. See settings.error_cache_ttl —
+    the prior 60s sticky-error cache amplified short cold-start outages into
+    minute-long broken-image cascades for every README visitor.
+    """
+    from hyperweave.config.settings import get_settings
+
+    ttl = get_settings().error_cache_ttl
+    return {
+        "Cache-Control": f"max-age={ttl}, stale-while-revalidate=60",
+        "X-HW-Error-Code": str(status_code),
+    }
+
+
 async def _resolve_data_param(data: str, *, fallback: str = "") -> tuple[str, int]:
     """Parse ?data= param via the unified token grammar and format for ``value``.
 
@@ -832,7 +850,9 @@ def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
                 status_code=304,
                 headers={
                     "ETag": etag_header,
-                    "Cache-Control": f"public, max-age={settings.data_cache_ttl}",
+                    # Pure-compose route: artifact has no upstream data and only
+                    # changes when HyperWeave version ships. Long Camo cache.
+                    "Cache-Control": f"public, max-age={settings.compose_cache_ttl}",
                 },
             )
 
@@ -844,7 +864,7 @@ def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
             content=result.svg,
             media_type="image/svg+xml",
             headers={
-                "Cache-Control": f"public, max-age={settings.data_cache_ttl}",
+                "Cache-Control": f"public, max-age={settings.compose_cache_ttl}",
                 "ETag": etag_header,
                 "X-HW-Genome": spec.genome_id,
                 "X-HW-Frame": spec.type,
@@ -860,10 +880,7 @@ def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
             # producing a valid SMPTE SVG. The error class travels in the SVG
             # (``data-hw-status-code``, ``ERR_NNN`` slab) and the response header.
             status_code=200,
-            headers={
-                "Cache-Control": "max-age=60",
-                "X-HW-Error-Code": str(status_code),
-            },
+            headers=_error_response_headers(status_code),
         )
 
 
@@ -907,10 +924,7 @@ def _compose_and_respond_with_ttl(spec: Any, request: Request | None, ttl: int) 
             # producing a valid SMPTE SVG. The error class travels in the SVG
             # (``data-hw-status-code``, ``ERR_NNN`` slab) and the response header.
             status_code=200,
-            headers={
-                "Cache-Control": "max-age=60",
-                "X-HW-Error-Code": str(status_code),
-            },
+            headers=_error_response_headers(status_code),
         )
 
 
