@@ -95,7 +95,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/badge/BUILD/warning/chrome.static?state=warning" alt="warning"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/critical/chrome.static?state=critical" alt="critical"/>
   <br/>
-  <sub><code>/v1/badge/{title}/{value}/chrome.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/chrome.static?data=gh:owner/repo.metric</code> for live values</sub>
+  <ul>
+<li><sub><code>/v1/badge/{title}/{value}/{genome}.static?state={state}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/BUILD/passing/chrome.static?state=passing</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -103,7 +106,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/strip/readme-ai/chrome.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/chrome.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
+  <ul>
+<li><sub><code>/v1/strip/{title}/{genome}.static?data={tokens}&subtitle={text}&glyph={glyph}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/strip/readme-ai/chrome.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -111,7 +117,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/stats/eli64s/chrome.static" alt="stats" width="100%"/>
   <br/>
-  <sub><code>/v1/stats/eli64s/chrome.static</code></sub>
+  <ul>
+<li><sub><code>/v1/stats/{username}/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/stats/eli64s/chrome.static</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -119,7 +128,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/chrome.static" alt="star chart" width="100%"/>
   <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/chrome.static</code></sub>
+  <ul>
+<li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/chrome.static</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -127,7 +139,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/marquee/readme-ai/chrome.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
   <br/>
-  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code> &mdash; five tokens, three providers, one URL</sub>
+  <ul>
+<li><sub><code>/v1/marquee/{title}/{genome}.static?data={tokens}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/marquee/readme-ai/chrome.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -138,7 +153,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/icon/npm/chrome.static?shape=square" alt="npm" width="56"/>
   <img src="https://hyperweave.app/v1/icon/instagram/chrome.static?shape=square" alt="instagram" width="56"/>
   <br/>
-  <sub><code>/v1/icon/{glyph}/chrome.static?shape={circle|square}</code></sub>
+  <ul>
+<li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/icon/youtube/chrome.static?shape=circle</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -146,7 +164,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/divider/band/chrome.static" alt="chrome band divider"/>
   <br/>
-  <sub><code>/v1/divider/band/chrome.static</code> &mdash; chrome envelope band, 11-stop gradient drift at phi3 (6.854s)</sub>
+  <ul>
+<li><sub><code>/v1/divider/band/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/divider/band/chrome.static</code></sub></li>
+</ul>
 </td>
 </tr>
 </table>
@@ -162,7 +183,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist.static?state=warning" alt="warning"/>
   <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist.static?state=critical" alt="critical"/>
   <br/>
-  <sub><code>/v1/badge/{title}/{value}/brutalist.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/brutalist.static?data=gh:owner/repo.metric</code> for live values</sub>
+  <ul>
+<li><sub><code>/v1/badge/{title}/{value}/{genome}.static?state={state}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/BUILD/passing/brutalist.static?state=passing</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -170,7 +194,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/brutalist.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
+  <ul>
+<li><sub><code>/v1/strip/{title}/{genome}.static?data={tokens}&subtitle={text}&glyph={glyph}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -178,7 +205,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static" alt="stats" width="100%"/>
   <br/>
-  <sub><code>/v1/stats/eli64s/brutalist.static</code></sub>
+  <ul>
+<li><sub><code>/v1/stats/{username}/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/stats/eli64s/brutalist.static</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -186,7 +216,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static" alt="star chart" width="100%"/>
   <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/brutalist.static</code></sub>
+  <ul>
+<li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -194,7 +227,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/marquee/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
   <br/>
-  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code> &mdash; five tokens, three providers, one URL</sub>
+  <ul>
+<li><sub><code>/v1/marquee/{title}/{genome}.static?data={tokens}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/marquee/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -205,7 +241,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/icon/x/brutalist.static?shape=square" alt="x" width="56"/>
   <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=square" alt="spotify" width="56"/>
   <br/>
-  <sub><code>/v1/icon/{glyph}/brutalist.static?shape={circle|square}</code></sub>
+  <ul>
+<li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/icon/discord/brutalist.static?shape=circle</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -213,7 +252,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/divider/seam/brutalist.static" alt="brutalist seam divider"/>
   <br/>
-  <sub><code>/v1/divider/seam/brutalist.static</code> &mdash; concrete expansion-joint pattern, five emerald rule segments + four perpendicular joint marks</sub>
+  <ul>
+<li><sub><code>/v1/divider/seam/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/divider/seam/brutalist.static</code></sub></li>
+</ul>
 </td>
 </tr>
 </table>
@@ -228,7 +270,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=blue" alt="pypi teal"/>
   <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=purple" alt="pypi amethyst"/>
   <br/>
-  <sub><code>/v1/badge/{title}/{value}/automata.static?glyph=python&variant={blue|purple}</code> &mdash; or <code>/v1/badge/{title}/automata.static?data=pypi:hyperweave.version&variant={blue|purple}</code> for live values</sub>
+  <ul>
+<li><sub><code>/v1/badge/{title}/automata.static?data={token}&variant={blue|purple|bifamily}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=purple</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -236,7 +281,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bifamily&glyph=github" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&variant=bifamily</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
+  <ul>
+<li><sub><code>/v1/strip/{title}/automata.static?data={tokens}&variant=bifamily&subtitle={text}&glyph={glyph}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bifamily&glyph=github</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -244,7 +292,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/stats/eli64s/automata.static" alt="stats" width="100%"/>
   <br/>
-  <sub><code>/v1/stats/eli64s/automata.static</code></sub>
+  <ul>
+<li><sub><code>/v1/stats/{username}/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/stats/eli64s/automata.static</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -252,7 +303,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static" alt="star chart" width="100%"/>
   <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/automata.static</code></sub>
+  <ul>
+<li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -260,7 +314,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bifamily" alt="marquee"/>
   <br/>
-  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bifamily</code> &mdash; five tokens, three providers, bifamily palette</sub>
+  <ul>
+<li><sub><code>/v1/marquee/{title}/automata.static?data={tokens}&variant=bifamily</code></sub></li>
+<li><sub><code>hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bifamily</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -271,7 +328,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&variant=purple" alt="huggingface" width="56"/>
   <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&variant=purple" alt="jupyter" width="56"/>
   <br/>
-  <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&variant={blue|purple}</code></sub>
+  <ul>
+<li><sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&variant={blue|purple}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/icon/python/automata.static?shape=circle&variant=blue</code></sub></li>
+</ul>
 </td>
 </tr>
 <tr>
@@ -279,7 +339,10 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/divider/dissolve/automata.static" alt="automata dissolve divider"/>
   <br/>
-  <sub><code>/v1/divider/dissolve/automata.static</code> &mdash; bifamily teal/amethyst bridge, static-baked per-rect opacity cascade</sub>
+  <ul>
+<li><sub><code>/v1/divider/dissolve/{genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/divider/dissolve/automata.static</code></sub></li>
+</ul>
 </td>
 </tr>
 </table>
@@ -300,27 +363,60 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <table>
 <tr>
 <th align="left" width="160">block<br/><sub>De Stijl composition</sub></th>
-<td><img src="https://hyperweave.app/a/inneraura/dividers/block" alt="block divider"/></td>
+<td>
+  <img src="https://hyperweave.app/a/inneraura/dividers/block" alt="block divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/a/inneraura/dividers/{slug}</code></sub></li>
+<li><sub><code>hyperweave.app/a/inneraura/dividers/block</code></sub></li>
+</ul>
+</td>
 </tr>
 <tr>
 <th align="left">current<br/><sub>animated rainbow bezier</sub></th>
-<td><img src="https://hyperweave.app/a/inneraura/dividers/current" alt="current divider"/></td>
+<td>
+  <img src="https://hyperweave.app/a/inneraura/dividers/current" alt="current divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/a/inneraura/dividers/{slug}</code></sub></li>
+<li><sub><code>hyperweave.app/a/inneraura/dividers/current</code></sub></li>
+</ul>
+</td>
 </tr>
 <tr>
 <th align="left">takeoff<br/><sub>rocket trajectory + thrust</sub></th>
-<td><img src="https://hyperweave.app/a/inneraura/dividers/takeoff" alt="takeoff divider"/></td>
+<td>
+  <img src="https://hyperweave.app/a/inneraura/dividers/takeoff" alt="takeoff divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/a/inneraura/dividers/{slug}</code></sub></li>
+<li><sub><code>hyperweave.app/a/inneraura/dividers/takeoff</code></sub></li>
+</ul>
+</td>
 </tr>
 <tr>
 <th align="left">void<br/><sub>spectral bloom + hover state</sub></th>
-<td><img src="https://hyperweave.app/a/inneraura/dividers/void" alt="void divider"/></td>
+<td>
+  <img src="https://hyperweave.app/a/inneraura/dividers/void" alt="void divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/a/inneraura/dividers/{slug}</code></sub></li>
+<li><sub><code>hyperweave.app/a/inneraura/dividers/void</code></sub></li>
+</ul>
+</td>
 </tr>
 <tr>
 <th align="left">zeropoint<br/><sub>aurora rule + nexus beacon</sub></th>
-<td><img src="https://hyperweave.app/a/inneraura/dividers/zeropoint" alt="zeropoint divider"/></td>
+<td>
+  <img src="https://hyperweave.app/a/inneraura/dividers/zeropoint" alt="zeropoint divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/a/inneraura/dividers/{slug}</code></sub></li>
+<li><sub><code>hyperweave.app/a/inneraura/dividers/zeropoint</code></sub></li>
+</ul>
+</td>
 </tr>
 </table>
-
-<sub>Genome-agnostic compositional primitives. Hardcoded specimen palettes; independent of genome theming.</sub>
 
 <h3 id="error-fallback">Error fallback &mdash; SMPTE NO SIGNAL</h3>
 
@@ -331,7 +427,10 @@ Every broken `<img>` URL renders the SMPTE RP 219 test pattern with `ERR_NNN` ma
 </p>
 
 <p align="center">
-  <sub><code>/v1/badge/TEST/value/unknown-genome.static</code> &mdash; unknown genome &rarr; HTTP 404, value slab reads <code>ERR_404</code>.</sub>
+  <ul>
+<li><sub><code>/v1/badge/{title}/{value}/{unknown-genome}.static</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/TEST/value/unknown-genome.static</code></sub></li>
+</ul>
 </p>
 
 ---

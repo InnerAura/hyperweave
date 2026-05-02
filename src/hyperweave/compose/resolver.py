@@ -1202,7 +1202,7 @@ def _resolve_horizontal(
     # (and label_color when label is present). Gradient mode emits the empty
     # string sentinel — the template substitutes the gradient URL.
     bold_pattern = _prof.get("marquee_horizontal_bold_pattern", "even")
-    fam = chrome_ctx.get("family", "")
+    fam = chrome_ctx.get("variant", "")
     teal_info = chrome_ctx.get("variant_blue_info", "")
     amethyst_info = chrome_ctx.get("variant_purple_info", "")
     bifamily_active = fam == "bifamily" and bool(teal_info) and bool(amethyst_info) and bool(tspan_palette)

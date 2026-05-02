@@ -5,6 +5,19 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.20] - 2026-05-02
+
+Hotfix for two v0.2.19 regressions + README subtitle clarity.
+
+### Fixed
+
+- **Marquee bifamily palette lost on data-token marquees.** Resolver still read `chrome_ctx.get("family")` after the v0.2.19 family→variant rename — `bifamily_active` evaluated False and the cellular tspan palette never applied, so automata marquees with `gh:`/`pypi:`/`docker:` data tokens rendered grey instead of teal+amethyst.
+- **404 SMPTE error SVG had duplicate `data-hw-variant` attributes** (`rainbow-static` + `universal-fallback`) — XML parsers rejected it. Renamed the second to `data-hw-fallback="universal"`.
+
+### Changed
+
+- **README subtitles reformatted as bullet pairs per artifact** (route pattern + paste-ready URL). Long URLs that wrap stay scannable; readers can copy either line directly.
+
 ## [0.2.19] - 2026-05-02
 
 Genome slug renames, chromatic axis rename, and divider namespace split. Frees the `variant` axis name for the universal chromatic chooser and gives genome-agnostic dividers their own URL space.
