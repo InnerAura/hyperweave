@@ -5,6 +5,29 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.19] - 2026-05-02
+
+Genome slug renames, chromatic axis rename, and divider namespace split. Frees the `variant` axis name for the universal chromatic chooser and gives genome-agnostic dividers their own URL space.
+
+### Changed
+
+- **Genome slugs:** `chrome-horizon → chrome`, `brutalist-emerald → brutalist`. Hard cut, no aliases.
+- **`family` → `variant`** across CLI/HTTP/MCP, paradigm YAML, genome JSON keys, templates, tests.
+- **Badge size axis renamed `variant → size`** to free `variant` for the chromatic axis.
+- **Path B grammar:** genomes declare `variants: [...]` + `flagship_variant`; resolver enforces the whitelist at resolve-time (422 on violation). Pydantic `_ALLOWED_FAMILIES` deleted.
+- **Divider rename:** `cellular-dissolve → dissolve` (slug carries the design name only; genome identifies the paradigm).
+
+### Added
+
+- **`/a/inneraura/dividers/<slug>`** route for genome-agnostic dividers (block, current, takeoff, void, zeropoint).
+- **Chrome `band`** (envelope drift, phi3 6.854s) and **brutalist `seam`** (concrete expansion-joint) dividers.
+- **Genome-declared `dividers: [...]` whitelist** + slug-interpolation template dispatch (`frames/divider/<genome>-<slug>.svg.j2`).
+
+### Notes
+
+- 681 tests; ruff + format + mypy --strict green.
+- `/v1/divider/{variant}` path-param renamed to `{divider_variant}` (avoids collision with new `?variant=` query).
+
 ## [0.2.18] - 2026-05-01
 
 Tier 2 of the production reliability rollout (Tier 1 shipped as v0.2.17). Three coupled architectural changes target the remaining first-traffic-after-deploy spike: a singleton `httpx.AsyncClient` with HTTP/2 multiplexing replacing per-request fresh TLS handshakes, a FastAPI lifespan handler that pre-warms the compose pipeline, and a readiness-gating `/health` that returns 503 (not 500) on compose failure so Fly's load balancer holds a freshly-woken machine out of rotation until warmup completes.

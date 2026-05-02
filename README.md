@@ -12,15 +12,15 @@
 
 <!--
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/STARS/chrome-horizon.static?data=gh:InnerAura/hyperweave.stars" alt="stars"/>
-  <img src="https://hyperweave.app/v1/badge/FORKS/chrome-horizon.static?data=gh:InnerAura/hyperweave.forks" alt="forks"/>
-  <img src="https://hyperweave.app/v1/badge/VERSION/chrome-horizon.static?data=pypi:hyperweave.version" alt="version"/>
-  <img src="https://hyperweave.app/v1/badge/LICENSE/chrome-horizon.static?data=gh:InnerAura/hyperweave.license" alt="license"/>
-  <img src="https://hyperweave.app/v1/badge/PYTHON/chrome-horizon.static?data=pypi:hyperweave.python_requires" alt="python"/>
+  <img src="https://hyperweave.app/v1/badge/STARS/chrome.static?data=gh:InnerAura/hyperweave.stars" alt="stars"/>
+  <img src="https://hyperweave.app/v1/badge/FORKS/chrome.static?data=gh:InnerAura/hyperweave.forks" alt="forks"/>
+  <img src="https://hyperweave.app/v1/badge/VERSION/chrome.static?data=pypi:hyperweave.version" alt="version"/>
+  <img src="https://hyperweave.app/v1/badge/LICENSE/chrome.static?data=gh:InnerAura/hyperweave.license" alt="license"/>
+  <img src="https://hyperweave.app/v1/badge/PYTHON/chrome.static?data=pypi:hyperweave.python_requires" alt="python"/>
 </p>
 -->
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome-horizon.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=github" alt="strip"/>
 </p>
 
 <!--
@@ -77,55 +77,55 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 -->
 
 <p align="center">
-  <a href="#chrome-horizon"><kbd> chrome-horizon </kbd></a>
+  <a href="#chrome"><kbd>chrome</kbd></a>
   &middot;
-  <a href="#brutalist-emerald"><kbd> brutalist-emerald </kbd></a>
+  <a href="#brutalist"><kbd>brutalist</kbd></a>
   &middot;
-  <a href="#automata"><kbd> automata </kbd></a>
+  <a href="#automata"><kbd>automata</kbd></a>
 </p>
 
-<h3 id="chrome-horizon">chrome-horizon</h3>
+<h3 id="chrome">chrome</h3>
 <sub><b>chrome paradigm &middot; metallic env-mapping &middot; smooth corner radii</b></sub>
 
 <table>
 <tr>
 <th align="left" width="160">Signals<br/><sub>state machine</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/badge/BUILD/passing/chrome-horizon.static?state=passing" alt="passing"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/warning/chrome-horizon.static?state=warning" alt="warning"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/critical/chrome-horizon.static?state=critical" alt="critical"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/passing/chrome.static?state=passing" alt="passing"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/warning/chrome.static?state=warning" alt="warning"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/critical/chrome.static?state=critical" alt="critical"/>
   <br/>
-  <sub><code>/v1/badge/{title}/{value}/chrome-horizon.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/chrome-horizon.static?data=gh:owner/repo.metric</code> for live values</sub>
+  <sub><code>/v1/badge/{title}/{value}/chrome.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/chrome.static?data=gh:owner/repo.metric</code> for live values</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome-horizon.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/chrome.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/chrome-horizon.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
+  <sub><code>/v1/strip/readme-ai/chrome.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Profile<br/><sub>stats card</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/chrome-horizon.static" alt="stats" width="100%"/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/chrome.static" alt="stats" width="100%"/>
   <br/>
-  <sub><code>/v1/stats/eli64s/chrome-horizon.static</code></sub>
+  <sub><code>/v1/stats/eli64s/chrome.static</code></sub>
 </td>
 </tr>
 <tr>
 <th align="left">Star Chart<br/><sub>star history</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/chrome-horizon.static" alt="star chart" width="100%"/>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/chrome.static" alt="star chart" width="100%"/>
   <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/chrome-horizon.static</code></sub>
+  <sub><code>/v1/chart/stars/eli64s/readme-ai/chrome.static</code></sub>
 </td>
 </tr>
 <tr>
 <th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/readme-ai/chrome-horizon.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/chrome.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
   <br/>
   <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code> &mdash; five tokens, three providers, one URL</sub>
 </td>
@@ -133,58 +133,66 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/youtube/chrome-horizon.static?shape=circle" alt="youtube" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/notion/chrome-horizon.static?shape=circle" alt="notion" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/npm/chrome-horizon.static?shape=square" alt="npm" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/instagram/chrome-horizon.static?shape=square" alt="instagram" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/youtube/chrome.static?shape=circle" alt="youtube" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/notion/chrome.static?shape=circle" alt="notion" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/npm/chrome.static?shape=square" alt="npm" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/instagram/chrome.static?shape=square" alt="instagram" width="56"/>
   <br/>
-  <sub><code>/v1/icon/{glyph}/chrome-horizon.static?shape={circle|square}</code></sub>
+  <sub><code>/v1/icon/{glyph}/chrome.static?shape={circle|square}</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Divider<br/><sub>band</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/divider/band/chrome.static" alt="chrome band divider"/>
+  <br/>
+  <sub><code>/v1/divider/band/chrome.static</code> &mdash; chrome envelope band, 11-stop gradient drift at phi3 (6.854s)</sub>
 </td>
 </tr>
 </table>
 
-<h3 id="brutalist-emerald">brutalist-emerald</h3>
+<h3 id="brutalist">brutalist</h3>
 <sub><b>brutalist paradigm &middot; sharp zero-radius &middot; 5 border SMIL motions</b></sub>
 
 <table>
 <tr>
 <th align="left" width="160">Signals<br/><sub>state machine</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/badge/BUILD/passing/brutalist-emerald.static?state=passing" alt="passing"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist-emerald.static?state=warning" alt="warning"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist-emerald.static?state=critical" alt="critical"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/passing/brutalist.static?state=passing" alt="passing"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist.static?state=warning" alt="warning"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist.static?state=critical" alt="critical"/>
   <br/>
-  <sub><code>/v1/badge/{title}/{value}/brutalist-emerald.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/brutalist-emerald.static?data=gh:owner/repo.metric</code> for live values</sub>
+  <sub><code>/v1/badge/{title}/{value}/brutalist.static?state={state}</code> &mdash; or <code>/v1/badge/{title}/brutalist.static?data=gh:owner/repo.metric</code> for live values</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/brutalist-emerald.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
+  <sub><code>/v1/strip/readme-ai/brutalist.static?subtitle=eli64s/readme-ai</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Profile<br/><sub>stats card</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist-emerald.static" alt="stats" width="100%"/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static" alt="stats" width="100%"/>
   <br/>
-  <sub><code>/v1/stats/eli64s/brutalist-emerald.static</code></sub>
+  <sub><code>/v1/stats/eli64s/brutalist.static</code></sub>
 </td>
 </tr>
 <tr>
 <th align="left">Star Chart<br/><sub>star history</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist-emerald.static" alt="star chart" width="100%"/>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static" alt="star chart" width="100%"/>
   <br/>
-  <sub><code>/v1/chart/stars/eli64s/readme-ai/brutalist-emerald.static</code></sub>
+  <sub><code>/v1/chart/stars/eli64s/readme-ai/brutalist.static</code></sub>
 </td>
 </tr>
 <tr>
 <th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/readme-ai/brutalist-emerald.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
   <br/>
   <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code> &mdash; five tokens, three providers, one URL</sub>
 </td>
@@ -192,12 +200,20 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/discord/brutalist-emerald.static?shape=circle" alt="discord" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/github/brutalist-emerald.static?shape=circle" alt="github" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/x/brutalist-emerald.static?shape=square" alt="x" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/spotify/brutalist-emerald.static?shape=square" alt="spotify" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=circle" alt="discord" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle" alt="github" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/x/brutalist.static?shape=square" alt="x" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=square" alt="spotify" width="56"/>
   <br/>
-  <sub><code>/v1/icon/{glyph}/brutalist-emerald.static?shape={circle|square}</code></sub>
+  <sub><code>/v1/icon/{glyph}/brutalist.static?shape={circle|square}</code></sub>
+</td>
+</tr>
+<tr>
+<th align="left">Divider<br/><sub>seam</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/divider/seam/brutalist.static" alt="brutalist seam divider"/>
+  <br/>
+  <sub><code>/v1/divider/seam/brutalist.static</code> &mdash; concrete expansion-joint pattern, five emerald rule segments + four perpendicular joint marks</sub>
 </td>
 </tr>
 </table>
@@ -209,18 +225,18 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left" width="160">Signals<br/><sub>chromatic variant</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&family=blue" alt="pypi teal"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&family=purple" alt="pypi amethyst"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=blue" alt="pypi teal"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=purple" alt="pypi amethyst"/>
   <br/>
-  <sub><code>/v1/badge/{title}/{value}/automata.static?glyph=python&family={blue|purple}</code> &mdash; or <code>/v1/badge/{title}/automata.static?data=pypi:hyperweave.version&family={blue|purple}</code> for live values</sub>
+  <sub><code>/v1/badge/{title}/{value}/automata.static?glyph=python&variant={blue|purple}</code> &mdash; or <code>/v1/badge/{title}/automata.static?data=pypi:hyperweave.version&variant={blue|purple}</code> for live values</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Dashboard<br/><sub>strip &middot; bifamily</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&family=bifamily&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bifamily&glyph=github" alt="strip"/>
   <br/>
-  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&family=bifamily</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
+  <sub><code>/v1/strip/readme-ai/automata.static?subtitle=eli64s/readme-ai&variant=bifamily</code> &mdash; or <code>?data=gh:owner/repo.stars,...</code> for live metrics</sub>
 </td>
 </tr>
 <tr>
@@ -242,41 +258,69 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Marquee<br/><sub>horizontal ticker &middot; bifamily</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&family=bifamily" alt="marquee"/>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bifamily" alt="marquee"/>
   <br/>
-  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&family=bifamily</code> &mdash; five tokens, three providers, bifamily palette</sub>
+  <sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bifamily</code> &mdash; five tokens, three providers, bifamily palette</sub>
 </td>
 </tr>
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&family=blue" alt="python" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&family=blue" alt="docker" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&family=purple" alt="huggingface" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&family=purple" alt="jupyter" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&variant=blue" alt="python" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=blue" alt="docker" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&variant=purple" alt="huggingface" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&variant=purple" alt="jupyter" width="56"/>
   <br/>
-  <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&family={blue|purple}</code></sub>
+  <sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&variant={blue|purple}</code></sub>
 </td>
 </tr>
 <tr>
-<th align="left">Divider<br/><sub>cellular-dissolve</sub></th>
+<th align="left">Divider<br/><sub>dissolve</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/divider/cellular-dissolve/automata.static?family=bifamily" alt="divider"/>
+  <img src="https://hyperweave.app/v1/divider/dissolve/automata.static" alt="automata dissolve divider"/>
   <br/>
-  <sub><code>/v1/divider/cellular-dissolve/automata.static?family=bifamily</code></sub>
+  <sub><code>/v1/divider/dissolve/automata.static</code> &mdash; bifamily teal/amethyst bridge, static-baked per-rect opacity cascade</sub>
 </td>
 </tr>
 </table>
 
-| | chrome-horizon | brutalist-emerald | automata |
+| | chrome | brutalist | automata |
 |---|---|---|---|
 | Surface | `#000a14` deep void | `#14532D` dark field | `#04060A` void |
 | Signal | `#5ba3d4` metallic blue | `#10B981` emerald | `#1E849A` teal &middot; `#6B3B8A` amethyst |
 | Profile | chrome (smooth, env-mapped) | brutalist (sharp, zero-radius) | brutalist (cellular paradigm) |
 | Chromatic variant | &mdash; | &mdash; | `blue` / `purple` / `bifamily` |
 | Motions | 5 border SMIL | 5 border SMIL | static, chromatic-pulse, rimrun, corner-trace |
+| Divider | `band` (envelope drift) | `seam` (expansion joint) | `dissolve` (bifamily bridge) |
 
-<sub>The two automata signal badges share a URL and differ only in the chromatic variant: <code>?family=blue</code> renders the teal palette, <code>?family=purple</code> the amethyst, <code>?family=bifamily</code> both. The parameter name is provisional and likely to be renamed to <code>?variant=</code> once brutalist skin variants land &mdash; treat the surface as unstable.</sub>
+<sub>The two automata signal badges share a URL and differ only in the chromatic variant: <code>?variant=blue</code> renders the teal palette, <code>?variant=purple</code> the amethyst, <code>?variant=bifamily</code> both. Each genome declares its allowed variants in its JSON config; unknown values return 422.</sub>
+
+<h3 id="dividers"><code>/a/inneraura/dividers/</code></h3>
+
+<table>
+<tr>
+<th align="left" width="160">block<br/><sub>De Stijl composition</sub></th>
+<td><img src="https://hyperweave.app/a/inneraura/dividers/block" alt="block divider"/></td>
+</tr>
+<tr>
+<th align="left">current<br/><sub>animated rainbow bezier</sub></th>
+<td><img src="https://hyperweave.app/a/inneraura/dividers/current" alt="current divider"/></td>
+</tr>
+<tr>
+<th align="left">takeoff<br/><sub>rocket trajectory + thrust</sub></th>
+<td><img src="https://hyperweave.app/a/inneraura/dividers/takeoff" alt="takeoff divider"/></td>
+</tr>
+<tr>
+<th align="left">void<br/><sub>spectral bloom + hover state</sub></th>
+<td><img src="https://hyperweave.app/a/inneraura/dividers/void" alt="void divider"/></td>
+</tr>
+<tr>
+<th align="left">zeropoint<br/><sub>aurora rule + nexus beacon</sub></th>
+<td><img src="https://hyperweave.app/a/inneraura/dividers/zeropoint" alt="zeropoint divider"/></td>
+</tr>
+</table>
+
+<sub>Genome-agnostic compositional primitives. Hardcoded specimen palettes; independent of genome theming.</sub>
 
 <h3 id="error-fallback">Error fallback &mdash; SMPTE NO SIGNAL</h3>
 
@@ -339,25 +383,25 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
 
 ```
 # Static badge
-hw_compose(type="badge", title="BUILD", value="passing", genome="brutalist-emerald")
+hw_compose(type="badge", title="BUILD", value="passing", genome="brutalist")
 
 # Data-driven badge — unified token grammar (gh:owner/repo.metric, pypi:pkg.metric, ...)
-hw_compose(type="badge", title="STARS", data="gh:anthropics/claude-code.stars", genome="brutalist-emerald")
+hw_compose(type="badge", title="STARS", data="gh:anthropics/claude-code.stars", genome="brutalist")
 
 # Strip with multiple live metrics
 hw_compose(type="strip", title="readme-ai",
            data="gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version",
-           genome="chrome-horizon")
+           genome="chrome")
 
 # Marquee with mixed text + live tokens
 hw_compose(type="marquee-horizontal",
            data="text:NEW RELEASE,gh:anthropics/claude-code.stars,text:DOWNLOAD",
-           genome="brutalist-emerald")
+           genome="brutalist")
 
 # Discoverable shortcut for single-metric live badges
 hw_live(provider="github", identifier="anthropics/claude-code", metric="stars")
 
-hw_kit(type="readme", genome="brutalist-emerald", badges="build:passing")
+hw_kit(type="readme", genome="brutalist", badges="build:passing")
 hw_discover(what="all")
 ```
 
@@ -365,25 +409,25 @@ hw_discover(what="all")
 
 ```bash
 # Badge
-hyperweave compose badge "build" "passing" --genome brutalist-emerald
+hyperweave compose badge "build" "passing" --genome brutalist
 
 # Strip with metrics
-hyperweave compose strip "readme-ai" "STARS:2.9k,FORKS:278" -g brutalist-emerald
+hyperweave compose strip "readme-ai" "STARS:2.9k,FORKS:278" -g brutalist
 
 # Live data through the unified --data token grammar
-hyperweave compose badge "STARS" --data 'gh:anthropics/claude-code.stars' -g brutalist-emerald
+hyperweave compose badge "STARS" --data 'gh:anthropics/claude-code.stars' -g brutalist
 
 # Marquee with mixed text + live tokens
-hyperweave compose marquee-horizontal --data 'text:NEW RELEASE,gh:owner/repo.stars,text:DOWNLOAD' -g brutalist-emerald
+hyperweave compose marquee-horizontal --data 'text:NEW RELEASE,gh:owner/repo.stars,text:DOWNLOAD' -g brutalist
 
 # Artifact kit
-hyperweave kit readme -g brutalist-emerald --badges "build:passing,version:v0.2.0" --social "github,discord"
+hyperweave kit readme -g brutalist --badges "build:passing,version:v0.2.0" --social "github,discord"
 
 # Profile card (live GitHub data, path-segment identity)
-hyperweave compose stats eli64s -g chrome-horizon -o stats.svg
+hyperweave compose stats eli64s -g chrome -o stats.svg
 
 # Star history chart
-hyperweave compose chart stars eli64s/readme-ai -g brutalist-emerald -o chart.svg
+hyperweave compose chart stars eli64s/readme-ai -g brutalist -o chart.svg
 
 # Custom genome from a local JSON file (validated against the profile contract)
 hyperweave compose badge "DEPLOY" "live" --genome-file ./my-genome.json
@@ -394,17 +438,29 @@ hyperweave validate-genome ./my-genome.json
 
 ```bash
 # URL grammar: /v1/{type}/{title}/{value}/{genome}.{motion}
-curl 'https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278'
+curl 'https://hyperweave.app/v1/strip/readme-ai/brutalist.static?value=STARS:2.9k,FORKS:278'
 
 # Live data via the unified ?data= grammar (works on badge / strip / marquee)
-curl 'https://hyperweave.app/v1/badge/STARS/chrome-horizon.static?data=gh:anthropics/claude-code.stars'
-curl 'https://hyperweave.app/v1/strip/readme-ai/brutalist-emerald.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks'
-curl 'https://hyperweave.app/v1/marquee/SCROLL/brutalist-emerald.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars'
+curl 'https://hyperweave.app/v1/badge/STARS/chrome.static?data=gh:anthropics/claude-code.stars'
+curl 'https://hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks'
+curl 'https://hyperweave.app/v1/marquee/SCROLL/brutalist.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars'
+
+# Chromatic variant (automata's blue/purple/bifamily axis) and size (badge default/compact)
+curl 'https://hyperweave.app/v1/badge/PYPI/automata.static?variant=purple&data=pypi:hyperweave.version'
+curl 'https://hyperweave.app/v1/badge/build/passing/automata.static?size=compact'
+
+# Genome-themed dividers
+curl 'https://hyperweave.app/v1/divider/band/chrome.static'
+curl 'https://hyperweave.app/v1/divider/seam/brutalist.static'
+curl 'https://hyperweave.app/v1/divider/dissolve/automata.static'
+
+# Genome-agnostic dividers
+curl 'https://hyperweave.app/a/inneraura/dividers/zeropoint'
 
 # POST compose
 curl -X POST https://hyperweave.app/v1/compose \
   -H "Content-Type: application/json" \
-  -d '{"type":"strip","title":"hyperweave","genome":"brutalist-emerald","value":"STARS:2.9k"}'
+  -d '{"type":"strip","title":"hyperweave","genome":"brutalist","value":"STARS:2.9k"}'
 
 # Local server
 hyperweave serve --port 8000
@@ -464,10 +520,10 @@ Every artifact ships with:
 | Dimension | Count |
 |---|---|
 | Frame types | 9 (badge, strip, icon, divider, marquee-horizontal, stats, chart, receipt, rhythm-strip) |
-| Genomes | 3 (automata, brutalist-emerald, chrome-horizon) |
+| Genomes | 3 (automata, brutalist, chrome) |
 | Motion configs | 6 (1 static + 5 border SMIL) |
 | Glyphs | 99 (93 Simple Icons + 6 geometric) |
-| Divider variants | 6 (block, cellular-dissolve, current, takeoff, void, zeropoint) |
+| Divider variants | 8 &mdash; 3 genome-themed (`band` chrome, `seam` brutalist, `dissolve` automata) + 5 genome-agnostic (`block`, `current`, `takeoff`, `void`, `zeropoint`) at <code>/a/inneraura/dividers/</code> |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
 | Paradigms | 4 per frame (default, brutalist, chrome, cellular) — per-frame dispatch from genome |
 | Bundled fonts | 3 (JetBrains Mono, Orbitron, Chakra Petch — base64-embedded) |

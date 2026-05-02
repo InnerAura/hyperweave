@@ -55,7 +55,7 @@ async def test_hw_live_error_fallback() -> None:
 
 
 async def test_hw_kit_readme() -> None:
-    result = await hw_kit(type="readme", genome="brutalist-emerald", project="test", badges="build:passing")
+    result = await hw_kit(type="readme", genome="brutalist", project="test", badges="build:passing")
     assert isinstance(result, dict)
     assert "badge-build" in result
     assert "divider" in result
@@ -75,7 +75,7 @@ async def test_hw_discover_genomes() -> None:
     assert "genomes" in result
     assert "motions" not in result
     ids = [g["id"] for g in result["genomes"]]
-    assert "brutalist-emerald" in ids
+    assert "brutalist" in ids
 
 
 async def test_hw_discover_motions() -> None:
@@ -140,8 +140,8 @@ async def test_schema_resource() -> None:
 async def test_genomes_resource() -> None:
     result = await genomes_resource()
     data = json.loads(result)
-    assert "brutalist-emerald" in data
-    assert "chrome-horizon" in data
+    assert "brutalist" in data
+    assert "chrome" in data
 
 
 async def test_motions_resource() -> None:

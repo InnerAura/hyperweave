@@ -52,7 +52,7 @@ def test_slot_content_frozen() -> None:
 def test_compose_spec_defaults() -> None:
     spec = ComposeSpec(type="badge")
     assert spec.type == "badge"
-    assert spec.genome_id == "brutalist-emerald"
+    assert spec.genome_id == "brutalist"
     assert spec.state == "active"
     assert spec.motion == "static"
     assert spec.metadata_tier == 3
@@ -106,7 +106,7 @@ def test_frame_def() -> None:
 
 
 def test_genome_spec_brutalist_emerald(sample_genome: GenomeSpec) -> None:
-    assert sample_genome.id == "brutalist-emerald"
+    assert sample_genome.id == "brutalist"
     assert sample_genome.category == "dark"
     assert sample_genome.profile == "brutalist"
     assert sample_genome.surface_0 == "#0A2218"
@@ -260,7 +260,7 @@ def test_genome_spec_paradigm_fields_default_empty() -> None:
 
 
 def test_genome_spec_brutalist_emerald_has_paradigms(sample_genome: GenomeSpec) -> None:
-    """The brutalist-emerald genome declares paradigms and structural dicts."""
+    """The brutalist genome declares paradigms and structural dicts."""
     # Paradigms dispatch map (Principle 26)
     assert sample_genome.paradigms["badge"] == "default"
     assert sample_genome.paradigms["stats"] == "brutalist"
@@ -420,7 +420,7 @@ def test_is_wcag_aa_similar_colors() -> None:
 
 
 def test_contrast_ratio_brutalist_emerald() -> None:
-    """Verify that brutalist-emerald ink on surface passes WCAG AA."""
+    """Verify that brutalist ink on surface passes WCAG AA."""
     ratio = contrast_ratio("#14532D", "#A7F3D0")
     assert ratio >= 4.5
 
@@ -509,8 +509,8 @@ def test_threshold_invalid_value() -> None:
 
 
 def test_load_genomes(all_genomes: dict[str, GenomeSpec]) -> None:
-    assert "brutalist-emerald" in all_genomes
-    assert "chrome-horizon" in all_genomes
+    assert "brutalist" in all_genomes
+    assert "chrome" in all_genomes
     assert len(all_genomes) >= 2
 
 

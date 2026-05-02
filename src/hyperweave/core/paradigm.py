@@ -297,8 +297,8 @@ class ParadigmSpec(FrozenModel):
     :func:`hyperweave.compose.validate_paradigms.validate_genome_against_paradigms`.
     """
 
-    frame_family_defaults: dict[str, str] = Field(default_factory=dict)
-    """Per-frame default for ``ComposeSpec.family`` when the user leaves it
+    frame_variant_defaults: dict[str, str] = Field(default_factory=dict)
+    """Per-frame default for ``ComposeSpec.variant`` when the user leaves it
     empty. Cellular paradigm declares ``{badge: blue, strip: bifamily, ...}``
     so monofamily artifacts (badge/icon) pick blue by default and bifamily
     artifacts (strip/marquee/divider) show both palettes simultaneously.

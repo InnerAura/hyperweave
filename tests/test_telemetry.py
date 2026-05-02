@@ -493,7 +493,7 @@ class TestGenerationEvent:
 
         spec = ComposeSpec(
             type="badge",
-            genome_id="brutalist-emerald",
+            genome_id="brutalist",
             motion="bars",
             regime="normal",
             metadata_tier=3,
@@ -507,7 +507,7 @@ class TestGenerationEvent:
         event = emit_generation_event(spec, result)
         assert isinstance(event, GenerationEvent)
         assert event.artifact_type == "badge"
-        assert event.genome_id == "brutalist-emerald"
+        assert event.genome_id == "brutalist"
         assert event.motion == "bars"
         assert event.width == 200
         assert event.height == 22

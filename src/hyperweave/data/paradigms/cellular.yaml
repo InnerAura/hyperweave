@@ -14,26 +14,26 @@ description: >
   reads state_{status}_{core,bright} fields from the genome.
 
 requires_genome_fields:
-  - family_blue_rim_stops
-  - family_blue_pattern_cells
-  - family_blue_seam_mid
-  - family_blue_label_slab_fill
-  - family_blue_label_text
-  - family_blue_value_text
-  - family_blue_canvas_top
-  - family_blue_canvas_bottom
-  - family_purple_rim_stops
-  - family_purple_pattern_cells
-  - family_purple_seam_mid
-  - family_purple_label_slab_fill
-  - family_purple_label_text
-  - family_purple_value_text
-  - family_purple_canvas_top
-  - family_purple_canvas_bottom
-  - bifamily_bridge_teal_mid
-  - bifamily_bridge_teal_deep
-  - bifamily_bridge_amethyst_core
-  - bifamily_bridge_amethyst_bright
+  - variant_blue_rim_stops
+  - variant_blue_pattern_cells
+  - variant_blue_seam_mid
+  - variant_blue_label_slab_fill
+  - variant_blue_label_text
+  - variant_blue_value_text
+  - variant_blue_canvas_top
+  - variant_blue_canvas_bottom
+  - variant_purple_rim_stops
+  - variant_purple_pattern_cells
+  - variant_purple_seam_mid
+  - variant_purple_label_slab_fill
+  - variant_purple_label_text
+  - variant_purple_value_text
+  - variant_purple_canvas_top
+  - variant_purple_canvas_bottom
+  - variant_bifamily_bridge_teal_mid
+  - variant_bifamily_bridge_teal_deep
+  - variant_bifamily_bridge_amethyst_core
+  - variant_bifamily_bridge_amethyst_bright
   - cellular_pulse_base_duration
   - cellular_pattern_opacity
   - state_passing_core
@@ -47,7 +47,7 @@ requires_genome_fields:
   - state_offline_core
   - state_offline_bright
 
-frame_family_defaults:
+frame_variant_defaults:
   badge: blue
   icon: blue
   strip: bifamily
@@ -125,7 +125,7 @@ marquee:
   # Bifamily-tspan palette: scroll items alternate teal/amethyst.
   # Specimen cellular-automata-marquee-current.svg uses these exact hexes
   # for tspan fills; sourcing from the genome chromosomes is intentional
-  # (resolver routes them via family_blue_seam_mid / family_purple_seam_mid
+  # (resolver routes them via variant_blue_seam_mid / variant_purple_seam_mid
   # rather than re-stating them here, but the palette length tells the
   # resolver how many cycle slots exist).
   tspan_palette: ["#3A9FB8", "#A88AD4"]

@@ -42,22 +42,22 @@ def _make_chart_spec(genome: str) -> ComposeSpec:
 
 
 def test_chart_compose_brutalist_emerald_full() -> None:
-    result = compose(_make_chart_spec("brutalist-emerald"))
+    result = compose(_make_chart_spec("brutalist"))
     svg = result.svg
     assert result.width == 900
     assert result.height == 500
     assert 'data-hw-frame="chart"' in svg
-    # brutalist-emerald declares paradigms.chart = "brutalist"
+    # brutalist declares paradigms.chart = "brutalist"
     assert "<polyline" in svg
     assert 'stroke-linejoin="miter"' in svg
     assert "<rect" in svg  # square markers
 
 
 def test_chart_compose_chrome_horizon_full() -> None:
-    result = compose(_make_chart_spec("chrome-horizon"))
+    result = compose(_make_chart_spec("chrome"))
     svg = result.svg
     assert 'data-hw-frame="chart"' in svg
-    # chrome-horizon declares paradigms.chart = "chrome"
+    # chrome declares paradigms.chart = "chrome"
     # → bezier <path> instead of polyline
     assert "<path" in svg
     # Diamond markers via rotate(45)
@@ -73,7 +73,7 @@ def test_chart_graceful_degradation_without_data() -> None:
     """
     spec = ComposeSpec(
         type="chart",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         chart_owner="eli64s",
         chart_repo="readme-ai",
         connector_data=None,
@@ -91,7 +91,7 @@ def test_chart_zero_stars_renders_empty_state() -> None:
     """A repo with 0 real stars must render an empty state — no 1200 leak, no fake polyline."""
     spec = ComposeSpec(
         type="chart",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         chart_owner="jiahongc",
         chart_repo="march-madness-prediction-market",
         connector_data={
@@ -121,7 +121,7 @@ def test_chart_six_stars_renders_real_polyline_with_derived_labels() -> None:
     points = [{"date": f"2025-{m:02d}-01T00:00:00Z", "count": i + 1} for i, m in enumerate((1, 3, 5, 7, 9, 11))]
     spec = ComposeSpec(
         type="chart",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         chart_owner="jiahongc",
         chart_repo="cc-companion",
         connector_data={
@@ -188,14 +188,14 @@ async def test_fetch_stargazer_history_single_page_uses_per_stargazer_timestamps
 
 
 def test_chart_structural_differentiation_proves_not_color_swap() -> None:
-    """brutalist-emerald and chrome-horizon produce materially different SVGs.
+    """brutalist and chrome produce materially different SVGs.
 
     Enforces Principle 26: paradigm dispatch must produce structural differences,
     not just color swaps. We compare element counts — the two paradigms use
     different primitives (polyline vs path, rect vs rotated-rect markers).
     """
-    br = compose(_make_chart_spec("brutalist-emerald")).svg
-    ch = compose(_make_chart_spec("chrome-horizon")).svg
+    br = compose(_make_chart_spec("brutalist")).svg
+    ch = compose(_make_chart_spec("chrome")).svg
 
     # brutalist uses <polyline>, chrome uses <path> for the line.
     assert br.count("<polyline") > ch.count("<polyline")

@@ -72,7 +72,7 @@ class HyperWeaveSettings(BaseSettings):
     total_timeout: float = Field(default=15.0, description="HTTP total timeout in seconds")
 
     # -- Defaults --
-    default_genome: str = Field(default="brutalist-emerald", description="Default genome slug")
+    default_genome: str = Field(default="brutalist", description="Default genome slug")
     default_metadata_tier: int = Field(default=3, description="Default metadata tier (3 = Resonant)")
     default_regime: str = Field(default="normal", description="Default policy lane")
     default_glyph_mode: str = Field(default="auto", description="Default glyph rendering mode")

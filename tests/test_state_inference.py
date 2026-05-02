@@ -19,7 +19,7 @@ def _metadata_state(title: str, value: str, state: str = "active") -> str:
     """
     spec = ComposeSpec(
         type="badge",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         title=title,
         value=value,
         state=state,

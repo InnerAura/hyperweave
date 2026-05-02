@@ -1,27 +1,21 @@
-{# Cellular badge defs — per-family rim/seam/canvas gradients + pattern pulse.
+{# Cellular badge defs — per-variant rim/seam/canvas gradients + pattern pulse.
 
    Invariant 11: zero specimen hex fallbacks. All colors flow from genome
    fields validated at load time by validate_genome_against_paradigms.
-   Invariant 12: family is resolved via slug interpolation, never string
-   comparison in Python. This template uses {% if family == ... %} which
-   is paradigm-scoped template logic (not the forbidden pattern). #}
+   Path B grammar (v0.2.19): variant lookup via dynamic key interpolation
+   on _genome_raw, never string comparison branches. Adding a new variant
+   to automata.json's `variants` list + a new `variant_<name>_*` block
+   requires zero template edits. #}
 <clipPath id="{{ uid }}-clip">
   <rect width="{{ width }}" height="{{ height }}"/>
 </clipPath>
-{% set fam = "purple" if family == "purple" else "blue" %}
-{% if fam == "blue" %}
-  {% set rim_stops = family_blue_rim_stops %}
-  {% set seam_mid = family_blue_seam_mid %}
-  {% set seam_anchor = family_blue_pattern_cells[0] %}
-  {% set canvas_top = family_blue_canvas_top %}
-  {% set canvas_bottom = family_blue_canvas_bottom %}
-{% else %}
-  {% set rim_stops = family_purple_rim_stops %}
-  {% set seam_mid = family_purple_seam_mid %}
-  {% set seam_anchor = family_purple_pattern_cells[0] %}
-  {% set canvas_top = family_purple_canvas_top %}
-  {% set canvas_bottom = family_purple_canvas_bottom %}
-{% endif %}
+{# bifamily monofamily-side resolves to blue; pure mono uses spec.variant directly #}
+{% set v = "purple" if variant == "purple" else "blue" %}
+{% set rim_stops = _genome_raw["variant_" ~ v ~ "_rim_stops"] %}
+{% set seam_mid = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
+{% set seam_anchor = _genome_raw["variant_" ~ v ~ "_pattern_cells"][0] %}
+{% set canvas_top = _genome_raw["variant_" ~ v ~ "_canvas_top"] %}
+{% set canvas_bottom = _genome_raw["variant_" ~ v ~ "_canvas_bottom"] %}
 <linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="0" y2="1">
   {% for stop in rim_stops %}
   <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>

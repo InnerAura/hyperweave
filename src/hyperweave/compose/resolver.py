@@ -26,6 +26,33 @@ if TYPE_CHECKING:
 _TELEMETRY_FRAMES: frozenset[str] = frozenset({FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD})
 
 
+def resolve_variant(spec: ComposeSpec, genome: dict[str, Any], paradigm_spec: Any = None) -> str:
+    """Resolve the chromatic variant via Path B precedence chain.
+
+    1. spec.variant (explicit user input)
+    2. paradigm_spec.frame_variant_defaults[spec.type] (paradigm per-frame default)
+    3. genome.flagship_variant (genome's default)
+    4. "" (no variant)
+
+    When the genome declares a non-empty `variants` whitelist, the resolved
+    value must be in that list (or empty). Raises ValueError on violation —
+    moved here from the Pydantic field_validator at v0.2.19 (Path B grammar)
+    so genomes can declare their own allowed variants without Python edits.
+    """
+    resolved = spec.variant
+    if not resolved and paradigm_spec is not None:
+        defaults = getattr(paradigm_spec, "frame_variant_defaults", {}) or {}
+        resolved = defaults.get(spec.type, "")
+    if not resolved:
+        resolved = str(genome.get("flagship_variant", ""))
+
+    allowed = list(genome.get("variants") or [])
+    if allowed and resolved and resolved not in allowed:
+        msg = f"variant '{resolved}' not in genome.variants {allowed}"
+        raise ValueError(msg)
+    return resolved
+
+
 def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     """Resolve a ComposeSpec into a typed ResolvedArtifact."""
     # Telemetry frames always use the telemetry-void genome (specimen palette).
@@ -83,7 +110,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     # chrome+hero text gradients) applied universally at the dispatcher.
     # Replaces manual _genome_material_context(...) calls previously scattered
     # across badge/strip/icon/divider/marquee/stats/chart resolvers —
-    # the forgetting of which caused Bug D (stats + chart rendered chrome-horizon
+    # the forgetting of which caused Bug D (stats + chart rendered chrome
     # envelopes regardless of genome). setdefault semantics: a frame resolver
     # that legitimately pre-computes one of these keys still wins.
     for _k, _v in _genome_material_context(genome, profile).items():
@@ -131,7 +158,7 @@ def resolve_badge(
     # Cellular badges render at 32px default / 20px compact; brutalist/chrome
     # stay at 20px. ``compact`` flows into text-measurement scaling and
     # template pattern-cell geometry.
-    compact = spec.variant == "compact"
+    compact = spec.size == "compact"
     badge_cfg_for_height = paradigm_spec.badge if paradigm_spec else None
     if badge_cfg_for_height is not None:
         height = badge_cfg_for_height.frame_height_compact if compact else badge_cfg_for_height.frame_height
@@ -292,10 +319,7 @@ def resolve_badge(
     is_state_badge = spec.state in state_set and (not value_raw or value_raw == spec.state)
 
     # Family resolution: user wins; empty falls back to paradigm default.
-    resolved_family = spec.family
-    if not resolved_family and paradigm_spec is not None:
-        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
-        resolved_family = family_defaults.get(spec.type, "")
+    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
 
     # Profile visual context (envelope, well, specular, chrome text gradients)
     # is now applied universally by the dispatcher at resolve() via
@@ -327,9 +351,9 @@ def resolve_badge(
             "use_mono": use_mono,
             "label_uppercase": label_uppercase,
             "inset": inset,
-            "family": resolved_family,
+            "variant": resolved_variant,
             "is_state_badge": is_state_badge,
-            "compact": spec.variant == "compact",
+            "compact": spec.size == "compact",
         },
     }
 
@@ -557,12 +581,9 @@ def resolve_strip(
     flank_width = strip_cfg.flank_width if strip_cfg else 0
     flank_cell_size = strip_cfg.flank_cell_size if strip_cfg else 12
     has_flanks = flank_width > 0
-    # Family resolution: user-specified ``--family`` wins; empty falls back
-    # to paradigm's frame_family_defaults (cellular → bifamily for strip).
-    resolved_family = spec.family
-    if not resolved_family and paradigm_spec is not None:
-        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
-        resolved_family = family_defaults.get(spec.type, "")
+    # Family resolution: user-specified ``--variant`` wins; empty falls back
+    # to paradigm's frame_variant_defaults (cellular → bifamily for strip).
+    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
 
     n = max(len(metrics), 1)
     # If flanks are present, metric zones shift right by flank_width on each side
@@ -642,7 +663,7 @@ def resolve_strip(
         "status_x": status_x,
         "content_right": content_right,
         "glyph_zone_x_offset": glyph_zone_x_offset,
-        "family": resolved_family,
+        "variant": resolved_variant,
         "show_status_indicator": show_status_indicator,
         "has_flanks": has_flanks,
         "flank_width": flank_width,
@@ -747,10 +768,7 @@ def resolve_icon(
         icon_variant = "binary-square"
 
     # Family resolution (cellular icon: monofamily, default blue).
-    resolved_family = spec.family
-    if not resolved_family and paradigm_spec is not None:
-        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
-        resolved_family = family_defaults.get(spec.type, "")
+    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
 
     # Paradigm-driven viewBox override. Chrome paradigm sets viewbox_w/h=120
     # so the chrome icon templates can use the v2 specimen's 120-unit material
@@ -765,7 +783,7 @@ def resolve_icon(
         "icon_rx": 0,
         "icon_label": icon_label,
         "icon_variant": icon_variant,
-        "family": resolved_family,
+        "variant": resolved_variant,
         # Raw genome hex colors for gradient stops (CSS var() doesn't work in SVG stops)
         "genome_signal": genome.get("accent", "#845ef7"),
         "genome_surface": genome.get("surface_0", "#000000"),
@@ -792,30 +810,64 @@ def resolve_divider(
     profile: dict[str, Any],
     **_kw: Any,
 ) -> dict[str, Any]:
-    """Resolve divider dimensions using specimen variants."""
-    _specimen_variants = {"block", "current", "takeoff", "void", "zeropoint", "cellular-dissolve"}
-    variant = spec.divider_variant if spec.divider_variant in _specimen_variants else "zeropoint"
+    """Resolve divider dimensions + template selection.
+
+    v0.2.19 split:
+      - 5 editorial generics (block/current/takeoff/void/zeropoint) + automata's
+        dissolve render via the legacy multi-branch template `frames/divider.svg.j2`.
+      - Genome-themed dividers (band, seam) live in `frames/divider/<genome>-<slug>.svg.j2`
+        and are dispatched via slug interpolation.
+      - Validation: the (slug, genome) pairing must be in `genome.dividers` for
+        compositor-route requests. Editorial generics bypass this check.
+    """
+    _editorial_generics = {"block", "current", "takeoff", "void", "zeropoint"}
+    _all_known_variants = _editorial_generics | {"dissolve", "band", "seam"}
+    variant = spec.divider_variant if spec.divider_variant in _all_known_variants else "zeropoint"
+
+    # (slug, genome) pairing validator — only enforced for non-editorial slugs
+    # (editorial generics are intentionally genome-agnostic, served via /a/inneraura/).
+    if variant not in _editorial_generics:
+        allowed = list(genome.get("dividers") or [])
+        if variant not in allowed:
+            msg = f"divider_variant '{variant}' not in genome.dividers {allowed}"
+            raise ValueError(msg)
+
     variant_dims: dict[str, tuple[int, int]] = {
         "block": (700, 80),
         "current": (700, 40),
         "takeoff": (700, 100),
         "void": (700, 40),
         "zeropoint": (700, 30),
-        "cellular-dissolve": (800, 28),
+        "dissolve": (800, 28),
+        "band": (800, 22),
+        "seam": (800, 16),
     }
     w, h = variant_dims.get(variant, (700, 30))
+
+    # Slug-interpolation template dispatch: genome-themed dividers live at
+    # frames/divider/<genome>-<slug>.svg.j2. Falls back to the multi-branch
+    # legacy template (handles editorial generics + dissolve).
+    from hyperweave.render.templates import template_exists  # late import: avoid cycle
+
+    genome_specific = f"frames/divider/{spec.genome_id}-{variant}.svg.j2"
+    template = genome_specific if template_exists(genome_specific) else "frames/divider.svg.j2"
 
     ctx: dict[str, Any] = {
         "divider_variant": variant,
         "divider_label": spec.value or "",
-        "family": spec.family or "bifamily",
+        "variant": spec.variant or "bifamily",
+        # Pass through chrome chromosomes so chrome-band template's envelope_stops
+        # for-loop has data. brutalist-seam needs accent + accent_signal.
+        "envelope_stops": genome.get("envelope_stops", []),
+        "accent": genome.get("accent", ""),
+        "accent_signal": genome.get("accent_signal", ""),
     }
     # Profile visual context now injected centrally by the dispatcher.
 
     return {
         "width": w,
         "height": h,
-        "template": "frames/divider.svg.j2",
+        "template": template,
         "context": ctx,
     }
 
@@ -835,10 +887,7 @@ def resolve_marquee(
     inside ``_resolve_horizontal``.
     """
     # Family resolution (cellular marquee-horizontal: bifamily default).
-    resolved_family = spec.family
-    if not resolved_family and paradigm_spec is not None:
-        family_defaults = getattr(paradigm_spec, "frame_family_defaults", {}) or {}
-        resolved_family = family_defaults.get(spec.type, "")
+    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
 
     # ``_resolve_horizontal`` only needs signal_hex/surface_hex as hex-resolved
     # carriers for ``<stop>`` attributes (var() is unreliable inside SVG stops).
@@ -849,9 +898,9 @@ def resolve_marquee(
     chrome_ctx: dict[str, Any] = {
         "signal_hex": genome.get("accent", "#10B981"),
         "surface_hex": genome.get("surface_0", genome.get("surface", "#0A0A0A")),
-        "family": resolved_family,
-        "family_blue_info": genome.get("family_blue_seam_mid", ""),
-        "family_purple_info": genome.get("family_purple_seam_mid", ""),
+        "variant": resolved_variant,
+        "variant_blue_info": genome.get("variant_blue_seam_mid", ""),
+        "variant_purple_info": genome.get("variant_purple_seam_mid", ""),
     }
 
     # Paradigm-declared marquee config — separator glyph, palette, live-block
@@ -1154,8 +1203,8 @@ def _resolve_horizontal(
     # string sentinel — the template substitutes the gradient URL.
     bold_pattern = _prof.get("marquee_horizontal_bold_pattern", "even")
     fam = chrome_ctx.get("family", "")
-    teal_info = chrome_ctx.get("family_blue_info", "")
-    amethyst_info = chrome_ctx.get("family_purple_info", "")
+    teal_info = chrome_ctx.get("variant_blue_info", "")
+    amethyst_info = chrome_ctx.get("variant_purple_info", "")
     bifamily_active = fam == "bifamily" and bool(teal_info) and bool(amethyst_info) and bool(tspan_palette)
 
     # Default font_weight for measurement: paradigm-level value when set,
@@ -2048,26 +2097,26 @@ def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) ->
         "glyph_fill": genome.get("glyph_inner", ""),
         "light_mode": genome.get("light_mode"),
         # Automata bifamily palettes (surfaced for cellular paradigm templates).
-        "family_blue_rim_stops": genome.get("family_blue_rim_stops", []),
-        "family_blue_pattern_cells": genome.get("family_blue_pattern_cells", []),
-        "family_blue_seam_mid": genome.get("family_blue_seam_mid", ""),
-        "family_blue_label_slab_fill": genome.get("family_blue_label_slab_fill", ""),
-        "family_blue_label_text": genome.get("family_blue_label_text", ""),
-        "family_blue_value_text": genome.get("family_blue_value_text", ""),
-        "family_blue_canvas_top": genome.get("family_blue_canvas_top", ""),
-        "family_blue_canvas_bottom": genome.get("family_blue_canvas_bottom", ""),
-        "family_purple_rim_stops": genome.get("family_purple_rim_stops", []),
-        "family_purple_pattern_cells": genome.get("family_purple_pattern_cells", []),
-        "family_purple_seam_mid": genome.get("family_purple_seam_mid", ""),
-        "family_purple_label_slab_fill": genome.get("family_purple_label_slab_fill", ""),
-        "family_purple_label_text": genome.get("family_purple_label_text", ""),
-        "family_purple_value_text": genome.get("family_purple_value_text", ""),
-        "family_purple_canvas_top": genome.get("family_purple_canvas_top", ""),
-        "family_purple_canvas_bottom": genome.get("family_purple_canvas_bottom", ""),
-        "bifamily_bridge_teal_mid": genome.get("bifamily_bridge_teal_mid", ""),
-        "bifamily_bridge_teal_deep": genome.get("bifamily_bridge_teal_deep", ""),
-        "bifamily_bridge_amethyst_core": genome.get("bifamily_bridge_amethyst_core", ""),
-        "bifamily_bridge_amethyst_bright": genome.get("bifamily_bridge_amethyst_bright", ""),
+        "variant_blue_rim_stops": genome.get("variant_blue_rim_stops", []),
+        "variant_blue_pattern_cells": genome.get("variant_blue_pattern_cells", []),
+        "variant_blue_seam_mid": genome.get("variant_blue_seam_mid", ""),
+        "variant_blue_label_slab_fill": genome.get("variant_blue_label_slab_fill", ""),
+        "variant_blue_label_text": genome.get("variant_blue_label_text", ""),
+        "variant_blue_value_text": genome.get("variant_blue_value_text", ""),
+        "variant_blue_canvas_top": genome.get("variant_blue_canvas_top", ""),
+        "variant_blue_canvas_bottom": genome.get("variant_blue_canvas_bottom", ""),
+        "variant_purple_rim_stops": genome.get("variant_purple_rim_stops", []),
+        "variant_purple_pattern_cells": genome.get("variant_purple_pattern_cells", []),
+        "variant_purple_seam_mid": genome.get("variant_purple_seam_mid", ""),
+        "variant_purple_label_slab_fill": genome.get("variant_purple_label_slab_fill", ""),
+        "variant_purple_label_text": genome.get("variant_purple_label_text", ""),
+        "variant_purple_value_text": genome.get("variant_purple_value_text", ""),
+        "variant_purple_canvas_top": genome.get("variant_purple_canvas_top", ""),
+        "variant_purple_canvas_bottom": genome.get("variant_purple_canvas_bottom", ""),
+        "variant_bifamily_bridge_teal_mid": genome.get("variant_bifamily_bridge_teal_mid", ""),
+        "variant_bifamily_bridge_teal_deep": genome.get("variant_bifamily_bridge_teal_deep", ""),
+        "variant_bifamily_bridge_amethyst_core": genome.get("variant_bifamily_bridge_amethyst_core", ""),
+        "variant_bifamily_bridge_amethyst_bright": genome.get("variant_bifamily_bridge_amethyst_bright", ""),
         "cellular_pulse_base_duration": genome.get("cellular_pulse_base_duration", "6s"),
         "cellular_pulse_fast_duration": genome.get("cellular_pulse_fast_duration", "3s"),
         "cellular_pattern_opacity": genome.get("cellular_pattern_opacity", "0.78"),

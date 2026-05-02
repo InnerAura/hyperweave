@@ -8,7 +8,7 @@ from hyperweave.core.models import ComposeResult, ComposeSpec
 
 def compose_kit(
     kit_type: str,
-    genome: str = "brutalist-emerald",
+    genome: str = "brutalist",
     project: str = "",
     badges: str = "",
     social: str = "",

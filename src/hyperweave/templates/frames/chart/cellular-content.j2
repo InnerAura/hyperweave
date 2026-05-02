@@ -25,7 +25,7 @@
   <rect width="{{ cw }}" height="{{ ch }}" fill="{{ surface_0 | default('#04060A') }}"/>
 
   {# Left teal flank — 3 x n_rows bifamily substrate #}
-  {% set blue_trio = family_blue_pattern_cells %}
+  {% set blue_trio = variant_blue_pattern_cells %}
   {% set blue_classes = ["cc1", "ccd", "cc3", "cc4", "ccd", "ccf", "cc2", "ccd", "cc1", "cc2", "cc3", "cc4"] %}
   <g opacity="0.65">
   {% for col in range(flank_cols) %}
@@ -38,7 +38,7 @@
   </g>
 
   {# Right amethyst flank #}
-  {% set purple_trio = family_purple_pattern_cells %}
+  {% set purple_trio = variant_purple_pattern_cells %}
   {% set purple_classes = ["cc2", "ccd", "ccf", "cc3", "cc1", "cc4", "ccd", "cc2", "ccf", "cc3", "cc1", "ccd"] %}
   <g opacity="0.65">
   {% for col in range(flank_cols) %}
@@ -52,16 +52,16 @@
 
   {# Data panel — 768x588 between flanks #}
   <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ ch - 12 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.92"/>
-  <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ ch - 12 }}" fill="none" stroke="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.25"/>
+  <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ ch - 12 }}" fill="none" stroke="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.25"/>
 </g>
 
 {# HEADER — stacked: brand, title, accent rule, repo slug, hairline. #}
 <g data-hw-zone="header">
   <text x="86" y="34" class="{{ uid }}-title-sub">INNERAURA LABS</text>
   <text x="86" y="72" class="{{ uid }}-title-main">STAR HISTORY</text>
-  <rect x="86" y="82" width="62" height="3" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" opacity="0.6"/>
+  <rect x="86" y="82" width="62" height="3" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" opacity="0.6"/>
   <text x="86" y="108" class="{{ uid }}-hdr-user">{{ chart_repo | default('repo') }}</text>
-  <line x1="86" y1="122" x2="814" y2="122" stroke="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.18"/>
+  <line x1="86" y1="122" x2="814" y2="122" stroke="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.18"/>
 </g>
 
 {# HERO — total stars top-right. #}
@@ -72,17 +72,17 @@
 
 {# CONWAY'S GLIDER — cellular-automaton lineage marker. #}
 <g data-hw-zone="glider" transform="translate(640, 26)" opacity="0.32">
-  <rect x="8"  y="0"  width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="16" y="8"  width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="0"  y="16" width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="8"  y="16" width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="16" y="16" width="7" height="7" fill="{{ family_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="8"  y="0"  width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="16" y="8"  width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="0"  y="16" width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="8"  y="16" width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
+  <rect x="16" y="16" width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
 </g>
 
 {# CHART — fragments emitted in absolute SVG coords (no outer translate).
    Renders via the shared components/chart-*.svg.j2 partials. #}
-{% set _purple_furniture = family_purple_pattern_cells[0] | default('#6B3B8A') %}
-{% set _teal_furniture = family_blue_pattern_cells[0] | default('#1E849A') %}
+{% set _purple_furniture = variant_purple_pattern_cells[0] | default('#6B3B8A') %}
+{% set _teal_furniture = variant_blue_pattern_cells[0] | default('#1E849A') %}
 {% set _baseline_y = vy + vh %}
 <g data-hw-zone="chart">
   {# Y-axis labels — the "0" baseline is drawn in the purple furniture tone

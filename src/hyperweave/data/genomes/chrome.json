@@ -1,6 +1,6 @@
 {
-  "id": "chrome-horizon",
-  "name": "Chrome Horizon",
+  "id": "chrome",
+  "name": "Chrome",
   "category": "dark",
   "profile": "chrome",
   "surface_0": "#000A14",
@@ -31,6 +31,9 @@
     "entanglement",
     "rimrun"
   ],
+  "variants": [],
+  "flagship_variant": "",
+  "dividers": ["band"],
   "bg": "#000A14",
   "bg_alt": "#0C1E2E",
   "brand_text": "#E0ECF6",

@@ -27,36 +27,36 @@ def test_cellular_requires_bifamily_fields() -> None:
     required = set(cellular.requires_genome_fields)
     # Blue family
     assert {
-        "family_blue_rim_stops",
-        "family_blue_pattern_cells",
-        "family_blue_label_text",
-        "family_blue_value_text",
+        "variant_blue_rim_stops",
+        "variant_blue_pattern_cells",
+        "variant_blue_label_text",
+        "variant_blue_value_text",
     }.issubset(required)
     # Purple family
     assert {
-        "family_purple_rim_stops",
-        "family_purple_pattern_cells",
-        "family_purple_label_text",
-        "family_purple_value_text",
+        "variant_purple_rim_stops",
+        "variant_purple_pattern_cells",
+        "variant_purple_label_text",
+        "variant_purple_value_text",
     }.issubset(required)
     # Bifamily bridge
     assert {
-        "bifamily_bridge_teal_mid",
-        "bifamily_bridge_amethyst_core",
+        "variant_bifamily_bridge_teal_mid",
+        "variant_bifamily_bridge_amethyst_core",
     }.issubset(required)
     # State palette (used by the shared state-signal cascade partial)
     assert {"state_passing_core", "state_passing_bright", "state_critical_core"}.issubset(required)
 
 
-def test_cellular_frame_family_defaults() -> None:
+def test_cellular_frame_variant_defaults() -> None:
     """Paradigm declares per-frame family defaults (data-driven, not Python)."""
     cellular = get_paradigms()["cellular"]
-    assert cellular.frame_family_defaults.get("badge") == "blue"
-    assert cellular.frame_family_defaults.get("icon") == "blue"
-    assert cellular.frame_family_defaults.get("strip") == "bifamily"
-    assert cellular.frame_family_defaults.get("marquee-horizontal") == "bifamily"
+    assert cellular.frame_variant_defaults.get("badge") == "blue"
+    assert cellular.frame_variant_defaults.get("icon") == "blue"
+    assert cellular.frame_variant_defaults.get("strip") == "bifamily"
+    assert cellular.frame_variant_defaults.get("marquee-horizontal") == "bifamily"
     # banner default removed in v0.2.14 with the banner frame type.
-    assert "banner" not in cellular.frame_family_defaults
+    assert "banner" not in cellular.frame_variant_defaults
 
 
 def test_cellular_strip_config_exposes_status_flags() -> None:

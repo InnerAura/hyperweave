@@ -33,9 +33,9 @@ def all_genomes() -> dict[str, GenomeSpec]:
 
 @pytest.fixture(scope="session")
 def sample_genome() -> GenomeSpec:
-    """Return the brutalist-emerald genome for tests."""
+    """Return the brutalist genome for tests."""
     genomes = load_genomes()
-    return genomes["brutalist-emerald"]
+    return genomes["brutalist"]
 
 
 @pytest.fixture(scope="session")
@@ -78,7 +78,7 @@ def sample_compose_spec() -> ComposeSpec:
     """Return a minimal badge ComposeSpec for testing."""
     return ComposeSpec(
         type="badge",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         profile_id="brutalist",
         title="build",
         value="passing",
@@ -95,7 +95,7 @@ def strip_compose_spec() -> ComposeSpec:
     """Return a strip ComposeSpec for testing."""
     return ComposeSpec(
         type="strip",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         profile_id="brutalist",
         title="readme-ai",
         state="active",

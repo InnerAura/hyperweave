@@ -72,6 +72,21 @@ def render_template(template_name: str, context: dict[str, Any]) -> str:
     return template.render(**context)
 
 
+def template_exists(template_name: str) -> bool:
+    """Check if a Jinja2 template can be located in the templates dir.
+
+    Used by resolvers that dispatch via slug interpolation
+    (e.g., `frames/divider/<genome>-<slug>.svg.j2`) to fall back to a
+    multi-branch template when no specific genome-themed template exists.
+    """
+    env = create_jinja_env()
+    try:
+        env.get_template(template_name)
+    except jinja2.TemplateNotFound:
+        return False
+    return True
+
+
 # Custom Jinja2 filters
 
 

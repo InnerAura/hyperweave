@@ -1,10 +1,7 @@
-{# Cellular icon defs — single-family rim gradient + pattern pulse CSS. #}
-{% set fam = "purple" if family == "purple" else "blue" %}
-{% if fam == "blue" %}
-  {% set rim_stops = family_blue_rim_stops %}
-{% else %}
-  {% set rim_stops = family_purple_rim_stops %}
-{% endif %}
+{# Cellular icon defs — single-variant rim gradient + pattern pulse CSS.
+   Path B grammar: dynamic variant key lookup on _genome_raw. #}
+{% set v = "purple" if variant == "purple" else "blue" %}
+{% set rim_stops = _genome_raw["variant_" ~ v ~ "_rim_stops"] %}
 <linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="0" y2="1">
 {% for stop in rim_stops %}
   <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>

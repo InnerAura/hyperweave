@@ -99,7 +99,7 @@ def _base_context(
         "status": spec.state,
         "state": spec.state,
         "regime": spec.regime,
-        "variant": spec.variant,
+        "size": spec.size,
         "motion_id": resolved.motion,
         "motion": resolved.motion,
         "metadata_tier": spec.metadata_tier,

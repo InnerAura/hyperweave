@@ -63,7 +63,7 @@ icon:
   viewbox_h: 120
 
 marquee:
-  # Specimen: chrome-horizon-marquee-horizontal.svg (1040×56). Pure scroll
+  # Specimen: chrome-marquee-horizontal.svg (1040×56). Pure scroll
   # band — no LIVE label panel after v0.2.16 (LIVE block deleted entirely).
   width: 1040
   height: 56

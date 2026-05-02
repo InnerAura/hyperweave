@@ -327,19 +327,19 @@
 </g>
 
 {# ═══════════════════════════════════════════════════════════
-   VARIANT: cellular-dissolve — Bifamily bridge, static-baked
+   VARIANT: dissolve — Bifamily bridge, static-baked
    Source: cellular-automata-divider.svg (800x28)
-   Palette: bifamily_bridge_* fields from genome (teal left terminal,
+   Palette: variant_bifamily_bridge_* fields from genome (teal left terminal,
             amethyst right terminal, dissolve via per-rect opacity).
    NO <style>, NO animation — renderer-independent per feedback rule
    feedback_static_rendering_renderer_independence + baked composite
    colors for transparent artifacts.
    ═══════════════════════════════════════════════════════════ #}
-{% elif divider_variant == 'cellular-dissolve' %}
-{% set teal_mid = bifamily_bridge_teal_mid | default('#147A90') %}
-{% set teal_deep = bifamily_bridge_teal_deep | default('#0D3E4E') %}
-{% set amethyst_core = bifamily_bridge_amethyst_core | default('#5A3278') %}
-{% set amethyst_bright = bifamily_bridge_amethyst_bright | default('#8B6DB5') %}
+{% elif divider_variant == 'dissolve' %}
+{% set teal_mid = variant_bifamily_bridge_teal_mid | default('#147A90') %}
+{% set teal_deep = variant_bifamily_bridge_teal_deep | default('#0D3E4E') %}
+{% set amethyst_core = variant_bifamily_bridge_amethyst_core | default('#5A3278') %}
+{% set amethyst_bright = variant_bifamily_bridge_amethyst_bright | default('#8B6DB5') %}
 {# Center line spans between terminals #}
 <line x1="48" y1="14" x2="{{ dw - 48 }}" y2="14" stroke="{{ teal_mid }}" stroke-width="0.6" opacity="0.45"/>
 {# Left terminal — 4 x 2 teal block grid at full opacity #}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from hyperweave.core.enums import (
     DividerVariant,
@@ -50,13 +50,10 @@ class ReasoningFields(FrozenModel):
 
 # Genome -> profile resolution map (matches data/genomes/*.json).
 _GENOME_PROFILE_MAP: dict[str, str] = {
-    GenomeId.BRUTALIST_EMERALD: ProfileId.BRUTALIST,
-    GenomeId.CHROME_HORIZON: ProfileId.CHROME,
+    GenomeId.BRUTALIST: ProfileId.BRUTALIST,
+    GenomeId.CHROME: ProfileId.CHROME,
     GenomeId.AUTOMATA: ProfileId.BRUTALIST,
 }
-
-# Allowed values for ComposeSpec.family (empty = frame-type default resolved by paradigm).
-_ALLOWED_FAMILIES: frozenset[str] = frozenset({"", "blue", "purple", "bifamily"})
 
 
 class ComposeSpec(FrozenModel):
@@ -74,7 +71,7 @@ class ComposeSpec(FrozenModel):
     # --genome-file can load arbitrary genome slugs not in the built-in registry.
     # GenomeId enum remains valid for internal defaults and type-hinting.
     genome_id: str = Field(
-        default=GenomeId.BRUTALIST_EMERALD.value,
+        default=GenomeId.BRUTALIST.value,
         description="Genome slug (built-in or custom from --genome-file)",
     )
     profile_id: str = Field(default="", description="Profile ID (resolved from genome if empty)")
@@ -92,7 +89,7 @@ class ComposeSpec(FrozenModel):
             if isinstance(override, dict) and override.get("profile"):
                 data["profile_id"] = str(override["profile"])
                 return data
-            genome_raw = str(data.get("genome_id", GenomeId.BRUTALIST_EMERALD.value))
+            genome_raw = str(data.get("genome_id", GenomeId.BRUTALIST.value))
             data["profile_id"] = _GENOME_PROFILE_MAP.get(genome_raw, ProfileId.BRUTALIST)
         return data
 
@@ -103,20 +100,15 @@ class ComposeSpec(FrozenModel):
     glyph: str = Field(default="", description="Glyph identifier")
     glyph_mode: GlyphMode = Field(default=GlyphMode.AUTO, description="Glyph rendering mode: auto, fill, wire, none")
     custom_glyph_svg: str = Field(default="", description="Raw SVG for custom glyphs")
-    variant: str = Field(default="default", description="Frame variant: default, compact")
+    size: str = Field(default="default", description="Frame size: default, compact")
     shape: str = Field(default="", description="Icon frame shape: square, circle")
-    family: str = Field(
+    variant: str = Field(
         default="",
-        description="Chromatic family within genome: blue, purple, bifamily. Empty = frame default.",
+        description=(
+            "Chromatic variant within genome (genome.variants whitelist enforced at "
+            "resolve-time). Empty = paradigm/genome default."
+        ),
     )
-
-    @field_validator("family")
-    @classmethod
-    def _validate_family(cls, v: str) -> str:
-        if v not in _ALLOWED_FAMILIES:
-            msg = f"family must be one of {sorted(_ALLOWED_FAMILIES)}, got '{v}'"
-            raise ValueError(msg)
-        return v
 
     # -- Governance --
     regime: Regime = Field(default=Regime.NORMAL, description="Policy lane: normal, permissive, ungoverned")

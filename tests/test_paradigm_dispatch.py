@@ -117,9 +117,9 @@ def test_load_genome_returns_override_verbatim(
 
 def test_load_genome_falls_back_to_registry_without_override() -> None:
     """Without override, _load_genome queries the built-in registry."""
-    result = _load_genome("brutalist-emerald")
-    assert result["id"] == "brutalist-emerald"
-    assert result["accent"] == "#10B981"  # brutalist-emerald accent from JSON
+    result = _load_genome("brutalist")
+    assert result["id"] == "brutalist"
+    assert result["accent"] == "#10B981"  # brutalist accent from JSON
 
 
 def test_load_genome_raises_for_unknown_slug() -> None:
@@ -195,16 +195,16 @@ def test_resolve_injects_paradigm_context() -> None:
     resolved = resolve(spec)
     assert "paradigm" in resolved.frame_context
     assert "structural" in resolved.frame_context
-    # brutalist-emerald declares paradigms.badge = "default"
+    # brutalist declares paradigms.badge = "default"
     assert resolved.frame_context["paradigm"] == "default"
-    # brutalist-emerald.structural.stroke_linejoin = "miter"
+    # brutalist.structural.stroke_linejoin = "miter"
     assert resolved.frame_context["structural"].get("stroke_linejoin") == "miter"
 
 
 def test_resolve_paradigm_differs_between_genomes() -> None:
-    """brutalist-emerald.stats = brutalist; chrome-horizon.stats = chrome."""
-    br = resolve(ComposeSpec(type="badge", genome_id="brutalist-emerald"))
-    ch = resolve(ComposeSpec(type="badge", genome_id="chrome-horizon"))
-    # Badge paradigms: brutalist-emerald = "default", chrome-horizon = "chrome"
+    """brutalist.stats = brutalist; chrome.stats = chrome."""
+    br = resolve(ComposeSpec(type="badge", genome_id="brutalist"))
+    ch = resolve(ComposeSpec(type="badge", genome_id="chrome"))
+    # Badge paradigms: brutalist = "default", chrome = "chrome"
     assert br.frame_context["paradigm"] == "default"
     assert ch.frame_context["paradigm"] == "chrome"

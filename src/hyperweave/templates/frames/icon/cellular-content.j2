@@ -1,18 +1,13 @@
-{# Cellular icon content: 64x64 viewBox, 4x4 monofamily cell grid +
-   inner frame with family-colored stroke + centered glyph.
+{# Cellular icon content: 64x64 viewBox, 4x4 monovariant cell grid +
+   inner frame with variant-colored stroke + centered glyph.
 
-   Family resolution: ComposeSpec.family or cellular paradigm default (blue).
-   Bifamily caller falls back to blue for icon (monofamily invariant). #}
-{% set fam = "purple" if family == "purple" else "blue" %}
-{% if fam == "blue" %}
-  {% set pattern_trio = family_blue_pattern_cells %}
-  {% set frame_stroke = family_blue_seam_mid %}
-  {% set alt_color = family_blue_seam_mid %}
-{% else %}
-  {% set pattern_trio = family_purple_pattern_cells %}
-  {% set frame_stroke = family_purple_seam_mid %}
-  {% set alt_color = family_purple_seam_mid %}
-{% endif %}
+   Variant resolution: ComposeSpec.variant or cellular paradigm default (blue).
+   Bifamily caller falls back to blue for icon (monovariant invariant).
+   Path B grammar: dynamic variant key lookup on _genome_raw. #}
+{% set v = "purple" if variant == "purple" else "blue" %}
+{% set pattern_trio = _genome_raw["variant_" ~ v ~ "_pattern_cells"] %}
+{% set frame_stroke = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
+{% set alt_color = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
 
 {# Void ground #}
 <rect width="64" height="64" fill="{{ surface_0 | default('#04060A') }}"/>

@@ -49,7 +49,7 @@ def _spec(genome: str) -> ComposeSpec:
 
 
 def test_stats_compose_brutalist_emerald_renders() -> None:
-    result = compose(_spec("brutalist-emerald"))
+    result = compose(_spec("brutalist"))
     assert result.width == 495
     assert result.height == 280
     assert 'data-hw-frame="stats"' in result.svg
@@ -63,7 +63,7 @@ def test_stats_compose_brutalist_emerald_renders() -> None:
 
 
 def test_stats_compose_chrome_horizon_renders_material_stack() -> None:
-    result = compose(_spec("chrome-horizon"))
+    result = compose(_spec("chrome"))
     svg = result.svg
     assert result.width == 495
     assert result.height == 260
@@ -74,10 +74,10 @@ def test_stats_compose_chrome_horizon_renders_material_stack() -> None:
 
 
 def test_stats_paradigms_are_structurally_different() -> None:
-    """Principle 26: brutalist-emerald and chrome-horizon stats must render
+    """Principle 26: brutalist and chrome stats must render
     with materially different primitive counts, not just different colors."""
-    br = compose(_spec("brutalist-emerald")).svg
-    ch = compose(_spec("chrome-horizon")).svg
+    br = compose(_spec("brutalist")).svg
+    ch = compose(_spec("chrome")).svg
     # Brutalist uses heavy stroke-width rules; chrome uses gradient envelopes.
     assert 'stroke-width="2.5"' in br
     assert 'stroke-width="2.5"' not in ch
@@ -87,7 +87,7 @@ def test_stats_paradigms_are_structurally_different() -> None:
 
 
 def test_stats_graceful_degradation_without_data() -> None:
-    spec = ComposeSpec(type="stats", genome_id="brutalist-emerald", stats_username="eli64s", connector_data=None)
+    spec = ComposeSpec(type="stats", genome_id="brutalist", stats_username="eli64s", connector_data=None)
     result = compose(spec)
     assert 'data-hw-status="stale"' in result.svg
     # Still renders — no exception, no empty SVG.
@@ -99,7 +99,7 @@ def test_stats_contains_real_data_values() -> None:
 
     Proves the PRD requirement: ship with real values, NOT em-dash placeholders.
     """
-    result = compose(_spec("brutalist-emerald"))
+    result = compose(_spec("brutalist"))
     # Template shows COMMITS, PRS, ISSUES, STREAK from mock connector data.
     assert "1,203" in result.svg  # commits_display
     assert "47d" in result.svg  # streak_display
@@ -109,7 +109,7 @@ def test_stats_compose_with_minimal_connector_data() -> None:
     """Partial connector data (only username + stars) still renders OK."""
     spec = ComposeSpec(
         type="stats",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         stats_username="anon",
         connector_data={"username": "anon", "stars_total": 12},
     )
@@ -126,7 +126,7 @@ def test_stats_chrome_zero_stars_does_not_synthesize_placeholder() -> None:
     """
     spec = ComposeSpec(
         type="stats",
-        genome_id="chrome-horizon",
+        genome_id="chrome",
         stats_username="newbie",
         connector_data={
             "username": "newbie",
@@ -514,7 +514,7 @@ def test_resolve_stats_renders_dash_for_stale_field() -> None:
     """
     spec = ComposeSpec(
         type="stats",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         stats_username="eli64s",
         connector_data={
             "username": "eli64s",
@@ -547,7 +547,7 @@ def test_resolve_stats_real_zero_renders_zero_not_dash() -> None:
     """
     spec = ComposeSpec(
         type="stats",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         stats_username="newbie",
         connector_data={
             "username": "newbie",

@@ -1,0 +1,39 @@
+{# Chrome band divider — thick chrome envelope band with material drift.
+
+   Single 800x4 pill-shaped rect at y=6 (rx=0.8, opacity 0.75) filled with
+   the genome's 11-stop envelope gradient. Drift via SMIL <animate> on x1/x2
+   at phi3 6.854s with cubic-bezier easing. Motion is CIM-compliant
+   (gradient stop interpolation, not geometry).
+
+   Source: tier2/genomes/chrome/production/dividers/chrome-band.svg
+   Genome whitelist: chrome (declared in chrome.json `dividers: ["band"]`).
+#}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+<linearGradient id="{{ uid }}-env" x1="0" x2="1" y1="0" y2="0">
+  {% for stop in envelope_stops | default([]) %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
+  <animate attributeName="x1" values="-0.15;0.15;-0.15" dur="6.854s"
+           repeatCount="indefinite" calcMode="spline"
+           keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+  <animate attributeName="x2" values="0.85;1.15;0.85" dur="6.854s"
+           repeatCount="indefinite" calcMode="spline"
+           keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+</linearGradient>
+
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    animate { display: none !important; }
+  }
+  @media (forced-colors: active) {
+    rect { stroke: CanvasText; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{# Thick envelope band — single rect filling the genome envelope #}
+<rect x="0" y="6" width="{{ width }}" height="4" rx="0.8" fill="url(#{{ uid }}-env)" opacity="0.75"/>
+{% endblock %}

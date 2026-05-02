@@ -22,7 +22,7 @@
 <rect width="{{ sw }}" height="{{ sh }}" fill="{{ surface_0 | default('#04060A') }}"/>
 
 {# Left teal flank #}
-{% set blue_trio = family_blue_pattern_cells %}
+{% set blue_trio = variant_blue_pattern_cells %}
 {% set blue_classes = ["cs1", "cs2", "csd", "cs3", "cs4", "csf", "csd", "cs2", "cs1", "cs4", "cs3", "csf"] %}
 <g opacity="0.65">
 {% for col in range(flank_cols) %}
@@ -35,7 +35,7 @@
 </g>
 
 {# Right amethyst flank #}
-{% set purple_trio = family_purple_pattern_cells %}
+{% set purple_trio = variant_purple_pattern_cells %}
 {% set purple_classes = ["cs2", "csd", "csf", "cs3", "cs1", "cs4", "csd", "cs2", "csf", "cs3", "cs1", "csd"] %}
 <g opacity="0.65">
 {% for col in range(flank_cols) %}
@@ -49,7 +49,7 @@
 
 {# Data panel #}
 <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ sh - 12 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.92"/>
-<rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ sh - 12 }}" fill="none" stroke="{{ family_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.25"/>
+<rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ sh - 12 }}" fill="none" stroke="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.25"/>
 
 {# Slot-boundary separators — production draws a 0.3-stroke hairline between
    each vertical band (header/hero/secondary/heatmap/footer). These are the
@@ -58,7 +58,7 @@
    x1 = panel_x + 16 (= 82), x2 = panel_x + panel_w - 16 (= 413). #}
 {% set sep_left = panel_x + 16 %}
 {% set sep_right = panel_x + panel_w - 16 %}
-{% set sep_stroke = family_blue_pattern_cells[0] | default('#1E849A') %}
+{% set sep_stroke = variant_blue_pattern_cells[0] | default('#1E849A') %}
 
 {# SLOT 1: HEADER (y 12-44) — username + bio + accent underline.
    All <text> elements use CSS classes from cellular-defs.j2 so the
@@ -91,13 +91,13 @@
 
 {# SLOT 3: SECONDARY (y 116-162) — 4-column metrics: PRS / ISSUES / CONTRIB / STREAK.
    Value tints: PRS/ISSUES muted slate (#808898), CONTRIB dimmer (#606878), STREAK green (#22c55e).
-   Label tint source: `family_purple_pattern_cells[0]` gives the "furniture"
-   purple (#6B3B8A). Using `family_purple_seam_mid` here resolves to #A88AD4
+   Label tint source: `variant_purple_pattern_cells[0]` gives the "furniture"
+   purple (#6B3B8A). Using `variant_purple_seam_mid` here resolves to #A88AD4
    (the "pennant" tone), which is a role mismatch per the two-stop chromatic
    rule — labels are low-hierarchy chrome, not state signal. STREAK label
    stays on the teal seam because STREAK is the active-pulse indicator. #}
-{% set purple_label = family_purple_pattern_cells[0] | default('#6B3B8A') %}
-{% set teal_label = family_blue_pattern_cells[0] | default('#1E849A') %}
+{% set purple_label = variant_purple_pattern_cells[0] | default('#6B3B8A') %}
+{% set teal_label = variant_blue_pattern_cells[0] | default('#1E849A') %}
 {% set sec_cols = [
   (16, prs_display | default('--'), 'PRS', '#808898', purple_label),
   (96, issues_display | default('--'), 'ISSUES', '#808898', purple_label),
@@ -185,10 +185,10 @@
 {% set _bar_y = 236 %}
 {% set _gap = 2 %}
 {% set _lang_cycle = [
-  (family_blue_pattern_cells[0] | default('#1E849A'), 0.6),
-  (family_purple_pattern_cells[0] | default('#6B3B8A'), 0.5),
-  (family_blue_pattern_cells[1] | default('#104052'), 0.4),
-  (family_purple_pattern_cells[2] | default('#160B24'), 0.3)
+  (variant_blue_pattern_cells[0] | default('#1E849A'), 0.6),
+  (variant_purple_pattern_cells[0] | default('#6B3B8A'), 0.5),
+  (variant_blue_pattern_cells[1] | default('#104052'), 0.4),
+  (variant_purple_pattern_cells[2] | default('#160B24'), 0.3)
 ] %}
 <g data-hw-zone="languages" transform="translate({{ _bar_x }},{{ _bar_y }})">
   <rect width="{{ _bar_w }}" height="3" rx="1" fill="#0a0e14"/>

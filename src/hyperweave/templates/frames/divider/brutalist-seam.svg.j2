@@ -1,0 +1,39 @@
+{# Brutalist seam divider — concrete expansion-joint pattern.
+
+   Five horizontal segments at y=8 (genome accent, opacity 0.6) with four
+   16-px expansion gaps. Each gap is bracketed by two perpendicular joint
+   marks (genome accent_signal, y=4..12, opacity 0.65). Static — no
+   animation. Rebar-in-concrete structural metaphor.
+
+   Source: tier2/genomes/brutalist/production/dividers/seam.svg
+   Genome whitelist: brutalist (declared in brutalist.json `dividers: ["seam"]`).
+#}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+<style>
+  @media (forced-colors: active) {
+    line { stroke: CanvasText !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{# Five horizontal rule segments at y=8. Segment x-ranges:
+   0-152 · 168-312 · 328-472 · 488-632 · 648-800 (16-px gaps). #}
+<line x1="0"   y1="8" x2="152" y2="8" stroke="{{ accent }}" stroke-width="1.5" opacity="0.6"/>
+<line x1="168" y1="8" x2="312" y2="8" stroke="{{ accent }}" stroke-width="1.5" opacity="0.6"/>
+<line x1="328" y1="8" x2="472" y2="8" stroke="{{ accent }}" stroke-width="1.5" opacity="0.6"/>
+<line x1="488" y1="8" x2="632" y2="8" stroke="{{ accent }}" stroke-width="1.5" opacity="0.6"/>
+<line x1="648" y1="8" x2="800" y2="8" stroke="{{ accent }}" stroke-width="1.5" opacity="0.6"/>
+
+{# Joint faces — perpendicular marks at the four gap edges (8 verticals total). #}
+<line x1="152" y1="4" x2="152" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="168" y1="4" x2="168" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="312" y1="4" x2="312" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="328" y1="4" x2="328" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="472" y1="4" x2="472" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="488" y1="4" x2="488" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="632" y1="4" x2="632" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="648" y1="4" x2="648" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+{% endblock %}

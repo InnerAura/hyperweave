@@ -24,8 +24,8 @@ from hyperweave.core.models import ComposeSpec
 @pytest.mark.parametrize(
     ("genome_id", "expected_w", "expected_h"),
     [
-        ("chrome-horizon", 1040, 56),
-        ("brutalist-emerald", 720, 32),
+        ("chrome", 1040, 56),
+        ("brutalist", 720, 32),
         ("automata", 800, 40),
     ],
 )
@@ -44,7 +44,7 @@ def test_marquee_dimensions_paradigm_driven(genome_id: str, expected_w: int, exp
 # ────────────────────────────────────────────────────────────────────
 
 
-@pytest.mark.parametrize("genome_id", ["chrome-horizon", "brutalist-emerald", "automata"])
+@pytest.mark.parametrize("genome_id", ["chrome", "brutalist", "automata"])
 def test_marquee_no_live_block_residue(genome_id: str) -> None:
     """v0.2.16 deleted the LIVE label panel + status diamond + divider entirely.
     No paradigm should emit residue from the old LIVE-block infrastructure."""
@@ -75,9 +75,9 @@ def _extract_scroll_distance(svg: str) -> int:
 def test_marquee_scroll_distance_grows_with_content() -> None:
     """Long content should produce a larger scroll_distance than short content,
     proving the resolver wired _layout_marquee_items correctly."""
-    short = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome-horizon", title="HW")).svg
+    short = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW")).svg
     long_text = "|".join(["A VERY LONG SCROLL ITEM"] * 8)
-    long_ = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome-horizon", title=long_text)).svg
+    long_ = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title=long_text)).svg
     short_sd = _extract_scroll_distance(short)
     long_sd = _extract_scroll_distance(long_)
     assert long_sd > short_sd, f"Expected long_sd > short_sd; got long={long_sd} short={short_sd}"
@@ -86,7 +86,7 @@ def test_marquee_scroll_distance_grows_with_content() -> None:
 def test_marquee_short_content_floors_at_viewport_width() -> None:
     """When content is shorter than the viewport, scroll_distance floors at
     viewport_width so the cycle is still a full pass (matches chrome target)."""
-    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome-horizon", title="HW")).svg
+    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW")).svg
     sd = _extract_scroll_distance(svg)
     # Chrome viewport is 1040; a one-item "HW" marquee easily fits → floor applies.
     assert sd >= 1040, f"Expected scroll_distance >= viewport_width 1040; got {sd}"
@@ -108,7 +108,7 @@ def test_marquee_loop_boundary_matches_inter_item_rhythm() -> None:
     svg = compose(
         ComposeSpec(
             type="marquee-horizontal",
-            genome_id="chrome-horizon",
+            genome_id="chrome",
             title="HYPERWEAVE|CHROME HORIZON|LIVING SVG ARTIFACTS|v0.2.16",
         )
     ).svg
@@ -142,7 +142,7 @@ def test_marquee_set_b_offset_equals_scroll_distance() -> None:
     """Set-B group is offset by scroll_distance for seamless loop. The
     SMIL animateTransform translates by -scroll_distance; if Set-B isn't
     at +scroll_distance the loop has a visible jump."""
-    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome-horizon", title="HW|TEST|MARQUEE")).svg
+    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW|TEST|MARQUEE")).svg
     sd = _extract_scroll_distance(svg)
     # Set B is rendered as <g data-hw-zone="set-b" transform="translate(SD, 0)">.
     assert f'data-hw-zone="set-b" transform="translate({sd}, 0)"' in svg
@@ -156,7 +156,7 @@ def test_marquee_set_b_offset_equals_scroll_distance() -> None:
 def test_chrome_marquee_uses_chrome_text_gradient() -> None:
     """Chrome paradigm declares text_fill_mode=gradient + text_fill_gradient_id=ct.
     Items should reference url(#{uid}-ct) in their fill attribute (not a hex)."""
-    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome-horizon", title="HW|TEST")).svg
+    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW|TEST")).svg
     # The chrome-text gradient definition exists in defs.
     assert re.search(r'<linearGradient id="hw-[^"]+-ct"', svg), "chrome-text gradient missing"
     # At least one tspan/text fill references the gradient.
@@ -169,7 +169,7 @@ def test_brutalist_marquee_uses_rect_separators() -> None:
     svg = compose(
         ComposeSpec(
             type="marquee-horizontal",
-            genome_id="brutalist-emerald",
+            genome_id="brutalist",
             title="LIVING ARTIFACTS|SELF-CONTAINED|AGENT INTERFACES",
         )
     ).svg
@@ -187,7 +187,7 @@ def test_brutalist_marquee_alternates_text_fill_cycle() -> None:
     svg = compose(
         ComposeSpec(
             type="marquee-horizontal",
-            genome_id="brutalist-emerald",
+            genome_id="brutalist",
             title="LIVING|SELF-CONTAINED|AGENT|INTERFACES",
         )
     ).svg
@@ -198,8 +198,8 @@ def test_brutalist_marquee_alternates_text_fill_cycle() -> None:
 
 def test_cellular_marquee_uses_bifamily_palette() -> None:
     """Cellular paradigm preserves the bifamily teal/amethyst alternation when
-    family=bifamily (default for marquee-horizontal). Sourced from genome
-    chromosomes (family_blue_seam_mid / family_purple_seam_mid)."""
+    variant=bifamily (default for marquee-horizontal). Sourced from genome
+    chromosomes (variant_blue_seam_mid / variant_purple_seam_mid)."""
     svg = compose(
         ComposeSpec(
             type="marquee-horizontal",
@@ -227,7 +227,7 @@ def test_marquee_data_token_mode_uses_paradigm_dimensions() -> None:
     ]
     spec = ComposeSpec(
         type="marquee-horizontal",
-        genome_id="chrome-horizon",
+        genome_id="chrome",
         data_tokens=tokens,
     )
     svg = compose(spec).svg
@@ -246,7 +246,7 @@ def test_chrome_icon_circle_uses_120_unit_viewbox_at_64px() -> None:
     """Chrome paradigm's icon block declares viewbox_w=120, viewbox_h=120.
     The rendered output is 64x64 but the internal coordinate system is 120-unit
     so v2 specimen geometry (r=46/r=42 bezel, 0.6-unit hairlines) is preserved."""
-    svg = compose(ComposeSpec(type="icon", genome_id="chrome-horizon", glyph="github", shape="circle")).svg
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="circle")).svg
     assert 'viewBox="0 0 120 120"' in svg
     assert 'width="64"' in svg
     assert 'height="64"' in svg
@@ -257,7 +257,7 @@ def test_chrome_icon_circle_uses_120_unit_viewbox_at_64px() -> None:
 
 def test_chrome_icon_square_uses_120_unit_viewbox_at_64px() -> None:
     """Same viewBox-override mechanism as the circle variant."""
-    svg = compose(ComposeSpec(type="icon", genome_id="chrome-horizon", glyph="github", shape="square")).svg
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="square")).svg
     assert 'viewBox="0 0 120 120"' in svg
     assert 'width="64"' in svg
     # 96x96 card body (v2 specimen dimensions).
@@ -268,7 +268,7 @@ def test_brutalist_icon_keeps_64x64_viewbox_regression() -> None:
     """Brutalist paradigm doesn't declare icon.viewbox_w/h, so viewBox stays
     aligned to the rendered 64x64 size. Regression guard against the chrome
     viewBox-override leaking into brutalist."""
-    svg = compose(ComposeSpec(type="icon", genome_id="brutalist-emerald", glyph="github", shape="square")).svg
+    svg = compose(ComposeSpec(type="icon", genome_id="brutalist", glyph="github", shape="square")).svg
     assert 'viewBox="0 0 64 64"' in svg
     assert 'width="64"' in svg
 
@@ -276,7 +276,7 @@ def test_brutalist_icon_keeps_64x64_viewbox_regression() -> None:
 def test_chrome_icon_circle_has_rim_sweep_animation() -> None:
     """Chrome icon's 17.944s phi³ rim sweep is the material-physics signature.
     Verifies the rim gradient + animations got plumbed into chrome-defs.j2."""
-    svg = compose(ComposeSpec(type="icon", genome_id="chrome-horizon", glyph="github", shape="circle")).svg
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="circle")).svg
     assert "17.944s" in svg, "phi³ rim sweep duration missing"
     assert 'attributeName="x1"' in svg, "rim sweep x1 animate missing"
 
@@ -284,14 +284,14 @@ def test_chrome_icon_circle_has_rim_sweep_animation() -> None:
 def test_chrome_icon_square_has_env_rail() -> None:
     """Square variant has the 6-unit env-rail at (3, 3) — the card-family
     signature. Circle variant has no rail."""
-    svg = compose(ComposeSpec(type="icon", genome_id="chrome-horizon", glyph="github", shape="square")).svg
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="square")).svg
     assert "-env-rail" in svg, "square icon env-rail gradient missing"
 
 
 def test_chrome_icon_circle_has_no_env_rail() -> None:
     """Env-rail def is wrapped in {% if icon_variant == 'binary-square' %} —
     circle icon should NOT include it."""
-    svg = compose(ComposeSpec(type="icon", genome_id="chrome-horizon", glyph="github", shape="circle")).svg
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="circle")).svg
     assert "-env-rail" not in svg, "env-rail leaked into circle variant"
 
 
@@ -299,7 +299,7 @@ def test_chrome_icon_uses_bevel_filter_not_simple_shadow() -> None:
     """v0.2.16 expanded the chrome icon filter from a basic drop-shadow to a
     feSpecularLighting bevel. Ensures the upgrade landed and the old filter
     id ({{uid}}-sh) is gone."""
-    svg = compose(ComposeSpec(type="icon", genome_id="chrome-horizon", glyph="github", shape="circle")).svg
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="circle")).svg
     assert "feSpecularLighting" in svg, "bevel filter's feSpecularLighting missing"
     # Old id was {{uid}}-sh; new id is {{uid}}-bevel.
     assert "-bevel)" in svg, "new bevel filter ID missing"

@@ -2,7 +2,7 @@ id: brutalist
 name: Brutalist
 description: >
   Flat plate, class-based separators, sharp geometric typography.
-  Used by brutalist-emerald's stats/chart frames (and by any future
+  Used by brutalist's stats/chart frames (and by any future
   flat-matte genome). No chrome-material requirements.
 requires_genome_fields: []
 
@@ -45,7 +45,7 @@ icon:
   default_shape: square
 
 marquee:
-  # Specimen: brutalist-emerald-marquee-v1.svg (720×32). Flat slab with 4px
+  # Specimen: brutalist-marquee-v1.svg (720×32). Flat slab with 4px
   # emerald accent bar; pure scroll band — no LIVE label panel after v0.2.16.
   width: 720
   height: 32
@@ -64,7 +64,7 @@ marquee:
   # Items rotate through [ink, info, ink, info, …] colors per position —
   # the two-stop chromatic hierarchy the user codified (substrate vs info
   # stops). Hardcoding these in paradigm yaml is the cleanest fit because
-  # only brutalist-emerald uses brutalist paradigm today; if a second
+  # only brutalist uses brutalist paradigm today; if a second
   # genome adopts brutalist later, this should be migrated to genome
   # chromosomes via a "genome-field-name" indirection.
   text_fill_mode: cycle

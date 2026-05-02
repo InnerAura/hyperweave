@@ -25,7 +25,7 @@ def _compose_svg(**kwargs: object) -> str:
 
 
 def test_version_badge_blue_default() -> None:
-    svg = _compose_svg(title="PYPI", value="v0.2.5", family="blue", glyph="python")
+    svg = _compose_svg(title="PYPI", value="v0.2.5", variant="blue", glyph="python")
     # Blue-family signature colors
     assert "#3A9FB8" in svg  # label text
     assert "#A8D4F0" in svg  # value text
@@ -41,7 +41,7 @@ def test_version_badge_blue_default() -> None:
 
 
 def test_version_badge_purple_default() -> None:
-    svg = _compose_svg(title="PYPI", value="v0.2.5", family="purple", glyph="python")
+    svg = _compose_svg(title="PYPI", value="v0.2.5", variant="purple", glyph="python")
     # Purple-family signature colors — label/value/rim all use amethyst palette
     assert "#A88AD4" in svg  # label text
     assert "#D8B4FE" in svg  # value text
@@ -55,15 +55,15 @@ def test_version_badge_purple_default() -> None:
 
 def test_version_badge_compact_is_smaller() -> None:
     default_spec = ComposeSpec(
-        type="badge", genome_id="automata", title="PYPI", value="v0.2.5", family="blue", glyph="python"
+        type="badge", genome_id="automata", title="PYPI", value="v0.2.5", variant="blue", glyph="python"
     )
     compact_spec = ComposeSpec(
         type="badge",
         genome_id="automata",
         title="PYPI",
         value="v0.2.5",
-        family="blue",
-        variant="compact",
+        variant="blue",
+        size="compact",
         glyph="python",
     )
     d = compose(default_spec)
@@ -73,7 +73,7 @@ def test_version_badge_compact_is_smaller() -> None:
 
 
 def test_compact_badge_viewbox_is_20_tall() -> None:
-    svg = _compose_svg(title="PYPI", value="v0.2.5", family="blue", variant="compact")
+    svg = _compose_svg(title="PYPI", value="v0.2.5", variant="blue", size="compact")
     # Compact height is 20 (small badge class)
     assert 'height="20"' in svg or "height=20" in svg
 
@@ -84,7 +84,7 @@ def test_compact_badge_viewbox_is_20_tall() -> None:
 @pytest.mark.parametrize("state", ["passing", "warning", "critical", "building", "offline"])
 def test_state_badge_emits_ring_and_bit(state: str) -> None:
     """state-mode badges render the ring+bit indicator block."""
-    svg = _compose_svg(title="BUILD", value=state, state=state, family="blue", glyph="github")
+    svg = _compose_svg(title="BUILD", value=state, state=state, variant="blue", glyph="github")
     assert 'class="hw-ring"' in svg
     assert 'class="hw-bit"' in svg
     # The state cascade partial defines --hw-state-signal for this status
@@ -93,14 +93,14 @@ def test_state_badge_emits_ring_and_bit(state: str) -> None:
 
 def test_state_badge_binds_hw_value_text_class() -> None:
     """State value text routes through CSS custom property for runtime swap."""
-    svg = _compose_svg(title="BUILD", value="passing", state="passing", family="blue", glyph="github")
+    svg = _compose_svg(title="BUILD", value="passing", state="passing", variant="blue", glyph="github")
     assert 'class="hw-value-text"' in svg
     assert "var(--hw-state-value" in svg
 
 
 def test_state_badge_state_signal_cascade_included() -> None:
     """The shared state-signal cascade partial is inlined for state badges."""
-    svg = _compose_svg(title="BUILD", value="warning", state="warning", family="blue", glyph="github")
+    svg = _compose_svg(title="BUILD", value="warning", state="warning", variant="blue", glyph="github")
     # All 5 state selectors should be present in the cascade block
     assert '[data-hw-status="passing"]' in svg
     assert '[data-hw-status="warning"]' in svg
@@ -122,7 +122,7 @@ def test_state_badge_state_signal_cascade_included() -> None:
 
 def test_cellular_badge_has_pattern_strip() -> None:
     """3 x 4 = 12 cellular pattern cells render on the left edge."""
-    svg = _compose_svg(title="PYPI", value="v0.2.5", family="blue")
+    svg = _compose_svg(title="PYPI", value="v0.2.5", variant="blue")
     # Pattern cells are rects with class="cz{1,2,3,4,f,d}"; count distinct classes
     for cls in ("cz1", "cz2", "cz3", "cz4", "czf", "czd"):
         assert f'class="{cls}"' in svg, f"missing pattern class {cls}"
@@ -130,7 +130,7 @@ def test_cellular_badge_has_pattern_strip() -> None:
 
 def test_cellular_badge_has_chrome_rim() -> None:
     """Rim, dark lip, and drop-shadow lift filter are all present."""
-    svg = _compose_svg(title="PYPI", value="v0.2.5", family="blue")
+    svg = _compose_svg(title="PYPI", value="v0.2.5", variant="blue")
     assert "-rim" in svg  # gradient id suffix
     assert "feDropShadow" in svg
     assert "-lift" in svg  # filter id suffix
@@ -138,11 +138,11 @@ def test_cellular_badge_has_chrome_rim() -> None:
 
 def test_cellular_badge_font_face_embedded() -> None:
     """Font-face CSS embeds Chakra Petch + Orbitron + JetBrains Mono WOFF2."""
-    svg = _compose_svg(title="PYPI", value="v0.2.5", family="blue")
+    svg = _compose_svg(title="PYPI", value="v0.2.5", variant="blue")
     assert "@font-face" in svg
 
 
 def test_cellular_badge_respects_prefers_reduced_motion() -> None:
     """CIM compliance: animation pauses under reduce-motion media query."""
-    svg = _compose_svg(title="PYPI", value="v0.2.5", family="blue")
+    svg = _compose_svg(title="PYPI", value="v0.2.5", variant="blue")
     assert "prefers-reduced-motion" in svg

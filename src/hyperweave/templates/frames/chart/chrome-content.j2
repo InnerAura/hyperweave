@@ -1,5 +1,5 @@
 {# Chart paradigm: chrome.
-   Ported element-by-element from tier2/genomes/chrome-horizon/github-star-history-card-v6.svg.
+   Ported element-by-element from tier2/genomes/chrome/horizon/github-star-history-card-v6.svg.
    900x500, material stack (envelope + well + rail), Catmull-Rom data curve with line glow,
    diamond markers, scanlines, horizon glow, milestone diamonds.
    Chart fragments (polyline, markers, milestones) come from chart_engine. #}
@@ -12,7 +12,7 @@
 {% set vh = chart_viewport_h | default(250) %}
 
 {# MATERIAL STACK — every color genome-driven via CSS vars + _profile_visual_context
-   template params. Fallbacks preserve chrome-horizon specimen fidelity. #}
+   template params. Fallbacks preserve chrome specimen fidelity. #}
 <g clip-path="url(#{{ uid }}-clip)">
   <rect width="{{ cw }}" height="{{ ch }}" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-bevel)"/>
   <rect x="2" y="2" width="{{ cw - 4 }}" height="{{ ch - 4 }}" rx="4.5" fill="none"

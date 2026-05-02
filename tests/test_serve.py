@@ -64,11 +64,11 @@ def _reset_specimens_cache() -> Any:
 
 
 def test_parse_genome_motion_with_dot() -> None:
-    assert _parse_genome_motion("brutalist-emerald.cascade") == ("brutalist-emerald", "cascade")
+    assert _parse_genome_motion("brutalist.cascade") == ("brutalist", "cascade")
 
 
 def test_parse_genome_motion_without_dot() -> None:
-    assert _parse_genome_motion("brutalist-emerald") == ("brutalist-emerald", "static")
+    assert _parse_genome_motion("brutalist") == ("brutalist", "static")
 
 
 def test_parse_genome_motion_multiple_dots() -> None:
@@ -101,7 +101,7 @@ def test_etag_no_match() -> None:
 
 
 async def test_badge_url_returns_svg(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/badge/build/passing/brutalist-emerald.static")
+    resp = await client.get("/v1/badge/build/passing/brutalist.static")
     assert resp.status_code == 200
     assert "image/svg+xml" in resp.headers["content-type"]
     assert "<svg" in resp.text
@@ -109,33 +109,33 @@ async def test_badge_url_returns_svg(client: AsyncClient, mock_compose: Any) -> 
 
 async def test_badge_url_default_motion(client: AsyncClient, mock_compose: Any) -> None:
     """No dot in genome_motion defaults to static motion."""
-    resp = await client.get("/v1/badge/build/passing/brutalist-emerald")
+    resp = await client.get("/v1/badge/build/passing/brutalist")
     assert resp.status_code == 200
 
 
 async def test_badge_url_with_glyph(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/badge/build/passing/brutalist-emerald.static?glyph=github")
+    resp = await client.get("/v1/badge/build/passing/brutalist.static?glyph=github")
     assert resp.status_code == 200
 
 
 async def test_strip_url_returns_svg(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/strip/readme-ai/brutalist-emerald.static?value=STARS:2.9k,FORKS:278")
+    resp = await client.get("/v1/strip/readme-ai/brutalist.static?value=STARS:2.9k,FORKS:278")
     assert resp.status_code == 200
     assert "image/svg+xml" in resp.headers["content-type"]
 
 
 async def test_icon_url_returns_svg(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/icon/github/brutalist-emerald.static")
+    resp = await client.get("/v1/icon/github/brutalist.static")
     assert resp.status_code == 200
 
 
 async def test_divider_url_returns_svg(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/divider/void/brutalist-emerald.static")
+    resp = await client.get("/v1/divider/void/brutalist.static")
     assert resp.status_code == 200
 
 
 async def test_marquee_horizontal(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/marquee/HYPERWEAVE/brutalist-emerald.static?direction=ltr")
+    resp = await client.get("/v1/marquee/HYPERWEAVE/brutalist.static?direction=ltr")
     assert resp.status_code == 200
 
 
@@ -147,7 +147,7 @@ async def test_marquee_horizontal_with_data_tokens(client: AsyncClient) -> None:
         patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT),
     ):
         resp = await client.get(
-            "/v1/marquee/SCROLL/brutalist-emerald.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars",
+            "/v1/marquee/SCROLL/brutalist.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars",
         )
         assert resp.status_code == 200
 
@@ -156,7 +156,7 @@ async def test_marquee_horizontal_data_token_comma_escape(client: AsyncClient) -
     """text: payload preserves embedded commas via the \\, escape."""
     with patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT):
         resp = await client.get(
-            "/v1/marquee/SCROLL/brutalist-emerald.static?data=text:Hello%5C%2C%20world",
+            "/v1/marquee/SCROLL/brutalist.static?data=text:Hello%5C%2C%20world",
         )
         assert resp.status_code == 200
 
@@ -185,7 +185,7 @@ async def test_compose_post_strip(client: AsyncClient, mock_compose: Any) -> Non
 
 async def test_badge_data_route_requires_data_param(client: AsyncClient) -> None:
     """The 2-segment data-driven badge route returns a 400 SMPTE SVG when ?data= is missing."""
-    resp = await client.get("/v1/badge/STARS/brutalist-emerald.static")
+    resp = await client.get("/v1/badge/STARS/brutalist.static")
     # 200 to keep Camo happy; the error class travels in headers + SVG content
     assert resp.status_code == 200
     assert resp.headers.get("x-hw-error-code") == "400"
@@ -212,7 +212,7 @@ async def test_badge_data_route_resolves_live_token(client: AsyncClient) -> None
         patch("hyperweave.serve.app.compose", side_effect=_capture_spec),
     ):
         resp = await client.get(
-            "/v1/badge/STARS/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+            "/v1/badge/STARS/brutalist.static?data=gh:anthropics/claude-code.stars",
         )
         assert resp.status_code == 200
         assert "image/svg+xml" in resp.headers["content-type"]
@@ -228,13 +228,13 @@ async def test_badge_data_route_kv_token(client: AsyncClient) -> None:
     """kv: tokens encode static literals through the same data-route shape as live ones."""
     with patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT):
         resp = await client.get(
-            "/v1/badge/VERSION/brutalist-emerald.static?data=kv:VERSION=0.6.9",
+            "/v1/badge/VERSION/brutalist.static?data=kv:VERSION=0.6.9",
         )
         assert resp.status_code == 200
 
 
 async def test_compose_post_defaults(client: AsyncClient, mock_compose: Any) -> None:
-    """Empty body uses all defaults (badge, brutalist-emerald, static)."""
+    """Empty body uses all defaults (badge, brutalist, static)."""
     resp = await client.post("/v1/compose", json={})
     assert resp.status_code == 200
 
@@ -255,12 +255,12 @@ async def test_list_genomes(client: AsyncClient) -> None:
     resp = await client.get("/v1/genomes")
     assert resp.status_code == 200
     ids = [g["id"] for g in resp.json()]
-    assert "brutalist-emerald" in ids
-    assert "chrome-horizon" in ids
+    assert "brutalist" in ids
+    assert "chrome" in ids
 
 
 async def test_get_genome_found(client: AsyncClient) -> None:
-    resp = await client.get("/v1/genomes/brutalist-emerald")
+    resp = await client.get("/v1/genomes/brutalist")
     assert resp.status_code == 200
 
 
@@ -290,7 +290,7 @@ async def test_list_glyphs(client: AsyncClient) -> None:
 
 
 async def test_genome_registry_found(client: AsyncClient) -> None:
-    resp = await client.get("/g/brutalist-emerald")
+    resp = await client.get("/g/brutalist")
     assert resp.status_code == 200
     assert resp.headers["content-type"] == "application/json"
     assert "stale-while-revalidate" in resp.headers.get("cache-control", "")
@@ -307,7 +307,7 @@ async def test_genome_registry_not_found(client: AsyncClient) -> None:
 
 
 async def test_list_specimens(client: AsyncClient) -> None:
-    registry = {"badge-build": "genomes/brutalist-emerald/badge_build.svg"}
+    registry = {"badge-build": "genomes/brutalist/badge_build.svg"}
     with patch("hyperweave.serve.app._load_specimens_registry", return_value=registry):
         resp = await client.get("/a/inneraura")
         assert resp.status_code == 200
@@ -338,12 +338,12 @@ async def test_specimen_meta_not_found(client: AsyncClient) -> None:
 
 
 async def test_drop_metadata(client: AsyncClient) -> None:
-    resp = await client.get("/d/001-brutalist-emerald")
+    resp = await client.get("/d/001-brutalist")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["id"] == "001-brutalist-emerald"
+    assert data["id"] == "001-brutalist"
     assert data["sequence"] == "001"
-    assert data["name"] == "brutalist-emerald"
+    assert data["name"] == "brutalist"
     assert "/g/" in data["genome_url"]
 
 
@@ -353,17 +353,17 @@ async def test_drop_metadata(client: AsyncClient) -> None:
 
 
 async def test_etag_returned_on_compose(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/badge/build/passing/brutalist-emerald")
+    resp = await client.get("/v1/badge/build/passing/brutalist")
     assert resp.status_code == 200
     assert "etag" in resp.headers
 
 
 async def test_304_on_matching_etag(client: AsyncClient, mock_compose: Any) -> None:
-    resp1 = await client.get("/v1/badge/build/passing/brutalist-emerald")
+    resp1 = await client.get("/v1/badge/build/passing/brutalist")
     etag = resp1.headers["etag"]
 
     resp2 = await client.get(
-        "/v1/badge/build/passing/brutalist-emerald",
+        "/v1/badge/build/passing/brutalist",
         headers={"if-none-match": etag},
     )
     assert resp2.status_code == 304
@@ -371,7 +371,7 @@ async def test_304_on_matching_etag(client: AsyncClient, mock_compose: Any) -> N
 
 async def test_200_on_different_etag(client: AsyncClient, mock_compose: Any) -> None:
     resp = await client.get(
-        "/v1/badge/build/passing/brutalist-emerald",
+        "/v1/badge/build/passing/brutalist",
         headers={"if-none-match": '"completely-different"'},
     )
     assert resp.status_code == 200
@@ -388,7 +388,7 @@ async def test_compose_error_returns_500_svg(client: AsyncClient) -> None:
         patch("hyperweave.serve.app.compose", side_effect=ValueError("render failed")),
         patch("hyperweave.serve.app._error_badge", return_value=error_svg),
     ):
-        resp = await client.get("/v1/badge/build/passing/brutalist-emerald")
+        resp = await client.get("/v1/badge/build/passing/brutalist")
         # HTTP 200 with X-HW-Error-Code: 500 — see _classify_compose_exception.
         assert resp.status_code == 200
         assert resp.headers["x-hw-error-code"] == "500"
@@ -466,7 +466,7 @@ async def test_unknown_genome_returns_404_smpte_pattern(client: AsyncClient) -> 
 
 
 async def test_svg_camo_headers(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/badge/build/passing/brutalist-emerald")
+    resp = await client.get("/v1/badge/build/passing/brutalist")
     assert resp.headers.get("access-control-allow-origin") == "*"
     assert "Accept" in resp.headers.get("vary", "")
     assert resp.headers.get("x-content-type-options") == "nosniff"
@@ -481,7 +481,7 @@ async def test_kit_post(client: AsyncClient) -> None:
     with patch("hyperweave.kit.compose", return_value=MOCK_RESULT):
         resp = await client.post(
             "/v1/kit/readme",
-            json={"genome": "brutalist-emerald", "project": "test", "badges": "build:passing"},
+            json={"genome": "brutalist", "project": "test", "badges": "build:passing"},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -522,18 +522,18 @@ async def test_list_frames(client: AsyncClient) -> None:
 
 
 async def test_badge_with_regime(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/badge/build/passing/brutalist-emerald.static?regime=permissive")
+    resp = await client.get("/v1/badge/build/passing/brutalist.static?regime=permissive")
     assert resp.status_code == 200
 
 
 async def test_icon_with_shape(client: AsyncClient, mock_compose: Any) -> None:
-    resp = await client.get("/v1/icon/terminal/chrome-horizon.static?shape=circle")
+    resp = await client.get("/v1/icon/terminal/chrome.static?shape=circle")
     assert resp.status_code == 200
 
 
 async def test_icon_brutalist_circle_shape(client: AsyncClient, mock_compose: Any) -> None:
     """Brutalist genome supports both circle and square icon shapes."""
-    resp = await client.get("/v1/icon/terminal/brutalist-emerald.static?shape=circle")
+    resp = await client.get("/v1/icon/terminal/brutalist.static?shape=circle")
     assert resp.status_code == 200
 
 
@@ -549,7 +549,7 @@ async def test_strip_data_tokens(client: AsyncClient) -> None:
         patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT),
     ):
         resp = await client.get(
-            "/v1/strip/readme-ai/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+            "/v1/strip/readme-ai/brutalist.static?data=gh:anthropics/claude-code.stars",
         )
         assert resp.status_code == 200
         assert "stale-while-revalidate" in resp.headers.get("cache-control", "")
@@ -561,14 +561,14 @@ async def test_strip_data_tokens_error(client: AsyncClient) -> None:
         patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT),
     ):
         resp = await client.get(
-            "/v1/strip/readme-ai/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+            "/v1/strip/readme-ai/brutalist.static?data=gh:anthropics/claude-code.stars",
         )
         assert resp.status_code == 200
 
 
 async def test_strip_data_tokens_malformed_returns_400_smpte(client: AsyncClient) -> None:
     """Malformed ?data= returns a 400-class SMPTE SVG (HTTP 200 for Camo)."""
-    resp = await client.get("/v1/strip/readme-ai/brutalist-emerald.static?data=gh:no-dot-no-metric")
+    resp = await client.get("/v1/strip/readme-ai/brutalist.static?data=gh:no-dot-no-metric")
     assert resp.status_code == 200
     assert resp.headers.get("x-hw-error-code") == "400"
 

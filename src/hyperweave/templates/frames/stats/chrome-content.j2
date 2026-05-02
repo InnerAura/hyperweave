@@ -1,5 +1,5 @@
 {# Stats paradigm: chrome.
-   Ported element-by-element from tier2/genomes/chrome-horizon/github-profile-stats-card-v6.svg.
+   Ported element-by-element from tier2/genomes/chrome/horizon/github-profile-stats-card-v6.svg.
    495x260, material stack (envelope + well + rail), 4 centered metric columns,
    gradient activity bars with glow, horizon shelf. #}
 
@@ -8,7 +8,7 @@
 
 {# MATERIAL STACK — every color below is genome-driven via CSS vars or
    template params plumbed through compose/resolver._profile_visual_context.
-   Fallbacks preserve chrome-horizon's appearance when a genome omits a
+   Fallbacks preserve chrome's appearance when a genome omits a
    field, so the specimen card still renders identically. #}
 <g clip-path="url(#{{ uid }}-clip)">
   <rect width="{{ sw }}" height="{{ sh }}" fill="url(#{{ uid }}-env)" filter="url(#{{ uid }}-bevel)"/>

@@ -1,11 +1,11 @@
 {# Cellular strip frame: void canvas + bifamily flanking cells + content panel.
 
    Flanking is bifamily-only (teal left, amethyst right). For monofamily
-   compositions (family=blue|purple), the strip resolver can set
+   compositions (variant=blue|purple), the strip resolver can set
    flank_width=0 via a paradigm override; in this paradigm the default is
-   36px flanks when family=bifamily. Content panel spans the interior and
+   36px flanks when variant=bifamily. Content panel spans the interior and
    carries the identity + metric grid drawn by the outer strip.svg.j2. #}
-{% set bifamily = (family == "bifamily") and has_flanks %}
+{% set bifamily = (variant == "bifamily") and has_flanks %}
 
 <g clip-path="url(#{{ uid }}-clip)">
   {# 1. Void ground #}
@@ -17,7 +17,7 @@
   {% set fcs = flank_cell_size | default(12) %}
   {% set n_rows = strip_h // fcs %}
   {% set n_cols = (flank_width | default(36)) // fcs %}
-  {% set blue_trio = family_blue_pattern_cells %}
+  {% set blue_trio = variant_blue_pattern_cells %}
   <g opacity="{{ cellular_pattern_opacity | default('0.7') }}">
   {% for col in range(n_cols) %}
     {% for row in range(n_rows) %}
@@ -30,7 +30,7 @@
   </g>
 
   {# 3. Right amethyst flank — mirror of left with family_purple palette. #}
-  {% set purple_trio = family_purple_pattern_cells %}
+  {% set purple_trio = variant_purple_pattern_cells %}
   {% set right_flank_x = width - (flank_width | default(36)) %}
   <g opacity="{{ cellular_pattern_opacity | default('0.7') }}">
   {% for col in range(n_cols) %}

@@ -29,8 +29,8 @@ class FrameType(StrEnum):
 class GenomeId(StrEnum):
     """Genome identifier -- maps to a JSON config in data/genomes/."""
 
-    BRUTALIST_EMERALD = "brutalist-emerald"
-    CHROME_HORIZON = "chrome-horizon"
+    BRUTALIST = "brutalist"
+    CHROME = "chrome"
     AUTOMATA = "automata"
 
 
@@ -69,14 +69,26 @@ class MotionId(StrEnum):
 
 
 class DividerVariant(StrEnum):
-    """Specimen-faithful divider variant -- each has a unique visual identity."""
+    """Divider variant slug — both editorial generics and genome-themed.
 
+    Post-v0.2.19 split:
+      - Editorial generics (block, current, takeoff, void, zeropoint) are served
+        from /a/inneraura/dividers/<slug>; genome-agnostic, hardcoded specimen colors.
+      - Genome-themed (dissolve, band, seam) live at /v1/divider/{slug}/{genome}.{motion}
+        and are validated against genome.dividers at resolve-time.
+    Slug consistency rule: slug carries the design name only, never genome qualifier.
+    """
+
+    # Editorial generics (rendered via /a/inneraura/dividers/)
     BLOCK = "block"
     CURRENT = "current"
     TAKEOFF = "takeoff"
     VOID = "void"
     ZEROPOINT = "zeropoint"
-    CELLULAR_DISSOLVE = "cellular-dissolve"
+    # Genome-themed (rendered via /v1/divider/, declared in genome.dividers)
+    DISSOLVE = "dissolve"  # automata
+    BAND = "band"  # chrome
+    SEAM = "seam"  # brutalist
 
 
 class GlyphMode(StrEnum):

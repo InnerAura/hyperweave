@@ -22,20 +22,20 @@ def test_automata_strip_bifamily_has_flank_zones() -> None:
         genome_id="automata",
         title="README-AI",
         value="STARS:2.9k,FORKS:278",
-        family="bifamily",
+        variant="bifamily",
     )
     result = compose(spec)
     # Width has flank allocation on top of standard identity + N metrics + status
     # We can't know the exact width (depends on text measurement) but flank presence
-    # adds >= 72px over the equivalent brutalist-emerald compose.
+    # adds >= 72px over the equivalent brutalist compose.
     assert result.width >= 72 + 80  # flanks + minimum identity zone
 
 
 def test_brutalist_strip_unaffected_by_flank_zero() -> None:
-    """Existing brutalist-emerald strip doesn't grow (flank_width defaults 0)."""
+    """Existing brutalist strip doesn't grow (flank_width defaults 0)."""
     spec = ComposeSpec(
         type="strip",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         title="README-AI",
         value="STARS:2.9k,FORKS:278",
     )
@@ -52,7 +52,7 @@ def test_strip_renders_with_zero_metrics() -> None:
         genome_id="automata",
         title="SOLO",
         value="",
-        family="bifamily",
+        variant="bifamily",
     )
     result = compose(spec)
     assert result.width > 0
@@ -66,14 +66,14 @@ def test_strip_renders_with_many_metrics() -> None:
         genome_id="automata",
         title="REPO",
         value="A:1,B:2,C:3",
-        family="bifamily",
+        variant="bifamily",
     )
     spec6 = ComposeSpec(
         type="strip",
         genome_id="automata",
         title="REPO",
         value="A:1,B:2,C:3,D:4,E:5,F:6",
-        family="bifamily",
+        variant="bifamily",
     )
     r3 = compose(spec3)
     r6 = compose(spec6)

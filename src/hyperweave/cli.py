@@ -31,7 +31,7 @@ def compose(
     ],
     title: Annotated[str, typer.Argument(help="Primary text (label, identity, username, owner/repo, ...)")] = "",
     value: Annotated[str, typer.Argument(help="Secondary text or chart subtype (e.g. 'stars')")] = "",
-    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist-emerald",
+    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist",
     genome_file: Annotated[
         Path | None,
         typer.Option(
@@ -44,13 +44,13 @@ def compose(
     glyph: Annotated[str, typer.Option("--glyph")] = "",
     glyph_mode: Annotated[str, typer.Option("--glyph-mode")] = "auto",
     regime: Annotated[str, typer.Option("--regime")] = "normal",
-    variant: Annotated[str, typer.Option("--variant")] = "default",
+    size: Annotated[str, typer.Option("--size")] = "default",
     shape: Annotated[str, typer.Option("--shape", help="Icon shape: square, circle")] = "",
-    family: Annotated[
+    variant: Annotated[
         str,
         typer.Option(
-            "--family",
-            help="Chromatic family (automata): blue, purple, bifamily. Empty = frame default.",
+            "--variant",
+            help="Chromatic variant (automata): blue, purple, bifamily. Empty = frame default.",
         ),
     ] = "",
     # Divider options
@@ -179,9 +179,9 @@ def compose(
         glyph=glyph,
         glyph_mode=glyph_mode,
         regime=regime,
-        variant=variant,
+        size=size,
         shape=shape,
-        family=family,
+        variant=variant,
         divider_variant=divider_variant,
         marquee_direction=direction,
         stats_username=stats_username,
@@ -203,7 +203,7 @@ def compose(
 @app.command()
 def kit(
     kit_type: Annotated[str, typer.Argument(help="Kit type: readme")] = "readme",
-    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist-emerald",
+    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist",
     project: Annotated[str, typer.Option("--project")] = "",
     badges: Annotated[str, typer.Option("--badges", help="'build:passing,version:v0.6.3'")] = "",
     social: Annotated[str, typer.Option("--social", help="'github,discord,x'")] = "",
@@ -362,7 +362,7 @@ def live(
     provider: Annotated[str, typer.Argument(help="Provider: github, pypi, npm, arxiv, huggingface, docker")],
     identifier: Annotated[str, typer.Argument(help="Resource ID: owner/repo, package-name, paper-id")],
     metric: Annotated[str, typer.Argument(help="Metric: stars, forks, version, downloads, likes")],
-    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist-emerald",
+    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist",
     glyph: Annotated[str, typer.Option("--glyph")] = "",
     state: Annotated[str, typer.Option("--state", "-s")] = "active",
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,

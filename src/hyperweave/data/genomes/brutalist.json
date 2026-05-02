@@ -1,6 +1,6 @@
 {
-  "id": "brutalist-emerald",
-  "name": "Brutalist Emerald",
+  "id": "brutalist",
+  "name": "Brutalist",
   "category": "dark",
   "profile": "brutalist",
   "surface_0": "#0A2218",
@@ -29,6 +29,9 @@
     "entanglement",
     "rimrun"
   ],
+  "variants": [],
+  "flagship_variant": "",
+  "dividers": ["seam"],
   "bg": "#14532D",
   "bg_alt": "#0E2B20",
   "ink_bright": "#0A2218",

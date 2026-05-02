@@ -16,7 +16,7 @@ post-fix invariants:
 Usage:
     uv run python scripts/probe_live_stats.py [endpoint] [user/genome.variant]
 
-Defaults probe https://hyperweave.app against ``eli64s/chrome-horizon.static``.
+Defaults probe https://hyperweave.app against ``eli64s/chrome.static``.
 Exit code 0 on pass, 1 on fail (suspicious-zero, missing markers, HTTP error).
 A ``stale`` marker emits a warning but does not fail the probe on a single run.
 """
@@ -31,7 +31,7 @@ import time
 import httpx
 
 DEFAULT_ENDPOINT = "https://hyperweave.app"
-DEFAULT_TARGET = "eli64s/chrome-horizon.static"
+DEFAULT_TARGET = "eli64s/chrome.static"
 
 # Anchor on the label text — both paradigms emit <text>LABEL</text> followed
 # immediately by the value text element. Chrome uses data-hw-zone + mval

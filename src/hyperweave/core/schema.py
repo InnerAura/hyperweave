@@ -85,7 +85,7 @@ class GenomeSpec(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # -- Identity --
-    id: str = Field(description="Genome slug (e.g. 'brutalist-emerald')")
+    id: str = Field(description="Genome slug (e.g. 'brutalist')")
     name: str = Field(description="Human-readable name")
     category: str = Field(description="'dark' or 'light'")
     profile: str = Field(description="Profile ID reference (e.g. 'brutalist')")
@@ -173,43 +173,69 @@ class GenomeSpec(BaseModel):
         default_factory=list, description="Hero value text gradient stops (icy silver for chrome)"
     )
 
-    # -- Automata family palettes (bifamily genomes with teal/amethyst axis) --
-    # Automata specimens establish two parallel chromatic families with the
-    # same structural architecture. Cellular paradigm requires both families
-    # populated; monofamily artifacts (badges/icons) pick one via ComposeSpec.family.
-    family_blue_rim_stops: list[dict[str, str]] = Field(
+    # -- Path B variant grammar (v0.2.19) --
+    # Genome-declared whitelist for ComposeSpec.variant. Empty list = no variant
+    # axis (validated at resolve-time, not Pydantic field-validator). flagship_variant
+    # is the genome's default when spec.variant=="" and paradigm has no per-frame
+    # default. Together these enable adding variants without Python edits — same
+    # extensibility story Invariant 12 brought to paradigms.
+    variants: list[str] = Field(
+        default_factory=list,
+        description="Allowed values for ComposeSpec.variant. Empty = no variant axis.",
+    )
+    flagship_variant: str = Field(
+        default="",
+        description="Default variant when spec.variant is empty and no paradigm default exists.",
+    )
+    dividers: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Genome-themed divider slugs allowed on /v1/divider/{slug}/{genome}. Editorial generics "
+            "(block, current, takeoff, void, zeropoint) are NOT in this list — they live at /a/inneraura/."
+        ),
+    )
+
+    # -- Automata variant palettes (bifamily genomes with teal/amethyst axis) --
+    # Automata specimens establish two parallel chromatic palettes with the
+    # same structural architecture. Cellular paradigm requires both populated;
+    # monofamily artifacts (badges/icons) pick one via ComposeSpec.variant.
+    variant_blue_rim_stops: list[dict[str, str]] = Field(
         default_factory=list, description="Blue-family rim gradient stops (7-stop metallic bezel)"
     )
-    family_blue_pattern_cells: list[str] = Field(
+    variant_blue_pattern_cells: list[str] = Field(
         default_factory=list, description="Blue-family cellular substrate trio [solid, mid, deep]"
     )
-    family_blue_seam_mid: str = Field(default="", description="Blue-family seam gradient mid color")
-    family_blue_label_slab_fill: str = Field(default="", description="Blue-family label slab fill (deep teal-black)")
-    family_blue_label_text: str = Field(default="", description="Blue-family label text color")
-    family_blue_value_text: str = Field(default="", description="Blue-family value text color (bright teal)")
-    family_blue_canvas_top: str = Field(default="", description="Blue-family value slab gradient top")
-    family_blue_canvas_bottom: str = Field(default="", description="Blue-family value slab gradient bottom")
+    variant_blue_seam_mid: str = Field(default="", description="Blue-family seam gradient mid color")
+    variant_blue_label_slab_fill: str = Field(default="", description="Blue-family label slab fill (deep teal-black)")
+    variant_blue_label_text: str = Field(default="", description="Blue-family label text color")
+    variant_blue_value_text: str = Field(default="", description="Blue-family value text color (bright teal)")
+    variant_blue_canvas_top: str = Field(default="", description="Blue-family value slab gradient top")
+    variant_blue_canvas_bottom: str = Field(default="", description="Blue-family value slab gradient bottom")
 
-    family_purple_rim_stops: list[dict[str, str]] = Field(
+    variant_purple_rim_stops: list[dict[str, str]] = Field(
         default_factory=list, description="Purple-family rim gradient stops (7-stop amethyst bezel)"
     )
-    family_purple_pattern_cells: list[str] = Field(
+    variant_purple_pattern_cells: list[str] = Field(
         default_factory=list, description="Purple-family cellular substrate trio [solid, mid, deep]"
     )
-    family_purple_seam_mid: str = Field(default="", description="Purple-family seam gradient mid color")
-    family_purple_label_slab_fill: str = Field(
+    variant_purple_seam_mid: str = Field(default="", description="Purple-family seam gradient mid color")
+    variant_purple_label_slab_fill: str = Field(
         default="", description="Purple-family label slab fill (deep amethyst-black)"
     )
-    family_purple_label_text: str = Field(default="", description="Purple-family label text color")
-    family_purple_value_text: str = Field(default="", description="Purple-family value text color (bright amethyst)")
-    family_purple_canvas_top: str = Field(default="", description="Purple-family value slab gradient top")
-    family_purple_canvas_bottom: str = Field(default="", description="Purple-family value slab gradient bottom")
+    variant_purple_label_text: str = Field(default="", description="Purple-family label text color")
+    variant_purple_value_text: str = Field(default="", description="Purple-family value text color (bright amethyst)")
+    variant_purple_canvas_top: str = Field(default="", description="Purple-family value slab gradient top")
+    variant_purple_canvas_bottom: str = Field(default="", description="Purple-family value slab gradient bottom")
 
     # Bifamily bridge (used by divider + flanking compositions — static-baked palette)
-    bifamily_bridge_teal_mid: str = Field(default="", description="Bifamily-bridge teal midtone (divider cells)")
-    bifamily_bridge_teal_deep: str = Field(default="", description="Bifamily-bridge teal deep (divider cells)")
-    bifamily_bridge_amethyst_core: str = Field(default="", description="Bifamily-bridge amethyst core (divider cells)")
-    bifamily_bridge_amethyst_bright: str = Field(
+    variant_bifamily_bridge_teal_mid: str = Field(
+        default="", description="Bifamily-bridge teal midtone (divider cells)"
+    )
+    variant_bifamily_bridge_teal_deep: str = Field(default="", description="Bifamily-bridge teal deep (divider cells)")
+    variant_bifamily_bridge_amethyst_core: str = Field(
+        default="", description="Bifamily-bridge amethyst core (divider cells)"
+    )
+    variant_bifamily_bridge_amethyst_bright: str = Field(
         default="", description="Bifamily-bridge amethyst bright (divider cells)"
     )
 
@@ -224,7 +250,7 @@ class GenomeSpec(BaseModel):
 
     # -- State palette (per-status core + bright pair; promoted to top-level
     # so every genome can populate state-badge variants. Default "" keeps
-    # current brutalist-emerald/chrome-horizon unchanged until backfilled.) --
+    # current brutalist/chrome unchanged until backfilled.) --
     state_passing_core: str = Field(default="", description="State=passing core color (e.g. emerald-400)")
     state_passing_bright: str = Field(default="", description="State=passing bright value-text color")
     state_warning_core: str = Field(default="", description="State=warning core color (e.g. amber-400)")
@@ -287,7 +313,7 @@ class GenomeSpec(BaseModel):
 
     # -- Text metrics (optional, per-zone width factors for empirical calibration) --
     # The text-measurement LUT is Inter-calibrated; genomes that render with wider
-    # fonts (e.g. Orbitron 900 for chrome-horizon badge values) declare a
+    # fonts (e.g. Orbitron 900 for chrome badge values) declare a
     # -- Kinetic cascade (optional, motion timing + compatible vocab) --
     motion_config: dict[str, Any] = Field(
         default_factory=dict,

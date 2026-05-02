@@ -113,7 +113,7 @@ def emit_metrics_json(
 # Known font configs. Add entries here to extend.
 FONT_CONFIGS: dict[str, dict[str, object]] = {
     "orbitron": {
-        "family": "Orbitron",
+        "variant": "Orbitron",
         "baseline_size_px": 20,
         "bold_expansion_factor": 1.06,
         "aliases": ["orbitron"],
@@ -121,7 +121,7 @@ FONT_CONFIGS: dict[str, dict[str, object]] = {
         "char_width_px": 0.0,
     },
     "jetbrains-mono": {
-        "family": "JetBrains Mono",
+        "variant": "JetBrains Mono",
         "baseline_size_px": 11,
         "bold_expansion_factor": 1.0,  # true monospace — no bold width change
         "aliases": ["jetbrains mono", "jetbrains-mono", "sf mono", "menlo", "monospace"],
@@ -130,7 +130,7 @@ FONT_CONFIGS: dict[str, dict[str, object]] = {
         "char_width_px": 0.0,
     },
     "chakra-petch": {
-        "family": "Chakra Petch",
+        "variant": "Chakra Petch",
         "baseline_size_px": 12,  # dominant rendered size in automata badge value text
         "bold_expansion_factor": 1.04,
         "aliases": ["chakra petch", "chakra-petch"],
@@ -161,7 +161,7 @@ def extract_one(slug: str) -> Path:
         char_width_px = advance_tenths / 10.0
 
     data = emit_metrics_json(
-        family=str(config["family"]),
+        variant=str(config["family"]),
         baseline_size_px=baseline,
         widths=widths,
         bold_expansion_factor=float(config["bold_expansion_factor"]),

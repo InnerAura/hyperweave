@@ -31,15 +31,15 @@ async def hw_compose(
     type: str = "badge",
     title: str = "",
     value: str = "",
-    genome: str = "brutalist-emerald",
+    genome: str = "brutalist",
     state: str = "active",
     motion: str = "static",
     glyph: str = "",
     glyph_mode: str = "auto",
     regime: str = "normal",
-    variant: str = "default",
+    size: str = "default",
     shape: str = "",
-    family: str = "",
+    variant: str = "",
     divider_variant: str = "zeropoint",
     direction: str = "ltr",
     speeds: list[float] | None = None,
@@ -56,8 +56,8 @@ async def hw_compose(
     type: badge | strip | icon | divider | marquee-horizontal |
           receipt | rhythm-strip | master-card | catalog | stats | chart
 
-    genome: brutalist-emerald (dark, sharp corners, emerald accent) |
-            chrome-horizon (dark, metallic, blue-silver gradient) |
+    genome: brutalist (dark, sharp corners, emerald accent) |
+            chrome (dark, metallic, blue-silver gradient) |
             automata (cellular bifamily; teal + amethyst)
             — or pass ``genome_override`` as an inline genome dict to bypass
               the built-in registry (equivalent to CLI ``--genome-file``).
@@ -68,7 +68,7 @@ async def hw_compose(
       strip:    title="readme-ai" value="STARS:2.9k,FORKS:278" (metric strip)
                 — or strip with data="gh:owner/repo.stars,gh:owner/repo.forks"
       icon:     glyph="github" (64x64 icon frame)
-      divider:  divider_variant=block|current|takeoff|void|zeropoint|cellular-dissolve
+      divider:  divider_variant=block|current|takeoff|void|zeropoint|dissolve
       marquee:  title="ITEM1 | ITEM2" (pipe-separated for raw text)
                 — or data="text:NEW,gh:owner/repo.stars,text:DOWNLOAD"
       receipt:  telemetry_data={session data contract dict}
@@ -93,9 +93,9 @@ async def hw_compose(
                                 entanglement | rimrun
     state: active | passing | building | warning | critical | failing | offline
     glyph_mode: auto | fill | wire | none
-    variant: default | compact
+    size: default | compact
     shape: square | circle (icon frame shape, genome-dependent)
-    family: blue | purple | bifamily (automata chromatic axis; empty = frame default)
+    variant: blue | purple | bifamily (automata chromatic axis; empty = frame default)
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -129,9 +129,9 @@ async def hw_compose(
         glyph=glyph,
         glyph_mode=glyph_mode,
         regime=regime,
-        variant=variant,
+        size=size,
         shape=shape,
-        family=family,
+        variant=variant,
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_speeds=speeds,
@@ -153,7 +153,7 @@ async def hw_live(
     provider: str,
     identifier: str,
     metric: str,
-    genome: str = "brutalist-emerald",
+    genome: str = "brutalist",
     glyph: str = "",
     state: str = "active",
 ) -> str:
@@ -182,7 +182,7 @@ async def hw_live(
 @mcp.tool()
 async def hw_kit(
     type: str = "readme",
-    genome: str = "brutalist-emerald",
+    genome: str = "brutalist",
     project: str = "",
     badges: str = "",
     social: str = "",
@@ -259,11 +259,11 @@ async def hw_discover(
                     "glyph_mode": "auto | fill | wire | none",
                     "state": "active | passing | building | warning | critical | failing | offline",
                     "regime": "normal | permissive | ungoverned",
-                    "variant": "default | compact",
-                    "family": "blue | purple | bifamily (automata)",
+                    "size": "default | compact",
+                    "variant": "blue | purple | bifamily (automata)",
                     "t": "Title override (use when title contains slashes)",
                 },
-                "example": "/v1/badge/build/passing/brutalist-emerald.static",
+                "example": "/v1/badge/build/passing/brutalist.static",
             },
             "badge (data-driven)": {
                 "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
@@ -273,10 +273,10 @@ async def hw_discover(
                     "glyph_mode": "auto | fill | wire | none",
                     "state": "Semantic state",
                     "regime": "normal | permissive | ungoverned",
-                    "variant": "default | compact",
-                    "family": "blue | purple | bifamily (automata)",
+                    "size": "default | compact",
+                    "variant": "blue | purple | bifamily (automata)",
                 },
-                "example": "/v1/badge/STARS/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
+                "example": "/v1/badge/STARS/brutalist.static?data=gh:anthropics/claude-code.stars",
             },
             "strip": {
                 "pattern": "/v1/strip/{title}/{genome}.{motion}",
@@ -286,12 +286,11 @@ async def hw_discover(
                     "subtitle": "Subtitle under identity (cellular paradigm)",
                     "glyph": "Glyph identifier",
                     "state": "Semantic state",
-                    "family": "blue | purple | bifamily (automata)",
+                    "variant": "blue | purple | bifamily (automata)",
                     "t": "Title override (use when title contains slashes)",
                 },
                 "example": (
-                    "/v1/strip/readme-ai/brutalist-emerald.static"
-                    "?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks"
+                    "/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks"
                 ),
             },
             "icon": {
@@ -300,16 +299,16 @@ async def hw_discover(
                     "shape": "square | circle",
                     "glyph_mode": "auto | fill | wire | none",
                     "state": "Semantic state",
-                    "family": "blue | purple | bifamily (automata)",
+                    "variant": "blue | purple | bifamily (automata)",
                 },
-                "example": "/v1/icon/github/chrome-horizon.static?shape=circle",
+                "example": "/v1/icon/github/chrome.static?shape=circle",
             },
             "divider": {
                 "pattern": "/v1/divider/{variant}/{genome}.{motion}",
                 "query_params": {
-                    "family": "blue | purple | bifamily (automata)",
+                    "variant": "blue | purple | bifamily (automata)",
                 },
-                "example": "/v1/divider/void/brutalist-emerald.static",
+                "example": "/v1/divider/void/brutalist.static",
             },
             "marquee-horizontal": {
                 "pattern": "/v1/marquee/{title}/{genome}.{motion}",
@@ -317,23 +316,22 @@ async def hw_discover(
                     "data": data_grammar + " When set, drives the scroll directly and ignores title.",
                     "direction": "ltr | rtl",
                     "speeds": "Single float scroll speed multiplier",
-                    "family": "blue | purple | bifamily (automata)",
+                    "variant": "blue | purple | bifamily (automata)",
                     "t": "Title override (use when title contains slashes)",
                 },
                 "example": (
-                    "/v1/marquee/SCROLL/brutalist-emerald.static"
-                    "?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars"
+                    "/v1/marquee/SCROLL/brutalist.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars"
                 ),
             },
             "stats": {
                 "pattern": "/v1/stats/{username}/{genome}.{motion}",
                 "query_params": {},
-                "example": "/v1/stats/eli64s/chrome-horizon.static",
+                "example": "/v1/stats/eli64s/chrome.static",
             },
             "chart-stars": {
                 "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
                 "query_params": {},
-                "example": "/v1/chart/stars/torvalds/linux/brutalist-emerald.static",
+                "example": "/v1/chart/stars/torvalds/linux/brutalist.static",
             },
         }
 

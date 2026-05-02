@@ -22,7 +22,6 @@ from hyperweave.config.loader import load_genomes
 from hyperweave.core.enums import (
     ArtifactStatus,
     BorderMotionId,
-    DividerVariant,
     FrameType,
     GenomeId,
     Regime,
@@ -119,8 +118,8 @@ def _compose(
     regime: str = "normal",
     glyph_mode: str = "auto",
     divider_variant: str = "zeropoint",
-    variant: str = "default",
-    family: str = "",
+    size: str = "default",
+    variant: str = "",
     shape: str = "",
     telemetry_data: dict[str, Any] | None = None,
     connector_data: dict[str, Any] | None = None,
@@ -136,8 +135,8 @@ def _compose(
         regime=regime,
         glyph_mode=glyph_mode,
         divider_variant=divider_variant,
+        size=size,
         variant=variant,
-        family=family,
         shape=shape,
         telemetry_data=telemetry_data,
         connector_data=connector_data,
@@ -181,31 +180,31 @@ def generate_static() -> int:
         _write(base / "strip.svg", svg)
         total += 1
 
-        svg = _compose("icon", genome, glyph="github")
-        _write(base / "icon.svg", svg)
-        total += 1
-
-        # Per-shape icon variants (v0.2.16): chrome-horizon and brutalist-emerald
-        # ship both circle and square icons since their paradigms support both
-        # shapes and the v2 specimens are explicit about the per-shape material
-        # discipline. Other genomes (cellular, telemetry-void) keep the
-        # paradigm-default-shape icon only.
-        if genome in (GenomeId.CHROME_HORIZON, GenomeId.BRUTALIST_EMERALD):
+        # Icons: chrome/brutalist support both shapes (per v0.2.16 paradigms);
+        # render only the explicit-shape pair to avoid duplicating the
+        # paradigm default. Other genomes keep their single paradigm-default icon.
+        if genome in (GenomeId.CHROME, GenomeId.BRUTALIST):
             svg = _compose("icon", genome, glyph="github", shape="circle")
             _write(base / "icon_circle.svg", svg)
             total += 1
             svg = _compose("icon", genome, glyph="github", shape="square")
             _write(base / "icon_square.svg", svg)
             total += 1
+        else:
+            svg = _compose("icon", genome, glyph="github")
+            _write(base / "icon.svg", svg)
+            total += 1
 
-        for dv in DividerVariant:
-            # cellular-dissolve is automata-only; the other 5 variants
-            # (block/current/takeoff/void/zeropoint) are generic inneraura-
-            # namespace dividers shared across all genomes.
-            if dv == DividerVariant.CELLULAR_DISSOLVE and genome != GenomeId.AUTOMATA:
-                continue
-            svg = _compose("divider", genome, divider_variant=dv)
-            _write(base / f"divider_{dv}.svg", svg)
+        # v0.2.19 divider proof set: only the genome's declared divider(s) render
+        # at /v1/divider/. Editorial generics (block/current/takeoff/void/zeropoint)
+        # are no longer per-genome — see the dedicated /a/inneraura/dividers/
+        # generation block at the bottom of generate_static().
+        from hyperweave.config.loader import load_genomes
+
+        genome_cfg = load_genomes().get(genome)
+        for slug in genome_cfg.dividers if genome_cfg else []:
+            svg = _compose("divider", genome, divider_variant=slug)
+            _write(base / f"divider_{slug}.svg", svg)
             total += 1
 
         # marquee-horizontal — pipe-separated items split into discrete tokens.
@@ -215,8 +214,8 @@ def generate_static() -> int:
         # brutalist=rect, cellular=glyph). Marquee text per genome matches its
         # paradigm voice.
         marquee_text_by_genome: dict[str, str] = {
-            GenomeId.CHROME_HORIZON: "HYPERWEAVE|CHROME HORIZON|LIVING SVG ARTIFACTS|v0.2.16",
-            GenomeId.BRUTALIST_EMERALD: "LIVING ARTIFACTS|SELF-CONTAINED SVG|AGENT INTERFACES",
+            GenomeId.CHROME: "HYPERWEAVE|CHROME HORIZON|LIVING SVG ARTIFACTS|v0.2.16",
+            GenomeId.BRUTALIST: "LIVING ARTIFACTS|SELF-CONTAINED SVG|AGENT INTERFACES",
             GenomeId.AUTOMATA: "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL",
         }
         marquee_text = marquee_text_by_genome.get(genome, "HYPERWEAVE|LIVING ARTIFACTS|v0.2.16")
@@ -226,18 +225,18 @@ def generate_static() -> int:
 
         # ── 1b. Automata-specific family-axis coverage (blue/purple x default/compact) ──
         if genome == GenomeId.AUTOMATA:
-            fam_dir = gdir / "families"
+            var_dir = gdir / "variants"
             for fam in ("blue", "purple"):
-                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", family=fam)
-                _write(fam_dir / f"badge_pypi_{fam}_default.svg", svg)
+                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", variant=fam)
+                _write(var_dir / f"badge_pypi_{fam}_default.svg", svg)
                 total += 1
-                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", family=fam, variant="compact")
-                _write(fam_dir / f"badge_pypi_{fam}_compact.svg", svg)
+                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", variant=fam, size="compact")
+                _write(var_dir / f"badge_pypi_{fam}_compact.svg", svg)
                 total += 1
-                svg = _compose("icon", genome, glyph="github", family=fam)
-                _write(fam_dir / f"icon_github_{fam}.svg", svg)
+                svg = _compose("icon", genome, glyph="github", variant=fam)
+                _write(var_dir / f"icon_github_{fam}.svg", svg)
                 total += 1
-            # Bifamily strip + cellular-dissolve divider
+            # Bifamily strip + dissolve divider
             svg = _compose(
                 "strip",
                 genome,
@@ -245,13 +244,13 @@ def generate_static() -> int:
                 "STARS:12.4k,VERSION:v0.6.9,BUILD:passing",
                 "passing",
                 "github",
-                family="bifamily",
+                variant="bifamily",
                 connector_data={"repo_slug": "eli64s/readme-ai"},
             )
-            _write(fam_dir / "strip_bifamily.svg", svg)
+            _write(var_dir / "strip_bifamily.svg", svg)
             total += 1
-            svg = _compose("divider", genome, divider_variant="cellular-dissolve")
-            _write(fam_dir / "divider_cellular_dissolve.svg", svg)
+            svg = _compose("divider", genome, divider_variant="dissolve")
+            _write(var_dir / "divider_dissolve.svg", svg)
             total += 1
 
         # ── 2. State machine -- badges ──
@@ -325,17 +324,26 @@ def generate_static() -> int:
     # ── 8. Telemetry frames (genome-independent, generated once) ──
     telemetry_dir = OUT / "proofset" / "telemetry"
     for ftype in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD):
-        svg = _compose(ftype, GenomeId.BRUTALIST_EMERALD, telemetry_data=MOCK_TELEMETRY)
+        svg = _compose(ftype, GenomeId.BRUTALIST, telemetry_data=MOCK_TELEMETRY)
         _write(telemetry_dir / f"{ftype.value.replace('-', '_')}.svg", svg)
         total += 1
 
-    # ── 9. Stats / chart frames ──
-    total += _generate_session_2a2b()
+    # ── 9. Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once) ──
+    # Render via compose() with a default genome — the templates hardcode their
+    # own colors and ignore the genome dict by design.
+    inneraura_dir = OUT / "proofset" / "inneraura" / "dividers"
+    for slug in ("block", "current", "takeoff", "void", "zeropoint"):
+        svg = _compose("divider", GenomeId.BRUTALIST, divider_variant=slug)
+        _write(inneraura_dir / f"{slug}.svg", svg)
+        total += 1
+
+    # ── 10. Stats / chart frames ──
+    total += _generate_data_cards()
 
     return total
 
 
-# ── Session 2A+2B proof set generation ─────────────────────────────────────
+# ── Data cards (stats + chart) proof set generation ─────────────────────────────────────
 
 
 _MOCK_STATS_DATA: dict[str, Any] = {
@@ -387,7 +395,7 @@ def _compose_connector(
     return compose(spec).svg
 
 
-def _generate_session_2a2b() -> int:
+def _generate_data_cards() -> int:
     """Generate stats and chart artifacts for each built-in genome.
 
     Fetches real data from GitHub for eli64s / eli64s/readme-ai. Falls back to
@@ -400,22 +408,31 @@ def _generate_session_2a2b() -> int:
     stats_data: dict[str, Any] | None = None
     chart_data: dict[str, Any] | None = None
 
-    # Fetch real data from GitHub.
-    try:
-        from hyperweave.connectors.github import fetch_stargazer_history, fetch_user_stats
+    # Fetch real data from GitHub. Both fetches share a single asyncio.run() —
+    # the httpx singleton client binds to the loop on first use, so a second
+    # asyncio.run() finds it bound to a closed loop ("Event loop is closed").
+    from hyperweave.connectors.base import close_client
+    from hyperweave.connectors.github import fetch_stargazer_history, fetch_user_stats
 
-        stats_data = asyncio.run(fetch_user_stats("eli64s"))
-        print("  fetched real stats for eli64s")
-    except Exception as exc:
-        print(f"  stats fetch failed ({exc}), using mock data")
+    async def _fetch_both() -> tuple[dict[str, Any] | None, dict[str, Any] | None, str | None, str | None]:
+        s_err: str | None = None
+        c_err: str | None = None
+        s_data: dict[str, Any] | None = None
+        c_data: dict[str, Any] | None = None
+        try:
+            s_data = await fetch_user_stats("eli64s")
+        except Exception as exc:
+            s_err = str(exc)
+        try:
+            c_data = await fetch_stargazer_history("eli64s", "readme-ai")
+        except Exception as exc:
+            c_err = str(exc)
+        await close_client()
+        return s_data, c_data, s_err, c_err
 
-    try:
-        from hyperweave.connectors.github import fetch_stargazer_history
-
-        chart_data = asyncio.run(fetch_stargazer_history("eli64s", "readme-ai"))
-        print("  fetched real star history for eli64s/readme-ai")
-    except Exception as exc:
-        print(f"  chart fetch failed ({exc}), using mock data")
+    stats_data, chart_data, _s_err, _c_err = asyncio.run(_fetch_both())
+    print("  fetched real stats for eli64s" if stats_data else f"  stats fetch failed ({_s_err}), using mock data")
+    print("  fetched real star history for eli64s/readme-ai" if chart_data else f"  chart fetch failed ({_c_err})")
 
     # Stats fallback: stats card has many cells, mock data keeps the showcase
     # rendering even when GitHub is unreachable. The mock here is documented
@@ -467,7 +484,13 @@ def _generate_session_2a2b() -> int:
 
                 # Drop the cached bad result before retrying.
                 get_cache().clear()
-                chart_data = asyncio.run(fetch_stargazer_history("eli64s", "readme-ai"))
+
+                async def _retry() -> dict[str, Any]:
+                    result = await fetch_stargazer_history("eli64s", "readme-ai")
+                    await close_client()
+                    return result
+
+                chart_data = asyncio.run(_retry())
                 chart_stars = int(chart_data.get("current_stars") or 0)
                 ratio = max(chart_stars, user_stars) / max(min(chart_stars, user_stars), 1)
                 print(f"  retry returned current_stars={chart_stars} (now {ratio:.1f}x)")
@@ -488,7 +511,7 @@ def _generate_session_2a2b() -> int:
     total = 0
 
     for genome in GenomeId:
-        gdir = OUT / "proofset" / genome / "session-2a2b"
+        gdir = OUT / "proofset" / genome / "data-cards"
 
         # Stats card — paradigm comes from genome.paradigms.stats
         svg = _compose_connector(
@@ -534,7 +557,7 @@ async def generate_live() -> int:
         try:
             data = await fetch_metric(spec["provider"], spec["id"], spec["metric"])
             value = str(data.get("value", "N/A"))
-            genome = GenomeId.BRUTALIST_EMERALD
+            genome = GenomeId.BRUTALIST
 
             if spec["frame"] == "badge":
                 svg = _compose("badge", genome, spec["title"], value, "active")
@@ -610,7 +633,7 @@ async def _generate_multi_provider_marquee(proofset_root: Path) -> int:
         spec = ComposeSpec(
             type="marquee-horizontal",
             genome_id=genome,
-            family="bifamily" if genome == GenomeId.AUTOMATA else "",
+            variant="bifamily" if genome == GenomeId.AUTOMATA else "",
             data_tokens=list(resolved),
         )
         try:
@@ -764,21 +787,25 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append("")
         lines.append(f"![strip](proofset/{g}/base/strip.svg)")
         lines.append("")
-        lines.append(f"![icon](proofset/{g}/base/icon.svg)")
-        lines.append("")
-        # Per-shape icon variants for chrome-horizon and brutalist-emerald
-        # (paradigms that ship both shapes per v0.2.16).
-        if genome in (GenomeId.CHROME_HORIZON, GenomeId.BRUTALIST_EMERALD):
+        # Icons: chrome/brutalist render explicit shape pair only; other
+        # genomes render their single paradigm-default icon.
+        if genome in (GenomeId.CHROME, GenomeId.BRUTALIST):
             lines.append(f"![icon circle](proofset/{g}/base/icon_circle.svg)")
             lines.append("")
             lines.append(f"![icon square](proofset/{g}/base/icon_square.svg)")
             lines.append("")
-        for dv in DividerVariant:
-            # cellular-dissolve only renders for automata (mirror the guard
-            # in generate_static); skip the broken image link in other genomes.
-            if dv == DividerVariant.CELLULAR_DISSOLVE and genome != GenomeId.AUTOMATA:
-                continue
-            lines.append(f"![divider {dv}](proofset/{g}/base/divider_{dv}.svg)")
+        else:
+            lines.append(f"![icon](proofset/{g}/base/icon.svg)")
+            lines.append("")
+        # Per-genome dividers: only the genome's declared dividers render
+        # at /v1/divider/{slug}/{genome}.{motion}. Genome-agnostic dividers
+        # (block/current/takeoff/void/zeropoint) live at /a/inneraura/dividers/
+        # and are listed in their own section at the bottom of this README.
+        from hyperweave.config.loader import load_genomes
+
+        _genome_cfg = load_genomes().get(genome)
+        for slug in _genome_cfg.dividers if _genome_cfg else []:
+            lines.append(f"![divider {slug}](proofset/{g}/base/divider_{slug}.svg)")
             lines.append("")
         lines.append(f"![marquee_horizontal (custom text)](proofset/{g}/base/marquee_horizontal.svg)")
         lines.append("")
@@ -812,27 +839,27 @@ def generate_readme(total: int, live_total: int) -> None:
                 lines.append(f"![{stem}](proofset/{g}/connectors/{stem}.svg)")
                 lines.append("")
 
-        # Automata-specific family axis (blue/purple x default/compact)
+        # Automata-specific variant axis (blue/purple/bifamily x default/compact)
         if genome == GenomeId.AUTOMATA:
-            lines.extend(["### Family Axis (blue / purple x default / compact)", ""])
+            lines.extend(["### Variant Axis (blue / purple / bifamily)", ""])
             lines.append(
-                "Automata's bifamily chromatic axis: badges + icons pick "
-                "`--family blue|purple`; strip/marquee-horizontal/divider render both simultaneously."
+                "Automata's chromatic variant axis: badges + icons pick "
+                "`?variant=blue|purple`; strip/marquee-horizontal/divider render bifamily."
             )
             lines.append("")
-            for fam in ("blue", "purple"):
-                lines.append(f"**Family: `{fam}`**")
+            for v in ("blue", "purple"):
+                lines.append(f"**Variant: `{v}`**")
                 lines.append("")
-                lines.append(f"![badge pypi {fam} default](proofset/{g}/families/badge_pypi_{fam}_default.svg) ")
-                lines.append(f"![badge pypi {fam} compact](proofset/{g}/families/badge_pypi_{fam}_compact.svg)")
+                lines.append(f"![badge pypi {v} default](proofset/{g}/variants/badge_pypi_{v}_default.svg) ")
+                lines.append(f"![badge pypi {v} compact](proofset/{g}/variants/badge_pypi_{v}_compact.svg)")
                 lines.append("")
-                lines.append(f"![icon github {fam}](proofset/{g}/families/icon_github_{fam}.svg)")
+                lines.append(f"![icon github {v}](proofset/{g}/variants/icon_github_{v}.svg)")
                 lines.append("")
             lines.append("**Bifamily compositions:**")
             lines.append("")
-            lines.append(f"![strip bifamily](proofset/{g}/families/strip_bifamily.svg)")
+            lines.append(f"![strip bifamily](proofset/{g}/variants/strip_bifamily.svg)")
             lines.append("")
-            lines.append(f"![divider cellular-dissolve](proofset/{g}/families/divider_cellular_dissolve.svg)")
+            lines.append(f"![divider dissolve](proofset/{g}/variants/divider_dissolve.svg)")
             lines.append("")
 
         # States
@@ -852,11 +879,11 @@ def generate_readme(total: int, live_total: int) -> None:
 
         # Stats card + Star chart inline per genome
         lines.extend(["### Profile Card (stats)", ""])
-        lines.append(f"![stats {g}](proofset/{g}/session-2a2b/stats.svg)")
+        lines.append(f"![stats {g}](proofset/{g}/data-cards/stats.svg)")
         lines.append("")
 
         lines.extend(["### Star History Chart", ""])
-        lines.append(f"![chart full {g}](proofset/{g}/session-2a2b/chart_stars_full.svg)")
+        lines.append(f"![chart full {g}](proofset/{g}/data-cards/chart_stars_full.svg)")
         lines.append("")
 
         # Policy lanes
@@ -876,6 +903,12 @@ def generate_readme(total: int, live_total: int) -> None:
         # Kinetic typography removed in v0.2.14 with the banner frame.
 
         lines.extend(["---", ""])
+
+    # Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once)
+    lines.extend(["## `/a/inneraura/dividers/`", ""])
+    for slug in ("block", "current", "takeoff", "void", "zeropoint"):
+        lines.append(f"![divider {slug}](proofset/inneraura/dividers/{slug}.svg)")
+        lines.append("")
 
     # Telemetry (genome-independent, bottom of page)
     lines.extend(["## Telemetry", ""])

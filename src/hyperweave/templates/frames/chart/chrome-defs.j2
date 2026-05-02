@@ -1,7 +1,7 @@
 {# Chrome chart defs: envelope + well + text gradients + rim + filters + CSS.
-   Ported from tier2/genomes/chrome-horizon/github-star-history-card-v6.svg,
+   Ported from tier2/genomes/chrome/horizon/github-star-history-card-v6.svg,
    then refactored (v0.2.6 Bug D' fix) so every color comes from the genome
-   via the shared _profile_visual_context. chrome-horizon's 11-stop envelope
+   via the shared _profile_visual_context. chrome's 11-stop envelope
    is preserved as the fallback when a genome doesn't declare envelope_stops
    — so the specimen still renders identically. #}
 
@@ -66,7 +66,7 @@
 
 {# Data line glow — outer white halo + inner genome-highlight halo.
    feFlood flood-color accepts hex only (not var()), so we substitute the
-   genome's specular_light if provided and fall back to chrome-horizon cyan. #}
+   genome's specular_light if provided and fall back to chrome cyan. #}
 <filter id="{{ uid }}-lineglow" x="-15%" y="-50%" width="130%" height="200%">
   <feGaussianBlur in="SourceAlpha" stdDeviation="9" result="blur1"/>
   <feFlood flood-color="#FFFFFF" flood-opacity="0.55"/>

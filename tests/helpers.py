@@ -25,7 +25,7 @@ def build_partial_genome_for_testing(**overrides: Any) -> dict[str, Any]:
     construction (all required fields populated with neutral placeholders)
     but does not declare any chrome-paradigm-specific chromatic fields,
     so tests that route it through a ``chrome`` template will produce
-    empty gradients rather than chrome-horizon specimen colors — the
+    empty gradients rather than chrome specimen colors — the
     deliberate safe failure mode.
     """
     defaults: dict[str, Any] = {

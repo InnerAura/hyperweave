@@ -4,7 +4,7 @@ Consumes ``spec.connector_data`` (produced by ``fetch_user_stats``) and
 routes the rendering context to one of the declared stats paradigms:
 
     brutalist  → brutalist hero-left layout (emerald mockups)
-    chrome     → chrome-horizon material stack layout
+    chrome     → chrome material stack layout
 
 For the ``chrome`` paradigm the resolver also calls the shared chart engine
 to produce an embedded compact chart fragment (star history strip) that the

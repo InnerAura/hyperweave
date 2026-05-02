@@ -21,8 +21,8 @@ OUT = Path("outputs/stress-test")
 # ── Test matrix ──
 
 GENOMES = [
-    "brutalist-emerald",
-    "chrome-horizon",
+    "brutalist",
+    "chrome",
 ]
 SUBSTRATES = ["flat", "tectonic", "specular", "temporal", "parchment"]
 STATES = ["active", "warning", "critical", "building", "offline"]
@@ -393,12 +393,12 @@ def run_api_tests() -> None:
         client = TestClient(app)
 
         url_tests = [
-            ("/v1/compose/badge/build/passing/brutalist-emerald", "url_badge"),
-            ("/v1/compose/badge/build/passing/chrome-horizon.breathe", "url_badge_motion"),
-            ("/v1/compose/strip/readme-ai/STARS:12.4k/brutalist-emerald", "url_strip"),
-            ("/v1/compose/icon/github/brutalist-emerald", "url_icon"),
-            ("/v1/compose/divider/chrome-horizon?terminal=aurora&rule=wave", "url_divider"),
-            ("/v1/compose/marquee/HYPERWEAVE/brutalist-emerald", "url_marquee"),
+            ("/v1/compose/badge/build/passing/brutalist", "url_badge"),
+            ("/v1/compose/badge/build/passing/chrome.breathe", "url_badge_motion"),
+            ("/v1/compose/strip/readme-ai/STARS:12.4k/brutalist", "url_strip"),
+            ("/v1/compose/icon/github/brutalist", "url_icon"),
+            ("/v1/compose/divider/chrome?terminal=aurora&rule=wave", "url_divider"),
+            ("/v1/compose/marquee/HYPERWEAVE/brutalist", "url_marquee"),
         ]
 
         for url, label in url_tests:

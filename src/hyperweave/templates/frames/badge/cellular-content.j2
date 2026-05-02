@@ -3,27 +3,21 @@
    Geometry derives from the resolver-supplied width (measure_text-driven),
    lp_w, sep_w_val, seam_w_val, ind_size. Pattern grid is 3 columns × 4 rows;
    per-cell size scales from compact (4×4 at 4px pitch) to default (6×7 at
-   6px pitch). Family resolution: ComposeSpec.family or cellular paradigm's
-   frame_family_defaults.badge (= "blue").
+   6px pitch). Family resolution: ComposeSpec.variant or cellular paradigm's
+   frame_variant_defaults.badge (= "blue").
 
    State-mode badges (is_state_badge=True) render a ring+bit indicator on
    the right; its fill is driven by the state-signal-cascade partial which
    binds data-hw-status to --hw-state-signal / --hw-state-value. #}
-{% set fam = "purple" if family == "purple" else "blue" %}
-{% if fam == "blue" %}
-  {% set pattern_cells_trio = family_blue_pattern_cells %}
-  {% set label_slab_fill = family_blue_label_slab_fill %}
-  {% set label_text_fill = family_blue_label_text %}
-  {% set value_text_fill = family_blue_value_text %}
-  {% set top_highlight = family_blue_rim_stops[0].color %}
-{% else %}
-  {% set pattern_cells_trio = family_purple_pattern_cells %}
-  {% set label_slab_fill = family_purple_label_slab_fill %}
-  {% set label_text_fill = family_purple_label_text %}
-  {% set value_text_fill = family_purple_value_text %}
-  {% set top_highlight = family_purple_rim_stops[0].color %}
-{% endif %}
-{% set dark_lip = family_blue_rim_stops[-1].color if fam == "blue" else family_purple_rim_stops[-1].color %}
+{# Path B grammar (v0.2.19): variant lookup via dynamic key interpolation
+   on _genome_raw, never string-comparison branches. #}
+{% set v = "purple" if variant == "purple" else "blue" %}
+{% set pattern_cells_trio = _genome_raw["variant_" ~ v ~ "_pattern_cells"] %}
+{% set label_slab_fill = _genome_raw["variant_" ~ v ~ "_label_slab_fill"] %}
+{% set label_text_fill = _genome_raw["variant_" ~ v ~ "_label_text"] %}
+{% set value_text_fill = _genome_raw["variant_" ~ v ~ "_value_text"] %}
+{% set top_highlight = _genome_raw["variant_" ~ v ~ "_rim_stops"][0].color %}
+{% set dark_lip = _genome_raw["variant_" ~ v ~ "_rim_stops"][-1].color %}
 
 {# Pattern grid geometry: 3 columns × 4 rows. Sizes compact ↔ default. #}
 {% set cell_w = 4 if compact else 6 %}
@@ -82,11 +76,11 @@
       hardcoded (blue-family tint) and fixed dimensions that don't respect
       the cellular paradigm's glyph_size override. Reconstructing here uses
       the paradigm-driven glyph_render_size and picks fill from the family. #}
-{% set family_glyph_fill = family_blue_seam_mid if fam == "blue" else family_purple_seam_mid %}
+{% set variant_glyph_fill = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
 {% if has_glyph | default(false) and glyph_path %}
 <g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y | default(3) }})">
   <svg width="{{ glyph_render_size }}" height="{{ glyph_render_size }}" viewBox="{{ glyph_viewbox }}">
-    <path d="{{ glyph_path }}" fill="{{ family_glyph_fill }}"/>
+    <path d="{{ glyph_path }}" fill="{{ variant_glyph_fill }}"/>
   </svg>
 </g>
 {% endif %}

@@ -1,34 +1,9 @@
-# Editorial specimen registry
-# Maps slug -> file path (relative to specs/ directory).
-# hw-compliant/ versions are preferred when available.
-#
-# v0.2.14: banner-holofoil-v1 and the 10 kinetic typography motion entries
-# (bars / broadcast / cascade / converge / drop / rubricate / impact / breach /
-# intake / collapse) were removed alongside the banner frame deletion. Surviving
-# 16 entries remain registered. The /a/inneraura/{slug} route currently 404s
-# on every slug because the specs/ directory it resolves against was relocated;
-# the route is preserved as scaffolding for the upcoming golden-200 dataset.
+# Specimen registry — categorized assets served via /a/inneraura/{category}/{slug}.
+# Each category dispatches to its own renderer in serve/app.py.
 
-# Dividers
-divider-block-v1: components/dividers/hw-compliant/block_divider.svg
-divider-current-v1: components/dividers/hw-compliant/current_divider.svg
-divider-takeoff-v1: components/dividers/hw-compliant/takeoff_divider.svg
-divider-void-v1: components/dividers/hw-compliant/void_divider.svg
-divider-zeropoint-v1: components/dividers/hw-compliant/zeropoint_divider.svg
-
-# Icons
-icon-github-binary-circular-v1: components/icons/hw-compliant/github-binary-circular.svg
-icon-github-binary-square-v1: components/icons/hw-compliant/github-binary-square.svg
-
-# Border motions
-motion-chromatic-pulse-v1: motion/motion-border-frames/hw-compliant/002-chromatic-pulse.svg
-motion-corner-trace-v1: motion/motion-border-frames/hw-compliant/003-corner-trace.svg
-motion-dual-orbit-v1: motion/motion-border-frames/hw-compliant/004-dual-orbit.svg
-motion-entanglement-v1: motion/motion-border-frames/hw-compliant/020-quantum-entanglement.svg
-motion-rimrun-v1: motion/motion-border-frames/hw-compliant/rim-runners.svg
-
-# Telemetry artifacts
-telemetry-receipt-v1: telemetry-artifacts/receipt.svg
-telemetry-mastercard-v1: telemetry-artifacts/mastercard.svg
-telemetry-rhythm-strip-v1: telemetry-artifacts/rhythm-strip.svg
-telemetry-rhythm-strip-loop-v1: telemetry-artifacts/rhythm-strip-loop.svg
+dividers:
+  block:     { divider_variant: block,     width: 700, height: 80 }
+  current:   { divider_variant: current,   width: 700, height: 40 }
+  takeoff:   { divider_variant: takeoff,   width: 700, height: 100 }
+  void:      { divider_variant: void,      width: 700, height: 40 }
+  zeropoint: { divider_variant: zeropoint, width: 700, height: 30 }

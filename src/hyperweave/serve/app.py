@@ -37,7 +37,7 @@ from hyperweave.serve.data_tokens import (
 # from the static _GENOME_PROFILE_MAP and ProfileId enum; no I/O, no registry.
 _PROBE_SPEC = ComposeSpec(
     type="badge",
-    genome_id="brutalist-emerald",
+    genome_id="brutalist",
     title="HEALTH",
     value="ok",
     state="active",
@@ -122,7 +122,7 @@ class ComposeRequest(BaseModel):
     """Full compose request (POST /v1/compose)."""
 
     type: str = "badge"
-    genome: str = "brutalist-emerald"
+    genome: str = "brutalist"
     title: str = ""
     value: str = ""
     state: str = "active"
@@ -130,9 +130,9 @@ class ComposeRequest(BaseModel):
     glyph: str = ""
     glyph_mode: str = "auto"
     regime: str = "normal"
-    variant: str = "default"
+    size: str = "default"
     shape: str = ""
-    family: str = ""
+    variant: str = ""
     metadata_tier: int = 3
     divider_variant: str = "zeropoint"
     direction: str = "ltr"
@@ -156,8 +156,8 @@ async def compose_badge_url(
     glyph_mode: Annotated[str, Query()] = "auto",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
-    variant: Annotated[str, Query()] = "default",
-    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+    size: Annotated[str, Query()] = "default",
+    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Static badge: /v1/badge/{title}/{value}/{genome}.{motion}.
 
@@ -176,8 +176,8 @@ async def compose_badge_url(
         glyph=glyph,
         glyph_mode=glyph_mode,
         regime=regime,
+        size=size,
         variant=variant,
-        family=family,
     )
     return _compose_and_respond(spec, request)
 
@@ -205,8 +205,8 @@ async def compose_badge_data_url(
     glyph_mode: Annotated[str, Query()] = "auto",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
-    variant: Annotated[str, Query()] = "default",
-    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+    size: Annotated[str, Query()] = "default",
+    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Data-driven badge: /v1/badge/{title}/{genome}.{motion}?data=...
 
@@ -252,8 +252,8 @@ async def compose_badge_data_url(
         glyph=glyph,
         glyph_mode=glyph_mode,
         regime=regime,
+        size=size,
         variant=variant,
-        family=family,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl)
 
@@ -281,9 +281,9 @@ async def compose_strip_url(
     glyph: Annotated[str, Query()] = "",
     glyph_mode: Annotated[str, Query()] = "auto",
     state: Annotated[str, Query()] = "active",
-    variant: Annotated[str, Query()] = "default",
+    size: Annotated[str, Query()] = "default",
     regime: Annotated[str, Query()] = "normal",
-    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
     subtitle: Annotated[
         str,
         Query(description="Strip subtitle (e.g. 'eli64s/readme-ai'). Cellular paradigm renders under identity."),
@@ -322,9 +322,9 @@ async def compose_strip_url(
         motion=motion,
         glyph=glyph,
         glyph_mode=glyph_mode,
-        variant=variant,
+        size=size,
         regime=regime,
-        family=family,
+        variant=variant,
         connector_data=connector_data,
     )
 
@@ -343,10 +343,10 @@ async def compose_icon_url(
     genome_motion: str,
     glyph_mode: Annotated[str, Query()] = "auto",
     shape: Annotated[str, Query()] = "",
-    variant: Annotated[str, Query()] = "default",
+    size: Annotated[str, Query()] = "default",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
-    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Compose an icon: /v1/icon/{glyph}/{genome}.{motion}?shape=circle"""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -359,33 +359,58 @@ async def compose_icon_url(
         glyph_mode=glyph_mode,
         motion=motion,
         shape=shape,
-        variant=variant,
+        size=size,
         state=state,
         regime=regime,
-        family=family,
+        variant=variant,
     )
     return _compose_and_respond(spec, request)
 
 
+# v0.2.19: editorial-only divider slugs no longer route through /v1/divider/.
+# They moved to /a/inneraura/dividers/<slug> (genome-agnostic editorial assets).
+# Per-genome dividers (dissolve, band, seam) continue here — validated against
+# genome.dividers at resolve-time.
+_EDITORIAL_DIVIDER_SLUGS: frozenset[str] = frozenset({"block", "current", "takeoff", "void", "zeropoint"})
+
+
 @app.get(
-    "/v1/divider/{variant}/{genome_motion}",
+    "/v1/divider/{divider_variant}/{genome_motion}",
     response_class=Response,
 )
 async def compose_divider_url(
     request: Request,
-    variant: str,
+    divider_variant: str,
     genome_motion: str,
-    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
 ) -> Response:
-    """Compose a divider: /v1/divider/{variant}/{genome}.{motion}"""
+    """Compose a genome-themed divider: /v1/divider/{divider_variant}/{genome}.{motion}.
+
+    The 5 editorial generics (block, current, takeoff, void, zeropoint) live at
+    /a/inneraura/dividers/<slug> — they don't theme to genomes. This route only
+    serves dividers declared in the genome's `dividers` whitelist.
+    """
+    if divider_variant in _EDITORIAL_DIVIDER_SLUGS:
+        return Response(
+            content=_error_badge(
+                f"Divider '{divider_variant}' is editorial — see /a/inneraura/dividers/{divider_variant}",
+                status_code=404,
+            ),
+            media_type="image/svg+xml",
+            status_code=200,
+            headers={
+                "X-HW-Error-Code": "404",
+                "X-HW-Specimen-Moved": f"/a/inneraura/dividers/{divider_variant}",
+            },
+        )
     genome, motion = _parse_genome_motion(genome_motion)
 
     spec = ComposeSpec(
         type="divider",
         genome_id=genome,
         motion=motion,
-        divider_variant=variant,
-        family=family,
+        divider_variant=divider_variant,
+        variant=variant,
     )
     return _compose_and_respond(spec, request)
 
@@ -414,7 +439,7 @@ async def compose_marquee_url(
     speeds: Annotated[str, Query(description="Scroll speed multiplier (single float)")] = "",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
-    family: Annotated[str, Query(description="Chromatic family (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
 ) -> Response:
     """Marquee-horizontal: /v1/marquee/{title}/{genome}.{motion}.
 
@@ -459,7 +484,7 @@ async def compose_marquee_url(
         marquee_speeds=parsed_speeds,
         state=state,
         regime=regime,
-        family=family,
+        variant=variant,
         data_tokens=data_tokens_resolved,
     )
 
@@ -481,9 +506,9 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         glyph=req.glyph,
         glyph_mode=req.glyph_mode,
         regime=req.regime,
-        variant=req.variant,
+        size=req.size,
         shape=req.shape,
-        family=req.family,
+        variant=req.variant,
         metadata_tier=req.metadata_tier,
         divider_variant=req.divider_variant,
         marquee_direction=req.direction,
@@ -567,7 +592,7 @@ async def compose_stats(
 class KitRequest(BaseModel):
     """Kit compose request."""
 
-    genome: str = "brutalist-emerald"
+    genome: str = "brutalist"
     project: str = ""
     badges: str = ""
     social: str = ""
@@ -586,27 +611,27 @@ async def compose_kit_post(req: KitRequest) -> dict[str, str]:
 _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
     "badge (static)": {
         "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
-        "query_params": ["glyph", "glyph_mode", "state", "regime", "variant", "family"],
+        "query_params": ["glyph", "glyph_mode", "state", "regime", "size", "variant"],
     },
     "badge (data-driven)": {
         "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
-        "query_params": ["data", "glyph", "glyph_mode", "state", "regime", "variant", "family"],
+        "query_params": ["data", "glyph", "glyph_mode", "state", "regime", "size", "variant"],
     },
     "strip": {
         "pattern": "/v1/strip/{title}/{genome}.{motion}",
-        "query_params": ["value", "data", "glyph", "glyph_mode", "state", "variant", "regime", "family", "subtitle"],
+        "query_params": ["value", "data", "glyph", "glyph_mode", "state", "size", "regime", "variant", "subtitle"],
     },
     "icon": {
         "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
-        "query_params": ["glyph_mode", "shape", "state", "regime", "family", "variant"],
+        "query_params": ["glyph_mode", "shape", "state", "regime", "variant", "size"],
     },
     "divider": {
         "pattern": "/v1/divider/{variant}/{genome}.{motion}",
-        "query_params": ["family"],
+        "query_params": ["variant"],
     },
     "marquee-horizontal": {
         "pattern": "/v1/marquee/{title}/{genome}.{motion}",
-        "query_params": ["data", "direction", "speeds", "state", "regime", "family"],
+        "query_params": ["data", "direction", "speeds", "state", "regime", "variant"],
     },
     "chart-stars": {
         "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
@@ -681,16 +706,109 @@ async def list_glyphs(response: Response) -> list[str]:
 
 @app.get("/a/inneraura", response_model=None)
 async def list_specimens() -> list[dict[str, str]]:
-    """List all editorial specimens available under /a/inneraura/."""
+    """List all editorial specimens — categorized (v0.2.19+) + legacy flat slugs."""
     registry = _load_specimens_registry()
-    return [{"slug": slug, "url": f"/a/inneraura/{slug}"} for slug in sorted(registry)]
+    out: list[dict[str, str]] = []
+    for category, entries in sorted(_categorized_specimens(registry).items()):
+        for slug in sorted(entries):
+            out.append({"category": category, "slug": slug, "url": f"/a/inneraura/{category}/{slug}"})
+    for slug in sorted(_flat_specimens(registry)):
+        out.append({"category": "legacy", "slug": slug, "url": f"/a/inneraura/{slug}"})
+    return out
+
+
+@app.get("/a/inneraura/{slug}/meta.json", response_model=None)
+async def serve_specimen_meta(slug: str) -> Response | JSONResponse:
+    """Serve metadata-only for a legacy flat-slug editorial specimen.
+
+    NOTE: declared before the catch-all `/a/inneraura/{category}/{slug}` so the
+    literal `meta.json` segment matches before the two-greedy-segment pattern.
+    """
+    registry = _load_specimens_registry()
+    rel_path = _flat_specimens(registry).get(slug)
+    if not rel_path:
+        return JSONResponse({"error": f"Specimen '{slug}' not found"}, status_code=404)
+
+    import json as json_mod
+
+    category = slug.split("-")[0] if "-" in slug else "unknown"
+    meta = {
+        "slug": slug,
+        "category": category,
+        "path": rel_path,
+        "url": f"/a/inneraura/{slug}",
+        "tier": 3,
+        "type": "editorial-specimen",
+    }
+    return Response(
+        content=json_mod.dumps(meta, indent=2),
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/a/inneraura/{category}/{slug}", response_class=Response)
+async def serve_categorized_specimen(category: str, slug: str) -> Response:
+    """Serve an editorial specimen by (category, slug). v0.2.19+ shape.
+
+    For category=='dividers', renders the divider template directly (no
+    compositor pipeline, no genome). Other categories TBD.
+    """
+    registry = _load_specimens_registry()
+    cat_entries = _categorized_specimens(registry).get(category)
+    if not cat_entries:
+        return Response(
+            content=_error_badge(f"Category '{category}' not found", status_code=404),
+            media_type="image/svg+xml",
+            status_code=200,
+            headers={"X-HW-Error-Code": "404"},
+        )
+    entry = cat_entries.get(slug)
+    if not entry:
+        return Response(
+            content=_error_badge(f"Specimen '{category}/{slug}' not found", status_code=404),
+            media_type="image/svg+xml",
+            status_code=200,
+            headers={"X-HW-Error-Code": "404"},
+        )
+
+    if category == "dividers":
+        # Editorial dividers route through compose() with a default genome (brutalist).
+        # The 5 editorial divider templates hardcode their own colors and ignore the
+        # genome dict by design — so the choice of genome only affects the metadata
+        # attributes (data-hw-genome etc.), not the rendered visual. The
+        # X-HW-Artifact-Type header advertises the editorial-specimen status as the
+        # source of truth for consumers parsing the response.
+        spec = ComposeSpec(
+            type="divider",
+            genome_id="brutalist",
+            motion="static",
+            divider_variant=entry["divider_variant"],
+        )
+        result = compose(spec)
+        ttl = get_settings().static_cache_ttl
+        return Response(
+            content=result.svg,
+            media_type="image/svg+xml",
+            headers={
+                "Cache-Control": f"public, max-age={ttl}, immutable",
+                "X-HW-Artifact-Type": "editorial-specimen",
+            },
+        )
+
+    return Response(
+        content=_error_badge(f"Category '{category}' has no renderer yet", status_code=501),
+        media_type="image/svg+xml",
+        status_code=200,
+        headers={"X-HW-Error-Code": "501"},
+    )
 
 
 @app.get("/a/inneraura/{slug}", response_class=Response)
 async def serve_specimen(slug: str) -> Response:
-    """Serve an editorial specimen SVG by slug."""
+    """Serve a legacy flat-slug editorial specimen SVG (specs/ filesystem)."""
     registry = _load_specimens_registry()
-    rel_path = registry.get(slug)
+    rel_path = _flat_specimens(registry).get(slug)
     if not rel_path:
         return Response(
             content=_error_badge(f"Specimen '{slug}' not found", status_code=404),
@@ -717,32 +835,6 @@ async def serve_specimen(slug: str) -> Response:
         content=svg_content,
         media_type="image/svg+xml",
         headers={"Cache-Control": f"public, max-age={ttl}, immutable", "X-HW-Artifact-Type": "editorial-specimen"},
-    )
-
-
-@app.get("/a/inneraura/{slug}/meta.json", response_model=None)
-async def serve_specimen_meta(slug: str) -> Response | JSONResponse:
-    """Serve metadata-only for an editorial specimen."""
-    registry = _load_specimens_registry()
-    rel_path = registry.get(slug)
-    if not rel_path:
-        return JSONResponse({"error": f"Specimen '{slug}' not found"}, status_code=404)
-
-    import json as json_mod
-
-    category = slug.split("-")[0] if "-" in slug else "unknown"
-    meta = {
-        "slug": slug,
-        "category": category,
-        "path": rel_path,
-        "url": f"/a/inneraura/{slug}",
-        "tier": 3,
-        "type": "editorial-specimen",
-    }
-    return Response(
-        content=json_mod.dumps(meta, indent=2),
-        media_type="application/json",
-        headers={"Cache-Control": "public, max-age=86400"},
     )
 
 
@@ -936,10 +1028,17 @@ def _compose_and_respond_with_ttl(spec: Any, request: Request | None, ttl: int) 
         )
 
 
-_specimens_cache: dict[str, str] | None = None
+_specimens_cache: dict[str, Any] | None = None
 
 
-def _load_specimens_registry() -> dict[str, str]:
+def _load_specimens_registry() -> dict[str, Any]:
+    """Load the editorial specimens registry from data/specimens.yaml.
+
+    Returns a mixed dict: top-level keys may be either flat slugs (str values
+    pointing at a relative file path under specs/) or categories (dict values
+    keyed by slug). v0.2.19+ uses the categorized form for new content; legacy
+    flat-slug entries remain as scaffolding for the upcoming golden-200 dataset.
+    """
     global _specimens_cache
     if _specimens_cache is not None:
         return _specimens_cache
@@ -949,10 +1048,21 @@ def _load_specimens_registry() -> dict[str, str]:
 
     registry_path = pathlib.Path(__file__).resolve().parent.parent / "data" / "specimens.yaml"
     if not registry_path.exists():
-        return {}
+        _specimens_cache = {}
+        return _specimens_cache
     with registry_path.open() as f:
         _specimens_cache = yaml.safe_load(f) or {}
     return _specimens_cache
+
+
+def _flat_specimens(registry: dict[str, Any]) -> dict[str, str]:
+    """Filter to legacy flat-slug entries (str values only)."""
+    return {k: v for k, v in registry.items() if isinstance(v, str)}
+
+
+def _categorized_specimens(registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Filter to categorized entries (dict values only). v0.2.19+ form."""
+    return {k: v for k, v in registry.items() if isinstance(v, dict)}
 
 
 def _error_badge(message: str, status_code: int = 500) -> str:
@@ -1003,5 +1113,11 @@ def _classify_compose_exception(exc: BaseException) -> int:
     except ImportError:
         return 500
     if isinstance(exc, ValidationError):
+        return 422
+    # Path B grammar (v0.2.19): resolvers raise ValueError when
+    # spec.variant or spec.divider_variant is not in the genome's whitelist.
+    # Detect by message prefix rather than a custom exception class to keep
+    # the resolver layer dependency-free.
+    if isinstance(exc, ValueError) and (str(exc).startswith("variant '") or str(exc).startswith("divider_variant '")):
         return 422
     return 500
