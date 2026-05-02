@@ -205,13 +205,10 @@ class TestFetch:
             request=httpx.Request("GET", "https://api.github.com/repos/test/test"),
         )
 
-        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
-            instance = AsyncMock()
-            instance.get.return_value = mock_response
-            instance.__aenter__ = AsyncMock(return_value=instance)
-            instance.__aexit__ = AsyncMock(return_value=None)
-            mock_client.return_value = instance
+        instance = AsyncMock()
+        instance.get = AsyncMock(return_value=mock_response)
 
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
             response = await fetch(
                 "https://api.github.com/repos/test/test",
                 provider="github",
@@ -220,13 +217,10 @@ class TestFetch:
 
     @pytest.mark.asyncio
     async def test_failed_fetch_trips_breaker(self) -> None:
-        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
-            instance = AsyncMock()
-            instance.get.side_effect = httpx.RequestError("connection refused")
-            instance.__aenter__ = AsyncMock(return_value=instance)
-            instance.__aexit__ = AsyncMock(return_value=None)
-            mock_client.return_value = instance
+        instance = AsyncMock()
+        instance.get = AsyncMock(side_effect=httpx.RequestError("connection refused"))
 
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
             breaker = get_breaker("fail-provider")
             assert breaker.state is CircuitState.CLOSED
 
@@ -1019,7 +1013,12 @@ class TestFetchGraphQL:
 
     @staticmethod
     def _mock_client(response_json: Any, capture: dict[str, Any] | None = None) -> Any:
-        """Build an AsyncMock that intercepts client.post and records the call."""
+        """Build an AsyncMock that intercepts client.post and records the call.
+
+        Returned mock is patched in via ``patch("hyperweave.connectors.base.get_client",
+        return_value=instance)`` since fetch_graphql now uses the module singleton
+        client rather than ``async with httpx.AsyncClient(...)``.
+        """
         mock_response = httpx.Response(
             200,
             json=response_json,
@@ -1036,8 +1035,6 @@ class TestFetchGraphQL:
             return mock_response
 
         instance.post = _capturing_post
-        instance.__aenter__ = AsyncMock(return_value=instance)
-        instance.__aexit__ = AsyncMock(return_value=None)
         return instance
 
     @pytest.mark.asyncio
@@ -1045,8 +1042,7 @@ class TestFetchGraphQL:
         capture: dict[str, Any] = {}
         instance = self._mock_client({"data": {"ok": True}}, capture=capture)
 
-        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
-            mock_client.return_value = instance
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
             from hyperweave.connectors.base import fetch_graphql
 
             result = await fetch_graphql(
@@ -1065,8 +1061,7 @@ class TestFetchGraphQL:
         capture: dict[str, Any] = {}
         instance = self._mock_client({"data": {}}, capture=capture)
 
-        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
-            mock_client.return_value = instance
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
             from hyperweave.connectors.base import fetch_graphql
 
             await fetch_graphql(query="{ viewer { login } }")
@@ -1080,8 +1075,7 @@ class TestFetchGraphQL:
         capture: dict[str, Any] = {}
         instance = self._mock_client({"data": {}}, capture=capture)
 
-        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
-            mock_client.return_value = instance
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
             from hyperweave.connectors.base import fetch_graphql
 
             await fetch_graphql(query="{ viewer { login } }")
@@ -1096,8 +1090,7 @@ class TestFetchGraphQL:
 
         async def _run_call(idx: int) -> None:
             instance = self._mock_client({"data": {}}, capture=captures[idx])
-            with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
-                mock_client.return_value = instance
+            with patch("hyperweave.connectors.base.get_client", return_value=instance):
                 from hyperweave.connectors.base import fetch_graphql
 
                 await fetch_graphql(query="{ viewer { login } }")
@@ -1112,11 +1105,8 @@ class TestFetchGraphQL:
     async def test_http_failure_trips_breaker(self) -> None:
         instance = AsyncMock()
         instance.post = AsyncMock(side_effect=httpx.RequestError("connection refused"))
-        instance.__aenter__ = AsyncMock(return_value=instance)
-        instance.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("hyperweave.connectors.base.httpx.AsyncClient") as mock_client:
-            mock_client.return_value = instance
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
             from hyperweave.connectors.base import fetch_graphql
 
             # Three breaker domains exist post-v0.2.11 (core / search / graphql);

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import time
 from enum import StrEnum
@@ -158,6 +159,75 @@ CONNECT_TIMEOUT: float = 10.0
 TOTAL_TIMEOUT: float = 15.0
 
 
+# Singleton AsyncClient — replaces the per-request httpx.AsyncClient construction
+# that was paying a fresh TCP+TLS handshake (~150-300ms) on every upstream call.
+# With HTTP/2 multiplexing, the marquee fan-out (5 tokens / 3 providers) reuses
+# already-established connections to api.github.com / pypi.org / pypistats.org /
+# hub.docker.com instead of opening 5 fresh ones in parallel.
+#
+# Lifecycle:
+#   - FastAPI: opened in lifespan startup (warmup compose primes the pool),
+#     closed in lifespan shutdown via close_client().
+#   - CLI: opened lazily on first asyncio.run(fetch_metric(...)) call, reaped
+#     at process exit (each CLI invocation is a fresh process).
+#   - Tests: tests/conftest.py autouse fixture calls close_client() after every
+#     test so each test gets a fresh client bound to its own event loop
+#     (pytest-asyncio asyncio_mode='auto' creates a new loop per test).
+_client: httpx.AsyncClient | None = None
+
+
+def get_client() -> httpx.AsyncClient:
+    """Return the singleton AsyncClient, creating it lazily if needed.
+
+    Re-creates if the previous client was closed (test fixtures do this between
+    tests to rebind the client to each test's event loop). Same code path
+    serves FastAPI (lifespan-opened), CLI (lazy-opened), and tests (autouse-
+    fixture-recreated).
+    """
+    global _client
+    if _client is None or _client.is_closed:
+        timeout = httpx.Timeout(
+            connect=CONNECT_TIMEOUT,
+            read=TOTAL_TIMEOUT,
+            write=TOTAL_TIMEOUT,
+            pool=TOTAL_TIMEOUT,
+        )
+        _client = httpx.AsyncClient(
+            http2=True,
+            timeout=timeout,
+            limits=httpx.Limits(
+                max_keepalive_connections=20,
+                max_connections=40,
+                keepalive_expiry=30.0,
+            ),
+        )
+    return _client
+
+
+async def close_client() -> None:
+    """Close the singleton AsyncClient and reset the module-level reference.
+
+    Called by FastAPI lifespan shutdown so the client cleanly releases its
+    connections, and by tests/conftest.py autouse fixture between tests so
+    the next test gets a fresh client on its own event loop.
+
+    Cross-loop tolerance: if a sync test ran ``asyncio.run(fetch_metric(...))``
+    internally, the client was bound to that nested loop -- which is closed
+    by the time pytest-asyncio runs this fixture's teardown on a different
+    loop. ``aclose()`` would then raise ``RuntimeError: Event loop is closed``.
+    Catch and drop the reference; the OS reaps the sockets at process exit
+    and the next ``get_client()`` call rebinds to a live loop.
+    """
+    global _client
+    if _client is not None and not _client.is_closed:
+        # Client may be bound to a different (now-closed) event loop -- e.g.
+        # a sync test that ran asyncio.run() internally. Suppress and drop
+        # the reference; OS reaps the sockets at process exit.
+        with contextlib.suppress(RuntimeError):
+            await _client.aclose()
+    _client = None
+
+
 def pin_github_token() -> str | None:
     """Grab one GitHub token NOW for use across multiple correlated requests.
 
@@ -219,19 +289,12 @@ async def fetch(
         if token:
             merged_headers["Authorization"] = f"Bearer {token}"
 
-    timeout = httpx.Timeout(
-        connect=CONNECT_TIMEOUT,
-        read=TOTAL_TIMEOUT,
-        write=TOTAL_TIMEOUT,
-        pool=TOTAL_TIMEOUT,
-    )
-
     try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.get(url, headers=merged_headers)
-            response.raise_for_status()
-            breaker.record_success()
-            return response
+        client = get_client()
+        response = await client.get(url, headers=merged_headers)
+        response.raise_for_status()
+        breaker.record_success()
+        return response
     except (httpx.HTTPStatusError, httpx.RequestError) as exc:
         breaker.record_failure()
         raise ConnectorError(f"Fetch failed for {provider!r}: {exc}") from exc
@@ -311,22 +374,15 @@ async def fetch_graphql(
         if token:
             merged_headers["Authorization"] = f"Bearer {token}"
 
-    timeout = httpx.Timeout(
-        connect=CONNECT_TIMEOUT,
-        read=TOTAL_TIMEOUT,
-        write=TOTAL_TIMEOUT,
-        pool=TOTAL_TIMEOUT,
-    )
-
     body: dict[str, Any] = {"query": query, "variables": variables or {}}
 
     try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(url, headers=merged_headers, json=body)
-            response.raise_for_status()
-            breaker.record_success()
-            data: dict[str, Any] = response.json()
-            return data
+        client = get_client()
+        response = await client.post(url, headers=merged_headers, json=body)
+        response.raise_for_status()
+        breaker.record_success()
+        data: dict[str, Any] = response.json()
+        return data
     except (httpx.HTTPStatusError, httpx.RequestError) as exc:
         breaker.record_failure()
         raise ConnectorError(f"GraphQL fetch failed for {provider!r}: {exc}") from exc

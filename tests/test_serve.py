@@ -44,7 +44,7 @@ async def client() -> Any:
 @pytest.fixture()
 def mock_compose() -> Any:
     """Patch compose() in the engine module so HTTP tests stay fast."""
-    with patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT) as m:
+    with patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT) as m:
         yield m
 
 
@@ -144,7 +144,7 @@ async def test_marquee_horizontal_with_data_tokens(client: AsyncClient) -> None:
     mock_data = {"value": 12345, "ttl": 300}
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
-        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
+        patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT),
     ):
         resp = await client.get(
             "/v1/marquee/SCROLL/brutalist-emerald.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars",
@@ -154,7 +154,7 @@ async def test_marquee_horizontal_with_data_tokens(client: AsyncClient) -> None:
 
 async def test_marquee_horizontal_data_token_comma_escape(client: AsyncClient) -> None:
     """text: payload preserves embedded commas via the \\, escape."""
-    with patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT):
+    with patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT):
         resp = await client.get(
             "/v1/marquee/SCROLL/brutalist-emerald.static?data=text:Hello%5C%2C%20world",
         )
@@ -209,7 +209,7 @@ async def test_badge_data_route_resolves_live_token(client: AsyncClient) -> None
     mock_data = {"value": 12345, "ttl": 300}
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
-        patch("hyperweave.compose.engine.compose", side_effect=_capture_spec),
+        patch("hyperweave.serve.app.compose", side_effect=_capture_spec),
     ):
         resp = await client.get(
             "/v1/badge/STARS/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
@@ -226,7 +226,7 @@ async def test_badge_data_route_resolves_live_token(client: AsyncClient) -> None
 
 async def test_badge_data_route_kv_token(client: AsyncClient) -> None:
     """kv: tokens encode static literals through the same data-route shape as live ones."""
-    with patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT):
+    with patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT):
         resp = await client.get(
             "/v1/badge/VERSION/brutalist-emerald.static?data=kv:VERSION=0.6.9",
         )
@@ -385,7 +385,7 @@ async def test_200_on_different_etag(client: AsyncClient, mock_compose: Any) -> 
 async def test_compose_error_returns_500_svg(client: AsyncClient) -> None:
     error_svg = '<svg xmlns="http://www.w3.org/2000/svg"><text>error</text></svg>'
     with (
-        patch("hyperweave.compose.engine.compose", side_effect=ValueError("render failed")),
+        patch("hyperweave.serve.app.compose", side_effect=ValueError("render failed")),
         patch("hyperweave.serve.app._error_badge", return_value=error_svg),
     ):
         resp = await client.get("/v1/badge/build/passing/brutalist-emerald")
@@ -546,7 +546,7 @@ async def test_strip_data_tokens(client: AsyncClient) -> None:
     mock_data = {"value": "2.9k", "ttl": 300}
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
-        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
+        patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT),
     ):
         resp = await client.get(
             "/v1/strip/readme-ai/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",
@@ -558,7 +558,7 @@ async def test_strip_data_tokens(client: AsyncClient) -> None:
 async def test_strip_data_tokens_error(client: AsyncClient) -> None:
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, side_effect=Exception("timeout")),
-        patch("hyperweave.compose.engine.compose", return_value=MOCK_RESULT),
+        patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT),
     ):
         resp = await client.get(
             "/v1/strip/readme-ai/brutalist-emerald.static?data=gh:anthropics/claude-code.stars",

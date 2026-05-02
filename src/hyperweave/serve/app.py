@@ -2,28 +2,101 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
 from hyperweave import __version__
+from hyperweave.compose.engine import compose
+from hyperweave.compose.resolver import GenomeNotFoundError
+from hyperweave.config.loader import get_loader
+from hyperweave.config.settings import get_settings
+from hyperweave.connectors.base import close_client, get_client
+from hyperweave.connectors.github import fetch_stargazer_history, fetch_user_stats
+from hyperweave.core.enums import FrameType
+from hyperweave.core.models import ComposeSpec
+from hyperweave.kit import compose_kit
+from hyperweave.render.fonts import load_font_face_css
+from hyperweave.render.templates import render_template
+from hyperweave.serve.data_tokens import (
+    format_for_badge,
+    format_for_value,
+    parse_data_tokens,
+    resolve_data_tokens,
+)
+
+# Shared by lifespan warmup and /health endpoint. Single source of truth so
+# both paths exercise an identical compose pipeline. Construction is safe at
+# module-import time — ComposeSpec validators (core/models.py:82-97) only read
+# from the static _GENOME_PROFILE_MAP and ProfileId enum; no I/O, no registry.
+_PROBE_SPEC = ComposeSpec(
+    type="badge",
+    genome_id="brutalist-emerald",
+    title="HEALTH",
+    value="ok",
+    state="active",
+    motion="static",
+)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Pre-warm the compose pipeline so first traffic doesn't pay cold-import cost.
+
+    compose() has its own internal lazy imports (resolver, assembler, context,
+    lanes, templates -- see compose/engine.py:26-45). The single warmup call
+    here is what actually triggers them to load. Module-scope imports in this
+    file only handle the OUTER lazy imports.
+
+    The httpx singleton is also force-initialized so the HTTP/2 connection pool
+    is established eagerly -- the marquee fan-out (5 tokens / 3 providers) then
+    multiplexes over already-open connections instead of paying 5 fresh TLS
+    handshakes on first traffic.
+    """
+    get_client()
+    compose(_PROBE_SPEC)
+    yield
+    await close_client()
+
 
 app = FastAPI(
     title="HyperWeave",
     description="Compositor API for self-contained SVG artifacts.",
     version=__version__,
+    lifespan=lifespan,
 )
 
 
-# -- Health probe (before middleware, minimal) --------------------------------
+# -- Readiness probe ---------------------------------------------------------
 
 
-@app.get("/health")
-async def health() -> dict[str, str]:
-    """Liveness probe for container orchestration."""
-    return {"status": "ok"}
+@app.get("/health", response_model=None)
+async def health() -> Response:
+    """Readiness probe -- exercises the compose pipeline.
+
+    Returns 200 if the compositor can produce an artifact. Returns 503 (NOT
+    500) if compose fails for any reason (lifespan warmup not complete,
+    template missing, font asset corrupt, etc). 503 is the semantically
+    correct status for "process is up but cannot serve yet" -- any
+    sophisticated load balancer interprets it as retriable rather than as a
+    hard failure.
+
+    Combined with `min_machines_running=1` + `auto_stop="suspend"` in
+    fly.toml, this means a freshly-woken machine is held out of rotation
+    until the warmup compose succeeds, eliminating the 18:47-style spike
+    where Camo fans out to a not-yet-warm origin and gets seconds-long p99.
+    """
+    try:
+        compose(_PROBE_SPEC)
+    except Exception:
+        return JSONResponse({"status": "degraded"}, status_code=503)
+    return JSONResponse({"status": "ok"})
 
 
 # -- Camo-hardening middleware ------------------------------------------------
@@ -93,8 +166,6 @@ async def compose_badge_url(
     """
     genome, motion = _parse_genome_motion(genome_motion)
 
-    from hyperweave.core.models import ComposeSpec
-
     spec = ComposeSpec(
         type="badge",
         genome_id=genome,
@@ -158,12 +229,6 @@ async def compose_badge_data_url(
     # rendered string. format_for_badge extracts just the resolved value
     # (no LABEL: prefix), unlike strip which uses format_for_value to
     # produce "K1:V1,K2:V2" pairs for its multi-cell layout.
-    from hyperweave.serve.data_tokens import (
-        format_for_badge,
-        parse_data_tokens,
-        resolve_data_tokens,
-    )
-
     try:
         tokens = parse_data_tokens(data)
         resolved, ttl = await resolve_data_tokens(tokens)
@@ -176,8 +241,6 @@ async def compose_badge_data_url(
         )
 
     final_value = format_for_badge(resolved)
-
-    from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(
         type="badge",
@@ -250,8 +313,6 @@ async def compose_strip_url(
     # that don't opt into subtitles (brutalist, chrome) stay unaffected.
     connector_data: dict[str, Any] | None = {"repo_slug": subtitle} if subtitle else None
 
-    from hyperweave.core.models import ComposeSpec
-
     spec = ComposeSpec(
         type="strip",
         genome_id=genome,
@@ -290,8 +351,6 @@ async def compose_icon_url(
     """Compose an icon: /v1/icon/{glyph}/{genome}.{motion}?shape=circle"""
     genome, motion = _parse_genome_motion(genome_motion)
 
-    from hyperweave.core.models import ComposeSpec
-
     spec = ComposeSpec(
         type="icon",
         genome_id=genome,
@@ -320,8 +379,6 @@ async def compose_divider_url(
 ) -> Response:
     """Compose a divider: /v1/divider/{variant}/{genome}.{motion}"""
     genome, motion = _parse_genome_motion(genome_motion)
-
-    from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(
         type="divider",
@@ -382,11 +439,6 @@ async def compose_marquee_url(
     ttl = 300
     if data:
         try:
-            from hyperweave.serve.data_tokens import (
-                parse_data_tokens,
-                resolve_data_tokens,
-            )
-
             tokens = parse_data_tokens(data)
             data_tokens_resolved_seq, ttl = await resolve_data_tokens(tokens)
             data_tokens_resolved = list(data_tokens_resolved_seq)
@@ -397,8 +449,6 @@ async def compose_marquee_url(
                 status_code=200,
                 headers=_error_response_headers(400),
             )
-
-    from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(
         type="marquee-horizontal",
@@ -421,8 +471,6 @@ async def compose_marquee_url(
 @app.post("/v1/compose", response_class=Response)
 async def compose_post(request: Request, req: ComposeRequest) -> Response:
     """Compose any artifact via POST with full ComposeSpec."""
-    from hyperweave.core.models import ComposeSpec
-
     spec = ComposeSpec(
         type=req.type,
         genome_id=req.genome,
@@ -467,13 +515,9 @@ async def compose_chart_stars(
 
     connector_data: dict[str, Any] | None = None
     try:
-        from hyperweave.connectors.github import fetch_stargazer_history
-
         connector_data = await fetch_stargazer_history(owner, repo)
     except Exception:
         connector_data = None
-
-    from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(
         type="chart",
@@ -506,13 +550,9 @@ async def compose_stats(
 
     connector_data: dict[str, Any] | None = None
     try:
-        from hyperweave.connectors.github import fetch_user_stats
-
         connector_data = await fetch_user_stats(username)
     except Exception:
         connector_data = None
-
-    from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(
         type="stats",
@@ -536,8 +576,6 @@ class KitRequest(BaseModel):
 @app.post("/v1/kit/readme", response_model=None)
 async def compose_kit_post(req: KitRequest) -> dict[str, str]:
     """Compose a full artifact kit. Returns dict of SVG strings."""
-    from hyperweave.kit import compose_kit
-
     results = compose_kit("readme", req.genome, req.project, req.badges, req.social)
     return {name: result.svg for name, result in results.items()}
 
@@ -588,8 +626,6 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
 @app.get("/v1/frames")
 async def list_frames() -> list[dict[str, Any]]:
     """List all frame types with URL grammar and query params."""
-    from hyperweave.core.enums import FrameType
-
     return [
         {
             "type": ft.value,
@@ -602,8 +638,6 @@ async def list_frames() -> list[dict[str, Any]]:
 @app.get("/v1/genomes")
 async def list_genomes(response: Response) -> list[dict[str, Any]]:
     """List available genomes."""
-    from hyperweave.config.loader import get_loader
-
     response.headers["Cache-Control"] = "public, max-age=3600"
     loader = get_loader()
     return [
@@ -615,8 +649,6 @@ async def list_genomes(response: Response) -> list[dict[str, Any]]:
 @app.get("/v1/genomes/{genome_id}", response_model=None)
 async def get_genome(genome_id: str, response: Response) -> dict[str, Any] | JSONResponse:
     """Get a specific genome's full config."""
-    from hyperweave.config.loader import get_loader
-
     response.headers["Cache-Control"] = "public, max-age=3600"
     loader = get_loader()
     genome = loader.genomes.get(genome_id)
@@ -628,8 +660,6 @@ async def get_genome(genome_id: str, response: Response) -> dict[str, Any] | JSO
 @app.get("/v1/motions")
 async def list_motions(response: Response) -> list[dict[str, Any]]:
     """List available motion primitives."""
-    from hyperweave.config.loader import get_loader
-
     response.headers["Cache-Control"] = "public, max-age=3600"
     loader = get_loader()
     return [
@@ -641,8 +671,6 @@ async def list_motions(response: Response) -> list[dict[str, Any]]:
 @app.get("/v1/glyphs")
 async def list_glyphs(response: Response) -> list[str]:
     """List available glyph IDs."""
-    from hyperweave.config.loader import get_loader
-
     response.headers["Cache-Control"] = "public, max-age=3600"
     loader = get_loader()
     return sorted(loader.glyphs.keys()) if hasattr(loader, "glyphs") else []
@@ -682,8 +710,6 @@ async def serve_specimen(slug: str) -> Response:
             status_code=200,
             headers={"X-HW-Error-Code": "404"},
         )
-
-    from hyperweave.config.settings import get_settings
 
     svg_content = svg_path.read_text(encoding="utf-8")
     ttl = get_settings().static_cache_ttl
@@ -728,14 +754,10 @@ async def genome_registry(genome_slug: str) -> Response | JSONResponse:
     """Serve genome DNA (JSON)."""
     import json
 
-    from hyperweave.config.loader import get_loader
-
     loader = get_loader()
     genome = loader.genomes.get(genome_slug)
     if not genome:
         return JSONResponse({"error": f"Genome '{genome_slug}' not found"}, status_code=404)
-    from hyperweave.config.settings import get_settings
-
     ttl = get_settings().genome_cache_ttl
     return Response(
         content=json.dumps(genome, indent=2),
@@ -799,8 +821,6 @@ def _error_response_headers(status_code: int) -> dict[str, str]:
     the prior 60s sticky-error cache amplified short cold-start outages into
     minute-long broken-image cascades for every README visitor.
     """
-    from hyperweave.config.settings import get_settings
-
     ttl = get_settings().error_cache_ttl
     return {
         "Cache-Control": f"max-age={ttl}, stale-while-revalidate=60",
@@ -815,12 +835,6 @@ async def _resolve_data_param(data: str, *, fallback: str = "") -> tuple[str, in
     fallback at the default TTL. Invalid token strings raise
     ``ValueError`` so callers can surface a 400 to the user.
     """
-    from hyperweave.serve.data_tokens import (
-        format_for_value,
-        parse_data_tokens,
-        resolve_data_tokens,
-    )
-
     if not data:
         return fallback, 300
 
@@ -835,8 +849,6 @@ async def _resolve_data_param(data: str, *, fallback: str = "") -> tuple[str, in
 
 def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
     import hashlib
-
-    from hyperweave.config.settings import get_settings
 
     settings = get_settings()
 
@@ -857,8 +869,6 @@ def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
             )
 
     try:
-        from hyperweave.compose.engine import compose
-
         result = compose(spec)
         return Response(
             content=result.svg,
@@ -900,8 +910,6 @@ def _compose_and_respond_with_ttl(spec: Any, request: Request | None, ttl: int) 
             )
 
     try:
-        from hyperweave.compose.engine import compose
-
         result = compose(spec)
         return Response(
             content=result.svg,
@@ -957,9 +965,6 @@ def _error_badge(message: str, status_code: int = 500) -> str:
     a stable per-message uid so two failures on the same README page don't
     collide on gradient or clip-path IDs.
     """
-    from hyperweave.render.fonts import load_font_face_css
-    from hyperweave.render.templates import render_template
-
     truncated = (message or "compose failed")[:120]
     uid = f"hw-err-{abs(hash(truncated)) % 100000:05d}"
     font_faces = load_font_face_css(["chakra-petch", "orbitron"])
@@ -991,8 +996,6 @@ def _classify_compose_exception(exc: BaseException) -> int:
     read ``data-hw-status-code`` from the SVG attributes or the
     ``X-HW-Error-Code`` response header.
     """
-    from hyperweave.compose.resolver import GenomeNotFoundError
-
     if isinstance(exc, GenomeNotFoundError):
         return 404
     try:

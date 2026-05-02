@@ -9,8 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import pytest
+import pytest_asyncio
 
 from hyperweave.config.loader import load_genomes, load_profiles
+from hyperweave.connectors.base import close_client
 from hyperweave.core.models import ComposeSpec, SlotContent
 
 if TYPE_CHECKING:
@@ -140,3 +142,28 @@ def profile_parametrize() -> Any:
     """
     profiles = load_profiles()
     return pytest.mark.parametrize("profile_id", sorted(profiles.keys()))
+
+
+# ---------------------------------------------------------------------------
+# Singleton httpx client isolation (autouse)
+# ---------------------------------------------------------------------------
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _reset_singleton_client() -> Any:
+    """Reset the connectors.base httpx singleton between every test.
+
+    The singleton client binds to whatever asyncio event loop is active when
+    get_client() is first called. pytest-asyncio (asyncio_mode='auto') gives
+    each test its own loop, so the singleton from test N is bound to a loop
+    that no longer exists by test N+1. close_client() resets the module-level
+    _client to None so the next test gets a fresh client bound to its own
+    loop.
+
+    Without this fixture, async tests would start failing intermittently with
+    "Event loop is closed" because the global client outlives the loop it was
+    bound to. Cost is microseconds when there's no client to close (most
+    tests don't trigger get_client() at all).
+    """
+    yield
+    await close_client()
