@@ -54,6 +54,8 @@ take structured state, compress it into an emotionally legible surface, and make
 "In a post-Mythos world, letting autonomous agents generate executable UI code (React/JS) is a catastrophic security risk. HyperWeave is the secure, stateless, verifiable visual protocol for the Agentic Web."
 
 The Voiceover: "Agents don't need to generate heavy React apps that require hosting and runtimes. HyperWeave generates secure, zero-dependency SVG artifacts that travel to wherever your users actually work."
+
+Prompting Guide for AI Agents
 -->
 
 ---
@@ -268,11 +270,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <th align="left" width="160">Signals<br/><sub>chromatic variant</sub></th>
 <td>
   <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=blue" alt="pypi teal"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=purple" alt="pypi amethyst"/>
+  <img src="https://hyperweave.app/v1/badge/DISCORD/JOIN/automata.static?glyph=discord&variant=purple" alt="discord amethyst"/>
   <br/>
   <ul>
 <li><sub><code>/v1/badge/{title}/automata.static?data={token}&variant={blue|purple|bifamily}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=purple</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/DISCORD/JOIN/automata.static?glyph=discord&variant=purple</code></sub></li>
 </ul>
 </td>
 </tr>
@@ -323,14 +325,14 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&variant=blue" alt="python" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=blue" alt="docker" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&variant=purple" alt="huggingface" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&variant=purple" alt="jupyter" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/python/automata.static?shape=circle&variant=blue&v=20" alt="python" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=blue&v=20" alt="docker" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=circle&variant=purple&v=20" alt="huggingface" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/jupyter/automata.static?shape=square&variant=purple&v=20" alt="jupyter" width="56"/>
   <br/>
   <ul>
 <li><sub><code>/v1/icon/{glyph}/automata.static?shape={circle|square}&variant={blue|purple}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/icon/python/automata.static?shape=circle&variant=blue</code></sub></li>
+<li><sub><code>hyperweave.app/v1/icon/python/automata.static?shape=circle&variant=blue&v=20</code></sub></li>
 </ul>
 </td>
 </tr>
