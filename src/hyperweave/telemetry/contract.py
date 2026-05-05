@@ -6,11 +6,20 @@ from typing import TYPE_CHECKING, Any
 
 from hyperweave.telemetry.corrections import classify_user_events
 from hyperweave.telemetry.cost import calculate_turn_cost
+from hyperweave.telemetry.models import ToolOutcome
 from hyperweave.telemetry.parser import parse_transcript
 from hyperweave.telemetry.stages import detect_stages
 
 if TYPE_CHECKING:
     from hyperweave.telemetry.models import SessionTelemetry
+
+# Identifier for the runtime that produced this transcript. The Claude Code
+# parser is the only path through this module; v0.2.22 adds a parallel
+# codex_parser.py that emits "codex" instead, and a `parse_transcript_auto`
+# dispatcher will sniff JSONL schema markers to route between them. The
+# receipt's skin precedence chain reads this field to auto-select the
+# matching genome (telemetry-claude-code vs telemetry-codex etc).
+_RUNTIME = "claude-code"
 
 
 def build_contract(transcript_path: str) -> dict[str, Any]:
@@ -45,6 +54,10 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
             "model": t.model or "",
             "git_branch": t.git_branch or "",
             "project_path": t.project_path or "",
+            # Load-bearing for v0.2.21+ skin auto-detection: the receipt
+            # resolver's _resolve_telemetry_genome() reads this field to
+            # select the matching telemetry-{runtime} genome JSON.
+            "runtime": _RUNTIME,
         },
         "profile": {
             "total_input_tokens": o.total_input_tokens,
@@ -74,6 +87,17 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
                 "start": s.start_time.isoformat(),
                 "end": s.end_time.isoformat(),
                 "tools": s.call_count,
+                # Per-stage token totals enable variable-height rhythm bars
+                # in compose/bar_chart.py. Sum mirrors the receipt-level
+                # `total_tok = input + output + cache_read + cache_create`.
+                "tokens": sum(
+                    tc.tokens_input + tc.tokens_output + tc.cache_read_tokens + tc.cache_create_tokens
+                    for tc in s.tool_calls
+                ),
+                # Per-stage failure count for rhythm error-tick markers.
+                # Includes BLOCKED + ERROR to match the receipt's tier-cell
+                # "✗N" convention (treats both as one "failure" signal).
+                "errors": sum(1 for tc in s.tool_calls if tc.outcome in (ToolOutcome.ERROR, ToolOutcome.BLOCKED)),
                 "boundary_score": s.boundary_score,
             }
             for s in t.stages

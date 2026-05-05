@@ -68,6 +68,33 @@ HyperWeave is that primitive. Semantic SVGs with embedded CSS state machines, ac
 
 ---
 
+## Agent Receipts
+
+Every AI coding session produces a receipt &mdash; cost, tokens, tool distribution, session rhythm. One install, fully automatic. The artifact isn't a visualization of data. It *is* the record.
+
+```bash
+hyperweave install-hook
+```
+
+Every session drops a receipt SVG into `.hyperweave/receipts/`. No config, no server, no manual step. Skin auto-detects from the coding agent's runtime &mdash; Claude Code resolves to the warm-paper skin; everything else falls back to voltage. Pin a different default with `hyperweave install-hook --genome cream`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_voltage_xlarge.svg" alt="session receipt — voltage skin showing 262M tokens, 562 calls, 52 stages, divergence flag" width="800"/>
+</p>
+<p align="center"><sub>262M tokens &middot; 562 calls &middot; 52 stages &middot; $175 &mdash; voltage skin</sub></p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_claude-code_medium.svg" alt="session receipt — claude-code skin on warm paper substrate" width="800"/>
+</p>
+<p align="center"><sub>Same protocol, different genome &mdash; claude-code skin</sub></p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/rhythm_strip_voltage_xlarge.svg" alt="session rhythm strip — same session data at 92px tall" width="800"/>
+</p>
+<p align="center"><sub>Rhythm strip &mdash; the same session data at 92px tall</sub></p>
+
+---
+
 ## Genomes &mdash; Aesthetic DNA
 
 A genome is a portable, machine-readable aesthetic specification. It encodes the complete visual identity &mdash; chromatic system, surface material, motion vocabulary, geometric form language &mdash; as a set of CSS custom properties that any agent can consume and apply consistently across every artifact type.
@@ -566,34 +593,6 @@ curl -X POST https://hyperweave.app/v1/compose \
 # Local server
 hyperweave serve --port 8000
 ```
-
----
-
-## Session Telemetry
-
-HyperWeave parses Claude Code transcripts into visual receipts &mdash; cost, tokens, tool distribution, cognitive phases. The artifact isn't a visualization of data. It *is* the record.
-
-```bash
-# Manual
-hyperweave session receipt .claude/session.jsonl -o receipt.svg
-
-# Autonomous — install once, every session gets a receipt
-hyperweave install-hook
-```
-
-After `install-hook`, every Claude Code session automatically drops a receipt SVG into `.hyperweave/receipts/`. No config, no server, no manual step.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt.svg" alt="session receipt" width="800"/>
-</p>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/rhythm_strip.svg" alt="rhythm strip" width="800"/>
-</p>
-<!--
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/examples/telemetry/master_card.svg" alt="master card" width="800"/>
-</p>
--->
 
 ---
 

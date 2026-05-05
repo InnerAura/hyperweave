@@ -129,30 +129,50 @@ def _stress_telemetry(n_stages: int) -> dict[str, Any]:
 
 
 def test_receipt_rhythm_bars_fit_content_width_at_high_stage_count() -> None:
-    """End-to-end: receipt compose with 79 stages fits the 752px content track."""
+    """End-to-end: receipt compose with 79 stages fits the 752px content track.
+
+    v0.2.21 — receipt rhythm switched to compose/bar_chart (variable-height bars
+    with merge/decimation when stage count exceeds max_bars=60). The original
+    79-stage bug guarded against was right-edge overflow; that invariant still
+    holds, but the bar count itself can be lower than the input stage count
+    after the helper compacts pathologically long sessions.
+    """
     from hyperweave.compose.resolver import resolve_receipt
     from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(type="receipt", telemetry_data=_stress_telemetry(79))
     result = resolve_receipt(spec, {}, {})
-    bars = result["context"]["rhythm_bars"]
-    assert len(bars) == 79
-    assert max(b["x"] + b["w"] for b in bars) <= 752
-    assert {b["h"] for b in bars} == {BAR_HEIGHT}
+    ctx = result["context"]
+    bars = ctx["rhythm_bars"]
+    # bar_chart returns BarChartCell dataclasses — attribute access, not dict.
+    assert max(b.x + b.w for b in bars) <= 752
+    # Original stage count preserved in context for the panel header label.
+    assert ctx["rhythm_original_count"] == 79
+    # Visible bars after compaction must respect the max_bars cap.
+    assert ctx["rhythm_shown_count"] <= 60
 
 
-def test_rhythm_strip_bars_fit_484_at_high_stage_count() -> None:
-    """End-to-end: rhythm-strip compose with 40 stages fits the 484px track.
+def test_rhythm_strip_v2_bars_fit_track_at_high_stage_count() -> None:
+    """End-to-end: rhythm-strip-v2 compose with 40 stages fits the 242px rhythm zone.
 
-    Note: the rhythm-strip resolver emits the bar list under context key
-    ``stages`` (not ``rhythm_bars``) because its template consumes it there.
+    v0.2.21 — rhythm-strip rewritten to v2 4-zone layout (600x92 strip with
+    rhythm zone from x=268 to x=510, width 242). Bars are variable-height
+    BarChartCell instances baseline-aligned to y=78 within the strip.
     """
     from hyperweave.compose.resolver import resolve_rhythm_strip
     from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(type="rhythm-strip", telemetry_data=_stress_telemetry(40))
     result = resolve_rhythm_strip(spec, {}, {})
-    bars = result["context"]["stages"]
+    ctx = result["context"]
+    # Strip dimensions from v2 spec.
+    assert result["width"] == 600
+    assert result["height"] == 92
+    # bar_chart returns BarChartCell dataclasses — attribute access.
+    bars = ctx["rhythm_bars"]
     assert len(bars) == 40
-    assert max(b["x"] + b["w"] for b in bars) <= 484
-    assert {b["h"] for b in bars} == {BAR_HEIGHT}
+    # Rhythm zone width = 510 - 268 = 242.
+    assert max(b.x + b.w for b in bars) <= 242
+    # All bars baseline-aligned to y=78 (panel-relative within rhythm zone).
+    for b in bars:
+        assert b.y + b.h == 78

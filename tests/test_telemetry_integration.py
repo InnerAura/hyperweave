@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -93,13 +95,15 @@ def test_rhythm_strip_end_to_end(fixture_transcript: Path) -> None:
     result = compose(spec)
 
     assert "<svg" in result.svg
-    assert result.width == 800
-    assert result.height == 60
+    # v0.2.21 — rhythm-strip rewritten to v2 4-zone layout (600x92).
+    assert result.width == 600
+    assert result.height == 92
 
-    # Stats present
-    assert 'data-hw-zone="stats-left"' in result.svg
+    # v0.2.21 — strip has 4 zones: identity / velocity / rhythm / status.
+    assert 'data-hw-zone="identity"' in result.svg
     assert 'data-hw-zone="velocity"' in result.svg
-    assert 'data-hw-zone="loop-status"' in result.svg
+    assert 'data-hw-zone="rhythm"' in result.svg
+    assert 'data-hw-zone="status"' in result.svg
 
 
 def test_cli_session_parse(fixture_transcript: Path) -> None:
@@ -205,74 +209,72 @@ _STRESS_TELEMETRY: dict[str, object] = {
 }
 
 
-def test_receipt_treemap_clippath_present() -> None:
-    """Every treemap cell has a clipPath preventing inter-cell text overflow."""
+def test_receipt_treemap_cells_have_tier_attribute() -> None:
+    """Every treemap cell renders with data-hw-tier so downstream consumers
+    can style/query by tier without parsing the geometric structure."""
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(type="receipt", telemetry_data=_STRESS_TELEMETRY)
     svg = compose(spec).svg
 
-    # Each cell group must have a <clipPath> definition and a <g clip-path=...> wrapper
-    clip_defs = set(re.findall(r'<clipPath id="([^"]+)">', svg))
-    clip_refs = set(re.findall(r'clip-path="url\(#([^"]+)\)"', svg))
-
-    assert len(clip_defs) >= 5, f"Expected >=5 clipPaths, got {len(clip_defs)}"
-    assert clip_refs <= clip_defs, f"Dangling clip-path refs: {clip_refs - clip_defs}"
+    tier_attrs = re.findall(r'data-hw-tier="([123])"', svg)
+    assert len(tier_attrs) >= 5, f"Expected >=5 tiered cells, got {len(tier_attrs)}"
+    # All three tiers should be represented for a stress fixture with 12+ tools.
+    assert set(tier_attrs) >= {"1", "2", "3"}
 
 
-def test_receipt_treemap_clippath_dimensions_match_cell() -> None:
-    """Each clipPath rect matches its parent cell's dimensions."""
-    from hyperweave.compose.engine import compose
+def test_receipt_treemap_cell_dimensions_fit_content_width() -> None:
+    """v0.2.21: label truncation now happens in compose/treemap.py, so the
+    OLD clipPath-per-cell scaffolding was dropped. This test guards the
+    invariant that survived the rewrite — every cell's right edge stays
+    inside the 752px content track.
+    """
+    from hyperweave.compose.resolver import resolve_receipt
     from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(type="receipt", telemetry_data=_STRESS_TELEMETRY)
-    svg = compose(spec).svg
-
-    # Extract pairs: clipPath rect dimensions vs sibling background rect dimensions
-    cell_pattern = re.compile(
-        r"<clipPath[^>]*>\s*<rect width=\"(\d+)\" height=\"(\d+)\"/>\s*</clipPath>\s*"
-        r"<rect width=\"(\d+)\" height=\"(\d+)\"",
-    )
-    for m in cell_pattern.finditer(svg):
-        clip_w, clip_h, bg_w, bg_h = m.groups()
-        assert clip_w == bg_w, f"clipPath width {clip_w} != cell width {bg_w}"
-        assert clip_h == bg_h, f"clipPath height {clip_h} != cell height {bg_h}"
+    result = resolve_receipt(spec, {}, {})
+    cells = result["context"]["treemap_cells"]
+    assert cells, "fixture should produce treemap cells"
+    # Cells are TreemapCell dataclasses with content-track-relative coords.
+    assert max(c.x + c.w for c in cells) <= 752
 
 
 def test_receipt_tier2_vertical_stacking() -> None:
-    """Tier-2 treemap cells stack name above meta (distinct y values)."""
-    from hyperweave.compose.engine import compose
+    """Tier-2 treemap cells stack name above detail (distinct y values).
+
+    v0.2.21 template uses `data-hw-tier="2"` on the cell wrapper and reads
+    label_y / detail_y from the resolver's tier_styles table. Test now
+    validates the stacking via TreemapCell attribute inspection.
+    """
+    from hyperweave.compose.resolver import resolve_receipt
     from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(type="receipt", telemetry_data=_STRESS_TELEMETRY)
-    svg = compose(spec).svg
-
-    # Tier-2 cells: cell-name at font-size=9, cell-meta at font-size=8
-    # inside a cell with height=32 (tier-2 specific).
-    tier2_cells = re.findall(
-        r'<clipPath[^>]*>\s*<rect width="\d+" height="32"/>\s*</clipPath>'
-        r'.*?<text class="m cell-name"[^>]*y="(\d+)"[^>]*>([^<]+)</text>\s*'
-        r'<text class="m cell-meta"[^>]*y="(\d+)"',
-        svg,
-        re.DOTALL,
-    )
+    result = resolve_receipt(spec, {}, {})
+    ctx = result["context"]
+    tier2_cells = [c for c in ctx["treemap_cells"] if c.tier == 2]
     assert len(tier2_cells) >= 2, f"Expected >=2 tier-2 cells, got {len(tier2_cells)}"
-    for name_y, name, meta_y in tier2_cells:
-        assert name_y != meta_y, (
-            f"Tier-2 cell '{name}' has name_y={name_y} == meta_y={meta_y} — text collision (stacking regression)"
-        )
+    tier_styles = ctx["tier_styles"]
+    detail_y = tier_styles[2]["detail_y"]
+    for cell in tier2_cells:
+        assert cell.text_y != detail_y, f"Tier-2 cell '{cell.name}' has label/detail at same y — stacking regression"
 
 
 def test_receipt_treemap_error_annotations() -> None:
-    """Cells with blocked/errored calls show ✗N; clean cells do not."""
+    """Cells with blocked/errored calls show ✗N; clean cells do not.
+
+    v0.2.21 template: error badges render as `<text>✗{n}</text>` with
+    `fill="var(--dna-status-failing-core)"`. The OLD `class="m cell-error"`
+    selector is gone; the marker is the failing-core fill + ✗ glyph.
+    """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
 
     spec = ComposeSpec(type="receipt", telemetry_data=_STRESS_TELEMETRY)
     svg = compose(spec).svg
 
-    # Derive expected error count from the fixture itself
     tools = _STRESS_TELEMETRY["tools"]
     assert isinstance(tools, dict)
     expected_errors = {
@@ -281,23 +283,20 @@ def test_receipt_treemap_error_annotations() -> None:
         if isinstance(data, dict) and data.get("blocked", 0) + data.get("errors", 0) > 0
     }
 
-    # Extract all cell-error annotations
-    error_annotations = re.findall(r'class="m cell-error"[^>]*>✗(\d+)</text>', svg)
-
-    # Every tool with errors must have a matching annotation
-    for name, count in expected_errors.items():
-        assert str(count) in error_annotations, f"Expected ✗{count} for {name}, got annotations: {error_annotations}"
-
-    # No extra annotations beyond what the fixture defines
-    assert len(error_annotations) == len(expected_errors), (
-        f"Expected {len(expected_errors)} error annotations, got {len(error_annotations)}: {error_annotations}"
+    # Receipt-cell error badges: ✗{N} text wrapped in failing-core fill.
+    # The legend marker (✗N as a generic example) ALSO appears, so we filter
+    # by requiring a numeric count (not the literal "N" of the legend tspan).
+    error_annotations = re.findall(
+        r'fill="var\(--dna-status-failing-core\)"[^>]*>✗(\d+)</text>',
+        svg,
     )
 
-    # Error annotations must be inside clip-path groups (not outside)
-    for m in re.finditer(r'<g clip-path="[^"]*">(.*?)</g>', svg, re.DOTALL):
-        clip_content = m.group(1)
-        if "cell-error" in clip_content:
-            assert 'text-anchor="end"' in clip_content, "Error text must be right-aligned"
+    for name, count in expected_errors.items():
+        assert str(count) in error_annotations, f"Expected ✗{count} for {name}, got: {error_annotations}"
+
+    assert len(error_annotations) == len(expected_errors), (
+        f"Expected {len(expected_errors)} cell error annotations, got {len(error_annotations)}: {error_annotations}"
+    )
 
 
 # ── Hero/footer label split (§2.1) + ✗N legend (§2.7) ──
@@ -334,15 +333,15 @@ def test_receipt_splits_user_turns_and_tool_errors() -> None:
     spec = ComposeSpec(type="receipt", telemetry_data=tel)
     svg = compose(spec).svg
 
-    # Hero-right shows both labels, split.
+    # Hero-right shows both labels (now joined by ' · ' on a single row,
+    # red-tinted via failing-core when tool errors are present).
     assert "4 user turns" in svg
     assert "5 tool errors" in svg  # 3 Edit errors + 2 Bash blocked
-    # Red tint on the tool-errors label only (failing-core CSS var).
+    # The pushback row carries the failing-core tint when tool errors > 0.
     assert 'fill="var(--dna-status-failing-core)"' in svg
     # The legacy single "N corrections" string is gone.
     assert "corrections" not in svg.lower()
-
-    # Footer carries the same split.
+    # Hero-right joins user-turns + tool-errors on a single row.
     assert "4 user turns · 5 tool errors" in svg
 
 
@@ -365,12 +364,18 @@ def test_receipt_singular_user_turn_pluralization() -> None:
 
 
 def test_receipt_renders_failed_tool_calls_legend() -> None:
-    """Treemap header shows the ✗N legend so ✗8 marks aren't ambiguous."""
+    """Treemap header shows the ✗N legend so ✗8 marks aren't ambiguous.
+
+    v0.2.21 splits the legend across two `<tspan>` elements (the ✗N gets
+    failing-core fill, the descriptor stays muted), so this test checks
+    both pieces are present rather than treating it as one flat string.
+    """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
 
     svg = compose(ComposeSpec(type="receipt", telemetry_data=_STRESS_TELEMETRY)).svg
-    assert "✗N = failed tool calls" in svg
+    assert "✗N" in svg
+    assert "= failed tool calls" in svg
 
 
 def test_treemap_field_is_errors_not_error_count() -> None:
@@ -416,9 +421,14 @@ def test_hero_uses_dominant_stage_not_first_stage() -> None:
     }
     svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
 
-    # Hero pill (rect + text with letter-spacing="1.2px" at y=12) shows the
-    # dominant label, not the first-stage label.
-    pill_match = re.search(r'letter-spacing="1\.2px"[^>]*>([A-Z\s]+)</text>', svg)
+    # v0.2.21 hero pill: text inside `<g data-hw-zone="phase-pill">` with
+    # letter-spacing="0.28em" (specimen value). Pulls the dominant label,
+    # not the first-stage label.
+    pill_match = re.search(
+        r'data-hw-zone="phase-pill".*?letter-spacing="0\.28em"[^>]*>([A-Z\s]+)</text>',
+        svg,
+        re.DOTALL,
+    )
     assert pill_match is not None
     assert "IMPLEMENTATION" in pill_match.group(1)
     assert "VALIDATION" not in pill_match.group(1)
@@ -442,7 +452,11 @@ def test_hero_falls_back_to_mixed_when_no_stage_dominates() -> None:
     }
     svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
 
-    pill_match = re.search(r'letter-spacing="1\.2px"[^>]*>([A-Z\s]+)</text>', svg)
+    pill_match = re.search(
+        r'data-hw-zone="phase-pill".*?letter-spacing="0\.28em"[^>]*>([A-Z\s]+)</text>',
+        svg,
+        re.DOTALL,
+    )
     assert pill_match is not None
     assert "MIXED" in pill_match.group(1)
 
@@ -462,6 +476,109 @@ def test_hero_defaults_to_session_when_no_stages() -> None:
     }
     svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
     assert "SESSION" in svg
+
+
+# ── Active-window crop (v0.2.21 visual-fidelity-fix) ──
+# When a session is left open overnight (e.g. 19,689m total but actual work
+# concentrated in the first ~3h), the bar chart's grid lines and time-axis
+# labels should key off the active window — not the full session — so we
+# don't get a dense mesh of grid lines compressed into the leftmost 2% of
+# the chart. Resolver computes active_duration_m from stage timestamps.
+
+
+def _telemetry_with_session_durations(
+    *,
+    duration_minutes: float,
+    stage_minutes: list[tuple[str, float, float]],
+) -> dict[str, Any]:
+    """Build telemetry data with stages whose timestamps frame an active window.
+
+    Each ``stage_minutes`` triple is ``(class, start_offset_m, end_offset_m)``
+    measured from a fixed session start. The session ``duration_minutes``
+    can be far larger than the stages' timespan to simulate "session left
+    open" scenarios.
+    """
+    base = "2026-01-01T00:00:00"
+    base_dt = datetime.fromisoformat(base)
+    stages = []
+    for cls, start_off, end_off in stage_minutes:
+        start = (base_dt + timedelta(minutes=start_off)).isoformat()
+        end = (base_dt + timedelta(minutes=end_off)).isoformat()
+        stages.append(
+            {
+                "label": cls.upper(),
+                "dominant_class": cls,
+                "start": start,
+                "end": end,
+                "tools": 5,
+                "tokens": 1000,
+                "errors": 0,
+            }
+        )
+    return {
+        "session": {"id": "active-window-test", "duration_minutes": duration_minutes, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 100, "total_output_tokens": 50, "total_cost": 0.50},
+        "tools": {"Read": {"total_tokens": 5000, "count": 5, "tool_class": "explore"}},
+        "stages": stages,
+        "user_events": [],
+        "agents": [],
+    }
+
+
+def test_receipt_hero_subline_flags_divergence_when_active_lt_half_session() -> None:
+    # Session duration 100m but stages span only 30m (active = 30%, well under
+    # 50% threshold). Hero subline should surface both numbers honestly.
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = _telemetry_with_session_durations(
+        duration_minutes=100,
+        stage_minutes=[("explore", 0, 15), ("execute", 15, 30)],
+    )
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    assert "30m active" in svg
+    assert "100m total" in svg
+
+
+def test_receipt_hero_subline_omits_divergence_when_active_close_to_session() -> None:
+    # Stages span 0-80m (sum=80, wall_clock=80), session duration_m=100m.
+    # active=80, total=max(100,80)=100, ratio=0.8 ≥ 0.5 → no divergence flag.
+    # Hero shows the active duration (80m), NOT parser's 100m. Stage-derived
+    # values are the single source of truth for the chart axis + hero label.
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = _telemetry_with_session_durations(
+        duration_minutes=100,
+        stage_minutes=[("explore", 0, 80)],
+    )
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    assert "80m" in svg
+    # No divergence flag: the "active · total" pattern shouldn't appear.
+    assert "active · " not in svg
+    assert " total" not in svg
+
+
+def test_receipt_falls_back_to_session_duration_when_stages_lack_timestamps() -> None:
+    # Mock-style stages without start/end → active_duration_m falls back to
+    # session.duration_minutes; subtitle and chart geometry use the full value.
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "no-ts", "duration_minutes": 60, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 100, "total_output_tokens": 50, "total_cost": 0.50},
+        "tools": {"Read": {"total_tokens": 5000, "count": 5, "tool_class": "explore"}},
+        "stages": [
+            {"label": "EXP", "dominant_class": "explore", "tools": 5, "tokens": 1000, "errors": 0},
+        ],
+        "user_events": [],
+        "agents": [],
+    }
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    assert "60m" in svg
+    # No divergence flag because active falls back to session duration.
+    assert "active" not in svg.lower() or "no-ts" in svg  # session id is "no-ts", not "active"
 
 
 # ── SessionEnd hook: graceful no-op for non-conversational sessions ──

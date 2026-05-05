@@ -93,6 +93,7 @@ def _base_context(
         "contract_id": artifact_id,
         "frame_type": spec.type,
         "genome_id": spec.genome_id,
+        "genome_category": resolved.genome.get("category", "dark"),
         "profile_id": resolved.profile_id,
         "_genome_raw": resolved.genome,
         "divider_variant": spec.divider_variant,

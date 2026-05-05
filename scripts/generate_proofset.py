@@ -47,6 +47,69 @@ def _genome_motions(genome_id: str) -> list[str]:
 
 # ── Mock telemetry data for receipt / rhythm-strip / master-card ──
 
+# ── Real-transcript visual fidelity corpus (v0.2.21) ──
+# Five transcripts spanning a range of sizes from the user's local Claude Code
+# project history. Paths are user-machine-only (NOT committed). Falls back to
+# MOCK_TELEMETRY when absent — keeps CI / clean-environment runs reproducible.
+# xlarge + xxlarge stress-test bar count, tier-3 overflow, and label collision.
+_REAL_TRANSCRIPTS: list[tuple[str, Path]] = [
+    (
+        "small",
+        Path.home()
+        / ".claude"
+        / "projects"
+        / "-Users-k01101011-Projects-GitHub-eli64s"
+        / "d6ceeb70-599b-4c10-b827-ee267f0701dc.jsonl",
+    ),
+    (
+        "medium",
+        Path.home()
+        / ".claude"
+        / "projects"
+        / "-Users-k01101011-Projects-InnerAura-hyperweave"
+        / "b8e704a6-fb10-4887-b80d-86bd82d0eced.jsonl",
+    ),
+    (
+        "large",
+        Path.home()
+        / ".claude"
+        / "projects"
+        / "-Users-k01101011-Projects-InnerAura-hyperweave--claude-worktrees-gracious-swirles-93af5c"
+        / "4f7565a5-da44-4fbb-9234-b6f9cb2a1be6.jsonl",
+    ),
+    (
+        "xlarge",
+        Path.home()
+        / ".claude"
+        / "projects"
+        / "-Users-k01101011-Projects-InnerAura-hyperweave"
+        / "398ce70f-2632-4c61-9eee-659f3e5df19a.jsonl",
+    ),
+    (
+        "xxlarge",
+        Path.home()
+        / ".claude"
+        / "projects"
+        / "-Users-k01101011-Projects-InnerAura-hyperweave"
+        / "e313bc93-4f66-431b-b134-4c17d0af8d23.jsonl",
+    ),
+]
+
+
+def _load_real_telemetry(path: Path) -> dict[str, Any] | None:
+    """Build a contract from a JSONL transcript, or return None if missing.
+
+    The script ships paths to user-local Claude Code transcripts; on machines
+    without those exact paths (CI, fresh checkout), this returns None and the
+    caller should fall back to MOCK_TELEMETRY.
+    """
+    if not path.exists():
+        return None
+    from hyperweave.telemetry.contract import build_contract
+
+    return build_contract(str(path))
+
+
 MOCK_TELEMETRY: dict[str, Any] = {
     "session": {"model": "claude-opus-4-6", "duration_s": 1932},
     "cost": {"total": 0.42, "input": 0.28, "output": 0.14},
@@ -321,12 +384,35 @@ def generate_static() -> int:
 
         # ── 7. Kinetic typography removed in v0.2.14 with the banner frame ──
 
-    # ── 8. Telemetry frames (genome-independent, generated once) ──
+    # ── 8. Telemetry frames — visual fidelity matrix (v0.2.21) ──
+    # Receipts and rhythm-strips render against 3 real session transcripts of
+    # varying size (small / medium / large) when the user has them locally,
+    # plus a baseline mock-data render. Each (skin x transcript x frame) tuple
+    # produces one SVG. Real transcripts are user-local; on machines without
+    # them, the matrix gracefully falls back to mock-only.
     telemetry_dir = OUT / "proofset" / "telemetry"
-    for ftype in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD):
-        svg = _compose(ftype, GenomeId.BRUTALIST, telemetry_data=MOCK_TELEMETRY)
-        _write(telemetry_dir / f"{ftype.value.replace('-', '_')}.svg", svg)
-        total += 1
+
+    # Available transcripts: always include "mock"; add each real transcript
+    # only when its path exists.
+    transcript_corpus: list[tuple[str, dict[str, Any]]] = [("mock", MOCK_TELEMETRY)]
+    for label, transcript_path in _REAL_TRANSCRIPTS:
+        contract = _load_real_telemetry(transcript_path)
+        if contract is not None:
+            transcript_corpus.append((label, contract))
+
+    # 3 skins x N transcripts x 2 frame types
+    for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream"):
+        for label, telemetry in transcript_corpus:
+            for ftype in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
+                svg = _compose(ftype, skin, telemetry_data=telemetry)
+                filename = f"{ftype.value.replace('-', '_')}_{skin}_{label}.svg"
+                _write(telemetry_dir / filename, svg)
+                total += 1
+
+    # Master-card single voltage variant (multi-skin master-card deferred to pre-v0.3.0).
+    svg = _compose(FrameType.MASTER_CARD, "telemetry-voltage", telemetry_data=MOCK_TELEMETRY)
+    _write(telemetry_dir / "master_card.svg", svg)
+    total += 1
 
     # ── 9. Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once) ──
     # Render via compose() with a default genome — the templates hardcode their
@@ -910,13 +996,38 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append(f"![divider {slug}](proofset/inneraura/dividers/{slug}.svg)")
         lines.append("")
 
-    # Telemetry (genome-independent, bottom of page)
+    # Telemetry visual-fidelity matrix (v0.2.21): 3 skins x N transcripts x 2 frames.
     lines.extend(["## Telemetry", ""])
-    lines.append("*Telemetry frames use their own built-in palette (no genome skinning).*")
+    lines.append(
+        "*Risograph-canonical structure across all 3 skins, palette per genome JSON. "
+        "Each skin renders against a baseline mock + (when available) 3 real session "
+        "transcripts of varying size (small / medium / large) so visual fidelity is "
+        "verified across both sparse and dense data. Skin precedence chain: explicit "
+        "`--genome` override → JSONL `runtime` field → `telemetry-voltage` fallback.*"
+    )
     lines.append("")
-    for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD):
-        lines.append(f"![{ft}](proofset/telemetry/{ft.value.replace('-', '_')}.svg)")
+
+    # Re-derive the actual corpus that was rendered (mirror generate_static logic).
+    corpus_labels: list[str] = ["mock"]
+    for label, transcript_path in _REAL_TRANSCRIPTS:
+        if transcript_path.exists():
+            corpus_labels.append(label)
+
+    for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream"):
+        lines.append(f"### {skin}")
         lines.append("")
+        for label in corpus_labels:
+            lines.append(f"**{label}**")
+            lines.append("")
+            for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
+                lines.append(
+                    f"![{ft}-{skin}-{label}](proofset/telemetry/{ft.value.replace('-', '_')}_{skin}_{label}.svg)"
+                )
+                lines.append("")
+    lines.append("### master-card (voltage only, v0.2.21)")
+    lines.append("")
+    lines.append("![master-card](proofset/telemetry/master_card.svg)")
+    lines.append("")
 
     if live_total > 0:
         lines.extend(["## Live Data (requires --live)", ""])

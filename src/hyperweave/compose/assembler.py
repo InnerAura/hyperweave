@@ -16,11 +16,17 @@ _STATEFUL_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP})
 # Frame types that use bridge hw-* class mappings
 _BRIDGE_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP, FrameType.ICON})
 
-# Telemetry frame types — need tool-class + extra ink variables
-_TELEMETRY_FRAMES: frozenset[str] = frozenset({FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD})
-
 # Marquee frame types — need frame_fill, status colors, ink tiers
 _MARQUEE_FRAMES: frozenset[str] = frozenset({FrameType.MARQUEE_HORIZONTAL})
+
+# Genome fields that signal a telemetry skin (presence-gates the tool-color CSS block)
+_TELEMETRY_GENOME_FIELDS: tuple[str, ...] = (
+    "tool_explore",
+    "tool_execute",
+    "tool_mutate",
+    "tool_coordinate",
+    "tool_reflect",
+)
 
 
 def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, str]:
@@ -62,12 +68,6 @@ def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, 
         css["status"] = _load_css_file("status.css")
     else:
         css["status"] = ""
-
-    # Telemetry utility classes + phase color defaults — only for telemetry frames
-    if frame_type in _TELEMETRY_FRAMES:
-        css["telemetry"] = _load_css_file("phase-colors.css") + "\n" + _load_css_file("telemetry.css")
-    else:
-        css["telemetry"] = ""
 
     # Motion CSS — only when a motion is active
     css["motion"] = _load_motion_css(motion_id) if motion_id != MotionId.STATIC else ""
@@ -147,8 +147,10 @@ def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
                 ("label_text", "--dna-label-text"),
             ]
         )
-    elif frame_type in _TELEMETRY_FRAMES:
-        # Telemetry frames need tool-class colors, status colors, and extra ink tiers
+    elif any(genome.get(f) for f in _TELEMETRY_GENOME_FIELDS):
+        # Telemetry skin (presence-gated by tool-color fields). Replaces the old
+        # frame-type gate so any genome declaring tool_* fields gets the
+        # tool-class + status-color + extended-ink mappings, regardless of frame.
         mapping.extend(
             [
                 ("accent_signal", "--dna-status-passing-core"),
@@ -162,6 +164,20 @@ def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
                 ("tool_mutate", "--dna-tool-mutate"),
                 ("tool_coordinate", "--dna-tool-coordinate"),
                 ("tool_reflect", "--dna-tool-reflect"),
+                # Receipt compositor tokens (v0.2.21). Per-skin pill / glyph /
+                # card-frame surface lets the receipt template stay branch-free.
+                # "transparent" values render the element invisibly without a
+                # template conditional — the rect emits but paints no pixels.
+                ("pill_outer_bg", "--dna-pill-outer-bg"),
+                ("pill_outer_stroke", "--dna-pill-outer-stroke"),
+                ("pill_inner_bg", "--dna-pill-inner-bg"),
+                ("pill_text", "--dna-pill-text"),
+                ("pill_rule_top", "--dna-pill-rule-top"),
+                ("pill_rule_bottom", "--dna-pill-rule-bottom"),
+                ("glyph_fill", "--dna-glyph-fill"),
+                ("card_border", "--dna-card-border"),
+                ("card_border_top", "--dna-card-border-top"),
+                ("card_inner_glyph", "--dna-card-inner-glyph"),
             ]
         )
 
@@ -191,6 +207,21 @@ def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
         lines.append("  --dna-status-delta-negative: #DC2626;")
 
     lines.append("}")
+
+    # Telemetry typography utility classes — used by receipt + rhythm-strip + master-card
+    # templates (class="s ink1", "m ink2", etc.). Gated by the same telemetry-skin
+    # presence check so badge/strip/icon don't carry these unused selectors.
+    if any(genome.get(f) for f in _TELEMETRY_GENOME_FIELDS):
+        lines.extend(
+            [
+                ".m { font-family: var(--dna-font-mono); }",
+                ".s { font-family: var(--dna-font-display); }",
+                ".ink1 { fill: var(--dna-ink-primary); }",
+                ".ink2 { fill: var(--dna-ink-muted); }",
+                ".ink3 { fill: var(--dna-ink-tertiary); }",
+                "@media (forced-colors: active) { text { fill: CanvasText; } }",
+            ]
+        )
 
     # Light mode overrides
     light = genome.get("light_mode")

@@ -1,170 +1,183 @@
-{# HyperWeave Receipt Frame — 800x500 session receipt (v0.4).
-   Specimen: specs/telemetry-artifacts/receipt.svg
-   Three horizontal panels: hero row -> token treemap -> session rhythm,
-   plus a metadata band (project/branch/path · session/started) above the footer.
-   "The screenshot that gets posted" — answers "what happened?" in 2 seconds.
-   Extends document.svg.j2.  Context: ComposeSpec dict. #}
+{# Session Receipt 800x500 (v0.2.21 risograph-canonical). Thin render: zero math, zero hex.
+   Geometry from compose/treemap.py + bar_chart.py; colors from var(--dna-*).
+   Same structure for ALL skins; palette swaps via genome JSON.
+   Specimen: tier2/telemetry/telemetry-redesign/receipt-genome-risograph.svg #}
 {% extends "document.svg.j2" %}
 
 {% block defs %}
-  {# Background gradient #}
-  <linearGradient id="{{ uid }}-bg" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="var(--dna-surface)"/>
-    <stop offset="100%" stop-color="var(--dna-surface-deep)"/>
-  </linearGradient>
-  {# Tool-class gradients for treemap cells #}
-{% for tc in ['explore', 'execute', 'mutate', 'coordinate'] %}
-  <linearGradient id="{{ uid }}-{{ tc }}" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="var(--dna-tool-{{ tc }})" stop-opacity="0.18"/>
-    <stop offset="100%" stop-color="var(--dna-tool-{{ tc }})" stop-opacity="0.04"/>
-  </linearGradient>
-{% endfor %}
-  {# Rhythm bar gradients (bottom-up) #}
-{% for tc in ['explore', 'execute', 'mutate', 'coordinate'] %}
-  <linearGradient id="{{ uid }}-rh-{{ tc }}" x1="0" y1="1" x2="0" y2="0">
-    <stop offset="0%" stop-color="var(--dna-tool-{{ tc }})" stop-opacity="0.6"/>
-    <stop offset="100%" stop-color="var(--dna-tool-{{ tc }})" stop-opacity="0.12"/>
-  </linearGradient>
-{% endfor %}
+{% include "partials/provider-glyphs.svg.j2" %}
+{# Card-shape clipPath — defines the receipt's rounded outline so any element
+   that paints to the SVG edges (substrate, top accent strip) inherits the
+   rounding instead of poking out as square corners around the rounded card.
+   Matches the claude-code v9 specimen's #card-shape pattern. The card_border
+   outer stroke uses the same rx=5.5 so all three edges align. #}
+<clipPath id="receipt-card-shape">
+  <rect width="{{ width }}" height="{{ height }}" rx="5.5" ry="5.5"/>
+</clipPath>
 {% endblock %}
 
 {% block content %}
-{% set rw = width | default(800) %}
-{% set rh = height | default(500) %}
-{% set mx = 24 %}
-{% set content_w = rw - (mx * 2) %}
+{# Substrate — rounded to rx=5.5 so its corners align with the card_border
+   outer stroke. Without rx, the square substrate corners protrude past the
+   rounded border on light skins (visible as a square box around the rounded
+   shape on cream / claude-code paper). #}
+<rect width="{{ width }}" height="{{ height }}" rx="5.5" ry="5.5" fill="var(--dna-surface)"/>
 
-{# === Background === #}
-<rect width="{{ rw }}" height="{{ rh }}" rx="4" fill="url(#{{ uid }}-bg)"/>
-<rect x="0.5" y="0.5" width="{{ rw - 1 }}" height="{{ rh - 1 }}"
-      rx="4" fill="none" stroke="var(--dna-border)" stroke-width="1"/>
-
-{# === PANEL 1: HERO ROW (y:0-96) === #}
-<g transform="translate({{ mx }}, 18)" data-hw-zone="hero">
-  {# Phase pill — colored by dominant tool class, width snug-fit to label.
-     Label length * ~7px per char (font-size 9 mono + 1.2px letter-spacing) + 16px padding. #}
-  {% set pill_label = hero_profile | default('SESSION') | upper %}
-  {% set pill_w = 16 + (pill_label | length) * 7 %}
-  <rect x="0" y="-4" width="{{ pill_w }}" height="22"
-        fill="var(--dna-tool-{{ hero_tool_class }})" fill-opacity="0.15"
-        stroke="var(--dna-tool-{{ hero_tool_class }})" stroke-opacity="0.3" stroke-width="0.5"/>
-  <text class="m" font-size="9" font-weight="600" letter-spacing="1.2px"
-        fill="var(--dna-tool-{{ hero_tool_class }})" x="8" y="12">{{ pill_label }}</text>
-  <text class="s ink1" font-size="26" font-weight="700" y="50"
-        letter-spacing="-0.5px">{{ hero_headline }}</text>
-  <text class="m ink3" font-size="10" y="66">{{ hero_subline }}</text>
-  <g transform="translate({{ content_w }}, 0)" text-anchor="end">
-    <text class="m ghost" font-size="9" letter-spacing="1px">SESSION</text>
+{# ═══ HERO ZONE (translate 24, 18 — risograph-canonical) ═══ #}
+{% if has_glyph %}
+<use href="#{{ glyph_id }}" x="24" y="13" width="18" height="18"/>
+{% endif %}
+<text x="50" y="27" class="s ink1" font-size="14" font-weight="700">{{ provider_label }}</text>
+{% if model_label %}
+<text x="142" y="27" class="m ink2" font-size="11" letter-spacing="0.04em">· {{ model_label }}</text>
+{% endif %}
+{# Phase pill at top-right — token-driven, branch-free.
+   Voltage (titanium spec): layered structure — dark outer base + thin frame
+   stroke + champagne phosphor inner + white/orange hairlines + dark text.
+   Claude-code: single bright pill — outer/stroke/rules transparent, solid
+   terra-coral inner + white text. The v9 specimen used rx=11 (full pill);
+   the canonical v0.2.21 silhouette is square (rx=0) across all skins for
+   cross-skin coherence (locked by test_pill_rx_normalized_to_square_across_skins).
+   Cream (risograph spec): layered like voltage but with cream-shifted base,
+   dark-brown frame, fluoro-orange phosphor inner, light cream text + hairlines.
+   "transparent" tokens render the rect but paint no pixels — same template,
+   three different identities, zero conditionals. #}
+<g transform="translate({{ pill_x }}, 11)" data-hw-zone="phase-pill">
+  <rect width="{{ pill_w }}" height="22" rx="{{ pill_rx }}" fill="var(--dna-pill-outer-bg)"/>
+  <rect width="{{ pill_w }}" height="22" rx="{{ pill_rx }}" fill="none" stroke="var(--dna-pill-outer-stroke)" stroke-width="0.75"/>
+  <rect class="anchor-live" x="2" y="2" width="{{ pill_w - 4 }}" height="18" rx="{{ pill_rx }}" fill="var(--dna-pill-inner-bg)"/>
+  <rect x="2" y="2" width="{{ pill_w - 4 }}" height="1" fill="var(--dna-pill-rule-top)"/>
+  <rect x="2" y="19" width="{{ pill_w - 4 }}" height="1" fill="var(--dna-pill-rule-bottom)"/>
+  <text class="m" x="{{ pill_w // 2 }}" y="14" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="0.28em" fill="var(--dna-pill-text)">{{ pill_label }}</text>
+</g>
+{# Hero headline: tokens billed (ink) + ${cost} (signal color), weight=800 #}
+<text x="24" y="66" class="s ink1" font-size="26" font-weight="800" letter-spacing="-0.02em"><tspan>{{ headline_tokens }}</tspan><tspan fill="var(--dna-signal)">{{ headline_cost }}</tspan></text>
+<text x="24" y="82" class="m ink3" font-size="10" letter-spacing="0.04em">{{ hero_subline }}</text>
+{# Hero-right stats (right-aligned mono ink2 lines at y=56/70/84) #}
+<g data-hw-zone="hero-right">
 {% for stat in hero_right_stats | default([]) %}
-    <text class="m ink2" font-size="10" y="{{ 16 + (loop.index0 * 14) }}"
-          {% if stat.get('accent') == 'failing' %}fill="var(--dna-status-failing-core)" font-weight="600"{% endif %}>{{ stat.text }}</text>
+<text x="{{ content_right_x }}" y="{{ stat.y }}" class="m ink2" font-size="10" text-anchor="end" letter-spacing="0.02em"
+  {% if stat.accent == 'failing' %}fill="var(--dna-status-failing-core)" font-weight="600"{% endif %}>{{ stat.text }}</text>
 {% endfor %}
-  </g>
 </g>
+<line x1="24" y1="96" x2="{{ content_right_x }}" y2="96" stroke="var(--dna-border)" stroke-width="1"/>
 
-<line x1="{{ mx }}" y1="96" x2="{{ rw - mx }}" y2="96" class="div"/>
-
-{# === PANEL 2: TOKEN MAP (y:104-290) === #}
-<g transform="translate({{ mx }}, 104)" data-hw-zone="treemap">
-  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px" y="16">TOKEN MAP</text>
-  {# Legend dots — shifted down 16px to create breathing room below hero divider #}
-{% for legend in treemap_legend | default([]) %}
-  <circle cx="{{ 96 + (loop.index0 * 80) }}" cy="13" r="3"
-          fill="var(--dna-tool-{{ legend.tool_class }})"/>
-  <text class="m ink3" font-size="9"
-        x="{{ 103 + (loop.index0 * 80) }}" y="16">{{ legend.label }}</text>
+{# ═══ TREEMAP ZONE (translate 24, 104 — header INSIDE zone) ═══ #}
+<g transform="translate(24, 104)" data-hw-zone="treemap">
+  {# Header row: TOKEN MAP lab + 4 color-class chips + ✗N hint #}
+  <text class="m ink3" font-size="7" font-weight="700" letter-spacing="0.22em" y="12">TOKEN MAP</text>
+{% for chip in treemap_header_chips | default([]) %}
+  <rect x="{{ chip.x }}" y="6" width="2" height="8" fill="var(--dna-tool-{{ chip.tool_class }})"/>
+  <text class="m ink3" x="{{ chip.x + 6 }}" y="13" font-size="9">{{ chip.label }}</text>
 {% endfor %}
-  {# ✗N legend — right-aligned, failing-red. Tells the reader that the
-     tiny marks on treemap cells mean "failed tool calls," not "typos". #}
-  <text class="m" font-size="9" font-weight="600" letter-spacing="0.5px"
-        fill="var(--dna-status-failing-core)"
-        x="{{ content_w }}" y="16" text-anchor="end">✗N = failed tool calls</text>
+  <text class="m ink3" x="{{ content_w }}" y="13" font-size="9" text-anchor="end"><tspan fill="var(--dna-status-failing-core)" opacity="0.85" font-weight="700">✗N</tspan><tspan dx="3">= failed tool calls</tspan></text>
 
-  {# Treemap cells — computed by resolver, rendered here.
-     clipPath per cell prevents text overflow into adjacent cells. #}
+  {# Tier cells — full-width top accent on every cell, hero metric on tier-1 #}
 {% for cell in treemap_cells | default([]) %}
-  <g transform="translate({{ cell.x }}, {{ cell.y }})">
-    <clipPath id="{{ uid }}-clip-{{ loop.index0 }}">
-      <rect width="{{ cell.w }}" height="{{ cell.h }}"/>
-    </clipPath>
-    <rect width="{{ cell.w }}" height="{{ cell.h }}" rx="{{ 3 if cell.tier == 1 else 2 }}"
-          fill="url(#{{ uid }}-{{ cell.tool_class }})"
-          stroke="var(--dna-tool-{{ cell.tool_class }})" stroke-opacity="0.2" stroke-width="1"/>
-    <g clip-path="url(#{{ uid }}-clip-{{ loop.index0 }})">
-    <text class="m cell-name" font-size="{{ 13 if cell.tier == 1 else 9 }}" x="{{ 12 if cell.tier == 1 else 10 }}" y="{{ 22 if cell.tier == 1 else (13 if cell.tier == 2 else 12) }}">{{ cell.name }}</text>
-{% if cell.tier == 1 %}
-    <text class="m" font-size="32" font-weight="700" fill="var(--dna-tool-{{ cell.tool_class }})" x="12" y="58">{{ cell.pct }}%</text>
-    <text class="m cell-meta" font-size="10" x="12" y="74">{{ cell.detail }}</text>
-{% elif cell.tier == 2 %}
-    <text class="m cell-meta" font-size="8" x="10" y="25">{{ cell.detail }}</text>
-{% else %}
-    <text class="m cell-meta" font-size="8" x="10" y="22">{{ cell.detail }}</text>
-{% endif %}
+  <g transform="translate({{ cell.x }}, {{ cell.y }})" data-hw-tier="{{ cell.tier }}" data-hw-tool="{{ cell.name }}"{% if cell.is_overflow %} data-hw-overflow="true"{% endif %}>
+    <rect width="{{ cell.w }}" height="{{ cell.h }}" fill="var(--dna-surface-deep)"/>
+    <rect width="{{ cell.accent_w }}" height="{{ cell.accent_h }}" fill="var(--dna-tool-{{ cell.tool_class }})" opacity="0.85"/>
+    <rect width="{{ cell.w }}" height="{{ cell.h }}" fill="none" stroke="var(--dna-border)" stroke-width="0.5"/>
+{% if cell.is_hero %}
+    {# Tier-1 hero treatment: 38pt percentage in tool color, large name + detail #}
+    <text class="m ink1" font-size="13" font-weight="600" x="14" y="24">{{ cell.label }}</text>
+    <text class="s" font-size="38" font-weight="800" fill="var(--dna-tool-{{ cell.tool_class }})" x="14" y="66" letter-spacing="-0.02em">{{ cell.pct }}%</text>
+    <text class="m ink3" font-size="10" x="14" y="80">{{ cell.detail }}</text>
 {% if cell.errors %}
-    <text class="m cell-error" font-size="8" x="{{ cell.w - 8 }}"
-          y="{{ 22 if cell.tier == 1 else (13 if cell.tier == 2 else 12) }}"
-          text-anchor="end">✗{{ cell.errors }}</text>
-{% endif %}
+    <g transform="translate({{ cell.w - 8 }}, 14)">
+      <rect x="-24" y="-10" width="22" height="14" fill="var(--dna-surface-deep)" stroke="var(--dna-status-failing-core)" stroke-opacity="0.35" stroke-width="0.5"/>
+      <text class="m" font-size="8" font-weight="700" fill="var(--dna-status-failing-core)" x="-13" y="0" text-anchor="middle">✗{{ cell.errors }}</text>
     </g>
-  </g>
-{% endfor %}
-
-</g>
-
-<line x1="{{ mx }}" y1="290" x2="{{ rw - mx }}" y2="290" class="div"/>
-
-{# === PANEL 3: SESSION RHYTHM (y:306+) — bar_area_h drives layout === #}
-<g transform="translate({{ mx }}, 306)" data-hw-zone="rhythm">
-  <text class="m ghost" font-size="9" font-weight="600" letter-spacing="1px">
-    SESSION RHYTHM ({{ stage_count | default(0) }} STAGES)</text>
-  {# Time axis #}
-  <text class="m ink3" font-size="8" y="18">0m</text>
-  <text class="m ink3" font-size="8" x="{{ content_w // 2 }}" y="18"
-        text-anchor="middle">{{ (duration_minutes | default(0)) // 2 }}m</text>
-  <text class="m ink3" font-size="8" x="{{ content_w }}" y="18"
-        text-anchor="end">{{ duration_minutes | default(0) }}m</text>
-
-  {# Rhythm bars #}
-  <g transform="translate(0, 28)">
-{% for bar in rhythm_bars | default([]) %}
-    <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}"
-          rx="{{ 2 if bar.h > 30 else 1 }}"
-          fill="url(#{{ uid }}-rh-{{ bar.tool_class }})"/>
-{% endfor %}
-  </g>
-
-  {# Phase strip (4px colored bar below rhythm) #}
-  <g transform="translate(0, {{ bar_area_h + 32 }})">
-{% for bar in rhythm_bars | default([]) %}
-    <rect x="{{ bar.x }}" width="{{ bar.w }}" height="4" rx="1"
-          fill="var(--dna-tool-{{ bar.tool_class }})" opacity="0.5"/>
-{% endfor %}
-  </g>
-
-  {# Phase legend — full labels, 80px spacing #}
-  <g transform="translate(0, {{ bar_area_h + 46 }})">
-{% for p in phase_legend | default([]) %}
-    <rect x="{{ loop.index0 * 80 }}" y="0" width="6" height="6" rx="1"
-          fill="var(--dna-tool-{{ p.id }})" opacity="0.5"/>
-    <text class="m ink3" font-size="8" x="{{ loop.index0 * 80 + 10 }}" y="5">{{ p.label }}</text>
-{% endfor %}
-    <text class="m" font-size="9" font-weight="600" fill="var(--dna-signal)"
-          x="{{ content_w }}" y="6" text-anchor="end"
-          letter-spacing="0.5px">{{ dominant_profile | default('') | upper }}</text>
-  </g>
-</g>
-
-{# === Metadata band (v0.4) — provenance row above footer === #}
-{% if metadata_left %}
-<text class="m ghost" font-size="8" x="{{ mx }}" y="{{ rh - 30 }}">{{ metadata_left }}</text>
 {% endif %}
-{% if metadata_right %}
-<text class="m ghost" font-size="8" x="{{ rw - mx }}" y="{{ rh - 30 }}"
-      text-anchor="end">{{ metadata_right }}</text>
+{% elif cell.tier == 2 %}
+    {# Tier-2: name + detail + inline error badge #}
+    <text class="m ink1" font-size="9.5" font-weight="600" x="10" y="14">{{ cell.label }}</text>
+    <text class="m ink3" font-size="8" x="10" y="26">{{ cell.detail }}</text>
+{% if cell.errors %}
+    <text class="m" font-size="8" font-weight="700" fill="var(--dna-status-failing-core)" x="{{ cell.w - 8 }}" y="14" text-anchor="end">✗{{ cell.errors }}</text>
+{% endif %}
+{% else %}
+    {# Tier-3: compact name + detail + tiny error badge #}
+    <text class="m ink1" font-size="9" font-weight="600" x="10" y="12">{{ cell.label }}</text>
+    <text class="m ink3" font-size="8" x="10" y="22">{{ cell.detail }}</text>
+{% if cell.errors %}
+    <text class="m" font-size="8" font-weight="700" fill="var(--dna-status-failing-core)" x="{{ cell.w - 8 }}" y="12" text-anchor="end">✗{{ cell.errors }}</text>
+{% endif %}
+{% endif %}
+  </g>
+{% endfor %}
+</g>
+<line x1="24" y1="290" x2="{{ content_right_x }}" y2="290" stroke="var(--dna-border)" stroke-width="1"/>
+
+{# ═══ RHYTHM ZONE (translate 24, 306 — risograph-canonical) ═══ #}
+<g transform="translate(24, 306)" data-hw-zone="rhythm">
+  {# Header composite: LEFT lab + RIGHT mono total/peak #}
+  <text class="m ink3" font-size="7" font-weight="700" letter-spacing="0.22em">{{ rhythm_header_left }}</text>
+  <text class="m ink3" x="{{ content_w }}" y="0" font-size="7.5" text-anchor="end" letter-spacing="0.18em">{{ rhythm_header_right }}</text>
+
+  {# Time axis labels ABOVE the bar track at major intervals #}
+{% for tick in time_axis_ticks | default([]) %}
+{% if tick.is_major %}
+  <text class="m ink3" x="{{ tick.x }}" y="20" font-size="8"{% if loop.first %}{% elif loop.last %} text-anchor="end"{% else %} text-anchor="middle"{% endif %}>{{ tick.label }}</text>
+{% endif %}
+{% endfor %}
+
+  {# Vertical grid lines at major time intervals (across bar track only) #}
+{% for grid in rhythm_grid_lines | default([]) %}
+  <line x1="{{ grid.x }}" y1="30" x2="{{ grid.x }}" y2="{{ rhythm_baseline_y }}" stroke="var(--dna-border-tint)" stroke-width="0.5" opacity="0.55"/>
+{% endfor %}
+
+  {# Baseline rule across full track width #}
+  <line x1="0" y1="{{ rhythm_baseline_y }}" x2="{{ content_w }}" y2="{{ rhythm_baseline_y }}" stroke="var(--dna-border)" stroke-width="1"/>
+
+  {# Variable-height bars (opacity from BarChartCell) #}
+  <g data-hw-field="bars">
+{% for bar in rhythm_bars | default([]) %}
+    <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}" fill="var(--dna-tool-{{ bar.tool_class }})" opacity="{{ bar.opacity }}" rx="0.3"/>
+{% endfor %}
+  </g>
+
+  {# Peak marker: 1.5px signal-color tick at top of max-tokens bar #}
+{% if rhythm_peak_marker %}
+  <rect x="{{ rhythm_peak_marker.x }}" y="{{ rhythm_peak_marker.y }}" width="{{ rhythm_peak_marker.w }}" height="{{ rhythm_peak_marker.h }}" fill="var(--dna-signal)"/>
 {% endif %}
 
-{# === Footer === #}
-<text class="m ghost" font-size="9" x="{{ mx }}" y="{{ rh - 10 }}">{{ footer_left }}</text>
-<text class="m ghost" font-size="9" x="{{ rw - mx }}" y="{{ rh - 10 }}"
-      text-anchor="end">{{ footer_right }}</text>
+  {# Error ticks: dedicated band ABOVE bars (1.2x5px red marks) #}
+  <g data-hw-field="errors">
+{% for tick in rhythm_error_ticks | default([]) %}
+    <rect x="{{ tick.x }}" y="{{ tick.y }}" width="{{ tick.w }}" height="{{ tick.h }}" fill="var(--dna-status-failing-core)" opacity="0.85"/>
+{% endfor %}
+  </g>
+
+  {# Legend at panel bottom: 4 tool swatches + error-tick swatch + DOMINANT label #}
+  <g transform="translate(0, {{ rhythm_baseline_y + 16 }})" data-hw-zone="legend">
+{% for entry in phase_legend | default([]) %}
+{% if entry.kind == 'error' %}
+    <rect x="{{ entry.x }}" y="0" width="2" height="6" fill="var(--dna-status-failing-core)"/>
+    <text class="m ink3" x="{{ entry.x + 6 }}" y="6" font-size="8.5">{{ entry.label }}</text>
+{% else %}
+    <rect x="{{ entry.x }}" y="0" width="6" height="6" fill="var(--dna-tool-{{ entry.id }})"/>
+    <text class="m ink3" x="{{ entry.x + 10 }}" y="6" font-size="8.5">{{ entry.label }}</text>
+{% endif %}
+{% endfor %}
+    <text class="m" x="{{ content_w }}" y="6" font-size="9" font-weight="700" fill="var(--dna-signal)" text-anchor="end" letter-spacing="0.14em">{{ rhythm_dominant_label }}</text>
+  </g>
+</g>
+
+{# ═══ FOOTER (4-quadrant) ═══ #}
+<line x1="24" y1="452" x2="{{ content_right_x }}" y2="452" stroke="var(--dna-border)" stroke-width="0.5"/>
+<text x="24" y="470" class="m ink3" font-size="9" letter-spacing="0.04em">{{ footer_tl }}</text>
+<text x="{{ content_right_x }}" y="470" class="m ink3" font-size="9" text-anchor="end" letter-spacing="0.04em">{{ footer_tr }}</text>
+<text x="24" y="487" class="m ink2" font-size="9" letter-spacing="0.04em">{{ footer_bl }}</text>
+<text x="{{ content_right_x }}" y="487" class="m ink2" font-size="9" text-anchor="end" letter-spacing="0.04em">{{ footer_br }}</text>
+
+{# Card chrome — token-driven, branch-free.
+   Top accent strip: rendered for every skin; transparent on voltage + cream
+   (no top stripe per their specimens), terra-coral on claude-code per the v9
+   specimen. The rect always emits — its visibility comes from the genome.
+   Outer frame: 1px stroke at the SVG edge. Voltage = subtle dark gray
+   (#2F3540), cream = dark brown (#1A1510), claude-code = terra-coral
+   (#D97757). Rendered for every skin; the genome chooses the color. #}
+<rect x="0" y="0" width="{{ width }}" height="2" fill="var(--dna-card-border-top)" fill-opacity="0.85" clip-path="url(#receipt-card-shape)"/>
+<rect x="0.5" y="0.5" width="{{ width - 1 }}" height="{{ height - 1 }}" rx="5.5" ry="5.5" fill="none" stroke="var(--dna-card-border)" stroke-width="1"/>
 {% endblock %}

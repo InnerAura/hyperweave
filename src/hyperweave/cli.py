@@ -15,6 +15,25 @@ app = typer.Typer(
 )
 
 
+def _normalize_genome_slug(slug: str) -> str:
+    """Expand short-form telemetry skin slugs (e.g. ``cream`` → ``telemetry-cream``).
+
+    Lets users type ``--genome cream`` instead of ``--genome telemetry-cream`` for
+    the three v0.2.21 telemetry skins. Pass-through for slugs that already carry
+    the ``telemetry-`` prefix or any non-telemetry genome (brutalist, chrome, etc.).
+    """
+    if not slug or slug.startswith("telemetry-"):
+        return slug
+    candidate = f"telemetry-{slug}"
+    # Only auto-prefix when the prefixed form actually exists; otherwise pass
+    # the original through so non-telemetry genomes (brutalist, chrome) still work.
+    from hyperweave.compose.resolver import _genome_supports_receipts
+
+    if _genome_supports_receipts(candidate):
+        return candidate
+    return slug
+
+
 @app.command()
 def version() -> None:
     """Print the HyperWeave version."""
@@ -264,6 +283,17 @@ def session(
     action: Annotated[str, typer.Argument(help="Action: receipt, strip, parse")],
     transcript: Annotated[Path | None, typer.Argument(help="Path to transcript JSONL")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+    genome: Annotated[
+        str,
+        typer.Option(
+            "--genome",
+            help=(
+                "Pin telemetry skin (cream, voltage, claude-code, or full slug like "
+                "telemetry-cream). Empty = auto-detect from JSONL runtime field, "
+                "fall back to telemetry-voltage."
+            ),
+        ),
+    ] = "",
 ) -> None:
     """Session telemetry: parse transcripts, render receipts and rhythm strips.
 
@@ -317,7 +347,12 @@ def session(
     from hyperweave.core.models import ComposeSpec
 
     frame_type = "receipt" if action == "receipt" else "rhythm-strip"
-    spec = ComposeSpec(type=frame_type, telemetry_data=contract)
+    genome_slug = _normalize_genome_slug(genome) if genome else ""
+    spec = ComposeSpec(
+        type=frame_type,
+        genome_id=genome_slug,
+        telemetry_data=contract,
+    )
     result = do_compose(spec)
 
     if action == "receipt":
@@ -432,9 +467,39 @@ def genomes_cmd(
 
 
 @app.command("install-hook")
-def install_hook() -> None:
+def install_hook(
+    genome: Annotated[
+        str,
+        typer.Option(
+            "--genome",
+            help=(
+                "Pin telemetry skin for every session receipt (cream, voltage, "
+                "claude-code, or full slug like telemetry-cream). Empty = auto-detect "
+                "from JSONL runtime field at session-end time."
+            ),
+        ),
+    ] = "",
+) -> None:
     """Install the SessionEnd hook into Claude Code settings."""
     import json
+
+    from hyperweave.compose.resolver import _genome_supports_receipts
+
+    # Validate --genome BEFORE writing the hook. install-hook fails loud (unlike
+    # the receipt CLI which silently falls through) because pinning a bad genome
+    # would produce silent surprises every session-end until someone notices.
+    full_slug = ""
+    if genome:
+        full_slug = _normalize_genome_slug(genome)
+        if not _genome_supports_receipts(full_slug):
+            typer.echo(
+                f"Error: genome '{genome}' (resolved to '{full_slug}') does not support receipts. "
+                "Telemetry skins must declare paradigms.receipt — try 'cream', 'voltage', or 'claude-code'.",
+                err=True,
+            )
+            raise typer.Exit(1)
+
+    hook_command = f"hyperweave session receipt --genome {full_slug}" if full_slug else "hyperweave session receipt"
 
     settings_path = Path.home() / ".claude" / "settings.json"
     settings: dict[str, object] = {}
@@ -451,9 +516,9 @@ def install_hook() -> None:
     if not isinstance(raw_session_end, list):
         hooks["SessionEnd"] = session_end
 
-    # Remove stale "hw" hooks (0A bug: hw binary never existed)
+    # Remove stale "hw" hooks (0A bug: hw binary never existed) AND any prior
+    # hyperweave hook entry — pinning a new --genome should replace, not append.
     cleaned = []
-    already_installed = False
     for entry in session_end:
         if not isinstance(entry, dict):
             cleaned.append(entry)
@@ -466,21 +531,18 @@ def install_hook() -> None:
         if any("hw session" in c and "hyperweave" not in c for c in cmds):
             continue  # drop stale hw hook
         if any("hyperweave session" in c for c in cmds):
-            already_installed = True
+            continue  # drop any prior hyperweave hook so the new --genome wins
         cleaned.append(entry)
     hooks["SessionEnd"] = cleaned
     session_end = cleaned
 
-    if already_installed:
-        typer.echo("Hook already installed.")
-        settings_path.write_text(json.dumps(settings, indent=2) + "\n")
-        return
-
-    hook_entry = {"hooks": [{"type": "command", "command": "hyperweave session receipt", "timeout": 10}]}
+    hook_entry = {"hooks": [{"type": "command", "command": hook_command, "timeout": 10}]}
     session_end.append(hook_entry)
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
-    typer.echo(f"Installed SessionEnd hook in {settings_path}")
+
+    pinned = f" (pinned to {full_slug})" if full_slug else " (auto-detect skin)"
+    typer.echo(f"Installed SessionEnd hook in {settings_path}{pinned}")
 
 
 @app.command("validate-genome")

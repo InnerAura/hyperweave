@@ -5,6 +5,36 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.21] - 2026-05-05
+
+Agent receipts ship as a token-driven compositor frame: three telemetry skins (voltage, claude-code, cream), zero template conditionals, faithful to specimen SVGs. Auto-detects the coding agent's runtime via the JSONL `runtime` field; adding a new skin is a JSON file, not a code change.
+
+### Added
+
+- **Three telemetry skins** with specimen-faithful palettes — voltage (titanium dark + champagne), claude-code (warm paper + terra-coral), cream (risograph + fluoro-orange).
+- **`hyperweave install-hook`** — Claude Code `SessionEnd` hook drops a receipt SVG per session; `--genome cream|voltage|claude-code` pins a specific skin.
+- **Runtime auto-detection** picks the agent's skin (`claude-code` → claude-code; else voltage); 12 genome tokens for pill / glyph / card-frame, `"transparent"` hides elements without conditionals.
+- **Compose modules:** `treemap.py` (3-tier + `+N more` overflow), `bar_chart.py` (opacity stagger 0.78/0.85, BAR_MIN_W=6, 35px time-axis collision guard), `rhythm_strip.py` (v2 4-zone).
+- **Active-window duration** — chart uses sum of stage durations; hero shows `"Xm active · Ym total"` when active < 50% of session (sessions left open render honestly).
+- **Rhythm header** surfaces `(N SHOWN)` when `merge_consecutive_same_class` compacts stages; `#receipt-card-shape` clipPath rounds substrate + top-accent corners.
+- **Provider glyph partial** (claude + codex glyphs from v9 specimens); 26 compliance tests; 5 real transcripts in proofset (small → xxlarge / 109 stages).
+
+### Fixed
+
+- **212% dominant-phase** — denominator self-normalizes against classified time; never exceeds 100%.
+- **Provider identity runtime-keyed** (was skin-keyed) — Claude Code glyph appears on voltage receipts when JSONL runtime is `claude-code`, regardless of palette skin.
+- **XML-safe model labels** — `<synthetic>` and other angle-bracketed model tokens stripped at the resolver boundary so test transcripts no longer break SVG parsing.
+
+### Changed
+
+- **`{% if skin_mode %}` branches deleted** from `receipt.svg.j2`; all variation through genome tokens; resolver's hardcoded `genome.id == "telemetry-claude-code"` check replaced by token lookup; pill silhouette normalized to `pill_rx=0` across all skins (cross-skin coherence over per-specimen fidelity).
+- **Voltage palette re-authored** from titanium specimen (champagne signal + teal/magenta/gold tool palette; was Tailwind indigo/purple inherited from telemetry-void).
+- **README "Session Telemetry" → "Agent Receipts"**, repositioned above the genome catalog with three captioned examples.
+
+### Notes
+
+- 855 tests; ruff + format + mypy --strict green; Codex runtime falls through to voltage (dedicated codex skin planned).
+
 ## [0.2.20] - 2026-05-02
 
 Hotfix for two v0.2.19 regressions + README subtitle clarity.

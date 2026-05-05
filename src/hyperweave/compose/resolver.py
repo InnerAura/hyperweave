@@ -6,7 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.rhythm import layout_rhythm_bars
+from hyperweave.compose.bar_chart import compute_time_axis_ticks, layout_bar_chart
+from hyperweave.compose.treemap import compute_treemap_layout
 from hyperweave.core.enums import (
     FrameType,
     GlyphMode,
@@ -23,7 +24,33 @@ if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec
 
 
-_TELEMETRY_FRAMES: frozenset[str] = frozenset({FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD})
+def _resolve_telemetry_genome(spec: ComposeSpec, telemetry_data: dict[str, Any]) -> str:
+    """Resolve telemetry genome via precedence: explicit override → JSONL runtime → voltage fallback.
+
+    Empty-string fallback is deliberate. Pre-patch JSONL has no runtime field; those
+    sessions route to voltage (the explicit fallback) rather than auto-classifying as
+    claude-code. Explicit signal → specific skin; absent signal → fallback.
+
+    Non-receipt-capable genome overrides (e.g. brutalist) silently fall through to
+    runtime detection rather than raising — the install-hook CLI handles fail-loud
+    validation upstream; here we keep compose() forgiving so a stale --genome flag
+    on a session command doesn't crash the receipt write.
+    """
+    if spec.genome_id and _genome_supports_receipts(spec.genome_id):
+        return spec.genome_id
+    runtime = telemetry_data.get("session", {}).get("runtime") or ""
+    if runtime == "claude-code":
+        return "telemetry-claude-code"
+    return "telemetry-voltage"
+
+
+def _genome_supports_receipts(genome_id: str) -> bool:
+    """Return True when a genome declares paradigms.receipt, gating receipt eligibility."""
+    try:
+        g = _load_genome(genome_id)
+    except GenomeNotFoundError:
+        return False
+    return "receipt" in (g.get("paradigms") or {})
 
 
 def resolve_variant(spec: ComposeSpec, genome: dict[str, Any], paradigm_spec: Any = None) -> str:
@@ -55,10 +82,12 @@ def resolve_variant(spec: ComposeSpec, genome: dict[str, Any], paradigm_spec: An
 
 def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     """Resolve a ComposeSpec into a typed ResolvedArtifact."""
-    # Telemetry frames always use the telemetry-void genome (specimen palette).
-    # Genome skinning is deferred until templates faithfully reproduce specimens.
-    if spec.type in _TELEMETRY_FRAMES:
-        genome = _load_genome("telemetry-void")
+    # Telemetry frames flow through _resolve_telemetry_genome() precedence chain:
+    # explicit --genome override → JSONL runtime field → telemetry-voltage fallback.
+    if spec.type in {FrameType.RECEIPT, FrameType.RHYTHM_STRIP, FrameType.MASTER_CARD}:
+        tel: dict[str, Any] = dict(spec.telemetry_data or {})
+        genome_id = _resolve_telemetry_genome(spec, tel)
+        genome = _load_genome(genome_id)
         profile = _load_profile(genome.get("profile", "brutalist"))
     else:
         # Session 2A+2B: genome_override bypasses the registry (used by --genome-file).
@@ -1352,6 +1381,177 @@ def _fmt_tok(n: int) -> str:
     return str(n)
 
 
+# ── Provider identity (runtime-keyed, v0.2.21 visual-fidelity-v2) ──
+# Identity is keyed by the JSONL ``runtime`` field — NOT the skin. Skin and
+# identity are orthogonal: skin chooses palette, runtime is the agent that
+# produced the receipt. A user pinning ``--genome telemetry-voltage`` on a
+# Claude Code session sees the voltage palette + Claude Code identity (glyph
+# + label), because they chose a palette, not a different agent. Phase D's
+# skin-keyed mapping conflated these two axes; this reverts to runtime-keyed.
+_PROVIDER_BY_RUNTIME: dict[str, tuple[str, str | None]] = {
+    "claude-code": ("Claude Code", "claude-glyph"),
+    "codex": ("Codex", "codex-glyph"),
+}
+
+
+def _resolve_provider(runtime: str) -> tuple[str, str | None]:
+    """Map JSONL runtime field to (provider_label, glyph_id) for the hero brand line.
+
+    Returns (``"HyperWeave"``, ``None``) when runtime is empty or unknown —
+    the glyph slot stays empty and the brand line falls back to the project
+    name. Branded runtimes (``claude-code``, ``codex``) carry an explicit
+    identity package regardless of which palette skin is active.
+    """
+    return _PROVIDER_BY_RUNTIME.get(runtime, ("HyperWeave", None))
+
+
+def _format_model_label(model: str) -> str:
+    """Display-format a model identifier ("claude-opus-4-7" → "opus-4.7").
+
+    Strips the vendor prefix and rewrites the trailing major-minor pair
+    so "claude-opus-4-7" reads as "opus-4.7" — matching the v9 specimen
+    convention. Falls back to the raw model string when it doesn't fit
+    the recognized vendor-prefixed pattern.
+
+    XML safety: strips angle brackets and ampersands. Claude Code's synthetic
+    test transcripts carry ``model = "<synthetic>"`` as a marker token; when
+    injected raw into the SVG ``<text>`` body it breaks XML parsing (Jinja2
+    autoescape is off for SVG generation, so the template's text body inherits
+    whatever the resolver hands it).
+    """
+    if not model:
+        return ""
+    # Strip XML-unsafe characters defensively. The known case is
+    # ``"<synthetic>"`` from Claude Code synthetic transcripts; this also
+    # protects against any future angle-bracket-wrapped identifier.
+    label = model.replace("<", "").replace(">", "").replace("&", "").strip()
+    if not label:
+        return ""
+    for prefix in ("claude-", "anthropic/"):
+        if label.startswith(prefix):
+            label = label[len(prefix) :]
+            break
+    parts = label.split("-")
+    # Pattern: family-major-minor (e.g. "opus-4-7") → "opus-4.7".
+    if len(parts) >= 3 and parts[-1].isdigit() and parts[-2].isdigit():
+        head = "-".join(parts[:-2])
+        return f"{head}-{parts[-2]}.{parts[-1]}"
+    return label
+
+
+def _active_window_minutes(stages: list[dict[str, Any]], fallback_m: float) -> float:
+    """Active work duration in minutes, bounded by both sum and wall-clock.
+
+    Returns ``min(sum_of_stage_durations, wall_clock_first_to_last)``:
+      * Sum_of_stages handles idle gaps — sessions left open across multiple
+        bursts over days resolve to actual work hours, not wall-clock days.
+      * Wall-clock cap handles overlapping/async stages — when stage end
+        timestamps extend past the last visible session message (async tool
+        completion), the sum can exceed the wall-clock first→last span.
+        Without the cap, the chart axis disagrees with the hero subline.
+
+    Both are stage-derived, so the chart and hero see the same number from
+    the same primary source (stage timestamps) — never from the parser's
+    ``duration_minutes`` which can be unreliable.
+
+    Returns ``fallback_m`` when stages lack ISO timestamps (mock data) or
+    when parsing fails.
+    """
+    if not stages:
+        return fallback_m
+    durations: list[float] = []
+    starts: list[datetime] = []
+    ends: list[datetime] = []
+    for s in stages:
+        start = s.get("start")
+        end = s.get("end")
+        if not start or not end:
+            return fallback_m
+        try:
+            t0 = datetime.fromisoformat(start)
+            t_end = datetime.fromisoformat(end)
+        except (ValueError, TypeError):
+            return fallback_m
+        starts.append(t0)
+        ends.append(t_end)
+        durations.append((t_end - t0).total_seconds() / 60.0)
+    sum_m = sum(durations)
+    wall_clock_m = (max(ends) - min(starts)).total_seconds() / 60.0
+    return max(min(sum_m, wall_clock_m), 1.0)
+
+
+def _wall_clock_minutes(stages: list[dict[str, Any]], fallback_m: float) -> float:
+    """Wall-clock span minutes from earliest stage start to latest stage end.
+
+    Used as the ``total`` value in the hero divergence flag — a sensible
+    upper bound on session duration when the parser's ``duration_minutes``
+    underestimates (sessions where async tool calls extend past the last
+    visible message).
+    """
+    if not stages:
+        return fallback_m
+    starts: list[datetime] = []
+    ends: list[datetime] = []
+    for s in stages:
+        start = s.get("start")
+        end = s.get("end")
+        if not start or not end:
+            return fallback_m
+        try:
+            starts.append(datetime.fromisoformat(start))
+            ends.append(datetime.fromisoformat(end))
+        except (ValueError, TypeError):
+            return fallback_m
+    if not starts or not ends:
+        return fallback_m
+    return max((max(ends) - min(starts)).total_seconds() / 60.0, 1.0)
+
+
+# ── Tier styling table for the treemap (Phase B template thinness) ──
+# All tier-derived font sizes, x offsets, and accent widths live here so
+# the receipt template iterates cells without branching on tier. The
+# values are derived from tier 1 / 2 / 3 visual hierarchy in the v9
+# specimens (claude-code-ledger as the canonical reference).
+_TREEMAP_TIER_STYLES: dict[int, dict[str, Any]] = {
+    1: {
+        "accent_w": 4,
+        "label_x": 14,
+        "label_size": 13,
+        "detail_x": 14,
+        "detail_y": 72,
+        "detail_size": 10,
+        "error_size": 9,
+        "error_pad": 8,
+        "pct_size": 36,
+        "pct_y": 58,
+    },
+    2: {
+        "accent_w": 3,
+        "label_x": 10,
+        "label_size": 10,
+        "detail_x": 10,
+        "detail_y": 24,
+        "detail_size": 8,
+        "error_size": 8,
+        "error_pad": 8,
+        "pct_size": 0,  # tier 2/3 omit the big-pct block
+        "pct_y": 0,
+    },
+    3: {
+        "accent_w": 3,
+        "label_x": 9,
+        "label_size": 9,
+        "detail_x": 9,
+        "detail_y": 19,
+        "detail_size": 8,
+        "error_size": 8,
+        "error_pad": 7,
+        "pct_size": 0,
+        "pct_y": 0,
+    },
+}
+
+
 def resolve_receipt(
     spec: ComposeSpec,
     genome: dict[str, Any],
@@ -1379,9 +1579,10 @@ def resolve_receipt(
     else:
         tools = list(tools_raw)
 
-    # ── Normalize stages: contract produces {label, dominant_class, start, end, tools} ──
-    # Templates need {name, pct, tool_class}; start/end are preserved so
-    # :func:`layout_rhythm_bars` can lay out time-proportional x/w.
+    # ── Normalize stages: contract produces {label, dominant_class, start, end, tools, tokens, errors} ──
+    # Phase C added per-stage tokens + errors to the contract; Phase B's bar_chart
+    # consumes them for variable-height bars and error-tick markers. Templates
+    # also still see the legacy {name, pct, tool_class} shape.
     total_stage_tools = sum(s.get("tools", 1) for s in stages_raw) or 1
     stages: list[dict[str, Any]] = [
         {
@@ -1389,8 +1590,12 @@ def resolve_receipt(
             "pct": round(s.get("tools", 1) / total_stage_tools * 100),
             "label": s.get("label", ""),
             "tool_class": s.get("dominant_class", "explore"),
+            "dominant_class": s.get("dominant_class", "explore"),
             "start": s.get("start"),
             "end": s.get("end"),
+            "tokens": s.get("tokens", 0),
+            "errors": s.get("errors", 0),
+            "tools": s.get("tools", 0),
         }
         for s in stages_raw
     ]
@@ -1403,6 +1608,15 @@ def resolve_receipt(
     total_tok = total_input + total_output + total_cache_read + total_cache_create
     total_cost = profile_data.get("total_cost", 0)
     duration_m = session.get("duration_minutes", 0)
+    # Active window: bounded by both sum-of-stages (collapses idle gaps) and
+    # wall-clock span (caps overlapping/async stages). Same value drives the
+    # chart geometry AND the hero subline, so they always agree.
+    active_duration_m = _active_window_minutes(stages, float(duration_m))
+    wall_clock_m = _wall_clock_minutes(stages, float(duration_m))
+    # ``total`` for the divergence flag: max of parser-reported duration and
+    # the stage-derived wall-clock. The parser may overstate (idle tail) or
+    # understate (async stages); max() picks whichever is more honest.
+    total_duration_m = max(float(duration_m), wall_clock_m)
     model = session.get("model", profile_data.get("model", "Claude Session"))
     calls = sum(t.get("count", 0) for t in tools)
 
@@ -1433,9 +1647,30 @@ def resolve_receipt(
     dominant_pct = dominant.get("pct", 0) if dominant else 0
 
     # ── Hero row ──
-    hero_headline = f"{_fmt_tok(total_tok)} tokens billed · ${total_cost:.2f}"
-    dur_label = f"{int(duration_m)}m" if duration_m else "—"
-    hero_subline = f"{model} · {dur_label} · {calls} calls"
+    # Phase B canonical layout for ALL skins: [glyph] {Provider} · {model} ......... [PHASE PILL]
+    # Skin-driven identity: voltage/cream resolve to ("HyperWeave", None) so the
+    # glyph slot renders empty even when the JSONL runtime is "claude-code". Branded
+    # skins (claude-code, codex) always carry their identity package regardless of
+    # runtime — the skin precedence chain already mapped runtime → skin upstream.
+    provider_label, glyph_id = _resolve_provider(session.get("runtime", ""))
+    model_label = _format_model_label(model)
+
+    # v0.2.21 risograph hero treatment: split headline into tokens part +
+    # signal-colored cost part so the template can render them as separate
+    # tspans (cost in var(--dna-signal) per the spec).
+    headline_tokens = f"{_fmt_tok(total_tok)} tokens billed · "
+    headline_cost = f"${total_cost:.2f}"
+    hero_headline = f"{headline_tokens}{headline_cost}"  # legacy single-string for fallback
+    # Divergence flag: when active work is < half the total session window,
+    # surface both numbers so "session left open" cases are honest. Otherwise
+    # the chart's axis (active_duration_m) and the hero label always agree.
+    if total_duration_m and active_duration_m < 0.5 * total_duration_m:
+        dur_label = f"{int(active_duration_m)}m active · {int(total_duration_m)}m total"
+    elif active_duration_m:
+        dur_label = f"{int(active_duration_m)}m"
+    else:
+        dur_label = "—"
+    hero_subline = f"{dur_label} · {calls} calls · {len(stages)} stages"
     if not dominant:
         hero_profile = "SESSION"
     elif dominant_pct < 20:
@@ -1443,110 +1678,148 @@ def resolve_receipt(
     else:
         hero_profile = dominant_label.upper()
     hero_tool_class = dominant["tool_class"] if dominant else "explore"
+    # Phase pill: width estimated at ~7px/char + 16px padding (font-size 9 mono
+    # with 0.28em letter-spacing per the v9 specimens). Right-aligned with the
+    # 24px outer margin: pill_x = receipt_w - margin - pill_w.
+    # v0.2.21 pill geometry: rx=4 with letter-spacing-aware width.
+    # Char width 7px at font-size 9 with 0.28em letter-spacing means each
+    # char effectively consumes ~7 * 1.28 = 8.96px of horizontal extent;
+    # add 14px (~7px each side) of horizontal padding so the text sits
+    # comfortably inside the pill and never clips at edges.
+    pill_label = hero_profile.upper()
+    pill_w = int(len(pill_label) * 7 * 1.28) + 14
+    pill_x = 800 - 24 - pill_w
     # Split "pushbacks" into distinct signals so the card stops labeling them
     # as one opaque "N corrections" lie. user_events counts every non-continuation
     # user turn (corrections + redirects + elaborations); tool errors count
     # failing/blocked tool calls (the red ✗N cell marks reconcile to this).
     n_user_turns = len(user_events)
     n_tool_errors = sum(t.get("errors", 0) + t.get("blocked", 0) for t in tools)
-    n_agents = len(agents)
-    hero_right: list[dict[str, str]] = [
-        {"text": f"{_fmt_tok(total_input)} in / {_fmt_tok(total_output)} out"},
+    # n_agents = len(agents)  # was used by old footer; v0.2.21 footer is 4-quadrant.
+    _ = agents  # keep the extraction for forward use without lint warnings
+    hero_right: list[dict[str, Any]] = [
+        {"text": f"{_fmt_tok(total_input)} in / {_fmt_tok(total_output)} out", "accent": ""},
     ]
     if total_cache_read or total_cache_create:
-        hero_right.append({"text": f"{_fmt_tok(total_cache_read)} cached / {_fmt_tok(total_cache_create)} written"})
-    if n_user_turns:
-        hero_right.append({"text": f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}"})
-    if n_tool_errors:
-        hero_right.append({"text": f"{n_tool_errors} tool errors", "accent": "failing"})
-
-    # ── Treemap layout (3-tier, 752px wide, token-proportional) ──
-    content_w = 752
-    sorted_tools = sorted(tools, key=lambda t: t.get("total_tokens", t.get("count", 0)), reverse=True)
-    total_tool_tokens = sum(t.get("total_tokens", t.get("count", 0)) for t in sorted_tools) or 1
-
-    treemap_cells: list[dict[str, Any]] = []
-    if sorted_tools:
-        # Tier 1: dominant tool — full width, 88px tall
-        top = sorted_tools[0]
-        top_tokens = top.get("total_tokens", top.get("count", 0))
-        pct = round(top_tokens / total_tool_tokens * 100)
-        tc = top.get("tool_class", _TOOL_CLASS.get(top.get("name", ""), "explore"))
-        treemap_cells.append(
+        hero_right.append(
             {
-                "tier": 1,
-                "x": 0,
-                "y": 26,
-                "w": content_w,
-                "h": 88,
-                "name": top.get("name", ""),
-                "pct": pct,
-                "detail": f"{_fmt_tok(top_tokens)} · {top.get('count', 0)} calls",
-                "tool_class": tc,
-                "errors": top.get("blocked", 0) + top.get("errors", 0),
-            }
+                "text": f"{_fmt_tok(total_cache_read)} cached / {_fmt_tok(total_cache_create)} written",
+                "accent": "",
+            },
+        )
+    pushback_parts: list[str] = []
+    if n_user_turns:
+        pushback_parts.append(f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}")
+    if n_tool_errors:
+        pushback_parts.append(f"{n_tool_errors} tool errors")
+    if pushback_parts:
+        hero_right.append(
+            {
+                "text": " · ".join(pushback_parts),
+                "accent": "failing" if n_tool_errors else "",
+            },
         )
 
-        # Tier 2: next tools — proportional widths, 32px tall
-        mid_tools = sorted_tools[1:4]
-        if mid_tools:
-            mid_total = sum(t.get("total_tokens", t.get("count", 0)) for t in mid_tools) or 1
-            x = 0
-            for t in mid_tools:
-                t_tokens = t.get("total_tokens", t.get("count", 0))
-                share = t_tokens / mid_total
-                w = max(int(content_w * share) - 4, 40)
-                tc = t.get("tool_class", _TOOL_CLASS.get(t.get("name", ""), "execute"))
-                treemap_cells.append(
-                    {
-                        "tier": 2,
-                        "x": x,
-                        "y": 118,
-                        "w": w,
-                        "h": 32,
-                        "name": t.get("name", ""),
-                        "pct": round(t_tokens / total_tool_tokens * 100),
-                        "detail": f"{_fmt_tok(t_tokens)} · {t.get('count', 0)} calls",
-                        "tool_class": tc,
-                        "errors": t.get("blocked", 0) + t.get("errors", 0),
-                    }
-                )
-                x += w + 4
+    # Pre-compute hero-right y-offsets so the template doesn't need loop math.
+    for i, stat in enumerate(hero_right):
+        stat["y"] = 56 + (i * 14)
 
-        # Tier 3: remaining tools — small boxes, 24px tall
-        tail_tools = sorted_tools[4:]
-        if tail_tools:
-            x = 0
-            for t in tail_tools:
-                w = max(80, int(content_w / len(tail_tools)) - 4)
-                tc = t.get("tool_class", _TOOL_CLASS.get(t.get("name", ""), "coordinate"))
-                treemap_cells.append(
-                    {
-                        "tier": 3,
-                        "x": x,
-                        "y": 154,
-                        "w": min(w, 180),
-                        "h": 24,
-                        "name": t.get("name", ""),
-                        "pct": 0,
-                        "detail": f"{t.get('count', 0)} calls",
-                        "tool_class": tc,
-                        "errors": t.get("blocked", 0) + t.get("errors", 0),
-                    }
-                )
-                x += min(w, 180) + 4
+    # ── Treemap layout — delegated to compose/treemap.py ──
+    # Centralized in v0.2.21 to fix two arithmetic bugs that caused tier-3
+    # cells (TaskCreate / ExitPlanMode / AskUserQuestion) to clip the right
+    # edge of the receipt. The helper also applies label truncation and
+    # synthesizes a "+N more" cell when the tool count exceeds what fits
+    # at the tier-3 minimum width. See compose/treemap.py for the algorithm.
+    content_w = 752
+    classified_tools = [
+        {**t, "tool_class": t.get("tool_class") or _TOOL_CLASS.get(t.get("name", ""), "explore")} for t in tools
+    ]
+    # v0.2.21 risograph-canonical: tier_y=(22, 118, 154), tier_h=(88, 32, 24).
+    # The template's treemap zone now hosts the TOKEN MAP header inside it
+    # (header at y=12, tier-1 at y=22, just below). Tier-3 cells are uniform
+    # 90x24 (8 cells across the 752px track + 7 gaps x 4 = 748 ≤ 752).
+    # Accent stripe position is genome-driven via the ``treemap_accent_side``
+    # token: claude-code v9 specimen uses vertical stripes on the LEFT edge
+    # (4px tier-1, 3px tier-2/3); voltage (titanium spec) and cream (risograph
+    # spec) use horizontal stripes across the TOP (full-width x 1.5px). Each
+    # specimen's accent treatment is part of its visual identity, declared in
+    # the genome JSON — never inferred from a hardcoded skin-id check here.
+    treemap_accent_position = genome.get("treemap_accent_side", "top")
+    treemap_cells = compute_treemap_layout(
+        classified_tools,
+        content_w=content_w,
+        accent_position=treemap_accent_position,
+    )
 
-    # ── Rhythm bars ──
-    # Delegated to the shared helper so receipt + rhythm-strip can't drift.
-    # See src/hyperweave/compose/rhythm.py for the two-pass algorithm.
-    bar_area_h = 92
-    rhythm_bars = layout_rhythm_bars(stages, area_w=content_w, area_h=bar_area_h)
+    # ── Rhythm panel — risograph-canonical structure (v0.2.21) ──
+    # The bar_chart helper returns a BarChartLayout dataclass bundling
+    # bars + error_ticks (separate band) + peak_marker + grid_lines +
+    # header labels + counts. All geometry derives from the panel_h
+    # parameter (single source of truth) so the y=-1 overflow bug from
+    # Phase D's independently-hardcoded constants can't recur.
+    panel_h = 130
+    bar_layout = layout_bar_chart(
+        stages,
+        area_w=content_w,
+        area_h=panel_h,
+        duration_m=active_duration_m,
+    )
+    rhythm_bars = bar_layout.bars
+    rhythm_error_ticks = bar_layout.error_ticks
+    rhythm_peak_marker = bar_layout.peak_marker
+    rhythm_grid_lines = bar_layout.grid_lines
+    rhythm_total_label = bar_layout.total_tokens_label
+    rhythm_peak_label = bar_layout.peak_tokens_label
+    original_count = bar_layout.original_count
+    shown_count = bar_layout.shown_count
+    bar_baseline_y = bar_layout.baseline_y
+    bar_area_h = panel_h
+    time_axis_ticks = compute_time_axis_ticks(active_duration_m, area_w=content_w)
 
-    # ── Legend entries ──
-    used_classes = sorted({c["tool_class"] for c in treemap_cells}) if treemap_cells else ["explore"]
+    # ── Legend entries (risograph-canonical) ──
+    # treemap_cells are TreemapCell dataclasses; access via attribute, not key.
+    used_classes = sorted({c.tool_class for c in treemap_cells}) if treemap_cells else ["explore"]
     treemap_legend = [{"tool_class": tc, "label": tc} for tc in used_classes]
 
-    # ── Metadata band (v0.4): provenance row between rhythm legend and footer ──
+    # Treemap header row chips: 4 fixed-position 2x8 swatches + labels per spec.
+    # Always renders all four standard classes (coordinate/execute/explore/mutate)
+    # so the legend is stable across sessions; absent classes still appear so
+    # cross-session comparison stays consistent.
+    treemap_header_chips = [
+        {"tool_class": "coordinate", "label": "coordinate", "x": 96},
+        {"tool_class": "execute", "label": "execute", "x": 170},
+        {"tool_class": "explore", "label": "explore", "x": 232},
+        {"tool_class": "mutate", "label": "mutate", "x": 292},
+    ]
+
+    # Rhythm-panel legend: 4 tool swatches + error-tick swatch + DOMINANT label.
+    # Each entry has pre-computed x-offset for the template to consume directly.
+    phase_legend: list[dict[str, Any]] = [
+        {"id": "coordinate", "label": "coordinate", "x": 0, "kind": "tool"},
+        {"id": "execute", "label": "execute", "x": 82, "kind": "tool"},
+        {"id": "explore", "label": "explore", "x": 152, "kind": "tool"},
+        {"id": "mutate", "label": "mutate", "x": 220, "kind": "tool"},
+        {"id": "error_tick", "label": "error tick", "x": 290, "kind": "error"},
+    ]
+    # DOMINANT label right-aligned (template renders this separately due to anchor).
+    rhythm_dominant_label = f"{dominant_label.upper()} · {dominant_pct}%" if dominant_label and dominant else "SESSION"
+
+    # Treemap subtitle: "BY TOOL · N SOURCES".
+    treemap_subtitle = f"BY TOOL · {len(tools)} SOURCES" if tools else "BY TOOL"
+
+    # Rhythm header composite (v0.2.21 risograph-canonical):
+    # LEFT: "SESSION RHYTHM · N STAGES · HEIGHT ≈ TOKENS" — when bar_chart's
+    #   merge_consecutive_same_class compacted N stages into M < N bars,
+    #   the header surfaces it as "N STAGES (M SHOWN)" so the rendered bar
+    #   count never silently diverges from the user's actual stage count.
+    # RIGHT: "{total} · PEAK {peak}" — the bar_layout already formatted these.
+    if shown_count != original_count:
+        rhythm_header_left = f"SESSION RHYTHM · {original_count} STAGES ({shown_count} SHOWN) · HEIGHT ≈ TOKENS"
+    else:
+        rhythm_header_left = f"SESSION RHYTHM · {original_count} STAGES · HEIGHT ≈ TOKENS"
+    rhythm_header_right = f"{rhythm_total_label} · {rhythm_peak_label}"
+
+    # ── Provenance + footer 4-quadrant ──
     session_id = session.get("id", "")
     session_id_short = session_id[:8].rstrip("-") if session_id else ""
     git_branch = session.get("git_branch", "")
@@ -1562,31 +1835,34 @@ def resolve_receipt(
         except ValueError:
             start_formatted = ""
 
-    metadata_left_parts = [project_name]
+    # Footer 4-quadrant per the risograph specimen convention:
+    #   TL: repo · branch · receipts/<id>.svg
+    #   TR: session <id> · <start_date>
+    #   BL: {N} user turns · {N} tool errors  (was "generated by hyperweave.app")
+    #   BR: hyperweave.app                    (was "agent session receipt")
+    footer_tl_parts = [project_name]
     if git_branch:
-        metadata_left_parts.append(git_branch)
+        footer_tl_parts.append(git_branch)
     if receipt_path:
-        metadata_left_parts.append(receipt_path)
-    metadata_left = " · ".join(metadata_left_parts)
+        footer_tl_parts.append(receipt_path)
+    footer_tl = " · ".join(footer_tl_parts)
 
-    metadata_right_parts = []
+    footer_tr_parts: list[str] = []
     if session_id_short:
-        metadata_right_parts.append(f"session {session_id_short}")
+        footer_tr_parts.append(f"session {session_id_short}")
     if start_formatted:
-        metadata_right_parts.append(f"started {start_formatted}")
-    metadata_right = " · ".join(metadata_right_parts)
+        footer_tr_parts.append(start_formatted)
+    footer_tr = " · ".join(footer_tr_parts)
 
-    # ── Footer: session stats (left) + brand anchor (right) ──
-    # Same split as hero so nothing in the card claims "corrections" anymore.
-    footer_parts = []
+    # v0.2.21 footer swap: BL now reflects session work intensity (user turns +
+    # tool errors), BR carries the brand mark. Matches the risograph spec layout.
+    footer_bl_parts: list[str] = []
     if n_user_turns:
-        footer_parts.append(f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}")
+        footer_bl_parts.append(f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}")
     if n_tool_errors:
-        footer_parts.append(f"{n_tool_errors} tool error{'s' if n_tool_errors != 1 else ''}")
-    if n_agents:
-        footer_parts.append(f"{n_agents} agent{'s' if n_agents != 1 else ''}")
-    footer_left = " · ".join(footer_parts) if footer_parts else ""
-    footer_right = "hyperweave.app"
+        footer_bl_parts.append(f"{n_tool_errors} tool error{'s' if n_tool_errors != 1 else ''}")
+    footer_bl = " · ".join(footer_bl_parts) if footer_bl_parts else ""
+    footer_br = "hyperweave.app"
 
     return {
         "width": 800,
@@ -1594,23 +1870,70 @@ def resolve_receipt(
         "template": "frames/receipt.svg.j2",
         "context": {
             "telemetry": tel,
+            # Hero zone (v0.2.21 risograph-canonical)
+            "provider_label": provider_label,
+            "glyph_id": glyph_id,
+            "has_glyph": bool(glyph_id),
+            "model_label": model_label,
             "hero_profile": hero_profile,
             "hero_tool_class": hero_tool_class,
             "hero_headline": hero_headline,
+            "headline_tokens": headline_tokens,
+            "headline_cost": headline_cost,
             "hero_subline": hero_subline,
             "hero_right_stats": hero_right,
+            "pill_label": pill_label,
+            "pill_w": pill_w,
+            "pill_x": pill_x,
+            # Pill corner radius — genome-token driven (0=square, 11=full pill).
+            # SVG2 auto-clamps rx to min(rx, height/2): inner rect (h=18) caps
+            # at 9, outer rect (h=22) caps at 11. Both fully rounded at half-h.
+            "pill_rx": genome.get("pill_rx", 4),
+            "content_w": content_w,
+            # Treemap panel
+            "treemap_subtitle": treemap_subtitle,
             "treemap_legend": treemap_legend,
+            "treemap_header_chips": treemap_header_chips,
             "treemap_cells": treemap_cells,
+            "tier_styles": _TREEMAP_TIER_STYLES,
+            # Rhythm panel — v0.2.21 risograph-canonical structure
             "stage_count": len(stages),
-            "duration_minutes": int(duration_m),
+            "rhythm_original_count": original_count,
+            "rhythm_shown_count": shown_count,
             "rhythm_bars": rhythm_bars,
+            "rhythm_error_ticks": rhythm_error_ticks,
+            "rhythm_peak_marker": rhythm_peak_marker,
+            "rhythm_grid_lines": rhythm_grid_lines,
+            "rhythm_total_label": rhythm_total_label,
+            "rhythm_peak_label": rhythm_peak_label,
+            "rhythm_header_left": rhythm_header_left,
+            "rhythm_header_right": rhythm_header_right,
+            "rhythm_dominant_label": rhythm_dominant_label,
+            "rhythm_baseline_y": bar_baseline_y,
             "bar_area_h": bar_area_h,
-            "phase_legend": [{"id": tc, "label": tc} for tc in used_classes],
+            "time_axis_ticks": time_axis_ticks,
+            "duration_minutes": int(duration_m),
+            "phase_legend": phase_legend,
             "dominant_profile": f"{dominant_label} ({dominant_pct}%)",
-            "metadata_left": metadata_left,
-            "metadata_right": metadata_right,
-            "footer_left": footer_left,
-            "footer_right": footer_right,
+            # Geometric constants pre-computed for the v0.2.21 thin-render template.
+            # All derive from panel_h=130 in compose/bar_chart.py (single source).
+            "content_right_x": 800 - 24,
+            "inner_w": 800 - 1,
+            "inner_h": 500 - 1,
+            "axis_tick_top_y": bar_area_h,
+            "axis_tick_bottom_y": bar_area_h + 6,
+            "axis_label_y": bar_area_h + 18,
+            "legend_y": bar_area_h + 30,
+            # Footer 4-quadrant
+            "footer_tl": footer_tl,
+            "footer_tr": footer_tr,
+            "footer_bl": footer_bl,
+            "footer_br": footer_br,
+            # Backwards-compat fields kept until callers migrate.
+            "metadata_left": footer_tl,
+            "metadata_right": footer_tr,
+            "footer_left": footer_bl,
+            "footer_right": footer_br,
             "tools": tools,
             "stages": stages,
         },
@@ -1623,11 +1946,27 @@ def resolve_rhythm_strip(
     profile: dict[str, Any],
     **_kw: Any,
 ) -> dict[str, Any]:
-    """Resolve telemetry rhythm strip — specimen-faithful layout.
+    """Resolve rhythm-strip-v2 — 4-zone layout (identity / velocity / rhythm / status).
 
-    Computes: left stats, velocity, rhythm bar positions, loop status.
-    Specimen: specs/telemetry-artifacts/rhythm-strip.svg
+    Specimen: ``tier2/telemetry/receipt-types/receipts-pr-strips/rhythm-strip-v2.svg``
+    600x92 strip, 4 zones separated by thin vertical dividers:
+
+    * IDENTITY  (16-190px):  session id + call/duration/stages + tokens/cost +
+                              4-chip tool legend.
+    * VELOCITY  (200-264px): VEL label + big tok/min number + 8-bucket sparkline +
+                              0m/{duration}m axis labels.
+    * RHYTHM    (268-510px): variable-height bars + peak marker + 0m/{duration}m
+                              labels + density hint.
+    * STATUS    (522-600px): pulsing OK/WARN/ERR dot + dominant tool class +
+                              percent-time.
     """
+    from hyperweave.compose.rhythm_strip import (
+        compute_dominant_phase,
+        compute_session_velocity,
+        compute_status_dot,
+        compute_velocity_sparkline,
+    )
+
     tel: dict[str, Any] = dict(spec.telemetry_data or {})
     session: dict[str, Any] = tel.get("session", {})
     profile_data: dict[str, Any] = tel.get("profile", {})
@@ -1640,17 +1979,17 @@ def resolve_rhythm_strip(
     else:
         tools = list(tools_raw)
 
-    # ── Normalize stages ──
-    # start/end preserved so :func:`layout_rhythm_bars` can lay out
-    # time-proportional widths when the contract carries them.
-    total_stage_tools = sum(s.get("tools", 1) for s in stages_raw) or 1
+    # ── Normalize stages — same shape as resolve_receipt so bar_chart can consume ──
     stages: list[dict[str, Any]] = [
         {
-            "name": s.get("dominant_class", s.get("label", "explore")),
-            "pct": round(s.get("tools", 1) / total_stage_tools * 100),
+            "label": s.get("label", ""),
             "tool_class": s.get("dominant_class", "explore"),
+            "dominant_class": s.get("dominant_class", "explore"),
             "start": s.get("start"),
             "end": s.get("end"),
+            "tokens": s.get("tokens", 0),
+            "errors": s.get("errors", 0),
+            "tools": s.get("tools", 0),
         }
         for s in stages_raw
     ]
@@ -1662,43 +2001,104 @@ def resolve_rhythm_strip(
     total_tok = total_input + total_output + total_cache_read + total_cache_create
     total_cost = profile_data.get("total_cost", 0)
     duration_m = session.get("duration_minutes", 0)
+    # Active window mirrors resolve_receipt — bounded by sum-of-stages and
+    # wall-clock span. The strip's chart and identity zone both use this so
+    # they agree without showing the parser's potentially-stale duration_m.
+    active_duration_m = _active_window_minutes(stages, float(duration_m))
     calls = sum(t.get("count", 0) for t in tools)
+    n_errors = sum(int(t.get("errors", 0)) + int(t.get("blocked", 0)) for t in tools)
 
-    # Rhythm bars — must match template bar_w = sw - stats_w - right_w - 16.
-    # With sw=800, stats_w=180, right_w=120: bar_area_w = 484.
-    # Delegated to the shared helper — see src/hyperweave/compose/rhythm.py.
-    bar_area_w = 484
-    bar_area_h = 42
-    rhythm_bars = layout_rhythm_bars(stages, area_w=bar_area_w, area_h=bar_area_h)
-
-    # Velocity estimate
-    vel = int(total_tok / max(duration_m, 1)) if duration_m else 0
-
-    # Session ID (strip trailing hyphen so synthetic "session-001" renders as "session"
-    # rather than "session-", while UUIDs like "3449fc3d-030c-..." are unaffected)
     sid = session.get("id", "session")
     sid_short = sid[:8].rstrip("-") if len(sid) > 8 else sid
 
-    # Dominant phase
-    dominant = max(stages, key=lambda s: s.get("pct", 0)) if stages else {"name": "", "pct": 0}
+    # ── Identity zone (16-190px) ──
+    # Session info + 4 tool-legend chips. The chips render alphabetically with
+    # 28px stride matching the specimen.
+    identity_chips = [
+        {"tool_class": "explore", "label": "EXP", "x": 0},
+        {"tool_class": "execute", "label": "EXE", "x": 28},
+        {"tool_class": "mutate", "label": "MUT", "x": 56},
+        {"tool_class": "coordinate", "label": "CRD", "x": 84},
+    ]
+
+    # ── Velocity zone (200-264px) ──
+    # Big tok/min number + 8-bucket sparkline. Sparkline runs from x=210 to x=256
+    # within the strip (panel-relative; template translates the zone).
+    _, velocity_label = compute_session_velocity(stages, active_duration_m)
+    sparkline = compute_velocity_sparkline(
+        stages,
+        duration_m=active_duration_m,
+        x_left=210,
+        x_right=256,
+        y_top=56,
+        y_bottom=68,
+    )
+
+    # ── Rhythm zone (268-510px) ──
+    # Variable-height bars baseline-aligned to y=78 within the strip. Bars
+    # max-height 28px (full ~28px track). No error band — errors surface in
+    # the status zone via the dot color, not inline marks.
+    bar_area_w = 510 - 268
+    bar_layout = layout_bar_chart(
+        stages,
+        area_w=bar_area_w,
+        baseline_y_override=78,
+        bar_max_h_override=28,
+        emit_error_ticks=False,
+        duration_m=active_duration_m,
+    )
+
+    # ── Status zone (522-600px) ──
+    status_indicator = compute_status_dot(n_errors=n_errors, total_calls=calls)
+    dominant_phase = compute_dominant_phase(stages, active_duration_m)
 
     return {
-        "width": 800,
-        "height": 60,
+        "width": 600,
+        "height": 92,
         "template": "frames/rhythm-strip.svg.j2",
         "context": {
             "telemetry": tel,
+            # IDENTITY zone
             "session_id_short": sid_short,
             "call_number": calls,
+            "duration_label": f"{int(active_duration_m)}m" if active_duration_m else "—",
+            "stage_count": len(stages),
+            "token_total_label": _fmt_tok(total_tok),
+            "cost_label": f"${total_cost:.2f}",
+            "identity_chips": identity_chips,
+            # VELOCITY zone
+            "velocity_label": velocity_label,
+            "sparkline_points": sparkline.points,
+            "sparkline_fill_path": sparkline.fill_path,
+            "sparkline_stroke_path": sparkline.stroke_path,
+            "sparkline_label_left": sparkline.label_left,
+            "sparkline_label_right": sparkline.label_right,
+            # RHYTHM zone
+            "rhythm_bars": bar_layout.bars,
+            "rhythm_peak_marker": bar_layout.peak_marker,
+            "rhythm_total_label": bar_layout.total_tokens_label,
+            "rhythm_peak_label": bar_layout.peak_tokens_label,
+            "rhythm_baseline_y": bar_layout.baseline_y,
+            "rhythm_label_left": "0m",
+            "rhythm_label_right": f"{int(active_duration_m)}m" if active_duration_m else "0m",
+            # STATUS zone
+            "status_word": status_indicator.word,
+            "status_severity": status_indicator.severity,
+            "status_color_var": status_indicator.color_var,
+            "n_errors": n_errors,
+            "dominant_label": dominant_phase.label,
+            "dominant_tool_class": dominant_phase.tool_class,
+            "dominant_pct_time": dominant_phase.pct_time,
+            # Backwards-compat fields kept until callers migrate.
+            "stages": bar_layout.bars,
             "elapsed_label": f"{int(duration_m)}m" if duration_m else "—",
             "token_summary": f"{_fmt_tok(total_tok)} tok · ${total_cost:.2f}",
-            "velocity_value": _fmt_tok(vel),
-            "stages": rhythm_bars,
+            "velocity_value": velocity_label,
             "loop_detected": False,
             "loop_elevated": False,
-            "loop_label": "NOMINAL",
-            "loop_detail": "no loop",
-            "profile_label": f"{dominant['name'].upper()} {dominant['pct']}%" if dominant.get("name") else "",
+            "loop_label": status_indicator.word,
+            "loop_detail": f"{n_errors} err" if n_errors else "no loop",
+            "profile_label": (f"{dominant_phase.label} {dominant_phase.pct_time}%" if dominant_phase.label else ""),
         },
     }
 

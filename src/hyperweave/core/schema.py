@@ -282,6 +282,27 @@ class GenomeSpec(BaseModel):
     tool_coordinate: str = Field(default="", description="Tool class color: coordinate (Agent, Task)")
     tool_reflect: str = Field(default="", description="Tool class color: reflect")
 
+    # -- Receipt compositor tokens (telemetry skins only, v0.2.21) --
+    # Per-element pill / glyph / card-frame surface that lets receipt.svg.j2
+    # stay branch-free. Values can be ``"transparent"`` to render the element
+    # invisibly without a template conditional. Non-telemetry genomes leave
+    # these empty (default="") and the assembler skips emitting the CSS vars.
+    pill_outer_bg: str = Field(default="", description="Receipt pill base panel fill (layered skins) or transparent")
+    pill_outer_stroke: str = Field(default="", description="Receipt pill base frame stroke or transparent")
+    pill_inner_bg: str = Field(default="", description="Receipt pill phosphor / inner fill")
+    pill_text: str = Field(default="", description="Receipt pill label text color")
+    pill_rule_top: str = Field(default="", description="Receipt pill top hairline color or transparent")
+    pill_rule_bottom: str = Field(default="", description="Receipt pill bottom hairline color or transparent")
+    pill_rx: int = Field(default=4, description="Receipt pill corner radius (0=square, 11=full pill)")
+    glyph_fill: str = Field(default="", description="Provider glyph (Claude/Codex) outer path fill")
+    card_border: str = Field(default="", description="Receipt card outer border stroke or transparent")
+    card_border_top: str = Field(default="", description="Receipt card top accent stripe color or transparent")
+    card_inner_glyph: str = Field(default="", description="Codex glyph inner cutout fill (typically surface)")
+    treemap_accent_side: str = Field(
+        default="top",
+        description="Treemap row accent direction: 'top' (1.5px full-width bar) or 'left' (4px full-height bar)",
+    )
+
     # -- Paradigm dispatch (Principle 26: three-layer taxonomy) --
     # Maps FrameType enum value -> paradigm slug. Resolver uses this to pick
     # templates/frames/{frame_type}/{paradigm}-content.j2 at render time.
