@@ -17,9 +17,11 @@ Risograph-canonical structure (matches
 * Error ticks live in a **dedicated band** at ``ERROR_BAND_Y`` (above the
   bars), not inline above each bar. One :class:`ErrorTick` per stage
   with ``errors > 0``.
-* Time axis: labels render ABOVE the bars at major intervals (5m for
-  short sessions, 30m otherwise). Grid lines run vertically across the
-  bar track at the same major positions.
+* Time axis: labels render ABOVE the bars at adaptive major intervals
+  picked by :func:`_select_major_interval` from a clean 1-2-5/base-60
+  candidate table — readable at any duration from 30 seconds to 100 days.
+  Grid lines run vertically across the bar track at the same major
+  positions; the helper guarantees they can never drift.
 
 Single source of truth — derive everything from ``panel_h``
 =========================================================
@@ -534,14 +536,21 @@ def layout_bar_chart(
     total_tokens_label = _format_tokens_short(total_billed)
     peak_tokens_label = f"PEAK {_format_tokens_short(max_tokens if max_tokens > 1 else 0)}"
 
-    # Grid lines: vertical strokes at major time intervals across the bar track.
+    # Grid lines: vertical strokes at interior major time intervals across
+    # the bar track. Shares :func:`_select_major_interval` with
+    # :func:`compute_time_axis_ticks` so grid and labels never drift —
+    # both compute x via ``int(area_w * t / duration_m)`` from the same
+    # interval. Bug 2 fix: short sessions (e.g. 3m) now emit grid lines
+    # because the adaptive selector returns a 1-minute interval rather
+    # than short-circuiting on the old hardcoded 5m threshold.
     grid_lines: list[GridLine] = []
     if duration_m and duration_m > 0:
-        major_interval = 5 if duration_m < 30 else 30
-        t = float(major_interval)
-        while t < duration_m:
-            grid_lines.append(GridLine(x=int(area_w * t / duration_m)))
-            t += major_interval
+        grid_interval = _select_major_interval(duration_m, area_w)
+        if grid_interval is not None:
+            t = float(grid_interval)
+            while t < duration_m:
+                grid_lines.append(GridLine(x=int(area_w * t / duration_m)))
+                t += grid_interval
 
     return BarChartLayout(
         bars=bars,
@@ -557,31 +566,105 @@ def layout_bar_chart(
     )
 
 
+# --------------------------------------------------------------------------- #
+# Adaptive time-axis interval selection                                       #
+# --------------------------------------------------------------------------- #
+
+_TICK_INTERVAL_CANDIDATES: tuple[int, ...] = (
+    1,
+    2,
+    5,
+    10,
+    15,
+    30,  # minutes
+    60,
+    120,
+    300,
+    600,  # hours: 1h, 2h, 5h, 10h
+    1440,
+    2880,
+    7200,
+    14400,  # days:  1d, 2d, 5d, 10d
+    43200,
+    144000,  # months: 30d, 100d
+)
+"""Clean human-readable major-tick candidates (minutes). Hybrid 1-2-5-with-
+base-60 vocabulary: minute fractions for short sessions, hour/day boundaries
+for long ones. Spans 1m → 100d so the selection loop terminates for any
+sane session duration."""
+
+_MAX_MAJOR_TICKS = 14
+"""Soft cap on visible major ticks (≤15 including terminal). Above this the
+density becomes unreadable regardless of available pixel width."""
+
+_MIN_LABEL_GAP_PX = 50
+"""Minimum pixel gap between adjacent major-tick labels. Sized for "17280m"
+at font-size 8 plus margin — covers the broadest label the algorithm can
+produce within reasonable session durations."""
+
+_MIN_MINOR_GAP_PX = 8
+"""Minimum pixel gap between minor-tick coordinates. Below this minors form
+a visual smear; skip emission entirely."""
+
+_FALLBACK_INTERVAL_M = 144000
+"""Last-resort interval (100 days) used only when no candidate satisfies
+both predicates — keeps the function total for absurd durations."""
+
+
+def _select_major_interval(duration_m: float, area_w: int) -> int | None:
+    """Pick a clean major-tick interval (minutes) for the given duration.
+
+    Two predicates must hold simultaneously:
+
+    1. **Count cap** — ``floor(duration_m / interval) + 1 <= MAX_MAJOR_TICKS``,
+       so the visible label list stays scannable.
+    2. **Gap floor** — ``area_w * interval / duration_m >= MIN_LABEL_GAP_PX``,
+       so adjacent labels never overlap regardless of label width.
+
+    The two predicates are dual: at the receipt's ``area_w=752``, the gap
+    floor dominates above ~75 minutes and the count cap dominates below.
+    On narrow tracks (``area_w<200``) the gap floor takes over entirely.
+
+    Returns ``None`` for non-positive duration or width (caller emits an
+    empty tick list); otherwise the chosen interval in minutes.
+    """
+    if duration_m <= 0 or area_w <= 0:
+        return None
+    for interval in _TICK_INTERVAL_CANDIDATES:
+        n_interior = int(duration_m // interval)
+        px_gap = area_w * interval / duration_m
+        if n_interior + 1 <= _MAX_MAJOR_TICKS and px_gap >= _MIN_LABEL_GAP_PX:
+            return interval
+    return _FALLBACK_INTERVAL_M
+
+
 def compute_time_axis_ticks(
     duration_m: float,
     area_w: int,
-    *,
-    short_session_threshold_m: float = 30.0,
 ) -> list[TimeAxisTick]:
     """Generate major + minor ticks for the rhythm panel's time axis.
 
+    Picks a clean major interval adaptively from
+    :data:`_TICK_INTERVAL_CANDIDATES` such that labels never overlap
+    (≥ ``_MIN_LABEL_GAP_PX`` apart) and the visible major count stays
+    ≤ ``_MAX_MAJOR_TICKS``. Minor ticks fill at one-third major spacing
+    when the resulting pixel gap exceeds ``_MIN_MINOR_GAP_PX``.
+
     Args:
-        duration_m: Session duration in minutes.
+        duration_m: Session duration in minutes. Non-positive returns ``[]``.
         area_w: Track width in pixels (ticks span 0 → area_w).
-        short_session_threshold_m: Below this duration, use 5-minute
-            major intervals; otherwise 30-minute.
 
     Returns:
         List of :class:`TimeAxisTick`, ordered left-to-right, with major
-        ticks labeled (``"0m"``, ``"30m"``, ..., ``"{duration}m"``) and
-        minor ticks unlabeled. The terminal tick (rightmost) is always
+        ticks labeled (e.g. ``"0m"``, ``"30m"``, ..., ``"{duration}m"``)
+        and minor ticks unlabeled. The terminal tick (rightmost) is always
         major and labeled with the actual session duration.
     """
-    if duration_m <= 0 or area_w <= 0:
+    major_interval = _select_major_interval(duration_m, area_w)
+    if major_interval is None:
         return []
 
-    major_interval = 5 if duration_m < short_session_threshold_m else 30
-    minor_interval = major_interval // 3 if major_interval >= 3 else 1
+    minor_interval = max(major_interval // 3, 1) if major_interval >= 3 else max(major_interval // 2, 1)
 
     ticks: list[TimeAxisTick] = []
 
@@ -593,25 +676,26 @@ def compute_time_axis_ticks(
         t += major_interval
 
     # Terminal tick at x=area_w with the actual duration label. If the last
-    # major sits within MIN_LABEL_GAP_PX of the terminal, replace its
-    # position+label with the terminal so we don't render "420m437m"
-    # overlapping. Threshold sized for ~"999m" at font-size 8 plus margin.
-    min_label_gap_px = 35
+    # major sits within _MIN_LABEL_GAP_PX of the terminal, replace its
+    # position+label with the terminal so adjacent labels never collide.
     terminal = TimeAxisTick(x=area_w, label=f"{round(duration_m)}m", is_major=True)
-    if ticks and (area_w - ticks[-1].x) < min_label_gap_px:
+    if ticks and (area_w - ticks[-1].x) < _MIN_LABEL_GAP_PX:
         ticks[-1] = terminal
     else:
         ticks.append(terminal)
 
-    # Minor ticks (unlabeled) between majors.
-    minor_ticks: list[TimeAxisTick] = []
-    t = float(minor_interval)
-    while t < duration_m:
-        if t % major_interval != 0:
-            x = int(area_w * t / duration_m)
-            minor_ticks.append(TimeAxisTick(x=x, label="", is_major=False))
-        t += minor_interval
+    # Minor ticks (unlabeled) — only when their pixel spacing exceeds the
+    # visibility floor; otherwise they form a noise smear at long durations.
+    minor_px_gap = area_w * minor_interval / duration_m
+    if minor_px_gap >= _MIN_MINOR_GAP_PX:
+        minor_ticks: list[TimeAxisTick] = []
+        t = float(minor_interval)
+        while t < duration_m:
+            if t % major_interval != 0:
+                x = int(area_w * t / duration_m)
+                minor_ticks.append(TimeAxisTick(x=x, label="", is_major=False))
+            t += minor_interval
+        ticks.extend(minor_ticks)
 
-    ticks.extend(minor_ticks)
     ticks.sort(key=lambda tk: (tk.x, not tk.is_major))
     return ticks

@@ -5,6 +5,26 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.22] - 2026-05-05
+
+Adaptive time-axis tick algorithm replaces v0.2.21's hardcoded two-tier threshold; one helper now drives both labels and grid lines so they can never drift. README "Agent Receipts" swaps body copy for a skin table and reorders the receipt examples.
+
+### Fixed
+
+- **Time-axis label explosion** &mdash; `compute_time_axis_ticks` produced 600+ overlapping labels for multi-day sessions; new adaptive picker keeps the visible major count ≤14 with a 50px label-gap floor.
+- **Grid lines absent on short sessions** &mdash; sessions under 5 minutes emitted no grid lines; same adaptive helper now drives `layout_bar_chart`'s grid generator for any positive duration.
+
+### Changed
+
+- **`compute_time_axis_ticks` signature** &mdash; dropped keyword-only `short_session_threshold_m` parameter (encoded the dead two-tier model).
+- **Terminal-collision guard widened 35→50px** to match the new label-gap floor.
+- **README "Agent Receipts" body** swaps text-only intro for an images-first layout (voltage receipt → voltage rhythm strip → claude-code receipt) followed by a per-agent livery table.
+
+### Notes
+
+- 866 tests (was 855); ruff + format + mypy --strict green.
+- 30-minute sessions now get 5-minute granularity; intentional behavior change, surfaces in proofset visual diff.
+
 ## [0.2.21] - 2026-05-05
 
 Agent receipts ship as a token-driven compositor frame: three telemetry skins (voltage, claude-code, cream), zero template conditionals, faithful to specimen SVGs. Auto-detects the coding agent's runtime via the JSONL `runtime` field; adding a new skin is a JSON file, not a code change.

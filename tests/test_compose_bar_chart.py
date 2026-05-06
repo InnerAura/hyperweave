@@ -14,6 +14,7 @@ Locks the v0.2.21 risograph-canonical layout invariants:
 from __future__ import annotations
 
 import dataclasses
+from itertools import pairwise
 from typing import Any
 
 import pytest
@@ -385,13 +386,18 @@ def test_peak_tokens_label_includes_peak_prefix() -> None:
 
 
 def test_grid_lines_at_major_time_intervals_for_long_session() -> None:
-    """120-minute session → 30-minute majors at 30, 60, 90 (terminal not emitted)."""
+    """120-minute session at 480px → adaptive picks 15m intervals.
+
+    At ``area_w=480, duration_m=120`` the dual predicates land on a
+    15-minute interval (``px_gap = 60 ≥ 50``). Grid lines emit at
+    interior majors only — origin (x=0) and terminal (x=area_w) are
+    handled by the surrounding rule rendering, not by ``grid_lines``.
+    """
     stages = [_stage(tokens=1000) for _ in range(5)]
     layout = layout_bar_chart(stages, area_w=480, duration_m=120)
-    assert len(layout.grid_lines) == 3  # 30m, 60m, 90m (not 0m or 120m)
-    # x positions scale to area_w.
     xs = [g.x for g in layout.grid_lines]
-    assert xs == [int(480 * 30 / 120), int(480 * 60 / 120), int(480 * 90 / 120)]
+    expected = [int(480 * t / 120) for t in (15, 30, 45, 60, 75, 90, 105)]
+    assert xs == expected
 
 
 def test_grid_lines_use_5m_intervals_for_short_session() -> None:
@@ -507,6 +513,97 @@ def test_minor_ticks_are_unlabeled() -> None:
     for t in ticks:
         if not t.is_major:
             assert t.label == ""
+
+
+# --------------------------------------------------------------------------- #
+# Adaptive tick algorithm — invariants across the duration spectrum           #
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "duration_m",
+    [0.5, 2.0, 30.0, 437.0, 19_000.0, 1_000_000.0],
+)
+def test_adaptive_ticks_invariants(duration_m: float) -> None:
+    """Major-tick count, anchoring, and inter-label gap hold for any duration."""
+    ticks = compute_time_axis_ticks(duration_m=duration_m, area_w=752)
+    majors = [t for t in ticks if t.is_major]
+    # Count cap: ≤14 interior majors + terminal slack.
+    assert len(majors) <= 16, f"too many majors at duration={duration_m}: {len(majors)}"
+    # Leftmost anchor at x=0, rightmost (terminal) at x=area_w.
+    assert majors[0].x == 0
+    assert majors[-1].x == 752
+    # Adjacent major x-coords never collide. Slack of 10 px below the 50-px
+    # design floor accounts for int-floor truncation in
+    # ``int(area_w * t / duration_m)``.
+    xs = sorted({m.x for m in majors})
+    if len(xs) >= 2:
+        gaps = [b - a for a, b in pairwise(xs)]
+        assert min(gaps) >= 40, f"label collision at duration={duration_m}: gaps={gaps}"
+
+
+def test_three_minute_session_emits_grid_lines() -> None:
+    """Bug 2 lock: short sessions now emit grid lines via the adaptive selector.
+
+    Pre-fix, ``layout_bar_chart(duration_m=3.0)`` produced an empty
+    ``grid_lines`` list because the hardcoded 5-minute interval exceeded
+    the session duration. Adaptive selection returns a 1-minute interval
+    for this case, populating grid lines as the rhythm panel expects.
+    """
+    layout = layout_bar_chart(
+        [_stage(start="2026-04-19T00:00:00", end="2026-04-19T00:03:00")],
+        area_w=752,
+        duration_m=3.0,
+    )
+    assert len(layout.grid_lines) >= 1
+
+
+def test_grid_lines_align_with_major_ticks() -> None:
+    """Grid lines and major-tick interior x-coords share a single source.
+
+    Both call ``_select_major_interval`` and convert via the identical
+    formula, so the grid set must be a subset of interior major positions.
+    """
+    layout = layout_bar_chart(
+        [_stage(start="2026-04-19T00:00:00", end="2026-04-19T02:00:00")],
+        area_w=752,
+        duration_m=120.0,
+    )
+    ticks = compute_time_axis_ticks(duration_m=120.0, area_w=752)
+    interior_major_xs = {t.x for t in ticks if t.is_major and 0 < t.x < 752}
+    grid_xs = {g.x for g in layout.grid_lines}
+    assert grid_xs.issubset(interior_major_xs)
+
+
+def test_narrow_track_reduces_tick_count() -> None:
+    """Below ~200 px the gap-floor predicate dominates and ticks thin out."""
+    ticks = compute_time_axis_ticks(duration_m=120.0, area_w=200)
+    majors = [t for t in ticks if t.is_major]
+    assert len(majors) <= 5
+
+
+def test_terminal_replaces_last_major_within_gap() -> None:
+    """When the last interior major sits within ``_MIN_LABEL_GAP_PX`` of the
+    terminal, the terminal replaces it so labels never collide.
+
+    For ``duration_m=92.0, area_w=752``: the 10-minute candidate yields
+    px_gap ≈ 81 (≥ 50), so the last interior major is at t=90m, x≈735 —
+    only 17 px from the terminal at x=752. The terminal must replace it.
+    """
+    ticks = compute_time_axis_ticks(duration_m=92.0, area_w=752)
+    labels = [t.label for t in ticks if t.is_major]
+    assert "90m" not in labels
+    assert "92m" in labels
+
+
+def test_million_minute_session_falls_back_gracefully() -> None:
+    """Absurd durations don't crash; algorithm picks a sane fallback."""
+    ticks = compute_time_axis_ticks(duration_m=1_000_000.0, area_w=752)
+    majors = [t for t in ticks if t.is_major]
+    assert len(majors) <= 16
+    assert majors[0].x == 0
+    assert majors[-1].x == 752
+    assert majors[-1].label == "1000000m"
 
 
 # --------------------------------------------------------------------------- #

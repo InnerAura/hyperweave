@@ -62,36 +62,45 @@ Prompting Guide for AI Agents
 
 ## The Problem
 
-When an AI agent needs visual output, it generates React code or HTML that breaks across platforms, carries no brand identity, and is illegible to the next agent in the chain. There's no portable, reliable visual primitive for agents.
+When an agent needs to produce something visual &mdash; a status card, a dashboard, a receipt of its work &mdash; it generates React, HTML, or pixels, locked in the environment that made it. Embed it in markdown, pass it to another agent &mdash; it breaks or loses context. There's no portable visual primitive for agents.
 
-HyperWeave is that primitive. Semantic SVGs with embedded CSS state machines, accessibility markup, and machine-readable metadata. The artifact stays live, stays on-brand, and stays legible &mdash; whether it's rendered in a GitHub README, Slack, Notion, documentation site, email, VS Code, or terminal. Every surface that renders an `<img>` tag is a HyperWeave surface.
+HyperWeave is that primitive. One API call returns a self-contained SVG with data binding, branding, and machine-readable metadata baked in. No JavaScript, no dependencies, no runtime. It renders in GitHub READMEs, Slack, Notion, docs, your site, email, VS Code, or terminal. Every surface that renders an `<img>` tag is a HyperWeave surface.
 
 ---
 
 ## Agent Receipts
 
-Every AI coding session produces a receipt &mdash; cost, tokens, tool distribution, session rhythm. One install, fully automatic. The artifact isn't a visualization of data. It *is* the record.
+Every AI coding session produces a receipt &mdash; cost, tokens, tool distribution, session rhythm. One install, fully automatic.
 
 ```bash
 hyperweave install-hook
 ```
 
-Every session drops a receipt SVG into `.hyperweave/receipts/`. No config, no server, no manual step. Skin auto-detects from the coding agent's runtime &mdash; Claude Code resolves to the warm-paper skin; everything else falls back to voltage. Pin a different default with `hyperweave install-hook --genome cream`.
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_voltage_xlarge.svg" alt="session receipt — voltage skin showing 262M tokens, 562 calls, 52 stages, divergence flag" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_voltage_xlarge.svg" alt="session receipt — voltage livery showing 262M tokens, 562 calls, 52 stages, divergence flag" width="800"/>
 </p>
-<p align="center"><sub>262M tokens &middot; 562 calls &middot; 52 stages &middot; $175 &mdash; voltage skin</sub></p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_claude-code_medium.svg" alt="session receipt — claude-code skin on warm paper substrate" width="800"/>
-</p>
-<p align="center"><sub>Same protocol, different genome &mdash; claude-code skin</sub></p>
+<p align="center"><sub>262M tokens &middot; 562 calls &middot; 52 stages &middot; $175 &mdash; voltage</sub></p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/rhythm_strip_voltage_xlarge.svg" alt="session rhythm strip — same session data at 92px tall" width="800"/>
 </p>
 <p align="center"><sub>Rhythm strip &mdash; the same session data at 92px tall</sub></p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_claude-code_medium.svg" alt="session receipt — claude-code livery on warm paper substrate" width="800"/>
+</p>
+<p align="center"><sub>Same data, different livery &mdash; claude-code</sub></p>
+
+The livery matches the agent that produced the session:
+
+| Agent | Livery | Aesthetic |
+|-------|--------|-----------|
+| Claude Code | `claude-code` | warm paper, terra-coral signal |
+| Codex | `codex` | *(coming soon)* |
+| &mdash; | `voltage` | titanium dark, champagne signal |
+| &mdash; | `cream` | risograph, fluoro-orange |
+
+Auto-detected from the session transcript. Pin a different default with `hyperweave install-hook --genome voltage`.
 
 ---
 
