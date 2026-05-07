@@ -5,6 +5,21 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.25] - 2026-05-07
+
+Production badges on data-driven URLs (`STARS`, `FORKS`, `VERSION`, `LICENSE`, `PYTHON`) no longer trigger false-alarm status indicators on numeric values. Badge value text now centers correctly for every value length across all genomes.
+
+### Fixed
+
+- **Data badges no longer show false status indicators** &mdash; a `STARS` badge with value `6` rendered an orange warning diamond because the leading digit matched a threshold rule designed for percentages. Indicators now only appear on common build / test / CI / quality / deployment / monitoring titles (`BUILD`, `TESTS`, `CI`, `PIPELINE`, `WORKFLOW`, `COVERAGE`, `LINT`, `DEPLOY`, `RELEASE`, `STATUS`, `HEALTH`, `UPTIME`, etc.) or when explicitly set via `?state=`. Hyphen and underscore variants like `BUILD-STATUS` and `CI_CD` match the same canonical title without separate config entries.
+- **Badge value text centers correctly across all genomes** &mdash; values drifted 1&ndash;3px right of true center, with automata badges drifting further than chrome and brutalist. Centering now verified within 0.5px across short percentages, version strings, license slugs, python_requires, and long names.
+- **Monospace labels had extra padding on the right** &mdash; width measurement double-counted letter-spacing for mono labels like `BUILD` and `COVERAGE`; labels now match their actual rendered width.
+- **Data-only strips drop the status diamond** &mdash; `STARS | FORKS | VERSION` strips render as pure data; mixed strips like `BUILD | STARS` keep the right-edge indicator; `?state=` always overrides.
+
+### Notes
+
+- 955 tests (was 914). Divider and icon URLs render unchanged; existing badge URLs continue to work, with corrected centering and tighter widths where false indicators were removed.
+
 ## [0.2.24] - 2026-05-07
 
 Receipts no longer clip past the right edge of the card when one tool dominates the session. Cleanup pass removes an unused template, an unused styling table, and two silent default-position fallbacks in the receipt template.

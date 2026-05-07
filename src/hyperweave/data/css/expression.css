@@ -171,16 +171,32 @@ svg:not([data-hw-status="active"]):not([data-hw-status="passing"]):not([data-hw-
   opacity: 0.08;
 }
 
-/* === Living Value: Threshold State Machine === */
-[data-hw-value^="9"], [data-hw-value^="8"] {
+/* === Living Value: Threshold State Machine ===
+ * v0.2.25: gated by data-hw-statemode="auto" so leading-digit auto-
+ * inference fires ONLY for stateful badges (build/coverage/uptime/
+ * health/score/lint/ci/deploy/status). A STARS=6 badge has
+ * data-hw-statemode="off" and these selectors don't match —
+ * preventing the orange-warning false alarm on data-driven badges
+ * whose values happen to start with a "6" or "7".
+ *
+ * Explicit-mode badges (data-hw-statemode="explicit", set by ?state=)
+ * also bypass threshold inference: the user owns the state. */
+[data-hw-statemode="auto"][data-hw-value^="9"],
+[data-hw-statemode="auto"][data-hw-value^="8"] {
   --dna-status-color: var(--dna-status-passing-core, #22C55E);
 }
-[data-hw-value^="7"], [data-hw-value^="6"] {
+[data-hw-statemode="auto"][data-hw-value^="7"],
+[data-hw-statemode="auto"][data-hw-value^="6"] {
   --dna-status-color: var(--dna-status-warning-core, #F59E0B);
 }
-[data-hw-value^="5"], [data-hw-value^="4"],
-[data-hw-value^="3"], [data-hw-value^="2"],
-[data-hw-value^="1"], [data-hw-value^="0"] {
+[data-hw-statemode="auto"][data-hw-value^="5"],
+[data-hw-statemode="auto"][data-hw-value^="4"],
+[data-hw-statemode="auto"][data-hw-value^="3"],
+[data-hw-statemode="auto"][data-hw-value^="2"],
+[data-hw-statemode="auto"][data-hw-value^="1"],
+[data-hw-statemode="auto"][data-hw-value^="0"] {
   --dna-status-color: var(--dna-status-failing-core, #EF4444);
 }
-[data-hw-value] .hw-living { fill: var(--dna-status-color); }
+[data-hw-statemode="auto"][data-hw-value] .hw-living {
+  fill: var(--dna-status-color);
+}

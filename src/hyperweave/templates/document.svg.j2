@@ -31,6 +31,8 @@
 {% endif %}
 {% if data_hw_value %}     data-hw-value="{{ data_hw_value }}"
 {% endif %}
+{% if data_hw_statemode and data_hw_statemode != 'off' %}     data-hw-statemode="{{ data_hw_statemode }}"
+{% endif %}
      data-hw-chromatic="{{ genome_id }}">
   <title id="{{ uid }}-title">{{ title_text }}</title>
   <desc id="{{ uid }}-desc">{{ desc_text }}</desc>

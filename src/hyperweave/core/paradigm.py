@@ -171,6 +171,24 @@ class ParadigmBadgeConfig(FrozenModel):
     """Vertical placement of label/value text baseline as fraction of
     frame_height. Brutalist/chrome: 0.69. Cellular specimen: 0.656 (y=21 at
     height=32), which aligns the indicator visually with the text center."""
+    sep_w: int = 0
+    """Optional paradigm-specific separator width (left-panel boundary).
+    When ``> 0``, overrides the profile's ``badge_sep_width``. Cellular
+    paints a 1px gradient seam at ``x=lp_w`` (sep_w=1) but inherits the
+    brutalist profile (badge_sep_width=2) — without this override, the
+    resolver assumes 2px separator + 3px seam and places ``value_zone_left``
+    1px past where the cellular template actually paints the value slab,
+    drifting the centered text 1.5px right of the slab center."""
+    seam_w: int = 0
+    """Optional paradigm-specific seam width. ``> 0`` overrides
+    profile's ``badge_seam_width``. Provided for symmetry with ``sep_w``;
+    no current paradigm needs it but keeps the override surface uniform."""
+    right_canvas_inset: int = 0
+    """Pixels between ``total_w`` and the value slab's right edge.
+    Brutalist/chrome: 0 (slab spans to total_w). Cellular: 2 (inner canvas
+    at ``x=2..width-2`` per cellular-content.j2:9). Without this override,
+    ``value_zone_right`` lands ``right_canvas_inset`` past the actual slab
+    edge and drifts the centered value text right by half that amount."""
 
 
 class ParadigmIconConfig(FrozenModel):

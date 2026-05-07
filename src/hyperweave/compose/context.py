@@ -117,6 +117,11 @@ def _base_context(
         "slots": [s.model_dump() for s in spec.slots],
         "numeric_value": spec.numeric_value,
         "data_hw_value": spec.numeric_value,
+        # v0.2.25: SVG-root attribute that gates threshold-CSS auto-tinting.
+        # Default "off" = stateless; resolvers override via frame_context.
+        # Values: "off" (stateless), "auto" (stateful, threshold-CSS may fire),
+        # "explicit" (?state= set; user owns the state, no auto-inference).
+        "data_hw_statemode": "off",
         # Profile
         "profile": profile,
         "badge_corner": profile.get("badge_corner", 3.33),

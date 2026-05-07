@@ -16,12 +16,25 @@ def compose(spec: ComposeSpec) -> ComposeResult:
     # etc.) sets spec.state to something other than "active" and survives
     # this step untouched. This is the single chokepoint covering HTTP,
     # CLI, MCP, and kit.
-    if spec.state == "active" and spec.value:
+    #
+    # v0.2.25: gated on the stateful-title allowlist (data/badge_modes.yaml).
+    # Pre-v0.2.25 the inference fired on EVERY badge regardless of title —
+    # so a STARS=42 badge was auto-inferred to state="critical" (leading
+    # digit 4) and then re-classified as "explicit" mode by resolve_badge_mode,
+    # rendering an orange/red status indicator on a value with no semantic
+    # state. Now inference only fires for titles that meaningfully pass/fail
+    # (build / coverage / uptime / health / score / lint / ci / deploy / status).
+    if spec.state == "active" and spec.value and spec.title:
+        from hyperweave.compose.layout import normalize_title
+        from hyperweave.config.loader import load_badge_modes
         from hyperweave.core.state import infer_state
 
-        inferred = infer_state(spec.title, spec.value)
-        if inferred != "active":
-            spec = spec.model_copy(update={"state": inferred})
+        # Normalize for separator-insensitive lookup (BUILD-STATUS,
+        # CI_CD, etc.) — same normalizer ``resolve_badge_mode`` uses.
+        if normalize_title(spec.title) in load_badge_modes():
+            inferred = infer_state(spec.title, spec.value)
+            if inferred != "active":
+                spec = spec.model_copy(update={"state": inferred})
 
     # ── 1. Resolve genome, profile, frame ──
     from hyperweave.compose.resolver import resolve

@@ -68,6 +68,16 @@ badge:
   glyph_size: 12
   glyph_size_compact: 8
   text_y_factor: 0.656
+  # Cellular paints a 1px gradient seam at lp_w (template lines 60-61),
+  # not the brutalist 2px separator. Override sep_w so the resolver's
+  # value_zone_left lines up with the cellular template's actual value
+  # slab — without this, value_x lands 1.5px right of slab center.
+  sep_w: 1
+  # Inner canvas at x=2..width-2 (cellular-content.j2:9) shrinks the
+  # effective value slab right edge by 2px. Without this override,
+  # value_zone_right lands 2px past the slab edge and the centered
+  # value text drifts 1px right.
+  right_canvas_inset: 2
 
 strip:
   # Specimen cellular-automata-strip-v10.svg is 48px tall (not 52px default).

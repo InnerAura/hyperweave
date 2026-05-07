@@ -17,9 +17,9 @@
 {# Separator line #}
 <line x1="{{ lp_w }}" y1="5" x2="{{ lp_w }}" y2="{{ h - 5 }}" stroke="url(#{{ uid }}-sep)" stroke-width="0.75"/>
 
-{# Glyph #}
-{% if has_glyph | default(false) and glyph_svg %}
-<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y | default(5) }})">
+{# Glyph — glyph_y supplied by compose/layout.py (Invariant 6). #}
+{% if has_glyph and glyph_svg %}
+<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y }})">
   {{ glyph_svg | safe }}
 </g>
 {% endif %}
@@ -39,8 +39,8 @@
       class="{{ uid }}-value"
       fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}">{{ value }}</text>
 
-{# Diamond status indicator #}
-{% if show_indicator | default(true) %}
+{# Diamond status indicator — gated on resolver-supplied show_indicator (mode-driven). #}
+{% if show_indicator %}
 <g data-hw-zone="status" transform="translate({{ indicator_x + ind_size // 2 }},{{ h // 2 }})">
   <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
         transform="rotate(45)" fill="#040C14"/>

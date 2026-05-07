@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -91,6 +92,24 @@ def load_glyphs() -> dict[str, dict[str, Any]]:
     if not path.exists():
         return {}
     return _read_json(path)  # type: ignore[no-any-return]
+
+
+@lru_cache(maxsize=1)
+def load_badge_modes() -> frozenset[str]:
+    """Load the stateful-title allowlist from data/badge_modes.yaml.
+
+    Titles in the returned frozenset trigger status-indicator rendering
+    AND auto-state-inference (engine.py:infer_state). Titles NOT in the
+    set default to "stateless" mode at compose time. Lowercased; lookup
+    via ``spec.title.lower() in load_badge_modes()``.
+
+    Cached because every badge resolution checks against this set.
+    """
+    path = _data_path("badge_modes.yaml")
+    if not path.exists():
+        return frozenset()
+    raw = _read_yaml(path) or {}
+    return frozenset(str(t).lower() for t in raw.get("stateful_types", []))
 
 
 def load_motions() -> dict[str, dict[str, Any]]:

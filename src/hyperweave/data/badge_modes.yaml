@@ -1,0 +1,66 @@
+# Stateful badge title allowlist (v0.2.25).
+#
+# Titles in this list trigger two orthogonal behaviors in resolve_badge_mode:
+#   1. The status indicator (diamond/dot/ring) renders.
+#   2. Auto-state-inference fires (engine.py:infer_state) — title-driven CI
+#      semantics like "build / passing" → state="passing", or "coverage / 82%"
+#      → state inferred from leading digit.
+#
+# Titles NOT in this list default to "stateless" mode: no indicator, no
+# auto-inference, no [data-hw-statemode="auto"] threshold-CSS tinting. An
+# explicit ?state= query param still works on any title — it triggers
+# "explicit" mode independent of the allowlist.
+#
+# Resolver normalizes the title before lookup: lowercase + strip
+# hyphens/underscores. So `BUILD-STATUS` → `buildstatus`, `CI_CD` →
+# `cicd`, and the YAML can list canonical joined forms instead of every
+# separator variant.
+#
+# Coverage spans the standard CI / build / test / coverage / quality /
+# deployment / monitoring vocabulary used by shields.io, GitHub Actions,
+# GitLab Pipelines, Travis, CircleCI, codecov, etc. Adding new entries
+# is pure config (no Python edits). Removing the file falls back to
+# "stateless for everything" — fail safe, no false alarms on data-
+# driven badges like STARS / VERSION.
+
+stateful_types:
+  # Build & integration
+  - build
+  - ci
+  - cicd            # covers ci-cd, ci_cd via normalization
+  - pipeline
+  - workflow
+  - checks
+  - integration
+  - e2e
+
+  # Tests
+  - test
+  - tests
+  - testing
+
+  # Code quality
+  - lint
+  - lints
+  - linting
+  - quality
+  - score
+
+  # Coverage
+  - coverage
+  - codecov
+  - cov
+
+  # Deployment & release
+  - deploy
+  - deployment
+  - deployments
+  - release
+  - releases
+
+  # Status & monitoring
+  - status
+  - health
+  - uptime
+  - buildstatus     # normalized "build-status"
+  - prchecks        # normalized "pr-checks"

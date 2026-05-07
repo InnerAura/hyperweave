@@ -216,8 +216,22 @@ def resolve_badge(
         glyph_size = 14
     glyph_gap = 4
 
-    sep_w = profile.get("badge_sep_width", 2)
-    seam_w = profile.get("badge_seam_width", 3)
+    # Paradigm may override profile-level seam structure. Cellular declares
+    # sep_w=1 because its template paints a 1px gradient seam where
+    # brutalist would paint a 2px separator — without the override, the
+    # resolver's value_zone_left lands 1px past the actual slab and the
+    # centered value text drifts 1.5px right of the slab visual center.
+    badge_cfg_for_seam = paradigm_spec.badge if paradigm_spec else None
+    sep_w = (
+        badge_cfg_for_seam.sep_w
+        if badge_cfg_for_seam and badge_cfg_for_seam.sep_w > 0
+        else profile.get("badge_sep_width", 2)
+    )
+    seam_w = (
+        badge_cfg_for_seam.seam_w
+        if badge_cfg_for_seam and badge_cfg_for_seam.seam_w > 0
+        else profile.get("badge_seam_width", 3)
+    )
     indicator_size = profile.get("badge_indicator_size", 8)
     ind_pad_r = profile.get("badge_indicator_pad_r", 8)
     inset = profile.get("badge_inset", 0)
@@ -247,12 +261,18 @@ def resolve_badge(
         _label_size = max(round(_label_size * 0.78), 6)
         _value_size = max(round(_value_size * 0.78), 7)
 
+    # Monospace labels carry letter-spacing 0.06em (CSS declared in chrome-
+    # defs). Pre-v0.2.25 the resolver added len(text)*font_size*0.06 AFTER
+    # measure_text returned, double-counting and using the wrong (N vs N-1)
+    # formula. measure_text now applies (max(0, N-1) * font_size * em)
+    # internally — single source of truth in core/text.py.
     lw = (
         measure_text(
             label_display,
             font_family=_label_family,
             font_size=_label_size,
             font_weight=400 if use_mono else 700,
+            letter_spacing_em=0.06 if use_mono else 0.0,
         )
         if label_display
         else 0.0
@@ -268,10 +288,6 @@ def resolve_badge(
         else 0.0
     )
 
-    # Monospace labels get letter-spacing 0.06em (CSS declared in chrome-defs).
-    if use_mono and label_display:
-        lw += len(label_display) * font_size * 0.06
-
     has_glyph = bool(spec.glyph or spec.custom_glyph_svg)
 
     # Glyph-left offset: paradigms that render decoration on the left edge
@@ -286,108 +302,98 @@ def resolve_badge(
     else:
         glyph_left_offset = 0
 
-    # Glyph pixel position
-    if has_glyph:
-        glyph_x = (inset + accent_w + 4) if inset else (accent_w + 3)
-        glyph_x += glyph_left_offset
-        glyph_y = round((height - glyph_size) / 2, 1)
-    else:
-        glyph_x, glyph_y = 0, 0.0
+    # v0.2.25: three-mode state architecture. badge_mode drives indicator
+    # rendering AND data-hw-statemode (which gates threshold-CSS auto-tinting).
+    # Replaces the prior is_state_badge ad-hoc value-mirrors-state inference
+    # with a title-allowlist + explicit-state precedence chain.
+    from hyperweave.compose.layout import (
+        compute_badge_layout,
+        data_hw_statemode_for,
+        resolve_badge_mode,
+    )
+    from hyperweave.config.loader import load_badge_modes
 
-    # Label area starts after glyph (or after accent + paradigm left-edge decoration).
-    # When a paradigm declares ``glyph_left_offset`` (cellular: 18 default, 12 compact)
-    # it reserves a left-edge zone for decoration (cellular pattern strip at x=2..~20).
-    # The with-glyph branch already clears that zone via glyph_x. The no-glyph
-    # branch must also respect it — otherwise label text overlaps the decoration.
-    # Brutalist/chrome are unaffected: glyph_left_offset=0.
-    label_start = (glyph_x + glyph_size + glyph_gap) if has_glyph else (accent_w + 6 + glyph_left_offset)
+    badge_mode = resolve_badge_mode(spec, load_badge_modes())
+    paradigm_show_indicator = paradigm_spec.badge.show_indicator if paradigm_spec is not None else True
+    effective_show_indicator = paradigm_show_indicator and badge_mode != "stateless"
 
-    # Left panel width
-    label_pad_r = 9 if use_mono else 8
-    left_panel = round(label_start + lw + label_pad_r)
-    left_panel = max(left_panel, 30)
+    # Paradigm-specific right-canvas-inset (cellular: 2px, brutalist/chrome: 0).
+    right_canvas_inset = badge_cfg_for_seam.right_canvas_inset if badge_cfg_for_seam else 0
 
-    # Label text center (midpoint of label area)
-    label_area_end = left_panel - (6 if label_uppercase else 0)
-    label_x = round((label_start + label_area_end) / 2, 1)
+    # All badge geometry now lives in compose/layout.py — single source of
+    # truth, unit-tested independently. The v0.2.25 centering fix is in there
+    # (value_x = zone_center, not midpoint of unrelated bounds).
+    layout = compute_badge_layout(
+        height=height,
+        measured_label_w=lw,
+        measured_value_w=vw,
+        has_glyph=has_glyph,
+        show_indicator=effective_show_indicator,
+        use_mono=use_mono,
+        label_uppercase=label_uppercase,
+        value_raw_len=len(value_raw),
+        accent_w=accent_w,
+        inset=inset,
+        glyph_size=glyph_size,
+        glyph_gap=glyph_gap,
+        glyph_left_offset=glyph_left_offset,
+        sep_w=sep_w,
+        seam_w=seam_w,
+        indicator_size=indicator_size,
+        ind_pad_r=ind_pad_r,
+        val_pad_l=3,
+        val_min_gap=3,
+        right_canvas_inset=right_canvas_inset,
+        text_y_factor=text_y_factor,
+        value_font_size=_value_size,
+    )
 
-    # Indicator zone: reserved ONLY when this is a state-mode badge. Even
-    # when the paradigm opts into indicators (show_indicator=True), version-
-    # mode badges (pypi v0.2.5, etc.) don't render a ring+bit — reserving
-    # the 16px allocation creates dead black space on the right side.
-    # State-mode badges get the full allocation.
-    badge_cfg = paradigm_spec.badge if paradigm_spec else None
-    show_indicator = badge_cfg.show_indicator if badge_cfg is not None else True
-    # State-mode inference happens below; pre-compute for indicator_alloc.
-    state_set = {"passing", "warning", "critical", "building", "offline", "failing"}
-    _is_state = spec.state in state_set and (not value_raw or value_raw == spec.state)
-    indicator_alloc = (indicator_size + ind_pad_r) if (show_indicator and _is_state) else 0
-
-    # Total width: left + sep/seam + right panel
-    val_pad_l = 3
-    val_min_gap = 3
-    # Non-mono value text has letter-spacing .4 — add overshoot buffer
-    ls_extra = len(value_raw) * 0.4 if not use_mono and value_raw else 0
-    right_panel = val_pad_l + vw + ls_extra + 2 * val_min_gap + indicator_alloc
-    total_w = round(left_panel + sep_w + seam_w + right_panel)
-    total_w = max(total_w, 60)
-
-    # Derived positions
-    right_x = left_panel + sep_w + seam_w
-    indicator_x = total_w - ind_pad_r - indicator_size
-    value_x = round((right_x + val_pad_l + indicator_x) / 2, 1)
-    text_y = round(height * text_y_factor, 1)
-    # Indicator vertical center — pinned to value-text visual midline.
-    # Cap height ≈ 70% of font size across Chakra Petch, Inter, and Orbitron
-    # (validated against font metrics in data/font-metrics/), so the visual
-    # center of uppercase glyphs = baseline (text_y) - 0.3 * font_size. The
-    # indicator box is square; its top-y = visual_center - size/2. Computing
-    # here (resolver) instead of in each paradigm template means every new
-    # paradigm inherits correct vertical centering without re-deriving.
-    indicator_y = round(text_y - _value_size * 0.3 - indicator_size / 2, 1)
-
-    # State-badge inference: when state matches an ArtifactStatus and value
-    # canonically mirrors state (value == state or empty), the badge is in
-    # state-mode. Cellular templates branch on is_state_badge to render the
-    # ring+bit indicator block and route value text through the state cascade.
-    state_set = {"passing", "warning", "critical", "building", "offline", "failing"}
-    is_state_badge = spec.state in state_set and (not value_raw or value_raw == spec.state)
-
-    # Family resolution: user wins; empty falls back to paradigm default.
+    # Variant resolution: explicit > paradigm default > genome flagship.
     resolved_variant = resolve_variant(spec, genome, paradigm_spec)
 
     # Profile visual context (envelope, well, specular, chrome text gradients)
     # is now applied universally by the dispatcher at resolve() via
     # _genome_material_context — no per-resolver call needed.
     return {
-        "width": total_w,
-        "height": height,
+        "width": layout.width,
+        "height": layout.height,
         "template": "frames/badge.svg.j2",
         "context": {
             "label": label_raw,
             "label_display": label_display,
             "value": value_raw,
-            "left_panel_width": left_panel,
-            "right_panel_x": right_x,
-            "text_y": text_y,
-            "glyph_x": glyph_x,
-            "glyph_y": glyph_y,
+            "left_panel_width": layout.left_panel_w,
+            "right_panel_x": layout.right_panel_x,
+            "right_panel_w": layout.right_panel_w,
+            "text_y": layout.text_y,
+            "glyph_x": layout.glyph_x,
+            "glyph_y": layout.glyph_y,
             "glyph_render_size": glyph_size,
-            "label_x": label_x,
-            "value_x": value_x,
-            "indicator_x": indicator_x,
-            "indicator_y": indicator_y,
+            "label_x": layout.label_x,
+            "value_x": layout.value_x,
+            "value_zone_left": layout.value_zone_left,
+            "value_zone_right": layout.value_zone_right,
+            "value_zone_width": layout.value_zone_width,
+            "indicator_x": layout.indicator_x,
+            "indicator_y": layout.indicator_y,
             "sep_width": sep_w,
             "seam_width": seam_w,
-            "indicator_size": indicator_size,
+            "indicator_size": layout.indicator_size,
+            "inner_bit_w": layout.inner_bit_w,
+            "inner_bit_offset": layout.inner_bit_offset,
             "accent_bar_width": accent_w,
             "has_glyph": has_glyph,
-            "show_indicator": show_indicator,
+            "show_indicator": layout.show_indicator,
             "use_mono": use_mono,
             "label_uppercase": label_uppercase,
             "inset": inset,
             "variant": resolved_variant,
-            "is_state_badge": is_state_badge,
+            "badge_mode": badge_mode,
+            "data_hw_statemode": data_hw_statemode_for(badge_mode),
+            # Backward-compat for cellular template's value-text class branch
+            # (cellular-content.j2:104). Will be removed once cellular template
+            # is updated to read badge_mode directly.
+            "is_state_badge": badge_mode != "stateless",
             "compact": spec.size == "compact",
         },
     }
@@ -594,12 +600,27 @@ def resolve_strip(
     cell_widths: list[int] = [rec["cell_w"] for rec in cell_layouts_records]
     metric_pitch = max(cell_widths) if cell_widths else max(min_metric_pitch, cell_min_w)
 
+    # v0.2.25: strip mode rolls up from metric labels via the badge
+    # allowlist. STARS|FORKS|VERSION (all stateless) → no indicator,
+    # no data-hw-statemode, no threshold-CSS auto-tinting. BUILD|STARS
+    # (BUILD allowlisted) → strip is "auto" stateful and the right-edge
+    # indicator renders. Explicit ?state= overrides everything.
+    from hyperweave.compose.layout import data_hw_statemode_for, decide_strip_mode
+    from hyperweave.config.loader import load_badge_modes
+
+    strip_mode = decide_strip_mode(
+        [m.get("label") for m in metrics],
+        spec,
+        load_badge_modes(),
+    )
+
     # Status-indicator zone: tight-fit around the 14px indicator geometry.
     # Algorithmic sizing (pre_gap + indicator_size + post_gap) replaces the
     # former hardcoded 56px reserve, which left ~26px of dead black space
     # between the indicator and the right flank. Now: 16 pre-gap (matches
     # spec strip v10: last_seam=400 → frame_x=416) + 14 indicator + 4 post-gap.
-    show_status_indicator = strip_cfg.show_status_indicator if strip_cfg else True
+    paradigm_show_status_indicator = strip_cfg.show_status_indicator if strip_cfg else True
+    show_status_indicator = paradigm_show_status_indicator and strip_mode != "stateless"
     _indicator_size = 14
     _indicator_pre_gap = 16
     # Post-indicator breathing. Paradigms with icon-boxes (cellular) now
@@ -700,6 +721,8 @@ def resolve_strip(
         "glyph_zone_x_offset": glyph_zone_x_offset,
         "variant": resolved_variant,
         "show_status_indicator": show_status_indicator,
+        "strip_mode": strip_mode,
+        "data_hw_statemode": data_hw_statemode_for(strip_mode),
         "has_flanks": has_flanks,
         "flank_width": flank_width,
         "flank_cell_size": flank_cell_size,

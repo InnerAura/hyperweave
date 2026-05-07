@@ -198,6 +198,10 @@
    falls back to the legacy (last_seam + width) / 2 derivation for genomes
    whose resolvers don't populate status_x. status_cy stays at the vertical
    midpoint so the indicator lines up with the metric band. #}
+{# v0.2.25: gate the status group on show_status_indicator (mode-driven).
+   Stateless strips (STARS | FORKS | VERSION) get NO indicator element at
+   all — same architectural posture as stateless badges. #}
+{% if show_status_indicator %}
 {% if status_x is defined and status_x is number and status_x > 0 %}
 {% set _status_x = status_x %}
 {% else %}
@@ -210,6 +214,7 @@
    {% if status_shape_rendering != "geometricPrecision" %}shape-rendering="{{ status_shape_rendering }}"{% endif %}>
 {% include "frames/strip/" ~ paradigm_strip ~ "-status.j2" %}
 </g>
+{% endif %}
 
 {# ── Border motion SMIL overlay (shared across all paradigms) ── #}
 {% if motion_border_defs | default('') %}

@@ -77,8 +77,8 @@
       the cellular paradigm's glyph_size override. Reconstructing here uses
       the paradigm-driven glyph_render_size and picks fill from the family. #}
 {% set variant_glyph_fill = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
-{% if has_glyph | default(false) and glyph_path %}
-<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y | default(3) }})">
+{% if has_glyph and glyph_path %}
+<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y }})">
   <svg width="{{ glyph_render_size }}" height="{{ glyph_render_size }}" viewBox="{{ glyph_viewbox }}">
     <path d="{{ glyph_path }}" fill="{{ variant_glyph_fill }}"/>
   </svg>
@@ -103,18 +103,14 @@
       font-size="{{ 9 if compact else 12 }}" font-weight="700"
       {% if is_state_badge %}class="hw-value-text" fill="var(--hw-state-value, {{ value_text_fill }})"{% else %}fill="{{ value_text_fill }}"{% endif %}>{{ value }}</text>
 
-{# 13. State indicator (ring + bit) — only in state-mode badges.
-      Uses indicator_y from the resolver: `text_y - font_size*0.3 - ind_size/2`,
-      where 0.3 reflects cap-height ≈ 70% of font size for all display fonts
-      in use. Centralizing the formula in resolve_badge means every paradigm
-      that adopts state-mode badges inherits correct vertical alignment
-      automatically — no per-template re-derivation. #}
-{% if is_state_badge and show_indicator %}
+{# 13. State indicator (ring + bit) — gated on resolver-supplied show_indicator
+      (v0.2.25 mode-driven). indicator_y is text-baseline-pinned by
+      compose/layout.py. inner_bit_w / inner_bit_offset come from the
+      same engine — no template-side arithmetic (Invariant 6). #}
+{% if show_indicator %}
 <g data-hw-zone="status" transform="translate({{ indicator_x }},{{ indicator_y }})">
   <rect class="hw-ring" fill="none" stroke="var(--hw-state-signal, {{ label_text_fill }})" stroke-width="1.2" width="{{ ind_size }}" height="{{ ind_size }}"/>
-  {% set inner_w = ind_size // 2 %}
-  {% set inner_off = (ind_size - inner_w) / 2 %}
-  <rect class="hw-bit" x="{{ inner_off }}" y="{{ inner_off }}" width="{{ inner_w }}" height="{{ inner_w }}"
+  <rect class="hw-bit" x="{{ inner_bit_offset }}" y="{{ inner_bit_offset }}" width="{{ inner_bit_w }}" height="{{ inner_bit_w }}"
         fill="var(--hw-state-signal, {{ label_text_fill }})"/>
 </g>
 {% endif %}
