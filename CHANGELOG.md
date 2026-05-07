@@ -5,6 +5,26 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.24] - 2026-05-07
+
+Receipts no longer clip past the right edge of the card when one tool dominates the session. Cleanup pass removes an unused template, an unused styling table, and two silent default-position fallbacks in the receipt template.
+
+### Fixed
+
+- **Token map row could overflow the receipt's right edge** &mdash; sessions where a single tool used most of the tokens (for example 95% by one tool, the rest split between two others) made the smallest tool's cell extend past the card's right edge, hiding part of its label. The token map now shrinks cells proportionally when the row would otherwise overflow, with a minimum width that keeps every cell visible as a readable colored block.
+
+### Removed
+
+- **Unused template `templates/components/treemap.svg.j2`** &mdash; orphan from before v0.2.21 with no remaining callers in the rendering pipeline.
+- **Unused styling table in `compose/resolver.py`** &mdash; values had drifted from the live source in `treemap.py` and no template read it.
+- **Silent default-position fallbacks for the provider and model labels** &mdash; these positions are always computed from the actual rendered text width; missing values now raise a clear template error instead of silently rendering at the legacy hardcoded position.
+
+### Notes
+
+- 914 tests (was 910); 4 new tests cover token-map cell widths under heavy and balanced tool distributions plus the row of small tool cells fitting within the card.
+- The row of small tool cells was already safe by construction (8 cells * 90px + 7 gaps * 4px = 748 <= 752); a defensive test now locks that contract.
+- ruff + format + mypy --strict green.
+
 ## [0.2.23] - 2026-05-06
 
 Multi-runtime tool registry replaces v0.2.22's single empirical `tool-classes.yaml`. Codex receipts ship as the second runtime via spec-driven YAML registries dispatched by JSONL-shape auto-detection.

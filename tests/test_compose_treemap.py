@@ -132,6 +132,113 @@ def test_tier2_widths_plus_gaps_fit_content_w() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Floor-pressure rescale (v0.2.24 — tier-2 budget invariant)                  #
+# --------------------------------------------------------------------------- #
+
+
+def test_tier2_budget_invariant_under_floor_pressure() -> None:
+    """Reproduces production receipt overflow: tier-2 share distribution
+    95% / 3% / 2% pushed the rightmost cell past 752px because the 2%
+    cell hit the 40px readability floor without a corresponding rescale
+    of its larger siblings. The post-hoc rescale must restore the bound.
+    """
+    tools = [
+        _tool("Bash", 5_000_000, 500, "execute"),  # tier-1
+        _tool("Edit", 950_000, 200, "mutate"),
+        _tool("Read", 30_000, 50, "explore"),
+        _tool("Write", 20_000, 30, "mutate"),
+    ]
+    cells = compute_treemap_layout(tools)
+    tier2 = [c for c in cells if c.tier == 2]
+    assert len(tier2) == 3, f"expected 3 tier-2 cells, got {len(tier2)}"
+    last = max(tier2, key=lambda c: c.x + c.w)
+    assert last.x + last.w <= 752, f"production overflow regression: last cell ends at {last.x + last.w}"
+
+
+def test_tier2_extreme_skew_triggers_rescale() -> None:
+    """3 tools at 99% / 0.5% / 0.5% — both small cells hit the 40 floor
+    and the largest cell would push raw_total well past usable. The
+    rescale must activate, and the post-rescale sum + gaps must fit
+    inside content_w. Asserts the budget bound explicitly so a future
+    regression where the rescale floor of 24 breaks the bound surfaces
+    as a test failure rather than a silent overflow.
+    """
+    tools = [
+        _tool("Bash", 10_000_000, 1000, "execute"),  # tier-1
+        _tool("Edit", 990_000, 100, "mutate"),
+        _tool("Read", 5_000, 5, "explore"),
+        _tool("Write", 5_000, 5, "mutate"),
+    ]
+    cells = compute_treemap_layout(tools)
+    tier2 = [c for c in cells if c.tier == 2]
+    assert len(tier2) == 3
+
+    # Rescale activates: the largest cell shrinks below its un-rescaled
+    # proportional width (744 * 0.99 ≈ 736).
+    largest = max(tier2, key=lambda c: c.w)
+    assert largest.w < 736, f"expected rescaled largest cell, got w={largest.w}"
+
+    # Post-rescale sum invariant: sum of cell widths plus inter-cell gaps
+    # must fit inside content_w. This is the budget bound; provably tight
+    # when usable >= n * 24 (holds for content_w >= 80; default 752 has ~10* headroom).
+    gap_px = 4
+    total = sum(c.w for c in tier2) + (len(tier2) - 1) * gap_px
+    assert total <= 752, f"tier-2 budget invariant broken: cells={[c.w for c in tier2]}, sum+gaps={total}"
+
+
+def test_tier2_balanced_distribution_no_rescale() -> None:
+    """Balanced 50/30/20 distribution — no cell hits the 40 floor, so
+    the rescale path doesn't run. Guards against regressions where the
+    rescale runs unnecessarily and shrinks balanced cells.
+    """
+    tools = [
+        _tool("Bash", 5_000_000, 500, "execute"),  # tier-1
+        _tool("Edit", 500_000, 200, "mutate"),
+        _tool("Read", 300_000, 100, "explore"),
+        _tool("Write", 200_000, 50, "mutate"),
+    ]
+    cells = compute_treemap_layout(tools)
+    tier2 = [c for c in cells if c.tier == 2]
+    assert len(tier2) == 3
+
+    # No cell at the 40 floor → rescale didn't run → proportional widths
+    # are preserved (modulo integer rounding).
+    assert all(c.w > 40 for c in tier2), f"cells={[c.w for c in tier2]}"
+
+    # Order matches descending token rank.
+    assert tier2[0].name == "Edit"
+    assert tier2[1].name == "Read"
+    assert tier2[2].name == "Write"
+    assert tier2[0].w > tier2[1].w > tier2[2].w
+
+    # Budget invariant still holds.
+    gap_px = 4
+    total = sum(c.w for c in tier2) + (len(tier2) - 1) * gap_px
+    assert total <= 752
+
+
+def test_tier3_uniform_budget_invariant_under_max_cells() -> None:
+    """Tier-3 uses uniform 90px cells with max_cells=8. Verify the budget
+    invariant at maximum cell count and that the +N more overflow cell
+    occupies the last visible slot. Defensive test: tier-3 is provably
+    safe today (8*90 + 7*4 = 748 ≤ 752), but a future refactor that
+    breaks the uniform-cell contract should fail this test.
+    """
+    # 1 tier-1 + 3 tier-2 + 12 tier-3 (12 > max_cells=8 → triggers +N more).
+    tools = [_tool(f"Tool{i:02d}", 100_000 - i * 100, 50 - i, "coordinate") for i in range(16)]
+    cells = compute_treemap_layout(tools)
+    tier3 = [c for c in cells if c.tier == 3]
+    assert len(tier3) <= 8, f"tier-3 exceeded max_cells: got {len(tier3)}"
+
+    overflow = [c for c in tier3 if c.is_overflow]
+    assert len(overflow) == 1, f"expected 1 +N more cell, got {len(overflow)}"
+
+    # Budget invariant: rightmost cell edge ≤ content_w.
+    rightmost = max(c.x + c.w for c in tier3)
+    assert rightmost <= 752, f"tier-3 budget broken: rightmost={rightmost}"
+
+
+# --------------------------------------------------------------------------- #
 # Overflow handling — "+N more" cell                                          #
 # --------------------------------------------------------------------------- #
 

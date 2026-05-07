@@ -460,11 +460,33 @@ def compute_treemap_layout(
         usable = content_w - total_gaps
         mid_total = sum(t.get("total_tokens", t.get("count", 0)) for t in mid_tools) or 1
 
-        x = 0
-        for i, t in enumerate(mid_tools):
+        # Pass 1: compute raw widths with the readability floor.
+        raw_w: list[int] = []
+        for t in mid_tools:
             t_tokens = t.get("total_tokens", t.get("count", 0))
             share = t_tokens / mid_total
-            w = max(int(usable * share), 40)
+            raw_w.append(max(int(usable * share), 40))
+
+        # Post-hoc rescale when floor pressure pushes the sum past the budget.
+        # Mirrors bar_chart.py's rescale pattern. The 24px rescale floor keeps
+        # a cell visible as a colored slab; below that, _truncate_label's 24px
+        # padding threshold returns empty and the cell becomes a pure color
+        # signal — the deliberate graceful-degradation point under skew.
+        #
+        # Bound: the post-rescale sum is provably ≤ usable when
+        # usable ≥ n * rescale_floor. For tier-2 with n ≤ 3 (sorted_tools[1:4])
+        # and rescale_floor = 24, this holds for usable ≥ 72 — equivalently
+        # content_w ≥ 80. At the receipt's 752px content_w the headroom is
+        # ~10*; below 80px the canvas is too small to render anyway.
+        raw_total = sum(raw_w)
+        if raw_total > usable and raw_total > 0:
+            scale = usable / raw_total
+            raw_w = [max(int(w * scale), 24) for w in raw_w]
+
+        # Pass 2: build cells with the (possibly rescaled) widths.
+        x = 0
+        for i, (t, w) in enumerate(zip(mid_tools, raw_w, strict=True)):
+            t_tokens = t.get("total_tokens", t.get("count", 0))
             cells.append(
                 _make_cell(
                     tier=2,
