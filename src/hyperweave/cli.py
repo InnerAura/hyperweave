@@ -466,40 +466,14 @@ def genomes_cmd(
             typer.echo(f"  {gid:<30} {g.get('name', gid)}")
 
 
-@app.command("install-hook")
-def install_hook(
-    genome: Annotated[
-        str,
-        typer.Option(
-            "--genome",
-            help=(
-                "Pin telemetry skin for every session receipt (cream, voltage, "
-                "claude-code, or full slug like telemetry-cream). Empty = auto-detect "
-                "from JSONL runtime field at session-end time."
-            ),
-        ),
-    ] = "",
-) -> None:
-    """Install the SessionEnd hook into Claude Code settings."""
+def _install_claude_code_hook(hook_command: str, full_slug: str) -> None:
+    """Write a SessionEnd hook to ``~/.claude/settings.json``.
+
+    Idempotent: prior hyperweave hook entries are removed before the new
+    one is appended, so re-running install-hook with a different
+    ``--genome`` replaces (not stacks) the previous pin.
+    """
     import json
-
-    from hyperweave.compose.resolver import _genome_supports_receipts
-
-    # Validate --genome BEFORE writing the hook. install-hook fails loud (unlike
-    # the receipt CLI which silently falls through) because pinning a bad genome
-    # would produce silent surprises every session-end until someone notices.
-    full_slug = ""
-    if genome:
-        full_slug = _normalize_genome_slug(genome)
-        if not _genome_supports_receipts(full_slug):
-            typer.echo(
-                f"Error: genome '{genome}' (resolved to '{full_slug}') does not support receipts. "
-                "Telemetry skins must declare paradigms.receipt — try 'cream', 'voltage', or 'claude-code'.",
-                err=True,
-            )
-            raise typer.Exit(1)
-
-    hook_command = f"hyperweave session receipt --genome {full_slug}" if full_slug else "hyperweave session receipt"
 
     settings_path = Path.home() / ".claude" / "settings.json"
     settings: dict[str, object] = {}
@@ -529,9 +503,9 @@ def install_hook(
             continue
         cmds = [str(h.get("command", "")) for h in entry_hooks if isinstance(h, dict)]
         if any("hw session" in c and "hyperweave" not in c for c in cmds):
-            continue  # drop stale hw hook
+            continue
         if any("hyperweave session" in c for c in cmds):
-            continue  # drop any prior hyperweave hook so the new --genome wins
+            continue
         cleaned.append(entry)
     hooks["SessionEnd"] = cleaned
     session_end = cleaned
@@ -543,6 +517,144 @@ def install_hook(
 
     pinned = f" (pinned to {full_slug})" if full_slug else " (auto-detect skin)"
     typer.echo(f"Installed SessionEnd hook in {settings_path}{pinned}")
+
+
+def _install_codex_hook(hook_command: str, full_slug: str) -> None:
+    """Write a Stop hook to ``~/.codex/hooks.json`` + enable codex_hooks feature.
+
+    Per developers.openai.com/codex/hooks, Codex CLI fires Stop hooks
+    PER-TURN (not per-session). Receipts therefore render at every turn
+    boundary rather than once at session end. Document this caveat
+    prominently — users may want to manually invoke
+    ``hyperweave session receipt <transcript-path>`` once a session
+    completes instead. v0.2.24 will revisit when codex notify-config
+    surfaces a session-scoped event.
+
+    Also writes ``[features] codex_hooks = true`` to ``~/.codex/config.toml``
+    (preserving any other keys); the feature flag is required for the
+    hook system to fire.
+    """
+    import json
+
+    codex_dir = Path.home() / ".codex"
+    hooks_path = codex_dir / "hooks.json"
+    config_path = codex_dir / "config.toml"
+    codex_dir.mkdir(parents=True, exist_ok=True)
+
+    # ── Update hooks.json: remove prior hyperweave Stop entries, append new one ──
+    config: dict[str, object] = {}
+    if hooks_path.exists():
+        config = json.loads(hooks_path.read_text())
+
+    raw_stop = config.setdefault("Stop", [])
+    stop_hooks: list[object] = raw_stop if isinstance(raw_stop, list) else []
+    if not isinstance(raw_stop, list):
+        config["Stop"] = stop_hooks
+
+    cleaned = []
+    for entry in stop_hooks:
+        if not isinstance(entry, dict):
+            cleaned.append(entry)
+            continue
+        cmd = str(entry.get("command", ""))
+        if "hyperweave session" in cmd:
+            continue  # drop prior hyperweave hook
+        cleaned.append(entry)
+    cleaned.append({"type": "command", "command": hook_command, "timeout": 10})
+    config["Stop"] = cleaned
+    hooks_path.write_text(json.dumps(config, indent=2) + "\n")
+
+    # ── Update config.toml: ensure [features] codex_hooks = true (preserve other keys) ──
+    config_lines: list[str] = []
+    if config_path.exists():
+        config_lines = config_path.read_text().splitlines()
+    has_features_section = any(line.strip() == "[features]" for line in config_lines)
+    has_codex_hooks_key = any(line.strip().startswith("codex_hooks") for line in config_lines)
+    if not has_features_section:
+        config_lines.extend(["", "[features]", "codex_hooks = true"])
+    elif not has_codex_hooks_key:
+        # Insert codex_hooks = true right after [features] header
+        for i, line in enumerate(config_lines):
+            if line.strip() == "[features]":
+                config_lines.insert(i + 1, "codex_hooks = true")
+                break
+    config_path.write_text("\n".join(config_lines) + "\n")
+
+    pinned = f" (pinned to {full_slug})" if full_slug else " (auto-detect skin)"
+    typer.echo(f"Installed Stop hook in {hooks_path}{pinned}")
+    typer.echo(f"Set [features] codex_hooks = true in {config_path}")
+    typer.echo(
+        "Note: Codex Stop fires per-turn — receipts render multiple times per session. "
+        "v0.2.24 will refine to a session-scoped event.",
+        err=True,
+    )
+
+
+# Runtime → install-hook handler. Dispatch by runtime is intrinsic here
+# (different runtimes write to different config files at different paths
+# with different event names); not the polymorphism that resolver.py /
+# parser.py avoid via runtime registries.
+_HOOK_INSTALLERS = {
+    "claude-code": _install_claude_code_hook,
+    "codex": _install_codex_hook,
+}
+
+
+@app.command("install-hook")
+def install_hook(
+    genome: Annotated[
+        str,
+        typer.Option(
+            "--genome",
+            help=(
+                "Pin telemetry skin for every session receipt (cream, voltage, "
+                "claude-code, codex, or full slug like telemetry-cream). Empty = "
+                "auto-detect from JSONL runtime field at session-end time."
+            ),
+        ),
+    ] = "",
+    runtime: Annotated[
+        str,
+        typer.Option(
+            "--runtime",
+            help=(
+                "Agent runtime to install the receipt hook for. 'claude-code' (default) "
+                "writes a SessionEnd hook to ~/.claude/settings.json. 'codex' writes a "
+                "Stop hook to ~/.codex/hooks.json plus enables [features] codex_hooks "
+                "in ~/.codex/config.toml. Codex Stop is per-turn, not per-session — "
+                "see release notes for caveats."
+            ),
+        ),
+    ] = "claude-code",
+) -> None:
+    """Install a session-receipt hook for the chosen agent runtime."""
+    from hyperweave.compose.resolver import _genome_supports_receipts
+
+    if runtime not in _HOOK_INSTALLERS:
+        typer.echo(
+            f"Error: unknown runtime '{runtime}'. Supported: {sorted(_HOOK_INSTALLERS)}",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    # Validate --genome BEFORE writing the hook. install-hook fails loud (unlike
+    # the receipt CLI which silently falls through) because pinning a bad genome
+    # would produce silent surprises every session-end until someone notices.
+    full_slug = ""
+    if genome:
+        full_slug = _normalize_genome_slug(genome)
+        if not _genome_supports_receipts(full_slug):
+            typer.echo(
+                f"Error: genome '{genome}' (resolved to '{full_slug}') does not support receipts. "
+                "Telemetry skins must declare paradigms.receipt — try 'cream', 'voltage', "
+                "'claude-code', or 'codex'.",
+                err=True,
+            )
+            raise typer.Exit(1)
+
+    hook_command = f"hyperweave session receipt --genome {full_slug}" if full_slug else "hyperweave session receipt"
+
+    _HOOK_INSTALLERS[runtime](hook_command, full_slug)
 
 
 @app.command("validate-genome")

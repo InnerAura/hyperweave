@@ -18,10 +18,21 @@ PHI: float = 1.618033988749895
 PHI_TOLERANCE: float = 0.15  # 15% tolerance on rhythm ratios
 
 _HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+_RGBA_RE = re.compile(r"^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[0-9.]+\s*)?\)$")
 
 
 def _is_hex(value: str) -> bool:
     return bool(_HEX_RE.match(value))
+
+
+def _is_color(value: str) -> bool:
+    """True for hex (``#RRGGBB``) or rgb/rgba (``rgba(R,G,B,A)``) values.
+
+    Genomes that participate in atmospheric layering (v0.2.23 codex skin)
+    declare translucent rgba surfaces so a backdrop gradient can bleed
+    through. Genomes that don't atmosphere-layer keep using hex.
+    """
+    return _is_hex(value) or bool(_RGBA_RE.match(value))
 
 
 def _parse_duration(value: str) -> float:
@@ -145,6 +156,35 @@ class GenomeSpec(BaseModel):
     # -- Material (optional) --
     material_specular: str = Field(default="", description="Specular intensity")
     material_roughness: str = Field(default="", description="Surface roughness")
+
+    # -- Atmospheric backdrop (optional, v0.2.23) --
+    # When non-empty, the receipt renders a full-canvas linear gradient as the
+    # backdrop and insets the substrate card by ``card_inset`` pixels so the
+    # atmosphere is visible as a colored ring around the card. Sourced from
+    # the v9 codex specimen's ``codex-atmo`` gradient (linear top-left → bottom-right).
+    atmosphere_stops: list[dict[str, str]] = Field(
+        default_factory=list,
+        description="Linear gradient stops painted full-canvas behind the substrate",
+    )
+    atmosphere_blooms: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "Radial gradient overlays painted between atmosphere and substrate. "
+            "Each entry: {id, cx, cy, r, stops: [{offset, color, opacity}]}. "
+            "Sourced from v9 codex ``bloom-cool`` and ``bloom-violet``."
+        ),
+    )
+    card_top_highlight: bool = Field(
+        default=False,
+        description=(
+            "When True, paint a 32px white→transparent linear gradient over the "
+            "card's top edge (glass-edge highlight; v9 codex specimen)."
+        ),
+    )
+    card_inset: int = Field(
+        default=0,
+        description="Substrate inset in px when atmosphere_stops is active (v9 codex uses 6px)",
+    )
 
     # -- Chrome profile rendering (optional) --
     envelope_stops: list[dict[str, str]] = Field(
@@ -353,6 +393,19 @@ class GenomeSpec(BaseModel):
         "surface_0",
         "surface_1",
         "surface_2",
+        "stroke",
+    )
+    @classmethod
+    def validate_surface_colors(cls, v: str) -> str:
+        """Surfaces and strokes accept hex OR rgba — rgba enables atmospheric
+        translucency in genomes layered over a backdrop gradient (v0.2.23 codex).
+        """
+        if not _is_color(v):
+            msg = f"Expected hex (#RRGGBB) or rgba(...) color, got '{v}'"
+            raise ValueError(msg)
+        return v
+
+    @field_validator(
         "ink",
         "ink_secondary",
         "ink_on_accent",
@@ -362,10 +415,11 @@ class GenomeSpec(BaseModel):
         "accent_warning",
         "accent_error",
         "shadow_color",
-        "stroke",
     )
     @classmethod
     def validate_hex_colors(cls, v: str) -> str:
+        """Ink and accent colors must be hex — rgba would alpha-blend text
+        into the backdrop, which destroys readability."""
         if not _is_hex(v):
             msg = f"Expected hex color (#RRGGBB), got '{v}'"
             raise ValueError(msg)

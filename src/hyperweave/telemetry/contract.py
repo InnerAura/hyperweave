@@ -1,30 +1,86 @@
-"""Thin orchestration: parse -> stages -> corrections -> cost -> dict."""
+"""Thin orchestration: parse -> stages -> corrections -> cost -> dict.
+
+v0.2.23 adds ``parse_transcript_auto`` — a runtime-dispatching parser
+that sniffs the first non-empty JSONL line, matches it against the
+registered runtime detection rules (``telemetry.runtimes``), and
+dynamically imports the matching parser module. ``build_contract`` is
+now runtime-agnostic; the runtime identity travels on
+``SessionTelemetry.runtime`` and is stamped into the assembled dict
+for the resolver's skin + identity precedence chain.
+"""
 
 from __future__ import annotations
 
+import importlib
+import json
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.telemetry.corrections import classify_user_events
 from hyperweave.telemetry.cost import calculate_turn_cost
 from hyperweave.telemetry.models import ToolOutcome
-from hyperweave.telemetry.parser import parse_transcript
+from hyperweave.telemetry.runtimes import RuntimeRegistry, load_all_runtimes
 from hyperweave.telemetry.stages import detect_stages
 
 if TYPE_CHECKING:
     from hyperweave.telemetry.models import SessionTelemetry
 
-# Identifier for the runtime that produced this transcript. The Claude Code
-# parser is the only path through this module; v0.2.22 adds a parallel
-# codex_parser.py that emits "codex" instead, and a `parse_transcript_auto`
-# dispatcher will sniff JSONL schema markers to route between them. The
-# receipt's skin precedence chain reads this field to auto-select the
-# matching genome (telemetry-claude-code vs telemetry-codex etc).
-_RUNTIME = "claude-code"
+
+def _find_matching_runtime(path: str | Path) -> RuntimeRegistry:
+    """Walk the JSONL until a line matches some registry's detection rule.
+
+    Real transcripts often open with metadata lines (Claude Code's
+    leafUUID/summary pair, file-history-snapshot, permission-mode events)
+    that lack runtime-identifying keys. This iterates past those and
+    returns the first registry whose detection rule matches some line —
+    making detection tolerant to header noise without requiring every
+    metadata-line variant to be enumerated in YAML ``type_values``.
+
+    Raises ``ValueError`` if no line in the file matches any registry.
+    """
+    registries = load_all_runtimes()
+    p = Path(path)
+    with p.open() as f:
+        for raw_line in f:
+            stripped = raw_line.strip()
+            if not stripped:
+                continue
+            try:
+                parsed = json.loads(stripped)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(parsed, dict):
+                continue
+            for reg in registries.values():
+                if reg.detection.matches(parsed):
+                    return reg
+    msg = f"No registered runtime detection rule matched any line in: {path}"
+    raise ValueError(msg)
+
+
+def parse_transcript_auto(transcript_path: str) -> SessionTelemetry:
+    """Detect the runtime by scanning the JSONL, then dispatch to its parser.
+
+    The detection rule set is mutually exclusive across registered
+    runtimes (enforced by ``tests/test_runtime_registries.py``), so a
+    Claude Code transcript never sniffs as Codex and vice versa. The
+    matched registry's ``parser_module`` is imported dynamically and
+    its ``parse_transcript`` function is invoked. The returned
+    SessionTelemetry already carries ``runtime`` stamped by its parser;
+    we re-stamp defensively in case of parser-side bugs.
+    """
+    registry = _find_matching_runtime(transcript_path)
+    parser_mod = importlib.import_module(registry.parser_module)
+    parse_fn = parser_mod.parse_transcript  # contract every runtime parser exposes
+    telemetry: SessionTelemetry = parse_fn(transcript_path)
+    if not telemetry.runtime:
+        telemetry.runtime = registry.runtime
+    return telemetry
 
 
 def build_contract(transcript_path: str) -> dict[str, Any]:
-    """Parse transcript and assemble data contract for ComposeSpec."""
-    t = parse_transcript(transcript_path)
+    """Parse transcript (auto-routed to the matching runtime) and assemble data contract."""
+    t = parse_transcript_auto(transcript_path)
     t.stages = detect_stages(t.tool_calls)
     t.user_events = classify_user_events(t.user_events, t.tool_calls)
     cost = sum(
@@ -56,8 +112,9 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
             "project_path": t.project_path or "",
             # Load-bearing for v0.2.21+ skin auto-detection: the receipt
             # resolver's _resolve_telemetry_genome() reads this field to
-            # select the matching telemetry-{runtime} genome JSON.
-            "runtime": _RUNTIME,
+            # select the matching telemetry-{runtime} genome JSON. As of
+            # v0.2.23 it's stamped by the parser, not a contract constant.
+            "runtime": t.runtime,
         },
         "profile": {
             "total_input_tokens": o.total_input_tokens,

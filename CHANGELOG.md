@@ -5,6 +5,30 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.23] - 2026-05-06
+
+Multi-runtime tool registry replaces v0.2.22's single empirical `tool-classes.yaml`. Codex receipts ship as the second runtime via spec-driven YAML registries dispatched by JSONL-shape auto-detection.
+
+### Added
+
+- **Codex receipts** &mdash; new `telemetry-codex` skin renders OpenAI Codex sessions on an atmospheric gradient substrate. `codex_parser.py` handles three tool-call shapes: `function_call`, `custom_tool_call`, `web_search_call`.
+- **Receipt geometry moves to the compose layer** &mdash; width-aware positioning via `measure_text` LUTs handles hero label x-offset, treemap detail truncation in narrow cells, and footer path truncation when the receipt id would collide with the right-aligned session date. `atmosphere_stops` + `card_inset` on `GenomeSpec` declare optional gradient backdrops.
+- **Codex translucent borders** &mdash; card border `rgba(53,70,255,0.20)` and divider stroke `rgba(67,87,246,0.14)` let the atmospheric gradient carry the edge definition.
+- **Per-runtime registries at `data/telemetry/runtimes/{claude-code,codex}.yaml`** &mdash; adding a runtime is a YAML drop-in plus parser module; no dispatcher / resolver / classifier edits needed.
+- **`parse_transcript_auto` dispatcher in `telemetry/contract.py`** &mdash; sniffs JSONL envelope shape and routes to the matching parser; mutual-exclusion guard prevents a Claude line from sniffing as Codex.
+- **`hyperweave install-hook --runtime codex`** &mdash; writes a Stop hook to the Codex hooks config and enables the `codex_hooks` feature flag; per-turn caveat surfaces in CLI help.
+- **Claude Code tool registry completed** &mdash; 9 tools previously unmapped (MultiEdit, Agent, ToolSearch, ScheduleWakeup, Cron×3, EnterWorktree, ExitWorktree); MCP tools resolve via `mcp__` prefix pattern.
+
+### Changed
+
+- **Three hardcoded runtime registries deleted** from `compose/resolver.py`: `_PROVIDER_BY_RUNTIME`, `_TOOL_CLASS`, and the runtime-string branch in `_resolve_telemetry_genome`. All routes go through `telemetry.runtimes`.
+- **Unknown-tool policy: warn, never silent** &mdash; `parser.py` no longer falls through to `ToolClass.EXPLORE` without an audit trail; the warning surfaces tool name + runtime so the YAML can be patched.
+- **`SessionTelemetry.runtime`** is a required field stamped by each parser; `contract._RUNTIME` constant deleted.
+
+### Notes
+
+- 910 tests (was 866); ruff + format + mypy --strict green.
+
 ## [0.2.22] - 2026-05-05
 
 Adaptive time-axis tick algorithm replaces v0.2.21's hardcoded two-tier threshold; one helper now drives both labels and grid lines so they can never drift. README "Agent Receipts" swaps body copy for a skin table and reorders the receipt examples.

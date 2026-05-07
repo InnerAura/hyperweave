@@ -19,6 +19,7 @@ from hyperweave.core.enums import (
 # NOTE: ProfileId import kept for icon resolver (BRUTALIST variant mapping).
 # Marquee resolvers no longer reference ProfileId directly.
 from hyperweave.core.models import ResolvedArtifact
+from hyperweave.telemetry.runtimes import classify_tool, get_runtime
 
 if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec
@@ -39,8 +40,13 @@ def _resolve_telemetry_genome(spec: ComposeSpec, telemetry_data: dict[str, Any])
     if spec.genome_id and _genome_supports_receipts(spec.genome_id):
         return spec.genome_id
     runtime = telemetry_data.get("session", {}).get("runtime") or ""
-    if runtime == "claude-code":
-        return "telemetry-claude-code"
+    if runtime:
+        try:
+            return get_runtime(runtime).genome
+        except KeyError:
+            # Unknown runtime falls through to voltage — receipts still render
+            # under the generic skin even if the agent identity is unrecognized.
+            pass
     return "telemetry-voltage"
 
 
@@ -1386,12 +1392,9 @@ def _fmt_tok(n: int) -> str:
 # identity are orthogonal: skin chooses palette, runtime is the agent that
 # produced the receipt. A user pinning ``--genome telemetry-voltage`` on a
 # Claude Code session sees the voltage palette + Claude Code identity (glyph
-# + label), because they chose a palette, not a different agent. Phase D's
-# skin-keyed mapping conflated these two axes; this reverts to runtime-keyed.
-_PROVIDER_BY_RUNTIME: dict[str, tuple[str, str | None]] = {
-    "claude-code": ("Claude Code", "claude-glyph"),
-    "codex": ("Codex", "codex-glyph"),
-}
+# + label), because they chose a palette, not a different agent. As of
+# v0.2.23 the (label, glyph) pair lives on each runtime's registry rather
+# than in a hardcoded dict here.
 
 
 def _resolve_provider(runtime: str) -> tuple[str, str | None]:
@@ -1400,9 +1403,105 @@ def _resolve_provider(runtime: str) -> tuple[str, str | None]:
     Returns (``"HyperWeave"``, ``None``) when runtime is empty or unknown —
     the glyph slot stays empty and the brand line falls back to the project
     name. Branded runtimes (``claude-code``, ``codex``) carry an explicit
-    identity package regardless of which palette skin is active.
+    identity package regardless of which palette skin is active. The
+    identity package is sourced from the runtime registry's
+    ``provider_label`` + ``glyph`` fields.
     """
-    return _PROVIDER_BY_RUNTIME.get(runtime, ("HyperWeave", None))
+    if not runtime:
+        return ("HyperWeave", None)
+    try:
+        r = get_runtime(runtime)
+    except KeyError:
+        return ("HyperWeave", None)
+    return (r.provider_label, r.glyph)
+
+
+def _truncate_path_left(
+    path: str,
+    max_w: float,
+    *,
+    font_size: float = 9.0,
+    letter_spacing_em: float = 0.04,
+) -> str:
+    """Truncate ``path`` from the LEFT (drop prefix, keep filename end) so the
+    result fits inside ``max_w`` pixels at 9pt JetBrains Mono.
+
+    Receipt footer paths look like ``.hyperweave/receipts/<uuid>.svg``,
+    where the UUID suffix is the only distinguishing information; the
+    ``.hyperweave/receipts/`` prefix is constant noise across every
+    session. Left-truncation preserves the meaningful end and emits
+    ``…<unique-suffix>``, so a footer line that would otherwise collide
+    with the right-aligned session date stays inside the content track.
+
+    Returns the input unchanged when it already fits. Returns the empty
+    string when ``max_w`` is too small even for a single ellipsis. Width
+    measurements use the JetBrains Mono LUT in :mod:`hyperweave.core.text`
+    — same font the receipt template renders the footer with.
+    """
+    from hyperweave.core.text import measure_text
+
+    if not path:
+        return ""
+    full_w = measure_text(
+        path,
+        font_family="JetBrains Mono",
+        font_size=font_size,
+        letter_spacing_em=letter_spacing_em,
+    )
+    if full_w <= max_w:
+        return path
+    ellipsis = "…"
+    ellipsis_w = measure_text(
+        ellipsis,
+        font_family="JetBrains Mono",
+        font_size=font_size,
+        letter_spacing_em=letter_spacing_em,
+    )
+    if ellipsis_w > max_w:
+        return ""
+    # Find the longest suffix that fits with a leading ellipsis. Linear
+    # scan from the front; receipt paths are ~60 chars so n is tiny.
+    for start in range(1, len(path)):
+        suffix_w = measure_text(
+            path[start:],
+            font_family="JetBrains Mono",
+            font_size=font_size,
+            letter_spacing_em=letter_spacing_em,
+        )
+        if suffix_w + ellipsis_w <= max_w:
+            return ellipsis + path[start:]
+    return ellipsis
+
+
+def _measure_text_width(text: str, font_size: int, weight: int = 400) -> float:
+    """Approximate text width in pixels for sans-serif (Söhne / OpenAI Sans / Inter).
+
+    Used by hero-zone layout to compute adaptive offsets — short provider
+    names ("Codex") shouldn't leave dead space where the template assumed
+    longer ones ("Claude Code"). The model label x-position is derived
+    from this measurement, not hardcoded.
+
+    Per-character width approximations (calibrated against v9 specimen at
+    font-size 14 weight 760 where "Codex" measures 46.56px and against
+    Inter at weight 700 where "Claude Code" measures ~89px):
+        narrow (i, l, t, f, .)   : 0.32 x font_size
+        space                    : 0.32 x font_size
+        uppercase + numerals     : 0.65 x font_size
+        lowercase                : 0.55 x font_size
+    Bold weights (>=700) add ~10% width.
+    """
+    narrow = set("iltf.,;:!|")
+    width = 0.0
+    for ch in text:
+        if ch in narrow or ch == " ":
+            width += font_size * 0.32
+        elif ch.isupper() or ch.isdigit():
+            width += font_size * 0.65
+        else:
+            width += font_size * 0.55
+    if weight >= 700:
+        width *= 1.10
+    return width
 
 
 def _format_model_label(model: str) -> str:
@@ -1620,21 +1719,21 @@ def resolve_receipt(
     model = session.get("model", profile_data.get("model", "Claude Session"))
     calls = sum(t.get("count", 0) for t in tools)
 
-    # ── Tool class mapping ──
-    _TOOL_CLASS: dict[str, str] = {
-        "Read": "explore",
-        "Glob": "explore",
-        "Grep": "explore",
-        "Bash": "execute",
-        "Edit": "mutate",
-        "Write": "mutate",
-        "Agent": "coordinate",
-        "Task": "coordinate",
-        "TaskCreate": "coordinate",
-        "TaskUpdate": "coordinate",
-        "Spawn": "coordinate",
-        "Send": "coordinate",
-    }
+    # ── Tool-class fallback for tools that arrive without a tool_class field ──
+    # Real session contracts always carry tool_class on each tool dict (set by
+    # contract._assemble); this fallback only fires for hand-built test mocks
+    # whose tools[] entries lack the field. The single source of truth is the
+    # runtime registry — no Python dict drifting from data/telemetry/runtimes/.
+    _runtime_name = session.get("runtime", "")
+    try:
+        _registry = get_runtime(_runtime_name) if _runtime_name else None
+    except KeyError:
+        _registry = None
+
+    def _classify_tool_name(name: str) -> str:
+        if not _registry:
+            return "explore"  # mocks without runtime stay backward-compatible
+        return classify_tool(_registry, name).value
 
     # ── Dominant phase (drives hero badge + bottom-right phase label) ──
     # Using stages[0] was the old bug — for a session where the first 2-minute
@@ -1654,6 +1753,19 @@ def resolve_receipt(
     # runtime — the skin precedence chain already mapped runtime → skin upstream.
     provider_label, glyph_id = _resolve_provider(session.get("runtime", ""))
     model_label = _format_model_label(model)
+
+    # Adaptive hero-zone spacing: model_label_x depends on the actual
+    # provider_label width. Hardcoded x="142" assumed "Claude Code" sizing
+    # and left an awkward gap for short labels like "Codex". The glyph sits
+    # at x=24, the provider label starts at x=50; we measure the provider
+    # label's pixel width at its render font (size 14, weight 700) and place
+    # the model dot-separator immediately after it with a 8px gap.
+    provider_label_x = 50
+    if provider_label:
+        provider_label_w = _measure_text_width(provider_label, font_size=14, weight=700)
+        model_label_x = int(provider_label_x + provider_label_w + 8)
+    else:
+        model_label_x = provider_label_x  # no provider → no gap
 
     # v0.2.21 risograph hero treatment: split headline into tokens part +
     # signal-colored cost part so the template can render them as separate
@@ -1732,7 +1844,7 @@ def resolve_receipt(
     # at the tier-3 minimum width. See compose/treemap.py for the algorithm.
     content_w = 752
     classified_tools = [
-        {**t, "tool_class": t.get("tool_class") or _TOOL_CLASS.get(t.get("name", ""), "explore")} for t in tools
+        {**t, "tool_class": t.get("tool_class") or _classify_tool_name(t.get("name", ""))} for t in tools
     ]
     # v0.2.21 risograph-canonical: tier_y=(22, 118, 154), tier_h=(88, 32, 24).
     # The template's treemap zone now hosts the TOKEN MAP header inside it
@@ -1854,6 +1966,29 @@ def resolve_receipt(
         footer_tr_parts.append(start_formatted)
     footer_tr = " · ".join(footer_tr_parts)
 
+    # ── Footer overlap guard ──
+    # footer_tl is left-aligned at x=24, footer_tr right-aligned at the
+    # 776 content edge. With long session IDs + branch names the two
+    # strings collide at ~y=470 (production bug from claude-code 37.4M
+    # receipt). Measure both at 9pt JetBrains Mono w/ 0.04em letter-
+    # spacing (matches receipt.svg.j2's rendering), and if they would
+    # overlap, truncate the receipt path from the LEFT — the
+    # ``.hyperweave/receipts/`` prefix is identical across sessions, so
+    # dropping it preserves all the unique information.
+    if receipt_path:
+        from hyperweave.core.text import measure_text
+
+        _footer_gap = 16
+        _tl_w = measure_text(footer_tl, font_family="JetBrains Mono", font_size=9.0, letter_spacing_em=0.04)
+        _tr_w = measure_text(footer_tr, font_family="JetBrains Mono", font_size=9.0, letter_spacing_em=0.04)
+        if _tl_w + _footer_gap + _tr_w > content_w:
+            _prefix_parts = footer_tl_parts[:-1]
+            _prefix = (" · ".join(_prefix_parts) + " · ") if _prefix_parts else ""
+            _prefix_w = measure_text(_prefix, font_family="JetBrains Mono", font_size=9.0, letter_spacing_em=0.04)
+            _max_for_path = content_w - _footer_gap - _tr_w - _prefix_w
+            if _max_for_path > 0:
+                footer_tl = _prefix + _truncate_path_left(receipt_path, _max_for_path)
+
     # v0.2.21 footer swap: BL now reflects session work intensity (user turns +
     # tool errors), BR carries the brand mark. Matches the risograph spec layout.
     footer_bl_parts: list[str] = []
@@ -1872,9 +2007,18 @@ def resolve_receipt(
             "telemetry": tel,
             # Hero zone (v0.2.21 risograph-canonical)
             "provider_label": provider_label,
+            "provider_label_x": provider_label_x,
             "glyph_id": glyph_id,
             "has_glyph": bool(glyph_id),
             "model_label": model_label,
+            "model_label_x": model_label_x,
+            # Atmosphere backdrop (v0.2.23, codex skin) — empty list for skins
+            # that don't declare a backdrop, so the template falls through to
+            # the existing full-canvas substrate.
+            "atmosphere_stops": genome.get("atmosphere_stops", []),
+            "atmosphere_blooms": genome.get("atmosphere_blooms", []),
+            "card_top_highlight": bool(genome.get("card_top_highlight", False)),
+            "card_inset": int(genome.get("card_inset", 0)),
             "hero_profile": hero_profile,
             "hero_tool_class": hero_tool_class,
             "hero_headline": hero_headline,
@@ -2099,6 +2243,12 @@ def resolve_rhythm_strip(
             "loop_label": status_indicator.word,
             "loop_detail": f"{n_errors} err" if n_errors else "no loop",
             "profile_label": (f"{dominant_phase.label} {dominant_phase.pct_time}%" if dominant_phase.label else ""),
+            # v0.2.23: atmosphere backdrop tokens — empty for skins that don't
+            # declare them, so the strip falls through to the original solid
+            # substrate paint. Codex skin uses these to keep its rhythm strip
+            # visually coherent with its receipt.
+            "atmosphere_stops": genome.get("atmosphere_stops", []),
+            "atmosphere_blooms": genome.get("atmosphere_blooms", []),
         },
     }
 

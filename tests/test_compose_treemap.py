@@ -215,15 +215,134 @@ def test_truncate_label_handles_zero_width() -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_tier_text_y_offsets_match_template_branches() -> None:
-    """Lifted from the receipt template's
-    `y="22 if tier==1 else (13 if tier==2 else 12)"` branch."""
+def test_tier_label_y_offsets_match_v0_2_22_baseline() -> None:
+    """v0.2.22 positions: tier-1 label y=22, tier-2 y=13, tier-3 y=12.
+
+    v0.2.23 pushed positioning out of the template into TreemapCell so
+    geometry decisions live in compose/treemap.py. The VALUES match
+    v0.2.22 (the architectural change is structural, not visual);
+    v9-specimen-faithful tier dimensions are deferred to v0.2.24 as
+    a per-genome override.
+    """
     tools = [_tool(f"Tool{i}", 1000 - i * 50, 30 - i, "explore") for i in range(7)]
     cells = compute_treemap_layout(tools)
-    by_tier = {c.tier: c.text_y for c in cells}
+    by_tier = {c.tier: c.label_y for c in cells}
     assert by_tier[1] == 22
     assert by_tier[2] == 13
     assert by_tier[3] == 12
+
+
+def test_fit_detail_to_width_returns_input_when_already_fits() -> None:
+    """Wide cells leave the detail string untouched."""
+    from hyperweave.compose.treemap import _fit_detail_to_width
+
+    out = _fit_detail_to_width(cell_w=200, detail_text="4.2K · 1 calls", detail_size=8.0)
+    assert out == "4.2K · 1 calls"
+
+
+def test_fit_detail_to_width_truncates_with_ellipsis_on_narrow_cell() -> None:
+    """Production bug (codex-small write_stdin): cell_w=68 with detail
+    "4.2K · 1 calls" overflowed the cell's right edge. Per the visual
+    brief, narrow cells truncate to a leading prefix + "…" rather than
+    drop entirely — a partial number ("4.2K · 1…") is more useful than
+    an empty cell.
+
+    The function uses the JetBrains Mono LUT, so the result is bound to
+    real font metrics rather than ``len * 0.6 * size`` multipliers.
+    Trailing whitespace in the prefix is stripped so we get
+    ``"4.2K · 1…"`` not ``"4.2K · 1 …"``.
+    """
+    from hyperweave.compose.treemap import _fit_detail_to_width
+
+    out = _fit_detail_to_width(cell_w=68, detail_text="4.2K · 1 calls", detail_size=8.0)
+    # Truncation produces an ellipsis-terminated prefix, never the full string
+    assert out.endswith("…"), f"expected ellipsis-truncated string, got {out!r}"
+    assert out != "4.2K · 1 calls"
+    # The truncated string starts with the leading numeric (most-informative byte)
+    assert out.startswith("4.2K"), f"truncation should preserve the leading numeric, got {out!r}"
+    # Trailing whitespace was stripped before the ellipsis
+    assert " …" not in out, f"trailing space before ellipsis is not allowed, got {out!r}"
+
+
+def test_fit_detail_to_width_handles_empty_and_pathological_cells() -> None:
+    """Empty input → empty output. A cell so narrow even an ellipsis
+    won't fit returns empty string (template skips the line)."""
+    from hyperweave.compose.treemap import _fit_detail_to_width
+
+    assert _fit_detail_to_width(cell_w=200, detail_text="", detail_size=8.0) == ""
+    # Width below 20 (padding) leaves nothing to draw
+    assert _fit_detail_to_width(cell_w=10, detail_text="anything", detail_size=8.0) == ""
+
+
+def test_tier3_renders_detail_at_v0_2_22_baseline() -> None:
+    """v0.2.22 rendered tier-3 detail (h=24) on every cell. The brief
+    height gate that suppressed it was a regression. Tier-3 cells must
+    show detail again — truncated when the width is too narrow, never
+    dropped because the cell is "too short".
+    """
+    tools = [_tool(f"Tool{i}", 1000 - i * 50, 30 - i, "explore") for i in range(7)]
+    cells = compute_treemap_layout(tools)
+    tier3 = [c for c in cells if c.tier == 3 and not c.is_overflow]
+    assert tier3, "expected tier-3 cells from this fixture"
+    for cell in tier3:
+        assert cell.show_detail is True, f"tier-3 cell '{cell.name}' h={cell.h}: detail must render (v0.2.22 baseline)"
+        assert cell.detail_y == 22, f"tier-3 cell '{cell.name}': detail_y must anchor to h - bottom_pad = 22"
+        assert cell.detail, f"tier-3 cell '{cell.name}': detail string must be non-empty"
+
+
+def test_narrow_tier2_cell_truncates_detail_instead_of_dropping() -> None:
+    """Production bug (codex-small write_stdin, cell_w=68): the narrow
+    cell's detail string overflowed horizontally. The fix is truncation,
+    not deletion — show what fits, ellipsize the rest.
+
+    Distribution pushes the third tier-2 cell to the ~64px range that
+    reproduced the bug. Both sibling cells stay wide enough to render
+    detail untruncated.
+    """
+    tools = [
+        _tool("ExecCommand", 5_000_000, 200, "execute"),  # tier-1
+        _tool("ViewImage", 600_000, 100, "explore"),  # tier-2 wide
+        _tool("WriteStdin", 250_000, 50, "execute"),  # tier-2 mid
+        _tool("ApplyPatch", 80_000, 1, "mutate"),  # tier-2 NARROW
+    ]
+    cells = compute_treemap_layout(tools)
+    tier2 = sorted([c for c in cells if c.tier == 2], key=lambda c: c.x)
+    assert len(tier2) == 3
+    wide, mid, narrow = tier2
+    assert narrow.w < 80, f"fixture should produce a narrow cell; got {narrow.w}px"
+    # Narrow cell shows truncated detail with an ellipsis — NOT empty
+    assert narrow.show_detail is True, (
+        f"narrow tier-2 cell '{narrow.name}' (w={narrow.w}) must render detail (truncated)"
+    )
+    assert narrow.detail.endswith("…"), f"narrow tier-2 detail should be ellipsis-truncated, got {narrow.detail!r}"
+    assert narrow.detail_y == narrow.h - 6, "tier-2 detail anchors to h - 6 (bottom_pad)"
+    # Wider tier-2 cells render the full untruncated detail
+    assert wide.show_detail is True
+    assert not wide.detail.endswith("…"), f"wide cell should not be truncated, got {wide.detail!r}"
+    assert mid.show_detail is True
+    assert not mid.detail.endswith("…"), f"mid cell should not be truncated, got {mid.detail!r}"
+
+
+def test_detail_y_anchors_to_cell_bottom_for_all_non_overflow_cells() -> None:
+    """Architectural property: ``cell.detail_y == cell.h - _TIER_BOTTOM_PAD[tier]``
+    on every non-overflow cell, regardless of whether the detail string
+    was truncated.
+
+    Detail baseline is COMPUTED from cell.h, not hardcoded. The width
+    truncation gate operates on the detail STRING, not on the y-anchor —
+    so the line position stays predictable across all skin variants.
+    """
+    from hyperweave.compose.treemap import _TIER_BOTTOM_PAD
+
+    tools = [_tool(f"Tool{i}", 1000 - i * 50, 30 - i, "explore") for i in range(7)]
+    cells = compute_treemap_layout(tools)
+    for cell in cells:
+        if cell.is_overflow:
+            continue
+        expected = cell.h - _TIER_BOTTOM_PAD[cell.tier]
+        assert cell.detail_y == expected, (
+            f"tier-{cell.tier} cell h={cell.h}: detail_y={cell.detail_y} should be h - bottom_pad ({expected})"
+        )
 
 
 def test_tier1_pct_uses_total_token_share() -> None:

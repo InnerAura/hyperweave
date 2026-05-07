@@ -31,6 +31,23 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from hyperweave.core.text import measure_text
+
+# Receipt detail text is rendered via class="m" in the receipt template,
+# which the assembler maps to ``font-family: var(--dna-font-mono)``. Across
+# all four shipped telemetry skins (voltage / claude-code / cream / codex)
+# that resolves to JetBrains Mono — the LUT we have a metric file for.
+# Unknown families fall back to Inter per the ``measure_text`` contract,
+# so a future skin with a different mono won't crash, just measure
+# approximately.
+_DETAIL_FONT_FAMILY = "JetBrains Mono"
+
+# Horizontal padding budget reserved on each side of the detail line
+# inside its cell (template renders detail at x=10 for tier-2/3 and x=14
+# for tier-1; both leave at least 10px on the right). The width gate
+# subtracts twice this so detail can never butt either edge.
+_DETAIL_HORIZONTAL_PADDING = 20
+
 
 @dataclass(frozen=True)
 class TreemapCell:
@@ -38,8 +55,10 @@ class TreemapCell:
 
     Geometry (``x``/``y``/``w``/``h``) is content-area-relative — the
     receipt template applies a ``translate()`` to position the panel
-    inside the SVG. The ``text_y`` field carries the label y-offset
-    that previously lived as an inline tier branch in the template.
+    inside the SVG. v0.2.23 pushed all label/detail positioning out of
+    the template (which previously had hardcoded y-offsets per tier)
+    into per-cell fields here, so geometry decisions live in the compose
+    layer and the template stays a dumb stamp.
     """
 
     tier: int
@@ -55,26 +74,118 @@ class TreemapCell:
     detail: str
     tool_class: str
     errors: int
-    text_y: int
-    """Tier-derived label y-offset. Was inline ``y="22 if tier==1 else 13 ..."``."""
+    label_y: int
+    """Y-offset of the label baseline within the cell."""
+    label_size: float
+    """Font size of the label in pixels."""
+    detail_y: int
+    """Y-offset of the detail baseline within the cell."""
+    detail_size: float
+    """Font size of the detail line in pixels."""
+    show_detail: bool
+    """False when the cell can't fit both label and detail without overflow."""
+    pct_y: int
+    """Y-offset of the tier-1 hero percentage baseline. Zero on non-hero cells."""
+    pct_size: float
+    """Font size of the tier-1 hero percentage. Zero on non-hero cells."""
     is_overflow: bool
     """True for the synthesized ``+N more`` cell."""
     accent_w: int
-    """Top accent bar width — always equals cell ``w`` (full-width risograph treatment)."""
+    """Accent bar width — equals ``w`` for top accent, fixed 3-4px for left accent."""
     accent_h: float
-    """Top accent bar height — always 1.5px for risograph spec."""
+    """Accent bar height — 1.5px for top accent, equals ``h`` for left accent."""
     accent_position: str
-    """Always ``"top"`` for v0.2.21 risograph-canonical structure."""
+    """``"top"`` (v0.2.21 risograph) or ``"left"`` (v9 codex specimen)."""
     is_hero: bool
-    """True for tier-1 cells; drives the 38pt hero percentage rendering in the template."""
+    """True for tier-1 cells; drives the hero percentage rendering in the template."""
 
 
-# Tier-derived label y-offsets — were template-side branches before centralization.
-_TIER_TEXT_Y: dict[int, int] = {1: 22, 2: 13, 3: 12}
+# ── Per-tier typography ──
+# Label baseline y is tier-anchored (top-of-cell positioning).
+# Detail baseline y is COMPUTED ADAPTIVELY via _TIER_BOTTOM_PAD below.
+_TIER_LABEL_Y: dict[int, int] = {1: 22, 2: 13, 3: 12}
+_TIER_LABEL_SIZE: dict[int, float] = {1: 13.0, 2: 9.5, 3: 9.0}
+_TIER_DETAIL_SIZE: dict[int, float] = {1: 10.0, 2: 8.0, 3: 8.0}
+
+# Per-tier baseline distance from cell BOTTOM. The detail line always
+# anchors to the cell's lower edge: ``detail_y = cell.h - bottom_pad``.
+# v0.2.22 baseline (preserved exactly):
+#   tier-1 h=88 bottom_pad=8  → detail_y=80
+#   tier-2 h=32 bottom_pad=6  → detail_y=26
+#   tier-3 h=24 bottom_pad=2  → detail_y=22
+# Width overflow is handled by :func:`_fit_detail_to_width`, which
+# ellipsizes the detail STRING in place — never drops the line.
+# A snug-but-readable detail beats a missing one; truncation preserves
+# the leading numeric (``"4.2K · 1…"``) where dropping discards it.
+_TIER_BOTTOM_PAD: dict[int, int] = {1: 8, 2: 6, 3: 2}
+
+# Tier-1 hero percentage — matches v0.2.22 template hardcode (y=66 size=38).
+_TIER1_PCT_Y: int = 66
+_TIER1_PCT_SIZE: float = 38.0
 
 # Per-tier character widths used by :func:`_truncate_label`.
-# Matches the receipt template's font-size mapping (tier 1 = 13px, others = 9px).
 _TIER_CHAR_W: dict[int, int] = {1: 8, 2: 6, 3: 6}
+
+
+def _fit_detail_to_width(cell_w: int, detail_text: str, detail_size: float) -> str:
+    """Truncate ``detail_text`` with an ellipsis to fit ``cell_w`` minus padding.
+
+    Returns the original string when it already fits; otherwise returns
+    the longest prefix that fits alongside a trailing ``…``. Trailing
+    whitespace is stripped from the prefix so we get ``"4.2K · 1…"``
+    rather than ``"4.2K · 1 …"``. Empty input returns an empty string.
+
+    Architectural intent: a cell showing partial information
+    (``"4.2K · 1…"``) is more useful than an empty cell. An earlier
+    revision of this gate dropped detail entirely on cells that didn't
+    fit; the v0.2.22 baseline kept detail on every cell, sometimes
+    browser-clipped. This function makes truncation explicit and
+    ellipsized rather than silently clipped or dropped — and removes
+    the height gate that mistakenly suppressed tier-3 detail.
+
+    Width measurements come from real per-font-family LUTs in
+    :mod:`hyperweave.core.text` — no ``len(text) * 0.6 * font_size``
+    magic multipliers. The receipt template renders detail with
+    ``class="m"`` → ``var(--dna-font-mono)``, which all four shipped
+    telemetry skins resolve to JetBrains Mono. Unknown families fall
+    back to Inter metrics with a one-shot warning (per the
+    ``measure_text`` contract), so a future skin with a different mono
+    font truncates approximately rather than crashing.
+    """
+    if not detail_text:
+        return ""
+    available = cell_w - _DETAIL_HORIZONTAL_PADDING
+    if available <= 0:
+        return ""
+    full_w = measure_text(
+        detail_text,
+        font_family=_DETAIL_FONT_FAMILY,
+        font_size=detail_size,
+    )
+    if full_w <= available:
+        return detail_text
+    ellipsis = "…"
+    ellipsis_w = measure_text(
+        ellipsis,
+        font_family=_DETAIL_FONT_FAMILY,
+        font_size=detail_size,
+    )
+    if available < ellipsis_w:
+        return ""
+    # Linear scan from the longest viable prefix downward. O(n²) on
+    # length, but n ≤ ~30 for token/call labels — a binary search would
+    # add code without measurable gain. Linear order also stops at the
+    # first fit, so the typical narrow-cell case (~10 chars) is fast.
+    for length in range(len(detail_text) - 1, 0, -1):
+        prefix = detail_text[:length]
+        prefix_w = measure_text(
+            prefix,
+            font_family=_DETAIL_FONT_FAMILY,
+            font_size=detail_size,
+        )
+        if prefix_w + ellipsis_w <= available:
+            return prefix.rstrip() + ellipsis
+    return ellipsis
 
 
 def _format_tokens(n: int) -> str:
@@ -145,6 +256,20 @@ def _make_cell(
         # Horizontal stripe across the TOP edge spanning full cell width.
         accent_w_val = w
         accent_h_val = 1.5
+    label_y = _TIER_LABEL_Y[tier]
+    label_size = _TIER_LABEL_SIZE[tier]
+    detail_size = _TIER_DETAIL_SIZE[tier]
+    # ── Truncate, never drop ──
+    # Visual baseline (v0.2.22) kept detail on every cell; the height
+    # gate that briefly replaced this was an over-correction. A snug
+    # tier-3 line (h=24) is more useful than a missing one. Width is
+    # the only real overflow risk now, and we resolve it by ellipsizing
+    # the detail string in place rather than dropping the whole line.
+    detail = _fit_detail_to_width(w, detail, detail_size)
+    show_detail = bool(detail)
+    detail_y = h - _TIER_BOTTOM_PAD[tier]
+    pct_y = _TIER1_PCT_Y if tier == 1 else 0
+    pct_size = _TIER1_PCT_SIZE if tier == 1 else 0.0
     return TreemapCell(
         tier=tier,
         x=x,
@@ -157,7 +282,13 @@ def _make_cell(
         detail=detail,
         tool_class=tool.get("tool_class", "coordinate"),
         errors=int(tool.get("blocked", 0)) + int(tool.get("errors", 0)),
-        text_y=_TIER_TEXT_Y[tier],
+        label_y=label_y,
+        label_size=label_size,
+        detail_y=detail_y,
+        detail_size=detail_size,
+        show_detail=show_detail,
+        pct_y=pct_y,
+        pct_size=pct_size,
         is_overflow=False,
         accent_w=accent_w_val,
         accent_h=accent_h_val,
@@ -239,7 +370,13 @@ def _layout_tier3(
                 detail="",
                 tool_class="coordinate",
                 errors=0,
-                text_y=_TIER_TEXT_Y[3],
+                label_y=_TIER_LABEL_Y[3],
+                label_size=_TIER_LABEL_SIZE[3],
+                detail_y=h - _TIER_BOTTOM_PAD[3],
+                detail_size=_TIER_DETAIL_SIZE[3],
+                show_detail=False,
+                pct_y=0,
+                pct_size=0.0,
                 is_overflow=True,
                 accent_w=ov_accent_w,
                 accent_h=ov_accent_h,

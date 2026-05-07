@@ -96,6 +96,35 @@ _REAL_TRANSCRIPTS: list[tuple[str, Path]] = [
 ]
 
 
+# ── Real-codex-transcript corpus (v0.2.23) ──
+# Codex sessions live at ``~/.codex/sessions/YYYY/MM/DD/rollout-TIMESTAMP-UUID.jsonl``.
+# Same pattern as ``_REAL_TRANSCRIPTS`` above: user-machine-only paths with
+# graceful fallback when missing. Two sizes give the proofset both a sparse
+# (web_search-heavy) and dense (apply_patch-heavy) codex receipt.
+_REAL_CODEX_TRANSCRIPTS: list[tuple[str, Path]] = [
+    (
+        "codex-small",
+        Path.home()
+        / ".codex"
+        / "sessions"
+        / "2026"
+        / "05"
+        / "03"
+        / "rollout-2026-05-03T19-16-03-019df057-8ee2-7543-974a-b0bb0bf3567d.jsonl",
+    ),
+    (
+        "codex-large",
+        Path.home()
+        / ".codex"
+        / "sessions"
+        / "2026"
+        / "04"
+        / "30"
+        / "rollout-2026-04-30T09-51-02-019ddedf-318a-7192-b29b-c0eab28e2308.jsonl",
+    ),
+]
+
+
 def _load_real_telemetry(path: Path) -> dict[str, Any] | None:
     """Build a contract from a JSONL transcript, or return None if missing.
 
@@ -393,16 +422,46 @@ def generate_static() -> int:
     telemetry_dir = OUT / "proofset" / "telemetry"
 
     # Available transcripts: always include "mock"; add each real transcript
-    # only when its path exists.
+    # only when its path exists. Mock data has no inherent runtime so it
+    # renders under all four skins (chrome demonstration on a neutral base).
+    # Real transcripts render only under (a) their runtime's matched skin and
+    # (b) telemetry-voltage as the universal fallback — cross-skin renders
+    # (codex data in cream skin, claude data in codex skin, etc.) produce
+    # noise rather than signal.
     transcript_corpus: list[tuple[str, dict[str, Any]]] = [("mock", MOCK_TELEMETRY)]
     for label, transcript_path in _REAL_TRANSCRIPTS:
         contract = _load_real_telemetry(transcript_path)
         if contract is not None:
             transcript_corpus.append((label, contract))
+    for label, transcript_path in _REAL_CODEX_TRANSCRIPTS:
+        contract = _load_real_telemetry(transcript_path)
+        if contract is not None:
+            transcript_corpus.append((label, contract))
 
-    # 3 skins x N transcripts x 2 frame types
-    for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream"):
-        for label, telemetry in transcript_corpus:
+    # ── Skin matrix per transcript ──
+    # Mock: all 4 skins (chrome showcase). Real transcript: matched-runtime skin
+    # + telemetry-voltage. Matched skin is sourced from the runtime registry
+    # (no string-literal coupling) — see telemetry.runtimes.get_runtime.
+    from hyperweave.telemetry.runtimes import get_runtime
+
+    all_skins = ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream", "telemetry-codex")
+
+    def _skins_for(label: str, telemetry: dict[str, Any]) -> tuple[str, ...]:
+        if label == "mock":
+            return all_skins
+        runtime = telemetry.get("session", {}).get("runtime", "")
+        if not runtime:
+            return ("telemetry-voltage",)
+        try:
+            matched = get_runtime(runtime).genome
+        except KeyError:
+            return ("telemetry-voltage",)
+        if matched == "telemetry-voltage":
+            return (matched,)
+        return (matched, "telemetry-voltage")
+
+    for label, telemetry in transcript_corpus:
+        for skin in _skins_for(label, telemetry):
             for ftype in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
                 svg = _compose(ftype, skin, telemetry_data=telemetry)
                 filename = f"{ftype.value.replace('-', '_')}_{skin}_{label}.svg"
@@ -996,35 +1055,50 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append(f"![divider {slug}](proofset/inneraura/dividers/{slug}.svg)")
         lines.append("")
 
-    # Telemetry visual-fidelity matrix (v0.2.21): 3 skins x N transcripts x 2 frames.
+    # Telemetry visual-fidelity matrix (v0.2.23): runtime-paired skins.
+    # Each transcript renders only under its matched-runtime skin + voltage
+    # (the universal fallback). Mock data renders under all 4 skins for chrome
+    # demonstration on a neutral baseline. Cross-runtime renders (codex data
+    # in cream skin, claude-code data in codex skin) are NOT generated —
+    # they're noise rather than signal.
     lines.extend(["## Telemetry", ""])
     lines.append(
-        "*Risograph-canonical structure across all 3 skins, palette per genome JSON. "
-        "Each skin renders against a baseline mock + (when available) 3 real session "
-        "transcripts of varying size (small / medium / large) so visual fidelity is "
-        "verified across both sparse and dense data. Skin precedence chain: explicit "
-        "`--genome` override → JSONL `runtime` field → `telemetry-voltage` fallback.*"
+        "*Each real transcript renders against its matched-runtime skin plus telemetry-voltage "
+        "(the universal fallback). Mock data demonstrates all 4 skin chromes on a neutral baseline. "
+        "Skin precedence chain: explicit `--genome` override → JSONL `runtime` field → `telemetry-voltage` fallback.*"
     )
     lines.append("")
 
-    # Re-derive the actual corpus that was rendered (mirror generate_static logic).
-    corpus_labels: list[str] = ["mock"]
-    for label, transcript_path in _REAL_TRANSCRIPTS:
-        if transcript_path.exists():
-            corpus_labels.append(label)
-
-    for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream"):
-        lines.append(f"### {skin}")
+    # Mock under all 4 skins
+    lines.extend(["### Mock (all 4 skins — chrome demonstration)", ""])
+    for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream", "telemetry-codex"):
+        lines.append(f"**{skin}**")
         lines.append("")
-        for label in corpus_labels:
+        for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
+            lines.append(f"![{ft}-{skin}-mock](proofset/telemetry/{ft.value.replace('-', '_')}_{skin}_mock.svg)")
+            lines.append("")
+
+    # Real transcripts grouped by source runtime (matched skin + voltage)
+    real_groups: list[tuple[str, list[tuple[str, Path]], str]] = [
+        ("Claude Code transcripts", _REAL_TRANSCRIPTS, "telemetry-claude-code"),
+        ("Codex transcripts", _REAL_CODEX_TRANSCRIPTS, "telemetry-codex"),
+    ]
+    for group_title, group_transcripts, matched_skin in real_groups:
+        labels_present = [label for label, p in group_transcripts if p.exists()]
+        if not labels_present:
+            continue
+        lines.extend([f"### {group_title} ({matched_skin} + telemetry-voltage)", ""])
+        for label in labels_present:
             lines.append(f"**{label}**")
             lines.append("")
-            for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
-                lines.append(
-                    f"![{ft}-{skin}-{label}](proofset/telemetry/{ft.value.replace('-', '_')}_{skin}_{label}.svg)"
-                )
-                lines.append("")
-    lines.append("### master-card (voltage only, v0.2.21)")
+            for skin in (matched_skin, "telemetry-voltage"):
+                for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
+                    lines.append(
+                        f"![{ft}-{skin}-{label}](proofset/telemetry/{ft.value.replace('-', '_')}_{skin}_{label}.svg)"
+                    )
+                    lines.append("")
+
+    lines.append("### master-card (voltage only, deferred to v0.3.0)")
     lines.append("")
     lines.append("![master-card](proofset/telemetry/master_card.svg)")
     lines.append("")

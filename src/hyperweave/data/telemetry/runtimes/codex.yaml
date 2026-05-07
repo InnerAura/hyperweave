@@ -1,0 +1,59 @@
+# Codex runtime registry.
+#
+# Codex docs (developers.openai.com/codex/cli/reference, /codex/mcp) do
+# not enumerate the runtime tool spec — they document configuration and
+# subcommands, not tool emission. This registry is therefore corpus-
+# validated rather than spec-driven: the 14-session sweep on this
+# machine surfaced 8 distinct tool-call shapes total. Future Codex
+# releases may add tools — the unknown_tool_policy will surface them
+# loudly via warning the first time they appear.
+
+runtime: codex
+parser: hyperweave.telemetry.codex_parser
+genome: telemetry-codex
+glyph: codex-glyph
+provider_label: Codex
+
+# Detection: Codex transcripts wrap every entry in a {timestamp, type,
+# payload} envelope. Top-level type values: session_meta (header),
+# turn_context (per-turn config), event_msg (operational events),
+# response_item (model output), compacted (history compaction).
+detection:
+  shape: envelope
+  required_keys:
+    - timestamp
+    - type
+    - payload
+  type_values:
+    - session_meta
+    - event_msg
+    - response_item
+    - turn_context
+    - compacted
+
+# Tool table sourced from the 14-session corpus on this machine.
+# ── 6 function_call tools (response_item.payload.type=function_call,
+#    keyed by payload.name) ──
+# ── 1 custom_tool_call tool (response_item.payload.type=custom_tool_call,
+#    keyed by payload.name) ──
+# ── 1 web_search_call shape (response_item.payload.type=web_search_call,
+#    NO payload.name field; the parser synthesizes the registry key
+#    "web_search" so this row matches it) ──
+tools:
+  exec_command: execute       # primary shell (newer Codex; JSON args)
+  shell_command: execute      # alternative shell variant (older Codex; both seen)
+  write_stdin: execute        # interactive stdin write to a running process
+  view_image: explore         # image content reader
+  apply_patch: mutate         # custom_tool_call — patch text payload
+  request_user_input: coordinate
+  update_plan: coordinate     # Codex's TaskUpdate analog
+  web_search: explore         # web_search_call shape — synthesized key (no payload.name)
+
+# Codex docs don't specify MCP tool naming convention; this prefix is
+# speculative. Will surface as warnings if wrong on first MCP-using
+# Codex transcript; revise then.
+patterns:
+  - prefix: "mcp_"
+    class: coordinate
+
+unknown_tool_policy: warn

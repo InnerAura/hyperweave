@@ -1,12 +1,16 @@
-"""Pydantic models for parsed Claude Code session telemetry.
+"""Pydantic models for parsed agent-runtime session telemetry.
 
 These models represent the structured output of parsing a JSONL
 transcript -- tool calls, agent spans, detected stages, user events,
-and aggregate session metrics.
+and aggregate session metrics. Multi-runtime as of v0.2.23: each
+SessionTelemetry instance carries the runtime that produced it
+(``claude-code``, ``codex``, ...) so downstream consumers (resolver,
+receipt skin precedence) can dispatch without sniffing.
 
 Ported from aura-research/systems/hooks/hw_claude_code_hook/models.py.
-Config maps (TOOL_CLASS_MAP, STAGE_LABEL_MAP) loaded from YAML at
-import time; enums stay in Python -- they are types, not config.
+``STAGE_LABEL_MAP`` loaded from YAML at import time; tool-class
+classification has moved to ``telemetry.runtimes`` (per-runtime
+registries) per Phase A of v0.2.23.
 """
 
 from __future__ import annotations
@@ -88,11 +92,6 @@ class ConfidenceLevel(StrEnum):
 # --------------------------------------------------------------------------- #
 # CONFIG MAPS (loaded from YAML)
 # --------------------------------------------------------------------------- #
-
-_raw_tool_classes: dict[str, str] = _load_yaml("tool-classes.yaml")
-TOOL_CLASS_MAP: dict[str, ToolClass] = {  # loaded from yaml config
-    name: ToolClass(cls) for name, cls in _raw_tool_classes.items()
-}
 
 _raw_stage_labels: dict[str, str] = _load_yaml("stage-labels.yaml")
 STAGE_LABEL_MAP: dict[ToolClass, StageLabel] = {  # loaded from yaml config
@@ -252,6 +251,14 @@ class SessionTelemetry(BaseModel):
     project_path: str
     git_branch: str | None = None
     model: str | None = None
+    runtime: str = Field(
+        description=(
+            "Agent runtime identifier (claude-code, codex, ...). Stamped by the "
+            "parser; consumed by resolver._resolve_telemetry_genome and ._resolve_provider "
+            "to route skin + identity (genome JSON, glyph id, provider label) without "
+            "any 'if runtime == ...' branching. See telemetry.runtimes."
+        ),
+    )
     timestamp: datetime = Field(description="Session start time")
     duration_minutes: float = Field(default=0.0, description="Wall-clock duration")
     tool_calls: list[ToolCall] = Field(

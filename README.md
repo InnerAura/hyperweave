@@ -91,14 +91,19 @@ hyperweave install-hook
 </p>
 <p align="center"><sub>Same data, different livery &mdash; claude-code</sub></p>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_codex_large.svg" alt="session receipt — codex agent transcript auto-detected from JSONL shape" width="800"/>
+</p>
+<p align="center"><sub>Codex transcripts auto-detect from the JSONL shape</sub></p>
+
 The livery matches the agent that produced the session:
 
-| Agent | Livery | Aesthetic |
-|-------|--------|-----------|
-| Claude Code | `claude-code` | warm paper, terra-coral signal |
-| Codex | `codex` | *(coming soon)* |
-| &mdash; | `voltage` | titanium dark, champagne signal |
-| &mdash; | `cream` | risograph, fluoro-orange |
+| Agent | Livery |
+|-------|--------|
+| Claude Code | `claude-code` |
+| Codex | `codex` |
+| &mdash; | `voltage` |
+| &mdash; | `cream` |
 
 Auto-detected from the session transcript. Pin a different default with `hyperweave install-hook --genome voltage`.
 

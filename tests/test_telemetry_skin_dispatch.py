@@ -67,10 +67,22 @@ def test_runtime_claude_code_auto_detects_skin() -> None:
     assert _resolve_telemetry_genome(spec, _tel("claude-code")) == "telemetry-claude-code"
 
 
-def test_unknown_runtime_falls_back_to_voltage() -> None:
-    """Codex / opencode / unknown runtimes fall through to telemetry-voltage in v0.2.21."""
+def test_codex_runtime_auto_detects_skin() -> None:
+    """v0.2.23: codex runtime registry resolves to its dedicated telemetry-codex skin."""
     spec = _spec("receipt")
-    for unknown in ("codex", "opencode", "gemini", "unknown-runtime"):
+    assert _resolve_telemetry_genome(spec, _tel("codex")) == "telemetry-codex"
+
+
+def test_unknown_runtime_falls_back_to_voltage() -> None:
+    """Truly unregistered runtimes (opencode/gemini/unknown) fall through to telemetry-voltage.
+
+    v0.2.23 added codex to the runtime registry; it now resolves to its own
+    skin (see ``test_codex_runtime_auto_detects_skin``). Future runtimes
+    (opencode, gemini, hermes) follow the same pattern: drop a YAML in
+    ``data/telemetry/runtimes/`` and the resolver picks them up.
+    """
+    spec = _spec("receipt")
+    for unknown in ("opencode", "gemini", "unknown-runtime"):
         assert _resolve_telemetry_genome(spec, _tel(unknown)) == "telemetry-voltage"
 
 
@@ -103,10 +115,11 @@ def test_unsupported_genome_falls_through_to_runtime() -> None:
 
 
 def test_genome_supports_receipts_for_telemetry_skins() -> None:
-    """All 3 telemetry skins declare paradigms.receipt → True."""
+    """All 4 telemetry skins declare paradigms.receipt → True."""
     assert _genome_supports_receipts("telemetry-voltage") is True
     assert _genome_supports_receipts("telemetry-claude-code") is True
     assert _genome_supports_receipts("telemetry-cream") is True
+    assert _genome_supports_receipts("telemetry-codex") is True
 
 
 def test_genome_supports_receipts_returns_false_for_brutalist() -> None:

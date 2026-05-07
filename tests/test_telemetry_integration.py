@@ -242,11 +242,11 @@ def test_receipt_treemap_cell_dimensions_fit_content_width() -> None:
 
 
 def test_receipt_tier2_vertical_stacking() -> None:
-    """Tier-2 treemap cells stack name above detail (distinct y values).
+    """Tier-2 treemap cells stack label above detail (distinct y values).
 
-    v0.2.21 template uses `data-hw-tier="2"` on the cell wrapper and reads
-    label_y / detail_y from the resolver's tier_styles table. Test now
-    validates the stacking via TreemapCell attribute inspection.
+    v0.2.23 pushed positioning into ``TreemapCell.label_y`` / ``detail_y``
+    so the template stays a dumb stamp. Test validates the stacking
+    invariant via cell attribute inspection.
     """
     from hyperweave.compose.resolver import resolve_receipt
     from hyperweave.core.models import ComposeSpec
@@ -256,10 +256,10 @@ def test_receipt_tier2_vertical_stacking() -> None:
     ctx = result["context"]
     tier2_cells = [c for c in ctx["treemap_cells"] if c.tier == 2]
     assert len(tier2_cells) >= 2, f"Expected >=2 tier-2 cells, got {len(tier2_cells)}"
-    tier_styles = ctx["tier_styles"]
-    detail_y = tier_styles[2]["detail_y"]
     for cell in tier2_cells:
-        assert cell.text_y != detail_y, f"Tier-2 cell '{cell.name}' has label/detail at same y — stacking regression"
+        assert cell.label_y != cell.detail_y, (
+            f"Tier-2 cell '{cell.name}' has label/detail at same y — stacking regression"
+        )
 
 
 def test_receipt_treemap_error_annotations() -> None:
@@ -650,3 +650,112 @@ def test_hook_mode_silent_when_transcript_path_does_not_exist(tmp_path: Path) ->
     assert result.exit_code == 0, (
         f"Nonexistent transcript path must not fail the hook. exit={result.exit_code}, output={result.output!r}"
     )
+
+
+# ── Footer overlap fix (v0.2.23 close-out) ───────────────────────────────
+
+
+def test_truncate_path_left_preserves_short_input() -> None:
+    """A path that already fits returns unchanged (no spurious ellipsis)."""
+    from hyperweave.compose.resolver import _truncate_path_left
+
+    assert _truncate_path_left("short.svg", max_w=400) == "short.svg"
+
+
+def test_truncate_path_left_drops_prefix_keeps_filename_end() -> None:
+    """Production bug: ``.hyperweave/receipts/<uuid>.svg`` collided with the
+    right-aligned session date on the claude-code 37.4M receipt.
+
+    Per the architectural intent, the unique UUID suffix is the only
+    distinguishing information; the ``.hyperweave/receipts/`` prefix is
+    constant noise. Left-truncation drops the prefix and keeps the
+    UUID + extension.
+    """
+    from hyperweave.compose.resolver import _truncate_path_left
+
+    long_path = ".hyperweave/receipts/4f7565a5-da44-4fbb-9234-b6f9cb2a1be6.svg"
+    out = _truncate_path_left(long_path, max_w=200)
+    assert out.startswith("…"), f"left-truncation must prefix with ellipsis, got {out!r}"
+    assert out.endswith(".svg"), f"filename extension must survive truncation, got {out!r}"
+    # The unique-id tail must be preserved (we keep the part the user can use to disambiguate)
+    assert "b6f9cb2a1be6" in out, f"trailing uuid bytes should remain, got {out!r}"
+
+
+def test_truncate_path_left_returns_empty_when_width_below_ellipsis() -> None:
+    """A budget too small even for the ellipsis returns empty string —
+    the template's downstream rendering handles this gracefully."""
+    from hyperweave.compose.resolver import _truncate_path_left
+
+    assert _truncate_path_left("anything.svg", max_w=2) == ""
+
+
+def test_truncate_path_left_handles_empty_input() -> None:
+    """Empty string in → empty string out (no spurious ellipsis)."""
+    from hyperweave.compose.resolver import _truncate_path_left
+
+    assert _truncate_path_left("", max_w=400) == ""
+
+
+def test_receipt_footer_truncates_long_path_to_avoid_overlap() -> None:
+    """Production bug (claude-code 37.4M): footer_tl filepath collided
+    with right-aligned footer_tr session date at y=470. The resolver
+    must measure both and truncate the receipt path from the LEFT until
+    they fit — preserving the unique UUID suffix.
+    """
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    # Mimic the claude-code 37.4M fixture's overflow scenario: long
+    # project name + long matching branch + full UUID session id.
+    tel = {
+        "session": {
+            "id": "4f7565a5-da44-4fbb-9234-b6f9cb2a1be6",
+            "model": "claude-opus",
+            "duration_minutes": 60,
+            "git_branch": "claude/gracious-swirles-93af5c",
+            "project_path": "/home/user/gracious-swirles-93af5c",
+            "start": "2026-04-17T02:19:00",
+        },
+        "profile": {"total_input_tokens": 1, "total_output_tokens": 1, "total_cost": 0.01},
+        "tools": {"Edit": {"total_tokens": 100, "count": 1, "tool_class": "mutate"}},
+        "stages": [{"name": "i", "label": "I", "pct": 100, "tool_class": "mutate"}],
+        "user_events": [],
+        "agents": [],
+    }
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    # Footer_tl line at y=470 must contain a left-truncated path (ellipsis
+    # appears INSIDE the footer line, not at the start of the unrelated
+    # branch name)
+    footer_line_match = re.search(r'y="470"[^>]*>([^<]*)</text>', svg)
+    assert footer_line_match, "footer_tl text element not found at y=470"
+    footer_tl = footer_line_match.group(1)
+    # The ellipsis marker is present, and the unique UUID tail survived
+    assert "…" in footer_tl, f"long footer path should be truncated with ellipsis, got {footer_tl!r}"
+    assert "b6f9cb2a1be6" in footer_tl, f"unique UUID tail should survive, got {footer_tl!r}"
+    # The constant prefix was dropped — that's the point of left-truncation
+    assert ".hyperweave/receipts/4f7565a5" not in footer_tl, (
+        f"left-truncation should drop the prefix, got {footer_tl!r}"
+    )
+
+
+def test_receipt_footer_unchanged_when_path_already_fits() -> None:
+    """Short fixtures must NOT trigger truncation — the ellipsis only
+    appears when overflow is real. Cream-mock fixture has empty session
+    id → empty receipt_path → footer fits trivially.
+    """
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "abc", "model": "claude-opus", "duration_minutes": 5},
+        "profile": {"total_input_tokens": 1, "total_output_tokens": 1, "total_cost": 0.01},
+        "tools": {"Edit": {"total_tokens": 100, "count": 1, "tool_class": "mutate"}},
+        "stages": [{"name": "i", "label": "I", "pct": 100, "tool_class": "mutate"}],
+        "user_events": [],
+        "agents": [],
+    }
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    footer_line_match = re.search(r'y="470"[^>]*>([^<]*)</text>', svg)
+    assert footer_line_match
+    footer_tl = footer_line_match.group(1)
+    assert "…" not in footer_tl, f"short footer should not be truncated, got {footer_tl!r}"

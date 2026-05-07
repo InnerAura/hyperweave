@@ -14,22 +14,59 @@
 <clipPath id="receipt-card-shape">
   <rect width="{{ width }}" height="{{ height }}" rx="5.5" ry="5.5"/>
 </clipPath>
+{# Atmosphere gradient (v0.2.23, codex skin). Diagonal linear gradient
+   painted behind the substrate when the genome declares ``atmosphere_stops``.
+   Empty list = no atmosphere = current behavior preserved across other skins. #}
+{% if atmosphere_stops %}
+<linearGradient id="receipt-atmosphere" x1="0" y1="0" x2="1" y2="1">
+{% for stop in atmosphere_stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{% endif %}
+{# Radial bloom overlays — additive lightness over the atmosphere
+   (v9 codex bloom-cool + bloom-violet). #}
+{% for bloom in atmosphere_blooms %}
+<radialGradient id="receipt-{{ bloom.id }}" cx="{{ bloom.cx }}" cy="{{ bloom.cy }}" r="{{ bloom.r }}">
+{% for stop in bloom.stops %}
+  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}" stop-opacity="{{ stop.opacity }}"/>
+{% endfor %}
+</radialGradient>
+{% endfor %}
+{# Card top highlight — white→transparent gradient suggesting a glass edge. #}
+{% if card_top_highlight %}
+<linearGradient id="receipt-card-top-highlight" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+  <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+</linearGradient>
+{% endif %}
 {% endblock %}
 
 {% block content %}
-{# Substrate — rounded to rx=5.5 so its corners align with the card_border
-   outer stroke. Without rx, the square substrate corners protrude past the
-   rounded border on light skins (visible as a square box around the rounded
-   shape on cream / claude-code paper). #}
+{# Atmosphere backdrop (v0.2.23): full-canvas gradient painted FIRST, then the
+   substrate inset by ``card_inset`` so the atmosphere is visible as a colored
+   ring around the card. Both fields default to empty/zero — other skins keep
+   their current full-canvas substrate behavior unchanged. #}
+{% if atmosphere_stops %}
+<rect width="{{ width }}" height="{{ height }}" rx="5.5" ry="5.5" fill="url(#receipt-atmosphere)"/>
+{% for bloom in atmosphere_blooms %}
+<rect width="{{ width }}" height="{{ height }}" rx="5.5" ry="5.5" fill="url(#receipt-{{ bloom.id }})"/>
+{% endfor %}
+<rect x="{{ card_inset }}" y="{{ card_inset }}" width="{{ width - 2 * card_inset }}" height="{{ height - 2 * card_inset }}" rx="3" ry="3" fill="var(--dna-surface)"/>
+{% if card_top_highlight %}
+<rect x="{{ card_inset }}" y="{{ card_inset }}" width="{{ width - 2 * card_inset }}" height="32" rx="3" ry="3" fill="url(#receipt-card-top-highlight)" pointer-events="none"/>
+{% endif %}
+{% else %}
 <rect width="{{ width }}" height="{{ height }}" rx="5.5" ry="5.5" fill="var(--dna-surface)"/>
+{% endif %}
 
 {# ═══ HERO ZONE (translate 24, 18 — risograph-canonical) ═══ #}
 {% if has_glyph %}
 <use href="#{{ glyph_id }}" x="24" y="13" width="18" height="18"/>
 {% endif %}
-<text x="50" y="27" class="s ink1" font-size="14" font-weight="700">{{ provider_label }}</text>
+<text x="{{ provider_label_x | default(50) }}" y="27" class="s ink1" font-size="14" font-weight="700">{{ provider_label }}</text>
 {% if model_label %}
-<text x="142" y="27" class="m ink2" font-size="11" letter-spacing="0.04em">· {{ model_label }}</text>
+<text x="{{ model_label_x | default(142) }}" y="27" class="m ink2" font-size="11" letter-spacing="0.04em">· {{ model_label }}</text>
 {% endif %}
 {# Phase pill at top-right — token-driven, branch-free.
    Voltage (titanium spec): layered structure — dark outer base + thin frame
@@ -64,7 +101,11 @@
 
 {# ═══ TREEMAP ZONE (translate 24, 104 — header INSIDE zone) ═══ #}
 <g transform="translate(24, 104)" data-hw-zone="treemap">
-  {# Header row: TOKEN MAP lab + 4 color-class chips + ✗N hint #}
+  {# Header row: TOKEN MAP lab + 4 color-class chips + ✗N hint.
+     The "BY TOOL · N SOURCES" subtitle that v9 has lives at a different
+     position (between the title and chips) — without resolver-side width
+     measurement the subtitle collided with chips at the same x. Removed
+     until it can be properly placed via computed positioning. #}
   <text class="m ink3" font-size="7" font-weight="700" letter-spacing="0.22em" y="12">TOKEN MAP</text>
 {% for chip in treemap_header_chips | default([]) %}
   <rect x="{{ chip.x }}" y="6" width="2" height="8" fill="var(--dna-tool-{{ chip.tool_class }})"/>
@@ -78,30 +119,33 @@
     <rect width="{{ cell.w }}" height="{{ cell.h }}" fill="var(--dna-surface-deep)"/>
     <rect width="{{ cell.accent_w }}" height="{{ cell.accent_h }}" fill="var(--dna-tool-{{ cell.tool_class }})" opacity="0.85"/>
     <rect width="{{ cell.w }}" height="{{ cell.h }}" fill="none" stroke="var(--dna-border)" stroke-width="0.5"/>
+{# Cell text — positions/sizes are computed in compose/treemap.py per cell;
+   the template never decides geometry, only renders what was decided. The
+   ``show_detail`` flag is False when the cell can't fit both label + detail
+   without overflow (catches small cells safely). #}
 {% if cell.is_hero %}
-    {# Tier-1 hero treatment: 38pt percentage in tool color, large name + detail #}
-    <text class="m ink1" font-size="13" font-weight="600" x="14" y="24">{{ cell.label }}</text>
-    <text class="s" font-size="38" font-weight="800" fill="var(--dna-tool-{{ cell.tool_class }})" x="14" y="66" letter-spacing="-0.02em">{{ cell.pct }}%</text>
-    <text class="m ink3" font-size="10" x="14" y="80">{{ cell.detail }}</text>
+    {# Tier-1 hero treatment: percentage at tier-1 hero font size in tool color,
+       label and detail at compose-computed offsets. v9 specimen: pct y=58 size=36,
+       detail y=72 size=10 — 6px gap between pct baseline and detail top. #}
+    <text class="m ink1" font-size="{{ cell.label_size }}" font-weight="600" x="14" y="{{ cell.label_y }}">{{ cell.label }}</text>
+    <text class="s" font-size="{{ cell.pct_size }}" font-weight="800" fill="var(--dna-tool-{{ cell.tool_class }})" x="14" y="{{ cell.pct_y }}" letter-spacing="-0.02em">{{ cell.pct }}%</text>
+{% if cell.show_detail %}
+    <text class="m ink3" font-size="{{ cell.detail_size }}" x="14" y="{{ cell.detail_y }}">{{ cell.detail }}</text>
+{% endif %}
 {% if cell.errors %}
     <g transform="translate({{ cell.w - 8 }}, 14)">
       <rect x="-24" y="-10" width="22" height="14" fill="var(--dna-surface-deep)" stroke="var(--dna-status-failing-core)" stroke-opacity="0.35" stroke-width="0.5"/>
       <text class="m" font-size="8" font-weight="700" fill="var(--dna-status-failing-core)" x="-13" y="0" text-anchor="middle">✗{{ cell.errors }}</text>
     </g>
 {% endif %}
-{% elif cell.tier == 2 %}
-    {# Tier-2: name + detail + inline error badge #}
-    <text class="m ink1" font-size="9.5" font-weight="600" x="10" y="14">{{ cell.label }}</text>
-    <text class="m ink3" font-size="8" x="10" y="26">{{ cell.detail }}</text>
-{% if cell.errors %}
-    <text class="m" font-size="8" font-weight="700" fill="var(--dna-status-failing-core)" x="{{ cell.w - 8 }}" y="14" text-anchor="end">✗{{ cell.errors }}</text>
-{% endif %}
 {% else %}
-    {# Tier-3: compact name + detail + tiny error badge #}
-    <text class="m ink1" font-size="9" font-weight="600" x="10" y="12">{{ cell.label }}</text>
-    <text class="m ink3" font-size="8" x="10" y="22">{{ cell.detail }}</text>
+    {# Tier-2 + Tier-3: name + (optional) detail + inline error badge #}
+    <text class="m ink1" font-size="{{ cell.label_size }}" font-weight="600" x="10" y="{{ cell.label_y }}">{{ cell.label }}</text>
+{% if cell.show_detail %}
+    <text class="m ink3" font-size="{{ cell.detail_size }}" x="10" y="{{ cell.detail_y }}">{{ cell.detail }}</text>
+{% endif %}
 {% if cell.errors %}
-    <text class="m" font-size="8" font-weight="700" fill="var(--dna-status-failing-core)" x="{{ cell.w - 8 }}" y="12" text-anchor="end">✗{{ cell.errors }}</text>
+    <text class="m" font-size="8" font-weight="700" fill="var(--dna-status-failing-core)" x="{{ cell.w - 8 }}" y="{{ cell.label_y }}" text-anchor="end">✗{{ cell.errors }}</text>
 {% endif %}
 {% endif %}
   </g>

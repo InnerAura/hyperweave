@@ -1,0 +1,82 @@
+# Claude Code runtime registry — spec-driven (not corpus-driven).
+#
+# Authored from Claude Code's tool spec (CLI flags, in-session tool inventory,
+# subagent harness tools), NOT from the empirical 14-session sweep that built
+# the v0.2.22 tool-classes.yaml. Tools the user happens to never invoke still
+# get classified correctly here; v0.2.22 silently defaulted them to EXPLORE.
+
+runtime: claude-code
+parser: hyperweave.telemetry.parser
+genome: telemetry-claude-code
+glyph: claude-glyph
+provider_label: Claude Code
+
+# Detection: Claude Code JSONL transcripts are flat objects keyed at top
+# level by sessionId + type. The type values cover assistant/user/system
+# messages, attachments, and the file-history snapshot that opens many
+# transcripts. No envelope.
+detection:
+  shape: flat
+  required_keys:
+    - sessionId
+    - type
+  type_values:
+    - user
+    - assistant
+    - system
+    - attachment
+    - file-history-snapshot
+
+# Complete tool table. ADDED-comment entries are tools the v0.2.22 YAML and
+# the divergent _TOOL_CLASS dict at resolver.py:1624 both missed.
+tools:
+  # ── Filesystem reads ──
+  Read: explore
+  Glob: explore
+  Grep: explore
+  # ── Web access ──
+  WebSearch: explore
+  WebFetch: explore
+  # ── Filesystem mutations ──
+  Edit: mutate
+  MultiEdit: mutate           # ADDED — multi-edit was missing
+  Write: mutate
+  NotebookEdit: mutate
+  # ── Process execution ──
+  Bash: execute
+  Agent: execute              # ADDED — subagent dispatch (was 'coordinate' in resolver dict)
+  # ── Coordination & meta ──
+  Task: coordinate
+  TaskCreate: coordinate
+  TaskUpdate: coordinate
+  TaskList: coordinate
+  TaskGet: coordinate
+  TaskOutput: coordinate
+  TaskStop: coordinate
+  SendMessage: coordinate
+  TeamCreate: coordinate
+  TeamDelete: coordinate
+  Skill: coordinate
+  EnterPlanMode: coordinate
+  ExitPlanMode: coordinate
+  AskUserQuestion: coordinate
+  ToolSearch: coordinate      # ADDED — used to load deferred tool schemas
+  ScheduleWakeup: coordinate  # ADDED — scheduled task triggers
+  CronCreate: coordinate      # ADDED
+  CronDelete: coordinate      # ADDED
+  CronList: coordinate        # ADDED
+  EnterWorktree: coordinate   # ADDED — git worktree dispatch
+  ExitWorktree: coordinate    # ADDED
+
+# Pattern fallbacks for namespaced tool families. Order matters:
+# more specific prefixes should come first.
+patterns:
+  - prefix: "mcp__"           # MCP server tools (verified: double underscore)
+    class: coordinate
+  - prefix: "Bash("           # parameterized Bash, e.g. Bash(git status)
+    class: execute
+
+# When a tool name doesn't match exact OR pattern, log a warning and
+# fall back to ToolClass.EXPLORE. The warning is the audit trail —
+# replaces the v0.2.22 silent default.
+unknown_tool_policy: warn

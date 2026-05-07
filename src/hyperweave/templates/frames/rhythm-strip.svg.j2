@@ -15,15 +15,41 @@
     <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0.25"/>
     <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0.03"/>
   </linearGradient>
+  {# v0.2.23: atmosphere gradient + blooms when the genome declares them.
+     Same pattern as the receipt template so codex skin's lavender backdrop
+     reaches both artifacts and they read as the same family. #}
+{% if atmosphere_stops %}
+  <linearGradient id="{{ uid }}-atmosphere" x1="0" y1="0" x2="1" y2="1">
+{% for stop in atmosphere_stops %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+  </linearGradient>
+{% endif %}
+{% for bloom in atmosphere_blooms %}
+  <radialGradient id="{{ uid }}-{{ bloom.id }}" cx="{{ bloom.cx }}" cy="{{ bloom.cy }}" r="{{ bloom.r }}">
+{% for stop in bloom.stops %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}" stop-opacity="{{ stop.opacity }}"/>
+{% endfor %}
+  </radialGradient>
+{% endfor %}
 {% endblock %}
 
 {% block content %}
 {% set sw = width | default(600) %}
 {% set sh = height | default(92) %}
 
-{# Substrate. No top strip — none of the v0.2.21 specimens carry one;
-   the rounded-corner rect provides the edge definition by itself. #}
+{# Atmosphere backdrop (codex skin) — paint full-canvas gradient, then blooms,
+   then translucent substrate so atmosphere bleeds through. Other skins fall
+   through to the original solid substrate paint. #}
+{% if atmosphere_stops %}
+<rect width="{{ sw }}" height="{{ sh }}" rx="5" fill="url(#{{ uid }}-atmosphere)"/>
+{% for bloom in atmosphere_blooms %}
+<rect width="{{ sw }}" height="{{ sh }}" rx="5" fill="url(#{{ uid }}-{{ bloom.id }})"/>
+{% endfor %}
 <rect width="{{ sw }}" height="{{ sh }}" rx="5" fill="var(--dna-surface)"/>
+{% else %}
+<rect width="{{ sw }}" height="{{ sh }}" rx="5" fill="var(--dna-surface)"/>
+{% endif %}
 
 {# ═══ ZONE 1: IDENTITY (16-190px) ═══ #}
 <g transform="translate(16, 0)" data-hw-zone="identity">

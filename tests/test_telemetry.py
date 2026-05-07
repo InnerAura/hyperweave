@@ -23,7 +23,6 @@ from hyperweave.telemetry.corrections import classify_user_events
 from hyperweave.telemetry.cost import calculate_session_cost, calculate_turn_cost
 from hyperweave.telemetry.models import (
     STAGE_LABEL_MAP,
-    TOOL_CLASS_MAP,
     ConfidenceLevel,
     SessionTelemetry,
     StageLabel,
@@ -34,7 +33,10 @@ from hyperweave.telemetry.models import (
     UserEventCategory,
 )
 from hyperweave.telemetry.parser import parse_transcript
+from hyperweave.telemetry.runtimes import classify_tool, get_runtime
 from hyperweave.telemetry.stages import detect_stages
+
+_CC_REGISTRY = get_runtime("claude-code")
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 SESSION_FIXTURE = FIXTURES_DIR / "session.jsonl"
@@ -46,24 +48,19 @@ SESSION_FIXTURE = FIXTURES_DIR / "session.jsonl"
 
 
 class TestYAMLConfigLoading:
-    """Verify that config maps are loaded from YAML, not hardcoded."""
+    """Verify that config maps are loaded from YAML, not hardcoded.
 
-    def test_tool_class_map_loaded(self) -> None:
-        assert len(TOOL_CLASS_MAP) > 0
-        assert TOOL_CLASS_MAP["Read"] == ToolClass.EXPLORE
-        assert TOOL_CLASS_MAP["Edit"] == ToolClass.MUTATE
-        assert TOOL_CLASS_MAP["Bash"] == ToolClass.EXECUTE
-        assert TOOL_CLASS_MAP["Task"] == ToolClass.COORDINATE
+    Tool-class classification moved to the per-runtime registries in
+    v0.2.23 — see ``tests/test_runtime_registries.py`` for tool table
+    and detection-rule coverage. This class now only covers stage-label
+    config (still in ``data/telemetry/stage-labels.yaml``).
+    """
 
     def test_stage_label_map_loaded(self) -> None:
         assert len(STAGE_LABEL_MAP) > 0
         assert STAGE_LABEL_MAP[ToolClass.EXPLORE] == StageLabel.RECONNAISSANCE
         assert STAGE_LABEL_MAP[ToolClass.MUTATE] == StageLabel.IMPLEMENTATION
         assert STAGE_LABEL_MAP[ToolClass.EXECUTE] == StageLabel.VALIDATION
-
-    def test_tool_class_map_values_are_enums(self) -> None:
-        for name, cls in TOOL_CLASS_MAP.items():
-            assert isinstance(cls, ToolClass), f"{name} mapped to {type(cls)}"
 
     def test_stage_label_map_values_are_enums(self) -> None:
         for cls, label in STAGE_LABEL_MAP.items():
@@ -227,7 +224,7 @@ class TestStageDetector:
         return ToolCall(
             tool_name=name,
             tool_id=f"id-{name}-{ts.second}",
-            tool_class=tool_class or TOOL_CLASS_MAP.get(name, ToolClass.EXPLORE),
+            tool_class=tool_class or classify_tool(_CC_REGISTRY, name),
             timestamp=ts,
         )
 

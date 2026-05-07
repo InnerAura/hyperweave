@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Any
 
 from .models import (
-    TOOL_CLASS_MAP,  # yaml config
     AgentSpan,
     ConfidenceLevel,
     SessionTelemetry,
@@ -31,11 +30,15 @@ from .models import (
     UserEvent,
     UserEventCategory,
 )
+from .runtimes import classify_tool, get_runtime
 
 logger = logging.getLogger(__name__)
 
 # Type alias for parsed JSONL objects
 _JsonObj = dict[str, Any]
+
+# Resolved at import time — fail loud if claude-code.yaml is missing.
+_REGISTRY = get_runtime("claude-code")
 
 
 # --------------------------------------------------------------------------- #
@@ -56,8 +59,8 @@ def _parse_timestamp(ts: str | None) -> datetime:
 
 
 def _classify_tool(name: str) -> ToolClass:
-    """Map tool name -> functional class."""
-    return TOOL_CLASS_MAP.get(name, ToolClass.EXPLORE)  # yaml config
+    """Map tool name -> functional class via the claude-code runtime registry."""
+    return classify_tool(_REGISTRY, name)
 
 
 def _is_user_entry(obj: _JsonObj) -> bool:
@@ -408,6 +411,7 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         project_path=project_path,
         git_branch=git_branch,
         model=model,
+        runtime=_REGISTRY.runtime,
         timestamp=session_start,
         duration_minutes=round(duration_minutes, 2),
         tool_calls=all_tool_calls,
