@@ -379,11 +379,12 @@ def test_receipt_renders_failed_tool_calls_legend() -> None:
 
 
 def test_treemap_field_is_errors_not_error_count() -> None:
-    """Both receipt template and the treemap component read cell.errors.
+    """No live .j2 template references the stale `cell.error_count` field.
 
-    Prior drift: templates/frames/receipt.svg.j2 used `cell.errors` while the
-    orphan templates/components/treemap.svg.j2 used `cell.error_count`. Both
-    should now read `cell.errors` so the resolver's single emission key wins.
+    Prior drift: receipt.svg.j2 used `cell.errors` while a now-deleted orphan
+    treemap component used `cell.error_count`. The orphan was removed in the
+    P0 audit cleanup; this test still defends against any future drift across
+    all live .j2 files.
     """
     from pathlib import Path
 

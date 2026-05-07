@@ -64,9 +64,9 @@
 {% if has_glyph %}
 <use href="#{{ glyph_id }}" x="24" y="13" width="18" height="18"/>
 {% endif %}
-<text x="{{ provider_label_x | default(50) }}" y="27" class="s ink1" font-size="14" font-weight="700">{{ provider_label }}</text>
+<text x="{{ provider_label_x }}" y="27" class="s ink1" font-size="14" font-weight="700">{{ provider_label }}</text>
 {% if model_label %}
-<text x="{{ model_label_x | default(142) }}" y="27" class="m ink2" font-size="11" letter-spacing="0.04em">· {{ model_label }}</text>
+<text x="{{ model_label_x }}" y="27" class="m ink2" font-size="11" letter-spacing="0.04em">· {{ model_label }}</text>
 {% endif %}
 {# Phase pill at top-right — token-driven, branch-free.
    Voltage (titanium spec): layered structure — dark outer base + thin frame

@@ -1606,51 +1606,6 @@ def _wall_clock_minutes(stages: list[dict[str, Any]], fallback_m: float) -> floa
     return max((max(ends) - min(starts)).total_seconds() / 60.0, 1.0)
 
 
-# ── Tier styling table for the treemap (Phase B template thinness) ──
-# All tier-derived font sizes, x offsets, and accent widths live here so
-# the receipt template iterates cells without branching on tier. The
-# values are derived from tier 1 / 2 / 3 visual hierarchy in the v9
-# specimens (claude-code-ledger as the canonical reference).
-_TREEMAP_TIER_STYLES: dict[int, dict[str, Any]] = {
-    1: {
-        "accent_w": 4,
-        "label_x": 14,
-        "label_size": 13,
-        "detail_x": 14,
-        "detail_y": 72,
-        "detail_size": 10,
-        "error_size": 9,
-        "error_pad": 8,
-        "pct_size": 36,
-        "pct_y": 58,
-    },
-    2: {
-        "accent_w": 3,
-        "label_x": 10,
-        "label_size": 10,
-        "detail_x": 10,
-        "detail_y": 24,
-        "detail_size": 8,
-        "error_size": 8,
-        "error_pad": 8,
-        "pct_size": 0,  # tier 2/3 omit the big-pct block
-        "pct_y": 0,
-    },
-    3: {
-        "accent_w": 3,
-        "label_x": 9,
-        "label_size": 9,
-        "detail_x": 9,
-        "detail_y": 19,
-        "detail_size": 8,
-        "error_size": 8,
-        "error_pad": 7,
-        "pct_size": 0,
-        "pct_y": 0,
-    },
-}
-
-
 def resolve_receipt(
     spec: ComposeSpec,
     genome: dict[str, Any],
@@ -2039,7 +1994,6 @@ def resolve_receipt(
             "treemap_legend": treemap_legend,
             "treemap_header_chips": treemap_header_chips,
             "treemap_cells": treemap_cells,
-            "tier_styles": _TREEMAP_TIER_STYLES,
             # Rhythm panel — v0.2.21 risograph-canonical structure
             "stage_count": len(stages),
             "rhythm_original_count": original_count,
