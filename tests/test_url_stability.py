@@ -49,6 +49,12 @@ _HW_UID_RE = re.compile(r"hw-[0-9a-f]{6,}")
 _FULL_UUID_RE = re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b")
 # ISO 8601 timestamps that may appear in metadata (created/created_at).
 _TS_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?")
+# Package version strings — `__version__` is dynamically computed from git
+# tags by hatch-vcs/setuptools-scm, so the same code produces "0.2.20"
+# locally (no tag) and "0.2.25" in CI (tagged release). Normalize all
+# semver-like version strings in metadata so backward-compat snapshots
+# track artifact STRUCTURE, not the version that happened to render them.
+_VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9a-zA-Z.\-]+)?")
 
 
 def _normalize(svg: str) -> str:
@@ -56,6 +62,7 @@ def _normalize(svg: str) -> str:
     svg = _HW_UID_RE.sub("hw-UID", svg)
     svg = _FULL_UUID_RE.sub("UUID", svg)
     svg = _TS_RE.sub("TIMESTAMP", svg)
+    svg = _VERSION_RE.sub("VERSION", svg)
     return svg
 
 

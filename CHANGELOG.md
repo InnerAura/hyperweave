@@ -5,6 +5,19 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.26] - 2026-05-07
+
+Two follow-ups to v0.2.25's badge state architecture: strip status indicators now color correctly when CI metrics fail, and the snapshot test suite no longer fails on local-vs-CI version differences.
+
+### Fixed
+
+- **Strip status indicator color tracks the most severe CI metric** &mdash; a strip with `BUILD:failing` next to `STARS` and `VERSION` now renders the right-edge diamond red, matching pre-v0.2.25 behavior. The v0.2.25 narrowing inadvertently dropped this for strips because their title is the repo identifier (`HYPERWEAVE`, `readme-ai`), not a state-bearing label. The engine now parses strip metric cells, runs state inference per allowlisted cell (`BUILD`, `COVERAGE`, `LINT`, etc.), and rolls up to the most severe state across them. Pure data strips (no allowlisted cells) stay neutral.
+- **Snapshot tests handle local-vs-CI version differences** &mdash; the URL stability suite was treating package version strings as content (`version="0.2.20"` vs `version="0.2.25"` from dynamic git-tag versioning), failing CI when local snapshots were captured at a different version than the runner. Versions in metadata are now normalized for comparison alongside UUIDs and timestamps.
+
+### Notes
+
+- 960 tests (was 955). 5 new tests pin the strip rollup contract across failing / passing / mixed-severity / pure-data / explicit-override cases.
+
 ## [0.2.25] - 2026-05-07
 
 Production badges on data-driven URLs (`STARS`, `FORKS`, `VERSION`, `LICENSE`, `PYTHON`) no longer trigger false-alarm status indicators on numeric values. Badge value text now centers correctly for every value length across all genomes.

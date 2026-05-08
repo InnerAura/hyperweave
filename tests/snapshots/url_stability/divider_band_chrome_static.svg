@@ -22,10 +22,10 @@
   <title id="hw-UID-title">HyperWeave divider artifact</title>
   <desc id="hw-UID-desc">A divider artifact, using chrome genome.</desc>
   <metadata>
-  <hw:artifact id="UUID" type="divider" series="core" version="0.2.20"
+  <hw:artifact id="UUID" type="divider" series="core" version="VERSION"
                xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
-      <hw:generator>HyperWeave Compositor v0.2.20 (InnerAura Labs)</hw:generator>
+      <hw:generator>HyperWeave Compositor vVERSION (InnerAura Labs)</hw:generator>
       <hw:created>TIMESTAMP</hw:created>
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
@@ -34,7 +34,7 @@
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:frame>divider</hw:frame>
-    <hw:genome>chrome@0.2.20</hw:genome>
+    <hw:genome>chrome@VERSION</hw:genome>
     <hw:profile>chrome</hw:profile>
     <hw:slots>
     </hw:slots>
@@ -44,7 +44,7 @@
            xmlns:dc="http://purl.org/dc/elements/1.1/">
     <rdf:Description>
       <dc:title>HyperWeave divider artifact</dc:title>
-      <dc:creator>HyperWeave Compositor v0.2.20 (InnerAura Labs)</dc:creator>
+      <dc:creator>HyperWeave Compositor vVERSION (InnerAura Labs)</dc:creator>
       <dc:date>TIMESTAMP</dc:date>
       <dc:rights>CC BY 4.0</dc:rights>
     </rdf:Description>

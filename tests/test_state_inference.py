@@ -99,3 +99,54 @@ def test_compose_empty_value_no_inference() -> None:
 def test_compose_unrecognizable_value_no_inference() -> None:
     """Value with no rule match leaves state at default."""
     assert _metadata_state("version", "v1.2.3") == "active"
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Strip frames — per-cell rolled-up inference (v0.2.25)
+# ─────────────────────────────────────────────────────────────────────
+
+
+def _strip_metadata_state(value: str, state: str = "active") -> str:
+    """Compose a strip and return its post-inference metadata state.
+
+    Strip's title is a repo identifier (HYPERWEAVE), not a state-bearing
+    label — the engine inspects metric cells and rolls up the most severe
+    state across allowlisted ones.
+    """
+    spec = ComposeSpec(
+        type="strip",
+        genome_id="chrome",
+        title="HYPERWEAVE",
+        value=value,
+        state=state,
+    )
+    result = compose(spec)
+    assert result.metadata is not None
+    return str(result.metadata.state)
+
+
+def test_strip_infers_failing_from_build_cell() -> None:
+    """Pre-v0.2.25 README regression: strip with BUILD:failing cell
+    must roll up to failing state so the right-edge indicator goes red."""
+    assert _strip_metadata_state("BUILD:failing,VERSION:0.2.24,LICENSE:Apache-2.0") == "failing"
+
+
+def test_strip_infers_passing_from_build_cell() -> None:
+    assert _strip_metadata_state("BUILD:passing,VERSION:0.2.24") == "passing"
+
+
+def test_strip_picks_most_severe_state_across_cells() -> None:
+    """When multiple cells are stateful, the rolled-up state is the
+    most severe (failing > critical > warning > building > passing)."""
+    assert _strip_metadata_state("BUILD:failing,LINT:warning,STARS:42") == "failing"
+
+
+def test_strip_with_no_stateful_cells_stays_active() -> None:
+    """Pure data strips don't infer state — STARS, FORKS, VERSION are
+    not in the allowlist, so no cell contributes to the rollup."""
+    assert _strip_metadata_state("STARS:2.9k,FORKS:278,VERSION:0.2.24") == "active"
+
+
+def test_strip_explicit_state_survives_inference() -> None:
+    """User-set state overrides metric rollup."""
+    assert _strip_metadata_state("BUILD:failing,VERSION:0.2.24", state="passing") == "passing"
