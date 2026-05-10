@@ -6,7 +6,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.assembler import compute_variant_inline_style
 from hyperweave.compose.bar_chart import compute_time_axis_ticks, layout_bar_chart
+from hyperweave.compose.palette import resolve_cellular_palette
 from hyperweave.compose.treemap import compute_treemap_layout
 from hyperweave.core.enums import (
     FrameType,
@@ -134,7 +136,78 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     paradigm_slug = _resolve_paradigm(genome, spec.type, default="default")
     all_paradigms = get_paradigms()
     paradigm_spec = all_paradigms.get(paradigm_slug) or all_paradigms["default"]
-    frame_result = resolver_fn(spec, genome, profile, glyph_data=glyph_data, paradigm_spec=paradigm_spec)
+
+    # v0.3.0 centralization: variant resolution + cellular palette + inline-style
+    # emission computed BEFORE the per-frame resolver runs so resolvers that
+    # need bifamily semantics (marquee) can consume cellular_palette directly
+    # as a kwarg rather than recomputing or branching on raw genome fields.
+    # Per-frame resolvers no longer call resolve_variant() — the dispatcher
+    # computes once and propagates via kwargs + frame_context + ResolvedArtifact.
+    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
+
+    # Merge variant_overrides into the genome dict so templates reading baked
+    # fields directly (envelope_stops, well_top, well_bottom, specular_light,
+    # glyph_inner) also see the variant. Inline-style emission still works
+    # for the CSS-var subset; this merge unlocks variant differentiation for
+    # the chrome strip/badge/icon visual structure that doesn't go through
+    # CSS variables. No-op when no override entry exists (bare/horizon paths).
+    if resolved_variant:
+        _vo = (genome.get("variant_overrides") or {}).get(resolved_variant) or {}
+        if _vo:
+            genome = {**genome, **_vo}
+
+    inline_style_overrides = compute_variant_inline_style(genome, resolved_variant)
+    cellular_palette = resolve_cellular_palette(genome, resolved_variant, pair=spec.pair)
+
+    # Cellular paradigm: append --hw-state-tone + --hw-state-value-tone CSS
+    # vars to the SVG-root inline style so the building/offline state indicator
+    # AND its value text color flow through the variant's primary tone instead
+    # of genome-static --dna-signal + --dna-badge-value-text (both teal for
+    # automata regardless of ?variant=). expression.css:126-133 reads both with
+    # genome-level fallbacks — chrome/brutalist genomes leave these CSS vars
+    # unset so they fall back to pre-v0.3 behavior.
+    _cp_primary_for_tone = cellular_palette.get("primary") or {}
+    _cellular_tone_decls: list[str] = []
+    if _cp_primary_for_tone.get("seam_mid"):
+        _cellular_tone_decls.append(f"--hw-state-tone:{_cp_primary_for_tone['seam_mid']};")
+    if _cp_primary_for_tone.get("value_text"):
+        _cellular_tone_decls.append(f"--hw-state-value-tone:{_cp_primary_for_tone['value_text']};")
+        # Override --dna-ink-primary so marquee scroll text + any legacy
+        # var(--dna-ink-primary) references inside cellular SVGs shift with
+        # variant. Without this, automata's --dna-ink-primary stays at its
+        # genome-level "#ededed" white-gray and marquees render variant-blind.
+        _cellular_tone_decls.append(f"--dna-ink-primary:{_cp_primary_for_tone['value_text']};")
+    if _cp_primary_for_tone.get("cellular_cells"):
+        _cells = _cp_primary_for_tone["cellular_cells"]
+        if _cells:
+            # Override --dna-ink-muted/--dna-ink-secondary so secondary text
+            # (separators, secondary tspan alternation in solo marquees) also
+            # shifts with variant. cellular_cells[0] is the variant's muted
+            # primary tone — perceptually close to "ink-muted" semantics.
+            _cellular_tone_decls.append(f"--dna-ink-muted:{_cells[0]};")
+            _cellular_tone_decls.append(f"--dna-ink-secondary:{_cells[0]};")
+            # Override --dna-signal so chart-marker partials (var(--dna-signal)),
+            # milestone-line color, and any other genome-static signal reference
+            # shifts with cellular variant. Without this, automata's chart
+            # markers stayed teal (#1E849A) regardless of ?variant=. Chrome
+            # paradigm has its own variant_overrides[accent] cascade, so
+            # non-cellular genomes are unaffected.
+            _cellular_tone_decls.append(f"--dna-signal:{_cells[0]};")
+    if _cellular_tone_decls:
+        _decls_str = " ".join(_cellular_tone_decls)
+        inline_style_overrides = (
+            f"{inline_style_overrides} {_decls_str}".strip() if inline_style_overrides else _decls_str
+        )
+
+    frame_result = resolver_fn(
+        spec,
+        genome,
+        profile,
+        glyph_data=glyph_data,
+        paradigm_spec=paradigm_spec,
+        resolved_variant=resolved_variant,
+        cellular_palette=cellular_palette,
+    )
 
     # Session 2A+2B: inject paradigm + structural hints into every frame_context
     # (Principle 26 dispatch + Principle 24 template-genome interface).
@@ -154,6 +227,34 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     ctx.setdefault("structural", genome.get("structural") or {})
     ctx.setdefault("genome_typography", genome.get("typography") or {})
     ctx.setdefault("genome_material", genome.get("material") or {})
+    ctx.setdefault("variant", resolved_variant)
+    ctx.setdefault("inline_style_overrides", inline_style_overrides)
+    ctx.setdefault("cellular_palette", cellular_palette)
+
+    # Cellular paradigm overrides glyph_fill from cellular_palette.primary.seam_mid
+    # so the strip's left-zone glyph (and chrome-defs typography classes that
+    # read glyph_fill) shift with variant. Without this, glyph_fill stays at
+    # genome.glyph_inner — variant-agnostic — and the strip's identity zone
+    # reads teal regardless of ?variant=. Non-cellular genomes have empty
+    # cellular_palette so primary is {} and the override doesn't fire.
+    _cp_primary = cellular_palette.get("primary") or {}
+    if _cp_primary.get("seam_mid"):
+        ctx["glyph_fill"] = _cp_primary["seam_mid"]
+
+    # Cellular paradigm: override variant-blind ctx keys with cellular_palette-
+    # derived values so the strip's metric-cell seams + subtitle text + content
+    # panel border shift with variant. Mirrors the glyph_fill override pattern
+    # above; non-cellular paradigms have empty cellular_palette so the overrides
+    # don't fire. divider_color = primary.cellular_cells[0] (variant's deepest
+    # cell); subtitle_color = primary.seam_mid (variant's mid-saturation accent).
+    # border_tint also routes through divider_color so the cellular content
+    # panel outline (rendered at 0.28 opacity) shifts with variant rather than
+    # leaking genome.border_tint (#1E849A static teal for automata).
+    if cellular_palette.get("divider_color"):
+        ctx["strip_divider_color"] = cellular_palette["divider_color"]
+        ctx["border_tint"] = cellular_palette["divider_color"]
+    if cellular_palette.get("subtitle_color"):
+        ctx["ink_sub"] = cellular_palette["subtitle_color"]
 
     return ResolvedArtifact(
         genome=genome,
@@ -164,6 +265,8 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         height=frame_result["height"],
         frame_template=frame_result["template"],
         frame_context=ctx,
+        resolved_variant=resolved_variant,
+        inline_style_overrides=inline_style_overrides,
         motion=motion,
         glyph_id=glyph_data.get("id", ""),
         glyph_path=glyph_data.get("path", ""),
@@ -348,12 +451,11 @@ def resolve_badge(
         value_font_size=_value_size,
     )
 
-    # Variant resolution: explicit > paradigm default > genome flagship.
-    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
-
-    # Profile visual context (envelope, well, specular, chrome text gradients)
-    # is now applied universally by the dispatcher at resolve() via
-    # _genome_material_context — no per-resolver call needed.
+    # Variant resolution and profile visual context (envelope, well, specular,
+    # chrome text gradients) are now applied universally by the dispatcher at
+    # resolve() via _genome_material_context and resolve_variant — no
+    # per-resolver call needed. The dispatcher's setdefault populates
+    # frame_context["variant"] before ResolvedArtifact construction.
     return {
         "width": layout.width,
         "height": layout.height,
@@ -387,7 +489,6 @@ def resolve_badge(
             "use_mono": use_mono,
             "label_uppercase": label_uppercase,
             "inset": inset,
-            "variant": resolved_variant,
             "badge_mode": badge_mode,
             "data_hw_statemode": data_hw_statemode_for(badge_mode),
             # Backward-compat for cellular template's value-text class branch
@@ -637,10 +738,6 @@ def resolve_strip(
     flank_width = strip_cfg.flank_width if strip_cfg else 0
     flank_cell_size = strip_cfg.flank_cell_size if strip_cfg else 12
     has_flanks = flank_width > 0
-    # Family resolution: user-specified ``--variant`` wins; empty falls back
-    # to paradigm's frame_variant_defaults (cellular → bifamily for strip).
-    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
-
     n = max(len(metrics), 1)
     # If flanks are present, metric zones shift right by flank_width on each side
     # (flanks live OUTSIDE the content panel; width grows accordingly).
@@ -719,7 +816,6 @@ def resolve_strip(
         "status_x": status_x,
         "content_right": content_right,
         "glyph_zone_x_offset": glyph_zone_x_offset,
-        "variant": resolved_variant,
         "show_status_indicator": show_status_indicator,
         "strip_mode": strip_mode,
         "data_hw_statemode": data_hw_statemode_for(strip_mode),
@@ -825,23 +921,55 @@ def resolve_icon(
     else:
         icon_variant = "binary-square"
 
-    # Family resolution (cellular icon: monofamily, default blue).
-    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
-
-    # Paradigm-driven viewBox override. Chrome paradigm sets viewbox_w/h=120
-    # so the chrome icon templates can use the v2 specimen's 120-unit material
-    # discipline at a 64px rendered size. Brutalist + others leave them at 0,
-    # which document.svg.j2 falls back to width/height (viewBox = rendered size).
+    # Paradigm-driven viewBox + card dim override. Chrome paradigm sets
+    # viewbox_w/h=120 (120-unit material discipline at 64px rendered size).
+    # Cellular paradigm v0.3.0 refresh sets card_width/height=48 and exposes
+    # cell grid + inner canvas geometry so the template stamps pre-computed
+    # values rather than carrying its own dimension constants.
     icon_cfg = paradigm_spec.icon if paradigm_spec is not None else None
     viewbox_w = getattr(icon_cfg, "viewbox_w", 0) if icon_cfg is not None else 0
     viewbox_h = getattr(icon_cfg, "viewbox_h", 0) if icon_cfg is not None else 0
+    # Card dimensions — paradigm config overrides the historic 64x64. Cellular
+    # v0.3.0 uses 48x48 with a 5x5 living cell grid; brutalist/chrome stay at
+    # the 64x64 default.
+    card_w = int(icon_cfg.card_width) if icon_cfg is not None and getattr(icon_cfg, "card_width", 0) > 0 else 64
+    card_h = int(icon_cfg.card_height) if icon_cfg is not None and getattr(icon_cfg, "card_height", 0) > 0 else 64
+
+    # Cellular icon geometry — read from paradigm config so the template stays
+    # arithmetic-free per CLAUDE.md "Compose owns geometry, template renders".
+    if icon_cfg is not None:
+        icon_grid_cols = int(getattr(icon_cfg, "cell_grid_cols", 0))
+        icon_grid_rows = int(getattr(icon_cfg, "cell_grid_rows", 0))
+        icon_cell_size = int(getattr(icon_cfg, "cell_size", 0))
+        icon_cell_gap = int(getattr(icon_cfg, "cell_gap", 0))
+        icon_cell_rx = int(getattr(icon_cfg, "cell_rx", 0))
+        icon_inner_inset = float(getattr(icon_cfg, "inner_canvas_inset", 0) or 0)
+        icon_inner_size = float(getattr(icon_cfg, "inner_canvas_size", 0) or 0)
+        icon_inner_rx = int(getattr(icon_cfg, "inner_canvas_rx", 0))
+        icon_glyph_inset = float(getattr(icon_cfg, "glyph_inset", 0) or 0)
+        icon_glyph_size = float(getattr(icon_cfg, "glyph_size", 0) or 0)
+        icon_outer_rx = int(getattr(icon_cfg, "outer_border_rx", 0))
+    else:
+        icon_grid_cols = icon_grid_rows = icon_cell_size = icon_cell_gap = icon_cell_rx = 0
+        icon_inner_inset = icon_inner_size = 0.0
+        icon_inner_rx = 0
+        icon_glyph_inset = icon_glyph_size = 0.0
+        icon_outer_rx = 0
+
+    # Cellular palette accent fields — surface info_accent / mid_accent /
+    # header_band so the cellular icon template can fill the cell grid + glyph
+    # + borders without consulting the genome dict directly.
+    cellular_palette = _kw.get("cellular_palette") or {}
+    primary_tone = cellular_palette.get("primary") or {}
+    icon_info_accent = primary_tone.get("info_accent", "")
+    icon_mid_accent = primary_tone.get("mid_accent", "")
+    icon_header_band = primary_tone.get("header_band", "")
 
     ctx: dict[str, Any] = {
         "icon_shape": shape,
         "icon_rx": 0,
         "icon_label": icon_label,
         "icon_variant": icon_variant,
-        "variant": resolved_variant,
         # Raw genome hex colors for gradient stops (CSS var() doesn't work in SVG stops)
         "genome_signal": genome.get("accent", "#845ef7"),
         "genome_surface": genome.get("surface_0", "#000000"),
@@ -851,12 +979,28 @@ def resolve_icon(
         # viewBox overrides — zero means "use width/height" (handled by template default).
         "viewbox_w": viewbox_w,
         "viewbox_h": viewbox_h,
+        # Cellular icon geometry (paradigm-driven; zero on non-cellular paradigms).
+        "icon_grid_cols": icon_grid_cols,
+        "icon_grid_rows": icon_grid_rows,
+        "icon_cell_size": icon_cell_size,
+        "icon_cell_gap": icon_cell_gap,
+        "icon_cell_rx": icon_cell_rx,
+        "icon_inner_inset": icon_inner_inset,
+        "icon_inner_size": icon_inner_size,
+        "icon_inner_rx": icon_inner_rx,
+        "icon_glyph_inset": icon_glyph_inset,
+        "icon_glyph_size": icon_glyph_size,
+        "icon_outer_rx": icon_outer_rx,
+        # Cellular accent stops.
+        "icon_info_accent": icon_info_accent,
+        "icon_mid_accent": icon_mid_accent,
+        "icon_header_band": icon_header_band,
     }
     # Profile visual context now injected centrally by the dispatcher.
 
     return {
-        "width": 64,
-        "height": 64,
+        "width": card_w,
+        "height": card_h,
         "template": "frames/icon.svg.j2",
         "context": ctx,
     }
@@ -913,7 +1057,7 @@ def resolve_divider(
     ctx: dict[str, Any] = {
         "divider_variant": variant,
         "divider_label": spec.value or "",
-        "variant": spec.variant or "bifamily",
+        "variant": spec.variant or "",
         # Pass through chrome chromosomes so chrome-band template's envelope_stops
         # for-loop has data. brutalist-seam needs accent + accent_signal.
         "envelope_stops": genome.get("envelope_stops", []),
@@ -940,25 +1084,40 @@ def resolve_marquee(
     """Resolve marquee-horizontal dimensions and scroll content.
 
     Single variant after v0.2.14: 800x40 LIVE ticker. The genome's family
-    palette (cellular: bifamily teal/amethyst) and the paradigm's marquee
-    config (separator glyph, live-block suppression) drive aesthetic dispatch
-    inside ``_resolve_horizontal``.
+    palette (cellular: paired primary/secondary tones) and the paradigm's
+    marquee config (separator glyph, live-block suppression) drive aesthetic
+    dispatch inside ``_resolve_horizontal``. cellular_palette flows in as a
+    kwarg from the dispatcher so paired-mode tspan alternation reads the
+    structured tone dict instead of branching on raw genome fields.
     """
-    # Family resolution (cellular marquee-horizontal: bifamily default).
-    resolved_variant = resolve_variant(spec, genome, paradigm_spec)
+    cellular_palette = _kw.get("cellular_palette") or {}
+    primary_tone = cellular_palette.get("primary") or {}
+    secondary_tone = cellular_palette.get("secondary") or {}
 
     # ``_resolve_horizontal`` only needs signal_hex/surface_hex as hex-resolved
     # carriers for ``<stop>`` attributes (var() is unreliable inside SVG stops).
-    # The rest of the profile visual context (envelope/well/etc.) is merged
-    # universally by the dispatcher. Bifamily cellular marquees additionally
-    # carry family-specific info hexes so ``_resolve_horizontal`` can generate
-    # tspan-alternation scroll_items.
+    # Bifamily cellular marquees additionally carry primary/secondary info
+    # hexes so ``_resolve_horizontal`` can generate tspan-alternation
+    # scroll_items. is_paired tells the downstream code whether to alternate.
+    #
+    # v0.3.0 cellular marquee refresh — primary_info_accent + primary_mid_accent
+    # surface to the template via chrome_ctx merge. info_accent fills scroll
+    # text (Orbitron 11px 700), mid_accent fills the bullet separators and the
+    # top/bottom hairlines drawn by cellular-overlay.j2. The marquee is
+    # monofamily for paired variants too — the 0.5px hairlines at 0.2 opacity
+    # would not perceptually communicate a bifamily split, so paired-variant
+    # signature is reserved for stat card / chart / icon where the chromatic
+    # bandwidth is larger.
+    primary_info_accent = primary_tone.get("info_accent", "")
+    primary_mid_accent = primary_tone.get("mid_accent", "")
     chrome_ctx: dict[str, Any] = {
         "signal_hex": genome.get("accent", "#10B981"),
         "surface_hex": genome.get("surface_0", genome.get("surface", "#0A0A0A")),
-        "variant": resolved_variant,
-        "variant_blue_info": genome.get("variant_blue_seam_mid", ""),
-        "variant_purple_info": genome.get("variant_purple_seam_mid", ""),
+        "primary_seam_mid": primary_tone.get("seam_mid", ""),
+        "secondary_seam_mid": secondary_tone.get("seam_mid", ""),
+        "primary_info_accent": primary_info_accent,
+        "primary_mid_accent": primary_mid_accent,
+        "is_paired": cellular_palette.get("is_paired", False),
     }
 
     # Paradigm-declared marquee config — separator glyph, palette, live-block
@@ -967,7 +1126,17 @@ def resolve_marquee(
     # marquee config still render correctly).
     marquee_cfg = paradigm_spec.marquee if paradigm_spec is not None else None
 
-    return _resolve_horizontal(spec, chrome_ctx, profile, marquee_cfg)
+    result = _resolve_horizontal(spec, chrome_ctx, profile, marquee_cfg)
+
+    # Cellular variant override: when the active variant declares a mid_accent,
+    # use it for separator_color so each variant's accent flows through bullet
+    # separators (rather than the static paradigm-config default which is a
+    # single hex frozen at amber's #B89800). The paradigm fallback is preserved
+    # for non-cellular paradigms.
+    if primary_mid_accent and "context" in result:
+        result["context"]["separator_color"] = primary_mid_accent
+
+    return result
 
 
 def _resolve_font_for_measurement(font_family_css: str) -> str:
@@ -1260,10 +1429,19 @@ def _resolve_horizontal(
     # (and label_color when label is present). Gradient mode emits the empty
     # string sentinel — the template substitutes the gradient URL.
     bold_pattern = _prof.get("marquee_horizontal_bold_pattern", "even")
-    fam = chrome_ctx.get("variant", "")
-    teal_info = chrome_ctx.get("variant_blue_info", "")
-    amethyst_info = chrome_ctx.get("variant_purple_info", "")
-    bifamily_active = fam == "bifamily" and bool(teal_info) and bool(amethyst_info) and bool(tspan_palette)
+    primary_info = chrome_ctx.get("primary_seam_mid", "")
+    secondary_info = chrome_ctx.get("secondary_seam_mid", "")
+    is_paired = chrome_ctx.get("is_paired", False)
+    bifamily_active = is_paired and bool(primary_info) and bool(secondary_info) and bool(tspan_palette)
+    # Cellular monofamily branch (v0.3.0): when chrome_ctx carries a
+    # primary_info_accent (cellular paradigm signal), use it as the uniform
+    # scroll text fill. The v3 prototype's monofamily approach treats every
+    # token in the variant's saturated brand stop, with mid_accent reserved
+    # for separators and hairlines. Both solo and paired cellular variants
+    # follow this rule — the marquee's chromatic bandwidth is too narrow for
+    # bifamily alternation to communicate paired identity.
+    primary_info_accent = chrome_ctx.get("primary_info_accent", "")
+    cellular_mono_active = bool(primary_info_accent) and not bifamily_active
 
     # Default font_weight for measurement: paradigm-level value when set,
     # else 700 for items the bold-pattern picks (matches historic behavior).
@@ -1284,8 +1462,16 @@ def _resolve_horizontal(
             label_color = value_color  # cycle paradigms use one color per item
             fw = font_weight_str
         elif bifamily_active:
-            palette = [teal_info, amethyst_info]
+            palette = [primary_info, secondary_info]
             value_color = palette[i % len(palette)]
+            label_color = value_color
+            fw = font_weight_str or "700"
+        elif cellular_mono_active:
+            # Cellular monofamily — every item in the variant's info_accent.
+            # Label color collapses to the same hex (cellular tokens rarely
+            # have separate labels; when they do, splitting label vs value
+            # by tone would compete with the bullet separator's mid_accent).
+            value_color = primary_info_accent
             label_color = value_color
             fw = font_weight_str or "700"
         else:
@@ -1354,6 +1540,34 @@ def _resolve_horizontal(
             separator_size=separator_size,
             separator_glyph=separator_glyph,
         )
+
+    # Set-B color shift — when the per-item color cycle (cycle mode or
+    # bifamily) doesn't divide evenly into the total Set-A item count, the
+    # loop boundary shows two adjacent same-color items (Set-A's last item
+    # cycle-position == Set-B's first item cycle-position). Fix: pre-compute
+    # value_color_set_b / label_color_set_b on each text entry with offset
+    # equal to the total item count, so Set-B picks up the cycle one position
+    # ahead and the boundary alternates correctly.
+    text_entries = [e for e in laid_out if e.get("type") == "text"]
+    total_items = len(text_entries)
+    cycle_len = 0
+    palette_for_shift: list[str] = []
+    if text_fill_mode == "cycle" and text_fill_cycle:
+        cycle_len = len(text_fill_cycle)
+        palette_for_shift = list(text_fill_cycle)
+    elif bifamily_active:
+        cycle_len = 2
+        palette_for_shift = [primary_info, secondary_info]
+    shift_needed = cycle_len > 0 and total_items % cycle_len != 0
+    for i, entry in enumerate(text_entries):
+        item = entry["item"]
+        if shift_needed:
+            new_color = palette_for_shift[(i + total_items) % cycle_len]
+            item["value_color_set_b"] = new_color
+            item["label_color_set_b"] = new_color
+        else:
+            item["value_color_set_b"] = item.get("value_color", "")
+            item["label_color_set_b"] = item.get("label_color", "")
 
     # scroll_distance: one full Set-A worth = content_end_x - start_x =
     # R x single_period. The layout helper added a trailing separator after
@@ -2623,27 +2837,13 @@ def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) ->
         "chrome_rhythm": genome.get("rhythm_base", ""),
         "glyph_fill": genome.get("glyph_inner", ""),
         "light_mode": genome.get("light_mode"),
-        # Automata bifamily palettes (surfaced for cellular paradigm templates).
-        "variant_blue_rim_stops": genome.get("variant_blue_rim_stops", []),
-        "variant_blue_pattern_cells": genome.get("variant_blue_pattern_cells", []),
-        "variant_blue_seam_mid": genome.get("variant_blue_seam_mid", ""),
-        "variant_blue_label_slab_fill": genome.get("variant_blue_label_slab_fill", ""),
-        "variant_blue_label_text": genome.get("variant_blue_label_text", ""),
-        "variant_blue_value_text": genome.get("variant_blue_value_text", ""),
-        "variant_blue_canvas_top": genome.get("variant_blue_canvas_top", ""),
-        "variant_blue_canvas_bottom": genome.get("variant_blue_canvas_bottom", ""),
-        "variant_purple_rim_stops": genome.get("variant_purple_rim_stops", []),
-        "variant_purple_pattern_cells": genome.get("variant_purple_pattern_cells", []),
-        "variant_purple_seam_mid": genome.get("variant_purple_seam_mid", ""),
-        "variant_purple_label_slab_fill": genome.get("variant_purple_label_slab_fill", ""),
-        "variant_purple_label_text": genome.get("variant_purple_label_text", ""),
-        "variant_purple_value_text": genome.get("variant_purple_value_text", ""),
-        "variant_purple_canvas_top": genome.get("variant_purple_canvas_top", ""),
-        "variant_purple_canvas_bottom": genome.get("variant_purple_canvas_bottom", ""),
-        "variant_bifamily_bridge_teal_mid": genome.get("variant_bifamily_bridge_teal_mid", ""),
-        "variant_bifamily_bridge_teal_deep": genome.get("variant_bifamily_bridge_teal_deep", ""),
-        "variant_bifamily_bridge_amethyst_core": genome.get("variant_bifamily_bridge_amethyst_core", ""),
-        "variant_bifamily_bridge_amethyst_bright": genome.get("variant_bifamily_bridge_amethyst_bright", ""),
+        # Cellular paradigm palette/pulse config. The 22 flat variant_blue_*/
+        # variant_purple_*/variant_bifamily_bridge_* fields previously surfaced
+        # here moved into cellular_palette (resolve_cellular_palette() in
+        # compose/palette.py) — templates now consume cellular_palette.primary,
+        # .secondary, .bridge instead of the flat fields. Pulse config stays
+        # because it's structural (cell animation timings + opacity), not
+        # tone-specific.
         "cellular_pulse_base_duration": genome.get("cellular_pulse_base_duration", "6s"),
         "cellular_pulse_fast_duration": genome.get("cellular_pulse_fast_duration", "3s"),
         "cellular_pattern_opacity": genome.get("cellular_pattern_opacity", "0.78"),

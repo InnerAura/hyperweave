@@ -121,15 +121,23 @@ svg[data-hw-status="offline"]  { opacity: .65; filter: grayscale(45%); }
   --hw-state-sweep: var(--dna-status-failing-core);
 }
 
-/* Default (neutral/offline/building) */
+/* Default (neutral/offline/building). Pre-v0.3.0 these all routed through
+   --dna-signal (indicator) and --dna-badge-value-text (text) — both
+   variant-blind for automata (genome.accent + genome.badge_value_text stay
+   static teal regardless of ?variant=bone|steel|phosphor|amber|...).
+   v0.3.0 introduces TWO variant-aware fallbacks: --hw-state-tone (indicator
+   color, = primary.seam_mid) and --hw-state-value-tone (text color, =
+   primary.value_text). Both set on the SVG root via inline style by the
+   resolver dispatcher for cellular paradigm. When unset (chrome, brutalist),
+   they fall back to the pre-v0.3 vars. */
 svg:not([data-hw-status="active"]):not([data-hw-status="passing"]):not([data-hw-status="warning"]):not([data-hw-status="critical"]):not([data-hw-status="failing"]) {
-  --hw-state-core: var(--dna-signal);
-  --hw-state-sep: var(--dna-signal);
-  --hw-state-ring: var(--dna-signal);
-  --hw-state-value: var(--dna-badge-value-text, var(--dna-brand-text));
-  --hw-state-signal: var(--dna-signal);
-  --hw-state-specular: var(--dna-signal);
-  --hw-state-sweep: var(--dna-signal);
+  --hw-state-core: var(--hw-state-tone, var(--dna-signal));
+  --hw-state-sep: var(--hw-state-tone, var(--dna-signal));
+  --hw-state-ring: var(--hw-state-tone, var(--dna-signal));
+  --hw-state-value: var(--hw-state-value-tone, var(--dna-badge-value-text, var(--dna-brand-text)));
+  --hw-state-signal: var(--hw-state-tone, var(--dna-signal));
+  --hw-state-specular: var(--hw-state-tone, var(--dna-signal));
+  --hw-state-sweep: var(--hw-state-tone, var(--dna-signal));
 }
 
 /* === Badge Element Classes === */

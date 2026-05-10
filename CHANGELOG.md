@@ -5,6 +5,27 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-10
+
+Chrome ships five named variants. Automata ships sixteen tones with a pairing grammar that composes any two into a bifamily strip or divider. Stat cards, star charts, marquees, and icons redesigned. Per-frame font filtering cuts artifact payloads.
+
+### Added
+
+- **Chrome variants** &mdash; horizon, abyssal, lightning, graphite, moth. Each carries its own gradient, glyph tone, text color, and status indicator.
+- **Automata 16 tones** &mdash; violet, teal, bone, steel, amber, jade, magenta, cobalt, toxic, solar, abyssal, crimson, sulfur, indigo, burgundy, copper.
+- **Pairing grammar** &mdash; `?variant=primary&pair=secondary` composes any two tones into a bifamily strip or divider. Other frame types silently ignore the parameter. Available on CLI, HTTP, and MCP.
+- **Redesigned automata stat card, star chart, marquee, and icon** &mdash; contribution heatmap, star history with threshold markers, scrolling marquee, and social icon with living cell grid.
+
+### Changed
+
+- **Chrome glyph dimensions match cellular** &mdash; both paradigms declare `glyph_size: 12`.
+- **Star chart threshold labels** &mdash; offset increased so annotations sit clearly above the polyline glow.
+- **Per-frame font filtering** &mdash; each frame embeds only the fonts its templates use. Icons and dividers ship font-free.
+
+### Notes
+
+- 1035 tests (was 960).
+
 ## [0.2.26] - 2026-05-07
 
 Two follow-ups to v0.2.25's badge state architecture: strip status indicators now color correctly when CI metrics fail, and the snapshot test suite no longer fails on local-vs-CI version differences.

@@ -71,6 +71,77 @@ def test_generate_data_cards_writes_stats_and_chart(proofset_module: object) -> 
         assert "<svg" in chart.read_text(), f"not valid SVG: {chart}"
 
 
+def test_variant_matrix_full_artifact_coverage(proofset_module: object) -> None:
+    """Every variant of every genome with a variants[] axis must produce its full
+    artifact suite. Compact-badge presence is gated on the genome's badge paradigm:
+    cellular declares glyph_size_compact, chrome does not — so chrome variants
+    emit only the default size. Charts may legitimately skip if the GitHub
+    stargazer cross-check fails — same skip semantics as the base data-cards test.
+    """
+    from hyperweave.config.loader import load_genomes, load_paradigms
+    from hyperweave.core.enums import ArtifactStatus, GenomeId
+
+    proofset_module._generate_data_cards()  # type: ignore[attr-defined]
+
+    out_dir = proofset_module.OUT  # type: ignore[attr-defined]
+    genomes = load_genomes()
+    paradigms = load_paradigms()
+
+    for genome in GenomeId:
+        cfg = genomes.get(str(genome))
+        if cfg is None or not cfg.variants:
+            continue  # brutalist + telemetry-* skip — no variant axis
+        var_dir = out_dir / "proofset" / genome / "variants"
+        divider_slug = "band" if genome == GenomeId.CHROME else "dissolve"
+
+        # Compact-badge gate matches the proofset script: cellular paradigm
+        # declares glyph_size_compact, chrome does not.
+        badge_paradigm_slug = cfg.paradigms.get("badge", "default")
+        badge_paradigm = paradigms.get(badge_paradigm_slug)
+        supports_compact = badge_paradigm is not None and badge_paradigm.badge.glyph_size_compact > 0
+
+        for variant in cfg.variants:
+            # Chrome supports binary-opposition icons (circle + square);
+            # other genomes are monoshape.
+            if genome == GenomeId.CHROME:
+                icon_files = [
+                    f"icon_github_{variant}_circle.svg",
+                    f"icon_github_{variant}_square.svg",
+                ]
+            else:
+                icon_files = [f"icon_github_{variant}.svg"]
+            compact_files = [f"badge_pypi_{variant}_compact.svg"] if supports_compact else []
+            expected = [
+                f"badge_pypi_{variant}_default.svg",
+                *compact_files,
+                *icon_files,
+                f"strip_{variant}.svg",
+                f"marquee_horizontal_{variant}.svg",
+                f"divider_{divider_slug}_{variant}.svg",
+                f"stats_{variant}.svg",
+                # 5 badge states
+                *[
+                    f"badge_{s.value}_{variant}.svg"
+                    for s in (
+                        ArtifactStatus.PASSING,
+                        ArtifactStatus.WARNING,
+                        ArtifactStatus.CRITICAL,
+                        ArtifactStatus.BUILDING,
+                        ArtifactStatus.OFFLINE,
+                    )
+                ],
+            ]
+            for filename in expected:
+                path = var_dir / filename
+                assert path.exists(), f"variant artifact missing: {path}"
+                assert path.stat().st_size > 500, f"variant artifact too small: {path}"
+
+            # Chart is conditional on GitHub fetch — same skip pattern as base.
+            chart_path = var_dir / f"chart_stars_{variant}.svg"
+            if chart_path.exists():
+                assert chart_path.stat().st_size > 500, f"variant chart too small: {chart_path}"
+
+
 def test_generate_readme_includes_new_sections(proofset_module: object) -> None:
     """README embeds stats + chart inline under each genome section."""
     proofset_module._generate_data_cards()  # type: ignore[attr-defined]
@@ -85,8 +156,45 @@ def test_generate_readme_includes_new_sections(proofset_module: object) -> None:
     # Timeline section removed in v0.2.14.
     assert "### Timeline / Roadmap" not in readme
     assert "timeline.svg" not in readme
-    # Automata variant-axis section
-    assert "### Variant Axis" in readme
-    assert "variants/badge_pypi_blue_default.svg" in readme
-    assert "variants/badge_pypi_purple_compact.svg" in readme
-    assert "variants/divider_dissolve.svg" in readme
+    # v0.3.0 variant matrix sections (one per genome with variants[]).
+    # Chrome ships 5 variants inline; automata ships 16 solo tones in a
+    # sibling README_AUTOMATA.md (the 16-tone matrix would otherwise dominate
+    # the main README). The main README links to that sibling and inlines a
+    # spot-check of representative tones for flavor.
+    assert "### Variant Matrix (5 variants)" in readme  # chrome
+    assert "### Variant Matrix (16 variants)" in readme  # automata stub heading
+    assert "[README_AUTOMATA.md](README_AUTOMATA.md)" in readme  # link to full matrix
+    # Chrome variants — full inline matrix
+    for v in ("horizon", "abyssal", "lightning", "graphite", "moth"):
+        assert f"variants/badge_pypi_{v}_default.svg" in readme
+        assert f"variants/strip_{v}.svg" in readme
+
+    # Automata's full 16-tone matrix lives in README_AUTOMATA.md.
+    automata_readme = (out_dir / "README_AUTOMATA.md").read_text()
+    assert automata_readme.startswith("# HyperWeave Automata"), "README_AUTOMATA.md should have an H1 header"
+    # All 16 solo tones present
+    for v in (
+        "violet",
+        "teal",
+        "bone",
+        "steel",
+        "amber",
+        "jade",
+        "magenta",
+        "cobalt",
+        "toxic",
+        "solar",
+        "abyssal",
+        "crimson",
+        "sulfur",
+        "indigo",
+        "burgundy",
+        "copper",
+    ):
+        assert f"variants/badge_pypi_{v}_default.svg" in automata_readme
+    # Freestyle pairings showcase
+    assert "## Freestyle Pairings" in automata_readme
+    # At least a few representative pair examples
+    for primary, secondary in (("teal", "violet"), ("cobalt", "magenta"), ("solar", "abyssal")):
+        assert f"?variant={primary}&pair={secondary}" in automata_readme
+        assert f"pairings/strip_{primary}-{secondary}.svg" in automata_readme

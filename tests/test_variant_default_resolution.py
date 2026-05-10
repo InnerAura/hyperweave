@@ -1,9 +1,11 @@
-"""Variant default resolution — Phase 3.
+"""Variant default resolution — v0.3.0 compositional tones + pairing grammar.
 
 An empty ``ComposeSpec.variant`` resolves per-frame via the paradigm's
-``frame_variant_defaults`` map. Cellular paradigm declares
-``badge=blue, strip=bifamily, ...`` — so the user can compose without
-specifying variant and get the canonical cellular treatment per frame.
+``frame_variant_defaults`` map. Cellular paradigm declares every frame's
+default as ``teal`` (the canonical solo flagship). Pairing is opt-in via
+``ComposeSpec.pair`` — ``?variant=teal&pair=violet`` reproduces the prior
+bifamily aesthetic on strip/divider while leaving badge/stats/chart/marquee
+to render solo teal regardless of pair.
 """
 
 from __future__ import annotations
@@ -24,22 +26,22 @@ def _variant_in_context(frame_type: str, explicit_variant: str = "") -> str:
     return str(resolved.frame_context.get("variant", ""))
 
 
-def test_badge_default_is_blue_under_cellular() -> None:
-    assert _variant_in_context("badge") == "blue"
+def test_badge_default_is_teal_under_cellular() -> None:
+    assert _variant_in_context("badge") == "teal"
 
 
-def test_icon_default_is_blue_under_cellular() -> None:
-    assert _variant_in_context("icon") == "blue"
+def test_icon_default_is_teal_under_cellular() -> None:
+    assert _variant_in_context("icon") == "teal"
 
 
-def test_strip_default_is_bifamily_under_cellular() -> None:
-    assert _variant_in_context("strip") == "bifamily"
+def test_strip_default_is_teal_under_cellular() -> None:
+    assert _variant_in_context("strip") == "teal"
 
 
-def test_marquee_horizontal_default_is_bifamily() -> None:
-    assert _variant_in_context("marquee-horizontal") == "bifamily"
+def test_marquee_horizontal_default_is_teal() -> None:
+    assert _variant_in_context("marquee-horizontal") == "teal"
 
 
 def test_explicit_variant_overrides_default() -> None:
-    assert _variant_in_context("strip", explicit_variant="blue") == "blue"
-    assert _variant_in_context("badge", explicit_variant="purple") == "purple"
+    assert _variant_in_context("strip", explicit_variant="teal") == "teal"
+    assert _variant_in_context("badge", explicit_variant="violet") == "violet"

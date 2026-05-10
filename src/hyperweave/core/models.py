@@ -109,6 +109,17 @@ class ComposeSpec(FrozenModel):
             "resolve-time). Empty = paradigm/genome default."
         ),
     )
+    pair: str = Field(
+        default="",
+        description=(
+            "Secondary tone for cellular paradigm pairing (?variant=primary&pair=secondary). "
+            "When set on automata + cellular paradigm, bifamily templates (strip, divider) "
+            "render the primary tone left + the pair tone right. Silently ignored on "
+            "non-automata genomes and on cellular frame types that don't consume bifamily "
+            "(badge, stats, chart, marquee, icon). Validated at resolve-time against "
+            "genome.variant_tones — invalid pair raises."
+        ),
+    )
 
     # -- Governance --
     regime: Regime = Field(default=Regime.NORMAL, description="Policy lane: normal, permissive, ungoverned")
@@ -222,6 +233,22 @@ class ResolvedArtifact(FrozenModel):
     height: int = Field(ge=1, description="Resolved artifact height in pixels")
     frame_template: str = Field(description="Jinja2 template path (e.g. 'frames/badge.svg.j2')")
     frame_context: dict[str, Any] = Field(default_factory=dict, description="Frame-specific rendering context")
+    resolved_variant: str = Field(
+        default="",
+        description=(
+            "Resolved chromatic variant slug (genome.variants whitelist member). "
+            "Empty when genome has no variant axis or spec/paradigm/flagship all unresolved."
+        ),
+    )
+    inline_style_overrides: str = Field(
+        default="",
+        description=(
+            "CSS declarations for the SVG-root style attribute (e.g. "
+            "'--dna-surface:#020E12; --dna-ink-primary:#C8F0E8'). Empty when genome "
+            "declares no variant_overrides[resolved_variant] entry; suppresses the "
+            "style attribute entirely so bare/horizon URLs stay byte-equal."
+        ),
+    )
     motion: str = Field(default="static", description="Resolved motion identifier")
     glyph_id: str = Field(default="", description="Resolved glyph identifier")
     glyph_path: str = Field(default="", description="SVG path data for the glyph")

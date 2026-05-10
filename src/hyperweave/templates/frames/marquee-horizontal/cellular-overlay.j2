@@ -1,13 +1,22 @@
-{# Cellular marquee-horizontal OVERLAY — top + bottom bifamily hairlines.
-   Renders above the scroll-track text so text visually slides UNDER the
+{# Cellular marquee-horizontal OVERLAY — top + bottom mid_accent hairlines.
+
+   v0.3.0 visual refresh: replaces the prior bifamily seam_mid split (top =
+   primary.seam_mid, bottom = secondary.seam_mid) with a single mid_accent
+   tone for both edges. The marquee is 32px tall and hairlines render at
+   0.5px stroke at 0.2 opacity — a chromatic split between top and bottom
+   would not perceptually communicate a paired-variant signature at this
+   scale. Paired variants express their dual-tone identity through richer
+   surfaces (stat card heatmap, chart cells, icon grid), so the marquee
+   adopts the primary tone's mid_accent and lets bandwidth go where it
+   actually carries.
+
+   Renders ABOVE the scroll-track text so text visually slides UNDER the
    hairlines at the top/bottom edges (instead of overlapping them).
-   Specimen: cellular-automata-marquee-current.svg.
 #}
-{% set teal_info = variant_blue_seam_mid | default('#3A9FB8') %}
-{% set amethyst_info = variant_purple_seam_mid | default('#A88AD4') %}
+{% set hairline = primary_mid_accent | default(cellular_palette.primary.mid_accent) %}
 
-{# Top hairline — abyssal-teal signature #}
-<rect x="0" y="0" width="{{ mw }}" height="0.5" fill="{{ teal_info }}" opacity="0.25"/>
+{# Top hairline #}
+<rect x="0" y="0" width="{{ mw }}" height="0.5" fill="{{ hairline }}" opacity="0.2"/>
 
-{# Bottom hairline — cyber-amethyst signature #}
-<rect x="0" y="{{ mh - 0.5 }}" width="{{ mw }}" height="0.5" fill="{{ amethyst_info }}" opacity="0.25"/>
+{# Bottom hairline #}
+<rect x="0" y="{{ mh - 0.5 }}" width="{{ mw }}" height="0.5" fill="{{ hairline }}" opacity="0.2"/>

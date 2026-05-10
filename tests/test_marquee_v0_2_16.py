@@ -26,7 +26,10 @@ from hyperweave.core.models import ComposeSpec
     [
         ("chrome", 1040, 56),
         ("brutalist", 720, 32),
-        ("automata", 800, 40),
+        # Cellular v0.3.0 visual refresh: marquee compacts to 800x32 (was 800x40).
+        # Matches the v3-sulfur prototype's tighter scroll strip — paired with
+        # mid_accent hairlines and info_accent scroll text.
+        ("automata", 800, 32),
     ],
 )
 def test_marquee_dimensions_paradigm_driven(genome_id: str, expected_w: int, expected_h: int) -> None:
@@ -165,7 +168,9 @@ def test_chrome_marquee_uses_chrome_text_gradient() -> None:
 
 def test_brutalist_marquee_uses_rect_separators() -> None:
     """Brutalist paradigm declares separator_kind=rect with separator_size=6
-    and separator_color=#10B981. Each item-gap should be a 6x6 emerald rect."""
+    and separator_color=#10B981. Each item-gap should be a 6x6 rect whose fill
+    routes through --dna-signal (so the variant's accent cascades through),
+    with #10B981 as the fallback for renderers that don't resolve the var."""
     svg = compose(
         ComposeSpec(
             type="marquee-horizontal",
@@ -174,8 +179,11 @@ def test_brutalist_marquee_uses_rect_separators() -> None:
         )
     ).svg
     # Two items between three labels → at least 2 separator rects per Set; 4 total.
+    # Round 7 wraps separator_color in var(--dna-signal, ...) so chrome variants
+    # cascade naturally; brutalist's accent (#10B981) matches its separator hex
+    # so the fallback case still equals the original color.
     rect_seps = re.findall(
-        r'<rect [^>]*width="6" height="6"[^>]*fill="#10B981"[^>]*shape-rendering="crispEdges"',
+        r'<rect [^>]*width="6" height="6"[^>]*fill="var\(--dna-signal, #10B981\)"[^>]*shape-rendering="crispEdges"',
         svg,
     )
     assert len(rect_seps) >= 4, f"Expected ≥4 emerald rect separators (Set A + B); got {len(rect_seps)}"
@@ -196,10 +204,16 @@ def test_brutalist_marquee_alternates_text_fill_cycle() -> None:
     assert 'fill="#34D399"' in svg
 
 
-def test_cellular_marquee_uses_bifamily_palette() -> None:
-    """Cellular paradigm preserves the bifamily teal/amethyst alternation when
-    variant=bifamily (default for marquee-horizontal). Sourced from genome
-    chromosomes (variant_blue_seam_mid / variant_purple_seam_mid)."""
+def test_cellular_marquee_uses_monofamily_info_accent() -> None:
+    """Cellular v0.3.0 visual refresh: marquee adopts the variant's info_accent
+    for scroll text and mid_accent for the top/bottom hairlines + bullet
+    separators. Replaces the prior bifamily teal/amethyst alternation since
+    the marquee's narrow chromatic bandwidth (32px tall, 0.5px hairlines at
+    0.2 opacity) couldn't perceptually communicate a paired-variant signature.
+
+    Tested at the default variant (which the cellular paradigm declares as
+    violet-teal, primary=teal). Teal's info_accent is #5BE0F0 and mid_accent
+    is #1A6A7E."""
     svg = compose(
         ComposeSpec(
             type="marquee-horizontal",
@@ -207,8 +221,11 @@ def test_cellular_marquee_uses_bifamily_palette() -> None:
             title="HYPERWEAVE|CELLULAR|LIVING|ARTIFACTS",
         )
     ).svg
-    assert "#3A9FB8" in svg, "teal info hex missing"
-    assert "#A88AD4" in svg, "amethyst info hex missing"
+    assert "#5BE0F0" in svg, "teal info_accent hex missing (scroll text)"
+    assert "#1A6A7E" in svg, "teal mid_accent hex missing (hairlines + separators)"
+    # Pre-v0.3.0 amethyst chromosome should NOT appear — paired variants no
+    # longer split the marquee into bifamily tones.
+    assert "#A88AD4" not in svg, "amethyst hex must not appear in v0.3.0 monofamily marquee"
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -295,11 +312,28 @@ def test_chrome_icon_circle_has_no_env_rail() -> None:
     assert "-env-rail" not in svg, "env-rail leaked into circle variant"
 
 
-def test_chrome_icon_uses_bevel_filter_not_simple_shadow() -> None:
+def test_chrome_icon_square_uses_bevel_filter_not_simple_shadow() -> None:
     """v0.2.16 expanded the chrome icon filter from a basic drop-shadow to a
-    feSpecularLighting bevel. Ensures the upgrade landed and the old filter
-    id ({{uid}}-sh) is gone."""
-    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="circle")).svg
-    assert "feSpecularLighting" in svg, "bevel filter's feSpecularLighting missing"
+    feSpecularLighting bevel. Ensures the upgrade landed (square retains it —
+    96x96 fill geometry handles the specular kernel as smooth metallic surface)
+    and the old filter id ({{uid}}-sh) is gone."""
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="square")).svg
+    assert "feSpecularLighting" in svg, "bevel filter's feSpecularLighting missing from defs"
+    assert 'filter="url(#hw-' in svg, "square envelope rect should reference the bevel filter"
     # Old id was {{uid}}-sh; new id is {{uid}}-bevel.
-    assert "-bevel)" in svg, "new bevel filter ID missing"
+    assert "-bevel" in svg, "new bevel filter ID missing"
+
+
+def test_chrome_icon_circle_omits_bevel_filter_application() -> None:
+    """Round 6 removed feSpecularLighting from the circle envelope STROKE because
+    the 5-unit annular geometry is too narrow for the kernel — highlight pixelated
+    as visible grain at 64px display. The filter primitive is still defined (square
+    consumes it), but the circle's envelope no longer applies it; the linearGradient
+    on the stroke carries the metallic sweep cleanly without kernel artifacts."""
+    svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="circle")).svg
+    # The envelope <circle> with stroke-width="5" must not reference the bevel filter.
+    # Search for the specific pattern to avoid false positives from other elements.
+    assert 'stroke-width="5" filter="url(#' not in svg, (
+        "circle envelope stroke must not apply bevel filter — narrow annular geometry "
+        "produces grain at small display sizes"
+    )

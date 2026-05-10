@@ -1,166 +1,200 @@
-{# Cellular star chart — 900x600 instrument-grade, bifamily substrate.
+{# Cellular star chart — v0.3.0 visual refresh.
 
-   Spec: cellular-automata-star-chart-xl.svg. Fragments (area/polyline/
-   markers/milestones/axes/y_labels/x_labels) come from chart_engine as
-   Python DICTS, not SVG strings — rendered via components/chart-*.svg.j2
-   partials (same architecture as brutalist-content.j2). Coordinates in
-   the fragments are already absolute (global SVG space), so there's NO
-   outer viewport translate — just emit them in place. #}
+   Replaces the prior floating-text header (translate(100,50) + translate(820,80))
+   with a deliberate HUD-style header band: a solid rect at y=0..header_band_height
+   filled with the variant's header_band tone, hosting the repo identifier,
+   STAR HISTORY title, hero metric, and CURRENT STARS subtitle. The band reads
+   as a separate visual zone, lifting header text out of the cell substrate
+   instead of overlaying it.
 
-{% set cw = width | default(900) %}
-{% set ch = height | default(600) %}
-{% set cell_size = 22 %}
-{% set flank_cols = 3 %}
-{% set flank_w = flank_cols * cell_size %}
-{% set n_rows = (ch + cell_size - 1) // cell_size %}
-{% set panel_x = flank_w %}
-{% set panel_w = cw - 2 * flank_w %}
-{% set vx = chart_viewport_x | default(130) %}
-{% set vy = chart_viewport_y | default(140) %}
-{% set vw = chart_viewport_w | default(640) %}
-{% set vh = chart_viewport_h | default(340) %}
+   Cell substrate (cells under the bezier polygon + dormant cells across the
+   full viewport) is unchanged structurally — Round 6 already established the
+   two-layer approach. v0.3.0 refresh tunes cell stride from 40 to 19 (cell
+   width 18, 1px gap) yielding a denser 30-col × 13-row grid in the chart
+   area. Animation classes consolidate to b1/b2/b3/b4.
 
+   Polyline drops to 3px white with double-glow drop-shadow (info_accent
+   outer halo + tight white inner glow). Axis lines render at info_accent
+   opacity 0.25 (was 0.14); gridlines stay faint at 0.06.
+
+   Footer simplifies to a thin hairline + repo URL (left) + brand stamp
+   (right) — the prior compound "HYPERWEAVE · STAR HISTORY" footer text is
+   gone since the header band already states the chart class. #}
+
+{% set cw = width | default(680) %}
+{% set ch = height | default(380) %}
+{% set vx = chart_viewport_x | default(72) %}
+{% set vy = chart_viewport_y | default(80) %}
+{% set vw = chart_viewport_w | default(580) %}
+{% set vh = chart_viewport_h | default(246) %}
+{% set _surface = surface_0 | default('#04060A') %}
+{% set _band_h = chart_header_band_height | default(64) %}
+{% set _accent = chart_info_accent %}
+{% set chart_levels = cellular_palette.primary.chart_levels %}
+
+{# Outer rounded-corner clip wraps the entire chart so the background, header
+   band, cells, polyline, and footer all clip to the same rx=10 silhouette.
+   Without this wrapping group the chart reads as a flat rectangle; with it
+   the chart frame becomes a deliberate artifact with curvature. The closing
+   </g> sits at the very bottom of the template just before the optional
+   outer border. #}
 <g clip-path="url(#{{ uid }}-clip)">
-  {# Void ground #}
-  <rect width="{{ cw }}" height="{{ ch }}" fill="{{ surface_0 | default('#04060A') }}"/>
 
-  {# Left teal flank — 3 x n_rows bifamily substrate #}
-  {% set blue_trio = variant_blue_pattern_cells %}
-  {% set blue_classes = ["cc1", "ccd", "cc3", "cc4", "ccd", "ccf", "cc2", "ccd", "cc1", "cc2", "cc3", "cc4"] %}
-  <g opacity="0.65">
-  {% for col in range(flank_cols) %}
-    {% for row in range(n_rows) %}
-    {% set cidx = (col + row) % 3 %}
-    {% set clsidx = (col * n_rows + row) % 12 %}
-    <rect x="{{ col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ blue_trio[cidx] }}" class="{{ blue_classes[clsidx] }}"/>
-    {% endfor %}
-  {% endfor %}
-  </g>
+{# Void ground — pure surface color, no cell substrate. #}
+<rect width="{{ cw }}" height="{{ ch }}" fill="{{ _surface }}"/>
 
-  {# Right amethyst flank #}
-  {% set purple_trio = variant_purple_pattern_cells %}
-  {% set purple_classes = ["cc2", "ccd", "ccf", "cc3", "cc1", "cc4", "ccd", "cc2", "ccf", "cc3", "cc1", "ccd"] %}
-  <g opacity="0.65">
-  {% for col in range(flank_cols) %}
-    {% for row in range(n_rows) %}
-    {% set cidx = (col + row) % 3 %}
-    {% set clsidx = (col * n_rows + row) % 12 %}
-    <rect x="{{ cw - flank_w + col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ purple_trio[cidx] }}" class="{{ purple_classes[clsidx] }}"/>
-    {% endfor %}
-  {% endfor %}
-  </g>
+{# HEADER BAND (y=0..header_band_height). Vertical gradient from canvas_top
+   to canvas_bottom — same material language as the stat card's header
+   (cellular-content stats:33-36). The earlier flat `header_band` fill read
+   as a distinct horizontal band against the canvas, especially on warmer
+   tones (bone, amber); the gradient blends seamlessly while preserving the
+   info_accent hairline at the bottom edge as the visible boundary. The
+   header_band tone primitive stays in the genome for other consumers (icon
+   cell grid). All text inside the band routes through the HUD filter so
+   labels lift from the gradient fill. #}
+<g data-hw-zone="header-band">
+  <rect width="{{ cw }}" height="{{ _band_h }}" fill="url(#{{ uid }}-top-grad)"/>
+  <line x1="0" y1="{{ _band_h }}" x2="{{ cw }}" y2="{{ _band_h }}" stroke="{{ _accent }}" stroke-opacity="0.12" stroke-width="0.5"/>
+</g>
+{# Header text positions tune the two pairs for VISIBLE-GAP coherence,
+   not strict pair-center or baseline-shared alignment. Forcing both pairs
+   to center at the same y created cramping (right pair's hero/subtitle
+   visible gap collapsed to 2px, dominating user feedback). Forcing
+   shared bottom baselines also stretched the left gap and crammed right.
+   The cleaner solution: equal *visible* gaps between text blocks on each
+   side, accepting that pair centers will differ slightly because the
+   17px title and 34px hero have asymmetric cap heights.
 
-  {# Data panel — 768x588 between flanks #}
-  <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ ch - 12 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.92"/>
-  <rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ ch - 12 }}" fill="none" stroke="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.25"/>
+   Visible gaps (text-bottom of upper row to text-top of lower row):
+     - Left:  10px  (repo baseline 22 to title cap-top 32 = 10)
+     - Right: 12px  (hero baseline 36 to subtitle cap-top 48 = 12)
+
+   The right side gets a slightly wider gap because the dominant 34px hero
+   benefits from extra breathing room before the small subtitle starts —
+   matches the v2 prototype's same proportions (hero y=32, subtitle y=50,
+   18 baseline / 12 visible gap). #}
+<g data-hw-zone="header-text" filter="url(#{{ uid }}-hud)">
+  <text x="22" y="22" class="{{ uid }}-hdr-user">{{ chart_repo | default('repo') | upper }}</text>
+  <text x="22" y="44" class="{{ uid }}-title-main">STAR HISTORY</text>
+  <text x="{{ cw - 22 }}" y="36" class="{{ uid }}-hero-value" text-anchor="end">{{ chart_current_stars | default('--') }}</text>
+  <text x="{{ cw - 22 }}" y="54" class="{{ uid }}-hero-label" text-anchor="end">CURRENT STARS</text>
 </g>
 
-{# HEADER — stacked: brand, title, accent rule, repo slug, hairline. #}
-<g data-hw-zone="header">
-  <text x="86" y="34" class="{{ uid }}-title-sub">INNERAURA LABS</text>
-  <text x="86" y="72" class="{{ uid }}-title-main">STAR HISTORY</text>
-  <rect x="86" y="82" width="62" height="3" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" opacity="0.6"/>
-  <text x="86" y="108" class="{{ uid }}-hdr-user">{{ chart_repo | default('repo') }}</text>
-  <line x1="86" y1="122" x2="814" y2="122" stroke="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.18"/>
-</g>
-
-{# HERO — total stars top-right. #}
-<g data-hw-zone="hero">
-  <text x="820" y="78" class="{{ uid }}-hero-value" text-anchor="end">{{ chart_current_stars | default('--') }}</text>
-  <text x="820" y="102" class="{{ uid }}-hero-label" text-anchor="end">TOTAL STARS</text>
-</g>
-
-{# CONWAY'S GLIDER — cellular-automaton lineage marker. #}
-<g data-hw-zone="glider" transform="translate(640, 26)" opacity="0.32">
-  <rect x="8"  y="0"  width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="16" y="8"  width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="0"  y="16" width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="8"  y="16" width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
-  <rect x="16" y="16" width="7" height="7" fill="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}"/>
-</g>
-
-{# CHART — fragments emitted in absolute SVG coords (no outer translate).
-   Renders via the shared components/chart-*.svg.j2 partials. #}
-{% set _purple_furniture = variant_purple_pattern_cells[0] | default('#6B3B8A') %}
-{% set _teal_furniture = variant_blue_pattern_cells[0] | default('#1E849A') %}
-{% set _baseline_y = vy + vh %}
+{# CHART zone — same layered render order as Round 6: dormant (full viewport,
+   no anim) → active cells (clipped to bezier polygon, animated) → gridlines
+   → polyline → markers → milestones → axes. The dormant layer renders FIRST
+   so the active layer's clipped overrides it inside the polyline area. #}
 <g data-hw-zone="chart">
-  {# Y-axis labels — the "0" baseline is drawn in the purple furniture tone
-     so the zero line reads as a family boundary (blue data sits above a
-     purple floor), not just another gridline. Non-zero labels inherit the
-     teal axis class from cellular-defs.j2. #}
-  {% for label in chart_y_labels %}
-  {% if label.text == "0" %}
-  <text x="{{ vx - 12 }}" y="{{ label.y + 4 }}" text-anchor="end" font-size="11" font-weight="600" fill="{{ _purple_furniture }}" opacity="0.78">{{ label.text }}</text>
-  {% else %}
-  <text class="{{ uid }}-axis-y" x="{{ vx - 12 }}" y="{{ label.y + 4 }}" text-anchor="end">{{ label.text }}</text>
-  {% endif %}
-  {% endfor %}
+  {%- if cellular_dormant_cells %}
+  <g data-hw-zone="cellular-dormant">
+    {%- for c in cellular_dormant_cells %}
+    <rect x="{{ c.x }}" y="{{ c.y }}" width="{{ c.w }}" height="{{ c.h }}" fill="{{ c.fill }}"/>
+    {%- endfor %}
+  </g>
+  {%- endif %}
 
-  {# Horizontal gridlines — baseline (y == vy+vh) gets the purple furniture
-     tone at 1px/0.3 opacity to echo the zero label; upper gridlines keep
-     the faint teal hairline from .hw-chart-gridline. Inline emission here
-     instead of the shared partial so cellular can differentiate the
-     baseline without touching the partial's single-line contract. #}
+  {%- if cellular_area_cells %}
+  <g data-hw-zone="cellular-area" clip-path="url(#{{ uid }}-area-clip)">
+    {%- for c in cellular_area_cells %}
+    <rect x="{{ c.x }}" y="{{ c.y }}" width="{{ c.w }}" height="{{ c.h }}" fill="{{ c.fill }}" class="{{ c.anim_class }}"/>
+    {%- endfor %}
+  </g>
+  {%- endif %}
+
+  {# Gridlines — uniform faint hairlines tinted info_accent at 0.06 opacity. #}
   {%- for gl in chart_gridlines %}
-    {%- if gl.y1 == _baseline_y %}
-  <line x1="{{ gl.x1 }}" y1="{{ gl.y1 }}" x2="{{ gl.x2 }}" y2="{{ gl.y2 }}" stroke="{{ _purple_furniture }}" stroke-width="1" opacity="0.3" fill="none"/>
+  <line x1="{{ gl.x1 }}" y1="{{ gl.y1 }}" x2="{{ gl.x2 }}" y2="{{ gl.y2 }}" class="hw-chart-gridline"/>
+  {%- endfor %}
+
+  {# Polyline — 3px white core with double-glow drop-shadow (info_accent outer
+     + tight white inner). Bezier (round linejoin) for cellular. #}
+  {%- if chart_polyline %}
+    {%- if chart_polyline.kind == 'path' %}
+  <path d="{{ chart_polyline.d }}" class="hw-chart-line" fill="none"/>
     {%- else %}
-  <line x1="{{ gl.x1 }}" y1="{{ gl.y1 }}" x2="{{ gl.x2 }}" y2="{{ gl.y2 }}" stroke="{{ _teal_furniture }}" stroke-width="0.5" opacity="0.1" fill="none"/>
+  <polyline points="{{ chart_polyline.points }}" class="hw-chart-line" fill="none"/>
+    {%- endif %}
+  {%- endif %}
+
+  {# Markers — smooth color progression along curve, white stroke + tinted
+     drop-shadow. Endpoint matches the regular marker geometry exactly so it
+     reads as the line's natural completion rather than a competing focal
+     element. The cellular substrate under the curve does the visual talking;
+     markers are structural beats, not exclamation points.
+
+     Endpoint differences from regular markers:
+       * fill = chart_levels[5] (brightest tier) so the terminal point feels
+         like the apex of the marker color progression
+       * NO animation class — pulse on the terminal point fights the line's
+         natural flow into its endpoint #}
+  <g data-hw-zone="markers" shape-rendering="geometricPrecision">
+  {%- for m in chart_markers %}
+    {%- if m.is_endpoint %}
+    {%- set _fill = chart_levels[5] %}
+    <g transform="translate({{ m.x }},{{ m.y }})">
+      <rect x="-4" y="-4" width="8" height="8" transform="rotate(45 0 0)"
+            fill="{{ _fill }}" stroke="#FFFFFF" stroke-width="1"
+            filter="drop-shadow(0 0 5px {{ _fill }})"/>
+    </g>
+    {%- else %}
+    {%- set _fill = cellular_marker_colors[loop.index0] if cellular_marker_colors and loop.index0 < (cellular_marker_colors | length) else chart_levels[3] %}
+    <g transform="translate({{ m.x }},{{ m.y }})">
+      <rect x="-4" y="-4" width="8" height="8" transform="rotate(45 0 0)"
+            fill="{{ _fill }}" stroke="#FFFFFF" stroke-width="1"
+            filter="drop-shadow(0 0 5px {{ _fill }})"/>
+    </g>
     {%- endif %}
   {%- endfor %}
-
-  {# Area fill (teal→void fade) #}
-  {%- if chart_area %}
-    {%- include "components/chart-area.svg.j2" %}
-  {%- endif %}
-
-  {# Polyline (2.5px angular) #}
-  {%- if chart_polyline %}
-    {%- include "components/chart-polyline.svg.j2" %}
-  {%- endif %}
-
-  {# Data markers (square + endpoint pulse) #}
-  <g data-hw-zone="markers">
-  {%- for m in chart_markers %}
-    {%- set partial = 'endpoint-' ~ m.shape if m.is_endpoint else m.shape %}
-    {%- include "components/chart-markers/" ~ partial ~ ".svg.j2" %}
-  {%- endfor %}
   </g>
 
-  {# Milestone markers (1K/2K dashed verticals + labels) #}
-  <g data-hw-zone="milestones">
+  {# Milestone markers (vertical dashed lines + value labels at threshold
+     crossings). #}
+  <g data-hw-zone="milestones" filter="url(#{{ uid }}-hud)">
   {%- for ms in chart_milestones %}
     {%- include "components/chart-milestone.svg.j2" %}
   {%- endfor %}
   </g>
 
-  {# Axes rails #}
+  {# Axes rails. #}
   {%- for ax in chart_axes %}
     {%- include "components/chart-axes.svg.j2" %}
   {%- endfor %}
 
-  {# Empty-state overlay (fresh repo / upstream failure) #}
+  {# Empty-state overlay (fresh repo / upstream failure). #}
   {%- if chart_empty_state %}
     {%- include "components/chart-empty-state.svg.j2" %}
   {%- endif %}
 </g>
 
-{# X-axis — year labels from chart_engine #}
-<g data-hw-zone="x-axis">
-  {% for label in chart_x_labels %}
-  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ vy + vh + 28 }}" text-anchor="{{ label.anchor | default('middle') }}">{{ label.text }}</text>
+{# Y-axis labels — HUD-filtered so they read against any cell bloom on the
+   left edge of the chart. #}
+<g data-hw-zone="y-axis" filter="url(#{{ uid }}-hud)">
+  {% for label in chart_y_labels %}
+  <text class="{{ uid }}-axis-y" x="{{ vx - 10 }}" y="{{ label.y + 4 }}" text-anchor="end">{{ label.text }}</text>
   {% endfor %}
 </g>
 
-{# FOOTER — date range · cellular matrix version · brand namespace.
-   Left text prefers the data-derived date range; falls back to repo slug
-   when raw_points is empty (stale/empty states). Middle uses the purple
-   furniture tone (not pennant seam_mid) so it matches production's muted
-   label color. Right is the canonical namespace "HYPERWEAVE::ABYSSAL". #}
-<g data-hw-zone="footer" transform="translate(130, {{ ch - 52 }})">
-  <line x1="0" y1="0" x2="640" y2="0" stroke="{{ _teal_furniture }}" stroke-width="0.5" opacity="0.2"/>
-  <text x="0" y="20" class="{{ uid }}-foot">{{ chart_date_range | default(chart_repo | default('')) }}</text>
-  <text x="320" y="20" class="{{ uid }}-foot" text-anchor="middle" fill="{{ _purple_furniture }}" letter-spacing="0.14em" opacity="0.85" font-weight="600">CELLULAR-MATRIX · 0.3.0</text>
-  <text x="640" y="20" class="{{ uid }}-foot" text-anchor="end" fill="{{ _teal_furniture }}" letter-spacing="0.15em" opacity="0.7" font-weight="600">HYPERWEAVE::ABYSSAL</text>
+{# X-axis — year labels below the chart. #}
+<g data-hw-zone="x-axis" filter="url(#{{ uid }}-hud)">
+  {% for label in chart_x_labels %}
+  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ vy + vh + 22 }}" text-anchor="{{ label.anchor | default('middle') }}">{{ label.text }}</text>
+  {% endfor %}
 </g>
+
+{# FOOTER — thin hairline above + repo URL (left, mid_accent quiet) + brand
+   stamp (right, info_accent very quiet). The chart class label is gone —
+   the header band already establishes "STAR HISTORY" so the footer doesn't
+   restate it. #}
+<line x1="16" y1="{{ ch - 30 }}" x2="{{ cw - 16 }}" y2="{{ ch - 30 }}" stroke="{{ _accent }}" stroke-opacity="0.06" stroke-width="0.5"/>
+<g data-hw-zone="footer" filter="url(#{{ uid }}-hud)">
+  <text x="22" y="{{ ch - 14 }}" class="{{ uid }}-foot">github.com/{{ chart_repo | default('') }}</text>
+  <text x="{{ cw - 22 }}" y="{{ ch - 14 }}" class="{{ uid }}-foot-brand" text-anchor="end">HYPERWEAVE</text>
+</g>
+
+</g>{# end outer rounded-corner clip #}
+
+{# Outer border — rounded rect tracing the chart's rx=10 silhouette in
+   info_accent at very low opacity. Drawn OUTSIDE the clip group so the
+   stroke isn't itself clipped at the corners. Reads as a deliberate
+   artifact edge framing the composition. #}
+<rect x="0.5" y="0.5" width="{{ cw - 1 }}" height="{{ ch - 1 }}" rx="10" fill="none" stroke="{{ _accent }}" stroke-opacity="0.10" stroke-width="1"/>

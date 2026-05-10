@@ -69,7 +69,19 @@ def compose(
         str,
         typer.Option(
             "--variant",
-            help="Chromatic variant (automata): blue, purple, bifamily. Empty = frame default.",
+            help="Variant slug (whitelist in genome JSON)",
+        ),
+    ] = "",
+    pair: Annotated[
+        str,
+        typer.Option(
+            "--pair",
+            help=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone. "
+                "Bifamily frames (strip, divider) consume the pair; "
+                "other frames silently ignore it."
+            ),
         ),
     ] = "",
     # Divider options
@@ -201,6 +213,7 @@ def compose(
         size=size,
         shape=shape,
         variant=variant,
+        pair=pair,
         divider_variant=divider_variant,
         marquee_direction=direction,
         stats_username=stats_username,

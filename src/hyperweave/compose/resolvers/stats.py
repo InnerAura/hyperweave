@@ -113,48 +113,6 @@ def resolve_stats(
     contrib_total = _value_or_none("contrib_total")
     streak_days = _value_or_none("streak_days")
 
-    # Stars delta annotation — production cellular stat card shows
-    # "▲ 2,431 /yr" beside the hero STARS value to communicate momentum.
-    # Source priority:
-    #   1. ``connector["stars_last_year"]`` — explicit value from connector
-    #   2. ``connector["points"]`` — diff latest count vs the earliest
-    #      point inside the last 365 days
-    # When neither is available the delta annotation renders blank, which
-    # matches the "no data" edge case rather than fabricating zero growth.
-    stars_delta_raw = connector.get("stars_last_year")
-    if stars_delta_raw is None:
-        pts = connector.get("points") or connector.get("star_history") or []
-        if pts:
-            from datetime import datetime, timedelta
-
-            now = datetime.now(UTC)
-            cutoff = now - timedelta(days=365)
-            try:
-                # Points are typically sorted oldest→newest; the latest point
-                # is the current cumulative star count. Find the earliest
-                # point on/after the cutoff to compute the year-over-year
-                # delta. Defensive parsing handles ISO dates with or without
-                # timezone, and tolerates plain YYYY-MM-DD strings.
-                latest_count = int(pts[-1].get("count", 0))
-                older_count = latest_count
-                for p in pts:
-                    raw_date = p.get("date")
-                    if not isinstance(raw_date, str):
-                        continue
-                    try:
-                        d = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
-                    except ValueError:
-                        continue
-                    if d.tzinfo is None:
-                        d = d.replace(tzinfo=UTC)
-                    if d >= cutoff:
-                        older_count = int(p.get("count", 0))
-                        break
-                stars_delta_raw = max(latest_count - older_count, 0)
-            except (TypeError, KeyError, ValueError):
-                stars_delta_raw = None
-    stars_delta_display = _format_count(stars_delta_raw) if stars_delta_raw else ""
-
     languages_raw = connector.get("language_breakdown") or _placeholder_languages()
     heatmap_grid = connector.get("heatmap_grid") or []
     username = connector.get("username") or spec.stats_username or "anonymous"
@@ -188,6 +146,89 @@ def resolve_stats(
     # change exists to eliminate.
     streak_display = "—" if streak_days is None else f"{int(streak_days)}d"
 
+    # Cellular v0.3.0 refresh: surface paradigm constants (genome-independent)
+    # and per-tone accent stops. Constants flow as named template variables
+    # so the variant-blind hex gate stays effective and overrides apply via
+    # paradigm config rather than hex spelunking. Cellular palette (info_accent
+    # / mid_accent / header_band) injected by the dispatcher via _kw.
+    cellular_palette: dict[str, Any] = _kw.get("cellular_palette") or {}
+    primary_tone: dict[str, Any] = cellular_palette.get("primary") or {}
+    stats_info_accent = primary_tone.get("info_accent", "")
+    stats_mid_accent = primary_tone.get("mid_accent", "")
+    stats_header_band = primary_tone.get("header_band", "")
+
+    if paradigm_spec is not None:
+        ps = paradigm_spec.stats
+        streak_green = ps.streak_green
+        mid_gray = ps.mid_gray
+        hero_white = ps.hero_white
+        header_band_height = int(ps.header_band_height)
+        heatmap_rows = int(ps.heatmap_rows) if ps.heatmap_rows else 0
+        heatmap_cols = int(ps.heatmap_cols) if ps.heatmap_cols else 0
+        heatmap_cell_size = float(ps.heatmap_cell_size) if ps.heatmap_cell_size else 0.0
+        heatmap_cell_gap = float(ps.heatmap_cell_gap) if ps.heatmap_cell_gap else 0.0
+        heatmap_zone_height = float(ps.heatmap_zone_height) if ps.heatmap_zone_height else 0.0
+        card_width_for_layout = ps.card_width if ps.card_width > 0 else _STATS_WIDTH
+    else:
+        streak_green = ""
+        mid_gray = ""
+        hero_white = ""
+        header_band_height = 0
+        heatmap_rows = 0
+        heatmap_cols = 0
+        heatmap_cell_size = 0.0
+        heatmap_cell_gap = 0.0
+        heatmap_zone_height = 0.0
+        card_width_for_layout = _STATS_WIDTH
+
+    # Language footer layout — v0.3.0 redesign replaces the proportional bar
+    # with inline swatch+label pairs walked left-to-right. Each entry is sized
+    # by measure_text against JBM 7px (the .lt class) and dropped from the end
+    # if it would overflow the zone's right edge. Languages are pre-sorted by
+    # descending pct, so dropping from the end drops the lowest-percentage
+    # language first — exactly what the user wants when the footer can't fit
+    # all four. No alias dictionaries, no truncation, no abbreviation: full
+    # canonical names exactly as the GitHub API returns them, with explicit
+    # % suffix on every percentage.
+    from hyperweave.core.text import measure_text as _measure_text
+
+    language_layout: list[dict[str, Any]] = []
+    if primary_tone:
+        _area_tiers_palette = primary_tone.get("area_tiers", [])
+        # Swatch palette mirrors the prior bar segment color cycle so the
+        # chromatic identity carries through the redesign unchanged.
+        if len(_area_tiers_palette) >= 5:
+            _swatch_cycle = [
+                _area_tiers_palette[2],
+                _area_tiers_palette[0],
+                _area_tiers_palette[1],
+                _area_tiers_palette[3],
+                _area_tiers_palette[4],
+            ]
+            _swatch_w = 5.0
+            _swatch_text_gap = 4.0  # gap between swatch and label text
+            _entry_gap = 24.0  # gap between adjacent entries
+            _zone_left = 20.0
+            _zone_right = float(card_width_for_layout) - 20.0  # symmetric margins
+            _x = _zone_left
+            for _idx, _lang in enumerate(languages_raw[:4]):
+                _name = str(_lang.get("name", ""))
+                _pct = int(_lang.get("pct", 0) or 0)
+                _label = f"{_name} {_pct}%"
+                _label_w = _measure_text(_label, font_family="JetBrains Mono", font_size=7)
+                _entry_w = _swatch_w + _swatch_text_gap + _label_w
+                if _x + _entry_w > _zone_right:
+                    break  # overflow — drop this and remaining (lower-pct) entries
+                language_layout.append(
+                    {
+                        "swatch_x": round(_x, 2),
+                        "swatch_color": _swatch_cycle[_idx % 5],
+                        "label_x": round(_x + _swatch_w + _swatch_text_gap, 2),
+                        "label_text": _label,
+                    }
+                )
+                _x += _entry_w + _entry_gap
+
     stats_context: dict[str, Any] = {
         "stats_username": username,
         "stats_bio": bio,
@@ -196,7 +237,6 @@ def resolve_stats(
         "stats_repo_label": f"{top_language} / {repo_count} repos" if top_language else "",
         "stars_display": _format_count(stars_total),
         "stars_raw": int(stars_total) if isinstance(stars_total, int) else 0,
-        "stars_delta_display": stars_delta_display,
         "commits_display": _format_count(commits_total),
         "prs_display": _format_count(prs_total),
         "issues_display": _format_count(issues_total),
@@ -208,6 +248,20 @@ def resolve_stats(
         "activity_bars": activity_bars,
         "activity_peak": activity_peak,
         "stale_fields": sorted(stale_fields),
+        # v0.3.0 cellular refresh — paradigm constants + per-tone accents.
+        "stats_info_accent": stats_info_accent,
+        "stats_mid_accent": stats_mid_accent,
+        "stats_header_band": stats_header_band,
+        "streak_green": streak_green,
+        "mid_gray": mid_gray,
+        "hero_white": hero_white,
+        "stats_header_band_height": header_band_height,
+        "heatmap_rows": heatmap_rows,
+        "heatmap_cols": heatmap_cols,
+        "heatmap_cell_size": heatmap_cell_size,
+        "heatmap_cell_gap": heatmap_cell_gap,
+        "heatmap_zone_height": heatmap_zone_height,
+        "language_layout": language_layout,
     }
 
     if stale:
@@ -287,9 +341,17 @@ def resolve_stats(
         stats_context["embedded_chart_viewport_w"] = embed_vp.w
         stats_context["embedded_chart_viewport_h"] = embed_vp.h
 
+    # Card dimensions — paradigm config drives both axes. Cellular v0.3.0 uses
+    # 530x233; brutalist + chrome use their own widths via the `card_width` /
+    # `card_height` fields. Paradigms that leave `card_width` at the schema
+    # default (0) fall back to the historical _STATS_WIDTH=495 baseline.
     card_height = paradigm_spec.stats.card_height if paradigm_spec is not None else 260
+    if paradigm_spec is not None and paradigm_spec.stats.card_width > 0:
+        card_width = paradigm_spec.stats.card_width
+    else:
+        card_width = _STATS_WIDTH
     return {
-        "width": _STATS_WIDTH,
+        "width": card_width,
         "height": card_height,
         "template": "frames/stats.svg.j2",
         "context": stats_context,

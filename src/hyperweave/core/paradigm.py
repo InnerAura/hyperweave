@@ -38,20 +38,32 @@ class ParadigmChartConfig(FrozenModel):
     viewport_w: int = 760
     viewport_h: int = 245
     chart_width: int = 900
-    """Overall chart SVG width (brutalist/chrome: 900; cellular: 900)."""
+    """Overall chart SVG width (brutalist/chrome: 900; cellular v0.3.0 refresh: 680)."""
     chart_height: int = 500
-    """Overall chart SVG height. Cellular specimen is 600 to fit footer."""
+    """Overall chart SVG height. Cellular v0.3.0 refresh: 380."""
     line_animate: bool = False
     """When True, emit a one-shot stroke-dashoffset draw animation on the
     polyline/path. Cellular paradigm opts in to reproduce the specimen's
     line-draws-on-load feel; brutalist/chrome keep the line static so the
     chart reads as instrument, not demo."""
+    cell_size: int = 0
+    """Cellular substrate cell stride in pixels. Zero defers to the chart
+    engine's internal default. Cellular v0.3.0 refresh: 19 (cell width 18,
+    1px gap)."""
+    header_band_height: int = 0
+    """Height of the HUD-style header band rendered as a solid rect at the
+    top of the chart (paradigm-specific). Zero disables the band entirely.
+    Cellular v0.3.0 refresh: 64 (band houses repo identifier, title, and
+    hero metric inside a tone-specific dark mid-band fill)."""
 
 
 class ParadigmStatsConfig(FrozenModel):
     """Stats frame config within a paradigm."""
 
     card_height: int = 260
+    card_width: int = 0
+    """Stats card width in pixels. Zero defers to the resolver's default
+    (495). Cellular v0.3.0 refresh: 530."""
     embeds_chart: bool = False
     """When True, resolve_stats composes a compact star-history strip
     beneath the metric row (chrome paradigm). When False, stats card is
@@ -60,6 +72,38 @@ class ParadigmStatsConfig(FrozenModel):
     embed_viewport_y: int = 170
     embed_viewport_w: int = 220
     embed_viewport_h: int = 70
+    # v0.3.0 cellular refresh — paradigm-level genome-independent constants.
+    # Routed to template context as named variables (not raw hex) so the
+    # variant-blind hex gate stays effective and other paradigms can override
+    # without touching genome JSON.
+    streak_green: str = ""
+    """Color for the streak metric (.mvg class) — genome-independent positive
+    signal. Cellular v0.3.0: '#3FB950' (GitHub green). Empty disables the
+    .mvg class fill rule."""
+    mid_gray: str = ""
+    """Mid-tone gray for medium metrics (.mvm/.mvs classes). Cellular v0.3.0:
+    '#6B7A88'. Empty falls back to the cell's CSS default."""
+    hero_white: str = ""
+    """Bright white for the hero metric (.mvh class). Cellular v0.3.0:
+    '#ECF2F8'. Empty falls back to the genome's value_text."""
+    # Heatmap geometry — cellular paradigm only consumes these. Other paradigms
+    # leave them at zero and skip the heatmap zone entirely.
+    heatmap_rows: int = 0
+    """Heatmap row count. Cellular v0.3.0: 7."""
+    heatmap_cols: int = 0
+    """Heatmap column count. Cellular v0.3.0: 42."""
+    heatmap_cell_size: float = 0
+    """Heatmap square cell side length in pixels. Cellular v0.3.0: 11.080."""
+    heatmap_cell_gap: float = 0
+    """Heatmap inter-cell gap in pixels (used for both x and y). Cellular v0.3.0: 1.2."""
+    heatmap_zone_height: float = 0
+    """Heatmap zone height available for cells + gaps; assertion test
+    enforces ``rows*cell + (rows-1)*gap <= heatmap_zone_height + 0.5``.
+    Cellular v0.3.0: ~84.76 (matches 7x11.080 + 6x1.2)."""
+    header_band_height: int = 0
+    """Header band height in pixels at the top of the stats card. Zero
+    disables. Cellular v0.3.0: 39 (band houses username + bio + brand stamp
+    against a dark gradient fill)."""
 
 
 class ParadigmStripConfig(FrozenModel):
@@ -205,6 +249,41 @@ class ParadigmIconConfig(FrozenModel):
     viewbox_h: int = 0
     """Internal coordinate system height for the icon's ``viewBox``. Zero means
     "use the resolver's rendered ``height``"."""
+    # v0.3.0 cellular icon refresh — 48x48 with 5x5 living cell grid.
+    # Cell + frame geometry pulled out of the template into paradigm config
+    # so dimension changes don't require template edits and so render/glyphs.py
+    # can read glyph_size + glyph_inset from a single source of truth.
+    card_width: int = 0
+    """Icon canvas width in pixels. Zero defers to resolver default (64).
+    Cellular v0.3.0: 48."""
+    card_height: int = 0
+    """Icon canvas height in pixels. Zero defers to resolver default (64).
+    Cellular v0.3.0: 48."""
+    cell_grid_cols: int = 0
+    """Cellular substrate grid column count. Zero disables substrate.
+    Cellular v0.3.0: 5."""
+    cell_grid_rows: int = 0
+    """Cellular substrate grid row count. Zero disables substrate.
+    Cellular v0.3.0: 5."""
+    cell_size: int = 0
+    """Substrate cell side length in pixels. Cellular v0.3.0: 8."""
+    cell_gap: int = 0
+    """Substrate inter-cell gap in pixels. Cellular v0.3.0: 1."""
+    cell_rx: int = 0
+    """Substrate cell corner radius. Cellular v0.3.0: 1 (rounded)."""
+    inner_canvas_inset: float = 0
+    """Distance from icon edge to inner canvas rect (left/top). Cellular v0.3.0: 10.08."""
+    inner_canvas_size: float = 0
+    """Inner canvas rect side length. Cellular v0.3.0: 27.84."""
+    inner_canvas_rx: int = 0
+    """Inner canvas corner radius. Cellular v0.3.0: 4."""
+    glyph_inset: float = 0
+    """Distance from icon edge to glyph SVG rect (left/top). Cellular v0.3.0:
+    13.44 (centers the 21.12 glyph in the 48 canvas)."""
+    glyph_size: float = 0
+    """Glyph render box side length. Cellular v0.3.0: 21.12."""
+    outer_border_rx: int = 0
+    """Outer border corner radius. Cellular v0.3.0: 6."""
 
 
 class ParadigmMarqueeConfig(FrozenModel):
@@ -317,7 +396,7 @@ class ParadigmSpec(FrozenModel):
 
     frame_variant_defaults: dict[str, str] = Field(default_factory=dict)
     """Per-frame default for ``ComposeSpec.variant`` when the user leaves it
-    empty. Cellular paradigm declares ``{badge: blue, strip: bifamily, ...}``
-    so monofamily artifacts (badge/icon) pick blue by default and bifamily
-    artifacts (strip/marquee/divider) show both palettes simultaneously.
-    Non-cellular paradigms leave this empty — resolvers fall back to ``blue``."""
+    empty. Cellular paradigm can declare a per-frame default tone or pair
+    (e.g. ``{badge: violet, strip: violet-teal}``) so monofamily artifacts pick
+    a solo tone and paired artifacts render bifamily. Non-cellular paradigms
+    leave this empty — resolvers fall back to the genome's flagship variant."""

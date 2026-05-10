@@ -1,36 +1,39 @@
-{# Cellular strip frame: void canvas + bifamily flanking cells + content panel.
+{# Cellular strip frame: void canvas + cellular flanking cells + content panel.
 
-   Flanking is bifamily-only (teal left, amethyst right). For monofamily
-   compositions (variant=blue|purple), the strip resolver can set
-   flank_width=0 via a paradigm override; in this paradigm the default is
-   36px flanks when variant=bifamily. Content panel spans the interior and
-   carries the identity + metric grid drawn by the outer strip.svg.j2. #}
-{% set bifamily = (variant == "bifamily") and has_flanks %}
+   v0.3.0: flanks always render when the resolver supplies flank_width > 0
+   (cells are the genome's identity — a cellular strip without cells isn't
+   automata). Paired variants render primary tone LEFT + secondary tone RIGHT;
+   solo variants render primary tone on BOTH sides. cellular_palette.secondary
+   mirrors primary in solo mode (per resolve_cellular_palette), so the
+   left/right rendering is uniform code path with no is_paired branch needed
+   at the structural level. #}
 
 <g clip-path="url(#{{ uid }}-clip)">
   {# 1. Void ground #}
   <rect width="{{ width }}" height="{{ strip_h }}" fill="{{ surface_0 | default('#04060A') }}"/>
 
-  {% if bifamily %}
-  {# 2. Left teal flank — 3 cols × (strip_h / flank_cell_size) rows of family_blue pattern cells.
-     Asymmetric phi offsets via cz1/cz2/cz3/cz4/czf/czd classes. #}
+  {% if has_flanks %}
   {% set fcs = flank_cell_size | default(12) %}
   {% set n_rows = strip_h // fcs %}
   {% set n_cols = (flank_width | default(36)) // fcs %}
-  {% set blue_trio = variant_blue_pattern_cells %}
+  {# 2. Left flank — primary tone cells (always rendered when has_flanks).
+     Asymmetric phi offsets via cz1/cz2/cz3/cz4/czf/czd classes. #}
+  {% set primary_trio = cellular_palette.primary.cellular_cells %}
   <g opacity="{{ cellular_pattern_opacity | default('0.7') }}">
   {% for col in range(n_cols) %}
     {% for row in range(n_rows) %}
     {% set color_idx = (col + row * 2) % 3 %}
     {% set class_idx = (col * 3 + row) % 5 %}
     {% set classes = ["cz1", "cz2", "cz3", "cz4", "czf"] %}
-    <rect x="{{ col * fcs }}" y="{{ row * fcs }}" width="{{ fcs }}" height="{{ fcs }}" fill="{{ blue_trio[color_idx] }}" class="{{ classes[class_idx] }}"/>
+    <rect x="{{ col * fcs }}" y="{{ row * fcs }}" width="{{ fcs }}" height="{{ fcs }}" fill="{{ primary_trio[color_idx] }}" class="{{ classes[class_idx] }}"/>
     {% endfor %}
   {% endfor %}
   </g>
 
-  {# 3. Right amethyst flank — mirror of left with family_purple palette. #}
-  {% set purple_trio = variant_purple_pattern_cells %}
+  {# 3. Right flank — secondary tone cells (paired variants get the secondary
+     palette here; solo variants get primary mirrored via resolve_cellular_palette).
+     Different cz-class rotation than the left so the pulse pattern doesn't echo. #}
+  {% set secondary_trio = cellular_palette.secondary.cellular_cells %}
   {% set right_flank_x = width - (flank_width | default(36)) %}
   <g opacity="{{ cellular_pattern_opacity | default('0.7') }}">
   {% for col in range(n_cols) %}
@@ -38,15 +41,15 @@
     {% set color_idx = (col + row * 2) % 3 %}
     {% set class_idx = (col * 3 + row) % 5 %}
     {% set classes = ["cz2", "cz3", "cz4", "cz1", "czf"] %}
-    <rect x="{{ right_flank_x + col * fcs }}" y="{{ row * fcs }}" width="{{ fcs }}" height="{{ fcs }}" fill="{{ purple_trio[color_idx] }}" class="{{ classes[class_idx] }}"/>
+    <rect x="{{ right_flank_x + col * fcs }}" y="{{ row * fcs }}" width="{{ fcs }}" height="{{ fcs }}" fill="{{ secondary_trio[color_idx] }}" class="{{ classes[class_idx] }}"/>
     {% endfor %}
   {% endfor %}
   </g>
   {% endif %}
 
   {# 4. Content panel — interior between flanks #}
-  {% set panel_x = flank_width | default(0) if bifamily else 0 %}
-  {% set panel_w = width - (2 * (flank_width | default(0))) if bifamily else width %}
+  {% set panel_x = flank_width | default(0) if has_flanks else 0 %}
+  {% set panel_w = width - (2 * (flank_width | default(0))) if has_flanks else width %}
   <rect x="{{ panel_x }}" y="2" width="{{ panel_w }}" height="{{ strip_h - 4 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.95"/>
   <rect x="{{ panel_x }}" y="2" width="{{ panel_w }}" height="{{ strip_h - 4 }}" fill="none" stroke="{{ border_tint | default('var(--dna-border-tint)') }}" stroke-width="0.5" opacity="0.28"/>
 </g>

@@ -280,6 +280,291 @@ def _build_area_path(projected: list[tuple[int, int]], baseline_y: int) -> str:
     return f"{curve} L{last_x},{baseline_y} L{first_x},{baseline_y} Z"
 
 
+# ── Cellular area-fill (v2 star chart) ────────────────────────────────────
+#
+# Round 6 / Issue G replaces the v1 left-teal / right-amethyst flank cells with
+# an area-fill approach: cells exist ONLY under the data polyline, with
+# brightness encoding vertical proximity to the curve. The chart's chromatic
+# identity migrates from border decoration to area substrate.
+#
+# Returns structured dicts per Invariant 6 (zero SVG strings in Python). The
+# template renders each cell as a <rect> with the supplied class for animation
+# cadence (b1/b2/b3/b4 — 4-phase breathe staggered 0/1.5/3/4.5s). Animation
+# classes are declared in chart/cellular-defs.j2 with the namespaced
+# @keyframes breathe-chart definition (4-stop timing for chart's bloom rhythm).
+
+# Animation class rotation. Cycles through 4 phase-staggered breathe variants
+# to break sync-beating across the cell grid. v0.3.0 visual refresh consolidated
+# the prior 5-class system (cc1/cc2/cc3/cc4/ccf) to 4 — the dropped 'ccf' fast
+# variant wasn't matching either prototype's pulse character and added
+# unnecessary visual complexity to the cell grid.
+_AREA_CELL_CLASSES: tuple[str, ...] = ("b1", "b2", "b3", "b4")
+
+# Cellular automata chart algorithm constants.
+#
+# Round 14: smooth-ombré + tiny-noise approach. The position gradient
+# (col_norm * 0.6 + row_from_top_norm * 0.4) produces a continuous trend
+# from bottom-left dim → top-right bright; small ±0.08 perturbation per
+# cell adds organic variance. The chart_levels list serves as 6 control
+# points on a gradient ramp; per-cell `frac` values position each cell
+# continuously between two adjacent control points via _lerp_rgb.
+#
+# Earlier rounds used neighbor smoothing (storing a 2D float grid and
+# averaging with left/above neighbors). That approach amplified isolated
+# noise nudges into vertical dark bands — once a cell got -1 noise, its
+# rightward and downward neighbors averaged with the darker value and
+# propagated the dim into 2-3 column-wide slices. Smooth gradient + tiny
+# noise has no propagation chain, so isolated noise stays isolated.
+_CHART_LEVEL_COUNT: int = 6
+# Two independent multiplicative hash constants for breaking row/column
+# correlation. The previous `(col * 7 + row * 13) * K` form was linear in
+# (col, row), so for any fixed row the hash walked through evenly-spaced
+# values as col incremented — producing visible horizontal periodicity.
+# XORing two independent multiplications destroys that linearity since XOR
+# has no algebraic distributivity over addition.
+_CHART_HASH_COL_MULT: int = 2654435761  # Knuth's golden ratio hash constant
+_CHART_HASH_ROW_MULT: int = 340573321  # second prime, no shared factors
+_CHART_HASH_SALT: int = 0xDEAD  # non-zero so corner cell (0,0) doesn't hash to 0
+# Noise amplitude range. ±0.08 is HALF a chart_levels segment (1/6 ≈ 0.167);
+# large enough to push some cells across a control-point boundary creating
+# cell-to-cell variation, small enough that the position gradient stays the
+# dominant signal so adjacent cells have visually similar colors.
+_CHART_NOISE_AMPLITUDE: float = 0.16
+# Inset between cells (cell_size - inset = rendered cell width). v0.3.0 visual
+# refresh sets this to 1 to match the v2 prototype's 18x18 cells in 19px stride
+# (1px hairline between cells). Earlier rounds used 0 (edge-to-edge), but the
+# v2 prototype's slight gap reads as a deliberate cellular grid boundary
+# rather than visual noise — the chart operates at a denser 30-col x 13-row
+# grid (vs prior 18x10) where the per-cell boundary is what carries the
+# cellular automata identity.
+_CHART_CELL_INSET: int = 1
+
+
+def _hex_to_rgb(hex_str: str) -> tuple[int, int, int]:
+    """Parse "#RRGGBB" into an (r, g, b) integer tuple. Tolerates "#rgb"
+    shorthand and missing leading hash. Returns (0, 0, 0) for malformed input
+    rather than raising — the caller is rendering visuals, not parsing config."""
+    h = hex_str.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    if len(h) != 6:
+        return (0, 0, 0)
+    try:
+        return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+    except ValueError:
+        return (0, 0, 0)
+
+
+def _lerp_rgb(c0: str, c1: str, t: float) -> str:
+    """Linear interpolate between two hex colors in RGB space at fraction t∈[0,1].
+    Returns "#RRGGBB". Used by the chart cell glow algorithm so the chromatic
+    gradient between edge_color and peak_color is continuous instead of
+    quantized into 5 discrete tiers."""
+    t = max(0.0, min(1.0, t))
+    r0, g0, b0 = _hex_to_rgb(c0)
+    r1, g1, b1 = _hex_to_rgb(c1)
+    r = round(r0 + (r1 - r0) * t)
+    g = round(g0 + (g1 - g0) * t)
+    b = round(b0 + (b1 - b0) * t)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _polyline_y_at(x: int, projected: list[tuple[int, int]]) -> int | None:
+    """Linear-interpolated polyline y at the given x. Returns None outside
+    the projected x-range — caller decides whether to fill or skip the cell."""
+    if not projected:
+        return None
+    if x < projected[0][0] or x > projected[-1][0]:
+        return None
+    for i in range(len(projected) - 1):
+        x0, y0 = projected[i]
+        x1, y1 = projected[i + 1]
+        if x0 <= x <= x1:
+            if x1 == x0:
+                return y0
+            t = (x - x0) / (x1 - x0)
+            return round(y0 + t * (y1 - y0))
+    return projected[-1][1]
+
+
+def compute_dormant_cells(
+    vp: Viewport,
+    dormant_range: list[str],
+    *,
+    cell_size: int = 40,
+) -> list[dict[str, Any]]:
+    """Compute the dormant cell substrate that softens the chart's void area.
+
+    Returns a flat tile of cells covering the FULL viewport (no clipping) with
+    very-dark colors interpolated between dormant_range[0] (low) and
+    dormant_range[1] (high). Each cell's interpolation fraction comes from a
+    seeded hash so the dormant grid has subtle per-cell variation rather than
+    a single solid fill, but the entire range stays at 2-5% luminance —
+    barely distinguishable from black until you look closely.
+
+    Purpose: the area ABOVE the polyline (where the bright cell layer is
+    clipped away) gets a faint warm/cool undertone matching the variant's
+    tone family instead of pure surface_0 black. This softens the clip
+    boundary so the chart reads as one heated surface where the data zone
+    glows brighter, instead of two discrete regions cut out of pure void.
+
+    No animation classes — dormant is structural background, not living signal.
+    """
+    if len(dormant_range) != 2:
+        return []
+    low_color, high_color = dormant_range
+    cells: list[dict[str, Any]] = []
+    n_cols = (vp.w + cell_size - 1) // cell_size
+    n_rows = (vp.h + cell_size - 1) // cell_size
+    inner_size = cell_size - _CHART_CELL_INSET
+    for col in range(n_cols):
+        for row in range(n_rows):
+            cx = vp.x + col * cell_size
+            cy = vp.y + row * cell_size
+            # Same XOR-mix hash as the active layer — uncorrelated noise
+            # avoids horizontal periodicity in the dormant texture too.
+            mixed = (col * _CHART_HASH_COL_MULT) ^ (row * _CHART_HASH_ROW_MULT) ^ _CHART_HASH_SALT
+            hash_val = ((mixed >> 16) ^ mixed) & 0xFF
+            frac = hash_val / 255.0
+            fill = _lerp_rgb(low_color, high_color, frac)
+            cells.append({"x": cx, "y": cy, "w": inner_size, "h": inner_size, "fill": fill})
+    return cells
+
+
+def compute_cellular_chart_cells(
+    projected: list[tuple[int, int]],
+    vp: Viewport,
+    chart_levels: list[str],
+    *,
+    cell_size: int = 40,
+) -> dict[str, Any]:
+    """Compute cellular automata chart cells via smooth ombré + tiny noise.
+
+    Cells exist ONLY under the polyline (clipped to a smooth-bezier polygon
+    closed to the baseline). Each cell's color comes from:
+
+    1. **Position gradient** — t = col_norm * 0.6 + row_from_top * 0.4 drives
+       a continuous trend bottom-left dim → top-right bright. This IS the
+       ombré: adjacent cells differ by ~5% in t (one step of grid resolution),
+       so their colors differ by exactly the corresponding gradient step.
+    2. **±0.08 hash perturbation** — a small per-cell offset from Knuth's
+       multiplicative hash adds organic variance without producing outliers.
+       At ±0.08 (half of one chart_levels segment width), some cells cross
+       a control-point boundary while most stay within their gradient zone.
+    3. **Continuous lerp through chart_levels** — the resulting `t ∈ [0, 1]`
+       maps to a position between adjacent chart_levels stops via _lerp_rgb,
+       so chart_levels acts as 6 control points on a gradient ramp rather
+       than a quantized palette.
+
+    No neighbor propagation. Earlier rounds averaged each cell with its
+    left + above neighbors, but isolated noise nudges (e.g., -1 level)
+    cascaded down/rightward chains creating visible 2-3 column-wide dark
+    bands. Smooth gradient + tiny noise has no propagation, so isolated
+    cells stay isolated and the surface flows continuously.
+
+    Returns a dict with:
+    - ``cells``: list of {x, y, w, h, fill, anim_class} dicts. Cells render
+      edge-to-edge (40x40, inset=0) so color difference is the only visible
+      boundary between neighbors. Animation classes cycled by index.
+    - ``clip_path_d``: bezier-following path closed to baseline; cells outside
+      the polyline polygon are masked at render time.
+    """
+    if not projected or len(chart_levels) != _CHART_LEVEL_COUNT:
+        return {"cells": [], "clip_path_d": ""}
+
+    baseline_y = vp.y + vp.h
+    # ClipPath: smooth bezier following the polyline, closed to baseline.
+    bezier_d = _build_bezier_path(projected)
+    last_x = projected[-1][0]
+    first_x = projected[0][0]
+    if not bezier_d:
+        return {"cells": [], "clip_path_d": ""}
+    clip_path_d = f"{bezier_d} L {last_x} {baseline_y} L {first_x} {baseline_y} Z"
+
+    # Tile cells across viewport. Ceiling division so the bottom row reaches
+    # the baseline even when vp.h isn't a clean multiple of cell_size.
+    n_cols = (vp.w + cell_size - 1) // cell_size
+    n_rows = (vp.h + cell_size - 1) // cell_size
+    col_div = max(1, n_cols - 1)
+    row_div = max(1, n_rows - 1)
+    inner_size = cell_size - _CHART_CELL_INSET
+    max_level_idx = _CHART_LEVEL_COUNT - 1
+
+    cells: list[dict[str, Any]] = []
+    cell_idx = 0
+    for col in range(n_cols):
+        for row in range(n_rows):
+            cx = vp.x + col * cell_size
+            cy = vp.y + row * cell_size
+
+            # Smooth position gradient — col*0.6 + (1-row)*0.4 → t ∈ [0, 1].
+            # Top-right (high col, low row) → t near 1.0 (brightest);
+            # bottom-left → t near 0.0 (darkest).
+            col_norm = col / col_div
+            row_from_top = 1.0 - (row / row_div)
+            base = col_norm * 0.6 + row_from_top * 0.4
+
+            # Tiny ±0.08 perturbation. XOR-mix hash breaks row/column
+            # correlation: independent multiplications combined via XOR can't
+            # be reduced to a linear function of (col, row), so adjacent cells
+            # produce uncorrelated noise values. The right-shift-then-XOR
+            # finalization mixes high bits (which carry the most entropy from
+            # the multiplications) into the low byte before masking.
+            mixed = (col * _CHART_HASH_COL_MULT) ^ (row * _CHART_HASH_ROW_MULT) ^ _CHART_HASH_SALT
+            hash_val = ((mixed >> 16) ^ mixed) & 0xFF
+            noise = (hash_val / 255.0 - 0.5) * _CHART_NOISE_AMPLITUDE
+
+            # Clamp t into [0, 0.9999] — the upper clamp keeps int(scaled)
+            # at most max_level_idx-1, so hi = lo+1 always selects a valid
+            # adjacent stop without needing a special case at t=1.0.
+            t = max(0.0, min(0.9999, base + noise))
+            scaled = t * max_level_idx
+            level_lo = int(scaled)
+            level_hi = min(level_lo + 1, max_level_idx)
+            frac = scaled - level_lo
+            fill = _lerp_rgb(chart_levels[level_lo], chart_levels[level_hi], frac)
+
+            anim_class = _AREA_CELL_CLASSES[cell_idx % len(_AREA_CELL_CLASSES)]
+            cells.append(
+                {
+                    "x": cx,
+                    "y": cy,
+                    "w": inner_size,
+                    "h": inner_size,
+                    "fill": fill,
+                    "anim_class": anim_class,
+                }
+            )
+            cell_idx += 1
+
+    return {"cells": cells, "clip_path_d": clip_path_d}
+
+
+def compute_marker_color_progression(
+    projected: list[tuple[int, int]],
+    chart_levels: list[str],
+) -> list[str]:
+    """Smooth color progression for chart markers, indexed by position along curve.
+
+    Returns a list of hex colors with length == len(projected). Marker[0] uses
+    chart_levels[0] (darkest), marker[n-1] uses chart_levels[5] (brightest),
+    with smooth RGB lerp between them. Endpoint marker is rendered separately
+    by the template (always white).
+
+    Cobalt-sapphire pattern: each marker tints its drop-shadow with the same
+    color as its fill so the glow rhymes with the marker tone, building visual
+    continuity across the curve.
+    """
+    if not projected or len(chart_levels) != _CHART_LEVEL_COUNT:
+        return []
+    n = len(projected)
+    if n == 1:
+        return [chart_levels[-1]]
+    edge = chart_levels[0]
+    peak = chart_levels[-1]
+    return [_lerp_rgb(edge, peak, i / (n - 1)) for i in range(n)]
+
+
 # ── Marker builders (structured output; rendered by Jinja partials) ────────
 #
 # Per Invariant 6 (zero f-string SVG in Python), marker geometry is emitted
@@ -630,6 +915,10 @@ def build_chart_svg(
     *,
     milestones: list[int] | None = None,
     empty_message: str | None = None,
+    cellular_chart_levels: list[str] | None = None,
+    cellular_dormant_range: list[str] | None = None,
+    cellular_cell_size: int = 40,
+    y_tick_target: int = 4,
 ) -> dict[str, Any]:
     """Render a set of time-series points into SVG fragment strings + label data.
 
@@ -668,7 +957,7 @@ def build_chart_svg(
     # and the polyline's baseline only agree by coincidence.
     if points:
         v_max = max(p.value for p in points)
-        ticks = _nice_y_ticks(v_max)
+        ticks = _nice_y_ticks(v_max, target_count=y_tick_target)
         effective_max = ticks[-1] if ticks else max(v_max, 1)
         y_labels = _build_y_labels(ticks, 0, effective_max, viewport)
         x_labels = _build_x_date_labels(points, viewport)
@@ -723,6 +1012,42 @@ def build_chart_svg(
     # embedded charts in stats.py that don't need a user-facing label).
     empty_state = _build_empty_state(viewport, empty_message or "") if not points else None
 
+    # Cellular automata chart substrate (Round 13). Three layers:
+    #   - dormant_cells: full-viewport tile in near-black tone-family hues,
+    #     softens the clip boundary so the void area above the curve reads as
+    #     warm undertone instead of pure black.
+    #   - cells (active): edge-to-edge cells with continuous interpolation
+    #     between chart_levels control points; clipped to bezier-baseline
+    #     polygon. Neighbor smoothing creates organic regions; per-cell hash
+    #     micro-noise + level interpolation creates the texture within regions.
+    #   - marker_colors: per-position color progression along the curve.
+    # Only computed when caller supplies chart_levels — brutalist + chrome
+    # leave it None and get empty defaults.
+    cellular_area: dict[str, Any] = {
+        "cells": [],
+        "clip_path_d": "",
+        "marker_colors": [],
+        "dormant_cells": [],
+    }
+    if cellular_chart_levels:
+        dormant_cells: list[dict[str, Any]] = []
+        if cellular_dormant_range:
+            dormant_cells = compute_dormant_cells(viewport, cellular_dormant_range, cell_size=cellular_cell_size)
+        if projected:
+            bright = compute_cellular_chart_cells(
+                projected, viewport, cellular_chart_levels, cell_size=cellular_cell_size
+            )
+            marker_colors = compute_marker_color_progression(projected, cellular_chart_levels)
+            cellular_area = {**bright, "marker_colors": marker_colors, "dormant_cells": dormant_cells}
+        else:
+            # Empty/zero state — dormant still renders so the chart isn't visually empty.
+            cellular_area = {
+                "cells": [],
+                "clip_path_d": "",
+                "marker_colors": [],
+                "dormant_cells": dormant_cells,
+            }
+
     return {
         "defs": "",
         "axes": axes,
@@ -734,4 +1059,5 @@ def build_chart_svg(
         "y_labels": y_labels,
         "x_labels": x_labels,
         "empty_state": empty_state,
+        "cellular_area": cellular_area,
     }

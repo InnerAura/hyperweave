@@ -20,17 +20,33 @@ from hyperweave.core.enums import ArtifactStatus, FrameType, MotionId
 if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec, ResolvedArtifact
 
+from hyperweave.compose.assembler import fonts_for_frame, frame_needs_fonts
 from hyperweave.render.fonts import load_font_face_css
 
 _CtxBuilder = Callable[["ComposeSpec", "ResolvedArtifact", dict[str, str]], dict[str, Any]]
 
 
-def _load_font_faces(genome: dict[str, Any]) -> str:
-    """Load embedded font CSS from the genome's ``fonts`` list."""
-    slugs = genome.get("fonts") or ["jetbrains-mono"]
-    if not isinstance(slugs, list):
-        slugs = ["jetbrains-mono"]
-    return load_font_face_css(slugs)
+def _load_font_faces(genome: dict[str, Any], frame_type: str) -> str:
+    """Load embedded font CSS for ``frame_type``, filtered to slugs the frame
+    actually renders.
+
+    Intersects the genome's declared ``fonts`` list with the per-frame allowlist
+    returned by :func:`fonts_for_frame`. A genome that declares all 3 fonts
+    (chakra-petch, orbitron, jetbrains-mono) will only embed Orbitron when the
+    frame is a marquee, saving ~55KB per artifact. Frames absent from the
+    allowlist (icon, divider) get an empty allowed set and embed zero fonts.
+
+    The intersection is order-preserving against the genome's declared list so
+    @font-face declarations render in genome-author intent order.
+    """
+    declared = genome.get("fonts") or ["jetbrains-mono"]
+    if not isinstance(declared, list):
+        declared = ["jetbrains-mono"]
+    allowed = fonts_for_frame(frame_type)
+    if not allowed:
+        return ""
+    filtered = [slug for slug in declared if slug in allowed]
+    return load_font_face_css(filtered)
 
 
 def build_context(
@@ -79,8 +95,12 @@ def _base_context(
         css_bundle.get("telemetry", ""),
         css_bundle.get("motion", ""),
     ]
-    # Debug comment listing included CSS modules (Tier 1B)
+    # Debug comment listing included CSS modules (Tier 1B). Per-frame font gate
+    # surfaces here too so `grep "hw:css-modules"` across outputs/proofset/ can
+    # confirm fonts were correctly excluded for icons/dividers.
     module_names = [k for k, v in css_bundle.items() if v]
+    if frame_needs_fonts(spec.type):
+        module_names.append("fonts")
     css_debug = f"/* hw:css-modules: {','.join(module_names)} */"
     css_assembled = css_debug + "\n" + "\n".join(p for p in css_parts if p)
 
@@ -156,8 +176,14 @@ def _base_context(
         "created_at": datetime.now(UTC).isoformat(),
         # Version -- read by templates/components/metadata.svg.j2
         "version": __version__,
-        # Embedded fonts (base64 @font-face CSS)
-        "font_faces": _load_font_faces(resolved.genome),
+        # Embedded fonts (base64 @font-face CSS) — gated per frame_type via
+        # frame_needs_fonts() and filtered per frame's font allowlist via
+        # fonts_for_frame(). Icons / dividers receive empty string (not in
+        # _NEEDS_FONTS dict) so template-level {{ font_faces }} renders
+        # nothing. Marquee receives Orbitron only; chart receives Orbitron +
+        # JetBrains Mono. The frame-aware filtering mirrors the per-frame CSS
+        # module pattern at assembler.py:14-32.
+        "font_faces": _load_font_faces(resolved.genome, spec.type) if frame_needs_fonts(spec.type) else "",
     }
     return ctx, uid, artifact_id
 
@@ -335,6 +361,14 @@ def _ctx_chart(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     ctx["chart_milestones"] = []
     ctx["chart_empty_state"] = None
     ctx["data_hw_status"] = "fresh"
+    # Cellular automata chart substrate (Round 13). Three layers: dormant
+    # softens void→data clip boundary, active cells under polyline, markers
+    # progress through chart_levels. Empty defaults so StrictUndefined never
+    # fires on non-cellular paradigms.
+    ctx["cellular_area_cells"] = []
+    ctx["cellular_area_clip_d"] = ""
+    ctx["cellular_marker_colors"] = []
+    ctx["cellular_dormant_cells"] = []
     ctx.update(resolved.frame_context)
     return ctx
 

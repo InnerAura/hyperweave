@@ -1,155 +1,98 @@
-{# Cellular stats card — 495x260 soulcard, bifamily substrate + 5-slot vertical.
+{# Cellular stats card v4b — compact 530×233 with three vertical zones.
 
-   Spec: cellular-automata-stat-card.svg. Layout:
-     Substrate: 22px cells × 3 cols × 12 rows per flank (teal left, amethyst right)
-     Data panel: x=66 w=363 y=6 h=248
-     HEADER slot   (y 12-44): username (Orbitron 11px #1E849A) + bio (JBM 7.5px)
-     HERO slot     (y 52-106): 2-column Chakra Petch 38px — stars + commits
-     SECONDARY slot (y 116-162): 4-column Chakra Petch 26px — PRS / ISSUES / CONTRIB / STREAK
-     HEATMAP slot  (y 172-224): 7×42 GitHub-style contribution grid, palette #161b22/#0e4429/#006d32/#26a641/#39d353
-     FOOTER slot   (y 228-250): small meta text #}
+   Replaces the v0.3.0-Round-9 5-slot vertical stack (header / hero /
+   secondary / heatmap / language) with three zones:
 
-{% set sw = width | default(495) %}
-{% set sh = height | default(260) %}
-{% set cell_size = 22 %}
-{% set flank_cols = 3 %}
-{% set flank_w = flank_cols * cell_size %}
-{% set n_rows = (sh + cell_size - 1) // cell_size %}
-{% set panel_x = flank_w %}
-{% set panel_w = sw - 2 * flank_w %}
+     1. HEADER BAND (y=0..39) — gradient-filled rect with username + bio inline,
+        HYPERWEAVE brand stamp top-right, accent hairline at y=39
+     2. METRIC STRIP (y≈73) — single-row hierarchy: hero (mvh, 26px white),
+        medium (mvm, 20px gray), small (mvs, 15px gray), streak (mvg, 15px
+        green). Five values: STARS · COMMITS · PRS · CONTRIB · STREAK
+     3. HEATMAP + LEGEND + LANGUAGE (y=101..221) — year label + 5-tier legend
+        column at top, 7×42 square heatmap below, 5-segment language bar
+        with inline labels at the bottom
 
-{# Void ground #}
-<rect width="{{ sw }}" height="{{ sh }}" fill="{{ surface_0 | default('#04060A') }}"/>
+   The card outline (rounded rect at info_accent @ 10% alpha) frames the
+   composition. Heatmap level 0..4 maps to area_tiers[4..0] (darkest →
+   brightest); active levels carry b1/b2/b3/b4 phase-staggered breathe. #}
 
-{# Left teal flank #}
-{% set blue_trio = variant_blue_pattern_cells %}
-{% set blue_classes = ["cs1", "cs2", "csd", "cs3", "cs4", "csf", "csd", "cs2", "cs1", "cs4", "cs3", "csf"] %}
-<g opacity="0.65">
-{% for col in range(flank_cols) %}
-  {% for row in range(n_rows) %}
-  {% set cidx = (col + row) % 3 %}
-  {% set clsidx = (col * n_rows + row) % 12 %}
-  <rect x="{{ col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ blue_trio[cidx] }}" class="{{ blue_classes[clsidx] }}"/>
-  {% endfor %}
+{% set sw = width | default(530) %}
+{% set sh = height | default(233) %}
+{% set _surface = surface_0 | default('#0A0A0A') %}
+{% set area_tiers = cellular_palette.primary.area_tiers %}
+{% set _accent = stats_info_accent %}
+{% set _band_h = stats_header_band_height | default(39) %}
+
+{# Card clip — masks rendering to the rounded rect so the breathing heatmap
+   and language bar can't bleed past the corners. #}
+<g clip-path="url(#{{ uid }}-card-clip)">
+
+{# Void ground — full canvas. #}
+<rect width="{{ sw }}" height="{{ sh }}" fill="{{ _surface }}"/>
+
+{# ZONE 1: HEADER BAND (y=0..39) — gradient fill, username + bio inline at
+   y=24, HYPERWEAVE brand stamp top-right, accent hairline at y=39. #}
+<rect width="{{ sw }}" height="{{ _band_h }}" fill="url(#{{ uid }}-top-grad)"/>
+<line x1="0" y1="{{ _band_h }}" x2="{{ sw }}" y2="{{ _band_h }}" stroke="{{ _accent }}" stroke-opacity="0.10" stroke-width="1"/>
+<text x="20" y="24" class="{{ uid }}-username">{{ stats_username | upper }}</text>
+{% if stats_bio or stats_repo_label %}
+<text x="98" y="24" class="{{ uid }}-bio">{% if stats_repo_label %}{{ stats_repo_label }}{% endif %}{% if stats_repo_label and stats_bio %} · {% endif %}{% if stats_bio %}{{ stats_bio }}{% endif %}</text>
+{% endif %}
+<text x="{{ sw - 20 }}" y="22" class="{{ uid }}-brand" text-anchor="end">HYPERWEAVE</text>
+
+{# ZONE 2: METRIC STRIP (y≈73) — single-row hierarchy. Layout from the v4b
+   prototype: STARS hero anchored at x=20; COMMITS medium follows; PRS and
+   CONTRIB small; STREAK green right-aligned at x≈459. The strip is one
+   visual rhythm; values snap to a 73-baseline so digit baselines align even
+   though font sizes differ.
+
+   Slot positions are absolute (computed from prototype) rather than flex —
+   Jinja2 doesn't resolve text widths at template time, so a flex layout
+   would require post-render measurement. The compositor knows the exact
+   pixel positions because metric values are formatted to fit the column
+   budget by the resolver (textLength caps if a value would overflow). #}
+<text x="20"  y="72.8" class="{{ uid }}-mvh">{{ stars_display | default('--') }}</text>
+<text x="89.5"  y="72.8" class="{{ uid }}-mlb">STARS</text>
+<text x="135" y="72.8" class="{{ uid }}-mvm">{{ commits_display | default('--') }}</text>
+<text x="173" y="72.8" class="{{ uid }}-mlb">COMMITS</text>
+<text x="229" y="72.8" class="{{ uid }}-mvs">{{ prs_display | default('--') }}</text>
+<text x="241" y="72.8" class="{{ uid }}-mlb">PRS</text>
+<text x="276" y="72.8" class="{{ uid }}-mvs">{{ contrib_display | default('--') }}</text>
+<text x="305" y="72.8" class="{{ uid }}-mlb">CONTRIB</text>
+<text x="459" y="72.8" class="{{ uid }}-mvg">{{ streak_display | default('--') }}</text>
+<text x="479" y="72.8" class="{{ uid }}-mlb">STREAK</text>
+
+{# ZONE 3a: YEAR LABEL + LEGEND COLUMN (y=101..108).
+   Year (e.g. "2026") at left x=20; 5-tier legend rects at right side
+   showing the heatmap palette in tier order (empty→brightest). Cell positions
+   match prototype literals: x=467/476/485/494/503. #}
+<text x="20" y="106.6" class="{{ uid }}-cyr">{{ stats_heatmap_year }}</text>
+{% set _legend_x = [467, 476, 485, 494, 503] %}
+{% for i in range(5) %}
+<rect x="{{ _legend_x[i] }}" y="101" width="7" height="7" rx="1.5" fill="{{ area_tiers[4 - i] }}"/>
 {% endfor %}
-</g>
 
-{# Right amethyst flank #}
-{% set purple_trio = variant_purple_pattern_cells %}
-{% set purple_classes = ["cs2", "csd", "csf", "cs3", "cs1", "cs4", "csd", "cs2", "csf", "cs3", "cs1", "csd"] %}
-<g opacity="0.65">
-{% for col in range(flank_cols) %}
-  {% for row in range(n_rows) %}
-  {% set cidx = (col + row) % 3 %}
-  {% set clsidx = (col * n_rows + row) % 12 %}
-  <rect x="{{ sw - flank_w + col * cell_size }}" y="{{ row * cell_size }}" width="{{ cell_size }}" height="{{ cell_size }}" fill="{{ purple_trio[cidx] }}" class="{{ purple_classes[clsidx] }}"/>
-  {% endfor %}
-{% endfor %}
-</g>
-
-{# Data panel #}
-<rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ sh - 12 }}" fill="{{ surface_0 | default('#04060A') }}" opacity="0.92"/>
-<rect x="{{ panel_x }}" y="6" width="{{ panel_w }}" height="{{ sh - 12 }}" fill="none" stroke="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" stroke-width="0.5" opacity="0.25"/>
-
-{# Slot-boundary separators — production draws a 0.3-stroke hairline between
-   each vertical band (header/hero/secondary/heatmap/footer). These are the
-   visual rhythm ticks the soulcard lays out against; omitting them collapses
-   the 5-slot architecture into undifferentiated content. Line bounds:
-   x1 = panel_x + 16 (= 82), x2 = panel_x + panel_w - 16 (= 413). #}
-{% set sep_left = panel_x + 16 %}
-{% set sep_right = panel_x + panel_w - 16 %}
-{% set sep_stroke = variant_blue_pattern_cells[0] | default('#1E849A') %}
-
-{# SLOT 1: HEADER (y 12-44) — username + bio + accent underline.
-   All <text> elements use CSS classes from cellular-defs.j2 so the
-   custom fonts (Orbitron) actually load. Inline font-family attributes
-   on <text> are overridden by the catch-all `text{font-family:'JBM'}`
-   rule per CSS specificity rules. #}
-<g data-hw-zone="header">
-  <text x="{{ panel_x + 16 }}" y="26" class="{{ uid }}-username">{{ stats_username | upper }}</text>
-  <text x="{{ panel_x + 16 }}" y="42" class="{{ uid }}-bio">{{ stats_repo_label | default('') }}{% if stats_bio %} · {{ stats_bio }}{% endif %}</text>
-  <rect x="{{ panel_x + 16 }}" y="48" width="40" height="1.5" fill="{{ sep_stroke }}" opacity="0.5"/>
-  <text x="{{ panel_x + panel_w - 16 }}" y="23" class="{{ uid }}-brand" text-anchor="end">HYPERWEAVE</text>
-</g>
-<line x1="{{ sep_left }}" y1="52" x2="{{ sep_right }}" y2="52" stroke="{{ sep_stroke }}" stroke-width="0.3" opacity="0.15"/>
-
-{# SLOT 2: HERO (y 52-106) — 2-column primary metrics. STARS left, COMMITS right.
-   Spec includes a delta indicator (▲ 2,431 /yr) next to STARS in green — emitted
-   conditionally when stars_delta_display is non-empty. #}
-{% set hero_left_x = panel_x + 16 %}
-{% set hero_right_x = panel_x + 191 %}
-<g data-hw-zone="hero">
-  <text x="{{ hero_left_x }}" y="92" class="{{ uid }}-hero-value">{{ stars_display | default('--') }}</text>
-  <text x="{{ hero_right_x }}" y="92" class="{{ uid }}-hero-value-alt">{{ commits_display | default('--') }}</text>
-  <text x="{{ hero_left_x }}" y="108" class="{{ uid }}-hero-label">STARS</text>
-  {% if stars_delta_display %}
-  <text x="{{ hero_left_x + 50 }}" y="108" class="{{ uid }}-hero-delta">▲ {{ stars_delta_display }}</text>
-  {% endif %}
-  <text x="{{ hero_right_x }}" y="108" class="{{ uid }}-hero-label">COMMITS</text>
-</g>
-<line x1="{{ sep_left }}" y1="116" x2="{{ sep_right }}" y2="116" stroke="{{ sep_stroke }}" stroke-width="0.3" opacity="0.12"/>
-
-{# SLOT 3: SECONDARY (y 116-162) — 4-column metrics: PRS / ISSUES / CONTRIB / STREAK.
-   Value tints: PRS/ISSUES muted slate (#808898), CONTRIB dimmer (#606878), STREAK green (#22c55e).
-   Label tint source: `variant_purple_pattern_cells[0]` gives the "furniture"
-   purple (#6B3B8A). Using `variant_purple_seam_mid` here resolves to #A88AD4
-   (the "pennant" tone), which is a role mismatch per the two-stop chromatic
-   rule — labels are low-hierarchy chrome, not state signal. STREAK label
-   stays on the teal seam because STREAK is the active-pulse indicator. #}
-{% set purple_label = variant_purple_pattern_cells[0] | default('#6B3B8A') %}
-{% set teal_label = variant_blue_pattern_cells[0] | default('#1E849A') %}
-{% set sec_cols = [
-  (16, prs_display | default('--'), 'PRS', '#808898', purple_label),
-  (96, issues_display | default('--'), 'ISSUES', '#808898', purple_label),
-  (176, contrib_display | default('--'), 'CONTRIB', '#606878', purple_label),
-  (271, streak_display | default('--'), 'STREAK', '#22c55e', teal_label)
-] %}
-<g data-hw-zone="secondary">
-{% for col in sec_cols %}
-  <text x="{{ panel_x + col[0] }}" y="146" class="{{ uid }}-sec-value" fill="{{ col[3] }}">{{ col[1] }}</text>
-  <text x="{{ panel_x + col[0] }}" y="162" class="{{ uid }}-sec-label" fill="{{ col[4] }}">{{ col[2] }}</text>
-{% endfor %}
-</g>
-<line x1="{{ sep_left }}" y1="172" x2="{{ sep_right }}" y2="172" stroke="{{ sep_stroke }}" stroke-width="0.3" opacity="0.12"/>
-
-{# SLOT 4: HEATMAP (y 172-224) — 4 rows x 42 cols of 5x5 cells with 2px gap.
-   Prototype metadata: "Chose 4-row heatmap over full 7-row GitHub graph to
-   fit 260px height". 4 rows × 7 row-pitch = 28px tall, leaving room for a
-   roomier label header above and a footer gutter below.
-
-   Layout: label and heatmap SHARE the same left edge at x=panel_x+16=82.
-   The prototype offset the heatmap 30px to the right of the label, which
-   the user explicitly flagged as a misalignment bug — fixing it BETTER
-   than the prototype is the explicit goal. 42 cols × 7px stride = 294px
-   span, ending at x=376. Right gutter to panel edge (x=429) is 53px,
-   well within the panel's 16px-min margin discipline.
-
-   Label class `-heatmap-label` lives in cellular-defs.j2 — JBM 6px in
-   teal at 60% opacity so the header reads as quiet metadata, not a
-   competing slot title. CSS class wins over the catch-all `text{}` rule.
-
-   Window: last 42 weeks × 4 rows = 168 cells from the tail of the
-   chronological grid; earlier weeks truncated. Year suffix is the
-   current calendar year so the label stays truthful. #}
-{% set heatmap_year = (stats_heatmap_year | default("") | string) %}
-<text data-hw-zone="heatmap-label" x="{{ panel_x + 16 }}" y="185" class="{{ uid }}-heatmap-label">CONTRIBUTIONS{% if heatmap_year %} {{ heatmap_year }}{% endif %}</text>
-<g data-hw-zone="heatmap" transform="translate({{ panel_x + 16 }}, 190)">
-  {% set heatmap_palette = ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'] %}
+{# ZONE 3b: HEATMAP (y=114..198) — 7 rows × 42 cols of square 11.080px cells
+   with 1.2px gap (stride 12.28). Cells start at x=20 and end at
+   x=20 + 41*12.28 + 11.08 = 514.56. Height fills 84.76px (7×11.080 +
+   6×1.2). Active cells (level >= 1) carry b1/b2/b3/b4 phase-staggered
+   breathe; level-0 cells stay static at the darkest tier (area_tiers[4]). #}
+{% set _hm_rows = heatmap_rows | default(7) %}
+{% set _hm_cols = heatmap_cols | default(42) %}
+{% set _hm_cell = heatmap_cell_size | default(11.080) %}
+{% set _hm_gap = heatmap_cell_gap | default(1.2) %}
+{% set _hm_stride = _hm_cell + _hm_gap %}
+{% set _hm_x0 = 20 %}
+{% set _hm_y0 = 114 %}
+<g data-hw-zone="heatmap">
   {% set grid = heatmap_grid | default([]) %}
-  {# Window the last 42 weeks × 4 rows (168 cells) from the tail of the
-     chronological grid. Stride is column*7+row to mirror GitHub's calendar
-     layout (Sun-Sat columns, weeks across); we render rows 3-6 (Wed-Sat)
-     for the densest activity stripe. #}
-  {% set cols = 42 %}
-  {% set rows = 4 %}
-  {% set window_cells = cols * 7 %}
   {% set grid_len = grid | length %}
+  {% set window_cells = _hm_cols * _hm_rows %}
   {% set offset = (grid_len - window_cells) if grid_len > window_cells else 0 %}
-  {% set row_skip = 3 %}
-  {% for row in range(rows) %}
-    <g transform="translate(0,{{ row * 7 }})">
-    {% for col in range(cols) %}
-      {% set idx = offset + col * 7 + (row + row_skip) %}
+  {% set _anim_classes = ["b1", "b2", "b3", "b4"] %}
+  {% for col in range(_hm_cols) %}
+    {% for row in range(_hm_rows) %}
+      {% set idx = offset + col * _hm_rows + row %}
       {% if idx >= 0 and idx < grid_len %}
         {% set cell = grid[idx] %}
         {% set level = cell.level | default(0) if cell is mapping else 0 %}
@@ -158,64 +101,46 @@
       {% endif %}
       {% if level < 0 %}{% set level = 0 %}{% endif %}
       {% if level > 4 %}{% set level = 4 %}{% endif %}
-      <rect x="{{ col * 7 }}" y="0" width="5" height="5" rx="0.5" fill="{{ heatmap_palette[level] }}"/>
+      {% set fill = area_tiers[4 - level] %}
+      {% set cx = _hm_x0 + col * _hm_stride %}
+      {% set cy = _hm_y0 + row * _hm_stride %}
+      {% if level >= 1 %}
+      <rect x="{{ '%.3f' % cx }}" y="{{ '%.3f' % cy }}" width="{{ _hm_cell }}" height="{{ _hm_cell }}" rx="1.5" fill="{{ fill }}" class="{{ _anim_classes[(col + row) % 4] }}"/>
+      {% else %}
+      <rect x="{{ '%.3f' % cx }}" y="{{ '%.3f' % cy }}" width="{{ _hm_cell }}" height="{{ _hm_cell }}" rx="1.5" fill="{{ fill }}"/>
+      {% endif %}
     {% endfor %}
-    </g>
   {% endfor %}
 </g>
-<line x1="{{ sep_left }}" y1="228" x2="{{ sep_right }}" y2="228" stroke="{{ sep_stroke }}" stroke-width="0.3" opacity="0.12"/>
 
-{# SLOT 5: FOOTER / LANGUAGE BAR — stacked track with inline-tspan legend.
-   Production architecture at translate(panel_x+16, 236):
-     • track:   331×3 fill=#0a0e14 rx=1  (dark gutter under the segments)
-     • segs:    stacked with a 2px gap between each; widths map 1:1 from pct
-                (rounded) onto the 331px track so Σ(seg_w) ≤ track_w - gaps.
-     • legend:  single <text y=14> with tspans, each prefixed by a coloured
-                "■" so the chromatic legend doubles as the palette key.
-   The gap is the chromatic delimiter — it's what lets the eye count four
-   segments rather than reading one continuous bar.
+{# ZONE 3c: LANGUAGE FOOTER — inline swatch + label pairs at y=217.
 
-   Palette uses two-stop chromatic hierarchy per the genome rule: teal
-   furniture (#1E849A) and seam-mid (#104052) for info/substrate; purple
-   furniture (#6B3B8A) and seam-mid (#160B24) for the alternation. The
-   cycle is teal-bright / purple-bright / teal-muted / purple-muted so
-   adjacent languages never share the same hue. #}
-{% set _bar_x = panel_x + 16 %}
-{% set _bar_w = panel_w - 32 %}
-{% set _bar_y = 236 %}
-{% set _gap = 2 %}
-{% set _lang_cycle = [
-  (variant_blue_pattern_cells[0] | default('#1E849A'), 0.6),
-  (variant_purple_pattern_cells[0] | default('#6B3B8A'), 0.5),
-  (variant_blue_pattern_cells[1] | default('#104052'), 0.4),
-  (variant_purple_pattern_cells[2] | default('#160B24'), 0.3)
-] %}
-<g data-hw-zone="languages" transform="translate({{ _bar_x }},{{ _bar_y }})">
-  <rect width="{{ _bar_w }}" height="3" rx="1" fill="#0a0e14"/>
-  {% set _total_pct = namespace(sum=0) %}
-  {% for lang in languages | default([]) %}{% set _total_pct.sum = _total_pct.sum + (lang.pct | default(0)) %}{% endfor %}
-  {# Allocate (len - 1) gaps from the track width; remaining px is the
-     drawable segment budget. #}
-  {% set _n = (languages | default([])) | length %}
-  {% set _drawable = _bar_w - (_gap * ([_n - 1, 0] | max)) %}
-  {% set _running = namespace(x=0) %}
-  {% for lang in languages | default([]) %}
-    {% set _pct = lang.pct | default(0) %}
-    {% set _seg_w = ((_drawable * _pct / _total_pct.sum) | round(0, 'floor') | int) if _total_pct.sum > 0 else 0 %}
-    {% set _color = _lang_cycle[loop.index0 % 4][0] %}
-    {% set _op = _lang_cycle[loop.index0 % 4][1] %}
-    {% if _seg_w > 0 %}
-    <rect x="{{ _running.x }}" y="0" width="{{ _seg_w }}" height="3" {% if loop.first %}rx="1"{% endif %} fill="{{ _color }}" opacity="{{ _op }}"/>
-    {% endif %}
-    {% set _running.x = _running.x + _seg_w + _gap %}
+   v0.3.0 polish replaces the proportional bar with a single row of
+   "swatch label pct%" entries spread across the heatmap's content zone.
+   The bar communicated nothing the swatches don't already convey (segment
+   colors equal swatch colors), and squeezed labels into ~132px causing
+   right-edge overflow on long names like "Jupyter Notebook".
+
+   Layout positions are computed by the resolver via measure_text against
+   JBM 7px so each label's pixel width is known precisely. Languages are
+   pre-sorted by descending pct; if all four don't fit in the available
+   zone, the resolver drops from the end (lowest pct first). Full canonical
+   names are preserved — no aliasing, no truncation.
+
+   Swatches use the same area_tiers cycle the bar segments used so the
+   chromatic identity carries through the redesign unchanged. The .lt
+   class (mid_accent at opacity 0.6) keeps labels quiet — the heatmap
+   above remains the visual focus of the bottom half of the card. #}
+<g data-hw-zone="languages">
+  {% for entry in language_layout | default([]) %}
+  <rect x="{{ entry.swatch_x }}" y="216" width="5" height="5" rx="1" fill="{{ entry.swatch_color }}"/>
+  <text x="{{ entry.label_x }}" y="221" class="{{ uid }}-lt">{{ entry.label_text }}</text>
   {% endfor %}
-  <text y="14" class="{{ uid }}-lang-text">
-  {% for lang in languages | default([]) %}
-    {% set _name = lang.name | default('') %}
-    {% set _pct = lang.pct | default(0) %}
-    {% set _color = _lang_cycle[loop.index0 % 4][0] %}
-    {% set _op = _lang_cycle[loop.index0 % 4][1] + 0.1 %}
-    <tspan {% if not loop.first %}dx="3" {% endif %}fill="{{ _color }}" opacity="{{ _op }}">■</tspan> {{ _name }}{% if _name %} {% endif %}{{ _pct | int }}
-  {% endfor %}
-  </text>
 </g>
+
+</g>{# end card-clip #}
+
+{# Card outline — drawn OUTSIDE the clip so the rounded rect stroke isn't
+   itself clipped. info_accent at 10% alpha frames the composition without
+   competing with the heatmap. #}
+<rect x="0.5" y="0.5" width="{{ sw - 1 }}" height="{{ sh - 1 }}" rx="8" fill="none" stroke="{{ _accent }}" stroke-opacity="0.10" stroke-width="1"/>

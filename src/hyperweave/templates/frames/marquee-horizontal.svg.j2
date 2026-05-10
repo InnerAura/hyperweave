@@ -48,7 +48,11 @@
 {% set sk = separator_kind | default('glyph') %}
 {% set ssz = separator_size | default(6) %}
 {% set sg = separator_glyph | default('■') %}
-{% set sc = separator_color | default('var(--dna-border)') %}
+{# Separator color cascades through --dna-signal so each chrome variant's
+   accent flows naturally into the bullet. The paradigm YAML's value becomes
+   the var() fallback — preserves byte-equality on URLs that don't override
+   --dna-signal (bare flagship resolves to its own accent via --dna-signal). #}
+{% set sc = 'var(--dna-signal, ' ~ (separator_color | default('var(--dna-border)')) ~ ')' %}
 {% set tfid = text_fill_gradient_id | default('') %}
 {# Vertical centering: dominant-baseline=central + y=mh/2 puts text mid-height
    regardless of font size. Separator rects are centered via (mh - ssz) / 2. #}
@@ -93,13 +97,21 @@
 {% endfor %}
     </g>
 
-    {# ── Set B ── identical items shifted by scroll_distance for seamless loop ── #}
+    {# ── Set B ── identical items shifted by scroll_distance for seamless loop.
+       Text colors read item.value_color_set_b / label_color_set_b instead of
+       the Set-A colors so the loop boundary alternates correctly when the
+       per-item color cycle doesn't divide evenly into the total item count.
+       Resolver pre-computes _set_b colors with offset = total_items so
+       Set B picks up the cycle one position ahead and Set-A's last color
+       differs from Set-B's first color. ── #}
     <g data-hw-zone="set-b" transform="translate({{ sd }}, 0)" aria-hidden="true">
 {% for entry in scroll_items %}
 {% if entry.type == 'text' %}
 {% set it = entry.item %}
+{% set vcb = it.value_color_set_b | default(it.value_color) %}
+{% set lcb = it.label_color_set_b | default(it.label_color) %}
       <text x="{{ entry.x }}" y="{{ baseline_y }}" dominant-baseline="central"
-            font-family="{{ ff }}" font-size="{{ fs }}" letter-spacing="{{ ls }}"{% if it.font_weight %} font-weight="{{ it.font_weight }}"{% elif fw %} font-weight="{{ fw }}"{% endif %}>{% if it.label %}<tspan{% if it.label_color %} fill="{{ it.label_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.label }}</tspan><tspan dx="8"{% if it.value_color %} fill="{{ it.value_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% else %}<tspan{% if it.value_color %} fill="{{ it.value_color }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% endif %}</text>
+            font-family="{{ ff }}" font-size="{{ fs }}" letter-spacing="{{ ls }}"{% if it.font_weight %} font-weight="{{ it.font_weight }}"{% elif fw %} font-weight="{{ fw }}"{% endif %}>{% if it.label %}<tspan{% if lcb %} fill="{{ lcb }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.label }}</tspan><tspan dx="8"{% if vcb %} fill="{{ vcb }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% else %}<tspan{% if vcb %} fill="{{ vcb }}"{% else %} fill="url(#{{ uid }}-{{ tfid }})"{% endif %}>{{ it.value }}</tspan>{% endif %}</text>
 {% elif entry.type == 'separator-glyph' %}
       <text x="{{ entry.x }}" y="{{ baseline_y }}" dominant-baseline="central"
             font-family="{{ ff }}" font-size="{{ fs }}"

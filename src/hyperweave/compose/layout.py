@@ -153,7 +153,12 @@ def compute_badge_layout(
     # spacing overrun (each char carries 0.4 of trailing tracking).
     indicator_alloc = (indicator_size + ind_pad_r) if show_indicator else 0
     ls_extra = value_raw_len * 0.4 if (not use_mono and value_raw_len) else 0
-    right_panel = val_pad_l + measured_value_w + ls_extra + 2 * val_min_gap + indicator_alloc
+    # right_panel reserves: val_pad_l (left interior gutter), the measured
+    # value text + letter-spacing overrun, val_min_gap (right interior gutter),
+    # and indicator_alloc when stateful. Pre-v0.3.0 reserved 2 * val_min_gap
+    # which left ~val_min_gap of unaccounted slack on stateless badges
+    # (visible as ~4.5px right padding instead of symmetric ~3px).
+    right_panel = val_pad_l + measured_value_w + ls_extra + val_min_gap + indicator_alloc
     total_w = round(left_panel + sep_w + seam_w + right_panel)
     total_w = max(total_w, min_total_w)
 

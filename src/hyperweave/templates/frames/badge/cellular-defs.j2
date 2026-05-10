@@ -9,13 +9,13 @@
 <clipPath id="{{ uid }}-clip">
   <rect width="{{ width }}" height="{{ height }}"/>
 </clipPath>
-{# bifamily monofamily-side resolves to blue; pure mono uses spec.variant directly #}
-{% set v = "purple" if variant == "purple" else "blue" %}
-{% set rim_stops = _genome_raw["variant_" ~ v ~ "_rim_stops"] %}
-{% set seam_mid = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
-{% set seam_anchor = _genome_raw["variant_" ~ v ~ "_pattern_cells"][0] %}
-{% set canvas_top = _genome_raw["variant_" ~ v ~ "_canvas_top"] %}
-{% set canvas_bottom = _genome_raw["variant_" ~ v ~ "_canvas_bottom"] %}
+{# v0.3.0: cellular_palette.primary holds the resolved tone dict (8 fields).
+   Solo and paired variants both populate primary; badges only consume it. #}
+{% set rim_stops = cellular_palette.primary.rim_stops %}
+{% set seam_mid = cellular_palette.primary.seam_mid %}
+{% set seam_anchor = cellular_palette.primary.cellular_cells[0] %}
+{% set canvas_top = cellular_palette.primary.canvas_top %}
+{% set canvas_bottom = cellular_palette.primary.canvas_bottom %}
 <linearGradient id="{{ uid }}-rim" x1="0" y1="0" x2="0" y2="1">
   {% for stop in rim_stops %}
   <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>

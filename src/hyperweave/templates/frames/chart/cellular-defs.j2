@@ -1,45 +1,87 @@
-{# Cellular chart defs — bifamily flank pulse + chart palette overrides.
+{# Cellular chart defs — v0.3.0 visual refresh.
 
-   Chart engine (render/chart_engine.py) emits fragment strings (area,
-   polyline, markers, milestones) as SVG classes keyed off CSS vars.
-   Cellular overrides those classes to use the teal family palette;
-   bifamily flanks are rendered in cellular-content.j2 outside the
-   chart viewport. #}
-<clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
-<linearGradient id="{{ uid }}-area-fade" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="{{ variant_blue_pattern_cells[0] | default('#1E849A') }}" stop-opacity="0.25"/>
-  <stop offset="60%" stop-color="{{ variant_blue_pattern_cells[1] | default('#104052') }}" stop-opacity="0.08"/>
-  <stop offset="100%" stop-color="{{ surface_0 | default('#04060A') }}" stop-opacity="0"/>
+   Replaces the prior 5-class animation system (cc1-cc4 + ccf fast variant)
+   with a 4-phase b1-b4 system staggered 0/1.5/3/4.5s. The keyframe is
+   namespaced as ``breathe-chart`` to prevent collision with the stats
+   card's ``breathe-stats`` if both ever embed in the same document.
+
+   Header band typography migrates from the prior translate(100,50) /
+   translate(820,80) floating-text layout to the v2 prototype's HUD-style
+   header band: repo identifier (Orbitron 10px 700) at left y=30; STAR
+   HISTORY title (Orbitron 17px 900) at left y=52; hero metric (Orbitron
+   34px 900) right-aligned at y=32; hero subtitle (JBM 7.5px 700) right-
+   aligned at y=50. All header text filtered through the HUD drop-shadow
+   so labels stay readable against the busy cell substrate.
+
+   Polyline stroke drops from 4px to 3px (v2 prototype literal); double
+   drop-shadow glow uses info_accent (mid-bright tint) + a tight white
+   inner glow for the white-hot core feel. #}
+{# Outer clipPath — rounds the chart frame's corners (rx=10) so background +
+   header band + footer all clip to the rounded shape. The chart reads as a
+   deliberate artifact with curvature rather than a flat rectangle. #}
+<clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}" rx="10"/></clipPath>
+{# Header gradient — canvas_top -> canvas_bottom mirrors the stat card's
+   top-grad so both frames render their header zone with the same material
+   language: a vertical gradient that blends into the canvas instead of the
+   prior solid header_band rect that read as a separate band. The gradient
+   softens the warmer tones (bone, amber, solar, copper) where the flat
+   header_band created a distinct horizontal break against the canvas. The
+   header_band tone primitive stays available for other consumers (icon
+   paradigm uses it for cell grid + glyph fill); only the chart's header
+   rendering switches to the gradient. #}
+<linearGradient id="{{ uid }}-top-grad" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="{{ cellular_palette.primary.canvas_top }}"/>
+  <stop offset="100%" stop-color="{{ cellular_palette.primary.canvas_bottom }}"/>
 </linearGradient>
+{# Area-fill clipPath — bezier polygon supplied by chart_engine. Empty when
+   no data (empty/stale states). #}
+{%- if cellular_area_clip_d %}
+<clipPath id="{{ uid }}-area-clip"><path d="{{ cellular_area_clip_d }}"/></clipPath>
+{%- endif %}
+{# HUD filter — gaussian-blurred dark halo behind any header/axis/milestone
+   text so labels stay readable against the cell substrate. flood-color
+   tracks surface_0 so the halo blends into the canvas. #}
+<filter id="{{ uid }}-hud" x="-20%" y="-20%" width="140%" height="140%">
+  <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="b"/>
+  <feFlood flood-color="{{ surface_0 | default('#04060A') }}" flood-opacity="0.85" result="c"/>
+  <feComposite in="c" in2="b" operator="in" result="s"/>
+  <feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
 {{ chart_defs | default("") | safe }}
 <style>{{ font_faces | safe }}
 text{font-family:'JetBrains Mono',monospace;shape-rendering:geometricPrecision}
-.cc1{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite;will-change:opacity}
-.cc2{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 1.5s;will-change:opacity}
-.cc3{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 3s;will-change:opacity}
-.cc4{animation:ccp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
-.ccf{animation:ccp {{ cellular_pulse_fast_duration | default('3s') }} ease-in-out infinite 0.5s;will-change:opacity}
+.b1{animation:breathe-chart {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite;will-change:opacity}
+.b2{animation:breathe-chart {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 1.5s;will-change:opacity}
+.b3{animation:breathe-chart {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 3s;will-change:opacity}
+.b4{animation:breathe-chart {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
 .ccd{opacity:.07}
-@keyframes ccp{0%,100%{opacity:.05}30%{opacity:.8}50%{opacity:.3}70%{opacity:.65}}
-.{{ uid }}-hdr-user{font-size:13px;font-weight:700;letter-spacing:0.04em;fill:{{ variant_purple_seam_mid | default('#A88AD4') }}}
-.{{ uid }}-title-main{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:700;letter-spacing:0.16em;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }}}
-.{{ uid }}-title-sub{font-size:9px;font-weight:500;letter-spacing:0.28em;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.45}
-.{{ uid }}-hero-value{font-family:'Chakra Petch',sans-serif;font-size:56px;font-weight:700;fill:{{ ink_bright | default('#ededed') }};letter-spacing:-0.02em}
-.{{ uid }}-hero-label{font-size:10px;font-weight:600;letter-spacing:0.28em;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.7}
-.{{ uid }}-axis-y{font-size:11px;font-weight:600;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.72}
-.{{ uid }}-axis-x{font-size:11px;font-weight:500;fill:#808898}
-.{{ uid }}-foot{font-size:11px;font-weight:500;letter-spacing:0.06em;fill:#808898}
-.hw-chart-axis{stroke:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:0.5;opacity:0.5;fill:none}
-.hw-chart-gridline{stroke:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:0.5;opacity:0.1;fill:none}
-.hw-chart-line{stroke:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:2.5;stroke-linejoin:miter;stroke-linecap:square}
+@keyframes breathe-chart{0%,100%{opacity:.45}30%{opacity:1}50%{opacity:.6}70%{opacity:.85}}
+{# Header band typography — v2 prototype layout. info_accent fills the title +
+   hero subtitle; hero_white-equivalent (genome value_text) fills hero metric.
+   The HUD filter applied at the group level (template) lifts text from
+   substrate. #}
+.{{ uid }}-hdr-user{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;fill:{{ chart_info_accent }};opacity:0.7}
+.{{ uid }}-title-main{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;letter-spacing:0.05em;fill:{{ chart_info_accent }}}
+.{{ uid }}-hero-value{font-family:'Orbitron',sans-serif;font-size:34px;font-weight:900;fill:{{ cellular_palette.primary.value_text }}}
+.{{ uid }}-hero-label{font-family:'JetBrains Mono',monospace;font-size:7.5px;font-weight:700;letter-spacing:0.2em;fill:{{ chart_info_accent }};opacity:0.55}
+{# Axis labels — info_accent at lower opacity. Matches v2 prototype's quieter
+   axis presence (was 0.95 / 0.85 in pre-refresh). #}
+.{{ uid }}-axis-y{font-size:10px;font-weight:700;fill:{{ chart_info_accent }};opacity:0.65;letter-spacing:0.08em}
+.{{ uid }}-axis-x{font-size:10px;font-weight:700;fill:{{ chart_info_accent }};opacity:0.55;letter-spacing:0.1em}
+{# Footer typography — repo URL (mid_accent at low opacity, left), brand stamp
+   (info_accent at very low opacity, right). v2 prototype simplifies the
+   footer to a small hairline + identifier line. #}
+.{{ uid }}-foot{font-size:8px;font-weight:400;letter-spacing:0.04em;fill:{{ chart_mid_accent }};opacity:0.45}
+.{{ uid }}-foot-brand{font-size:7px;font-weight:600;letter-spacing:0.12em;fill:{{ chart_info_accent }};opacity:0.15}
+.hw-chart-axis{stroke:{{ chart_info_accent }};stroke-width:0.5;opacity:0.25;fill:none}
+.hw-chart-gridline{stroke:{{ chart_info_accent }};stroke-width:0.5;opacity:0.06;fill:none}
+{# v2 polyline: 3px white core with double drop-shadow glow — tinted info_accent
+   outer halo (10px) + tight white inner glow (3px). The white core dominates;
+   the tinted halo carries variant chromatic identity around it. #}
+.hw-chart-line{stroke:#FFFFFF;stroke-width:3;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 10px {{ chart_info_accent }}) drop-shadow(0 0 3px #FFF)}
 .hw-chart-line-draw{animation:hw-line-draw 2.618s cubic-bezier(.25,.85,.35,1) forwards;will-change:stroke-dashoffset}
 @keyframes hw-line-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-.hw-chart-area{fill:url(#{{ uid }}-area-fade)}
-.hw-chart-area-smooth{fill:url(#{{ uid }}-area-fade)}
-[data-hw-zone="markers"]{shape-rendering:crispEdges}
-.hw-chart-endpoint{animation:{{ uid }}-pulse 2.618s ease-in-out infinite;will-change:opacity}
-.hw-chart-milestone-line{stroke:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:1;opacity:0.3;stroke-dasharray:4 4}
-.hw-chart-milestone-label{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.6}
-@keyframes {{ uid }}-pulse{0%,100%{opacity:0.4}50%{opacity:1}}
-@media(prefers-reduced-motion:reduce){.cc1,.cc2,.cc3,.cc4,.ccf{animation:none!important;opacity:.3!important}.hw-chart-endpoint{animation:none!important;opacity:0.8}.hw-chart-line-draw{animation:none!important;stroke-dashoffset:0!important}}
+.hw-chart-milestone-line{stroke:{{ chart_info_accent }};stroke-width:0.5;opacity:0.18;stroke-dasharray:3 3}
+.hw-chart-milestone-label{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;fill:{{ chart_info_accent }};opacity:0.4}
+@media(prefers-reduced-motion:reduce){.b1,.b2,.b3,.b4{animation:none!important;opacity:.5!important}.hw-chart-line-draw{animation:none!important;stroke-dashoffset:0!important}}
 </style>

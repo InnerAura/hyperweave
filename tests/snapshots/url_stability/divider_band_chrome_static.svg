@@ -16,7 +16,6 @@
      data-hw-generation="1"
      data-hw-contract="UUID"
      data-hw-size="default"
-     data-hw-fonts="self-contained"
      data-hw-regime="normal"
      data-hw-chromatic="chrome">
   <title id="hw-UID-title">HyperWeave divider artifact</title>
@@ -82,6 +81,8 @@ svg, :root {
   --dna-ink-sub: #7A9AB8;
   --dna-signal: #5BA3D4;
   --dna-signal-dim: #8A7355;
+  --dna-diamond-stroke: #1A3550;
+  --dna-diamond-housing: #040C14;
   --dna-border: #060810;
   --dna-border-tint: rgba(91,163,212,0.18);
   --dna-shadow-color: #000000;

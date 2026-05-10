@@ -114,6 +114,21 @@ class GenomeSpec(BaseModel):
     # -- Accents --
     accent: str = Field(description="Primary accent/signal color (hex)")
     accent_complement: str = Field(description="Complement accent (hex)")
+    diamond_stroke: str = Field(
+        default="",
+        description=(
+            "Chrome diamond ring stroke color (hex). Single-responsibility var "
+            "consumed by --dna-diamond-stroke; eliminates --dna-signal-dim "
+            "aliasing collisions on the chrome status indicator."
+        ),
+    )
+    diamond_housing: str = Field(
+        default="",
+        description=(
+            "Chrome diamond recessed housing fill color (hex). Single-responsibility "
+            "var consumed by --dna-diamond-housing; pairs with diamond_stroke."
+        ),
+    )
     accent_signal: str = Field(description="Status passing color (hex)")
     accent_warning: str = Field(description="Status warning color (hex)")
     accent_error: str = Field(description="Status error/failing color (hex)")
@@ -227,6 +242,31 @@ class GenomeSpec(BaseModel):
         default="",
         description="Default variant when spec.variant is empty and no paradigm default exists.",
     )
+    variant_overrides: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description=(
+            "Per-variant genome-field overrides. Keys are variant slugs (must subset "
+            "of variants[]); values are sparse genome-field dicts. Two effects: (1) the "
+            "assembler emits CSS-var-mappable fields as inline style on SVG root, (2) the "
+            "resolver merges the dict into the genome before render so templates reading "
+            "baked fields directly (envelope_stops, well_top, etc.) also see the variant. "
+            "Values can be any genome-field shape: str (hex), list[dict[str, str]] "
+            "(gradient stops), dict (light_mode, etc.). Used by chrome-style holistic "
+            "palette swaps. Automata-style compositional tones use variant_tones."
+        ),
+    )
+    variant_tones: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description=(
+            "Tone primitive palette (automata-style compositional). Keys are tone slugs "
+            "(violet, teal, bone, etc.); values declare 14 chromatic fields per tone "
+            "(rim_stops, cellular_cells, area_tiers, chart_levels, dormant_range, label_slab, "
+            "seam_mid, label_text, value_text, canvas_top, canvas_bottom, info_accent, "
+            "mid_accent, header_band). Resolved into cellular_palette context dict by "
+            "compose/palette.py. Pairing is expressed at request time via the URL grammar "
+            "modifier ?variant=primary&pair=secondary, which composes any two tones."
+        ),
+    )
     dividers: list[str] = Field(
         default_factory=list,
         description=(
@@ -235,51 +275,12 @@ class GenomeSpec(BaseModel):
         ),
     )
 
-    # -- Automata variant palettes (bifamily genomes with teal/amethyst axis) --
-    # Automata specimens establish two parallel chromatic palettes with the
-    # same structural architecture. Cellular paradigm requires both populated;
-    # monofamily artifacts (badges/icons) pick one via ComposeSpec.variant.
-    variant_blue_rim_stops: list[dict[str, str]] = Field(
-        default_factory=list, description="Blue-family rim gradient stops (7-stop metallic bezel)"
-    )
-    variant_blue_pattern_cells: list[str] = Field(
-        default_factory=list, description="Blue-family cellular substrate trio [solid, mid, deep]"
-    )
-    variant_blue_seam_mid: str = Field(default="", description="Blue-family seam gradient mid color")
-    variant_blue_label_slab_fill: str = Field(default="", description="Blue-family label slab fill (deep teal-black)")
-    variant_blue_label_text: str = Field(default="", description="Blue-family label text color")
-    variant_blue_value_text: str = Field(default="", description="Blue-family value text color (bright teal)")
-    variant_blue_canvas_top: str = Field(default="", description="Blue-family value slab gradient top")
-    variant_blue_canvas_bottom: str = Field(default="", description="Blue-family value slab gradient bottom")
-
-    variant_purple_rim_stops: list[dict[str, str]] = Field(
-        default_factory=list, description="Purple-family rim gradient stops (7-stop amethyst bezel)"
-    )
-    variant_purple_pattern_cells: list[str] = Field(
-        default_factory=list, description="Purple-family cellular substrate trio [solid, mid, deep]"
-    )
-    variant_purple_seam_mid: str = Field(default="", description="Purple-family seam gradient mid color")
-    variant_purple_label_slab_fill: str = Field(
-        default="", description="Purple-family label slab fill (deep amethyst-black)"
-    )
-    variant_purple_label_text: str = Field(default="", description="Purple-family label text color")
-    variant_purple_value_text: str = Field(default="", description="Purple-family value text color (bright amethyst)")
-    variant_purple_canvas_top: str = Field(default="", description="Purple-family value slab gradient top")
-    variant_purple_canvas_bottom: str = Field(default="", description="Purple-family value slab gradient bottom")
-
-    # Bifamily bridge (used by divider + flanking compositions — static-baked palette)
-    variant_bifamily_bridge_teal_mid: str = Field(
-        default="", description="Bifamily-bridge teal midtone (divider cells)"
-    )
-    variant_bifamily_bridge_teal_deep: str = Field(default="", description="Bifamily-bridge teal deep (divider cells)")
-    variant_bifamily_bridge_amethyst_core: str = Field(
-        default="", description="Bifamily-bridge amethyst core (divider cells)"
-    )
-    variant_bifamily_bridge_amethyst_bright: str = Field(
-        default="", description="Bifamily-bridge amethyst bright (divider cells)"
-    )
-
-    # Cellular pulse animation config (paradigm infrastructure)
+    # -- Cellular pulse animation config (paradigm infrastructure) --
+    # The 22 flat variant_blue_*/variant_purple_*/variant_bifamily_bridge_*
+    # fields previously declared here moved into the v0.3.0 compositional
+    # schema: variant_tones (tone primitives) consumed via cellular_palette
+    # by the resolver rather than reading flat fields, so the schema stays
+    # compact regardless of how many tones a genome ships.
     cellular_pulse_base_duration: str = Field(
         default="", description="Cellular pattern pulse base duration (e.g. '6s')"
     )

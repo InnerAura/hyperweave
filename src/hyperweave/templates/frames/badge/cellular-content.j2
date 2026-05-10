@@ -9,15 +9,17 @@
    State-mode badges (is_state_badge=True) render a ring+bit indicator on
    the right; its fill is driven by the state-signal-cascade partial which
    binds data-hw-status to --hw-state-signal / --hw-state-value. #}
-{# Path B grammar (v0.2.19): variant lookup via dynamic key interpolation
-   on _genome_raw, never string-comparison branches. #}
-{% set v = "purple" if variant == "purple" else "blue" %}
-{% set pattern_cells_trio = _genome_raw["variant_" ~ v ~ "_pattern_cells"] %}
-{% set label_slab_fill = _genome_raw["variant_" ~ v ~ "_label_slab_fill"] %}
-{% set label_text_fill = _genome_raw["variant_" ~ v ~ "_label_text"] %}
-{% set value_text_fill = _genome_raw["variant_" ~ v ~ "_value_text"] %}
-{% set top_highlight = _genome_raw["variant_" ~ v ~ "_rim_stops"][0].color %}
-{% set dark_lip = _genome_raw["variant_" ~ v ~ "_rim_stops"][-1].color %}
+{# v0.3.0: cellular_palette is a structured tone dict supplied by
+   compose/palette.py. primary holds the active tone (8 chromatic fields);
+   secondary mirrors primary in solo mode so paired bifamily templates
+   branch-free; bridge carries fusion-zone colors when paired. Badges are
+   monofamily — only primary is consumed. #}
+{% set pattern_cells_trio = cellular_palette.primary.cellular_cells %}
+{% set label_slab_fill = cellular_palette.primary.label_slab %}
+{% set label_text_fill = cellular_palette.primary.label_text %}
+{% set value_text_fill = cellular_palette.primary.value_text %}
+{% set top_highlight = cellular_palette.primary.rim_stops[0].color %}
+{% set dark_lip = cellular_palette.primary.rim_stops[-1].color %}
 
 {# Pattern grid geometry: 3 columns × 4 rows. Sizes compact ↔ default. #}
 {% set cell_w = 4 if compact else 6 %}
@@ -76,7 +78,7 @@
       hardcoded (blue-family tint) and fixed dimensions that don't respect
       the cellular paradigm's glyph_size override. Reconstructing here uses
       the paradigm-driven glyph_render_size and picks fill from the family. #}
-{% set variant_glyph_fill = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
+{% set variant_glyph_fill = cellular_palette.primary.seam_mid %}
 {% if has_glyph and glyph_path %}
 <g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y }})">
   <svg width="{{ glyph_render_size }}" height="{{ glyph_render_size }}" viewBox="{{ glyph_viewbox }}">

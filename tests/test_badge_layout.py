@@ -150,6 +150,26 @@ def test_stateless_no_indicator_zone_collapses() -> None:
     assert layout.value_zone_right == layout.width - BRUTALIST_INPUTS["val_min_gap"]
 
 
+def test_stateless_padding_symmetric_about_value_zone() -> None:
+    """val_pad_l (left interior gutter) and val_min_gap (right interior gutter)
+    MUST resolve to symmetric paddings on stateless badges. Pre-v0.3.0 the
+    right_panel formula reserved 2 * val_min_gap but value_zone_right only
+    subtracted 1 * val_min_gap — leaving ~val_min_gap of unaccounted slack on
+    the right (~4.5px instead of the symmetric ~3px). The PYPI/STARS/VERSION
+    badge silhouette was the visible regression case.
+    """
+    layout = _layout(label_w=51.0, value_w=43.0, value_len=6, show_indicator=False)
+    val_pad_l = BRUTALIST_INPUTS["val_pad_l"]
+    val_min_gap = BRUTALIST_INPUTS["val_min_gap"]
+
+    left_interior = layout.value_zone_left - layout.right_panel_x
+    right_interior = layout.width - layout.value_zone_right
+
+    assert left_interior == val_pad_l, f"left_interior={left_interior}, expected val_pad_l={val_pad_l}"
+    assert right_interior == val_min_gap, f"right_interior={right_interior}, expected val_min_gap={val_min_gap}"
+    assert left_interior == right_interior, f"asymmetric padding: left={left_interior}px, right={right_interior}px"
+
+
 # ─────────────────────────────────────────────────────────────────────
 # Width / panel structure
 # ─────────────────────────────────────────────────────────────────────

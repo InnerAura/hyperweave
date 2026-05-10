@@ -157,7 +157,18 @@ async def compose_badge_url(
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
     size: Annotated[str, Query()] = "default",
-    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
 ) -> Response:
     """Static badge: /v1/badge/{title}/{value}/{genome}.{motion}.
 
@@ -178,6 +189,7 @@ async def compose_badge_url(
         regime=regime,
         size=size,
         variant=variant,
+        pair=pair,
     )
     return _compose_and_respond(spec, request)
 
@@ -206,7 +218,18 @@ async def compose_badge_data_url(
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
     size: Annotated[str, Query()] = "default",
-    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
 ) -> Response:
     """Data-driven badge: /v1/badge/{title}/{genome}.{motion}?data=...
 
@@ -254,6 +277,7 @@ async def compose_badge_data_url(
         regime=regime,
         size=size,
         variant=variant,
+        pair=pair,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl)
 
@@ -283,7 +307,18 @@ async def compose_strip_url(
     state: Annotated[str, Query()] = "active",
     size: Annotated[str, Query()] = "default",
     regime: Annotated[str, Query()] = "normal",
-    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
     subtitle: Annotated[
         str,
         Query(description="Strip subtitle (e.g. 'eli64s/readme-ai'). Cellular paradigm renders under identity."),
@@ -325,6 +360,7 @@ async def compose_strip_url(
         size=size,
         regime=regime,
         variant=variant,
+        pair=pair,
         connector_data=connector_data,
     )
 
@@ -346,7 +382,18 @@ async def compose_icon_url(
     size: Annotated[str, Query()] = "default",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
-    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
 ) -> Response:
     """Compose an icon: /v1/icon/{glyph}/{genome}.{motion}?shape=circle"""
     genome, motion = _parse_genome_motion(genome_motion)
@@ -363,6 +410,7 @@ async def compose_icon_url(
         state=state,
         regime=regime,
         variant=variant,
+        pair=pair,
     )
     return _compose_and_respond(spec, request)
 
@@ -382,7 +430,18 @@ async def compose_divider_url(
     request: Request,
     divider_variant: str,
     genome_motion: str,
-    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
 ) -> Response:
     """Compose a genome-themed divider: /v1/divider/{divider_variant}/{genome}.{motion}.
 
@@ -411,6 +470,7 @@ async def compose_divider_url(
         motion=motion,
         divider_variant=divider_variant,
         variant=variant,
+        pair=pair,
     )
     return _compose_and_respond(spec, request)
 
@@ -439,7 +499,18 @@ async def compose_marquee_url(
     speeds: Annotated[str, Query(description="Scroll speed multiplier (single float)")] = "",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
-    variant: Annotated[str, Query(description="Chromatic variant (automata): blue, purple, bifamily")] = "",
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
 ) -> Response:
     """Marquee-horizontal: /v1/marquee/{title}/{genome}.{motion}.
 
@@ -485,6 +556,7 @@ async def compose_marquee_url(
         state=state,
         regime=regime,
         variant=variant,
+        pair=pair,
         data_tokens=data_tokens_resolved,
     )
 
@@ -529,6 +601,18 @@ async def compose_chart_stars(
     owner: str,
     repo: str,
     genome_motion: str,
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
 ) -> Response:
     """Compose a star history chart: /v1/chart/stars/{owner}/{repo}/{genome}.{motion}.
 
@@ -551,6 +635,8 @@ async def compose_chart_stars(
         chart_repo=repo,
         motion=motion,
         connector_data=connector_data,
+        variant=variant,
+        pair=pair,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl=3600)
 
@@ -563,6 +649,18 @@ async def compose_stats(
     request: Request,
     username: str,
     genome_motion: str,
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    pair: Annotated[
+        str,
+        Query(
+            description=(
+                "Cellular paradigm pairing modifier (automata only). "
+                "Composes any solo tone with any other solo tone — e.g. "
+                "?variant=teal&pair=violet. Bifamily frames (strip, divider) "
+                "consume the pair; other frames silently ignore it."
+            ),
+        ),
+    ] = "",
 ) -> Response:
     """Compose a GitHub stats card: /v1/stats/{username}/{genome}.{motion}.
 
@@ -585,6 +683,8 @@ async def compose_stats(
         stats_username=username,
         motion=motion,
         connector_data=connector_data,
+        variant=variant,
+        pair=pair,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl=3600)
 
@@ -611,35 +711,46 @@ async def compose_kit_post(req: KitRequest) -> dict[str, str]:
 _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
     "badge (static)": {
         "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
-        "query_params": ["glyph", "glyph_mode", "state", "regime", "size", "variant"],
+        "query_params": ["glyph", "glyph_mode", "state", "regime", "size", "variant", "pair"],
     },
     "badge (data-driven)": {
         "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
-        "query_params": ["data", "glyph", "glyph_mode", "state", "regime", "size", "variant"],
+        "query_params": ["data", "glyph", "glyph_mode", "state", "regime", "size", "variant", "pair"],
     },
     "strip": {
         "pattern": "/v1/strip/{title}/{genome}.{motion}",
-        "query_params": ["value", "data", "glyph", "glyph_mode", "state", "size", "regime", "variant", "subtitle"],
+        "query_params": [
+            "value",
+            "data",
+            "glyph",
+            "glyph_mode",
+            "state",
+            "size",
+            "regime",
+            "variant",
+            "pair",
+            "subtitle",
+        ],
     },
     "icon": {
         "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
-        "query_params": ["glyph_mode", "shape", "state", "regime", "variant", "size"],
+        "query_params": ["glyph_mode", "shape", "state", "regime", "variant", "pair", "size"],
     },
     "divider": {
         "pattern": "/v1/divider/{variant}/{genome}.{motion}",
-        "query_params": ["variant"],
+        "query_params": ["variant", "pair"],
     },
     "marquee-horizontal": {
         "pattern": "/v1/marquee/{title}/{genome}.{motion}",
-        "query_params": ["data", "direction", "speeds", "state", "regime", "variant"],
+        "query_params": ["data", "direction", "speeds", "state", "regime", "variant", "pair"],
     },
     "chart-stars": {
         "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
-        "query_params": [],
+        "query_params": ["variant", "pair"],
     },
     "stats": {
         "pattern": "/v1/stats/{username}/{genome}.{motion}",
-        "query_params": [],
+        "query_params": ["variant", "pair"],
     },
     "receipt": {"pattern": "POST /v1/compose", "query_params": []},
     "rhythm-strip": {"pattern": "POST /v1/compose", "query_params": []},

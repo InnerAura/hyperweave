@@ -15,7 +15,7 @@ from hyperweave.core.models import ComposeSpec, SlotContent
 def _compose_strip(**kwargs: object) -> str:
     kwargs.setdefault("type", "strip")
     kwargs.setdefault("genome_id", "automata")
-    kwargs.setdefault("variant", "bifamily")
+    kwargs.setdefault("variant", "teal")
     spec = ComposeSpec(**kwargs)  # type: ignore[arg-type]
     return compose(spec).svg
 
@@ -24,20 +24,20 @@ def _compose_strip(**kwargs: object) -> str:
 
 
 def test_bifamily_strip_renders_both_flanks() -> None:
-    """family=bifamily strip emits teal-family cells on left + purple on right."""
-    svg = _compose_strip(title="README-AI", value="STARS:2.9k,FORKS:278")
+    """variant=teal&pair=violet strip emits teal-family cells on left + violet on right."""
+    svg = _compose_strip(title="README-AI", value="STARS:2.9k,FORKS:278", pair="violet")
     # Teal family substrate colors (left flank)
     assert "#1E849A" in svg
     assert "#104052" in svg
-    # Purple family substrate colors (right flank)
+    # Violet family substrate colors (right flank)
     assert "#6B3B8A" in svg
     assert "#331A4A" in svg
 
 
 def test_monofamily_strip_suppresses_amethyst_rect_fills() -> None:
-    """family=blue strip emits NO amethyst-family rect fills.
-    (Amethyst hex may still appear in CSS var declarations like --dna-signal-dim.)"""
-    svg = _compose_strip(title="README-AI", value="STARS:2.9k", variant="blue")
+    """Solo variant=teal strip emits NO violet-family rect fills.
+    (Violet hex may still appear in CSS var declarations like --dna-signal-dim.)"""
+    svg = _compose_strip(title="README-AI", value="STARS:2.9k", variant="teal")
     assert 'fill="#6B3B8A"' not in svg
     assert 'fill="#331A4A"' not in svg
     assert 'fill="#160B24"' not in svg
@@ -50,7 +50,7 @@ def test_monofamily_strip_suppresses_amethyst_rect_fills() -> None:
 def test_strip_renders_arbitrary_metric_count(metric_count: int) -> None:
     """Strip composes correctly with N = 0, 1, 3, 6 metrics."""
     value = "" if metric_count == 0 else ",".join(f"M{i}:{100 + i}" for i in range(metric_count))
-    spec = ComposeSpec(type="strip", genome_id="automata", title="REPO", value=value, variant="bifamily")
+    spec = ComposeSpec(type="strip", genome_id="automata", title="REPO", value=value, variant="teal", pair="violet")
     result = compose(spec)
     assert result.width > 0
     # Cellular strip specimen is 48px tall (not 52px default); paradigm
@@ -63,9 +63,16 @@ def test_strip_renders_arbitrary_metric_count(metric_count: int) -> None:
 
 def test_strip_width_grows_with_metric_count() -> None:
     """Width is monotonic in metric count at equal cell-pitch."""
-    r1 = compose(ComposeSpec(type="strip", genome_id="automata", title="X", value="A:1", variant="bifamily"))
+    r1 = compose(ComposeSpec(type="strip", genome_id="automata", title="X", value="A:1", variant="teal", pair="violet"))
     r6 = compose(
-        ComposeSpec(type="strip", genome_id="automata", title="X", value="A:1,B:2,C:3,D:4,E:5,F:6", variant="bifamily")
+        ComposeSpec(
+            type="strip",
+            genome_id="automata",
+            title="X",
+            value="A:1,B:2,C:3,D:4,E:5,F:6",
+            variant="teal",
+            pair="violet",
+        )
     )
     assert r6.width > r1.width
 
@@ -78,7 +85,8 @@ def test_metric_state_slot_drives_state_cell() -> None:
     spec = ComposeSpec(
         type="strip",
         genome_id="automata",
-        variant="bifamily",
+        variant="teal",
+        pair="violet",
         title="README-AI",
         state="passing",
         slots=[

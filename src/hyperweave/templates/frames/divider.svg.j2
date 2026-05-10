@@ -329,40 +329,49 @@
 {# ═══════════════════════════════════════════════════════════
    VARIANT: dissolve — Bifamily bridge, static-baked
    Source: cellular-automata-divider.svg (800x28)
-   Palette: variant_bifamily_bridge_* fields from genome (teal left terminal,
-            amethyst right terminal, dissolve via per-rect opacity).
+   Palette: cellular_palette.bridge fields from compose/palette.py (primary
+            tone left terminal, secondary tone right terminal, dissolve via
+            per-rect opacity). Bridge is paired-only — solo variants never
+            reach this branch because frame_variant_defaults.divider routes
+            to a paired variant by default.
    NO <style>, NO animation — renderer-independent per feedback rule
    feedback_static_rendering_renderer_independence + baked composite
    colors for transparent artifacts.
    ═══════════════════════════════════════════════════════════ #}
 {% elif divider_variant == 'dissolve' %}
-{% set teal_mid = variant_bifamily_bridge_teal_mid | default('#147A90') %}
-{% set teal_deep = variant_bifamily_bridge_teal_deep | default('#0D3E4E') %}
-{% set amethyst_core = variant_bifamily_bridge_amethyst_core | default('#5A3278') %}
-{% set amethyst_bright = variant_bifamily_bridge_amethyst_bright | default('#8B6DB5') %}
+{# Bridge layout — LEFT terminal uses primary tone, RIGHT terminal uses
+   secondary tone. For ?variant=teal&pair=violet: primary=teal renders left,
+   secondary=violet renders right. Local variable names are paradigm-agnostic
+   (primary_main / primary_deep / secondary_main / secondary_deep) so the
+   template reads cleanly regardless of which two solo tones the pairing
+   grammar composed at request time. #}
+{% set primary_main = cellular_palette.bridge.primary_main %}
+{% set primary_deep = cellular_palette.bridge.primary_alt %}
+{% set secondary_main = cellular_palette.bridge.secondary_main %}
+{% set secondary_deep = cellular_palette.bridge.secondary_alt %}
 {# Center line spans between terminals #}
-<line x1="48" y1="14" x2="{{ dw - 48 }}" y2="14" stroke="{{ teal_mid }}" stroke-width="0.6" opacity="0.45"/>
-{# Left terminal — 4 x 2 teal block grid at full opacity #}
+<line x1="48" y1="14" x2="{{ dw - 48 }}" y2="14" stroke="{{ primary_main }}" stroke-width="0.6" opacity="0.45"/>
+{# Left terminal — 4 x 2 primary-tone block grid at full opacity #}
 {% for col in range(4) %}
   {% for row in range(2) %}
-  {% set tc = teal_mid if (col + row) % 2 == 0 else teal_deep %}
+  {% set tc = primary_main if (col + row) % 2 == 0 else primary_deep %}
   <rect x="{{ col * 12 }}" y="{{ 2 + row * 12 }}" width="12" height="12" fill="{{ tc }}"/>
   {% endfor %}
 {% endfor %}
-{# Left scatter — baked teal with per-rect opacity dissolve (inward fade) #}
+{# Left scatter — primary tone with per-rect opacity dissolve (inward fade) #}
 {% set left_scatter = [(56, 7, 8, 0.85), (68, 10, 6, 0.7), (80, 5, 7, 0.55), (94, 11, 5, 0.45), (108, 8, 5, 0.3), (122, 12, 3, 0.2), (58, 17, 6, 0.7), (70, 18, 5, 0.55), (84, 16, 7, 0.4), (100, 15, 4, 0.25)] %}
 {% for pos in left_scatter %}
-<rect x="{{ pos[0] }}" y="{{ pos[1] }}" width="{{ pos[2] }}" height="{{ pos[2] }}" fill="{{ teal_mid }}" opacity="{{ pos[3] }}"/>
+<rect x="{{ pos[0] }}" y="{{ pos[1] }}" width="{{ pos[2] }}" height="{{ pos[2] }}" fill="{{ primary_main }}" opacity="{{ pos[3] }}"/>
 {% endfor %}
-{# Right scatter — baked amethyst mirror (inward fade) #}
+{# Right scatter — secondary tone mirror (inward fade) #}
 {% set right_scatter = [(dw - 124, 12, 3, 0.2), (dw - 110, 8, 5, 0.3), (dw - 96, 11, 5, 0.45), (dw - 84, 5, 7, 0.55), (dw - 72, 10, 6, 0.7), (dw - 62, 7, 8, 0.85), (dw - 102, 15, 4, 0.25), (dw - 88, 18, 5, 0.4), (dw - 76, 16, 7, 0.55), (dw - 64, 17, 6, 0.7)] %}
 {% for pos in right_scatter %}
-<rect x="{{ pos[0] }}" y="{{ pos[1] }}" width="{{ pos[2] }}" height="{{ pos[2] }}" fill="{{ amethyst_core }}" opacity="{{ pos[3] }}"/>
+<rect x="{{ pos[0] }}" y="{{ pos[1] }}" width="{{ pos[2] }}" height="{{ pos[2] }}" fill="{{ secondary_main }}" opacity="{{ pos[3] }}"/>
 {% endfor %}
-{# Right terminal — 4 x 2 amethyst block grid at full opacity #}
+{# Right terminal — 4 x 2 secondary-tone block grid at full opacity #}
 {% for col in range(4) %}
   {% for row in range(2) %}
-  {% set ac = amethyst_core if (col + row) % 2 == 0 else amethyst_bright %}
+  {% set ac = secondary_main if (col + row) % 2 == 0 else secondary_deep %}
   <rect x="{{ dw - 48 + col * 12 }}" y="{{ 2 + row * 12 }}" width="12" height="12" fill="{{ ac }}"/>
   {% endfor %}
 {% endfor %}

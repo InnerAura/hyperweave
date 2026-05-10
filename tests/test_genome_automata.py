@@ -32,23 +32,86 @@ def test_automata_genome_loads() -> None:
     assert spec.profile == "brutalist"
 
 
-def test_automata_bifamily_chromatic_fields_populated() -> None:
-    """Both blue and purple families declare a complete palette."""
+def test_automata_compositional_tones_populated() -> None:
+    """v0.3.0: variant_tones declares 16 tone primitives, each with all 14 fields.
+    Pairing happens at request time via the URL grammar modifier
+    ?variant=primary&pair=secondary, which composes any two solo tones; bridge
+    synthesis happens in compose/palette.py from each tone's cellular_cells[0:2].
+
+    The 14-field shape is the original 11-field shape plus the three accent
+    stops (info_accent / mid_accent / header_band) added for the v0.3.0 visual
+    refresh — info_accent is the saturated brand-bright stop, mid_accent the
+    70%-saturated mid stop, header_band the dark mid-band tone."""
     spec = get_genome_specs()["automata"]
-    # Blue family
-    assert len(spec.variant_blue_rim_stops) == 7
-    assert len(spec.variant_blue_pattern_cells) == 3
-    assert spec.variant_blue_label_slab_fill == "#0A1C28"
-    assert spec.variant_blue_value_text == "#A8D4F0"
-    # Purple family
-    assert len(spec.variant_purple_rim_stops) == 7
-    assert len(spec.variant_purple_pattern_cells) == 3
-    assert spec.variant_purple_label_slab_fill == "#150A22"
-    assert spec.variant_purple_value_text == "#D8B4FE"
-    # Bifamily bridge (divider palette)
-    assert spec.variant_bifamily_bridge_teal_mid == "#147A90"
-    assert spec.variant_bifamily_bridge_amethyst_core == "#5A3278"
-    # Pulse config
+    # 16 production tones.
+    assert set(spec.variant_tones.keys()) == {
+        "violet",
+        "teal",
+        "bone",
+        "steel",
+        "amber",
+        "jade",
+        "magenta",
+        "cobalt",
+        "toxic",
+        "solar",
+        "abyssal",
+        "crimson",
+        "sulfur",
+        "indigo",
+        "burgundy",
+        "copper",
+    }
+    # Each tone has the full 14-field shape: area_tiers (5, brightest→darkest)
+    # for stat card heatmap + chart_levels (6, darkest→brightest) for chart
+    # cellular automata + dormant_range (2, low+high near-black) for chart
+    # dormant substrate + the three accent stops (info_accent / mid_accent /
+    # header_band) driving the new stat-card outline, chart header zone,
+    # marquee hairlines, and icon mid-tier cells.
+    for tone_name, tone in spec.variant_tones.items():
+        assert set(tone.keys()) == {
+            "rim_stops",
+            "cellular_cells",
+            "area_tiers",
+            "chart_levels",
+            "dormant_range",
+            "label_slab",
+            "seam_mid",
+            "label_text",
+            "value_text",
+            "canvas_top",
+            "canvas_bottom",
+            "info_accent",
+            "mid_accent",
+            "header_band",
+        }, f"variant_tones['{tone_name}'] shape mismatch"
+        assert len(tone["rim_stops"]) == 7
+        assert len(tone["cellular_cells"]) == 3
+        assert len(tone["area_tiers"]) == 5, f"{tone_name} area_tiers must be 5 colors brightest→darkest"
+        assert len(tone["chart_levels"]) == 6, f"{tone_name} chart_levels must be 6 colors darkest→brightest"
+        assert len(tone["dormant_range"]) == 2, f"{tone_name} dormant_range must be 2 colors [low, high]"
+        # Accent stops must be pairwise distinct (validator enforces; double-check at fixture level).
+        accents = (tone["info_accent"], tone["mid_accent"], tone["header_band"])
+        assert len(set(a.lower() for a in accents)) == 3, (
+            f"{tone_name} accent stops must be pairwise distinct, got {accents}"
+        )
+        # header_band must differ from canvas stops (otherwise chart header invisible).
+        assert tone["header_band"].lower() != tone["canvas_top"].lower(), (
+            f"{tone_name} header_band must differ from canvas_top"
+        )
+        assert tone["header_band"].lower() != tone["canvas_bottom"].lower(), (
+            f"{tone_name} header_band must differ from canvas_bottom"
+        )
+
+    # Spot-check existing values preserved 1:1 from the deleted flat fields
+    teal = spec.variant_tones["teal"]
+    assert teal["label_slab"] == "#0A1C28"
+    assert teal["value_text"] == "#A8D4F0"
+    violet = spec.variant_tones["violet"]
+    assert violet["label_slab"] == "#150A22"
+    assert violet["value_text"] == "#D8B4FE"
+
+    # Pulse config (paradigm infrastructure, unchanged)
     assert spec.cellular_pulse_base_duration == "6s"
     assert spec.cellular_pattern_opacity == "0.78"
 

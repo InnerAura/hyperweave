@@ -12,6 +12,11 @@ badge:
   label_font_size: 11
   value_font_size: 11
   value_font_weight: 700
+  # Glyph dimensions explicit per Round 6 (was implicit fallback to resolver default 14).
+  # Brutalist badge_frame_height matches chrome at 22px; same 14/22 proportion holds.
+  # No compact geometry declared (gate flips off via _paradigm_supports_compact).
+  glyph_size: 14
+  glyph_size_compact: 0
 
 strip:
   value_font_size: 18

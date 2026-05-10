@@ -1,39 +1,106 @@
-{# Cellular icon content: 64x64 viewBox, 4x4 monovariant cell grid +
-   inner frame with variant-colored stroke + centered glyph.
+{# Cellular icon content — v0.3.0 visual refresh (48×48, 5×5 living grid).
 
-   Variant resolution: ComposeSpec.variant or cellular paradigm default (blue).
-   Bifamily caller falls back to blue for icon (monovariant invariant).
-   Path B grammar: dynamic variant key lookup on _genome_raw. #}
-{% set v = "purple" if variant == "purple" else "blue" %}
-{% set pattern_trio = _genome_raw["variant_" ~ v ~ "_pattern_cells"] %}
-{% set frame_stroke = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
-{% set alt_color = _genome_raw["variant_" ~ v ~ "_seam_mid"] %}
+   Replaces the prior 64×64 4×4-grid implementation. The new geometry pulls
+   ALL dimension values from paradigm config (icon_grid_cols, icon_cell_size,
+   icon_inner_inset, icon_glyph_size, etc.) so dimension changes don't
+   require template edits and CLAUDE.md "Compose owns geometry, template
+   renders" stays clean.
 
-{# Void ground #}
-<rect width="64" height="64" fill="{{ surface_0 | default('#04060A') }}"/>
+   Cell tier system (5 classes via (row*cols + col) % 5):
+     cz1 → chart_levels[1]   (dark active)
+     cz2 → mid_accent        (mid active)
+     cz3 → info_accent       (bright active)
+     cz4 → mid_accent        (alt-phase mid; same color, different stagger)
+     czd → header_band       (dormant — opacity 0.08, no animation)
 
-{# 4x4 cell grid (16px cells) with phi-offset pulse classes. Color picked from
-   the family's 3-color trio via (col+row) parity. #}
-{% set class_pool = ["si1", "si2", "si3", "sid", "sid"] %}
-<g opacity="0.7">
-{% for row in range(4) %}
-  {% for col in range(4) %}
-  {% set cidx = (row * 4 + col) % 3 %}
-  {% set clsidx = (row * 4 + col) % 5 %}
-  <rect x="{{ col * 16 }}" y="{{ row * 16 }}" width="16" height="16" fill="{{ pattern_trio[cidx] }}" class="{{ class_pool[clsidx] }}"/>
+   Cell distribution by deterministic modulo means cz3 (bright) appears
+   every 5 cells, cz4 (mid alt-phase) every 5 cells, etc. The hand-tuned
+   composition in the v3-sulfur prototype emphasizes cz3 more than uniform
+   distribution would; if proofset visual review prefers the prototype's
+   concentration, swap to a hash-based dispatch later. The simple modulo
+   gives a balanced grid acceptable as the initial render. #}
+
+{% set _surface = surface_0 | default('#0A0800') %}
+{% set _cw = width | default(48) %}
+{% set _ch = height | default(48) %}
+{% set _cols = icon_grid_cols | default(5) %}
+{% set _rows = icon_grid_rows | default(5) %}
+{% set _cell = icon_cell_size | default(8) %}
+{% set _gap = icon_cell_gap | default(1) %}
+{% set _stride = _cell + _gap %}
+{% set _cell_rx = icon_cell_rx | default(1) %}
+{% set _inner_x = icon_inner_inset | default(10.08) %}
+{% set _inner_size = icon_inner_size | default(27.84) %}
+{% set _inner_rx = icon_inner_rx | default(4) %}
+{% set _glyph_inset = icon_glyph_inset | default(13.44) %}
+{% set _glyph_size = icon_glyph_size | default(21.12) %}
+{% set _outer_rx = icon_outer_rx | default(6) %}
+{% set _info = icon_info_accent %}
+{% set _mid = icon_mid_accent %}
+{% set _header_band = icon_header_band %}
+{% set chart_levels = cellular_palette.primary.chart_levels %}
+{% set _dark_active = chart_levels[1] %}
+
+{# 4-tier cell color map keyed by class slot. cz1/cz2/cz3/cz4 cycle with
+   different phase staggers; czd is the dormant low-opacity tone. #}
+{% set _cell_classes = ['cz1', 'cz2', 'cz3', 'cz4', 'czd'] %}
+{% set _cell_fills = [_dark_active, _mid, _info, _mid, _header_band] %}
+
+{# Pre-shuffled 25-entry slot table. Each entry is an index into _cell_classes
+   (0..4 = cz1/cz2/cz3/cz4/czd). The shuffle preserves the 5-of-each
+   distribution but breaks the diagonal wave pattern that modulo arithmetic
+   `(row*5 + col) % 5` would produce — adjacent cells getting sequential
+   phase offsets is what made the prototype's organic feel render as a
+   visible oscillation in the live SVG. The shuffle is fixed (deterministic)
+   so cached renders are byte-identical across runs. #}
+{% set _icon_slot_table = [
+  2, 4, 0, 3, 1,
+  0, 1, 4, 2, 3,
+  3, 2, 1, 4, 0,
+  4, 0, 3, 1, 2,
+  1, 3, 2, 0, 4
+] %}
+
+{# Card clip — masks any cell overflow inside the rounded outer rect so the
+   8×8 cells along the edges of the 5×5 grid don't extrude past the corner
+   curve. #}
+<clipPath id="{{ uid }}-card-clip"><rect width="{{ _cw }}" height="{{ _ch }}" rx="{{ _outer_rx }}"/></clipPath>
+
+{# Background — solid surface fill with rounded corners. #}
+<rect width="{{ _cw }}" height="{{ _ch }}" fill="{{ _surface }}" rx="{{ _outer_rx }}"/>
+
+{# Living cell substrate — 5×5 grid at opacity 0.75 so the layer reads as
+   ambient texture rather than competing with the centered glyph. Cells
+   are clipped to the card edge so corner cells stay inside the rounded
+   rect. #}
+<g opacity="0.75" clip-path="url(#{{ uid }}-card-clip)">
+{% for row in range(_rows) %}
+  {% for col in range(_cols) %}
+    {% set _slot = _icon_slot_table[row * _cols + col] %}
+    {% set _cls = _cell_classes[_slot] %}
+    {% set _fill = _cell_fills[_slot] %}
+    {% set _cx = col * _stride %}
+    {% set _cy = row * _stride %}
+    <rect x="{{ _cx }}" y="{{ _cy }}" width="{{ _cell }}" height="{{ _cell }}" rx="{{ _cell_rx }}" fill="{{ _fill }}" class="{{ _cls }}"/>
   {% endfor %}
 {% endfor %}
 </g>
 
-{# Inner canvas — reduces pattern visibility to a frame-edge effect. #}
-<rect x="8" y="8" width="48" height="48" fill="{{ surface_0 | default('#04060A') }}" opacity="0.78"/>
-<rect x="8" y="8" width="48" height="48" fill="none" stroke="{{ frame_stroke }}" stroke-width="0.5" opacity="0.3"/>
+{# Inner canvas — semi-opaque rect that mutes the cell substrate behind the
+   glyph so the brand mark stays the focal point. Outlined in mid_accent at
+   30% opacity for a subtle frame edge. #}
+<rect x="{{ _inner_x }}" y="{{ _inner_x }}" width="{{ _inner_size }}" height="{{ _inner_size }}" fill="{{ _surface }}" opacity="0.72" rx="{{ _inner_rx }}"/>
+<rect x="{{ _inner_x }}" y="{{ _inner_x }}" width="{{ _inner_size }}" height="{{ _inner_size }}" fill="none" stroke="{{ _mid }}" stroke-width="0.5" opacity="0.3" rx="{{ _inner_rx }}"/>
 
-{# Glyph — centered at (20,20) with 24x24 size (inside 48x48 canvas). #}
+{# Glyph — centered inside the inner canvas. Filled with info_accent for
+   maximum brand visibility against the muted backdrop. Embedded SVG sized
+   to icon_glyph_size with the registry's glyph viewBox preserved. #}
 {% if glyph_path %}
-<g transform="translate(20,20)" fill="{{ alt_color }}" opacity="1">
-  <svg width="24" height="24" viewBox="{{ glyph_viewbox }}">
-    <path d="{{ glyph_path }}" fill="{{ alt_color }}"/>
-  </svg>
-</g>
+<svg x="{{ _glyph_inset }}" y="{{ _glyph_inset }}" width="{{ _glyph_size }}" height="{{ _glyph_size }}" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="{{ _info }}"/>
+</svg>
 {% endif %}
+
+{# Outer border — single mid_accent hairline at full opacity tracing the
+   rounded card edge. Reads as the icon's structural frame. #}
+<rect x="0.5" y="0.5" width="{{ _cw - 1 }}" height="{{ _ch - 1 }}" fill="none" stroke="{{ _mid }}" stroke-width="0.5" rx="{{ _outer_rx }}"/>

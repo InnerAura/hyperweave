@@ -22,7 +22,8 @@ def test_automata_strip_bifamily_has_flank_zones() -> None:
         genome_id="automata",
         title="README-AI",
         value="STARS:2.9k,FORKS:278",
-        variant="bifamily",
+        variant="teal",
+        pair="violet",
     )
     result = compose(spec)
     # Width has flank allocation on top of standard identity + N metrics + status
@@ -52,7 +53,8 @@ def test_strip_renders_with_zero_metrics() -> None:
         genome_id="automata",
         title="SOLO",
         value="",
-        variant="bifamily",
+        variant="teal",
+        pair="violet",
     )
     result = compose(spec)
     assert result.width > 0
@@ -66,14 +68,16 @@ def test_strip_renders_with_many_metrics() -> None:
         genome_id="automata",
         title="REPO",
         value="A:1,B:2,C:3",
-        variant="bifamily",
+        variant="teal",
+        pair="violet",
     )
     spec6 = ComposeSpec(
         type="strip",
         genome_id="automata",
         title="REPO",
         value="A:1,B:2,C:3,D:4,E:5,F:6",
-        variant="bifamily",
+        variant="teal",
+        pair="violet",
     )
     r3 = compose(spec3)
     r6 = compose(spec6)

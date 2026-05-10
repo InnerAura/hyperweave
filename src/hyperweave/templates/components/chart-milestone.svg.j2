@@ -1,7 +1,15 @@
 {# Single milestone: vertical tick + label above the crossing point.
    Context: ms = {x, y, bottom_y, label, value}. Looped by chart content.
-   De-overlap is applied upstream in the engine (MILESTONE_MIN_GAP_PX). #}
+   De-overlap is applied upstream in the engine (MILESTONE_MIN_GAP_PX).
+
+   Label y-offset: 24px above the curve point (ms.y). The cellular polyline
+   renders with a 10px drop-shadow glow halo (.hw-chart-line in
+   cellular-defs.j2 emits drop-shadow(0 0 10px ...)). 24px = 10px glow
+   radius + 14px breathing room between the bottom of the label text and
+   the top of the visible glow. The prior 16px offset (10 + 6 breathing)
+   placed labels close enough to the halo that "500"/"1K"/"2K" still read
+   as visually attached to the line on cellular renders. #}
 <line x1="{{ ms.x }}" y1="{{ ms.y }}" x2="{{ ms.x }}" y2="{{ ms.bottom_y }}"
       class="hw-chart-milestone-line"/>
-<text x="{{ ms.x }}" y="{{ ms.y - 6 }}" text-anchor="middle"
+<text x="{{ ms.x }}" y="{{ ms.y - 24 }}" text-anchor="middle"
       class="hw-chart-milestone-label">{{ ms.label }}</text>

@@ -1,39 +1,45 @@
-{# Cellular stats defs — bifamily palette + class-based typography.
+{# Cellular stats defs — v0.3.0 visual refresh.
 
    Class-based typography is structural, not cosmetic: the catch-all
-   `text{font-family:'JetBrains Mono',monospace}` rule below overrides
-   any SVG `font-family="..."` presentation attribute on `<text>`
-   elements (CSS specificity 0.0.0.1 still beats presentation 0). So
-   custom-font slots (Orbitron headers, Chakra Petch hero numerals)
-   MUST use a CSS class — class specificity 0.0.1.0 wins over `text{}`.
+   `text{font-family:'JetBrains Mono',monospace}` rule below overrides any SVG
+   `font-family="..."` presentation attribute on `<text>` elements (CSS
+   specificity 0.0.0.1 still beats presentation 0). Custom-font slots
+   (Orbitron usernames, Chakra Petch metric numerals) MUST use a CSS class —
+   class specificity 0.0.1.0 wins over `text{}`.
 
-   This mirrors the chart's cellular-defs pattern (see frames/chart/
-   cellular-defs.j2 lines 24-32) where classes like `-title-main`,
-   `-hero-value`, `-axis-y` all carry their font-family inside the
-   class declaration. #}
+   v0.3.0 refresh consolidates the metric strip to four hierarchy classes
+   (mvh/mvm/mvs/mvg) with a 4-phase breathe animation (b1-b4) namespaced as
+   ``breathe-stats`` so it can't collide with the chart's ``breathe-chart``
+   if both ever embed in the same document. The 5-class system (cc1-cc4 +
+   ccf fast variant) is gone — the v4b prototype's breathe is uniform across
+   all heatmap cells, so the fast variant added unnecessary visual complexity.
+
+   Genome-independent constants (streak_green, mid_gray, hero_white) flow
+   from paradigm config as named template variables — never raw hex in the
+   template, so the variant-blind hex gate stays effective. #}
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
+<clipPath id="{{ uid }}-card-clip"><rect width="{{ width }}" height="{{ height }}" rx="8"/></clipPath>
+<linearGradient id="{{ uid }}-top-grad" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="{{ cellular_palette.primary.canvas_top }}"/>
+  <stop offset="100%" stop-color="{{ cellular_palette.primary.canvas_bottom }}"/>
+</linearGradient>
 {{ chart_defs | default("") | safe }}
 <style>{{ font_faces | safe }}
 text{font-family:'JetBrains Mono',monospace}
-.cs1{animation:csp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite;will-change:opacity}
-.cs2{animation:csp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 1.5s;will-change:opacity}
-.cs3{animation:csp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 3s;will-change:opacity}
-.cs4{animation:csp {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
-.csf{animation:csp {{ cellular_pulse_fast_duration | default('3s') }} ease-in-out infinite 0.5s;will-change:opacity}
-.csd{opacity:.07}
-@keyframes csp{0%,100%{opacity:.05}30%{opacity:.7}50%{opacity:.3}70%{opacity:.6}}
-.{{ uid }}-username{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.18em;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }}}
-.{{ uid }}-bio{font-family:'JetBrains Mono',monospace;font-size:7.5px;letter-spacing:0.04em;fill:{{ ink_sub | default('#3a4a5a') }}}
-.{{ uid }}-brand{font-family:'JetBrains Mono',monospace;font-size:5.5px;letter-spacing:0.12em;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.25}
-.{{ uid }}-hero-value{font-family:'Chakra Petch',sans-serif;font-size:38px;font-weight:700;letter-spacing:-0.02em;fill:{{ ink_bright | default('#ededed') }}}
-.{{ uid }}-hero-value-alt{font-family:'Chakra Petch',sans-serif;font-size:38px;font-weight:700;letter-spacing:-0.02em;fill:#b8c0d0}
-.{{ uid }}-hero-label{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:0.25em;opacity:0.7;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }}}
-.{{ uid }}-hero-delta{font-family:'JetBrains Mono',monospace;font-size:7.5px;letter-spacing:0.02em;fill:#22c55e}
-.{{ uid }}-sec-value{font-family:'Chakra Petch',sans-serif;font-size:26px;font-weight:600}
-.{{ uid }}-sec-label{font-family:'JetBrains Mono',monospace;font-size:6.5px;letter-spacing:0.2em;opacity:0.7}
-.{{ uid }}-heatmap-label{font-family:'JetBrains Mono',monospace;font-size:6px;letter-spacing:0.15em;fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.6}
-.{{ uid }}-lang-text{font-family:'JetBrains Mono',monospace;font-size:6.5px;fill:#3a4a5a}
-.hw-chart-line{stroke:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};stroke-width:2;fill:none}
-.hw-chart-area{fill:{{ variant_blue_pattern_cells[0] | default('#1E849A') }};opacity:0.1}
-@media(prefers-reduced-motion:reduce){.cs1,.cs2,.cs3,.cs4,.csf{animation:none!important;opacity:.3!important}}
+.b1{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite;will-change:opacity}
+.b2{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 1.5s;will-change:opacity}
+.b3{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 3s;will-change:opacity}
+.b4{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
+@keyframes breathe-stats{0%,100%{opacity:.5}40%{opacity:1}60%{opacity:.75}}
+.{{ uid }}-username{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.16em;fill:{{ stats_info_accent }}}
+.{{ uid }}-bio{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:0.03em;fill:{{ stats_mid_accent }};opacity:0.55}
+.{{ uid }}-brand{font-family:'JetBrains Mono',monospace;font-size:6.5px;letter-spacing:0.14em;fill:{{ stats_mid_accent }};opacity:0.18}
+.{{ uid }}-mvh{font-family:'Chakra Petch',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.02em;fill:{{ hero_white }}}
+.{{ uid }}-mvm{font-family:'Chakra Petch',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.02em;fill:{{ mid_gray }};opacity:0.8}
+.{{ uid }}-mvs{font-family:'Chakra Petch',sans-serif;font-size:15px;font-weight:600;fill:{{ mid_gray }};opacity:0.55}
+.{{ uid }}-mvg{font-family:'Chakra Petch',sans-serif;font-size:15px;font-weight:600;fill:{{ streak_green }};opacity:0.85}
+.{{ uid }}-mlb{font-family:'JetBrains Mono',monospace;font-size:6.5px;font-weight:500;letter-spacing:0.22em;fill:{{ stats_mid_accent }};opacity:0.50}
+.{{ uid }}-cyr{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:0.16em;fill:{{ stats_mid_accent }};opacity:0.32}
+.{{ uid }}-lt{font-family:'JetBrains Mono',monospace;font-size:7px;fill:{{ stats_mid_accent }};opacity:0.6}
+@media(prefers-reduced-motion:reduce){.b1,.b2,.b3,.b4{animation:none!important;opacity:.7!important}}
 </style>

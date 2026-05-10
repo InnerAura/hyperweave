@@ -130,6 +130,12 @@ def _parse_strip_metric_pairs(spec: ComposeSpec) -> list[tuple[str, str]]:
       ``slot.value`` of the form ``"LABEL:value"``.
     * Comma-separated fallback in ``spec.value`` —
       ``"STARS:2.9k,FORKS:278,BUILD:failing"``.
+
+    TODO: unify with ``resolver._parse_metrics`` when ``resolver.py`` is split
+    (architecture review Phase 4, deferred to v0.3.1+). The duplication is
+    intentional for now — engine step 0 runs before resolve(), so it can't
+    import from resolver.py without a circular dependency. Unification target
+    is ``core/`` once the resolver-too-fat split lands.
     """
     pairs: list[tuple[str, str]] = []
     for slot in spec.slots:

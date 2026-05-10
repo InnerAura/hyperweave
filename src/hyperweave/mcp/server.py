@@ -40,6 +40,7 @@ async def hw_compose(
     size: str = "default",
     shape: str = "",
     variant: str = "",
+    pair: str = "",
     divider_variant: str = "zeropoint",
     direction: str = "ltr",
     speeds: list[float] | None = None,
@@ -57,8 +58,9 @@ async def hw_compose(
           receipt | rhythm-strip | master-card | catalog | stats | chart
 
     genome: brutalist (dark, sharp corners, emerald accent) |
-            chrome (dark, metallic, blue-silver gradient) |
-            automata (cellular bifamily; teal + amethyst)
+            chrome (dark, metallic, 5 named variants: horizon/abyssal/lightning/graphite/moth) |
+            automata (cellular, 12 solo tones: violet/teal/bone/steel/amber/jade/magenta/
+              cobalt/toxic/solar/abyssal/crimson — pair any two via ?pair=...)
             — or pass ``genome_override`` as an inline genome dict to bypass
               the built-in registry (equivalent to CLI ``--genome-file``).
 
@@ -95,7 +97,14 @@ async def hw_compose(
     glyph_mode: auto | fill | wire | none
     size: default | compact
     shape: square | circle (icon frame shape, genome-dependent)
-    variant: blue | purple | bifamily (automata chromatic axis; empty = frame default)
+    variant: chrome → horizon | abyssal | lightning | graphite | moth
+             automata → violet | teal | bone | steel | amber | jade | magenta |
+                        cobalt | toxic | solar | abyssal | crimson (12 solo tones)
+             empty = frame default flagship variant (cellular default = teal)
+    pair: cellular paradigm pairing modifier (automata only). Composes any two
+          solo tones — e.g. variant="teal" pair="violet". Bifamily frames
+          (strip, divider) consume the pair; other frames silently ignore it.
+          Empty = solo render.
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -132,6 +141,7 @@ async def hw_compose(
         size=size,
         shape=shape,
         variant=variant,
+        pair=pair,
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_speeds=speeds,
@@ -260,7 +270,16 @@ async def hw_discover(
                     "state": "active | passing | building | warning | critical | failing | offline",
                     "regime": "normal | permissive | ungoverned",
                     "size": "default | compact",
-                    "variant": "blue | purple | bifamily (automata)",
+                    "variant": (
+                        "chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
+                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
+                    ),
+                    "pair": (
+                        "automata only — second solo tone for bifamily strip + divider. "
+                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
+                        "Other frame types silently ignore the parameter."
+                    ),
                     "t": "Title override (use when title contains slashes)",
                 },
                 "example": "/v1/badge/build/passing/brutalist.static",
@@ -274,7 +293,16 @@ async def hw_discover(
                     "state": "Semantic state",
                     "regime": "normal | permissive | ungoverned",
                     "size": "default | compact",
-                    "variant": "blue | purple | bifamily (automata)",
+                    "variant": (
+                        "chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
+                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
+                    ),
+                    "pair": (
+                        "automata only — second solo tone for bifamily strip + divider. "
+                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
+                        "Other frame types silently ignore the parameter."
+                    ),
                 },
                 "example": "/v1/badge/STARS/brutalist.static?data=gh:anthropics/claude-code.stars",
             },
@@ -286,7 +314,16 @@ async def hw_discover(
                     "subtitle": "Subtitle under identity (cellular paradigm)",
                     "glyph": "Glyph identifier",
                     "state": "Semantic state",
-                    "variant": "blue | purple | bifamily (automata)",
+                    "variant": (
+                        "chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
+                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
+                    ),
+                    "pair": (
+                        "automata only — second solo tone for bifamily strip + divider. "
+                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
+                        "Other frame types silently ignore the parameter."
+                    ),
                     "t": "Title override (use when title contains slashes)",
                 },
                 "example": (
@@ -299,16 +336,34 @@ async def hw_discover(
                     "shape": "square | circle",
                     "glyph_mode": "auto | fill | wire | none",
                     "state": "Semantic state",
-                    "variant": "blue | purple | bifamily (automata)",
+                    "variant": (
+                        "chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
+                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
+                    ),
+                    "pair": (
+                        "automata only — second solo tone for bifamily strip + divider. "
+                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
+                        "Other frame types silently ignore the parameter."
+                    ),
                 },
                 "example": "/v1/icon/github/chrome.static?shape=circle",
             },
             "divider": {
-                "pattern": "/v1/divider/{variant}/{genome}.{motion}",
+                "pattern": "/v1/divider/{divider_slug}/{genome}.{motion}",
                 "query_params": {
-                    "variant": "blue | purple | bifamily (automata)",
+                    "divider_slug (path)": "block | current | takeoff | void | zeropoint | dissolve | seam | band",
+                    "variant": (
+                        "Chromatic variant. chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
+                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
+                    ),
+                    "pair": (
+                        "automata only — second solo tone for bifamily dissolve divider. "
+                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet)."
+                    ),
                 },
-                "example": "/v1/divider/void/brutalist.static",
+                "example": "/v1/divider/dissolve/automata.static?variant=teal&pair=violet",
             },
             "marquee-horizontal": {
                 "pattern": "/v1/marquee/{title}/{genome}.{motion}",
@@ -316,7 +371,16 @@ async def hw_discover(
                     "data": data_grammar + " When set, drives the scroll directly and ignores title.",
                     "direction": "ltr | rtl",
                     "speeds": "Single float scroll speed multiplier",
-                    "variant": "blue | purple | bifamily (automata)",
+                    "variant": (
+                        "chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
+                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
+                    ),
+                    "pair": (
+                        "automata only — second solo tone for bifamily strip + divider. "
+                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
+                        "Other frame types silently ignore the parameter."
+                    ),
                     "t": "Title override (use when title contains slashes)",
                 },
                 "example": (
@@ -325,13 +389,25 @@ async def hw_discover(
             },
             "stats": {
                 "pattern": "/v1/stats/{username}/{genome}.{motion}",
-                "query_params": {},
-                "example": "/v1/stats/eli64s/chrome.static",
+                "query_params": {
+                    "variant": (
+                        "Chromatic variant. chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones."
+                    ),
+                    "pair": "automata only — silently ignored on stats (kept for URL grammar uniformity).",
+                },
+                "example": "/v1/stats/eli64s/automata.static?variant=bone",
             },
             "chart-stars": {
                 "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
-                "query_params": {},
-                "example": "/v1/chart/stars/torvalds/linux/brutalist.static",
+                "query_params": {
+                    "variant": (
+                        "Chromatic variant. chrome: horizon | abyssal | lightning | graphite | moth. "
+                        "automata: 16 solo tones."
+                    ),
+                    "pair": "automata only — silently ignored on chart (kept for URL grammar uniformity).",
+                },
+                "example": "/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone",
             },
         }
 

@@ -18,7 +18,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from hyperweave.compose.engine import compose
-from hyperweave.config.loader import load_genomes
+from hyperweave.config.loader import load_genomes, load_paradigms
 from hyperweave.core.enums import (
     ArtifactStatus,
     BorderMotionId,
@@ -27,6 +27,22 @@ from hyperweave.core.enums import (
     Regime,
 )
 from hyperweave.core.models import ComposeSpec
+
+
+def _paradigm_supports_compact(genome_cfg: Any, paradigms: dict[str, Any]) -> bool:
+    """Whether the genome's badge paradigm declares compact-mode geometry.
+
+    Compact rendering is paradigm geometry (frame_height_compact, glyph_size_compact,
+    glyph_offset_left_compact), not genome chromatics. Cellular declares it; chrome
+    doesn't. Without this gate the proofset would emit a chrome compact badge that
+    has no paradigm-specific tuning, producing a misshapen artifact.
+    """
+    paradigm_slug = genome_cfg.paradigms.get("badge", "default") if genome_cfg else "default"
+    paradigm = paradigms.get(paradigm_slug)
+    if paradigm is None:
+        return False
+    return paradigm.badge.glyph_size_compact > 0
+
 
 OUT = Path(__file__).resolve().parent.parent / "outputs"
 
@@ -212,6 +228,7 @@ def _compose(
     divider_variant: str = "zeropoint",
     size: str = "default",
     variant: str = "",
+    pair: str = "",
     shape: str = "",
     telemetry_data: dict[str, Any] | None = None,
     connector_data: dict[str, Any] | None = None,
@@ -229,6 +246,7 @@ def _compose(
         divider_variant=divider_variant,
         size=size,
         variant=variant,
+        pair=pair,
         shape=shape,
         telemetry_data=telemetry_data,
         connector_data=connector_data,
@@ -315,35 +333,134 @@ def generate_static() -> int:
         _write(base / "marquee_horizontal.svg", svg)
         total += 1
 
-        # ── 1b. Automata-specific family-axis coverage (blue/purple x default/compact) ──
-        if genome == GenomeId.AUTOMATA:
+        # ── 1b. v0.3.0 Variant matrix — every shipped variant rendered for the
+        #       relevant frame types. Visual palette verification across the full
+        #       chrome x automata variant surface so palette regressions surface
+        #       in the proofset before they hit production. Skips genomes with no
+        #       variant axis (brutalist). #}
+        if genome_cfg and genome_cfg.variants:
             var_dir = gdir / "variants"
-            for fam in ("blue", "purple"):
-                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", variant=fam)
-                _write(var_dir / f"badge_pypi_{fam}_default.svg", svg)
+            # Per-variant marquee text mirrors the base map at line 308 so the
+            # marquee voice stays consistent across base + variant artifacts.
+            variant_marquee_text = marquee_text_by_genome.get(genome, "HYPERWEAVE|LIVING ARTIFACTS|v0.3.0")
+            # Compact gate: cellular paradigm declares compact badge geometry;
+            # chrome paradigm does not. Render compact only when the badge
+            # paradigm supports it, so chrome variants emit just the default size
+            # and don't produce misshapen un-tuned compact artifacts.
+            paradigms = load_paradigms()
+            supports_compact = _paradigm_supports_compact(genome_cfg, paradigms)
+            # Each variant gets the full artifact suite: badge default (+ compact
+            # when paradigm supports), 5 badge states, icon, strip, marquee,
+            # divider. Skips border motions and policy lanes (not variant-sensitive).
+            # The dissolve divider works for all automata variants (solo gets a
+            # synthesized mirrored bridge from primary.cellular_cells via
+            # resolve_cellular_palette).
+            for variant in genome_cfg.variants:
+                # Badge default — exercises label, value, glyph, indicator
+                svg = _compose("badge", genome, "PYPI", "v0.3.0", "active", "python", variant=variant)
+                _write(var_dir / f"badge_pypi_{variant}_default.svg", svg)
                 total += 1
-                svg = _compose("badge", genome, "PYPI", "v0.2.5", "active", "python", variant=fam, size="compact")
-                _write(var_dir / f"badge_pypi_{fam}_compact.svg", svg)
+                if supports_compact:
+                    svg = _compose(
+                        "badge", genome, "PYPI", "v0.3.0", "active", "python", variant=variant, size="compact"
+                    )
+                    _write(var_dir / f"badge_pypi_{variant}_compact.svg", svg)
+                    total += 1
+                # Badge states per variant — full state-machine palette coverage
+                for status in (
+                    ArtifactStatus.PASSING,
+                    ArtifactStatus.WARNING,
+                    ArtifactStatus.CRITICAL,
+                    ArtifactStatus.BUILDING,
+                    ArtifactStatus.OFFLINE,
+                ):
+                    svg = _compose("badge", genome, "BUILD", status.value, status, "github", variant=variant)
+                    _write(var_dir / f"badge_{status}_{variant}.svg", svg)
+                    total += 1
+                # Icon — chrome supports both circle + square (binary-opposition
+                # icon_variant); other genomes are monoshape. Render both for
+                # chrome so the variant matrix shows shape coverage too.
+                if genome == GenomeId.CHROME:
+                    svg = _compose("icon", genome, glyph="github", shape="circle", variant=variant)
+                    _write(var_dir / f"icon_github_{variant}_circle.svg", svg)
+                    total += 1
+                    svg = _compose("icon", genome, glyph="github", shape="square", variant=variant)
+                    _write(var_dir / f"icon_github_{variant}_square.svg", svg)
+                    total += 1
+                else:
+                    svg = _compose("icon", genome, glyph="github", variant=variant)
+                    _write(var_dir / f"icon_github_{variant}.svg", svg)
+                    total += 1
+                # Strip: identity + 3 metrics. Paired automata variants render
+                # bifamily flanks; solo render content-only.
+                svg = _compose(
+                    "strip",
+                    genome,
+                    "readme-ai",
+                    "STARS:12.4k,VERSION:v0.6.9,BUILD:passing",
+                    "passing",
+                    "github",
+                    variant=variant,
+                    connector_data={"repo_slug": "eli64s/readme-ai"},
+                )
+                _write(var_dir / f"strip_{variant}.svg", svg)
                 total += 1
-                svg = _compose("icon", genome, glyph="github", variant=fam)
-                _write(var_dir / f"icon_github_{fam}.svg", svg)
+                # Marquee per variant — text + chromatic palette swap
+                svg = _compose("marquee-horizontal", genome, variant_marquee_text, variant=variant)
+                _write(var_dir / f"marquee_horizontal_{variant}.svg", svg)
                 total += 1
-            # Bifamily strip + dissolve divider
-            svg = _compose(
-                "strip",
-                genome,
-                "readme-ai",
-                "STARS:12.4k,VERSION:v0.6.9,BUILD:passing",
-                "passing",
-                "github",
-                variant="bifamily",
-                connector_data={"repo_slug": "eli64s/readme-ai"},
-            )
-            _write(var_dir / "strip_bifamily.svg", svg)
-            total += 1
-            svg = _compose("divider", genome, divider_variant="dissolve")
-            _write(var_dir / "divider_dissolve.svg", svg)
-            total += 1
+                # Divider per variant — chrome.band (vibration sweep across env);
+                # automata.dissolve (bifamily bridge, solo synthesizes mirrored).
+                divider_slug = "band" if genome == GenomeId.CHROME else "dissolve"
+                svg = _compose("divider", genome, divider_variant=divider_slug, variant=variant)
+                _write(var_dir / f"divider_{divider_slug}_{variant}.svg", svg)
+                total += 1
+
+        # ── 1c. v0.3.0 Freestyle pairings (automata only) ──
+        # The pairing grammar modifier ?variant=primary&pair=secondary composes
+        # any two solo tones at request time. Strip and divider are the
+        # bifamily frames that visibly consume the pair (other frames
+        # silently ignore it). Render ~10 representative pairings to disk
+        # so README_AUTOMATA.md can showcase the grammar's combinatorial
+        # surface without trying to enumerate the full 12x11=132 matrix.
+        if genome == GenomeId.AUTOMATA:
+            freestyle_dir = gdir / "pairings"
+            freestyle_pairs: list[tuple[str, str]] = [
+                ("teal", "violet"),  # legacy bifamily flagship
+                ("bone", "steel"),  # legacy neutral pairing
+                ("cobalt", "magenta"),  # warm/cool tension
+                ("jade", "crimson"),  # complementary wheel opposites
+                ("violet", "amber"),  # purple/gold royal pairing
+                ("solar", "abyssal"),  # thermal opposites
+                ("toxic", "jade"),  # adjacent greens
+                ("crimson", "steel"),  # warm signal on cool substrate
+                ("magenta", "bone"),  # saturated on neutral
+                ("amber", "cobalt"),  # warm/cool inverted from cobalt+magenta
+            ]
+            for primary, secondary in freestyle_pairs:
+                pair_slug = f"{primary}-{secondary}"
+                svg = _compose(
+                    "strip",
+                    genome,
+                    "readme-ai",
+                    "STARS:12.4k,VERSION:v0.6.9,BUILD:passing",
+                    "passing",
+                    "github",
+                    variant=primary,
+                    pair=secondary,
+                    connector_data={"repo_slug": "eli64s/readme-ai"},
+                )
+                _write(freestyle_dir / f"strip_{pair_slug}.svg", svg)
+                total += 1
+                svg = _compose(
+                    "divider",
+                    genome,
+                    divider_variant="dissolve",
+                    variant=primary,
+                    pair=secondary,
+                )
+                _write(freestyle_dir / f"divider_dissolve_{pair_slug}.svg", svg)
+                total += 1
 
         # ── 2. State machine -- badges ──
         states = gdir / "states"
@@ -526,6 +643,7 @@ def _compose_connector(
     chart_owner: str = "",
     chart_repo: str = "",
     genome_override: dict[str, Any] | None = None,
+    variant: str = "",
 ) -> str:
     """Compose a stats/chart frame with pre-fetched connector data."""
     spec = ComposeSpec(
@@ -536,6 +654,7 @@ def _compose_connector(
         chart_owner=chart_owner,
         chart_repo=chart_repo,
         genome_override=genome_override,
+        variant=variant,
     )
     return compose(spec).svg
 
@@ -668,6 +787,23 @@ def _generate_data_cards() -> int:
         _write(gdir / "stats.svg", svg)
         total += 1
 
+        # Per-variant stats cards — same connector_data, variant-shifted palette.
+        # Output to outputs/proofset/{genome}/variants/stats_{variant}.svg (flat
+        # under variants/, matching the badge/icon/strip naming convention).
+        genome_cfg = load_genomes().get(str(genome))
+        if genome_cfg and genome_cfg.variants:
+            var_dir = OUT / "proofset" / genome / "variants"
+            for variant in genome_cfg.variants:
+                svg = _compose_connector(
+                    "stats",
+                    genome,
+                    stats_username="eli64s",
+                    connector_data=stats_data,
+                    variant=variant,
+                )
+                _write(var_dir / f"stats_{variant}.svg", svg)
+                total += 1
+
         # Star chart — single full size (900x500). Skipped entirely when
         # cross-check failed; a missing artifact is honest (README link breaks
         # loudly) — a fake artifact would be dishonest.
@@ -683,6 +819,22 @@ def _generate_data_cards() -> int:
         )
         _write(gdir / "chart_stars_full.svg", svg)
         total += 1
+
+        # Per-variant star charts — same chart data, variant-shifted palette.
+        # Output to outputs/proofset/{genome}/variants/chart_stars_{variant}.svg.
+        if genome_cfg and genome_cfg.variants:
+            var_dir = OUT / "proofset" / genome / "variants"
+            for variant in genome_cfg.variants:
+                svg = _compose_connector(
+                    "chart",
+                    genome,
+                    chart_owner="eli64s",
+                    chart_repo="readme-ai",
+                    connector_data=chart_data,
+                    variant=variant,
+                )
+                _write(var_dir / f"chart_stars_{variant}.svg", svg)
+                total += 1
 
     return total
 
@@ -778,7 +930,7 @@ async def _generate_multi_provider_marquee(proofset_root: Path) -> int:
         spec = ComposeSpec(
             type="marquee-horizontal",
             genome_id=genome,
-            variant="bifamily" if genome == GenomeId.AUTOMATA else "",
+            variant="violet-teal" if genome == GenomeId.AUTOMATA else "",
             data_tokens=list(resolved),
         )
         try:
@@ -984,28 +1136,108 @@ def generate_readme(total: int, live_total: int) -> None:
                 lines.append(f"![{stem}](proofset/{g}/connectors/{stem}.svg)")
                 lines.append("")
 
-        # Automata-specific variant axis (blue/purple/bifamily x default/compact)
-        if genome == GenomeId.AUTOMATA:
-            lines.extend(["### Variant Axis (blue / purple / bifamily)", ""])
-            lines.append(
-                "Automata's chromatic variant axis: badges + icons pick "
-                "`?variant=blue|purple`; strip/marquee-horizontal/divider render bifamily."
+        # v0.3.0 variant matrix — every shipped variant rendered for visual
+        # palette verification. One row per variant: badge default + compact,
+        # icon, strip. Automata's 12-tone matrix lives in a sibling file
+        # (README_AUTOMATA.md) so the main README doesn't bloat — only a
+        # brief stub + link is inlined here. Chrome's 5-variant matrix stays
+        # inline since it fits comfortably alongside the rest of the README.
+        genome_cfg_for_readme = load_genomes().get(g)
+        if genome_cfg_for_readme and genome_cfg_for_readme.variants:
+            variants = genome_cfg_for_readme.variants
+            divider_slug_for_genome = "band" if g == GenomeId.CHROME else "dissolve"
+
+            if g == GenomeId.AUTOMATA:
+                # Brief stub in main README; full matrix moves to README_AUTOMATA.md.
+                lines.extend(
+                    [
+                        f"### Variant Matrix ({len(variants)} variants)",
+                        "",
+                        f"Automata ships {len(variants)} solo tones plus a request-time pairing grammar "
+                        f"(`?variant=primary&pair=secondary`) that composes any two tones into a bifamily "
+                        f"strip or divider. The full matrix — 12 solo artifact suites + freestyle paired "
+                        f"showcases — lives in [README_AUTOMATA.md](README_AUTOMATA.md).",
+                        "",
+                    ]
+                )
+                # Spot-check: render a handful of representative tones inline
+                # so the main README still gives a flavor of the chromatic
+                # surface without enumerating all 12.
+                spot_check = [v for v in ("teal", "magenta", "jade", "amber", "cobalt") if v in variants]
+                if spot_check:
+                    lines.append(
+                        " ".join(f"![{v}](proofset/{g}/variants/badge_pypi_{v}_default.svg)" for v in spot_check)
+                    )
+                    lines.append("")
+                continue
+
+            lines.extend(
+                [
+                    f"### Variant Matrix ({len(variants)} variants)",
+                    "",
+                    "Every shipped chromatic variant rendered against PYPI:v0.3.0 + readme-ai strip.",
+                    "",
+                ]
             )
-            lines.append("")
-            for v in ("blue", "purple"):
-                lines.append(f"**Variant: `{v}`**")
+            for v in variants:
+                lines.append(f"**`?variant={v}`**")
                 lines.append("")
-                lines.append(f"![badge pypi {v} default](proofset/{g}/variants/badge_pypi_{v}_default.svg) ")
-                lines.append(f"![badge pypi {v} compact](proofset/{g}/variants/badge_pypi_{v}_compact.svg)")
+                # Row 1: badge default (+ compact when paradigm supports) + icon(s).
+                # Chrome supports binary-opposition icons (circle + square) but
+                # not compact-size badges; other variant-bearing genomes are
+                # monoshape but support compact via cellular paradigm. The
+                # compact image only appears when the file actually exists on
+                # disk so the README never ships dead links.
+                row1 = f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg) "
+                compact_path = OUT / "proofset" / g / "variants" / f"badge_pypi_{v}_compact.svg"
+                if compact_path.exists():
+                    row1 += f"![badge compact](proofset/{g}/variants/badge_pypi_{v}_compact.svg) "
+                if g == GenomeId.CHROME:
+                    row1 += (
+                        f"![icon circle](proofset/{g}/variants/icon_github_{v}_circle.svg) "
+                        f"![icon square](proofset/{g}/variants/icon_github_{v}_square.svg)"
+                    )
+                else:
+                    row1 += f"![icon](proofset/{g}/variants/icon_github_{v}.svg)"
+                lines.append(row1)
                 lines.append("")
-                lines.append(f"![icon github {v}](proofset/{g}/variants/icon_github_{v}.svg)")
+                # Row 2: strip
+                lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
                 lines.append("")
-            lines.append("**Bifamily compositions:**")
-            lines.append("")
-            lines.append(f"![strip bifamily](proofset/{g}/variants/strip_bifamily.svg)")
-            lines.append("")
-            lines.append(f"![divider dissolve](proofset/{g}/variants/divider_dissolve.svg)")
-            lines.append("")
+                # Row 3: marquee
+                lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+                lines.append("")
+                # Row 4: divider — chrome.band sweep
+                lines.append(
+                    f"![divider {divider_slug_for_genome}]"
+                    f"(proofset/{g}/variants/divider_{divider_slug_for_genome}_{v}.svg)"
+                )
+                lines.append("")
+                # Row 5: stats card
+                stats_path = OUT / "proofset" / g / "variants" / f"stats_{v}.svg"
+                if stats_path.exists():
+                    lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
+                    lines.append("")
+                # Row 6: star history chart (only when generated — skipped on
+                # GitHub stargazer cross-check failure per --live policy)
+                chart_path = OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg"
+                if chart_path.exists():
+                    lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
+                    lines.append("")
+                # Rows 7-11: badge states stacked vertically (one per row)
+                # for spatial scan-diff. Inline-row layout (pre-fix) packed all
+                # 5 states into a single line, making it hard to compare state
+                # colors across variants. Vertical stack matches the brutalist
+                # "State Machine" section's pattern below.
+                for s in (
+                    ArtifactStatus.PASSING,
+                    ArtifactStatus.WARNING,
+                    ArtifactStatus.CRITICAL,
+                    ArtifactStatus.BUILDING,
+                    ArtifactStatus.OFFLINE,
+                ):
+                    lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
+                lines.append("")
 
         # States
         lines.extend(["### State Machine", ""])
@@ -1115,6 +1347,125 @@ def generate_readme(total: int, live_total: int) -> None:
         lines.append("")
 
     (OUT / "README.md").write_text("\n".join(lines) + "\n")
+    _emit_automata_readme()
+
+
+def _emit_automata_readme() -> None:
+    """Emit outputs/README_AUTOMATA.md with the full 12-tone variant matrix
+    plus a freestyle pairings showcase. Lifted out of the main README to
+    keep that file scannable; with 12 solo tones x 7 frame types + 5 badge
+    states each, the full matrix dominates whatever else lives there.
+
+    Image references point at LOCAL artifacts under outputs/proofset/automata/
+    — this is a local gallery, not deployed URLs.
+    """
+    g = "automata"
+    cfg = load_genomes().get(g)
+    if cfg is None or not cfg.variants:
+        return
+    variants = cfg.variants
+
+    lines: list[str] = [
+        "# HyperWeave Automata — 12-Tone Variant Matrix",
+        "",
+        "Automata is the cellular paradigm: 12 solo tones (`violet`, `teal`, `bone`, `steel`, "
+        "`amber`, `jade`, `magenta`, `cobalt`, `toxic`, `solar`, `abyssal`, `crimson`) plus a "
+        "request-time pairing grammar that composes any two tones into a bifamily strip or "
+        "divider. Use `?variant=primary&pair=secondary` to pair, `?variant=primary` alone for solo.",
+        "",
+        "Every solo tone below renders the full artifact suite (badge default + compact, icon, "
+        "strip, marquee, divider, stats card, star chart, 5 badge states). Pairing examples "
+        "live in the [Freestyle Pairings](#freestyle-pairings) section at the bottom.",
+        "",
+        "---",
+        "",
+    ]
+
+    for v in variants:
+        lines.append(f"## `?variant={v}`")
+        lines.append("")
+        # Row 1: badge default + compact + icon
+        row1 = f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg) "
+        compact_path = OUT / "proofset" / g / "variants" / f"badge_pypi_{v}_compact.svg"
+        if compact_path.exists():
+            row1 += f"![badge compact](proofset/{g}/variants/badge_pypi_{v}_compact.svg) "
+        row1 += f"![icon](proofset/{g}/variants/icon_github_{v}.svg)"
+        lines.append(row1)
+        lines.append("")
+        # Row 2: strip
+        lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
+        lines.append("")
+        # Row 3: marquee
+        lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+        lines.append("")
+        # Row 4: dissolve divider — solo synthesizes mirrored bridge
+        lines.append(f"![divider dissolve](proofset/{g}/variants/divider_dissolve_{v}.svg)")
+        lines.append("")
+        # Row 5: stats card
+        stats_path = OUT / "proofset" / g / "variants" / f"stats_{v}.svg"
+        if stats_path.exists():
+            lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
+            lines.append("")
+        # Row 6: star history chart
+        chart_path = OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg"
+        if chart_path.exists():
+            lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
+            lines.append("")
+        # Rows 7-11: badge states stacked
+        for s in (
+            ArtifactStatus.PASSING,
+            ArtifactStatus.WARNING,
+            ArtifactStatus.CRITICAL,
+            ArtifactStatus.BUILDING,
+            ArtifactStatus.OFFLINE,
+        ):
+            lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+
+    # Freestyle pairings — the URL grammar modifier composes any two tones.
+    # Mirrors the freestyle_pairs list in generate_static so the README
+    # reflects what's actually on disk; if files are missing the link breaks
+    # loudly rather than ships a fake.
+    lines.extend(
+        [
+            "## Freestyle Pairings",
+            "",
+            "The pairing grammar (`?variant=primary&pair=secondary`) composes any two solo tones "
+            "into bifamily strips and dissolve dividers. Other frame types (badge, stats, chart, "
+            "marquee, icon) silently ignore the pair and render the primary tone solo. The 10 "
+            "combinations below sample the combinatorial surface; any of the 12x11=132 possible "
+            "pairings work the same way.",
+            "",
+        ]
+    )
+    freestyle_pairs: list[tuple[str, str]] = [
+        ("teal", "violet"),
+        ("bone", "steel"),
+        ("cobalt", "magenta"),
+        ("jade", "crimson"),
+        ("violet", "amber"),
+        ("solar", "abyssal"),
+        ("toxic", "jade"),
+        ("crimson", "steel"),
+        ("magenta", "bone"),
+        ("amber", "cobalt"),
+    ]
+    for primary, secondary in freestyle_pairs:
+        pair_slug = f"{primary}-{secondary}"
+        lines.append(f"### `?variant={primary}&pair={secondary}`")
+        lines.append("")
+        strip_path = OUT / "proofset" / g / "pairings" / f"strip_{pair_slug}.svg"
+        divider_path = OUT / "proofset" / g / "pairings" / f"divider_dissolve_{pair_slug}.svg"
+        if strip_path.exists():
+            lines.append(f"![strip](proofset/{g}/pairings/strip_{pair_slug}.svg)")
+            lines.append("")
+        if divider_path.exists():
+            lines.append(f"![divider dissolve](proofset/{g}/pairings/divider_dissolve_{pair_slug}.svg)")
+            lines.append("")
+
+    (OUT / "README_AUTOMATA.md").write_text("\n".join(lines) + "\n")
 
 
 def main() -> None:

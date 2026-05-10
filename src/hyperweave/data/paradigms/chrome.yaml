@@ -20,6 +20,12 @@ badge:
   label_font_size: 11
   value_font_size: 11
   value_font_weight: 900
+  # Glyph dimensions: 12 matches cellular paradigm's declaration so chrome and
+  # cellular badges render the same glyph proportion. Chrome paradigm declares
+  # no compact geometry; glyph_size_compact=0 keeps _paradigm_supports_compact
+  # at scripts/generate_proofset.py gating compact rendering off.
+  glyph_size: 12
+  glyph_size_compact: 0
 
 strip:
   value_font_size: 17

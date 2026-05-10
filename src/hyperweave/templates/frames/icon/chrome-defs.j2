@@ -47,10 +47,14 @@
 
 {# Specular bevel · feDropShadow + feSpecularLighting at azimuth 225° / elevation
    45° with arithmetic composite. Same filter chain as marquee-horizontal/chrome —
-   chrome material is consistent across icon, marquee, badge, strip. #}
-<filter id="{{ uid }}-bevel" x="-8%" y="-8%" width="116%" height="116%">
+   chrome material is consistent across icon, marquee, badge, strip.
+   filterRes="256" stabilizes rendering at low display sizes (mobile 64px) where
+   the circle's thin metallic stroke ring would otherwise alias with the high-
+   frequency specular topography. specularExponent reduced from 22 to 16 to
+   soften micro-aliasing without changing perceptual material at viewing scale. #}
+<filter id="{{ uid }}-bevel" x="-8%" y="-8%" width="116%" height="116%" filterRes="256">
   <feDropShadow dx="0" dy="2.5" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
-  <feSpecularLighting in="SourceAlpha" surfaceScale="1.6" specularConstant="0.55" specularExponent="22" lighting-color="{{ specular_light }}" result="spec">
+  <feSpecularLighting in="SourceAlpha" surfaceScale="1.6" specularConstant="0.55" specularExponent="16" lighting-color="{{ specular_light }}" result="spec">
     <feDistantLight azimuth="225" elevation="45"/>
   </feSpecularLighting>
   <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>

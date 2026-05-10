@@ -13,8 +13,13 @@
 .czd{opacity:.07}
 @keyframes czp{0%,100%{opacity:.05}30%{opacity:.8}50%{opacity:.3}70%{opacity:.65}}
 @media(prefers-reduced-motion:reduce){.cz1,.cz2,.cz3,.cz4,.czf{animation:none!important;opacity:.35!important}}
-.{{ uid }}-identity{font-family:'Orbitron',sans-serif;font-size:{{ identity_font_size | default(8) }}px;font-weight:700;fill:{{ brand_text | default('var(--dna-brand-text)') }};letter-spacing:0.14em}
-.{{ uid }}-metric-label{font-family:'JetBrains Mono',monospace;font-size:{{ strip_metric_label_size | default(5.5) }}px;fill:{{ label_text | default('var(--dna-label-text)') }};letter-spacing:0.22em;opacity:0.9}
-.{{ uid }}-metric-value{font-family:'Chakra Petch',sans-serif;font-size:16px;font-weight:700;fill:{{ metric_text | default('var(--dna-metric-text)') }}}
+{# v0.3.0: identity / metric-label / metric-value fills come from
+   cellular_palette.primary so the strip's typography shifts with variant.
+   Pre-v0.3 these read from genome-level brand_text/label_text/metric_text
+   (variant-agnostic), which made the strip's left zone stay teal regardless
+   of ?variant= — the canonical bug-1 fix from v0.3.0 review. #}
+.{{ uid }}-identity{font-family:'Orbitron',sans-serif;font-size:{{ identity_font_size | default(8) }}px;font-weight:700;fill:{{ cellular_palette.primary.seam_mid }};letter-spacing:0.14em}
+.{{ uid }}-metric-label{font-family:'JetBrains Mono',monospace;font-size:{{ strip_metric_label_size | default(5.5) }}px;fill:{{ cellular_palette.primary.label_text }};letter-spacing:0.22em;opacity:0.9}
+.{{ uid }}-metric-value{font-family:'Chakra Petch',sans-serif;font-size:16px;font-weight:700;fill:{{ cellular_palette.primary.value_text }}}
 {% include "partials/state-signal-cascade.j2" %}
 </style>

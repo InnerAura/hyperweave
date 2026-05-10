@@ -1,8 +1,13 @@
 {# Chrome status indicator: recessed diamond housing.
-   Specimen: badge-diamond-final.svg #}
+   Specimen: badge-diamond-final.svg.
+   Housing fill + ring stroke route through dedicated --dna-diamond-* vars
+   so chrome variants (graphite/moth/abyssal/lightning) carry their own
+   tonal recession sourced from per-variant diamond_housing / diamond_stroke
+   fields in chrome.json. Single-responsibility vars eliminate the
+   --dna-signal-dim aliasing that bled accent_complement into the stroke. #}
 <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-      transform="rotate(45)" fill="#040C14"/>
+      transform="rotate(45)" fill="var(--dna-diamond-housing, #040C14)"/>
 <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-      transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width="0.5"/>
+      transform="rotate(45)" fill="none" stroke="var(--dna-diamond-stroke, #1A3550)" stroke-width="0.5"/>
 <rect class="hw-logic-bit" x="-2.2" y="-2.2" width="4.4" height="4.4" rx="0.3"
       transform="rotate(45)" fill="var(--dna-status-color, var(--dna-status-passing-core))"/>

@@ -40,15 +40,15 @@
 
   {# Chrome-text gradient · the marquee scroll-text fill (text_fill_mode=gradient
      in chrome paradigm yaml; resolver references this id via text_fill_gradient_id="ct").
-     v0.2.16-fix: brightened to 3-stop #C8DAE6 -> #FFFFFF -> #C8DAE6. The previous
-     7-stop with #5A8AAA edges made short words ("v0.2.16", "HYPERWEAVE") fade
-     to dim chrome at their edges, breaking aesthetic coherence with the strip's
-     solid-color values. The brighter gradient keeps the metallic shimmer feel
-     but stays bright enough to read like the rest of the chrome set. #}
+     Stops sourced from genome.chrome_text_gradient — variant_overrides supply
+     per-variant tonal envelopes (abyssal teal, lightning blue, graphite warm
+     gray, moth umber); horizon's bare stops keep the byte-equal flagship
+     output. Without this loop the gradient stayed at hardcoded chrome-horizon
+     stops on every variant. #}
   <linearGradient id="{{ uid }}-ct" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0%"   stop-color="#C8DAE6"/>
-    <stop offset="50%"  stop-color="#FFFFFF"/>
-    <stop offset="100%" stop-color="#C8DAE6"/>
+  {% for stop in chrome_text_gradient %}
+    <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+  {% endfor %}
   </linearGradient>
 
   {# Rim sweep · 17.944s phi-cubed travelling chrome highlight on the inner stroke #}

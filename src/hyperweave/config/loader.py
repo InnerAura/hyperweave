@@ -250,10 +250,17 @@ class ConfigLoader:
         # Cross-validate: every genome must declare the genome fields
         # required by the paradigms it opts into. Raises at load time so
         # chrome-defs templates can drop their specimen-color fallbacks.
-        from hyperweave.compose.validate_paradigms import validate_genome_against_paradigms
+        # validate_genome_variants additionally checks v0.3.0 variant grammar
+        # self-consistency: variant_overrides keys ⊆ variants[], variant_tones
+        # structural shape, variant_pairs primary/secondary in tones, etc.
+        from hyperweave.compose.validate_paradigms import (
+            validate_genome_against_paradigms,
+            validate_genome_variants,
+        )
 
         for genome_spec in self.genome_specs.values():
             validate_genome_against_paradigms(genome_spec, self.paradigms)
+            validate_genome_variants(genome_spec)
 
         self.glyphs = load_glyphs()
         self.motions = load_motions()

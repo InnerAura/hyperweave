@@ -16,7 +16,6 @@
      data-hw-generation="1"
      data-hw-contract="UUID"
      data-hw-size="default"
-     data-hw-fonts="self-contained"
      data-hw-regime="normal"
      data-hw-glyph="github"
      data-hw-chromatic="chrome">
@@ -83,6 +82,8 @@ svg, :root {
   --dna-ink-sub: #7A9AB8;
   --dna-signal: #5BA3D4;
   --dna-signal-dim: #8A7355;
+  --dna-diamond-stroke: #1A3550;
+  --dna-diamond-housing: #040C14;
   --dna-border: #060810;
   --dna-border-tint: rgba(91,163,212,0.18);
   --dna-shadow-color: #000000;
@@ -244,9 +245,9 @@ svg, :root {
     calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
 </linearGradient>
 
-<filter id="hw-UID-bevel" x="-8%" y="-8%" width="116%" height="116%">
+<filter id="hw-UID-bevel" x="-8%" y="-8%" width="116%" height="116%" filterRes="256">
   <feDropShadow dx="0" dy="2.5" stdDeviation="4" flood-color="#000000" flood-opacity="0.5"/>
-  <feSpecularLighting in="SourceAlpha" surfaceScale="1.6" specularConstant="0.55" specularExponent="22" lighting-color="#A8D4F0" result="spec">
+  <feSpecularLighting in="SourceAlpha" surfaceScale="1.6" specularConstant="0.55" specularExponent="16" lighting-color="#A8D4F0" result="spec">
     <feDistantLight azimuth="225" elevation="45"/>
   </feSpecularLighting>
   <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
@@ -256,7 +257,7 @@ svg, :root {
   </defs>
 
 <g transform="translate(60, 60)">
-  <circle r="46" fill="none" stroke="url(#hw-UID-env)" stroke-width="5" filter="url(#hw-UID-bevel)"/>
+  <circle r="46" fill="none" stroke="url(#hw-UID-env)" stroke-width="5"/>
   <circle r="42" fill="url(#hw-UID-well)"/>
   <circle r="42" fill="none" stroke="#000510" stroke-width="0.6"/>
   <circle r="42" fill="none" stroke="url(#hw-UID-rim)" stroke-width="1.0"/>

@@ -1,39 +1,27 @@
 id: cellular
 name: Cellular
 description: >
-  Bifamily chromatic paradigm used by the `automata` genome. Two parallel
-  palettes (blue/teal + purple/amethyst) share a common structural
-  architecture: 7-stop metallic rim bezel, 3-cell pattern pulse strip,
-  refined seam gradient, and label/value slabs. Monofamily artifacts
-  (badge, icon) pick one family via ComposeSpec.family; bifamily artifacts
-  (strip, marquee, divider) render both simultaneously.
+  Compositional chromatic paradigm used by the `automata` genome. Twelve
+  tone primitives (violet, teal, bone, steel, amber, jade, magenta, cobalt,
+  toxic, solar, abyssal, crimson) ship as solo variants. Pairing happens at
+  request time via the URL grammar modifier ?variant=primary&pair=secondary
+  — any solo tone composes with any other solo tone. Templates consume a
+  structured cellular_palette dict (primary, secondary, bridge, is_paired)
+  supplied by compose/palette.py.
 
-  Any genome opting into this paradigm must declare both family palettes
-  plus bifamily-bridge fields plus cellular-pulse config. The shared
-  state-signal cascade partial (templates/partials/state-signal-cascade.j2)
-  reads state_{status}_{core,bright} fields from the genome.
+  Solo variants (no pair param) mirror primary into secondary so bifamily
+  templates branch-free render single-tone artifacts. Paired variants
+  populate both tones; the 4-key bridge dict is synthesized from each
+  tone's cellular_cells[0:2] for the dissolve divider. Each tone declares
+  a 14-field chromatic shape (rim_stops, cellular_cells, area_tiers,
+  chart_levels, dormant_range, label_slab, seam_mid, label_text, value_text,
+  canvas_top, canvas_bottom, info_accent, mid_accent, header_band);
+  validated by validate_genome_variants at load.
+
+  Cellular-pulse animation timings + state palette stay required at the
+  paradigm level — they're shape-independent of the tone refactor.
 
 requires_genome_fields:
-  - variant_blue_rim_stops
-  - variant_blue_pattern_cells
-  - variant_blue_seam_mid
-  - variant_blue_label_slab_fill
-  - variant_blue_label_text
-  - variant_blue_value_text
-  - variant_blue_canvas_top
-  - variant_blue_canvas_bottom
-  - variant_purple_rim_stops
-  - variant_purple_pattern_cells
-  - variant_purple_seam_mid
-  - variant_purple_label_slab_fill
-  - variant_purple_label_text
-  - variant_purple_value_text
-  - variant_purple_canvas_top
-  - variant_purple_canvas_bottom
-  - variant_bifamily_bridge_teal_mid
-  - variant_bifamily_bridge_teal_deep
-  - variant_bifamily_bridge_amethyst_core
-  - variant_bifamily_bridge_amethyst_bright
   - cellular_pulse_base_duration
   - cellular_pattern_opacity
   - state_passing_core
@@ -48,11 +36,13 @@ requires_genome_fields:
   - state_offline_bright
 
 frame_variant_defaults:
-  badge: blue
-  icon: blue
-  strip: bifamily
-  marquee-horizontal: bifamily
-  divider: bifamily
+  badge: teal
+  icon: teal
+  strip: teal
+  marquee-horizontal: teal
+  divider: teal
+  stats: teal
+  chart: teal
 
 badge:
   label_font_family: Orbitron
@@ -130,19 +120,44 @@ strip:
 icon:
   supported_shapes: [square]
   default_shape: square
+  # v0.3.0 cellular icon refresh — 48×48 canvas with 5×5 living cell grid.
+  # Replaces the prior 64×64 4×4-grid form. Cell geometry pulled out of the
+  # template into paradigm config so dimension changes don't require template
+  # edits and render/glyphs.py reads glyph_size + glyph_inset from one source.
+  card_width: 48
+  card_height: 48
+  cell_grid_cols: 5
+  cell_grid_rows: 5
+  cell_size: 8
+  cell_gap: 1
+  cell_rx: 1
+  inner_canvas_inset: 10.08
+  inner_canvas_size: 27.84
+  inner_canvas_rx: 4
+  glyph_inset: 13.44
+  glyph_size: 21.12
+  outer_border_rx: 6
 
 marquee:
-  # Bifamily-tspan palette: scroll items alternate teal/amethyst.
-  # Specimen cellular-automata-marquee-current.svg uses these exact hexes
-  # for tspan fills; sourcing from the genome chromosomes is intentional
-  # (resolver routes them via variant_blue_seam_mid / variant_purple_seam_mid
-  # rather than re-stating them here, but the palette length tells the
-  # resolver how many cycle slots exist).
-  tspan_palette: ["#3A9FB8", "#A88AD4"]
-  # Separator glyph between scroll items. Specimen uses diamonds (◆) at
-  # 60% gray (#606878) instead of brutalist's filled square (■).
+  # v0.3.0 cellular marquee refresh — 800×32 monofamily strip with mid_accent
+  # hairlines (top + bottom) and info_accent scroll text. Replaces the prior
+  # bifamily teal/amethyst tspan_palette: paired variants no longer split
+  # bifamily on the marquee — the hairlines are 0.5px at 0.2 opacity, too
+  # subtle for a chromatic split to register, so the marquee adopts the
+  # primary tone's mid_accent and lets paired-variant signature express
+  # through scroll text + cell colors in other frames.
+  width: 800
+  height: 32
+  font_size: 11
+  font_weight: "700"
+  font_family: "Orbitron, sans-serif"
+  letter_spacing: "0.18em"
+  # Separator glyph between scroll items. Cellular specimen uses diamonds (◆)
+  # at 5px sized (smaller than scroll text), filled with mid_accent (resolver
+  # routes the tone-specific value; this default is the v0.3.0 amber prototype's
+  # mid stop, only used when resolver fallback fires).
   separator_glyph: "◆"
-  separator_color: "#606878"
+  separator_color: "#B89800"
   # Cellular always renders without a LIVE label panel; v0.2.16 deleted the
   # LIVE-block infrastructure entirely so this is now the universal default.
   # Scroll-track clip: exclude the 0.5px top and bottom hairlines (no left/
@@ -155,21 +170,42 @@ marquee:
   clip_rx: 0
 
 chart:
-  # Cellular star chart specimen is 900×600 with chart viewport at (130, 140)
-  # size 640×340 (leaves 66px flank margins + 66px bottom footer).
-  viewport_x: 130
-  viewport_y: 140
-  viewport_w: 640
-  viewport_h: 340
-  chart_width: 900
-  chart_height: 600
+  # v0.3.0 cellular chart refresh — 680×380 canvas with deliberate HUD-style
+  # header band (y=0..64) housing repo identifier, "STAR HISTORY" title, and
+  # hero metric. Chart viewport at (72, 80) size 580×246. Cell stride 19
+  # (cell width 18, 1px gap) yields a 30-col × 13-row grid in the chart area.
+  viewport_x: 72
+  viewport_y: 80
+  viewport_w: 580
+  viewport_h: 246
+  chart_width: 680
+  chart_height: 380
+  cell_size: 19
+  header_band_height: 64
   # One-shot stroke-dashoffset draw animation on the polyline. Cellular
   # specimen renders the data line as an arriving signal rather than a
   # printed plot; gated by prefers-reduced-motion at the CSS layer.
   line_animate: true
 
 stats:
-  card_height: 260
+  # v0.3.0 cellular stat card refresh — 530×233 compact form with 3 vertical
+  # zones (header band 39px, inline metric strip, heatmap+legend+langbar).
+  # Replaces the prior 495×295 5-slot layout. Single-row metric strip uses
+  # 4 hierarchy classes (.mvh hero, .mvm medium, .mvs small, .mvg streak/green).
+  # Heatmap is 7×42 with square 11.080×11.080 cells (1.2px gap). Card outline
+  # at rgba(info_accent, 0.10) frames the composition.
+  card_width: 530
+  card_height: 233
   embeds_chart: false
-  # Cellular stat card specimen is 495×260 soulcard layout:
-  # HEADER(12-44) → HERO(52-106) → SECONDARY(116-162) → HEATMAP(172-224) → FOOTER(228-250)
+  header_band_height: 39
+  heatmap_rows: 7
+  heatmap_cols: 40
+  heatmap_cell_size: 11.080
+  heatmap_cell_gap: 1.2
+  heatmap_zone_height: 84.76
+  # Genome-independent paradigm constants. Routed to template context as
+  # named template variables (not raw hex) so the variant-blind hex gate
+  # stays effective across all 6 cellular tones.
+  streak_green: "#3FB950"
+  mid_gray: "#6B7A88"
+  hero_white: "#ECF2F8"

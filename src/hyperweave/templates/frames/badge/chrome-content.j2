@@ -39,13 +39,18 @@
       class="{{ uid }}-value"
       fill="{{ glyph_fill | default('var(--dna-ink-primary)') }}">{{ value }}</text>
 
-{# Diamond status indicator — gated on resolver-supplied show_indicator (mode-driven). #}
+{# Diamond status indicator — gated on resolver-supplied show_indicator (mode-driven).
+   Housing fill + ring stroke route through dedicated --dna-diamond-* vars
+   sourced from per-variant diamond_housing / diamond_stroke fields in
+   chrome.json. Single-responsibility vars eliminate the --dna-signal-dim
+   aliasing that caused warm-tan strokes on horizon (accent_complement was
+   warm tan, --dna-signal-dim resolved to it, the var() fallback never fired). #}
 {% if show_indicator %}
 <g data-hw-zone="status" transform="translate({{ indicator_x + ind_size // 2 }},{{ h // 2 }})">
   <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-        transform="rotate(45)" fill="#040C14"/>
+        transform="rotate(45)" fill="var(--dna-diamond-housing, #040C14)"/>
   <rect x="-4.2" y="-4.2" width="8.4" height="8.4" rx="0.7"
-        transform="rotate(45)" fill="none" stroke="#1A3550" stroke-width="0.5"/>
+        transform="rotate(45)" fill="none" stroke="var(--dna-diamond-stroke, #1A3550)" stroke-width="0.5"/>
   <rect class="hw-logic-bit" x="-2.2" y="-2.2" width="4.4" height="4.4" rx="0.3"
         transform="rotate(45)" fill="var(--dna-status-color, var(--dna-status-passing-core))"/>
 </g>

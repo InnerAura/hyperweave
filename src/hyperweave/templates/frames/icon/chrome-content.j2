@@ -35,16 +35,20 @@
 </g>
 
 {% else %}
-{# ─── Circle variant ─── 92-unit chrome ring centered at (60, 60) · 5-layer stack
+{# ─── Circle variant ─── 92-unit chrome ring centered at (60, 60) · 4-layer stack
        Layer order (matches v2 spec):
-         1. 5-unit envelope-gradient bezel ring at radius 46 with bevel filter
+         1. 5-unit envelope-gradient bezel ring at radius 46 (linearGradient
+            carries the metallic sweep — feSpecularLighting was removed because
+            the 5-unit annular geometry is too narrow for the kernel; highlight
+            pixelated as grain at 64px display)
          2. radial icon-well at radius 42 · dark sky interior
          3. 0.6-unit dark inner hairline at radius 42 · door-gap between bezel and well
          4. 1.0-unit travelling rim-stroke at radius 42 · 17.944s phi³ sweep
-         5. (specular bevel applied via filter on layer 1)
+       Square variant retains the bevel filter (96×96 fill geometry is wide
+       enough for the specular kernel to read as smooth metallic surface).
        Glyph inlined at local (-24, -24) → canvas (36, 36), 48×48 centered. #}
 <g transform="translate(60, 60)">
-  <circle r="46" fill="none" stroke="url(#{{ uid }}-env)" stroke-width="5" filter="url(#{{ uid }}-bevel)"/>
+  <circle r="46" fill="none" stroke="url(#{{ uid }}-env)" stroke-width="5"/>
   <circle r="42" fill="url(#{{ uid }}-well)"/>
   <circle r="42" fill="none" stroke="#000510" stroke-width="0.6"/>
   <circle r="42" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
