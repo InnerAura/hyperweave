@@ -51,10 +51,27 @@ _FULL_UUID_RE = re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[
 _TS_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?")
 # Package version strings — `__version__` is dynamically computed from git
 # tags by hatch-vcs/setuptools-scm, so the same code produces "0.2.20"
-# locally (no tag) and "0.2.25" in CI (tagged release). Normalize all
-# semver-like version strings in metadata so backward-compat snapshots
-# track artifact STRUCTURE, not the version that happened to render them.
-_VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9a-zA-Z.\-]+)?")
+# locally (no tag) and "0.2.25" in CI (tagged release). PEP 440 also adds
+# dev-release forms like "0.3.1.dev1+gc18b78f36" when the working tree is
+# ahead of the latest tag — common on CI runs that test commits between
+# tags. Normalize all version-like strings in metadata so backward-compat
+# snapshots track artifact STRUCTURE, not the version that rendered them.
+#
+# Why this regex is precise rather than permissive: SVG path coordinates
+# pack numbers as ``8.205 .113.82-.258.82-.577`` — three-segment numbers
+# (``8.205``) get matched by ``\d+\.\d+\.\d+`` regardless. We accept that
+# match (path data over-match was already present in v0.2.26's pattern) but
+# carefully avoid extending the suffix to consume adjacent path coords.
+# Only true PEP 440 suffixes match: ``aN``/``bN``/``rcN`` (adjacent pre-
+# release), ``.devN``/``.postN``/``.preN``, ``-rcN`` (legacy), ``+local``.
+# A bare ``.NNN`` (path coordinate) does NOT match any suffix because it
+# isn't ``.dev/.post/.pre``.
+_VERSION_RE = re.compile(
+    r"\d+\.\d+\.\d+"
+    r"(?:[a-zA-Z]+\d+)?"  # adjacent pre-release: a1, b1, rc1
+    r"(?:\.(?:dev|post|pre)\d*)?"  # PEP 440 .devN/.postN/.preN
+    r"(?:[-+][0-9a-zA-Z.\-+]+)?"  # legacy -pre or +local (chained)
+)
 
 
 def _normalize(svg: str) -> str:
