@@ -27,6 +27,16 @@ def proofset_module() -> object:
     return module
 
 
+@pytest.fixture(scope="module")
+def static_proofset(proofset_module: object) -> object:
+    """Run generate_static() once per test module so variant matrix +
+    freestyle pairings exist on disk before downstream tests assert
+    artifact presence. ``outputs/`` is gitignored, so on a fresh CI
+    checkout the artifacts only exist after this fixture runs."""
+    proofset_module.generate_static()  # type: ignore[attr-defined]
+    return proofset_module
+
+
 def test_generate_data_cards_writes_stats_and_chart(proofset_module: object) -> None:
     """Run the stats + chart generator and verify every expected artifact exists.
 
@@ -71,7 +81,7 @@ def test_generate_data_cards_writes_stats_and_chart(proofset_module: object) -> 
         assert "<svg" in chart.read_text(), f"not valid SVG: {chart}"
 
 
-def test_variant_matrix_full_artifact_coverage(proofset_module: object) -> None:
+def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
     """Every variant of every genome with a variants[] axis must produce its full
     artifact suite. Compact-badge presence is gated on the genome's badge paradigm:
     cellular declares glyph_size_compact, chrome does not — so chrome variants
@@ -81,9 +91,9 @@ def test_variant_matrix_full_artifact_coverage(proofset_module: object) -> None:
     from hyperweave.config.loader import load_genomes, load_paradigms
     from hyperweave.core.enums import ArtifactStatus, GenomeId
 
-    proofset_module._generate_data_cards()  # type: ignore[attr-defined]
+    static_proofset._generate_data_cards()  # type: ignore[attr-defined]
 
-    out_dir = proofset_module.OUT  # type: ignore[attr-defined]
+    out_dir = static_proofset.OUT  # type: ignore[attr-defined]
     genomes = load_genomes()
     paradigms = load_paradigms()
 
@@ -142,12 +152,17 @@ def test_variant_matrix_full_artifact_coverage(proofset_module: object) -> None:
                 assert chart_path.stat().st_size > 500, f"variant chart too small: {chart_path}"
 
 
-def test_generate_readme_includes_new_sections(proofset_module: object) -> None:
-    """README embeds stats + chart inline under each genome section."""
-    proofset_module._generate_data_cards()  # type: ignore[attr-defined]
-    proofset_module.generate_readme(100, 0)  # type: ignore[attr-defined]
+def test_generate_readme_includes_new_sections(static_proofset: object) -> None:
+    """README embeds stats + chart inline under each genome section.
+    Depends on ``static_proofset`` so the variant matrix + freestyle pairings
+    artifacts exist on disk before README emission — the README writer's
+    `if path.exists()` guards skip references when files are missing, which
+    on a fresh CI checkout (``outputs/`` is gitignored) means image refs
+    silently disappear without the variant proofset run."""
+    static_proofset._generate_data_cards()  # type: ignore[attr-defined]
+    static_proofset.generate_readme(100, 0)  # type: ignore[attr-defined]
 
-    out_dir = proofset_module.OUT  # type: ignore[attr-defined]
+    out_dir = static_proofset.OUT  # type: ignore[attr-defined]
     readme = (out_dir / "README.md").read_text()
     assert "### Profile Card (stats)" in readme
     assert "### Star History Chart" in readme

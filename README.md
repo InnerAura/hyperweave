@@ -129,11 +129,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="chrome">chrome</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/BUILD/passing/chrome.static?state=passing&variant=horizon" alt="BUILD passing — horizon variant"/>
-  <img src="https://hyperweave.app/v1/badge/DEPLOY/live/chrome.static?state=passing&variant=abyssal" alt="DEPLOY live — abyssal variant"/>
-  <img src="https://hyperweave.app/v1/badge/COVERAGE/94%25/chrome.static?state=passing&variant=lightning" alt="COVERAGE 94% — lightning variant"/>
-  <img src="https://hyperweave.app/v1/badge/CRITICAL/0/chrome.static?state=warning&variant=graphite" alt="CRITICAL 0 — graphite variant"/>
-  <img src="https://hyperweave.app/v1/badge/TESTS/142/chrome.static?state=passing&variant=moth" alt="TESTS 142 — moth variant"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/chrome.static?data=gh:InnerAura/hyperweave.build&glyph=githubactions&variant=horizon" alt="BUILD — horizon variant"/>
+  <img src="https://hyperweave.app/v1/badge/BLUESKY/POST/chrome.static?glyph=bluesky&variant=abyssal" alt="BLUESKY POST — abyssal variant"/>
+  <img src="https://hyperweave.app/v1/badge/DOCKER/chrome.static?data=docker:zeroxeli/readme-ai.pull_count&glyph=docker&variant=lightning" alt="DOCKER pulls — lightning variant"/>
+  <img src="https://hyperweave.app/v1/badge/STARS/chrome.static?data=gh:eli64s/readme-ai.stars&glyph=github&variant=graphite" alt="STARS — graphite variant"/>
+  <img src="https://hyperweave.app/v1/badge/ANTHROPIC/CLAUDE/chrome.static?glyph=anthropic&variant=moth" alt="ANTHROPIC CLAUDE — moth variant"/>
 </p>
 
 <p align="center">
@@ -228,12 +228,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="automata">automata</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/DISCORD/JOIN/automata.static?glyph=discord&variant=indigo" alt="DISCORD JOIN — indigo variant"/>
-  <img src="https://hyperweave.app/v1/badge/DOCKER/PULL/automata.static?glyph=docker&variant=cobalt" alt="DOCKER PULL — cobalt variant"/>
-  <img src="https://hyperweave.app/v1/badge/STARS/automata.static?data=gh:InnerAura/hyperweave.stars&glyph=github&variant=bone" alt="STARS — bone variant"/>
-  <img src="https://hyperweave.app/v1/badge/FOLLOW/automata.static?glyph=x&variant=steel" alt="FOLLOW — steel variant"/>
+  <img src="https://hyperweave.app/v1/badge/DOCKER/PULL/automata.static?glyph=docker&variant=teal" alt="DOCKER PULL — teal variant"/>
+  <img src="https://hyperweave.app/v1/badge/DISCORD/JOIN/automata.static?glyph=discord&variant=violet" alt="DISCORD JOIN — violet variant"/>
+  <img src="https://hyperweave.app/v1/badge/STARS/automata.static?data=gh:eli64s/readme-ai.stars&glyph=github&variant=amber" alt="STARS — amber variant"/>
   <img src="https://hyperweave.app/v1/badge/HF/MODELS/automata.static?glyph=huggingface&variant=sulfur" alt="HF MODELS — sulfur variant"/>
-  <img src="https://hyperweave.app/v1/badge/LISTEN/automata.static?glyph=spotify&variant=jade" alt="LISTEN — jade variant"/>
+  <img src="https://hyperweave.app/v1/badge/SPOTIFY/LISTEN/automata.static?glyph=spotify&variant=jade" alt="SPOTIFY LISTEN — jade variant"/>
 </p>
 
 <p align="center">
@@ -257,7 +256,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bone&pair=steel&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bone&glyph=github" alt="strip"/>
   <br/>
   <ul>
 <li><sub><code>/v1/strip/{title}/automata.static?data={tokens}&variant={tone}&pair={tone}&subtitle={text}&glyph={glyph}</code></sub></li>
@@ -268,7 +267,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Profile<br/><sub>stats card</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static?variant=bone" alt="stats" width="100%"/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static?variant=bone&v=2" alt="stats" width="100%"/>
   <br/>
   <ul>
 <li><sub><code>/v1/stats/{username}/{genome}.static?variant={tone}</code></sub></li>
@@ -279,7 +278,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Star Chart<br/><sub>star history</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone" alt="star chart" width="100%"/>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone&v=2" alt="star chart" width="100%"/>
   <br/>
   <ul>
 <li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static?variant={tone}</code></sub></li>
@@ -303,8 +302,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <td>
   <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=cobalt" alt="docker cobalt" width="56"/>
   <img src="https://hyperweave.app/v1/icon/discord/automata.static?shape=square&variant=indigo" alt="discord indigo" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/automata.static?shape=square&variant=bone" alt="github bone" width="56"/>
   <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=square&variant=sulfur" alt="huggingface sulfur" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/anthropic/automata.static?shape=square&variant=solar" alt="anthropic solar" width="56"/>
   <img src="https://hyperweave.app/v1/icon/youtube/automata.static?shape=square&variant=crimson" alt="youtube crimson" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/automata.static?shape=square&variant=jade" alt="spotify jade" width="56"/>
   <br/>
   <ul>
 <li><sub><code>/v1/icon/{glyph}/automata.static?shape=square&variant={tone}</code></sub></li>
@@ -315,7 +317,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Divider<br/><sub>dissolve</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/divider/dissolve/automata.static?variant=bone&pair=steel" alt="automata dissolve divider"/>
+  <img src="https://hyperweave.app/v1/divider/dissolve/automata.static?variant=bone" alt="automata dissolve divider"/>
   <br/>
   <ul>
 <li><sub><code>/v1/divider/dissolve/{genome}.static?variant={tone}&pair={tone}</code></sub></li>
@@ -412,12 +414,16 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </tr>
 </table>
 
+<br />
+
 | | chrome | brutalist | automata |
 |---|---|---|---|
 | Aesthetic | Metallic precision | Raw material | Living cellular grid |
 | Variants | 5 named | &mdash; | 16 tones, any two pair |
 | Motion | Animated border SMIL | Animated border SMIL | Animated cell grid |
 | Divider | `band` | `seam` | `dissolve` |
+
+<br />
 
 <h3 id="dividers"><code>/a/inneraura/dividers/</code></h3>
 
