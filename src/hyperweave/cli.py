@@ -369,12 +369,30 @@ def session(
     result = do_compose(spec)
 
     if action == "receipt":
-        # Default output: .hyperweave/receipts/{session_id}.svg
+        # Default output: .hyperweave/receipts/{date}_{time}_{slug}.svg
         if not output:
-            sid = contract.get("session", {}).get("id", "unknown")
+            from datetime import datetime as _dt
+
+            from hyperweave.telemetry.receipt_paths import receipt_filename
+
+            sess = contract.get("session", {})
+            sid = sess.get("id", "unknown")
+            session_name = sess.get("name", "")
+            start_iso = sess.get("start", "")
+            try:
+                ts = _dt.fromisoformat(start_iso)
+            except (TypeError, ValueError):
+                ts = _dt.now()
+            user_events = contract.get("user_events", []) or []
+            first_prompt = user_events[0].get("preview", "") if user_events else ""
             hw_dir = Path(".hyperweave") / "receipts"
             hw_dir.mkdir(parents=True, exist_ok=True)
-            output = hw_dir / f"{sid}.svg"
+            output = hw_dir / receipt_filename(
+                timestamp=ts,
+                session_name=session_name,
+                session_id=sid,
+                prompt_text=first_prompt,
+            )
 
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(result.svg)

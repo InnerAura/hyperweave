@@ -580,3 +580,87 @@ class TestArchitecturalInvariant:
             source = py_file.read_text()
             assert 'f"<svg' not in source, f"f-string SVG in {py_file.name}"
             assert "f'<svg" not in source, f"f-string SVG in {py_file.name}"
+
+
+# =========================================================================
+# Telemetry Quality Pass: turn counting + customTitle extraction
+# =========================================================================
+#
+# Synthetic fixture (`tests/fixtures/synthetic_session.jsonl`) covers the
+# four leak/drop/overcount paths in one file:
+#   - 5 prose prompts (3 continuation, 1 correction, 1 elaboration)
+#   - 1 `<command-name>...</command-name>` slash command (filter regression)
+#   - 1 `<local-command-stdout>...</local-command-stdout>` echo (envelope leak)
+#   - 2 `tool_result` user records (count regression)
+#   - 3 `custom-title` records exercising rename history (latest wins)
+
+
+SYNTHETIC_FIXTURE = FIXTURES_DIR / "synthetic_session.jsonl"
+
+
+class TestEnvelopeFilter:
+    """Bug A: parser must filter ALL XML envelope wrappers, not just command-name."""
+
+    def test_local_command_stdout_excluded_from_user_events(self) -> None:
+        tel = parse_transcript(SYNTHETIC_FIXTURE)
+        previews = [e.message_preview for e in tel.user_events]
+        for p in previews:
+            assert not p.startswith("<local-command-stdout>"), (
+                f"local-command-stdout envelope leaked into user_events: {p!r}"
+            )
+
+    def test_command_name_envelope_excluded(self) -> None:
+        tel = parse_transcript(SYNTHETIC_FIXTURE)
+        previews = [e.message_preview for e in tel.user_events]
+        for p in previews:
+            assert not p.startswith("<command-name>"), f"command-name envelope leaked: {p!r}"
+
+    def test_only_prose_prompts_become_user_events(self) -> None:
+        """5 prose prompts in fixture; envelopes and tool_results all excluded."""
+        tel = parse_transcript(SYNTHETIC_FIXTURE)
+        assert len(tel.user_events) == 5, (
+            f"expected 5 prose user events, got {len(tel.user_events)}: {[e.message_preview for e in tel.user_events]}"
+        )
+
+
+class TestContractPreservesAllEvents:
+    """Bug B: the contract must NOT drop continuation events."""
+
+    def test_contract_user_events_includes_continuations(self) -> None:
+        c = build_contract(str(SYNTHETIC_FIXTURE))
+        assert len(c["user_events"]) == 5, (
+            f"contract dropped continuation events: got {len(c['user_events'])}, expected 5"
+        )
+
+    def test_contract_user_events_categories(self) -> None:
+        """3 continuation + 1 correction + 1 elaboration after classification."""
+        c = build_contract(str(SYNTHETIC_FIXTURE))
+        cats = [e["category"] for e in c["user_events"]]
+        assert cats.count("continuation") == 3, f"continuation count: {cats}"
+        assert cats.count("correction") == 1, f"correction count: {cats}"
+        assert cats.count("elaboration") == 1, f"elaboration count: {cats}"
+
+
+class TestTotalUserMessages:
+    """Bug D: total_user_messages must count only filtered prose, not raw user records."""
+
+    def test_total_user_messages_excludes_tool_results_and_envelopes(self) -> None:
+        tel = parse_transcript(SYNTHETIC_FIXTURE)
+        assert tel.totals.total_user_messages == 5, (
+            f"total_user_messages overcounts: got {tel.totals.total_user_messages}, expected 5 "
+            f"(2 tool_results + 1 command-name + 1 local-command-stdout must NOT count)"
+        )
+
+
+class TestSessionNameExtraction:
+    """Workstream 2: parser must surface latest customTitle as session_name."""
+
+    def test_session_name_uses_latest_custom_title(self) -> None:
+        """Fixture has 3 `custom-title` records: latest is 'third-session-title'."""
+        tel = parse_transcript(SYNTHETIC_FIXTURE)
+        assert tel.session_name == "third-session-title", f"expected latest customTitle, got {tel.session_name!r}"
+
+    def test_session_name_default_empty_when_no_custom_title(self) -> None:
+        """Existing session.jsonl fixture has no custom-title records."""
+        tel = parse_transcript(SESSION_FIXTURE)
+        assert tel.session_name == "", f"expected empty session_name, got {tel.session_name!r}"

@@ -159,3 +159,22 @@ def test_no_subagent_spans_for_codex() -> None:
     for fixture in (PRIMARY_FIXTURE, PATCHES_FIXTURE):
         t = parse_transcript(fixture)
         assert t.agents == []
+
+
+# --------------------------------------------------------------------------- #
+# Session identity (git_branch + thread_name)                                 #
+# --------------------------------------------------------------------------- #
+
+
+def test_git_branch_extracted_from_session_meta() -> None:
+    """session_meta.payload.git.branch is read into git_branch (no longer hardcoded None)."""
+    t = parse_transcript(PRIMARY_FIXTURE)
+    assert t.git_branch == "main", f"expected 'main' from fixture session_meta.git.branch, got {t.git_branch!r}"
+
+
+def test_session_name_from_thread_name_updated() -> None:
+    """event_msg/thread_name_updated.thread_name populates session_name (latest wins)."""
+    t = parse_transcript(PRIMARY_FIXTURE)
+    assert t.session_name == "hw_review_20260503", (
+        f"expected 'hw_review_20260503' from thread_name_updated event, got {t.session_name!r}"
+    )

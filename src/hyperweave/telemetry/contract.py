@@ -104,6 +104,7 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
     return {
         "session": {
             "id": t.session_id,
+            "name": t.session_name,
             "start": t.timestamp.isoformat(),
             "end": end,
             "duration_minutes": t.duration_minutes,
@@ -162,7 +163,6 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
         "user_events": [
             {"category": e.category.value, "preview": e.message_preview, "confidence": e.confidence.value}
             for e in t.user_events
-            if e.category.value != "continuation"
         ],
         "agents": [
             {"id": a.agent_id, "type": a.agent_type, "tool_calls": a.tool_calls, "tokens": a.total_tokens}

@@ -10,6 +10,24 @@ from hyperweave.compose.engine import compose
 from hyperweave.core.models import ComposeSpec
 
 
+def test_voltage_emits_no_light_mode_media_query() -> None:
+    """Voltage is dark-flagship. Removing its light_mode JSON block stops the
+    assembler from emitting `@media (prefers-color-scheme: light)`, which made
+    voltage receipts render as light in viewers (svgviewer) that respect the
+    OS color scheme. Pin the disable so a future contributor can't reintroduce
+    a light_mode block silently.
+    """
+    spec = ComposeSpec(
+        type="receipt",
+        genome_id="telemetry-voltage",
+        telemetry_data={"session": {"id": "test", "runtime": "claude-code"}},
+    )
+    css = compose(spec).svg
+    assert "prefers-color-scheme: light" not in css, (
+        "voltage must not emit a light-mode media query — remove the light_mode block from telemetry-voltage.json"
+    )
+
+
 def test_static_motion_omits_motion_css_but_retains_status() -> None:
     """motion=static should exclude motion keyframes but keep ambient status animations.
 

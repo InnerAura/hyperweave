@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,15 @@ _JsonObj = dict[str, Any]
 
 # Resolved at import time — fail loud if claude-code.yaml is missing.
 _REGISTRY = get_runtime("claude-code")
+
+# Match content that consists entirely of one or more XML envelopes
+# emitted by the Claude Code harness (e.g. <command-name>...</command-name>,
+# <local-command-stdout>...</local-command-stdout>, <system-reminder>...</...>).
+# These are non-prose framing — never count them as user turns.
+_ENVELOPE_ONLY = re.compile(
+    r"^<[a-z][a-z0-9-]*>.*</[a-z][a-z0-9-]*>$",
+    re.DOTALL,
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -199,7 +209,7 @@ def _extract_user_text(obj: _JsonObj) -> str | None:
 
     if isinstance(content, str):
         text = content.strip()
-        if text.startswith("<") and ("command-name" in text or "system-reminder" in text):
+        if _ENVELOPE_ONLY.match(text):
             return None
         return text if text else None
 
@@ -303,6 +313,16 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         if session_id and project_path and git_branch is not None:
             break
 
+    # `custom-title` records carry the user-facing session name (driven by /rename
+    # and Claude Code's auto-titling, which slugifies the first prompt). One record
+    # is emitted per assistant turn after the most-recent rename, so latest-wins.
+    session_name = ""
+    for line in raw_lines:
+        if line.get("type") == "custom-title":
+            title = line.get("customTitle")
+            if isinstance(title, str) and title:
+                session_name = title
+
     # -- Pass 1: Extract all tool calls from assistant messages --
     all_tool_calls: list[ToolCall] = []
     for line in raw_lines:
@@ -381,7 +401,9 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
             s.error_count += 1
 
     # -- Build totals --
-    total_user_msgs = sum(1 for ln in raw_lines if _is_user_entry(ln))
+    # Count only human-authored prose. type:"user" lines also wrap tool_results
+    # and command-name/local-command-stdout envelopes; those are not turns.
+    total_user_msgs = sum(1 for ln in raw_lines if _is_user_entry(ln) and _extract_user_text(ln) is not None)
     total_assistant_msgs = sum(1 for ln in raw_lines if ln.get("type") == "assistant")
 
     totals = SessionTotals(
@@ -408,6 +430,7 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
 
     return SessionTelemetry(
         session_id=session_id,
+        session_name=session_name,
         project_path=project_path,
         git_branch=git_branch,
         model=model,

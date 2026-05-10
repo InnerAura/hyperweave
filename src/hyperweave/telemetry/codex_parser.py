@@ -230,6 +230,8 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
     # ── Pass 1: session_meta + turn_context derive session metadata ──
     session_id = ""
     project_path = ""
+    git_branch: str | None = None
+    session_name = ""
     model: str | None = None
     for line in raw_lines:
         ltype = line.get("type")
@@ -239,6 +241,11 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         if ltype == "session_meta":
             session_id = session_id or str(payload.get("id", ""))
             project_path = project_path or str(payload.get("cwd", ""))
+            git_data = payload.get("git") or {}
+            if isinstance(git_data, dict):
+                branch = git_data.get("branch")
+                if isinstance(branch, str) and branch:
+                    git_branch = branch
         elif ltype == "turn_context":
             # turn_context refines model + cwd over time; the latest wins.
             cwd = payload.get("cwd")
@@ -247,6 +254,12 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
             mdl = payload.get("model")
             if mdl:
                 model = str(mdl)
+        elif ltype == "event_msg" and payload.get("type") == "thread_name_updated":
+            # Codex's equivalent of Claude Code's customTitle — driven by
+            # task-naming flow. Latest-wins so renames mid-session are honored.
+            tname = payload.get("thread_name")
+            if isinstance(tname, str) and tname:
+                session_name = tname
 
     # ── Pass 2: tool calls from response_item (3 shapes) ──
     all_tool_calls: list[ToolCall] = []
@@ -411,8 +424,9 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
 
     return SessionTelemetry(
         session_id=session_id,
+        session_name=session_name,
         project_path=project_path,
-        git_branch=None,  # Codex doesn't surface git_branch in transcripts
+        git_branch=git_branch,
         model=model,
         runtime=_REGISTRY.runtime,
         timestamp=session_start,

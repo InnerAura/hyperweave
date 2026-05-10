@@ -1993,10 +1993,9 @@ def resolve_receipt(
     pill_label = hero_profile.upper()
     pill_w = int(len(pill_label) * 7 * 1.28) + 14
     pill_x = 800 - 24 - pill_w
-    # Split "pushbacks" into distinct signals so the card stops labeling them
-    # as one opaque "N corrections" lie. user_events counts every non-continuation
-    # user turn (corrections + redirects + elaborations); tool errors count
-    # failing/blocked tool calls (the red ✗N cell marks reconcile to this).
+    # user_events is the unfiltered series of human-authored prose turns
+    # (continuations + corrections + redirects + elaborations). Tool errors
+    # count failing/blocked tool calls; the red ✗N cell marks reconcile to this.
     n_user_turns = len(user_events)
     n_tool_errors = sum(t.get("errors", 0) + t.get("blocked", 0) for t in tools)
     # n_agents = len(agents)  # was used by old footer; v0.2.21 footer is 4-quadrant.

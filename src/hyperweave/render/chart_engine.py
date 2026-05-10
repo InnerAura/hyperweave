@@ -798,10 +798,49 @@ def _build_y_labels(ticks: list[int], v_min: int, v_max: int, vp: Viewport) -> l
     return out
 
 
-# Minimum horizontal pixel gap between two x-axis labels. Year labels (4 chars)
-# need a bit more room than milestone labels (40 px); 48 px keeps well-spaced
-# "2023" / "2024" / "2025" readable without forcing unnecessary drops.
-_X_LABEL_MIN_GAP_PX: int = 48
+# Width-aware label collision constants. The previous fixed 48px center-to-center
+# gap let monthly labels ("Apr 2026", ~58px wide) overlap by ~10px on adjacent ticks
+# even when the gap "rule" passed. We now compute each label's actual rendered
+# bounding box and check edge-to-edge separation.
+
+# Conservative per-character width covering the widest paradigm (brutalist:
+# 9px sans-serif + 0.20em letter-spacing + uppercase). Cellular and chrome
+# render narrower, so this estimate is a safe upper bound for all genome
+# paradigms — it never under-estimates collision.
+_LABEL_CHAR_WIDTH_PX: float = 7.5
+
+# Minimum visual gap between two label bounding boxes. Smaller than the full
+# character width — readers tolerate close-packed labels as long as the glyphs
+# don't actually touch.
+_LABEL_EDGE_PADDING_PX: float = 6.0
+
+
+def _label_pixel_width(text: str) -> float:
+    """Worst-case rendered width of `text` in pixels."""
+    return len(text) * _LABEL_CHAR_WIDTH_PX
+
+
+def _label_bounds(label: dict[str, Any]) -> tuple[float, float]:
+    """Return (left_edge_px, right_edge_px) for a generated label dict.
+
+    Honors the SVG `text-anchor` semantics: 'start' anchors the left edge
+    at x, 'end' anchors the right edge at x, 'middle' centers the text on x.
+    """
+    x = float(label["x"])
+    w = _label_pixel_width(str(label["text"]))
+    anchor = label.get("anchor", "middle")
+    if anchor == "start":
+        return (x, x + w)
+    if anchor == "end":
+        return (x - w, x)
+    return (x - w / 2, x + w / 2)
+
+
+def _labels_collide(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    """True if `right`'s left edge is closer than padding to `left`'s right edge."""
+    _, left_right = _label_bounds(left)
+    right_left, _ = _label_bounds(right)
+    return right_left < left_right + _LABEL_EDGE_PADDING_PX
 
 
 def _build_x_date_labels(points: list[ChartPoint], vp: Viewport) -> list[dict[str, Any]]:
@@ -815,10 +854,11 @@ def _build_x_date_labels(points: list[ChartPoint], vp: Viewport) -> list[dict[st
         else       → every other year ("2012", "2014", ...)
 
     A single-point input renders one centered label with full "%b %d, %Y".
-    After candidate generation, a min-gap de-overlap pass removes any middle
-    label within ``_X_LABEL_MIN_GAP_PX`` of a previously-kept one. The first
-    and last labels are preserved unconditionally because they're the
-    temporal endpoints a reader expects to see.
+    After candidate generation, a width-aware de-overlap pass removes any
+    middle label whose bounding box would touch the previously-kept one
+    (see ``_labels_collide``). The first and last labels are preserved
+    unconditionally because they're the temporal endpoints a reader
+    expects to see.
     """
     if not points:
         return []
@@ -867,22 +907,23 @@ def _build_x_date_labels(points: list[ChartPoint], vp: Viewport) -> list[dict[st
     # First label flush with the y-axis for a cleaner left edge.
     candidates[0]["anchor"] = "start"
 
-    # De-overlap: preserve first + last; drop any middle label within min-gap
-    # of a previously-kept one. Same algorithm as _build_milestones.
+    # De-overlap: preserve first + last; drop any middle label whose
+    # bounding box would touch the previously-kept one. Edge-to-edge
+    # collision (not center-to-center) so labels of different widths
+    # (e.g. monthly "Apr 2026" vs yearly "2026") behave correctly.
     if len(candidates) <= 2:
         return candidates
     kept: list[dict[str, Any]] = [candidates[0]]
     for label in candidates[1:-1]:
-        if label["x"] - kept[-1]["x"] >= _X_LABEL_MIN_GAP_PX:
+        if not _labels_collide(kept[-1], label):
             kept.append(label)
-    # The terminal endpoint is always included. If it's too close to the
-    # last-kept middle label, or has identical text (e.g. yearly granularity
-    # where the last jan-1 tick and the terminal point both read "2026"),
-    # replace that middle label with the terminal rather than duplicating.
+    # The terminal endpoint is always included. If it would collide with
+    # the last-kept middle label, or has identical text (e.g. yearly
+    # granularity where the last jan-1 tick and the terminal point both
+    # read "2026"), replace that middle rather than duplicating.
     last_candidate = candidates[-1]
-    too_close = last_candidate["x"] - kept[-1]["x"] < _X_LABEL_MIN_GAP_PX
     same_text = last_candidate["text"] == kept[-1]["text"]
-    if too_close or same_text:
+    if same_text or _labels_collide(kept[-1], last_candidate):
         kept[-1] = last_candidate
     else:
         kept.append(last_candidate)

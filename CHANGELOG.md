@@ -5,6 +5,25 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-05-10
+
+Receipt user-turn count and filenames now reflect actual session content. Voltage receipts always render dark regardless of viewer color scheme. Star chart x-axis labels no longer collide on short-history repos.
+
+### Fixed
+
+- **Receipt user-turn count** &mdash; the footer "N user turns" now reports actual prompt count; slash commands and tool results no longer skew the number.
+- **Star chart x-axis labels on short histories** &mdash; "Apr 2026" / "May 2026" no longer overlap on charts spanning under two years. Spacing now accounts for actual label width and drops middle labels when their bounding boxes would touch.
+
+### Changed
+
+- **Receipt filenames are human-readable** &mdash; saved as `{date}_{time}_{session-name}.svg` (was UUID-only). Session name comes from Claude Code's auto-titled session or Codex's thread name; UUID stays in the SVG metadata.
+- **Voltage receipts always render dark** &mdash; the light-mode adaptation block is removed; voltage stays dark across all viewers.
+- **Codex receipts carry git branch and thread name** &mdash; both are now extracted from Codex transcripts and surfaced in receipt provenance and filenames.
+
+### Notes
+
+- 1067 tests (was 1035).
+
 ## [0.3.0] - 2026-05-10
 
 Chrome ships five named variants. Automata ships sixteen tones with a pairing grammar that composes any two into a bifamily strip or divider. Stat cards, star charts, marquees, and icons redesigned. Per-frame font filtering cuts artifact payloads.

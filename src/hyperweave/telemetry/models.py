@@ -248,6 +248,16 @@ class SessionTelemetry(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     session_id: str
+    session_name: str = Field(
+        default="",
+        description=(
+            "Human-readable session identifier. Claude Code: latest customTitle "
+            "from `custom-title` records (driven by /rename and auto-titling). "
+            "Codex: latest thread_name from `event_msg/thread_name_updated` events. "
+            "Empty when neither is available — consumers fall back to first-prompt "
+            "slug or session_id when constructing receipt filenames."
+        ),
+    )
     project_path: str
     git_branch: str | None = None
     model: str | None = None

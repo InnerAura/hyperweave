@@ -590,6 +590,149 @@ def test_x_date_labels_empty_points() -> None:
     assert _build_x_date_labels([], vp) == []
 
 
+# ── X-axis label visual overlap regression ───────────────────────────
+#
+# These tests exist because of a v0.3.0 bug where short-history repos
+# (e.g. openclaw/openclaw, ~6 months) rendered "Apr 2026" and "May 2026"
+# colliding into unreadable text. Root cause: the de-overlap pass measured
+# center-to-center distance against a fixed 48px constant, but each label
+# is ~58px wide, so adjacent labels with centers 48px apart overlap by 10px.
+#
+# Each test uses a local bounds-checker that mirrors the implementation's
+# width estimator. Independence from chart_engine internals means the
+# overlap assertion catches regressions even if internal helpers drift.
+
+
+# Brutalist's font + letter-spacing produces the widest labels of any
+# paradigm — 9px sans-serif, 0.20em letter-spacing, uppercase transform.
+# Estimating ~7.5px per character gives a worst-case bound that's safe
+# across all paradigms.
+_TEST_CHAR_WIDTH_PX: float = 7.5
+_TEST_EDGE_PADDING_PX: float = 6.0
+
+
+def _bounds_for(label: dict[str, object]) -> tuple[float, float]:
+    """Return (left, right) pixel edges of a generated label."""
+    x = float(label["x"])  # type: ignore[arg-type]
+    text = label["text"]
+    assert isinstance(text, str)
+    width = len(text) * _TEST_CHAR_WIDTH_PX
+    anchor = label.get("anchor", "middle")
+    if anchor == "start":
+        return (x, x + width)
+    if anchor == "end":
+        return (x - width, x)
+    return (x - width / 2, x + width / 2)
+
+
+def _assert_no_visual_overlap(labels: list[dict[str, object]]) -> None:
+    """Pairwise check: each label's right edge + padding must precede the next's left edge."""
+    for i in range(len(labels) - 1):
+        _, right_i = _bounds_for(labels[i])
+        left_next, _ = _bounds_for(labels[i + 1])
+        assert left_next >= right_i + _TEST_EDGE_PADDING_PX, (
+            f"Label {labels[i]['text']!r} (right edge {right_i:.1f}) overlaps with "
+            f"{labels[i + 1]['text']!r} (left edge {left_next:.1f}) — "
+            f"need {_TEST_EDGE_PADDING_PX}px gap"
+        )
+
+
+# Realistic viewports from the chart resolver — pin tests to actual production widths.
+_BRUTALIST_VP = Viewport(x=80, y=150, w=760, h=245)
+_CELLULAR_VP = Viewport(x=72, y=80, w=580, h=246)
+
+
+def test_x_date_labels_no_visual_overlap_for_six_month_history() -> None:
+    """6 months of stargazer data on a brutalist chart — the openclaw bug case.
+
+    Monthly granularity triggers (~30-day step) and produces ~6-7 candidates.
+    Pre-fix: adjacent monthly labels rendered with overlapping bounding boxes.
+    Post-fix: width-aware de-overlap drops middles until all bounds clear.
+    """
+    pts = _normalize_points(
+        [
+            {"date": "2025-12-01", "count": 1},
+            {"date": "2026-01-15", "count": 12},
+            {"date": "2026-02-20", "count": 28},
+            {"date": "2026-03-25", "count": 45},
+            {"date": "2026-04-15", "count": 60},
+            {"date": "2026-05-15", "count": 78},
+        ]
+    )
+    labels = _build_x_date_labels(pts, _BRUTALIST_VP)
+    assert len(labels) >= 2, "endpoints must always survive"
+    _assert_no_visual_overlap(labels)
+
+
+def test_x_date_labels_no_visual_overlap_for_one_month_history() -> None:
+    """Extreme short case (~30 days). Monthly granularity gives 1-2 candidates;
+    edge case where endpoint preservation must still avoid overlap."""
+    pts = _normalize_points(
+        [
+            {"date": "2026-04-10", "count": 1},
+            {"date": "2026-05-09", "count": 15},
+        ]
+    )
+    labels = _build_x_date_labels(pts, _BRUTALIST_VP)
+    assert len(labels) >= 1
+    _assert_no_visual_overlap(labels)
+
+
+def test_x_date_labels_no_visual_overlap_for_one_year_history() -> None:
+    """Medium case (~12 months). Monthly granularity, ~12 candidates;
+    width-aware de-overlap should keep ~4-6 evenly-spaced survivors."""
+    pts = _normalize_points(
+        [
+            {"date": "2025-05-01", "count": 1},
+            {"date": "2025-08-01", "count": 50},
+            {"date": "2025-11-01", "count": 200},
+            {"date": "2026-02-01", "count": 600},
+            {"date": "2026-05-01", "count": 1100},
+        ]
+    )
+    labels = _build_x_date_labels(pts, _BRUTALIST_VP)
+    assert len(labels) >= 2
+    _assert_no_visual_overlap(labels)
+
+
+def test_x_date_labels_no_visual_overlap_for_two_year_history() -> None:
+    """Long case (2+ years). Yearly granularity, ~3 candidates; should
+    continue rendering without overlap — regression check on the
+    pre-fix working path."""
+    pts = _normalize_points(
+        [
+            {"date": "2024-01-01", "count": 1},
+            {"date": "2024-07-01", "count": 500},
+            {"date": "2025-01-01", "count": 2000},
+            {"date": "2025-07-01", "count": 5000},
+            {"date": "2026-01-01", "count": 8000},
+            {"date": "2026-05-01", "count": 9500},
+        ]
+    )
+    labels = _build_x_date_labels(pts, _BRUTALIST_VP)
+    assert len(labels) >= 2
+    _assert_no_visual_overlap(labels)
+
+
+def test_x_date_labels_no_visual_overlap_on_cellular_viewport() -> None:
+    """Cellular paradigm has a smaller viewport (580px vs brutalist's 760px).
+    The worst-case (brutalist) width estimate must still produce non-overlapping
+    labels on the narrower canvas."""
+    pts = _normalize_points(
+        [
+            {"date": "2025-12-01", "count": 1},
+            {"date": "2026-01-15", "count": 12},
+            {"date": "2026-02-20", "count": 28},
+            {"date": "2026-03-25", "count": 45},
+            {"date": "2026-04-15", "count": 60},
+            {"date": "2026-05-15", "count": 78},
+        ]
+    )
+    labels = _build_x_date_labels(pts, _CELLULAR_VP)
+    assert len(labels) >= 2
+    _assert_no_visual_overlap(labels)
+
+
 # ── Zero-time-span defense (bug 2 reproducer) ────────────────────────
 
 
