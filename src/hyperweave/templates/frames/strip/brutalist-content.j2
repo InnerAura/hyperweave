@@ -1,10 +1,15 @@
-{# Brutalist strip frame: simple plate gradient, border stroke, accent bar. #}
-<g clip-path="url(#{{ uid }}-clip)">
-  <rect width="{{ width }}" height="{{ strip_h }}"
-        fill="url(#{{ uid }}-plate)"/>
-  {# Border stroke #}
-  <rect x="1" y="1" width="{{ width - 2 }}" height="{{ strip_h - 2 }}"
-        fill="none" stroke="var(--dna-border-tint)" stroke-width="2"/>
-  {# Accent bar — left edge #}
-  <rect width="{{ accent_w }}" height="{{ strip_h }}" class="hw-signal"/>
-</g>
+{# Brutalist STRIP paradigm DISPATCHER (v0.3.2 substrate split).
+
+   Resolves substrate_kind from the genome's active variant_override and
+   includes the substrate-specific strip substrate partial. The parent
+   `strip.svg.j2` renders identity, glyph, metric cells, dividers, and
+   status indicator on top of this substrate. substrate_kind defaults to
+   "dark" — pre-v0.3.2 strip behavior unchanged.
+
+   Brutalist strip grammar (bordered identity glyph box, ACCENT-VOID-ACCENT /
+   INK-SEAM-INK triple dividers, Barlow Condensed metric numerals,
+   ornament bookend) extends the parent strip.svg.j2 in v0.3.3 via new
+   context flags (show_brand_glyph_box, divider_grammar, etc.).
+
+   Polymorphism via slug interpolation per Invariant 12. #}
+{% include "frames/strip/brutalist-" ~ (substrate_kind | default('dark')) ~ "-content.j2" %}

@@ -261,10 +261,16 @@ def test_genome_spec_paradigm_fields_default_empty() -> None:
 
 def test_genome_spec_brutalist_emerald_has_paradigms(sample_genome: GenomeSpec) -> None:
     """The brutalist genome declares paradigms and structural dicts."""
-    # Paradigms dispatch map (Principle 26)
-    assert sample_genome.paradigms["badge"] == "default"
+    # Paradigms dispatch map (Principle 26). v0.3.2: badge + strip flipped to
+    # "brutalist" so substrate-aware dispatcher templates (brutalist-dark-content.j2
+    # / brutalist-light-content.j2) take effect for the 12-variant set.
+    assert sample_genome.paradigms["badge"] == "brutalist"
+    assert sample_genome.paradigms["strip"] == "brutalist"
     assert sample_genome.paradigms["stats"] == "brutalist"
     assert sample_genome.paradigms["chart"] == "brutalist"
+    # icon + divider remain "default" — color-only deltas, no template split.
+    assert sample_genome.paradigms["icon"] == "default"
+    assert sample_genome.paradigms["divider"] == "default"
     # banner / marquee-counter / marquee-vertical / timeline paradigm keys were
     # removed in v0.2.14 with the frame types themselves.
     assert "banner" not in sample_genome.paradigms

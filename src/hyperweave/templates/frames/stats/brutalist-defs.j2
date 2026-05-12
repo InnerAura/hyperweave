@@ -1,28 +1,89 @@
-{# Brutalist stats defs: grain filter, clip-path.
-   Ported from tier2/genomes/brutalist/emerald/brutalist-stat-card-v6.svg #}
+{# Brutalist stats defs: grain filter + clip-path + brutalist panel gradient
+   + CSS classes ported VERBATIM from the v0.3.2 prototypes:
+     dark substrates → the v0.3.2 brutalist dark stat card prototype (line 48)
+     light scholars  → tier2/.../the v0.3.2 brutalist light scholar full-set prototype   (line 58)
+
+   Class name set is shared (.u, .m, .hl, .hv, .hm, .sl, .sv, .al, .ll,
+   .ft, .fb, .gc) but FILLS differ because the polarity inverts: dark
+   variants put labels on dark substrate (accent-colored = --tm), light
+   scholars put labels on PAPER zone with crimson/etc. ink (= --bg, panel
+   top color). substrate_kind switches the fills.
+
+   Field → CSS var mapping per substrate:
+
+     === DARK SUBSTRATE ===
+     prototype --th (text high)   → var(--dna-brand-text) [= variant ink]
+     prototype --tm (text mid)    → var(--dna-signal)
+     prototype --tl (text low)    → var(--dna-label-text)
+     prototype --tg (text grid)   → var(--dna-surface-deep)
+     prototype --s  (surface)     → var(--dna-surface)
+     prototype --si (inset panel) → var(--dna-brand-panel-fill)
+     prototype --a  (accent)      → var(--dna-signal)
+
+     === LIGHT SCHOLAR ===
+     paper text     → var(--dna-brand-text)    [variant surface_0]
+     ink text       → var(--dna-ink-primary)   [variant ink, dark on paper]
+     tier-1 labels  → var(--dna-bg)            [panel top = deep crimson/etc.]
+     tier-2 labels  → var(--dna-label-text)    [warm-tan muted]
+     hero meta/gold → var(--dna-seam-color)    [gold/etc. seam color]
+     footer brand   → var(--dna-seam-color)    [gold]
+#}
 <filter id="{{ uid }}-grain" x="0%" y="0%" width="100%" height="100%">
-  <feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" seed="7" result="noise"/>
-  <feColorMatrix in="noise" type="luminanceToAlpha" result="alpha-noise"/>
-  <feColorMatrix in="alpha-noise" type="matrix" values="0 0 0 0 0.06
-                                                         0 0 0 0 0.18
-                                                         0 0 0 0 0.12
-                                                         0 0 0 0.12 0"/>
+  <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="7"/>
+  <feColorMatrix type="luminanceToAlpha"/>
+  <feColorMatrix type="matrix" values="0 0 0 0 .05
+                                       0 0 0 0 .05
+                                       0 0 0 0 .05
+                                       0 0 0 .08 0"/>
 </filter>
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
+{% if panel_gradient_stops %}
+<linearGradient id="{{ uid }}-panel" x1="0" x2="1" y1="0" y2="0">
+{% for stop in panel_gradient_stops %}
+<stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{% endif %}
 <style>
   {{ font_faces | safe }}
-  text { font-family: var(--dna-font-mono, var(--dna-font-display, 'JetBrains Mono', monospace)); shape-rendering: geometricPrecision; }
-  .{{ uid }}-field-label { font-size: 11px; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-ink-secondary, #6EE7B7); }
-  .{{ uid }}-field-value { font-size: 11px; font-weight: 400; letter-spacing: 0.06em; fill: var(--dna-signal, #34D399); }
-  .{{ uid }}-hero-value { font-size: 42px; font-weight: 800; letter-spacing: -0.02em; fill: var(--dna-ink-primary, #D1FAE5); }
-  .{{ uid }}-hero-label { font-size: 13px; font-weight: 800; letter-spacing: 0.36em; text-transform: uppercase; fill: var(--dna-ink-secondary, #6EE7B7); }
-  .{{ uid }}-hdr-user { font-size: 11px; font-weight: 800; letter-spacing: 0.22em; fill: var(--dna-ink-accent, #A7F3D0); }
-  .{{ uid }}-hdr-meta { font-size: 8px; font-weight: 400; letter-spacing: 0.12em; fill: var(--dna-signal, #34D399); opacity: 0.7; }
-  .{{ uid }}-act-label { font-size: 8px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-signal, #34D399); }
-  .{{ uid }}-foot { font-size: 7px; font-weight: 500; letter-spacing: 0.14em; fill: var(--dna-signal, #34D399); opacity: 0.6; }
-  .{{ uid }}-foot-brand { font-size: 7px; font-weight: 700; letter-spacing: 0.30em; fill: var(--dna-signal, #34D399); opacity: 0.4; }
-  .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-signal, #34D399); opacity: 0.25; }
+  text { font-family: 'JetBrains Mono', monospace; shape-rendering: geometricPrecision; }
+{% if substrate_kind == 'light' %}
+  {# Light scholar fills: paper text on dark panel, dark ink on paper.
+     Chromatic routing fixes (Phase 2b audit vs the v0.3.2 brutalist light scholar full-set prototype):
+     - .m (meta on dark panel) was --dna-label-text (= dark ink, INVISIBLE on
+       dark panel). Now uses --dna-brand-text (= paper) so the repo meta
+       reads as warm paper-on-crimson per prototype's #C4A080 intent.
+     - .al / .ft (labels on paper) were --dna-label-text (= dark ink, too
+       high contrast). Now use --dna-ink-muted (= ink_secondary) so they
+       read as muted warm-tan per prototype's #8B7355 intent. #}
+  .{{ uid }}-u  { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; fill: var(--dna-brand-text); }
+  .{{ uid }}-m  { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 400; letter-spacing: 0.12em; fill: var(--dna-brand-text); opacity: 0.7; }
+  .{{ uid }}-hl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.32em; text-transform: uppercase; fill: var(--dna-bg); }
+  .{{ uid }}-hv { font-family: 'Barlow Condensed', sans-serif; font-size: 68px; font-weight: 900; letter-spacing: -0.025em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-hm { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; fill: var(--dna-seam-color); }
+  .{{ uid }}-sl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-bg); }
+  .{{ uid }}-sv { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-al { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-ink-muted, var(--dna-ink-secondary, var(--dna-label-text))); }
+  .{{ uid }}-ll { font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 700; letter-spacing: 0.15em; fill: var(--dna-brand-text); opacity: 0.7; }
+  .{{ uid }}-ft { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 500; letter-spacing: 0.14em; fill: var(--dna-ink-muted, var(--dna-ink-secondary, var(--dna-label-text))); opacity: 0.85; }
+  .{{ uid }}-fb { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 700; letter-spacing: 0.28em; fill: var(--dna-seam-color); opacity: 0.6; }
+  .{{ uid }}-gc { font-family: 'JetBrains Mono', monospace; font-size: 5.5px; font-weight: 500; fill: var(--dna-ink-primary); opacity: 0.15; }
+{% else %}
+  {# Dark substrate fills: bright text on dark, accent on dark. #}
+  .{{ uid }}-u  { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; fill: var(--dna-brand-text); }
+  .{{ uid }}-m  { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 400; letter-spacing: 0.12em; fill: var(--dna-label-text); opacity: 0.8; }
+  .{{ uid }}-hl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.32em; text-transform: uppercase; fill: var(--dna-signal); }
+  .{{ uid }}-hv { font-family: 'Barlow Condensed', sans-serif; font-size: 68px; font-weight: 900; letter-spacing: -0.025em; fill: var(--dna-brand-text); }
+  .{{ uid }}-hm { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; fill: var(--dna-label-text); }
+  .{{ uid }}-sl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-signal); }
+  .{{ uid }}-sv { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; fill: var(--dna-brand-text); }
+  .{{ uid }}-al { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-label-text); }
+  .{{ uid }}-ll { font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 700; letter-spacing: 0.15em; fill: var(--dna-surface); opacity: 0.7; }
+  .{{ uid }}-ft { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 500; letter-spacing: 0.14em; fill: var(--dna-label-text); opacity: 0.7; }
+  .{{ uid }}-fb { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 700; letter-spacing: 0.28em; fill: var(--dna-label-text); opacity: 0.5; }
+  .{{ uid }}-gc { font-family: 'JetBrains Mono', monospace; font-size: 5.5px; font-weight: 500; fill: var(--dna-surface-deep); }
+{% endif %}
   @keyframes {{ uid }}-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
-  .{{ uid }}-status-dot { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
-  @media (prefers-reduced-motion: reduce) { .{{ uid }}-status-dot { animation: none !important; opacity: 0.8; } }
+  .{{ uid }}-sd { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
+  @media (prefers-reduced-motion: reduce) { .{{ uid }}-sd { animation: none !important; opacity: 0.8; } }
 </style>

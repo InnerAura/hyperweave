@@ -3,9 +3,9 @@
    Kind "polygon" is the solid fill under a miter polyline (brutalist).
    Kind "path" is the translucent fill under a bezier curve (chrome). #}
 {%- if chart_area.kind == "polygon" %}
-<polygon points="{{ chart_area.points }}" fill="var(--dna-signal)"
+<polygon points="{{ chart_area.points }}" fill="var(--dna-chart-main, var(--dna-signal))"
          fill-opacity="0.65" class="hw-chart-area"/>
 {%- elif chart_area.kind == "path" %}
-<path d="{{ chart_area.d }}" fill="var(--dna-signal)"
+<path d="{{ chart_area.d }}" fill="var(--dna-chart-main, var(--dna-signal))"
       fill-opacity="0.12" class="hw-chart-area-smooth"/>
 {%- endif %}

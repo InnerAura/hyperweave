@@ -19,11 +19,11 @@
 {%- set _anim_class = " hw-chart-line-draw" if _animate else "" %}
 {%- set _anim_attrs = ' pathLength="1" stroke-dasharray="1" stroke-dashoffset="0"' if _animate else "" %}
 {%- if chart_polyline.kind == "path" %}
-<path d="{{ chart_polyline.d }}" fill="none" stroke="var(--dna-signal)"
+<path d="{{ chart_polyline.d }}" fill="none" stroke="var(--dna-chart-main, var(--dna-signal))"
       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
       class="hw-chart-line{{ _anim_class }}"{{ _anim_attrs | safe }}/>
 {%- elif chart_polyline.kind == "polyline" %}
-<polyline points="{{ chart_polyline.points }}" fill="none" stroke="var(--dna-signal)"
+<polyline points="{{ chart_polyline.points }}" fill="none" stroke="var(--dna-chart-main, var(--dna-signal))"
           stroke-width="2.5" stroke-linejoin="miter"
           class="hw-chart-line{{ _anim_class }}"{{ _anim_attrs | safe }}/>
 {%- endif %}

@@ -184,6 +184,56 @@ class ParadigmStripConfig(FrozenModel):
     cells from collapsing when values were short); cellular defers to
     content sizing (0)."""
 
+    # v0.3.2 Phase C brutalist strip grammar — brutalist-only fields. When
+    # ``owns_strip`` is True the parent ``strip.svg.j2`` skips its shared zone
+    # pipeline (icon-box / glyph / identity / metric cells / status indicator)
+    # and the paradigm's content partial assumes full responsibility for body
+    # composition. Default zero / False preserves byte-equal output for chrome,
+    # cellular, default paradigms. Adding ``owns_strip: true`` to a paradigm
+    # YAML requires populating every strip-grammar field below to non-zero.
+    owns_strip: bool = False
+    """Strip-composition ownership flag. True: paradigm content-partial
+    renders brand panel + dividers + metric cells + status zone itself; the
+    parent template wraps its shared zone pipeline in
+    ``{% if not paradigm_owns_strip %}`` to defer entirely."""
+    brand_panel_x: int = 0
+    """Brand panel left edge (px). Brutalist: 6."""
+    brand_panel_width: int = 0
+    """Brand panel width (px). Brutalist: 156."""
+    triple_divider_x: int = 0
+    """ACCENT-VOID-ACCENT / INK-SEAM-INK triple divider start x.
+    Brutalist: 162 (= brand_panel_x + brand_panel_width)."""
+    triple_divider_bar_width: int = 0
+    """Width of the outer ink/accent bars in the triple divider. Brutalist: 3."""
+    triple_divider_void_width: int = 0
+    """Width of the middle void/seam bar in the triple divider. Brutalist: 2."""
+    ornament_x: int = 0
+    """Identity ornament left edge. Brutalist: 22."""
+    ornament_y: int = 0
+    """Identity ornament top edge. Brutalist: 19."""
+    ornament_size: int = 0
+    """Identity ornament side length. Brutalist: 14."""
+    ornament_inner_inset: int = 0
+    """Ornament inner-cutout inset (so inner = ornament_size - 2*inset).
+    Brutalist: 3 (8x8 inner cutout in 14x14 outer)."""
+    bookend_x: int = 0
+    """Bookend ornament center x. Brutalist: 520."""
+    brand_divider_x: int = 0
+    """First metric-cell seam x (= triple_divider_x + 2*bar_w + void_w).
+    Brutalist: 170."""
+    metric_cell_width: int = 0
+    """Uniform metric cell pitch (px). Brutalist: 100."""
+    metric_label_y: int = 0
+    """Metric label baseline y. Brutalist: 17."""
+    metric_value_y: int = 0
+    """Metric value baseline y. Brutalist: 36."""
+    identity_text_x: int = 0
+    """HYPERWEAVE identity text x. Brutalist: 50."""
+    identity_text_y: int = 0
+    """HYPERWEAVE identity text y. Brutalist: 30."""
+    strip_width: int = 0
+    """Total strip canvas width. Brutalist: 560."""
+
 
 class ParadigmBadgeConfig(FrozenModel):
     """Badge frame config within a paradigm."""

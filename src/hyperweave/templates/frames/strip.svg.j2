@@ -69,6 +69,18 @@
 {# === Frame structure (paradigm-dispatched via include — polymorphism, not a branch) === #}
 {% include "frames/strip/" ~ paradigm_strip ~ "-content.j2" %}
 
+{# v0.3.2 Phase C: paradigms with brutalist strip grammar (brutalist) take full
+   ownership of body composition via their content partial. The shared
+   pipeline below (icon box, glyph zone, identity, metric cells, status
+   indicator) only renders when paradigm_owns_strip is false — chrome /
+   cellular / default continue unchanged. The flag is set unconditionally
+   by resolve_strip so StrictUndefined never trips.
+
+   Border motion overlay (after this block) stays outside the gate because
+   it piggybacks on `{{ uid }}-clip` + width/height context that both code
+   paths preserve. #}
+{% if not paradigm_owns_strip %}
+
 {# === Icon box (paradigm opts in via show_icon_box) ===
    Render only when an actual glyph is provided. Without this gate, calling
    `compose("strip", ..., glyph="")` produces an EMPTY 28×28 dark box flush
@@ -215,6 +227,8 @@
 {% include "frames/strip/" ~ paradigm_strip ~ "-status.j2" %}
 </g>
 {% endif %}
+
+{% endif %}{# /paradigm_owns_strip gate — end of shared zone pipeline #}
 
 {# ── Border motion SMIL overlay (shared across all paradigms) ── #}
 {% if motion_border_defs | default('') %}

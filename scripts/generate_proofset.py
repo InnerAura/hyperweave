@@ -232,6 +232,7 @@ def _compose(
     shape: str = "",
     telemetry_data: dict[str, Any] | None = None,
     connector_data: dict[str, Any] | None = None,
+    data_tokens: list[Any] | None = None,
 ) -> str:
     spec = ComposeSpec(
         type=frame_type,
@@ -250,6 +251,7 @@ def _compose(
         shape=shape,
         telemetry_data=telemetry_data,
         connector_data=connector_data,
+        data_tokens=list(data_tokens) if data_tokens else [],
     )
     return compose(spec).svg
 
@@ -262,6 +264,38 @@ def _write(path: Path, svg: str) -> None:
 def generate_static() -> int:
     """Generate all static (non-network) artifacts. Returns count."""
     total = 0
+
+    # ── Pre-fetch marquee data tokens (v0.3.2 brutalist genome expansion) ──
+    # Resolved once at the top of generate_static so per-variant marquees can
+    # carry live GitHub/PyPI data rather than hardcoded brand strings. The
+    # stats/chart fetch later in this function (line ~725) uses the SAME
+    # asyncio loop pattern; both share one asyncio.run() per process because
+    # the httpx singleton binds to its first loop. Failure path: empty list
+    # → variant marquees fall back to the per-genome marquee_text strings.
+    from hyperweave.connectors.base import close_client as _close_marquee_client
+    from hyperweave.serve.data_tokens import parse_data_tokens as _parse_marquee_tokens
+    from hyperweave.serve.data_tokens import resolve_data_tokens as _resolve_marquee_tokens
+
+    _MARQUEE_PREFETCH_TOKENS = (
+        "gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads"
+    )
+
+    async def _prefetch_marquee_tokens() -> list[Any]:
+        try:
+            parsed = _parse_marquee_tokens(_MARQUEE_PREFETCH_TOKENS)
+            resolved, _ttl = await _resolve_marquee_tokens(parsed)
+            await _close_marquee_client()
+            return list(resolved)
+        except Exception:
+            await _close_marquee_client()
+            return []
+
+    marquee_data_tokens: list[Any] = asyncio.run(_prefetch_marquee_tokens())
+    print(
+        f"  resolved {len(marquee_data_tokens)} marquee tokens"
+        if marquee_data_tokens
+        else "  marquee tokens fetch failed; using fallback text"
+    )
 
     for genome in GenomeId:
         gdir = OUT / "proofset" / genome
@@ -405,13 +439,29 @@ def generate_static() -> int:
                 )
                 _write(var_dir / f"strip_{variant}.svg", svg)
                 total += 1
-                # Marquee per variant — text + chromatic palette swap
-                svg = _compose("marquee-horizontal", genome, variant_marquee_text, variant=variant)
+                # Marquee per variant — text + chromatic palette swap.
+                # v0.3.2 brutalist genome expansion: when marquee_data_tokens
+                # resolved at function-top, pass them so the marquee renders
+                # real GitHub/PyPI values (stars, forks, version, downloads).
+                # Empty token list falls back to the hardcoded text path.
+                svg = _compose(
+                    "marquee-horizontal",
+                    genome,
+                    variant_marquee_text,
+                    variant=variant,
+                    data_tokens=marquee_data_tokens or None,
+                )
                 _write(var_dir / f"marquee_horizontal_{variant}.svg", svg)
                 total += 1
                 # Divider per variant — chrome.band (vibration sweep across env);
-                # automata.dissolve (bifamily bridge, solo synthesizes mirrored).
-                divider_slug = "band" if genome == GenomeId.CHROME else "dissolve"
+                # automata.dissolve (bifamily bridge, solo synthesizes mirrored);
+                # brutalist.seam (only divider declared in brutalist.dividers).
+                if genome == GenomeId.CHROME:
+                    divider_slug = "band"
+                elif genome == GenomeId.BRUTALIST:
+                    divider_slug = "seam"
+                else:
+                    divider_slug = "dissolve"
                 svg = _compose("divider", genome, divider_variant=divider_slug, variant=variant)
                 _write(var_dir / f"divider_{divider_slug}_{variant}.svg", svg)
                 total += 1
@@ -1348,6 +1398,7 @@ def generate_readme(total: int, live_total: int) -> None:
 
     (OUT / "README.md").write_text("\n".join(lines) + "\n")
     _emit_automata_readme()
+    _emit_brutalist_readme()
 
 
 def _emit_automata_readme() -> None:
@@ -1466,6 +1517,173 @@ def _emit_automata_readme() -> None:
             lines.append("")
 
     (OUT / "README_AUTOMATA.md").write_text("\n".join(lines) + "\n")
+
+
+# Brutalist variant phenomenology — one-line identity statements emitted in the
+# README header for each variant. Mirrors data/genomes/brutalist.json
+# variant_phenomenology so both surfaces stay in sync; if you add a brutalist
+# variant, append here too. Split into dark monochromes (substrate materials)
+# and light scholars (functional roles) for the README's two-section structure.
+_BRUTALIST_DARK_PHENOMENOLOGY: list[tuple[str, str]] = [
+    (
+        "celadon",
+        "the ceramic glaze that survived the kiln — substance held (flagship; "
+        "bare `brutalist.static` URL renders this for byte-equality with pre-v0.3.2)",
+    ),
+    ("carbon", "graphite under pressure — substrate compressed into mark"),
+    ("alloy", "cold-rolled fusion — disparate metals made one surface"),
+    ("temper", "heat-treated tin — toughness achieved through stress"),
+    ("pigment", "amethyst ground to powder — color as physical material"),
+    ("ember", "warm metal cooling — luminance held in mass"),
+]
+_BRUTALIST_LIGHT_PHENOMENOLOGY: list[tuple[str, str]] = [
+    ("archive", "knowledge preserved — paper as memory substrate"),
+    ("signal", "transmission made visible — green terminal on cool white"),
+    ("pulse", "rhythm marked in ink — oxblood on parchment"),
+    ("depth", "measurement of below — royal blue plumbed"),
+    ("afterimage", "the optical echo persisting — perception's residue"),
+    ("primer", "the base coat applied — preparation as foundation"),
+]
+
+
+def _emit_brutalist_readme() -> None:
+    """Emit outputs/README_BRUTALIST.md with the full 12-variant matrix.
+
+    Mirrors README_AUTOMATA's structure: each variant renders its full
+    artifact suite (badge default, icon, strip, marquee, divider seam,
+    stats card, star chart, 5 badge states) as inline image embeds.
+
+    Brutalist differs from automata in two ways:
+    1. Two substrate polarities — 6 dark monochromes (substrate materials)
+       and 6 light scholars (functional roles) — split into two README
+       sections so the substrate distinction is structural, not buried in
+       prose.
+    2. No pairing grammar — brutalist is mono-substrate per variant; no
+       bifamily strips or freestyle pairings section.
+
+    Brutalist's divider variant is `seam` (per genome.dividers); automata's
+    is `dissolve`. Image references point at LOCAL artifacts under
+    outputs/proofset/brutalist/ — local gallery, not deployed URLs.
+    """
+    g = "brutalist"
+    cfg = load_genomes().get(g)
+    if cfg is None or not cfg.variants:
+        return
+
+    lines: list[str] = [
+        "# HyperWeave Brutalist — 12-Variant Substrate Matrix",
+        "",
+        "Brutalist is the only genome with two substrate polarities: **6 dark monochromes** "
+        "(substrate materials — `celadon`, `carbon`, `alloy`, `temper`, `pigment`, `ember`) "
+        "and **6 light scholars** (functional roles — `archive`, `signal`, `pulse`, `depth`, "
+        '`afterimage`, `primer`). Each variant declares `substrate_kind: "dark" | "light"` '
+        "driving template include dispatch — same paradigm, two material identities.",
+        "",
+        "The dark monochromes follow brutalist material vocabulary: matte surfaces, sharp "
+        "zero-radius corners, JetBrains Mono typography, no glow. Each name captures a "
+        "substance you can hold. The light scholars invert substrate polarity: paper canvas "
+        "hosts dark ink with accent seam colors carrying chromatic identity. Each name "
+        "captures a function.",
+        "",
+        "Stratum: `002-TRIBE`. Flagship variant: `celadon` (byte-equal to pre-v0.3.2 "
+        "brutalist palette for backwards compat).",
+        "",
+        "Every variant below renders the full artifact suite (badge default, icon, strip, "
+        "marquee, divider seam, stats card, star chart, 5 badge states).",
+        "",
+        "---",
+        "",
+        "## Dark Monochromes",
+        "",
+    ]
+
+    def _emit_variant_block(v: str, phenomenology: str) -> None:
+        lines.append(f"### `?variant={v}`")
+        lines.append("")
+        lines.append(f"_{phenomenology}_")
+        lines.append("")
+        # Row 1: badge default + icon (no compact for brutalist)
+        row1 = (
+            f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg) "
+            f"![icon](proofset/{g}/variants/icon_github_{v}.svg)"
+        )
+        lines.append(row1)
+        lines.append("")
+        # Row 2: strip
+        lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
+        lines.append("")
+        # Row 3: marquee
+        lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+        lines.append("")
+        # Row 4: divider seam (brutalist's only declared divider)
+        lines.append(f"![divider seam](proofset/{g}/variants/divider_seam_{v}.svg)")
+        lines.append("")
+        # Row 5: stats card
+        stats_path = OUT / "proofset" / g / "variants" / f"stats_{v}.svg"
+        if stats_path.exists():
+            lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
+            lines.append("")
+        # Row 6: star history chart
+        chart_path = OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg"
+        if chart_path.exists():
+            lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
+            lines.append("")
+        # Rows 7-11: badge states stacked
+        for s in (
+            ArtifactStatus.PASSING,
+            ArtifactStatus.WARNING,
+            ArtifactStatus.CRITICAL,
+            ArtifactStatus.BUILDING,
+            ArtifactStatus.OFFLINE,
+        ):
+            lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+
+    for v, phen in _BRUTALIST_DARK_PHENOMENOLOGY:
+        if v in cfg.variants:
+            _emit_variant_block(v, phen)
+
+    lines.append("## Light Scholars")
+    lines.append("")
+
+    for v, phen in _BRUTALIST_LIGHT_PHENOMENOLOGY:
+        if v in cfg.variants:
+            _emit_variant_block(v, phen)
+
+    # Architectural notes — what makes brutalist's variant grammar distinct.
+    lines.extend(
+        [
+            "## Substrate Architecture",
+            "",
+            "`substrate_kind` is the variant-declared axis driving template include dispatch "
+            "within the brutalist paradigm:",
+            "",
+            "```jinja2",
+            "{# templates/frames/badge/brutalist-content.j2 (dispatcher) #}",
+            '{% include "frames/badge/brutalist-" ~ (substrate_kind | default(\'dark\')) ~ "-content.j2" %}',
+            "```",
+            "",
+            "Dark variants route to `brutalist-dark-content.j2`; light variants route to "
+            "`brutalist-light-content.j2`. The dispatcher pattern applies to `badge`, `strip`, "
+            "`stats`, and `chart`. Icon, divider, and marquee stay CSS-vars-only because their "
+            "prototypes show color-only deltas.",
+            "",
+            "Validation at `compose/validate_paradigms.py:validate_genome_variants()` enforces "
+            "the substrate contract: every variant declares `substrate_kind`; light variants "
+            "additionally declare `panel_gradient_stops` (≥2 stops, for the dark academic "
+            "panel) and `seam_color`; dark variants must NOT declare `panel_gradient_stops`.",
+            "",
+            "## Cross-reference",
+            "",
+            "- [Main README](../README.md) — installation, compose grammar, all genomes",
+            "- [CHANGELOG](../CHANGELOG.md) — v0.3.2 release notes",
+            "",
+        ]
+    )
+
+    (OUT / "README_BRUTALIST.md").write_text("\n".join(lines) + "\n")
 
 
 def main() -> None:

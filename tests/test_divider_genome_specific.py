@@ -44,8 +44,11 @@ def test_brutalist_seam_renders() -> None:
     assert result.height == 16
     # 13 line elements (5 horizontals + 8 perpendicular joint marks)
     assert result.svg.count("<line ") == 13
-    # Genome accent emerald
-    assert "#10B981" in result.svg
+    # v0.3.2 visual review: celadon flagship accent migrated from base genome
+    # emerald #10B981 to the prototype's muted-ceramic-green #48A870
+    # (hw-elegant-mono-stat-cards.html celadon panel --a). The divider should
+    # render with the new accent. Pre-fix this test pinned #10B981.
+    assert "#48A870" in result.svg
 
 
 # ── (slug, genome) pairing validator rejects mismatched combinations ──────

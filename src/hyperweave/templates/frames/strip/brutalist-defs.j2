@@ -1,9 +1,34 @@
-{# Brutalist strip defs: plate gradient. #}
+{# Brutalist strip defs: plate gradient + grain filter (brutalist strip texture). #}
 <linearGradient id="{{ uid }}-plate" x1="0" x2="0" y1="0" y2="1">
   <stop offset="0%" style="stop-color: var(--dna-surface)"/>
   <stop offset="40%" style="stop-color: var(--dna-surface-alt)"/>
   <stop offset="100%" style="stop-color: var(--dna-surface-deep)"/>
 </linearGradient>
+{# Grain filter matching the v0.3.2 brutalist strip prototype (celadon panel
+   filter id="ce-n"). fractalNoise → luminanceToAlpha → flat dark-tint matrix
+   produces a barely-visible darkening texture. The brutalist strip content
+   rect (4) overlays this on the substrate for material depth. #}
+<filter id="{{ uid }}-grain" x="0%" y="0%" width="100%" height="100%">
+  <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="19" result="n"/>
+  <feColorMatrix in="n" type="luminanceToAlpha"/>
+  <feColorMatrix type="matrix" values="0 0 0 0 0.04
+                                       0 0 0 0 0.04
+                                       0 0 0 0 0.04
+                                       0 0 0 0.08 0"/>
+</filter>
+{# v0.3.2 Phase C: brutalist strip grammar dark brand panel gradient for
+   light scholar variants. Gated on panel_gradient_stops (declared on every
+   light variant override). The brutalist content partial paints either
+   `fill="var(--dna-brand-panel-fill)"` for dark variants or
+   `fill="url(#{{ uid }}-panel)"` for light variants depending on which is
+   present. #}
+{% if panel_gradient_stops %}
+<linearGradient id="{{ uid }}-panel" x1="0" x2="1" y1="0" y2="0">
+{% for stop in panel_gradient_stops %}
+<stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{% endif %}
 {# Typography (class-based, preserves pre-v0.2.2 brutalist strip rendering).
    strip.svg.j2 emits class names on identity / metric text; this block defines
    what those classes look like under the default/brutalist paradigm.
@@ -16,14 +41,27 @@
   font-size: 11px; font-weight: 900; letter-spacing: 0.18em;
   fill: var(--dna-brand-text);
 }
+/* v0.3.2 Phase C brutalist strip grammar — used by paradigm_owns_strip
+   content partials. Brand text uses Barlow Condensed (display serif) on
+   the brand panel; metric value uses Barlow Condensed (display) on the
+   strip body; metric label uses JetBrains Mono (mono body). Matches the
+   v0.3.2 brutalist strip prototype's typography spec.
+   The legacy `.metric-label` / `.metric-value` shared-pipeline classes
+   were removed in this patch: brutalist owns_strip skips the shared
+   pipeline so those definitions were dead code. */
+.{{ uid }}-brand-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.18em;
+  fill: var(--dna-brand-text);
+}
 .{{ uid }}-metric-label {
-  font-family: var(--dna-font-mono, 'SF Mono', monospace);
-  font-size: 7px; font-weight: 700; letter-spacing: 0.2em;
-  fill: var(--dna-ink-muted);
+  font-family: var(--dna-font-mono, 'JetBrains Mono', monospace);
+  font-size: 7px; font-weight: 800; letter-spacing: 0.25em; text-transform: uppercase;
+  fill: var(--dna-label-text);
 }
 .{{ uid }}-metric-value {
-  font-family: var(--dna-font-display, 'Inter', system-ui);
-  font-size: 18px; font-weight: 900; letter-spacing: -0.01em;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 900; letter-spacing: -0.03em;
   fill: var(--dna-ink-primary);
 }
 </style>

@@ -1,0 +1,81 @@
+{# Brutalist BADGE — LIGHT substrate (v0.3.2 substrate split).
+   Paper canvas with dark ink. Same spatial composition as dark for v0.3.2 MVP;
+   the divider/grammar refinements (INK-SEAM-INK three-component, brutalist scholar glyph box,
+   Barlow Condensed serif numerals) are queued for v0.3.3 light-scholar polish.
+   For now the substrate inversion is purely via CSS vars consumed from
+   variant_overrides (surface_0 → paper, ink → dark, accent → seam-color). #}
+
+<g clip-path="url(#{{ uid }}-clip)">
+  <rect width="{{ lp_w }}" height="{{ h }}" fill="var(--dna-surface)"/>
+  {# Right panel: brutalist light scholar variants paint the brown/crimson/cobalt gradient
+     (panel_gradient_stops); v0.3.2 prototype shows "BUILD passing" with
+     a dark brown right panel + cream label panel. Dark variants fall back
+     to flat --dna-surface-deep (no gradient declared). #}
+  {% if panel_gradient_stops %}
+  <rect x="{{ right_panel_x - 1 }}" width="{{ right_panel_w + 1 }}" height="{{ h }}" fill="url(#{{ uid }}-panel)"/>
+  {% else %}
+  <rect x="{{ right_panel_x - 1 }}" width="{{ right_panel_w + 1 }}" height="{{ h }}" fill="var(--dna-surface-deep)"/>
+  {% endif %}
+</g>
+{# Perimeter stroke: light substrate needs higher opacity for visibility
+   (dark ink at 0.06 invisible on paper; variants override stroke_opacity to 0.20). #}
+<rect x=".5" y=".5" width="{{ width - 1 }}" height="{{ h - 1 }}" fill="none" stroke="var(--dna-ink-primary)" stroke-opacity="{{ stroke_opacity | default('0.20') }}"/>
+{# Left ink bar: filled with ink primary (dark), not accent. Light substrate
+   convention reads as printed manuscript margin rule rather than colored chassis. #}
+<rect x="0" y="0" width="{{ accent_w }}" height="{{ h }}" fill="var(--dna-ink-primary)" data-hw-zone="accent-bar"/>
+{# v0.3.2 brutalist-genome-expansion: badge divider grammar is
+   GOLD-OVER-INK overlap (not the strip's 3+2+3 INK-SEAM-INK). Prototype
+   the v0.3.2 brutalist light scholar full-set prototype:201 paints a 4px ink rect at x=50 with a
+   2px gold rect at x=49 overlapping its left edge — net visual is a 1px
+   gold sliver against a 4px ink rule. The 3+2+3 grammar belongs to the
+   strip (560×52) where a chunky 8px bar reads correctly; the badge (140-
+   158×20) needs a tighter 5px divider zone.
+   Ink rect uses --dna-ink-primary directly (no state-sep override) so
+   state-active badges stay plain ink — state color flows only through
+   value text and indicator. #}
+<rect x="{{ lp_w }}" y="0" width="4" height="{{ h }}" fill="var(--dna-ink-primary)"/>
+<rect x="{{ lp_w - 1 }}" y="0" width="2" height="{{ h }}" fill="var(--dna-seam-color, var(--dna-signal))"/>
+
+{# Glyph — fill routes through --dna-badge-glyph semantic var so light
+   substrates use the variant's accent (gold/cyan/amber) on the dark right
+   panel zone the way the prototype's provider glyph does. The fallback
+   chain --dna-seam-color → --dna-ink-primary preserves dark-variant behavior
+   for the shared glyph SVG component. #}
+{% if has_glyph and glyph_svg %}
+<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y }})">
+  {{ glyph_svg | safe }}
+</g>
+{% endif %}
+
+{# Label — dark ink on paper #}
+<text data-hw-zone="label"
+      x="{{ label_x }}" y="{{ text_y }}"
+      text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" font-weight="600"
+      fill="var(--dna-label-text)"
+      letter-spacing="0.06em">{{ label_display | default(label | upper) }}</text>
+
+{# Value — dark ink on paper #}
+<text data-hw-zone="value"
+      x="{{ value_x }}" y="{{ text_y }}"
+      text-anchor="middle"
+      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
+      font-size="11" font-weight="700"
+      fill="var(--hw-state-value, var(--dna-brand-text))">{{ value }}</text>
+
+{# v0.3.2 Phase 4: scholar substrate status indicator is a CIRCLE (ring +
+   center dot), matching the v0.3.2 brutalist light scholar prototype:116. The
+   softer concentric-circle geometry harmonizes with the paper substrate
+   the way dark variants' concentric squares harmonize with the matte
+   dark canvas — substrate polarity inverts the indicator metaphor too.
+   Radii: r=3 outer ring + r=1 filled dot; positioned at center of the
+   indicator zone (indicator_x + ind_size/2, badge vertical center). #}
+{% if show_indicator %}
+{% set ind_cx = indicator_x + (ind_size / 2) %}
+{% set ind_cy = h / 2 %}
+<g data-hw-zone="status">
+  <circle cx="{{ ind_cx }}" cy="{{ ind_cy }}" r="3" fill="none" stroke="var(--hw-state-ring, var(--dna-seam-color, var(--dna-signal)))" stroke-width="1.2"/>
+  <circle class="hw-logic-bit" cx="{{ ind_cx }}" cy="{{ ind_cy }}" r="1" fill="var(--dna-status-color, var(--dna-seam-color, var(--dna-signal)))"/>
+</g>
+{% endif %}

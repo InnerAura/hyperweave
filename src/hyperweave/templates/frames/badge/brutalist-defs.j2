@@ -6,4 +6,17 @@
 <clipPath id="{{ uid }}-clip">
   <rect width="{{ width }}" height="{{ height }}"/>
 </clipPath>
+{# v0.3.2: brutalist scholar right-panel gradient for light scholar variants. Gated on
+   panel_gradient_stops (declared on every light variant override). Light
+   badges paint the right panel with this gradient instead of the flat
+   --dna-surface-deep tone, matching the v0.3.2 brutalist light scholar full-set prototype badges
+   (cream label panel + dark brown/crimson/cobalt right panel). Dark variants
+   leave panel_gradient_stops empty and continue using flat surface-deep. #}
+{% if panel_gradient_stops %}
+<linearGradient id="{{ uid }}-panel" x1="0" x2="1" y1="0" y2="0">
+{% for stop in panel_gradient_stops %}
+<stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{% endif %}
 <style>{{ font_faces | safe }}</style>

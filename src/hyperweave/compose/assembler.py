@@ -42,16 +42,22 @@ _MARQUEE_FRAMES: frozenset[str] = frozenset({FrameType.MARQUEE_HORIZONTAL})
 #   11px 700 with no other typography. Saving ~55KB per marquee artifact.
 # - ICON / DIVIDER: not in dict — zero fonts. Glyph-only rendering, no <text>
 #   elements.
+_BRUTALIST_FONTS: frozenset[str] = frozenset(
+    {"jetbrains-mono", "orbitron", "chakra-petch", "barlow-condensed-700", "barlow-condensed-900"}
+)
+_CHART_FONTS: frozenset[str] = frozenset({"jetbrains-mono", "orbitron", "barlow-condensed-700", "barlow-condensed-900"})
+_TELEMETRY_FONTS: frozenset[str] = frozenset({"jetbrains-mono", "orbitron", "chakra-petch"})
+
 _NEEDS_FONTS: dict[str, frozenset[str]] = {
-    FrameType.BADGE: frozenset({"jetbrains-mono", "orbitron", "chakra-petch"}),
-    FrameType.STRIP: frozenset({"jetbrains-mono", "orbitron", "chakra-petch"}),
-    FrameType.STATS: frozenset({"jetbrains-mono", "orbitron", "chakra-petch"}),
-    FrameType.CHART: frozenset({"jetbrains-mono", "orbitron"}),
+    FrameType.BADGE: _BRUTALIST_FONTS,
+    FrameType.STRIP: _BRUTALIST_FONTS,
+    FrameType.STATS: _BRUTALIST_FONTS,
+    FrameType.CHART: _CHART_FONTS,
     FrameType.MARQUEE_HORIZONTAL: frozenset({"orbitron"}),
-    FrameType.RECEIPT: frozenset({"jetbrains-mono", "orbitron", "chakra-petch"}),
-    FrameType.RHYTHM_STRIP: frozenset({"jetbrains-mono", "orbitron", "chakra-petch"}),
-    FrameType.MASTER_CARD: frozenset({"jetbrains-mono", "orbitron", "chakra-petch"}),
-    FrameType.CATALOG: frozenset({"jetbrains-mono", "orbitron", "chakra-petch"}),
+    FrameType.RECEIPT: _TELEMETRY_FONTS,
+    FrameType.RHYTHM_STRIP: _TELEMETRY_FONTS,
+    FrameType.MASTER_CARD: _TELEMETRY_FONTS,
+    FrameType.CATALOG: _TELEMETRY_FONTS,
 }
 
 
@@ -108,6 +114,18 @@ _CORE_CSS_MAPPING: list[tuple[str, str]] = [
     # Borders
     ("stroke", "--dna-border"),
     ("border_tint", "--dna-border-tint"),
+    ("stroke_opacity", "--dna-stroke-opacity"),
+    # Seam (brutalist light-scholar INK-SEAM-INK middle bar; brutalist strip
+    # seam accent)
+    ("seam_color", "--dna-seam-color"),
+    # Brand panel inset fill (brutalist strip — dark variant brand panel
+    # solid tone; light variants use panel_gradient_stops + url(#panel) instead).
+    ("brand_panel_fill", "--dna-brand-panel-fill"),
+    # Chart title-zone background tone — per-variant tinted-paper hex captured
+    # from the v0.3.2 brutalist light chart prototype. Pulse #ECDBC0
+    # warm cream, depth #DFE3EB cool gray-blue, signal #DAE0D4 cool sage, etc.
+    # Defaults to surface-deep when a variant doesn't declare its own.
+    ("chart_title_bg", "--dna-chart-title-bg"),
     # Shadow / Glow
     ("shadow_color", "--dna-shadow-color"),
     ("shadow_opacity", "--dna-shadow-opacity"),
@@ -181,22 +199,32 @@ _FONT_CSS_MAPPING: list[tuple[str, str]] = [
     ("font_mono", "--dna-font-mono"),
 ]
 
-# Flat lookup spanning every (genome_field → css_var) pair we know how to emit.
-# Used by compute_variant_inline_style() to translate sparse override dicts into
-# CSS declarations. Conflicts (e.g. accent_signal appears in stateful, marquee,
-# telemetry) collapse to the first occurrence — they all map to the same --dna-*
-# property anyway, so the duplication is benign.
-_ALL_CSS_MAPPING: dict[str, str] = {
-    field: prop
-    for mapping in (
-        _CORE_CSS_MAPPING,
-        _STATEFUL_CSS_MAPPING,
-        _MARQUEE_CSS_MAPPING,
-        _TELEMETRY_CSS_MAPPING,
-        _FONT_CSS_MAPPING,
-    )
-    for field, prop in mapping
-}
+# Multi-target lookup: one genome field may emit MULTIPLE --dna-* CSS vars
+# because the four mappings (core/stateful/marquee/telemetry) name the same
+# concept differently across frame types. For example, `ink_secondary` maps
+# to --dna-ink-muted in core (stats/chart/icon) AND --dna-ink-secondary in
+# marquee. Similarly `label_text` maps to --dna-label-text (stateful) AND
+# --dna-ink-ghost (telemetry). Without multi-target emission, a variant
+# override on ink_secondary would only update ONE of those vars — leaving
+# stats CSS classes that reference --dna-ink-muted reading the base
+# genome's emerald instead of the variant's accent-light.
+#
+# `_ALL_CSS_MAPPING_KEYS` is the set of fields that have ANY mapping; used
+# to detect which override entries are chromatic vs structural (e.g.
+# substrate_kind / panel_gradient_stops have no CSS var representation).
+_ALL_CSS_MAPPING: dict[str, list[str]] = {}
+for _mapping in (
+    _CORE_CSS_MAPPING,
+    _STATEFUL_CSS_MAPPING,
+    _MARQUEE_CSS_MAPPING,
+    _TELEMETRY_CSS_MAPPING,
+    _FONT_CSS_MAPPING,
+):
+    for _field, _prop in _mapping:
+        if _field not in _ALL_CSS_MAPPING:
+            _ALL_CSS_MAPPING[_field] = []
+        if _prop not in _ALL_CSS_MAPPING[_field]:
+            _ALL_CSS_MAPPING[_field].append(_prop)
 
 
 def compute_variant_inline_style(genome: dict[str, Any], resolved_variant: str) -> str:
@@ -228,11 +256,15 @@ def compute_variant_inline_style(genome: dict[str, Any], resolved_variant: str) 
 
     declarations: list[str] = []
     for field, value in overrides.items():
-        prop = _ALL_CSS_MAPPING.get(field)
-        if prop is None or not value:
+        props = _ALL_CSS_MAPPING.get(field)
+        if not props or not value:
             continue
         safe = str(value).replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-        declarations.append(f"{prop}:{safe};")
+        # Emit one declaration per target CSS var. Fields with multiple
+        # targets (ink_secondary, label_text) fan out so every consumer
+        # reads the variant's override instead of the base genome value.
+        for prop in props:
+            declarations.append(f"{prop}:{safe};")
     return " ".join(declarations)
 
 

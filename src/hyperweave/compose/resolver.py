@@ -872,6 +872,47 @@ def resolve_strip(
         ctx["status_shape_rendering"] = "crispEdges"
     # Profile visual context now injected centrally by the dispatcher.
 
+    # v0.3.2 Phase C brutalist strip grammar — owns_strip flag + geometry
+    # plumbing. When the paradigm declares owns_strip=true (brutalist v0.3.2),
+    # the parent strip.svg.j2 wraps its shared zone pipeline in
+    # ``{% if not paradigm_owns_strip %}`` and the paradigm content-partial
+    # renders brand panel + triple divider + ornament + metric cells + bookend
+    # itself. The geometry fields below feed that partial. Unconditional
+    # assignment guarantees StrictUndefined never trips on chrome / cellular /
+    # default paradigms (which leave owns_strip at the schema default of False).
+    paradigm_owns_strip = bool(strip_cfg and strip_cfg.owns_strip)
+    ctx["paradigm_owns_strip"] = paradigm_owns_strip
+    if paradigm_owns_strip and strip_cfg is not None:
+        ctx["brand_panel_x"] = strip_cfg.brand_panel_x
+        ctx["brand_panel_w"] = strip_cfg.brand_panel_width
+        ctx["triple_divider_x"] = strip_cfg.triple_divider_x
+        ctx["triple_divider_bar_w"] = strip_cfg.triple_divider_bar_width
+        ctx["triple_divider_void_w"] = strip_cfg.triple_divider_void_width
+        ctx["ornament_x"] = strip_cfg.ornament_x
+        ctx["ornament_y"] = strip_cfg.ornament_y
+        ctx["ornament_size"] = strip_cfg.ornament_size
+        ctx["ornament_inner_inset"] = strip_cfg.ornament_inner_inset
+        ctx["bookend_x"] = strip_cfg.bookend_x
+        ctx["identity_text_x"] = strip_cfg.identity_text_x
+        ctx["identity_text_y"] = strip_cfg.identity_text_y
+        ctx["metric_label_y"] = strip_cfg.metric_label_y
+        ctx["metric_value_y"] = strip_cfg.metric_value_y
+        # Strip width override: 560x52 fixed canvas per prototype.
+        # Overrides the adaptive (first_divider + cells + status) sum so the
+        # bookend ornament at x=520 always has consistent space.
+        strip_canvas_w = strip_cfg.strip_width
+        if strip_canvas_w > 0:
+            width = strip_canvas_w
+        # Brand panel fill (dark variants) / panel gradient stops (light variants)
+        # already merged onto the genome dict by the resolver; expose directly
+        # so the content partials can paint the panel without re-reading genome.
+        ctx["brand_panel_fill"] = genome.get("brand_panel_fill", "")
+        # Brand divider override — brutalist strip grammar uses fixed 170px
+        # regardless of identity text width (brand panel + triple divider is
+        # the seam).
+        if strip_cfg.brand_divider_x > 0:
+            ctx["first_divider_x"] = strip_cfg.brand_divider_x
+
     return {
         "width": width,
         "height": height,
@@ -2834,7 +2875,17 @@ def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) ->
         "chrome_text_gradient": genome.get("chrome_text_gradient", []),
         "hero_text_gradient": genome.get("hero_text_gradient", []),
         "chrome_rhythm": genome.get("rhythm_base", ""),
-        "glyph_fill": genome.get("glyph_inner", ""),
+        # v0.3.2 Phase 4: substrate-aware glyph fill. Light scholar prototypes
+        # (the v0.3.2 brutalist light scholar prototype:109) fill the provider glyph with the
+        # variant's panel/ink color so it reads as dark-ink-on-paper, not
+        # accent-on-paper. Accent on paper is too low-contrast (cyan on cream
+        # nearly disappears). Dark variants keep glyph_inner (accent color)
+        # which renders as accent-on-dark — the current visible behavior.
+        "glyph_fill": (
+            genome.get("ink", genome.get("ink_primary", genome.get("glyph_inner", "")))
+            if genome.get("substrate_kind") == "light"
+            else genome.get("glyph_inner", "")
+        ),
         "light_mode": genome.get("light_mode"),
         # Cellular paradigm palette/pulse config. The 22 flat variant_blue_*/
         # variant_purple_*/variant_bifamily_bridge_* fields previously surfaced

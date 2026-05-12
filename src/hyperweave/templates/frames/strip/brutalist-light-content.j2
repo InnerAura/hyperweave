@@ -1,0 +1,119 @@
+{# Brutalist strip — LIGHT substrate brutalist strip grammar (v0.3.2 Phase C).
+   Mirror of brutalist-dark-content.j2 with substrate inversion via CSS vars:
+   paper canvas + dark gradient panel + INK-SEAM-INK triple divider + dark
+   ink on paper for metric values + gold seam color for accents.
+
+   Same coordinate vocabulary as dark (geometry shared via paradigm YAML);
+   only the fill routing differs. Polarity flip enables the scholar manuscript
+   aesthetic while preserving exact layout-engine + parent-template contract. #}
+<g clip-path="url(#{{ uid }}-clip)">
+  {# (1) Paper substrate. surface_0 resolves to paper hex per variant override. #}
+  <rect width="{{ width }}" height="{{ strip_h }}" fill="var(--dna-surface)"/>
+
+  {# (2) Perimeter — lower opacity for paper visibility (dark ink at 0.15
+     reads correctly on cream/white without dominating the rule). #}
+  <rect x="0.5" y="0.5" width="{{ width - 1 }}" height="{{ strip_h - 1 }}"
+        fill="none" stroke="var(--dna-signal)" stroke-width="1" opacity="0.15"/>
+
+  {# (3) Left accent rail — same 6px width as dark, accent color from variant. #}
+  <rect width="{{ accent_w }}" height="{{ strip_h }}" fill="var(--dna-signal)"/>
+
+  {# (4) Dark gradient brand panel — uses panel_gradient_stops defined per
+     light variant. The gradient defs in brutalist-defs.j2 emits the
+     {{ uid }}-panel linearGradient gated on the same presence check. #}
+  <rect x="{{ brand_panel_x }}" y="0"
+        width="{{ brand_panel_w }}" height="{{ strip_h }}"
+        fill="url(#{{ uid }}-panel)"/>
+
+  {# (5) INK-SEAM-INK triple divider — substrate inversion of ACCENT-VOID-ACCENT:
+     outer bars use --dna-ink-primary (dark ink) at full opacity, center seam
+     uses --dna-seam-color (gold / amber / cyan per variant). The brutalist scholar
+     manuscript convention reads as ink-rule-with-gold-vein. #}
+  <rect x="{{ triple_divider_x }}" y="0"
+        width="{{ triple_divider_bar_w }}" height="{{ strip_h }}"
+        fill="var(--dna-ink-primary)"/>
+  <rect x="{{ triple_divider_x + triple_divider_bar_w }}" y="0"
+        width="{{ triple_divider_void_w }}" height="{{ strip_h }}"
+        fill="var(--dna-seam-color)"/>
+  <rect x="{{ triple_divider_x + triple_divider_bar_w + triple_divider_void_w }}" y="0"
+        width="{{ triple_divider_bar_w }}" height="{{ strip_h }}"
+        fill="var(--dna-ink-primary)"/>
+
+  {# (6) Identity glyph slot — same pattern as dark partial. When glyph_path
+     is supplied, the glyph renders in the brand panel; otherwise the
+     accent-outer + dark-panel-inner ornament fallback renders. Glyph fill
+     uses --dna-signal (accent) for visibility on the dark brand panel. #}
+  {% if glyph_path %}
+  <g data-hw-zone="brand-glyph" transform="translate({{ ornament_x }},{{ ornament_y }})">
+    <svg viewBox="{{ glyph_viewbox }}" width="{{ ornament_size }}" height="{{ ornament_size }}">
+      <path d="{{ glyph_path }}" fill="var(--dna-signal)"/>
+    </svg>
+  </g>
+  {% else %}
+  <rect x="{{ ornament_x }}" y="{{ ornament_y }}"
+        width="{{ ornament_size }}" height="{{ ornament_size }}"
+        fill="var(--dna-signal)"/>
+  <rect x="{{ ornament_x + ornament_inner_inset }}"
+        y="{{ ornament_y + ornament_inner_inset }}"
+        width="{{ ornament_size - 2 * ornament_inner_inset }}"
+        height="{{ ornament_size - 2 * ornament_inner_inset }}"
+        fill="var(--dna-bg)"/>
+  {% endif %}
+
+  {# (7) HYPERWEAVE identity text — paper-color (brand_text = surface_0 for
+     light variants) for visibility on the dark gradient panel. #}
+  <text data-hw-zone="identity"
+        x="{{ identity_text_x }}" y="{{ identity_text_y }}"
+        class="{{ uid }}-brand-text">{{ identity | upper }}</text>
+
+  {# (8) Metric cells — dark ink values on paper substrate. Inter-cell
+     divider uses --dna-ink-primary at 0.08 opacity (slightly lower than
+     dark's 0.10 because dark ink on paper has higher luminance contrast
+     at the same opacity). #}
+  {% set _ns = namespace(cx=first_divider_x) %}
+  {% for metric in metrics %}
+    {% set _layout = cell_layouts[loop.index0] %}
+    {% if not loop.first %}
+    <line x1="{{ _ns.cx }}" y1="2" x2="{{ _ns.cx }}" y2="{{ strip_h - 2 }}"
+          stroke="var(--dna-ink-primary)" stroke-width="0.5" opacity="0.08"/>
+    {% endif %}
+    <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ _ns.cx }},0)">
+      <text x="{{ _layout.label_x }}" y="{{ metric_label_y }}"
+            text-anchor="{{ _layout.text_anchor }}"
+            class="{{ uid }}-metric-label">{{ metric.label | upper }}</text>
+      <text x="{{ _layout.value_x }}" y="{{ metric_value_y }}"
+            text-anchor="{{ _layout.text_anchor }}"
+            class="{{ uid }}-metric-value">{{ metric.value }}</text>
+    </g>
+    {% set _ns.cx = _ns.cx + _layout.cell_w %}
+  {% endfor %}
+
+  {# (9) Bookend ornament — accent outer + ink-primary cutout (substrate
+     inversion of dark's accent + surface cutout). Reads as an inked
+     ornament block on paper. #}
+  {# Bookend OR status indicator — single endpoint marker at bookend_x.
+     Stateless strips render bookend; stateful strips replace it with the
+     status diamond (rendered outside this clip group). Never both — prior
+     v0.3.2 attempt double-rendered visibly. #}
+  {% if not show_status_indicator %}
+  <g transform="translate({{ bookend_x }},{{ strip_h // 2 }})">
+    <rect x="{{ -(ornament_size // 2) }}" y="{{ -(ornament_size // 2) }}"
+          width="{{ ornament_size }}" height="{{ ornament_size }}"
+          fill="var(--dna-signal)"/>
+    <rect x="{{ -(ornament_size // 2) + ornament_inner_inset }}"
+          y="{{ -(ornament_size // 2) + ornament_inner_inset }}"
+          width="{{ ornament_size - 2 * ornament_inner_inset }}"
+          height="{{ ornament_size - 2 * ornament_inner_inset }}"
+          fill="var(--dna-ink-primary)"/>
+  </g>
+  {% endif %}
+</g>
+
+{# (10) Status indicator at bookend_x (replaces decorative bookend on stateful
+   strips). Same posture as dark; reuses brutalist-status.j2 partial. #}
+{% if show_status_indicator %}
+<g data-hw-zone="status" transform="translate({{ bookend_x }},{{ strip_h // 2 }})"
+   {% if status_shape_rendering != "geometricPrecision" %}shape-rendering="{{ status_shape_rendering }}"{% endif %}>
+{% include "frames/strip/brutalist-status.j2" %}
+</g>
+{% endif %}

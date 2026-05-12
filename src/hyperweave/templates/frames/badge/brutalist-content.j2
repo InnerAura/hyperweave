@@ -1,54 +1,13 @@
-{# Brutalist badge content: two-panel layout, sharp separator, square status indicator.
-   v0.2.25: right_panel_x / right_panel_w / inner_bit_* sourced from compose/layout.py
-   (resolver supplies them — Invariant 6, no template-side arithmetic). #}
+{# Brutalist BADGE paradigm DISPATCHER (v0.3.2 substrate split).
 
-<g clip-path="url(#{{ uid }}-clip)">
-  <rect width="{{ lp_w }}" height="{{ h }}" fill="var(--dna-surface)"/>
-  <rect x="{{ right_panel_x - 1 }}" width="{{ right_panel_w + 1 }}" height="{{ h }}" fill="var(--dna-surface-deep)"/>
-</g>
-<rect x=".5" y=".5" width="{{ width - 1 }}" height="{{ h - 1 }}" fill="none" stroke="var(--dna-ink-primary)" stroke-opacity="0.06"/>
-<rect x="0" y="0" width="{{ accent_w }}" height="{{ h }}" fill="var(--dna-signal)" data-hw-zone="accent-bar"/>
-<rect x="{{ lp_w }}" y="0" width="{{ sep_w_val }}" height="{{ h }}" fill="var(--hw-state-sep, var(--dna-signal))"/>
-{% if seam_w_val > 0 %}
-<rect x="{{ lp_w + sep_w_val }}" y="0" width="{{ seam_w_val }}" height="{{ h }}" fill="var(--dna-seam-gap, var(--dna-surface-deep))"/>
-{% endif %}
+   Includes the substrate-specific content partial based on resolved
+   `substrate_kind` (sourced from genome variant override; see
+   compose/context.py). substrate_kind defaults to "dark" so genomes
+   without variant overrides (chrome, automata, telemetry-*) continue
+   rendering through the dark path with no behavior change. Light
+   variants (pulse, archive, depth, signal, afterimage, primer) opt in
+   via their variant_overrides declaration of substrate_kind="light".
 
-{# Glyph #}
-{% if has_glyph and glyph_svg %}
-<g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y }})">
-  {{ glyph_svg | safe }}
-</g>
-{% endif %}
-
-{# Label #}
-<text data-hw-zone="label"
-      x="{{ label_x }}" y="{{ text_y }}"
-      text-anchor="middle"
-      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
-      font-size="11" font-weight="600"
-      fill="var(--dna-label-text)"
-      letter-spacing="0.06em">{{ label_display | default(label | upper) }}</text>
-
-{# Value #}
-<text data-hw-zone="value"
-      x="{{ value_x }}" y="{{ text_y }}"
-      text-anchor="middle"
-      font-family="var(--dna-font-mono, 'SF Mono', monospace)"
-      font-size="11" font-weight="700"
-      fill="var(--hw-state-value, var(--dna-brand-text))">{{ value }}</text>
-
-{# Status indicator — gated on resolver-supplied show_indicator (mode-driven).
-   Brutalist anchors the indicator at the badge frame's vertical center
-   (geometric, not text-baseline-pinned like cellular/chrome). #}
-{% if show_indicator %}
-{% set ind_y = (h - ind_size) // 2 %}
-<g data-hw-zone="status" transform="translate({{ indicator_x }},{{ ind_y }})">
-  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="1.2" width="{{ ind_size }}" height="{{ ind_size }}"/>
-  <rect class="hw-logic-bit" x="{{ inner_bit_offset }}" y="{{ inner_bit_offset }}" width="{{ inner_bit_w }}" height="{{ inner_bit_w }}"
-        fill="var(--dna-status-color, var(--dna-signal))"/>
-</g>
-{% endif %}
-
-{# No state tint overlay: brutalist paradigm keeps the value zone flat --dna-surface-deep
-   across all states. State color flows via text fill, separator bar, and status cube only —
-   "truth to materials" — no decorative background wash. #}
+   Polymorphism via slug interpolation per Invariant 12; no `if
+   substrate_kind == "..."` conditionals here or in Python. #}
+{% include "frames/badge/brutalist-" ~ (substrate_kind | default('dark')) ~ "-content.j2" %}

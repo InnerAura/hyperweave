@@ -1,0 +1,275 @@
+# HyperWeave per-frame reasoning — brutalist genome.
+#
+# Each frame_type × substrate_kind pair declares (intent, approach, tradeoffs).
+# Loaded by hyperweave/data/reasoning/__init__.py:load_reasoning() at compose
+# time, wired into context.py as reasoning_intent / reasoning_approach /
+# reasoning_tradeoffs, emitted into the SVG <metadata> hw:reasoning block.
+#
+# Quality bar (v0.3.2 LOCKED):
+#   - Every string must contain ≥1 spatial measurement (px, %, units).
+#   - Every string must contain ≥1 geometric decision (named composition).
+#   - Every string must contain ≥1 explicit tradeoff (chose X over Y because Z).
+#   - tradeoffs field min_length=21 enforced by core.models.ReasoningFields.
+#
+# Phenomenology of variant names (oxide/afterimage/primer/...) lives in
+# brutalist.json variant_phenomenology — NOT here. Reasoning is per-frame
+# spatial intent, not per-variant naming philosophy.
+
+brutalist:
+  badge:
+    dark:
+      intent: |-
+        CI/CD status indicator as industrial label — 158×20px frame, 4px
+        glyph bar establishes identity at left edge, label and value sit at
+        opposite anchors of the 73-unit panel split so glance-readability
+        works at thumbnail scale.
+      approach: |-
+        Two-panel substrate (light surface left, deep surface right)
+        with single-rule separator and 0.06 stroke-opacity perimeter.
+        JetBrains Mono at 11px/600 for label / 11px/700 for value —
+        no font-size hierarchy because the panel split IS the hierarchy.
+      tradeoffs: |-
+        Chose flat two-zone over chrome's envelope gradient because
+        brutalist earns recognition through material discipline, not
+        specular reflection. Status indicator (14px square) over chrome's
+        14px diamond because the right angle is brutalist's signature.
+    light:
+      intent: |-
+        Same status-indicator role rendered as printed manuscript margin
+        rule — 158×20px frame with 4px dark ink bar at left replaces the
+        accent glyph bar, paper substrate hosts dark text at higher
+        stroke-opacity (0.20) to maintain readable perimeter on cream/white.
+      approach: |-
+        Paper canvas + dark ink polarity inversion via CSS-var swap
+        (surface_0 → paper, ink → dark, accent → seam-color). 6px ink
+        bar in v0.3.3 codex polish; v0.3.2 ships 4px parity with dark
+        substrate while substrate-aware stroke_opacity raises perimeter
+        visibility to AA contrast on light fields.
+      tradeoffs: |-
+        Substrate inversion alone for v0.3.2 — full INK-SEAM-INK triple
+        divider (3px ink + 2px seam + 3px ink) deferred to v0.3.3.
+        Kept geometric parity with dark to avoid layout-engine fork;
+        chose CSS-var inversion over template-level brutalist strip grammar.
+
+  strip:
+    dark:
+      intent: |-
+        Repo telemetry strip as instrument panel — 560×52px frame fits
+        3 metric cells at ~106px pitch with identity zone left and status
+        indicator right. Numbers are the heroes; identity is annotation.
+      approach: |-
+        Flat plate gradient (--dna-surface→--dna-surface-deep) with 6px
+        accent bar at left edge and 2px border-tint perimeter. Metric
+        cells get class-based dividers at 1px width. Inter 18px/900 for
+        values, JetBrains Mono 7px/700 for labels — display vs body split.
+      tradeoffs: |-
+        Single-stroke dividers over ACCENT-VOID-ACCENT three-rect grammar
+        because v0.3.2 strip is substrate-only; full brutalist strip grammar
+        ships in v0.3.3 when parent strip.svg.j2 gains the
+        show_brand_glyph_box / divider_grammar / show_ornament_bookend
+        context flags.
+    light:
+      intent: |-
+        Repo telemetry rendered as letterpress label strip — same 560×52
+        instrument panel role but paper substrate flips text/bar polarity.
+        Codex aesthetic without sacrificing scan-readability at small sizes.
+      approach: |-
+        Paper canvas with 6px dark ink bar at left edge (replaces accent
+        bar of dark variant). Border-tint perimeter raised to 0.20 opacity
+        for substrate visibility. Metric typography unchanged from dark
+        to preserve information density and resolver layout invariants.
+      tradeoffs: |-
+        Same composition as dark for v0.3.2 — chose substrate inversion
+        over full brutalist strip grammar (bordered identity glyph box +
+        ornament bookend + Barlow Condensed serif numerals) because those
+        require parent-template refactor. Light strip ships with reliable
+        telemetry now; full polish lands in v0.3.3.
+
+  stats:
+    dark:
+      intent: |-
+        GitHub profile as industrial instrument panel — hero metric at
+        42px occupies 35% of vertical space, 2×2 metric grid below at 11px
+        labels with end-anchored values. Activity histogram at y=200-260
+        hosts 52 weekly bars at 7px wide on 9px stride.
+      approach: |-
+        495×280 flat slab with 2.5px structural borders at y=32/108/200/260
+        and vertical rule at x=248 partitioning the 2×2 metric grid.
+        JetBrains Mono throughout: 42px/800 hero, 11px/800 labels, 11px/400
+        values, 9px LIFETIME annotation, 8px footer brand. STREAK metric
+        replaces REVIEWS because consecutive-day commit streaks decay if
+        unmaintained — STREAK rewards habit, REVIEWS rewards activity.
+      tradeoffs: |-
+        Chose monospace-only hierarchy over Barlow Condensed display
+        upgrade (queued for v0.3.3 polish) because the 42px JetBrains
+        Mono hero already establishes scale hierarchy without the
+        font-embedding cost. No language strip (252-264 zone)
+        in v0.3.2 — that 12px band requires resolver-side per-repo
+        language extraction that lands with the codex polish session.
+    light:
+      intent: |-
+        GitHub profile as academic manuscript page — paper substrate
+        with 6px dark ink bar at left and dark text throughout, evoking
+        printed data tables. Same 495×280 frame with same 2×2 metric
+        grid and 52-week activity histogram but inverted contrast polarity.
+      approach: |-
+        Paper canvas (--dna-surface from variant override) hosts dark
+        ink structural rules at 2px width with 0.5 opacity. Activity
+        histogram bars use seam_color (variant accent — gold/cyan/teal)
+        at 0.65 opacity for the data-as-texture effect on cream paper.
+        Perimeter stroke at 0.20 opacity for substrate visibility.
+      tradeoffs: |-
+        Chose CSS-var substrate inversion over the prototype's full codex
+        grammar (dark academic panel inset right + INK-SEAM-INK divider
+        between paper and panel + 68px Barlow Condensed hero) because
+        v0.3.2 ships substrate switching reliably across all 6 light
+        variants; codex polish lands in v0.3.3 once Barlow Condensed is
+        embedded in the font registry.
+
+  chart:
+    dark:
+      intent: |-
+        Star history visualization as engineering instrument — 900×500
+        frame with 760×245 plot viewport at x=80, y=150. Polyline shows
+        cumulative star count, crosshair markers anchor data points,
+        nested-square milestones flag 1K/2K/etc. thresholds.
+      approach: |-
+        Three-zone vertical split (header y=0-46, title y=46-140, plot
+        y=140-440) bounded by 2.5px structural rules at 0.55 opacity.
+        Y-axis rail and baseline at 2px/0.5 opacity. Polyline three-layer
+        effect: 4px ghost at 0.15 opacity, 3.5px main, 1.5px bright-core
+        highlight — establishes depth without gradient fills.
+      tradeoffs: |-
+        Chose nested-square milestones (signal outer / surface middle /
+        accent inner) over chrome's diamond housing because brutalist
+        geometry insists on right angles. No area fill beneath polyline
+        (would compete with structural rules); milestone label fonts
+        unchanged from header treatment to preserve typographic discipline.
+    light:
+      intent: |-
+        Star history as scholar's annotated chart — paper substrate
+        replaces dark slab, dark ink axes at 0.4 opacity establish plot
+        bounds without competing with the polyline data. Same 900×500
+        frame and 760×245 viewport as dark for layout-engine parity.
+      approach: |-
+        Paper canvas with 6px dark ink bar at left edge. Structural
+        rules at 2px/0.45 opacity in ink_primary instead of accent.
+        Status dot in footer uses seam_color (variant accent) for the
+        only chromatic spark on the page. Milestone markers use seam
+        color for outer rim, paper inside, dark text — inverted from
+        dark's signal-outer/accent-inner polarity.
+      tradeoffs: |-
+        Same viewport geometry as dark for v0.3.2 — chose CSS-var
+        inversion over dedicated dark plot panel inset (the prototype's
+        elevated-panel-on-paper composition) because that requires new
+        gradient defs and resolver-side panel positioning. Light chart
+        ships with reliable polarity inversion now.
+
+  marquee-horizontal:
+    dark:
+      intent: |-
+        Project CTA scroll band — 720×32px viewport with horizontal
+        scroll animation. Mono-only typography at 12px/800 with 0.28em
+        tracking establishes the brutalist voice; 6×6 square separators
+        between items maintain right-angle discipline at small scale.
+      approach: |-
+        Flat substrate (--dna-surface) with 4px emerald accent bar at
+        left edge clipped from the scroll-track viewport. Items rotate
+        through [ink, info, ink, info...] colors per position — the
+        two-stop chromatic hierarchy (substrate vs info stops) the
+        compositor codified into a structural rule.
+      tradeoffs: |-
+        Chose 6×6 square separator over chrome-style envelope gradient
+        bullets because brutalism's K-override forbids physics-inspired
+        glyphs; the square is hardware-style hard punctuation. No corner
+        radius on scroll-track clip (rx=0) — sharp corners are inviolate
+        in the K-override even at marquee scale.
+    light:
+      intent: |-
+        Project CTA on paper substrate — same 720×32 marquee role with
+        dark text scrolling against cream/white background. Reads as
+        printed ticker tape rather than hardware bezel; identity stays
+        instrumental but material register flips.
+      approach: |-
+        Paper canvas via CSS-var substrate inversion (surface_0 → paper,
+        ink → dark, accent → seam). 4px ink bar at left edge replaces
+        accent bar. Separator squares rendered in seam_color for the
+        only chromatic spark on the strip.
+      tradeoffs: |-
+        Chose CSS-var inversion over dedicated light-substrate marquee
+        template because the marquee has no brutalist strip grammar
+        upgrade in the prototypes — it's color-only delta. Same scroll
+        mechanics,
+        same separator geometry, same letterform tracking.
+
+  icon:
+    dark:
+      intent: |-
+        Brand glyph render at 4 standard sizes (32/64/96/128) — single
+        glyph centered in zero-radius square frame, accent bar at left
+        edge establishes brutalist identity. Square-only shape because
+        circle violates the right-angle K-override.
+      approach: |-
+        Flat substrate with 6×6px accent corner ornament and centered
+        glyph at 24px viewBox scaled to fit. No glow, no drop-shadow —
+        the material is matte. Filter chain = none. Single 2px border-tint
+        perimeter at 0.4 opacity provides edge definition without competing
+        with glyph silhouette.
+      tradeoffs: |-
+        Chose square-only over chrome's binary-opposition (circle+square)
+        because brutalism is mono-shape — the circle would dilute the
+        right-angle commitment. No envelope gradient on icon well because
+        chrome owns the metallic well aesthetic; brutalist earns presence
+        through flatness.
+    light:
+      intent: |-
+        Same brand glyph rendered as printed bookplate — paper substrate
+        hosts dark glyph silhouette. Same 4 standard sizes preserve the
+        icon's slot-role contract; substrate inversion is the only delta.
+      approach: |-
+        Paper canvas with dark glyph fill via CSS-var inversion. 6×6
+        accent corner ornament uses seam_color (variant accent — gold/
+        cyan/etc.) for chromatic identity. Perimeter at 0.20 opacity
+        for paper-substrate visibility.
+      tradeoffs: |-
+        CSS-var inversion only for v0.3.2 — no dedicated codex glyph
+        treatment. Chose to preserve glyph geometry exactly (no rim
+        stroke, no inverted negative space) because the brand glyph
+        IS the identity, not the frame around it.
+
+  divider:
+    dark:
+      intent: |-
+        Genome-themed horizontal rule between document sections —
+        720×40 substrate with brutalist seam variant (5 specimen-faithful
+        named variants: block / current / takeoff / void / zeropoint
+        plus brutalist's local seam). Each variant is a specific composition,
+        not a wireframe template.
+      approach: |-
+        Substrate paint via --dna-surface with 4px accent bar at left
+        edge matching badge/strip convention. Specific variant rendering
+        comes from frames/dividers/{slug}.svg.j2 — the dividers list in
+        brutalist.json gates which slugs the genome accepts. Brutalist
+        ships only "seam" today; future variants extend the list.
+      tradeoffs: |-
+        Chose genome-specific divider naming (brutalist=seam, chrome=band,
+        automata=dissolve) over universal editorial generics because
+        each genome's structural language defines its own seam. Editorial
+        generics live at /a/inneraura/, genome divs live at /v1/divider/.
+    light:
+      intent: |-
+        Same divider role on paper substrate — 720×40 frame hosts
+        dark ink rule on cream/white. Identity bar at left is 4px dark
+        ink instead of accent color; the colored signal moves to the
+        seam_color usage in specific variant compositions.
+      approach: |-
+        Paper canvas via CSS-var substrate inversion. 4px dark ink bar
+        replaces accent bar. Perimeter (if present) at 0.20 opacity.
+        Variant-specific rendering (seam composition) consumes seam_color
+        for chromatic emphasis on the otherwise monochrome paper.
+      tradeoffs: |-
+        Chose CSS-var substrate inversion over a dedicated light-divider
+        whitelist because the prototypes show no new divider grammar
+        (only material polarity flips). Kept dividers=["seam"] identical
+        to dark — substrate-specific divider variants would force a
+        validator extension for marginal visual gain on a 40px-tall frame.

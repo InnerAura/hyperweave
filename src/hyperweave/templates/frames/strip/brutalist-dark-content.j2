@@ -1,0 +1,129 @@
+{# Brutalist strip — DARK substrate brutalist strip grammar (v0.3.2 Phase C).
+   Renders the FULL strip composition: substrate, perimeter, accent rail,
+   brand panel (inset tone), ACCENT-VOID-ACCENT triple divider, identity
+   ornament, HYPERWEAVE brand text, metric cells, bookend ornament, status
+   indicator. The parent strip.svg.j2 wraps its shared zone pipeline in
+   {% if not paradigm_owns_strip %} and skips it for brutalist; this partial
+   owns every pixel of the strip body. Border motion overlay still runs from
+   the parent after this block — it shares the {{ uid }}-clip clip path the
+   <g> below defines.
+
+   Geometry constants (brand_panel_x, triple_divider_x, ornament_x, etc.)
+   come from data/paradigms/brutalist.yaml via ParadigmStripConfig and are
+   plumbed through compose/resolver.py:resolve_strip into context. No
+   template-side arithmetic per CLAUDE.md "compose owns geometry, template
+   renders". #}
+<g clip-path="url(#{{ uid }}-clip)">
+  {# (1) Void substrate — full canvas. #}
+  <rect width="{{ width }}" height="{{ strip_h }}" fill="var(--dna-surface)"/>
+
+  {# (1b) Grain texture overlay — barely-visible darkening filter that
+     gives the dark substrate material depth. Matches prototype line 68
+     (the v0.3.2 brutalist strip prototype celadon panel). #}
+  <rect width="{{ width }}" height="{{ strip_h }}" filter="url(#{{ uid }}-grain)"/>
+
+  {# (2) Perimeter hairline border — accent at 0.20 opacity for definition. #}
+  <rect x="0.5" y="0.5" width="{{ width - 1 }}" height="{{ strip_h - 1 }}"
+        fill="none" stroke="var(--dna-signal)" stroke-width="1" opacity="0.20"/>
+
+  {# (3) Left accent rail — 6px solid accent (signature brutalist identity bar). #}
+  <rect width="{{ accent_w }}" height="{{ strip_h }}" fill="var(--dna-signal)"/>
+
+  {# (4) Brand panel — elevated inset tone. brand_panel_fill declared per dark
+     variant in genome JSON; plumbed via assembler CSS mapping. #}
+  <rect x="{{ brand_panel_x }}" y="0"
+        width="{{ brand_panel_w }}" height="{{ strip_h }}"
+        fill="var(--dna-brand-panel-fill)"/>
+
+  {# (5) ACCENT-VOID-ACCENT triple divider at brand-panel-right seam.
+     Outer bars use --dna-signal at 0.7 opacity (structural-not-shouty);
+     center void uses --dna-surface (the void color). #}
+  <rect x="{{ triple_divider_x }}" y="0"
+        width="{{ triple_divider_bar_w }}" height="{{ strip_h }}"
+        fill="var(--dna-signal)" opacity="0.7"/>
+  <rect x="{{ triple_divider_x + triple_divider_bar_w }}" y="0"
+        width="{{ triple_divider_void_w }}" height="{{ strip_h }}"
+        fill="var(--dna-surface)"/>
+  <rect x="{{ triple_divider_x + triple_divider_bar_w + triple_divider_void_w }}" y="0"
+        width="{{ triple_divider_bar_w }}" height="{{ strip_h }}"
+        fill="var(--dna-signal)" opacity="0.7"/>
+
+  {# (6) Identity glyph slot — when glyph_path is supplied (e.g.
+     ?glyph=github), the glyph renders at the ornament position scaled
+     to ornament_size, filled with the variant's accent. Otherwise the
+     default 14×14 ornament square with inner cutout renders as the
+     fallback brand mark. The slot enables ?glyph={slug} to test brand
+     identity composition without changing template architecture. #}
+  {% if glyph_path %}
+  <g data-hw-zone="brand-glyph" transform="translate({{ ornament_x }},{{ ornament_y }})">
+    <svg viewBox="{{ glyph_viewbox }}" width="{{ ornament_size }}" height="{{ ornament_size }}">
+      <path d="{{ glyph_path }}" fill="var(--dna-signal)"/>
+    </svg>
+  </g>
+  {% else %}
+  <rect x="{{ ornament_x }}" y="{{ ornament_y }}"
+        width="{{ ornament_size }}" height="{{ ornament_size }}"
+        fill="var(--dna-signal)"/>
+  <rect x="{{ ornament_x + ornament_inner_inset }}"
+        y="{{ ornament_y + ornament_inner_inset }}"
+        width="{{ ornament_size - 2 * ornament_inner_inset }}"
+        height="{{ ornament_size - 2 * ornament_inner_inset }}"
+        fill="var(--dna-surface)"/>
+  {% endif %}
+
+  {# (7) HYPERWEAVE identity text — Barlow Condensed 11px 900 inside brand panel. #}
+  <text data-hw-zone="identity"
+        x="{{ identity_text_x }}" y="{{ identity_text_y }}"
+        class="{{ uid }}-brand-text">{{ identity | upper }}</text>
+
+  {# (8) Metric cells with inter-cell dividers. Skips the first seam (already
+     painted as the ACCENT-VOID-ACCENT triple at triple_divider_x). cell_layouts[i]
+     supplies pre-resolved coordinates; no template arithmetic. #}
+  {% set _ns = namespace(cx=first_divider_x) %}
+  {% for metric in metrics %}
+    {% set _layout = cell_layouts[loop.index0] %}
+    {% if not loop.first %}
+    <line x1="{{ _ns.cx }}" y1="2" x2="{{ _ns.cx }}" y2="{{ strip_h - 2 }}"
+          stroke="var(--dna-signal)" stroke-width="0.5" opacity="0.10"/>
+    {% endif %}
+    <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ _ns.cx }},0)">
+      <text x="{{ _layout.label_x }}" y="{{ metric_label_y }}"
+            text-anchor="{{ _layout.text_anchor }}"
+            class="{{ uid }}-metric-label">{{ metric.label | upper }}</text>
+      <text x="{{ _layout.value_x }}" y="{{ metric_value_y }}"
+            text-anchor="{{ _layout.text_anchor }}"
+            class="{{ uid }}-metric-value">{{ metric.value }}</text>
+    </g>
+    {% set _ns.cx = _ns.cx + _layout.cell_w %}
+  {% endfor %}
+
+  {# (9) Bookend ornament OR status indicator — single endpoint marker at
+     bookend_x (mutually exclusive; never both). Stateless strips render the
+     decorative bookend ornament (14×14 accent square with surface cutout);
+     stateful strips render the brutalist-status.j2 indicator at the same
+     position. Prior v0.3.2 attempt rendered both — visible double element. #}
+  {% if not show_status_indicator %}
+  <g transform="translate({{ bookend_x }},{{ strip_h // 2 }})">
+    <rect x="{{ -(ornament_size // 2) }}" y="{{ -(ornament_size // 2) }}"
+          width="{{ ornament_size }}" height="{{ ornament_size }}"
+          fill="var(--dna-signal)"/>
+    <rect x="{{ -(ornament_size // 2) + ornament_inner_inset }}"
+          y="{{ -(ornament_size // 2) + ornament_inner_inset }}"
+          width="{{ ornament_size - 2 * ornament_inner_inset }}"
+          height="{{ ornament_size - 2 * ornament_inner_inset }}"
+          fill="var(--dna-surface)"/>
+  </g>
+  {% endif %}
+</g>
+
+{# (10) Status indicator — conditional, outside the clip group. Renders at
+   bookend_x (not the shared-pipeline status_x) so brutalist stateful strips
+   show the status diamond/ring where the decorative bookend would otherwise
+   sit. brutalist-status.j2 supplies the rect+inner-bit composition; CSS
+   classes paint the state-color based on data-hw-status. #}
+{% if show_status_indicator %}
+<g data-hw-zone="status" transform="translate({{ bookend_x }},{{ strip_h // 2 }})"
+   {% if status_shape_rendering != "geometricPrecision" %}shape-rendering="{{ status_shape_rendering }}"{% endif %}>
+{% include "frames/strip/brutalist-status.j2" %}
+</g>
+{% endif %}

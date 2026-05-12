@@ -12,34 +12,70 @@ badge:
   label_font_size: 11
   value_font_size: 11
   value_font_weight: 700
-  # Glyph dimensions explicit per Round 6 (was implicit fallback to resolver default 14).
-  # Brutalist badge_frame_height matches chrome at 22px; same 14/22 proportion holds.
-  # No compact geometry declared (gate flips off via _paradigm_supports_compact).
+  # Glyph dimensions. Reverted to 14 in v0.3.2 follow-up: the inline glyph
+  # SVG component hardcodes width=14 height=14, so dropping paradigm value
+  # to 10 created a 2px vertical offset (glyph_y centered for 10 but actual
+  # render is 14 → visible "moved down"). Layout-side glyph_size value 14
+  # keeps the existing inline component coherent. Visual match to prototype's
+  # scale(.42) 10px effective glyph deferred until inline component takes the
+  # paradigm value as its width/height attrs.
   glyph_size: 14
   glyph_size_compact: 0
 
 strip:
   value_font_size: 18
-  value_font_family: Inter
+  value_font_family: Barlow Condensed
   label_font_size: 7
   label_font_family: JetBrains Mono
   divider_render_mode: class
   status_shape_rendering: crispEdges
-  # Cell-layout measurement params — must mirror brutalist-defs.j2:19-28.
-  # If the CSS class changes (font-weight, letter-spacing), update here so
-  # compute_cell_layout sizes cells to render-truth.
-  label_font_weight: 700
-  label_letter_spacing_em: 0.2
+  # Cell-layout measurement params — must mirror brutalist-defs.j2 CSS
+  # classes. Brutalist strip grammar uses 18px Barlow Condensed serif
+  # numerals at weight 900 with -0.03em tracking (per the v0.3.2 brutalist
+  # strip prototypes).
+  label_font_weight: 800
+  label_letter_spacing_em: 0.25
   value_font_weight: 900
-  value_letter_spacing_em: -0.01
-  cell_pad: 20
-  cell_min_width: 106
+  value_letter_spacing_em: -0.03
+  cell_pad: 0
+  cell_min_width: 100
+
+  # v0.3.2 Phase C: brutalist strip grammar geometry. owns_strip: true tells
+  # the parent strip.svg.j2 to defer body composition to
+  # brutalist-{dark,light}-content.j2 — those partials render brand panel +
+  # triple divider + ornament + metric cells + bookend themselves. Geometry
+  # values from the v0.3.2 brutalist strip prototypes (560×52 celadon panel);
+  # identical layout reused across all 12 brutalist variants. Other paradigms
+  # (chrome / cellular / default) leave owns_strip at the schema default
+  # (False) and continue using the shared zone pipeline.
+  owns_strip: true
+  brand_panel_x: 6
+  brand_panel_width: 156
+  triple_divider_x: 162
+  triple_divider_bar_width: 3
+  triple_divider_void_width: 2
+  ornament_x: 22
+  ornament_y: 19
+  ornament_size: 14
+  ornament_inner_inset: 3
+  bookend_x: 520
+  brand_divider_x: 170
+  metric_cell_width: 100
+  metric_label_y: 17
+  metric_value_y: 36
+  identity_text_x: 50
+  identity_text_y: 30
+  strip_width: 560
 
 chart:
-  viewport_x: 80
-  viewport_y: 150
-  viewport_w: 760
-  viewport_h: 245
+  # v0.3.2 visual review: viewport aligned to prototype pigment panel
+  # (the v0.3.2 brutalist dark chart prototype line 441) — Y-axis at x=90,
+  # X-axis y=388, chart area 90→857 × 140→388. Pre-fix used (80,150,
+  # 760,245) which drifted the axis rails 10px left and grid 5px high.
+  viewport_x: 90
+  viewport_y: 140
+  viewport_w: 767
+  viewport_h: 248
 
 stats:
   card_height: 280
@@ -65,15 +101,29 @@ marquee:
   # specimen uses a 6×6 emerald square as a hard "bullet" between items.
   separator_kind: rect
   separator_size: 6
+  # separator_color is the FALLBACK; the marquee template wraps this in
+  # var(--dna-signal, separator_color) — variant overrides cascade through
+  # --dna-signal automatically, the hex below is only the resolution fallback
+  # for renderers that don't honor CSS variables (Quick Look, some Slack
+  # previewers). Don't replace with var() — would double-wrap into
+  # var(--dna-signal, var(--dna-signal)).
   separator_color: "#10B981"
   # Items rotate through [ink, info, ink, info, …] colors per position —
-  # the two-stop chromatic hierarchy the user codified (substrate vs info
-  # stops). Hardcoding these in paradigm yaml is the cleanest fit because
-  # only brutalist uses brutalist paradigm today; if a second
-  # genome adopts brutalist later, this should be migrated to genome
-  # chromosomes via a "genome-field-name" indirection.
+  # the two-stop chromatic hierarchy (substrate vs info stops). Use CSS
+  # var() references (NOT hardcoded hex) so per-variant overrides flow
+  # through: carbon's text cycles cool gray-purple, pulse cycles paper +
+  # gold, etc. Hardcoded hex was the v0.3.2 emerald-bleed bug class —
+  # base genome's emerald #D1FAE5/#34D399 baked into every variant's
+  # marquee regardless of variant_overrides.
   text_fill_mode: cycle
-  text_fill_cycle: ["#D1FAE5", "#34D399"]
+  # v0.3.2 regression fix: was ["var(--dna-ink-bright)", "var(--dna-signal)"] —
+  # but ink_bright for dark variants resolves to the DARK surface color (e.g.,
+  # celadon ink_bright=#06140C = surface_0), making marquee text dark-on-dark
+  # invisible. Switched to ink_primary which carries the polarity-correct
+  # text color per variant (paper-bright on dark substrates, dark-ink on
+  # light substrates). Restores v0.3.1 celadon legibility AND adds light-
+  # variant correctness across all 12 brutalist variants.
+  text_fill_cycle: ["var(--dna-ink-primary)", "var(--dna-signal)"]
   # Scroll-track clip: exclude the 4px emerald accent bar (left) and the 1px
   # perimeter stroke (right/top/bottom). Sharp corners (rx=0) match the
   # brutalist K-override (no rounded geometry).

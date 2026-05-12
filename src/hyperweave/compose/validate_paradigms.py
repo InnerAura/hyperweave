@@ -32,6 +32,54 @@ if TYPE_CHECKING:
     from hyperweave.core.schema import GenomeSpec
 
 
+# Fields that define a variant's chromatic identity. Curated subset of the
+# fields the assembler maps to --dna-* CSS vars (assembler._ALL_CSS_MAPPING):
+# only true color/material-identity fields are listed here. Non-chromatic
+# fields the assembler also emits (motion timing, font stacks, opacity
+# numerics, semantic state colors like accent_signal/warning/error) are
+# excluded — variants legitimately inherit those from the base genome by
+# design (function-over-identity for state semantics; numeric/typographic
+# coherence for the rest). Adding a new variant-identity-carrying field
+# means updating both `assembler._ALL_CSS_MAPPING` and this set.
+_CHROMATIC_FIELDS: frozenset[str] = frozenset(
+    {
+        # Substrate / canvas
+        "surface_0",
+        "surface_1",
+        "surface_2",
+        "bg",
+        "bg_alt",
+        "frame_fill",
+        # Ink layers
+        "ink",
+        "ink_secondary",
+        "ink_on_accent",
+        "ink_bright",
+        "ink_sub",
+        # Accent / signal
+        "accent",
+        "accent_complement",
+        # Borders / strokes
+        "stroke",
+        "border_tint",
+        # Texts (per-role)
+        "brand_text",
+        "metric_text",
+        "label_text",
+        "glyph_inner",
+        # Seam (light-scholar INK-SEAM-INK + dark badge seam-gap)
+        "seam_color",
+        "seam_gap",
+        # Badge state-machine chromatic surfaces
+        "badge_value_text",
+        "badge_pass_sep",
+        "badge_pass_core",
+        # Shadow tint
+        "shadow_color",
+    }
+)
+
+
 # Required keys for every entry in genome.variant_tones (automata-style tone primitive).
 # Each tone declares its full chromatic shape — derivation discarded the
 # perceptual lightness curves authors hand-tuned for value_text and canvas_bottom,
@@ -89,6 +137,18 @@ _CHART_LEVELS_LENGTH: int = 6
 # Expected length of the dormant_range list. Pinned at 2: [low, high] near-black
 # bounds for the chart's dormant cell substrate (background under the curve clip).
 _DORMANT_RANGE_LENGTH: int = 2
+
+# Valid substrate_kind values for v0.3.2 brutalist substrate-dispatch variants.
+# Each variant in a substrate-aware genome must declare one of these so the
+# template dispatcher (`frames/{type}/brutalist-` ~ substrate_kind ~ "-content.j2")
+# resolves to a real file. Light variants additionally require panel_gradient_stops
+# (the dark academic panel inset) and seam_color (the INK-SEAM-INK middle bar).
+_SUBSTRATE_KINDS: frozenset[str] = frozenset({"dark", "light"})
+
+# Minimum number of gradient stops for the light-scholar dark academic panel
+# (header rect background, language strip background). Two-stop linear gradient
+# top→bottom is the minimum producing the depth-effect the prototype specifies.
+_PANEL_GRADIENT_MIN_STOPS: int = 2
 
 
 def validate_genome_against_paradigms(
@@ -173,6 +233,91 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
             violations.append(
                 f"  variant_overrides has keys not in variants[]: {sorted(unknown)} (variants={sorted(variants_set)})"
             )
+
+        # Substrate-dispatch opt-in flag: any override declaring substrate_kind
+        # signals this genome uses substrate-aware template dispatch (v0.3.2+).
+        # Used by both the chromatic coverage check and the substrate-dispatch
+        # self-consistency check below.
+        opts_in_substrate = any(
+            isinstance(ov, dict) and "substrate_kind" in ov for ov in genome.variant_overrides.values()
+        )
+
+        # Chromatic coverage contract (per CLAUDE.md): a variant_override that
+        # declares ANY chromatic field must declare EVERY chromatic field the
+        # base genome declares. The resolver merges base + variant_overrides
+        # naively (base fields inherit through), which silently regresses
+        # variant identity for fields the override forgets — e.g. the v0.3.2
+        # brutalist emerald-bleed bug where carbon overrode surface/ink/accent
+        # but inherited the base genome's emerald brand_text=#A7F3D0 because
+        # the override did not re-declare it. A flagship variant declaring
+        # ZERO chromatic fields (e.g. celadon: {"substrate_kind": "dark"}) is
+        # exempt — it deliberately inherits the entire base palette.
+        #
+        # SCOPE: this check is enabled only for genomes opting into substrate
+        # dispatch (v0.3.2+ brutalist; future light/dark-aware genomes). Legacy
+        # genomes (chrome, automata) use partial overrides by design — their
+        # variant identity is carried by a smaller set of fields and the
+        # missing-field inheritance is intentional. Extending the contract to
+        # those genomes requires authoring full per-variant palettes for each
+        # of their variants (a v0.3.3+ task scoped separately from this fix).
+        if opts_in_substrate:
+            base_chromatic = {f for f in _CHROMATIC_FIELDS if getattr(genome, f, "")}
+            for variant_slug, override in genome.variant_overrides.items():
+                if not isinstance(override, dict):
+                    continue
+                declared_chromatic = set(override.keys()) & _CHROMATIC_FIELDS
+                if not declared_chromatic:
+                    # Flagship case: zero chromatic overrides, inherit base verbatim.
+                    continue
+                missing_chromatic = base_chromatic - declared_chromatic
+                if missing_chromatic:
+                    violations.append(
+                        f"  variant_overrides['{variant_slug}'] declares chromatic fields but is missing: "
+                        f"{sorted(missing_chromatic)} — partial chromatic overrides silently inherit base "
+                        f"values (chromatic coverage contract: override all base chromatic fields or none)"
+                    )
+
+        # Substrate-dispatch self-consistency (v0.3.2): if ANY override declares
+        # substrate_kind the genome opts into substrate-aware template dispatch,
+        # and EVERY override must declare it consistently. Light variants need
+        # the dark academic panel gradient + INK-SEAM-INK seam color; dark
+        # variants must NOT declare panel gradient (catches misclassification —
+        # accidentally tagging a dark variant as light would route it to the
+        # light template with no panel).
+        if opts_in_substrate:
+            for variant_slug, override in genome.variant_overrides.items():
+                if not isinstance(override, dict):
+                    continue
+                substrate_kind = override.get("substrate_kind")
+                if not substrate_kind:
+                    violations.append(
+                        f"  variant_overrides['{variant_slug}'] missing required 'substrate_kind' "
+                        f"(genome uses substrate dispatch — all overrides must declare 'dark' or 'light')"
+                    )
+                    continue
+                if substrate_kind not in _SUBSTRATE_KINDS:
+                    violations.append(
+                        f"  variant_overrides['{variant_slug}'].substrate_kind={substrate_kind!r} "
+                        f"must be one of {sorted(_SUBSTRATE_KINDS)}"
+                    )
+                    continue
+                if substrate_kind == "light":
+                    panel_stops = override.get("panel_gradient_stops")
+                    if not isinstance(panel_stops, list) or len(panel_stops) < _PANEL_GRADIENT_MIN_STOPS:
+                        violations.append(
+                            f"  variant_overrides['{variant_slug}'] substrate_kind='light' requires "
+                            f"'panel_gradient_stops' with ≥{_PANEL_GRADIENT_MIN_STOPS} stops"
+                        )
+                    if not override.get("seam_color"):
+                        violations.append(
+                            f"  variant_overrides['{variant_slug}'] substrate_kind='light' requires 'seam_color' "
+                            f"(INK-SEAM-INK divider middle bar)"
+                        )
+                elif substrate_kind == "dark" and "panel_gradient_stops" in override:
+                    violations.append(
+                        f"  variant_overrides['{variant_slug}'] substrate_kind='dark' must NOT declare "
+                        f"'panel_gradient_stops' (panel is a light-substrate-only construct)"
+                    )
 
     # Check 2: variant_tones structural shape
     tones_set: set[str] = set()

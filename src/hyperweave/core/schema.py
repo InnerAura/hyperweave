@@ -267,6 +267,34 @@ class GenomeSpec(BaseModel):
             "modifier ?variant=primary&pair=secondary, which composes any two tones."
         ),
     )
+    variant_phenomenology: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Per-variant phenomenological/aesthetic identity statements. Documents the "
+            "naming philosophy ('afterimage = the optical echo persisting...'). Lives in "
+            "genome config (not per-artifact metadata) so the same description applies "
+            "regardless of which frame type renders the variant. Optional."
+        ),
+    )
+
+    # -- Ontological classification (v0.3.2) --
+    # Ring/stratum identifier consumed by the `hw:stratum` metadata field.
+    # Brutalist sits in Ring 002-TRIBE; future genomes declare their own.
+    stratum: str = Field(
+        default="",
+        description="Ring/ontology classification emitted as hw:stratum (e.g. '002-TRIBE').",
+    )
+
+    # -- Substrate-aware typography (v0.3.2) --
+    # Light substrate templates pair Barlow Condensed headings with JetBrains Mono
+    # body/data text. Empty falls back to `hero_font` from typography cascade.
+    scholar_heading_font: str = Field(
+        default="",
+        description=(
+            "Heading font stack for light-substrate templates (brutalist strip grammar). Pairs with "
+            "mono_font for body. Empty falls back to typography.hero_font."
+        ),
+    )
     dividers: list[str] = Field(
         default_factory=list,
         description=(

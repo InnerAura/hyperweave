@@ -195,16 +195,18 @@ def test_resolve_injects_paradigm_context() -> None:
     resolved = resolve(spec)
     assert "paradigm" in resolved.frame_context
     assert "structural" in resolved.frame_context
-    # brutalist declares paradigms.badge = "default"
-    assert resolved.frame_context["paradigm"] == "default"
+    # brutalist declares paradigms.badge = "brutalist" (v0.3.2 substrate dispatch).
+    assert resolved.frame_context["paradigm"] == "brutalist"
     # brutalist.structural.stroke_linejoin = "miter"
     assert resolved.frame_context["structural"].get("stroke_linejoin") == "miter"
 
 
 def test_resolve_paradigm_differs_between_genomes() -> None:
-    """brutalist.stats = brutalist; chrome.stats = chrome."""
+    """brutalist.badge = brutalist; chrome.badge = chrome (v0.3.2)."""
     br = resolve(ComposeSpec(type="badge", genome_id="brutalist"))
     ch = resolve(ComposeSpec(type="badge", genome_id="chrome"))
-    # Badge paradigms: brutalist = "default", chrome = "chrome"
-    assert br.frame_context["paradigm"] == "default"
+    # Badge paradigms: brutalist genome = "brutalist" (was "default" pre-v0.3.2),
+    # chrome genome = "chrome". The flip enables substrate-aware dispatch via
+    # brutalist-{dark,light}-content.j2 templates.
+    assert br.frame_context["paradigm"] == "brutalist"
     assert ch.frame_context["paradigm"] == "chrome"

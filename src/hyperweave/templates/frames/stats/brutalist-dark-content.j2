@@ -1,0 +1,169 @@
+{% set sw = width | default(495) %}
+{% set sh = height | default(280) %}
+{# Brutalist stats card — DARK substrate. Ported element-by-element from
+   the v0.3.2 brutalist dark stat card prototype
+   (celadon panel, lines 42-80; all 6 dark variants share identical
+   structure — only --dna vars change). 495×280 canvas, 4px baseline grid.
+
+   Order of operations matters because of SVG z-stacking:
+     1. Substrate fill
+     2. Perimeter stroke
+     3. Left accent rail
+     4. Grain filter rect (applied to right zone, overlays substrate)
+     5. Grid coords (gc class — 6 numerals at far left)
+     6. Header inset panel (--si surface, y=0→32)
+     7. GitHub glyph + identity text + status dot in header
+     8. Rule under header at y=32
+     9. STARS label + delta indicator + hero value
+    10. Rule under hero at y=128
+    11. Vertical divider at x=250 + horizontal subrule at y=164
+    12. 4 stat labels + 4 stat values
+    13. Rule at y=200 + ACTIVITY/PEAK labels
+    14. 52 activity bars + baseline rule at y=246
+    15. Language bar zone at y=252→264 with proportion overlays
+    16. Footer line at y=264
+    17. Footer text + brand
+#}
+
+<g clip-path="url(#{{ uid }}-clip)">
+  {# (1) Substrate canvas — --dna-surface #}
+  <rect width="{{ sw }}" height="{{ sh }}" fill="var(--dna-surface)"/>
+
+  {# (2) Perimeter — 1.5px accent at 0.3 opacity, inset 0.75px from edges. #}
+  <rect x=".75" y=".75" width="{{ sw - 1.5 }}" height="{{ sh - 1.5 }}"
+        fill="none" stroke="var(--dna-signal)" stroke-width="1.5" opacity="0.3"/>
+
+  {# (3) Left accent rail — solid 6px accent. #}
+  <rect width="6" height="{{ sh }}" fill="var(--dna-signal)"/>
+
+  {# (4) Grain filter — overlays the right zone (x=6 onward). #}
+  <rect x="6" width="{{ sw - 6 }}" height="{{ sh }}" filter="url(#{{ uid }}-grain)"/>
+
+  {# Grid coord numerals at x=11 down the left margin were in the prototype
+     the v0.3.2 brutalist dark stat card prototype:56 (industrial spec-sheet aesthetic) but
+     removed per user feedback — the faint 01-06 markers read as visual noise
+     rather than informational design. .cx-gc CSS class definition stays in
+     defs.j2 unused for now (cleanup deferred to a separate sweep). #}
+
+  {# (6) Header inset panel — y=0→32, fills brand_panel_fill (the --si tone). #}
+  <rect x="6" y="0" width="{{ sw - 6 }}" height="32" fill="var(--dna-brand-panel-fill)"/>
+
+  {# (7) GitHub glyph + identity + status dot. Glyph at (24,8) 14×14
+     filled with --th (--dna-ink-primary). #}
+  {# Glyph translate y unified with light template at y=11 — both substrates
+     now align glyph visual center (y=18) with username text cap-center (y~18). #}
+  <g transform="translate(24,11)">
+    <svg viewBox="0 0 24 24" width="14" height="14">
+      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-ink-primary)"/>
+    </svg>
+  </g>
+  {# Username + repo meta baselines unified across dark/light at y=22 to
+     match the v0.3.2 brutalist light scholar full-set prototype:88 — both substrates
+     render the same card with same spatial layout regardless of polarity. #}
+  <text class="{{ uid }}-u" x="44" y="22">{{ stats_username | upper }}</text>
+  <text class="{{ uid }}-m" x="122" y="22">{{ stats_repo_label }}</text>
+  <rect class="{{ uid }}-sd" x="472" y="12" width="8" height="8" fill="var(--dna-signal)"/>
+
+  {# (8) Rule under header — 2.5px accent at 0.55 opacity. #}
+  <line x1="6" y1="32" x2="{{ sw }}" y2="32"
+        stroke="var(--dna-signal)" stroke-width="2.5" opacity="0.55"/>
+
+  {# (9) STARS label + delta indicator + hero value. #}
+  <text class="{{ uid }}-hl" x="24" y="52">STARS</text>
+  <text class="{{ uid }}-hm" x="478" y="52" text-anchor="end">{{ stars_delta_display | default('LIFETIME') }}</text>
+  <text class="{{ uid }}-hv" x="22" y="114">{{ stars_display }}</text>
+
+  {# (10) Rule under hero — 2.5px accent 0.55 opacity. #}
+  <line x1="6" y1="128" x2="{{ sw }}" y2="128"
+        stroke="var(--dna-signal)" stroke-width="2.5" opacity="0.55"/>
+
+  {# (11) Vertical divider at x=250 y=128→200 + horizontal subrule y=164. #}
+  <line x1="250" y1="128" x2="250" y2="200"
+        stroke="var(--dna-signal)" stroke-width="1.5" opacity="0.3"/>
+  <line x1="6" y1="164" x2="{{ sw }}" y2="164"
+        stroke="var(--dna-signal)" stroke-width="1" opacity="0.22"/>
+
+  {# (12) 4 stat labels + values — 2x2 grid. STREAK retained per locked
+     v0.3.2 decision; prototype shows REVIEWS but production keeps STREAK. #}
+  <text class="{{ uid }}-sl" x="24" y="154">COMMITS</text>
+  <text class="{{ uid }}-sv" x="238" y="154" text-anchor="end">{{ commits_display }}</text>
+  <text class="{{ uid }}-sl" x="24" y="190">PRS</text>
+  <text class="{{ uid }}-sv" x="238" y="190" text-anchor="end">{{ prs_display }}</text>
+  <text class="{{ uid }}-sl" x="270" y="154">ISSUES</text>
+  <text class="{{ uid }}-sv" x="480" y="154" text-anchor="end">{{ issues_display }}</text>
+  <text class="{{ uid }}-sl" x="270" y="190">STREAK</text>
+  <text class="{{ uid }}-sv" x="480" y="190" text-anchor="end">{{ streak_display }}</text>
+
+  {# (13) Rule at y=200 + ACTIVITY/PEAK labels (y=214). #}
+  <line x1="6" y1="200" x2="{{ sw }}" y2="200"
+        stroke="var(--dna-signal)" stroke-width="2.5" opacity="0.55"/>
+  <text class="{{ uid }}-al" x="24" y="214">ACTIVITY · 52W</text>
+  <text class="{{ uid }}-al" x="478" y="214" text-anchor="end">{% if activity_peak > 0 %}PEAK · {{ activity_peak }}/WK{% else %}PEAK · —{% endif %}</text>
+
+  {# (14) 52 activity bars at 7px width, 9px stride, varying opacities (.43-.93).
+     Each bar's y is bar_baseline - h; baseline_y=246. Bars use --dna-signal
+     fill with per-bar opacity computed from count/peak (sqrt scaling). #}
+  {% set bar_baseline = 246 %}
+  {% set bar_max_h = 26 %}
+  {% set bar_w = 7 %}
+  {% set bar_start_x = 22 %}
+  {% set bar_stride = 9 %}
+  {% set peak = activity_peak if activity_peak > 0 else 1 %}
+  <g fill="var(--dna-signal)" shape-rendering="crispEdges">
+  {% for bar in activity_bars %}
+    {% if bar.count == 0 %}
+      {% set h = 4 %}
+      {% set op = 0.43 %}
+    {% else %}
+      {% set ratio = (bar.count / peak) ** 0.5 %}
+      {% set h = [4, (ratio * bar_max_h) | int] | max %}
+      {% set op_raw = 0.4 + (ratio * 0.53) %}
+      {% set op = ((op_raw * 100) | int) / 100 %}
+    {% endif %}
+    <rect x="{{ bar_start_x + loop.index0 * bar_stride }}" y="{{ bar_baseline - h }}" width="{{ bar_w }}" height="{{ h }}" opacity="{{ op }}"/>
+  {% endfor %}
+  </g>
+  <line x1="22" y1="246" x2="491" y2="246"
+        stroke="var(--dna-signal)" stroke-width="0.5" opacity="0.3"/>
+
+  {# (15) Language bar zone — y=252→264, 12px tall. Background inset (--si)
+     + proportional accent overlays + percentage labels. Currently shows
+     a single 'PY · 68%' / 'IPYNB · 18%' band; v0.3.3 will plumb resolver-
+     side language data per repo. #}
+  <line x1="6" y1="252" x2="{{ sw }}" y2="252"
+        stroke="var(--dna-signal)" stroke-width="1" opacity="0.35"/>
+  <g transform="translate(6,252)">
+    <rect width="{{ sw - 6 }}" height="12" fill="var(--dna-brand-panel-fill)"/>
+    {% if languages %}
+      {% set _ns = namespace(cx=0) %}
+      {% for lang in languages %}
+        {% set _w = ((lang.pct / 100) * (sw - 6)) | int %}
+        {# Opacity descends per language rank: 0.55, 0.40, 0.25, 0.10 — matches
+           the prototype's 4-band overlay pattern. round() avoids float noise
+           like 0.25000000000000006 in the rendered SVG. #}
+        {% set _op = [0.55, 0.40, 0.25, 0.10][loop.index0] if loop.index0 < 4 else 0.10 %}
+        <rect x="{{ _ns.cx }}" width="{{ _w }}" height="12" fill="var(--dna-signal)" opacity="{{ _op }}"/>
+        {% if loop.index0 < 2 %}
+        {# Language label x=_ns.cx+8 — first label starts at absolute x=14
+           inside the <g transform="translate(6,252)">. Footer URL moves to
+           x=14 to align with this per user feedback. #}
+        <text x="{{ _ns.cx + 8 }}" y="8.5" class="{{ uid }}-ll">{{ lang.name | upper }} · {{ lang.pct | round(0, 'floor') | int }}%</text>
+        {% endif %}
+        {% set _ns.cx = _ns.cx + _w %}
+      {% endfor %}
+    {% else %}
+      {# No language data — draw the language bar shell without overlays so
+         the visual zone is preserved (matches prototype's three-band layout
+         when ratios collapse to zero). #}
+      <text x="8" y="8.5" class="{{ uid }}-ll">—</text>
+    {% endif %}
+  </g>
+
+  {# (16) Footer line at y=264 + footer text. #}
+  <line x1="6" y1="264" x2="{{ sw }}" y2="264"
+        stroke="var(--dna-signal)" stroke-width="1" opacity="0.35"/>
+  {# Footer URL x=14 aligns with first language label first letter (= absolute
+     x=14 inside translate(6,252) transform group above) for a shared left-edge. #}
+  <text class="{{ uid }}-ft" x="14" y="275">github.com/{{ stats_username | lower }}</text>
+  <text class="{{ uid }}-fb" x="478" y="275" text-anchor="end">HYPERWEAVE</text>
+</g>

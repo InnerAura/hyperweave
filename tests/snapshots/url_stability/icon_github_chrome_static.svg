@@ -30,7 +30,7 @@
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
     <hw:spec size="64x64" performance="composite-only"
-             theme="dark" a11y="WCAG-AA" platform="web"/>
+             theme="dark" a11y="WCAG-AA" platform="github-readme"/>
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:frame>icon</hw:frame>
@@ -38,7 +38,7 @@
     <hw:profile>chrome</hw:profile>
     <hw:slots>
     </hw:slots>
-    <hw:environment platform="web" motion="static" status="active"/>
+    <hw:environment platform="github-readme" motion="static" status="active"/>
   </hw:composition>
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
            xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -51,14 +51,14 @@
   </rdf:RDF>
   <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:chromatic system="chrome" space="oklch"
-                  palette="" contrast-ratio="4.5:1"/>
+                  palette="chrome" contrast-ratio="16.6:1"/>
     <hw:motion vocabulary="static" physics="none"
-               timing="phi" duration-base="2.618s"
+               timing="phi" duration-base="6s"
                stagger-regime="contemplative" cim-compliant="true"/>
-    <hw:geometry form-language="geometric" corner-radius="5px"
+    <hw:geometry form-language="chrome" corner-radius="5px"
                  grid="auto" proportional-system="phi"
                  mathematical-basis="golden-ratio" symmetry="bilateral"/>
-    <hw:typography stack="" hierarchy="11/18/8"
+    <hw:typography stack="'Orbitron','Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif, 'JetBrains Mono','Courier New','SF Mono',ui-monospace,monospace" hierarchy="11/18/8"
                    weight-range="500-900" metrics-method="lut"/>
     <hw:material surface="genome-native" depth="deep" texture="none"/>
   </hw:aesthetic>

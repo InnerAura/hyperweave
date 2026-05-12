@@ -1,0 +1,167 @@
+{% set sw = width | default(495) %}
+{% set sh = height | default(280) %}
+{# Brutalist stats card — LIGHT scholar substrate. Ported element-by-element
+   from the v0.3.2 brutalist light scholar full-set prototype
+   (pulse stat card, lines 52-126). Light scholars invert polarity: paper
+   substrate + dark gradient header panel + gold seam rebar dividers +
+   dark ink activity bars.
+
+   Same 495×280 canvas, same zone y-coordinates as dark, but DIFFERENT
+   structural rule colors (gold/seam_color vs accent), DIFFERENT activity
+   bar fill (ink-primary vs accent), and ADDITIONAL elements (gold border
+   strips top/bottom, gold corner ornament). #}
+
+<g clip-path="url(#{{ uid }}-clip)">
+  {# (1) Paper substrate — variant surface_0 (paper). #}
+  <rect width="{{ sw }}" height="{{ sh }}" fill="var(--dna-surface)"/>
+
+  {# (2) Paper texture overlay — grain filter at low opacity with multiply
+     blend so the texture darkens paper without affecting overlaid panels. #}
+  <rect width="{{ sw }}" height="{{ sh }}" filter="url(#{{ uid }}-grain)" opacity="0.15" style="mix-blend-mode:multiply"/>
+
+  {# (3) Left accent rail — 6px INK bar (brutalist scholar manuscript convention; the
+     left rule is dark ink, not accent, because the accent role is reserved
+     for the gold seam rebar dividers). #}
+  <rect width="6" height="{{ sh }}" fill="var(--dna-ink-primary)"/>
+
+  {# (4) Perimeter — 1px crimson/ink panel-top color at 0.2 opacity, inset
+     0.5px (NOT 0.75px like dark — light perimeter is thinner). #}
+  <rect x=".5" y=".5" width="{{ sw - 1 }}" height="{{ sh - 1 }}"
+        fill="none" stroke="var(--dna-bg)" stroke-width="1" opacity="0.2"/>
+
+  {# (5) Top + bottom gold border strips — 2px gold (seam_color) at 0.35
+     opacity. Defines the brutalist scholar "manuscript margins" frame. #}
+  <rect x="6" y="0" width="{{ sw - 6 }}" height="2" fill="var(--dna-seam-color)" opacity="0.35"/>
+  <rect x="6" y="{{ sh - 2 }}" width="{{ sw - 6 }}" height="2" fill="var(--dna-seam-color)" opacity="0.35"/>
+
+  {# (6) Header dark panel — y=2→32, fills variant panel gradient
+     (crimson/sepia/cobalt/etc.). The 30px height + 2px gold seam below
+     occupies the header zone exactly. #}
+  <rect x="6" y="2" width="{{ sw - 6 }}" height="30" fill="url(#{{ uid }}-panel)"/>
+  <rect x="6" y="30" width="{{ sw - 6 }}" height="2" fill="var(--dna-seam-color)" opacity="0.6"/>
+
+  {# (7) GitHub glyph + identity + status dot. Glyph at (24,8) 14×14 filled
+     with paper-color (--dna-brand-text). Identity user text in paper-color.
+     Repo meta in warm-tan muted (label_text). Status dot in gold (seam). #}
+  {# Glyph at translate(24, 11) places 14×14 glyph center at (31, 18) which
+     aligns with the username text's visual cap-center at y=18.15 (11px font
+     at baseline y=22 minus 0.7*11/2). Pre-fix glyph at translate(24, 8)
+     centered at y=15, leaving a 3px misalignment above the text. #}
+  <g transform="translate(24,11)">
+    <svg viewBox="0 0 24 24" width="14" height="14">
+      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-brand-text)"/>
+    </svg>
+  </g>
+  <text class="{{ uid }}-u" x="44" y="22">{{ stats_username | upper }}</text>
+  <text class="{{ uid }}-m" x="122" y="22">{{ stats_repo_label }}</text>
+  {# Top-right status dot rendered at end of this template (around line 158)
+     so it sits ABOVE the dark gradient header panel in z-order. Identical
+     (472, 12) 8×8 coordinates as dark partial — single spatial source per
+     genome. Old corner ornament at (sw-13, 2) retired for layout parity. #}
+
+  {# (8) STARS label + delta indicator + hero value on PAPER zone.
+     STARS (cx-hl) fills with panel-top (--bg). Delta (cx-hm) fills with
+     gold. Hero value (cx-hv) fills with dark ink (--ink-primary). y=54
+     for label/delta, y=116 for hero (slightly different from dark's y=52,
+     y=114). #}
+  <text class="{{ uid }}-hl" x="24" y="54">STARS</text>
+  <text class="{{ uid }}-hm" x="478" y="54" text-anchor="end">{{ stars_delta_display | default('LIFETIME') }}</text>
+  <text class="{{ uid }}-hv" x="22" y="116">{{ stars_display }}</text>
+
+  {# (9) Gold seam rebar at y=128 — stroke-width 2 opacity .5 (lighter
+     than dark's 2.5/0.55). #}
+  <line x1="6" y1="128" x2="{{ sw }}" y2="128"
+        stroke="var(--dna-seam-color)" stroke-width="2" opacity="0.5"/>
+
+  {# (10) Stats grid dividers: vertical gold rule at x=250, horizontal
+     ink subrule at y=164. The subrule uses INK (not gold) at 0.15 opacity
+     — quiet structural separator between the two stat rows. #}
+  <line x1="250" y1="128" x2="250" y2="200"
+        stroke="var(--dna-seam-color)" stroke-width="1" opacity="0.3"/>
+  <line x1="6" y1="164" x2="{{ sw }}" y2="164"
+        stroke="var(--dna-ink-primary)" stroke-width="0.5" opacity="0.15"/>
+
+  {# (11) 4 stat labels + values. cx-sl fills panel-top crimson (--bg),
+     cx-sv fills dark ink (--ink-primary). STREAK retained. #}
+  <text class="{{ uid }}-sl" x="24" y="154">COMMITS</text>
+  <text class="{{ uid }}-sv" x="238" y="154" text-anchor="end">{{ commits_display }}</text>
+  <text class="{{ uid }}-sl" x="24" y="190">PRS</text>
+  <text class="{{ uid }}-sv" x="238" y="190" text-anchor="end">{{ prs_display }}</text>
+  <text class="{{ uid }}-sl" x="270" y="154">ISSUES</text>
+  <text class="{{ uid }}-sv" x="480" y="154" text-anchor="end">{{ issues_display }}</text>
+  <text class="{{ uid }}-sl" x="270" y="190">STREAK</text>
+  <text class="{{ uid }}-sv" x="480" y="190" text-anchor="end">{{ streak_display }}</text>
+
+  {# (12) Gold seam at y=200 + ACTIVITY/PEAK labels. #}
+  <line x1="6" y1="200" x2="{{ sw }}" y2="200"
+        stroke="var(--dna-seam-color)" stroke-width="2" opacity="0.5"/>
+  <text class="{{ uid }}-al" x="24" y="214">ACTIVITY · 52W</text>
+  <text class="{{ uid }}-al" x="478" y="214" text-anchor="end">{% if activity_peak > 0 %}PEAK · {{ activity_peak }}/WK{% else %}PEAK · —{% endif %}</text>
+
+  {# (13) 52 activity bars — fill INK-PRIMARY (dark ink on paper substrate),
+     opacity varies with count. Same width/stride/start_x as dark. #}
+  {% set bar_baseline = 246 %}
+  {% set bar_max_h = 26 %}
+  {% set bar_w = 7 %}
+  {% set bar_start_x = 22 %}
+  {% set bar_stride = 9 %}
+  {% set peak = activity_peak if activity_peak > 0 else 1 %}
+  <g fill="var(--dna-ink-primary)" shape-rendering="crispEdges">
+  {% for bar in activity_bars %}
+    {% if bar.count == 0 %}
+      {% set h = 4 %}
+      {% set op = 0.28 %}
+    {% else %}
+      {% set ratio = (bar.count / peak) ** 0.5 %}
+      {% set h = [4, (ratio * bar_max_h) | int] | max %}
+      {% set op_raw = 0.28 + (ratio * 0.47) %}
+      {% set op = ((op_raw * 100) | int) / 100 %}
+    {% endif %}
+    <rect x="{{ bar_start_x + loop.index0 * bar_stride }}" y="{{ bar_baseline - h }}" width="{{ bar_w }}" height="{{ h }}" opacity="{{ op }}"/>
+  {% endfor %}
+  </g>
+
+  {# (14) Language bar zone — y=252→264. Dark gradient PANEL background
+     + gold overlay rects + paper-color labels INSIDE the panel. NO seam
+     line at y=252 in the light prototype (light replaces that with the
+     panel itself). #}
+  <rect x="6" y="252" width="{{ sw - 6 }}" height="12" fill="url(#{{ uid }}-panel)"/>
+  {% if languages %}
+    {% set _ns = namespace(cx=6) %}
+    {% for lang in languages %}
+      {% set _w = ((lang.pct / 100) * (sw - 6)) | int %}
+      {# Gold overlay opacity descends: 0.12, 0.06, 0.04, 0.02 — matches
+         the prototype's 4-band gold tint pattern on the dark panel. #}
+      {% set _op = [0.12, 0.06, 0.04, 0.02][loop.index0] if loop.index0 < 4 else 0.02 %}
+      <rect x="{{ _ns.cx }}" y="252" width="{{ _w }}" height="12" fill="var(--dna-seam-color)" opacity="{{ _op }}"/>
+      {% if loop.index0 < 2 %}
+      {# Language label x=_ns.cx+8 — first label starts at absolute x=14
+         (cx starts at 6 inside this template). Footer URL moves to x=14
+         to align with this (footer→language, not language→footer per user). #}
+      <text x="{{ _ns.cx + 8 }}" y="260.5" class="{{ uid }}-ll">{{ lang.name | upper }} · {{ lang.pct | round(0, 'floor') | int }}%</text>
+      {% endif %}
+      {% set _ns.cx = _ns.cx + _w %}
+    {% endfor %}
+  {% else %}
+    <text x="14" y="260.5" class="{{ uid }}-ll">—</text>
+  {% endif %}
+
+  {# (15) Gold seam line at y=264 (before footer). #}
+  <line x1="6" y1="264" x2="{{ sw }}" y2="264"
+        stroke="var(--dna-seam-color)" stroke-width="1" opacity="0.4"/>
+
+  {# (16) Footer text (warm-tan muted) + brand (gold). #}
+  {# Footer URL x=14 aligns with first language label first letter (also at
+     x=14) so the two-row block reads as a single left-edge column. #}
+  <text class="{{ uid }}-ft" x="14" y="275">github.com/{{ stats_username | lower }}</text>
+  <text class="{{ uid }}-fb" x="478" y="275" text-anchor="end">HYPERWEAVE</text>
+
+  {# (17) Status dot at (472, 12) 8×8 — unified with dark template (line 64)
+     so both substrates have IDENTICAL top-right spatial layout. Pre-fix this
+     was a 6×6+2×2 corner ornament at (sw-13, 2) which positioned the element
+     differently from the dark partial. Now both substrates render the same
+     pulsing status dot at the same coordinates per user's "dark is right,
+     apply to light" directive. Animation runs via .{{ uid }}-sd class
+     defined in brutalist-defs.j2. #}
+  <rect class="{{ uid }}-sd" x="472" y="12" width="8" height="8" fill="var(--dna-seam-color)"/>
+</g>

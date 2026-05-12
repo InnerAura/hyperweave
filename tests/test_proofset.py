@@ -102,7 +102,10 @@ def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
         if cfg is None or not cfg.variants:
             continue  # brutalist + telemetry-* skip — no variant axis
         var_dir = out_dir / "proofset" / genome / "variants"
-        divider_slug = "band" if genome == GenomeId.CHROME else "dissolve"
+        # Divider slug is genome-specific (chrome=band, automata=dissolve,
+        # brutalist=seam). Read from genome config so v0.3.2 brutalist variants
+        # check against its own seam divider, not a hardcoded "dissolve".
+        divider_slug = cfg.dividers[0] if cfg.dividers else "dissolve"
 
         # Compact-badge gate matches the proofset script: cellular paradigm
         # declares glyph_size_compact, chrome does not.

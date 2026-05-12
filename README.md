@@ -119,13 +119,222 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 -->
 
 <p align="center">
-  <a href="#chrome"><kbd>chrome</kbd></a>
+  <a href="#brutalist"><kbd>brutalist</kbd></a>
   &middot;
   <a href="#automata"><kbd>automata</kbd></a>
   &middot;
-  <a href="#brutalist"><kbd>brutalist</kbd></a>
+  <a href="#chrome"><kbd>chrome</kbd></a>
 </p>
 
+<h3 id="brutalist">brutalist</h3>
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=celadon" alt="PYPI — celadon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=carbon" alt="PYPI — carbon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=alloy" alt="PYPI — alloy variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=temper" alt="PYPI — temper variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=pigment" alt="PYPI — pigment variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=ember" alt="PYPI — ember variant"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=archive" alt="PYPI — archive variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=signal" alt="PYPI — signal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=pulse" alt="PYPI — pulse variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=depth" alt="PYPI — depth variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=afterimage" alt="PYPI — afterimage variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=primer" alt="PYPI — primer variant"/>
+</p>
+
+<p align="center">
+  <sub>12 variants: <code>celadon</code> &middot; <code>carbon</code> &middot; <code>alloy</code> &middot; <code>temper</code> &middot; <code>pigment</code> &middot; <code>ember</code> &middot; <code>archive</code> &middot; <code>signal</code> &middot; <code>pulse</code> &middot; <code>depth</code> &middot; <code>afterimage</code> &middot; <code>primer</code></sub>
+</p>
+
+<table>
+<tr>
+<th align="left" width="160">Signals<br/><sub>state machine</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/badge/BUILD/passing/brutalist.static?state=passing&variant=celadon" alt="passing"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist.static?state=warning&variant=celadon" alt="warning"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist.static?state=critical&variant=celadon" alt="critical"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/badge/{title}/{value}/{genome}.static?state={state}&variant={celadon|carbon|alloy|temper|pigment|ember|archive|signal|pulse|depth|afterimage|primer}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/BUILD/passing/brutalist.static?state=passing&variant=celadon</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Dashboard<br/><sub>strip</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github&variant=celadon" alt="strip"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/strip/{title}/{genome}.static?data={tokens}&subtitle={text}&glyph={glyph}&variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github&variant=celadon</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Profile<br/><sub>stats card</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon" alt="stats" width="100%"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/stats/{username}/{genome}.static?variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Star Chart<br/><sub>star history</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static?variant=celadon" alt="star chart" width="100%"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static?variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static?variant=celadon</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=celadon" alt="marquee"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/marquee/{title}/{genome}.static?data={tokens}&variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/marquee/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=celadon</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Icons<br/><sub>circle + square</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=celadon" alt="github — celadon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=circle&variant=carbon" alt="discord — carbon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/brutalist.static?shape=circle&variant=alloy" alt="docker — alloy" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/npm/brutalist.static?shape=square&variant=temper" alt="npm — temper" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=square&variant=pigment" alt="spotify — pigment" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/anthropic/brutalist.static?shape=square&variant=ember" alt="anthropic — ember" width="56"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}&variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=celadon</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Divider<br/><sub>seam</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/divider/seam/brutalist.static?variant=celadon" alt="brutalist seam divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/divider/seam/{genome}.static?variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/divider/seam/brutalist.static?variant=celadon</code></sub></li>
+</ul>
+</td>
+</tr>
+</table>
+<h3 id="automata">automata</h3>
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/badge/DOCKER/PULL/automata.static?glyph=docker&variant=teal" alt="DOCKER PULL — teal variant"/>
+  <img src="https://hyperweave.app/v1/badge/DISCORD/JOIN/automata.static?glyph=discord&variant=violet" alt="DISCORD JOIN — violet variant"/>
+  <img src="https://hyperweave.app/v1/badge/STARS/automata.static?data=gh:eli64s/readme-ai.stars&glyph=github&variant=amber" alt="STARS — amber variant"/>
+  <img src="https://hyperweave.app/v1/badge/HF/MODELS/automata.static?glyph=huggingface&variant=sulfur" alt="HF MODELS — sulfur variant"/>
+  <img src="https://hyperweave.app/v1/badge/SPOTIFY/LISTEN/automata.static?glyph=spotify&variant=jade" alt="SPOTIFY LISTEN — jade variant"/>
+</p>
+
+<p align="center">
+  <sub>16 tones: <code>violet</code> &middot; <code>teal</code> &middot; <code>bone</code> &middot; <code>steel</code> &middot; <code>amber</code> &middot; <code>jade</code> &middot; <code>magenta</code> &middot; <code>cobalt</code> &middot; <code>toxic</code> &middot; <code>solar</code> &middot; <code>abyssal</code> &middot; <code>crimson</code> &middot; <code>sulfur</code> &middot; <code>indigo</code> &middot; <code>burgundy</code> &middot; <code>copper</code>. Pair any two via <code>?variant=primary&pair=secondary</code>.</sub>
+</p>
+
+<table>
+<tr>
+<th align="left" width="160">Signals<br/><sub>state machine</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/badge/BUILD/passing/automata.static?state=passing&variant=bone" alt="passing"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/warning/automata.static?state=warning&variant=bone" alt="warning"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/critical/automata.static?state=critical&variant=bone" alt="critical"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/badge/{title}/{value}/{genome}.static?state={state}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/BUILD/passing/automata.static?state=passing&variant=bone</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Dashboard<br/><sub>strip</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bone&glyph=github" alt="strip"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/strip/{title}/automata.static?data={tokens}&variant={tone}&pair={tone}&subtitle={text}&glyph={glyph}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bone&pair=steel&glyph=github</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Profile<br/><sub>stats card</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static?variant=bone&v=2" alt="stats" width="100%"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/stats/{username}/{genome}.static?variant={tone}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/stats/eli64s/automata.static?variant=bone</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Star Chart<br/><sub>star history</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone&v=2" alt="star chart" width="100%"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static?variant={tone}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bone" alt="marquee"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/marquee/{title}/automata.static?data={tokens}&variant={tone}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bone</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Icons<br/><sub>square</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=cobalt" alt="docker cobalt" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/discord/automata.static?shape=square&variant=indigo" alt="discord indigo" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/automata.static?shape=square&variant=bone" alt="github bone" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=square&variant=sulfur" alt="huggingface sulfur" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/anthropic/automata.static?shape=square&variant=solar" alt="anthropic solar" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/youtube/automata.static?shape=square&variant=crimson" alt="youtube crimson" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/automata.static?shape=square&variant=jade" alt="spotify jade" width="56"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/icon/{glyph}/automata.static?shape=square&variant={tone}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=cobalt</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Divider<br/><sub>dissolve</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/divider/dissolve/automata.static?variant=bone" alt="automata dissolve divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/divider/dissolve/{genome}.static?variant={tone}&pair={tone}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/divider/dissolve/automata.static?variant=bone&pair=steel</code></sub></li>
+</ul>
+</td>
+</tr>
+</table>
 <h3 id="chrome">chrome</h3>
 
 <p align="center">
@@ -225,203 +434,14 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </tr>
 </table>
 
-<h3 id="automata">automata</h3>
-
-<p align="center">
-  <img src="https://hyperweave.app/v1/badge/DOCKER/PULL/automata.static?glyph=docker&variant=teal" alt="DOCKER PULL — teal variant"/>
-  <img src="https://hyperweave.app/v1/badge/DISCORD/JOIN/automata.static?glyph=discord&variant=violet" alt="DISCORD JOIN — violet variant"/>
-  <img src="https://hyperweave.app/v1/badge/STARS/automata.static?data=gh:eli64s/readme-ai.stars&glyph=github&variant=amber" alt="STARS — amber variant"/>
-  <img src="https://hyperweave.app/v1/badge/HF/MODELS/automata.static?glyph=huggingface&variant=sulfur" alt="HF MODELS — sulfur variant"/>
-  <img src="https://hyperweave.app/v1/badge/SPOTIFY/LISTEN/automata.static?glyph=spotify&variant=jade" alt="SPOTIFY LISTEN — jade variant"/>
-</p>
-
-<p align="center">
-  <sub>16 tones: <code>violet</code> &middot; <code>teal</code> &middot; <code>bone</code> &middot; <code>steel</code> &middot; <code>amber</code> &middot; <code>jade</code> &middot; <code>magenta</code> &middot; <code>cobalt</code> &middot; <code>toxic</code> &middot; <code>solar</code> &middot; <code>abyssal</code> &middot; <code>crimson</code> &middot; <code>sulfur</code> &middot; <code>indigo</code> &middot; <code>burgundy</code> &middot; <code>copper</code>. Pair any two via <code>?variant=primary&pair=secondary</code>.</sub>
-</p>
-
-<table>
-<tr>
-<th align="left" width="160">Signals<br/><sub>state machine</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/badge/BUILD/passing/automata.static?state=passing&variant=bone" alt="passing"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/warning/automata.static?state=warning&variant=bone" alt="warning"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/critical/automata.static?state=critical&variant=bone" alt="critical"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/badge/{title}/{value}/{genome}.static?state={state}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/badge/BUILD/passing/automata.static?state=passing&variant=bone</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Dashboard<br/><sub>strip</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bone&glyph=github" alt="strip"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/strip/{title}/automata.static?data={tokens}&variant={tone}&pair={tone}&subtitle={text}&glyph={glyph}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/strip/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&variant=bone&pair=steel&glyph=github</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Profile<br/><sub>stats card</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/automata.static?variant=bone&v=2" alt="stats" width="100%"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/stats/{username}/{genome}.static?variant={tone}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/stats/eli64s/automata.static?variant=bone</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Star Chart<br/><sub>star history</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone&v=2" alt="star chart" width="100%"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static?variant={tone}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bone" alt="marquee"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/marquee/{title}/automata.static?data={tokens}&variant={tone}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/marquee/readme-ai/automata.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count&variant=bone</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Icons<br/><sub>square brand-matched tones</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=cobalt" alt="docker cobalt" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/discord/automata.static?shape=square&variant=indigo" alt="discord indigo" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/github/automata.static?shape=square&variant=bone" alt="github bone" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/huggingface/automata.static?shape=square&variant=sulfur" alt="huggingface sulfur" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/anthropic/automata.static?shape=square&variant=solar" alt="anthropic solar" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/youtube/automata.static?shape=square&variant=crimson" alt="youtube crimson" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/spotify/automata.static?shape=square&variant=jade" alt="spotify jade" width="56"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/icon/{glyph}/automata.static?shape=square&variant={tone}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/icon/docker/automata.static?shape=square&variant=cobalt</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Divider<br/><sub>dissolve</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/divider/dissolve/automata.static?variant=bone" alt="automata dissolve divider"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/divider/dissolve/{genome}.static?variant={tone}&pair={tone}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/divider/dissolve/automata.static?variant=bone&pair=steel</code></sub></li>
-</ul>
-</td>
-</tr>
-</table>
-
-<h3 id="brutalist">brutalist</h3>
-
-<table>
-<tr>
-<th align="left" width="160">Signals<br/><sub>state machine</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/badge/BUILD/passing/brutalist.static?state=passing" alt="passing"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/warning/brutalist.static?state=warning" alt="warning"/>
-  <img src="https://hyperweave.app/v1/badge/BUILD/critical/brutalist.static?state=critical" alt="critical"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/badge/{title}/{value}/{genome}.static?state={state}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/badge/BUILD/passing/brutalist.static?state=passing</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Dashboard<br/><sub>strip</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github" alt="strip"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/strip/{title}/{genome}.static?data={tokens}&subtitle={text}&glyph={glyph}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Profile<br/><sub>stats card</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static" alt="stats" width="100%"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/stats/{username}/{genome}.static</code></sub></li>
-<li><sub><code>hyperweave.app/v1/stats/eli64s/brutalist.static</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Star Chart<br/><sub>star history</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static" alt="star chart" width="100%"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static</code></sub></li>
-<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/marquee/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count" alt="marquee"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/marquee/{title}/{genome}.static?data={tokens}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/marquee/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Icons<br/><sub>circle + square</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=circle" alt="discord" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle" alt="github" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/x/brutalist.static?shape=square" alt="x" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=square" alt="spotify" width="56"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/icon/discord/brutalist.static?shape=circle</code></sub></li>
-</ul>
-</td>
-</tr>
-<tr>
-<th align="left">Divider<br/><sub>seam</sub></th>
-<td>
-  <img src="https://hyperweave.app/v1/divider/seam/brutalist.static" alt="brutalist seam divider"/>
-  <br/>
-  <ul>
-<li><sub><code>/v1/divider/seam/{genome}.static</code></sub></li>
-<li><sub><code>hyperweave.app/v1/divider/seam/brutalist.static</code></sub></li>
-</ul>
-</td>
-</tr>
-</table>
-
 <br />
 
-| | chrome | brutalist | automata |
+| | brutalist | automata | chrome |
 |---|---|---|---|
-| Aesthetic | Metallic precision | Raw material | Living cellular grid |
-| Variants | 5 named | &mdash; | 16 tones, any two pair |
-| Motion | Animated border SMIL | Animated border SMIL | Animated cell grid |
-| Divider | `band` | `seam` | `dissolve` |
+| Aesthetic | Raw material | Living cellular grid | Metallic precision |
+| Variants | 12 (6 dark, 6 light) | 16 tones, any two pair | 5 named |
+| Motion | Animated border SMIL | Animated cell grid | Animated border SMIL |
+| Divider | `seam` | `dissolve` | `band` |
 
 <br />
 

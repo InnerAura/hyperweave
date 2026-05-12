@@ -9,37 +9,131 @@
                                                          0 0 0 0.14 0"/>
 </filter>
 <linearGradient id="{{ uid }}-area-fade" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="var(--dna-signal, #10B981)" stop-opacity="0.14"/>
-  <stop offset="100%" stop-color="var(--dna-signal, #10B981)" stop-opacity="0.02"/>
+  {# Opacity stops 0.12 → 0.01 match the v0.3.2 brutalist light chart prototype
+     ca-af gradient. Pre-fix was 0.14 / 0.02 which slightly oversaturated the
+     light-substrate area fill. #}
+  <stop offset="0%" stop-color="var(--dna-chart-main, var(--dna-signal, #10B981))" stop-opacity="0.12"/>
+  <stop offset="100%" stop-color="var(--dna-chart-main, var(--dna-signal, #10B981))" stop-opacity="0.01"/>
 </linearGradient>
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
+{# v0.3.2 Phase D: dark header panel gradient for light scholar chart variants.
+   Gated on panel_gradient_stops. Light template renders a dark gradient panel
+   in the header zone (y=0→42) with a gold seam below it, matching the brutalist
+   scholar chart prototype's elevated-header composition. #}
+{% if panel_gradient_stops %}
+<linearGradient id="{{ uid }}-panel" x1="0" x2="1" y1="0" y2="0">
+{% for stop in panel_gradient_stops %}
+<stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}
+</linearGradient>
+{% endif %}
 {{ chart_defs | default("") | safe }}
 <style>
   {{ font_faces | safe }}
   text { font-family: var(--dna-font-mono, var(--dna-font-display, 'JetBrains Mono', monospace)); shape-rendering: geometricPrecision; }
-  .{{ uid }}-hdr-user { font-size: 12px; font-weight: 800; letter-spacing: 0.20em; fill: var(--dna-ink-accent, #A7F3D0); }
-  .{{ uid }}-hdr-meta { font-size: 9px; font-weight: 500; letter-spacing: 0.10em; fill: var(--dna-signal, #34D399); opacity: 0.6; }
-  .{{ uid }}-title-main { font-size: 40px; font-weight: 800; letter-spacing: 0.08em; fill: var(--dna-ink-primary, #D1FAE5); }
-  .{{ uid }}-title-sub { font-size: 8px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-signal, #34D399); opacity: 0.7; }
-  .{{ uid }}-hero-value { font-size: 52px; font-weight: 800; letter-spacing: -0.02em; fill: var(--dna-ink-primary, #D1FAE5); }
-  .{{ uid }}-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.26em; text-transform: uppercase; fill: var(--dna-signal, #34D399); opacity: 0.55; }
-  .{{ uid }}-axis-y { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; fill: var(--dna-ink-secondary, #6EE7B7); opacity: 0.85; }
-  .{{ uid }}-axis-x { font-size: 9px; font-weight: 800; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-ink-secondary, #6EE7B7); opacity: 0.75; }
-  .{{ uid }}-milestone { font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-ink-accent, #A7F3D0); }
-  .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-signal, #34D399); opacity: 0.22; }
-  .{{ uid }}-foot { font-size: 8px; font-weight: 500; letter-spacing: 0.12em; fill: var(--dna-signal, #34D399); opacity: 0.55; }
-  .{{ uid }}-foot-brand { font-size: 8px; font-weight: 700; letter-spacing: 0.26em; fill: var(--dna-signal, #34D399); opacity: 0.35; }
-  /* Chart engine fragment classes — brutalist aesthetic (match tier2 target) */
+  {# v0.3.2 Phase 3: substrate-conditional chart semantic vars. Decouples
+     "main data color" from "accent signal." On dark variants the data line
+     IS the accent; on light variants the data line is the panel color
+     (crimson/sepia/cobalt/etc.) and the accent (gold/cyan/amber) is the
+     thin highlight overlay. Cascades to shared chart components via the
+     {{ uid }}-chart wrapper class on the outer <g>. #}
+{% if substrate_kind == 'light' %}
+  .{{ uid }}-chart {
+    --dna-chart-main: var(--dna-bg);
+    --dna-chart-highlight: var(--dna-seam-color);
+    --dna-chart-axis-text: var(--dna-bg);
+    --dna-chart-glyph: var(--dna-seam-color);
+    {# Title zone bg uses the per-variant chart_title_bg hex captured from
+       the v0.3.2 brutalist light chart prototype (pulse #ECDBC0,
+       archive #E8D8C0, depth #DFE3EB, signal #DAE0D4, afterimage #D4CEE4,
+       primer #E4E4DE). Falls back to surface-deep when a variant doesn't
+       declare its own. #}
+  }
+{% else %}
+  .{{ uid }}-chart {
+    --dna-chart-main: var(--dna-signal);
+    --dna-chart-highlight: var(--dna-signal-dim, var(--dna-signal));
+    --dna-chart-axis-text: var(--dna-ink-muted);
+    --dna-chart-glyph: var(--dna-ink-primary);
+    --dna-chart-title-bg: var(--dna-surface-deep);
+  }
+{% endif %}
+  {# Typography ported VERBATIM from prototypes:
+       dark (pigment): the v0.3.2 brutalist dark chart prototype lines 427-436
+       light (pulse): the v0.3.2 brutalist light chart prototype lines 74-79
+
+     Both use Barlow Condensed 48px 900 for title + hero. Fills differ by
+     substrate because polarity inverts (light has paper substrate hosting
+     dark text + crimson title; dark has dark substrate hosting bright
+     text + bright title). substrate_kind switches the routing.
+
+     Dark mappings:
+       title-main / hero-value → var(--dna-brand-text) (--th = bright ink)
+       title-sub  / hero-label → var(--dna-signal) (--a = accent) opacity .8
+       hdr-user                → var(--dna-brand-text) (--th)
+       hdr-meta / foot         → var(--dna-label-text) (--tl)
+       foot-brand              → var(--dna-signal) (--a)
+       axis-y / axis-x         → var(--dna-ink-muted) (--al = accent-light)
+
+     Light mappings:
+       title-main              → var(--dna-bg) (panel top crimson/etc.)
+       hero-value              → var(--dna-ink-primary) (dark ink on paper)
+       title-sub / hero-label  → var(--dna-bg) opacity .8
+       hdr-user                → var(--dna-brand-text) (paper on dark panel)
+       hdr-meta / foot         → var(--dna-label-text)
+       foot-brand              → var(--dna-seam-color) (gold)
+       axis-y / axis-x         → var(--dna-ink-primary) opacity .65 #}
+{% if substrate_kind == 'light' %}
+  {# Fill + opacity values verified against the v0.3.2 brutalist light chart prototype
+     pulse panel lines 74-78 (pulse variant). Per-variant resolution flows
+     through --dna-bg (panel color) and --dna-seam-color (variant accent gold/lime/
+     orange/etc.). Earlier iteration over-tuned opacities (.uid-axis-y at 0.85
+     vs prototype 0.65, .uid-foot at 0.75 vs prototype 0.5) and routed
+     .uid-foot-brand to panel-color instead of the prototype's gold-at-0.5.
+     .uid-hdr-meta uses --dna-brand-text (paper) at 0.5 opacity on the dark
+     header gradient — was routed to --dna-label-text which resolved to dark
+     ink (invisible on the dark panel). #}
+  .{{ uid }}-hdr-user { font-size: 12px; font-weight: 800; letter-spacing: 0.20em; fill: var(--dna-brand-text); }
+  .{{ uid }}-hdr-meta { font-size: 9px; font-weight: 500; letter-spacing: 0.10em; fill: var(--dna-brand-text); opacity: 0.5; }
+  .{{ uid }}-title-main { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: 0.05em; fill: var(--dna-bg); text-transform: uppercase; }
+  .{{ uid }}-title-sub { font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-bg); opacity: 0.55; }
+  .{{ uid }}-hero-value { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: -0.02em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-bg); opacity: 0.55; }
+  .{{ uid }}-axis-y { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; fill: var(--dna-chart-axis-text, var(--dna-bg)); opacity: 0.65; }
+  .{{ uid }}-axis-x { font-size: 9px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-chart-axis-text, var(--dna-bg)); opacity: 0.5; }
+  .{{ uid }}-milestone { font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-ink-primary); opacity: 0.18; }
+  .{{ uid }}-foot { font-size: 8px; font-weight: 500; letter-spacing: 0.12em; fill: var(--dna-ink-muted, var(--dna-label-text)); opacity: 0.5; }
+  .{{ uid }}-foot-brand { font-size: 8px; font-weight: 700; letter-spacing: 0.26em; fill: var(--dna-seam-color); opacity: 0.5; }
+{% else %}
+  .{{ uid }}-hdr-user { font-size: 12px; font-weight: 800; letter-spacing: 0.20em; fill: var(--dna-brand-text); }
+  .{{ uid }}-hdr-meta { font-size: 9px; font-weight: 500; letter-spacing: 0.10em; fill: var(--dna-label-text); opacity: 0.7; }
+  .{{ uid }}-title-main { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: 0.05em; fill: var(--dna-brand-text); text-transform: uppercase; }
+  .{{ uid }}-title-sub { font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-signal); opacity: 0.8; }
+  .{{ uid }}-hero-value { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: -0.02em; fill: var(--dna-brand-text); }
+  .{{ uid }}-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-signal); opacity: 0.8; }
+  .{{ uid }}-axis-y { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; fill: var(--dna-ink-muted); opacity: 0.85; }
+  .{{ uid }}-axis-x { font-size: 9px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-ink-muted); opacity: 0.65; }
+  .{{ uid }}-milestone { font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-brand-text); }
+  .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-signal); opacity: 0.22; }
+  .{{ uid }}-foot { font-size: 8px; font-weight: 500; letter-spacing: 0.12em; fill: var(--dna-label-text); opacity: 0.75; }
+  .{{ uid }}-foot-brand { font-size: 8px; font-weight: 700; letter-spacing: 0.26em; fill: var(--dna-signal); opacity: 0.45; }
+{% endif %}
+  /* Chart engine fragment classes — brutalist aesthetic (match tier2 target).
+     v0.3.2 Phase 3: route through --dna-chart-main / --dna-chart-highlight
+     so light substrates use panel color for main data + seam color for
+     highlight; dark substrates fall through to the existing --dna-signal
+     defaults via the fallback chain. */
   .hw-chart-axis { stroke: var(--dna-border, var(--dna-signal)); stroke-width: 2; fill: none; opacity: 0.5; }
   .hw-chart-gridline { stroke: var(--dna-border, var(--dna-signal)); stroke-width: 0.5; opacity: 0.18; fill: none; shape-rendering: crispEdges; }
-  .hw-chart-line { stroke: var(--dna-signal, #10B981); stroke-width: 4; stroke-linejoin: miter; stroke-linecap: square; }
-  .{{ uid }}-bright-core .hw-chart-line { stroke: var(--dna-signal-dim, #34D399); stroke-width: 1.5; }
+  .hw-chart-line { stroke: var(--dna-chart-main, var(--dna-signal, #10B981)); stroke-width: 3.5; stroke-linejoin: miter; stroke-linecap: square; }
+  .{{ uid }}-bright-core .hw-chart-line { stroke: var(--dna-chart-highlight, var(--dna-signal-dim, #34D399)); stroke-width: 1.5; }
   .hw-chart-area { fill: url(#{{ uid }}-area-fade); fill-opacity: 1; }
   .hw-chart-area-smooth { fill: url(#{{ uid }}-area-fade); fill-opacity: 1; }
   [data-hw-zone="markers"] { shape-rendering: crispEdges; }
   .hw-chart-endpoint { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
   .hw-chart-milestone-line { stroke: var(--dna-border, var(--dna-signal)); stroke-width: 0.5; opacity: 0.22; stroke-dasharray: 4 8; }
-  .hw-chart-milestone-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-ink-accent, #A7F3D0); }
+  .hw-chart-milestone-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-brand-text, var(--dna-ink-bright)); }
   @keyframes {{ uid }}-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
   .{{ uid }}-beacon { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
   .{{ uid }}-status-dot { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }

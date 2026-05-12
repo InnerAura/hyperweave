@@ -190,8 +190,13 @@ def test_brutalist_marquee_uses_rect_separators() -> None:
 
 
 def test_brutalist_marquee_alternates_text_fill_cycle() -> None:
-    """Brutalist text_fill_cycle=[#D1FAE5, #34D399] → items rotate through
-    the two-stop chromatic hierarchy (ink, info)."""
+    """Brutalist text_fill_cycle=[var(--dna-ink-primary), var(--dna-signal)] →
+    items rotate through the polarity-correct text color (ink_primary) and
+    the variant accent (signal). v0.3.2 follow-up replaced --dna-ink-bright
+    (which resolved to the DARK surface color for dark variants, making
+    marquee text invisible) with --dna-ink-primary which carries the bright
+    text color for dark variants and the dark ink for light variants —
+    visible across all 12 brutalist variants regardless of substrate polarity."""
     svg = compose(
         ComposeSpec(
             type="marquee-horizontal",
@@ -199,9 +204,9 @@ def test_brutalist_marquee_alternates_text_fill_cycle() -> None:
             title="LIVING|SELF-CONTAINED|AGENT|INTERFACES",
         )
     ).svg
-    # Item 0 gets #D1FAE5 (ink), item 1 #34D399 (info), item 2 #D1FAE5, item 3 #34D399.
-    assert 'fill="#D1FAE5"' in svg
-    assert 'fill="#34D399"' in svg
+    # Item 0 gets --dna-ink-primary, item 1 --dna-signal (accent), repeat.
+    assert 'fill="var(--dna-ink-primary)"' in svg
+    assert 'fill="var(--dna-signal)"' in svg
 
 
 def test_cellular_marquee_uses_monofamily_info_accent() -> None:

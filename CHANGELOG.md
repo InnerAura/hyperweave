@@ -5,6 +5,28 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-05-11
+
+Brutalist gets 12 variants split by substrate: 6 dark monochromes (celadon, carbon, alloy, temper, pigment, ember) and 6 light scholars (archive, signal, pulse, depth, afterimage, primer). Metadata pipeline wires 12 fields that were silently hardcoded. Per-frame reasoning populates `hw:reasoning` from per-genome YAML.
+
+### Added
+
+- Brutalist 12 variants with substrate dispatch (dark | light template routing).
+- Per-frame reasoning architecture &mdash; `data/reasoning/{genome}.yaml` loader; brutalist authored, chrome/automata follow.
+- `hw:variant` and `hw:stratum` metadata fields.
+- Barlow Condensed 700/900 embedded for display typography.
+- Semantic chart CSS vars (`--dna-chart-main`, `--dna-chart-highlight`) decouple data color from accent signal across substrates.
+
+### Fixed
+
+- Metadata pipeline: 12 context variables now wired from genome/variant config (version, series, platform, theme, palette, fonts, rhythm, material, form language, contrast, motion compliance).
+- Version string reflects current release (was 0.2.4).
+- `hw:reasoning` fields populate (were always empty).
+
+### Notes
+
+- Chrome and automata reasoning YAML queued for follow-up.
+
 ## [0.3.1] - 2026-05-10
 
 Receipt user-turn count and filenames now reflect actual session content. Voltage receipts always render dark regardless of viewer color scheme. Star chart x-axis labels no longer collide on short-history repos.

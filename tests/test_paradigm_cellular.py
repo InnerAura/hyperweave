@@ -172,8 +172,15 @@ def test_per_frame_font_filtering() -> None:
     from hyperweave.compose.assembler import fonts_for_frame
     from hyperweave.core.enums import FrameType
 
-    assert fonts_for_frame(FrameType.STATS) == frozenset({"jetbrains-mono", "orbitron", "chakra-petch"})
-    assert fonts_for_frame(FrameType.CHART) == frozenset({"jetbrains-mono", "orbitron"})
+    # v0.3.2 Phase 4: Barlow Condensed weights 700/900 added to badge / strip /
+    # stats / chart allowlists so brutalist light-scholar templates can embed
+    # the hero serif numerals declared in their CSS.
+    assert fonts_for_frame(FrameType.STATS) == frozenset(
+        {"jetbrains-mono", "orbitron", "chakra-petch", "barlow-condensed-700", "barlow-condensed-900"}
+    )
+    assert fonts_for_frame(FrameType.CHART) == frozenset(
+        {"jetbrains-mono", "orbitron", "barlow-condensed-700", "barlow-condensed-900"}
+    )
     assert fonts_for_frame(FrameType.MARQUEE_HORIZONTAL) == frozenset({"orbitron"})
     assert fonts_for_frame(FrameType.ICON) == frozenset()
     assert fonts_for_frame(FrameType.DIVIDER) == frozenset()
