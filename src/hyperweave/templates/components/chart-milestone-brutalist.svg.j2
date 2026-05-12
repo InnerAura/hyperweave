@@ -1,0 +1,37 @@
+{# Brutalist milestone marker — nested-square trio anchored at the data point
+   with label sitting 10px above. Used by both brutalist substrates.
+
+   Spec source: tier2/genomes/brutalist/brutalist-v03/hw-elegant-mono-star-charts-v3.html
+   (dark, all 6 variants) and tier2/genomes/brutalist/brutalist-v03/hw-codex-star-charts-
+   light-scholar.html (light, all 6 variants). Both prototypes ship the same
+   nested-square geometry — only fills differ by substrate.
+
+   Geometry (verified against prototype line 138-140, 1K milestone at data
+   point y=316):
+     Outer 14x14 at (ms.x - 7, ms.y - 4) — 14px square, 4px above data point top
+     Middle  8x8 at (ms.x - 4, ms.y - 1) — 8px inset 3 from outer edges
+     Inner   4x4 at (ms.x - 2, ms.y + 1) — 4px inset 5 from outer edges
+     Label baseline at ms.y - 10 — sits clear of the marker, anchors above
+                                    the curve crossing for legibility
+
+   Substrate-aware fills cascade via CSS vars set on the `.uid-chart` wrapper
+   class in brutalist-defs.j2:
+     --dna-chart-milestone-outer  → outer 14x14 (signal for dark, seam for light)
+     --dna-chart-milestone-mid    → middle 8x8 (surface = canvas/paper)
+     --dna-chart-milestone-inner  → inner 4x4 (ink-primary, both substrates)
+
+   Label uses the global .hw-chart-milestone-label class — brutalist-defs.j2
+   routes its fill through --dna-chart-milestone-text (=ink-primary on both
+   substrates) so the label reads as the strongest ink tone available, never
+   bleeding into the cream/paper canvas. #}
+<rect x="{{ ms.x - 7 }}" y="{{ ms.y - 4 }}" width="14" height="14"
+      fill="var(--dna-chart-milestone-outer, var(--dna-signal))"
+      shape-rendering="crispEdges"/>
+<rect x="{{ ms.x - 4 }}" y="{{ ms.y - 1 }}" width="8" height="8"
+      fill="var(--dna-chart-milestone-mid, var(--dna-surface))"
+      shape-rendering="crispEdges"/>
+<rect x="{{ ms.x - 2 }}" y="{{ ms.y + 1 }}" width="4" height="4"
+      fill="var(--dna-chart-milestone-inner, var(--dna-ink-primary))"
+      shape-rendering="crispEdges"/>
+<text x="{{ ms.x }}" y="{{ ms.y - 10 }}" text-anchor="middle"
+      class="hw-chart-milestone-label">{{ ms.label }}</text>

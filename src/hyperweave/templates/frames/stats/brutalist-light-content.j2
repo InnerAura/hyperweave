@@ -98,15 +98,24 @@
   <text class="{{ uid }}-al" x="24" y="214">ACTIVITY · 52W</text>
   <text class="{{ uid }}-al" x="478" y="214" text-anchor="end">{% if activity_peak > 0 %}PEAK · {{ activity_peak }}/WK{% else %}PEAK · —{% endif %}</text>
 
-  {# (13) 52 activity bars — fill INK-PRIMARY (dark ink on paper substrate),
-     opacity varies with count. Same width/stride/start_x as dark. #}
+  {# (13) 52 activity bars — fill --dna-signal-dim (the assembler-mapped CSS
+     var for the variant's accent_complement stop). Every light variant
+     declares accent_complement as the panel-top color (panel_gradient_stops[0]),
+     so the histogram reads as the variant's signature warm/cool dark accent
+     on cream paper — pulse oxblood (#8B1A1A), archive tobacco-leather
+     (#5C4033), depth navy (#1A3A6B), signal forest (#1A4A2E), afterimage
+     ultraviolet (#2D1B69), primer zinc (#2A2D32). Switching from --dna-ink-primary
+     (the deep near-black ink) fixes the v0.3.2 regression where bars looked
+     like dark-gray smudges instead of ink-stained ledger entries.
+     Opacity envelope (.28 → .75 via sqrt scaling) is within the prototype
+     range across all six DNAs (.17 → .75). Same width/stride/start_x as dark. #}
   {% set bar_baseline = 246 %}
   {% set bar_max_h = 26 %}
   {% set bar_w = 7 %}
   {% set bar_start_x = 22 %}
   {% set bar_stride = 9 %}
   {% set peak = activity_peak if activity_peak > 0 else 1 %}
-  <g fill="var(--dna-ink-primary)" shape-rendering="crispEdges">
+  <g fill="var(--dna-signal-dim)" shape-rendering="crispEdges">
   {% for bar in activity_bars %}
     {% if bar.count == 0 %}
       {% set h = 4 %}

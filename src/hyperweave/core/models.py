@@ -147,6 +147,17 @@ class ComposeSpec(FrozenModel):
     telemetry_data: dict[str, object] | None = Field(
         default=None, description="Session data contract JSON (telemetry frames only)"
     )
+    receipt_filename_hint: str = Field(
+        default="",
+        description=(
+            "Human-readable filename basename for the receipt footer (e.g. "
+            "'20260508_receipt_debug_v0226.svg'). Set by the CLI write path "
+            "after computing the on-disk filename so the footer's filepath "
+            "token matches the file the user sees. Empty string falls back "
+            "to the legacy '.hyperweave/receipts/{uuid}.svg' path so HTTP / "
+            "MCP callers that don't set the hint keep rendering."
+        ),
+    )
 
     # -- Divider-specific --
     divider_variant: DividerVariant = Field(

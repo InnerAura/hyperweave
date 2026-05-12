@@ -710,7 +710,13 @@ def _build_milestones(
         px, py = projected[idx]
         for t in thresholds:
             if last_val < t <= p.value:
-                label = f"{t // 1000}K" if t >= 1000 else str(t)
+                threshold_label = f"{t // 1000}K" if t >= 1000 else str(t)
+                # Date suffix in `MMM YY` form (e.g. "APR 25") matches the
+                # v0.3.2 brutalist chart prototypes' milestone label cadence
+                # — `1K · APR 25` / `2K · NOV 25`. Skipping the apostrophe
+                # before the year mirrors the prototype's literal string.
+                date_suffix = p.date.strftime("%b %y").upper().lstrip("0")
+                label = f"{threshold_label} · {date_suffix}"
                 raw.append(
                     {
                         "x": px,

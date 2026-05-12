@@ -5,6 +5,23 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-05-12
+
+### Fixed
+
+- **Receipt filenames** &mdash; use consistent underscore separators; the footer displays the same human-readable filename.
+- **Dark brutalist badge panels** &mdash; match the prototype: left panel reads `brand_panel_fill`, label reads `ink-primary`, seam-gap rect restored so the divider region renders the same in any markdown viewer.
+- **Badge layout engine** &mdash; brutalist badges land every interior gap (accent&rarr;glyph, glyph&rarr;label, label&rarr;seam, seam&rarr;value, value&rarr;indicator, indicator&rarr;right border) on a single 5px rhythm. `measure_text` now consumes the paradigm's declared `value_letter_spacing_em` so the engine reserves the actual rendered width instead of under-counting by `(n-1) * font_size * em`.
+- **Dark brutalist star charts** &mdash; header glyph fill routes through `var(--dna-signal)` (was an orphaned brand-text white). 6px solid left accent rail anchors the chart as a Y-axis spine; outer perimeter softens to a 1.5px hairline at 0.25 opacity so the rail dominates the read.
+- **Light scholar star charts** &mdash; area gradient resolves through each variant's panel color across all 6 light variants instead of falling back to the seam color. Substrate-aware paper grain with multiply blend; perimeter inset and grain layer order match the prototype.
+- **Activity graph bars** &mdash; light scholar stat cards use the correct accent color.
+- **Divider tick marks** &mdash; resolve through the genome palette instead of a hardcoded green.
+
+### Changed
+
+- **Star chart milestone callouts** &mdash; now include date context (e.g. `1K · JAN 24`) so the chart is self-documenting without cross-referencing external star history tools.
+- **Star chart milestone markers** &mdash; data points use a filled square marker (&#9632;) to visually distinguish them from the regular interval crosshair (+) markers.
+
 ## [0.3.2] - 2026-05-11
 
 Brutalist gets 12 variants split by substrate: 6 dark monochromes (celadon, carbon, alloy, temper, pigment, ember) and 6 light scholars (archive, signal, pulse, depth, afterimage, primer). Metadata pipeline wires 12 fields that were silently hardcoded. Per-frame reasoning populates `hw:reasoning` from per-genome YAML.

@@ -22,12 +22,22 @@
   {# L0: PAPER CANVAS #}
   <rect width="{{ cw }}" height="{{ ch }}" fill="var(--dna-surface)"/>
 
-  {# L1: PERIMETER — dark ink at low opacity for paper substrate #}
-  <rect x="1.25" y="1.25" width="{{ cw - 2.5 }}" height="{{ ch - 2.5 }}" fill="none"
-        stroke="var(--dna-ink-primary, var(--dna-border))" stroke-width="2" stroke-opacity="{{ stroke_opacity | default('0.20') }}"/>
+  {# L1: PAPER GRAIN — substrate-aware grain filter (defined in brutalist-defs.j2
+     as low-frequency desaturated noise for light substrate); applied at
+     opacity .15 with mix-blend-mode multiply per the v0.3.2 brutalist light
+     scholar prototype (hw-codex-star-charts-light-scholar.html:569). Full
+     canvas size + emitted BEFORE the perimeter so the noise darkening fans
+     across the entire substrate without competing with the inset stroke.
+     The multiply blend ensures the noise darkens the cream paper rather
+     than adding a contrasting dapple. #}
+  <rect width="{{ cw }}" height="{{ ch }}" filter="url(#{{ uid }}-grain)" opacity="0.15" style="mix-blend-mode:multiply"/>
 
-  {# L2: PAPER GRAIN #}
-  <rect x="3" y="3" width="{{ cw - 6 }}" height="{{ ch - 6 }}" filter="url(#{{ uid }}-grain)"/>
+  {# L2: PERIMETER — dark ink at low opacity for paper substrate. 0.75px inset
+     + stroke-width=1 matches prototype line 570 exactly; the v0.3.2 build
+     used 1.25 inset + 2px stroke which read as too prominent against the
+     paper substrate, dominating the surface treatment. #}
+  <rect x="0.75" y="0.75" width="{{ cw - 1.5 }}" height="{{ ch - 1.5 }}" fill="none"
+        stroke="var(--dna-ink-primary, var(--dna-border))" stroke-width="1" stroke-opacity="{{ stroke_opacity | default('0.20') }}"/>
 
   {# v0.3.2 Phase D light scholar additives — dark header panel + gold seam rule.
      Matches the v0.3.2 brutalist light chart prototype pulse panel: dark gradient
@@ -136,7 +146,7 @@
     </g>
     <g data-hw-zone="milestones">
     {%- for ms in chart_milestones %}
-      {%- include "components/chart-milestone.svg.j2" %}
+      {%- include "components/chart-milestone-brutalist.svg.j2" %}
     {%- endfor %}
     </g>
     {%- for ax in chart_axes %}

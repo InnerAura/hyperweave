@@ -1,5 +1,22 @@
 {# Brutalist chart defs: grain filter, area-fade gradient, clip-path.
-   Ported from tier2/genomes/brutalist/emerald/brutalist-star-history-v4b.svg #}
+   Grain filter is substrate-aware:
+     - Light scholar substrate: low-frequency fractalNoise (.45) desaturated
+       to .1, applied at opacity .15 with mix-blend-mode multiply. Matches
+       the v0.3.2 brutalist light scholar prototype's paper-grain filter
+       (hw-codex-star-charts-light-scholar.html:45) — produces a subtle
+       brown dapple on cream paper rather than the dark-substrate green
+       wash, which read as off-palette dapple against any light variant's
+       paper canvas.
+     - Dark substrate: high-frequency fractalNoise (1.6) tinted constant
+       (0.04, 0.16, 0.10) at alpha=0.14. Ported from tier2/genomes/brutalist
+       /emerald/brutalist-star-history-v4b.svg; reads as faint phosphor
+       speckle on the dark canvas. #}
+{% if substrate_kind == 'light' %}
+<filter id="{{ uid }}-grain" x="0%" y="0%" width="100%" height="100%">
+  <feTurbulence type="fractalNoise" baseFrequency=".45" numOctaves="4" seed="7"/>
+  <feColorMatrix type="saturate" values=".1"/>
+</filter>
+{% else %}
 <filter id="{{ uid }}-grain" x="0%" y="0%" width="100%" height="100%">
   <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="19" result="noise"/>
   <feColorMatrix in="noise" type="luminanceToAlpha" result="alpha-noise"/>
@@ -8,12 +25,25 @@
                                                          0 0 0 0 0.10
                                                          0 0 0 0.14 0"/>
 </filter>
+{% endif %}
+{# Area-fade gradient stops use SVG-root-scoped vars (--dna-bg for light /
+   --dna-signal for dark) instead of --dna-chart-main. The chart-main var
+   is declared on `.uid-chart` (a `<g>` element) — but gradient stops live
+   in `<defs>` at SVG root, which is a SIBLING of the chart group, NOT an
+   ancestor. CSS custom props inherit through the DOM tree, so stops can't
+   see chart-scoped vars. The visible bug: afterimage area renders cyan
+   (--dna-signal=#00D4FF) instead of purple (--dna-bg=#2D1B69); depth area
+   renders orange (--dna-signal=#E07A2F) instead of navy (--dna-bg=#1A3A6B).
+   Routing through SVG-root vars (which the assembler emits on the <svg>
+   inline style) restores per-variant panel-color area fills. #}
 <linearGradient id="{{ uid }}-area-fade" x1="0" y1="0" x2="0" y2="1">
-  {# Opacity stops 0.12 → 0.01 match the v0.3.2 brutalist light chart prototype
-     ca-af gradient. Pre-fix was 0.14 / 0.02 which slightly oversaturated the
-     light-substrate area fill. #}
-  <stop offset="0%" stop-color="var(--dna-chart-main, var(--dna-signal, #10B981))" stop-opacity="0.12"/>
-  <stop offset="100%" stop-color="var(--dna-chart-main, var(--dna-signal, #10B981))" stop-opacity="0.01"/>
+{% if substrate_kind == 'light' %}
+  <stop offset="0%" stop-color="var(--dna-bg)" stop-opacity="0.12"/>
+  <stop offset="100%" stop-color="var(--dna-bg)" stop-opacity="0.01"/>
+{% else %}
+  <stop offset="0%" stop-color="var(--dna-signal, #10B981)" stop-opacity="0.12"/>
+  <stop offset="100%" stop-color="var(--dna-signal, #10B981)" stop-opacity="0.01"/>
+{% endif %}
 </linearGradient>
 <clipPath id="{{ uid }}-clip"><rect width="{{ width }}" height="{{ height }}"/></clipPath>
 {# v0.3.2 Phase D: dark header panel gradient for light scholar chart variants.
@@ -48,6 +78,16 @@
        archive #E8D8C0, depth #DFE3EB, signal #DAE0D4, afterimage #D4CEE4,
        primer #E4E4DE). Falls back to surface-deep when a variant doesn't
        declare its own. #}
+    {# Milestone marker palette (consumed by chart-milestone-brutalist.svg.j2).
+       Light scholar: gold/lime/orange/etc. seam outer, paper canvas mid,
+       dark ink inner + label. Matches the v0.3.2 brutalist light scholar
+       prototype (tier2 .../hw-codex-star-charts-light-scholar.html lines
+       138-140 — pulse 1K milestone — outer #D4AF37, mid #F5E6D3,
+       inner #2A1215). #}
+    --dna-chart-milestone-outer: var(--dna-seam-color);
+    --dna-chart-milestone-mid: var(--dna-surface);
+    --dna-chart-milestone-inner: var(--dna-ink-primary);
+    --dna-chart-milestone-text: var(--dna-ink-primary);
   }
 {% else %}
   .{{ uid }}-chart {
@@ -56,6 +96,18 @@
     --dna-chart-axis-text: var(--dna-ink-muted);
     --dna-chart-glyph: var(--dna-ink-primary);
     --dna-chart-title-bg: var(--dna-surface-deep);
+    {# Milestone marker palette (consumed by chart-milestone-brutalist.svg.j2).
+       Dark mono: variant accent (signal) outer, canvas (surface_0) mid, cream
+       ink (ink-primary) inner + label. Matches the v0.3.2 brutalist dark
+       prototype (hw-elegant-mono-star-charts-v3.html for celadon 1K milestone:
+       outer #48A870, mid #06140C, inner #D8F0E0). The mid value uses
+       --dna-surface which post-v0.3.3 carries the canvas/ground tone (not
+       the elevated panel that brand_panel_fill carries — see badge field
+       hierarchy decoupling in brutalist-dark-content.j2). #}
+    --dna-chart-milestone-outer: var(--dna-signal);
+    --dna-chart-milestone-mid: var(--dna-surface);
+    --dna-chart-milestone-inner: var(--dna-ink-primary);
+    --dna-chart-milestone-text: var(--dna-ink-primary);
   }
 {% endif %}
   {# Typography ported VERBATIM from prototypes:
@@ -103,8 +155,38 @@
   .{{ uid }}-axis-x { font-size: 9px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-chart-axis-text, var(--dna-bg)); opacity: 0.5; }
   .{{ uid }}-milestone { font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-ink-primary); }
   .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-ink-primary); opacity: 0.18; }
-  .{{ uid }}-foot { font-size: 8px; font-weight: 500; letter-spacing: 0.12em; fill: var(--dna-ink-muted, var(--dna-label-text)); opacity: 0.5; }
-  .{{ uid }}-foot-brand { font-size: 8px; font-weight: 700; letter-spacing: 0.26em; fill: var(--dna-seam-color); opacity: 0.5; }
+  {# Footer URL — uses --dna-bg (panel color) at opacity .5 to match
+     prototype line 667 fill="#2d1b69" opacity=".5". The pre-fix
+     --dna-ink-muted (=ink_secondary) resolved to mid-lavender (#6B5899
+     for afterimage) — lighter than the prototype's panel-color, making the
+     URL fade further than intended against cream paper. #}
+  .{{ uid }}-foot { font-size: 8px; font-weight: 500; letter-spacing: 0.12em; fill: var(--dna-bg); opacity: 0.5; }
+  .{{ uid }}-foot-brand { font-size: 8px; font-weight: 700; letter-spacing: 0.26em; fill: var(--dna-bg); opacity: 0.35; }
+  {# Light scholar gridline override: prototype paints gridlines in
+     accent_complement (--dna-bg) at opacity .06–.08, much subtler than the
+     global .hw-chart-gridline default (0.18). Scoped to the .uid-chart
+     wrapper so chrome/cellular keep their global defaults. #}
+  .{{ uid }}-chart .hw-chart-gridline { stroke: var(--dna-bg); opacity: 0.08; }
+  {# Bright-core highlight opacity 0.8 matches the prototype's accent
+     polyline overlay (line 630 of hw-codex-star-charts-light-scholar.html).
+     Without this attenuation the seam-color highlight reads as the
+     dominant line color over the main polyline, which inverts the
+     prototype's polyline-with-thin-highlight intent. #}
+  .{{ uid }}-bright-core .hw-chart-line { opacity: 0.8; }
+  {# Polyline width overrides — light scholar prototype lines 626-628 use
+     4px ghost / 3px main / 1.5px highlight. The bare .hw-chart-line above
+     sets 3.5px (a generic default); scope a brutalist-light pair to match
+     prototype exactly. #}
+  .{{ uid }}-chart .hw-chart-line { stroke-width: 3; }
+  .{{ uid }}-ghost-line .hw-chart-line { stroke-width: 4; }
+  {# Crosshair marker stroke — prototype line 633 uses #2d1b69 (=bg,
+     panel color) for the rect outline + cross lines. The shared
+     rect.svg.j2 partial emits stroke=var(--dna-signal-dim) which resolves
+     to ink_secondary (mid lavender for afterimage = #6B5899) and reads as
+     too pale against the panel-colored polyline. Override at the chart
+     scope so dark variants keep their existing signal-dim resolution. #}
+  .{{ uid }}-chart [data-hw-zone="markers"] rect,
+  .{{ uid }}-chart [data-hw-zone="markers"] line { stroke: var(--dna-bg); }
 {% else %}
   .{{ uid }}-hdr-user { font-size: 12px; font-weight: 800; letter-spacing: 0.20em; fill: var(--dna-brand-text); }
   .{{ uid }}-hdr-meta { font-size: 9px; font-weight: 500; letter-spacing: 0.10em; fill: var(--dna-label-text); opacity: 0.7; }
@@ -133,7 +215,7 @@
   [data-hw-zone="markers"] { shape-rendering: crispEdges; }
   .hw-chart-endpoint { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
   .hw-chart-milestone-line { stroke: var(--dna-border, var(--dna-signal)); stroke-width: 0.5; opacity: 0.22; stroke-dasharray: 4 8; }
-  .hw-chart-milestone-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-brand-text, var(--dna-ink-bright)); }
+  .hw-chart-milestone-label { font-family: var(--dna-font-mono, 'JetBrains Mono', monospace); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-chart-milestone-text, var(--dna-brand-text, var(--dna-ink-bright))); }
   @keyframes {{ uid }}-pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
   .{{ uid }}-beacon { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }
   .{{ uid }}-status-dot { animation: {{ uid }}-pulse 2.618s ease-in-out infinite; will-change: opacity; }

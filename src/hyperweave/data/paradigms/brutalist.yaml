@@ -21,6 +21,30 @@ badge:
   # paradigm value as its width/height attrs.
   glyph_size: 14
   glyph_size_compact: 0
+  # v0.3.3: indicator geometry calibrated to the v16 dark-badge matrix
+  # prototype. 10×10 outer ring + 6×6 inner bit at offset 2; stroke-width
+  # 1.5 (heavier than chrome's 0.5 diamond ring). The 10-px size anchored
+  # at ind_pad_r=10 places the right edge at total_w-10 → indicator_x=138
+  # for a 158-px badge, byte-matching the prototype's translate(138,5).
+  # Inner-bit ratio 0.6 yields a 6×6 bit (10 * 0.6 = 6), heavier-feeling
+  # than the previous 0.5 default (which gave 4×4 on an 8-px indicator).
+  indicator_size: 10
+  indicator_pad_r: 5
+  indicator_stroke_width: 1.5
+  indicator_inner_bit_ratio: 0.6
+  # v0.3.3 uniform-rhythm contract: every interior gap (accent→glyph or
+  # accent→label, glyph→label, label→seam, seam→value, value→indicator,
+  # indicator→right border) lands at exactly 5px. The layout engine reads
+  # rhythm_gap and derives label_start padding, label_pad_r, val_pad_l, and
+  # glyph_gap from it; the uppercase shy-from-seam 6px adjustment is bypassed.
+  # 5px favors information density over breathing room — badges are
+  # inline-dense artifacts where the 8px target read as too airy. Template
+  # letter-spacing values must be declared here too so measure_text reserves
+  # the actual rendered width (the value template uses 0.04em; the label
+  # uses 0.06em).
+  rhythm_gap: 5
+  label_letter_spacing_em: 0.06
+  value_letter_spacing_em: 0.04
 
 strip:
   value_font_size: 18

@@ -41,13 +41,16 @@ def test_brutalist_passes_chromatic_coverage(loaded: ConfigLoader) -> None:
 
 
 def test_brutalist_flagship_declares_full_palette(loaded: ConfigLoader) -> None:
-    """v0.3.2 visual review pass: celadon flagship now OVERRIDES the base
-    genome chromatic fields with prototype-matched values (--s #06140C,
-    --a #48A870, etc.) rather than inheriting base emerald #14532D/#10B981.
-    The "flagship inherits base" pattern collided with prototype fidelity —
-    the prototype's celadon is a muted-ceramic-green, not vivid-emerald.
-    Test asserts celadon now declares the full chromatic palette like the
-    other dark variants."""
+    """v0.3.3 architecture: celadon flagship declares the full chromatic palette
+    with semantic field hierarchy. `surface_0` is the genome-wide canvas/ground
+    tone (used by strip canvas, stats canvas, badge RIGHT panel). The badge's
+    elevated LEFT panel sources from `brand_panel_fill` instead — a badge/strip-
+    semantic field that does not leak into the genome-wide canvas. `label_text`
+    holds the muted-accent tone consumed by strip metric labels via
+    `--dna-label-text`; the badge label routes through `--dna-ink-primary`
+    (=ink) for the cream-tier prototype tone. Field decoupling is what allows
+    badge and strip to both pull from celadon's palette without one frame's
+    visual needs corrupting the other's substrate."""
     from hyperweave.compose.validate_paradigms import _CHROMATIC_FIELDS
 
     brutalist = loaded.genome_specs["brutalist"]
@@ -62,8 +65,26 @@ def test_brutalist_flagship_declares_full_palette(loaded: ConfigLoader) -> None:
     assert celadon["accent"].lower() == "#48a870", (
         f"celadon.accent must be prototype's muted-ceramic-green #48A870; got {celadon['accent']}"
     )
+    assert celadon["surface_0"].lower() == "#06140c", (
+        f"celadon.surface_0 must be the canvas/ground tone #06140C — used by strip canvas, stats "
+        f"canvas, and badge RIGHT panel. The elevated badge LEFT panel sources from brand_panel_fill, "
+        f"not surface_0; got {celadon['surface_0']}"
+    )
+    assert celadon["surface_2"].lower() == "#0e2818", (
+        f"celadon.surface_2 must be the intermediate tone #0E2818; got {celadon['surface_2']}"
+    )
+    assert celadon["brand_panel_fill"].lower() == "#102818", (
+        f"celadon.brand_panel_fill must be the elevated panel tone #102818 (used by badge LEFT panel "
+        f"via --dna-brand-panel-fill, strip brand panel, stats card header); got {celadon['brand_panel_fill']}"
+    )
     assert celadon["label_text"].lower() == "#308858", (
-        f"celadon.label_text (--tl) must be prototype's darker-mid-tone #308858; got {celadon['label_text']}"
+        f"celadon.label_text must be the muted-accent tone #308858 — consumed by strip metric labels via "
+        f"--dna-label-text. Badge label routes through --dna-ink-primary (=ink #D8F0E0) instead, so this "
+        f"value never bleeds into the badge; got {celadon['label_text']}"
+    )
+    assert celadon["ink"].lower() == "#d8f0e0", (
+        f"celadon.ink must be the cream-tier #D8F0E0 (consumed by badge label via --dna-ink-primary "
+        f"per the v16 prototype); got {celadon['ink']}"
     )
 
 

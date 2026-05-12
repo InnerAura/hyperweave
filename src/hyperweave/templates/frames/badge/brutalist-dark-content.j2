@@ -1,17 +1,49 @@
-{# Brutalist BADGE — DARK substrate (v0.3.2 split).
-   Two-panel layout, sharp separator, square status indicator.
-   Sources for spatial values: compose/layout.py (lp_w, right_panel_x, etc.).
-   stroke_opacity parameterized so light variants can raise visibility on paper substrate. #}
+{# Brutalist BADGE — DARK substrate.
+   v0.3.3 calibrated against tier2/genomes/brutalist/brutalist-v03/
+   hw-elegant-mono-badge-matrix-v16.html. Two flat panels (elevated over canvas)
+   with a single state-colored separator at the seam; no inset perimeter
+   stroke. Spatial values flow from compose/layout.py (lp_w, right_panel_x,
+   indicator_x, inner_bit_w). The prototype's 158x20 geometry is reproduced
+   when label="BUILD" + value="passing" — other labels/values reshape via
+   measure_text but the chromatic and geometric contracts stay constant.
+
+   Element contract (audited element-by-element against v16 prototype):
+
+     Left panel  : brand_panel_fill (elevated panel tone, celadon #102818).
+                   Reads from brand_panel_fill JSON field — a badge/strip-
+                   semantic field, NOT the genome-wide canvas (surface_0).
+                   Decoupling preserves strip/stats canvas integrity.
+     Right panel : surface_0 (canvas/ground tone, celadon #06140C). Same
+                   value the strip/stats/chart use for their substrate.
+     Seam gap    : --dna-seam-gap (fallback --dna-surface) fills the
+                   geometric gap when resolver computes seam_w > 0; without
+                   the rect the gap renders transparent and shows page
+                   background through (white in light MD, dark in dark MD).
+     Accent bar  : --dna-signal (chassis tone), 4px at x=0
+     Separator   : --hw-state-sep (per-state) → passing=accent, warn=amber,
+                   fail=red. 2px overlay at x=lp_w.
+     Glyph       : currentColor (set via accent_w-anchored translate)
+     Label       : --dna-ink-primary (cream/ink-bright per variant, celadon
+                   #D8F0E0), weight 700, ls 0.06em. Distinct from --dna-
+                   label-text (which carries the strip's muted accent — same
+                   semantic role, different per-frame tonal needs).
+     Value       : --hw-state-value (per-state) → passing=ink_secondary,
+                   warn=#FDE68A, fail=#FCA5A5. Weight 700, ls 0.04em.
+     Indicator   : --hw-state-ring stroke (1.5px) + --dna-status-color bit
+                   (10x10 outer, 6x6 inner at offset 2).
+
+   No perimeter stroke under the dark prototype's flat-plate aesthetic.
+   The light variant keeps the perimeter (paper substrate needs the rule).
+#}
 
 <g clip-path="url(#{{ uid }}-clip)">
-  <rect width="{{ lp_w }}" height="{{ h }}" fill="var(--dna-surface)"/>
-  <rect x="{{ right_panel_x - 1 }}" width="{{ right_panel_w + 1 }}" height="{{ h }}" fill="var(--dna-surface-deep)"/>
+  <rect width="{{ lp_w }}" height="{{ h }}" fill="var(--dna-brand-panel-fill)"/>
+  <rect x="{{ right_panel_x - 1 }}" width="{{ right_panel_w + 1 }}" height="{{ h }}" fill="var(--dna-surface)"/>
 </g>
-<rect x=".5" y=".5" width="{{ width - 1 }}" height="{{ h - 1 }}" fill="none" stroke="var(--dna-ink-primary)" stroke-opacity="{{ stroke_opacity | default('0.06') }}"/>
 <rect x="0" y="0" width="{{ accent_w }}" height="{{ h }}" fill="var(--dna-signal)" data-hw-zone="accent-bar"/>
 <rect x="{{ lp_w }}" y="0" width="{{ sep_w_val }}" height="{{ h }}" fill="var(--hw-state-sep, var(--dna-signal))"/>
 {% if seam_w_val > 0 %}
-<rect x="{{ lp_w + sep_w_val }}" y="0" width="{{ seam_w_val }}" height="{{ h }}" fill="var(--dna-seam-gap, var(--dna-surface-deep))"/>
+<rect x="{{ lp_w + sep_w_val }}" y="0" width="{{ seam_w_val }}" height="{{ h }}" fill="var(--dna-seam-gap, var(--dna-surface))"/>
 {% endif %}
 
 {# Glyph #}
@@ -21,30 +53,38 @@
 </g>
 {% endif %}
 
-{# Label #}
+{# Label — weight 700 + 0.06em tracking, cream ink (--dna-ink-primary, not
+   --dna-label-text) so badge gets the bright tone the prototype shows while
+   the strip preserves its muted-accent label tone via --dna-label-text. #}
 <text data-hw-zone="label"
       x="{{ label_x }}" y="{{ text_y }}"
       text-anchor="middle"
       font-family="var(--dna-font-mono, 'SF Mono', monospace)"
-      font-size="11" font-weight="600"
-      fill="var(--dna-label-text)"
+      font-size="11" font-weight="700"
+      fill="var(--dna-ink-primary)"
       letter-spacing="0.06em">{{ label_display | default(label | upper) }}</text>
 
-{# Value #}
+{# Value — weight 700 + 0.04em tracking (lighter than label by design;
+   prototype reserves the heavier 0.06em for the uppercase identifier and
+   gives the lowercase state word a tighter, more readable track). #}
 <text data-hw-zone="value"
       x="{{ value_x }}" y="{{ text_y }}"
       text-anchor="middle"
       font-family="var(--dna-font-mono, 'SF Mono', monospace)"
       font-size="11" font-weight="700"
-      fill="var(--hw-state-value, var(--dna-brand-text))">{{ value }}</text>
+      fill="var(--hw-state-value, var(--dna-brand-text))"
+      letter-spacing="0.04em">{{ value }}</text>
 
 {# Status indicator — gated on resolver-supplied show_indicator (mode-driven).
    Brutalist anchors the indicator at the badge frame's vertical center
-   (geometric, not text-baseline-pinned like cellular/chrome). #}
+   (geometric, not text-baseline-pinned like cellular/chrome).
+   stroke-width and inner-bit dimensions are paradigm-supplied:
+   brutalist v0.3.3 ships 1.5 / 6 (0.6 ratio), matching the v16
+   prototype's translate(138,5) → 10x10 ring + 6x6 bit at offset 2. #}
 {% if show_indicator %}
 {% set ind_y = (h - ind_size) // 2 %}
 <g data-hw-zone="status" transform="translate({{ indicator_x }},{{ ind_y }})">
-  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="1.2" width="{{ ind_size }}" height="{{ ind_size }}"/>
+  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="{{ indicator_stroke_width | default('1.2') }}" width="{{ ind_size }}" height="{{ ind_size }}"/>
   <rect class="hw-logic-bit" x="{{ inner_bit_offset }}" y="{{ inner_bit_offset }}" width="{{ inner_bit_w }}" height="{{ inner_bit_w }}"
         fill="var(--dna-status-color, var(--dna-signal))"/>
 </g>

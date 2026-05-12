@@ -165,11 +165,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Dashboard<br/><sub>strip</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github&variant=celadon" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/brutalist.static?data=gh:InnerAura/hyperweave.stars,pypi:hyperweave.version,gh:InnerAura/hyperweave.build&subtitle=InnerAura/hyperweave&glyph=github&variant=celadon" alt="strip"/>
   <br/>
   <ul>
 <li><sub><code>/v1/strip/{title}/{genome}.static?data={tokens}&subtitle={text}&glyph={glyph}&variant={variant}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github&variant=celadon</code></sub></li>
+<li><sub><code>hyperweave.app/v1/strip/hyperweave/brutalist.static?data=gh:InnerAura/hyperweave.stars,pypi:hyperweave.version,gh:InnerAura/hyperweave.build&subtitle=InnerAura/hyperweave&glyph=github&variant=celadon</code></sub></li>
 </ul>
 </td>
 </tr>

@@ -20,12 +20,20 @@
   {# L0: FLAT SLAB #}
   <rect width="{{ cw }}" height="{{ ch }}" fill="var(--dna-surface)"/>
 
-  {# L1: PERIMETER #}
-  <rect x="1.25" y="1.25" width="{{ cw - 2.5 }}" height="{{ ch - 2.5 }}" fill="none"
-        stroke="var(--dna-border, var(--dna-signal))" stroke-width="2.5"/>
-
-  {# L2: GRAIN #}
+  {# L1: GRAIN — paints before the perimeter and left rail so the structural
+     stroke + accent bar read as crisp ink layered over the substrate texture. #}
   <rect x="3" y="3" width="{{ cw - 6 }}" height="{{ ch - 6 }}" filter="url(#{{ uid }}-grain)"/>
+
+  {# L2: ASYMMETRIC L-FRAME — heavy left accent rail anchors the chart as a
+     Y-axis spine while the outer perimeter ships as a barely-visible 1.5px
+     hairline on all four sides. The visual asymmetry (6px solid accent left,
+     1.5px @ 0.25 opacity top/right/bottom) reads as an L-frame even though
+     structurally the perimeter is uniform — the rail dominates the eye.
+     Matches the v0.3.2 brutalist dark prototype's celadon panel exactly
+     (lines 55-56 of hw-elegant-mono-star-charts-v3.html). #}
+  <rect width="6" height="{{ ch }}" fill="var(--dna-signal)" data-hw-zone="accent-rail"/>
+  <rect x="0.75" y="0.75" width="{{ cw - 1.5 }}" height="{{ ch - 1.5 }}" fill="none"
+        stroke="var(--dna-border, var(--dna-signal))" stroke-width="1.5" stroke-opacity="0.25"/>
 
   {# STRUCTURAL RULES — y-coordinates from the v0.3.2 brutalist dark chart prototype
      pigment panel lines 71-78. Top rule y=42 separates identity header from
@@ -63,7 +71,7 @@
        for cross-substrate spatial parity per user feedback). #}
     <g transform="translate(20, 13)">
       <svg viewBox="0 0 24 24" width="16" height="16">
-        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-brand-text, var(--dna-ink-bright))"/>
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-signal)"/>
       </svg>
     </g>
     {# Header user text formatted as "ELI64S / README-AI" matching prototype
@@ -125,7 +133,7 @@
     </g>
     <g data-hw-zone="milestones">
     {%- for ms in chart_milestones %}
-      {%- include "components/chart-milestone.svg.j2" %}
+      {%- include "components/chart-milestone-brutalist.svg.j2" %}
     {%- endfor %}
     </g>
     {%- for ax in chart_axes %}

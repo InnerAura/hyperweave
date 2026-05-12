@@ -664,22 +664,20 @@ def test_truncate_path_left_preserves_short_input() -> None:
 
 
 def test_truncate_path_left_drops_prefix_keeps_filename_end() -> None:
-    """Production bug: ``.hyperweave/receipts/<uuid>.svg`` collided with the
-    right-aligned session date on the claude-code 37.4M receipt.
-
-    Per the architectural intent, the unique UUID suffix is the only
-    distinguishing information; the ``.hyperweave/receipts/`` prefix is
-    constant noise. Left-truncation drops the prefix and keeps the
-    UUID + extension.
+    """When the footer path is too long to fit, left-truncation preserves
+    the meaningful end. The CLI emits v0.3.3 human-readable basenames like
+    ``20260508_receipt_debug_v0226.svg``; HTTP / MCP without the hint emit
+    the legacy ``.hyperweave/receipts/<uuid>.svg`` shape. In both forms
+    the end carries the most identifying information.
     """
     from hyperweave.compose.resolver import _truncate_path_left
 
-    long_path = ".hyperweave/receipts/4f7565a5-da44-4fbb-9234-b6f9cb2a1be6.svg"
-    out = _truncate_path_left(long_path, max_w=200)
+    long_basename = "20260508_a_very_long_session_title_describing_the_work_v0226.svg"
+    out = _truncate_path_left(long_basename, max_w=200)
     assert out.startswith("…"), f"left-truncation must prefix with ellipsis, got {out!r}"
     assert out.endswith(".svg"), f"filename extension must survive truncation, got {out!r}"
-    # The unique-id tail must be preserved (we keep the part the user can use to disambiguate)
-    assert "b6f9cb2a1be6" in out, f"trailing uuid bytes should remain, got {out!r}"
+    # Trailing version-tag bytes should remain so the receipt is still disambiguable.
+    assert "v0226" in out, f"trailing slug bytes should remain, got {out!r}"
 
 
 def test_truncate_path_left_returns_empty_when_width_below_ellipsis() -> None:
@@ -701,7 +699,11 @@ def test_receipt_footer_truncates_long_path_to_avoid_overlap() -> None:
     """Production bug (claude-code 37.4M): footer_tl filepath collided
     with right-aligned footer_tr session date at y=470. The resolver
     must measure both and truncate the receipt path from the LEFT until
-    they fit — preserving the unique UUID suffix.
+    they fit — preserving the meaningful suffix.
+
+    HTTP / MCP callers don't set ``receipt_filename_hint``, so the footer
+    falls back to the legacy ``.hyperweave/receipts/<uuid>.svg`` shape;
+    that path drives the overflow + truncation flow here.
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -736,6 +738,67 @@ def test_receipt_footer_truncates_long_path_to_avoid_overlap() -> None:
     # The constant prefix was dropped — that's the point of left-truncation
     assert ".hyperweave/receipts/4f7565a5" not in footer_tl, (
         f"left-truncation should drop the prefix, got {footer_tl!r}"
+    )
+
+
+def test_receipt_footer_uses_filename_hint_when_supplied() -> None:
+    """v0.3.3: the CLI write path passes the human-readable basename as
+    ``ComposeSpec.receipt_filename_hint``; the footer surfaces it instead
+    of the legacy ``.hyperweave/receipts/<uuid>.svg`` shape so the on-disk
+    filename and the rendered footer agree.
+    """
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "abc-def", "model": "claude-opus", "duration_minutes": 5},
+        "profile": {"total_input_tokens": 1, "total_output_tokens": 1, "total_cost": 0.01},
+        "tools": {"Edit": {"total_tokens": 100, "count": 1, "tool_class": "mutate"}},
+        "stages": [{"name": "i", "label": "I", "pct": 100, "tool_class": "mutate"}],
+        "user_events": [],
+        "agents": [],
+    }
+    spec = ComposeSpec(
+        type="receipt",
+        telemetry_data=tel,
+        receipt_filename_hint="20260508_receipt_debug_v0226.svg",
+    )
+    svg = compose(spec).svg
+    # The footer at y=470 should carry the hint, not the legacy UUID path.
+    footer_line_match = re.search(r'y="470"[^>]*>([^<]*)</text>', svg)
+    assert footer_line_match, "footer_tl text element not found at y=470"
+    footer_tl = footer_line_match.group(1)
+    assert "20260508_receipt_debug_v0226.svg" in footer_tl, (
+        f"footer should surface the receipt_filename_hint, got {footer_tl!r}"
+    )
+    # Legacy UUID-path noise must not leak in when the hint is supplied.
+    assert ".hyperweave/receipts/" not in footer_tl, f"hint should replace the legacy UUID path, got {footer_tl!r}"
+
+
+def test_receipt_footer_falls_back_to_uuid_path_when_hint_empty() -> None:
+    """HTTP / MCP callers don't set ``receipt_filename_hint``; the footer
+    must still render via the legacy UUID-path fallback so those code
+    paths keep producing a usable footer.
+    """
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = {
+        "session": {"id": "abc-def", "model": "claude-opus", "duration_minutes": 5},
+        "profile": {"total_input_tokens": 1, "total_output_tokens": 1, "total_cost": 0.01},
+        "tools": {"Edit": {"total_tokens": 100, "count": 1, "tool_class": "mutate"}},
+        "stages": [{"name": "i", "label": "I", "pct": 100, "tool_class": "mutate"}],
+        "user_events": [],
+        "agents": [],
+    }
+    # Default: receipt_filename_hint="" → legacy UUID-path shape.
+    spec = ComposeSpec(type="receipt", telemetry_data=tel)
+    svg = compose(spec).svg
+    footer_line_match = re.search(r'y="470"[^>]*>([^<]*)</text>', svg)
+    assert footer_line_match, "footer_tl text element not found at y=470"
+    footer_tl = footer_line_match.group(1)
+    assert ".hyperweave/receipts/abc-def.svg" in footer_tl, (
+        f"empty hint should fall back to UUID path, got {footer_tl!r}"
     )
 
 

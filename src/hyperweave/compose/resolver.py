@@ -335,8 +335,30 @@ def resolve_badge(
         if badge_cfg_for_seam and badge_cfg_for_seam.seam_w > 0
         else profile.get("badge_seam_width", 3)
     )
-    indicator_size = profile.get("badge_indicator_size", 8)
-    ind_pad_r = profile.get("badge_indicator_pad_r", 8)
+    # Indicator geometry: paradigm overrides profile defaults. Brutalist v0.3.3
+    # declares 10x10 + ind_pad_r=10 to match the v16 prototype's translate(138,5);
+    # chrome and cellular continue to fall back to their profile defaults.
+    badge_cfg_for_indicator = paradigm_spec.badge if paradigm_spec else None
+    indicator_size = (
+        badge_cfg_for_indicator.indicator_size
+        if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_size > 0
+        else profile.get("badge_indicator_size", 8)
+    )
+    ind_pad_r = (
+        badge_cfg_for_indicator.indicator_pad_r
+        if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_pad_r > 0
+        else profile.get("badge_indicator_pad_r", 8)
+    )
+    indicator_stroke_width = (
+        badge_cfg_for_indicator.indicator_stroke_width
+        if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_stroke_width > 0
+        else 1.2
+    )
+    indicator_inner_bit_ratio = (
+        badge_cfg_for_indicator.indicator_inner_bit_ratio
+        if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_inner_bit_ratio > 0
+        else 0.5
+    )
     inset = profile.get("badge_inset", 0)
     # text_y_factor from paradigm (cellular uses 0.656 matching spec y=21 at
     # h=32; brutalist/chrome use 0.69 baseline). One place drives the math.
@@ -364,18 +386,26 @@ def resolve_badge(
         _label_size = max(round(_label_size * 0.78), 6)
         _value_size = max(round(_value_size * 0.78), 7)
 
-    # Monospace labels carry letter-spacing 0.06em (CSS declared in chrome-
-    # defs). Pre-v0.2.25 the resolver added len(text)*font_size*0.06 AFTER
-    # measure_text returned, double-counting and using the wrong (N vs N-1)
-    # formula. measure_text now applies (max(0, N-1) * font_size * em)
-    # internally — single source of truth in core/text.py.
+    # Letter-spacing values come from the paradigm's badge config so
+    # measure_text reserves the exact width the template will render. The
+    # paradigm's declared values are the canonical source; the
+    # ``0.06 if use_mono else 0.0`` fallback preserves pre-v0.3.3 behavior
+    # for paradigms (cellular, default) that haven't declared their badge
+    # letter-spacing yet. measure_text applies ``(max(0, N-1) * font_size
+    # * em)`` internally — single source of truth in core/text.py.
+    _label_ls_em = (
+        paradigm_spec.badge.label_letter_spacing_em
+        if paradigm_spec and paradigm_spec.badge.label_letter_spacing_em > 0
+        else (0.06 if use_mono else 0.0)
+    )
+    _value_ls_em = paradigm_spec.badge.value_letter_spacing_em if paradigm_spec else 0.0
     lw = (
         measure_text(
             label_display,
             font_family=_label_family,
             font_size=_label_size,
             font_weight=400 if use_mono else 700,
-            letter_spacing_em=0.06 if use_mono else 0.0,
+            letter_spacing_em=_label_ls_em,
         )
         if label_display
         else 0.0
@@ -386,6 +416,7 @@ def resolve_badge(
             font_family=_value_family,
             font_size=_value_size,
             font_weight=_value_weight,
+            letter_spacing_em=_value_ls_em,
         )
         if value_raw
         else 0.0
@@ -426,6 +457,16 @@ def resolve_badge(
     # All badge geometry now lives in compose/layout.py — single source of
     # truth, unit-tested independently. The v0.2.25 centering fix is in there
     # (value_x = zone_center, not midpoint of unrelated bounds).
+    # Uniform-rhythm gap: when the paradigm declares a positive
+    # ``rhythm_gap`` (brutalist v0.3.3 sets 8), every interior gap of the
+    # badge composition (accent→glyph or accent→label, glyph→label,
+    # label→seam, seam→value, value→indicator, indicator→right border)
+    # collapses to that single value. Paradigms that don't declare it
+    # (chrome / cellular / default) receive 0 and keep their legacy layout
+    # constants. When rhythm_gap > 0, ``ind_pad_r`` is also forced to the
+    # same value so the value→indicator and indicator→right-border gaps
+    # match the rest of the rhythm.
+    rhythm_gap = paradigm_spec.badge.rhythm_gap if paradigm_spec else 0
     layout = compute_badge_layout(
         height=height,
         measured_label_w=lw,
@@ -449,6 +490,8 @@ def resolve_badge(
         right_canvas_inset=right_canvas_inset,
         text_y_factor=text_y_factor,
         value_font_size=_value_size,
+        inner_bit_ratio=indicator_inner_bit_ratio,
+        rhythm_gap=rhythm_gap,
     )
 
     # Variant resolution and profile visual context (envelope, well, specular,
@@ -483,6 +526,7 @@ def resolve_badge(
             "indicator_size": layout.indicator_size,
             "inner_bit_w": layout.inner_bit_w,
             "inner_bit_offset": layout.inner_bit_offset,
+            "indicator_stroke_width": indicator_stroke_width,
             "accent_bar_width": accent_w,
             "has_glyph": has_glyph,
             "show_indicator": layout.show_indicator,
@@ -1100,10 +1144,18 @@ def resolve_divider(
         "divider_label": spec.value or "",
         "variant": spec.variant or "",
         # Pass through chrome chromosomes so chrome-band template's envelope_stops
-        # for-loop has data. brutalist-seam needs accent + accent_signal.
+        # for-loop has data. brutalist-seam needs accent + accent_complement (was
+        # accent_signal pre-v0.3.3 — see brutalist-seam.svg.j2 header for the
+        # chromatic-register rationale). zeropoint (editorial default) needs
+        # accent + accent_complement + surface_deep to drive its variant-aware
+        # aurora gradient + nexus beacon without hardcoded chromatic literals.
+        # accent_signal stays in context for backward-compat — currently no
+        # divider template reads it but other surfaces may grow into the field.
         "envelope_stops": genome.get("envelope_stops", []),
         "accent": genome.get("accent", ""),
+        "accent_complement": genome.get("accent_complement", ""),
         "accent_signal": genome.get("accent_signal", ""),
+        "surface_deep": genome.get("surface_2", ""),
     }
     # Profile visual context now injected centrally by the dispatcher.
 
@@ -1704,12 +1756,16 @@ def _truncate_path_left(
     """Truncate ``path`` from the LEFT (drop prefix, keep filename end) so the
     result fits inside ``max_w`` pixels at 9pt JetBrains Mono.
 
-    Receipt footer paths look like ``.hyperweave/receipts/<uuid>.svg``,
-    where the UUID suffix is the only distinguishing information; the
-    ``.hyperweave/receipts/`` prefix is constant noise across every
-    session. Left-truncation preserves the meaningful end and emits
-    ``…<unique-suffix>``, so a footer line that would otherwise collide
-    with the right-aligned session date stays inside the content track.
+    Receipt footer paths take one of two shapes depending on the caller:
+    the CLI write path emits a human-readable basename like
+    ``20260508_receipt_debug_v0226.svg`` (set via
+    ``ComposeSpec.receipt_filename_hint``); HTTP / MCP callers without the
+    hint emit the legacy ``.hyperweave/receipts/<uuid>.svg`` shape. In both
+    cases the *end* of the string carries the most identifying information
+    (the slug or the UUID), and any leading prefix is the lower-signal
+    portion to drop. Left-truncation emits ``…<unique-suffix>`` so a
+    footer line that would otherwise collide with the right-aligned
+    session date stays inside the content track.
 
     Returns the input unchanged when it already fits. Returns the empty
     string when ``max_w`` is too small even for a single ellipsis. Width
@@ -2169,7 +2225,16 @@ def resolve_receipt(
     git_branch = session.get("git_branch", "")
     project_path = session.get("project_path", "")
     project_name = Path(project_path).name if project_path else "session"
-    receipt_path = f".hyperweave/receipts/{session_id}.svg" if session_id else ""
+    # Footer filepath token: prefer the CLI-supplied human-readable basename
+    # (matches the file the user sees on disk — e.g. "20260508_receipt_debug_v0226.svg").
+    # Fall back to the legacy UUID path so HTTP / MCP callers that don't set
+    # receipt_filename_hint keep rendering rather than blanking the footer.
+    if spec.receipt_filename_hint:
+        receipt_path = spec.receipt_filename_hint
+    elif session_id:
+        receipt_path = f".hyperweave/receipts/{session_id}.svg"
+    else:
+        receipt_path = ""
 
     start_iso = session.get("start", "")
     start_formatted = ""

@@ -107,13 +107,19 @@
   </filter>
 
 {% else %}
-  {# ── Zeropoint (default): specimen aurora — dark/blue/green/teal/dark ── #}
+  {# ── Zeropoint (default): variant-aware aurora.
+       Endpoint stops fade to ``surface_deep`` (variant substrate); the
+       intermediate halo stops carry ``accent_complement`` (variant tonal
+       pair); the centre peak carries ``accent`` (variant identity).
+       Pre-v0.3.3 this gradient hardcoded substrate/intermediate/peak/halo
+       chromatic literals and bled mint-green through every brutalist light
+       variant (crimson/cream/gold/brown/teal) regardless of palette. ── #}
   <linearGradient id="{{ uid }}-aurora" x1="0%" x2="100%" y1="50%" y2="50%">
-    <stop offset="0%" style="stop-color:#0a0f1a;stop-opacity:0"/>
-    <stop offset="20%" style="stop-color:#1a2b49;stop-opacity:0.8"/>
-    <stop offset="50%" style="stop-color:#00ff94;stop-opacity:1"/>
-    <stop offset="80%" style="stop-color:#4c8b8b;stop-opacity:0.8"/>
-    <stop offset="100%" style="stop-color:#0a0f1a;stop-opacity:0"/>
+    <stop offset="0%" style="stop-color:{{ surface_deep }};stop-opacity:0"/>
+    <stop offset="20%" style="stop-color:{{ accent_complement }};stop-opacity:0.8"/>
+    <stop offset="50%" style="stop-color:{{ accent }};stop-opacity:1"/>
+    <stop offset="80%" style="stop-color:{{ accent_complement }};stop-opacity:0.8"/>
+    <stop offset="100%" style="stop-color:{{ surface_deep }};stop-opacity:0"/>
   </linearGradient>
 
 {% endif %}
@@ -379,15 +385,21 @@
 {# ═══════════════════════════════════════════════════════════
    VARIANT: zeropoint — Aurora Nexus Beacon (default)
    Source: zeropoint_divider.svg (300x20)
-   Palette: #0a0f1a dark / #1a2b49 / #00ff94 green / #4c8b8b teal
+   Palette (v0.3.3+): variant-aware via injected context vars.
+     - surface_deep — substrate endpoint + nexus inner well
+     - accent_complement — aurora halo (intermediate stops)
+     - accent — aurora peak + nexus outer ring
+   Label tint is genome-neutral mid-gray; ``var(--dna-ink-secondary, #666666)``
+   would also work but a plain hex matches the editorial generics' neutral-label
+   convention (block divider line 178, takeoff line 264).
    ═══════════════════════════════════════════════════════════ #}
 {% else %}
 {# Aurora rule — full width 2px line #}
 <rect fill="url(#{{ uid }}-aurora)" height="2" width="{{ dw }}" x="0" y="{{ cy - 1 }}"/>
 
-{# Nexus beacon — specimen green outer, dark inner #}
-<circle cx="{{ dw // 2 }}" cy="{{ cy }}" r="4" fill="#00ff94"/>
-<circle cx="{{ dw // 2 }}" cy="{{ cy }}" r="2" fill="#0a0f1a"/>
+{# Nexus beacon — variant accent outer, variant substrate inner #}
+<circle cx="{{ dw // 2 }}" cy="{{ cy }}" r="4" fill="{{ accent }}"/>
+<circle cx="{{ dw // 2 }}" cy="{{ cy }}" r="2" fill="{{ surface_deep }}"/>
 
 {# Label #}
 {% if divider_label %}

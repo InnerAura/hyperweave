@@ -2,8 +2,18 @@
 
    Five horizontal segments at y=8 (genome accent, opacity 0.6) with four
    16-px expansion gaps. Each gap is bracketed by two perpendicular joint
-   marks (genome accent_signal, y=4..12, opacity 0.65). Static — no
+   marks (genome accent_complement, y=4..12, opacity 0.65). Static — no
    animation. Rebar-in-concrete structural metaphor.
+
+   v0.3.3 chromatic register: joint marks were previously stroked with
+   accent_signal (--dna-status-passing-core), a SEMANTIC state field whose
+   role is the green "passing" CI indicator. Brutalist light variants
+   (pulse/archive/depth/signal/afterimage/primer) deliberately inherit
+   accent_signal from the base genome's emerald per the chromatic coverage
+   contract carve-out (see compose/validate_paradigms.py:38), so the joints
+   rendered #059669 mint-green across every light variant regardless of
+   palette. accent_complement is the variant-tonal-pair structural mate and
+   IS overridden per variant — the right register for rebar-in-concrete.
 
    Source: tier2/genomes/brutalist/production/dividers/seam.svg
    Genome whitelist: brutalist (declared in brutalist.json `dividers: ["seam"]`).
@@ -28,12 +38,12 @@
 <line x1="648" y1="8" x2="800" y2="8" stroke="{{ accent }}" stroke-width="1.5" opacity="0.6"/>
 
 {# Joint faces — perpendicular marks at the four gap edges (8 verticals total). #}
-<line x1="152" y1="4" x2="152" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
-<line x1="168" y1="4" x2="168" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
-<line x1="312" y1="4" x2="312" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
-<line x1="328" y1="4" x2="328" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
-<line x1="472" y1="4" x2="472" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
-<line x1="488" y1="4" x2="488" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
-<line x1="632" y1="4" x2="632" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
-<line x1="648" y1="4" x2="648" y2="12" stroke="{{ accent_signal }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="152" y1="4" x2="152" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="168" y1="4" x2="168" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="312" y1="4" x2="312" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="328" y1="4" x2="328" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="472" y1="4" x2="472" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="488" y1="4" x2="488" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="632" y1="4" x2="632" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
+<line x1="648" y1="4" x2="648" y2="12" stroke="{{ accent_complement }}" stroke-width="1.2" opacity="0.65"/>
 {% endblock %}

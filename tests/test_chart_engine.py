@@ -276,9 +276,13 @@ def test_build_milestones_marks_crossings(sample_viewport: Viewport) -> None:
     labels = [ms["label"] for ms in out]
     # With sample_viewport ~600px wide and points spread across 4 timestamps, all
     # three thresholds cross at well-spaced x positions → none get de-overlapped.
-    assert "500" in labels
-    assert "1K" in labels
-    assert "2K" in labels
+    # v0.3.3 chart fidelity: labels include the crossing-date suffix per the
+    # brutalist light scholar prototype's `1K · APR 25` cadence, so labels
+    # start with the threshold tag followed by " · " and the `MMM YY` date
+    # suffix.
+    assert any(label.startswith("500 · ") for label in labels)
+    assert any(label.startswith("1K · ") for label in labels)
+    assert any(label.startswith("2K · ") for label in labels)
     # Structural guarantees every milestone dict needs
     for ms in out:
         assert {"x", "y", "bottom_y", "label", "value"} <= set(ms)

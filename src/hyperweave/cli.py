@@ -361,39 +361,52 @@ def session(
 
     frame_type = "receipt" if action == "receipt" else "rhythm-strip"
     genome_slug = _normalize_genome_slug(genome) if genome else ""
+
+    # Pre-compute the receipt's on-disk filename (when applicable) so the
+    # footer can render the same human-readable basename as the file the
+    # user sees. The compose pipeline reads receipt_filename_hint when set;
+    # an empty hint falls back to the legacy UUID-path footer (HTTP / MCP).
+    filename_hint = ""
+    if action == "receipt" and not output:
+        from datetime import datetime as _dt
+
+        from hyperweave.telemetry.receipt_paths import receipt_filename
+
+        sess = contract.get("session", {})
+        sid = sess.get("id", "unknown")
+        session_name = sess.get("name", "")
+        start_iso = sess.get("start", "")
+        try:
+            ts = _dt.fromisoformat(start_iso)
+        except (TypeError, ValueError):
+            ts = _dt.now()
+        user_events = contract.get("user_events", []) or []
+        first_prompt = user_events[0].get("preview", "") if user_events else ""
+        hw_dir = Path(".hyperweave") / "receipts"
+        hw_dir.mkdir(parents=True, exist_ok=True)
+        output = hw_dir / receipt_filename(
+            timestamp=ts,
+            session_name=session_name,
+            session_id=sid,
+            prompt_text=first_prompt,
+        )
+        filename_hint = output.name
+    elif action == "receipt" and output:
+        # Explicit --output: the user picked a basename; surface it.
+        filename_hint = output.name
+
     spec = ComposeSpec(
         type=frame_type,
         genome_id=genome_slug,
         telemetry_data=contract,
+        receipt_filename_hint=filename_hint,
     )
     result = do_compose(spec)
 
     if action == "receipt":
-        # Default output: .hyperweave/receipts/{date}_{time}_{slug}.svg
-        if not output:
-            from datetime import datetime as _dt
-
-            from hyperweave.telemetry.receipt_paths import receipt_filename
-
-            sess = contract.get("session", {})
-            sid = sess.get("id", "unknown")
-            session_name = sess.get("name", "")
-            start_iso = sess.get("start", "")
-            try:
-                ts = _dt.fromisoformat(start_iso)
-            except (TypeError, ValueError):
-                ts = _dt.now()
-            user_events = contract.get("user_events", []) or []
-            first_prompt = user_events[0].get("preview", "") if user_events else ""
-            hw_dir = Path(".hyperweave") / "receipts"
-            hw_dir.mkdir(parents=True, exist_ok=True)
-            output = hw_dir / receipt_filename(
-                timestamp=ts,
-                session_name=session_name,
-                session_id=sid,
-                prompt_text=first_prompt,
-            )
-
+        # output is guaranteed non-None here: the receipt branch above either
+        # received an explicit --output or computed a default path.
+        assert output is not None
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(result.svg)
 

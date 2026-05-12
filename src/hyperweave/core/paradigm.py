@@ -283,6 +283,47 @@ class ParadigmBadgeConfig(FrozenModel):
     at ``x=2..width-2`` per cellular-content.j2:9). Without this override,
     ``value_zone_right`` lands ``right_canvas_inset`` past the actual slab
     edge and drifts the centered value text right by half that amount."""
+    indicator_size: int = 0
+    """Optional paradigm-specific indicator side length. ``> 0`` overrides
+    the profile's ``badge_indicator_size``. Brutalist v0.3.3 sets 10 to
+    match the v16 badge matrix prototype (concentric 10x10 outline + 6x6
+    inner bit). Zero (default) defers to the profile."""
+    indicator_pad_r: int = 0
+    """Optional paradigm-specific right padding for the indicator. ``> 0``
+    overrides the profile's ``badge_indicator_pad_r``. Brutalist v0.3.3
+    sets 10 so the 10x10 indicator anchors at x=138 in a 158px badge
+    (matches prototype's ``translate(138,5)``). Zero defers to the profile."""
+    indicator_stroke_width: float = 0.0
+    """Optional paradigm-specific outer-ring stroke width for the indicator.
+    ``> 0`` overrides the layout-engine default (1.2). Brutalist v0.3.3
+    sets 1.5 to match the prototype's heavier ring weight. Zero defers
+    to the default."""
+    indicator_inner_bit_ratio: float = 0.0
+    """Optional paradigm-specific inner-bit/outer-ring side-length ratio.
+    ``> 0`` overrides the layout-engine default (0.5 — bit half of outer).
+    Brutalist v0.3.3 sets 0.6 (10→6) to match the prototype's heavier
+    inner mark. Zero defers to the default."""
+    label_letter_spacing_em: float = 0.0
+    """CSS-rendered ``letter-spacing`` for the label text. Resolver passes
+    this to ``measure_text`` so the layout reserves the actual rendered
+    width. Pre-v0.3.3 the resolver hardcoded ``0.06 if use_mono else 0.0``;
+    paradigm-driven now so brutalist (0.06) and chrome (0.12) declare the
+    measurement value alongside the template's ``letter-spacing`` attribute."""
+    value_letter_spacing_em: float = 0.0
+    """CSS-rendered ``letter-spacing`` for the value text. Brutalist's value
+    text declares ``letter-spacing="0.04em"`` in the template; before this
+    field landed the resolver passed ``0.0`` to measure_text and the badge
+    layout under-reserved width by ``(n-1) * font_size * 0.04`` — visible as
+    the value text overflowing the value zone by ~2.6px on a 7-char value."""
+    rhythm_gap: int = 0
+    """When ``> 0``, the badge layout engine uses a uniform interior rhythm:
+    every interior gap (accent→glyph, glyph→label, label→seam, seam→value,
+    value→indicator, indicator→right border) equals ``rhythm_gap`` pixels.
+    Forces ``label_start = accent_w + rhythm_gap``, ``label_pad_r = rhythm_gap``,
+    ``val_pad_l = rhythm_gap``, ``glyph_gap = rhythm_gap``, and disables the
+    uppercase shy-from-seam adjustment. Zero (default) preserves legacy
+    layout for chrome/cellular/default paradigms; brutalist sets 8 to match
+    the v16 prototype's symmetric composition."""
 
 
 class ParadigmIconConfig(FrozenModel):
