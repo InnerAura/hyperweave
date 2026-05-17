@@ -742,10 +742,13 @@ def test_receipt_footer_truncates_long_path_to_avoid_overlap() -> None:
 
 
 def test_receipt_footer_uses_filename_hint_when_supplied() -> None:
-    """v0.3.3: the CLI write path passes the human-readable basename as
-    ``ComposeSpec.receipt_filename_hint``; the footer surfaces it instead
-    of the legacy ``.hyperweave/receipts/<uuid>.svg`` shape so the on-disk
-    filename and the rendered footer agree.
+    """v0.3.4: the CLI write path passes the full relative path
+    (``.hyperweave/receipts/{slug}.svg``) as ``ComposeSpec.receipt_filename_hint``;
+    the footer surfaces it verbatim so the rendered footer is self-documenting —
+    a reader sees the directory + filename and knows where to find the file.
+
+    v0.3.3 shipped a regression where the CLI passed only the basename, hiding
+    the directory; this test pins the v0.3.4 fix that restores the prefix.
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -761,18 +764,16 @@ def test_receipt_footer_uses_filename_hint_when_supplied() -> None:
     spec = ComposeSpec(
         type="receipt",
         telemetry_data=tel,
-        receipt_filename_hint="20260508_receipt_debug_v0226.svg",
+        receipt_filename_hint=".hyperweave/receipts/20260508_receipt_debug_v0226.svg",
     )
     svg = compose(spec).svg
-    # The footer at y=470 should carry the hint, not the legacy UUID path.
     footer_line_match = re.search(r'y="470"[^>]*>([^<]*)</text>', svg)
     assert footer_line_match, "footer_tl text element not found at y=470"
     footer_tl = footer_line_match.group(1)
-    assert "20260508_receipt_debug_v0226.svg" in footer_tl, (
-        f"footer should surface the receipt_filename_hint, got {footer_tl!r}"
+    # Full relative path must appear in the footer — directory prefix + basename.
+    assert ".hyperweave/receipts/20260508_receipt_debug_v0226.svg" in footer_tl, (
+        f"footer should surface the full relative path from receipt_filename_hint, got {footer_tl!r}"
     )
-    # Legacy UUID-path noise must not leak in when the hint is supplied.
-    assert ".hyperweave/receipts/" not in footer_tl, f"hint should replace the legacy UUID path, got {footer_tl!r}"
 
 
 def test_receipt_footer_falls_back_to_uuid_path_when_hint_empty() -> None:

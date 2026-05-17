@@ -5,6 +5,27 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-05-13
+
+`install-hook` now detects Claude Code and Codex automatically. A new `hyperweave doctor` command shows hook status, transcripts, and recent receipts at a glance.
+
+### Added
+
+- **`hyperweave doctor`** &mdash; shows hook registration, transcript directories, recent receipts, and version info per runtime.
+- **`install-hook --runtime all`** &mdash; registers hooks for both runtimes regardless of auto-detection.
+
+### Changed
+
+- **`install-hook` default** &mdash; without `--runtime`, detects which runtimes are installed and registers hooks for each. `--runtime claude-code` or `--runtime codex` scopes to one.
+
+### Fixed
+
+- **Receipt footer** &mdash; restores the full relative path (`.hyperweave/receipts/{slug}.svg`); v0.3.3 had stripped the directory prefix.
+
+### Notes
+
+- Codex receipts refresh live as the session progresses, reflecting cumulative state after each turn.
+
 ## [0.3.3] - 2026-05-12
 
 ### Fixed

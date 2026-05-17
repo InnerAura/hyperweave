@@ -363,9 +363,13 @@ def session(
     genome_slug = _normalize_genome_slug(genome) if genome else ""
 
     # Pre-compute the receipt's on-disk filename (when applicable) so the
-    # footer can render the same human-readable basename as the file the
-    # user sees. The compose pipeline reads receipt_filename_hint when set;
-    # an empty hint falls back to the legacy UUID-path footer (HTTP / MCP).
+    # footer can render the same path as the file the user sees. The compose
+    # pipeline reads receipt_filename_hint when set; an empty hint falls back
+    # to the legacy UUID-path footer (HTTP / MCP). Pass the FULL relative
+    # path (not just the basename) so the footer is self-documenting — a
+    # reader sees ".hyperweave/receipts/{slug}.svg" and knows where to find
+    # the file without prior context. Long footers trigger left-truncation
+    # of the constant prefix at resolver.py:_truncate_path_left.
     filename_hint = ""
     if action == "receipt" and not output:
         from datetime import datetime as _dt
@@ -390,10 +394,10 @@ def session(
             session_id=sid,
             prompt_text=first_prompt,
         )
-        filename_hint = output.name
+        filename_hint = str(output)
     elif action == "receipt" and output:
-        # Explicit --output: the user picked a basename; surface it.
-        filename_hint = output.name
+        # Explicit --output: surface whatever path shape the user provided.
+        filename_hint = str(output)
 
     spec = ComposeSpec(
         type=frame_type,
@@ -567,12 +571,13 @@ def _install_codex_hook(hook_command: str, full_slug: str) -> None:
     """Write a Stop hook to ``~/.codex/hooks.json`` + enable codex_hooks feature.
 
     Per developers.openai.com/codex/hooks, Codex CLI fires Stop hooks
-    PER-TURN (not per-session). Receipts therefore render at every turn
-    boundary rather than once at session end. Document this caveat
-    prominently — users may want to manually invoke
-    ``hyperweave session receipt <transcript-path>`` once a session
-    completes instead. v0.2.24 will revisit when codex notify-config
-    surfaces a session-scoped event.
+    PER-TURN (after every assistant response). The receipt rewrites the
+    same deterministic filename each turn, so the on-disk file becomes a
+    live mid-session telemetry window — opening it during a long session
+    shows the current state, and the final write at session-end carries
+    the complete cumulative receipt. This is intentional; future versions
+    will lean into live-receipt consumers (file watchers, dashboards)
+    rather than collapse it back to a single session-end event.
 
     Also writes ``[features] codex_hooks = true`` to ``~/.codex/config.toml``
     (preserving any other keys); the feature flag is required for the
@@ -628,8 +633,8 @@ def _install_codex_hook(hook_command: str, full_slug: str) -> None:
     typer.echo(f"Installed Stop hook in {hooks_path}{pinned}")
     typer.echo(f"Set [features] codex_hooks = true in {config_path}")
     typer.echo(
-        "Note: Codex Stop fires per-turn — receipts render multiple times per session. "
-        "v0.2.24 will refine to a session-scoped event.",
+        "Note: Codex Stop fires per-turn — the receipt file refreshes live as the "
+        "session progresses, always reflecting current cumulative state.",
         err=True,
     )
 
@@ -642,6 +647,37 @@ _HOOK_INSTALLERS = {
     "claude-code": _install_claude_code_hook,
     "codex": _install_codex_hook,
 }
+
+# Runtime → (config_dirname_under_home, cli_binary_name). Drives both the
+# auto-detect path (config dir OR binary on PATH) and `hyperweave doctor`
+# state reporting. Config-dir presence means "agent has been run at least
+# once"; binary-on-PATH covers fresh installs where the dir hasn't been
+# created yet. The installers create their dirs on demand, so installing
+# for a binary-only runtime is safe.
+_RUNTIME_DETECTION = {
+    "claude-code": (".claude", "claude"),
+    "codex": (".codex", "codex"),
+}
+
+
+def _detect_installed_runtimes() -> list[tuple[str, str]]:
+    """Detect installed agent runtimes via config-dir-OR-binary-on-PATH.
+
+    Returns ``(runtime_key, signal)`` tuples in ``_RUNTIME_DETECTION`` order.
+    Signal is ``"initialized"`` when the runtime's config dir exists (agent
+    has been run at least once), ``"binary_only"`` when only the CLI is on
+    PATH (fresh install, config dir not created yet). Runtimes with
+    neither signal are omitted entirely.
+    """
+    import shutil
+
+    detected: list[tuple[str, str]] = []
+    for runtime, (dirname, binname) in _RUNTIME_DETECTION.items():
+        if (Path.home() / dirname).exists():
+            detected.append((runtime, "initialized"))
+        elif shutil.which(binname):
+            detected.append((runtime, "binary_only"))
+    return detected
 
 
 @app.command("install-hook")
@@ -662,28 +698,55 @@ def install_hook(
         typer.Option(
             "--runtime",
             help=(
-                "Agent runtime to install the receipt hook for. 'claude-code' (default) "
-                "writes a SessionEnd hook to ~/.claude/settings.json. 'codex' writes a "
-                "Stop hook to ~/.codex/hooks.json plus enables [features] codex_hooks "
-                "in ~/.codex/config.toml. Codex Stop is per-turn, not per-session — "
-                "see release notes for caveats."
+                "Agent runtime to install the receipt hook for. Empty (default) "
+                "auto-detects installed runtimes (~/.claude, ~/.codex, or 'claude'/"
+                "'codex' on PATH) and registers for each present. 'claude-code' "
+                "writes a SessionEnd hook to ~/.claude/settings.json. 'codex' writes "
+                "a Stop hook to ~/.codex/hooks.json plus [features] codex_hooks in "
+                "~/.codex/config.toml. 'all' forces both regardless of detection."
             ),
         ),
-    ] = "claude-code",
+    ] = "",
 ) -> None:
-    """Install a session-receipt hook for the chosen agent runtime."""
+    """Install session-receipt hooks for installed agent runtimes.
+
+    Default behavior detects which agent CLIs are installed (Claude Code,
+    Codex) via config dir presence or binary on PATH, and registers receipt
+    hooks for each. Pass ``--runtime <name>`` to scope to a single runtime,
+    or ``--runtime all`` to force both regardless of detection.
+    """
     from hyperweave.compose.resolver import _genome_supports_receipts
 
-    if runtime not in _HOOK_INSTALLERS:
+    # Resolve targets:
+    #   ""     (default) → auto-detect installed runtimes (config dir OR binary)
+    #   "all"            → both runtimes regardless of detection
+    #   "<name>"         → just that runtime (legacy explicit form)
+    if runtime == "":
+        detected = _detect_installed_runtimes()
+        if not detected:
+            typer.echo(
+                "Error: no agent runtime detected (~/.claude, ~/.codex, or "
+                "'claude'/'codex' on PATH). Install Claude Code or Codex CLI, "
+                "or pass --runtime <name> to force.",
+                err=True,
+            )
+            raise typer.Exit(1)
+        targets = [rt for rt, _signal in detected]
+    elif runtime == "all":
+        targets = list(_HOOK_INSTALLERS)
+    elif runtime in _HOOK_INSTALLERS:
+        targets = [runtime]
+    else:
         typer.echo(
-            f"Error: unknown runtime '{runtime}'. Supported: {sorted(_HOOK_INSTALLERS)}",
+            f"Error: unknown runtime '{runtime}'. Supported: {sorted(_HOOK_INSTALLERS)} or 'all'.",
             err=True,
         )
         raise typer.Exit(1)
 
-    # Validate --genome BEFORE writing the hook. install-hook fails loud (unlike
-    # the receipt CLI which silently falls through) because pinning a bad genome
-    # would produce silent surprises every session-end until someone notices.
+    # Validate --genome BEFORE writing any hook. install-hook fails loud
+    # (unlike the receipt CLI which silently falls through) because pinning
+    # a bad genome would produce silent surprises every session-end until
+    # someone notices. Validate once even when targeting multiple runtimes.
     full_slug = ""
     if genome:
         full_slug = _normalize_genome_slug(genome)
@@ -698,7 +761,151 @@ def install_hook(
 
     hook_command = f"hyperweave session receipt --genome {full_slug}" if full_slug else "hyperweave session receipt"
 
-    _HOOK_INSTALLERS[runtime](hook_command, full_slug)
+    for target in targets:
+        _HOOK_INSTALLERS[target](hook_command, full_slug)
+
+
+def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:
+    """Parse a runtime's hook config and return a one-line status string.
+
+    Returns ``✓`` when the hyperweave hook is wired correctly, ``✗`` when
+    the runtime is initialized but no hyperweave hook is registered, or
+    ``⚠`` when the wiring is partial (malformed config; codex missing the
+    [features] codex_hooks flag). The string is rendered verbatim by
+    ``doctor``.
+    """
+    import json
+
+    if runtime == "claude-code":
+        settings_path = home_dir / "settings.json"
+        if not settings_path.exists():
+            return (
+                f"✗ {runtime}: ~/.claude/ exists but no settings.json — "
+                f"run 'hyperweave install-hook --runtime {runtime}'"
+            )
+        try:
+            settings = json.loads(settings_path.read_text())
+        except json.JSONDecodeError:
+            return f"⚠ {runtime}: ~/.claude/settings.json is malformed"
+        for entry in settings.get("hooks", {}).get("SessionEnd", []) or []:
+            if not isinstance(entry, dict):
+                continue
+            for hook in entry.get("hooks", []) or []:
+                if not isinstance(hook, dict):
+                    continue
+                cmd = str(hook.get("command", ""))
+                if "hyperweave session" in cmd:
+                    return f"✓ {runtime}: hook registered — {cmd}"
+        return f"✗ {runtime}: initialized but no hyperweave hook — run 'hyperweave install-hook --runtime {runtime}'"
+
+    if runtime == "codex":
+        hooks_path = home_dir / "hooks.json"
+        config_path = home_dir / "config.toml"
+        registered_cmd: str | None = None
+        if hooks_path.exists():
+            try:
+                hooks = json.loads(hooks_path.read_text())
+            except json.JSONDecodeError:
+                return f"⚠ {runtime}: ~/.codex/hooks.json is malformed"
+            for entry in hooks.get("Stop", []) or []:
+                if not isinstance(entry, dict):
+                    continue
+                cmd = str(entry.get("command", ""))
+                if "hyperweave session" in cmd:
+                    registered_cmd = cmd
+                    break
+        if not registered_cmd:
+            return (
+                f"✗ {runtime}: initialized but no hyperweave hook — run 'hyperweave install-hook --runtime {runtime}'"
+            )
+        # [features] codex_hooks = true must be present for the hook to fire;
+        # the install command writes it, but a hand-edited config could miss it.
+        feature_ok = False
+        if config_path.exists():
+            in_features = False
+            for line in config_path.read_text().splitlines():
+                stripped = line.strip()
+                if stripped == "[features]":
+                    in_features = True
+                    continue
+                if in_features and stripped.startswith("["):
+                    in_features = False
+                    continue
+                if in_features and stripped.startswith("codex_hooks") and "true" in stripped:
+                    feature_ok = True
+                    break
+        if not feature_ok:
+            return (
+                f"⚠ {runtime}: hook registered but [features] codex_hooks = true "
+                f"is missing — re-run 'hyperweave install-hook --runtime {runtime}'"
+            )
+        return f"✓ {runtime}: hook registered — {registered_cmd}"
+
+    return f"? {runtime}: unknown runtime"
+
+
+@app.command()
+def doctor() -> None:
+    """Diagnose hyperweave telemetry wiring across agent runtimes.
+
+    Reports per-runtime detection state (initialized / binary-only /
+    absent), hook registration status, transcript dir state, and recent
+    receipt activity in the current directory. Read-only — never
+    modifies any config. Always exits 0.
+    """
+    import shutil
+    from datetime import datetime, timedelta
+
+    from hyperweave import __version__
+
+    typer.echo(f"hyperweave doctor — v{__version__}")
+    typer.echo("")
+    typer.echo("Runtimes:")
+    for runtime, (dirname, binname) in _RUNTIME_DETECTION.items():
+        home_dir = Path.home() / dirname
+        if home_dir.exists():
+            typer.echo(f"  {_doctor_runtime_status(runtime, home_dir)}")
+        elif bin_path := shutil.which(binname):
+            typer.echo(
+                f"  ⚠ {runtime}: CLI on PATH at {bin_path} but ~/{dirname}/ "
+                f"not initialized — run '{binname}' once, then "
+                f"'hyperweave install-hook --runtime {runtime}'"
+            )
+        else:
+            typer.echo(f"  ✗ {runtime}: not detected")
+
+    typer.echo("")
+    typer.echo("Transcripts:")
+    for runtime, subdir in (("claude-code", "projects"), ("codex", "sessions")):
+        dirname = _RUNTIME_DETECTION[runtime][0]
+        root = Path.home() / dirname / subdir
+        display_root = f"~/{dirname}/{subdir}"
+        if not root.exists():
+            typer.echo(f"  {runtime}: {display_root} (not found)")
+            continue
+        files = list(root.rglob("*.jsonl"))
+        if not files:
+            typer.echo(f"  {runtime}: {display_root}/ (empty)")
+            continue
+        most_recent = max(files, key=lambda p: p.stat().st_mtime)
+        mtime = datetime.fromtimestamp(most_recent.stat().st_mtime)
+        typer.echo(f"  {runtime}: {len(files)} transcript(s), most recent {mtime:%Y-%m-%d %H:%M}")
+
+    typer.echo("")
+    typer.echo("Receipts (./.hyperweave/receipts/):")
+    receipts_dir = Path(".hyperweave") / "receipts"
+    if not receipts_dir.exists():
+        typer.echo("  (no receipts directory in cwd)")
+        return
+    svgs = [p for p in receipts_dir.iterdir() if p.is_file() and p.suffix == ".svg"]
+    if not svgs:
+        typer.echo("  (no receipts)")
+        return
+    cutoff = datetime.now() - timedelta(days=7)
+    recent = [p for p in svgs if datetime.fromtimestamp(p.stat().st_mtime) > cutoff]
+    most_recent = max(svgs, key=lambda p: p.stat().st_mtime)
+    typer.echo(f"  {len(recent)} receipt(s) in last 7 days, {len(svgs)} total")
+    typer.echo(f"  most recent: {most_recent.name}")
 
 
 @app.command("validate-genome")
