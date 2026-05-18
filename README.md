@@ -176,7 +176,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Profile<br/><sub>stats card</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon" alt="stats" width="100%"/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon" alt="stats" width="70%"/>
   <br/>
   <ul>
 <li><sub><code>/v1/stats/{username}/{genome}.static?variant={variant}</code></sub></li>
@@ -187,7 +187,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Star Chart<br/><sub>star history</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static?variant=celadon" alt="star chart" width="100%"/>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/brutalist.static?variant=celadon" alt="star chart" width="70%"/>
   <br/>
   <ul>
 <li><sub><code>/v1/chart/stars/{owner}/{repo}/{genome}.static?variant={variant}</code></sub></li>

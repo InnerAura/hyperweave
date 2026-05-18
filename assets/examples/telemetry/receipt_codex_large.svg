@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg"
      xmlns:hw="https://hyperweave.app/hw/v1.0"
      role="img"
-     aria-labelledby="hw-bef2e733-title hw-bef2e733-desc"
+     aria-labelledby="hw-99e0da0c-title hw-99e0da0c-desc"
      viewBox="0 0 800 500"
      width="800" height="500"
      shape-rendering="geometricPrecision"
-     data-hw-id="bef2e733-3f40-4413-9b05-23fc7d931aa9"
+     data-hw-id="99e0da0c-f58f-4841-9e05-2ac157cad284"
      data-hw-type="receipt"
      data-hw-frame="receipt"
      data-hw-genome="telemetry-codex"
@@ -14,54 +14,54 @@
      data-hw-profile="brutalist"
      data-hw-motion="static"
      data-hw-generation="1"
-     data-hw-contract="bef2e733-3f40-4413-9b05-23fc7d931aa9"
+     data-hw-contract="99e0da0c-f58f-4841-9e05-2ac157cad284"
      data-hw-size="default"
      data-hw-fonts="self-contained"
      data-hw-regime="normal"
      data-hw-glyph="codex-glyph"
      data-hw-chromatic="telemetry-codex">
-  <title id="hw-bef2e733-title">HyperWeave receipt artifact</title>
-  <desc id="hw-bef2e733-desc">A receipt artifact, using telemetry-codex genome.</desc>
+  <title id="hw-99e0da0c-title">HyperWeave receipt artifact</title>
+  <desc id="hw-99e0da0c-desc">A receipt artifact, using telemetry-codex genome.</desc>
   <metadata>
-  <hw:artifact id="bef2e733-3f40-4413-9b05-23fc7d931aa9" type="receipt" series="core" version="0.2.20"
+  <hw:artifact id="99e0da0c-f58f-4841-9e05-2ac157cad284" type="receipt" series="core" version="0.3.2"
                xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
-      <hw:generator>HyperWeave Compositor v0.2.20 (InnerAura Labs)</hw:generator>
-      <hw:created>2026-05-07T01:50:15.729827+00:00</hw:created>
+      <hw:generator>HyperWeave Compositor v0.3.2 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-05-18T03:02:20.162743+00:00</hw:created>
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
     <hw:spec size="800x500" performance="composite-only"
-             theme="dark" a11y="WCAG-AA" platform="web"/>
+             theme="light" a11y="WCAG-AA" platform="github-readme"/>
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:frame>receipt</hw:frame>
-    <hw:genome>telemetry-codex@0.2.20</hw:genome>
+    <hw:genome>telemetry-codex@0.3.2</hw:genome>
     <hw:profile>brutalist</hw:profile>
     <hw:slots>
     </hw:slots>
-    <hw:environment platform="web" motion="static" status="active"/>
+    <hw:environment platform="github-readme" motion="static" status="active"/>
   </hw:composition>
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
            xmlns:dc="http://purl.org/dc/elements/1.1/">
     <rdf:Description>
       <dc:title>HyperWeave receipt artifact</dc:title>
-      <dc:creator>HyperWeave Compositor v0.2.20 (InnerAura Labs)</dc:creator>
-      <dc:date>2026-05-07T01:50:15.729827+00:00</dc:date>
+      <dc:creator>HyperWeave Compositor v0.3.2 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-05-18T03:02:20.162743+00:00</dc:date>
       <dc:rights>CC BY 4.0</dc:rights>
     </rdf:Description>
   </rdf:RDF>
   <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:chromatic system="telemetry-codex" space="oklch"
-                  palette="" contrast-ratio="4.5:1"/>
+                  palette="telemetry-codex" contrast-ratio=""/>
     <hw:motion vocabulary="static" physics="none"
-               timing="phi" duration-base="2.618s"
+               timing="phi" duration-base="2s"
                stagger-regime="contemplative" cim-compliant="true"/>
-    <hw:geometry form-language="geometric" corner-radius="5px"
+    <hw:geometry form-language="" corner-radius="5px"
                  grid="auto" proportional-system="phi"
                  mathematical-basis="golden-ratio" symmetry="bilateral"/>
-    <hw:typography stack="" hierarchy="11/18/8"
+    <hw:typography stack="'Söhne','OpenAI Sans','Inter',system-ui,sans-serif, 'JetBrains Mono','IBM Plex Mono','SF Mono',ui-monospace,monospace" hierarchy="11/18/8"
                    weight-range="500-900" metrics-method="lut"/>
-    <hw:material surface="genome-native" depth="deep" texture="none"/>
+    <hw:material surface="genome-native" depth="" texture="none"/>
   </hw:aesthetic>
   <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:intent></hw:intent>
@@ -71,7 +71,7 @@
     <hw:spatial-notes>800x500 (1.60), left-to-right</hw:spatial-notes>
   </hw:reasoning>
 </metadata>
-  <style>/* hw:css-modules: genome,accessibility */
+  <style>/* hw:css-modules: genome,accessibility,fonts */
 svg, :root {
   --dna-surface: rgba(255,255,255,0.74);
   --dna-surface-alt: rgba(255,255,255,0.62);
@@ -211,10 +211,10 @@ svg, :root {
 <rect x="6" y="6" width="788" height="488" rx="3" ry="3" fill="var(--dna-surface)"/>
 <rect x="6" y="6" width="788" height="32" rx="3" ry="3" fill="url(#receipt-card-top-highlight)" pointer-events="none"/>
 
-<use href="#codex-glyph" x="24" y="13" width="18" height="18"/>
-<text x="50" y="27" class="s ink1" font-size="14" font-weight="700">Codex</text>
-<text x="101" y="27" class="m ink2" font-size="11" letter-spacing="0.04em">· gpt-5.4</text>
-<g transform="translate(673, 11)" data-hw-zone="phase-pill">
+<use href="#codex-glyph" x="24" y="16" width="18" height="18"/>
+<text x="50" y="31" class="s ink1" font-size="14" font-weight="700">Codex</text>
+<text x="101" y="31" class="m ink2" font-size="11" letter-spacing="0.04em">· gpt-5.4</text>
+<g transform="translate(673, 14)" data-hw-zone="phase-pill">
   <rect width="103" height="22" rx="0" fill="var(--dna-pill-outer-bg)"/>
   <rect width="103" height="22" rx="0" fill="none" stroke="var(--dna-pill-outer-stroke)" stroke-width="0.75"/>
   <rect class="anchor-live" x="2" y="2" width="99" height="18" rx="0" fill="var(--dna-pill-inner-bg)"/>
@@ -222,29 +222,31 @@ svg, :root {
   <rect x="2" y="19" width="99" height="1" fill="var(--dna-pill-rule-bottom)"/>
   <text class="m" x="51" y="14" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="0.28em" fill="var(--dna-pill-text)">VALIDATION</text>
 </g>
-<text x="24" y="66" class="s ink1" font-size="26" font-weight="800" letter-spacing="-0.02em"><tspan>11.5M tokens billed · </tspan><tspan fill="var(--dna-signal)">$16.18</tspan></text>
-<text x="24" y="82" class="m ink3" font-size="10" letter-spacing="0.04em">127m · 192 calls · 11 stages</text>
+<text x="24" y="66" class="s ink1" font-size="26" font-weight="800" letter-spacing="-0.02em"><tspan>11.5M token volume · </tspan><tspan fill="var(--dna-signal)">$8.49</tspan></text>
+<text x="24" y="92" class="m ink3" font-size="10" letter-spacing="0.04em" font-weight="500"><tspan>IN 1.4M</tspan><tspan dx="8" fill="var(--dna-ink-tertiary)" font-weight="400">│</tspan><tspan dx="8">OUT 162.0K</tspan><tspan dx="8" fill="var(--dna-ink-tertiary)" font-weight="400">│</tspan><tspan dx="8">CACHED 9.9M</tspan><tspan dx="8" fill="var(--dna-ink-tertiary)" font-weight="400">│</tspan><tspan dx="8" fill="var(--dna-ink-tertiary)">WRITTEN —</tspan></text>
 <g data-hw-zone="hero-right">
-<text x="776" y="56" class="m ink2" font-size="10" text-anchor="end" letter-spacing="0.02em"
->1.4M in / 162.0K out</text>
-<text x="776" y="70" class="m ink2" font-size="10" text-anchor="end" letter-spacing="0.02em"
->9.9M cached / 0 written</text>
-<text x="776" y="84" class="m ink2" font-size="10" text-anchor="end" letter-spacing="0.02em"
->1 user turn</text>
+<text x="776" y="64" class="m ink2" font-size="10" text-anchor="end" letter-spacing="0.02em"
+>127m active · 136m total</text>
+<text x="776" y="78" class="m ink2" font-size="10" text-anchor="end" letter-spacing="0.02em"
+>192 calls · 11 stages</text>
+<text x="776" y="92" class="m ink2" font-size="10" text-anchor="end" letter-spacing="0.02em"
+>4 user turns · 0 tool errors</text>
 </g>
-<line x1="24" y1="96" x2="776" y2="96" stroke="var(--dna-border)" stroke-width="1"/>
+<line x1="24" y1="104" x2="776" y2="104" stroke="var(--dna-border)" stroke-width="1"/>
 
-<g transform="translate(24, 104)" data-hw-zone="treemap">
-  <text class="m ink3" font-size="7" font-weight="700" letter-spacing="0.22em" y="12">TOKEN MAP</text>
-  <rect x="96" y="6" width="2" height="8" fill="var(--dna-tool-coordinate)"/>
-  <text class="m ink3" x="102" y="13" font-size="9">coordinate</text>
-  <rect x="170" y="6" width="2" height="8" fill="var(--dna-tool-execute)"/>
-  <text class="m ink3" x="176" y="13" font-size="9">execute</text>
-  <rect x="232" y="6" width="2" height="8" fill="var(--dna-tool-explore)"/>
-  <text class="m ink3" x="238" y="13" font-size="9">explore</text>
-  <rect x="292" y="6" width="2" height="8" fill="var(--dna-tool-mutate)"/>
-  <text class="m ink3" x="298" y="13" font-size="9">mutate</text>
-  <text class="m ink3" x="752" y="13" font-size="9" text-anchor="end"><tspan fill="var(--dna-status-failing-core)" opacity="0.85" font-weight="700">✗N</tspan><tspan dx="3">= failed tool calls</tspan></text>
+<g transform="translate(24,108)" data-hw-zone="treemap">
+  <text y="12" class="m ink3">
+    <tspan font-size="7" font-weight="700" letter-spacing="0.22em">TOKEN MAP ·</tspan>
+    <tspan dx="2" fill="var(--dna-tool-coordinate)" font-size="9">▍</tspan>
+    <tspan dx="2" font-size="9" letter-spacing="0.04em">coordinate</tspan>
+    <tspan dx="6" fill="var(--dna-tool-execute)" font-size="9">▍</tspan>
+    <tspan dx="2" font-size="9" letter-spacing="0.04em">execute</tspan>
+    <tspan dx="6" fill="var(--dna-tool-explore)" font-size="9">▍</tspan>
+    <tspan dx="2" font-size="9" letter-spacing="0.04em">explore</tspan>
+    <tspan dx="6" fill="var(--dna-tool-mutate)" font-size="9">▍</tspan>
+    <tspan dx="2" font-size="9" letter-spacing="0.04em">mutate</tspan>
+  </text>
+  <text class="m ink3" x="752" y="12" font-size="9" text-anchor="end"><tspan fill="var(--dna-status-failing-core)" opacity="0.85" font-weight="700">✗N</tspan><tspan dx="3">= failed tool calls</tspan></text>
 
   <g transform="translate(0, 22)" data-hw-tier="1" data-hw-tool="exec_command">
     <rect width="752" height="88" fill="var(--dna-surface-deep)"/>
@@ -254,28 +256,28 @@ svg, :root {
     <text class="s" font-size="38.0" font-weight="800" fill="var(--dna-tool-execute)" x="14" y="66" letter-spacing="-0.02em">66%</text>
     <text class="m ink3" font-size="10.0" x="14" y="80">1.1M · 127 calls</text>
   </g>
-  <g transform="translate(0, 118)" data-hw-tier="2" data-hw-tool="view_image">
+  <g transform="translate(0, 114)" data-hw-tier="2" data-hw-tool="view_image">
     <rect width="307" height="32" fill="var(--dna-surface-deep)"/>
     <rect width="3" height="32.0" fill="var(--dna-tool-explore)" opacity="0.85"/>
     <rect width="307" height="32" fill="none" stroke="var(--dna-border)" stroke-width="0.5"/>
     <text class="m ink1" font-size="9.5" font-weight="600" x="10" y="13">view_image</text>
     <text class="m ink3" font-size="8.0" x="10" y="26">215.8K · 26 calls</text>
   </g>
-  <g transform="translate(311, 118)" data-hw-tier="2" data-hw-tool="write_stdin">
+  <g transform="translate(311, 114)" data-hw-tier="2" data-hw-tool="write_stdin">
     <rect width="271" height="32" fill="var(--dna-surface-deep)"/>
     <rect width="3" height="32.0" fill="var(--dna-tool-execute)" opacity="0.85"/>
     <rect width="271" height="32" fill="none" stroke="var(--dna-border)" stroke-width="0.5"/>
     <text class="m ink1" font-size="9.5" font-weight="600" x="10" y="13">write_stdin</text>
     <text class="m ink3" font-size="8.0" x="10" y="26">190.9K · 23 calls</text>
   </g>
-  <g transform="translate(586, 118)" data-hw-tier="2" data-hw-tool="apply_patch">
+  <g transform="translate(586, 114)" data-hw-tier="2" data-hw-tool="apply_patch">
     <rect width="165" height="32" fill="var(--dna-surface-deep)"/>
     <rect width="3" height="32.0" fill="var(--dna-tool-mutate)" opacity="0.85"/>
     <rect width="165" height="32" fill="none" stroke="var(--dna-border)" stroke-width="0.5"/>
     <text class="m ink1" font-size="9.5" font-weight="600" x="10" y="13">apply_patch</text>
     <text class="m ink3" font-size="8.0" x="10" y="26">116.2K · 14 calls</text>
   </g>
-  <g transform="translate(0, 154)" data-hw-tier="3" data-hw-tool="update_plan">
+  <g transform="translate(0, 150)" data-hw-tier="3" data-hw-tool="update_plan">
     <rect width="90" height="24" fill="var(--dna-surface-deep)"/>
     <rect width="3" height="24.0" fill="var(--dna-tool-coordinate)" opacity="0.85"/>
     <rect width="90" height="24" fill="none" stroke="var(--dna-border)" stroke-width="0.5"/>
@@ -285,7 +287,7 @@ svg, :root {
 </g>
 <line x1="24" y1="290" x2="776" y2="290" stroke="var(--dna-border)" stroke-width="1"/>
 
-<g transform="translate(24, 306)" data-hw-zone="rhythm">
+<g transform="translate(24,306)" data-hw-zone="rhythm">
   <text class="m ink3" font-size="7" font-weight="700" letter-spacing="0.22em">SESSION RHYTHM · 11 STAGES · HEIGHT ≈ TOKENS</text>
   <text class="m ink3" x="752" y="0" font-size="7.5" text-anchor="end" letter-spacing="0.18em">12M · PEAK 3.7M</text>
 
@@ -353,9 +355,9 @@ svg, :root {
 </g>
 
 <line x1="24" y1="452" x2="776" y2="452" stroke="var(--dna-border)" stroke-width="0.5"/>
-<text x="24" y="470" class="m ink3" font-size="9" letter-spacing="0.04em">aura-research · .hyperweave/receipts/019ddedf-318a-7192-b29b-c0eab28e2308.svg</text>
+<text x="24" y="470" class="m ink3" font-size="9" letter-spacing="0.04em">aura-research · main · .hyperweave/receipts/019ddedf-318a-7192-b29b-c0eab28e2308.svg</text>
 <text x="776" y="470" class="m ink3" font-size="9" text-anchor="end" letter-spacing="0.04em">session 019ddedf · 2026-04-30 14:53</text>
-<text x="24" y="487" class="m ink2" font-size="9" letter-spacing="0.04em">1 user turn</text>
+<text x="24" y="487" class="m ink3" font-size="9" font-style="italic" letter-spacing="0.04em" opacity="0.75">Cost is an estimate based on public per-token rates.</text>
 <text x="776" y="487" class="m ink2" font-size="9" text-anchor="end" letter-spacing="0.04em">hyperweave.app</text>
 
 <rect x="0" y="0" width="800" height="2" fill="var(--dna-card-border-top)" fill-opacity="0.85" clip-path="url(#receipt-card-shape)"/>

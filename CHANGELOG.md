@@ -5,6 +5,33 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] - 2026-05-17
+
+Receipt hero reads `token volume · $cost` with a four-cell decomposition strip below (IN / OUT / CACHED / WRITTEN), making the asymmetric cache-token math legible at a glance. Codex receipts now price tokens against the OpenAI rate card; figures previously inflated ~2× drop to actual GPT rates.
+
+### Added
+
+- **Receipt decomposition strip** &mdash; four labeled cells below the hero break tokens by type (IN / OUT / CACHED / WRITTEN). Codex sessions render an em-dash in the WRITTEN cell since the runtime has no cache-write concept.
+- **GPT model rates** &mdash; gpt-5.3-codex, gpt-5.2-codex, gpt-5.4, gpt-5.4-mini, gpt-5.5 added to the model pricing table; cache reads use the shared 0.1x discount.
+- **Opus 4.7 model rates** &mdash; claude-opus-4-7 and claude-opus-4-7-1m entries added; previously fell through to the default block.
+
+### Changed
+
+- **Receipt hero label** &mdash; "tokens billed" becomes "token volume". The aggregate stays the same; cache reads aren't priced at face value, so volume is the honest framing.
+- **Receipt right-side stats** &mdash; three rows show active/total duration, calls/stages, user turns/tool errors. Both values in each row always render (e.g. `6 user turns · 0 tool errors`, `82m active · 84m total`) so receipts read consistently across sessions. Token-by-type rows moved into the decomposition strip beneath the hero.
+- **Receipt treemap header** &mdash; tightens the rule-to-header gap above TOKEN MAP and adds the `·` separator between TOKEN MAP and the color legend, both matching the SESSION RHYTHM header treatment.
+- **Receipt footer** &mdash; duplicated turns/errors line replaced with an italic `Cost is an estimate based on public per-token rates.` disclaimer in muted text.
+
+### Fixed
+
+- **Codex receipt cost** &mdash; resolves through GPT rates instead of the Opus 4.6 default fallback. Cost figures drop ~2x to match the OpenAI rate card.
+- **Treemap row spacing** &mdash; uniform 4-unit gaps between tier-1, tier-2, and tier-3 cells. Previous v0.2.21 layout had an asymmetric 8/4 step that made the top row gap look looser than the bottom.
+- **Adaptive treemap zone height** &mdash; sessions populating fewer than 3 tiers (e.g., short Codex runs) now collapse the zone so the rhythm header sits close to the last cell row instead of below a large gap. Receipt total height stays 500.
+
+### Notes
+
+- 1198 tests pass.
+
 ## [0.3.4] - 2026-05-13
 
 `install-hook` now detects Claude Code and Codex automatically. A new `hyperweave doctor` command shows hook status, transcripts, and recent receipts at a glance.

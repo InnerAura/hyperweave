@@ -392,7 +392,7 @@ def compute_treemap_layout(
     tools: list[dict[str, Any]],
     content_w: int = 752,
     *,
-    tier_y: tuple[int, int, int] = (22, 118, 154),
+    tier_y: tuple[int, int, int] = (22, 114, 150),
     tier_h: tuple[int, int, int] = (88, 32, 24),
     gap_px: int = 4,
     cell_w_tier3: int = 90,
@@ -409,8 +409,11 @@ def compute_treemap_layout(
         content_w: Track width in pixels. The default 752 matches the
             receipt's 800px canvas with 24px horizontal margins.
         tier_y: Y offsets per tier (1, 2, 3) inside the panel. Defaults
-            match the risograph specimen: tier-1 at y=22 (just below
-            the header row), tier-2 at y=118 (88+8 gap), tier-3 at y=154.
+            give uniform 4-unit inter-row gaps: tier-1 at y=22 (h=88,
+            ends y=110), tier-2 at y=114 (h=32, ends y=146), tier-3 at
+            y=150 (h=24, ends y=174). v0.3.5 unified the gaps; v0.2.21
+            had an asymmetric 8/4 step that made tier-1→tier-2 look
+            looser than tier-2→tier-3.
         tier_h: Heights per tier. Defaults match the spec: 88/32/24.
         gap_px: Inter-cell gap. Reserved upfront in the budget so the
             rightmost cell can never overflow the track.

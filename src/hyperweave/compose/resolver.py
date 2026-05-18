@@ -1995,6 +1995,19 @@ def resolve_receipt(
     total_cache_create = profile_data.get("total_cache_creation_tokens", 0)
     total_tok = total_input + total_output + total_cache_read + total_cache_create
     total_cost = profile_data.get("total_cost", 0)
+    # v0.3.5 hero decomp strip: IN / OUT / CACHED / WRITTEN cells beneath the hero.
+    # Zero buckets render as em-dash in muted ink — fires unconditionally on the
+    # WRITTEN cell for every Codex session (Codex has no cache_create concept;
+    # codex_parser.py:355 always emits cache_create_tokens=0).
+    decomp_cells = [
+        {"label": label, "value": _fmt_tok(value) if value else "—", "is_zero": not value}
+        for label, value in (
+            ("IN", total_input),
+            ("OUT", total_output),
+            ("CACHED", total_cache_read),
+            ("WRITTEN", total_cache_create),
+        )
+    ]
     duration_m = session.get("duration_minutes", 0)
     # Active window: bounded by both sum-of-stages (collapses idle gaps) and
     # wall-clock span (caps overlapping/async stages). Same value drives the
@@ -2059,19 +2072,13 @@ def resolve_receipt(
     # v0.2.21 risograph hero treatment: split headline into tokens part +
     # signal-colored cost part so the template can render them as separate
     # tspans (cost in var(--dna-signal) per the spec).
-    headline_tokens = f"{_fmt_tok(total_tok)} tokens billed · "
+    headline_tokens = f"{_fmt_tok(total_tok)} token volume · "
     headline_cost = f"${total_cost:.2f}"
     hero_headline = f"{headline_tokens}{headline_cost}"  # legacy single-string for fallback
-    # Divergence flag: when active work is < half the total session window,
-    # surface both numbers so "session left open" cases are honest. Otherwise
-    # the chart's axis (active_duration_m) and the hero label always agree.
-    if total_duration_m and active_duration_m < 0.5 * total_duration_m:
-        dur_label = f"{int(active_duration_m)}m active · {int(total_duration_m)}m total"
-    elif active_duration_m:
-        dur_label = f"{int(active_duration_m)}m"
-    else:
-        dur_label = "—"
-    hero_subline = f"{dur_label} · {calls} calls · {len(stages)} stages"
+    # v0.3.5: hero_subline retired. The duration + calls/stages information
+    # now lives in hero-right rows 1 + 2 where it doesn't visually compete
+    # with the hero number, and the decomp_cells strip takes over the y=82
+    # position the subline used to occupy.
     if not dominant:
         hero_profile = "SESSION"
     elif dominant_pct < 20:
@@ -2097,21 +2104,34 @@ def resolve_receipt(
     n_tool_errors = sum(t.get("errors", 0) + t.get("blocked", 0) for t in tools)
     # n_agents = len(agents)  # was used by old footer; v0.2.21 footer is 4-quadrant.
     _ = agents  # keep the extraction for forward use without lint warnings
-    hero_right: list[dict[str, Any]] = [
-        {"text": f"{_fmt_tok(total_input)} in / {_fmt_tok(total_output)} out", "accent": ""},
-    ]
-    if total_cache_read or total_cache_create:
-        hero_right.append(
-            {
-                "text": f"{_fmt_tok(total_cache_read)} cached / {_fmt_tok(total_cache_create)} written",
-                "accent": "",
-            },
-        )
+    # v0.3.5 hero-right: session-shape rows replace token-by-type rows. The
+    # token decomposition now lives in the decomp_cells strip beneath the hero;
+    # this column carries orthogonal "session shape" information (duration,
+    # calls / stages, and friction signals).
+    #
+    # Row 1 (y=56): "Xm active · Ym total" — both values always shown when there
+    # is any duration data, so receipts read consistently regardless of session
+    # shape. Hiding "total" when it's close to "active" creates per-receipt
+    # variance ("did the session have an idle tail or not?") and asks the
+    # reader to interpret absence; matching values are positive signal (no
+    # idle tail), not noise. Em-dash if no duration data is available.
+    duration_row = f"{int(active_duration_m)}m active · {int(total_duration_m)}m total" if active_duration_m else "—"
+    # Row 2 (y=70): call count + stage count — the session-shape spine.
+    shape_row = f"{calls} calls · {len(stages)} stages"
+    # Row 3 (y=84): turns + errors joined by " · ", failing-core fill when
+    # errors > 0. Both counters render whenever there's any session activity —
+    # "0 tool errors" is positive signal ("this session ran clean"), and
+    # reading "6 user turns" alone makes a reader wonder whether errors were
+    # tracked at all. The duplicated copy in footer_bl is replaced by the
+    # cost-estimate disclaimer in this version — pushback info lives only here.
     pushback_parts: list[str] = []
-    if n_user_turns:
+    if n_user_turns or n_tool_errors:
         pushback_parts.append(f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}")
-    if n_tool_errors:
-        pushback_parts.append(f"{n_tool_errors} tool errors")
+        pushback_parts.append(f"{n_tool_errors} tool error{'s' if n_tool_errors != 1 else ''}")
+    hero_right: list[dict[str, Any]] = [
+        {"text": duration_row, "accent": ""},
+        {"text": shape_row, "accent": ""},
+    ]
     if pushback_parts:
         hero_right.append(
             {
@@ -2121,8 +2141,22 @@ def resolve_receipt(
         )
 
     # Pre-compute hero-right y-offsets so the template doesn't need loop math.
+    # v0.3.5: rows at 64/78/92 with consistent 14-unit cadence. The starting
+    # y=64 grounds the column near the bottom of the hero zone — row 3 lands
+    # at y=92, baseline-aligned with the decomp strip on the left, so both
+    # columns end at the same y close to the rule at y=104. This gives the
+    # hero zone a unified bottom band instead of the right side floating
+    # near the phase pill.
     for i, stat in enumerate(hero_right):
-        stat["y"] = 56 + (i * 14)
+        stat["y"] = 64 + (i * 14)
+
+    # ── Receipt geometry constants — single source of truth ──
+    # left_margin is propagated to the template via context so every
+    # left-anchored element (glyph, hero, decomp, dividers, group transforms,
+    # footer lines) references the same value. Cell-internal text padding
+    # (x=10/x=14 inside treemap cells) is cell layout, not receipt margin.
+    left_margin = 24
+    content_w = 800 - 2 * left_margin  # 752
 
     # ── Treemap layout — delegated to compose/treemap.py ──
     # Centralized in v0.2.21 to fix two arithmetic bugs that caused tier-3
@@ -2130,7 +2164,6 @@ def resolve_receipt(
     # edge of the receipt. The helper also applies label truncation and
     # synthesizes a "+N more" cell when the tool count exceeds what fits
     # at the tier-3 minimum width. See compose/treemap.py for the algorithm.
-    content_w = 752
     classified_tools = [
         {**t, "tool_class": t.get("tool_class") or _classify_tool_name(t.get("name", ""))} for t in tools
     ]
@@ -2151,13 +2184,36 @@ def resolve_receipt(
         accent_position=treemap_accent_position,
     )
 
+    # ── Adaptive treemap zone height (v0.3.5) ──
+    # Treemap reserves vertical space for up to 3 tiers (each with fixed
+    # height); when a session populates fewer tiers, the zone collapses
+    # so the rhythm header doesn't float far below the last cell row.
+    # bottom_divider_y, rhythm_group_y, and panel_h all derive from the
+    # max populated tier so the rhythm legend stays anchored at y=430 and
+    # the footer at y=452/470/487 — receipt height stays 500.
+    _max_tier = max((c.tier for c in treemap_cells), default=3) if treemap_cells else 3
+    # Relative y where each tier's last cells end (tier_y + tier_h):
+    #   tier-1: y=22, h=88 → bottom y=110
+    #   tier-2: y=114, h=32 → bottom y=146
+    #   tier-3: y=150, h=24 → bottom y=174
+    _tier_bottoms_relative = {1: 110, 2: 146, 3: 174}
+    _treemap_group_y = 108  # absolute y of treemap group transform
+    _treemap_bottom_absolute = _treemap_group_y + _tier_bottoms_relative.get(_max_tier, 174)
+    bottom_divider_y = _treemap_bottom_absolute + 8  # 8-unit gap below content
+    rhythm_group_y = bottom_divider_y + 16  # 16-unit gap = rule-to-header parity
+
     # ── Rhythm panel — risograph-canonical structure (v0.2.21) ──
     # The bar_chart helper returns a BarChartLayout dataclass bundling
     # bars + error_ticks (separate band) + peak_marker + grid_lines +
     # header labels + counts. All geometry derives from the panel_h
     # parameter (single source of truth) so the y=-1 overflow bug from
     # Phase D's independently-hardcoded constants can't recur.
-    panel_h = 130
+    # panel_h expands when treemap collapses so the legend (at relative
+    # baseline_y + 16 with baseline_y = panel_h - 22) stays at absolute
+    # y=430. Math: legend_y = rhythm_group_y + panel_h - 22 + 16 = 430
+    # → panel_h = 436 - rhythm_group_y. For 3-tier sessions this yields
+    # the canonical panel_h=130.
+    panel_h = 436 - rhythm_group_y
     bar_layout = layout_bar_chart(
         stages,
         area_w=content_w,
@@ -2181,15 +2237,26 @@ def resolve_receipt(
     used_classes = sorted({c.tool_class for c in treemap_cells}) if treemap_cells else ["explore"]
     treemap_legend = [{"tool_class": tc, "label": tc} for tc in used_classes]
 
-    # Treemap header row chips: 4 fixed-position 2x8 swatches + labels per spec.
+    # v0.3.5: "TOKEN MAP ·" composed at the data layer so the · separator is
+    # consistent with the other header strings (`Claude Code · opus-4.7`,
+    # `SESSION RHYTHM · N STAGES · HEIGHT ≈ TOKENS`). The chip-to-chip
+    # boundaries don't need · separators — the colored chip indicators
+    # already carry the visual segmentation between class labels.
+    # v0.3.5: "TOKEN MAP ·" composed at the data layer so the · separator
+    # matches the rest of the receipt's header strings (`Claude Code · opus-4.7`,
+    # `SESSION RHYTHM · N STAGES · HEIGHT ≈ TOKENS`). The legend chips flow
+    # inline in the template via tspans — no absolute x's needed. Chips carry
+    # just (tool_class, label); the template renders a colored ▍ indicator
+    # followed by the label, with uniform dx gaps between chips.
+    treemap_header_label = "TOKEN MAP ·"
     # Always renders all four standard classes (coordinate/execute/explore/mutate)
     # so the legend is stable across sessions; absent classes still appear so
     # cross-session comparison stays consistent.
     treemap_header_chips = [
-        {"tool_class": "coordinate", "label": "coordinate", "x": 96},
-        {"tool_class": "execute", "label": "execute", "x": 170},
-        {"tool_class": "explore", "label": "explore", "x": 232},
-        {"tool_class": "mutate", "label": "mutate", "x": 292},
+        {"tool_class": "coordinate", "label": "coordinate"},
+        {"tool_class": "execute", "label": "execute"},
+        {"tool_class": "explore", "label": "explore"},
+        {"tool_class": "mutate", "label": "mutate"},
     ]
 
     # Rhythm-panel legend: 4 tool swatches + error-tick swatch + DOMINANT label.
@@ -2286,14 +2353,11 @@ def resolve_receipt(
             if _max_for_path > 0:
                 footer_tl = _prefix + _truncate_path_left(receipt_path, _max_for_path)
 
-    # v0.2.21 footer swap: BL now reflects session work intensity (user turns +
-    # tool errors), BR carries the brand mark. Matches the risograph spec layout.
-    footer_bl_parts: list[str] = []
-    if n_user_turns:
-        footer_bl_parts.append(f"{n_user_turns} user turn{'s' if n_user_turns != 1 else ''}")
-    if n_tool_errors:
-        footer_bl_parts.append(f"{n_tool_errors} tool error{'s' if n_tool_errors != 1 else ''}")
-    footer_bl = " · ".join(footer_bl_parts) if footer_bl_parts else ""
+    # v0.3.5 footer-bl: universal cost-estimate disclaimer. Matches Anthropic's
+    # own SDK disclaimer language ("client-side estimate, not authoritative
+    # billing data"). Turns/errors info lives in hero_right row 3, where the
+    # failing-core color signal carries more semantic weight than down here.
+    footer_bl = "Cost is an estimate based on public per-token rates."
     footer_br = "hyperweave.app"
 
     return {
@@ -2321,7 +2385,7 @@ def resolve_receipt(
             "hero_headline": hero_headline,
             "headline_tokens": headline_tokens,
             "headline_cost": headline_cost,
-            "hero_subline": hero_subline,
+            "decomp_cells": decomp_cells,
             "hero_right_stats": hero_right,
             "pill_label": pill_label,
             "pill_w": pill_w,
@@ -2334,6 +2398,7 @@ def resolve_receipt(
             # Treemap panel
             "treemap_subtitle": treemap_subtitle,
             "treemap_legend": treemap_legend,
+            "treemap_header_label": treemap_header_label,
             "treemap_header_chips": treemap_header_chips,
             "treemap_cells": treemap_cells,
             # Rhythm panel — v0.2.21 risograph-canonical structure
@@ -2357,7 +2422,14 @@ def resolve_receipt(
             "dominant_profile": f"{dominant_label} ({dominant_pct}%)",
             # Geometric constants pre-computed for the v0.2.21 thin-render template.
             # All derive from panel_h=130 in compose/bar_chart.py (single source).
-            "content_right_x": 800 - 24,
+            # left_margin (24) is the single source of truth for left-anchored
+            # element positioning across the receipt template; see the geometry
+            # constants block above for its definition.
+            "left_margin": left_margin,
+            "content_right_x": 800 - left_margin,
+            # Adaptive zone boundaries — collapse when treemap has fewer tiers.
+            "bottom_divider_y": bottom_divider_y,
+            "rhythm_group_y": rhythm_group_y,
             "inner_w": 800 - 1,
             "inner_h": 500 - 1,
             "axis_tick_top_y": bar_area_h,

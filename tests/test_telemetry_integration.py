@@ -541,11 +541,14 @@ def test_receipt_hero_subline_flags_divergence_when_active_lt_half_session() -> 
     assert "100m total" in svg
 
 
-def test_receipt_hero_subline_omits_divergence_when_active_close_to_session() -> None:
+def test_receipt_hero_shows_both_durations_when_active_close_to_session() -> None:
     # Stages span 0-80m (sum=80, wall_clock=80), session duration_m=100m.
-    # active=80, total=max(100,80)=100, ratio=0.8 ≥ 0.5 → no divergence flag.
-    # Hero shows the active duration (80m), NOT parser's 100m. Stage-derived
-    # values are the single source of truth for the chart axis + hero label.
+    # active=80, total=max(100,80)=100. v0.3.5: both values render
+    # unconditionally so receipts read consistently regardless of session
+    # shape. Pre-v0.3.5 had a divergence flag that hid "total" when the ratio
+    # was ≥ 0.5; that conditional was removed because matching values are
+    # positive signal ("no idle tail"), not noise — and hiding one value
+    # made the reader interpret absence.
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
 
@@ -554,10 +557,8 @@ def test_receipt_hero_subline_omits_divergence_when_active_close_to_session() ->
         stage_minutes=[("explore", 0, 80)],
     )
     svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
-    assert "80m" in svg
-    # No divergence flag: the "active · total" pattern shouldn't appear.
-    assert "active · " not in svg
-    assert " total" not in svg
+    assert "80m active" in svg
+    assert "100m total" in svg
 
 
 def test_receipt_falls_back_to_session_duration_when_stages_lack_timestamps() -> None:
