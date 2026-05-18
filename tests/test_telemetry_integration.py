@@ -491,6 +491,7 @@ def _telemetry_with_session_durations(
     *,
     duration_minutes: float,
     stage_minutes: list[tuple[str, float, float]],
+    turn_duration_minutes: float | None = None,
 ) -> dict[str, Any]:
     """Build telemetry data with stages whose timestamps frame an active window.
 
@@ -498,6 +499,11 @@ def _telemetry_with_session_durations(
     measured from a fixed session start. The session ``duration_minutes``
     can be far larger than the stages' timespan to simulate "session left
     open" scenarios.
+
+    ``turn_duration_minutes`` simulates Claude Code's per-turn compute sum
+    (from ``system.turn_duration`` events). When provided, the resolver
+    uses it as the primary active source; when None (default), the
+    resolver falls back to ``min(sum_of_stage_spans, wall_clock_span)``.
     """
     base = "2026-01-01T00:00:00"
     base_dt = datetime.fromisoformat(base)
@@ -516,8 +522,15 @@ def _telemetry_with_session_durations(
                 "errors": 0,
             }
         )
+    session: dict[str, Any] = {
+        "id": "active-window-test",
+        "duration_minutes": duration_minutes,
+        "model": "claude-opus",
+    }
+    if turn_duration_minutes is not None:
+        session["turn_duration_minutes"] = turn_duration_minutes
     return {
-        "session": {"id": "active-window-test", "duration_minutes": duration_minutes, "model": "claude-opus"},
+        "session": session,
         "profile": {"total_input_tokens": 100, "total_output_tokens": 50, "total_cost": 0.50},
         "tools": {"Read": {"total_tokens": 5000, "count": 5, "tool_class": "explore"}},
         "stages": stages,
@@ -581,6 +594,62 @@ def test_receipt_falls_back_to_session_duration_when_stages_lack_timestamps() ->
     assert "60m" in svg
     # No divergence flag because active falls back to session duration.
     assert "active" not in svg.lower() or "no-ts" in svg  # session id is "no-ts", not "active"
+
+
+def test_receipt_active_uses_turn_duration_when_available() -> None:
+    # v0.3.6: when the runtime emits per-turn duration events (Claude Code's
+    # `system.turn_duration`), active_duration_m sources from that sum
+    # directly. Stage spans absorb intra-stage idle (a multi-hour break in
+    # the middle of a same-class stretch silently inflates the stage), so
+    # turn-duration is the primary source whenever it's available.
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    # Stages span 0-800m (heavy idle within a single explore stretch), but
+    # the parser reported 119m of actual per-turn compute. Old formula would
+    # render "800m active"; v0.3.6 renders "119m active".
+    tel = _telemetry_with_session_durations(
+        duration_minutes=119,
+        stage_minutes=[("explore", 0, 800)],
+        turn_duration_minutes=119,
+    )
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    assert "119m active" in svg
+    assert "800m active" not in svg
+
+
+def test_receipt_active_falls_back_when_turn_duration_missing() -> None:
+    # Codex sessions and any runtime without per-turn duration events
+    # leave turn_duration_minutes unset. Active stays on the prior
+    # min(sum_of_stages, wall_clock) formula.
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = _telemetry_with_session_durations(
+        duration_minutes=100,
+        stage_minutes=[("explore", 0, 40)],
+        turn_duration_minutes=None,
+    )
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    assert "40m active" in svg
+
+
+def test_receipt_active_caps_turn_duration_at_wall_clock() -> None:
+    # Defensive: a malformed turn_duration value larger than the session's
+    # wall-clock span shouldn't inflate active past the chart axis. The cap
+    # protects the chart-geometry/hero-subline invariant.
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    tel = _telemetry_with_session_durations(
+        duration_minutes=100,
+        stage_minutes=[("explore", 0, 30)],
+        turn_duration_minutes=9999,  # impossibly large
+    )
+    svg = compose(ComposeSpec(type="receipt", telemetry_data=tel)).svg
+    # Wall-clock cap = stage span = 30m
+    assert "30m active" in svg
+    assert "9999m" not in svg
 
 
 # ── SessionEnd hook: graceful no-op for non-conversational sessions ──

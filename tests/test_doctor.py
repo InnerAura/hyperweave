@@ -45,12 +45,35 @@ def _write_codex_hook(
     *,
     with_feature_flag: bool = True,
 ) -> None:
+    """Write a Codex hook in the GA wrapped+matcher format (Codex v0.129+)."""
+    codex_dir = home / ".codex"
+    codex_dir.mkdir(parents=True, exist_ok=True)
+    hooks = {
+        "hooks": {
+            "Stop": [
+                {
+                    "matcher": "*",
+                    "hooks": [{"type": "command", "command": command, "timeout": 10}],
+                }
+            ]
+        }
+    }
+    (codex_dir / "hooks.json").write_text(json.dumps(hooks, indent=2))
+    config_lines = ["[features]", "hooks = true"] if with_feature_flag else ["[other]", "key = 1"]
+    (codex_dir / "config.toml").write_text("\n".join(config_lines) + "\n")
+
+
+def _write_codex_hook_legacy_flat(home: Path, command: str) -> None:
+    """Write a Codex hook in the pre-GA flat shape (no wrapper, bare entries).
+
+    Used to drive the doctor's legacy-detection path so a stale install
+    surfaces as ⚠ with an upgrade pointer.
+    """
     codex_dir = home / ".codex"
     codex_dir.mkdir(parents=True, exist_ok=True)
     hooks = {"Stop": [{"type": "command", "command": command, "timeout": 10}]}
     (codex_dir / "hooks.json").write_text(json.dumps(hooks, indent=2))
-    config_lines = ["[features]", "codex_hooks = true"] if with_feature_flag else ["[other]", "key = 1"]
-    (codex_dir / "config.toml").write_text("\n".join(config_lines) + "\n")
+    (codex_dir / "config.toml").write_text("[features]\nhooks = true\n")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -98,8 +121,34 @@ def test_doctor_codex_initialized_but_no_hook(monkeypatch: MonkeyPatch, tmp_path
     assert "hyperweave install-hook --runtime codex" in result.stdout
 
 
+def test_doctor_codex_hook_in_legacy_flat_format_surfaces_warning(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    """Pre-GA flat hooks.json surfaces as ⚠ with an upgrade pointer, not ✗.
+
+    Codex v0.129.0 took hooks GA and changed hooks.json from flat
+    ``{Stop: [{type, command, timeout}]}`` to wrapped
+    ``{hooks: {Stop: [{matcher, hooks: [{type, command, timeout}]}]}}``.
+    A user with a stale install — hyperweave entry written in the flat
+    shape — would otherwise look like "no hyperweave hook" to doctor and
+    leave the silent symptom (Codex ignores the file, no receipt fires)
+    undiagnosed. The legacy-detection branch flips that to ⚠ with a
+    re-install pointer.
+    """
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _write_codex_hook_legacy_flat(tmp_path, "hyperweave session receipt --genome telemetry-codex")
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["doctor"])
+    assert result.exit_code == 0
+    assert "⚠ codex" in result.stdout
+    assert "legacy pre-GA flat format" in result.stdout
+    assert "hyperweave install-hook --runtime codex" in result.stdout
+
+
 def test_doctor_codex_hook_registered_but_feature_flag_missing(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
-    """Codex Stop hook only fires when [features] codex_hooks = true is set."""
+    """Codex Stop hook only fires when [features] hooks = true is set (renamed
+    from codex_hooks in Codex v0.130.0)."""
     _patch_home(monkeypatch, tmp_path)
     _patch_which(monkeypatch, {"claude": None, "codex": None})
     _write_codex_hook(tmp_path, "hyperweave session receipt", with_feature_flag=False)
@@ -109,7 +158,7 @@ def test_doctor_codex_hook_registered_but_feature_flag_missing(monkeypatch: Monk
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     assert "⚠ codex" in result.stdout
-    assert "codex_hooks" in result.stdout
+    assert "[features] hooks = true" in result.stdout
 
 
 def test_doctor_codex_binary_only_state(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

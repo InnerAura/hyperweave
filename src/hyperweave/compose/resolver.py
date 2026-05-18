@@ -1872,44 +1872,65 @@ def _format_model_label(model: str) -> str:
     return label
 
 
-def _active_window_minutes(stages: list[dict[str, Any]], fallback_m: float) -> float:
-    """Active work duration in minutes, bounded by both sum and wall-clock.
+def _active_window_minutes(
+    stages: list[dict[str, Any]],
+    fallback_m: float,
+    turn_duration_m: float | None = None,
+) -> float:
+    """Active work duration in minutes.
 
-    Returns ``min(sum_of_stage_durations, wall_clock_first_to_last)``:
-      * Sum_of_stages handles idle gaps — sessions left open across multiple
-        bursts over days resolve to actual work hours, not wall-clock days.
-      * Wall-clock cap handles overlapping/async stages — when stage end
-        timestamps extend past the last visible session message (async tool
-        completion), the sum can exceed the wall-clock first→last span.
-        Without the cap, the chart axis disagrees with the hero subline.
+    Primary source is ``turn_duration_m`` — the parser's sum of per-turn
+    compute durations from ``system.turn_duration`` events (Claude Code).
+    This measures agent compute time directly and never absorbs idle gaps
+    that the stage detector failed to break on (a multi-hour break inside
+    a same-class working stretch silently inflates a stage's span).
 
-    Both are stage-derived, so the chart and hero see the same number from
-    the same primary source (stage timestamps) — never from the parser's
-    ``duration_minutes`` which can be unreliable.
+    Fallback is ``min(sum_of_stage_durations, wall_clock_first_to_last)``
+    when the runtime emits no per-turn duration events (Codex) or when
+    stages lack ISO timestamps (mock fixtures):
+      * Sum_of_stages collapses inter-stage idle in sessions left open
+        across multiple bursts over days.
+      * Wall-clock cap defends against any future stage detector that
+        produces overlapping spans (today's partition algorithm cannot,
+        but the cap costs nothing).
+
+    The wall-clock cap applies to the turn-duration source too — defensive
+    against malformed turn_duration values exceeding the session span.
 
     Returns ``fallback_m`` when stages lack ISO timestamps (mock data) or
     when parsing fails.
     """
     if not stages:
+        if turn_duration_m is not None and turn_duration_m > 0:
+            return max(turn_duration_m, 1.0)
         return fallback_m
-    durations: list[float] = []
     starts: list[datetime] = []
     ends: list[datetime] = []
+    durations: list[float] = []
     for s in stages:
         start = s.get("start")
         end = s.get("end")
         if not start or not end:
+            if turn_duration_m is not None and turn_duration_m > 0:
+                return max(turn_duration_m, 1.0)
             return fallback_m
         try:
             t0 = datetime.fromisoformat(start)
             t_end = datetime.fromisoformat(end)
         except (ValueError, TypeError):
+            if turn_duration_m is not None and turn_duration_m > 0:
+                return max(turn_duration_m, 1.0)
             return fallback_m
         starts.append(t0)
         ends.append(t_end)
         durations.append((t_end - t0).total_seconds() / 60.0)
-    sum_m = sum(durations)
     wall_clock_m = (max(ends) - min(starts)).total_seconds() / 60.0
+    if turn_duration_m is not None and turn_duration_m > 0:
+        # Cap defensively at wall-clock so a runtime emitting impossibly
+        # large turn_duration values can't make the chart disagree with
+        # itself; in practice turn_duration_m << wall_clock_m always.
+        return max(min(turn_duration_m, wall_clock_m), 1.0)
+    sum_m = sum(durations)
     return max(min(sum_m, wall_clock_m), 1.0)
 
 
@@ -2009,10 +2030,17 @@ def resolve_receipt(
         )
     ]
     duration_m = session.get("duration_minutes", 0)
-    # Active window: bounded by both sum-of-stages (collapses idle gaps) and
-    # wall-clock span (caps overlapping/async stages). Same value drives the
+    turn_duration_m = session.get("turn_duration_minutes")
+    # Active window: prefers the parser's per-turn compute sum (Claude
+    # Code's `system.turn_duration` events) and falls back to
+    # min(stage-span sum, wall-clock) when the runtime emits no per-turn
+    # signal (Codex) or stages lack timestamps. Same value drives the
     # chart geometry AND the hero subline, so they always agree.
-    active_duration_m = _active_window_minutes(stages, float(duration_m))
+    active_duration_m = _active_window_minutes(
+        stages,
+        float(duration_m),
+        float(turn_duration_m) if turn_duration_m is not None else None,
+    )
     wall_clock_m = _wall_clock_minutes(stages, float(duration_m))
     # ``total`` for the divergence flag: max of parser-reported duration and
     # the stage-derived wall-clock. The parser may overstate (idle tail) or

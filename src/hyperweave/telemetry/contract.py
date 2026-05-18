@@ -108,6 +108,11 @@ def _assemble(t: SessionTelemetry, cost: float) -> dict[str, Any]:
             "start": t.timestamp.isoformat(),
             "end": end,
             "duration_minutes": t.duration_minutes,
+            # Per-turn compute sum when the runtime emits it (Claude Code's
+            # `system.turn_duration` events). None for Codex and any runtime
+            # without per-turn duration signal; the resolver falls back to
+            # min(stage-span sum, wall-clock) in that case.
+            "turn_duration_minutes": t.turn_duration_minutes,
             "model": t.model or "",
             "git_branch": t.git_branch or "",
             "project_path": t.project_path or "",

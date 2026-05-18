@@ -186,12 +186,121 @@ def test_install_hook_runtime_codex_with_genome_pins_command(monkeypatch: Monkey
     result = runner.invoke(app, ["install-hook", "--runtime", "codex", "--genome", "telemetry-voltage"])
     assert result.exit_code == 0
     hooks = json.loads((tmp_path / ".codex" / "hooks.json").read_text())
-    stop_entries = hooks["Stop"]
+    stop_groups = hooks["hooks"]["Stop"]
+    inner_handlers = [handler for group in stop_groups for handler in group.get("hooks", [])]
     assert any(
-        "hyperweave session receipt --genome telemetry-voltage" in str(entry.get("command", ""))
-        for entry in stop_entries
-    ), f"expected genome-pinned command in Stop hooks, got {stop_entries!r}"
+        "hyperweave session receipt --genome telemetry-voltage" in str(handler.get("command", ""))
+        for handler in inner_handlers
+    ), f"expected genome-pinned command under wrapper.Stop, got {stop_groups!r}"
     assert not (tmp_path / ".claude").exists()
+
+
+def test_install_hook_codex_strips_legacy_codex_hooks_feature_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    """Codex v0.130.0 renamed the feature gate from ``codex_hooks`` to ``hooks``.
+
+    Re-running install-hook over a config that still carries the legacy key
+    must strip it and write the new ``hooks = true`` in its place, while
+    preserving any unrelated sections so user trust_level / model settings
+    survive the upgrade.
+    """
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    codex_dir = tmp_path / ".codex"
+    codex_dir.mkdir()
+    (codex_dir / "config.toml").write_text(
+        'model = "gpt-5.5"\n\n[projects."/repo"]\ntrust_level = "trusted"\n\n[features]\ncodex_hooks = true\n'
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["install-hook", "--runtime", "codex"])
+    assert result.exit_code == 0
+
+    config_text = (codex_dir / "config.toml").read_text()
+    assert "codex_hooks" not in config_text, f"legacy codex_hooks key was not stripped:\n{config_text}"
+    assert "hooks = true" in config_text, f"new hooks gate was not written:\n{config_text}"
+    assert 'model = "gpt-5.5"' in config_text, "unrelated top-level key was dropped"
+    assert '[projects."/repo"]' in config_text, "unrelated section was dropped"
+
+
+def test_install_hook_codex_lifts_legacy_flat_hooks_json(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    """Codex v0.129.0 (hooks GA) changed hooks.json from flat to wrapped+matcher.
+
+    Re-running install-hook over a pre-GA flat config must:
+    1. Lift every legacy top-level event key under the new ``hooks`` wrapper.
+    2. Wrap each bare-command entry in a ``{matcher: "*", hooks: [...]}`` group.
+    3. Preserve unrelated hook commands (other tools' entries must survive).
+    4. Produce exactly one hyperweave entry.
+    5. Be idempotent — a second run does not double-wrap or stack entries.
+    """
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    codex_dir = tmp_path / ".codex"
+    codex_dir.mkdir()
+    # Pre-GA flat shape: bare-command entries directly under top-level event keys,
+    # plus an unrelated PreToolUse hook that must survive the migration.
+    flat_hooks = {
+        "Stop": [
+            {
+                "type": "command",
+                "command": "hyperweave session receipt --genome telemetry-codex",
+                "timeout": 10,
+            },
+            {"type": "command", "command": "/usr/local/bin/some-other-hook", "timeout": 30},
+        ],
+        "PreToolUse": [
+            {"type": "command", "command": "/usr/local/bin/preuse-hook", "timeout": 5},
+        ],
+    }
+    (codex_dir / "hooks.json").write_text(json.dumps(flat_hooks, indent=2))
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["install-hook", "--runtime", "codex"])
+    assert result.exit_code == 0
+
+    out = json.loads((codex_dir / "hooks.json").read_text())
+    # No legacy top-level event keys remain.
+    assert "Stop" not in out, f"legacy flat Stop key still at top level: {out!r}"
+    assert "PreToolUse" not in out, f"legacy flat PreToolUse key still at top level: {out!r}"
+    # GA wrapper exists and is a dict.
+    assert isinstance(out.get("hooks"), dict), f"GA wrapper missing or wrong shape: {out!r}"
+    wrapper = out["hooks"]
+    assert "Stop" in wrapper, f"Stop not lifted under wrapper: {wrapper!r}"
+    assert "PreToolUse" in wrapper, f"PreToolUse not lifted under wrapper: {wrapper!r}"
+    # Each lifted entry is in {matcher, hooks: [...]} shape.
+    for event_name, groups in wrapper.items():
+        for group in groups:
+            assert "matcher" in group, f"{event_name} lifted entry missing matcher: {group!r}"
+            assert isinstance(group.get("hooks"), list), (
+                f"{event_name} lifted entry missing inner hooks list: {group!r}"
+            )
+    # The unrelated commands survive the migration.
+    all_commands = [
+        h.get("command", "") for groups in wrapper.values() for group in groups for h in group.get("hooks", [])
+    ]
+    assert any("some-other-hook" in c for c in all_commands), f"unrelated Stop hook was dropped: {all_commands!r}"
+    assert any("preuse-hook" in c for c in all_commands), f"unrelated PreToolUse hook was dropped: {all_commands!r}"
+    # Exactly one hyperweave entry under wrapper.Stop.
+    hyperweave_handlers = [
+        h
+        for group in wrapper["Stop"]
+        for h in group.get("hooks", [])
+        if "hyperweave session" in str(h.get("command", ""))
+    ]
+    assert len(hyperweave_handlers) == 1, (
+        f"expected exactly one hyperweave handler post-migration, got {hyperweave_handlers!r}"
+    )
+
+    # Re-run is idempotent — no double-wrapping, no stacking.
+    result2 = runner.invoke(app, ["install-hook", "--runtime", "codex"])
+    assert result2.exit_code == 0
+    out2 = json.loads((codex_dir / "hooks.json").read_text())
+    hyperweave_handlers2 = [
+        h
+        for group in out2["hooks"]["Stop"]
+        for h in group.get("hooks", [])
+        if "hyperweave session" in str(h.get("command", ""))
+    ]
+    assert len(hyperweave_handlers2) == 1, f"re-run stacked or double-wrapped: {hyperweave_handlers2!r}"
 
 
 def test_install_hook_is_idempotent(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
@@ -217,9 +326,15 @@ def test_install_hook_is_idempotent(monkeypatch: MonkeyPatch, tmp_path: Path) ->
     )
 
     codex_hooks = json.loads((tmp_path / ".codex" / "hooks.json").read_text())
-    stop_hyperweave = [entry for entry in codex_hooks["Stop"] if "hyperweave session" in str(entry.get("command", ""))]
-    assert len(stop_hyperweave) == 1, (
-        f"expected exactly one hyperweave Stop hook after two invocations, got {stop_hyperweave!r}"
+    stop_groups = codex_hooks["hooks"]["Stop"]
+    hyperweave_handlers = [
+        handler
+        for group in stop_groups
+        for handler in group.get("hooks", [])
+        if "hyperweave session" in str(handler.get("command", ""))
+    ]
+    assert len(hyperweave_handlers) == 1, (
+        f"expected exactly one hyperweave Stop hook after two invocations, got {hyperweave_handlers!r}"
     )
 
 

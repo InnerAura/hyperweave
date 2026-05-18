@@ -271,6 +271,18 @@ class SessionTelemetry(BaseModel):
     )
     timestamp: datetime = Field(description="Session start time")
     duration_minutes: float = Field(default=0.0, description="Wall-clock duration")
+    turn_duration_minutes: float | None = Field(
+        default=None,
+        description=(
+            "Sum of per-turn compute durations when the runtime emits them. "
+            "Claude Code emits `system.turn_duration` events and the parser "
+            "sums them here; Codex has no equivalent and leaves this None. "
+            "Receipts prefer this over stage-span sums because it counts "
+            "agent compute time directly and never absorbs idle gaps that "
+            "the stage detector failed to break on. None signals the "
+            "fallback path (min of stage-span sum and wall-clock span)."
+        ),
+    )
     tool_calls: list[ToolCall] = Field(
         default_factory=list,
         description="Flat ordered list of all tool calls",

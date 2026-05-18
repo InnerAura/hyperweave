@@ -5,6 +5,29 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] - 2026-05-18
+
+Receipt active-duration sources from per-turn compute when the runtime emits it; long-running sessions no longer inflate via stage-span summation. Codex hooks migrate to the wrapped-matcher GA layout shipped in the Codex CLI v0.129 release. The `data-hw-genome` root attribute reflects the resolved genome ID instead of raw spec input.
+
+### Added
+
+- **`just tag VERSION MESSAGE`** &mdash; annotated tag plus automatic `_version.py` refresh so the `doctor` banner and metadata version stay in sync after release.
+- **`just version-refresh`** &mdash; standalone recipe to rebuild `_version.py` from the current git tag.
+
+### Changed
+
+- **Receipt active-duration** &mdash; Claude Code sessions source from `system.turn_duration` events; Codex and mocked fixtures fall back to the prior `min(stage-span sum, wall-clock span)` formula.
+- **Session contract** &mdash; new `turn_duration_minutes` field surfaces the parser's per-turn compute sum; null when the runtime emits no per-turn signal.
+- **Codex hooks file** &mdash; `install-hook` writes the wrapped-matcher GA format (Codex CLI v0.129+). Existing flat installs are migrated on next install.
+- **Hooks feature flag** &mdash; `codex_hooks` renames to `hooks` to match Codex's GA terminology; the legacy name continues to work for one release.
+- **`hyperweave doctor`** &mdash; traverses both the new wrapped format and the legacy flat layout, surfacing a migration prompt when a flat config is detected.
+- **Genome root attribute** &mdash; `data-hw-genome` reflects the resolved genome ID instead of raw spec input, so variants and auto-resolved genomes never emit empty.
+
+### Notes
+
+- Codex sessions hit the active-duration fallback because the runtime emits no per-turn duration signal.
+- `_version.py` refreshes automatically when tagging through `just tag`.
+
 ## [0.3.5] - 2026-05-17
 
 Receipt hero reads `token volume · $cost` with a four-cell decomposition strip below (IN / OUT / CACHED / WRITTEN), making the asymmetric cache-token math legible at a glance. Codex receipts now price tokens against the OpenAI rate card; figures previously inflated ~2× drop to actual GPT rates.

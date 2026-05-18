@@ -373,6 +373,10 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
             n_assistant_msgs += 1
 
     # ── Compute timestamps + duration ──
+    # Codex emits no per-turn duration events analogous to Claude Code's
+    # `system.turn_duration`, so `turn_duration_minutes` stays None and the
+    # receipt's active-duration line falls back to min(stage-span sum,
+    # wall-clock span). Wall-clock is the only signal available here.
     timestamps = [_parse_timestamp(line.get("timestamp")) for line in raw_lines if line.get("timestamp")]
     session_start = min(timestamps) if timestamps else datetime.now()
     session_end = max(timestamps) if timestamps else session_start
@@ -431,6 +435,7 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         runtime=_REGISTRY.runtime,
         timestamp=session_start,
         duration_minutes=round(duration_minutes, 2),
+        turn_duration_minutes=None,  # Codex has no per-turn duration events
         tool_calls=all_tool_calls,
         stages=[],  # populated by stages.detect_stages
         agents=[],  # Codex has no Task-style subagent dispatch

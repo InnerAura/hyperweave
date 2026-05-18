@@ -567,8 +567,45 @@ def _install_claude_code_hook(hook_command: str, full_slug: str) -> None:
     typer.echo(f"Installed SessionEnd hook in {settings_path}{pinned}")
 
 
+# Codex hook event names (v0.129.0 GA). Used by ``_install_codex_hook`` and
+# ``_doctor_runtime_status`` to detect pre-GA flat-format event keys sitting
+# at the top of ``hooks.json`` and lift them under the canonical ``hooks``
+# wrapper introduced when hooks went GA.
+_CODEX_HOOK_EVENTS = frozenset(
+    {
+        "SessionStart",
+        "PreToolUse",
+        "PermissionRequest",
+        "PostToolUse",
+        "UserPromptSubmit",
+        "Stop",
+    }
+)
+
+
+def _wrap_legacy_codex_hook_entry(entry: object) -> object:
+    """Lift a pre-GA bare-command hook entry into the GA matcher+hooks group.
+
+    Codex v0.129 (hooks GA) changed each event-array entry from a bare
+    ``{type, command, timeout}`` to a matcher group
+    ``{matcher, hooks: [{type, command, timeout}]}``. Idempotent: an entry
+    already carrying a list-valued ``hooks`` key is returned unchanged so
+    repeated migrations stay stable. Bare-command entries are wrapped under
+    a universal ``"*"`` matcher; the matcher is parsed-but-ignored for Stop
+    today per the spec, but we use ``"*"`` for forward-compat against any
+    future Codex release that begins to honor it on Stop.
+    """
+    if not isinstance(entry, dict):
+        return entry
+    if isinstance(entry.get("hooks"), list):
+        return entry  # already in GA shape
+    if entry.get("type") == "command":
+        return {"matcher": "*", "hooks": [entry]}
+    return entry  # unknown shape — preserve as-is
+
+
 def _install_codex_hook(hook_command: str, full_slug: str) -> None:
-    """Write a Stop hook to ``~/.codex/hooks.json`` + enable codex_hooks feature.
+    """Write a Stop hook to ``~/.codex/hooks.json`` + enable hooks feature.
 
     Per developers.openai.com/codex/hooks, Codex CLI fires Stop hooks
     PER-TURN (after every assistant response). The receipt rewrites the
@@ -579,9 +616,21 @@ def _install_codex_hook(hook_command: str, full_slug: str) -> None:
     will lean into live-receipt consumers (file watchers, dashboards)
     rather than collapse it back to a single session-end event.
 
-    Also writes ``[features] codex_hooks = true`` to ``~/.codex/config.toml``
-    (preserving any other keys); the feature flag is required for the
-    hook system to fire.
+    Codex v0.129.0 (2026-05-07) took hooks GA with two shape changes the
+    installer handles via migration-on-write:
+
+    * ``hooks.json`` moved from flat ``{Stop: [{type, command, timeout}]}``
+      to wrapped ``{hooks: {Stop: [{matcher, hooks: [{type, command,
+      timeout}]}]}}``. Any pre-GA event keys at the top level are lifted
+      under the new wrapper; each bare-command entry is wrapped under a
+      universal ``"*"`` matcher group.
+    * ``[features].codex_hooks`` was aliased as ``[features].hooks``. The
+      installer strips any legacy ``codex_hooks`` entry and writes the
+      canonical ``hooks = true``.
+
+    Both migrations are idempotent — re-running install-hook over any
+    combination of pre-GA, partially-migrated, or GA configs converges to
+    the canonical GA shape with exactly one hyperweave entry.
     """
     import json
 
@@ -590,48 +639,99 @@ def _install_codex_hook(hook_command: str, full_slug: str) -> None:
     config_path = codex_dir / "config.toml"
     codex_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Update hooks.json: remove prior hyperweave Stop entries, append new one ──
+    # ── Update hooks.json: lift any pre-GA flat keys into the wrapper, then
+    # operate on hooks.Stop as the canonical GA structure ──
     config: dict[str, object] = {}
     if hooks_path.exists():
-        config = json.loads(hooks_path.read_text())
+        loaded = json.loads(hooks_path.read_text())
+        if isinstance(loaded, dict):
+            config = loaded
 
-    raw_stop = config.setdefault("Stop", [])
-    stop_hooks: list[object] = raw_stop if isinstance(raw_stop, list) else []
-    if not isinstance(raw_stop, list):
-        config["Stop"] = stop_hooks
+    # GA wrapper: hooks lives under config["hooks"]. Pre-GA configs may not
+    # have it yet; create it (or reset if it's the wrong shape).
+    wrapper_raw = config.setdefault("hooks", {})
+    hooks_wrapper: dict[str, object]
+    if isinstance(wrapper_raw, dict):
+        hooks_wrapper = wrapper_raw
+    else:
+        hooks_wrapper = {}
+        config["hooks"] = hooks_wrapper
 
-    cleaned = []
-    for entry in stop_hooks:
-        if not isinstance(entry, dict):
-            cleaned.append(entry)
+    # Lift any pre-GA top-level event keys (Stop, PreToolUse, etc.) into the
+    # wrapper, wrapping bare-command entries with a universal matcher group.
+    # Iterate over a snapshot of keys since we mutate during traversal.
+    for legacy_event in list(config.keys()):
+        if legacy_event == "hooks" or legacy_event not in _CODEX_HOOK_EVENTS:
             continue
-        cmd = str(entry.get("command", ""))
-        if "hyperweave session" in cmd:
-            continue  # drop prior hyperweave hook
-        cleaned.append(entry)
-    cleaned.append({"type": "command", "command": hook_command, "timeout": 10})
-    config["Stop"] = cleaned
+        legacy_value = config.pop(legacy_event)
+        if not isinstance(legacy_value, list):
+            continue
+        target_raw = hooks_wrapper.setdefault(legacy_event, [])
+        target: list[object]
+        if isinstance(target_raw, list):
+            target = target_raw
+        else:
+            target = []
+            hooks_wrapper[legacy_event] = target
+        for entry in legacy_value:
+            target.append(_wrap_legacy_codex_hook_entry(entry))
+
+    # Now drop any prior hyperweave matcher groups under hooks.Stop and
+    # append the fresh one. A hyperweave group is identified by ANY inner
+    # handler whose command mentions "hyperweave session".
+    raw_stop = hooks_wrapper.setdefault("Stop", [])
+    stop_groups: list[object]
+    if isinstance(raw_stop, list):
+        stop_groups = raw_stop
+    else:
+        stop_groups = []
+        hooks_wrapper["Stop"] = stop_groups
+
+    cleaned: list[object] = []
+    for group in stop_groups:
+        if not isinstance(group, dict):
+            cleaned.append(group)
+            continue
+        inner_hooks = group.get("hooks", [])
+        if isinstance(inner_hooks, list) and any(
+            isinstance(h, dict) and "hyperweave session" in str(h.get("command", "")) for h in inner_hooks
+        ):
+            continue  # drop the whole matcher group — owned by hyperweave
+        cleaned.append(group)
+    cleaned.append(
+        {
+            "matcher": "*",
+            "hooks": [{"type": "command", "command": hook_command, "timeout": 10}],
+        }
+    )
+    hooks_wrapper["Stop"] = cleaned
     hooks_path.write_text(json.dumps(config, indent=2) + "\n")
 
-    # ── Update config.toml: ensure [features] codex_hooks = true (preserve other keys) ──
+    # ── Update config.toml: ensure [features] hooks = true (preserve other keys) ──
+    # Codex v0.130.0 renamed the gate from `codex_hooks` to `hooks`; strip any
+    # legacy key on the way in so re-running install-hook over an older config
+    # upgrades cleanly instead of leaving a dead key. Key detection is exact-
+    # match (split-on-=, strip), not prefix, so `hooks_*` lookalikes can't
+    # spoof a hit.
     config_lines: list[str] = []
     if config_path.exists():
         config_lines = config_path.read_text().splitlines()
+    config_lines = [line for line in config_lines if line.split("=", 1)[0].strip() != "codex_hooks"]
     has_features_section = any(line.strip() == "[features]" for line in config_lines)
-    has_codex_hooks_key = any(line.strip().startswith("codex_hooks") for line in config_lines)
+    has_hooks_key = any("=" in line and line.split("=", 1)[0].strip() == "hooks" for line in config_lines)
     if not has_features_section:
-        config_lines.extend(["", "[features]", "codex_hooks = true"])
-    elif not has_codex_hooks_key:
-        # Insert codex_hooks = true right after [features] header
+        config_lines.extend(["", "[features]", "hooks = true"])
+    elif not has_hooks_key:
+        # Insert hooks = true right after [features] header
         for i, line in enumerate(config_lines):
             if line.strip() == "[features]":
-                config_lines.insert(i + 1, "codex_hooks = true")
+                config_lines.insert(i + 1, "hooks = true")
                 break
     config_path.write_text("\n".join(config_lines) + "\n")
 
     pinned = f" (pinned to {full_slug})" if full_slug else " (auto-detect skin)"
     typer.echo(f"Installed Stop hook in {hooks_path}{pinned}")
-    typer.echo(f"Set [features] codex_hooks = true in {config_path}")
+    typer.echo(f"Set [features] hooks = true in {config_path}")
     typer.echo(
         "Note: Codex Stop fires per-turn — the receipt file refreshes live as the "
         "session progresses, always reflecting current cumulative state.",
@@ -702,7 +802,7 @@ def install_hook(
                 "auto-detects installed runtimes (~/.claude, ~/.codex, or 'claude'/"
                 "'codex' on PATH) and registers for each present. 'claude-code' "
                 "writes a SessionEnd hook to ~/.claude/settings.json. 'codex' writes "
-                "a Stop hook to ~/.codex/hooks.json plus [features] codex_hooks in "
+                "a Stop hook to ~/.codex/hooks.json plus [features] hooks in "
                 "~/.codex/config.toml. 'all' forces both regardless of detection."
             ),
         ),
@@ -771,8 +871,8 @@ def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:
     Returns ``✓`` when the hyperweave hook is wired correctly, ``✗`` when
     the runtime is initialized but no hyperweave hook is registered, or
     ``⚠`` when the wiring is partial (malformed config; codex missing the
-    [features] codex_hooks flag). The string is rendered verbatim by
-    ``doctor``.
+    [features] hooks flag — renamed from ``codex_hooks`` in Codex v0.130.0).
+    The string is rendered verbatim by ``doctor``.
     """
     import json
 
@@ -802,24 +902,56 @@ def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:
         hooks_path = home_dir / "hooks.json"
         config_path = home_dir / "config.toml"
         registered_cmd: str | None = None
+        legacy_flat_cmd: str | None = None
         if hooks_path.exists():
             try:
                 hooks = json.loads(hooks_path.read_text())
             except json.JSONDecodeError:
                 return f"⚠ {runtime}: ~/.codex/hooks.json is malformed"
-            for entry in hooks.get("Stop", []) or []:
-                if not isinstance(entry, dict):
-                    continue
-                cmd = str(entry.get("command", ""))
-                if "hyperweave session" in cmd:
-                    registered_cmd = cmd
-                    break
+            # GA traversal (Codex v0.129+):
+            #   hooks["hooks"]["Stop"][group].hooks[handler].command
+            wrapper = hooks.get("hooks") if isinstance(hooks, dict) else None
+            if isinstance(wrapper, dict):
+                for group in wrapper.get("Stop") or []:
+                    if not isinstance(group, dict):
+                        continue
+                    for handler in group.get("hooks") or []:
+                        if not isinstance(handler, dict):
+                            continue
+                        cmd = str(handler.get("command", ""))
+                        if "hyperweave session" in cmd:
+                            registered_cmd = cmd
+                            break
+                    if registered_cmd:
+                        break
+            # Pre-GA flat fallback (kept for one release): hooks["Stop"][entry]
+            # with command directly on the entry. Detected separately so a
+            # legacy install surfaces as ⚠ with an upgrade pointer instead of
+            # silently misreporting the hook as missing.
+            if not registered_cmd and isinstance(hooks, dict):
+                for entry in hooks.get("Stop") or []:
+                    if not isinstance(entry, dict):
+                        continue
+                    cmd = str(entry.get("command", ""))
+                    if "hyperweave session" in cmd:
+                        legacy_flat_cmd = cmd
+                        break
+        if legacy_flat_cmd and not registered_cmd:
+            return (
+                f"⚠ {runtime}: hook registered in legacy pre-GA flat format — "
+                f"re-run 'hyperweave install-hook --runtime {runtime}' to lift "
+                f"it to the GA wrapped structure (Codex v0.129+)"
+            )
         if not registered_cmd:
             return (
                 f"✗ {runtime}: initialized but no hyperweave hook — run 'hyperweave install-hook --runtime {runtime}'"
             )
-        # [features] codex_hooks = true must be present for the hook to fire;
-        # the install command writes it, but a hand-edited config could miss it.
+        # [features] hooks = true must be present for the hook to fire; the
+        # install command writes it, but a hand-edited config could miss it.
+        # Codex v0.130.0 renamed the gate from `codex_hooks` to `hooks`; key
+        # detection is exact-match within the [features] section so a stale
+        # `codex_hooks = true` left over from older installs is not mistaken
+        # for the live gate (and so `hooks_*` lookalikes can't spoof a hit).
         feature_ok = False
         if config_path.exists():
             in_features = False
@@ -831,12 +963,14 @@ def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:
                 if in_features and stripped.startswith("["):
                     in_features = False
                     continue
-                if in_features and stripped.startswith("codex_hooks") and "true" in stripped:
-                    feature_ok = True
-                    break
+                if in_features and "=" in stripped:
+                    key, _, value = stripped.partition("=")
+                    if key.strip() == "hooks" and "true" in value:
+                        feature_ok = True
+                        break
         if not feature_ok:
             return (
-                f"⚠ {runtime}: hook registered but [features] codex_hooks = true "
+                f"⚠ {runtime}: hook registered but [features] hooks = true "
                 f"is missing — re-run 'hyperweave install-hook --runtime {runtime}'"
             )
         return f"✓ {runtime}: hook registered — {registered_cmd}"

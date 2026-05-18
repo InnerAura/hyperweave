@@ -368,10 +368,15 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
     session_start = min(timestamps) if timestamps else datetime.now()
     session_end = max(timestamps) if timestamps else session_start
 
+    # turn_duration_minutes is the receipt's primary "active" source when present —
+    # it measures per-turn compute time and ignores idle gaps the stage detector
+    # silently absorbs into a stage span. None signals the fallback path.
     if total_duration_ms > 0:
         duration_minutes = total_duration_ms / 60_000
+        turn_duration_minutes: float | None = duration_minutes
     else:
         duration_minutes = (session_end - session_start).total_seconds() / 60
+        turn_duration_minutes = None
 
     # -- Extract unique file paths (ordered) --
     files_accessed: list[str] = []
@@ -437,6 +442,7 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         runtime=_REGISTRY.runtime,
         timestamp=session_start,
         duration_minutes=round(duration_minutes, 2),
+        turn_duration_minutes=(round(turn_duration_minutes, 2) if turn_duration_minutes is not None else None),
         tool_calls=all_tool_calls,
         stages=[],
         agents=agents,

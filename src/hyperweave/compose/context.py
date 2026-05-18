@@ -181,7 +181,7 @@ def _base_context(
         "artifact_id": artifact_id,
         "contract_id": artifact_id,
         "frame_type": spec.type,
-        "genome_id": spec.genome_id,
+        "genome_id": resolved.genome.get("id", spec.genome_id),
         "genome_category": resolved.genome.get("category", "dark"),
         # v0.3.2: variant + substrate_kind plumbed through to templates.
         # substrate_kind drives the brutalist split-template dispatcher

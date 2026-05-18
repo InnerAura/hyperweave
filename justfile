@@ -48,3 +48,13 @@ docs:
 
 build:
     uv build
+
+version-refresh:
+    uv pip install -e . --force-reinstall --no-deps --quiet
+    @uv run python -c "import hyperweave; print(f'_version.py refreshed to {hyperweave.__version__}')"
+
+tag VERSION MESSAGE:
+    git tag -a {{VERSION}} -m "{{MESSAGE}}"
+    just version-refresh
+    @echo ""
+    @echo "Tagged {{VERSION}}. Push with: git push --follow-tags"
