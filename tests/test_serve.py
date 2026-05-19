@@ -8,6 +8,7 @@ rendering, and Camo-hardening middleware.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -470,6 +471,53 @@ async def test_svg_camo_headers(client: AsyncClient, mock_compose: Any) -> None:
     assert resp.headers.get("access-control-allow-origin") == "*"
     assert "Accept" in resp.headers.get("vary", "")
     assert resp.headers.get("x-content-type-options") == "nosniff"
+
+
+# ===========================================================================
+# Access log middleware (v0.3.8)
+# ===========================================================================
+
+
+async def test_access_log_emits_hw_request(
+    client: AsyncClient, mock_compose: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.INFO, logger="hyperweave.serve.access"):
+        resp = await client.get(
+            "/v1/badge/build/passing/brutalist",
+            headers={
+                "user-agent": "github-camo/abc123",
+                "referer": "https://github.com/Foo/bar",
+                "x-forwarded-for": "1.2.3.4",
+            },
+        )
+    assert resp.status_code == 200
+    lines = [r.message for r in caplog.records if "HW_REQUEST" in r.message]
+    assert lines, f"no HW_REQUEST line; got {[r.message for r in caplog.records]}"
+    line = lines[0]
+    assert "method=GET" in line
+    assert "path=/v1/badge/build/passing/brutalist" in line
+    assert "ua=github-camo/abc123" in line
+    assert "ref=https://github.com/Foo/bar" in line
+    assert "ip=1.2.3.4" in line
+    assert "status=200" in line
+
+
+async def test_access_log_skips_health(client: AsyncClient, caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level(logging.INFO, logger="hyperweave.serve.access"):
+        await client.get("/health")
+    assert not any("HW_REQUEST" in r.message for r in caplog.records)
+
+
+async def test_access_log_scrubs_whitespace_in_ua(
+    client: AsyncClient, mock_compose: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.INFO, logger="hyperweave.serve.access"):
+        await client.get(
+            "/v1/badge/build/passing/brutalist",
+            headers={"user-agent": "Mozilla/5.0 (X11; Linux x86_64)"},
+        )
+    line = next(r.message for r in caplog.records if "HW_REQUEST" in r.message)
+    assert "ua=Mozilla/5.0_(X11;_Linux_x86_64)" in line
 
 
 # ===========================================================================

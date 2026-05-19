@@ -5,6 +5,20 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.8] - 2026-05-19
+
+Every artifact request now emits one greppable `HW_REQUEST` access-log line to stdout, so Fly.io's log stream reveals which GitHub repos embed HyperWeave SVGs via Camo's referer header. Health and metrics probes stay silent so 30-second checks don't drown the signal.
+
+### Added
+
+- **Access log middleware** &mdash; one `HW_REQUEST` line per non-probe request carries method, path with query string, user-agent, referer, x-forwarded-for, and status. Whitespace inside header values collapses to `_` so each `key=value` token stays grep-addressable.
+- **Silent probe filter** &mdash; `/health` and `/metrics` skip the access log; Fly health-check traffic no longer pollutes the stream.
+
+### Notes
+
+- Logs flow through the `hyperweave.serve.access` named logger at INFO; uvicorn's stdout handler delivers them to Fly's log stream.
+- Request and response bodies are never logged. The referer header is the only embed-attribution signal captured.
+
 ## [0.3.7] - 2026-05-18
 
 Font payloads now embed only the characters each artifact actually renders, and fonts an artifact never displays are no longer embedded at all. Across every text-bearing artifact type &mdash; badges, strips, stats cards, star charts, marquees, receipts, and rhythm strips &mdash; and across all three genomes, gzip size drops by an average of 59% per artifact.

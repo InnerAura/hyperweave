@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Annotated, Any
 
@@ -112,6 +113,42 @@ async def svg_camo_headers(request: Request, call_next):  # type: ignore[no-unty
         response.headers["Vary"] = "Accept"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'"
+    return response
+
+
+# -- Request observability middleware ---------------------------------------
+# Emits one greppable `HW_REQUEST` line per non-probe request so we can
+# track which GitHub repos embed our SVGs via Camo (referer header) and how
+# often they're viewed. Probe endpoints stay silent to keep Fly health-check
+# noise out of the access log. Bodies are never logged.
+
+_ACCESS_LOG = logging.getLogger("hyperweave.serve.access")
+_SILENT_PATHS = frozenset({"/health", "/metrics"})
+
+
+def _scrub(value: str | None) -> str:
+    """Collapse whitespace in header values so each key=value stays a single grep token."""
+    if not value:
+        return "-"
+    return value.replace(" ", "_").replace("\t", "_")
+
+
+@app.middleware("http")
+async def access_log(request: Request, call_next):  # type: ignore[no-untyped-def]
+    response = await call_next(request)
+    if request.url.path in _SILENT_PATHS:
+        return response
+    path = request.url.path + (f"?{request.url.query}" if request.url.query else "")
+    ip = request.headers.get("x-forwarded-for") or (request.client.host if request.client else "-")
+    _ACCESS_LOG.info(
+        "HW_REQUEST method=%s path=%s ua=%s ref=%s ip=%s status=%d",
+        request.method,
+        _scrub(path),
+        _scrub(request.headers.get("user-agent")),
+        _scrub(request.headers.get("referer")),
+        _scrub(ip),
+        response.status_code,
+    )
     return response
 
 
