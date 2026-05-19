@@ -209,11 +209,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=celadon" alt="github — celadon" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=circle&variant=carbon" alt="discord — carbon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=circle&variant=celadon" alt="spotify — celadon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=carbon" alt="github — carbon" width="56"/>
   <img src="https://hyperweave.app/v1/icon/docker/brutalist.static?shape=circle&variant=alloy" alt="docker — alloy" width="56"/>
   <img src="https://hyperweave.app/v1/icon/npm/brutalist.static?shape=square&variant=temper" alt="npm — temper" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=square&variant=pigment" alt="spotify — pigment" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=square&variant=pigment" alt="discord — pigment" width="56"/>
   <img src="https://hyperweave.app/v1/icon/anthropic/brutalist.static?shape=square&variant=ember" alt="anthropic — ember" width="56"/>
   <br/>
   <ul>
@@ -237,11 +237,23 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="automata">automata</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/DOCKER/PULL/automata.static?glyph=docker&variant=teal" alt="DOCKER PULL — teal variant"/>
-  <img src="https://hyperweave.app/v1/badge/DISCORD/JOIN/automata.static?glyph=discord&variant=violet" alt="DISCORD JOIN — violet variant"/>
-  <img src="https://hyperweave.app/v1/badge/STARS/automata.static?data=gh:eli64s/readme-ai.stars&glyph=github&variant=amber" alt="STARS — amber variant"/>
-  <img src="https://hyperweave.app/v1/badge/HF/MODELS/automata.static?glyph=huggingface&variant=sulfur" alt="HF MODELS — sulfur variant"/>
-  <img src="https://hyperweave.app/v1/badge/SPOTIFY/LISTEN/automata.static?glyph=spotify&variant=jade" alt="SPOTIFY LISTEN — jade variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=violet&size=compact" alt="PYPI — violet variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=teal&size=compact" alt="PYPI — teal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=bone&size=compact" alt="PYPI — bone variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=steel&size=compact" alt="PYPI — steel variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=amber&size=compact" alt="PYPI — amber variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=jade&size=compact" alt="PYPI — jade variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=magenta&size=compact" alt="PYPI — magenta variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=cobalt&size=compact" alt="PYPI — cobalt variant"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=toxic&size=compact" alt="PYPI — toxic variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=solar&size=compact" alt="PYPI — solar variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=abyssal&size=compact" alt="PYPI — abyssal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=crimson&size=compact" alt="PYPI — crimson variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=sulfur&size=compact" alt="PYPI — sulfur variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=indigo&size=compact" alt="PYPI — indigo variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=burgundy&size=compact" alt="PYPI — burgundy variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=copper&size=compact" alt="PYPI — copper variant"/>
 </p>
 
 <p align="center">
@@ -338,11 +350,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="chrome">chrome</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/BUILD/chrome.static?data=gh:InnerAura/hyperweave.build&glyph=githubactions&variant=horizon" alt="BUILD — horizon variant"/>
-  <img src="https://hyperweave.app/v1/badge/BLUESKY/POST/chrome.static?glyph=bluesky&variant=abyssal" alt="BLUESKY POST — abyssal variant"/>
-  <img src="https://hyperweave.app/v1/badge/DOCKER/chrome.static?data=docker:zeroxeli/readme-ai.pull_count&glyph=docker&variant=lightning" alt="DOCKER pulls — lightning variant"/>
-  <img src="https://hyperweave.app/v1/badge/STARS/chrome.static?data=gh:eli64s/readme-ai.stars&glyph=github&variant=graphite" alt="STARS — graphite variant"/>
-  <img src="https://hyperweave.app/v1/badge/ANTHROPIC/CLAUDE/chrome.static?glyph=anthropic&variant=moth" alt="ANTHROPIC CLAUDE — moth variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=horizon" alt="PYPI — horizon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=abyssal" alt="PYPI — abyssal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=lightning" alt="PYPI — lightning variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=graphite" alt="PYPI — graphite variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=moth" alt="PYPI — moth variant"/>
 </p>
 
 <p align="center">
@@ -410,10 +422,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/youtube/chrome.static?shape=circle&variant=horizon" alt="youtube" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/notion/chrome.static?shape=circle&variant=horizon" alt="notion" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/npm/chrome.static?shape=square&variant=horizon" alt="npm" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/instagram/chrome.static?shape=square&variant=horizon" alt="instagram" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/chrome.static?shape=circle&variant=horizon" alt="github — horizon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/notion/chrome.static?shape=circle&variant=graphite" alt="notion — graphite" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/rust/chrome.static?shape=square&variant=moth" alt="rust — moth" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/chrome.static?shape=square&variant=lightning" alt="docker — lightning" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/chrome.static?shape=square&variant=abyssal" alt="spotify — abyssal" width="56"/>
   <br/>
   <ul>
 <li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}&variant={variant}</code></sub></li>

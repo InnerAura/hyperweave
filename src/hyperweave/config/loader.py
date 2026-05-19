@@ -112,6 +112,45 @@ def load_badge_modes() -> frozenset[str]:
     return frozenset(str(t).lower() for t in raw.get("stateful_types", []))
 
 
+@lru_cache(maxsize=1)
+def load_font_embedding() -> dict[str, Any]:
+    """Load font embedding gate from data/font-embedding.yaml.
+
+    Returns a dict with three top-level keys:
+
+    - ``defaults``: per-frame fallback font slug lists (frames absent from
+      a genome's block).
+    - ``genomes``: per-(genome_id, frame_type) override font slug lists.
+    - ``non_embedded_locales``: documentation-only list of locales that
+      should bypass font embedding when CJK rendering is added.
+
+    Cached because the font gate fires once per compose() call across
+    every HTTP/CLI/MCP entry point.
+    """
+    path = _data_path("font-embedding.yaml")
+    if not path.exists():
+        return {"defaults": {}, "genomes": {}, "non_embedded_locales": []}
+    raw = _read_yaml(path) or {}
+    return {
+        "defaults": raw.get("defaults") or {},
+        "genomes": raw.get("genomes") or {},
+        "non_embedded_locales": raw.get("non_embedded_locales") or [],
+    }
+
+
+def _available_font_slugs() -> frozenset[str]:
+    """Return the set of font slugs present in data/fonts/ as .b64 + .meta.json pairs."""
+    fonts_dir = _data_path("fonts")
+    if not fonts_dir.exists():
+        return frozenset()
+    slugs: set[str] = set()
+    for b64 in fonts_dir.glob("*.b64"):
+        meta = b64.with_suffix(".meta.json")
+        if meta.exists():
+            slugs.add(b64.stem)
+    return frozenset(slugs)
+
+
 def load_motions() -> dict[str, dict[str, Any]]:
     """Load motion definitions from data/motions/ (root + border/ + kinetic/ subdirs)."""
     motions_dir = _data_path("motions")
@@ -254,6 +293,7 @@ class ConfigLoader:
         # self-consistency: variant_overrides keys ⊆ variants[], variant_tones
         # structural shape, variant_pairs primary/secondary in tones, etc.
         from hyperweave.compose.validate_paradigms import (
+            validate_font_embedding,
             validate_genome_against_paradigms,
             validate_genome_variants,
         )
@@ -261,6 +301,12 @@ class ConfigLoader:
         for genome_spec in self.genome_specs.values():
             validate_genome_against_paradigms(genome_spec, self.paradigms)
             validate_genome_variants(genome_spec)
+
+        # Cross-validate the font embedding gate against the loaded genomes
+        # and the on-disk font files. Catches typos, missing .b64 files,
+        # and rows that reference fonts no genome declares (silent drops
+        # at intersection time would otherwise mask the misconfig).
+        validate_font_embedding(self.genome_specs, load_font_embedding(), _available_font_slugs())
 
         self.glyphs = load_glyphs()
         self.motions = load_motions()

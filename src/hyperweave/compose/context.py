@@ -95,27 +95,164 @@ def _compute_contrast_ratio(fg_hex: str, bg_hex: str) -> str:
     return f"{ratio:.1f}:1"
 
 
-def _load_font_faces(genome: dict[str, Any], frame_type: str) -> str:
-    """Load embedded font CSS for ``frame_type``, filtered to slugs the frame
-    actually renders.
+def _load_font_faces(
+    genome: dict[str, Any],
+    frame_type: str,
+    char_set: frozenset[str] | None = None,
+) -> str:
+    """Load embedded font CSS for ``(frame_type, genome.id)``.
 
-    Intersects the genome's declared ``fonts`` list with the per-frame allowlist
-    returned by :func:`fonts_for_frame`. A genome that declares all 3 fonts
-    (chakra-petch, orbitron, jetbrains-mono) will only embed Orbitron when the
-    frame is a marquee, saving ~55KB per artifact. Frames absent from the
-    allowlist (icon, divider) get an empty allowed set and embed zero fonts.
+    Intersects the genome's declared ``fonts`` list with the per-(genome,
+    frame) allowlist returned by :func:`fonts_for_frame`. The allowlist
+    is genome-aware (v0.3.7): the brutalist badge embeds JetBrains Mono
+    only even though the brutalist genome declares Barlow Condensed for
+    its stats/strip/chart frames. Frames whose ``(genome, frame)`` row
+    is empty (icons, dividers, error badges) embed zero fonts.
 
-    The intersection is order-preserving against the genome's declared list so
-    @font-face declarations render in genome-author intent order.
+    When ``char_set`` is provided each surviving font is subset to only
+    the codepoints the artifact actually renders. ``None`` embeds full
+    fonts (legacy behavior, ``_error_badge``).
+
+    The intersection is order-preserving against the genome's declared
+    list so ``@font-face`` declarations render in genome-author intent
+    order.
     """
     declared = genome.get("fonts") or ["jetbrains-mono"]
     if not isinstance(declared, list):
         declared = ["jetbrains-mono"]
-    allowed = fonts_for_frame(frame_type)
+    genome_id = genome.get("id", "")
+    allowed = fonts_for_frame(frame_type, genome_id)
     if not allowed:
         return ""
     filtered = [slug for slug in declared if slug in allowed]
-    return load_font_face_css(filtered)
+    return load_font_face_css(filtered, char_set)
+
+
+# Per-frame text-field maps for glyph subsetting. Each entry lists the
+# context keys whose string content reaches a rendered <text> element
+# and therefore must be present in the font subset. Glyph SVG paths,
+# reasoning metadata, ARIA strings, and version/created/contract_id
+# render via different paths (paths render as <path>, metadata renders
+# in <hw:*> blocks read by no browser font) and stay outside the
+# extraction surface.
+_TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
+    "badge": ("title", "value", "label", "description"),
+    "strip": ("title", "value", "label", "description"),
+    "stats": (
+        "stats_username",
+        "stats_bio",
+        "stats_repo_label",
+        "stars_display",
+        "stars_delta_display",
+        "commits_display",
+        "prs_display",
+        "issues_display",
+        "contrib_display",
+        "streak_display",
+        "languages",
+        "activity_bars",
+    ),
+    "chart": (
+        "chart_repo",
+        "chart_title",
+        "chart_current_stars",
+        "chart_axes",
+        "chart_milestones",
+        "chart_empty_state",
+    ),
+    "marquee-horizontal": ("scroll_items",),
+    "receipt": (
+        "hero_headline",
+        "hero_subline",
+        "hero_right_stats",
+        "treemap_legend",
+        "metadata_left",
+        "metadata_right",
+        "footer_left",
+        "footer_right",
+        "dominant_profile",
+        "phase_legend",
+    ),
+    "rhythm-strip": (
+        "session_id_short",
+        "elapsed_label",
+        "token_summary",
+        "velocity_value",
+        "loop_label",
+        "loop_detail",
+        "profile_label",
+        "stages",
+    ),
+    "master-card": (
+        "mc_title",
+        "mc_subtitle",
+        "mc_total_tokens",
+        "mc_total_cost",
+        "mc_sessions",
+        "mc_skills",
+        "session_entries",
+        "footer_left",
+        "footer_right",
+    ),
+    "catalog": (
+        "catalog_title",
+        "catalog_subtitle",
+        "catalog_items",
+        "catalog_footer_left",
+        "catalog_footer_right",
+    ),
+}
+
+# Conservative baseline character set. Always included even when the
+# template's resolved text is sparse — covers axis tick labels, %
+# suffixes, numeric formatters, paren-wrapped clarifiers, and unicode
+# arrows / dots used in chrome/brutalist label glyphs.
+_SAFE_BASELINE: frozenset[str] = frozenset(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .:,;-_/·→×%+()[]"  # noqa: RUF001  middle-dot / right-arrow / multiplication-sign are deliberate
+)
+
+
+def _collect_text(value: Any, chars: set[str]) -> None:
+    """Recursively walk ``value`` and absorb every string codepoint into ``chars``.
+
+    Lists, tuples, and dicts (keys + values) are traversed; ``None`` and
+    non-string scalars (numbers, bools) are skipped. The recursive shape
+    keeps the collector resilient against future context-field additions
+    that wrap text in additional dict/list layers — a new ``chart_axes``
+    entry shape doesn't need a corresponding extractor edit.
+    """
+    if value is None:
+        return
+    if isinstance(value, str):
+        chars.update(value)
+        return
+    if isinstance(value, list | tuple):
+        for item in value:
+            _collect_text(item, chars)
+        return
+    if isinstance(value, dict):
+        for k, v in value.items():
+            if isinstance(k, str):
+                chars.update(k)
+            _collect_text(v, chars)
+
+
+def _extract_char_set(ctx: dict[str, Any], frame_type: str) -> frozenset[str]:
+    """Return the union of the safe baseline and every rendered text char.
+
+    Reads the per-frame text-field map at :data:`_TEXT_FIELDS_BY_FRAME`
+    and recursively flattens each context value to its component codepoints.
+    Frames not in the map fall back to the baseline only.
+
+    Run AFTER the per-frame builder populates ``ctx`` (which means the
+    resolver-emitted text fields like ``chart_milestones`` and
+    ``stats_username`` are visible) — see the ordering note on
+    :func:`build_context`.
+    """
+    chars: set[str] = set(_SAFE_BASELINE)
+    for field in _TEXT_FIELDS_BY_FRAME.get(frame_type, ()):
+        _collect_text(ctx.get(field), chars)
+    return frozenset(chars)
 
 
 def build_context(
@@ -123,7 +260,17 @@ def build_context(
     resolved: ResolvedArtifact,
     css_bundle: dict[str, str],
 ) -> dict[str, Any]:
-    """Dispatch to the per-frame context builder."""
+    """Dispatch to the per-frame context builder, then wire font subsetting.
+
+    Per-frame builders fill ``ctx`` with the safe defaults and then merge
+    ``resolved.frame_context`` (resolver output: ``chart_milestones``,
+    ``stats_username``, ``scroll_items[*].text``, etc.). Only after that
+    merge runs does the rendered text surface become observable — which is
+    why v0.3.7 moves the ``font_faces`` assignment OUT of ``_base_context``
+    and INTO this post-builder step. The extractor at :func:`_extract_char_set`
+    then walks the fully-populated ctx and the subsetter at
+    :func:`_load_font_faces` emits a payload tuned to the actual glyph set.
+    """
     _BUILDERS: dict[str, _CtxBuilder] = {
         FrameType.BADGE: _ctx_badge,
         FrameType.STRIP: _ctx_strip,
@@ -140,6 +287,10 @@ def build_context(
     builder = _BUILDERS.get(spec.type, _ctx_badge)
     ctx = builder(spec, resolved, css_bundle)
     _inject_motion(ctx, spec, resolved)
+    genome_id = resolved.genome.get("id", "")
+    if frame_needs_fonts(spec.type, genome_id):
+        char_set = _extract_char_set(ctx, spec.type)
+        ctx["font_faces"] = _load_font_faces(resolved.genome, spec.type, char_set)
     return ctx
 
 
@@ -168,7 +319,7 @@ def _base_context(
     # surfaces here too so `grep "hw:css-modules"` across outputs/proofset/ can
     # confirm fonts were correctly excluded for icons/dividers.
     module_names = [k for k, v in css_bundle.items() if v]
-    if frame_needs_fonts(spec.type):
+    if frame_needs_fonts(spec.type, resolved.genome.get("id", "")):
         module_names.append("fonts")
     css_debug = f"/* hw:css-modules: {','.join(module_names)} */"
     css_assembled = css_debug + "\n" + "\n".join(p for p in css_parts if p)
@@ -310,14 +461,16 @@ def _base_context(
         # enforced at load time; missing entries return None and the metadata
         # template emits empty hw:reasoning fields gracefully.
         **_resolve_reasoning_context(spec, resolved),
-        # Embedded fonts (base64 @font-face CSS) — gated per frame_type via
-        # frame_needs_fonts() and filtered per frame's font allowlist via
-        # fonts_for_frame(). Icons / dividers receive empty string (not in
-        # _NEEDS_FONTS dict) so template-level {{ font_faces }} renders
-        # nothing. Marquee receives Orbitron only; chart receives Orbitron +
-        # JetBrains Mono. The frame-aware filtering mirrors the per-frame CSS
-        # module pattern at assembler.py:14-32.
-        "font_faces": _load_font_faces(resolved.genome, spec.type) if frame_needs_fonts(spec.type) else "",
+        # Embedded fonts (base64 @font-face CSS) — placeholder. The real
+        # assignment lands in build_context() AFTER the per-frame builder
+        # merges resolver text fields into ctx, so the glyph subsetter
+        # at _extract_char_set + _load_font_faces sees the full rendered
+        # text surface (chart milestone labels, stats username, marquee
+        # scroll items, etc.). Setting the empty default here keeps
+        # Jinja's StrictUndefined happy for any code path that bypasses
+        # build_context (none exist today, but the default is defense
+        # against future drift).
+        "font_faces": "",
     }
     return ctx, uid, artifact_id
 

@@ -5,6 +5,27 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7] - 2026-05-18
+
+Font payloads now embed only the characters each artifact actually renders, and fonts an artifact never displays are no longer embedded at all. Across every text-bearing artifact type &mdash; badges, strips, stats cards, star charts, marquees, receipts, and rhythm strips &mdash; and across all three genomes, gzip size drops by an average of 59% per artifact.
+
+### Changed
+
+- **Brutalist badge embedding** &mdash; single JetBrains Mono `@font-face` block. Barlow Condensed embeds only in stats, strips, and charts.
+- **Automata badge embedding** &mdash; Orbitron + Chakra Petch only. JetBrains Mono no longer ships in badges since no badge text uses it.
+- **Automata chart embedding** &mdash; Orbitron + JetBrains Mono only. Chakra Petch dropped since no chart text uses it.
+- **Per-genome, per-frame embed list** &mdash; `data/font-embedding.yaml` declares which fonts ship for each genome-and-artifact combination. Adding a font is a single YAML edit, no Python changes.
+
+### Fixed
+
+- **Codex Stop hook crash on receipt render** &mdash; `fonttools` and `brotli` are now runtime dependencies, so `uv tool install` users no longer hit `ModuleNotFoundError: fontTools` when the hook fires.
+
+### Notes
+
+- Repeat renders of the same text reuse a cached subset, so the first request pays the subsetting cost and subsequent requests don't.
+- CJK locale font embedding deferred to a future release.
+- Icons and dividers continue to embed zero fonts.
+
 ## [0.3.6] - 2026-05-18
 
 Receipt active-duration sources from per-turn compute when the runtime emits it; long-running sessions no longer inflate via stage-span summation. Codex hooks migrate to the wrapped-matcher GA layout shipped in the Codex CLI v0.129 release. The `data-hw-genome` root attribute reflects the resolved genome ID instead of raw spec input.

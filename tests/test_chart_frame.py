@@ -140,10 +140,12 @@ def test_chart_six_stars_renders_real_polyline_with_derived_labels() -> None:
     assert ">4</text>" in svg
     assert ">6</text>" in svg
     # Derived X-axis: year numbers only, no EARLY/MID/LATE bucket words.
+    # v0.3.7: assertions scoped to rendered <text> content (>WORD<) so the
+    # font-subset base64 payload can't trigger spurious substring matches.
     assert "2025" in svg
-    assert "EARLY" not in svg
-    assert "MID" not in svg
-    assert "LATE" not in svg
+    assert ">EARLY<" not in svg
+    assert ">MID<" not in svg
+    assert ">LATE<" not in svg
 
 
 @pytest.mark.asyncio

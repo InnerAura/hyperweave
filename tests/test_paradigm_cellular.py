@@ -165,22 +165,51 @@ def test_cellular_heatmap_fits_card_height() -> None:
     assert used <= available + 0.5, f"Heatmap content {used:.2f}px overflows {available:.2f}px zone"
 
 
-def test_per_frame_font_filtering() -> None:
-    """Directive 2: font embedding is filtered per frame so marquee + chart
-    don't ship the full 3-font payload. Marquee gets Orbitron only; chart
-    gets Orbitron + JBM (no Chakra Petch); icon embeds zero fonts."""
+def test_per_genome_frame_font_filtering() -> None:
+    """v0.3.7 genome-aware gate: font embedding filters by (genome, frame).
+
+    Brutalist stats embeds JBM + both Barlow weights for hero serif numerals.
+    Chrome stats embeds JBM + Orbitron only — chrome has no Barlow declaration.
+    Automata stats embeds the full 3-font set (JBM + Orbitron + Chakra Petch).
+    Automata chart drops Chakra Petch (no CSS class binds it on chart).
+    Marquee for chrome/automata is Orbitron only. Icon and divider embed
+    zero fonts across every genome.
+
+    Legacy callers without resolved genome context (genome_id="") fall through
+    to the ``defaults`` row, which is empty in v0.3.7 — _error_badge and any
+    other genome-less code path embeds no fonts.
+    """
     from hyperweave.compose.assembler import fonts_for_frame
     from hyperweave.core.enums import FrameType
 
-    # v0.3.2 Phase 4: Barlow Condensed weights 700/900 added to badge / strip /
-    # stats / chart allowlists so brutalist light-scholar templates can embed
-    # the hero serif numerals declared in their CSS.
-    assert fonts_for_frame(FrameType.STATS) == frozenset(
-        {"jetbrains-mono", "orbitron", "chakra-petch", "barlow-condensed-700", "barlow-condensed-900"}
+    # Brutalist: stats/chart/strip use Barlow Condensed; badge does not.
+    assert fonts_for_frame(FrameType.STATS, "brutalist") == frozenset(
+        {"jetbrains-mono", "barlow-condensed-700", "barlow-condensed-900"}
     )
-    assert fonts_for_frame(FrameType.CHART) == frozenset(
-        {"jetbrains-mono", "orbitron", "barlow-condensed-700", "barlow-condensed-900"}
+    assert fonts_for_frame(FrameType.CHART, "brutalist") == frozenset(
+        {"jetbrains-mono", "barlow-condensed-700", "barlow-condensed-900"}
     )
-    assert fonts_for_frame(FrameType.MARQUEE_HORIZONTAL) == frozenset({"orbitron"})
-    assert fonts_for_frame(FrameType.ICON) == frozenset()
-    assert fonts_for_frame(FrameType.DIVIDER) == frozenset()
+    assert fonts_for_frame(FrameType.BADGE, "brutalist") == frozenset({"jetbrains-mono"})
+
+    # Chrome: paired typography (JBM + Orbitron) across all text-bearing frames.
+    assert fonts_for_frame(FrameType.STATS, "chrome") == frozenset({"jetbrains-mono", "orbitron"})
+    assert fonts_for_frame(FrameType.CHART, "chrome") == frozenset({"jetbrains-mono", "orbitron"})
+
+    # Automata: 3-font set for stats; chart drops Chakra Petch; badge drops JBM.
+    assert fonts_for_frame(FrameType.STATS, "automata") == frozenset({"jetbrains-mono", "orbitron", "chakra-petch"})
+    assert fonts_for_frame(FrameType.CHART, "automata") == frozenset({"jetbrains-mono", "orbitron"})
+    assert fonts_for_frame(FrameType.BADGE, "automata") == frozenset({"orbitron", "chakra-petch"})
+
+    # Marquee-horizontal: Orbitron only for chrome / automata (cellular scroll text).
+    # Brutalist does not bind marquee → defaults row → empty.
+    assert fonts_for_frame(FrameType.MARQUEE_HORIZONTAL, "chrome") == frozenset({"orbitron"})
+    assert fonts_for_frame(FrameType.MARQUEE_HORIZONTAL, "automata") == frozenset({"orbitron"})
+
+    # Icon / divider: zero fonts across every genome.
+    for genome_id in ("brutalist", "chrome", "automata"):
+        assert fonts_for_frame(FrameType.ICON, genome_id) == frozenset()
+        assert fonts_for_frame(FrameType.DIVIDER, genome_id) == frozenset()
+
+    # Legacy no-genome path: defaults row, empty in v0.3.7.
+    assert fonts_for_frame(FrameType.BADGE, "") == frozenset()
+    assert fonts_for_frame(FrameType.STATS, "") == frozenset()

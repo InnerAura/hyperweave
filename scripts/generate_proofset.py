@@ -1691,6 +1691,18 @@ def main() -> None:
     parser.add_argument("--live", action="store_true", help="Include network-dependent artifacts")
     args = parser.parse_args()
 
+    # Wipe outputs/proofset/ before regenerating so renamed/retired artifacts
+    # (paired-variant pairings, telemetry size variants) don't carry stale
+    # payloads forward and create false audit noise. READMEs live one level up
+    # (outputs/README*.md) and are preserved.
+    import shutil
+
+    proofset_dir = OUT / "proofset"
+    if proofset_dir.exists():
+        stale = sum(1 for _ in proofset_dir.rglob("*.svg"))
+        shutil.rmtree(proofset_dir)
+        print(f"Cleaned {stale} stale artifacts from {proofset_dir}")
+
     print("Generating static proof set...")
     total = generate_static()
     print(f"  {total} static artifacts")

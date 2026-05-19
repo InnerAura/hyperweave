@@ -42,6 +42,13 @@ dependencies = [
     "httpx[http2]>=0.28",
     "fastmcp>=3.0",
     "pyyaml>=6.0",
+    # Font subsetting (v0.3.7). Runtime — not dev-only — because
+    # render/fonts.py imports fontTools at module top-level, which
+    # executes on every receipt render. brotli is the WOFF2 codec
+    # fontTools uses inside font.save(flavor="woff2") and must be
+    # importable on every install (uv tool install, pip install, etc.).
+    "fonttools>=4.62.1",
+    "brotli>=1.2.0",
 ]
 
 [project.urls]
@@ -81,8 +88,6 @@ dev = [
     "mypy>=1.14",
     "types-pyyaml>=6.0.12.20250915",
     "pre-commit>=4.0",
-    "fonttools>=4.62.1",
-    "brotli>=1.2.0",
 ]
 
 [tool.pytest.ini_options]

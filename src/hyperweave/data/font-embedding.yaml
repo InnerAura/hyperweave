@@ -1,0 +1,75 @@
+# Font embedding gate (v0.3.7). Per (genome_id, frame_type) declares the
+# exact font slugs whose @font-face block ships in the rendered SVG.
+#
+# The composer intersects this with each genome's declared `fonts` list,
+# so a slug here that the genome does not declare is a noop. The list is
+# the upper bound; the genome list filters down to what is available.
+#
+# Adding a new font binding to an existing genome × frame: edit this file
+# only. No Python edits required (Invariant 12).
+#
+# Allowed slugs (one per data/fonts/<slug>.b64 + .meta.json pair):
+#   jetbrains-mono, orbitron, chakra-petch,
+#   barlow-condensed-700, barlow-condensed-900
+
+# Universal fallback row. Frames absent from a genome's block fall back
+# here. Empty list ⇒ embed nothing (icon, divider semantics — they
+# render zero <text> elements).
+defaults:
+  badge: []
+  strip: []
+  stats: []
+  chart: []
+  marquee-horizontal: []
+  receipt: []
+  rhythm-strip: []
+  master-card: []
+  catalog: []
+  icon: []
+  divider: []
+
+# Per-genome overrides. Keys are (genome_id, frame_type).
+genomes:
+  brutalist:
+    # Badge templates (brutalist-dark-content.j2:62,73 and
+    # brutalist-light-content.j2:54,63) reference --dna-font-mono only,
+    # which resolves to JetBrains Mono per brutalist.json:466. Barlow is
+    # queued for v0.3.3 light-scholar polish; add barlow-condensed-700
+    # and barlow-condensed-900 here when that lands (zero Python edits).
+    badge: [jetbrains-mono]
+    strip: [jetbrains-mono, barlow-condensed-700, barlow-condensed-900]
+    stats: [jetbrains-mono, barlow-condensed-700, barlow-condensed-900]
+    chart: [jetbrains-mono, barlow-condensed-700, barlow-condensed-900]
+  chrome:
+    badge: [jetbrains-mono, orbitron]
+    strip: [jetbrains-mono, orbitron]
+    stats: [jetbrains-mono, orbitron]
+    chart: [jetbrains-mono, orbitron]
+    marquee-horizontal: [orbitron]
+    receipt: [jetbrains-mono, orbitron]
+    rhythm-strip: [jetbrains-mono, orbitron]
+    master-card: [jetbrains-mono, orbitron]
+  automata:
+    # Badge cellular-content.j2:94,104 references Orbitron + Chakra Petch.
+    # JetBrains Mono is declared in automata.json but never bound to a
+    # CSS rule in the badge defs — drop from the embed list.
+    badge: [orbitron, chakra-petch]
+    strip: [jetbrains-mono, orbitron, chakra-petch]
+    stats: [jetbrains-mono, orbitron, chakra-petch]
+    # Chart cellular-defs.j2:52-66 binds Orbitron + JBM; Chakra Petch
+    # has no CSS rule on chart so it drops out.
+    chart: [jetbrains-mono, orbitron]
+    marquee-horizontal: [orbitron]
+    receipt: [jetbrains-mono, orbitron, chakra-petch]
+    rhythm-strip: [jetbrains-mono, orbitron, chakra-petch]
+    master-card: [jetbrains-mono, orbitron, chakra-petch]
+
+# Documentation only in v0.3.7 — no runtime consumer. When CJK
+# rendering becomes in-scope, plumb a `locale` field through
+# ComposeSpec and short-circuit font embedding in
+# context._load_font_faces when locale matches this list.
+non_embedded_locales:
+  - zh-CN
+  - zh-TW
+  - ja-JP
+  - ko-KR

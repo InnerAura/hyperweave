@@ -151,6 +151,105 @@ _SUBSTRATE_KINDS: frozenset[str] = frozenset({"dark", "light"})
 _PANEL_GRADIENT_MIN_STOPS: int = 2
 
 
+def validate_font_embedding(
+    genome_specs: dict[str, GenomeSpec],
+    font_embedding: dict[str, object],
+    available_slugs: frozenset[str],
+) -> None:
+    """Assert ``data/font-embedding.yaml`` is internally consistent.
+
+    Four checks, each contributing structured violation lines so a single
+    config-load surfaces the complete remediation list:
+
+    1. **Slug existence.** Every slug mentioned in ``defaults`` or
+       ``genomes.<id>.<frame>`` must exist as ``data/fonts/<slug>.b64``
+       paired with ``<slug>.meta.json``. Typos and stale slugs fail loud
+       rather than silently embed nothing.
+    2. **Genome identity.** Every key in ``genomes`` must be a loaded
+       genome id (``brutalist``, ``chrome``, ``automata``, ...). A row
+       keyed off ``brutlist`` ships dead config.
+    3. **Genome `fonts` subset.** Every entry in
+       ``genomes.<id>.<frame>`` must appear in that genome's declared
+       ``fonts`` list. Slugs absent from the genome list silently drop
+       at intersection time (``compose/context.py:_load_font_faces``);
+       failing here surfaces the misconfig at startup instead.
+    4. **`non_embedded_locales` shape.** Must be a list of strings.
+       Runtime consumer is deferred (v0.3.7 is documentation only) but
+       structural validation here prevents the field from being a
+       silently-broken dict.
+
+    :raises ValueError: if any check fails. Message enumerates every
+        violation in one pass so a single config-load surfaces the
+        complete fix list.
+    """
+    violations: list[str] = []
+
+    defaults = font_embedding.get("defaults") or {}
+    genomes_block = font_embedding.get("genomes") or {}
+    locales = font_embedding.get("non_embedded_locales") or []
+
+    if not isinstance(defaults, dict):
+        violations.append(f"  'defaults' must be a mapping, got {type(defaults).__name__}")
+        defaults = {}
+    if not isinstance(genomes_block, dict):
+        violations.append(f"  'genomes' must be a mapping, got {type(genomes_block).__name__}")
+        genomes_block = {}
+
+    # Check 1 + 2: per-row slug existence + genome identity.
+    def _check_row(label: str, frame_type: str, slugs: object) -> list[str]:
+        row_violations: list[str] = []
+        if not isinstance(slugs, list):
+            row_violations.append(f"  {label}.{frame_type} must be a list, got {type(slugs).__name__}")
+            return row_violations
+        for slug in slugs:
+            if not isinstance(slug, str):
+                row_violations.append(f"  {label}.{frame_type} contains non-string entry {slug!r}")
+                continue
+            if slug not in available_slugs:
+                row_violations.append(
+                    f"  {label}.{frame_type} references unknown font slug {slug!r} "
+                    f"(no data/fonts/{slug}.b64 + .meta.json pair)"
+                )
+        return row_violations
+
+    for frame_type, slugs in defaults.items():
+        violations.extend(_check_row("defaults", frame_type, slugs))
+
+    for genome_id, frames in genomes_block.items():
+        if genome_id not in genome_specs:
+            violations.append(f"  genomes.{genome_id!r} is not a loaded genome (known: {sorted(genome_specs.keys())})")
+            continue
+        if not isinstance(frames, dict):
+            violations.append(f"  genomes.{genome_id} must be a mapping, got {type(frames).__name__}")
+            continue
+        genome_declared = set(genome_specs[genome_id].fonts or [])
+        for frame_type, slugs in frames.items():
+            row_violations = _check_row(f"genomes.{genome_id}", frame_type, slugs)
+            violations.extend(row_violations)
+            # Check 3: subset of genome.fonts (only if the row itself is well-formed
+            # and references valid slugs — otherwise the cascade error obscures the
+            # subset violation).
+            if not row_violations and isinstance(slugs, list):
+                missing = set(slugs) - genome_declared
+                if missing:
+                    violations.append(
+                        f"  genomes.{genome_id}.{frame_type} references slugs not in "
+                        f"{genome_id}.fonts={sorted(genome_declared)}: {sorted(missing)} — "
+                        f"these would silently drop at intersection time"
+                    )
+
+    # Check 4: non_embedded_locales shape.
+    if not isinstance(locales, list):
+        violations.append(f"  'non_embedded_locales' must be a list, got {type(locales).__name__}")
+    else:
+        for entry in locales:
+            if not isinstance(entry, str):
+                violations.append(f"  non_embedded_locales contains non-string entry {entry!r}")
+
+    if violations:
+        raise ValueError("data/font-embedding.yaml has violations:\n" + "\n".join(violations))
+
+
 def validate_genome_against_paradigms(
     genome: GenomeSpec,
     paradigms: dict[str, ParadigmSpec],

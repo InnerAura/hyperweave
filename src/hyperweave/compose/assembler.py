@@ -19,63 +19,49 @@ _BRIDGE_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP, Fr
 # Marquee frame types — need frame_fill, status colors, ink tiers
 _MARQUEE_FRAMES: frozenset[str] = frozenset({FrameType.MARQUEE_HORIZONTAL})
 
-# Per-frame font allowlist: maps each frame type to the font slugs that frame's
-# templates actually render. Frames absent from the dict embed zero fonts (icon,
-# divider). This is a refinement of the pre-v0.3.0 binary gate (frozenset of
-# frame names): the dict shape lets each frame declare exactly the slugs it
-# needs, so a marquee carrying only Orbitron text doesn't ship JetBrains Mono
-# and Chakra Petch base64 payloads it never references.
+
+# Font embedding gate: per-(genome_id, frame_type) lookup against the YAML
+# config at ``data/font-embedding.yaml``. Replaces the v0.3.5 frozenset
+# table that was keyed only by frame_type — which meant the brutalist
+# badge embedded the genome's full font list (~28KB of unused Barlow
+# Condensed base64) because the genome declared Barlow for stats/strip/
+# chart and the badge frame's allowlist passed it through.
 #
-# Slugs match the keys in ``data/fonts/{slug}.b64`` and the entries in genome
-# ``fonts`` lists. The intersection of the genome's font list and a frame's
-# allowed slugs is what actually gets embedded.
-#
-# Per-frame allocation rationale:
-# - BADGE / STRIP / RECEIPT / RHYTHM_STRIP / MASTER_CARD / CATALOG: full 3-font
-#   set — these frames render mixed typography (mono labels, display values,
-#   chakra-petch metrics).
-# - STATS: full 3-font set — Chakra Petch for metric values, Orbitron for
-#   username/title, JetBrains Mono for labels.
-# - CHART: Orbitron (header zone) + JetBrains Mono (axis labels). Chart never
-#   renders Chakra Petch — saving ~13KB per chart artifact.
-# - MARQUEE_HORIZONTAL: Orbitron only. Cellular marquee scroll text is Orbitron
-#   11px 700 with no other typography. Saving ~55KB per marquee artifact.
-# - ICON / DIVIDER: not in dict — zero fonts. Glyph-only rendering, no <text>
-#   elements.
-_BRUTALIST_FONTS: frozenset[str] = frozenset(
-    {"jetbrains-mono", "orbitron", "chakra-petch", "barlow-condensed-700", "barlow-condensed-900"}
-)
-_CHART_FONTS: frozenset[str] = frozenset({"jetbrains-mono", "orbitron", "barlow-condensed-700", "barlow-condensed-900"})
-_TELEMETRY_FONTS: frozenset[str] = frozenset({"jetbrains-mono", "orbitron", "chakra-petch"})
+# The genome-aware lookup lets the brutalist badge embed only JetBrains
+# Mono (the one font its CSS classes actually reference) while the
+# brutalist stats card continues to embed all three fonts it needs.
+# Adding a new (genome, frame) binding is a YAML edit only (Invariant 12).
+def fonts_for_frame(frame_type: str, genome_id: str = "") -> frozenset[str]:
+    """Return the font slugs to embed for ``(frame_type, genome_id)``.
 
-_NEEDS_FONTS: dict[str, frozenset[str]] = {
-    FrameType.BADGE: _BRUTALIST_FONTS,
-    FrameType.STRIP: _BRUTALIST_FONTS,
-    FrameType.STATS: _BRUTALIST_FONTS,
-    FrameType.CHART: _CHART_FONTS,
-    FrameType.MARQUEE_HORIZONTAL: frozenset({"orbitron"}),
-    FrameType.RECEIPT: _TELEMETRY_FONTS,
-    FrameType.RHYTHM_STRIP: _TELEMETRY_FONTS,
-    FrameType.MASTER_CARD: _TELEMETRY_FONTS,
-    FrameType.CATALOG: _TELEMETRY_FONTS,
-}
+    When ``genome_id`` matches a row in ``font-embedding.yaml``'s
+    ``genomes`` block, returns that row's per-frame list. Otherwise
+    falls back to ``defaults.<frame_type>`` — an empty list in v0.3.7,
+    matching icon/divider semantics for callers without resolved genome
+    context (e.g. ``_error_badge``).
 
-
-def frame_needs_fonts(frame_type: str) -> bool:
-    """Per-frame font-loading gate. Returns True if any fonts should be
-    embedded for this frame type. Frames absent from the ``_NEEDS_FONTS`` dict
-    return False — icon and divider render glyph-only with no ``<text>``
-    elements, so embedding fonts in them is pure payload waste.
+    The composer further intersects this with the genome's declared
+    ``fonts`` list at ``compose/context.py:_load_font_faces``, so a slug
+    listed here that the genome does not declare is a noop.
     """
-    return frame_type in _NEEDS_FONTS
+    from hyperweave.config.loader import load_font_embedding
+
+    embedding = load_font_embedding()
+    genome_block = embedding["genomes"].get(genome_id) if genome_id else None
+    if isinstance(genome_block, dict) and frame_type in genome_block:
+        slugs = genome_block.get(frame_type) or []
+    else:
+        slugs = embedding["defaults"].get(frame_type) or []
+    return frozenset(slugs)
 
 
-def fonts_for_frame(frame_type: str) -> frozenset[str]:
-    """Return the set of font slugs allowed for embedding in ``frame_type``'s
-    templates. Empty set for frames that don't render text. The font loader
-    intersects this with the genome's declared font list so genomes that don't
-    declare a slug still skip it even if the frame allows it."""
-    return _NEEDS_FONTS.get(frame_type, frozenset())
+def frame_needs_fonts(frame_type: str, genome_id: str = "") -> bool:
+    """Per-(frame_type, genome_id) font-loading gate. Returns True when
+    any fonts should be embedded — used by context-builder to gate the
+    ``data-hw-fonts="self-contained"`` SVG-root attribute and the
+    ``hw:css-modules`` debug comment.
+    """
+    return bool(fonts_for_frame(frame_type, genome_id))
 
 
 # Genome fields that signal a telemetry skin (presence-gates the tool-color CSS block)

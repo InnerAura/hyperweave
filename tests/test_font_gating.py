@@ -1,15 +1,18 @@
-"""Per-frame font tree-shaking gate tests (Round 6 / Issue H).
+"""Per-(frame, genome) font embedding gate tests.
 
 The CSS module gate at compose/assembler.py:183-226 already gates bridge,
 expression, status, motion, telemetry per frame type. v0.3.0 Round 6
-extended this pattern with `_NEEDS_FONTS` to cover the @font-face base64
-payloads that previously loaded for every frame regardless of whether
-text rendered.
+introduced a per-frame font gate; v0.3.7 evolved it into a per-(frame,
+genome) gate at ``data/font-embedding.yaml`` so the brutalist badge
+embeds JetBrains Mono only (saving ~28KB) even though the brutalist
+genome declares Barlow Condensed for its stats/strip/chart frames.
 
 These tests pin the contract: icons + dividers must NOT embed fonts
-(zero text content makes them inert payload), badges + charts + stats
-MUST embed fonts (text is the carrier of meaning). The hw:css-modules
-debug comment surfaces the gate decision per artifact for visual audit.
+(zero text content makes them inert payload); badges + charts + stats
+MUST embed fonts (text is the carrier of meaning); and within those
+text-bearing frames, only the slugs the templates' CSS classes
+actually reference get embedded. The ``hw:css-modules`` debug comment
+surfaces the gate decision per artifact for visual audit.
 """
 
 from __future__ import annotations
@@ -72,11 +75,68 @@ def test_divider_excludes_fonts() -> None:
 
 def test_badge_includes_fonts() -> None:
     """Badges render label + value text and must embed fonts. The gate's
-    positive case — confirms _NEEDS_FONTS correctly admits text-bearing frames."""
+    positive case — confirms text-bearing frames get @font-face payloads."""
     spec = ComposeSpec(type="badge", genome_id="automata", title="BUILD", value="passing", state="passing")
     svg = compose(spec).svg
     assert "@font-face" in svg, "badge must embed @font-face for label/value text"
     assert "fonts" in _extract_modules_comment(svg)
+
+
+def _embedded_families(svg: str) -> set[str]:
+    """Return the set of font-family names appearing in @font-face blocks."""
+    blocks = re.findall(r"@font-face\s*\{[^}]*?font-family:\s*'([^']+)'", svg)
+    return set(blocks)
+
+
+def test_brutalist_badge_excludes_barlow() -> None:
+    """Brutalist badge templates reference --dna-font-mono only (= JetBrains
+    Mono). Barlow Condensed is declared in brutalist.json:fonts for the
+    stats/strip/chart frames; the v0.3.7 genome-aware gate prevents it from
+    shipping in the badge. Saves ~28KB raw / ~24KB gzip per brutalist badge.
+    """
+    for variant in ("celadon", "pulse"):
+        spec = ComposeSpec(
+            type="badge", genome_id="brutalist", variant=variant, title="BUILD", value="passing", state="passing"
+        )
+        svg = compose(spec).svg
+        families = _embedded_families(svg)
+        assert "Barlow Condensed" not in families, (
+            f"brutalist {variant} badge embeds Barlow Condensed (unused) — gate misconfigured"
+        )
+        assert families == {"JetBrains Mono"}, (
+            f"brutalist {variant} badge expected only JetBrains Mono, got {sorted(families)}"
+        )
+
+
+def test_automata_badge_excludes_jetbrains_mono() -> None:
+    """Automata badge CSS classes reference Orbitron (label) + Chakra Petch
+    (value). JetBrains Mono is declared in automata.json:fonts for the
+    strip/stats/receipt/master-card frames; v0.3.7 genome-aware gate
+    prevents it from shipping in the badge. Saves ~30KB raw per badge.
+    """
+    spec = ComposeSpec(type="badge", genome_id="automata", title="BUILD", value="passing", state="passing")
+    svg = compose(spec).svg
+    families = _embedded_families(svg)
+    assert "JetBrains Mono" not in families, "automata badge embeds JetBrains Mono (unused) — gate misconfigured"
+    assert families == {"Orbitron", "Chakra Petch"}, (
+        f"automata badge expected Orbitron + Chakra Petch, got {sorted(families)}"
+    )
+
+
+def test_automata_chart_excludes_chakra_petch() -> None:
+    """Automata chart cellular-defs.j2 binds Orbitron (header) + JetBrains
+    Mono (axis labels). Chakra Petch is declared in automata.json:fonts
+    for the badge/strip/stats frames but never bound to a chart CSS class;
+    v0.3.7 genome-aware gate prevents it from shipping. Saves ~14KB raw.
+    """
+    spec = ComposeSpec(type="chart", genome_id="automata")
+    svg = compose(spec).svg
+    families = _embedded_families(svg)
+    assert "Chakra Petch" not in families, "automata chart embeds Chakra Petch (unused) — gate misconfigured"
+
+
+# Combined Layer 1 + Layer 2 byte ceilings live in tests/test_font_subsetting.py
+# where they're parameterized across the full (genome, variant) matrix.
 
 
 def test_chart_includes_fonts() -> None:
