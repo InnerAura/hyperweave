@@ -64,6 +64,18 @@ def test_generate_data_cards_writes_stats_and_chart(proofset_module: object) -> 
         assert stats.stat().st_size > 500, f"artifact too small: {stats}"
         assert "<svg" in stats.read_text(), f"not valid SVG: {stats}"
 
+    glm5 = out_dir / "proofset" / "chrome" / "data-cards" / "stats_glm5_multiprovider.svg"
+    if glm5.exists():
+        svg = glm5.read_text()
+        assert "https://github.com/zai-org/GLM-5" in svg
+        assert "github.com/glm-5" not in svg
+
+    n8n = out_dir / "proofset" / "chrome" / "data-cards" / "stats_n8n_distribution.svg"
+    if n8n.exists():
+        svg = n8n.read_text()
+        assert "https://github.com/n8n-io/n8n" in svg
+        assert "github.com/n8n</text>" not in svg
+
     # Chart artifacts share a single upstream fetch — if one is missing
     # they're all missing, so probe one genome and skip if absent.
     sample_genome = next(iter(GenomeId))

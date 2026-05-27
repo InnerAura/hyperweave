@@ -1,0 +1,5 @@
+<g fill="{{ activity_bar_fill | default('var(--dna-signal)') }}" shape-rendering="crispEdges"{% if activity_group_opacity | default('') %} opacity="{{ activity_group_opacity }}"{% endif %}>
+{% for bar in activity_bar_layouts %}
+  <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}"{% if not (activity_group_opacity | default('')) and bar.opacity is defined %} opacity="{{ bar.opacity }}"{% endif %}/>
+{% endfor %}
+</g>

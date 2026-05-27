@@ -34,16 +34,18 @@
    chromatic (matches chrome badge + chrome chart, all three artifacts
    now share the same per-variant glyph color). Fallback to
    ``--dna-signal`` for genomes that don't declare per-variant glyph_inner. #}
+{% if glyph_path %}
 <g data-hw-zone="glyph" transform="translate({{ stats_layout.rects.chrome_glyph.x }},{{ stats_layout.rects.chrome_glyph.y }})">
-  <svg viewBox="0 0 24 24" width="{{ stats_layout.rects.chrome_glyph.w }}" height="{{ stats_layout.rects.chrome_glyph.h }}">
-    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-glyph-inner, var(--dna-signal))"/>
+  <svg viewBox="{{ glyph_viewbox }}" width="{{ stats_layout.rects.chrome_glyph.w }}" height="{{ stats_layout.rects.chrome_glyph.h }}">
+    <path d="{{ glyph_path }}" fill="var(--dna-glyph-inner, var(--dna-signal))"/>
   </svg>
 </g>
+{% endif %}
 <text data-hw-zone="identity" class="{{ uid }}-identity" x="{{ stats_layout.texts.chrome_identity.x }}" y="{{ stats_layout.texts.chrome_identity.y }}"
-  {%- if identity_text_length %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ stats_username }}</text>
+  {%- if identity_text_length %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ stats_username | xml_escape }}</text>
 
-<text data-hw-zone="hero-value" class="{{ uid }}-hero" x="{{ stats_layout.texts.chrome_hero_value.x }}" y="{{ stats_layout.texts.chrome_hero_value.y }}">{{ stars_display }}</text>
-<text data-hw-zone="hero-label" class="{{ uid }}-hero-label" x="{{ stats_layout.texts.chrome_hero_label.x }}" y="{{ stats_layout.texts.chrome_hero_label.y }}">TOTAL STARS · LIFETIME</text>
+<text data-hw-zone="hero-value" class="{{ uid }}-hero" x="{{ stats_layout.texts.chrome_hero_value.x }}" y="{{ stats_layout.texts.chrome_hero_value.y }}">{{ stars_display | xml_escape }}</text>
+<text data-hw-zone="hero-label" class="{{ uid }}-hero-label" x="{{ stats_layout.texts.chrome_hero_label.x }}" y="{{ stats_layout.texts.chrome_hero_label.y }}">{{ hero_caption | default('TOTAL STARS · LIFETIME') }}</text>
 
 <line x1="{{ stats_layout.chrome_hero_rule.x1 }}" y1="{{ stats_layout.chrome_hero_rule.y1 }}"
       x2="{{ stats_layout.chrome_hero_rule.x2 }}" y2="{{ stats_layout.chrome_hero_rule.y2 }}"
@@ -57,9 +59,9 @@
   <g data-hw-zone="metrics">
   {% for slot in metric_layouts %}
   <g data-hw-zone="metric-{{ loop.index0 }}">
-    <text class="{{ uid }}-mlabel" x="{{ slot.label_x }}" y="{{ slot.label_y }}" text-anchor="{{ slot.text_anchor }}">{{ slot.label_text }}</text>
+    <text class="{{ uid }}-mlabel" x="{{ slot.label_x }}" y="{{ slot.label_y }}" text-anchor="{{ slot.text_anchor }}">{{ slot.label_text | xml_escape }}</text>
     <text class="{{ uid }}-mval" x="{{ slot.value_x }}" y="{{ slot.value_y }}" text-anchor="{{ slot.text_anchor }}"
-      {%- if slot.value_text_length %} textLength="{{ slot.value_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ slot.value_display }}</text>
+      {%- if slot.value_text_length %} textLength="{{ slot.value_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ slot.value_display | xml_escape }}</text>
   </g>
   {% endfor %}
   {% for divider_x in stats_layout.metric_divider_xs %}
@@ -75,29 +77,22 @@
       fill="{{ specular_light }}"
       filter="url(#{{ uid }}-horizon-glow)"/>
 
-{# ZONE 3: 52-WEEK ACTIVITY — bars from real heatmap_grid data #}
+{# ZONE 3: ACTIVITY — dispatched by normalized activity type. #}
+{% if activity %}
   <g data-hw-zone="activity">
-  <text class="{{ uid }}-act-label" x="{{ stats_layout.texts.chrome_activity_label.x }}" y="{{ stats_layout.texts.chrome_activity_label.y }}">ACTIVITY · 52W</text>
-  <text class="{{ uid }}-act-label" x="{{ stats_layout.texts.chrome_activity_peak.x }}" y="{{ stats_layout.texts.chrome_activity_peak.y }}" text-anchor="{{ stats_layout.texts.chrome_activity_peak.anchor }}">{% if activity_peak > 0 %}{{ activity_peak }} CONTRIB/WK PEAK{% endif %}</text>
+  <text class="{{ uid }}-act-label" x="{{ stats_layout.texts.chrome_activity_label.x }}" y="{{ stats_layout.texts.chrome_activity_label.y }}">ACTIVITY · {% if activity.type == "sparkline_30d" %}30D{% else %}52W{% endif %}</text>
+  <text class="{{ uid }}-act-label" x="{{ stats_layout.texts.chrome_activity_peak.x }}" y="{{ stats_layout.texts.chrome_activity_peak.y }}" text-anchor="{{ stats_layout.texts.chrome_activity_peak.anchor }}">{% if activity.type == "sparkline_30d" %}PEAK · {{ activity_peak_label | default('—') }}{% elif activity_peak > 0 %}{{ activity_peak }} CONTRIB/WK PEAK{% endif %}</text>
 
   <line x1="{{ stats_layout.chrome_activity_baseline.x1 }}" y1="{{ stats_layout.chrome_activity_baseline.y1 }}"
         x2="{{ stats_layout.chrome_activity_baseline.x2 }}" y2="{{ stats_layout.chrome_activity_baseline.y2 }}"
         stroke="var(--dna-border-tint)" stroke-width="0.4"/>
 
-  {# Activity bars — solid fill + crispEdges for mobile readability.
-     v0.2.4: gradient fill muddied at mobile scales
-     because 7×N-pixel bars had insufficient vertical range for the 6-stop
-     gradient to resolve cleanly; the brutalist variant stays crisp with a
-     solid fill + crispEdges, so we port that pattern here. Icy-highlight
-     aesthetic is preserved via the horizon shelf-glow above the bars, not
-     per-bar gradient top-stops. Integer coords + crispEdges snap to pixel
-     grid on phones. #}
-  <g data-hw-zone="activity-bars" fill="var(--dna-signal)"
-     opacity="0.72" shape-rendering="crispEdges">
-  {% for bar in activity_bar_layouts %}
-    <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}"/>
-  {% endfor %}
-  </g>
+  {% if activity.type == "sparkline_30d" %}
+    {% include "frames/stats/zones/activity-sparkline.j2" %}
+  {% else %}
+    {% set activity_group_opacity = "0.72" %}
+    {% include "frames/stats/zones/activity-bars.j2" %}
+  {% endif %}
 
   {% if activity_bars %}
   <g data-hw-zone="activity-present" transform="translate({{ stats_layout.activity_present_x }},{{ stats_layout.activity_present_y }})">
@@ -107,6 +102,7 @@
   </g>
   {% endif %}
 </g>
+{% endif %}
 
 {# ZONE 4: FOOTER #}
 <line x1="{{ stats_layout.chrome_footer_rule.x1 }}" y1="{{ stats_layout.chrome_footer_rule.y1 }}"
@@ -120,5 +116,5 @@
         transform="rotate(45)" fill="var(--hw-core, var(--dna-signal))"/>
 </g>
 
-<text data-hw-zone="subject-url" class="{{ uid }}-foot" x="{{ stats_layout.texts.chrome_footer_url.x }}" y="{{ stats_layout.texts.chrome_footer_url.y }}">github.com/{{ stats_username | lower }}</text>
+<text data-hw-zone="subject-url" class="{{ uid }}-foot" x="{{ stats_layout.texts.chrome_footer_url.x }}" y="{{ stats_layout.texts.chrome_footer_url.y }}">{{ subject_url | default(stats_username | lower) | xml_escape }}</text>
 <text data-hw-zone="brand" class="{{ uid }}-brand" x="{{ stats_layout.texts.chrome_footer_brand.x }}" y="{{ stats_layout.texts.chrome_footer_brand.y }}" text-anchor="{{ stats_layout.texts.chrome_footer_brand.anchor }}">HYPERWEAVE</text>

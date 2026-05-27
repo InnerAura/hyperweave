@@ -38,6 +38,24 @@ def _make_chart_spec(genome: str) -> ComposeSpec:
     )
 
 
+def _make_download_chart_spec(genome: str) -> ComposeSpec:
+    return ComposeSpec(
+        type="chart",
+        genome_id=genome,
+        connector_data={
+            "provider": "pypi",
+            "identity": "vllm",
+            "hero": {"label": "DOWNLOADS/MO", "value": "6.1M", "raw_value": 6_131_880},
+            "series_label": "DOWNLOADS",
+            "series_points": [
+                {"date": "2026-05-01", "count": 1000},
+                {"date": "2026-05-02", "count": 2000},
+            ],
+            "source_url": "https://pypi.org/project/vllm/",
+        },
+    )
+
+
 # ── End-to-end compose for chart frame ─────────────────────────────────
 
 
@@ -53,6 +71,15 @@ def test_chart_compose_brutalist_emerald_full() -> None:
     assert "<rect" in svg  # square markers
 
 
+def test_chart_resolver_passes_default_milestones() -> None:
+    """Standalone chart frames keep the v0.3.10 resolver-level milestone thresholds."""
+    svg = compose(_make_chart_spec("brutalist")).svg
+    assert "hw-chart-milestone-label" in svg
+    assert "500 · JUL 25" in svg
+    assert "1K · OCT 25" in svg
+    assert "2K · JAN 26" in svg
+
+
 def test_chart_compose_chrome_horizon_full() -> None:
     result = compose(_make_chart_spec("chrome"))
     svg = result.svg
@@ -62,6 +89,26 @@ def test_chart_compose_chrome_horizon_full() -> None:
     assert "<path" in svg
     # Diamond markers via rotate(45)
     assert "rotate(45" in svg
+
+
+def test_chrome_star_chart_keeps_lifetime_hero_suffix() -> None:
+    svg = compose(_make_chart_spec("chrome")).svg
+    assert "TOTAL STARS · LIFETIME" in svg
+    assert "LIFETIME GROWTH" in svg
+
+
+def test_chrome_download_chart_omits_lifetime_hero_suffix() -> None:
+    svg = compose(_make_download_chart_spec("chrome")).svg
+    assert "DOWNLOAD TREND" in svg
+    assert "TOTAL DOWNLOADS/MO" in svg
+    assert "TOTAL DOWNLOADS/MO · LIFETIME" not in svg
+    assert "LIFETIME GROWTH" not in svg
+
+
+def test_brutalist_download_chart_omits_lifetime_subtitle() -> None:
+    svg = compose(_make_download_chart_spec("brutalist")).svg
+    assert "DOWNLOAD TREND" in svg
+    assert "LIFETIME GROWTH" not in svg
 
 
 def test_chart_graceful_degradation_without_data() -> None:

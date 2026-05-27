@@ -8,8 +8,6 @@ from hyperweave.config.loader import (
     load_motions,
     load_policies,
     load_profiles,
-    load_terminal_rules,
-    load_terminals,
 )
 from hyperweave.config.registry import (
     get_genome_specs,
@@ -34,7 +32,5 @@ __all__ = [
     "load_motions",
     "load_policies",
     "load_profiles",
-    "load_terminal_rules",
-    "load_terminals",
     "reset_registry",
 ]

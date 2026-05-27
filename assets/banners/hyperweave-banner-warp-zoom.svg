@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 1200 420" overflow="visible" role="img" aria-labelledby="t d"
+     data-hw-component="banner" data-hw-chromatic="cobalt-sapphire-deep"
+     data-hw-variant="v12-warp-zoom" data-protocol="hw-v1">
+  <title id="t">HyperWeave — Where Vectors Meet Vision</title>
+  <desc id="d">V12 warp-zoom — Scale(8)→1 from infinity</desc>
+  <defs>
+    <linearGradient id="e" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1838b0"><animate attributeName="stop-color" values="#1838b0;#2850d8;#1030a0;#1838b0" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="30%" stop-color="#4080ff"><animate attributeName="stop-color" values="#4080ff;#60a0ff;#3070f0;#4080ff" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="55%" stop-color="#d0e4ff"><animate attributeName="stop-color" values="#d0e4ff;#e8f0ff;#b8d4ff;#d0e4ff" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="78%" stop-color="#5848d8"><animate attributeName="stop-color" values="#5848d8;#7060f0;#4838c0;#5848d8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="100%" stop-color="#2040b0"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="13.708s" repeatCount="indefinite"/>
+    </linearGradient>
+    <radialGradient id="i" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#4080ff" stop-opacity=".06"/><stop offset="50%" stop-color="#2848c0" stop-opacity=".03"/><stop offset="100%" stop-color="#1020a0" stop-opacity="0"/></radialGradient>
+    <radialGradient id="n" cx="50%" cy="35%" r="55%"><stop offset="0%" stop-color="#e8f0ff"/><stop offset="30%" stop-color="#80b0ff" stop-opacity=".9"/><stop offset="100%" stop-color="#3060d0" stop-opacity="0"/></radialGradient>
+    <!-- DARK text gradient: white→bright blue→vivid blue→medium blue -->
+    <linearGradient id="gd" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="28%" stop-color="#90c0ff"/><stop offset="58%" stop-color="#6888f8"/><stop offset="100%" stop-color="#5070e0"/></linearGradient>
+    <!-- LIGHT text gradient: dark navy→deep blue→medium→vivid -->
+    <linearGradient id="gl" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="#0a1040"/><stop offset="28%" stop-color="#1838b0"/><stop offset="58%" stop-color="#2848c8"/><stop offset="100%" stop-color="#3858d0"/></linearGradient>
+    <!-- Text glow filter -->
+    <filter id="ft" x="-3%" y="-12%" width="106%" height="124%"><feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/><feColorMatrix in="b" type="matrix" values="0.1 0 0.4 0 0.04 0.06 0.07 0.32 0 0.02 0.15 0.05 0.75 0 0.06 0 0 0 0.28 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <!-- Sigil filters -->
+    <filter id="fg" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b"/><feColorMatrix in="b" type="matrix" values="0.12 0 0.5 0 0.05 0.08 0.1 0.4 0 0.03 0.2 0.08 0.9 0 0.08 0 0 0 0.5 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="fh" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b"/><feColorMatrix in="b" type="matrix" values="0.08 0 0.35 0 0.02 0.05 0.06 0.28 0 0.01 0.14 0.04 0.7 0 0.04 0 0 0 0.15 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="fn" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="b"/><feColorMatrix in="b" type="matrix" values="0.15 0 0.5 0 0.06 0.1 0.12 0.45 0 0.04 0.25 0.1 1.0 0 0.12 0 0 0 0.65 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <style>
+    svg{color-scheme:light dark}
+    /* POST-CONSTRUCTION LIFE */
+    @keyframes nl{0%,100%{opacity:1}50%{opacity:.88}}.na{animation:nl 3.236s ease-in-out 1.5s infinite}
+    @keyframes fl{0%,100%{opacity:1}50%{opacity:.7}}.fi{animation:fl 13.708s ease-in-out 1.5s infinite}
+    @keyframes or{to{transform:rotate(360deg)}}.orb{opacity:0}
+    .oa{transform-origin:0 0;animation:or 8.472s linear 1.5s infinite,os .2s ease 1.1s both}
+    .ob{transform-origin:0 0;animation:or 13.708s linear 1.5s infinite,os .2s ease 1.1s both}
+    @keyframes os{from{opacity:0}to{opacity:.8}}
+    /* ADAPTIVE TEXT — prefers-color-scheme */
+    .hw-pri{fill:url(#gd)}.hw-tag{fill:#c0d0f0}.hw-lab{fill:#7888e0}.hw-dv{stroke:#3858c0}
+    @media(prefers-color-scheme:light){.hw-pri{fill:url(#gl)}.hw-tag{fill:#3a4878}.hw-lab{fill:#3040a0}.hw-dv{stroke:#5070d0}}
+    /* TEXT AT 0.6s — README-optimized timing */
+    .wm{opacity:0;animation:wma .3s cubic-bezier(.25,.46,.45,.94) .6s both}@keyframes wma{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .dv{opacity:0;transform-origin:left;animation:dva .18s cubic-bezier(.25,.46,.45,.94) .76s both}@keyframes dva{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:.28}}
+    .tg{opacity:0;animation:tga .18s cubic-bezier(.25,.46,.45,.94) .80s both}@keyframes tga{from{opacity:0}to{opacity:1}}
+    .lb{opacity:0;animation:lba .15s cubic-bezier(.25,.46,.45,.94) .84s both}@keyframes lba{from{opacity:0}to{opacity:1}}
+    /* REDUCED MOTION */
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}
+    .nd{opacity:1;transform:none}.dc,.dd{stroke-dashoffset:0;opacity:.85}.frame{stroke-dashoffset:0;opacity:1}.inner{opacity:1}.orb{opacity:.8}
+    .wm{opacity:1;transform:none}.tg,.lb{opacity:1}.dv{opacity:.28;transform:scaleX(1)}
+    .sigil{clip-path:none;opacity:1;transform:translate(230px,210px) scale(1.85)}}
+    /* WARP-ZOOM */
+    
+    .nd,.dc,.dd,.frame,.inner{opacity:0}
+    @keyframes wz{0%{transform:scale(8);opacity:0}35%{opacity:1}65%{transform:scale(.94)}100%{transform:scale(1);opacity:1}}
+    @keyframes sw{from{opacity:0}to{opacity:1}}
+    .nc{transform-origin:0 0;animation:wz .28s cubic-bezier(.2,.6,.35,1) 0s both}
+    .nn{transform-origin:0 -80px;animation:wz .25s cubic-bezier(.2,.6,.35,1) .05s both}.ne{transform-origin:80px 0;animation:wz .25s cubic-bezier(.2,.6,.35,1) .08s both}
+    .ns{transform-origin:0 80px;animation:wz .25s cubic-bezier(.2,.6,.35,1) .11s both}.nw{transform-origin:-80px 0;animation:wz .25s cubic-bezier(.2,.6,.35,1) .14s both}
+    .dc{animation:sw .1s cubic-bezier(.25,.46,.45,.94) .22s both}.dd{animation:sw .1s cubic-bezier(.25,.46,.45,.94) .26s both}
+    .frame{transform-origin:0 0;animation:wz .3s cubic-bezier(.2,.6,.35,1) .30s both}.inner{animation:sw .12s cubic-bezier(.25,.46,.45,.94) .42s both}
+  </style>
+  <g opacity=".02" stroke="#2040a0" stroke-width=".5">
+    <line x1="230" y1="0" x2="230" y2="420"/><line x1="470" y1="0" x2="470" y2="420"/><line x1="0" y1="210" x2="1200" y2="210"/>
+  </g>
+  <g class="sigil" transform="translate(230,210) scale(1.85)">
+    <g filter="url(#fh)">
+      <line class="dc dc-n" x1="0" y1="0" x2="0" y2="-80" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+      <line class="dc dc-e" x1="0" y1="0" x2="80" y2="0" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+      <line class="dc dc-s" x1="0" y1="0" x2="0" y2="80" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+      <line class="dc dc-w" x1="0" y1="0" x2="-80" y2="0" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g filter="url(#fh)">
+      <path class="dd dd-ne" d="M0,-80 C20,-60 60,-20 80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+      <path class="dd dd-nw" d="M0,-80 C-20,-60 -60,-20 -80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+      <path class="dd dd-se" d="M0,80 C20,60 60,20 80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+      <path class="dd dd-sw" d="M0,80 C-20,60 -60,20 -80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+    <path class="inner fi" d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z" fill="url(#i)"/>
+    <path class="frame" d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z" fill="none" stroke="url(#e)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" filter="url(#fg)"/>
+    <g class="nd nc na" filter="url(#fn)"><circle cx="0" cy="0" r="4.5" fill="url(#n)"/></g>
+    <g class="nd nn na" filter="url(#fn)"><circle cx="0" cy="-80" r="3" fill="url(#n)"/></g>
+    <g class="nd ne na" filter="url(#fn)"><circle cx="80" cy="0" r="3" fill="url(#n)"/></g>
+    <g class="nd ns na" filter="url(#fn)"><circle cx="0" cy="80" r="3" fill="url(#n)"/></g>
+    <g class="nd nw na" filter="url(#fn)"><circle cx="-80" cy="0" r="3" fill="url(#n)"/></g>
+    <g class="orb oa"><circle r="1.8" cx="0" cy="-83" fill="#d0e4ff" filter="url(#fn)"/></g>
+    <g class="orb ob"><circle r="1.2" cx="83" cy="0" fill="#b0c8ff" filter="url(#fn)" opacity=".6"/></g>
+  </g>
+  <g class="wm" filter="url(#ft)">
+    <text x="470" y="236" font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif" font-size="90" font-weight="900" font-style="italic" letter-spacing="0" class="hw-pri" style="-webkit-font-smoothing:antialiased">HyperWeave</text>
+  </g>
+  <line class="dv hw-dv" x1="470" y1="252" x2="920" y2="252" stroke-width=".8"/>
+  <g class="tg"><text x="472" y="274" class="hw-tag" font-family="'JetBrains Mono','SF Mono','Fira Code',monospace" font-size="14" font-weight="500" letter-spacing="7" style="-webkit-font-smoothing:antialiased">WHERE VECTORS MEET VISION</text></g>
+  <g class="lb"><text x="472" y="298" class="hw-lab" font-family="'JetBrains Mono','SF Mono','Fira Code',monospace" font-size="11" font-weight="600" letter-spacing="6" style="-webkit-font-smoothing:antialiased">INNERAURA LABS</text></g>
+</svg>

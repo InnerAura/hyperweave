@@ -25,10 +25,6 @@
 {% endif %}
 {% if has_glyph | default(false) %}     data-hw-glyph="{{ glyph_id }}"
 {% endif %}
-{% if terminal_id %}     data-hw-terminal="{{ terminal_id }}"
-{% endif %}
-{% if rule_id %}     data-hw-rule="{{ rule_id }}"
-{% endif %}
 {% if data_hw_value %}     data-hw-value="{{ data_hw_value }}"
 {% endif %}
 {% if data_hw_statemode and data_hw_statemode != 'off' %}     data-hw-statemode="{{ data_hw_statemode }}"

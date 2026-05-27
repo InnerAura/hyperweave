@@ -706,6 +706,7 @@ def _compose_connector(
     chart_repo: str = "",
     genome_override: dict[str, Any] | None = None,
     variant: str = "",
+    data_tokens: list[Any] | None = None,
 ) -> str:
     """Compose a stats/chart frame with pre-fetched connector data."""
     spec = ComposeSpec(
@@ -717,8 +718,91 @@ def _compose_connector(
         chart_repo=chart_repo,
         genome_override=genome_override,
         variant=variant,
+        data_tokens=data_tokens,
     )
     return compose(spec).svg
+
+
+def _write_stats_family(
+    *,
+    genome: str,
+    stem: str,
+    stats_username: str,
+    connector_data: dict[str, Any] | None = None,
+    data_tokens: list[Any] | None = None,
+) -> int:
+    """Write a stats proof artifact plus per-variant siblings when available."""
+    total = 0
+    gdir = OUT / "proofset" / genome / "data-cards"
+    svg = _compose_connector(
+        "stats",
+        genome,
+        stats_username=stats_username,
+        connector_data=connector_data,
+        data_tokens=data_tokens,
+    )
+    _write(gdir / f"{stem}.svg", svg)
+    total += 1
+
+    genome_cfg = load_genomes().get(str(genome))
+    if genome_cfg and genome_cfg.variants:
+        var_dir = OUT / "proofset" / genome / "variants"
+        for variant in genome_cfg.variants:
+            svg = _compose_connector(
+                "stats",
+                genome,
+                stats_username=stats_username,
+                connector_data=connector_data,
+                data_tokens=data_tokens,
+                variant=variant,
+            )
+            _write(var_dir / f"{stem}_{variant}.svg", svg)
+            total += 1
+    return total
+
+
+def _write_chart_family(
+    *,
+    genome: str,
+    stem: str,
+    connector_data: dict[str, Any],
+) -> int:
+    """Write a chart proof artifact plus per-variant siblings when available."""
+    total = 0
+    gdir = OUT / "proofset" / genome / "data-cards"
+    svg = _compose_connector("chart", genome, connector_data=connector_data)
+    _write(gdir / f"{stem}.svg", svg)
+    total += 1
+
+    genome_cfg = load_genomes().get(str(genome))
+    if genome_cfg and genome_cfg.variants:
+        var_dir = OUT / "proofset" / genome / "variants"
+        for variant in genome_cfg.variants:
+            svg = _compose_connector("chart", genome, connector_data=connector_data, variant=variant)
+            _write(var_dir / f"{stem}_{variant}.svg", svg)
+            total += 1
+    return total
+
+
+async def _fetch_snapshot_or_cache(
+    fixtures: dict[str, Any],
+    cache_key: str,
+    label: str,
+    fetcher: Any,
+) -> dict[str, Any]:
+    """Fetch a provider snapshot live, falling back to the proofset fixture cache."""
+    import time
+
+    try:
+        result = await fetcher()
+        fixtures[cache_key] = {"value": result, "fetched_at": time.time()}
+        return result
+    except Exception as exc:
+        cached = fixtures.get(cache_key)
+        if isinstance(cached, dict) and isinstance(cached.get("value"), dict):
+            print(f"  [SNAPSHOT CACHE] {label}: live failed ({type(exc).__name__}), using cached live fixture")
+            return dict(cached["value"])
+        raise
 
 
 def _generate_data_cards() -> int:
@@ -897,6 +981,143 @@ def _generate_data_cards() -> int:
                 )
                 _write(var_dir / f"chart_stars_{variant}.svg", svg)
                 total += 1
+
+    async def _fetch_multisource_cards(fixtures: dict[str, Any]) -> dict[str, Any]:
+        from hyperweave.connectors.base import close_client as _close_client
+        from hyperweave.connectors.snapshots import fetch_arxiv_snapshot, fetch_hf_snapshot, fetch_pypi_snapshot
+        from hyperweave.serve.data_tokens import parse_data_tokens, resolve_data_tokens
+
+        results: dict[str, Any] = {}
+        try:
+            tokens = parse_data_tokens(
+                "github:zai-org/GLM-5.stars,"
+                "hf:zai-org/GLM-5.1.downloads,"
+                "hf:zai-org/GLM-5.1.likes,"
+                "arxiv:2602.15763.title"
+            )
+            resolved, _ttl = await resolve_data_tokens(tokens)
+            results["glm5_tokens"] = list(resolved)
+        except Exception as exc:
+            print(f"  [MULTI-SOURCE SKIP] GLM-5 data tokens: {type(exc).__name__}: {exc}")
+        try:
+            tokens = parse_data_tokens("github:n8n-io/n8n.stars,npm:n8n.downloads,docker:n8nio/n8n.pull_count")
+            resolved, _ttl = await resolve_data_tokens(tokens)
+            results["n8n_tokens"] = list(resolved)
+        except Exception as exc:
+            print(f"  [MULTI-SOURCE SKIP] n8n data tokens: {type(exc).__name__}: {exc}")
+        try:
+            results["hf_glm51"] = await _fetch_snapshot_or_cache(
+                fixtures,
+                "snapshot:huggingface:zai-org/GLM-5.1",
+                "HuggingFace zai-org/GLM-5.1",
+                lambda: fetch_hf_snapshot("zai-org/GLM-5.1"),
+            )
+        except Exception as exc:
+            print(f"  [MULTI-SOURCE SKIP] HuggingFace GLM-5.1 snapshot: {type(exc).__name__}: {exc}")
+        try:
+            results["arxiv_2602"] = await _fetch_snapshot_or_cache(
+                fixtures,
+                "snapshot:arxiv:2602.15763",
+                "arXiv 2602.15763",
+                lambda: fetch_arxiv_snapshot("2602.15763"),
+            )
+        except Exception as exc:
+            print(f"  [MULTI-SOURCE SKIP] arXiv 2602.15763 snapshot: {type(exc).__name__}: {exc}")
+        try:
+            results["vllm_pypi"] = await _fetch_snapshot_or_cache(
+                fixtures,
+                "snapshot:pypi:vllm",
+                "PyPI vllm",
+                lambda: fetch_pypi_snapshot("vllm"),
+            )
+        except Exception as exc:
+            print(f"  [MULTI-SOURCE SKIP] PyPI vllm snapshot: {type(exc).__name__}: {exc}")
+        await _close_client()
+        return results
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from proofset_harness import load_fixtures, save_fixtures
+
+    fixtures = load_fixtures()
+    fixtures_before = dict(fixtures)
+    multisource = asyncio.run(_fetch_multisource_cards(fixtures))
+    if fixtures != fixtures_before:
+        save_fixtures(fixtures)
+        added = len(set(fixtures) - set(fixtures_before))
+        if added:
+            print(f"  cached {added} provider snapshots")
+        else:
+            print("  refreshed provider snapshot cache")
+
+    hf_snapshot = multisource.get("hf_glm51")
+    if isinstance(hf_snapshot, dict):
+        total += _write_stats_family(
+            genome=str(GenomeId.CHROME),
+            stem="stats_glm51_hf",
+            stats_username="GLM-5.1",
+            connector_data=hf_snapshot,
+        )
+    arxiv_snapshot = multisource.get("arxiv_2602")
+    if isinstance(arxiv_snapshot, dict):
+        total += _write_stats_family(
+            genome=str(GenomeId.AUTOMATA),
+            stem="stats_arxiv_2602",
+            stats_username="2602.15763",
+            connector_data=arxiv_snapshot,
+        )
+    if isinstance(hf_snapshot, dict) and isinstance(arxiv_snapshot, dict):
+        from hyperweave.connectors.snapshots import merge_stats_sources
+
+        hf_arxiv = merge_stats_sources(hf_snapshot, arxiv_snapshot)
+        hf_arxiv["identity"] = "zai-org/GLM-5.1"
+        hf_arxiv["username"] = "GLM-5.1"
+        hf_arxiv["identity_subtitle"] = "HuggingFace model + arXiv paper"
+        total += _write_stats_family(
+            genome=str(GenomeId.CHROME),
+            stem="stats_zai_hf_arxiv",
+            stats_username="GLM-5.1",
+            connector_data=hf_arxiv,
+        )
+
+    if multisource.get("glm5_tokens"):
+        total += _write_stats_family(
+            genome=str(GenomeId.CHROME),
+            stem="stats_glm5_multiprovider",
+            stats_username="GLM-5",
+            connector_data={
+                "identity": "GLM-5",
+                "identity_subtitle": "Z.AI ecosystem",
+                "source_url": "https://github.com/zai-org/GLM-5",
+            },
+            data_tokens=multisource["glm5_tokens"],
+        )
+    if multisource.get("n8n_tokens"):
+        total += _write_stats_family(
+            genome=str(GenomeId.CHROME),
+            stem="stats_n8n_distribution",
+            stats_username="n8n",
+            connector_data={
+                "identity": "n8n",
+                "identity_subtitle": "GitHub + npm + Docker",
+                "source_url": "https://github.com/n8n-io/n8n",
+            },
+            data_tokens=multisource["n8n_tokens"],
+        )
+    vllm_snapshot = multisource.get("vllm_pypi")
+    if isinstance(vllm_snapshot, dict):
+        total += _write_stats_family(
+            genome=str(GenomeId.BRUTALIST),
+            stem="stats_vllm_pypi",
+            stats_username="vllm",
+            connector_data=vllm_snapshot,
+        )
+        if vllm_snapshot.get("series_points"):
+            for genome_id in (GenomeId.BRUTALIST, GenomeId.CHROME, GenomeId.AUTOMATA):
+                total += _write_chart_family(
+                    genome=str(genome_id),
+                    stem="chart_vllm_downloads",
+                    connector_data=vllm_snapshot,
+                )
 
     return total
 
@@ -1240,6 +1461,34 @@ def generate_readme(total: int, live_total: int) -> None:
         # Kinetic typography removed in v0.2.14 with the banner frame.
 
         lines.extend(["---", ""])
+
+    multi_source_cards = [
+        ("proofset/chrome/data-cards/stats_glm51_hf.svg", "HuggingFace model stats — zai-org/GLM-5.1"),
+        ("proofset/automata/data-cards/stats_arxiv_2602.svg", "arXiv paper stats — 2602.15763"),
+        ("proofset/chrome/data-cards/stats_zai_hf_arxiv.svg", "Z.AI combined card — HuggingFace + arXiv"),
+        ("proofset/chrome/data-cards/stats_glm5_multiprovider.svg", "Z.AI multi-provider tokens — GitHub + HF + arXiv"),
+        ("proofset/chrome/data-cards/stats_n8n_distribution.svg", "n8n multi-provider tokens — GitHub + npm + Docker"),
+        ("proofset/brutalist/data-cards/stats_vllm_pypi.svg", "PyPI package stats — vllm sparkline activity"),
+        ("proofset/brutalist/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm"),
+        ("proofset/chrome/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm chrome"),
+        ("proofset/automata/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm automata"),
+    ]
+    existing_multi_source_cards = [(path, label) for path, label in multi_source_cards if (OUT / path).exists()]
+    if existing_multi_source_cards:
+        lines.extend(
+            [
+                "## Multi-Source Data Cards",
+                "",
+                "Live provider snapshots and data-token compositions proving that stats and chart frames are "
+                "source-agnostic.",
+                "",
+            ]
+        )
+        for path, label in existing_multi_source_cards:
+            lines.append(f"**{label}**")
+            lines.append("")
+            lines.append(f"![{label}]({path})")
+            lines.append("")
 
     # Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once)
     lines.extend(["## `/a/inneraura/dividers/`", ""])
@@ -3667,7 +3916,7 @@ _RENDER_ONLY_SPECS: list[tuple[str, str, str, str, str, str, str]] = [
         "bone",
         "vllm-project (ORG, retained as design reference) — automata bone",
     ),
-    # Star charts — 3 specs across growth profile + genome variant.
+    # Star charts — growth profiles plus a controlled same-series genome sweep.
     (
         "chart-langflow-chrome-lightning",
         "chart",
@@ -3713,6 +3962,33 @@ _RENDER_ONLY_SPECS: list[tuple[str, str, str, str, str, str, str]] = [
         "brutalist",
         "celadon",
         "Mature, plateaued (langchain-ai/langchain) — brutalist celadon",
+    ),
+    (
+        "chart-claude-code-same-chrome-horizon",
+        "chart",
+        "anthropics",
+        "claude-code",
+        "chrome",
+        "horizon",
+        "Same series check (anthropics/claude-code) — chrome horizon",
+    ),
+    (
+        "chart-claude-code-same-brutalist-celadon",
+        "chart",
+        "anthropics",
+        "claude-code",
+        "brutalist",
+        "celadon",
+        "Same series check (anthropics/claude-code) — brutalist celadon",
+    ),
+    (
+        "chart-claude-code-same-automata-teal",
+        "chart",
+        "anthropics",
+        "claude-code",
+        "automata",
+        "teal",
+        "Same series check (anthropics/claude-code) — automata teal",
     ),
 ]
 
@@ -4080,6 +4356,14 @@ _EDGE_CASE_GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
             ("chart-claude-code-automata-teal", "Mid-growth (anthropics/claude-code) — automata teal"),
             ("chart-vllm-chrome-abyssal", "High-growth (vllm-project/vllm) — chrome abyssal"),
             ("chart-langchain-brutalist-celadon", "Mature, plateaued (langchain-ai/langchain) — brutalist celadon"),
+        ],
+    ),
+    (
+        "Star chart same-series genome sweep (render-only)",
+        [
+            ("chart-claude-code-same-chrome-horizon", "anthropics/claude-code — chrome horizon"),
+            ("chart-claude-code-same-brutalist-celadon", "anthropics/claude-code — brutalist celadon"),
+            ("chart-claude-code-same-automata-teal", "anthropics/claude-code — automata teal"),
         ],
     ),
     # ── paired-glyph zone-collapse coverage ──

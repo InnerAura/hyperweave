@@ -53,7 +53,7 @@
 {% for stop in divider_escape_stops %}
     <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}">
       <animate attributeName="stop-color"
-        values="{{ stop.values }}"
+        values="{{ stop['values'] }}"
         dur="1s" repeatCount="indefinite"/>
     </stop>
 {% endfor %}

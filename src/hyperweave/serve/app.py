@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Annotated, Any
 
@@ -124,6 +125,23 @@ async def svg_camo_headers(request: Request, call_next):  # type: ignore[no-unty
 
 _ACCESS_LOG = logging.getLogger("hyperweave.serve.access")
 _SILENT_PATHS = frozenset({"/health", "/metrics"})
+
+
+# Uvicorn's default log_config never wires the root logger; our access logger needs an explicit handler to reach stdout.
+def _configure_access_logging() -> None:
+    """Wire HW_REQUEST to stdout and silence the uvicorn.access duplicate."""
+    if not _ACCESS_LOG.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        _ACCESS_LOG.addHandler(handler)
+        _ACCESS_LOG.setLevel(logging.INFO)
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.handlers = []
+    uvicorn_access.propagate = False
+    uvicorn_access.disabled = True
+
+
+_configure_access_logging()
 
 
 def _scrub(value: str | None) -> str:
@@ -686,6 +704,15 @@ async def compose_stats(
     request: Request,
     username: str,
     genome_motion: str,
+    data: Annotated[
+        str,
+        Query(
+            description=(
+                "Optional data tokens appended to the stats card as provider metric slots. "
+                "Forms: gh:owner/repo.metric | pypi:pkg.metric | hf:org/model.metric | etc."
+            )
+        ),
+    ] = "",
     variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
     pair: Annotated[
         str,
@@ -709,6 +736,22 @@ async def compose_stats(
     genome, motion = _parse_genome_motion(genome_motion)
 
     connector_data: dict[str, Any] | None = None
+    data_tokens_resolved: list[Any] | None = None
+    ttl = 3600
+    if data:
+        try:
+            tokens = parse_data_tokens(data)
+            resolved, data_ttl = await resolve_data_tokens(tokens)
+            data_tokens_resolved = list(resolved)
+            ttl = min(ttl, data_ttl)
+        except ValueError as exc:
+            return Response(
+                content=_error_badge(f"data parse: {exc}", status_code=400),
+                media_type="image/svg+xml",
+                status_code=200,
+                headers=_error_response_headers(400),
+            )
+
     try:
         connector_data = await fetch_user_stats(username)
     except Exception:
@@ -720,10 +763,11 @@ async def compose_stats(
         stats_username=username,
         motion=motion,
         connector_data=connector_data,
+        data_tokens=data_tokens_resolved,
         variant=variant,
         pair=pair,
     )
-    return _compose_and_respond_with_ttl(spec, request, ttl=3600)
+    return _compose_and_respond_with_ttl(spec, request, ttl=ttl)
 
 
 class KitRequest(BaseModel):
@@ -787,11 +831,10 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
     },
     "stats": {
         "pattern": "/v1/stats/{username}/{genome}.{motion}",
-        "query_params": ["variant", "pair"],
+        "query_params": ["data", "variant", "pair"],
     },
     "receipt": {"pattern": "POST /v1/compose", "query_params": []},
     "rhythm-strip": {"pattern": "POST /v1/compose", "query_params": []},
-    "catalog": {"pattern": "POST /v1/compose", "query_params": []},
 }
 
 
@@ -1020,7 +1063,6 @@ async def get_drop(drop_id: str) -> dict[str, Any]:
         "sequence": sequence,
         "name": name,
         "genome_url": f"/g/{name}",
-        "catalog_url": f"/a/inneraura/{drop_id}-catalog-v1",
         "specimens_url": f"/a/inneraura?prefix={name}",
     }
 

@@ -183,13 +183,6 @@ _TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
         "profile_label",
         "stages",
     ),
-    "catalog": (
-        "catalog_title",
-        "catalog_subtitle",
-        "catalog_items",
-        "catalog_footer_left",
-        "catalog_footer_right",
-    ),
 }
 
 # Conservative baseline character set. Always included even when the
@@ -268,7 +261,6 @@ def build_context(
         FrameType.MARQUEE_HORIZONTAL: _ctx_marquee,
         FrameType.RECEIPT: _ctx_receipt,
         FrameType.RHYTHM_STRIP: _ctx_rhythm_strip,
-        FrameType.CATALOG: _ctx_catalog,
         FrameType.STATS: _ctx_stats,
         FrameType.CHART: _ctx_chart,
     }
@@ -399,9 +391,6 @@ def _base_context(
         # Metadata / accessibility
         "title_text": _aria_title(spec),
         "desc_text": _aria_desc(spec),
-        # Document-level attributes (used by document.svg.j2 base template)
-        "terminal_id": "",
-        "rule_id": "",
         # Chrome material gradients intentionally overrun the SVG extent.
         "gradient_y_neg_010": -0.1,
         "gradient_y_090": 0.9,
@@ -607,17 +596,6 @@ def _ctx_rhythm_strip(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[s
     ctx["loop_label"] = "NOMINAL"
     ctx["loop_detail"] = "no loop"
     ctx["profile_label"] = ""
-    ctx.update(resolved.frame_context)
-    return ctx
-
-
-def _ctx_catalog(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
-    ctx, _uid, _aid = _base_context(spec, resolved, css)
-    ctx["catalog_title"] = spec.title or "Genome Catalog"
-    ctx["catalog_subtitle"] = ""
-    ctx["catalog_items"] = []
-    ctx["catalog_footer_left"] = ""
-    ctx["catalog_footer_right"] = ""
     ctx.update(resolved.frame_context)
     return ctx
 

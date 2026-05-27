@@ -18,13 +18,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.chart_layout import compute_chart_layout, position_x_labels, position_y_labels
+from hyperweave.compose.schema import coerce_chart_input
 from hyperweave.render.chart_engine import Viewport, build_chart_svg
 
 if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec
 
 
-# Default milestones for star charts (shown when values cross these thresholds).
+# Default milestones for star/download charts. These are resolver-level
+# opt-in thresholds; build_chart_svg(None) intentionally emits no milestones.
 _DEFAULT_MILESTONES: list[int] = [500, 1000, 2000, 5000, 10000]
 
 
@@ -55,34 +57,17 @@ def resolve_chart(
         cellular_cell_size = 40
         chart_header_band_height = 0
 
-    # Three-state machine. "fresh" preserved (not renamed to "live") for
-    # backward compat with the existing data-hw-status contract; "empty" is
-    # new and specifically marks a truthful zero-star state.
-    connector = spec.connector_data
-    raw_points: list[Any]
-    empty_message: str | None
-    if connector is None:
-        # Upstream API failure — no data to trust.
-        status = "stale"
+    input_data = coerce_chart_input(spec.connector_data, spec)
+    status = input_data.status
+    raw_points: list[dict[str, object]] = [point.model_dump() for point in input_data.series_points]
+    if status == "empty":
         raw_points = []
-        current_stars = 0
-        empty_message = "DATA UNAVAILABLE"
+        empty_message: str | None = "NEW REPO · NO STARS YET"
+    elif status == "stale":
+        raw_points = []
+        empty_message = "DATA UNAVAILABLE" if input_data.hero.raw_value is None else "HISTORY UNAVAILABLE"
     else:
-        current_stars = int(connector.get("current_stars") or connector.get("stars_total") or 0)
-        raw_points = list(connector.get("points") or connector.get("star_history") or [])
-        if current_stars == 0:
-            # Truthful zero-star state (brand-new repo) — render empty, don't fabricate.
-            status = "empty"
-            raw_points = []
-            empty_message = "NEW REPO · NO STARS YET"
-        elif not raw_points:
-            # Has stars but no history — shouldn't happen after the connector
-            # fix, but degrade truthfully rather than synthesize.
-            status = "stale"
-            empty_message = "HISTORY UNAVAILABLE"
-        else:
-            status = "fresh"
-            empty_message = None
+        empty_message = None
 
     # Structural hints come from the resolver injection in compose/resolver.py,
     # but we also read directly from the genome here because this file is
@@ -106,9 +91,16 @@ def resolve_chart(
         if isinstance(dormant, list) and len(dormant) == 2:
             cellular_dormant_range = dormant
 
-    repo = connector.get("repo") if connector else None
-    repo = repo or f"{spec.chart_owner}/{spec.chart_repo}".strip("/")
-    chart_header_label = _chart_header_label(repo=repo, connector=connector)
+    repo = input_data.identity
+    chart_header_label = _chart_header_label(repo=repo, provider=input_data.provider)
+    chart_series_title = _chart_series_title(input_data.series_label)
+    chart_hero_label = _chart_hero_label(input_data.hero.label)
+    chart_hero_suffix = _chart_hero_suffix(hero_label=input_data.hero.label, series_label=input_data.series_label)
+    chart_subject_url = _chart_subject_url(
+        provider=input_data.provider,
+        identity=repo,
+        source_url=input_data.source_url,
+    )
     chart_layout = (
         compute_chart_layout(chart=paradigm_spec.chart, repo=repo, header_label=chart_header_label)
         if paradigm_spec is not None
@@ -134,13 +126,14 @@ def resolve_chart(
 
     # Hero identity strings shown at top + right of the standalone chart.
     title_upper = (repo or "star history").upper()
-    current_display = _format_compact(int(current_stars))
+    current_display = input_data.hero.value
 
     # Footer date range — "Mon YYYY — Mon YYYY" bookending the data we actually
     # plotted. Cellular paradigm consumes this; other paradigms ignore it and
     # fall back to repo slug via the template's | default chain. Empty string
     # when we have no points (stale/empty states keep the repo slug).
     date_range = _format_date_range(raw_points)
+    chart_subtitle_label = _chart_subtitle_label(input_data.series_label)
 
     # Cellular v0.3.0 refresh: surface info_accent / mid_accent / header_band
     # from the variant's primary tone to the template context. info_accent
@@ -174,6 +167,18 @@ def resolve_chart(
         "chart_title": title_upper,
         "chart_header_label": chart_header_label,
         "chart_current_stars": current_display,
+        "chart_series_title": chart_series_title,
+        "chart_hero_label": chart_hero_label,
+        "chart_hero_suffix": chart_hero_suffix,
+        "chart_subtitle_label": chart_subtitle_label,
+        "chart_subject_url": chart_subject_url,
+        "chart_brand_label": f"HYPERWEAVE · {chart_series_title}",
+        "hero_label": input_data.hero.label,
+        "hero_value": input_data.hero.value,
+        "hero_raw_value": input_data.hero.raw_value,
+        "identity": input_data.identity,
+        "provider_label": input_data.provider,
+        "series_points": [point.model_dump() for point in input_data.series_points],
         "chart_viewport_x": vp.x,
         "chart_viewport_y": vp.y,
         "chart_viewport_w": vp.w,
@@ -225,44 +230,67 @@ def resolve_chart(
     }
 
 
-def _format_compact(n: int) -> str:
-    """Render an integer as a compact string (2850 → '2,850', 12847 → '12.8K')."""
-    if n >= 10000:
-        return f"{n / 1000:.1f}K".rstrip("0").rstrip(".")
-    return f"{n:,}"
-
-
-def _chart_header_label(*, repo: str, connector: dict[str, Any] | None) -> str:
+def _chart_header_label(*, repo: str, provider: str) -> str:
     """Compose the chart header identity from project slug and data provider."""
     project = (repo.rsplit("/", 1)[-1] if repo else "project").strip() or "project"
-    provider = _chart_provider(connector)
     return f"{project.upper()} · {provider.upper()}"
 
 
-def _chart_provider(connector: dict[str, Any] | None) -> str:
-    if connector:
-        for key in ("provider", "source", "provider_source", "platform"):
-            value = connector.get(key)
-            if isinstance(value, str) and value.strip():
-                return _normalize_provider(value)
-        for key in ("url", "html_url", "repo_url", "source_url"):
-            value = connector.get(key)
-            if isinstance(value, str) and value.strip():
-                lowered = value.lower()
-                if "huggingface.co" in lowered:
-                    return "huggingface"
-                if "github.com" in lowered:
-                    return "github"
-    return "github"
+def _chart_series_title(series_label: str) -> str:
+    """Return the visible chart title for a generic time series."""
+    label = (series_label or "SERIES").strip().upper()
+    if "STAR" in label:
+        return "STAR HISTORY"
+    if "DOWNLOAD" in label:
+        return "DOWNLOAD TREND"
+    return f"{label} TREND"
 
 
-def _normalize_provider(value: str) -> str:
-    lowered = value.strip().lower()
-    if lowered in {"gh", "github", "github-core", "github-graphql"}:
-        return "github"
-    if lowered in {"hf", "huggingface", "hugging-face"}:
-        return "huggingface"
-    return lowered
+def _chart_hero_label(hero_label: str) -> str:
+    """Return the visible hero label for a generic time series."""
+    label = (hero_label or "VALUE").strip().upper()
+    if label == "STARS":
+        return "TOTAL STARS"
+    if label.startswith("DOWNLOAD"):
+        return f"TOTAL {label}"
+    return label
+
+
+def _chart_hero_suffix(*, hero_label: str, series_label: str) -> str:
+    """Return the context-specific hero-label suffix."""
+    label = (hero_label or "").strip().upper()
+    series = (series_label or "").strip().upper()
+    if label == "STARS" or "STAR" in series:
+        return " · LIFETIME"
+    return ""
+
+
+def _chart_subtitle_label(series_label: str) -> str:
+    """Return the secondary title line without assuming star-history semantics."""
+    label = (series_label or "SERIES").strip().upper()
+    if "STAR" in label:
+        return "LIFETIME GROWTH"
+    if "DOWNLOAD" in label:
+        return "DOWNLOAD TREND"
+    return f"{label} TREND"
+
+
+def _chart_subject_url(*, provider: str, identity: str, source_url: str = "") -> str:
+    """Format a footer source label without assuming GitHub."""
+    if source_url:
+        return source_url
+    primary_provider = provider.split("+", 1)[0]
+    if primary_provider == "github":
+        return f"github.com/{identity}"
+    if primary_provider == "pypi":
+        return f"pypi.org/project/{identity}"
+    if primary_provider == "huggingface":
+        return f"huggingface.co/{identity}"
+    if primary_provider == "arxiv":
+        return f"arxiv.org/abs/{identity}"
+    if primary_provider == "docker":
+        return f"hub.docker.com/r/{identity}"
+    return identity
 
 
 def _format_date_range(points: list[Any]) -> str:

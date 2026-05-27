@@ -10,6 +10,8 @@ Covers:
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from hyperweave.compose.engine import compose
@@ -32,7 +34,7 @@ MOCK_STATS = {
         {"name": "Rust", "pct": 9.5, "count": 6},
         {"name": "Go", "pct": 3.9, "count": 2},
     ],
-    "heatmap_grid": [],
+    "heatmap_grid": [{"date": f"2025-01-{(i % 28) + 1:02d}", "count": (i % 12) + 1} for i in range(364)],
 }
 
 
@@ -115,6 +117,12 @@ def test_stats_compose_with_minimal_connector_data() -> None:
     )
     result = compose(spec)
     assert 'data-hw-frame="stats"' in result.svg
+
+
+def test_brutalist_stats_omits_absent_hero_delta_text() -> None:
+    """Brutalist stats cards should not emit empty hero-delta text nodes."""
+    svg = compose(_spec("brutalist")).svg
+    assert not re.search(r'<text class="[^"]+-hm"[^>]*>\s*</text>', svg)
 
 
 def test_stats_chrome_zero_stars_does_not_synthesize_placeholder() -> None:

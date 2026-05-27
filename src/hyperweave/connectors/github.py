@@ -298,9 +298,11 @@ async def _fetch_stargazer_history_rest(
     total_stars = int(repo_data.get("stargazers_count", 0))
     if total_stars == 0:
         return {
+            "provider": "github",
             "points": [],
             "current_stars": 0,
             "repo": identifier,
+            "source_url": f"https://github.com/{identifier}",
             "ttl": STARGAZER_HISTORY_TTL,
         }
 
@@ -321,9 +323,11 @@ async def _fetch_stargazer_history_rest(
                 ratio,
             )
             return {
+                "provider": "github",
                 "points": [],
                 "current_stars": max(total_stars, cross_check_stars),
                 "repo": identifier,
+                "source_url": f"https://github.com/{identifier}",
                 "ttl": STARGAZER_HISTORY_TTL,
             }
         # Sources agree within 2x — trust the GraphQL number (more reliable
@@ -352,9 +356,11 @@ async def _fetch_stargazer_history_rest(
                 if isinstance(entry, dict) and entry.get("starred_at"):
                     single_page_points.append({"date": entry["starred_at"], "count": idx + 1})
         return {
+            "provider": "github",
             "points": single_page_points,
             "current_stars": total_stars,
             "repo": identifier,
+            "source_url": f"https://github.com/{identifier}",
             "ttl": STARGAZER_HISTORY_TTL,
         }
 
@@ -409,9 +415,11 @@ async def _fetch_stargazer_history_rest(
     points.sort(key=lambda p: p["date"])
 
     return {
+        "provider": "github",
         "points": points,
         "current_stars": total_stars,
         "repo": identifier,
+        "source_url": f"https://github.com/{identifier}",
         "ttl": STARGAZER_HISTORY_TTL,
     }
 
@@ -784,6 +792,7 @@ async def _fetch_user_stats_graphql(username: str) -> Any:
         stale_fields.add("repo_count")
 
     return {
+        "provider": "github",
         "username": username,
         "avatar_url": str(user.get("avatarUrl") or ""),
         "bio": str(user.get("bio") or ""),
@@ -798,6 +807,7 @@ async def _fetch_user_stats_graphql(username: str) -> Any:
         "repo_count": repo_count,
         "followers": followers_count,
         "heatmap_grid": heatmap_grid,
+        "source_url": f"https://github.com/{username}",
         "_stale_fields": sorted(stale_fields),
         "ttl": USER_STATS_TTL,
     }
@@ -919,6 +929,7 @@ async def _fetch_user_stats_rest(username: str) -> dict[str, Any]:
         heatmap_grid = []
 
     return {
+        "provider": "github",
         "username": username,
         "avatar_url": avatar_url,
         "bio": bio,
@@ -933,6 +944,7 @@ async def _fetch_user_stats_rest(username: str) -> dict[str, Any]:
         "repo_count": repo_count,
         "followers": followers,
         "heatmap_grid": heatmap_grid,
+        "source_url": f"https://github.com/{username}",
         "_stale_fields": sorted(stale_fields),
         "ttl": USER_STATS_TTL,
     }

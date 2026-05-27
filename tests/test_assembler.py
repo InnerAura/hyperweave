@@ -49,15 +49,30 @@ def test_chrome_emits_no_light_mode_media_query() -> None:
 
 def test_chrome_stats_and_chart_headers_use_badge_identity_roles() -> None:
     """Chrome stats/chart header slots consume the same roles as badges."""
-    stats_svg = compose(ComposeSpec(type="stats", genome_id="chrome", variant="horizon")).svg
+    stats_svg = compose(
+        ComposeSpec(
+            type="stats",
+            genome_id="chrome",
+            variant="horizon",
+            connector_data={
+                "provider": "github",
+                "username": "eli64s",
+                "stars_total": 20,
+                "source_url": "https://github.com/eli64s",
+            },
+        )
+    ).svg
     chart_svg = compose(
         ComposeSpec(
             type="chart",
             genome_id="chrome",
             variant="horizon",
             connector_data={
-                "points": [{"date": "2024-01-01", "stars": 10}, {"date": "2024-02-01", "stars": 20}],
+                "provider": "github",
+                "identity": "eli64s/readme-ai",
+                "points": [{"date": "2024-01-01", "count": 10}, {"date": "2024-02-01", "count": 20}],
                 "current_stars": 20,
+                "source_url": "https://github.com/eli64s/readme-ai",
             },
         )
     ).svg

@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/hyperweave-banner.svg" alt="HyperWeave" width="800"/>
+  <img src="assets/banners/hyperweave-banner-warp-zoom.svg" alt="HyperWeave" width="100%"/>
 </p>
 
 <p align="center">
@@ -20,6 +20,14 @@
 
 <p align="center">
   <img src="https://hyperweave.app/v1/strip/hyperweave/chrome.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=github" alt="strip"/>
+</p>
+
+<p align="center">
+  <img src="assets/rapid-match-cuts/rapid-match-cut-stat-cards.svg" alt="rapid match cuts"/>
+</p>
+
+<p align="center">
+  <img src="assets/marquees/genome-marquee-v3.svg" alt="genome marquee"/>
 </p>
 
 <!--

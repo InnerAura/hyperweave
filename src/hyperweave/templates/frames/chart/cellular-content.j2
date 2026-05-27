@@ -71,9 +71,9 @@
    18 baseline / 12 visible gap). #}
 <g data-hw-zone="header-text" filter="url(#{{ uid }}-hud)">
   <text x="{{ chart_layout.texts.cellular_repo.x }}" y="{{ chart_layout.texts.cellular_repo.y }}" class="{{ uid }}-hdr-user">{{ chart_repo | default('repo') | upper }}</text>
-  <text x="{{ chart_layout.texts.cellular_title.x }}" y="{{ chart_layout.texts.cellular_title.y }}" class="{{ uid }}-title-main">STAR HISTORY</text>
+  <text x="{{ chart_layout.texts.cellular_title.x }}" y="{{ chart_layout.texts.cellular_title.y }}" class="{{ uid }}-title-main">{{ chart_series_title | default('STAR HISTORY') }}</text>
   <text x="{{ chart_layout.texts.cellular_hero_value.x }}" y="{{ chart_layout.texts.cellular_hero_value.y }}" class="{{ uid }}-hero-value" text-anchor="{{ chart_layout.texts.cellular_hero_value.anchor }}">{{ chart_current_stars | default('--') }}</text>
-  <text x="{{ chart_layout.texts.cellular_hero_label.x }}" y="{{ chart_layout.texts.cellular_hero_label.y }}" class="{{ uid }}-hero-label" text-anchor="{{ chart_layout.texts.cellular_hero_label.anchor }}">CURRENT STARS</text>
+  <text x="{{ chart_layout.texts.cellular_hero_label.x }}" y="{{ chart_layout.texts.cellular_hero_label.y }}" class="{{ uid }}-hero-label" text-anchor="{{ chart_layout.texts.cellular_hero_label.anchor }}">{{ chart_hero_label | default('CURRENT STARS') }}</text>
 </g>
 
 {# CHART zone — layered render order: dormant (full viewport, no anim) →
@@ -133,7 +133,7 @@
             filter="drop-shadow(0 0 5px {{ _fill }})"/>
     </g>
     {%- else %}
-    {%- set _fill = cellular_marker_colors[loop.index0] if cellular_marker_colors and loop.index0 < (cellular_marker_colors | length) else chart_levels[3] %}
+    {%- set _fill = chart_levels[0] %}
     <g transform="translate({{ m.x }},{{ m.y }})">
       <rect x="{{ m.cellular_neg_half }}" y="{{ m.cellular_neg_half }}" width="{{ m.size }}" height="{{ m.size }}" transform="rotate(45 0 0)"
             fill="{{ _fill }}" stroke="var(--dna-chart-marker-stroke, var(--dna-ink-primary))" stroke-width="1"
@@ -185,7 +185,7 @@
       x2="{{ chart_layout.lines.cellular_footer_rule.x2 }}" y2="{{ chart_layout.lines.cellular_footer_rule.y2 }}"
       stroke="{{ _accent }}" stroke-opacity="0.06" stroke-width="0.5"/>
 <g data-hw-zone="footer" filter="url(#{{ uid }}-hud)">
-  <text x="{{ chart_layout.texts.cellular_footer_url.x }}" y="{{ chart_layout.texts.cellular_footer_url.y }}" class="{{ uid }}-foot">github.com/{{ chart_repo | default('') }}</text>
+  <text x="{{ chart_layout.texts.cellular_footer_url.x }}" y="{{ chart_layout.texts.cellular_footer_url.y }}" class="{{ uid }}-foot">{{ chart_subject_url | default(chart_repo | default('')) }}</text>
   <text x="{{ chart_layout.texts.cellular_footer_brand.x }}" y="{{ chart_layout.texts.cellular_footer_brand.y }}" class="{{ uid }}-foot-brand" text-anchor="{{ chart_layout.texts.cellular_footer_brand.anchor }}">HYPERWEAVE</text>
 </g>
 

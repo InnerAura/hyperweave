@@ -261,6 +261,32 @@ def test_build_markers_endpoint_is_last_only() -> None:
     assert all(not m["is_endpoint"] for m in out[:-1])
 
 
+def test_build_markers_single_point_emits_endpoint_only() -> None:
+    """A single-point series should not double-stamp origin = endpoint."""
+    out = _build_markers([(42, 99)], shape="diamond", size=6)
+    assert len(out) == 1
+    assert out[0]["is_endpoint"] is True
+    assert (out[0]["x"], out[0]["y"]) == (42, 99)
+
+
+def test_build_markers_keeps_per_point_markers_at_density_cutoff() -> None:
+    projected = [(x, 100 - x) for x in range(24)]
+    out = _build_markers(projected, shape="square", size=10)
+    assert len(out) == 24
+    assert sum(1 for m in out if m["is_endpoint"]) == 1
+    assert (out[-1]["x"], out[-1]["y"]) == projected[-1]
+
+
+def test_build_markers_collapses_high_frequency_series_to_origin_and_endpoint() -> None:
+    projected = [(x, 100 - x) for x in range(25)]
+    out = _build_markers(projected, shape="square", size=10)
+    assert len(out) == 2
+    assert out[0]["is_endpoint"] is False
+    assert (out[0]["x"], out[0]["y"]) == projected[0]
+    assert out[-1]["is_endpoint"] is True
+    assert (out[-1]["x"], out[-1]["y"]) == projected[-1]
+
+
 def test_build_markers_empty_returns_empty_list() -> None:
     assert _build_markers([], shape="rect", size=5) == []
 
@@ -411,6 +437,24 @@ def test_build_chart_svg_empty_points_safe(sample_viewport: Viewport) -> None:
     assert result["y_labels"][0]["text"] == "0"
     assert result["x_labels"] == []
     assert result["empty_state"] is None
+
+
+def test_build_chart_svg_does_not_emit_default_milestones_when_none_supplied(
+    sample_viewport: Viewport,
+) -> None:
+    """Milestones remain opt-in for v0.3.11.
+
+    Automatic milestone selection is deferred with the broader chart marker
+    architecture work so labels cannot collide with chart headers by default.
+    """
+    points = [
+        {"date": "2025-01-01", "count": 100},
+        {"date": "2025-06-01", "count": 600},
+        {"date": "2025-12-01", "count": 1500},
+        {"date": "2026-06-01", "count": 2800},
+    ]
+    result = build_chart_svg(points, sample_viewport, structural={}, milestones=None)
+    assert result["milestones"] == []
 
 
 def test_build_chart_svg_empty_with_message_renders_overlay(

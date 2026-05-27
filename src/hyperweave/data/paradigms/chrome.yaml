@@ -126,9 +126,13 @@ stats:
   metric_layout_mode: chrome_columns
   metric_value_font_family: Orbitron
   metric_value_font_size: 20
-  metric_value_font_weight: 700
-  metric_value_letter_spacing_em: 0.0
+  metric_value_font_weight: 900
+  metric_value_letter_spacing_em: 0.01
   metric_value_budget: 112
+  metric_label_font_family: JetBrains Mono
+  metric_label_font_size: 7
+  metric_label_font_weight: 700
+  metric_label_letter_spacing_em: 0.22
   activity_bar_baseline_y: 222
   activity_bar_max_h: 35
   activity_bar_min_h: 2

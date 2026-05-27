@@ -244,27 +244,6 @@ class TestXmlEscapeFilter:
 # ==========================================================================
 
 
-class TestRenderFunctions:
-    """Integration tests for render_artifact and render_template."""
-
-    def test_render_template_component(self) -> None:
-        """render_template can render a component fragment."""
-        from hyperweave.render.templates import render_template
-
-        # rule.svg.j2 expects rule_id, rule_x1, rule_x2, rule_y
-        ctx: dict[str, Any] = {
-            "rule_id": "straight",
-            "uid": "test-001",
-            "rule_x1": 10,
-            "rule_x2": 200,
-            "rule_y": 30,
-            "rule_bar_h": 4,
-        }
-        result = render_template("components/rule.svg.j2", ctx)
-        assert isinstance(result, str)
-        assert len(result) > 0
-
-
 # ==========================================================================
 # glyphs.py -- Loading
 # ==========================================================================

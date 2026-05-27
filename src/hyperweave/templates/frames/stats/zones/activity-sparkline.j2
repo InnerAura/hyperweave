@@ -1,0 +1,9 @@
+{% if activity_sparkline_polyline | default('') %}
+<polyline data-hw-zone="activity-sparkline"
+          points="{{ activity_sparkline_polyline }}"
+          fill="none"
+          stroke="{{ activity_sparkline_stroke | default('var(--dna-signal)') }}"
+          stroke-width="{{ activity_sparkline_stroke_width | default('1.4') }}"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+{% endif %}

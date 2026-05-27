@@ -20,6 +20,12 @@ from hyperweave.connectors.rest import (
     npm_fetch_metric,
     pypi_fetch_metric,
 )
+from hyperweave.connectors.snapshots import (
+    fetch_arxiv_snapshot,
+    fetch_hf_snapshot,
+    fetch_pypi_snapshot,
+    merge_stats_sources,
+)
 
 _CONNECTORS: dict[str, Any] = {
     "github": github.fetch_metric,
@@ -52,6 +58,10 @@ __all__ = [
     "ConnectorError",
     "SSRFError",
     "fetch",
+    "fetch_arxiv_snapshot",
+    "fetch_hf_snapshot",
     "fetch_metric",
+    "fetch_pypi_snapshot",
+    "merge_stats_sources",
     "validate_url",
 ]

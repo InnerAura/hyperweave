@@ -177,6 +177,10 @@ async def test_resolve_live_token_fetches_via_connector() -> None:
         resolved, ttl = await resolve_data_tokens(tokens)
     mock_fetch.assert_called_once_with("github", "owner/repo", "stars")
     assert resolved[0] == ResolvedToken(kind="live", label="STARS", value="12345", ttl=300)
+    assert resolved[0].provider == "github"
+    assert resolved[0].identifier == "owner/repo"
+    assert resolved[0].metric == "stars"
+    assert resolved[0].raw_value == 12345
     assert ttl == 300
 
 

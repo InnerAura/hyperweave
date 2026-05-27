@@ -162,6 +162,33 @@ async def test_marquee_horizontal_data_token_comma_escape(client: AsyncClient) -
         assert resp.status_code == 200
 
 
+async def test_stats_route_with_data_tokens_appends_provider_metrics(client: AsyncClient) -> None:
+    """Stats route accepts the same multi-provider data tokens as strips."""
+    captured_specs: list[Any] = []
+
+    def _capture_spec(spec: Any) -> Any:
+        captured_specs.append(spec)
+        return MOCK_RESULT
+
+    async def fake_fetch_metric(provider: str, identifier: str, metric: str) -> dict[str, Any]:
+        return {"value": 123 if provider == "github" else 456, "ttl": 300}
+
+    with (
+        patch("hyperweave.serve.app.fetch_user_stats", new_callable=AsyncMock, return_value=None),
+        patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, side_effect=fake_fetch_metric),
+        patch("hyperweave.serve.app.compose", side_effect=_capture_spec),
+    ):
+        resp = await client.get(
+            "/v1/stats/GLM-5/chrome.static?data=github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
+        )
+
+    assert resp.status_code == 200
+    assert len(captured_specs) == 1
+    assert captured_specs[0].stats_username == "GLM-5"
+    assert captured_specs[0].data_tokens is not None
+    assert [token.provider for token in captured_specs[0].data_tokens] == ["github", "huggingface"]
+
+
 # ===========================================================================
 # POST /v1/compose
 # ===========================================================================
@@ -518,6 +545,14 @@ async def test_access_log_scrubs_whitespace_in_ua(
         )
     line = next(r.message for r in caplog.records if "HW_REQUEST" in r.message)
     assert "ua=Mozilla/5.0_(X11;_Linux_x86_64)" in line
+
+
+def test_uvicorn_access_logger_is_silenced() -> None:
+    """uvicorn.access is disabled at app import so it doesn't double-log every request."""
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    assert uvicorn_access.disabled is True
+    assert uvicorn_access.handlers == []
+    assert uvicorn_access.propagate is False
 
 
 # ===========================================================================

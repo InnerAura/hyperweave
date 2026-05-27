@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 1920 1080" role="img" aria-labelledby="t d"
+     data-hw-component="video-closer" data-hw-chromatic="cobalt-sapphire-deep"
+     data-hw-variant="v14-gravity-slam" data-protocol="hw-v1">
+  <title id="t">HyperWeave — Where Vectors Meet Vision</title>
+  <desc id="d">16:9 closer. Free-fall from above with squash-stretch impact and 4-stage dampened bounce. v12-cobalt geometry. Banner layout. Universal text.</desc>
+  <defs>
+    <linearGradient id="e" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1838b0"><animate attributeName="stop-color" values="#1838b0;#2850d8;#1030a0;#1838b0" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="30%" stop-color="#4080ff"><animate attributeName="stop-color" values="#4080ff;#60a0ff;#3070f0;#4080ff" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="55%" stop-color="#d0e4ff"><animate attributeName="stop-color" values="#d0e4ff;#e8f0ff;#b8d4ff;#d0e4ff" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="78%" stop-color="#5848d8"><animate attributeName="stop-color" values="#5848d8;#7060f0;#4838c0;#5848d8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="100%" stop-color="#2040b0"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="13.708s" repeatCount="indefinite"/>
+    </linearGradient>
+    <radialGradient id="i" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#4080ff" stop-opacity=".06"/><stop offset="50%" stop-color="#2848c0" stop-opacity=".03"/><stop offset="100%" stop-color="#1020a0" stop-opacity="0"/></radialGradient>
+    <radialGradient id="n" cx="50%" cy="35%" r="55%"><stop offset="0%" stop-color="#e8f0ff"/><stop offset="30%" stop-color="#80b0ff" stop-opacity=".9"/><stop offset="100%" stop-color="#3060d0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ut" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="#2040b0"/><stop offset="30%" stop-color="#3858cc"/><stop offset="60%" stop-color="#5070e0"/><stop offset="100%" stop-color="#4060d0"/></linearGradient>
+    <filter id="fg" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/><feColorMatrix in="b" type="matrix" values="0.12 0 0.5 0 0.05 0.08 0.1 0.4 0 0.03 0.2 0.08 0.9 0 0.08 0 0 0 0.5 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="fh" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/><feColorMatrix in="b" type="matrix" values="0.08 0 0.35 0 0.02 0.05 0.06 0.28 0 0.01 0.14 0.04 0.7 0 0.04 0 0 0 0.15 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="fn" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b"/><feColorMatrix in="b" type="matrix" values="0.15 0 0.5 0 0.06 0.1 0.12 0.45 0 0.04 0.25 0.1 1.0 0 0.12 0 0 0 0.65 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="ft" x="-3%" y="-12%" width="106%" height="124%"><feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/><feColorMatrix in="b" type="matrix" values="0.1 0 0.4 0 0.04 0.06 0.07 0.32 0 0.02 0.15 0.05 0.75 0 0.06 0 0 0 0.28 0" result="t"/><feMerge><feMergeNode in="t"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <style>
+    svg{color-scheme:light dark}
+    @keyframes nl{0%,100%{opacity:1}50%{opacity:.88}}.na{animation:nl 3.236s ease-in-out 2s infinite}
+    @keyframes fl{0%,100%{opacity:1}50%{opacity:.7}}.fi{animation:fl 13.708s ease-in-out 2s infinite}
+    @keyframes or{to{transform:rotate(360deg)}}.orb{opacity:0}
+    .oa{transform-origin:0 0;animation:or 8.472s linear 2s infinite,os .25s ease 1.8s both}
+    .ob{transform-origin:0 0;animation:or 13.708s linear 2s infinite,os .25s ease 1.8s both}
+    @keyframes os{from{opacity:0}to{opacity:.8}}
+    .wm{opacity:0;animation:wma .45s cubic-bezier(.25,.46,.45,.94) 1.1s both}@keyframes wma{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .dv{opacity:0;transform-origin:left;animation:dva .28s cubic-bezier(.25,.46,.45,.94) 1.35s both}@keyframes dva{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:.3}}
+    .tg{opacity:0;animation:tga .28s cubic-bezier(.25,.46,.45,.94) 1.48s both}@keyframes tga{from{opacity:0}to{opacity:1}}
+    .lb{opacity:0;animation:lba .22s cubic-bezier(.25,.46,.45,.94) 1.60s both}@keyframes lba{from{opacity:0}to{opacity:1}}
+    .cn{opacity:0}@keyframes cna{from{opacity:0}to{opacity:.3}}
+    .c1{animation:cna .12s ease 1.68s both}.c2{animation:cna .12s ease 1.72s both}.c3{animation:cna .12s ease 1.76s both}.c4{animation:cna .12s ease 1.80s both}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}
+    .nd{opacity:1;transform:none}.dc,.dd{stroke-dashoffset:0;opacity:.85}.frame{stroke-dashoffset:0;opacity:1}.inner{opacity:1}.orb{opacity:.8}
+    .wm{opacity:1;transform:none}.tg,.lb{opacity:1}.dv{opacity:.3;transform:scaleX(1)}.cn{opacity:.3}
+    .sigil{clip-path:none;opacity:1;transform:translate(480px,540px) scale(3.6)}}
+    /* GRAVITY-SLAM */
+    
+    .nd,.dc,.dd,.frame,.inner{opacity:1}.dc{opacity:.85}.dd{opacity:.75}
+    .sigil{transform:translate(480px,-150px) scale(3.6);animation:gs .85s cubic-bezier(.33,.02,.67,.38) 0s both}
+    @keyframes gs{
+      0%{transform:translate(480px,-150px) scale(3.6)}
+      38%{transform:translate(480px,550px) scale(3.6,3.4)}
+      50%{transform:translate(480px,525px) scale(3.6,3.66)}
+      64%{transform:translate(480px,543px) scale(3.6,3.56)}
+      78%{transform:translate(480px,538px) scale(3.6,3.62)}
+      100%{transform:translate(480px,540px) scale(3.6)}
+    }
+  </style>
+
+  <g opacity=".015" stroke="#2040a0" stroke-width=".6">
+    <line x1="480" y1="0" x2="480" y2="1080"/><line x1="960" y1="0" x2="960" y2="1080"/><line x1="0" y1="540" x2="1920" y2="540"/>
+  </g>
+
+  <!-- SIGIL — v12-cobalt, left-positioned -->
+  <g class="sigil" transform="translate(480,540) scale(3.6)">
+    <g filter="url(#fh)">
+      <line class="dc dc-n" x1="0" y1="0" x2="0" y2="-80" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+      <line class="dc dc-e" x1="0" y1="0" x2="80" y2="0" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+      <line class="dc dc-s" x1="0" y1="0" x2="0" y2="80" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+      <line class="dc dc-w" x1="0" y1="0" x2="-80" y2="0" stroke="url(#e)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g filter="url(#fh)">
+      <path class="dd dd-ne" d="M0,-80 C20,-60 60,-20 80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+      <path class="dd dd-nw" d="M0,-80 C-20,-60 -60,-20 -80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+      <path class="dd dd-se" d="M0,80 C20,60 60,20 80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+      <path class="dd dd-sw" d="M0,80 C-20,60 -60,20 -80,0" fill="none" stroke="url(#e)" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+    <path class="inner fi" d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z" fill="url(#i)"/>
+    <path class="frame" d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z" fill="none" stroke="url(#e)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" filter="url(#fg)"/>
+    <g class="nd nc na" filter="url(#fn)"><circle cx="0" cy="0" r="4.5" fill="url(#n)"/></g>
+    <g class="nd nn na" filter="url(#fn)"><circle cx="0" cy="-80" r="3" fill="url(#n)"/></g>
+    <g class="nd ne na" filter="url(#fn)"><circle cx="80" cy="0" r="3" fill="url(#n)"/></g>
+    <g class="nd ns na" filter="url(#fn)"><circle cx="0" cy="80" r="3" fill="url(#n)"/></g>
+    <g class="nd nw na" filter="url(#fn)"><circle cx="-80" cy="0" r="3" fill="url(#n)"/></g>
+    <g class="orb oa"><circle r="1.8" cx="0" cy="-83" fill="#d0e4ff" filter="url(#fn)"/></g>
+    <g class="orb ob"><circle r="1.2" cx="83" cy="0" fill="#b0c8ff" filter="url(#fn)" opacity=".6"/></g>
+  </g>
+
+  <!-- TEXT — right side, universal fills -->
+  <g class="wm" filter="url(#ft)">
+    <text x="960" y="570" font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
+          font-size="180" font-weight="900" font-style="italic" letter-spacing="-4"
+          fill="url(#ut)" style="-webkit-font-smoothing:antialiased">HyperWeave</text>
+  </g>
+  <line class="dv" x1="960" y1="605" x2="1700" y2="605" stroke="#3858c0" stroke-width="1.2"/>
+  <g class="tg"><text x="966" y="650" fill="#4868b8" font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="26" font-weight="500" letter-spacing="12" style="-webkit-font-smoothing:antialiased">WHERE VECTORS MEET VISION</text></g>
+  <g class="lb"><text x="966" y="695" fill="#3050a0" font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+          font-size="20" font-weight="600" letter-spacing="10" style="-webkit-font-smoothing:antialiased">INNERAURA LABS</text></g>
+
+  <g class="cn c1" stroke="#4060c0" stroke-width="1.4" fill="none"><path d="M72,36 L36,36 L36,72"/></g>
+  <g class="cn c2" stroke="#4060c0" stroke-width="1.4" fill="none"><path d="M1848,36 L1884,36 L1884,72"/></g>
+  <g class="cn c3" stroke="#4060c0" stroke-width="1.4" fill="none"><path d="M72,1044 L36,1044 L36,1008"/></g>
+  <g class="cn c4" stroke="#4060c0" stroke-width="1.4" fill="none"><path d="M1848,1044 L1884,1044 L1884,1008"/></g>
+</svg>

@@ -45,6 +45,24 @@ async def test_hw_compose_strip() -> None:
     assert "<svg" in result
 
 
+async def test_hw_compose_stats_accepts_multi_provider_data_tokens() -> None:
+    async def fake_fetch_metric(provider: str, identifier: str, metric: str) -> dict[str, object]:
+        return {"value": 123 if provider == "github" else 456, "ttl": 300}
+
+    with patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, side_effect=fake_fetch_metric):
+        result = await hw_compose(
+            type="stats",
+            title="GLM-5",
+            stats_username="GLM-5",
+            genome="chrome",
+            data="github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
+        )
+
+    assert "<svg" in result
+    assert "GH STARS" in result
+    assert "HF DL" in result
+
+
 async def test_hw_compose_divider() -> None:
     result = await hw_compose(type="divider", divider_variant="void")
     assert "<svg" in result
@@ -122,6 +140,7 @@ async def test_hw_discover_url_grammar_advertises_data_token_routes() -> None:
     assert "data" in grammar["badge (data-driven)"]["query_params"]
     assert "data" in grammar["strip"]["query_params"]
     assert "data" in grammar["marquee-horizontal"]["query_params"]
+    assert "data" in grammar["stats"]["query_params"]
 
     # Route-shape assertions lock the patterns against the HTTP route source of truth.
     assert grammar["stats"]["pattern"] == "/v1/stats/{username}/{genome}.{motion}"

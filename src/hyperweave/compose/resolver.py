@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -117,7 +118,6 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         "marquee-horizontal": resolve_marquee,
         "receipt": resolve_receipt,
         "rhythm-strip": resolve_rhythm_strip,
-        "catalog": resolve_catalog,
         "chart": resolve_chart,
         "stats": resolve_stats,
     }
@@ -463,7 +463,7 @@ def resolve_badge(
     label_start_bearing = label_metrics.leading_bearing if label_metrics is not None else 0.0
     value_start_bearing = value_metrics.leading_bearing if value_metrics is not None else 0.0
 
-    has_glyph = bool(spec.glyph or spec.custom_glyph_svg)
+    has_glyph = bool(glyph_path or glyph_data.get("custom_svg"))
     badge_cfg = paradigm_spec.badge if paradigm_spec else None
 
     # Legacy glyph-left offset fallback. Paradigms with rendered left
@@ -811,6 +811,7 @@ def resolve_strip(
     # resolve_marquee): each resolver pulls only what it needs at the call site.
     from dataclasses import asdict
 
+    from hyperweave.compose.schema import coerce_strip_input
     from hyperweave.core.cell_layout import TextSpec, compute_cell_layout
     from hyperweave.core.text import measure_text
 
@@ -827,7 +828,8 @@ def resolve_strip(
 
     strip_glyph_size = compute_strip_glyph_size(height, strip_cfg.strip_glyph_ratio) if strip_cfg else 18
 
-    metrics = _parse_metrics(spec)
+    input_data = coerce_strip_input(spec.connector_data, spec)
+    metrics = [metric.model_dump() for metric in input_data.metrics]
     # min_metric_pitch is the brutalist-era aesthetic floor (106px) that
     # prevents cells from collapsing when metrics are short. When a paradigm
     # declares show_icon_box, it has its own structural chrome and font
@@ -887,16 +889,15 @@ def resolve_strip(
 
     # Subtitle (paradigm opts in): measured to potentially push identity
     # zone wider if subtitle is longer than identity. Fallback chain:
-    # explicit subtitle (connector_data.repo_slug / spec.subtitle) > spec.title
-    # uppercased (the project name the user already provided) > genome.name
+    # explicit normalized subtitle > spec.title uppercased (the project name
+    # the user already provided) > genome.name
     # uppercased (last resort). Suppress subtitle entirely when it would
     # duplicate the identity text.
     show_subtitle = strip_cfg.show_subtitle if strip_cfg else False
     subtitle_raw = ""
     subtitle_w = 0.0
     if show_subtitle and strip_cfg is not None:
-        conn = spec.connector_data or {}
-        subtitle_raw = str(conn.get("repo_slug") or conn.get("repo") or "")
+        subtitle_raw = input_data.identity_subtitle
         if not subtitle_raw and spec.title:
             subtitle_raw = str(spec.title).upper()
         if not subtitle_raw:
@@ -1077,6 +1078,8 @@ def resolve_strip(
     ctx: dict[str, Any] = {
         "strip_zones": zones,
         "identity": identity,
+        "identity_subtitle": input_data.identity_subtitle,
+        "metric_slots": [metric.model_dump() for metric in input_data.metrics],
         "identity_font_family": _id_family,
         "identity_font_size": _id_size,
         "identity_letter_spacing_em": _id_ls_em,
@@ -3524,80 +3527,6 @@ def resolve_rhythm_strip(
     }
 
 
-def resolve_catalog(
-    spec: ComposeSpec,
-    genome: dict[str, Any],
-    profile: dict[str, Any],
-    **_kw: Any,
-) -> dict[str, Any]:
-    """Resolve editorial catalog."""
-    catalog_w = 800
-    catalog_h = 400
-    catalog_margin = 32
-    catalog_columns = 3
-    catalog_col_gap = 16
-    catalog_card_h = 140
-    catalog_card_gap = 16
-    catalog_content_w = catalog_w - (catalog_margin * 2)
-    catalog_col_w = int((catalog_content_w - (catalog_col_gap * (catalog_columns - 1))) / catalog_columns)
-    catalog_header_end_y = catalog_margin + 56
-    catalog_grid_start_y = catalog_header_end_y + 16
-    catalog_footer_y = catalog_h - 24
-    catalog_geom = {
-        "frame_rx": 6,
-        "border_x": 0.5,
-        "border_y": 0.5,
-        "title_y": 28,
-        "subtitle_y": 46,
-        "card_rx": 4,
-        "card_border_x": 0.5,
-        "card_border_y": 0.5,
-        "card_accent_h": 3,
-        "item_text_x": 12,
-        "item_label_y": 24,
-        "item_title_y": 42,
-        "item_description_y": 60,
-        "badge_y": 14,
-    }
-    source_items = list((spec.connector_data or {}).get("catalog_items", []))
-    catalog_items: list[dict[str, Any]] = []
-    for idx, raw_item in enumerate(source_items):
-        item = dict(raw_item)
-        row = idx // catalog_columns
-        col = idx % catalog_columns
-        item["card_x"] = catalog_margin + (col * (catalog_col_w + catalog_col_gap))
-        item["card_y"] = catalog_grid_start_y + (row * (catalog_card_h + catalog_card_gap))
-        item["card_inner_w"] = catalog_col_w - 1
-        item["card_inner_h"] = catalog_card_h - 1
-        item["meta_y"] = catalog_card_h - 12
-        item["badge_x"] = catalog_col_w - 12
-        catalog_items.append(item)
-    return {
-        "width": catalog_w,
-        "height": catalog_h,
-        "template": "frames/catalog.svg.j2",
-        "context": {
-            "catalog_geom": catalog_geom,
-            "catalog_w": catalog_w,
-            "catalog_h": catalog_h,
-            "catalog_margin": catalog_margin,
-            "catalog_content_w": catalog_content_w,
-            "catalog_columns": catalog_columns,
-            "catalog_col_gap": catalog_col_gap,
-            "catalog_col_w": catalog_col_w,
-            "catalog_card_h": catalog_card_h,
-            "catalog_card_gap": catalog_card_gap,
-            "catalog_inner_w": catalog_w - 1,
-            "catalog_inner_h": catalog_h - 1,
-            "catalog_right_x": catalog_w - catalog_margin,
-            "catalog_header_end_y": catalog_header_end_y,
-            "catalog_grid_start_y": catalog_grid_start_y,
-            "catalog_footer_y": catalog_footer_y,
-            "catalog_cards": catalog_items,
-        },
-    }
-
-
 # Helpers
 
 
@@ -3707,6 +3636,9 @@ def _default_profile() -> dict[str, Any]:
 
 
 def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
+    if spec.glyph_mode == GlyphMode.NONE:
+        return {}
+
     try:
         from hyperweave.config.settings import get_settings
         from hyperweave.render.glyphs import infer_glyph, load_glyphs
@@ -3715,16 +3647,19 @@ def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
         glyphs = load_glyphs(settings.data_dir / "glyphs.json")
 
         glyph_id = spec.glyph
-        if not glyph_id and spec.glyph_mode != GlyphMode.NONE:
-            glyph_id = infer_glyph(spec.title or "")
-
         if glyph_id and glyph_id in glyphs:
-            g = glyphs[glyph_id]
+            return _glyph_payload(glyph_id, glyphs)
+        if spec.custom_glyph_svg:
             return {
-                "id": glyph_id,
-                "path": g["path"],
-                "viewBox": g.get("viewBox", "0 0 640 640"),
+                "id": "custom",
+                "path": "",
+                "viewBox": "",
+                "custom_svg": spec.custom_glyph_svg,
             }
+
+        inferred = _infer_glyph_id(spec, glyphs, infer_glyph)
+        if inferred and inferred in glyphs:
+            return _glyph_payload(inferred, glyphs)
     except (ImportError, Exception):
         pass
 
@@ -3737,6 +3672,128 @@ def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
         }
 
     return {}
+
+
+def _glyph_payload(glyph_id: str, glyphs: Mapping[str, Mapping[str, object]]) -> dict[str, Any]:
+    glyph = glyphs[glyph_id]
+    return {
+        "id": glyph_id,
+        "path": str(glyph.get("path", "")),
+        "viewBox": str(glyph.get("viewBox", "0 0 640 640")),
+    }
+
+
+def _infer_glyph_id(spec: ComposeSpec, glyphs: Mapping[str, object], infer_glyph: Callable[[str], str]) -> str:
+    votes, hero_provider = _glyph_provider_votes(spec)
+    if votes:
+        top_count = max(votes.values())
+        winners = [provider for provider, count in votes.items() if count == top_count]
+        dominant = hero_provider if hero_provider in winners else winners[0]
+        glyph_id = _glyph_id_for_provider(dominant, glyphs, infer_glyph)
+        if glyph_id:
+            return glyph_id
+
+    text_candidates = [
+        spec.title,
+        spec.stats_username,
+        spec.chart_owner,
+        spec.chart_repo,
+    ]
+    raw = spec.connector_data
+    if isinstance(raw, Mapping):
+        for key in ("identity", "username", "repo", "repo_slug", "source_url", "url", "html_url", "repo_url"):
+            value = raw.get(key)
+            if isinstance(value, str):
+                text_candidates.append(value)
+    return infer_glyph(" ".join(part for part in text_candidates if part))
+
+
+def _glyph_id_for_provider(provider: str, glyphs: Mapping[str, object], infer_glyph: Callable[[str], str]) -> str:
+    if not provider:
+        return ""
+    if provider in glyphs:
+        return provider
+    glyph_id = infer_glyph(provider)
+    return glyph_id if glyph_id in glyphs else ""
+
+
+def _glyph_provider_votes(spec: ComposeSpec) -> tuple[dict[str, int], str]:
+    votes: dict[str, int] = {}
+    hero_provider = ""
+
+    def vote(provider: str, amount: int = 1) -> None:
+        if provider:
+            votes[provider] = votes.get(provider, 0) + amount
+
+    raw = spec.connector_data
+    if isinstance(raw, Mapping):
+        direct_providers = _providers_from_mapping(raw)
+        direct_single = direct_providers[0] if len(direct_providers) == 1 else ""
+        hero = raw.get("hero")
+        if isinstance(hero, Mapping):
+            hero_parts = _providers_from_mapping(hero) or ([direct_single] if direct_single else [])
+            if hero_parts:
+                hero_provider = hero_parts[0]
+                vote(hero_provider)
+        elif direct_single and any(key in raw for key in ("hero_label", "hero_value", "stars_total", "current_stars")):
+            hero_provider = direct_single
+            vote(hero_provider)
+
+        metric_value = raw.get("metrics")
+        if isinstance(metric_value, Sequence) and not isinstance(metric_value, str | bytes | bytearray):
+            for item in metric_value:
+                if not isinstance(item, Mapping):
+                    continue
+                metric_providers = _providers_from_mapping(item)
+                if not metric_providers and direct_single:
+                    metric_providers = [direct_single]
+                for provider in metric_providers[:1]:
+                    vote(provider)
+
+        if not votes:
+            for provider in direct_providers:
+                vote(provider)
+            if direct_providers and not hero_provider:
+                hero_provider = direct_providers[0]
+
+    token_value = spec.data_tokens
+    if isinstance(token_value, Sequence) and not isinstance(token_value, str | bytes | bytearray):
+        for token in token_value:
+            provider = _normalize_glyph_provider(str(getattr(token, "provider", "") or ""))
+            if provider:
+                if not hero_provider:
+                    hero_provider = provider
+                vote(provider)
+
+    return votes, hero_provider
+
+
+def _providers_from_mapping(value: Mapping[str, object]) -> list[str]:
+    direct_value = _first_mapping_value(value, ("provider", "source", "provider_source", "platform"))
+    return _split_provider_chain(direct_value)
+
+
+def _first_mapping_value(value: Mapping[str, object], keys: Sequence[str]) -> str:
+    for key in keys:
+        item = value.get(key)
+        if item is not None and item != "":
+            return str(item)
+    return ""
+
+
+def _split_provider_chain(value: str) -> list[str]:
+    if not value:
+        return []
+    providers: list[str] = []
+    for part in value.replace(",", "+").split("+"):
+        provider = _normalize_glyph_provider(part)
+        if provider and provider not in providers:
+            providers.append(provider)
+    return providers
+
+
+def _normalize_glyph_provider(value: str) -> str:
+    return value.strip().lower()
 
 
 def _resolve_motion(spec: ComposeSpec, genome: dict[str, Any]) -> str:
@@ -3810,26 +3867,6 @@ def _parse_metrics(spec: ComposeSpec) -> list[dict[str, Any]]:
         m.setdefault("state", "")
 
     return metrics
-
-
-def _load_terminal(terminal_id: str) -> dict[str, Any]:
-    try:
-        from hyperweave.config.loader import get_loader
-
-        loader = get_loader()
-        return loader.terminals.get(terminal_id, {"id": terminal_id, "svg_fragment": ""})
-    except (ImportError, Exception):
-        return {"id": terminal_id, "svg_fragment": ""}
-
-
-def _load_rule(rule_id: str) -> dict[str, Any]:
-    try:
-        from hyperweave.config.loader import get_loader
-
-        loader = get_loader()
-        return loader.rules.get(rule_id, {"id": rule_id, "svg_fragment": ""})
-    except (ImportError, Exception):
-        return {"id": rule_id, "svg_fragment": ""}
 
 
 def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:

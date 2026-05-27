@@ -17,11 +17,15 @@ from __future__ import annotations
 from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.stats_layout import compute_stats_layout
+from hyperweave.compose.schema import ActivityData, coerce_stats_input, format_count
+from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
+from hyperweave.core.text import measure_text
 from hyperweave.render.chart_engine import Viewport, build_chart_svg
 
 if TYPE_CHECKING:
+    from hyperweave.compose.stats_layout import StatsLayout
     from hyperweave.core.models import ComposeSpec
+    from hyperweave.core.paradigm import ParadigmStatsConfig
 
 
 _STATS_WIDTH = 495
@@ -39,45 +43,202 @@ def _format_count(n: int | None) -> str:
     a failed sub-fetch surfaces visibly instead of being misrepresented as
     a real zero.
     """
-    if n is None:
-        return "—"
-    try:
-        n = int(n)
-    except (TypeError, ValueError):
-        return "—"
-    if n <= 0:
-        return "0"
-    if n >= 1_000_000_000:
-        return f"{n / 1_000_000_000:.1f}B".rstrip("0").rstrip(".")
-    if n >= 1_000_000:
-        return f"{n / 1_000_000:.1f}M".rstrip("0").rstrip(".")
-    if n >= 10_000:
-        return f"{n / 1_000:.1f}K".rstrip("0").rstrip(".")
-    return f"{n:,}"
+    return format_count(n)
 
 
-def _build_activity_bars(heatmap_grid: list[dict[str, Any]]) -> list[dict[str, int]]:
-    """Aggregate daily heatmap cells into 52 weekly totals.
+def _build_activity_bars(activity: ActivityData | None) -> list[dict[str, int]]:
+    """Convert normalized activity points into layout bar counts.
 
     Returns a list of ``{"week": 0..51, "count": N}`` entries.
     """
-    if not heatmap_grid:
+    if activity is None or activity.type == "sparkline_30d":
         return []
-    # Group by week (every 7 consecutive days).
     weeks: list[dict[str, int]] = []
-    for i in range(0, len(heatmap_grid), 7):
-        chunk = heatmap_grid[i : i + 7]
-        total = sum(int(c.get("count", 0) or 0) for c in chunk)
-        weeks.append({"week": len(weeks), "count": total})
-    return weeks[:52]  # cap at 52 weeks
+    peak = activity.peak_value if isinstance(activity.peak_value, int | float) else None
+    limit = 12 if activity.type == "compact_bars_12w" else 52
+    for idx, point in enumerate(activity.points[:limit]):
+        count = round(point * peak) if peak and peak > 0 and point <= 1.0 else round(point)
+        weeks.append({"week": idx, "count": count})
+    return weeks
 
 
-def _placeholder_languages() -> list[dict[str, Any]]:
-    return [
-        {"name": "Python", "pct": 62.0, "count": 31},
-        {"name": "TypeScript", "pct": 22.0, "count": 11},
-        {"name": "Rust", "pct": 16.0, "count": 8},
-    ]
+def _build_activity_sparkline(activity: ActivityData | None, layout: StatsLayout) -> str:
+    """Build a compact SVG polyline point string for sparkline activity."""
+    if activity is None or activity.type != "sparkline_30d" or not activity.points:
+        return ""
+    zone = layout.zones["activity"]
+    if zone.h <= 0:
+        return ""
+    x0 = 22.0
+    x1 = float(layout.width - 22)
+    y0 = zone.y + 24.0
+    h = max(10.0, zone.h - 30.0)
+    peak = max(activity.points) or 1.0
+    points: list[str] = []
+    denom = max(1, len(activity.points) - 1)
+    for idx, raw in enumerate(activity.points):
+        ratio = max(0.0, min(1.0, raw / peak if peak > 1.0 else raw))
+        x = x0 + ((x1 - x0) * idx / denom)
+        y = y0 + h - (ratio * h)
+        points.append(f"{x:.2f},{y:.2f}")
+    return " ".join(points)
+
+
+def _activity_peak_label(activity: ActivityData | None, activity_peak: int) -> str:
+    if activity is None:
+        return "—"
+    if activity.type == "sparkline_30d":
+        if activity.peak_label:
+            return activity.peak_label.removesuffix(" PEAK")
+        if isinstance(activity.peak_value, int | float) and activity.peak_value > 0:
+            return format_count(activity.peak_value)
+        return "—"
+    return f"{activity_peak}/WK" if activity_peak > 0 else "—"
+
+
+def _layout_metric_entries(
+    metrics: list[dict[str, Any]],
+    *,
+    provider: str,
+    metric_layout_mode: str,
+) -> list[dict[str, Any]]:
+    """Select the metric slots a paradigm is designed to render."""
+    if metric_layout_mode == "cellular_inline":
+        return metrics
+
+    by_label = {str(metric.get("label") or "").upper(): metric for metric in metrics}
+    provider_key = provider.lower()
+    is_github_full = (not provider_key or "github" in provider_key) and {"COMMITS", "PRS", "ISSUES", "STREAK"}.issubset(
+        by_label
+    )
+    if is_github_full:
+        return [by_label[label] for label in ("COMMITS", "PRS", "ISSUES", "STREAK")]
+    if metric_layout_mode == "brutalist_grid":
+        return metrics[:4]
+    return metrics
+
+
+def _fit_identity_display(username: str, stats: ParadigmStatsConfig) -> str:
+    display = username.upper() if stats.identity_text_transform == "uppercase" else username
+    budget = max(0.0, float(stats.bio_x - stats.identity_x - stats.identity_padding))
+    if budget <= 0:
+        return display
+    measured = measure_text(
+        display,
+        font_family=stats.identity_font_family,
+        font_size=stats.identity_font_size,
+        font_weight=stats.identity_font_weight,
+        letter_spacing_em=stats.identity_letter_spacing_em,
+    )
+    if measured <= budget:
+        return display
+    candidate = display
+    while len(candidate) > 4:
+        text = candidate + "..."
+        measured = measure_text(
+            text,
+            font_family=stats.identity_font_family,
+            font_size=stats.identity_font_size,
+            font_weight=stats.identity_font_weight,
+            letter_spacing_em=stats.identity_letter_spacing_em,
+        )
+        if measured <= budget:
+            return text
+        candidate = candidate[:-1]
+    return display[:4] + "..."
+
+
+def _truncate_to_width(
+    text: str,
+    *,
+    budget: float,
+    font_family: str,
+    font_size: float,
+    font_weight: int,
+    letter_spacing_em: float,
+) -> str:
+    """Return ``text`` or a right-truncated ``...`` variant within ``budget``."""
+    if not text or budget <= 0:
+        return ""
+    measured = measure_text(
+        text,
+        font_family=font_family,
+        font_size=font_size,
+        font_weight=font_weight,
+        letter_spacing_em=letter_spacing_em,
+    )
+    if measured <= budget:
+        return text
+
+    suffix = "..."
+    suffix_w = measure_text(
+        suffix,
+        font_family=font_family,
+        font_size=font_size,
+        font_weight=font_weight,
+        letter_spacing_em=letter_spacing_em,
+    )
+    if suffix_w > budget:
+        return suffix
+
+    lo = 0
+    hi = len(text)
+    best = ""
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        candidate = text[:mid].rstrip()
+        display = f"{candidate}{suffix}" if candidate else suffix
+        width = measure_text(
+            display,
+            font_family=font_family,
+            font_size=font_size,
+            font_weight=font_weight,
+            letter_spacing_em=letter_spacing_em,
+        )
+        if width <= budget:
+            best = display
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return best or suffix
+
+
+def _truncate_subtitle_context(
+    *,
+    context: dict[str, Any],
+    layout: StatsLayout,
+    stats: ParadigmStatsConfig,
+    full_text: str,
+) -> None:
+    """Truncate rendered subtitle text before it can bleed past the card edge."""
+    if not full_text:
+        return
+
+    if stats.metric_layout_mode == "cellular_inline":
+        anchor = layout.texts["cellular_bio"].x
+        font_size = 8.5
+        letter_spacing = 0.03
+    elif stats.metric_layout_mode == "brutalist_grid":
+        anchor = layout.texts["bio"].x
+        font_size = 8.5
+        letter_spacing = 0.12
+    else:
+        return
+
+    edge_budget = max(0.0, float(layout.width) - float(anchor) - 20.0)
+    budget = float(layout.bio_text_length) if layout.bio_text_length > 0 else edge_budget
+    fitted = _truncate_to_width(
+        full_text,
+        budget=budget,
+        font_family="JetBrains Mono",
+        font_size=font_size,
+        font_weight=400,
+        letter_spacing_em=letter_spacing,
+    )
+    if fitted != full_text:
+        context["stats_repo_label"] = fitted
+        context["stats_bio"] = ""
+        context["bio_text_length"] = 0.0
 
 
 def resolve_stats(
@@ -88,43 +249,30 @@ def resolve_stats(
     **_kw: Any,
 ) -> dict[str, Any]:
     """Build the stats card context for the chosen paradigm."""
-    connector = spec.connector_data or {}
-    # ``_stale_fields`` is populated by ``fetch_user_stats`` when sub-fetches
-    # fail (rate limits, breaker open, network errors). Stale fields render
-    # as ``—`` rather than misrepresenting failure as a real ``0`` — the bug
-    # that produced v0.2.10's silent COMMITS=0/PRS=0 readings under search-
-    # API quota exhaustion. Empty list / missing key → fully live data.
-    stale_fields: set[str] = set(connector.get("_stale_fields") or ())
-    stale = not bool(connector) or bool(stale_fields)
+    input_data = coerce_stats_input(spec.connector_data, spec)
+    stale_fields: set[str] = set(input_data.stale_fields)
+    stale = input_data.status == "stale"
+    metric_by_label = {metric.label.upper(): metric for metric in input_data.metrics}
 
-    def _value_or_none(field: str) -> Any:
-        """Pass through ``None`` for stale fields, raw value otherwise.
+    def _metric_display(label: str) -> str:
+        metric = metric_by_label.get(label)
+        return metric.value if metric is not None else "—"
 
-        ``_format_count(None)`` already returns ``"—"``, so this is the only
-        change needed at the formatting layer to surface staleness visually.
-        """
-        if field in stale_fields:
-            return None
-        return connector.get(field)
+    def _raw_int(value: int | float | None) -> int:
+        return int(value) if isinstance(value, int | float) else 0
 
-    stars_total = _value_or_none("stars_total")
-    commits_total = _value_or_none("commits_total")
-    prs_total = _value_or_none("prs_total")
-    issues_total = _value_or_none("issues_total")
-    contrib_total = _value_or_none("contrib_total")
-    streak_days = _value_or_none("streak_days")
-
-    languages_raw = connector.get("language_breakdown") or _placeholder_languages()
-    heatmap_grid = connector.get("heatmap_grid") or []
-    username = connector.get("username") or spec.stats_username or "anonymous"
-    bio = connector.get("bio") or ""
-    top_language = connector.get("top_language") or ""
-    repo_count_raw = _value_or_none("repo_count")
-    repo_count = repo_count_raw if isinstance(repo_count_raw, int) else 0
-
-    # Aggregate 365 daily cells into 52 weekly totals for the activity bar chart.
-    activity_bars = _build_activity_bars(heatmap_grid)
+    hero_raw_value = input_data.hero.raw_value
+    username = input_data.identity
+    bio = input_data.bio
+    top_language = input_data.top_language
+    repo_count = input_data.repo_count
+    languages_raw = [{"name": segment.label, "pct": segment.pct} for segment in input_data.proportional_bar]
+    heatmap_grid = [cell.model_dump() for cell in input_data.heatmap]
+    activity_bars = _build_activity_bars(input_data.activity)
     activity_peak = max((b["count"] for b in activity_bars), default=0)
+    activity_peak_label = _activity_peak_label(input_data.activity, activity_peak)
+    activity_type = input_data.activity.type if input_data.activity is not None else ""
+    metric_entries = [metric.model_dump() for metric in input_data.metrics]
 
     # Heatmap year label — cellular "CONTRIBUTIONS YYYY" caption. Prefer the
     # tail of the heatmap_grid (most recent cell date) so the label stays
@@ -142,10 +290,7 @@ def resolve_stats(
                 with contextlib.suppress(ValueError):
                     heatmap_year = int(tail_date[:4])
 
-    # Streak rendering: ``"47d"`` for live, ``"—"`` for stale. Don't coerce
-    # ``None`` to ``0`` — that's the silent-zero anti-pattern this whole
-    # change exists to eliminate.
-    streak_display = "—" if streak_days is None else f"{int(streak_days)}d"
+    streak_display = _metric_display("STREAK")
 
     # Cellular v0.3.0 refresh: surface paradigm constants (genome-independent)
     # and per-tone accent stops. Constants flow as named template variables
@@ -185,19 +330,20 @@ def resolve_stats(
         "stats_bio": bio,
         "stats_top_language": top_language,
         "stats_repo_count": repo_count,
-        "stats_repo_label": f"{top_language} / {repo_count} repos" if top_language else "",
-        "stars_display": _format_count(stars_total),
-        "stars_raw": int(stars_total) if isinstance(stars_total, int) else 0,
-        "commits_display": _format_count(commits_total),
-        "prs_display": _format_count(prs_total),
-        "issues_display": _format_count(issues_total),
-        "contrib_display": _format_count(contrib_total),
+        "stats_repo_label": input_data.identity_subtitle,
+        "stars_display": input_data.hero.value,
+        "stars_raw": _raw_int(hero_raw_value),
+        "commits_display": _metric_display("COMMITS"),
+        "prs_display": _metric_display("PRS"),
+        "issues_display": _metric_display("ISSUES"),
+        "contrib_display": _metric_display("CONTRIB"),
         "streak_display": streak_display,
         "languages": languages_raw[:4],
         "heatmap_grid": heatmap_grid,
         "stats_heatmap_year": str(heatmap_year),
         "activity_bars": activity_bars,
         "activity_peak": activity_peak,
+        "activity_peak_label": activity_peak_label,
         "stale_fields": sorted(stale_fields),
         # v0.3.0 cellular refresh — paradigm constants + per-tone accents.
         "stats_info_accent": stats_info_accent,
@@ -212,6 +358,22 @@ def resolve_stats(
         "heatmap_cell_size": heatmap_cell_size,
         "heatmap_cell_gap": heatmap_cell_gap,
         "heatmap_zone_height": heatmap_zone_height,
+        "hero_label": input_data.hero.label,
+        "hero_caption": _stats_hero_caption(input_data.hero.label),
+        "hero_value": input_data.hero.value,
+        "hero_raw_value": input_data.hero.raw_value,
+        "identity": input_data.identity,
+        "identity_subtitle": input_data.identity_subtitle,
+        "provider_label": input_data.provider,
+        "subject_url": _stats_subject_url(
+            provider=input_data.provider,
+            identity=input_data.identity,
+            source_url=input_data.source_url,
+        ),
+        "metric_slots": [metric.model_dump() for metric in input_data.metrics],
+        "activity": input_data.activity.model_dump() if input_data.activity is not None else None,
+        "proportional_bar": [segment.model_dump() for segment in input_data.proportional_bar],
+        "series_points": [point.model_dump() for point in input_data.series_points],
     }
     if paradigm_spec is not None:
         stats_context.update(
@@ -231,14 +393,40 @@ def resolve_stats(
     # now injected universally by the dispatcher at resolver.resolve(), so
     # per-frame resolvers no longer need to call _genome_material_context.
 
-    card_height = paradigm_spec.stats.card_height if paradigm_spec is not None else 260
     if paradigm_spec is not None and paradigm_spec.stats.card_width > 0:
         card_width = paradigm_spec.stats.card_width
     else:
         card_width = _STATS_WIDTH
     stats_cfg = paradigm_spec.stats if paradigm_spec is not None else None
+    layout_metric_entries = (
+        _layout_metric_entries(
+            metric_entries,
+            provider=input_data.provider,
+            metric_layout_mode=stats_cfg.metric_layout_mode,
+        )
+        if stats_cfg is not None
+        else metric_entries
+    )
     if stats_cfg is not None:
-        repo_label_str = f"{top_language} / {repo_count} repos" if top_language else ""
+        if stats_cfg.metric_layout_mode == "cellular_inline":
+            display_username = _fit_identity_display(username, stats_cfg)
+        else:
+            display_username = username
+        stats_context["stats_username"] = display_username
+        card_height = compute_stats_card_height(
+            stats=stats_cfg,
+            metric_count=len(layout_metric_entries),
+            activity_type=activity_type,
+            has_activity=input_data.activity is not None,
+            has_heatmap=bool(input_data.heatmap),
+            has_proportional_bar=bool(input_data.proportional_bar),
+        )
+    else:
+        card_height = 260
+    if stats_cfg is not None:
+        repo_label_str = input_data.identity_subtitle or (
+            f"{top_language} / {repo_count} repos" if top_language else ""
+        )
         bio_full = f"{repo_label_str} · {bio}" if repo_label_str and bio else repo_label_str or bio
         area_tiers_obj = primary_tone.get("area_tiers", []) if primary_tone else []
         area_tiers = [str(color) for color in area_tiers_obj] if isinstance(area_tiers_obj, list) else []
@@ -246,7 +434,7 @@ def resolve_stats(
             stats=stats_cfg,
             card_width=card_width,
             card_height=card_height,
-            username=username,
+            username=display_username,
             bio_text=bio_full,
             displays={
                 "stars": stats_context["stars_display"],
@@ -256,11 +444,17 @@ def resolve_stats(
                 "contrib": stats_context["contrib_display"],
                 "streak": stats_context["streak_display"],
             },
+            metric_entries=layout_metric_entries,
+            hero_label=input_data.hero.label,
             activity_bars=activity_bars,
             activity_peak=activity_peak,
+            activity_type=activity_type,
             languages=languages_raw[:4],
             heatmap_grid=heatmap_grid,
             area_tiers=area_tiers,
+            has_activity=input_data.activity is not None,
+            has_heatmap=bool(input_data.heatmap),
+            has_proportional_bar=bool(input_data.proportional_bar),
             substrate_kind=str(genome.get("substrate_kind") or "dark"),
         )
         stats_context.update(
@@ -277,12 +471,19 @@ def resolve_stats(
                 "language_layout": stats_layout.inline_language_entries,
                 "heatmap_cells": stats_layout.heatmap_cells,
                 "heatmap_legend_cells": stats_layout.heatmap_legend_cells,
+                "activity_sparkline_polyline": _build_activity_sparkline(input_data.activity, stats_layout),
                 "stats_brand_x": card_width - 20,
                 "commits_text_length": stats_layout.commits_text_length,
                 "prs_text_length": stats_layout.prs_text_length,
                 "issues_text_length": stats_layout.issues_text_length,
                 "streak_text_length": stats_layout.streak_text_length,
             }
+        )
+        _truncate_subtitle_context(
+            context=stats_context,
+            layout=stats_layout,
+            stats=stats_cfg,
+            full_text=bio_full,
         )
 
     # Embedded compact chart — enablement flag + viewport sourced from
@@ -294,15 +495,15 @@ def resolve_stats(
         ec = paradigm_spec.stats
         embed_vp = Viewport(x=ec.embed_viewport_x, y=ec.embed_viewport_y, w=ec.embed_viewport_w, h=ec.embed_viewport_h)
         # Zero-guard: never default to a 1200-star synthetic curve. When
-        # stars_total is zero, the truthful state is an empty embedded chart.
-        # Stale-guard: when ``stars_total`` is ``None`` (sub-fetch failed),
+        # the hero metric is zero, the truthful state is an empty embedded chart.
+        # Stale-guard: when the hero metric is ``None`` (sub-fetch failed),
         # the embedded chart is empty too — synthesizing a curve from a
         # known-bad value would compound the silent-zero misrepresentation.
-        stars_int = int(stars_total) if isinstance(stars_total, int) else 0
-        real_points = connector.get("points") or connector.get("star_history")
+        stars_int = _raw_int(hero_raw_value)
+        real_points = [point.model_dump() for point in input_data.series_points]
         if real_points:
             chart_points: list[dict[str, Any]] = list(real_points)
-        elif stars_int > 0 and "stars_total" not in stale_fields:
+        elif stars_int > 0 and hero_raw_value is not None:
             # Only synthesize when we know the total — this approximates a
             # plausible growth curve rather than fabricating it from nothing.
             chart_points = _synthetic_series_from_total(stars_int)
@@ -328,6 +529,32 @@ def resolve_stats(
         "template": "frames/stats.svg.j2",
         "context": stats_context,
     }
+
+
+def _stats_hero_caption(hero_label: str) -> str:
+    label = (hero_label or "STARS").strip().upper()
+    if label == "STARS":
+        return "TOTAL STARS · LIFETIME"
+    if label in {"DOWNLOADS/MO", "DOWNLOADS/MONTH", "DOWNLOADS MONTHLY"}:
+        return "DOWNLOADS · MONTHLY"
+    return label
+
+
+def _stats_subject_url(*, provider: str, identity: str, source_url: str = "") -> str:
+    if source_url:
+        return source_url
+    primary_provider = provider.split("+", 1)[0]
+    if primary_provider == "github":
+        return f"github.com/{identity.lower()}"
+    if primary_provider == "pypi":
+        return f"pypi.org/project/{identity}"
+    if primary_provider == "huggingface":
+        return f"huggingface.co/{identity}"
+    if primary_provider == "arxiv":
+        return f"arxiv.org/abs/{identity}"
+    if primary_provider == "docker":
+        return f"hub.docker.com/r/{identity}"
+    return identity
 
 
 def _synthetic_series_from_total(total: int) -> list[dict[str, Any]]:

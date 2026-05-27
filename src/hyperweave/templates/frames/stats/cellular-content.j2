@@ -36,7 +36,7 @@
       x2="{{ stats_layout.lines.cellular_header_rule.x2 }}" y2="{{ stats_layout.lines.cellular_header_rule.y2 }}"
       stroke="{{ _accent }}" stroke-opacity="0.10" stroke-width="1"/>
 <text x="{{ stats_layout.texts.cellular_identity.x }}" y="{{ stats_layout.texts.cellular_identity.y }}" class="{{ uid }}-username"
-  {%- if identity_text_length %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ stats_username | upper }}</text>
+  {%- if identity_text_length %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ stats_username | upper | xml_escape }}</text>
 {% if stats_bio or stats_repo_label %}
 {# v0.3.9 algorithmic: identity_x + bio_x come from the cellular paradigm's
    stats config (cellular.yaml: identity_x=20, bio_x=110). identity_zone_width
@@ -45,7 +45,7 @@
    width would visually collide with the right-edge HYPERWEAVE branding —
    prevents karpathy-length bios from bleeding into the branding zone. #}
 <text x="{{ stats_layout.texts.cellular_bio.x }}" y="{{ stats_layout.texts.cellular_bio.y }}" class="{{ uid }}-bio"
-  {%- if bio_text_length %} textLength="{{ bio_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{% if stats_repo_label %}{{ stats_repo_label }}{% endif %}{% if stats_repo_label and stats_bio %} · {% endif %}{% if stats_bio %}{{ stats_bio }}{% endif %}</text>
+  {%- if bio_text_length %} textLength="{{ bio_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{% if stats_repo_label %}{{ stats_repo_label | xml_escape }}{% endif %}{% if stats_repo_label and stats_bio %} · {% endif %}{% if stats_bio %}{{ stats_bio | xml_escape }}{% endif %}</text>
 {% endif %}
 {# v0.3.9 Bug A + Bug #5: HYPERWEAVE branding lives in the footer band
    on the same baseline as the language labels (y=221). Sharing the
@@ -62,14 +62,15 @@
    floats left of the STREAK label rather than overflowing into it. The
    prior hardcoded x positions broke for value widths beyond ~3 chars. #}
 {% for slot in metric_layouts %}
-<text x="{{ slot.value_x }}" y="{{ metric_y }}" class="{{ uid }}-{{ slot.css_value }}">{{ slot.value_display | default('--') }}</text>
-<text x="{{ slot.label_x }}" y="{{ metric_y }}" class="{{ uid }}-mlb">{{ slot.label_text }}</text>
+<text x="{{ slot.value_x }}" y="{{ metric_y }}" class="{{ uid }}-{{ slot.css_value }}">{{ slot.value_display | default('--') | xml_escape }}</text>
+<text x="{{ slot.label_x }}" y="{{ metric_y }}" class="{{ uid }}-mlb">{{ slot.label_text | xml_escape }}</text>
 {% endfor %}
 
 {# ZONE 3a: YEAR LABEL + LEGEND COLUMN (y=101..108).
    Year (e.g. "2026") at left x=20; 5-tier legend rects at right side
    showing the heatmap palette in tier order (empty→brightest). Cell positions
    match prototype literals: x=467/476/485/494/503. #}
+{% if heatmap_cells %}
 <text x="{{ stats_layout.texts.cellular_year.x }}" y="{{ stats_layout.texts.cellular_year.y }}" class="{{ uid }}-cyr">{{ stats_heatmap_year }}</text>
 {% for cell in heatmap_legend_cells %}
 <rect x="{{ cell.x }}" y="{{ cell.y }}" width="{{ cell.w }}" height="{{ cell.h }}" rx="{{ cell.rx }}" fill="{{ cell.fill }}"/>
@@ -85,6 +86,7 @@
     <rect x="{{ cell.x }}" y="{{ cell.y }}" width="{{ cell.w }}" height="{{ cell.h }}" rx="{{ cell.rx }}" fill="{{ cell.fill }}"{% if cell.css_class %} class="{{ cell.css_class }}"{% endif %}/>
   {% endfor %}
 </g>
+{% endif %}
 
 {# ZONE 3c: LANGUAGE FOOTER — inline swatch + label pairs at y=217.
 
@@ -105,10 +107,12 @@
    class (mid_accent at opacity 0.6) keeps labels quiet — the heatmap
    above remains the visual focus of the bottom half of the card. #}
 <g data-hw-zone="languages">
+  {% if proportional_bar %}
   {% for entry in language_layout | default([]) %}
   <rect x="{{ entry.swatch_x }}" y="{{ entry.swatch_y }}" width="{{ entry.swatch_w }}" height="{{ entry.swatch_h }}" rx="{{ entry.swatch_rx }}" fill="{{ entry.swatch_color }}"/>
-  <text x="{{ entry.label_x }}" y="{{ entry.label_y }}" class="{{ uid }}-lt">{{ entry.label_text }}</text>
+  <text x="{{ entry.label_x }}" y="{{ entry.label_y }}" class="{{ uid }}-lt">{{ entry.label_text | xml_escape }}</text>
   {% endfor %}
+  {% endif %}
 </g>
 
 </g>{# end card-clip #}

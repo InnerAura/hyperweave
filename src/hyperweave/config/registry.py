@@ -18,8 +18,6 @@ from hyperweave.config.loader import (
     load_paradigms,
     load_policies,
     load_profiles,
-    load_terminal_rules,
-    load_terminals,
 )
 from hyperweave.core.models import ProfileConfig  # noqa: TC001 (runtime return type)
 from hyperweave.core.paradigm import ParadigmSpec  # noqa: TC001 (runtime return type)
@@ -63,18 +61,6 @@ def get_motions() -> dict[str, dict[str, Any]]:
 
 
 @functools.lru_cache(maxsize=1)
-def get_terminals() -> dict[str, dict[str, Any]]:
-    """Terminal geometry definitions."""
-    return load_terminals()
-
-
-@functools.lru_cache(maxsize=1)
-def get_rules() -> dict[str, dict[str, Any]]:
-    """Terminal rule style definitions."""
-    return load_terminal_rules()
-
-
-@functools.lru_cache(maxsize=1)
 def get_policies() -> dict[str, dict[str, Any]]:
     """Policy lane definitions."""
     return load_policies()
@@ -101,7 +87,5 @@ def reset_registry() -> None:
     get_paradigms.cache_clear()
     get_glyphs.cache_clear()
     get_motions.cache_clear()
-    get_terminals.cache_clear()
-    get_rules.cache_clear()
     get_policies.cache_clear()
     get_font_metrics.cache_clear()

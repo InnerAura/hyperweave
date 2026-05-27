@@ -5,6 +5,42 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.11] - 2026-05-27
+
+v0.3.11 expands HyperWeave data cards to multi-source signals. Stats cards and charts now read from Hugging Face, PyPI, arXiv, npm, and Docker alongside GitHub, while established GitHub layouts and self-contained SVG output are preserved.
+
+### Added
+
+- **More live data sources** &mdash; Hugging Face models and organizations, PyPI packages, and arXiv papers can drive stats cards; PyPI download history can also drive charts.
+- **Multi-source stats cards** &mdash; Cards can combine signals from sources such as GitHub, Hugging Face, npm, Docker, and arXiv in one artifact.
+- **Flexible metric cards** &mdash; Stats cards now render one to six meaningful metrics instead of assuming every source looks like a four-metric GitHub profile.
+- **Adaptive activity zones** &mdash; Cards choose the right activity view for the data: weekly bars, compact bars, or a 30-day sparkline.
+- **Provider-aware glyphs** &mdash; Badges, strips, stats cards, charts, marquees, and icons now infer a relevant provider glyph when one is not explicitly chosen.
+
+### Changed
+
+- **Stats card layout** &mdash; GitHub's four-metric card keeps its v0.3.10 coordinates, while package/model/paper cards use measured columns and rows that fit the available space.
+- **Chart language** &mdash; Chart titles, hero labels, and source links now follow the data source, so download charts read as download trends instead of star history.
+- **Package metadata** &mdash; PyPI version, Python requirement, daily downloads, monthly downloads, and 30-day peak labels are normalized before rendering.
+- **Long identities** &mdash; Long model names, paper titles, and subtitles truncate before they collide with the card edge.
+
+### Removed
+
+- **Unused surfaces** &mdash; The catalog frame, terminal frame/data paths, and the `catalog_url` field on `/d/<id>` drop responses were removed.
+
+### Fixed
+
+- **Connector text safety** &mdash; Text from live data sources is escaped before it reaches SVG output.
+- **Metric overflow** &mdash; Three-metric chrome cards use the full width, six-metric chrome cards wrap into two rows, and brutalist package cards use compact label/value cells.
+- **Language bars** &mdash; Labels hide before they bleed outside short proportional segments.
+- **High-frequency charts** &mdash; Dense daily series keep the curve but reduce markers to the origin and endpoint so the chart remains readable.
+- **Request access log delivery** &mdash; Per-request `HW_REQUEST` lines now reach stdout for log aggregation; previous releases configured the logger but left it without a stdout handler.
+
+### Notes
+
+- Existing GitHub stats cards and star charts keep their v0.3.10 visual positions.
+- Chart markers at axis date positions and smarter milestone labels are planned for a future release.
+
 ## [0.3.10] - 2026-05-22
 
 v0.3.10 finishes the layout hardening started in v0.3.9. Badges, strips, stats cards, charts, and older frame templates now place their content from measured layout values instead of template-side math. The visible result is tighter automata badges, cleaner headers, and more consistent glyph alignment.

@@ -23,7 +23,6 @@ defaults:
   marquee-horizontal: []
   receipt: []
   rhythm-strip: []
-  catalog: []
   icon: []
   divider: []
 

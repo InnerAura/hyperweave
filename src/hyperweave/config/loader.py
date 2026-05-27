@@ -177,38 +177,6 @@ def load_motions() -> dict[str, dict[str, Any]]:
     return result
 
 
-def load_terminals() -> dict[str, dict[str, Any]]:
-    """Load terminal geometry definitions from data/terminals/."""
-    terminals_dir = _data_path("terminals")
-    result: dict[str, dict[str, Any]] = {}
-
-    if not terminals_dir.exists():
-        return result
-
-    for path in sorted(terminals_dir.glob("*.json")):
-        raw = _read_json(path)
-        if raw and "id" in raw:
-            result[raw["id"]] = raw
-
-    return result
-
-
-def load_terminal_rules() -> dict[str, dict[str, Any]]:
-    """Load terminal rule style definitions from data/terminals/rules/."""
-    rules_dir = _data_path("terminals/rules")
-    result: dict[str, dict[str, Any]] = {}
-
-    if not rules_dir.exists():
-        return result
-
-    for path in sorted(rules_dir.glob("*.json")):
-        raw = _read_json(path)
-        if raw and "id" in raw:
-            result[raw["id"]] = raw
-
-    return result
-
-
 def load_policies() -> dict[str, dict[str, Any]]:
     """Load policy lane definitions from data/policies/."""
     policies_dir = _data_path("policies")
@@ -261,8 +229,6 @@ class ConfigLoader:
         self.paradigms: dict[str, ParadigmSpec] = {}
         self.glyphs: dict[str, dict[str, Any]] = {}
         self.motions: dict[str, dict[str, Any]] = {}
-        self.terminals: dict[str, dict[str, Any]] = {}
-        self.rules: dict[str, dict[str, Any]] = {}
         self.policies: dict[str, dict[str, Any]] = {}
         self.font_metrics: dict[str, dict[str, Any]] = {}
         self._loaded = False
@@ -310,8 +276,6 @@ class ConfigLoader:
 
         self.glyphs = load_glyphs()
         self.motions = load_motions()
-        self.terminals = load_terminals()
-        self.rules = load_terminal_rules()
         self.policies = load_policies()
         self.font_metrics = load_font_metrics()
         self._loaded = True

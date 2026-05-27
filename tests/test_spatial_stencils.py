@@ -7,7 +7,7 @@ from pathlib import Path
 
 from hyperweave.compose.chart_layout import compute_chart_layout
 from hyperweave.compose.engine import compose
-from hyperweave.compose.stats_layout import compute_stats_layout
+from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
 from hyperweave.config.registry import get_paradigms, reset_registry
 from hyperweave.core.models import ComposeSpec
 
@@ -81,13 +81,27 @@ def test_chrome_stats_template_pins_material_geometry_to_stats_layout() -> None:
     """Rendered chrome stats frame follows StatsLayout when config changes."""
     reset_registry()
     stats = get_paradigms()["chrome"].stats
+    metric_entries = [
+        {"label": "COMMITS", "value": "1,203"},
+        {"label": "PRS", "value": "89"},
+        {"label": "ISSUES", "value": "47"},
+        {"label": "STREAK", "value": "47d"},
+    ]
+    card_height = compute_stats_card_height(
+        stats=stats,
+        metric_count=len(metric_entries),
+        has_activity=False,
+        has_heatmap=False,
+        has_proportional_bar=False,
+    )
     layout = compute_stats_layout(
         stats=stats,
         card_width=495,
-        card_height=260,
+        card_height=card_height,
         username="eli64s",
         bio_text="",
         displays={"stars": "12.8K", "commits": "1,203", "prs": "89", "issues": "47", "contrib": "234", "streak": "47d"},
+        metric_entries=metric_entries,
         activity_bars=[],
         activity_peak=0,
         languages=[],
@@ -122,13 +136,28 @@ def test_cellular_stats_pins_layout_to_template() -> None:
     """Rendered cellular stats frame follows StatsLayout."""
     reset_registry()
     stats = get_paradigms()["cellular"].stats
+    metric_entries = [
+        {"label": "COMMITS", "value": "1,203"},
+        {"label": "PRS", "value": "89"},
+        {"label": "ISSUES", "value": "47"},
+        {"label": "CONTRIB", "value": "234"},
+        {"label": "STREAK", "value": "47d"},
+    ]
+    card_height = compute_stats_card_height(
+        stats=stats,
+        metric_count=len(metric_entries),
+        has_activity=False,
+        has_heatmap=False,
+        has_proportional_bar=False,
+    )
     layout = compute_stats_layout(
         stats=stats,
         card_width=stats.card_width,
-        card_height=stats.card_height,
+        card_height=card_height,
         username="karpathy",
         bio_text="Python / 39 repos",
         displays={"stars": "12.8K", "commits": "1,203", "prs": "89", "issues": "47", "contrib": "234", "streak": "47d"},
+        metric_entries=metric_entries,
         activity_bars=[],
         activity_peak=0,
         languages=[],

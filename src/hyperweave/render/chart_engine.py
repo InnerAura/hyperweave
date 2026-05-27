@@ -689,8 +689,17 @@ def _build_markers(
     """
     if not projected:
         return []
+    if len(projected) == 1:
+        x, y = projected[0]
+        return [_marker_spec(shape, x, y, size, is_endpoint=True)]
     markers = [_marker_spec(shape, x, y, size, is_endpoint=False) for x, y in projected[:-1]]
     x_last, y_last = projected[-1]
+    if len(projected) > 24:
+        x0, y0 = projected[0]
+        return [
+            _marker_spec(shape, x0, y0, size, is_endpoint=False),
+            _marker_spec(shape, x_last, y_last, size, is_endpoint=True),
+        ]
     markers.append(_marker_spec(shape, x_last, y_last, size, is_endpoint=True))
     return markers
 

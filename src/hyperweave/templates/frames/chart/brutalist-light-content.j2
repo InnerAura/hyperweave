@@ -90,11 +90,13 @@
        — 16×16 glyph at x=20 means it ends at x=36; text at x=42 leaves a 6px
        gap. Pre-fix used translate(24,16) which ended at x=40 with text at
        x=42 → 2px gap (visually crammed). #}
-    <g transform="translate({{ chart_layout.rects.brutalist_glyph.x }}, {{ chart_layout.rects.brutalist_glyph.y }})">
-      <svg viewBox="0 0 24 24" width="{{ chart_layout.rects.brutalist_glyph.w }}" height="{{ chart_layout.rects.brutalist_glyph.h }}">
-        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" fill="var(--dna-chart-glyph, var(--dna-seam-color, var(--dna-ink-primary)))"/>
+    {% if glyph_path %}
+    <g data-hw-zone="glyph" transform="translate({{ chart_layout.rects.brutalist_glyph.x }}, {{ chart_layout.rects.brutalist_glyph.y }})">
+      <svg viewBox="{{ glyph_viewbox }}" width="{{ chart_layout.rects.brutalist_glyph.w }}" height="{{ chart_layout.rects.brutalist_glyph.h }}">
+        <path d="{{ glyph_path }}" fill="var(--dna-chart-glyph, var(--dna-seam-color, var(--dna-ink-primary)))"/>
       </svg>
     </g>
+    {% endif %}
     {# Header user text only — top-right repo URL removed per visual review
        (was redundant with the bottom-left footer URL and pushed the status
        dot into an awkward position above the corner). #}
@@ -118,11 +120,11 @@
        STAR HISTORY hero text baseline y=92 (visual center ~y=78); subtitle and
        TOTAL STARS label baseline y=110. Pulls text visually toward the centre
        of the y=44→122 title zone (78px tall, centre at y=83). #}
-    <text class="{{ uid }}-title-main" x="{{ chart_layout.texts.brutalist_light_title.x }}" y="{{ chart_layout.texts.brutalist_light_title.y }}">STAR HISTORY</text>
-    <text class="{{ uid }}-title-sub" x="{{ chart_layout.texts.brutalist_light_subtitle.x }}" y="{{ chart_layout.texts.brutalist_light_subtitle.y }}">LIFETIME GROWTH{% if chart_date_range %} · {{ chart_date_range | upper | replace('—', '→') }}{% endif %}</text>
+    <text class="{{ uid }}-title-main" x="{{ chart_layout.texts.brutalist_light_title.x }}" y="{{ chart_layout.texts.brutalist_light_title.y }}">{{ chart_series_title | default('STAR HISTORY') }}</text>
+    <text class="{{ uid }}-title-sub" x="{{ chart_layout.texts.brutalist_light_subtitle.x }}" y="{{ chart_layout.texts.brutalist_light_subtitle.y }}">{{ chart_subtitle_label | default('LIFETIME GROWTH') }}{% if chart_date_range %} · {{ chart_date_range | upper | replace('—', '→') }}{% endif %}</text>
 
     <text class="{{ uid }}-hero-value" x="{{ chart_layout.texts.brutalist_light_hero_value.x }}" y="{{ chart_layout.texts.brutalist_light_hero_value.y }}" text-anchor="{{ chart_layout.texts.brutalist_light_hero_value.anchor }}">{{ chart_current_stars }}</text>
-    <text class="{{ uid }}-hero-label" x="{{ chart_layout.texts.brutalist_light_hero_label.x }}" y="{{ chart_layout.texts.brutalist_light_hero_label.y }}" text-anchor="{{ chart_layout.texts.brutalist_light_hero_label.anchor }}">TOTAL STARS</text>
+    <text class="{{ uid }}-hero-label" x="{{ chart_layout.texts.brutalist_light_hero_label.x }}" y="{{ chart_layout.texts.brutalist_light_hero_label.y }}" text-anchor="{{ chart_layout.texts.brutalist_light_hero_label.anchor }}">{{ chart_hero_label | default('TOTAL STARS') }}</text>
   </g>
 
   {# ZONE 3: CHART #}
@@ -183,8 +185,8 @@
        The status marker rect+dot were hallucinated additions — no chart
        prototype carries a footer status indicator. Removed per user feedback;
        footer is text-only matching the v0.3.2 brutalist light chart prototype:155. #}
-    <text class="{{ uid }}-foot" x="{{ chart_layout.texts.brutalist_footer_url.x }}" y="{{ chart_layout.texts.brutalist_footer_url.y }}">github.com/{{ chart_repo }}</text>
-    <text class="{{ uid }}-foot-brand" x="{{ chart_layout.texts.brutalist_footer_brand.x }}" y="{{ chart_layout.texts.brutalist_footer_brand.y }}" text-anchor="{{ chart_layout.texts.brutalist_footer_brand.anchor }}">HYPERWEAVE · STAR HISTORY</text>
+    <text class="{{ uid }}-foot" x="{{ chart_layout.texts.brutalist_footer_url.x }}" y="{{ chart_layout.texts.brutalist_footer_url.y }}">{{ chart_subject_url | default(chart_repo) }}</text>
+    <text class="{{ uid }}-foot-brand" x="{{ chart_layout.texts.brutalist_footer_brand.x }}" y="{{ chart_layout.texts.brutalist_footer_brand.y }}" text-anchor="{{ chart_layout.texts.brutalist_footer_brand.anchor }}">{{ chart_brand_label | default('HYPERWEAVE · STAR HISTORY') }}</text>
   </g>
 
 </g>

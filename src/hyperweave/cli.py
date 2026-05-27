@@ -192,7 +192,7 @@ def compose(
             typer.echo(f"Error: --data parse failed: {exc}", err=True)
             raise typer.Exit(2) from exc
 
-        if frame_type == "marquee-horizontal":
+        if frame_type in {"marquee-horizontal", "stats"}:
             data_tokens_resolved = list(resolved)
         else:
             formatted = format_for_value(resolved)

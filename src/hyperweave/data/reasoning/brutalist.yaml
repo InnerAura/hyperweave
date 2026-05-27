@@ -129,10 +129,10 @@ brutalist:
   chart:
     dark:
       intent: |-
-        Star history visualization as engineering instrument — 900×500
+        Time-series visualization as engineering instrument — 900×500
         frame with 760×245 plot viewport at x=80, y=150. Polyline shows
-        cumulative star count, crosshair markers anchor data points,
-        nested-square milestones flag 1K/2K/etc. thresholds.
+        cumulative provider values, crosshair markers anchor sampled data
+        points, nested-square milestones flag configured thresholds.
       approach: |-
         Three-zone vertical split (header y=0-46, title y=46-140, plot
         y=140-440) bounded by 2.5px structural rules at 0.55 opacity.

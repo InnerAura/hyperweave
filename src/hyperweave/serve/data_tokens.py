@@ -37,7 +37,7 @@ survives URL decoding intact.
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 _DEFAULT_TTL = 300
@@ -45,7 +45,7 @@ _FAILURE_TTL = 60
 
 _PROVIDERS: frozenset[str] = frozenset({"gh", "github", "pypi", "npm", "hf", "huggingface", "arxiv", "docker"})
 
-_PROVIDER_ALIASES: dict[str, str] = {"gh": "github"}
+_PROVIDER_ALIASES: dict[str, str] = {"gh": "github", "hf": "huggingface"}
 
 
 @dataclass(frozen=True)
@@ -78,6 +78,14 @@ class ResolvedToken:
     """Fetched value, literal value, or text payload."""
     ttl: int = 0
     """Cache TTL in seconds. ``0`` for non-live tokens."""
+    provider: str = field(default="", compare=False)
+    """Canonical provider key for live tokens; empty for text/kv tokens."""
+    identifier: str = field(default="", compare=False)
+    """Provider identifier for live tokens; empty for text/kv tokens."""
+    metric: str = field(default="", compare=False)
+    """Raw provider metric for live tokens; empty for text/kv tokens."""
+    raw_value: object = field(default=None, compare=False)
+    """Unformatted connector value for live tokens when available."""
 
 
 def _split_unescaped_commas(data: str) -> list[str]:
@@ -265,12 +273,16 @@ async def resolve_data_tokens(tokens: list[DataToken]) -> tuple[list[ResolvedTok
                     label=_display_label(tok.metric),
                     value="--",
                     ttl=_FAILURE_TTL,
+                    provider=tok.provider,
+                    identifier=tok.identifier,
+                    metric=tok.metric,
                 )
             )
             min_ttl = min(min_ttl, _FAILURE_TTL)
             continue
 
-        value = str(result.get("value", "n/a"))
+        raw_value = result.get("value", "n/a")
+        value = str(raw_value)
         ttl = int(result.get("ttl", _DEFAULT_TTL))
         resolved.append(
             ResolvedToken(
@@ -278,6 +290,10 @@ async def resolve_data_tokens(tokens: list[DataToken]) -> tuple[list[ResolvedTok
                 label=_display_label(tok.metric),
                 value=value,
                 ttl=ttl,
+                provider=tok.provider,
+                identifier=tok.identifier,
+                metric=tok.metric,
+                raw_value=raw_value,
             )
         )
         min_ttl = min(min_ttl, ttl)

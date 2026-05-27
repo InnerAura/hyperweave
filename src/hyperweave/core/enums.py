@@ -20,7 +20,6 @@ class FrameType(StrEnum):
     MARQUEE_HORIZONTAL = "marquee-horizontal"
     RECEIPT = "receipt"
     RHYTHM_STRIP = "rhythm-strip"
-    CATALOG = "catalog"
     STATS = "stats"
     CHART = "chart"
 

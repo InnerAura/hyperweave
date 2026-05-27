@@ -55,7 +55,7 @@ async def hw_compose(
     """Compose a HyperWeave artifact. Returns self-contained SVG.
 
     type: badge | strip | icon | divider | marquee-horizontal |
-          receipt | rhythm-strip | catalog | stats | chart
+          receipt | rhythm-strip | stats | chart
 
     genome: brutalist (dark, sharp corners, emerald accent) |
             chrome (dark, metallic, 5 named variants: horizon/abyssal/lightning/graphite/moth) |
@@ -123,7 +123,7 @@ async def hw_compose(
 
         tokens = parse_data_tokens(data)
         resolved, _ttl = await resolve_data_tokens(tokens)
-        if type == "marquee-horizontal":
+        if type in {"marquee-horizontal", "stats"}:
             data_tokens_resolved = list(resolved)
         else:
             formatted = format_for_value(resolved)
@@ -392,13 +392,14 @@ async def hw_discover(
             "stats": {
                 "pattern": "/v1/stats/{username}/{genome}.{motion}",
                 "query_params": {
+                    "data": "Optional live data tokens appended as stats metric slots.",
                     "variant": (
                         "Chromatic variant. chrome: horizon | abyssal | lightning | graphite | moth. "
                         "automata: 16 solo tones."
                     ),
                     "pair": "automata only — silently ignored on stats (kept for URL grammar uniformity).",
                 },
-                "example": "/v1/stats/eli64s/automata.static?variant=bone",
+                "example": "/v1/stats/GLM-5/chrome.static?data=github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
             },
             "chart-stars": {
                 "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
