@@ -1,92 +1,104 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
      viewBox="0 0 1200 420" role="img" aria-labelledby="t d"
-     data-hw-component="banner" data-hw-chromatic="cobalt-sapphire-deep"
+     data-hw-component="banner" data-hw-chromatic="cobalt-sapphire"
      data-hw-variant="v17-cobalt-chirp" data-protocol="hw-v1">
   <title id="t">HYPERWEAVE — Where Vectors Meet Vision</title>
-  <desc id="d">v17 cobalt-chirp — Animated text gradient + specular frame + chirp construction.</desc>
+  <desc id="d">v17 cobalt — Original gradient, chirp construction, italic caps, dual-surface chromatic.</desc>
+
   <defs>
-    <!-- SIGIL GRADIENT: original 5-stop animated cobalt-sapphire -->
-    <linearGradient id="e" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1838b0"><animate attributeName="stop-color" values="#1838b0;#2850d8;#1030a0;#1838b0" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
-      <stop offset="30%" stop-color="#4080ff"><animate attributeName="stop-color" values="#4080ff;#60a0ff;#3070f0;#4080ff" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
-      <stop offset="55%" stop-color="#d0e4ff"><animate attributeName="stop-color" values="#d0e4ff;#e8f0ff;#b8d4ff;#d0e4ff" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
-      <stop offset="78%" stop-color="#5848d8"><animate attributeName="stop-color" values="#5848d8;#7060f0;#4838c0;#5848d8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+    <!-- ═══ SIGIL GRADIENT: original 5-stop cobalt-sapphire from v14 closer ═══ -->
+    <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1838b0">
+        <animate attributeName="stop-color" values="#1838b0;#2850d8;#1030a0;#1838b0" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="30%" stop-color="#4080ff">
+        <animate attributeName="stop-color" values="#4080ff;#60a0ff;#3070f0;#4080ff" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="55%" stop-color="#d0e4ff">
+        <animate attributeName="stop-color" values="#d0e4ff;#e8f0ff;#b8d4ff;#d0e4ff" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="78%" stop-color="#5848d8">
+        <animate attributeName="stop-color" values="#5848d8;#7060f0;#4838c0;#5848d8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
       <stop offset="100%" stop-color="#2040b0"/>
       <animateTransform attributeName="gradientTransform" type="rotate" from="0 .5 .5" to="360 .5 .5" dur="13.708s" repeatCount="indefinite"/>
     </linearGradient>
 
-    <!-- TEXT GRADIENT: animated, same phi timing, dual-surface luminance range -->
-    <linearGradient id="tg" x1="0%" y1="50%" x2="100%" y2="50%" gradientUnits="userSpaceOnUse">
+    <!-- ═══ TEXT GRADIENT: animated, same phi rhythm, dual-surface luminance ═══ -->
+    <linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse" x1="460" x2="1000">
       <stop offset="0%" stop-color="#2040b8">
-        <animate attributeName="stop-color" values="#2040b8;#3058d0;#1830a0;#2040b8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
-      <stop offset="30%" stop-color="#4878f0">
-        <animate attributeName="stop-color" values="#4878f0;#5890ff;#3868e0;#4878f0" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
-      <stop offset="65%" stop-color="#3858cc">
-        <animate attributeName="stop-color" values="#3858cc;#4868e0;#2848b8;#3858cc" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
+        <animate attributeName="stop-color" values="#2040b8;#3058d0;#1830a0;#2040b8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="35%" stop-color="#4878f0">
+        <animate attributeName="stop-color" values="#4878f0;#5890ff;#3868e0;#4878f0" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="70%" stop-color="#3858cc">
+        <animate attributeName="stop-color" values="#3858cc;#4868e0;#2848b8;#3858cc" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
       <stop offset="100%" stop-color="#5048c8">
-        <animate attributeName="stop-color" values="#5048c8;#6058e0;#4038b0;#5048c8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/>
-      </stop>
+        <animate attributeName="stop-color" values="#5048c8;#6058e0;#4038b0;#5048c8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
     </linearGradient>
 
-    <radialGradient id="i" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#4080ff" stop-opacity=".1"/><stop offset="60%" stop-color="#2848c0" stop-opacity=".04"/><stop offset="100%" stop-color="#1020a0" stop-opacity="0"/></radialGradient>
-    <radialGradient id="n" cx="50%" cy="35%" r="55%"><stop offset="0%" stop-color="#ffffff"/><stop offset="30%" stop-color="#80b8ff" stop-opacity=".95"/><stop offset="100%" stop-color="#3060d0" stop-opacity="0"/></radialGradient>
+    <!-- ═══ RADIAL FILLS ═══ -->
+    <radialGradient id="inner" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#4080ff" stop-opacity=".08"/>
+      <stop offset="60%" stop-color="#2848c0" stop-opacity=".03"/>
+      <stop offset="100%" stop-color="#1020a0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="node" cx="50%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#80b8ff" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#3060d0" stop-opacity="0"/>
+    </radialGradient>
 
-    <!-- FRAME GLOW: double-blur + specular lighting for polished metallic shine -->
-    <filter id="fg" x="-15%" y="-15%" width="130%" height="130%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="b1"/>
-      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="b2"/>
-      <feSpecularLighting in="b2" surfaceScale="3" specularConstant=".5" specularExponent="20" lighting-color="#e0eaff" result="spec">
-        <fePointLight x="50" y="-30" z="90"/>
-      </feSpecularLighting>
-      <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
-      <feColorMatrix in="b1" type="matrix" values="0.6 0 0.15 0 0 0 0.4 0.1 0 0 0.15 0.1 1.0 0 0 0 0 0 0.45 0" result="cg"/>
-      <feMerge><feMergeNode in="cg"/><feMergeNode in="specIn"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <!-- ═══ FRAME FILTER: key + rim dual specular ═══ -->
+    <filter id="ff" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="b2"/>
+      <feSpecularLighting in="b2" surfaceScale="4" specularConstant=".7" specularExponent="28" lighting-color="#e8f0ff" result="key">
+        <fePointLight x="0" y="-40" z="100"/></feSpecularLighting>
+      <feComposite in="key" in2="SourceAlpha" operator="in" result="keyIn"/>
+      <feSpecularLighting in="b1" surfaceScale="2" specularConstant=".3" specularExponent="12" lighting-color="#c0d0ff" result="rim">
+        <fePointLight x="60" y="30" z="60"/></feSpecularLighting>
+      <feComposite in="rim" in2="SourceAlpha" operator="in" result="rimIn"/>
+      <feColorMatrix in="b1" type="matrix" values="0.5 0 0.2 0 0 0 0.35 0.15 0 0 0.2 0.1 1.0 0 0 0 0 0 0.4 0" result="cg"/>
+      <feMerge><feMergeNode in="cg"/><feMergeNode in="rimIn"/><feMergeNode in="keyIn"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
-    <!-- NODE GLOW: tighter, brighter -->
-    <filter id="fn" x="-12%" y="-12%" width="124%" height="124%">
+    <!-- ═══ NODE FILTER: specular + glow ═══ -->
+    <filter id="nf" x="-12%" y="-12%" width="124%" height="124%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="b"/>
       <feSpecularLighting in="b" surfaceScale="4" specularConstant=".6" specularExponent="25" lighting-color="#ffffff" result="sp">
-        <fePointLight x="10" y="-8" z="50"/>
-      </feSpecularLighting>
+        <fePointLight x="10" y="-8" z="50"/></feSpecularLighting>
       <feComposite in="sp" in2="SourceAlpha" operator="in" result="spIn"/>
       <feColorMatrix in="b" type="matrix" values="0 0 0.1 0 0 0.2 0.6 0.5 0 0.08 0.2 0.5 0.8 0 0.12 0 0 0 0.6 0" result="g"/>
       <feMerge><feMergeNode in="g"/><feMergeNode in="spIn"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
-    <!-- TEXT GLOW: subtle luminous halo behind the wordmark -->
-    <filter id="ft" x="-4%" y="-15%" width="108%" height="130%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
-      <feColorMatrix in="b" type="matrix" values="0.1 0 0.35 0 0.03 0.06 0.08 0.3 0 0.02 0.12 0.05 0.7 0 0.05 0 0 0 0.2 0" result="g"/>
+    <!-- ═══ TEXT GLOW FILTER ═══ -->
+    <filter id="tf" x="-4%" y="-15%" width="108%" height="130%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="0.1 0 0.35 0 0.03 0.06 0.08 0.3 0 0.02 0.12 0.05 0.7 0 0.05 0 0 0 0.18 0" result="g"/>
       <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
   <style>
     svg{color-scheme:light dark}
-    @keyframes nl{0%,100%{opacity:.95;transform:scale(1)}50%{opacity:.78;transform:scale(.96)}}
-    .na{animation:nl 3.236s ease-in-out 2s infinite}
-    @keyframes fl{0%,100%{opacity:1}50%{opacity:.82}}
-    .fi{animation:fl 4.236s ease-in-out 2s infinite}
-    @keyframes orb{to{transform:rotate(360deg)}}
-    .oa{transform-origin:0 0;opacity:0;animation:orb 6.854s linear 2s infinite}
-    .ob{transform-origin:0 0;opacity:0;animation:orb 11.09s linear 2s infinite}
+    @keyframes breathe{0%,100%{opacity:.95;transform:scale(1)}50%{opacity:.78;transform:scale(.96)}}
+    .na{animation:breathe 3.236s ease-in-out 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.82}}
+    .fi{animation:pulse 4.236s ease-in-out 2s infinite}
+    @keyframes orbit{to{transform:rotate(360deg)}}
+    .oa{transform-origin:0 0;opacity:0;animation:orbit 6.854s linear 2s infinite}
+    .ob{transform-origin:0 0;opacity:0;animation:orbit 11.09s linear 2s infinite}
     @media(prefers-reduced-motion:reduce){
       *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}
-      .nd,.dc,.dd{opacity:1}.frame{opacity:1;stroke-dasharray:none}
-      .inner{opacity:.8}.oa,.ob{opacity:.8}
     }
   </style>
 
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  SIGIL: chirp construction                     -->
+  <!-- ═══════════════════════════════════════════════ -->
   <g transform="translate(230,210) scale(1.85)">
 
-    <!-- CARDINAL EDGES: chirp -->
-    <g filter="url(#fg)">
-      <g stroke="url(#e)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0">
-        <animate attributeName="opacity" values="0.3;0.5;0.6;0.7;0.8;0.95" dur="1.2s" fill="freeze"
+    <!-- CARDINAL EDGES -->
+    <g filter="url(#ff)">
+      <g stroke="url(#sg)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0">
+        <animate attributeName="opacity" values="0.3;0.5;0.65;0.8;0.9;0.95" dur="1.2s" fill="freeze"
                  calcMode="spline" keySplines="0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1"/>
         <animate attributeName="stroke-dasharray" values="20,20;14,14;8,8;4,4;2,2;82,0" dur="1.2s" fill="freeze"
                  calcMode="spline" keySplines="0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1"/>
@@ -95,10 +107,10 @@
       </g>
     </g>
 
-    <!-- DIAGONAL CURVES: chirp staggered -->
-    <g filter="url(#fg)">
-      <g fill="none" stroke="url(#e)" stroke-width="2.2" stroke-linecap="round" opacity="0">
-        <animate attributeName="opacity" values="0.2;0.4;0.5;0.65;0.75;0.85" dur="1.2s" fill="freeze" begin="0.1s"
+    <!-- DIAGONAL CURVES -->
+    <g filter="url(#ff)">
+      <g fill="none" stroke="url(#sg)" stroke-width="2.2" stroke-linecap="round" opacity="0">
+        <animate attributeName="opacity" values="0.2;0.4;0.55;0.7;0.8;0.85" dur="1.2s" fill="freeze" begin="0.1s"
                  calcMode="spline" keySplines="0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1"/>
         <animate attributeName="stroke-dasharray" values="30,30;20,20;12,12;6,6;2,2;120,0" dur="1.2s" fill="freeze" begin="0.1s"
                  calcMode="spline" keySplines="0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1"/>
@@ -108,14 +120,15 @@
     </g>
 
     <!-- INNER FILL -->
-    <path d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z" fill="url(#i)" class="fi" opacity="0">
+    <path d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z"
+          fill="url(#inner)" class="fi" opacity="0">
       <animate attributeName="opacity" values="0;0;0.2;0.5;0.8" dur="1.4s" fill="freeze"
                calcMode="spline" keySplines="1 0 1 0;0.4 0 0.6 1;0.4 0 0.6 1;0.2 0.8 1 1"/>
     </path>
 
-    <!-- FRAME: chirp + ringdown + specular glow -->
+    <!-- FRAME: chirp + ringdown -->
     <path d="M-15,-60 L-45,-30 C-60,-15 -60,15 -45,30 L-15,60 L15,60 L45,30 C60,15 60,-15 45,-30 L15,-60 Z"
-          fill="none" stroke="url(#e)" stroke-linejoin="round" stroke-linecap="round" filter="url(#fg)"
+          fill="none" stroke="url(#sg)" stroke-linejoin="round" stroke-linecap="round" filter="url(#ff)"
           stroke-width="2" opacity="0.3">
       <animate attributeName="stroke-dasharray"
                values="80,80;60,60;40,40;25,25;14,14;7,7;3,3;1,1;360,0"
@@ -129,79 +142,93 @@
                values="0.3;0.4;0.5;0.6;0.7;0.8;0.9;0.95;1"
                dur="1.2s" fill="freeze" calcMode="spline"
                keySplines="0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1"/>
+      <!-- RINGDOWN -->
       <animate attributeName="stroke-width"
                values="5.5;7;5.5;4.8;4.5" dur="0.5s" begin="1.2s" fill="freeze"
                calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1;0.4 0 0.2 1"/>
     </path>
 
-    <!-- NODES: drift-settling + specular glow -->
-    <g fill="url(#n)" opacity="0">
-      <animate attributeName="opacity" values="0;0;0.3;0.6;0.9;0.95" dur="1.2s" fill="freeze"
-               calcMode="spline" keySplines="0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1"/>
-      <circle cx="0" cy="0" r="5" class="na" filter="url(#fn)">
-        <animateTransform attributeName="transform" type="scale" values="1;1.4;0.8;1" dur="1.4s" fill="freeze"
-                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/>
-      </circle>
-      <circle cx="0" cy="-80" r="4.2" class="na" filter="url(#fn)">
-        <animateTransform attributeName="transform" type="translate" values="0,0;8,-12;-5,8;0,0" dur="1.3s" fill="freeze"
-                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/>
-      </circle>
-      <circle cx="80" cy="0" r="4.2" class="na" filter="url(#fn)">
-        <animateTransform attributeName="transform" type="translate" values="0,0;-12,8;10,-5;0,0" dur="1.3s" fill="freeze"
-                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/>
-      </circle>
-      <circle cx="0" cy="80" r="4.2" class="na" filter="url(#fn)">
-        <animateTransform attributeName="transform" type="translate" values="0,0;-8,-10;6,12;0,0" dur="1.3s" fill="freeze"
-                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/>
-      </circle>
-      <circle cx="-80" cy="0" r="4.2" class="na" filter="url(#fn)">
-        <animateTransform attributeName="transform" type="translate" values="0,0;12,-8;-8,6;0,0" dur="1.3s" fill="freeze"
-                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/>
-      </circle>
+    <!-- FRAME VERTEX MARKERS: 8 joints -->
+    <g fill="url(#node)" opacity="0" filter="url(#nf)">
+      <animate attributeName="opacity" values="0;0;0.4;0.8" dur="1.4s" fill="freeze"
+               calcMode="spline" keySplines="1 0 1 0;0.4 0 0.6 1;0.2 0.8 1 1"/>
+      <circle cx="-15" cy="-60" r="1.8"/><circle cx="15" cy="-60" r="1.8"/>
+      <circle cx="-45" cy="-30" r="1.8"/><circle cx="45" cy="-30" r="1.8"/>
+      <circle cx="-45" cy="30" r="1.8"/><circle cx="45" cy="30" r="1.8"/>
+      <circle cx="-15" cy="60" r="1.8"/><circle cx="15" cy="60" r="1.8"/>
     </g>
 
-    <!-- ORBITALS -->
+    <!-- CARDINAL NODES: drift + settle -->
+    <g fill="url(#node)" opacity="0">
+      <animate attributeName="opacity" values="0;0;0.3;0.6;0.9;0.95" dur="1.2s" fill="freeze"
+               calcMode="spline" keySplines="0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1;0.1 0 0.9 1"/>
+      <circle cx="0" cy="0" r="5" class="na" filter="url(#nf)">
+        <animateTransform attributeName="transform" type="scale" values="1;1.4;0.8;1" dur="1.4s" fill="freeze"
+                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/></circle>
+      <circle cx="0" cy="-80" r="4.2" class="na" filter="url(#nf)">
+        <animateTransform attributeName="transform" type="translate" values="0,0;8,-12;-5,8;0,0" dur="1.3s" fill="freeze"
+                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/></circle>
+      <circle cx="80" cy="0" r="4.2" class="na" filter="url(#nf)">
+        <animateTransform attributeName="transform" type="translate" values="0,0;-12,8;10,-5;0,0" dur="1.3s" fill="freeze"
+                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/></circle>
+      <circle cx="0" cy="80" r="4.2" class="na" filter="url(#nf)">
+        <animateTransform attributeName="transform" type="translate" values="0,0;-8,-10;6,12;0,0" dur="1.3s" fill="freeze"
+                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/></circle>
+      <circle cx="-80" cy="0" r="4.2" class="na" filter="url(#nf)">
+        <animateTransform attributeName="transform" type="translate" values="0,0;12,-8;-8,6;0,0" dur="1.3s" fill="freeze"
+                         calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;1 0 1 0"/></circle>
+    </g>
+
+    <!-- ORBITALS: post-ringdown -->
     <g opacity="0">
       <animate attributeName="opacity" values="0;0;0.85" dur="0.4s" begin="1.5s" fill="freeze"
                calcMode="spline" keySplines="1 0 1 0;0.2 0.8 1 1"/>
-      <circle r="2" fill="#d0e4ff" filter="url(#fn)" class="oa">
-        <animateMotion path="M0,-84 Q84,0 0,84 Q-84,0 0,-84" dur="6.854s" repeatCount="indefinite"/>
-      </circle>
-      <circle r="1.5" fill="#b0c8ff" filter="url(#fn)" opacity=".9" class="ob">
-        <animateMotion path="M84,0 Q0,-84 -84,0 Q0,84 84,0" dur="11.09s" repeatCount="indefinite"/>
-      </circle>
+      <circle r="2" fill="#d0e4ff" filter="url(#nf)" class="oa">
+        <animateMotion path="M0,-84 Q84,0 0,84 Q-84,0 0,-84" dur="6.854s" repeatCount="indefinite"/></circle>
+      <circle r="1.5" fill="#b0c8ff" filter="url(#nf)" opacity=".9" class="ob">
+        <animateMotion path="M84,0 Q0,-84 -84,0 Q0,84 84,0" dur="11.09s" repeatCount="indefinite"/></circle>
     </g>
   </g>
 
-  <!-- TYPOGRAPHY: animated gradient fill + glow filter -->
-  <g opacity="0" filter="url(#ft)">
+  <!-- ═══════════════════════════════════════════════ -->
+  <!--  TYPOGRAPHY                                    -->
+  <!-- ═══════════════════════════════════════════════ -->
+
+  <!-- WORDMARK -->
+  <g opacity="0" filter="url(#tf)">
     <animate attributeName="opacity" values="0;0;1" dur="0.5s" begin="1.0s" fill="freeze"
              calcMode="spline" keySplines="1 0 1 0;0.16 1 0.3 1"/>
     <animateTransform attributeName="transform" type="translate" values="0,10;0,10;0,0" dur="0.5s" begin="1.0s" fill="freeze"
                      calcMode="spline" keySplines="1 0 1 0;0.16 1 0.3 1"/>
-    <text x="470" y="232" font-family="'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
-          font-size="88" font-weight="900" fill="url(#tg)" letter-spacing="5"
+    <text x="470" y="230"
+          font-family="'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+          font-size="88" font-weight="900" font-style="italic"
+          fill="url(#tg)" letter-spacing="3"
           style="-webkit-font-smoothing:antialiased">HYPERWEAVE</text>
   </g>
 
-  <!-- DIVIDER: animated gradient stroke -->
-  <line x1="470" y1="250" x2="940" y2="250" stroke="url(#e)" stroke-width="1" opacity="0">
-    <animate attributeName="opacity" values="0;0;0.4" dur="0.3s" begin="1.2s" fill="freeze"
+  <!-- DIVIDER -->
+  <line x1="470" y1="248" x2="940" y2="248" stroke="url(#sg)" stroke-width="1" opacity="0">
+    <animate attributeName="opacity" values="0;0;0.35" dur="0.3s" begin="1.2s" fill="freeze"
              calcMode="spline" keySplines="1 0 1 0;0.16 1 0.3 1"/>
   </line>
 
-  <!-- TAGLINE: same animated fill as text, lower opacity -->
-  <text x="472" y="274" fill="url(#tg)" opacity="0" font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
-        font-size="13.5" font-weight="600" letter-spacing="8" style="-webkit-font-smoothing:antialiased">
-    <animate attributeName="opacity" values="0;0;0.7" dur="0.3s" begin="1.3s" fill="freeze"
+  <!-- TAGLINE -->
+  <text x="472" y="272" fill="url(#tg)" opacity="0"
+        font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+        font-size="13" font-weight="600" letter-spacing="8"
+        style="-webkit-font-smoothing:antialiased">
+    <animate attributeName="opacity" values="0;0;0.65" dur="0.3s" begin="1.3s" fill="freeze"
              calcMode="spline" keySplines="1 0 1 0;0.16 1 0.3 1"/>
     WHERE VECTORS MEET VISION
   </text>
 
-  <!-- LAB: slightly more violet-shifted -->
-  <text x="472" y="296" fill="url(#tg)" opacity="0" font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
-        font-size="11" font-weight="700" letter-spacing="6" style="-webkit-font-smoothing:antialiased">
-    <animate attributeName="opacity" values="0;0;0.5" dur="0.3s" begin="1.4s" fill="freeze"
+  <!-- LAB -->
+  <text x="472" y="294" fill="url(#tg)" opacity="0"
+        font-family="'JetBrains Mono','SF Mono','Fira Code',monospace"
+        font-size="11" font-weight="700" letter-spacing="6"
+        style="-webkit-font-smoothing:antialiased">
+    <animate attributeName="opacity" values="0;0;0.45" dur="0.3s" begin="1.4s" fill="freeze"
              calcMode="spline" keySplines="1 0 1 0;0.16 1 0.3 1"/>
     INNERAURA LABS
   </text>
