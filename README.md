@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="./assets/banners/hyperweave-banner-v2.svg" alt="HyperWeave" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/3d46165fff7cf46e6c3feab6f96cfe09a63b1655/assets/banners/hyperweave-banner.svg" alt="HyperWeave" width="100%"/>
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/rapid-match-cuts/rapid-match-cut-stat-cards.svg" alt="rapid match cuts"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/3d46165fff7cf46e6c3feab6f96cfe09a63b1655/assets/rapid-match-cuts/rapid-match-cut-stat-cards.svg" alt="rapid match cuts"/>
 </p>
 
 <!--
