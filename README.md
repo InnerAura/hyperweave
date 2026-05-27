@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="assets/banners/hyperweave-banner-warp-zoom.svg" alt="HyperWeave" width="100%"/>
+  <img src="./assets/banners/hyperweave-banner-gravity-slam.svg" alt="HyperWeave" width="100%"/>
 </p>
 
 <p align="center">
@@ -24,10 +24,6 @@
 
 <p align="center">
   <img src="assets/rapid-match-cuts/rapid-match-cut-stat-cards.svg" alt="rapid match cuts"/>
-</p>
-
-<p align="center">
-  <img src="assets/marquees/genome-marquee-v3.svg" alt="genome marquee"/>
 </p>
 
 <!--
