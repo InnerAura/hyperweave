@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="./assets/banners/hyperweave-banner-gravity-slam.svg" alt="HyperWeave" width="100%"/>
+  <img src="./assets/banners/hyperweave-banner-v2.svg" alt="HyperWeave" width="100%"/>
 </p>
 
 <p align="center">
