@@ -29,6 +29,8 @@
 {% endif %}
 {% if data_hw_statemode and data_hw_statemode != 'off' %}     data-hw-statemode="{{ data_hw_statemode }}"
 {% endif %}
+{% if data_hw_state_shape | default('') %}     data-hw-state-shape="{{ data_hw_state_shape }}"
+{% endif %}
 {% if inline_style_overrides | default('') %}     style="{{ inline_style_overrides }}"
 {% endif %}
      data-hw-chromatic="{{ genome_id }}">

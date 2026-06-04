@@ -35,10 +35,10 @@ from hyperweave.telemetry.models import (
 from hyperweave.telemetry.parser import parse_transcript
 from hyperweave.telemetry.runtimes import classify_tool, get_runtime
 from hyperweave.telemetry.stages import detect_stages
+from tests.conftest import FIXTURES_DIR
 
 _CC_REGISTRY = get_runtime("claude-code")
 
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
 SESSION_FIXTURE = FIXTURES_DIR / "session.jsonl"
 
 
@@ -534,7 +534,7 @@ class TestGenerationEvent:
 class TestArchitecturalInvariant:
     """Verify that the telemetry module has ZERO imports from render/ or compose/."""
 
-    TELEMETRY_DIR = Path(__file__).parent.parent / "src" / "hyperweave" / "telemetry"
+    TELEMETRY_DIR = Path(__file__).parent.parent.parent / "src" / "hyperweave" / "telemetry"
 
     def _get_imports(self, filepath: Path) -> list[str]:
         source = filepath.read_text()

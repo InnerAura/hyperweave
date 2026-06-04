@@ -374,15 +374,11 @@ def resolve_badge(
         if badge_cfg_for_seam and badge_cfg_for_seam.seam_w > 0
         else profile.get("badge_seam_width", 3)
     )
-    # Indicator geometry: paradigm overrides profile defaults. Brutalist v0.3.3
-    # declares 10x10 + ind_pad_r=10 to match the v16 prototype's translate(138,5);
-    # chrome and cellular continue to fall back to their profile defaults.
+    # Indicator geometry. ``indicator_size`` (the proportional accent size) is
+    # derived from the value-font cap height AFTER the value size is resolved
+    # below — see ``indicator_size = ...`` near ``_value_size``. Stroke + inner-bit
+    # ratio remain paradigm-tunable here.
     badge_cfg_for_indicator = paradigm_spec.badge if paradigm_spec else None
-    indicator_size = (
-        badge_cfg_for_indicator.indicator_size
-        if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_size > 0
-        else profile.get("badge_indicator_size", 8)
-    )
     indicator_stroke_width = (
         badge_cfg_for_indicator.indicator_stroke_width
         if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_stroke_width > 0
@@ -393,6 +389,22 @@ def resolve_badge(
         if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_inner_bit_ratio > 0
         else 0.5
     )
+    # State-indicator shape cascade: request override > genome/variant default >
+    # paradigm default > substrate default. Reading paradigm_spec.badge.indicator_shape
+    # is config field access, not a paradigm-string comparison (Invariant 12). The
+    # substrate default keys off substrate_kind (a substrate axis, not a paradigm):
+    # light substrates default to the soft ring (circle), dark to the angular bit
+    # (square) — preserving the brutalist dark=square / light=circle pairing
+    # without a per-variant config edit. chrome sets indicator_shape=diamond in
+    # paradigm config, short-circuiting before the substrate default. The chosen
+    # slug selects indicators/<shape>-indicator.j2 in the content template.
+    _substrate_default_shape = "circle" if str(genome.get("substrate_kind", "dark")) == "light" else "square"
+    _paradigm_indicator_shape = (
+        badge_cfg_for_indicator.indicator_shape
+        if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_shape
+        else _substrate_default_shape
+    )
+    indicator_shape = spec.state_glyph_shape or genome.get("state_glyph_shape") or _paradigm_indicator_shape
     inset = profile.get("badge_inset", 0)
     # text_y_factor from paradigm (cellular uses 0.656 matching spec y=21 at
     # h=32; brutalist/chrome use 0.69 baseline). One place drives the math.
@@ -420,6 +432,18 @@ def resolve_badge(
     if compact:
         _label_size = max(round(_label_size * 0.78), 6)
         _value_size = max(round(_value_size * 0.78), 7)
+
+    # Indicator size = the value-font cap height, so the status glyph reads as one
+    # proportional accent sized to the text (never a fixed oversized block). Every
+    # shape derives from this: square side, circle diameter, and diamond diagonal
+    # all equal indicator_size (see circle/diamond geometry below). cap_ratio ≈
+    # 0.72 (Orbitron / JetBrains Mono cap height ≈ 0.72em); paradigm-tunable.
+    _cap_ratio = (
+        badge_cfg_for_indicator.indicator_cap_ratio
+        if badge_cfg_for_indicator and badge_cfg_for_indicator.indicator_cap_ratio > 0
+        else 0.72
+    )
+    indicator_size = max(4, round(_value_size * _cap_ratio))
 
     # Letter-spacing values come from the paradigm's badge config so
     # measure_text reserves the exact width the template will render. The
@@ -599,10 +623,17 @@ def resolve_badge(
     )
 
     indicator_center_x = zones.indicator_x + zones.indicator_size / 2 if zones.show_indicator else 0.0
-    indicator_center_y = height / 2
-    diamond_outer_size = round(indicator_size + 0.4, 1)
+    # Single source: the indicator vertical center is computed once in
+    # compose/layout.py (geometric, height/2) and consumed here so square,
+    # circle, and diamond all anchor to the same midline regardless of paradigm.
+    indicator_center_y = zones.indicator_center_y
+    # Diamond is a rotated square: its vertical/horizontal extent is the DIAGONAL.
+    # Side = indicator_size / sqrt(2) so the diamond's diagonal == indicator_size —
+    # the same bounding height as the square and circle (one proportional accent
+    # across shapes). Inner bit stays 0.55 of the side.
+    diamond_outer_size = round(indicator_size / 1.41421356, 1)
     diamond_outer_half = round(diamond_outer_size / 2, 1)
-    diamond_inner_size = round(max(1.0, indicator_size * 0.55), 1)
+    diamond_inner_size = round(max(1.0, diamond_outer_size * 0.55), 1)
     diamond_inner_half = round(diamond_inner_size / 2, 1)
 
     cellular_pattern_cells: list[dict[str, object]] = []
@@ -661,8 +692,11 @@ def resolve_badge(
     light_perimeter_inset = 0.5
     light_badge_ink_divider_w = 4
     light_badge_seam_w = 2
-    light_indicator_outer_r = 3
-    light_indicator_inner_r = 1
+    # Circle: diameter == indicator_size (radius = size/2), so it matches the
+    # square side and diamond diagonal — one proportional accent across shapes.
+    # Inner dot ~1/3 of the radius (the brutalist-light dot proportion), min 0.6.
+    light_indicator_outer_r = round(indicator_size / 2, 1)
+    light_indicator_inner_r = round(max(0.6, light_indicator_outer_r / 3), 1)
     light_indicator_stroke_width = 1.2
 
     # Variant resolution and profile visual context (envelope, well, specular,
@@ -761,6 +795,11 @@ def resolve_badge(
             "diamond_inner_y": -diamond_inner_half,
             "diamond_inner_size": diamond_inner_size,
             "indicator_stroke_width": indicator_stroke_width,
+            "indicator_shape": indicator_shape,
+            # Root data-hw-state-shape mirrors the rendered shape, but only when an
+            # indicator actually paints (stateless badges reclaim the zone, so they
+            # carry no shape). Empty string => document.svg.j2 omits the attribute.
+            "data_hw_state_shape": indicator_shape if zones.show_indicator else "",
             "accent_bar_width": accent_w,
             "has_glyph": has_glyph,
             "show_indicator": zones.show_indicator,

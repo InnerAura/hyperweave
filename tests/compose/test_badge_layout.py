@@ -254,11 +254,30 @@ def test_indicator_inner_bit_centered() -> None:
     assert zones.inner_bit_offset == expected_offset
 
 
-def test_indicator_y_pinned_to_text_baseline() -> None:
-    """text_y - 0.3 * font_size - indicator_size/2."""
+def test_indicator_anchored_to_content_reading_line() -> None:
+    """The state indicator centers on the content reading line — the SAME line the
+    identity glyph uses — so the brand glyph and the status glyph sit on one line.
+
+    NOT the geometric badge midline (height/2): that drifts off the reading line
+    on paradigms whose content line isn't the midline (chrome's is ≈10.5 in a 20px
+    badge), which left the status glyph misaligned from the brand glyph and value
+    text. The reading line is ``text_y - label_font_size*offset_em + glyph_y_offset``;
+    the square's top-left derives ``center - size/2``. All shapes share this center.
+    """
     zones = _zones(label_w=33.0, value_w=44.0)
-    expected = zones.text_y - BRUTALIST_INPUTS["value_font_size"] * 0.3 - BRUTALIST_INPUTS["indicator_size"] / 2
-    assert abs(zones.indicator_y - expected) < 0.05
+    size = BRUTALIST_INPUTS["indicator_size"]
+    # Reading line for these inputs: text_y(13.8) - label_font_size(11)*0.3 + 0 = 10.5.
+    expected_center = round(zones.text_y - 11.0 * 0.3, 1)
+    assert zones.indicator_center_y == expected_center
+    assert zones.indicator_y == round(zones.indicator_center_y - size / 2, 1)
+
+
+def test_indicator_aligns_with_identity_glyph() -> None:
+    """With a glyph present, the status glyph and the brand glyph share one line."""
+    inputs = {**BRUTALIST_INPUTS, "has_glyph": True}
+    zones = compute_badge_zones(measured_label_w=33.0, measured_value_w=44.0, **inputs)
+    glyph_center = zones.glyph_y + zones.glyph_size / 2
+    assert zones.indicator_center_y == round(glyph_center, 1)
 
 
 # ─────────────────────────────────────────────────────────────────────

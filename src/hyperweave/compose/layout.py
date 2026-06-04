@@ -128,7 +128,13 @@ class BadgeZones:
     indicator_x: float
     """Left edge of state indicator. 0.0 when ``has_state_indicator=False``."""
     indicator_y: float
-    """Top edge of state indicator. 0.0 when absent."""
+    """Top edge of state indicator (= indicator_center_y - size/2). 0.0 when absent."""
+    indicator_center_y: float
+    """Vertical center of the state indicator — the SINGLE source every shape
+    anchors to (square top-left derives ``- size/2``; circle/diamond use it
+    directly). Equals the content reading line (``text_visual_center +
+    glyph_y_offset``) — i.e. the identity glyph's center — so the status glyph and
+    the brand glyph share one line on every paradigm. 0.0 when absent."""
     indicator_size: int
     """State indicator side length. 0 when absent."""
     left_panel_w: int
@@ -281,6 +287,21 @@ def compute_badge_zones(
     # Text baseline (label + value share the same y for consistent reading line).
     text_y = round(height * text_y_factor, 1)
 
+    # Content reading line — the single vertical anchor for BOTH the identity
+    # glyph and the state indicator, so the two glyphs sit on one line on every
+    # paradigm. ``text_visual_center`` is where text optically centers (real font
+    # ink metrics when supplied, else the 0.3em heuristic); ``glyph_y_offset`` is
+    # the paradigm's nudge onto the rendered reading line. Geometric center
+    # (height/2) drifts off this line wherever the paradigm's content line isn't
+    # the badge midline (e.g. chrome: reading line ≈10.5, midline 10.0).
+    if center_glyph_on_text_ink:
+        text_visual_center = text_y + text_ink_center_offset_y
+    else:
+        text_visual_center = text_y - label_font_size * text_visual_center_offset_em
+    # Unrounded so each consumer rounds once (glyph_y stays byte-identical to the
+    # original ``text_visual_center - glyph_size/2 + glyph_y_offset`` formula).
+    content_reading_center = text_visual_center + glyph_y_offset
+
     # Structural frame ends at accent + legacy left-decoration offset, unless
     # a paradigm supplies the rendered left adornment boundary explicitly.
     # Cellular does this for its pattern bookend so compact badges can use a
@@ -301,14 +322,9 @@ def compute_badge_zones(
     glyph_visible_w = glyph_visual_w if glyph_visual_w > 0 else float(glyph_size)
     if has_glyph:
         glyph_x = cursor + (glyph_visible_w - glyph_size) / 2.0 if visual_gap_active else cursor
-        # Align the glyph box to the label's visual center, not the frame's
-        # geometric center. Prefer real font ink metrics when supplied; older
-        # callers retain the 0.3em heuristic.
-        if center_glyph_on_text_ink:
-            text_visual_center = text_y + text_ink_center_offset_y
-        else:
-            text_visual_center = text_y - label_font_size * text_visual_center_offset_em
-        glyph_y = round(text_visual_center - glyph_size / 2 + glyph_y_offset, 1)
+        # Align the glyph box to the content reading line (computed once above):
+        # glyph center == content_reading_center, so glyph_y = center - size/2.
+        glyph_y = round(content_reading_center - glyph_size / 2, 1)
         next_gap = resolved_visual_gap if visual_gap_active else (glyph_label_gap if glyph_label_gap > 0 else pad)
         if visual_gap_active:
             cursor += glyph_visible_w + next_gap
@@ -400,13 +416,20 @@ def compute_badge_zones(
     total_w = max(round(cursor + right_canvas_inset), min_total_w)
     right_panel_w = total_w - right_panel_x
 
-    # Indicator vertical center pinned to value-text visual midline.
-    # cap_height ≈ 70% of font_size; visual_center = text_y - 0.3 * font_size.
+    # Indicator vertical center: the content reading line (== the identity glyph's
+    # center), the SINGLE source every shape anchors to. Square top-left derives
+    # ``center - size/2``; circle/diamond consume ``indicator_center_y`` directly
+    # (resolver reads it off zones). Anchoring to the reading line — not height/2 —
+    # keeps the status glyph on the SAME line as the brand glyph and the value
+    # text on every paradigm. (Geometric center drifts off this line wherever a
+    # paradigm's content line isn't the badge midline, e.g. chrome's ≈10.5.)
     if has_state_indicator:
-        indicator_y = round(text_y - value_font_size * 0.3 - indicator_size / 2, 1)
+        indicator_center_y = round(content_reading_center, 1)
+        indicator_y = round(content_reading_center - indicator_size / 2, 1)
         inner_bit_w = round(indicator_size * inner_bit_ratio)
         inner_bit_offset = (indicator_size - inner_bit_w) / 2
     else:
+        indicator_center_y = 0.0
         indicator_y = 0.0
         inner_bit_w = 0
         inner_bit_offset = 0.0
@@ -446,6 +469,7 @@ def compute_badge_zones(
         value_text_length=value_text_length,
         indicator_x=indicator_x,
         indicator_y=indicator_y,
+        indicator_center_y=indicator_center_y,
         indicator_size=indicator_size if has_state_indicator else 0,
         left_panel_w=left_panel_w,
         right_panel_x=right_panel_x,

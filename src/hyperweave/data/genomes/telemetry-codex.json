@@ -98,6 +98,7 @@
     }
   ],
   "card_top_highlight": true,
+  "card_top_highlight_color": "#FFFFFF",
   "card_inset": 6,
   "paradigms": {
     "receipt": "default",

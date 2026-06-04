@@ -1,0 +1,14 @@
+{# Shared DIAMOND state indicator (housing + ring + bit, three rotated rects).
+   chrome reference: housing/stroke route through dedicated --dna-diamond-* vars;
+   the inner bit's class + fill are styling vars set by the including content
+   template (chrome: hw-logic-bit + --dna-status-color). Geometry (diamond_*,
+   chrome_diamond_*) is resolver-supplied. 8-space continuation indent is
+   load-bearing for byte-equality. #}
+<g data-hw-zone="status" transform="translate({{ indicator_center_x }},{{ indicator_center_y }})">
+  <rect x="{{ diamond_outer_x }}" y="{{ diamond_outer_y }}" width="{{ diamond_outer_size }}" height="{{ diamond_outer_size }}" rx="{{ chrome_diamond_outer_rx }}"
+        transform="rotate(45)" fill="var(--dna-diamond-housing)"/>
+  <rect x="{{ diamond_outer_x }}" y="{{ diamond_outer_y }}" width="{{ diamond_outer_size }}" height="{{ diamond_outer_size }}" rx="{{ chrome_diamond_outer_rx }}"
+        transform="rotate(45)" fill="none" stroke="var(--dna-diamond-stroke)" stroke-width="{{ chrome_diamond_stroke_width }}"/>
+  <rect class="{{ indicator_bit_class }}" x="{{ diamond_inner_x }}" y="{{ diamond_inner_y }}" width="{{ diamond_inner_size }}" height="{{ diamond_inner_size }}" rx="{{ chrome_diamond_inner_rx }}"
+        transform="rotate(45)" fill="{{ indicator_bit_fill }}"/>
+</g>

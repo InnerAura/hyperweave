@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPT_PATH = PROJECT_ROOT / "scripts" / "generate_proofset.py"
 
 

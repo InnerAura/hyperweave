@@ -18,9 +18,10 @@ from __future__ import annotations
 
 from hyperweave.telemetry.codex_parser import parse_transcript
 from hyperweave.telemetry.models import ToolClass, ToolOutcome
+from tests.conftest import FIXTURES_DIR
 
-PRIMARY_FIXTURE = "tests/fixtures/codex_session.jsonl"
-PATCHES_FIXTURE = "tests/fixtures/codex_session_patches.jsonl"
+PRIMARY_FIXTURE = str(FIXTURES_DIR / "codex_session.jsonl")
+PATCHES_FIXTURE = str(FIXTURES_DIR / "codex_session_patches.jsonl")
 
 
 # --------------------------------------------------------------------------- #

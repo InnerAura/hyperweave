@@ -5,6 +5,25 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.14] - 2026-06-04
+
+v0.3.14 makes the badge state indicator a configurable, proportional accent, restores the Codex telemetry receipt's glass edge, and reorganizes the test suite.
+
+### Added
+
+- **Configurable state-indicator shape** &mdash; the badge status mark renders as a square, circle, or diamond via `?state_glyph_shape=`, on any genome (paradigm default when unset), and exposes the rendered shape as a `data-hw-state-shape` attribute.
+
+### Changed
+
+- **Proportional state indicator** &mdash; the status mark is sized to the value-text cap height and renders at one consistent size across square, circle, and diamond, reading as an accent rather than a fixed block.
+- **Test suite reorganized** &mdash; test files moved into subpackages mirroring `src/hyperweave/` (compose, telemetry, connectors, …); version-named files renamed to capability names.
+
+### Fixed
+
+- **State-indicator alignment** &mdash; the status mark, brand glyph, and value text now share one line on every genome; the mark previously drifted above the text on chrome.
+- **State-indicator spacing** &mdash; the trailing gap is measured to the chrome bezel's inner edge, so the mark no longer sits crammed against the metallic frame.
+- **Codex receipt top edge** &mdash; the Codex telemetry receipt's top highlight rendered as a dark grey wash; it now paints the intended light glass edge.
+
 ## [0.3.13] - 2026-06-03
 
 v0.3.13 expands the brutalist light palette to fourteen variants with a new horizontal stats layout, adds the HyperWeave identity glyph, and tightens the strip layout engine across all genomes.

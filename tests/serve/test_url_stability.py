@@ -33,15 +33,15 @@ rendered twice compares equal even though its embedded IDs differ.
 from __future__ import annotations
 
 import re
-from pathlib import Path
 from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from hyperweave.serve.app import app
+from tests.conftest import SNAPSHOTS_DIR
 
-SNAPSHOT_DIR = Path(__file__).parent / "snapshots" / "url_stability"
+SNAPSHOT_DIR = SNAPSHOTS_DIR / "url_stability"
 
 # Short UUID fragments embedded in element IDs/classes (e.g., hw-ebd30b0c-title).
 _HW_UID_RE = re.compile(r"hw-[0-9a-f]{6,}")

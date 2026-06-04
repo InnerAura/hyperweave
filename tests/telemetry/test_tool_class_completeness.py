@@ -17,14 +17,17 @@ import logging
 from typing import TYPE_CHECKING
 
 from hyperweave.telemetry.contract import build_contract
+from tests.conftest import FIXTURES_DIR
 
 if TYPE_CHECKING:
     import pytest
+
+_SESSION_FIXTURE = str(FIXTURES_DIR / "session.jsonl")
 
 
 def test_claude_session_fixture_has_no_unknown_tools(caplog: pytest.LogCaptureFixture) -> None:
     """Sweep the bundled Claude session fixture — every tool name must be mapped."""
     with caplog.at_level(logging.WARNING):
-        build_contract("tests/fixtures/session.jsonl")
+        build_contract(_SESSION_FIXTURE)
     unknowns = [r for r in caplog.records if "unknown_tool" in r.message]
-    assert not unknowns, f"unmapped tools in tests/fixtures/session.jsonl: {[r.message for r in unknowns]}"
+    assert not unknowns, f"unmapped tools in {_SESSION_FIXTURE}: {[r.message for r in unknowns]}"

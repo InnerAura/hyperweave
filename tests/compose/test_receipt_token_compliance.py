@@ -27,13 +27,15 @@ import re
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from hyperweave.compose.assembler import genome_to_css
 from hyperweave.compose.engine import compose
 from hyperweave.compose.treemap import compute_treemap_layout
 from hyperweave.core.models import ComposeSpec
+from hyperweave.core.schema import GenomeSpec
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _RECEIPT_TEMPLATE = _REPO_ROOT / "src/hyperweave/templates/frames/receipt.svg.j2"
 _GLYPH_PARTIAL = _REPO_ROOT / "src/hyperweave/templates/partials/provider-glyphs.svg.j2"
 _GENOMES_DIR = _REPO_ROOT / "src/hyperweave/data/genomes"
@@ -401,3 +403,54 @@ def test_treemap_accent_side_per_skin_matches_specimen() -> None:
         assert genome["treemap_accent_side"] == expected_side, (
             f"{genome_id}.treemap_accent_side must be {expected_side!r}; got {genome['treemap_accent_side']!r}"
         )
+
+
+# --------------------------------------------------------------------------- #
+# Card top-highlight token (glass edge) — regression guard                     #
+# --------------------------------------------------------------------------- #
+#
+# v0.3.10 tokenized the receipt card top-highlight gradient but pointed it at
+# --dna-ink-primary. ink is text tone (near-black on the light codex skin), so
+# the intended white glass edge rendered as a dark grey wash band. The fix
+# routes the highlight through its own surface-light role (--dna-card-top-
+# highlight, sourced from card_top_highlight_color) and enforces the gate↔color
+# pair at genome load. These tests pin both halves so the wash can't return.
+
+_MINIMAL_TELEMETRY = {"session": {}, "profile": {}, "tools": {}, "stages": []}
+
+
+def test_codex_receipt_top_highlight_uses_surface_token_not_ink() -> None:
+    """The codex card top-highlight must source --dna-card-top-highlight, not ink.
+
+    Renders a real codex receipt and asserts the highlight gradient block paints
+    the surface-light token (white), with zero ``ink-primary`` reference inside
+    it. A reference to ink anywhere in the ``receipt-card-top-highlight``
+    linearGradient reintroduces the dark-wash regression.
+    """
+    svg = compose(ComposeSpec(type="receipt", genome_id="telemetry-codex", telemetry_data=_MINIMAL_TELEMETRY)).svg
+    assert "--dna-card-top-highlight: #FFFFFF;" in svg, "codex CSS must emit the surface-light highlight token"
+    block = re.search(r"receipt-card-top-highlight.*?</linearGradient>", svg, re.S)
+    assert block is not None, "codex receipt must define the card top-highlight gradient"
+    grad = block.group(0)
+    assert "var(--dna-card-top-highlight)" in grad, "highlight stops must reference --dna-card-top-highlight"
+    assert "ink-primary" not in grad, "ink must NOT leak into the highlight gradient (the dark-wash regression)"
+
+
+def test_codex_genome_declares_highlight_color() -> None:
+    """telemetry-codex must declare both the gate and its surface-light color."""
+    genome = _load_genome("telemetry-codex")
+    assert genome["card_top_highlight"] is True
+    assert genome["card_top_highlight_color"] == "#FFFFFF", "codex glass edge must be white per v0.3.7 aesthetic"
+
+
+def test_card_top_highlight_gate_requires_color_at_load() -> None:
+    """A genome with the gate on but no color must fail loud at GenomeSpec load.
+
+    This is the contract that prevents the regression class permanently: you
+    cannot enable the highlight without supplying its color, so the gradient can
+    never render an empty/undefined CSS var again.
+    """
+    raw = _load_genome("telemetry-codex")
+    raw["card_top_highlight_color"] = ""  # blank the color, keep the gate True
+    with pytest.raises(ValidationError, match="card_top_highlight_color"):
+        GenomeSpec(**raw)

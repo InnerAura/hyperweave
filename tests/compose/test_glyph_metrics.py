@@ -147,5 +147,7 @@ def test_brutalist_and_chrome_badge_slots_stay_pinned() -> None:
 
     assert 'viewBox="0 0 124 20"' in brutalist
     assert 'transform="translate(9.0,3.8)"' in brutalist
-    assert 'viewBox="0 0 123 20"' in chrome
+    # chrome width grew 2px in v0.3.14: right_canvas_inset=2 reserves the metallic
+    # bezel so trailing content pads to the well's inner edge, not the badge edge.
+    assert 'viewBox="0 0 125 20"' in chrome
     assert 'transform="translate(11.0,4.5)"' in chrome

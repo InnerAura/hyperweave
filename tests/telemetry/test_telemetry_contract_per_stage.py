@@ -19,14 +19,14 @@ they unblock skin auto-detection (Phase D) and variable-height bars
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 import pytest
 
 from hyperweave.telemetry.contract import build_contract
+from tests.conftest import FIXTURES_DIR
 
-SESSION_FIXTURE = Path(__file__).parent / "fixtures" / "session.jsonl"
+SESSION_FIXTURE = FIXTURES_DIR / "session.jsonl"
 
 
 @pytest.fixture(scope="module")

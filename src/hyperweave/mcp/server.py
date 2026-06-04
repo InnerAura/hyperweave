@@ -41,6 +41,7 @@ async def hw_compose(
     shape: str = "",
     variant: str = "",
     pair: str = "",
+    state_glyph_shape: str = "",
     divider_variant: str = "zeropoint",
     direction: str = "ltr",
     speeds: list[float] | None = None,
@@ -108,6 +109,9 @@ async def hw_compose(
           solo tones — e.g. variant="teal" pair="violet". Bifamily frames
           (strip, divider) consume the pair; other frames silently ignore it.
           Empty = solo render.
+    state_glyph_shape: badge state-indicator shape override: square | circle |
+          diamond. Empty = genome/paradigm default (brutalist dark=square /
+          light=circle, chrome=diamond, cellular=square).
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -145,6 +149,7 @@ async def hw_compose(
         shape=shape,
         variant=variant,
         pair=pair,
+        state_glyph_shape=state_glyph_shape,
         divider_variant=divider_variant,
         marquee_direction=direction,
         marquee_speeds=speeds,

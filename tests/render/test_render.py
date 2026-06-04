@@ -19,11 +19,11 @@ import pytest
 # Fixtures
 # ==========================================================================
 
-GLYPHS_PATH = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "data" / "glyphs.json"
+GLYPHS_PATH = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "data" / "glyphs.json"
 
-MOTIONS_DIR = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "data" / "motions"
+MOTIONS_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "data" / "motions"
 
-TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "templates"
+TEMPLATES_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "templates"
 
 
 @pytest.fixture(scope="session")

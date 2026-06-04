@@ -33,11 +33,15 @@
 {% endfor %}
 </radialGradient>
 {% endfor %}
-{# Card top highlight — white→transparent gradient suggesting a glass edge. #}
+{# Card top highlight — surface-light→transparent gradient suggesting a glass
+   edge. Sources --dna-card-top-highlight (the genome's card_top_highlight_color),
+   NOT --dna-ink-primary: ink is text tone (near-black on light skins), so
+   routing the edge through ink turned codex's white glass edge into a dark
+   wash. The highlight is a surface-light role with its own token. #}
 {% if card_top_highlight %}
 <linearGradient id="receipt-card-top-highlight" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="var(--dna-ink-primary)" stop-opacity="0.35"/>
-  <stop offset="100%" stop-color="var(--dna-ink-primary)" stop-opacity="0"/>
+  <stop offset="0%" stop-color="var(--dna-card-top-highlight)" stop-opacity="0.35"/>
+  <stop offset="100%" stop-color="var(--dna-card-top-highlight)" stop-opacity="0"/>
 </linearGradient>
 {% endif %}
 {% endblock %}

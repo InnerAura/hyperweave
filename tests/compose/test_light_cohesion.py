@@ -17,7 +17,7 @@ import pytest
 
 from hyperweave.compose.engine import compose
 from hyperweave.core.models import ComposeSpec
-from tests.test_stats_brutalist import MOCK_STATS
+from tests.compose.test_stats_brutalist import MOCK_STATS
 
 # All 14 light scholars (6 original + 8 v0.3.13 substrates). The structural
 # pins below derive from shared light partials, so every variant inherits them.

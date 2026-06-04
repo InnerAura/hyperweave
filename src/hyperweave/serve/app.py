@@ -232,6 +232,10 @@ async def compose_badge_url(
             ),
         ),
     ] = "",
+    state_glyph_shape: Annotated[
+        str,
+        Query(description="Badge state-indicator shape override: square | circle | diamond."),
+    ] = "",
 ) -> Response:
     """Static badge: /v1/badge/{title}/{value}/{genome}.{motion}.
 
@@ -253,6 +257,7 @@ async def compose_badge_url(
         size=size,
         variant=variant,
         pair=pair,
+        state_glyph_shape=state_glyph_shape,
     )
     return _compose_and_respond(spec, request)
 
@@ -293,6 +298,10 @@ async def compose_badge_data_url(
                 "consume the pair; other frames silently ignore it."
             ),
         ),
+    ] = "",
+    state_glyph_shape: Annotated[
+        str,
+        Query(description="Badge state-indicator shape override: square | circle | diamond."),
     ] = "",
 ) -> Response:
     """Data-driven badge: /v1/badge/{title}/{genome}.{motion}?data=...
@@ -342,6 +351,7 @@ async def compose_badge_data_url(
         size=size,
         variant=variant,
         pair=pair,
+        state_glyph_shape=state_glyph_shape,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl)
 

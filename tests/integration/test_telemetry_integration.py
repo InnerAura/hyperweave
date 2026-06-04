@@ -13,7 +13,9 @@ from typing import Any
 
 import pytest
 
-FIXTURE_JSONL = Path("tests/fixtures/session.jsonl")
+from tests.conftest import FIXTURES_DIR
+
+FIXTURE_JSONL = FIXTURES_DIR / "session.jsonl"
 
 
 @pytest.fixture()
@@ -386,9 +388,7 @@ def test_treemap_field_is_errors_not_error_count() -> None:
     P0 audit cleanup; this test still defends against any future drift across
     all live .j2 files.
     """
-    from pathlib import Path
-
-    templates_root = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "templates"
+    templates_root = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "templates"
     for path in templates_root.rglob("*.j2"):
         text = path.read_text()
         assert "error_count" not in text, f"Stale cell.error_count reference in {path}"

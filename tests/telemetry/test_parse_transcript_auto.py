@@ -10,10 +10,11 @@ exclusive by construction, but tests guard the invariant.
 from __future__ import annotations
 
 from hyperweave.telemetry.contract import build_contract, parse_transcript_auto
+from tests.conftest import FIXTURES_DIR
 
-CLAUDE_FIXTURE = "tests/fixtures/session.jsonl"
-CODEX_FIXTURE = "tests/fixtures/codex_session.jsonl"
-CODEX_PATCHES_FIXTURE = "tests/fixtures/codex_session_patches.jsonl"
+CLAUDE_FIXTURE = str(FIXTURES_DIR / "session.jsonl")
+CODEX_FIXTURE = str(FIXTURES_DIR / "codex_session.jsonl")
+CODEX_PATCHES_FIXTURE = str(FIXTURES_DIR / "codex_session_patches.jsonl")
 
 
 def test_claude_fixture_routes_to_claude_parser() -> None:

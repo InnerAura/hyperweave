@@ -86,9 +86,10 @@
       compose/layout.py. inner_bit_w / inner_bit_offset come from the
       same engine — no template-side arithmetic (Invariant 6). #}
 {% if show_indicator %}
-<g data-hw-zone="status" transform="translate({{ indicator_x }},{{ indicator_y }})">
-  <rect class="hw-ring" fill="none" stroke="var(--hw-state-signal, {{ label_text_fill }})" stroke-width="1.2" width="{{ indicator_size }}" height="{{ indicator_size }}"/>
-  <rect class="hw-bit" x="{{ inner_bit_offset }}" y="{{ inner_bit_offset }}" width="{{ inner_bit_w }}" height="{{ inner_bit_w }}"
-        fill="var(--hw-state-signal, {{ label_text_fill }})"/>
-</g>
+{% set indicator_ring_class = "hw-ring" %}
+{% set indicator_ring_stroke = "var(--hw-state-signal, " ~ label_text_fill ~ ")" %}
+{% set indicator_stroke_width_value = "1.2" %}
+{% set indicator_bit_class = "hw-bit" %}
+{% set indicator_bit_fill = "var(--hw-state-signal, " ~ label_text_fill ~ ")" %}
+{% include "frames/badge/indicators/" ~ indicator_shape ~ "-indicator.j2" %}
 {% endif %}

@@ -82,11 +82,12 @@
    brutalist v0.3.3 ships 1.5 / 6 (0.6 ratio), matching the v16
    prototype's translate(138,5) → 10x10 ring + 6x6 bit at offset 2. #}
 {% if show_indicator %}
-<g data-hw-zone="status" transform="translate({{ indicator_x }},{{ indicator_y }})">
-  <rect fill="none" stroke="var(--hw-state-ring, var(--dna-signal))" stroke-width="{{ indicator_stroke_width | default('1.2') }}" width="{{ indicator_size }}" height="{{ indicator_size }}"/>
-  <rect class="hw-logic-bit" x="{{ inner_bit_offset }}" y="{{ inner_bit_offset }}" width="{{ inner_bit_w }}" height="{{ inner_bit_w }}"
-        fill="var(--dna-status-color, var(--dna-signal))"/>
-</g>
+{% set indicator_ring_class = "" %}
+{% set indicator_ring_stroke = "var(--hw-state-ring, var(--dna-signal))" %}
+{% set indicator_stroke_width_value = indicator_stroke_width %}
+{% set indicator_bit_class = "hw-logic-bit" %}
+{% set indicator_bit_fill = "var(--dna-status-color, var(--dna-signal))" %}
+{% include "frames/badge/indicators/" ~ indicator_shape ~ "-indicator.j2" %}
 {% endif %}
 
 {# No state tint overlay: brutalist paradigm keeps the value zone flat --dna-surface-deep

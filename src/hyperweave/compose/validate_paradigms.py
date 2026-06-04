@@ -27,6 +27,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from hyperweave.core.schema import INDICATOR_SHAPES
+
 if TYPE_CHECKING:
     from hyperweave.core.paradigm import ParadigmSpec
     from hyperweave.core.schema import GenomeSpec
@@ -332,6 +334,21 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
             violations.append(
                 f"  variant_overrides has keys not in variants[]: {sorted(unknown)} (variants={sorted(variants_set)})"
             )
+
+        # state_glyph_shape override bound — ungated so chrome/automata variant
+        # overrides are covered too (not just substrate-dispatch genomes). Variant
+        # overrides are free-form dicts that bypass GenomeSpec field validation, so
+        # a typo'd shape would otherwise reach the indicators/<shape> include with
+        # no partial behind it. Empty/absent is fine (defers to the cascade).
+        for variant_slug, override in genome.variant_overrides.items():
+            if not isinstance(override, dict):
+                continue
+            shape = override.get("state_glyph_shape")
+            if shape and shape not in INDICATOR_SHAPES:
+                violations.append(
+                    f"  variant_overrides['{variant_slug}'].state_glyph_shape={shape!r} "
+                    f"must be one of {sorted(INDICATOR_SHAPES)}"
+                )
 
         # Substrate-dispatch opt-in flag: any override declaring substrate_kind
         # signals this genome uses substrate-aware template dispatch (v0.3.2+).

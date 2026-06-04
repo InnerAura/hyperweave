@@ -58,6 +58,15 @@ badge:
   # trailing bearings).
   label_letter_spacing_em: 0.1
   value_letter_spacing_em: 0.03
+  # Chrome's state indicator is the rotated diamond (housing + ring + bit).
+  # Selects indicators/diamond-indicator.j2; genome state_glyph_shape can
+  # override per-variant or per-request.
+  indicator_shape: diamond
+  # Reserve the metallic bezel/well inset (2px each side) on the right so the
+  # trailing pad lands at the WELL inner edge — the visible content boundary —
+  # not the badge outer edge. Without this the indicator sits pad-2px from the
+  # well edge (looks crammed right). Mirrors cellular's inner-canvas inset.
+  right_canvas_inset: 2
 
 strip:
   value_font_size: 17

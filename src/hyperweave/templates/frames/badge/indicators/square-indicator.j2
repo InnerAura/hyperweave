@@ -1,0 +1,11 @@
+{# Shared SQUARE state indicator (concentric ring + bit, translate group).
+   Parameterized so brutalist-dark (no ring class, hw-logic-bit, --hw-state-ring
+   var, indicator_stroke_width) and cellular (hw-ring/hw-bit, --hw-state-signal,
+   literal 1.2) both byte-reproduce. Geometry (indicator_x/y/size, inner_bit_*)
+   is resolver-supplied; styling vars are set by the including content template.
+   The 2-space / 8-space indentation is load-bearing for byte-equality. #}
+<g data-hw-zone="status" transform="translate({{ indicator_x }},{{ indicator_y }})">
+  <rect {% if indicator_ring_class %}class="{{ indicator_ring_class }}" {% endif %}fill="none" stroke="{{ indicator_ring_stroke }}" stroke-width="{{ indicator_stroke_width_value }}" width="{{ indicator_size }}" height="{{ indicator_size }}"/>
+  <rect class="{{ indicator_bit_class }}" x="{{ inner_bit_offset }}" y="{{ inner_bit_offset }}" width="{{ inner_bit_w }}" height="{{ inner_bit_w }}"
+        fill="{{ indicator_bit_fill }}"/>
+</g>

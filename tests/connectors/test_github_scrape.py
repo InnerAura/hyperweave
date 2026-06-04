@@ -7,8 +7,6 @@ drift canaries live in test_github_scrape_live.py (opt-in via -m network).
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from hyperweave.connectors.github import (
@@ -16,8 +14,9 @@ from hyperweave.connectors.github import (
     _fetch_contribution_data,
     parse_contribution_html,
 )
+from tests.conftest import FIXTURES_DIR
 
-FIXTURE_DIR = Path(__file__).parent / "fixtures" / "github_contributions"
+FIXTURE_DIR = FIXTURES_DIR / "github_contributions"
 
 
 @pytest.fixture()

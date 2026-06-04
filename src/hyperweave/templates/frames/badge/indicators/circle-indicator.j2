@@ -1,0 +1,9 @@
+{# Shared CIRCLE state indicator (concentric ring + dot, absolute cx/cy, no
+   group transform). brutalist-light reference: ring + bit both --dna-signal,
+   hw-logic-bit on the dot. Radii + stroke width are resolver-supplied
+   (light_indicator_*). Styling vars set by the including content template;
+   indicator_ring_class is empty on the default light path. #}
+<g data-hw-zone="status">
+  <circle {% if indicator_ring_class %}class="{{ indicator_ring_class }}" {% endif %}cx="{{ indicator_center_x }}" cy="{{ indicator_center_y }}" r="{{ light_indicator_outer_r }}" fill="none" stroke="{{ indicator_ring_stroke }}" stroke-width="{{ light_indicator_stroke_width }}"/>
+  <circle class="{{ indicator_bit_class }}" cx="{{ indicator_center_x }}" cy="{{ indicator_center_y }}" r="{{ light_indicator_inner_r }}" fill="{{ indicator_bit_fill }}"/>
+</g>

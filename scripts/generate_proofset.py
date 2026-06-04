@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -63,12 +64,12 @@ def _genome_motions(genome_id: str) -> list[str]:
 
 # ── Mock telemetry data for receipt / rhythm-strip ──
 
-# ── Real-transcript visual fidelity corpus (v0.2.21) ──
-# Five transcripts spanning a range of sizes from the user's local Claude Code
-# project history. Paths are user-machine-only (NOT committed). Falls back to
-# MOCK_TELEMETRY when absent — keeps CI / clean-environment runs reproducible.
-# xlarge + xxlarge stress-test bar count, tier-3 overflow, and label collision.
-_REAL_TRANSCRIPTS: list[tuple[str, Path]] = [
+# ── Claude Code transcript fallback corpus ──
+# Pinned paths used only when live discovery (``_discover_transcripts`` below)
+# finds nothing — i.e. on a machine without ~/.claude history. Discovery is the
+# primary source; these literals keep clean-env / CI behavior reproducible.
+# Paths are user-machine-only (NOT committed) and may be stale on any given box.
+_FALLBACK_TRANSCRIPTS: list[tuple[str, Path]] = [
     (
         "small",
         Path.home()
@@ -112,12 +113,10 @@ _REAL_TRANSCRIPTS: list[tuple[str, Path]] = [
 ]
 
 
-# ── Real-codex-transcript corpus (v0.2.23) ──
+# ── Codex transcript fallback corpus ──
 # Codex sessions live at ``~/.codex/sessions/YYYY/MM/DD/rollout-TIMESTAMP-UUID.jsonl``.
-# Same pattern as ``_REAL_TRANSCRIPTS`` above: user-machine-only paths with
-# graceful fallback when missing. Two sizes give the proofset both a sparse
-# (web_search-heavy) and dense (apply_patch-heavy) codex receipt.
-_REAL_CODEX_TRANSCRIPTS: list[tuple[str, Path]] = [
+# Same role as ``_FALLBACK_TRANSCRIPTS``: used only when discovery finds nothing.
+_FALLBACK_CODEX_TRANSCRIPTS: list[tuple[str, Path]] = [
     (
         "codex-small",
         Path.home()
@@ -153,6 +152,76 @@ def _load_real_telemetry(path: Path) -> dict[str, Any] | None:
     from hyperweave.telemetry.contract import build_contract
 
     return build_contract(str(path))
+
+
+def _discover_transcripts(
+    base: Path,
+    pattern: str,
+    label_prefix: str,
+    fallback: list[tuple[str, Path]],
+    *,
+    max_candidates: int = 500,
+    min_bytes: int = 4096,
+) -> list[tuple[str, Path]]:
+    """Discover size-varied real transcripts under ``base``.
+
+    Globs ``base/pattern``, drops sub-floor / corrupt files (< ``min_bytes``),
+    sorts by on-disk byte size (a deterministic proxy for token volume — avoids
+    parsing everything), caps the candidate set at ``max_candidates`` by keeping
+    an even spread across the size range (so a 10k-file machine doesn't stat-thrash
+    and the scan stays bounded), then selects one representative per size bucket
+    (small → xxlarge) across the distribution. Only the chosen few are parsed
+    (try/except, backfilling from the next candidate on parse failure). Returns
+    ``[(f"{label_prefix}{bucket}", Path), ...]`` with stable labels, or
+    ``fallback`` when nothing usable is found (clean-env reproducibility).
+
+    Selection is byte-size-spread, NOT exact token volume — a proxy that keeps the
+    scan O(stat) rather than O(parse). Files below ``min_bytes`` are skipped to
+    drop empty/corrupt sessions; this is not silent truncation of a real session.
+    """
+    if not base.is_dir():
+        return fallback
+    sized = sorted(
+        ((p.stat().st_size, str(p), p) for p in base.glob(pattern) if p.is_file()),
+        key=lambda t: (t[0], t[1]),
+    )
+    sized = [s for s in sized if s[0] >= min_bytes]
+    if len(sized) > max_candidates:
+        step = len(sized) / max_candidates
+        sized = [sized[int(i * step)] for i in range(max_candidates)]
+    if not sized:
+        return fallback
+
+    n = len(sized)
+    buckets = ("small", "medium", "large", "xlarge", "xxlarge")
+    # Fractional positions spanning small..very-large, avoiding degenerate extremes
+    # (the absolute min/max can be empty stubs or pathological multi-MB sessions).
+    fractions = (0.08, 0.30, 0.52, 0.74, 0.94)
+    out: list[tuple[str, Path]] = []
+    used: set[int] = set()
+    for bucket, frac in zip(buckets, fractions, strict=True):
+        idx = min(n - 1, int(frac * n))
+        while idx < n:
+            if idx not in used and _load_real_telemetry(sized[idx][2]) is not None:
+                used.add(idx)
+                out.append((f"{label_prefix}{bucket}", sized[idx][2]))
+                break
+            idx += 1
+    return out or fallback
+
+
+@lru_cache(maxsize=1)
+def _real_transcripts() -> list[tuple[str, Path]]:
+    """Discovered Claude Code transcripts (lazy + cached; not at import time)."""
+    return _discover_transcripts(Path.home() / ".claude" / "projects", "**/*.jsonl", "", _FALLBACK_TRANSCRIPTS)
+
+
+@lru_cache(maxsize=1)
+def _real_codex_transcripts() -> list[tuple[str, Path]]:
+    """Discovered Codex transcripts (lazy + cached; not at import time)."""
+    return _discover_transcripts(
+        Path.home() / ".codex" / "sessions", "**/rollout-*.jsonl", "codex-", _FALLBACK_CODEX_TRANSCRIPTS
+    )
 
 
 MOCK_TELEMETRY: dict[str, Any] = {
@@ -245,6 +314,7 @@ def _compose(
     variant: str = "",
     pair: str = "",
     shape: str = "",
+    state_glyph_shape: str = "",
     telemetry_data: dict[str, Any] | None = None,
     connector_data: dict[str, Any] | None = None,
     data_tokens: list[Any] | None = None,
@@ -264,6 +334,7 @@ def _compose(
         variant=variant,
         pair=pair,
         shape=shape,
+        state_glyph_shape=state_glyph_shape,
         telemetry_data=telemetry_data,
         connector_data=connector_data,
         data_tokens=list(data_tokens) if data_tokens else [],
@@ -619,11 +690,11 @@ def generate_static() -> int:
     # (codex data in cream skin, claude data in codex skin, etc.) produce
     # noise rather than signal.
     transcript_corpus: list[tuple[str, dict[str, Any]]] = [("mock", MOCK_TELEMETRY)]
-    for label, transcript_path in _REAL_TRANSCRIPTS:
+    for label, transcript_path in _real_transcripts():
         contract = _load_real_telemetry(transcript_path)
         if contract is not None:
             transcript_corpus.append((label, contract))
-    for label, transcript_path in _REAL_CODEX_TRANSCRIPTS:
+    for label, transcript_path in _real_codex_transcripts():
         contract = _load_real_telemetry(transcript_path)
         if contract is not None:
             transcript_corpus.append((label, contract))
@@ -1641,6 +1712,90 @@ def generate_readme(total: int, live_total: int) -> None:
     _emit_brutalist_readme()
     _emit_chrome_readme()
     _emit_telemetry_readme()
+    _emit_state_readme()
+
+
+def _emit_state_readme() -> None:
+    """Emit outputs/README_STATE.md — the badge state-indicator shape matrix.
+
+    3 genomes (spanning the badge paradigms) x 3 shapes (square / circle /
+    diamond, forced via the request-time ?state_glyph_shape= override). Each shape
+    renders a 3x3 grid: 3 variants (rows) x 3 states (passing / warning / critical,
+    columns) so both the shape dispatch AND the per-variant state-glyph colour are
+    comparable in one scroll. 81 badges into proofset/state-matrix/ — distinct from
+    the per-genome <genome>/states/ dirs. Cross-paradigm diamonds (e.g. brutalist
+    + diamond) show only the ring + bit because the housing routes through
+    chrome-specific --dna-diamond-* vars; that is honest, not broken.
+    """
+    state_dir = OUT / "proofset" / "state-matrix"
+    # Per genome: three variants spanning its colour range. Substrate noted because
+    # brutalist mixes dark and light variants (a light variant forced to `square`
+    # shows its state colour on a paper substrate).
+    genomes = [
+        (
+            "brutalist",
+            [("celadon", "dark — emerald phosphor"), ("ember", "dark — fired clay"), ("archive", "light — paper")],
+        ),
+        (
+            "chrome",
+            [("horizon", "frozen blue-silver"), ("moth", "umber iridescent"), ("abyssal", "teal-cyan")],
+        ),
+        (
+            "automata",
+            [("teal", "cellular teal"), ("violet", "cellular violet"), ("amber", "cellular amber")],
+        ),
+    ]
+    shapes = ("square", "circle", "diamond")
+    states = (ArtifactStatus.PASSING, ArtifactStatus.WARNING, ArtifactStatus.CRITICAL)
+
+    lines: list[str] = [
+        "# HyperWeave Badge State-Indicator Shape Matrix",
+        "",
+        "The badge state indicator is a configurable shape — `square`, `circle`, "
+        "or `diamond` — selectable per genome/variant or per request via "
+        "`?state_glyph_shape=`. Each paradigm has a default (brutalist dark=square "
+        "/ light=circle, chrome=diamond, cellular=square); the override flips it.",
+        "",
+        "Each shape shows a 3x3 grid — three variants (rows) across passing / "
+        "warning / critical (columns) — so the shape dispatch and the per-variant "
+        "state-glyph colour are both verifiable in one scroll.",
+        "",
+        "---",
+        "",
+    ]
+    for genome, variants in genomes:
+        lines.extend([f"## {genome}", ""])
+        for shape in shapes:
+            lines.extend([f"### shape = `{shape}`", ""])
+            for variant, substrate in variants:
+                lines.append(f"**{variant}** ({substrate})")
+                lines.append("")
+                row = []
+                for status in states:
+                    svg = _compose(
+                        "badge",
+                        genome,
+                        title="BUILD",
+                        description=status.value,
+                        state=status.value,
+                        glyph="github",
+                        variant=variant,
+                        state_glyph_shape=shape,
+                    )
+                    fname = f"badge_{genome}_{variant}_{shape}_{status.value}.svg"
+                    _write(state_dir / fname, svg)
+                    row.append(f"![{variant}-{shape}-{status.value}](proofset/state-matrix/{fname})")
+                lines.append(" ".join(row))  # one line → states render side-by-side
+                lines.append("")
+    lines.extend(
+        [
+            "## Cross-reference",
+            "",
+            "- [Main README](README.md) — proofset overview + genome cross-links",
+            "",
+        ]
+    )
+    (OUT / "README_STATE.md").write_text("\n".join(lines) + "\n")
 
 
 def _emit_telemetry_readme() -> None:
@@ -1680,8 +1835,8 @@ def _emit_telemetry_readme() -> None:
             lines.append("")
 
     real_groups: list[tuple[str, list[tuple[str, Path]], str]] = [
-        ("Claude Code transcripts", _REAL_TRANSCRIPTS, "telemetry-claude-code"),
-        ("Codex transcripts", _REAL_CODEX_TRANSCRIPTS, "telemetry-codex"),
+        ("Claude Code transcripts", _real_transcripts(), "telemetry-claude-code"),
+        ("Codex transcripts", _real_codex_transcripts(), "telemetry-codex"),
     ]
     for group_title, group_transcripts, matched_skin in real_groups:
         labels_present = [label for label, p in group_transcripts if p.exists()]

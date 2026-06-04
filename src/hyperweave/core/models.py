@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from hyperweave.core.enums import (
     DividerVariant,
@@ -14,6 +14,7 @@ from hyperweave.core.enums import (
     ProfileId,
     Regime,
 )
+from hyperweave.core.schema import INDICATOR_SHAPES
 
 
 class FrozenModel(BaseModel):
@@ -110,6 +111,22 @@ class ComposeSpec(FrozenModel):
             data["glyph"] = ""
         return data
 
+    @field_validator("state_glyph_shape", mode="before")
+    @classmethod
+    def _normalize_state_glyph_shape(cls, v: object) -> str:
+        """Normalize the request-time shape override; unknown slugs defer.
+
+        Query params arrive as raw strings (``?state_glyph_shape=Circle``): lower
+        + strip, then drop anything outside the canonical set back to ``""``. This
+        is untrusted request input served through Camo (no error page possible),
+        so an unknown slug degrades to the genome/paradigm default — mirroring how
+        an unknown ``?state=`` renders neutral rather than 500-ing. Developer-
+        authored config (GenomeSpec.state_glyph_shape, variant overrides) stays
+        strict and fails loud at load.
+        """
+        s = str(v or "").strip().lower()
+        return s if s in INDICATOR_SHAPES else ""
+
     # -- Content --
     slots: list[SlotContent] = Field(default_factory=list, description="Content filling frame zones")
     state: str = Field(default="active", description="Semantic state: active, warning, critical, passing, etc.")
@@ -135,6 +152,15 @@ class ComposeSpec(FrozenModel):
             "non-automata genomes and on cellular frame types that don't consume bifamily "
             "(badge, stats, chart, marquee, icon). Validated at resolve-time against "
             "genome.variant_tones — invalid pair raises."
+        ),
+    )
+    state_glyph_shape: str = Field(
+        default="",
+        description=(
+            "Request-time badge state-indicator shape override: '' (defer to "
+            "genome/paradigm), 'square', 'circle', or 'diamond'. Highest precedence "
+            "in the shape cascade (request > genome variant > paradigm default). "
+            "Powers ?state_glyph_shape= and the state-matrix proofset."
         ),
     )
 

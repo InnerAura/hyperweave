@@ -55,12 +55,10 @@
    aliasing that caused warm-tan strokes on horizon (accent_complement was
    warm tan, --dna-signal-dim resolved to it, the var() fallback never fired). #}
 {% if show_indicator %}
-<g data-hw-zone="status" transform="translate({{ indicator_center_x }},{{ indicator_center_y }})">
-  <rect x="{{ diamond_outer_x }}" y="{{ diamond_outer_y }}" width="{{ diamond_outer_size }}" height="{{ diamond_outer_size }}" rx="{{ chrome_diamond_outer_rx }}"
-        transform="rotate(45)" fill="var(--dna-diamond-housing)"/>
-  <rect x="{{ diamond_outer_x }}" y="{{ diamond_outer_y }}" width="{{ diamond_outer_size }}" height="{{ diamond_outer_size }}" rx="{{ chrome_diamond_outer_rx }}"
-        transform="rotate(45)" fill="none" stroke="var(--dna-diamond-stroke)" stroke-width="{{ chrome_diamond_stroke_width }}"/>
-  <rect class="hw-logic-bit" x="{{ diamond_inner_x }}" y="{{ diamond_inner_y }}" width="{{ diamond_inner_size }}" height="{{ diamond_inner_size }}" rx="{{ chrome_diamond_inner_rx }}"
-        transform="rotate(45)" fill="var(--dna-status-color, var(--dna-status-passing-core))"/>
-</g>
+{% set indicator_ring_class = "" %}
+{% set indicator_ring_stroke = "var(--dna-diamond-stroke)" %}
+{% set indicator_stroke_width_value = chrome_diamond_stroke_width %}
+{% set indicator_bit_class = "hw-logic-bit" %}
+{% set indicator_bit_fill = "var(--dna-status-color, var(--dna-status-passing-core))" %}
+{% include "frames/badge/indicators/" ~ indicator_shape ~ "-indicator.j2" %}
 {% endif %}

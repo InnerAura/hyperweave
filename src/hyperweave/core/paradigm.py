@@ -526,6 +526,19 @@ class ParadigmBadgeConfig(FrozenModel):
     ``> 0`` overrides the layout-engine default (0.5 — bit half of outer).
     Brutalist v0.3.3 sets 0.6 (10→6) to match the prototype's heavier
     inner mark. Zero defers to the default."""
+    indicator_cap_ratio: float = 0.0
+    """Indicator size as a fraction of the value-font size (its cap height), so
+    the status glyph reads as one proportional accent sized to the text — square
+    side, circle diameter, and diamond diagonal all equal ``value_font_size *
+    cap_ratio``. ``> 0`` overrides the default 0.72 (Orbitron / JetBrains Mono cap
+    height ≈ 0.72em). Replaced the fixed ``indicator_size`` / profile
+    ``badge_indicator_size`` so the accent never exceeds the cap height."""
+    indicator_shape: str = ""
+    """Default state-indicator shape for this paradigm: ``square`` / ``circle``
+    / ``diamond``. Selects the ``indicators/<shape>-indicator.j2`` partial via
+    slug interpolation. chrome sets ``diamond``; brutalist/cellular leave it
+    empty (the resolver coerces empty → ``square``). Genome ``state_glyph_shape``
+    (per-variant or request-time ``?state_glyph_shape=``) overrides this."""
     label_letter_spacing_em: float = 0.0
     """CSS-rendered ``letter-spacing`` for the label text. Resolver passes
     this to ``measure_text`` so the layout reserves the actual rendered

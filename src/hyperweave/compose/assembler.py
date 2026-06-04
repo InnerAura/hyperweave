@@ -186,6 +186,7 @@ _TELEMETRY_CSS_MAPPING: list[tuple[str, str]] = [
     ("card_border", "--dna-card-border"),
     ("card_border_top", "--dna-card-border-top"),
     ("card_inner_glyph", "--dna-card-inner-glyph"),
+    ("card_top_highlight_color", "--dna-card-top-highlight"),
 ]
 
 _FONT_CSS_MAPPING: list[tuple[str, str]] = [

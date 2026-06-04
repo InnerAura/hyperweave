@@ -11,7 +11,7 @@ from hyperweave.compose.stats_layout import compute_stats_card_height, compute_s
 from hyperweave.config.registry import get_paradigms, reset_registry
 from hyperweave.core.models import ComposeSpec
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TEMPLATE_ROOT = ROOT / "src/hyperweave/templates"
 GEOMETRY_STENCIL_DENYLIST: set[Path] = set()
 JINJA_EXPR_ARITHMETIC = re.compile(

@@ -50,8 +50,10 @@
 
 {# Status indicator — concentric ACCENT ring + dot on the ground panel. #}
 {% if show_indicator %}
-<g data-hw-zone="status">
-  <circle cx="{{ indicator_center_x }}" cy="{{ indicator_center_y }}" r="{{ light_indicator_outer_r }}" fill="none" stroke="var(--dna-signal)" stroke-width="{{ light_indicator_stroke_width }}"/>
-  <circle class="hw-logic-bit" cx="{{ indicator_center_x }}" cy="{{ indicator_center_y }}" r="{{ light_indicator_inner_r }}" fill="var(--dna-signal)"/>
-</g>
+{% set indicator_ring_class = "" %}
+{% set indicator_ring_stroke = "var(--dna-signal)" %}
+{% set indicator_stroke_width_value = light_indicator_stroke_width %}
+{% set indicator_bit_class = "hw-logic-bit" %}
+{% set indicator_bit_fill = "var(--dna-signal)" %}
+{% include "frames/badge/indicators/" ~ indicator_shape ~ "-indicator.j2" %}
 {% endif %}

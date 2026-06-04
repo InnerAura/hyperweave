@@ -471,7 +471,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 | | brutalist | automata | chrome |
 |---|---|---|---|
 | Aesthetic | Raw material | Living cellular grid | Metallic precision |
-| Variants | 14 (8 dark, 6 light) | 16 tones, any two pair | 5 named |
+| Variants | 22 (8 dark, 14 light) | 16 tones, any two pair | 5 named |
 | Motion | Animated border SMIL | Animated cell grid | Animated border SMIL |
 | Divider | `seam` | `dissolve` | `band` |
 

@@ -84,6 +84,10 @@ def compose(
             ),
         ),
     ] = "",
+    state_glyph_shape: Annotated[
+        str,
+        typer.Option("--state-glyph-shape", help="Badge state-indicator shape: square | circle | diamond"),
+    ] = "",
     # Divider options
     divider_variant: Annotated[str, typer.Option("--divider-variant")] = "zeropoint",
     # Marquee options
@@ -215,6 +219,7 @@ def compose(
         shape=shape,
         variant=variant,
         pair=pair,
+        state_glyph_shape=state_glyph_shape,
         divider_variant=divider_variant,
         marquee_direction=direction,
         stats_username=stats_username,

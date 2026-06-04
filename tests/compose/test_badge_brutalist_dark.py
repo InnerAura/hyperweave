@@ -305,8 +305,12 @@ def test_dark_variant_no_perimeter_stroke(variant: str) -> None:
 
 @pytest.mark.parametrize("variant", [v["variant"] for v in PROTOTYPE_VARIANTS])
 def test_dark_variant_indicator_geometry(variant: str) -> None:
-    """Indicator: 10x10 outer ring, 6x6 inner bit at offset 2, stroke-width
-    1.5 — matches the v16 prototype's translate(138,5) → 10x10 + 6x6 bit."""
+    """Indicator: 8x8 outer ring, 5x5 inner bit, stroke-width 1.5.
+
+    v0.3.14: indicator size is the value-font cap height (proportional accent),
+    not a fixed block — brutalist value font 11px → cap ≈ 8px (was a fixed 10x10).
+    Inner bit = 8 * 0.6 paradigm ratio ≈ 5.
+    """
     result = compose(
         ComposeSpec(
             type="badge",
@@ -317,10 +321,10 @@ def test_dark_variant_indicator_geometry(variant: str) -> None:
             state="passing",
         )
     )
-    assert 'stroke-width="1.5" width="10" height="10"' in result.svg, (
-        f"{variant}: indicator outer ring must be 10x10 with stroke-width 1.5"
+    assert 'stroke-width="1.5" width="8" height="8"' in result.svg, (
+        f"{variant}: indicator outer ring must be 8x8 with stroke-width 1.5"
     )
-    assert 'width="6" height="6"' in result.svg, f"{variant}: indicator inner bit must be 6x6 (paradigm ratio 0.6)"
+    assert 'width="5" height="5"' in result.svg, f"{variant}: indicator inner bit must be 5x5 (paradigm ratio 0.6)"
 
 
 @pytest.mark.parametrize("variant", [v["variant"] for v in PROTOTYPE_VARIANTS])

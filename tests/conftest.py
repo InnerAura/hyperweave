@@ -6,6 +6,7 @@ No class-based tests -- pytest functions only.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -18,6 +19,14 @@ from hyperweave.core.models import ComposeSpec, SlotContent
 if TYPE_CHECKING:
     from hyperweave.core.models import ProfileConfig
     from hyperweave.core.schema import GenomeSpec
+
+
+# Shared filesystem anchors. Single source of truth so subpackage tests resolve
+# shared fixtures/snapshots regardless of nesting depth — import via
+# ``from tests.conftest import FIXTURES_DIR`` instead of per-file
+# ``Path(__file__).parents[N]`` math that breaks when a test moves.
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+SNAPSHOTS_DIR = Path(__file__).resolve().parent / "snapshots"
 
 
 # ---------------------------------------------------------------------------

@@ -44,6 +44,14 @@ def _parse_duration(value: str) -> float:
     return float(v)
 
 
+# Canonical badge state-indicator shapes. Each maps to a
+# templates/frames/badge/indicators/<shape>-indicator.j2 partial. Shared by
+# GenomeSpec.state_glyph_shape, ComposeSpec.state_glyph_shape, ParadigmBadgeConfig
+# .indicator_shape, and the variant-override validator — one source of truth so
+# a slug can never reach the include dispatch without a partial behind it.
+INDICATOR_SHAPES: frozenset[str] = frozenset({"square", "circle", "diamond"})
+
+
 # -- Field-to-CSS mapping for the core genome properties --
 _CORE_CSS_MAP: dict[str, str] = {
     "surface_0": "--dna-surface",
@@ -192,13 +200,35 @@ class GenomeSpec(BaseModel):
     card_top_highlight: bool = Field(
         default=False,
         description=(
-            "When True, paint a 32px white→transparent linear gradient over the "
-            "card's top edge (glass-edge highlight; v9 codex specimen)."
+            "When True, paint a 32px <color>→transparent linear gradient over the "
+            "card's top edge (glass-edge highlight; v9 codex specimen). The color "
+            "is ``card_top_highlight_color`` (required when this is True) — NOT "
+            "ink, which is text tone and turns the edge into a dark wash on light "
+            "skins."
+        ),
+    )
+    card_top_highlight_color: str = Field(
+        default="",
+        description=(
+            "Surface-light color for the card top-edge glass highlight, emitted "
+            "as --dna-card-top-highlight. Required (non-empty) when "
+            "card_top_highlight is True; enforced by _require_card_top_highlight_color."
         ),
     )
     card_inset: int = Field(
         default=0,
         description="Substrate inset in px when atmosphere_stops is active (v9 codex uses 6px)",
+    )
+
+    # -- Badge state-indicator shape (optional) --
+    state_glyph_shape: str = Field(
+        default="",
+        description=(
+            "Genome/variant default state-indicator shape: '' (defer to paradigm), "
+            "'square', 'circle', or 'diamond'. Selects indicators/<shape>-indicator.j2. "
+            "Overrides the paradigm default; overridden by request-time "
+            "?state_glyph_shape=. Light brutalist variants set 'circle'."
+        ),
     )
 
     # -- Chrome profile rendering (optional) --
@@ -470,6 +500,19 @@ class GenomeSpec(BaseModel):
             raise ValueError(msg)
         return v
 
+    @field_validator("state_glyph_shape")
+    @classmethod
+    def validate_state_glyph_shape(cls, v: str) -> str:
+        """Empty (defer to paradigm) or one of the canonical indicator shapes.
+
+        Bounds the slug at load so it can never reach the
+        ``indicators/<shape>-indicator.j2`` include without a partial behind it.
+        """
+        if v and v not in INDICATOR_SHAPES:
+            msg = f"state_glyph_shape must be empty or one of {sorted(INDICATOR_SHAPES)}, got '{v}'"
+            raise ValueError(msg)
+        return v
+
     @model_validator(mode="after")
     def compute_rhythm_derivatives(self) -> GenomeSpec:
         """Compute rhythm_slow and rhythm_fast from base if not provided."""
@@ -503,6 +546,27 @@ class GenomeSpec(BaseModel):
                 )
                 raise ValueError(msg)
 
+        return self
+
+    @model_validator(mode="after")
+    def _require_card_top_highlight_color(self) -> GenomeSpec:
+        """Fail loud when the card top-highlight gate is on but its color is unset.
+
+        ``card_top_highlight`` toggles a gradient that sources
+        ``--dna-card-top-highlight``. With no ``card_top_highlight_color`` the
+        token never emits and the CSS var resolves empty — a silent broken edge
+        (the v0.3.10→v0.3.13 codex regression, where the edge fell through to
+        ink and rendered a dark wash). Enforce the pair at load so a future
+        genome can't flip the gate without supplying the surface-light color.
+        """
+        if self.card_top_highlight and not self.card_top_highlight_color:
+            msg = (
+                f"Genome '{self.id}' sets card_top_highlight=True but leaves "
+                "card_top_highlight_color empty — the glass-edge gradient would "
+                "render no color. Declare card_top_highlight_color (a surface-light "
+                "hex, e.g. '#FFFFFF')."
+            )
+            raise ValueError(msg)
         return self
 
     def genome_to_css(self) -> dict[str, str]:

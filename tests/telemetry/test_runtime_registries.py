@@ -31,7 +31,7 @@ from hyperweave.telemetry.runtimes import (
     load_all_runtimes,
 )
 
-_GENOMES_DIR = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "data" / "genomes"
+_GENOMES_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "data" / "genomes"
 
 
 # --------------------------------------------------------------------------- #
