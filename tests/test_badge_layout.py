@@ -355,19 +355,21 @@ def test_cellular_right_panel_x_uses_paradigm_sep_w() -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Shrink-to-fit (textLength emission)
+# Shrink-to-fit + camo bound (textLength emission)
 # ─────────────────────────────────────────────────────────────────────
 
 
-def test_label_text_length_zero_when_under_max() -> None:
-    """When measured label fits within max_label_w, no shrink applied."""
+def test_label_text_length_is_measured_width_when_under_max() -> None:
+    """When the label fits within max_label_w, no shrink — but textLength is
+    still the measured width (the camo bound: a fallback font can't render
+    wider than the zone when @font-face is blocked). label_w stays unclamped."""
     zones = compute_badge_zones(
         measured_label_w=40.0,
         measured_value_w=30.0,
         max_label_w=60.0,
         **BRUTALIST_INPUTS,
     )
-    assert zones.label_text_length == 0.0
+    assert zones.label_text_length == 40.0
     assert zones.label_w == 40.0
 
 
@@ -383,7 +385,8 @@ def test_label_text_length_clamped_when_over_max() -> None:
     assert zones.label_w == 80.0
 
 
-def test_value_text_length_zero_default() -> None:
-    """No max_value_w arg → no shrink-to-fit on value."""
+def test_value_text_length_is_measured_width_by_default() -> None:
+    """No max_value_w → no shrink, but value textLength is still the measured
+    width (camo bound), matching the label."""
     zones = _zones(label_w=40.0, value_w=200.0)
-    assert zones.value_text_length == 0.0
+    assert zones.value_text_length == 200.0

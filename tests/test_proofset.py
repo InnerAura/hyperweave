@@ -126,6 +126,14 @@ def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
         supports_compact = badge_paradigm is not None and badge_paradigm.badge.glyph_size_compact > 0
 
         for variant in cfg.variants:
+            # Divider slug is substrate-aware for brutalist: light scholars
+            # default to sigil, dark substrates to seam (mirrors the proofset
+            # generator). Other genomes use their single declared divider.
+            if genome == GenomeId.BRUTALIST:
+                substrate = cfg.variant_overrides.get(variant, {}).get("substrate_kind", "dark")
+                variant_divider_slug = "sigil" if substrate == "light" else "seam"
+            else:
+                variant_divider_slug = divider_slug
             # Chrome and brutalist both declare ``icon.supported_shapes:
             # [circle, square]`` in their paradigm yaml — emit both shape
             # files per variant. Automata is square-only.
@@ -143,7 +151,7 @@ def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
                 *icon_files,
                 f"strip_{variant}.svg",
                 f"marquee_horizontal_{variant}.svg",
-                f"divider_{divider_slug}_{variant}.svg",
+                f"divider_{variant_divider_slug}_{variant}.svg",
                 f"stats_{variant}.svg",
                 # 5 badge states
                 *[

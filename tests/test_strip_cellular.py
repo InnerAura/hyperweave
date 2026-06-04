@@ -53,9 +53,9 @@ def test_strip_renders_arbitrary_metric_count(metric_count: int) -> None:
     spec = ComposeSpec(type="strip", genome_id="automata", title="REPO", value=value, variant="teal", pair="violet")
     result = compose(spec)
     assert result.width > 0
-    # Cellular strip specimen is 48px tall (not 52px default); paradigm
-    # config declares strip_height: 48.
-    assert result.height == 48
+    # v0.3.13: cellular strip_height is 52 (parity with brutalist + chrome) so
+    # automata strips no longer scale up taller than peers in README columns.
+    assert result.height == 52
     # N metrics → N label text nodes (for non-zero counts)
     for i in range(metric_count):
         assert f"M{i}" in result.svg

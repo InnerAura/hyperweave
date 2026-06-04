@@ -12,6 +12,8 @@ compositor route rejects them with 404 + X-HW-Specimen-Moved header.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from hyperweave.compose.engine import compose
@@ -125,13 +127,24 @@ _BRUTALIST_DARK_VARIANTS: list[tuple[str, str, str]] = [
     ("ember", "#C0A050", "#E0C878"),
 ]
 
+# v0.3.13: light variants adopt the 4-role prototype palette — accent is the
+# variant signal, accent_complement is the variant INK (the ink structure /
+# divider-joint tone). 8 new substrates joined the original 6.
 _BRUTALIST_LIGHT_VARIANTS: list[tuple[str, str, str]] = [
-    ("pulse", "#D4AF37", "#8B1A1A"),
-    ("archive", "#A6CE39", "#5C4033"),
-    ("depth", "#E07A2F", "#1A3A6B"),
-    ("signal", "#2EC4A0", "#1A4A2E"),
-    ("afterimage", "#00D4FF", "#2D1B69"),
-    ("primer", "#E8A020", "#2A2D32"),
+    ("pulse", "#9B2226", "#281015"),
+    ("archive", "#7A5F18", "#2A2013"),
+    ("depth", "#2A5FA8", "#0E1626"),
+    ("signal", "#1F6B3E", "#102018"),
+    ("afterimage", "#6A3AA0", "#1C1428"),
+    ("primer", "#515C66", "#161819"),
+    ("ferro", "#A8501F", "#2A1810"),
+    ("ozalid", "#136663", "#0C1F1E"),
+    ("sulfur", "#5E680F", "#20240E"),
+    ("tyrian", "#9E2B6E", "#251020"),
+    ("indigo", "#3A3A8C", "#121233"),
+    ("patina", "#357059", "#0E2018"),
+    ("graphite", "#414D59", "#14181C"),
+    ("cyan", "#0C6A88", "#08202A"),
 ]
 
 
@@ -242,3 +255,29 @@ def test_zeropoint_divider_no_hardcoded_green_in_non_brutalist_dark_variant_geno
             assert green not in result.svg, (
                 f"brutalist[{variant_slug}] zeropoint contains forbidden green {green} — chromatic bleed regression"
             )
+
+
+# ── v0.3.13 sigil divider (brutalist light default) ──
+
+
+def test_brutalist_sigil_is_solid_center_block() -> None:
+    """The sigil center is ONE solid ink rect — no path/polygon geometry (a
+    co-centered diamond polygon extended past the block and rendered as 4 spikes).
+    Ink rules + a 26x26 ink block + accent cap + accent spot marks. Ink =
+    accent_complement (variant ink #281015 for pulse), accent = #9B2226."""
+    svg = compose(ComposeSpec(type="divider", genome_id="brutalist", divider_variant="sigil", variant="pulse")).svg
+    assert "#281015" in svg, "sigil ink rules/block use the variant ink (accent_complement)"
+    assert "#9B2226" in svg, "sigil spot marks + cap use the variant accent"
+    assert "<polygon" not in svg, "sigil center must be a single solid <rect>, never a polygon (the spike source)"
+    assert re.search(r'<rect[^>]*width="26"[^>]*height="26"[^>]*fill="#281015"', svg), (
+        "sigil center is a solid 26x26 ink rect"
+    )
+
+
+def test_brutalist_dividers_declare_seam_and_sigil() -> None:
+    """Brutalist whitelists both dividers; light substrates default to sigil and
+    dark to seam (selection lives in the resolver + proofset generator)."""
+    from hyperweave.config.loader import load_genomes
+
+    dividers = load_genomes()["brutalist"].dividers
+    assert "sigil" in dividers and "seam" in dividers, f"expected seam + sigil, got {dividers}"

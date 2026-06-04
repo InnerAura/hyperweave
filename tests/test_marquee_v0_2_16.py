@@ -25,8 +25,8 @@ from hyperweave.core.models import ComposeSpec
     ("genome_id", "expected_w", "expected_h"),
     [
         # v0.3.12: all three marquees reconciled to their 800x44 prototypes
-        # (chrome was 1040x56, automata 800x32 — old dims that survived the WS4
-        # rebuild; both now match marquee-dense-chrome / automata-bone-v4).
+        # (chrome was 1040x56, automata 800x32 — old dims that survived the v0.2.x
+        # marquee rebuild; both now match marquee-dense-chrome / automata-bone-v4).
         ("chrome", 800, 44),
         ("brutalist", 800, 44),
         ("automata", 800, 44),

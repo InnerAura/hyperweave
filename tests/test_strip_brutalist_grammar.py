@@ -13,15 +13,17 @@ This test pins the contract on three axes:
    continue rendering through the shared zone pipeline — no brand panel rect,
    no brutalist strip CSS classes, no bookend ornament.
 3. Brutalist strip canvas WIDTH adapts to metric content AND identity
-   content: brand panel sizes to identity text width with
-   ``brand_panel_width`` as the MAX ceiling;
-   triple_divider_x and brand_divider_x follow the panel right edge.
-   Cells march at cell_min_width=100 stride. Bookend snaps to
-   ``cells_end + 16`` (gap), canvas width = bookend + 40 (trailing pad).
-   HEIGHT stays pinned at 52. For the 3-metric reference render
-   (title=HYPERWEAVE, identity ~100px wide): brand_panel_w=136,
-   triple_divider_x=142, brand_divider_x=150, cells at 150/250/350,
-   last cell ends at 450, bookend at 466, canvas 506x52.
+   content (v0.3.13 content-aware retune): the brand panel GROWS to fit the
+   measured identity (no ceiling); triple_divider_x and brand_divider_x follow
+   the panel right edge; cells size to content (max(label,value)+2*strip_pad,
+   small cell_min_width=44 floor — no fixed 100px stride). A glyphless strip
+   defaults to the HyperWeave sigil in the identity zone; a STATELESS strip
+   (v0.3.13, dark) renders no decorative bookend and ends at cells_end +
+   strip_pad (16). HEIGHT stays pinned at 52. For the 3-metric STATELESS
+   reference render (title=HYPERWEAVE, Barlow Condensed 73.6px): brand_panel_w
+   =134, triple_divider_x=140, brand_divider_x=148, cells end at 338, canvas
+   340x52 (last cell + stateless trailing 2). (Measured in Barlow Condensed —
+   the `.brand-text` render font.)
 """
 
 from __future__ import annotations
@@ -48,50 +50,49 @@ def _render(genome: str, variant: str | None = None) -> str:
 
 
 def test_brutalist_brand_panel(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Brutalist celadon strip brand panel sizes to identity content.
+    """Brutalist celadon strip brand panel GROWS to fit identity content.
 
-    For title='HYPERWEAVE' (~100px wide content-driven), brand_panel_w=136
-    (< YAML max 156). The panel shrinks to fit content rather than holding
-    a fixed width — same algorithm clamps to 156 for longer identities and
-    triggers shrink-to-fit textLength when content overflows.
+    For title='HYPERWEAVE' (73.6px in Barlow Condensed): brand_panel_w =
+    ceil(identity_left_inset 44 + 73.6 + strip_pad 16) = 134. The panel has no
+    ceiling (v0.3.13) — it grows for longer identities and shrinks for shorter,
+    always sized to the measured render-font width.
     """
     body = _render("brutalist", "celadon")
     assert re.search(
-        r'<rect\s+x="6"\s+y="0"\s+width="136"\s+height="52"\s+fill="var\(--dna-brand-panel-fill\)"',
+        r'<rect\s+x="6"\s+y="0"\s+width="134"\s+height="52"\s+fill="var\(--dna-brand-panel-fill\)"',
         body,
-    ), "brutalist HYPERWEAVE strip must render content-driven brand panel at x=6 width=136"
+    ), "brutalist HYPERWEAVE strip must render content-driven brand panel at x=6 width=134"
 
 
 def test_brutalist_triple_divider(monkeypatch: pytest.MonkeyPatch) -> None:
     """ACCENT-VOID-ACCENT triple divider follows the content-driven brand panel
-    right edge (x=142 for HYPERWEAVE: brand_panel_x 6 + brand_panel_w 136).
+    right edge (x=140 for HYPERWEAVE: brand_panel_x 6 + brand_panel_w 134).
     Width 3px + 2px + 3px = 8px total triple-divider span.
     """
     body = _render("brutalist", "celadon")
-    assert re.search(r'<rect\s+x="142"\s+y="0"\s+width="3"', body), "missing left accent bar of triple divider"
-    assert re.search(r'<rect\s+x="145"\s+y="0"\s+width="2"', body), "missing center void of triple divider"
-    assert re.search(r'<rect\s+x="147"\s+y="0"\s+width="3"', body), "missing right accent bar of triple divider"
+    assert re.search(r'<rect\s+x="140"\s+y="0"\s+width="3"', body), "missing left accent bar of triple divider"
+    assert re.search(r'<rect\s+x="143"\s+y="0"\s+width="2"', body), "missing center void of triple divider"
+    assert re.search(r'<rect\s+x="145"\s+y="0"\s+width="3"', body), "missing right accent bar of triple divider"
 
 
-def test_brutalist_ornament_and_bookend(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Identity ornament at (22,19) 14x14 + bookend snaps after cells.
-
-    ornament_size stays at 14 because it also controls the right bookend
-    square. The left identity GitHub glyph uses a separate
-    ``identity_glyph_size`` field; the fallback ornament square and right
-    bookend stay at 14.
-
-    For the 3-metric reference render (HYPERWEAVE identity → brand_divider_x
-    150): cells end at 150 + 3*100 = 450, bookend at 450 + 16 gap = 466.
+def test_brutalist_default_glyph_and_stateless_terminus(monkeypatch: pytest.MonkeyPatch) -> None:
+    """v0.3.13: a glyphless brutalist strip defaults to the HyperWeave
+    sigil in the identity zone (not a fallback ornament square), and a
+    STATELESS strip (STARS/FORKS/ISSUES — none allowlisted) renders NO
+    right-side terminus: the operational-status slot is empty, so the strip
+    ends at the last cell + pad rather than a decorative bookend square.
     """
     body = _render("brutalist", "celadon")
-    assert re.search(
-        r'<rect\s+x="22"\s+y="19"\s+width="14"\s+height="14"',
-        body,
-    ), "brutalist strip must render identity ornament at (22,19) size 14"
-    assert "translate(466,26)" in body, (
-        "brutalist 3-metric strip must render bookend at x=466 (=cells_end 450 + 16 gap)"
+    # Glyphless → HyperWeave sigil fills the identity zone.
+    assert 'data-hw-zone="brand-glyph"' in body, "glyphless strip must default to the HyperWeave sigil"
+    assert "M12 0 C15 3 21 9 24 12" in body, "default identity glyph must be the HyperWeave sigil path"
+    # No retired fallback ornament square at the old (22,19) identity slot.
+    assert not re.search(r'<rect\s+x="22"\s+y="19"\s+width="14"\s+height="14"', body), (
+        "default-sigil strip must NOT render the retired identity ornament square"
     )
+    # Stateless → no decorative bookend AND no status indicator.
+    assert "translate(354,26)" not in body, "stateless strip must NOT render a decorative bookend"
+    assert 'data-hw-zone="status"' not in body, "stateless strip must NOT render a status indicator"
 
 
 def test_brutalist_canvas_height_invariant(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -101,14 +102,17 @@ def test_brutalist_canvas_height_invariant(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 def test_brutalist_canvas_width_additive(monkeypatch: pytest.MonkeyPatch) -> None:
-    """3-metric brutalist strip is 506 wide (bookend 466 + 40px trailing pad).
+    """3-metric STATELESS brutalist strip is 340 wide (v0.3.13, dark default).
 
-    Width = brand_panel_x 6 + brand_panel_w 136 + triple_divider_w 8 +
-    3 cells * 100 + bookend_gap 16 + trailing_pad 40 = 506.
+    Width = brand_divider_x 148 + content cells (64+60+66=190) + stateless
+    trailing 2 = 340. The stateless strip ends a thin stroke clearance past the
+    last cell (no decorative ornament), so the last value's right margin mirrors
+    its left — the cell's own pad supplies the margin, not a full strip_pad of
+    trailing. HEIGHT stays 52.
     """
     body = _render("brutalist", "celadon")
-    assert re.search(r'viewBox="0\s+0\s+506\s+52"', body), (
-        "brutalist 3-metric strip canvas must be 506x52 under content-driven layout"
+    assert re.search(r'viewBox="0\s+0\s+340\s+52"', body), (
+        "brutalist 3-metric stateless strip canvas must be 340x52 (symmetric trailing)"
     )
 
 
@@ -125,13 +129,13 @@ def test_brutalist_light_substrate_inversion(monkeypatch: pytest.MonkeyPatch) ->
     body = _render("brutalist", "pulse")
     assert "url(#hw-" in body and "-panel)" in body, "brutalist light strip must reference panel gradient"
     # Verify INK-SEAM-INK polarity: outer bars use ink-primary, center uses seam-color.
-    # Triple divider x follows content-driven brand panel (HYPERWEAVE → x=142).
+    # Triple divider x follows content-driven brand panel (HYPERWEAVE → x=140).
     assert re.search(
-        r'<rect\s+x="142"\s+y="0"\s+width="3"\s+height="52"\s+fill="var\(--dna-ink-primary\)"',
+        r'<rect\s+x="140"\s+y="0"\s+width="3"\s+height="52"\s+fill="var\(--dna-ink-primary\)"',
         body,
     ), "light variant triple divider outer must use --dna-ink-primary"
     assert re.search(
-        r'<rect\s+x="145"\s+y="0"\s+width="2"\s+height="52"\s+fill="var\(--dna-seam-color\)"',
+        r'<rect\s+x="143"\s+y="0"\s+width="2"\s+height="52"\s+fill="var\(--dna-seam-color\)"',
         body,
     ), "light variant triple divider center must use --dna-seam-color"
 

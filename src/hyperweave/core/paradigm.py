@@ -334,6 +334,13 @@ class ParadigmStripConfig(FrozenModel):
     """Aesthetic floor for cell width. Brutalist legacy was 106 (kept
     cells from collapsing when values were short); cellular defers to
     content sizing (0)."""
+    strip_pad: int = 16
+    """Single shared padding source for ``owns_strip`` (brutalist) grammar.
+    The identity zone right-pad = ``strip_pad`` and each metric ``cell_pad
+    = 2 * strip_pad`` (pad on both sides). One knob moves the identity
+    inset, inter-cell gap, and metric padding together — change it and
+    every gap moves (the canary test pins this). Non-owns paradigms keep
+    their own ``cell_pad``/``cell_min_width`` and ignore this field."""
 
     # v0.3.2 Phase C brutalist strip grammar — brutalist-only fields. When
     # ``owns_strip`` is True the parent ``strip.svg.j2`` skips its shared zone

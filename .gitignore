@@ -28,7 +28,9 @@ archive/
 .claude/
 # CLAUDE.md
 outputs/
-tier2/experiments/
+
+tier2/_experiments/
+tier2/_notes/
 
 assets/banners/hyperweave-banner-chirp-caps.svg
 assets/banners/hyperweave-banner-clean.svg
@@ -39,6 +41,7 @@ assets/cards/cards-2x2-v3.svg
 assets/cards/cards-2x2.svg
 assets/cards/halftone-card-triangle.svg
 assets/demos/
+
 scripts/analyze_audio.py
 scripts/generate_demo_charts.py
 scripts/render_demo_video.py

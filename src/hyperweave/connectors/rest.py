@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 from hyperweave import __version__
-from hyperweave.connectors.base import CircuitOpenError, ConnectorError, fetch_json
+from hyperweave.connectors.base import (
+    CircuitOpenError,
+    ConnectorError,
+    fetch_json,
+)
 from hyperweave.connectors.cache import get_cache
 
 

@@ -53,19 +53,26 @@ async def fetch_pypi_snapshot(package: str) -> dict[str, Any]:
 
     quoted = quote(normalized, safe="")
     metadata = await fetch_json(f"https://pypi.org/pypi/{quoted}/json", provider="pypi")
-    recent = await fetch_json(f"https://pypistats.org/api/packages/{quoted}/recent", provider="pypistats")
+    # v0.3.13: hero + sparkline share ONE source — the with-mirrors `overall`
+    # daily series — so the headline (trailing-30-day sum) and the chart (those
+    # same 30 points) reconcile BY CONSTRUCTION. v0.3.12 split them: the hero
+    # read recent.last_month (with mirrors, ~6.1M for vllm) while the sparkline
+    # read overall?mirrors=false (without mirrors, ~half), so the chart rendered
+    # a flat line at half the headline magnitude. with-mirrors is the figure
+    # users recognise (pypistats.org / shields PyPI badges). Sourcing both from
+    # one series also drops the separate /recent call — a recurring 429 source.
     overall = await fetch_json(
-        f"https://pypistats.org/api/packages/{quoted}/overall?mirrors=false",
+        f"https://pypistats.org/api/packages/{quoted}/overall?mirrors=true",
         provider="pypistats",
     )
 
     info = _mapping(metadata.get("info") if isinstance(metadata, Mapping) else None)
-    recent_data = _mapping(recent.get("data") if isinstance(recent, Mapping) else None)
-    last_month = _int_value(recent_data.get("last_month"))
-    last_day = _int_value(recent_data.get("last_day"))
     series = _download_series(overall.get("data") if isinstance(overall, Mapping) else None)
-    sparkline_points = _normalized_points([point["count"] for point in series[-30:]])
-    peak = max((int(point["count"]) for point in series[-30:]), default=0)
+    recent30 = series[-30:]
+    last_month = sum(int(point["count"]) for point in recent30)
+    last_day = int(recent30[-1]["count"]) if recent30 else 0
+    sparkline_points = _normalized_points([point["count"] for point in recent30])
+    peak = max((int(point["count"]) for point in recent30), default=0)
 
     result: dict[str, Any] = {
         "provider": "pypi",

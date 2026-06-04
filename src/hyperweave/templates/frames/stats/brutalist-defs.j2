@@ -48,25 +48,24 @@
   {{ font_faces | safe }}
   text { font-family: 'JetBrains Mono', monospace; shape-rendering: geometricPrecision; }
 {% if substrate_kind == 'light' %}
-  {# Light scholar fills: paper text on dark panel, dark ink on paper.
-     Chromatic routing fixes (Phase 2b audit vs the v0.3.2 brutalist light scholar full-set prototype):
-     - .m (meta on dark panel) was --dna-label-text (= dark ink, INVISIBLE on
-       dark panel). Now uses --dna-brand-text (= paper) so the repo meta
-       reads as warm paper on the dark panel.
-     - .al / .ft (labels on paper) were --dna-label-text (= dark ink, too
-       high contrast). Now use --dna-ink-muted (= ink_secondary) so they
-       read as muted warm text. #}
-  .{{ uid }}-u  { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; fill: var(--dna-brand-text); }
-  .{{ uid }}-m  { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 400; letter-spacing: 0.12em; fill: var(--dna-brand-text); opacity: 0.7; }
-  .{{ uid }}-hl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.32em; text-transform: uppercase; fill: var(--dna-bg); }
-  .{{ uid }}-hv { font-family: 'Barlow Condensed', sans-serif; font-size: 68px; font-weight: 900; letter-spacing: -0.025em; fill: var(--dna-ink-primary); }
-  .{{ uid }}-hm { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; fill: var(--dna-seam-color); }
-  .{{ uid }}-sl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-bg); }
-  .{{ uid }}-sv { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; fill: var(--dna-ink-primary); }
-  .{{ uid }}-al { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-ink-muted, var(--dna-ink-secondary, var(--dna-label-text))); }
-  .{{ uid }}-ll { font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 700; letter-spacing: 0.15em; fill: var(--dna-brand-text); opacity: 0.7; }
-  .{{ uid }}-ft { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 500; letter-spacing: 0.14em; fill: var(--dna-ink-muted, var(--dna-ink-secondary, var(--dna-label-text))); opacity: 0.85; }
-  .{{ uid }}-fb { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 700; letter-spacing: 0.28em; fill: var(--dna-seam-color); opacity: 0.6; }
+  {# Light row fills (v0.3.13, reference hw-depth-card-mid.svg): CREAM knockout
+     on the ink header/pills (--dna-brand-text), INK values/structure
+     (--dna-ink-primary), ACCENT labels-on-cream (--dna-signal). Fonts match the
+     reference — username 14, hero value Barlow 78, row value Barlow 27/900,
+     row label JBM 8 accent. .sv size/weight MUST track stats_layout
+     _ROW_VALUE_FONT_SIZE/_WEIGHT so measured textLength matches the render. #}
+  .{{ uid }}-u  { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-brand-text); }
+  .{{ uid }}-m  { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 700; letter-spacing: 0.12em; fill: var(--dna-brand-text); opacity: 0.65; }
+  .{{ uid }}-hl { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; fill: var(--dna-brand-text); }
+  .{{ uid }}-hv { font-family: 'Barlow Condensed', sans-serif; font-size: 78px; font-weight: 900; letter-spacing: -0.025em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-hm { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; font-weight: 500; letter-spacing: 0.16em; fill: var(--dna-signal); }
+  .{{ uid }}-sl { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; fill: var(--dna-signal); }
+  .{{ uid }}-sv { font-family: 'Barlow Condensed', sans-serif; font-size: 27px; font-weight: 900; letter-spacing: -0.01em; fill: var(--dna-ink-primary); }
+  .{{ uid }}-al { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; fill: var(--dna-ink-primary); }
+  .{{ uid }}-apill { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; fill: var(--dna-brand-text); }
+  .{{ uid }}-ll { font-family: 'JetBrains Mono', monospace; font-size: 7px; font-weight: 700; letter-spacing: 0.06em; fill: var(--dna-brand-text); }
+  .{{ uid }}-ft { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 700; letter-spacing: 0.05em; fill: var(--dna-ink-primary); opacity: 0.6; }
+  .{{ uid }}-fb { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; font-weight: 800; letter-spacing: 0.24em; fill: var(--dna-ink-primary); opacity: 0.5; }
   .{{ uid }}-gc { font-family: 'JetBrains Mono', monospace; font-size: 5.5px; font-weight: 500; fill: var(--dna-ink-primary); opacity: 0.15; }
 {% else %}
   {# Dark substrate fills: bright text on dark, accent on dark. #}

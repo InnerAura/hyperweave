@@ -71,16 +71,22 @@ def compute_cell_layout(
 ) -> CellLayout:
     """Resolve a metric cell's geometry from label + value specs.
 
-    ``cell_w`` is ``ceil(max(label_w, value_w) + cell_pad)`` floored
-    by ``min_cell_w``. ``label_x``/``value_x`` are coordinates inside
-    the cell: at ``text_inset`` for ``anchor='start'``, at
-    ``cell_w / 2`` for ``'middle'``, at ``cell_w - text_inset`` for
-    ``'end'``.
+    ``cell_w`` is ``ceil(max(content_w, min_cell_w) + cell_pad)`` — the floor
+    applies to the CONTENT, then a CONSTANT ``cell_pad`` gutter is added. Every
+    cell therefore carries the same padding: short content-driven cells and
+    floored cells alike get exactly ``cell_pad``, so the inter-metric rhythm is
+    uniform. (The prior ``max(content + cell_pad, min_cell_w)`` floored the whole
+    cell, so a short floored cell absorbed the slack as generous extra spacing
+    while a wide content-driven cell stayed tight — inconsistent rhythm.) The
+    effective minimum cell is thus ``min_cell_w + cell_pad``. ``label_x`` /
+    ``value_x`` are coordinates inside the cell: at ``text_inset`` for
+    ``anchor='start'``, at ``cell_w / 2`` for ``'middle'``, at
+    ``cell_w - text_inset`` for ``'end'``.
     """
     label_w = label.rendered_width
     value_w = value.rendered_width
     content_w = max(label_w, value_w)
-    cell_w = max(math.ceil(content_w + cell_pad), int(min_cell_w))
+    cell_w = math.ceil(max(content_w, float(min_cell_w)) + cell_pad)
     if anchor == "start":
         text_x = float(text_inset)
     elif anchor == "end":

@@ -6,23 +6,30 @@
    data-hw-status); the RIGHT cap holds a static square seal. A 3px bottom
    accent rail is the foundation; a 1px perimeter frames the band.
 
+   v0.3.13 light-scholar cohesion: cap fill, the liveness cube/seal, and the
+   perimeter route through substrate-aware hexes (cap_fill_hex, cube_fill_hex,
+   marquee_perimeter_hex). On LIGHT the caps carry INK MASS with a PAPER-knockout
+   cube/seal and an INK perimeter; on DARK they stay byte-equal (cap=surface,
+   cube/seal/perimeter=accent). The cap-edge rails + bottom foundation rail
+   remain signal_hex accent SPOTS on both substrates.
+
    ALL geometry is resolver-supplied (the `liveness` context dict) — zero
    coordinate arithmetic / literals here (spatial stencil contract).
 #}
 {% if liveness.cap_l_w %}
 <g data-hw-zone="cap-left">
-  <rect x="{{ liveness.origin }}" y="{{ liveness.origin }}" width="{{ liveness.cap_l_w }}" height="{{ liveness.cap_h }}" fill="{{ surface_hex }}"/>
-  <rect x="{{ liveness.cube_outer_x }}" y="{{ liveness.cube_outer_y }}" width="{{ liveness.cube_outer_w }}" height="{{ liveness.cube_outer_w }}" fill="none" stroke="{{ signal_hex }}" stroke-width="1.5"/>
-  <rect x="{{ liveness.cube_inner_x }}" y="{{ liveness.cube_inner_y }}" width="{{ liveness.cube_inner_w }}" height="{{ liveness.cube_inner_w }}" class="hw-mq-cube" fill="{{ signal_hex }}"/>
+  <rect x="{{ liveness.origin }}" y="{{ liveness.origin }}" width="{{ liveness.cap_l_w }}" height="{{ liveness.cap_h }}" fill="{{ cap_fill_hex }}"/>
+  <rect x="{{ liveness.cube_outer_x }}" y="{{ liveness.cube_outer_y }}" width="{{ liveness.cube_outer_w }}" height="{{ liveness.cube_outer_w }}" fill="none" stroke="{{ cube_fill_hex }}" stroke-width="1.5"/>
+  <rect x="{{ liveness.cube_inner_x }}" y="{{ liveness.cube_inner_y }}" width="{{ liveness.cube_inner_w }}" height="{{ liveness.cube_inner_w }}" class="hw-mq-cube" fill="{{ cube_fill_hex }}"/>
   <rect x="{{ liveness.cap_l_rail_x }}" y="{{ liveness.origin }}" width="{{ liveness.cap_rail_w }}" height="{{ liveness.cap_h }}" fill="{{ signal_hex }}"/>
 </g>
 {% endif %}
 {% if liveness.cap_r_w %}
 <g data-hw-zone="cap-right">
-  <rect x="{{ liveness.cap_r_x }}" y="{{ liveness.origin }}" width="{{ liveness.cap_r_w }}" height="{{ liveness.cap_h }}" fill="{{ surface_hex }}"/>
+  <rect x="{{ liveness.cap_r_x }}" y="{{ liveness.origin }}" width="{{ liveness.cap_r_w }}" height="{{ liveness.cap_h }}" fill="{{ cap_fill_hex }}"/>
   <rect x="{{ liveness.cap_r_x }}" y="{{ liveness.origin }}" width="{{ liveness.cap_rail_w }}" height="{{ liveness.cap_h }}" fill="{{ signal_hex }}"/>
-  <rect x="{{ liveness.seal_x }}" y="{{ liveness.seal_y }}" width="{{ liveness.seal_w }}" height="{{ liveness.seal_w }}" fill="{{ signal_hex }}"/>
+  <rect x="{{ liveness.seal_x }}" y="{{ liveness.seal_y }}" width="{{ liveness.seal_w }}" height="{{ liveness.seal_w }}" fill="{{ cube_fill_hex }}"/>
 </g>
 {% endif %}
 <rect x="{{ liveness.origin }}" y="{{ liveness.bottom_rail_y }}" width="{{ mw }}" height="{{ liveness.bottom_rail_h }}" fill="{{ signal_hex }}" shape-rendering="crispEdges"/>
-<rect x="{{ liveness.perimeter_x }}" y="{{ liveness.perimeter_y }}" width="{{ liveness.perimeter_w }}" height="{{ liveness.perimeter_h }}" fill="none" stroke="{{ signal_hex }}" stroke-opacity="0.30" stroke-width="1" shape-rendering="crispEdges"/>
+<rect x="{{ liveness.perimeter_x }}" y="{{ liveness.perimeter_y }}" width="{{ liveness.perimeter_w }}" height="{{ liveness.perimeter_h }}" fill="none" stroke="{{ marquee_perimeter_hex }}" stroke-opacity="0.30" stroke-width="1" shape-rendering="crispEdges"/>

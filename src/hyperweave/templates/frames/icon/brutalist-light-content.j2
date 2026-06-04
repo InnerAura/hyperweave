@@ -1,0 +1,32 @@
+{# Brutalist icon — LIGHT substrate (v0.3.13 cohesion polish).
+   Ink-mass treatment: the disc/square is filled with --dna-ink-primary so
+   the icon carries WEIGHT on cream paper, the glyph renders as a
+   --dna-surface (paper) knockout, and accent (--dna-signal) appears
+   ONLY as a SPOT — the inset circle rim / square top cap — never as the
+   structural frame. Replaces the v0.3.2 weightless treatment (paper fill +
+   2.5px lime structural border + brown signal-dim glyph) that light-scholar
+   review flagged as accent-as-structure. Geometry tokens are identical to
+   brutalist-dark-content.j2; only the fill routing differs. #}
+
+{% if icon_variant == 'brutalist-circular' %}
+{# Ink disc (mass) + paper glyph knockout + inset accent rim (inner ring). #}
+<circle cx="{{ icon_geometry.brutalist_circle_cx }}" cy="{{ icon_geometry.brutalist_circle_cy }}" r="{{ icon_geometry.brutalist_circle_r }}" fill="var(--dna-ink-primary)"/>
+<circle cx="{{ icon_geometry.brutalist_circle_cx }}" cy="{{ icon_geometry.brutalist_circle_cy }}" r="{{ icon_geometry.brutalist_circle_rim_r }}" fill="none" stroke="var(--dna-signal)" stroke-width="2.5"/>
+{% if glyph_path %}
+<svg x="{{ icon_geometry.brutalist_circle_glyph_x }}" y="{{ icon_geometry.brutalist_circle_glyph_y }}" width="{{ icon_geometry.brutalist_circle_glyph_size }}" height="{{ icon_geometry.brutalist_circle_glyph_size }}" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="var(--dna-surface)" stroke="none"/>
+</svg>
+{% endif %}
+
+{% elif icon_variant == 'brutalist-square' %}
+{# Ink square (mass) + paper glyph knockout + seam top-cap spot. The ink
+   fill defines the shape, so the v0.3.2 structural border is dropped. #}
+<rect x="{{ icon_geometry.brutalist_square_x }}" y="{{ icon_geometry.brutalist_square_y }}" width="{{ icon_geometry.brutalist_square_w }}" height="{{ icon_geometry.brutalist_square_h }}" fill="var(--dna-ink-primary)"/>
+<rect x="{{ icon_geometry.brutalist_square_x }}" y="{{ icon_geometry.brutalist_square_y }}" width="{{ icon_geometry.brutalist_square_w }}" height="{{ icon_geometry.brutalist_square_accent_h }}" fill="var(--dna-signal)"/>
+{% if glyph_path %}
+<svg x="{{ icon_geometry.brutalist_square_glyph_x }}" y="{{ icon_geometry.brutalist_square_glyph_y }}" width="{{ icon_geometry.brutalist_square_glyph_size }}" height="{{ icon_geometry.brutalist_square_glyph_size }}" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="var(--dna-surface)" stroke="none"/>
+</svg>
+{% endif %}
+
+{% endif %}

@@ -86,7 +86,8 @@ class DividerVariant(StrEnum):
     # Genome-themed (rendered via /v1/divider/, declared in genome.dividers)
     DISSOLVE = "dissolve"  # automata
     BAND = "band"  # chrome
-    SEAM = "seam"  # brutalist
+    SEAM = "seam"  # brutalist (dark default)
+    SIGIL = "sigil"  # brutalist (light default)
 
 
 class GlyphMode(StrEnum):

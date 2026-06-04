@@ -87,8 +87,21 @@ strip:
   # agreement with brutalist's ``identity_glyph_size: 18``. Both paradigms
   # now derive their identity glyph from the same ratio, so changing the
   # design intent updates both uniformly. See ParadigmStripConfig.strip_glyph_ratio.
-  cell_pad: 20
-  cell_min_width: 106
+  # v0.3.13: 48 (24px/side) — Orbitron's wide geometric letterforms read cramped
+  # at the 20px (10/side) generic gutter. 48 matches v0.3.12's TYPICAL breathing
+  # (its 106-floor gave normal metrics ~21–33px/side, variable; 24 sits mid-range)
+  # but now as a CONSTANT gutter on every cell (the rhythm fix), so short and
+  # wide values breathe identically instead of only floored short cells looking roomy.
+  cell_pad: 48
+  # v0.3.13 cell-rhythm fix: cell_min_width now floors the CONTENT (not the
+  # whole cell), so it must sit BELOW typical metric content (~24px+) or short
+  # cells stay floored and over-padded while wide cells are tight. 20 (effective
+  # min cell 40 = 20 + cell_pad) keeps a 1-char-collapse guard without binding
+  # the typical 3-4 metric strip — every cell now carries the same 10px/side
+  # gutter, so README-AI (short values) and VLLM (wide values) share one rhythm.
+  # The earlier 88 (a whole-cell floor) inflated short cells; the breathing room
+  # is now the constant cell_pad. strip_min_width still guards 1-metric warp.
+  cell_min_width: 20
   # Pinned strip height (v0.3.9 additive layout). Canvas WIDTH adapts to
   # content; height stays at 52 regardless of metric count.
   strip_height: 52

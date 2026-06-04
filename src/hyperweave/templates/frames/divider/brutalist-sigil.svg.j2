@@ -1,0 +1,42 @@
+{# Brutalist sigil divider — brutalist LIGHT default (800x34).
+
+   Two ink rules with end caps flank a SOLID ink center block (the diamond is
+   filled solid, continuous with the block — no cutout, no outline, no gap),
+   capped with a thin accent bar. Two accent spot marks bracket the block.
+
+   Ink structure uses ``accent_complement`` (= the variant ink P); the accent
+   cap + spot marks use ``accent`` (= the variant signal A). Both arrive on the
+   divider context. Static — no animation (renderer-independent).
+
+   Geometry (sigil_* rects/points) is computed in compose/resolver.py
+   `_divider_geometry_context`. Genome whitelist: brutalist (dividers ["seam",
+   "sigil"]); light substrates default here, dark keep seam.
+#}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+<style>
+  @media (forced-colors: active) {
+    rect, polygon { fill: CanvasText !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{# Ink rules + end caps (accent_complement = ink). #}
+<rect x="{{ sigil_left_rule.x }}" y="{{ sigil_left_rule.y }}" width="{{ sigil_left_rule.w }}" height="{{ sigil_left_rule.h }}" fill="{{ accent_complement }}"/>
+<rect x="{{ sigil_right_rule.x }}" y="{{ sigil_right_rule.y }}" width="{{ sigil_right_rule.w }}" height="{{ sigil_right_rule.h }}" fill="{{ accent_complement }}"/>
+<rect x="{{ sigil_left_cap.x }}" y="{{ sigil_left_cap.y }}" width="{{ sigil_left_cap.w }}" height="{{ sigil_left_cap.h }}" fill="{{ accent_complement }}"/>
+<rect x="{{ sigil_right_cap.x }}" y="{{ sigil_right_cap.y }}" width="{{ sigil_right_cap.w }}" height="{{ sigil_right_cap.h }}" fill="{{ accent_complement }}"/>
+
+{# Accent spot marks bracketing the center block. #}
+{% for spot in sigil_spots %}
+<rect x="{{ spot.x }}" y="{{ spot.y }}" width="{{ spot.w }}" height="{{ spot.h }}" fill="{{ accent }}"/>
+{% endfor %}
+
+{# Solid ink center block — ONE rect, no diamond/path geometry (a co-centered
+   diamond polygon extended past the block edges and rendered as 4 spikes). Then
+   a thin accent top cap. #}
+<rect x="{{ sigil_block.x }}" y="{{ sigil_block.y }}" width="{{ sigil_block.w }}" height="{{ sigil_block.h }}" fill="{{ accent_complement }}"/>
+<rect x="{{ sigil_block_cap.x }}" y="{{ sigil_block_cap.y }}" width="{{ sigil_block_cap.w }}" height="{{ sigil_block_cap.h }}" fill="{{ accent }}"/>
+{% endblock %}

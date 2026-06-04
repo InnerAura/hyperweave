@@ -118,6 +118,21 @@ def _layout_metric_entries(
     return metrics
 
 
+def _emphasis_for(label: object, raw_value: object) -> str | None:
+    """Flag metrics carrying temporal momentum for the row column-tint.
+
+    STREAK earns the tint only once it crosses a week (>= 7 days); UPTIME and
+    ACTIVE-DAYS are inherently temporal. Consumed by the brutalist-light row,
+    which paints an accent column tint when emphasis == "momentum".
+    """
+    up = str(label or "").upper()
+    if up == "STREAK":
+        return "momentum" if isinstance(raw_value, int | float) and raw_value >= 7 else None
+    if up in {"UPTIME", "ACTIVE-DAYS"}:
+        return "momentum"
+    return None
+
+
 def _fit_identity_display(username: str, stats: ParadigmStatsConfig) -> str:
     display = username.upper() if stats.identity_text_transform == "uppercase" else username
     budget = max(0.0, float(stats.bio_x - stats.identity_x - stats.identity_padding))
@@ -273,6 +288,8 @@ def resolve_stats(
     activity_peak_label = _activity_peak_label(input_data.activity, activity_peak)
     activity_type = input_data.activity.type if input_data.activity is not None else ""
     metric_entries = [metric.model_dump() for metric in input_data.metrics]
+    for entry in metric_entries:
+        entry["emphasis"] = _emphasis_for(entry.get("label"), entry.get("raw_value"))
 
     # Heatmap year label — cellular "CONTRIBUTIONS YYYY" caption. Prefer the
     # tail of the heatmap_grid (most recent cell date) so the label stays
@@ -420,6 +437,7 @@ def resolve_stats(
             has_activity=input_data.activity is not None,
             has_heatmap=bool(input_data.heatmap),
             has_proportional_bar=bool(input_data.proportional_bar),
+            substrate_kind=str(genome.get("substrate_kind") or "dark"),
         )
     else:
         card_height = 260
@@ -465,6 +483,7 @@ def resolve_stats(
                 "identity_text_length": stats_layout.identity_text_length,
                 "bio_text_length": stats_layout.bio_text_length,
                 "metric_layouts": stats_layout.metric_slots,
+                "metric_emphasis_rects": stats_layout.metric_emphasis_rects,
                 "metric_y": stats_layout.metric_slots[0].value_y if stats_layout.metric_slots else 0.0,
                 "activity_bar_layouts": stats_layout.activity_bars,
                 "language_segments": stats_layout.language_segments,

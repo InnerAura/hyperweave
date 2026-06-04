@@ -26,6 +26,7 @@ class MetricSlot(FrozenModel):
     value: str
     delta: str | None = None
     raw_value: int | float | None = None
+    emphasis: str | None = None
 
 
 class StripMetricSlot(MetricSlot):

@@ -37,7 +37,7 @@
       x="{{ label_x }}" y="{{ text_y }}"
       text-anchor="{{ text_anchor | default('middle') }}" dominant-baseline="central"
       class="{{ uid }}-label"
-      fill="var(--dna-signal)"{% if label_text_length and label_text_length > 0 %} textLength="{{ label_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ label_display | default(label) | upper }}</text>
+      fill="var(--dna-signal)"{% if label_text_length and label_text_length > 0 %} textLength="{{ label_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ label_display | default(label | upper) }}</text>
 
 {# Value — Orbitron 10/800. Label and value share y = h/2 + 0.5
    (= 10.5 at h=20), preventing the 1px vertical drift where the label

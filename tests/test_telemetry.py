@@ -653,7 +653,7 @@ class TestTotalUserMessages:
 
 
 class TestSessionNameExtraction:
-    """Workstream 2: parser must surface latest customTitle as session_name."""
+    """Parser must surface latest customTitle as session_name."""
 
     def test_session_name_uses_latest_custom_title(self) -> None:
         """Fixture has 3 `custom-title` records: latest is 'third-session-title'."""

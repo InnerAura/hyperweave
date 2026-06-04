@@ -5,6 +5,39 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.13] - 2026-06-03
+
+v0.3.13 expands the brutalist light palette to fourteen variants with a new horizontal stats layout, adds the HyperWeave identity glyph, and tightens the strip layout engine across all genomes.
+
+### Added
+
+- **Eight new brutalist light variants** &mdash; ferro, ozalid, sulfur, tyrian, indigo, patina, graphite, and cyan join the original six, for fourteen light and eight dark.
+- **Sigil divider** &mdash; a new brutalist divider with ink rules and a solid center block; light variants default to it, dark defaults to seam, both selectable on any variant.
+- **HyperWeave identity glyph** &mdash; strips show the HyperWeave sigil by default when no provider glyph is detected; `--glyph none` suppresses it.
+- **Temporal metric highlighting** &mdash; streak and uptime metrics get a subtle accent tint behind the column on the stats card.
+
+### Changed
+
+- **Light stats card** &mdash; metrics display in a horizontal row with labels above values, replacing the 2&times;2 grid used on dark cards.
+- **Light strip** &mdash; ends with an ink bookend containing a breathing accent square, or a state indicator when the strip carries one.
+- **Light badge, icon, chart** &mdash; every light frame now shares one consistent color system: dark panels with light text, accent for data and labels, light backgrounds for values.
+
+### Fixed
+
+- **Strip layout** &mdash; identity panel and metric cells size to their content with uniform padding; short and wide values share one rhythm instead of short values floating in extra space.
+- **Strip text in READMEs** &mdash; every text run on badges and strips is bounded to its measured width, so text stays inside its slot even when GitHub's proxy blocks the embedded font.
+- **Empty strips** &mdash; strips with no metrics collapse to a compact identity-only mark across all genomes, instead of rendering phantom metric space.
+- **Badge label sizing** &mdash; labels are measured in the same case they render, so uppercase labels no longer overflow into the value zone.
+- **Badge inline attributes** &mdash; light badge font weight and letter spacing now match what the layout engine measures, closing a sub-pixel drift.
+- **Strip dividers** &mdash; the shared strip template now uses leading dividers (before each cell) instead of trailing dividers (after each cell), so the status indicator sits with even padding on all genomes.
+- **Chrome strip spacing** &mdash; cell padding retuned to match chrome's wider font proportions.
+- **PyPI download chart** &mdash; the monthly headline and the daily chart read the same source, so the number and the graph agree.
+- **Scorecard labels** &mdash; remaining OpenSSF checks show friendly labels instead of raw keys.
+
+### Notes
+
+- `?state=` is a no-op on marquee frames, which carry per-metric state rather than one whole-frame state.
+
 ## [0.3.12] - 2026-06-01
 
 v0.3.12 widens HyperWeave's data reach with three new connectors, adds two dark brutalist palettes, rebuilds the horizontal marquee as a categorized instrument panel, and splits the install so the CLI stays lean.

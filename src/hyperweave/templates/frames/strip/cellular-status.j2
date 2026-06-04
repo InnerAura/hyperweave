@@ -1,17 +1,20 @@
 {# Cellular strip status indicator: 14px frame + 6px inner bit.
 
    The outer strip.svg.j2 transform anchors the indicator at
-   (status_x, strip_h/2). The frame's TOP-LEFT corner sits at the transform
-   origin (x=0, y=-size/2) so the 14x14 frame is vertically centered on the
-   strip's midline. Horizontal centering within the status_zone slot is
-   achieved by the resolver — pre_gap == post_gap (16px each for cellular,
-   producing a 46px zone with the indicator centered).
+   (status_x, strip_h/2). Both the frame and its inner bit are CENTER-anchored on
+   the origin (x = status.outer_x = -size/2, mirroring the y anchor), so the 14x14
+   frame is centered both ways on status_x. compute_strip_zones lands status_x —
+   the frame's center — on the midpoint between the last cell's content-right edge
+   and the right flank, so the leading gap (from the last metric) mirrors the
+   trailing gap (to the flank). Same center-anchored convention as chrome's
+   diamond → the engine treats status_x as the indicator center for every adaptive
+   genome (no per-paradigm offset).
 
    ACTIVE text subtitle removed: state is already encoded by the frame's
    outline color (state_passing_core → green, etc.), so a redundant ACTIVE
    label added noise without information. #}
 <rect class="hw-state-frame" fill="none" stroke="var(--hw-state-signal, var(--dna-signal))" stroke-width="1"
-      x="{{ strip_status_origin_x }}" y="{{ strip_zones.status.outer_y }}"
+      x="{{ strip_zones.status.outer_x }}" y="{{ strip_zones.status.outer_y }}"
       width="{{ indicator_size }}" height="{{ indicator_size }}" opacity="0.65"/>
 <rect class="hw-bit" fill="var(--hw-state-signal, var(--dna-signal))"
       x="{{ strip_zones.status.cellular_inner_x }}" y="{{ strip_zones.status.cellular_inner_y }}"

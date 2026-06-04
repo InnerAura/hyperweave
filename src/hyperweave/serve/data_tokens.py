@@ -263,6 +263,16 @@ _METRIC_DISPLAY_LABELS: dict[str, str] = {
     "token_permissions": "TOKEN-PERMS",
     "security_policy": "SEC-POLICY",
     "dependency_update": "DEP-UPDATE",
+    # OpenSSF Scorecard (v0.3.13) — remaining checks that previously fell
+    # through to raw-key uppercasing (e.g. "CII_BEST_PRACTICES").
+    "cii_best_practices": "CII-BP",
+    "fuzzing": "FUZZING",
+    "packaging": "PACKAGING",
+    "sast": "SAST",
+    "signed_releases": "SIGNED-REL",
+    "license": "LICENSE",
+    "ci_tests": "CI-TESTS",
+    "contributors": "CONTRIBS",
     # GitHub Actions DORA
     "deploy_frequency": "DEPLOY FREQ",
     "lead_time": "LEAD TIME",

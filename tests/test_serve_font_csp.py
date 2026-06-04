@@ -1,6 +1,6 @@
 """Served-response invariant: a CSP must permit the fonts its own SVG embeds.
 
-WS6 (v0.3.12). The brutalist strip identity bled past its seam on the
+v0.3.12. The brutalist strip identity bled past its seam on the
 direct-served URL: ``serve/app.py``'s ``svg_camo_headers`` middleware set
 ``Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'`` with
 NO ``font-src`` directive, so ``font-src`` inherited ``default-src 'none'`` and

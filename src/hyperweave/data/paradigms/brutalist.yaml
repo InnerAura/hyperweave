@@ -64,8 +64,27 @@ strip:
   label_letter_spacing_em: 0.25
   value_font_weight: 900
   value_letter_spacing_em: -0.03
+  # v0.3.13: identity (brand) measurement MUST match brutalist-defs.j2
+  # `.brand-text` render truth — Barlow Condensed 11/900/0.18em (107px for
+  # TRANSFORMERS-V2). Without this the strip fell through to the schema
+  # default (JetBrains Mono, ~127px), oversizing the panel and stretching
+  # the identity via textLength. (Distinct from the stats-block
+  # identity_font_*, which stays JetBrains Mono for the `.{{uid}}-u` header.)
+  identity_font_family: Barlow Condensed
+  identity_font_size: 11
+  identity_font_weight: 900
+  identity_letter_spacing_em: 0.18
+  # v0.3.13 content-aware retune: ONE shared pad drives identity inset,
+  # inter-cell gap, and metric cell padding. cell_pad is derived in the
+  # resolver as 2*strip_pad (pad on each side). v0.3.13 cell-rhythm fix:
+  # cell_min_width now floors the CONTENT (not content+pad), so it sits BELOW
+  # typical content (~16px+) to keep every cell on a constant 2*strip_pad
+  # gutter — short cells no longer absorb the floor as extra spacing. 12 keeps
+  # the effective minimum cell at 12 + 32 = 44 (a 1-char-collapse guard) while
+  # leaving the typical 3-4 metric strip fully content-driven.
+  strip_pad: 16
   cell_pad: 0
-  cell_min_width: 100
+  cell_min_width: 12
 
   # v0.3.2 Phase C: brutalist strip grammar geometry. owns_strip: true tells
   # the parent strip.svg.j2 to defer body composition to
@@ -77,7 +96,10 @@ strip:
   # (False) and continue using the shared zone pipeline.
   owns_strip: true
   brand_panel_x: 6
-  brand_panel_width: 156
+  # v0.3.13: 0 = unbounded (panel grows to fit the measured identity, no
+  # textLength squish). A >0 value re-enables an optional ceiling. Was 156,
+  # which squeezed TRANSFORMERS-V2 (107px) into textLength="104".
+  brand_panel_width: 0
   triple_divider_x: 162
   triple_divider_bar_width: 3
   triple_divider_void_width: 2
@@ -143,8 +165,13 @@ stats:
   activity_bar_stride: 9
   activity_bar_opacity_min: 0.43
   activity_bar_opacity_max: 0.93
-  activity_bar_opacity_min_light: 0.28
-  activity_bar_opacity_max_light: 0.75
+  activity_bar_opacity_min_light: 0.5
+  activity_bar_opacity_max_light: 1.0
+  # v0.3.13: language-bar segments are accent (--dna-signal) data-viz on
+  # the dark panel; opacity ramps per segment so the dominant language reads
+  # full-strength and trailing languages fade. Replaces the near-invisible
+  # seam-color ramp (0.12→0.02) tuned for the old routing.
+  language_segment_opacities_light: [1.0, 0.66, 0.42, 0.26]
   # Username header layout. ``identity_zone_width`` is derived as
   # ``bio_x - identity_x - identity_padding = 134 - 44 - 20 = 70`` instead
   # of carried as an independent magic number. bio_x includes breathing

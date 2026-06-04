@@ -98,12 +98,23 @@ def test_brutalist_carbon_brand_text_not_emerald(loaded: ConfigLoader) -> None:
     )
 
 
-def test_brutalist_pulse_brand_text_paper(loaded: ConfigLoader) -> None:
+def test_brutalist_pulse_brand_text_is_light_knockout(loaded: ConfigLoader) -> None:
+    """v0.3.13 4-role: brand_text is the CREAM knockout for text/glyph on the
+    ink panel — a light tone, distinct from and lighter than the ink it sits on.
+    It is intentionally NOT equal to surface_0 (cream reads brighter than the
+    ground substrate), so the old brand_text == surface_0 invariant is retired."""
     brutalist = loaded.genome_specs["brutalist"]
     pulse = brutalist.variant_overrides["pulse"]
-    assert pulse["brand_text"].lower() == pulse["surface_0"].lower(), (
-        f"pulse light variant's brand_text should equal surface_0 (paper) for text on dark panel; "
-        f"got brand_text={pulse['brand_text']} surface_0={pulse['surface_0']}"
+
+    def _lum(hexv: str) -> float:
+        h = hexv.lstrip("#")
+        r, g, b = (int(h[i : i + 2], 16) for i in (0, 2, 4))
+        return 0.299 * r + 0.587 * g + 0.114 * b
+
+    assert pulse["brand_text"].lower() != pulse["ink"].lower(), "cream knockout must contrast the ink panel"
+    assert _lum(pulse["brand_text"]) > _lum(pulse["ink"]) + 100, (
+        f"brand_text must be a light knockout on the dark ink panel; "
+        f"got brand_text={pulse['brand_text']} ink={pulse['ink']}"
     )
 
 

@@ -92,6 +92,24 @@ class ComposeSpec(FrozenModel):
             data["profile_id"] = _GENOME_PROFILE_MAP.get(genome_raw, ProfileId.BRUTALIST)
         return data
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_glyph_none(cls, data: object) -> object:
+        """``glyph=none`` is a suppression sentinel — map it to ``glyph_mode=none``.
+
+        Lets ``--glyph none`` (CLI/HTTP/MCP all pass the raw string) suppress the
+        glyph on any frame via the single ``glyph_mode == NONE`` check in
+        ``_resolve_glyph``. Without this, ``"none"`` falls through to inference
+        (and, for strips, the HyperWeave default) instead of rendering nothing.
+        """
+        if not isinstance(data, dict):
+            return data
+        glyph = data.get("glyph")
+        if isinstance(glyph, str) and glyph.strip().lower() == "none":
+            data["glyph_mode"] = GlyphMode.NONE.value
+            data["glyph"] = ""
+        return data
+
     # -- Content --
     slots: list[SlotContent] = Field(default_factory=list, description="Content filling frame zones")
     state: str = Field(default="active", description="Semantic state: active, warning, critical, passing, etc.")

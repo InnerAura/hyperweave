@@ -6,8 +6,7 @@
 
 <p align="center">
   <strong>Portable visual output layer for agents.</strong><br/>
-  One API call &rarr; self-contained SVG. No JavaScript. No dependencies. No runtime.<br/>
-  Works everywhere an <code>&lt;img&gt;</code> tag works.
+  One API call, one SVG. No JavaScript. Works everywhere.
 </p>
 
 <!--
@@ -21,7 +20,7 @@
 -->
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=github" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave" alt="strip"/>
 </p>
 
 <!--
@@ -146,8 +145,8 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=carbon" alt="PYPI — carbon variant"/>
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=pigment" alt="PYPI — pigment variant"/>
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=umber" alt="PYPI — umber variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=temper" alt="PYPI — temper variant"/>
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=ember" alt="PYPI — ember variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=temper" alt="PYPI — temper variant"/>
   <br/>
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=onyx" alt="PYPI — onyx variant"/>
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=primer" alt="PYPI — primer variant"/>
@@ -159,7 +158,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </p>
 
 <p align="center">
-  <sub>14 variants &mdash; 8 dark: <code>celadon</code> &middot; <code>alloy</code> &middot; <code>carbon</code> &middot; <code>pigment</code> &middot; <code>umber</code> &middot; <code>temper</code> &middot; <code>ember</code> &middot; <code>onyx</code><br/>6 light: <code>primer</code> &middot; <code>depth</code> &middot; <code>pulse</code> &middot; <code>archive</code> &middot; <code>signal</code> &middot; <code>afterimage</code></sub>
+  <sub>22 variants &mdash; 8 dark: <code>celadon</code> &middot; <code>alloy</code> &middot; <code>carbon</code> &middot; <code>pigment</code> &middot; <code>umber</code> &middot; <code>ember</code> &middot; <code>temper</code> &middot; <code>onyx</code><br/>14 light (6 shown): <code>primer</code> &middot; <code>depth</code> &middot; <code>pulse</code> &middot; <code>archive</code> &middot; <code>signal</code> &middot; <code>afterimage</code></sub>
 </p>
 
 <table>
@@ -190,11 +189,13 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Profile<br/><sub>stats card</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon" alt="stats" width="70%"/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=pulse" alt="stats — pulse (light)" width="70%"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon" alt="stats — celadon (dark)" width="70%"/>
   <br/>
   <ul>
 <li><sub><code>/v1/stats/{username}/{genome}.static?variant={variant}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon</code></sub></li>
+<li><sub><code>hyperweave.app/v1/stats/eli64s/brutalist.static?variant=pulse</code></sub></li>
 </ul>
 </td>
 </tr>
@@ -224,11 +225,13 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
   <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=circle&variant=celadon" alt="spotify — celadon" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=carbon" alt="github — carbon" width="56"/>
   <img src="https://hyperweave.app/v1/icon/docker/brutalist.static?shape=circle&variant=alloy" alt="docker — alloy" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/npm/brutalist.static?shape=square&variant=temper" alt="npm — temper" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=square&variant=pigment" alt="discord — pigment" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=carbon" alt="github — carbon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=circle&variant=pigment" alt="discord — pigment" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/rust/brutalist.static?shape=square&variant=umber" alt="rust — umber" width="56"/>
   <img src="https://hyperweave.app/v1/icon/anthropic/brutalist.static?shape=square&variant=ember" alt="anthropic — ember" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/codex/brutalist.static?shape=square&variant=temper" alt="codex — temper" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/hyperweave/brutalist.static?shape=square&variant=onyx" alt="hyperweave — onyx" width="56"/>
   <br/>
   <ul>
 <li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}&variant={variant}</code></sub></li>
@@ -237,13 +240,15 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 <tr>
-<th align="left">Divider<br/><sub>seam</sub></th>
+<th align="left">Divider<br/><sub>seam &middot; sigil</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/divider/seam/brutalist.static?variant=celadon" alt="brutalist seam divider"/>
+  <img src="https://hyperweave.app/v1/divider/seam/brutalist.static?variant=celadon" alt="brutalist seam divider (dark)"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/divider/sigil/brutalist.static?variant=pulse" alt="brutalist sigil divider (light)"/>
   <br/>
   <ul>
-<li><sub><code>/v1/divider/seam/{genome}.static?variant={variant}</code></sub></li>
-<li><sub><code>hyperweave.app/v1/divider/seam/brutalist.static?variant=celadon</code></sub></li>
+<li><sub><code>/v1/divider/{seam|sigil}/{genome}.static?variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/divider/sigil/brutalist.static?variant=pulse</code></sub></li>
 </ul>
 </td>
 </tr>

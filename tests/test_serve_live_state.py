@@ -1,6 +1,6 @@
 """HTTP integration tests for the state inference chokepoint.
 
-BUG-003 deferred for four releases because the fix was framed as per-route
+This bug was deferred for four releases because the fix was framed as per-route
 wiring. These tests exercise the single-point fix: a live badge fetching
 ``value="failing"`` must render as failing through the real HTTP pipeline,
 with no per-route changes. Tests deliberately do NOT mock compose().

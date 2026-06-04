@@ -685,6 +685,15 @@ def resolve_badge(
             "right_panel_w": zones.right_panel_w,
             "right_panel_draw_x": right_panel_draw_x,
             "right_panel_draw_w": right_panel_draw_w,
+            # v0.3.13 light badge: the GROUND panel butts directly against the
+            # ink left panel (x = left_panel_width) and the 2px accent seam draws
+            # on top — no separator-zone gap (the prototype has no gap; the dark
+            # badge reserves the zone for its ink+state separator). Width spans
+            # to the panel's right edge.
+            "light_right_panel": {
+                "x": zones.left_panel_w,
+                "w": zones.right_panel_x + zones.right_panel_w - zones.left_panel_w,
+            },
             "badge_origin_x": badge_origin_x,
             "badge_origin_y": badge_origin_y,
             "light_perimeter_w": light_perimeter_w,
@@ -946,7 +955,11 @@ def resolve_strip(
         label_ls_em = strip_cfg.label_letter_spacing_em
         value_weight = strip_cfg.value_font_weight
         value_ls_em = strip_cfg.value_letter_spacing_em
-        cell_pad = strip_cfg.cell_pad
+        # owns_strip (brutalist) derives cell_pad from the single strip_pad
+        # source — 2*strip_pad is the pad on each side, so the inter-cell
+        # content gap is a constant 2*strip_pad. Non-owns paradigms keep their
+        # own cell_pad. v0.3.13 content-aware retune.
+        cell_pad = 2 * strip_cfg.strip_pad if strip_cfg.owns_strip else strip_cfg.cell_pad
         cell_min_w = strip_cfg.cell_min_width
         text_anchor = strip_cfg.metric_text_anchor
         text_inset = strip_cfg.metric_text_x
@@ -1033,6 +1046,17 @@ def resolve_strip(
 
     paradigm_owns_strip = bool(strip_cfg and strip_cfg.owns_strip)
     _post_indicator_gap = 16 if show_icon_box else 4
+    # v0.3.13 brutalist-light: the right terminus becomes a fixed-width INK
+    # bookend (matching the left identity panel) holding a breathing/state
+    # square. Reserve its width here and suppress the separate status-zone
+    # reservation — the bookend itself carries the indicator. Dark is untouched.
+    strip_is_light = paradigm_owns_strip and str(genome.get("substrate_kind") or "dark") == "light"
+    _light_bookend_w = 28
+    # Light strips ALWAYS reserve the terminus (even stateless) so the ink
+    # bookend has room: the owns_strip terminus path sets width = bookend_x +
+    # bookend_pad_right. Dark keeps its state-driven reclaim. The light content
+    # partial draws its own bookend, so the shared status include is dropped.
+    strip_status_for_zones = True if strip_is_light else show_status_indicator
     zones = compute_strip_zones(
         height=height,
         owns_strip=paradigm_owns_strip,
@@ -1045,10 +1069,19 @@ def resolve_strip(
         brand_panel_x=strip_cfg.brand_panel_x if strip_cfg else 0,
         brand_panel_width=strip_cfg.brand_panel_width if strip_cfg else 0,
         identity_text_x=strip_cfg.identity_text_x if strip_cfg else 0,
+        identity_panel_pad=strip_cfg.strip_pad if strip_cfg else 8,
         brand_divider_x=strip_cfg.brand_divider_x if strip_cfg else 0,
         triple_divider_bar_width=strip_cfg.triple_divider_bar_width if strip_cfg else 3,
         triple_divider_void_width=strip_cfg.triple_divider_void_width if strip_cfg else 2,
         bookend_x_fallback=strip_cfg.bookend_x if strip_cfg else 0,
+        # v0.3.13: tight right margin = strip_pad after the terminus box
+        # (status/ornament is ornament_size, centered at bookend_x). Replaces
+        # the legacy 40px trailing that left dead space on the right edge.
+        bookend_pad_right=_light_bookend_w
+        if strip_is_light
+        else (strip_cfg.ornament_size // 2 + strip_cfg.strip_pad)
+        if (strip_cfg and strip_cfg.owns_strip)
+        else 40,
         ornament_x=strip_cfg.ornament_x if strip_cfg else 0,
         ornament_y=strip_cfg.ornament_y if strip_cfg else 0,
         ornament_size=strip_cfg.ornament_size if strip_cfg else 14,
@@ -1059,7 +1092,7 @@ def resolve_strip(
         cell_widths=cell_widths,
         cell_layouts_records=cell_layouts_records,
         metric_pitch_fallback=metric_pitch,
-        has_status_indicator=show_status_indicator,
+        has_status_indicator=strip_status_for_zones,
         status_indicator_post_gap=_post_indicator_gap,
         flank_width=flank_width,
         flank_cell_size=flank_cell_size,
@@ -1137,7 +1170,6 @@ def resolve_strip(
         "strip_chrome_highlight_h": 0.5,
         "strip_chrome_highlight_rx": 0.25,
         "strip_cellular_panel_y": 2,
-        "strip_status_origin_x": 0,
         "content_right": content_right,
         "glyph_zone_x_offset": glyph_zone_x_offset,
         "icon_box_x": zones.icon_box_x,
@@ -1159,6 +1191,31 @@ def resolve_strip(
         "strip_glyph_svg_x": zones.glyph_svg_x,
         "strip_glyph_svg_y": zones.glyph_svg_y,
         "show_status_indicator": show_status_indicator,
+        # Brutalist-light ink bookend geometry (right terminus). When present the
+        # light content partial paints an ink rect with a breathing square
+        # (stateless) or a double-square state indicator (stateful) inside.
+        "light_strip_bookend": strip_is_light,
+        "light_bookend_ink": {"x": width - _light_bookend_w, "y": 0, "w": _light_bookend_w, "h": height},
+        "light_bookend_edge": {"x": width - _light_bookend_w, "y": 0, "w": 2, "h": height},
+        "light_bookend_square": {
+            "x": width - _light_bookend_w / 2 - 4.5,
+            "y": height / 2 - 4.5,
+            "w": 9,
+            "h": 9,
+        },
+        "light_bookend_state_outer": {
+            "x": width - _light_bookend_w / 2 - 5.5,
+            "y": height / 2 - 5.5,
+            "w": 11,
+            "h": 11,
+        },
+        "light_bookend_state_inner": {
+            "x": width - _light_bookend_w / 2 - 2.5,
+            "y": height / 2 - 2.5,
+            "w": 5,
+            "h": 5,
+        },
+        "light_bookend_has_state": show_status_indicator,
         "strip_mode": strip_mode,
         "data_hw_statemode": data_hw_statemode_for(strip_mode),
         # content_width is where visible strip content ends. When strip_min_width
@@ -1479,12 +1536,17 @@ def resolve_icon(
         "chrome_circle_glyph_x": -24,
         "chrome_circle_glyph_y": -24,
         "chrome_circle_glyph_size": 48,
+        # v0.3.13 icon geometry matches the brutalist-light prototype and is
+        # shared by BOTH substrates: ink disc r=30 with a thin accent EDGE ring
+        # at r=29 (an inset border at the perimeter — not the prior small inner
+        # ring at r=24), a larger centered glyph, and a 6px accent square cap.
         "brutalist_circle_cx": 32,
         "brutalist_circle_cy": 32,
-        "brutalist_circle_r": 28,
-        "brutalist_circle_glyph_x": 18,
-        "brutalist_circle_glyph_y": 18,
-        "brutalist_circle_glyph_size": 28,
+        "brutalist_circle_r": 30,
+        "brutalist_circle_rim_r": 29,
+        "brutalist_circle_glyph_x": 16,
+        "brutalist_circle_glyph_y": 16,
+        "brutalist_circle_glyph_size": 32,
         "brutalist_square_x": 2,
         "brutalist_square_y": 2,
         "brutalist_square_w": 60,
@@ -1493,10 +1555,10 @@ def resolve_icon(
         "brutalist_square_border_y": 1.25,
         "brutalist_square_border_w": 61.5,
         "brutalist_square_border_h": 61.5,
-        "brutalist_square_accent_h": 3,
-        "brutalist_square_glyph_x": 18,
-        "brutalist_square_glyph_y": 20,
-        "brutalist_square_glyph_size": 28,
+        "brutalist_square_accent_h": 6,
+        "brutalist_square_glyph_x": 16,
+        "brutalist_square_glyph_y": 18,
+        "brutalist_square_glyph_size": 32,
         "cellular_border_x": 0.5,
         "cellular_border_y": 0.5,
     }
@@ -1647,6 +1709,25 @@ def _divider_geometry_context(
         for i in range(0, len(seam_segment_edges), 2)
     ]
     seam_joints = [{"x": x, "y1": seam_y - 4, "y2": seam_y + 4} for x in seam_segment_edges[1:-1]]
+    # Sigil divider (brutalist light default, 800x34): two ink rules with end
+    # caps flanking a SOLID ink center block (the diamond is filled solid,
+    # continuous with the block — no cutout/outline/gap), plus two accent spot
+    # marks bracketing the block and an accent top cap on the block. Ink uses
+    # accent_complement (=P), spots/cap use accent (=A) — both already in ctx.
+    sigil_cx = width // 2
+    sigil_block = 26
+    sigil_block_x = sigil_cx - sigil_block // 2
+    sigil_block_y = (height - sigil_block) // 2
+    sigil_rule_h = 4
+    sigil_rule_y = (height - sigil_rule_h) // 2
+    sigil_rule_gap = 57  # block <-> rule gap houses the spot mark
+    sigil_left_rule_w = sigil_block_x - sigil_rule_gap
+    sigil_right_rule_x = sigil_block_x + sigil_block + sigil_rule_gap
+    sigil_cap_w, sigil_cap_h = 6, 10
+    sigil_cap_y = (height - sigil_cap_h) // 2
+    sigil_spot_w, sigil_spot_h = 14, 6
+    sigil_spot_y = (height - sigil_spot_h) // 2
+    sigil_spot_offset = 53  # center distance, symmetric about sigil_cx
     ctx: dict[str, Any] = {
         "divider_variant": variant,
         "divider_w": width,
@@ -1789,6 +1870,31 @@ def _divider_geometry_context(
         "seam_segments": seam_segments,
         "seam_joints": seam_joints,
         "seam_gap": seam_gap,
+        "sigil_left_rule": {"x": 0, "y": sigil_rule_y, "w": sigil_left_rule_w, "h": sigil_rule_h},
+        "sigil_right_rule": {
+            "x": sigil_right_rule_x,
+            "y": sigil_rule_y,
+            "w": width - sigil_right_rule_x,
+            "h": sigil_rule_h,
+        },
+        "sigil_left_cap": {"x": 0, "y": sigil_cap_y, "w": sigil_cap_w, "h": sigil_cap_h},
+        "sigil_right_cap": {"x": width - sigil_cap_w, "y": sigil_cap_y, "w": sigil_cap_w, "h": sigil_cap_h},
+        "sigil_block": {"x": sigil_block_x, "y": sigil_block_y, "w": sigil_block, "h": sigil_block},
+        "sigil_block_cap": {"x": sigil_block_x, "y": sigil_block_y, "w": sigil_block, "h": 4},
+        "sigil_spots": [
+            {
+                "x": sigil_cx - sigil_spot_offset - sigil_spot_w // 2,
+                "y": sigil_spot_y,
+                "w": sigil_spot_w,
+                "h": sigil_spot_h,
+            },
+            {
+                "x": sigil_cx + sigil_spot_offset - sigil_spot_w // 2,
+                "y": sigil_spot_y,
+                "w": sigil_spot_w,
+                "h": sigil_spot_h,
+            },
+        ],
     }
     return ctx
 
@@ -1810,8 +1916,24 @@ def resolve_divider(
         compositor-route requests. Editorial generics bypass this check.
     """
     _editorial_generics = {"block", "current", "takeoff", "void", "zeropoint"}
-    _all_known_variants = _editorial_generics | {"dissolve", "band", "seam"}
-    variant = spec.divider_variant if spec.divider_variant in _all_known_variants else "zeropoint"
+    _all_known_variants = _editorial_generics | {"dissolve", "band", "seam", "sigil"}
+    variant: str
+    if spec.divider_variant in _all_known_variants:
+        variant = spec.divider_variant
+    elif genome.get("dividers"):
+        # Genome-themed default: the substrate picks the family divider.
+        # Brutalist light defaults to sigil (ink rules + solid center block);
+        # dark keeps seam (concrete expansion-joint). Both stay explicitly
+        # selectable via ?divider=seam|sigil.
+        _allowed = list(genome.get("dividers") or [])
+        if genome.get("substrate_kind") == "light" and "sigil" in _allowed:
+            variant = "sigil"
+        elif "seam" in _allowed:
+            variant = "seam"
+        else:
+            variant = _allowed[0]
+    else:
+        variant = "zeropoint"
 
     # (slug, genome) pairing validator — only enforced for non-editorial slugs
     # (editorial generics are intentionally genome-agnostic, served via /a/inneraura/).
@@ -1830,6 +1952,7 @@ def resolve_divider(
         "dissolve": (800, 28),
         "band": (800, 22),
         "seam": (800, 16),
+        "sigil": (800, 34),
     }
     w, h = variant_dims.get(variant, (700, 30))
 
@@ -1913,9 +2036,25 @@ def resolve_marquee(
     # bandwidth is larger.
     primary_info_accent = primary_tone.get("info_accent", "")
     primary_mid_accent = primary_tone.get("mid_accent", "")
+    _is_light_substrate = genome.get("substrate_kind") == "light"
+    _ink_hex = genome.get("ink", genome.get("ink_primary", "#0A0A0A"))
+    _surface_hex = genome.get("surface_0", genome.get("surface", "#0A0A0A"))
+    _accent_hex = genome.get("accent", "#10B981")
     chrome_ctx: dict[str, Any] = {
-        "signal_hex": genome.get("accent", "#10B981"),
-        "surface_hex": genome.get("surface_0", genome.get("surface", "#0A0A0A")),
+        "signal_hex": _accent_hex,
+        "surface_hex": _surface_hex,
+        # v0.3.13 light-scholar cohesion: on light substrates the bookend caps
+        # carry INK MASS (not paper), with a PAPER-knockout liveness cube/seal
+        # and an INK frame perimeter (structure); accent stays a spot (cap
+        # rails + bottom foundation rail). Dark substrates keep surface caps +
+        # accent cube/perimeter, so these resolve byte-equal there. Substrate-
+        # aware in the resolver (mirrors the glyph_fill routing at ~4300) so the
+        # shared brutalist overlay needs no per-substrate template split — the
+        # light/dark elements are identical in structure, only their fill
+        # differs (unlike the icon, which needed a true structural split).
+        "cap_fill_hex": _ink_hex if _is_light_substrate else _surface_hex,
+        "cube_fill_hex": _surface_hex if _is_light_substrate else _accent_hex,
+        "marquee_perimeter_hex": _ink_hex if _is_light_substrate else _accent_hex,
         "primary_seam_mid": primary_tone.get("seam_mid", ""),
         "secondary_seam_mid": secondary_tone.get("seam_mid", ""),
         "primary_info_accent": primary_info_accent,
@@ -4034,6 +4173,13 @@ def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
         inferred = _infer_glyph_id(spec, glyphs, infer_glyph)
         if inferred and inferred in glyphs:
             return _glyph_payload(inferred, glyphs)
+        # Strip-scoped default: when no explicit glyph, custom SVG, or inferred
+        # provider resolves, strips fall back to the HyperWeave sigil so the
+        # identity zone carries the brand mark instead of an empty/ornament-only
+        # bookend. Other frames keep their no-glyph behavior (badges stay clean).
+        # ``--glyph none`` → glyph_mode NONE (returned above) still suppresses.
+        if spec.type == "strip" and "hyperweave" in glyphs:
+            return _glyph_payload("hyperweave", glyphs)
     except (ImportError, Exception):
         pass
 
@@ -4291,17 +4437,15 @@ def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) ->
         "chrome_text_gradient": chrome_text_gradient,
         "hero_text_gradient": genome.get("hero_text_gradient", []),
         "chrome_rhythm": genome.get("rhythm_base", ""),
-        # v0.3.2 Phase 4: substrate-aware glyph fill. Light scholar prototypes
-        # (the v0.3.2 brutalist light scholar prototype:109) fill the provider glyph with the
-        # variant's panel/ink color so it reads as dark-ink-on-paper, not
-        # accent-on-paper. Accent on paper is too low-contrast (cyan on cream
-        # nearly disappears). Dark variants keep glyph_inner (accent color)
-        # which renders as accent-on-dark — the current visible behavior.
-        "glyph_fill": (
-            genome.get("ink", genome.get("ink_primary", genome.get("glyph_inner", "")))
-            if genome.get("substrate_kind") == "light"
-            else genome.get("glyph_inner", "")
-        ),
+        # Provider glyph fill = the genome's glyph_inner role, both substrates.
+        # v0.3.13: every brutalist glyph zone (badge/strip/icon left panel, icon
+        # body) is an INK mass, so the glyph is a CREAM knockout — which is
+        # exactly what glyph_inner already holds for light variants (and the
+        # accent for dark, which renders accent-on-dark). The earlier light
+        # override to `ink` was written for the superseded cream-left-panel badge
+        # (ink-on-paper); on the current ink panels it rendered ink-on-ink
+        # (invisible glyph). One field, no substrate branch.
+        "glyph_fill": genome.get("glyph_inner", ""),
         "light_mode": genome.get("light_mode"),
         # Cellular paradigm palette/pulse config. The 22 flat variant_blue_*/
         # variant_purple_*/variant_bifamily_bridge_* fields previously surfaced

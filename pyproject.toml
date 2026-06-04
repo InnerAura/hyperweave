@@ -1,25 +1,22 @@
 [project]
 name = "hyperweave"
 dynamic = ["version"]
-description = "Headless visual output layer for AI agents. One API call → self-contained SVG."
+description = "Portable visual output layer for agents. One API call, one SVG. Zero dependencies, renders in any markdown."
 requires-python = ">=3.12"
 license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]
 readme = "README.md"
 keywords = [
-    "svg",
-    "svg-generation",
-    "design-system",
+    "agent-observability",
     "ai-agents",
-    "generative-ui",
-    "mcp-server",
-    "mcp",
+    "design-system",
     "developer-tools",
-    "fastapi",
-    "claude-code",
-    "badges",
-    "github-profile",
+    "generative-ui",
+    "mcp",
+    "mcp-server",
     "profile-readme",
+    "svg",
+    "svg-generator",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

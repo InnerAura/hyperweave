@@ -91,8 +91,9 @@ class BadgeZones:
 
     Templates consume these directly via ``{{ width }}``, ``{{ label_x }}``,
     ``{{ value_x }}``, etc. — no template-side arithmetic. ``label_text_length``
-    and ``value_text_length`` carry the SVG ``textLength`` attribute value
-    when shrink-to-fit is active (0.0 = render natural width).
+    and ``value_text_length`` carry the SVG ``textLength`` attribute = the
+    measured text width (the camo bound — pins a fallback font to the zone),
+    overridden to the clamped width when shrink-to-fit is active.
 
     Equal-spacing rule (v0.3.9): every gap between PRESENT zones equals
     ``pad``. Absent zones (no glyph, no state indicator) collapse fully —
@@ -230,12 +231,15 @@ def compute_badge_zones(
       separator (``sep_w`` stroke + ``seam_w`` mark). Full pad on each side
       of the panel boundary. No etched seam hairlines emitted.
 
-    Shrink-to-fit
-    -------------
-    When ``max_label_w > 0`` and ``measured_label_w > max_label_w``, the
-    returned ``label_w`` clamps to ``max_label_w`` and ``label_text_length``
-    is populated so templates emit ``textLength`` + ``lengthAdjust=
-    "spacingAndGlyphs"``. Same logic for value.
+    Shrink-to-fit + camo bound
+    --------------------------
+    ``label_text_length`` is ALWAYS the measured label width so templates emit
+    ``textLength`` + ``lengthAdjust="spacingAndGlyphs"`` — a camo bound that
+    keeps a fallback font (when ``@font-face`` is blocked) from rendering wider
+    than the zone. When ``max_label_w > 0`` and ``measured_label_w >
+    max_label_w`` the label additionally shrinks: ``label_w`` clamps to
+    ``max_label_w`` and ``label_text_length`` becomes that clamped width. Same
+    logic for value.
 
     SVG text anchoring
     ------------------
@@ -245,9 +249,16 @@ def compute_badge_zones(
     ``<text text-anchor="{{ text_anchor }}" x="{{ label_x }}">``.
     """
     # Clamp label and value to shrink-to-fit ceilings before geometry.
+    # Camo bound (v0.3.13): textLength pins the rendered text to its
+    # MEASURED width even when it fits (not just on shrink-to-fit), so a
+    # fallback font can't render WIDER than the content-sized zone and cross
+    # the seam. GitHub camo blocks @font-face, so Orbitron/JBM never load and
+    # the wider sans-serif fallback would otherwise overflow (e.g. CHROME's "E"
+    # past the seam). No-op when the real font loads. Same bound the strip
+    # identity carries; one place, every genome's badge.
     label_w = measured_label_w
     label_ink_w = measured_label_ink_w if measured_label_ink_w > 0 else measured_label_w
-    label_text_length = 0.0
+    label_text_length = round(measured_label_w, 1) if measured_label_w > 0 else 0.0
     if max_label_w > 0 and measured_label_w > max_label_w:
         scale = max_label_w / measured_label_w if measured_label_w > 0 else 1.0
         label_w = max_label_w
@@ -258,7 +269,7 @@ def compute_badge_zones(
 
     value_w = measured_value_w
     value_ink_w = measured_value_ink_w if measured_value_ink_w > 0 else measured_value_w
-    value_text_length = 0.0
+    value_text_length = round(measured_value_w, 1) if measured_value_w > 0 else 0.0
     if max_value_w > 0 and measured_value_w > max_value_w:
         scale = max_value_w / measured_value_w if measured_value_w > 0 else 1.0
         value_w = max_value_w
@@ -971,7 +982,6 @@ def compute_strip_zones(
     """
     cell_widths = list(cell_widths or [])
     cell_layouts_records = list(cell_layouts_records or [])
-    n_cells = len(cell_widths)
 
     # Bifamily flank handling: every coordinate downstream of identity shifts
     # right by flank_width when flanks render (automata strips reserve 36px
@@ -1037,17 +1047,25 @@ def compute_strip_zones(
         min_panel_w = identity_left_inset + identity_panel_pad
         # Required panel width to fit measured content with right pad. Ceiling
         # so a measured width of 23.4 lands at integer 24 — without it, panel
-        # truncation would clip content by < 1px and falsely trigger shrink.
+        # truncation would clip content by < 1px.
         required_panel_w = math.ceil(identity_left_inset + identity_w + identity_panel_pad)
-        # Content-driven panel: between min and brand_panel_width (the YAML max).
-        effective_panel_w = max(min_panel_w, min(required_panel_w, brand_panel_width))
+        # v0.3.13 content-aware retune: the panel GROWS to fit the measured
+        # identity (no ceiling), so long identities no longer squish. A
+        # ``brand_panel_width > 0`` re-enables an optional ceiling; brutalist
+        # sets it to 0 (unbounded).
+        effective_panel_w = max(min_panel_w, required_panel_w)
+        if brand_panel_width > 0:
+            effective_panel_w = min(effective_panel_w, brand_panel_width)
         effective_panel_right = brand_panel_x + effective_panel_w
-        # Shrink-to-fit when content exceeds the clamped panel's available text width.
-        # 0.5px tolerance absorbs measurement noise from font-metric LUT
-        # rounding and browser text rendering.
+        # textLength = the natural measured width. A no-op when the embedded
+        # font loads (the text is already that wide); a font-independent BOUND
+        # when it can't — GitHub camo's CSP blocks @font-face, so the wider
+        # fallback would otherwise bleed past the seam. If an explicit ceiling
+        # squeezes the panel below the content, clamp to the available width.
         available_text_w = effective_panel_right - identity_text_x - identity_panel_pad
-        if identity_w > available_text_w + 0.5 and available_text_w > 0:
-            identity_text_length = float(available_text_w)
+        identity_text_length = round(
+            float(min(identity_w, available_text_w)) if available_text_w > 0 else float(identity_w), 1
+        )
         # Downstream geometry follows the resolved panel right edge.
         brand_panel_x_resolved = brand_panel_x
         brand_panel_w_resolved = effective_panel_w
@@ -1062,6 +1080,11 @@ def compute_strip_zones(
         identity_x_resolved = accent_w + glyph_zone_width if show_icon_box or has_identity_glyph else accent_w + 14
         identity_x_for_template = identity_x_resolved + seam_offset
         identity_zone_width = max(identity_w, subtitle_w)
+        # v0.3.13 camo bound: emit the identity's natural measured width as
+        # textLength so chrome/cellular strips match brutalist's overflow guard.
+        # A no-op when the embedded font loads; a hard bound when GitHub camo's
+        # CSP blocks @font-face and the wider fallback would otherwise bleed.
+        identity_text_length = round(float(identity_w), 1)
         first_divider_x = max(
             int(identity_x_resolved + identity_zone_width + identity_right_pad),
             first_divider_x_floor,
@@ -1071,7 +1094,12 @@ def compute_strip_zones(
     # First seam at first_divider_x + seam_offset (shifted by flank when present).
     # Then one seam per cell trailing edge, cumulative widths.
     metric_pitch = max(cell_widths) if cell_widths else max(metric_pitch_fallback, 0)
-    metrics_zone_width = sum(cell_widths) if cell_widths else (max(n_cells, 1) * metric_pitch)
+    # Empty strips (no metrics) reserve NO metric zone — they collapse to a
+    # minimal identity-only strip: no phantom 1-cell width, no metric-separator
+    # divider, no trailing dead space, no min-width clamp (v0.3.13 coherent
+    # empty-state — every genome ends right after the identity).
+    is_empty_strip = not cell_widths
+    metrics_zone_width = sum(cell_widths) if cell_widths else 0
 
     seams: list[float] = [float(first_divider_x + seam_offset)]
     cell_start = first_divider_x + cell_offset + seam_offset
@@ -1090,24 +1118,47 @@ def compute_strip_zones(
         status_zone_width = 0
 
     # ── Total width (additive layout) ──
+    # A STATELESS strip has no status terminus, so the trailing space past the
+    # last cell collapses to a thin stroke clearance. The cell's own internal
+    # pad already supplies the right margin; adding a full strip_pad / bookend_gap
+    # of trailing would seat the last value lopsided — more space on its right
+    # than its left (v0.3.13 fix). One value, every genome.
+    stateless_trailing = 2
     if owns_strip:
         # Dynamic bookend snaps to right edge of last cell + bookend_gap;
         # fallback to YAML constant for zero-cell strips. Uses the content-
         # driven brand_divider_x_resolved so short identities → tight strips
         # (N8N: bookend at ~120 not 520) and long identities → standard layout
         # (AUTOGPT: bookend follows the clamped 170 baseline).
-        bookend_x = brand_divider_x_resolved + sum(cell_widths) + bookend_gap if cell_widths else bookend_x_fallback
-        width = bookend_x + bookend_pad_right
+        last_cell_right = brand_divider_x_resolved + sum(cell_widths)
+        if is_empty_strip:
+            # Empty: identity panel only — end at the panel right edge + a thin
+            # clearance. No triple divider / metric zone / bookend (template
+            # gates the divider on metrics). Replaces the bookend_x_fallback
+            # constant that elongated empty brutalist strips to ~543px.
+            bookend_x = triple_divider_x_resolved
+            width = triple_divider_x_resolved + stateless_trailing
+        elif has_status_indicator:
+            # Stateful: reserve the bookend zone for the status diamond.
+            bookend_x = last_cell_right + bookend_gap
+            width = bookend_x + bookend_pad_right
+        else:
+            # Stateless: end at the last cell + stroke clearance (no decorative
+            # ornament), so the last value's right margin mirrors its left.
+            bookend_x = last_cell_right
+            width = last_cell_right + stateless_trailing
     else:
         # Adaptive layout: identity + cells + status + flanks. The trailing
-        # pad moves outside content_width as transparent SVG canvas instead
-        # of visible dead space between the last cell and envelope edge.
-        # Chrome uses that transparent pad when strip_min_width clamps the
-        # canvas wider than natural; cellular paints cells to the full viewBox,
-        # so gating on strip_min_width keeps cellular motion aligned with the
-        # painted cell extent.
+        # clearance sits outside content_width as transparent SVG canvas (not
+        # visible dead space inside the envelope). Chrome keeps a hair of it so
+        # the strip_min_width clamp still has room to grow; cellular (strip_min_
+        # width 0) gets none — its bifamily flanks frame the right edge.
         natural_content_width = first_divider_x + cell_offset + metrics_zone_width + status_zone_width + flank_total
-        adaptive_trailing_pad = bookend_gap if (strip_min_width > 0 and not has_status_indicator) else 0
+        # Empty strips: no trailing clearance and (below) no strip_min_width
+        # clamp — that guards 1-metric aspect-warp, not the identity-only state.
+        adaptive_trailing_pad = (
+            stateless_trailing if (strip_min_width > 0 and not has_status_indicator and not is_empty_strip) else 0
+        )
         width = natural_content_width + adaptive_trailing_pad
         bookend_x = 0
 
@@ -1119,15 +1170,38 @@ def compute_strip_zones(
     # content_width matches width. Adaptive paradigms separate content from
     # trailing transparent canvas via natural_content_width.
     content_width = width if owns_strip else natural_content_width
-    if strip_min_width > 0 and width < strip_min_width:
+    if strip_min_width > 0 and width < strip_min_width and not is_empty_strip:
         width = strip_min_width
 
-    # Status indicator x: last_seam + pre_gap when stateful; 0 otherwise.
-    if has_status_indicator:
+    # Status indicator x. owns_strip (brutalist) renders the diamond off its own
+    # bookend_x, so status_x is dead there — keep the legacy seam+pre_gap value.
+    # Adaptive paradigms (chrome / cellular) render off status_x: CENTER the
+    # indicator between the last cell's content-right edge and the trailing
+    # content edge, so its leading gap (from the last metric) mirrors its
+    # trailing gap (to the envelope edge / right flank). The pre-v0.3.13 formula
+    # placed it at last_seam + pre_gap, but the last cell's own right gutter
+    # (cell_pad/2) already sits between the value and the seam — so a constant
+    # pre_gap stacked on a wide gutter seated the diamond closer to the edge than
+    # to the value (chrome's 48px gutter: 40px lead vs 18px trail). Centering on
+    # the content-right edge (derived from cell_w - content_w) cancels the gutter
+    # uniformly: negligible for automata's 20px gutter, decisive for chrome's 48.
+    # One code path, every adaptive genome — both adaptive status partials center
+    # their indicator on the group origin (chrome diamond and cellular frame are
+    # both anchored at status.outer_x), so status_x IS the center, no offset.
+    if not has_status_indicator:
+        status_x = 0.0
+    elif owns_strip:
         last_seam_x = seams[-1] if seams else float(first_divider_x)
         status_x = last_seam_x + status_indicator_pre_gap
     else:
-        status_x = 0.0
+        last_pad = (
+            float(cell_layouts_records[-1]["cell_w"]) - float(cell_layouts_records[-1]["content_w"])
+            if cell_layouts_records
+            else 0.0
+        )
+        last_content_right = (seams[-1] if seams else float(first_divider_x)) - last_pad / 2.0
+        trailing_edge = content_width - (flank_width if has_flanks else 0)
+        status_x = (last_content_right + trailing_edge) / 2.0
 
     # Content right edge (= width minus flank on right side, when flanked).
     content_right = width - (flank_width if has_flanks else 0)
@@ -1287,7 +1361,7 @@ def compute_strip_zones(
             inner_y=status_inner_y,
             inner_w=status_inner_size,
             inner_h=status_inner_size,
-            cellular_inner_x=4.0,
+            cellular_inner_x=status_outer_x + 4.0,
             cellular_inner_y=status_outer_y + 4.0,
             cellular_inner_w=6.0,
             cellular_inner_h=6.0,

@@ -1,6 +1,6 @@
 """Tests for the state inference chokepoint in compose().
 
-BUG-003 regression tests: verify that state inference runs once at compose()
+Regression tests: verify that state inference runs once at compose()
 entry and covers every call site (CLI, HTTP, MCP, kit) without per-route
 wiring. Observable signal is ``ComposeResult.metadata.state``.
 """

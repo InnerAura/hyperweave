@@ -57,11 +57,19 @@
 .{{ uid }}-metric-label {
   font-family: var(--dna-font-mono, 'JetBrains Mono', monospace);
   font-size: 7px; font-weight: 800; letter-spacing: 0.25em; text-transform: uppercase;
-  fill: var(--dna-label-text);
+  {# v0.3.13: light strips put metric LABELS in accent (--dna-signal) — the
+     labels-on-cream role that names each value; dark strips keep the muted
+     label-text tone. Metric VALUES stay --dna-ink-primary on both. #}
+  fill: {% if substrate_kind == 'light' %}var(--dna-signal){% else %}var(--dna-label-text){% endif %};
 }
 .{{ uid }}-metric-value {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 18px; font-weight: 900; letter-spacing: -0.03em;
   fill: var(--dna-ink-primary);
 }
+{# v0.3.13 brutalist-light ink-bookend liveness square — opacity-only breathe
+   (CIM-compliant), stilled under reduced-motion. #}
+@keyframes {{ uid }}-bk { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+.{{ uid }}-bk { animation: {{ uid }}-bk 2.618s ease-in-out infinite; will-change: opacity; }
+@media (prefers-reduced-motion: reduce) { .{{ uid }}-bk { animation: none !important; opacity: 0.85; } }
 </style>

@@ -2,19 +2,18 @@
 
 Regression coverage for the v0.3.3 brutalist-light activity-bar fix.
 
-The 52-week activity bars in the brutalist stats card MUST use:
-  - ``var(--dna-signal-dim)`` for the 6 light scholar variants (archive,
-    signal, pulse, depth, afterimage, primer). The light template was
-    authored to flip polarity against dark — substituting the panel-top
-    accent (mapped from each variant's ``accent_complement`` JSON field)
-    for the dark accent. A v0.3.2 regression hardcoded ``var(--dna-ink-primary)``
-    which resolves to the deep near-black ink hex (e.g. #2A1215 on pulse),
-    making the histogram read as dark-gray smudges on cream paper instead
-    of the warm/cool dark accent intended by the prototype.
+The 52-week activity bars in the brutalist stats card MUST use
+``var(--dna-signal)`` — the primary accent / data-viz role — on ALL variants
+(v0.3.13 three-role routing):
+  - Light scholars (archive, signal, pulse, depth, afterimage, primer): the
+    activity bars are the per-variant accent at a per-bar opacity ramp
+    (0.5 short -> 1.0 tall), the SAME accent the chart polyline uses so stats
+    and chart read as one family. This supersedes the earlier ``signal-dim``
+    routing (the muted substrate stop). Ink is still forbidden on the bars —
+    it reads as dark-gray smudges on cream (the v0.3.2 bug).
 
-  - ``var(--dna-signal)`` for the 6 dark substrate variants (celadon, carbon,
-    alloy, temper, pigment, ember). This guards the dark side from drifting
-    into the light-only fix.
+  - Dark substrates (celadon, carbon, alloy, temper, pigment, ember): also
+    ``var(--dna-signal)``. The light + dark routing now agree.
 
 The activity histogram is rendered inside a ``<g fill="var(--dna-...)">``
 parent so per-bar ``<rect>`` elements inherit the fill — the test asserts
@@ -82,17 +81,18 @@ def _activity_group_fill(svg: str) -> str:
 
 
 @pytest.mark.parametrize("variant", LIGHT_VARIANTS)
-def test_brutalist_light_variant_activity_bars_use_signal_dim(variant: str) -> None:
+def test_brutalist_light_variant_activity_bars_use_signal(variant: str) -> None:
     """Each of the 6 light scholar variants must fill the 52-week activity
-    histogram with ``var(--dna-signal-dim)`` so per-variant accent_complement
-    (oxblood / tobacco / navy / forest / ultraviolet / zinc) reaches the bars.
+    histogram with ``var(--dna-signal)`` — the primary accent / data-viz role
+    (v0.3.13). Per-bar opacity ramps 0.5->1.0 by height; the accent IS the
+    data colour, matching the chart polyline so stats + chart read as one
+    family. Supersedes the earlier signal-dim (muted substrate) routing.
     """
     svg = _compose_stats(variant)
     fill = _activity_group_fill(svg)
-    assert fill == "var(--dna-signal-dim)", (
+    assert fill == "var(--dna-signal)", (
         f"brutalist-light variant {variant!r}: activity bars filled with {fill}, "
-        "expected var(--dna-signal-dim) — the assembler-mapped accent_complement stop "
-        "that matches each light DNA's prototype activity-bar fill"
+        "expected var(--dna-signal) — the primary accent / data-viz stop"
     )
 
 

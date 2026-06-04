@@ -31,7 +31,11 @@ badge_seam_width: 0
 badge_inset: 2
 badge_indicator_size: 10
 badge_indicator_pad_r: 5
-badge_label_uppercase: false
+# v0.3.13: true so the MEASURED label matches the uppercase the template
+# renders. With false, the resolver measured the lowercase label (e.g.
+# "chrome" 40px) while the chrome badge renders it uppercase ("CHROME" 47px),
+# sizing the label zone too narrow so the label crossed the seam.
+badge_label_uppercase: true
 badge_use_mono: false
 badge_text_y_factor: 0.5
 

@@ -35,9 +35,11 @@
         width="{{ strip_zones.core.brand_panel_w }}" height="{{ strip_h }}"
         fill="var(--dna-brand-panel-fill)"/>
 
-  {# (5) ACCENT-VOID-ACCENT triple divider at brand-panel-right seam.
-     Outer bars use --dna-signal at 0.7 opacity (structural-not-shouty);
-     center void uses --dna-surface (the void color). #}
+  {# (5) ACCENT-VOID-ACCENT triple divider at brand-panel-right seam — the
+     identity↔metrics separator, so it renders only when metrics are present
+     (empty strips are identity-only, no dangling divider). Outer bars
+     --dna-signal at 0.7 opacity; center void --dna-surface. #}
+  {% if metrics %}
   <rect x="{{ strip_zones.core.triple_divider_x }}" y="{{ strip_origin_y }}"
         width="{{ triple_divider_bar_w }}" height="{{ strip_h }}"
         fill="var(--dna-signal)" opacity="0.7"/>
@@ -47,13 +49,13 @@
   <rect x="{{ strip_zones.core.triple_divider_right_x }}" y="{{ strip_origin_y }}"
         width="{{ triple_divider_bar_w }}" height="{{ strip_h }}"
         fill="var(--dna-signal)" opacity="0.7"/>
+  {% endif %}
 
-  {# (6) Identity glyph slot — when glyph_path is supplied (e.g.
-     ?glyph=github), the glyph renders at the ornament position scaled
-     to ornament_size, filled with the variant's accent. Otherwise the
-     default 14×14 ornament square with inner cutout renders as the
-     fallback brand mark. The slot enables ?glyph={slug} to test brand
-     identity composition without changing template architecture. #}
+  {# (6) Identity glyph slot — glyph_path is the explicit/provider glyph, or
+     the HyperWeave sigil that the resolver defaults strips to. It renders at
+     the ornament position scaled to ornament_size, filled with the variant's
+     accent. glyph_path is empty only under ?glyph=none (suppression), in which
+     case nothing renders here. #}
   {% if glyph_path %}
   {# v0.3.9 algorithmic strip glyph: identity glyph sized by ``strip_glyph_size``
      (derived from ``strip_height * strip_glyph_ratio`` in compose/resolver.py)
@@ -67,15 +69,6 @@
       <path d="{{ glyph_path }}" fill="var(--dna-glyph-inner, var(--dna-signal))"/>
     </svg>
   </g>
-  {% else %}
-  <rect x="{{ ornament_x }}" y="{{ ornament_y }}"
-        width="{{ ornament_size }}" height="{{ ornament_size }}"
-        fill="var(--dna-signal)"/>
-  <rect x="{{ strip_zones.bookend.ornament_inner_x }}"
-        y="{{ strip_zones.bookend.ornament_inner_y }}"
-        width="{{ strip_zones.bookend.ornament_inner_w }}"
-        height="{{ strip_zones.bookend.ornament_inner_h }}"
-        fill="var(--dna-surface)"/>
   {% endif %}
 
   {# (7) HYPERWEAVE identity text — Barlow Condensed 11px 900 inside brand panel.
@@ -98,30 +91,19 @@
     <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ _layout.cell_x }},0)">
       <text x="{{ _layout.label_x }}" y="{{ metric_label_y }}"
             text-anchor="{{ _layout.text_anchor }}"
-            class="{{ uid }}-metric-label">{{ metric.label | upper }}</text>
+            class="{{ uid }}-metric-label"{% if _layout.label_w and _layout.label_w > 0 %} textLength="{{ _layout.label_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.label | upper }}</text>
       <text x="{{ _layout.value_x }}" y="{{ metric_value_y }}"
             text-anchor="{{ _layout.text_anchor }}"
-            class="{{ uid }}-metric-value">{{ metric.value }}</text>
+            class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value }}</text>
     </g>
   {% endfor %}
 
-  {# (9) Bookend ornament OR status indicator — single endpoint marker at
-     bookend_x (mutually exclusive; never both). Stateless strips render the
-     decorative bookend ornament (14×14 accent square with surface cutout);
-     stateful strips render the brutalist-status.j2 indicator at the same
-     position. Prior v0.3.2 attempt rendered both — visible double element. #}
-  {% if not show_status_indicator %}
-  <g transform="translate({{ strip_zones.core.bookend_x }},{{ strip_zones.core.half_h }})">
-    <rect x="{{ strip_zones.bookend.outer_x }}" y="{{ strip_zones.bookend.outer_y }}"
-          width="{{ ornament_size }}" height="{{ ornament_size }}"
-          fill="var(--dna-signal)"/>
-    <rect x="{{ strip_zones.bookend.inner_x }}"
-          y="{{ strip_zones.bookend.inner_y }}"
-          width="{{ strip_zones.bookend.inner_w }}"
-          height="{{ strip_zones.bookend.inner_h }}"
-          fill="var(--dna-surface)"/>
-  </g>
-  {% endif %}
+  {# (9) Status terminus — stateful strips render the status indicator at
+     bookend_x (outside this clip group, below). Stateless strips render
+     NOTHING here: the "operational status" slot is empty when there's no
+     state, so the strip ends at the last metric cell + pad (width reclaimed
+     in compute_strip_zones). v0.3.13 retired the decorative bookend square —
+     it was redundant with the left identity glyph (two bookending squares). #}
 </g>
 
 {# (10) Status indicator — conditional, outside the clip group. Renders at

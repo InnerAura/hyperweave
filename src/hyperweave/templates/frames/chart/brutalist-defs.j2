@@ -26,19 +26,18 @@
                                                          0 0 0 0.14 0"/>
 </filter>
 {% endif %}
-{# Area-fade gradient stops use SVG-root-scoped vars (--dna-bg for light /
-   --dna-signal for dark) instead of --dna-chart-main. The chart-main var
-   is declared on `.uid-chart` (a `<g>` element) — but gradient stops live
-   in `<defs>` at SVG root, which is a SIBLING of the chart group, NOT an
-   ancestor. CSS custom props inherit through the DOM tree, so stops can't
-   see chart-scoped vars. The visible bug: area fills used the signal role
-   instead of the panel/background role.
-   Routing through SVG-root vars (which the assembler emits on the <svg>
-   inline style) restores per-variant panel-color area fills. #}
+{# Area-fade gradient stops use the SVG-root-scoped --dna-signal instead of the
+   chart-scoped --dna-chart-main. The chart-main var is declared on `.uid-chart`
+   (a `<g>` element) — but gradient stops live in `<defs>` at SVG root, a
+   SIBLING of the chart group, NOT an ancestor, so they can't see chart-scoped
+   vars. v0.3.13: BOTH substrates fill the area with the accent
+   (--dna-signal) at low opacity — the data-viz role — so the area reads as the
+   same colour family as the polyline. The root var keeps per-variant accent
+   resolution working across the defs/group boundary. #}
 <linearGradient id="{{ uid }}-area-fade" x1="0" y1="0" x2="0" y2="1">
 {% if substrate_kind == 'light' %}
-  <stop offset="0%" stop-color="var(--dna-bg)" stop-opacity="0.12"/>
-  <stop offset="100%" stop-color="var(--dna-bg)" stop-opacity="0.01"/>
+  <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0.13"/>
+  <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0.01"/>
 {% else %}
   <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0.12"/>
   <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0.01"/>
@@ -60,17 +59,17 @@
 <style>
   {{ font_faces | safe }}
   text { font-family: var(--dna-font-mono, var(--dna-font-display, 'JetBrains Mono', monospace)); shape-rendering: geometricPrecision; }
-  {# v0.3.2 Phase 3: substrate-conditional chart semantic vars. Decouples
-     "main data color" from "accent signal." On dark variants the data line
-     IS the accent; on light variants the data line is the panel color
-     (crimson/sepia/cobalt/etc.) and the accent (gold/cyan/amber) is the
-     thin highlight overlay. Cascades to shared chart components via the
-     {{ uid }}-chart wrapper class on the outer <g>. #}
+  {# Chart semantic vars cascade to the shared chart components via the
+     {{ uid }}-chart wrapper class on the outer <g>. v0.3.13: BOTH substrates
+     route the data line to the accent (--dna-signal) — the data-viz role — so
+     light + dark charts speak the same visual language and light charts match
+     their stats-card sibling (whose activity bars are also --dna-signal).
+     --dna-chart-highlight stays the seam tone for the thin bright-core overlay. #}
 {% if substrate_kind == 'light' %}
   .{{ uid }}-chart {
-    --dna-chart-main: var(--dna-bg);
+    --dna-chart-main: var(--dna-signal);
     --dna-chart-highlight: var(--dna-seam-color);
-    --dna-chart-axis-text: var(--dna-bg);
+    --dna-chart-axis-text: var(--dna-signal);
     --dna-chart-glyph: var(--dna-glyph-inner, var(--dna-seam-color));
     {# Title zone bg uses the per-variant chart_title_bg captured from
        the v0.3.2 brutalist light chart prototype. Falls back to
@@ -121,14 +120,13 @@
        foot-brand              → var(--dna-signal) (--a)
        axis-y / axis-x         → var(--dna-ink-muted) (--al = accent-light)
 
-     Light mappings:
-       title-main              → var(--dna-bg) (panel top crimson/etc.)
+     Light mappings (v0.3.13 — accent carries data-viz + labels-on-cream):
+       title-main / title-sub / hero-label → var(--dna-signal) (accent label)
        hero-value              → var(--dna-ink-primary) (dark ink on paper)
-       title-sub / hero-label  → var(--dna-bg) opacity .8
        hdr-user                → var(--dna-brand-text) (paper on dark panel)
        hdr-meta / foot         → var(--dna-label-text)
        foot-brand              → var(--dna-seam-color) (gold)
-       axis-y / axis-x         → var(--dna-ink-primary) opacity .65 #}
+       axis-y / axis-x         → var(--dna-chart-axis-text)=signal opacity .7/.55 #}
 {% if substrate_kind == 'light' %}
   {# Fill + opacity values verified against the v0.3.2 brutalist light chart prototype
      pulse panel lines 74-78 (pulse variant). Per-variant resolution flows
@@ -141,12 +139,12 @@
      ink (invisible on the dark panel). #}
   .{{ uid }}-hdr-user { font-size: 12px; font-weight: 800; letter-spacing: 0.20em; fill: var(--dna-brand-text); }
   .{{ uid }}-hdr-meta { font-size: 9px; font-weight: 500; letter-spacing: 0.10em; fill: var(--dna-brand-text); opacity: 0.5; }
-  .{{ uid }}-title-main { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: 0.05em; fill: var(--dna-bg); text-transform: uppercase; }
-  .{{ uid }}-title-sub { font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-bg); opacity: 0.55; }
+  .{{ uid }}-title-main { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: 0.05em; fill: var(--dna-signal); text-transform: uppercase; }
+  .{{ uid }}-title-sub { font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; fill: var(--dna-signal); opacity: 0.6; }
   .{{ uid }}-hero-value { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; letter-spacing: -0.02em; fill: var(--dna-ink-primary); }
-  .{{ uid }}-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-bg); opacity: 0.55; }
-  .{{ uid }}-axis-y { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; fill: var(--dna-chart-axis-text, var(--dna-bg)); opacity: 0.65; }
-  .{{ uid }}-axis-x { font-size: 9px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-chart-axis-text, var(--dna-bg)); opacity: 0.5; }
+  .{{ uid }}-hero-label { font-size: 9px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; fill: var(--dna-signal); opacity: 0.55; }
+  .{{ uid }}-axis-y { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; fill: var(--dna-chart-axis-text, var(--dna-bg)); opacity: 0.7; }
+  .{{ uid }}-axis-x { font-size: 9px; font-weight: 700; letter-spacing: 0.20em; text-transform: uppercase; fill: var(--dna-chart-axis-text, var(--dna-bg)); opacity: 0.55; }
   .{{ uid }}-milestone { font-size: 9px; font-weight: 800; letter-spacing: 0.12em; fill: var(--dna-ink-primary); }
   .{{ uid }}-grid-coord { font-size: 5px; font-weight: 500; fill: var(--dna-ink-primary); opacity: 0.18; }
   {# Footer URL — uses --dna-bg (panel color) at opacity .5 to match
@@ -160,7 +158,7 @@
      accent_complement (--dna-bg) at opacity .06–.08, much subtler than the
      global .hw-chart-gridline default (0.18). Scoped to the .uid-chart
      wrapper so chrome/cellular keep their global defaults. #}
-  .{{ uid }}-chart .hw-chart-gridline { stroke: var(--dna-bg); opacity: 0.08; }
+  .{{ uid }}-chart .hw-chart-gridline { stroke: var(--dna-signal); opacity: 0.09; }
   {# Bright-core highlight opacity 0.8 matches the prototype's accent
      polyline overlay (line 630 of hw-codex-star-charts-light-scholar.html).
      Without this attenuation the seam-color highlight reads as the
@@ -180,7 +178,7 @@
      Override at the chart
      scope so dark variants keep their existing signal-dim resolution. #}
   .{{ uid }}-chart [data-hw-zone="markers"] rect,
-  .{{ uid }}-chart [data-hw-zone="markers"] line { stroke: var(--dna-bg); }
+  .{{ uid }}-chart [data-hw-zone="markers"] line { stroke: var(--dna-signal); }
 {% else %}
   .{{ uid }}-hdr-user { font-size: 12px; font-weight: 800; letter-spacing: 0.20em; fill: var(--dna-brand-text); }
   .{{ uid }}-hdr-meta { font-size: 9px; font-weight: 500; letter-spacing: 0.10em; fill: var(--dna-label-text); opacity: 0.7; }

@@ -97,10 +97,10 @@
     {# Two-line stack: identity top, subtitle bottom, centered vertically.
        The subtitle gate also checks subtitle_text non-empty so suppressed
        duplicate subtitles do not emit empty text elements. #}
-    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_stack_y | default(0) }}" class="{{ uid }}-identity">{{ identity | upper }}</text>
+    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_stack_y | default(0) }}" class="{{ uid }}-identity"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper }}</text>
     <text data-hw-zone="subtitle" x="{{ identity_x }}" y="{{ subtitle_y | default(0) }}" font-family="'{{ subtitle_font_family }}',monospace" font-size="{{ subtitle_font_size }}" fill="{{ ink_sub | default('var(--dna-ink-sub)') }}" letter-spacing="{{ subtitle_letter_spacing_em }}em">{{ subtitle_text }}</text>
   {% else %}
-    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_single_y | default(0) }}" class="{{ uid }}-identity">{{ identity | upper }}</text>
+    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_single_y | default(0) }}" class="{{ uid }}-identity"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper }}</text>
   {% endif %}
 </g>
 
@@ -117,6 +117,9 @@
    divider_render_mode = "gradient" → chrome-defs url(#...-sep) gradient
    divider_render_mode = "class"    → profile-declared flat color.
    Decision lives in paradigm YAML, not in a template branch on slug. #}
+{# The first divider is the identity↔metrics separator — render it only when
+   metrics are present, so empty strips stay identity-only with no dangling rule. #}
+{% if metrics %}
 {% if divider_render_mode == "gradient" %}
 <line x1="{{ first_div_x }}" y1="{{ div_y1 }}"
       x2="{{ first_div_x }}" y2="{{ div_y2 }}"
@@ -127,6 +130,7 @@
       stroke="{{ strip_divider_color | default('var(--dna-border)') }}"
       stroke-width="1"
       opacity="{{ strip_divider_opacity | default(1.0) }}"/>
+{% endif %}
 {% endif %}
 
 {# Metric cell typography — every coordinate comes pre-resolved from the
@@ -145,10 +149,26 @@
 {% set _vx = _layout.value_x %}
 {% set _mta = _layout.text_anchor %}
 {% set _cell_x = _seams[loop.index0] %}
-{% set _trailing_x = _seams[loop.index] %}
+{# Leading divider before each metric EXCEPT the first — the identity↔metrics
+   divider already paints that boundary. Honors the layout engine's
+   show_leading_rule (the same per-cell flag brutalist-dark-content.j2 consumes),
+   so NO divider renders after the last cell. The status indicator is a terminus,
+   not another cell: a trailing divider there becomes the indicator's visible
+   left-neighbor and pulls it off-center (automata's solid dividers exposed this;
+   chrome's gradient dividers merely hid it). One divider model, every genome. #}
+{% if _layout.show_leading_rule %}
+{% if divider_render_mode == "gradient" %}
+<line x1="{{ _cell_x }}" y1="{{ div_y1 }}" x2="{{ _cell_x }}" y2="{{ div_y2 }}"
+      stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
+{% else %}
+<line x1="{{ _cell_x }}" y1="{{ div_y1 }}" x2="{{ _cell_x }}" y2="{{ div_y2 }}"
+      stroke="{{ strip_divider_color | default('var(--dna-border)') }}"
+      stroke-width="1" opacity="{{ strip_divider_opacity | default(1.0) }}"/>
+{% endif %}
+{% endif %}
 <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ _cell_x }},{{ strip_metric_local_origin_y }})">
   <text x="{{ _lx }}" y="{{ strip_metric_label_y | default(18) }}" text-anchor="{{ _mta }}"
-        class="{{ uid }}-metric-label">{{ metric.label | upper }}</text>
+        class="{{ uid }}-metric-label"{% if _layout.label_w and _layout.label_w > 0 %} textLength="{{ _layout.label_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.label | upper }}</text>
   {# Metric value — skew applied only when strip_metric_value_skew != 0
      (was hardcoded to paradigm=chrome; now chrome.yaml sets skew=0 for badge
      parity, removing the Impact-italic treatment that diverged from badge's
@@ -157,30 +177,17 @@
   {% if _skew != 0 %}
   <g transform="translate({{ _vx }},{{ strip_metric_value_y | default(36) }}) skewX({{ _skew }})">
     <text x="{{ strip_metric_local_origin_x }}" y="{{ strip_metric_local_origin_y }}" text-anchor="{{ _mta }}" dominant-baseline="central"
-          class="{{ uid }}-metric-value">{{ metric.value }}</text>
+          class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value }}</text>
   </g>
   {% else %}
   <text x="{{ _vx }}" y="{{ strip_metric_value_y | default(36) }}" text-anchor="{{ _mta }}"
-        class="{{ uid }}-metric-value">{{ metric.value }}</text>
+        class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value }}</text>
   {% endif %}
 {% if metric.delta %}
   <text x="{{ _vx }}" y="{{ strip_metric_delta_y }}" text-anchor="{{ _mta }}"
         class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>
 {% endif %}
 </g>
-{# Trailing divider after each metric — anchored to this cell's right edge
-   via resolver-computed seam positions (per-cell, not multiplicative). #}
-{% if divider_render_mode == "gradient" %}
-<line x1="{{ _trailing_x }}" y1="{{ div_y1 }}"
-      x2="{{ _trailing_x }}" y2="{{ div_y2 }}"
-      stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
-{% else %}
-<line x1="{{ _trailing_x }}" y1="{{ div_y1 }}"
-      x2="{{ _trailing_x }}" y2="{{ div_y2 }}"
-      stroke="{{ strip_divider_color | default('var(--dna-border)') }}"
-      stroke-width="1"
-      opacity="{{ strip_divider_opacity | default(1.0) }}"/>
-{% endif %}
 {% endfor %}
 
 {# === Status indicator (paradigm-dispatched) ===

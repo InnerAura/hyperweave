@@ -472,16 +472,22 @@ def generate_static() -> int:
                 total += 1
                 # Divider per variant — chrome.band (vibration sweep across env);
                 # automata.dissolve (bifamily bridge, solo synthesizes mirrored);
-                # brutalist.seam (only divider declared in brutalist.dividers).
-                if genome == GenomeId.CHROME:
-                    divider_slug = "band"
-                elif genome == GenomeId.BRUTALIST:
-                    divider_slug = "seam"
+                # brutalist: light scholars default to sigil (ink rules + solid
+                # center block), dark substrates keep seam (concrete joint).
+                if genome == GenomeId.BRUTALIST:
+                    # Both genome dividers per variant — seam (concrete joint) and
+                    # sigil (ink rules + solid center block) — so each README
+                    # variant section shows the full divider register. Light
+                    # variants default to sigil, dark to seam at request time.
+                    divider_slugs = ("seam", "sigil")
+                elif genome == GenomeId.CHROME:
+                    divider_slugs = ("band",)
                 else:
-                    divider_slug = "dissolve"
-                svg = _compose("divider", genome, divider_variant=divider_slug, variant=variant)
-                _write(var_dir / f"divider_{divider_slug}_{variant}.svg", svg)
-                total += 1
+                    divider_slugs = ("dissolve",)
+                for divider_slug in divider_slugs:
+                    svg = _compose("divider", genome, divider_variant=divider_slug, variant=variant)
+                    _write(var_dir / f"divider_{divider_slug}_{variant}.svg", svg)
+                    total += 1
 
         # ── 1c. v0.3.0 Freestyle pairings (automata only) ──
         # The pairing grammar modifier ?variant=primary&pair=secondary composes
@@ -1006,6 +1012,23 @@ def _generate_data_cards() -> int:
         except Exception as exc:
             print(f"  [MULTI-SOURCE SKIP] n8n data tokens: {type(exc).__name__}: {exc}")
         try:
+            tokens = parse_data_tokens(
+                "github:eli64s/readme-ai.stars,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count"
+            )
+            resolved, _ttl = await resolve_data_tokens(tokens)
+            results["readmeai_tokens"] = list(resolved)
+        except Exception as exc:
+            print(f"  [MULTI-SOURCE SKIP] readme-ai data tokens: {type(exc).__name__}: {exc}")
+        try:
+            results["readmeai_pypi"] = await _fetch_snapshot_or_cache(
+                fixtures,
+                "snapshot:pypi:readmeai",
+                "PyPI readmeai",
+                lambda: fetch_pypi_snapshot("readmeai"),
+            )
+        except Exception as exc:
+            print(f"  [MULTI-SOURCE SKIP] PyPI readmeai snapshot: {type(exc).__name__}: {exc}")
+        try:
             results["hf_glm51"] = await _fetch_snapshot_or_cache(
                 fixtures,
                 "snapshot:huggingface:zai-org/GLM-5.1",
@@ -1118,6 +1141,79 @@ def _generate_data_cards() -> int:
                     stem="chart_vllm_downloads",
                     connector_data=vllm_snapshot,
                 )
+
+    # v0.3.13 brutalist-LIGHT multi-source data cards — prove the light stats
+    # card (horizontal row, ink header, accent data-viz) is source-agnostic
+    # across providers AND variants. Every metric binds to a live connector; a
+    # failed fetch skips the card so its README link breaks loudly rather than
+    # ship fabricated numbers.
+    light_dir = OUT / "proofset" / str(GenomeId.BRUTALIST) / "data-cards"
+
+    def _light_card(
+        *,
+        variant: str,
+        stem: str,
+        username: str,
+        connector_data: dict[str, Any] | None,
+        data_tokens: list[Any] | None = None,
+    ) -> int:
+        svg = _compose_connector(
+            "stats",
+            str(GenomeId.BRUTALIST),
+            stats_username=username,
+            connector_data=connector_data,
+            variant=variant,
+            data_tokens=data_tokens,
+        )
+        _write(light_dir / f"{stem}.svg", svg)
+        return 1
+
+    # 1. GitHub user stats — eli64s, pulse (4-metric row + STREAK momentum tint).
+    total += _light_card(
+        variant="pulse", stem="stats_eli64s_brutalist_pulse", username="eli64s", connector_data=stats_data
+    )
+    # 2. PyPI package stats — vllm, archive (3 metrics + download sparkline).
+    if isinstance(vllm_snapshot, dict):
+        total += _light_card(
+            variant="archive",
+            stem="stats_vllm_pypi_brutalist_archive",
+            username="vllm",
+            connector_data=vllm_snapshot,
+        )
+    # 3. Z.AI combined card — HuggingFace + arXiv, depth (cross-provider on light).
+    if isinstance(hf_snapshot, dict) and isinstance(arxiv_snapshot, dict):
+        from hyperweave.connectors.snapshots import merge_stats_sources as _merge_sources
+
+        _zai = _merge_sources(hf_snapshot, arxiv_snapshot)
+        _zai["identity"] = "zai-org/GLM-5.1"
+        _zai["username"] = "GLM-5.1"
+        _zai["identity_subtitle"] = "HuggingFace model + arXiv paper"
+        total += _light_card(
+            variant="depth", stem="stats_zai_hf_arxiv_brutalist_depth", username="GLM-5.1", connector_data=_zai
+        )
+    # 4. readme-ai multi-provider — ozalid (GitHub stars + PyPI downloads +
+    #    Docker pulls via tokens; the PyPI snapshot supplies the download sparkline).
+    readmeai_pypi = multisource.get("readmeai_pypi")
+    if multisource.get("readmeai_tokens") and isinstance(readmeai_pypi, dict):
+        # The 3 tokens (GitHub stars + PyPI downloads + Docker pulls) ARE the
+        # metrics; the PyPI snapshot contributes only its download sparkline +
+        # series, so the card reads as a genuine multi-provider composition
+        # rather than a PyPI card with one star metric grafted on.
+        _readmeai = {
+            "identity": "readme-ai",
+            "username": "readme-ai",
+            "identity_subtitle": "GitHub + PyPI + Docker",
+            "source_url": "https://github.com/eli64s/readme-ai",
+            "activity": readmeai_pypi.get("activity"),
+            "series_points": readmeai_pypi.get("series_points"),
+        }
+        total += _light_card(
+            variant="ozalid",
+            stem="stats_readmeai_multi_brutalist_ozalid",
+            username="readme-ai",
+            connector_data=_readmeai,
+            data_tokens=multisource["readmeai_tokens"],
+        )
 
     return total
 
@@ -1364,7 +1460,7 @@ def generate_readme(total: int, live_total: int) -> None:
         "Quick-reference proofset for the three production genomes plus telemetry "
         "and parity surfaces. Per-variant artifact matrices live in dedicated files:",
         "",
-        "- [README_BRUTALIST.md](README_BRUTALIST.md) — 14 brutalist variants (8 dark monochromes + 6 light scholars)",
+        "- [README_BRUTALIST.md](README_BRUTALIST.md) — 22 brutalist variants (8 dark monochromes + 14 light scholars)",
         "- [README_CHROME.md](README_CHROME.md) — 5 chrome material identities "
         "(horizon, abyssal, lightning, graphite, moth)",
         "- [README_AUTOMATA.md](README_AUTOMATA.md) — 16 automata solo tones plus pairing-grammar showcase",
@@ -1469,6 +1565,23 @@ def generate_readme(total: int, live_total: int) -> None:
         ("proofset/chrome/data-cards/stats_glm5_multiprovider.svg", "Z.AI multi-provider tokens — GitHub + HF + arXiv"),
         ("proofset/chrome/data-cards/stats_n8n_distribution.svg", "n8n multi-provider tokens — GitHub + npm + Docker"),
         ("proofset/brutalist/data-cards/stats_vllm_pypi.svg", "PyPI package stats — vllm sparkline activity"),
+        # v0.3.13 brutalist-LIGHT data cards — source-agnostic across providers + variants.
+        (
+            "proofset/brutalist/data-cards/stats_eli64s_brutalist_pulse.svg",
+            "GitHub stats — eli64s, 4-metric row + STREAK tint, brutalist pulse (light)",
+        ),
+        (
+            "proofset/brutalist/data-cards/stats_vllm_pypi_brutalist_archive.svg",
+            "PyPI package stats — vllm, 3 metrics + sparkline, brutalist archive (light)",
+        ),
+        (
+            "proofset/brutalist/data-cards/stats_zai_hf_arxiv_brutalist_depth.svg",
+            "Z.AI combined — HuggingFace + arXiv (cross-provider), brutalist depth (light)",
+        ),
+        (
+            "proofset/brutalist/data-cards/stats_readmeai_multi_brutalist_ozalid.svg",
+            "readme-ai multi-provider — GitHub + PyPI + Docker, brutalist ozalid (light)",
+        ),
         ("proofset/brutalist/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm"),
         ("proofset/chrome/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm chrome"),
         ("proofset/automata/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm automata"),
@@ -1742,6 +1855,14 @@ _BRUTALIST_LIGHT_PHENOMENOLOGY: list[tuple[str, str]] = [
     ("depth", "measurement of below — royal blue plumbed"),
     ("afterimage", "the optical echo persisting — perception's residue"),
     ("primer", "the base coat applied — preparation as foundation"),
+    ("ferro", "iron meeting air — oxide bloom on raw metal"),
+    ("ozalid", "the diazo print developing — ammonia-fixed blueprint"),
+    ("sulfur", "mineral brimstone ground fine — acid yellow on bone"),
+    ("tyrian", "murex wrung from the shell — imperial dye on linen"),
+    ("indigo", "vat-dyed cloth oxidizing — indigo deepening in air"),
+    ("patina", "bronze weathered green — copper's slow age"),
+    ("graphite", "pencil lead burnished — graphite sheen on tooth"),
+    ("cyan", "cyanotype exposed — Prussian blue fixed by light"),
 ]
 _CHROME_PHENOMENOLOGY: list[tuple[str, str]] = [
     (
@@ -1757,23 +1878,23 @@ _CHROME_PHENOMENOLOGY: list[tuple[str, str]] = [
 
 
 def _emit_brutalist_readme() -> None:
-    """Emit outputs/README_BRUTALIST.md with the full 14-variant matrix.
+    """Emit outputs/README_BRUTALIST.md with the full 22-variant matrix.
 
     Mirrors README_AUTOMATA's structure: each variant renders its full
-    artifact suite (badge default, icon, strip, marquee, divider seam,
+    artifact suite (badge default, icon, strip, marquee, both dividers,
     stats card, star chart, 5 badge states) as inline image embeds.
 
     Brutalist differs from automata in two ways:
     1. Two substrate polarities — 8 dark monochromes (substrate materials)
-       and 6 light scholars (functional roles) — split into two README
+       and 14 light scholars (functional roles) — split into two README
        sections so the substrate distinction is structural, not buried in
        prose.
     2. No pairing grammar — brutalist is mono-substrate per variant; no
        bifamily strips or freestyle pairings section.
 
-    Brutalist's divider variant is `seam` (per genome.dividers); automata's
-    is `dissolve`. Image references point at LOCAL artifacts under
-    outputs/proofset/brutalist/ — local gallery, not deployed URLs.
+    Brutalist declares two dividers (`seam`, `sigil`); light variants default
+    to sigil, dark to seam, and every variant section shows both. Image
+    references point at LOCAL artifacts under outputs/proofset/brutalist/.
     """
     g = "brutalist"
     cfg = load_genomes().get(g)
@@ -1781,12 +1902,13 @@ def _emit_brutalist_readme() -> None:
         return
 
     lines: list[str] = [
-        "# HyperWeave Brutalist — 14-Variant Substrate Matrix",
+        "# HyperWeave Brutalist — 22-Variant Substrate Matrix",
         "",
         "Brutalist is the only genome with two substrate polarities: **8 dark monochromes** "
         "(substrate materials — `celadon`, `carbon`, `alloy`, `temper`, `pigment`, `ember`, "
-        "`umber`, `onyx`) and **6 light scholars** (functional roles — `archive`, `signal`, "
-        "`pulse`, `depth`, `afterimage`, `primer`). Each variant declares `substrate_kind: "
+        "`umber`, `onyx`) and **14 light scholars** (functional roles — `archive`, `signal`, "
+        "`pulse`, `depth`, `afterimage`, `primer`, `ferro`, `ozalid`, `sulfur`, `tyrian`, "
+        "`indigo`, `patina`, `graphite`, `cyan`). Each variant declares `substrate_kind: "
         '"dark" | "light"` driving template include dispatch — same paradigm, two material '
         "identities.",
         "",
@@ -1801,8 +1923,8 @@ def _emit_brutalist_readme() -> None:
         "",
         "Brutalist supports both `circle` and `square` icon shapes; each variant embeds "
         "both. Every variant below renders the full artifact suite (default badge, "
-        "circle + square icons, strip, marquee, divider seam, stats card, star chart, "
-        "5 badge states).",
+        "circle + square icons, strip, marquee, both dividers (seam + sigil), stats card, "
+        "star chart, 5 badge states).",
         "",
         "---",
         "",
@@ -1830,8 +1952,13 @@ def _emit_brutalist_readme() -> None:
         # Row 4: marquee
         lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
         lines.append("")
-        # Row 5: divider seam (brutalist's only declared divider)
-        lines.append(f"![divider seam](proofset/{g}/variants/divider_seam_{v}.svg)")
+        # Row 5: both dividers — seam (concrete joint) + sigil (ink rules +
+        # solid center block). Light variants default to sigil, dark to seam,
+        # but every variant section shows both for the full chromatic register.
+        lines.append(
+            f"![divider seam](proofset/{g}/variants/divider_seam_{v}.svg) "
+            f"![divider sigil](proofset/{g}/variants/divider_sigil_{v}.svg)"
+        )
         lines.append("")
         # Row 5: stats card
         stats_path = OUT / "proofset" / g / "variants" / f"stats_{v}.svg"
@@ -2013,7 +2140,7 @@ def _emit_chrome_readme() -> None:
             "## Cross-reference",
             "",
             "- [Main README](../README.md) — installation, compose grammar, all genomes",
-            "- [Brutalist README](README_BRUTALIST.md) — 14-variant substrate matrix",
+            "- [Brutalist README](README_BRUTALIST.md) — 22-variant substrate matrix",
             "- [Automata README](README_AUTOMATA.md) — 16-tone cellular matrix",
             "",
         ]
@@ -3405,6 +3532,29 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             },
         )
     )
+    # Cross-genome parity for the long-namespace 4-metric strip (v0.3.13):
+    # chrome (cell_min_width 88 + identity textLength) and automata (bifamily
+    # flanks + identity textLength) size identity to content like brutalist —
+    # regression coverage for the cross-genome strip parity work.
+    for _ns_genome in ("chrome", "automata"):
+        specs.append(
+            ParitySpec(
+                spec_id=f"long-namespace-strip-4metric-{_ns_genome}",
+                compose_spec=ComposeSpec(
+                    type="strip",
+                    genome_id=_ns_genome,
+                    title="Significant-Gravitas/AutoGPT",
+                    value=autogpt_4m,
+                ),
+                http_path=(f"/v1/strip/_/{_ns_genome}.static?t=Significant-Gravitas%2FAutoGPT&value={autogpt_4m}"),
+                mcp_args={
+                    "type": "strip",
+                    "title": "Significant-Gravitas/AutoGPT",
+                    "value": autogpt_4m,
+                    "genome": _ns_genome,
+                },
+            )
+        )
     cc_stars2 = _fmt_count(rd.get("github:anthropics/claude-code.stars"))
     specs.append(
         ParitySpec(
@@ -4419,6 +4569,8 @@ _EDGE_CASE_GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
         "Namespace length — strips",
         [
             ("long-namespace-strip-4metric", "Long namespace (`Significant-Gravitas/AutoGPT`) + 4 metrics"),
+            ("long-namespace-strip-4metric-chrome", "Long namespace + 4 metrics — chrome (cross-genome parity)"),
+            ("long-namespace-strip-4metric-automata", "Long namespace + 4 metrics — automata (cross-genome parity)"),
             ("short-name-strip-1metric", "Short name (`claude-code`) + 1 metric"),
             ("gh-autogpt-strip-3metric", "AutoGPT + 3 real-data metrics"),
             ("gh-claude-code-strip-2metric", "claude-code + 2 real-data metrics"),

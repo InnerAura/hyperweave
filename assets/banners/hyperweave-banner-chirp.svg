@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
-     viewBox="0 0 1200 420" role="img" aria-labelledby="t d"
+     viewBox="0 0 1200 380" role="img" aria-labelledby="t d"
      data-hw-component="banner" data-hw-chromatic="cobalt-sapphire"
      data-hw-variant="v18-cobalt-chirp-grand" data-protocol="hw-v1">
   <title id="t">HyperWeave — Where Vectors Meet Vision</title>
-  <desc id="d">v18 cobalt — chirp construction at V11 proportions: 113px mixed-case wordmark, original layout rhythm, animated cobalt-sapphire gradient text.</desc>
+  <desc id="d">v18 cobalt — chirp construction: 113px mixed-case wordmark on a 1200×380 canvas, raised sigil+wordmark lockup with breathing room above the tagline, sharpened animated cobalt-sapphire gradient text.</desc>
 
   <defs>
     <!-- ═══ SIGIL GRADIENT: original 5-stop cobalt-sapphire from v14 closer ═══ -->
@@ -23,14 +23,14 @@
     <!-- ═══ TEXT GRADIENT: animated, same phi rhythm, dual-surface luminance ═══ -->
     <!-- userSpaceOnUse extent widened 1000→1100 to cover the 113px wordmark fully -->
     <linearGradient id="tg" gradientUnits="userSpaceOnUse" x1="460" y1="0" x2="1100" y2="0">
-      <stop offset="0%" stop-color="#2040b8">
-        <animate attributeName="stop-color" values="#2040b8;#3058d0;#1830a0;#2040b8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
-      <stop offset="35%" stop-color="#4878f0">
-        <animate attributeName="stop-color" values="#4878f0;#5890ff;#3868e0;#4878f0" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
-      <stop offset="70%" stop-color="#3858cc">
-        <animate attributeName="stop-color" values="#3858cc;#4868e0;#2848b8;#3858cc" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
-      <stop offset="100%" stop-color="#5048c8">
-        <animate attributeName="stop-color" values="#5048c8;#6058e0;#4038b0;#5048c8" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="0%" stop-color="#1432c4">
+        <animate attributeName="stop-color" values="#1432c4;#2348e8;#0f28a8;#1432c4" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="35%" stop-color="#3f78ff">
+        <animate attributeName="stop-color" values="#3f78ff;#5a98ff;#2f64f5;#3f78ff" dur="3.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="70%" stop-color="#2f50da">
+        <animate attributeName="stop-color" values="#2f50da;#4066f0;#2342c2;#2f50da" dur="8.472s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
+      <stop offset="100%" stop-color="#5a3ce0">
+        <animate attributeName="stop-color" values="#5a3ce0;#6c4ef2;#4a2ec8;#5a3ce0" dur="5.236s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1"/></stop>
     </linearGradient>
 
     <!-- ═══ RADIAL FILLS ═══ -->
@@ -71,7 +71,7 @@
 
     <!-- ═══ TEXT GLOW FILTER ═══ -->
     <filter id="tf" x="-4%" y="-15%" width="108%" height="130%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="b"/>
       <feColorMatrix in="b" type="matrix" values="0.1 0 0.35 0 0.03 0.06 0.08 0.3 0 0.02 0.12 0.05 0.7 0 0.05 0 0 0 0.18 0" result="g"/>
       <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
@@ -94,7 +94,7 @@
   <!-- ═══════════════════════════════════════════════ -->
   <!--  SIGIL: chirp construction                     -->
   <!-- ═══════════════════════════════════════════════ -->
-  <g transform="translate(230,210) scale(1.85)">
+  <g transform="translate(230,190) scale(1.85)">
 
     <!-- CARDINAL EDGES -->
     <g filter="url(#ff)">
@@ -201,7 +201,7 @@
              calcMode="spline" keySplines="1 0 1 0;0.16 1 0.3 1"/>
     <animateTransform attributeName="transform" type="translate" values="0,10;0,10;0,0" dur="0.5s" begin="1.0s" fill="freeze"
                      calcMode="spline" keySplines="1 0 1 0;0.16 1 0.3 1"/>
-    <text x="470" y="242"
+    <text x="470" y="222"
           font-family="'Inter','SF Pro Display','Segoe UI',system-ui,sans-serif"
           font-size="113" font-weight="900" font-style="italic"
           fill="url(#tg)" letter-spacing="-3.5"

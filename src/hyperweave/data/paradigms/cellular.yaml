@@ -99,8 +99,11 @@ badge:
   glyph_y_offset: 0.0
 
 strip:
-  # Specimen cellular-automata-strip-v10.svg is 48px tall (not 52px default).
-  strip_height: 48
+  # v0.3.13: strip_height 52 to match brutalist + chrome. The 48 (from the
+  # cellular-automata-strip-v10.svg specimen) made automata strips render
+  # shorter/narrower, so a fixed-width README column scaled them UP and they
+  # read as the "tall" outlier next to the 52-tall genomes. One height, parity.
+  strip_height: 52
   value_font_family: Chakra Petch
   value_font_size: 16
   label_font_family: JetBrains Mono
