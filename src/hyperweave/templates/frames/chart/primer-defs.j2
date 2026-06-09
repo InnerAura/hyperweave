@@ -1,0 +1,123 @@
+{# Primer chart defs. Frame geometry comes from chart_layout; data projection
+   fragments come from render/chart_engine.py. #}
+<clipPath id="{{ uid }}-clip">
+  <rect width="{{ width }}" height="{{ height }}"/>
+</clipPath>
+<linearGradient id="{{ uid }}-card-bg" x1="0" y1="0" x2="0" y2="1">
+{% if panel_gradient_stops %}
+{% for stop in panel_gradient_stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}{% else %}  <stop offset="0%" stop-color="var(--dna-surface-alt)"/>
+  <stop offset="100%" stop-color="var(--dna-surface)"/>
+{% endif %}</linearGradient>
+<linearGradient id="{{ uid }}-area-fade" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0.14"/>
+  <stop offset="55%" stop-color="var(--dna-signal)" stop-opacity="0.04"/>
+  <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0"/>
+</linearGradient>
+<filter id="{{ uid }}-lift" x="-4%" y="-8%" width="108%" height="116%">
+  <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.04"/>
+  <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.03"/>
+</filter>
+{# Editorial line gradient — light tint → accent → deep accent (horizontal),
+   genome-derived literal stops so it resolves in every renderer. #}
+<linearGradient id="{{ uid }}-line-g" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0%" stop-color="{{ _genome_raw.accent_complement }}"/>
+  <stop offset="55%" stop-color="{{ _genome_raw.accent }}"/>
+  <stop offset="100%" stop-color="{{ _genome_raw.accent }}"/>
+</linearGradient>
+{# Glass callout soft shadow. #}
+<filter id="{{ uid }}-glass" x="-40%" y="-40%" width="180%" height="190%">
+  <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.06"/>
+</filter>
+<style>
+{{ font_faces | safe }}
+.{{ uid }}-chart text { shape-rendering: geometricPrecision; }
+.{{ uid }}-title {
+  font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  /* ink-primary is substrate-aware; ink_bright is the near-black surface tone on
+     dark variants, which made the chart title vanish on noir/carbon/space/anvil. */
+  fill: var(--dna-ink-primary);
+}
+.{{ uid }}-subtitle,
+.{{ uid }}-axis-y,
+.{{ uid }}-axis-x,
+.{{ uid }}-footer,
+.{{ uid }}-live {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  fill: var(--dna-ink-muted);
+}
+.{{ uid }}-subtitle { font-size: 12px; letter-spacing: 0.03em; opacity: 0.85; }
+.{{ uid }}-hero-value {
+  font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  /* Hero = the SAME identity tone as the glyph (glyph_inner), so the big number
+     reads the same orange/cobalt/etc. as the header mark on every variant. The
+     prior accent_deep was a muddy darker tone that clashed with the bright glyph. */
+  fill: {{ _genome_raw.glyph_inner }};
+}
+/* PRIMER LABEL VOICE (single source: genome label_text). The chart's category
+   labels — CURRENT/DELTA/WINDOW, GROWTH/GAINED, LIVE·TOTAL — wear the SAME voice as
+   the badge label, strip column header, and stats card label: JetBrains Mono, 8px,
+   700, 0.12em, uppercase, fill var(--dna-label-text). */
+.{{ uid }}-tri-label,
+.{{ uid }}-callout-label,
+.{{ uid }}-hero-label {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  fill: var(--dna-label-text);
+}
+.{{ uid }}-tri-value { font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; fill: var(--dna-ink-primary); }
+.{{ uid }}-tri-accent { fill: var(--dna-signal); }
+.{{ uid }}-callout-value { font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif); font-size: 32px; font-weight: 800; letter-spacing: -0.03em; fill: var(--dna-ink-primary); }
+.{{ uid }}-live-word { fill: var(--dna-signal); animation: {{ uid }}-pulse var(--dna-rhythm-base, 2.618s) ease-in-out infinite; will-change: opacity; }
+.{{ uid }}-live { font-size: 9px; font-weight: 700; letter-spacing: 0.10em; fill: var(--dna-signal); }
+/* Axis ticks share the label colour (var(--dna-label-text)); they keep their own
+   legible tick size since they're data annotations, and the milestone accent
+   (axis-accent) still wins for the top-Y / current-X tick. */
+.{{ uid }}-axis-y { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; fill: var(--dna-label-text); opacity: 0.72; }
+.{{ uid }}-axis-x { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; fill: var(--dna-label-text); opacity: 0.58; }
+/* Accented tick (top Y, current X) — the genome accent at full strength. Defined
+   after axis-y/axis-x so it wins their fill + opacity at equal specificity. */
+.{{ uid }}-axis-accent { fill: var(--dna-signal); opacity: 1; }
+.{{ uid }}-footer { font-size: 9px; letter-spacing: 0.14em; opacity: 0.62; }
+.{{ uid }}-brand { font-weight: 700; letter-spacing: 0.24em; }
+/* Grid is a light NEUTRAL field (faint ink), not the blue border — matching the
+   specimen's barely-there near-white grid. Baseline axis a touch stronger; the
+   trailing (current) vertical carries a faint accent tint. */
+.{{ uid }}-chart .hw-chart-gridline { stroke: var(--dna-ink-primary); stroke-width: 1; opacity: 0.06; }
+.{{ uid }}-chart .hw-chart-axis { stroke: var(--dna-ink-primary); stroke-width: 1; opacity: 0.12; }
+.{{ uid }}-vgrid { stroke: var(--dna-ink-primary); stroke-width: 1; opacity: 0.05; }
+.{{ uid }}-vgrid-a { stroke: var(--dna-signal); stroke-width: 1; opacity: 0.14; }
+.{{ uid }}-chart .hw-chart-area-smooth { fill: url(#{{ uid }}-area-fade); fill-opacity: 1; }
+.{{ uid }}-chart .hw-chart-line { stroke: url(#{{ uid }}-line-g); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.{{ uid }}-chart [data-hw-zone="markers"] circle { fill: var(--dna-surface-alt); stroke: var(--dna-signal); stroke-width: 1; }
+.{{ uid }}-chart [data-hw-zone="markers"] circle:last-child { fill: var(--dna-signal); stroke: none; }
+.{{ uid }}-chart .hw-chart-milestone-line { stroke: var(--dna-signal); stroke-width: 0.7; opacity: 0.25; stroke-dasharray: 2 6; }
+.{{ uid }}-chart .hw-chart-milestone-label { font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace); font-size: 9px; font-weight: 700; letter-spacing: 0.10em; fill: var(--dna-ink-primary); }
+.{{ uid }}-pulse { animation: {{ uid }}-pulse var(--dna-rhythm-base, 2.618s) ease-in-out infinite; will-change: opacity; }
+@keyframes {{ uid }}-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+{# CIM chart motion (transform/opacity only). Default state is fully visible
+   (dashoffset 0, opacity 1) so static renderers show the finished chart; the
+   keyframes animate FROM the hidden state, so animation-capable renderers play
+   the reveal. Line draws on, area + markers fade in staggered, endpoint pings. #}
+.{{ uid }}-chart .hw-chart-line-draw { stroke-dashoffset: 0; animation: {{ uid }}-draw 2.4s cubic-bezier(0.16,1,0.3,1) 0.25s backwards; will-change: stroke-dashoffset; }
+@keyframes {{ uid }}-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.{{ uid }}-chart .hw-chart-area-smooth { animation: {{ uid }}-rise 1.2s ease-out 1.0s backwards; }
+.{{ uid }}-chart [data-hw-zone="markers"] { animation: {{ uid }}-rise 0.6s ease-out 1.9s backwards; }
+@keyframes {{ uid }}-rise { from { opacity: 0; } to { opacity: 1; } }
+.{{ uid }}-chart .hw-chart-endpoint { transform-box: fill-box; transform-origin: center; animation: {{ uid }}-ping 3s cubic-bezier(0.16,1,0.3,1) 2.6s infinite; will-change: transform, opacity; }
+@keyframes {{ uid }}-ping { 0% { opacity: 0.3; transform: scale(1); } 100% { opacity: 0; transform: scale(2.4); } }
+@media (prefers-reduced-motion: reduce) {
+  .{{ uid }}-chart .hw-chart-line-draw { animation: none; stroke-dashoffset: 0; }
+  .{{ uid }}-chart .hw-chart-area-smooth,
+  .{{ uid }}-chart [data-hw-zone="markers"] { animation: none; opacity: 1; }
+  .{{ uid }}-chart .hw-chart-endpoint { animation: none; }
+  .{{ uid }}-pulse, .{{ uid }}-live-word { animation: none !important; opacity: 1; }
+}
+</style>
+{{ chart_defs | default("") | safe }}

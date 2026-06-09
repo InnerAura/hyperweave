@@ -132,6 +132,16 @@ def compute_chart_layout(*, chart: ParadigmChartConfig, repo: str, header_label:
         "chrome_clip": RectSpec(0.0, 0.0, float(chart.chart_width), float(chart.chart_height), 6.0),
         "cellular_clip": RectSpec(0.0, 0.0, float(chart.chart_width), float(chart.chart_height), 10.0),
         "cellular_header_band": RectSpec(0.0, 0.0, float(chart.chart_width), float(chart.header_band_height)),
+        "primer_card": RectSpec(50.0, 36.0, float(chart.chart_width - 100), float(chart.chart_height - 72), 16.0),
+        "primer_live_pill": RectSpec(float(chart.chart_width - 165), 64.0, 66.0, 22.0, 11.0),
+        "primer_live_dot": RectSpec(float(chart.chart_width - 151), 72.5, 5.0, 5.0, 5.0),
+        "primer_endpoint_shadow": RectSpec(0.0, 0.0, 0.0, 0.0),
+        # Floating glass growth callout — sits in the upper-left empty region above
+        # a rising curve (backdrop + top-highlight strip).
+        "primer_callout": RectSpec(150.0, 210.0, 120.0, 72.0, 10.0),
+        # Thin top-edge shine (not a tall oval): inset 1px, 2px tall, hugging the
+        # rounded top so it reads as a glass highlight, not a pill.
+        "primer_callout_hi": RectSpec(151.0, 211.0, 118.0, 2.0, 1.0),
     }
     lines = {
         "brutalist_header_rule": LineSpec(3.0, 42.0, float(brutalist_right_3), 42.0),
@@ -153,6 +163,16 @@ def compute_chart_layout(*, chart: ParadigmChartConfig, repo: str, header_label:
             float(cellular_footer_rule_y),
             float(right_16),
             float(cellular_footer_rule_y),
+        ),
+        "primer_footer_rule": LineSpec(
+            100.0, float(chart.chart_height - 60), float(chart.chart_width - 100), float(chart.chart_height - 60)
+        ),
+        # Metric triptych top rule + brand-bar rule (editorial footer band).
+        "primer_triptych_rule": LineSpec(
+            80.0, float(chart.chart_height - 130), float(chart.chart_width - 80), float(chart.chart_height - 130)
+        ),
+        "primer_brand_rule": LineSpec(
+            80.0, float(chart.chart_height - 60), float(chart.chart_width - 80), float(chart.chart_height - 60)
         ),
     }
     texts = {
@@ -181,6 +201,32 @@ def compute_chart_layout(*, chart: ParadigmChartConfig, repo: str, header_label:
         "cellular_hero_label": TextSpec(float(right_22), 54.0, anchor="end"),
         "cellular_footer_url": TextSpec(22.0, float(cellular_footer_text_y), anchor="middle"),
         "cellular_footer_brand": TextSpec(float(right_22), float(cellular_footer_text_y), anchor="end"),
+        # Two-row header grid, both sides on the SAME baselines so the right reads
+        # level with the left: row 1 (y90) = title | hero number; row 2 (y110) =
+        # subtitle | "LIVE · <hero label>". No floating pill — the LIVE word itself
+        # breathes as the live indicator, keeping the right block exactly 2 rows.
+        "primer_title": TextSpec(100.0, 90.0, anchor="start"),
+        "primer_subtitle": TextSpec(100.0, 110.0, anchor="start"),
+        "primer_hero_value": TextSpec(float(chart.chart_width - 100), 90.0, anchor="end"),
+        "primer_hero_label": TextSpec(float(chart.chart_width - 100), 110.0, anchor="end"),
+        # Optional chart-header identity glyph (left of the title); rendered only
+        # when a glyph resolves. Title shifts right via chart_title_x in the resolver.
+        "primer_header_glyph": TextSpec(100.0, 73.0, anchor="start"),
+        "primer_footer_url": TextSpec(100.0, float(chart.chart_height - 24), anchor="start"),
+        "primer_footer_brand": TextSpec(float(chart.chart_width - 100), float(chart.chart_height - 24), anchor="end"),
+        # Metric triptych: 3 label-over-value columns (CURRENT / DELTA / WINDOW).
+        "primer_tri_l1": TextSpec(100.0, float(chart.chart_height - 108), anchor="start"),
+        "primer_tri_l2": TextSpec(410.0, float(chart.chart_height - 108), anchor="start"),
+        "primer_tri_l3": TextSpec(720.0, float(chart.chart_height - 108), anchor="start"),
+        "primer_tri_v1": TextSpec(100.0, float(chart.chart_height - 84), anchor="start"),
+        "primer_tri_v2": TextSpec(410.0, float(chart.chart_height - 84), anchor="start"),
+        "primer_tri_v3": TextSpec(720.0, float(chart.chart_height - 84), anchor="start"),
+        # Brand bar.
+        "primer_brand": TextSpec(100.0, float(chart.chart_height - 44), anchor="start"),
+        "primer_brand_date": TextSpec(float(chart.chart_width - 100), float(chart.chart_height - 44), anchor="end"),
+        # Glass callout value + sublabel (centered in the callout box).
+        "primer_callout_value": TextSpec(210.0, 254.0, anchor="middle"),
+        "primer_callout_label": TextSpec(210.0, 270.0, anchor="middle"),
     }
     return ChartLayout(
         width=chart.chart_width,

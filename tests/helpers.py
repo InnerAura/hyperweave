@@ -32,7 +32,7 @@ def build_partial_genome_for_testing(**overrides: Any) -> dict[str, Any]:
         "id": overrides.get("id", "test-partial"),
         "name": overrides.get("name", "Test Partial Genome"),
         "category": overrides.get("category", "dark"),
-        "profile": overrides.get("profile", "brutalist"),
+        "profile": overrides.get("profile", "flat"),
         "surface_0": "#1a1a1a",
         "surface_1": "#222222",
         "surface_2": "#0a0a0a",

@@ -135,6 +135,65 @@ def resolve_chart(
     date_range = _format_date_range(raw_points)
     chart_subtitle_label = _chart_subtitle_label(input_data.series_label)
 
+    # Primer editorial chart: mixed-case voice + metrics derived from the REAL
+    # series (division-safe, schema-agnostic) for the metric triptych footer
+    # (CURRENT / DELTA / WINDOW) and the floating glass growth callout — replacing
+    # the brutalist milestone annotations the prior pass carried. Other paradigms
+    # ignore these context keys.
+    def _fmt_compact(n: float) -> str:
+        n = abs(n)
+        if n >= 1_000_000:
+            return f"{n / 1_000_000:.1f}M".replace(".0M", "M")
+        if n >= 1_000:
+            return f"{n / 1_000:.1f}K".replace(".0K", "K")
+        return f"{round(n)}"
+
+    def _num(x: object) -> float:
+        try:
+            return float(x)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            return 0.0
+
+    _pt_vals = [(_num(p.get("count")) or _num(p.get("value"))) for p in raw_points]
+    _baseline = _pt_vals[0] if _pt_vals else 0.0
+    _first_nz = next((v for v in _pt_vals if v > 0), _baseline)
+    _last_val = _pt_vals[-1] if _pt_vals else 0.0
+    _net = max(0.0, _last_val - _baseline)
+    if _first_nz >= 10:
+        _delta_pct = round((_last_val - _first_nz) / _first_nz * 100)
+        chart_primer_delta = f"+{_delta_pct}%"
+        _mult = _last_val / _first_nz
+        chart_primer_callout_value = f"{_mult:.0f}\u00d7" if _mult >= 2 else f"+{_fmt_compact(_net)}"
+        chart_primer_callout_label = "GROWTH" if _mult >= 2 else "GAINED"
+    else:
+        chart_primer_delta = f"+{_fmt_compact(_net)}"
+        chart_primer_callout_value = f"+{_fmt_compact(_net)}"
+        chart_primer_callout_label = "GAINED"
+
+    def _ym(point: dict[str, object]) -> tuple[int, int] | None:
+        d = str(point.get("date") or "")
+        return (int(d[0:4]), int(d[5:7])) if len(d) >= 7 and d[0:4].isdigit() and d[5:7].isdigit() else None
+
+    _yms = [v for v in (_ym(p) for p in raw_points) if v is not None]
+    if len(_yms) >= 2:
+        _months = (_yms[-1][0] - _yms[0][0]) * 12 + (_yms[-1][1] - _yms[0][1])
+        chart_primer_window = f"{_months}mo" if _months < 24 else f"{_months // 12}y"
+    else:
+        chart_primer_window = f"{len(raw_points)}pts"
+    _series_lc = (input_data.series_label or "trend").strip()
+    chart_primer_title = repo or _series_lc
+    chart_primer_subtitle = f"{_series_lc} · {date_range}" if date_range else _series_lc
+    chart_primer_current = current_display
+    # Optional chart-header identity glyph (the provider mark, e.g. github),
+    # resolved by the dispatcher and threaded via glyph_data. When present the
+    # title shifts right to make room (chart_title_x); else it stays flush left.
+    _chart_glyph = _kw.get("glyph_data") or {}
+    chart_glyph_path = str(_chart_glyph.get("path", ""))
+    chart_glyph_viewbox = str(_chart_glyph.get("viewBox", "") or "0 0 64 64")
+    chart_has_glyph = bool(chart_glyph_path)
+    chart_glyph_size = 20
+    chart_title_x = 132.0 if chart_has_glyph else 100.0
+
     # Cellular v0.3.0 refresh: surface info_accent / mid_accent / header_band
     # from the variant's primary tone to the template context. info_accent
     # carries the chart title + hero metric color and the polyline drop-shadow
@@ -153,6 +212,31 @@ def resolve_chart(
         if chart_layout is not None
         else chart_fragments["x_labels"]
     )
+    # Primer axis accents + vertical gridlines (per the porcelain chart specimen):
+    # the top Y-tick label and the trailing (current) X-tick label render in the
+    # genome accent, and a vertical gridline drops at every X-tick. Gated by
+    # paradigm.chart.axis_accent so other paradigms keep uniform muted ticks and
+    # horizontal-only grid (byte-identical).
+    # Positioned labels are TextSpec objects (immutable); pass the accent POSITIONS
+    # and let the template compare. Top Y-tick = min y (highest on screen); current
+    # X-tick = max x (rightmost). Vertical gridlines drop at every X-tick.
+    chart_axis_accent = paradigm_spec.chart.axis_accent if paradigm_spec is not None else False
+    chart_x_gridlines: list[dict[str, Any]] = []
+    chart_accent_y: float | None = None
+    chart_accent_x: float | None = None
+    if chart_axis_accent and chart_layout is not None and chart_y_labels and chart_x_labels:
+        chart_accent_y = min(label.y for label in chart_y_labels)
+        chart_accent_x = max(label.x for label in chart_x_labels)
+        chart_x_gridlines = [
+            {
+                "x1": label.x,
+                "y1": vp.y,
+                "x2": label.x,
+                "y2": vp.y + vp.h,
+                "accent": label.x == chart_accent_x,
+            }
+            for label in chart_x_labels
+        ]
     identity_font_family = paradigm_spec.chart.identity_font_family if paradigm_spec is not None else "JetBrains Mono"
     identity_font_size = paradigm_spec.chart.identity_font_size if paradigm_spec is not None else 12.0
     identity_font_weight = paradigm_spec.chart.identity_font_weight if paradigm_spec is not None else 700
@@ -171,6 +255,19 @@ def resolve_chart(
         "chart_hero_label": chart_hero_label,
         "chart_hero_suffix": chart_hero_suffix,
         "chart_subtitle_label": chart_subtitle_label,
+        # Primer editorial voice + derived metrics (triptych + glass callout).
+        "chart_primer_title": chart_primer_title,
+        "chart_primer_subtitle": chart_primer_subtitle,
+        "chart_primer_current": chart_primer_current,
+        "chart_primer_delta": chart_primer_delta,
+        "chart_primer_window": chart_primer_window,
+        "chart_primer_callout_value": chart_primer_callout_value,
+        "chart_primer_callout_label": chart_primer_callout_label,
+        "chart_glyph_path": chart_glyph_path,
+        "chart_glyph_viewbox": chart_glyph_viewbox,
+        "chart_has_glyph": chart_has_glyph,
+        "chart_glyph_size": chart_glyph_size,
+        "chart_title_x": chart_title_x,
         "chart_subject_url": chart_subject_url,
         "chart_brand_label": f"HYPERWEAVE · {chart_series_title}",
         "hero_label": input_data.hero.label,
@@ -192,6 +289,10 @@ def resolve_chart(
         "chart_milestones": chart_fragments["milestones"],
         "chart_y_labels": chart_y_labels,
         "chart_x_labels": chart_x_labels,
+        "chart_x_gridlines": chart_x_gridlines,
+        "chart_axis_accent": chart_axis_accent,
+        "chart_accent_y": chart_accent_y,
+        "chart_accent_x": chart_accent_x,
         "chart_empty_state": chart_fragments["empty_state"],
         "chart_date_range": date_range,
         "data_hw_status": status,

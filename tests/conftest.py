@@ -66,9 +66,9 @@ def all_profiles() -> dict[str, ProfileConfig]:
 
 @pytest.fixture(scope="session")
 def sample_profile() -> ProfileConfig:
-    """Return the brutalist profile for tests."""
+    """Return the flat profile for tests."""
     profiles = load_profiles()
-    return profiles["brutalist"]
+    return profiles["flat"]
 
 
 @pytest.fixture(scope="session")
@@ -88,7 +88,7 @@ def sample_compose_spec() -> ComposeSpec:
     return ComposeSpec(
         type="badge",
         genome_id="brutalist",
-        profile_id="brutalist",
+        profile_id="flat",
         title="build",
         value="passing",
         state="passing",
@@ -105,7 +105,7 @@ def strip_compose_spec() -> ComposeSpec:
     return ComposeSpec(
         type="strip",
         genome_id="brutalist",
-        profile_id="brutalist",
+        profile_id="flat",
         title="readme-ai",
         state="active",
         glyph="github",

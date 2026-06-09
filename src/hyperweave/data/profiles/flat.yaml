@@ -1,5 +1,5 @@
-id: brutalist
-name: Brutalist
+id: flat
+name: Flat
 fonts:
   title: "'Inter', -apple-system, system-ui, sans-serif"
   value: "'Inter', -apple-system, system-ui, sans-serif"

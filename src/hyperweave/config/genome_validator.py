@@ -34,7 +34,7 @@ def load_and_validate_genome_file(
         raise FileNotFoundError(f"Genome file not found: {genome_path}")
 
     genome_raw = json.loads(genome_path.read_text())
-    profile_id = profile_override or genome_raw.get("profile", "brutalist")
+    profile_id = profile_override or genome_raw.get("profile", "flat")
 
     contract_path = Path(__file__).resolve().parent.parent / "data" / "profiles" / f"{profile_id}.contract.json"
     if not contract_path.exists():
@@ -49,11 +49,11 @@ def load_and_validate_genome_file(
         if source_key and not genome_raw.get(source_key):
             errors.append(f"MISSING: {var_name} (genome key '{source_key}' not set)")
 
-    # Chrome-specific required fields
-    for key, key_spec in contract.get("chrome_required", {}).items():
+    # Material-layer (dimensional profile) required fields
+    for key, key_spec in contract.get("material_required", {}).items():
         val = genome_raw.get(key)
         if not val:
-            errors.append(f"MISSING: chrome required field '{key}'")
+            errors.append(f"MISSING: material required field '{key}'")
         elif key_spec.get("type") == "array" and isinstance(val, list):
             min_items = key_spec.get("min_items", 1)
             if len(val) < min_items:

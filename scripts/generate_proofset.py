@@ -42,7 +42,15 @@ def _paradigm_supports_compact(genome_cfg: Any, paradigms: dict[str, Any]) -> bo
     paradigm = paradigms.get(paradigm_slug)
     if paradigm is None:
         return False
-    return paradigm.badge.glyph_size_compact > 0
+    badge = paradigm.badge
+    # Compact is supported when the paradigm declares distinct compact geometry —
+    # an explicit compact glyph size, a compact glyph ratio (primer: 0.5), OR a
+    # compact frame height that differs from the default (primer: 20 vs 36).
+    return (
+        badge.glyph_size_compact > 0
+        or badge.glyph_size_compact_ratio > 0
+        or badge.frame_height_compact != badge.frame_height
+    )
 
 
 OUT = Path(__file__).resolve().parent.parent / "outputs"
@@ -497,18 +505,25 @@ def generate_static() -> int:
                     svg = _compose("badge", genome, "BUILD", status.value, status, "github", variant=variant)
                     _write(var_dir / f"badge_{status}_{variant}.svg", svg)
                     total += 1
-                # Icon shapes — both chrome and brutalist paradigms declare
-                # ``icon.supported_shapes: [circle, square]`` in their yaml,
-                # so render both shapes per variant to show shape coverage.
-                # Automata is square-only (``cellular.yaml: [square]``); emit
-                # the single canonical icon there.
-                if genome in (GenomeId.CHROME, GenomeId.BRUTALIST):
-                    svg = _compose("icon", genome, glyph="github", shape="circle", variant=variant)
-                    _write(var_dir / f"icon_github_{variant}_circle.svg", svg)
-                    total += 1
-                    svg = _compose("icon", genome, glyph="github", shape="square", variant=variant)
-                    _write(var_dir / f"icon_github_{variant}_square.svg", svg)
-                    total += 1
+                    # Compact badge across every state (when the paradigm supports
+                    # compact geometry) — the 20px form of each state badge.
+                    if supports_compact:
+                        svg = _compose(
+                            "badge", genome, "BUILD", status.value, status, "github", variant=variant, size="compact"
+                        )
+                        _write(var_dir / f"badge_{status}_{variant}_compact.svg", svg)
+                        total += 1
+                # Icon shapes — render every shape the genome's icon paradigm
+                # declares in ``icon.supported_shapes`` (chrome/brutalist/primer:
+                # [circle, square]; automata: [square] only). Data-driven so a
+                # paradigm that supports both never silently emits just one.
+                _icon_paradigm = paradigms.get(genome_cfg.paradigms.get("icon", "default")) if genome_cfg else None
+                _icon_shapes = list(_icon_paradigm.icon.supported_shapes) if _icon_paradigm else []
+                if len(_icon_shapes) > 1:
+                    for _shape in _icon_shapes:
+                        svg = _compose("icon", genome, glyph="github", shape=_shape, variant=variant)
+                        _write(var_dir / f"icon_github_{variant}_{_shape}.svg", svg)
+                        total += 1
                 else:
                     svg = _compose("icon", genome, glyph="github", variant=variant)
                     _write(var_dir / f"icon_github_{variant}.svg", svg)
@@ -553,6 +568,9 @@ def generate_static() -> int:
                     divider_slugs = ("seam", "sigil")
                 elif genome == GenomeId.CHROME:
                     divider_slugs = ("band",)
+                elif genome == GenomeId.PRIMER:
+                    # Primer ships the luminous "aura" divider (lit filament + blurred aura).
+                    divider_slugs = ("aura",)
                 else:
                     divider_slugs = ("dissolve",)
                 for divider_slug in divider_slugs:
@@ -1532,6 +1550,7 @@ def generate_readme(total: int, live_total: int) -> None:
         "and parity surfaces. Per-variant artifact matrices live in dedicated files:",
         "",
         "- [README_BRUTALIST.md](README_BRUTALIST.md) — 22 brutalist variants (8 dark monochromes + 14 light scholars)",
+        "- [README_PRIMER.md](README_PRIMER.md) — 8 primer substrates (4 dark + 4 light editorial)",
         "- [README_CHROME.md](README_CHROME.md) — 5 chrome material identities "
         "(horizon, abyssal, lightning, graphite, moth)",
         "- [README_AUTOMATA.md](README_AUTOMATA.md) — 16 automata solo tones plus pairing-grammar showcase",
@@ -1710,6 +1729,7 @@ def generate_readme(total: int, live_total: int) -> None:
     (OUT / "README.md").write_text("\n".join(lines) + "\n")
     _emit_automata_readme()
     _emit_brutalist_readme()
+    _emit_primer_readme()
     _emit_chrome_readme()
     _emit_telemetry_readme()
     _emit_state_readme()
@@ -1731,21 +1751,33 @@ def _emit_state_readme() -> None:
     # Per genome: three variants spanning its colour range. Substrate noted because
     # brutalist mixes dark and light variants (a light variant forced to `square`
     # shows its state colour on a paper substrate).
+    # (genome, [(variant, substrate)], shapes). brutalist/chrome/automata share the
+    # configurable geometric shapes; primer's indicator is its own state-keyed
+    # ANIMATED mark (status-glyph: ping/throb/shake per state), which is its only
+    # shape — the geometric square/circle/diamond paths don't apply to it.
+    geometric = ("square", "circle", "diamond")
     genomes = [
         (
             "brutalist",
             [("celadon", "dark — emerald phosphor"), ("ember", "dark — fired clay"), ("archive", "light — paper")],
+            geometric,
         ),
         (
             "chrome",
             [("horizon", "frozen blue-silver"), ("moth", "umber iridescent"), ("abyssal", "teal-cyan")],
+            geometric,
         ),
         (
             "automata",
             [("teal", "cellular teal"), ("violet", "cellular violet"), ("amber", "cellular amber")],
+            geometric,
+        ),
+        (
+            "primer",
+            [("porcelain", "light flagship"), ("noir", "dark"), ("carbon", "dark — ember accent")],
+            ("status-glyph",),
         ),
     ]
-    shapes = ("square", "circle", "diamond")
     states = (ArtifactStatus.PASSING, ArtifactStatus.WARNING, ArtifactStatus.CRITICAL)
 
     lines: list[str] = [
@@ -1754,7 +1786,10 @@ def _emit_state_readme() -> None:
         "The badge state indicator is a configurable shape — `square`, `circle`, "
         "or `diamond` — selectable per genome/variant or per request via "
         "`?state_glyph_shape=`. Each paradigm has a default (brutalist dark=square "
-        "/ light=circle, chrome=diamond, cellular=square); the override flips it.",
+        "/ light=circle, chrome=diamond, cellular=square); the override flips it. "
+        "Primer is the exception: its indicator is a state-KEYED animated mark "
+        "(`status-glyph` — ping / throb / shake per state), its own system rather "
+        "than a geometric, so it shows that one shape.",
         "",
         "Each shape shows a 3x3 grid — three variants (rows) across passing / "
         "warning / critical (columns) — so the shape dispatch and the per-variant "
@@ -1763,7 +1798,7 @@ def _emit_state_readme() -> None:
         "---",
         "",
     ]
-    for genome, variants in genomes:
+    for genome, variants, shapes in genomes:
         lines.extend([f"## {genome}", ""])
         for shape in shapes:
             lines.extend([f"### shape = `{shape}`", ""])
@@ -2181,6 +2216,258 @@ def _emit_brutalist_readme() -> None:
     )
 
     (OUT / "README_BRUTALIST.md").write_text("\n".join(lines) + "\n")
+
+
+def _emit_primer_stress_section() -> list[str]:
+    """Build the README "Schema-agnostic stress test" section.
+
+    Proves the primer stats card + chart are CONTENT-AWARE: the layout adapts to
+    any metric COUNT (1-6) and any connector SHAPE. Every metric binds to a REAL
+    connector token (github / pypi / npm / crates) resolved live — NO fabricated
+    kv: data. The metric count is varied by slicing a real cross-connector token
+    list; the chart rides real GitHub star history. Writes artifacts under
+    outputs/proofset/primer/stress/ and returns the markdown.
+    """
+    import asyncio
+
+    from hyperweave.connectors.base import close_client
+    from hyperweave.connectors.snapshots import fetch_pypi_snapshot
+    from hyperweave.serve.data_tokens import parse_data_tokens, resolve_data_tokens
+
+    # Six real cross-connector tokens — a single ecosystem footprint card whose
+    # metrics span GitHub + PyPI + npm + crates. Sliced [:n] to vary the count.
+    token_str = (
+        "github:vllm-project/vllm.stars,"
+        "github:vllm-project/vllm.forks,"
+        "pypi:vllm.version,"
+        "pypi:vllm.downloads,"
+        "npm:n8n.downloads,"
+        "crates:serde.downloads"
+    )
+
+    async def _resolve() -> tuple[list[Any], dict[str, Any]]:
+        toks: list[Any] = []
+        snap: dict[str, Any] = {}
+        try:
+            parsed = parse_data_tokens(token_str)
+            resolved, _ttl = await resolve_data_tokens(parsed)
+            toks = list(resolved)
+        except Exception:
+            toks = []
+        try:
+            # PyPI snapshot carries BOTH a download sparkline (activity) and a daily
+            # download series (series_points) — the card's activity zone + a non-star
+            # trend chart, on the same pipeline as the GitHub star chart. Routed
+            # through the shared snapshot cache (same "snapshot:pypi:vllm" key the
+            # brutalist vllm card uses) so a pypistats 429 under burst regeneration
+            # falls back to the last good fixture instead of silently dropping the
+            # sparkline card — the only direct, uncached pypi call in the proofset.
+            from proofset_harness import load_fixtures
+
+            snap = await _fetch_snapshot_or_cache(
+                load_fixtures(),
+                "snapshot:pypi:vllm",
+                "PyPI vllm (primer stress)",
+                lambda: fetch_pypi_snapshot("vllm"),
+            )
+        except Exception:
+            snap = {}
+        await close_client()
+        return toks, snap
+
+    tokens, pypi_snap = asyncio.run(_resolve())
+    lines: list[str] = [
+        "## Schema-agnostic stress test",
+        "",
+        "Every element in every primer frame is a measured, content-aware **slot** — "
+        "not hand-placed geometry. The same stats-card and chart layouts adapt to any "
+        "**metric count** and any **connector shape**. Below, the card is composed across "
+        "**1-6 metrics** sliced from a single live cross-connector footprint "
+        "(GitHub + PyPI + npm + crates); the count is the only variable. Every value "
+        "binds to a **real connector token** — no fabricated data.",
+        "",
+    ]
+    if not tokens:
+        lines.append(
+            "_Connector tokens did not resolve at generation time (offline / rate-limited); "
+            "re-run `scripts/generate_proofset.py` with network access to populate this section._"
+        )
+        lines.append("")
+        return lines
+    sdir = OUT / "proofset" / "primer" / "stress"
+    for n in range(1, len(tokens) + 1):
+        svg = _compose("stats", "primer", title="vllm", data_tokens=tokens[:n], variant="porcelain")
+        _write(sdir / f"stats_n{n}.svg", svg)
+        plural = "metric" if n == 1 else "metrics"
+        lines.append(f"**{n} {plural}** — card sizes to fit:")
+        lines.append("")
+        lines.append(f"![primer stats {n} metrics](proofset/primer/stress/stats_n{n}.svg)")
+        lines.append("")
+    lines.append(
+        "The card never reflows to a fixed grid — the hero + secondary metric row flow from "
+        "`compute_stats_layout` keyed on the resolved metric set, and the card height collapses "
+        "to the data it carries (a single hero metric leaves no dead band).",
+    )
+    lines.append("")
+
+    # Activity sparkline (the card's editorial activity viz) + non-star trend chart,
+    # both from a live PyPI snapshot — the same layout engine, a different shape.
+    if pypi_snap.get("activity") or pypi_snap.get("series_points"):
+        lines.append("### Activity + non-star data")
+        lines.append("")
+    if pypi_snap.get("activity"):
+        spark = _compose("stats", "primer", title="vllm", connector_data=pypi_snap, variant="porcelain")
+        _write(sdir / "stats_sparkline.svg", spark)
+        lines.append(
+            "**Download sparkline** — the card's activity zone reads a live 30-day PyPI "
+            "download series (primer's editorial activity viz; the denser contribution heatmap "
+            "is a brutalist/automata form):"
+        )
+        lines.append("")
+        lines.append("![primer stats sparkline](proofset/primer/stress/stats_sparkline.svg)")
+        lines.append("")
+    if pypi_snap.get("series_points"):
+        for var in ("porcelain", "carbon"):
+            chart = _compose("chart", "primer", connector_data=pypi_snap, variant=var)
+            _write(sdir / f"chart_downloads_{var}.svg", chart)
+            lines.append(f"**PyPI download trend — {var}** (non-star series, same chart pipeline):")
+            lines.append("")
+            lines.append(f"![primer download chart {var}](proofset/primer/stress/chart_downloads_{var}.svg)")
+            lines.append("")
+    lines.append("---")
+    lines.append("")
+    return lines
+
+
+def _emit_primer_readme() -> None:
+    """Emit outputs/README_PRIMER.md with the full 8-variant substrate matrix.
+
+    Mirrors README_BRUTALIST's structure: each variant renders its full artifact
+    suite (badge default, icon, strip, marquee, aura divider, stats card, star
+    chart, 5 badge states) as inline image embeds. Primer is 4 dark + 4 light
+    substrates on the flat profile; substrate_kind (read from each variant
+    override) splits the two sections. Image refs point at LOCAL artifacts under
+    outputs/proofset/primer/.
+    """
+    g = "primer"
+    cfg = load_genomes().get(g)
+    if cfg is None or not cfg.variants:
+        return
+    phen = cfg.variant_phenomenology or {}
+    overrides = cfg.variant_overrides or {}
+
+    lines: list[str] = [
+        "# HyperWeave Primer — 8-Variant Substrate Matrix",
+        "",
+        "Primer is HyperWeave's minimal, editorial genome — the clean light-and-dark "
+        "on-ramp. Eight substrates split **4 dark** (`noir`, `carbon`, `space`, `anvil`) "
+        "and **4 light** (`porcelain`, `cream`, `dusk`, `petrol`), each declaring "
+        '`substrate_kind: "dark" | "light"` to drive template include dispatch.',
+        "",
+        "Inter display type with JetBrains Mono numerals, soft vertical-gradient grounds, "
+        "an accent seam fade, circle status dots, and a glassmorphic two-layer drop shadow "
+        "lifting the light cards off the page. Rides the `flat` structural profile.",
+        "",
+        "Stratum: `002-TRIBE`. Flagship variant: `porcelain` (light cobalt-on-white; the "
+        "bare `primer.static` URL renders this).",
+        "",
+        "Every variant below renders the full artifact suite (default badge, icon, strip, "
+        "marquee, aura divider, stats card, star chart, 5 badge states).",
+        "",
+        "---",
+        "",
+        "## Dark Substrates",
+        "",
+    ]
+
+    def _emit(v: str) -> None:
+        lines.append(f"### `?variant={v}`")
+        lines.append("")
+        if phen.get(v):
+            lines.append(f"_{phen[v]}_")
+            lines.append("")
+        lines.append(f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg)")
+        if (OUT / "proofset" / g / "variants" / f"badge_pypi_{v}_compact.svg").exists():
+            lines.append(f" ![badge compact](proofset/{g}/variants/badge_pypi_{v}_compact.svg)")
+        lines.append("")
+        lines.append(
+            f"![icon circle](proofset/{g}/variants/icon_github_{v}_circle.svg) "
+            f"![icon square](proofset/{g}/variants/icon_github_{v}_square.svg)"
+        )
+        lines.append("")
+        lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
+        lines.append("")
+        lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+        lines.append("")
+        lines.append(f"![divider aura](proofset/{g}/variants/divider_aura_{v}.svg)")
+        lines.append("")
+        if (OUT / "proofset" / g / "variants" / f"stats_{v}.svg").exists():
+            lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
+            lines.append("")
+        if (OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg").exists():
+            lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
+            lines.append("")
+        _states = (
+            ArtifactStatus.PASSING,
+            ArtifactStatus.WARNING,
+            ArtifactStatus.CRITICAL,
+            ArtifactStatus.BUILDING,
+            ArtifactStatus.OFFLINE,
+        )
+        for s in _states:
+            lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
+        lines.append("")
+        if (OUT / "proofset" / g / "variants" / f"badge_passing_{v}_compact.svg").exists():
+            lines.append("**Compact (20px) across states:**")
+            lines.append("")
+            for s in _states:
+                lines.append(f"![{s.value} compact](proofset/{g}/variants/badge_{s.value}_{v}_compact.svg)")
+            lines.append("")
+        lines.append("---")
+        lines.append("")
+
+    dark = [v for v in cfg.variants if (overrides.get(v) or {}).get("substrate_kind") == "dark"]
+    light = [v for v in cfg.variants if (overrides.get(v) or {}).get("substrate_kind") == "light"]
+    for v in dark:
+        _emit(v)
+    lines.append("## Light Substrates")
+    lines.append("")
+    for v in light:
+        _emit(v)
+
+    lines.extend(_emit_primer_stress_section())
+
+    lines.extend(
+        [
+            "## Substrate Architecture",
+            "",
+            "`substrate_kind` is the variant-declared axis driving template include dispatch "
+            "within the primer paradigm:",
+            "",
+            "```jinja2",
+            "{# templates/frames/badge/primer-content.j2 (dispatcher) #}",
+            '{% include "frames/badge/primer-" ~ (substrate_kind | default(\'light\')) ~ "-content.j2" %}',
+            "```",
+            "",
+            "Dark variants route to `primer-dark-content.j2`; light variants to "
+            "`primer-light-content.j2` (badge, strip, icon, marquee). The aura divider is "
+            "substrate-invariant — one template, per-variant `--dna-*` overrides carry the hue. "
+            "The fallback is `light` (primer's flagship is porcelain), and a bare `?genome=primer` "
+            "resolves its substrate from `category: light`.",
+            "",
+            "Stats and chart now use first-class primer layout paths: Inter editorial "
+            "stats cards, smooth area charts, and circular chart endpoints all flow "
+            "through the same resolver/layout/template pipeline as the other frames.",
+            "",
+            "## Cross-reference",
+            "",
+            "- [Main README](../README.md) — installation, compose grammar, all genomes",
+            "- [CHANGELOG](../CHANGELOG.md) — v0.4.0-alpha.1 release notes",
+            "",
+        ]
+    )
+
+    (OUT / "README_PRIMER.md").write_text("\n".join(lines) + "\n")
 
 
 def _emit_chrome_readme() -> None:

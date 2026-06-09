@@ -399,6 +399,14 @@ def resolve_stats(
                 "identity_font_size": paradigm_spec.stats.identity_font_size,
                 "identity_font_weight": paradigm_spec.stats.identity_font_weight,
                 "identity_letter_spacing_em": paradigm_spec.stats.identity_letter_spacing_em,
+                "metric_value_font_family": paradigm_spec.stats.metric_value_font_family,
+                "metric_value_font_size": paradigm_spec.stats.metric_value_font_size,
+                "metric_value_font_weight": paradigm_spec.stats.metric_value_font_weight,
+                "metric_value_letter_spacing_em": paradigm_spec.stats.metric_value_letter_spacing_em,
+                "metric_label_font_family": paradigm_spec.stats.metric_label_font_family,
+                "metric_label_font_size": paradigm_spec.stats.metric_label_font_size,
+                "metric_label_font_weight": paradigm_spec.stats.metric_label_font_weight,
+                "metric_label_letter_spacing_em": paradigm_spec.stats.metric_label_letter_spacing_em,
             }
         )
 

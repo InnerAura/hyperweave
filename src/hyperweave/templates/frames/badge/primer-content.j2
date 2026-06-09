@@ -1,0 +1,8 @@
+{# Primer BADGE paradigm DISPATCHER (substrate split, Invariant 12).
+
+   Includes the substrate-specific content partial by interpolating resolved
+   `substrate_kind`. Primer's flagship is light (porcelain), so the fallback is
+   'light' — and context.py:327 resolves an unset substrate_kind from genome
+   `category` (light), so the bare ?genome=primer URL takes the light path.
+   No `if substrate_kind == ...` conditionals here or in Python. #}
+{% include "frames/badge/primer-" ~ (substrate_kind | default('light')) ~ "-content.j2" %}

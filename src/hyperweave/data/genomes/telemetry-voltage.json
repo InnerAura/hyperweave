@@ -2,7 +2,7 @@
   "id": "telemetry-voltage",
   "name": "Telemetry Voltage",
   "category": "dark",
-  "profile": "brutalist",
+  "profile": "flat",
   "surface_0": "#08101A",
   "surface_1": "#101824",
   "surface_2": "#030611",

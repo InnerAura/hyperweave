@@ -322,9 +322,12 @@ def _base_context(
         # (`brutalist-{substrate_kind}-content.j2`). When a variant override
         # declares substrate_kind it's already merged onto resolved.genome
         # by the resolver, so a single getattr suffices. Empty/missing falls
-        # back to "dark" (current and all pre-v0.3.2 genome behavior).
+        # back to genome `category` — consistent with theme_category (below),
+        # _compose_font_stack and _resolve_reasoning_context — so a category:light
+        # genome with no substrate_kind (e.g. primer's no-variant flagship path)
+        # resolves "light", not a hardcoded "dark".
         "variant": resolved.resolved_variant,
-        "substrate_kind": resolved.genome.get("substrate_kind", "dark"),
+        "substrate_kind": resolved.genome.get("substrate_kind") or resolved.genome.get("category", "dark"),
         # v0.3.2 Phase D: panel_gradient_stops + seam_color exposed to templates
         # so light-substrate defs.j2 can render the dark academic panel gradient
         # (`url(#{{ uid }}-panel)`) and per-variant gold seam color. Variants

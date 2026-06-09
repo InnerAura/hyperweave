@@ -1,0 +1,9 @@
+{# PASSING / DEPLOYED — ping: a solid live core + two expanding stroke rings
+   (offset half a cycle) in the universal CI green. Core + rings use the genome's
+   substrate-harmonized GREEN (strip_status_dot — green on every variant, unlike
+   badge_pass_core/accent which is orange on carbon). Baked literal so the mark is
+   true in plain rsvg / VS Code / Finder as well as browsers. Static renderers show
+   the resting core + rings. #}
+<circle class="hw-pri-ping" r="{{ status_glyph.ping_ring_r }}" fill="none" stroke="{{ _genome_raw.strip_status_dot }}" stroke-width="{{ status_glyph.ping_ring_stroke_w }}"/>
+<circle class="hw-pri-ping2" r="{{ status_glyph.ping_ring_r }}" fill="none" stroke="{{ _genome_raw.strip_status_dot }}" stroke-width="{{ status_glyph.ping_ring_stroke_w }}"/>
+<circle r="{{ status_glyph.ping_core_r }}" fill="{{ _genome_raw.strip_status_dot }}"/>

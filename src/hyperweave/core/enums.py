@@ -30,13 +30,19 @@ class GenomeId(StrEnum):
     BRUTALIST = "brutalist"
     CHROME = "chrome"
     AUTOMATA = "automata"
+    PRIMER = "primer"
 
 
 class ProfileId(StrEnum):
-    """Structural profile -- controls typography, geometry, and glyph rendering."""
+    """Structural profile -- controls typography, geometry, and glyph rendering.
 
-    BRUTALIST = "brutalist"
-    CHROME = "chrome"
+    Named on the one axis the contracts differ on: presence of a material/depth
+    layer. ``flat`` is the minimal four-var base (6 genomes ride it); ``dimensional``
+    adds the required envelope/well/specular material block (chrome genome).
+    """
+
+    FLAT = "flat"
+    DIMENSIONAL = "dimensional"
 
 
 class BorderMotionId(StrEnum):
@@ -88,6 +94,7 @@ class DividerVariant(StrEnum):
     BAND = "band"  # chrome
     SEAM = "seam"  # brutalist (dark default)
     SIGIL = "sigil"  # brutalist (light default)
+    AURA = "aura"  # primer (luminous filament over a blurred aura)
 
 
 class GlyphMode(StrEnum):

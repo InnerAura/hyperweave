@@ -46,6 +46,12 @@ class ParadigmChartConfig(FrozenModel):
     polyline/path. Cellular paradigm opts in to reproduce the specimen's
     line-draws-on-load feel; brutalist/chrome keep the line static so the
     chart reads as instrument, not demo."""
+    axis_accent: bool = False
+    """When True (primer), the top Y-tick label and the trailing (current) X-tick
+    label render in the genome accent, and vertical gridlines drop at every X-tick.
+    Matches the porcelain chart specimen's blue axis details + full grid. ``False``
+    (brutalist/chrome/cellular) keeps uniform muted ticks and horizontal-only grid,
+    so those charts stay byte-identical."""
     cell_size: int = 0
     """Cellular substrate cell stride in pixels. Zero defers to the chart
     engine's internal default. Cellular v0.3.0 refresh: 19 (cell width 18,
@@ -193,7 +199,9 @@ class ParadigmStatsConfig(FrozenModel):
     """Text transform applied by the stats template before render. The resolver
     must measure the transformed text, otherwise lower-case connector data
     underestimates templates that render ``{{ stats_username | upper }}``."""
-    metric_layout_mode: Literal["brutalist_grid", "chrome_columns", "cellular_inline"] = "brutalist_grid"
+    metric_layout_mode: Literal["brutalist_grid", "chrome_columns", "cellular_inline", "primer_editorial"] = (
+        "brutalist_grid"
+    )
     """Stats metric slot layout algorithm selected by config, never by paradigm slug."""
     metric_value_font_family: str = "Inter"
     metric_value_font_size: float = 20
@@ -287,14 +295,41 @@ class ParadigmStripConfig(FrozenModel):
     pair (chrome ``glyph_size: 22`` + brutalist ``identity_glyph_size: 18``)
     that had to stay in proportional agreement by manual update."""
     divider_render_mode: Literal["gradient", "class"] = "class"
-    """``gradient`` routes through chrome-defs ``url(#{uid}-sep)`` stroke;
-    ``class`` uses a flat CSS-class-colored divider."""
+    """``gradient`` routes through ``url(#{uid}-sep)`` stroke (chrome's etched
+    sep, primer's vertical accent-fade seam); ``class`` uses a flat
+    CSS-class-colored divider."""
+    divider_inset: int = 8
+    """Vertical inset (px) of the inter-zone dividers from the strip's top and
+    bottom edges (``y1 = inset``, ``y2 = height - inset``). Primer declares 12
+    for a short, breathing accent-fade seam; the flat-profile default 8 keeps
+    chrome/cellular/default dividers unchanged."""
+    plate_corner: int = 0
+    """Corner radius (px) of the strip plate as a rounded material card. ``> 0``
+    (primer: 10) makes the content partial paint a rounded plate + bevel-edge
+    stroke + perimeter hairline + drop shadow (a polished physical card). ``0``
+    (chrome/cellular/brutalist) keeps the existing flat/owns-strip plate — the
+    bevel/perimeter/shadow geometry the resolver emits is consumed only by content
+    partials that opt in, so this is a pure no-op for the shipped genomes."""
+    identity_accent_from_seam: bool = False
+    """When True (primer), the identity glyph fill resolves to the variant's
+    ``seam_color`` (the BRIGHT substrate accent) instead of ``glyph_inner`` (the
+    MUTED tone). On dark variants ``glyph_inner`` reads dull grey while the
+    specimen identity is the bright accent; ``seam_color`` already equals the
+    bright identity accent for every variant. The identity TEXT routes the same
+    way via the primer-defs CSS class. Default False keeps brutalist/chrome/
+    cellular on ``glyph_inner``."""
     status_shape_rendering: Literal["crispEdges", "geometricPrecision"] = "crispEdges"
     show_status_indicator: bool = True
     """When False, the status-indicator zone (56px reserve) collapses to
     zero width -- strip omits the right-edge diamond/ring entirely. Set
     False for paradigms/compositions where the state carrier lives
     elsewhere (e.g. inside a metric-state cell)."""
+    status_always: bool = False
+    """When True, the editorial ACTIVE status light renders on EVERY strip
+    regardless of stateless/stateful mode (primer's telemetry strip carries a
+    universal live dot — numbers are heroes, state is a quiet annotation). When
+    False (default), the stateless gate suppresses it so a STARS|FORKS|VERSION
+    strip shows no indicator — preserving chrome/cellular/default behaviour."""
     flank_width: int = 0
     """Bifamily chromatic flank width in pixels (e.g. automata strips render
     36px teal/amethyst cell columns at left and right). Zero disables."""
@@ -401,6 +436,11 @@ class ParadigmStripConfig(FrozenModel):
     trailing edge after the bookend. Chrome: 320 (prevents 1-metric strips
     from aspect-warping in README columns). Zero (default) means no clamp —
     width grows additively from cells."""
+    stretch_cells_to_min_width: bool = False
+    """When True, adaptive strips distribute strip_min_width slack across
+    metric cells instead of leaving transparent trailing canvas. Primer uses
+    this to keep the specimen's full editorial rail while preserving measured
+    per-cell text placement through the shared strip engine."""
 
 
 class ParadigmBadgeConfig(FrozenModel):
@@ -434,6 +474,24 @@ class ParadigmBadgeConfig(FrozenModel):
     rendered adornment boundary instead of from an inverse offset."""
     glyph_offset_left_compact: int = 0
     """Compact-variant glyph offset. Empty (0) falls back to glyph_offset_left."""
+    pad_ratio: float = 0.0
+    """Interior pad as a fraction of the (size-scaled) value font size. ``> 0``
+    (primer: 0.6) makes the pad PROPORTIONAL to scale — ONE rule that tightens
+    the badge coherently at every size (default 36px and compact 20px are the same
+    artifact at different scales, so the gap rhythm scales with them) instead of a
+    separate per-size pad. ``0`` falls back to the fixed ``pad``."""
+    center_text_factor: float = 0.0
+    """When ``> 0`` (primer: 0.35), the text baseline is COMPUTED to vertically
+    centre the value at any badge height: ``text_y = height/2 + value_font_size *
+    center_text_factor``. One scale-invariant rule, replacing a per-size
+    ``text_y_factor`` that reads top-heavy when the badge shrinks. ``0`` falls back
+    to the fixed ``text_y_factor``."""
+    label_center_text_factor: float = 0.0
+    """When ``> 0`` (primer: 0.4) the LABEL gets its own centred baseline
+    ``height/2 + label_font_size * factor``, distinct from the value baseline.
+    A smaller mono label optically centres ~0.5px higher than the larger value
+    text at the same baseline, so the specimen sets label y=14.2 / value y=15.2 in
+    a 22px frame. ``0`` falls back to the shared value baseline (one text_y)."""
     glyph_size: int = 14
     """Fallback glyph render box when no proportional ratio is declared."""
     glyph_size_compact: int = 0
@@ -463,12 +521,39 @@ class ParadigmBadgeConfig(FrozenModel):
     """Optional paradigm-specific seam width. ``> 0`` overrides
     profile's ``badge_seam_width``. Provided for symmetry with ``sep_w``;
     no current paradigm needs it but keeps the override surface uniform."""
+    seam_inset_ratio: float = 0.0
+    """Vertical inset of the rendered seam as a fraction of ``frame_height``.
+    ``> 0`` (primer: 0.22) renders the panel separator as a thin hairline
+    centered vertically — top/bottom inset of ``round(height * ratio)`` — rather
+    than a full-height bar. ``0`` (brutalist/cellular) keeps the full-height
+    separator. A third seam mode beside chrome's etched seam and brutalist's
+    structural separator: primer's signature is a short cobalt-fade hairline."""
+    seam_pixel_w: float = 0.0
+    """Explicit rendered seam width in px (primer: 1.4 hairline). ``> 0``
+    overrides ``sep_w`` for the rendered seam rect only — the cursor walk still
+    reserves ``sep_w + seam_w``, so spacing is unchanged; only the painted seam
+    narrows. ``0`` paints the seam at ``sep_w``."""
+    light_indicator_inner_ratio: float = 0.0
+    """Inner status-dot radius as a fraction of the outer housing radius on the
+    light circle indicator. ``> 0`` (primer: 0.5 — a status-light core inside a
+    surface housing) overrides the legacy ``outer / 3`` dot. ``0`` keeps the
+    brutalist-light proportion so that genome is unchanged."""
     right_canvas_inset: int = 0
     """Pixels between ``total_w`` and the value slab's right edge.
     Brutalist/chrome: 0 (slab spans to total_w). Cellular: 2 (inner canvas
     at ``x=2..width-2`` per cellular-content.j2:9). Without this override,
     ``value_zone_right`` lands ``right_canvas_inset`` past the actual slab
     edge and drifts the centered value text right by half that amount."""
+    value_centers_in_recess: bool = False
+    """When ``True`` (primer) the value word centers in the VISIBLE recess —
+    between the carved-seam right edge and the badge edge — instead of the
+    cursor-reserved ``[value_zone_left, value_zone_right]``. The flat profile
+    reserves ``sep_w + seam_w`` (5px) for the seam, but primer PAINTS a ~2.5px
+    carved groove (``seam_pixel_w``), so the reserved zone's left edge sits ~2.5px
+    past the visible seam and drifts the centered value right (an 11px seam→value
+    gap vs a 7px value→edge gap). Re-centering on the painted recess makes the two
+    gaps symmetric at every value width. ``False`` keeps reserved-zone centering
+    for every other paradigm (mirror of ``right_canvas_inset`` for the seam side)."""
     left_adornment_width: float = 0.0
     """Rendered right edge of the optional left adornment measured from x=0.
     Cellular large: 20 (= pattern x 2 + 3 cols * 6px). Zero disables
@@ -539,6 +624,21 @@ class ParadigmBadgeConfig(FrozenModel):
     slug interpolation. chrome sets ``diamond``; brutalist/cellular leave it
     empty (the resolver coerces empty → ``square``). Genome ``state_glyph_shape``
     (per-variant or request-time ``?state_glyph_shape=``) overrides this."""
+    content_center_geometric: bool = False
+    """When True (primer), the brand glyph and state indicator centre on the badge
+    MIDLINE (height/2) rather than the text-ink reading line. The value baseline
+    already carries optical centring; the v04alpha1 specimen places both marks
+    geometrically at y=height/2. ``False`` keeps every other paradigm's reading-line
+    anchoring byte-identical."""
+    indicator_leads_value: bool = False
+    """When True, the state indicator is placed at the LEFT of the value zone
+    (leading the value text) instead of trailing it at the right edge. Primer's
+    status-glyph reads as a pill ``[icon] value`` — the icon directly annotates
+    the state word, matching the badge-matrix specimen. ``False`` (brutalist /
+    chrome / cellular) keeps the trailing indicator, so those genomes stay
+    byte-identical. The cursor walk in ``compute_badge_zones`` reserves the
+    indicator slot before the value when set; ``indicator_center_x`` and the
+    value zone shift accordingly with zero template arithmetic."""
     label_letter_spacing_em: float = 0.0
     """CSS-rendered ``letter-spacing`` for the label text. Resolver passes
     this to ``measure_text`` so the layout reserves the actual rendered
@@ -819,6 +919,33 @@ class ParadigmMarqueeConfig(FrozenModel):
     """Top y of the module divider."""
     module_divider_h: int = 32
     """Height (px) of the module divider."""
+    module_divider_opacity: float = 1.0
+    """Opacity of the module divider. Primer uses 0.12 (a low-opacity cobalt
+    hairline at the gap midpoint, not a hard full-opacity bar). Default 1.0 keeps
+    brutalist's opaque divider byte-equal."""
+    cap_kind: Literal["none", "identity"] = "none"
+    """Left identity cap rendered ABOVE the scroll track. ``identity`` (primer)
+    paints a fixed head band carrying the brand glyph, a scope label (spec.title),
+    a quiet ``LIVE`` mark, and a single breathing pulse dot — the signature the
+    porcelain marquee specimen leads with. ``none`` (chrome/brutalist/cellular)
+    keeps their existing decorative liveness (diamond / strobe-cube). The cap zone
+    is reserved by ``clip_inset_left`` so modules scroll under the cap seam."""
+    hero_color_role: str = ""
+    """Color role for the hero (first volume) value when the paradigm declares no
+    text-fill gradient. Empty = the legacy ``var(--dna-ink-primary)`` ink hero.
+    ``signal`` routes the hero to ``var(--dna-signal)`` (primer's cobalt hero —
+    the one accent-colored value). Gated so chrome's gradient hero + brutalist's
+    ink hero stay byte-equal."""
+    state_value_stop: Literal["bright", "core"] = "bright"
+    """Which state-cascade stop the activity (stateful) cell values use.
+    ``bright`` (default) → ``var(--hw-state-value)`` (the bright stop, tuned for
+    dark substrates). ``core`` (primer) → ``var(--hw-state-signal)`` (the deeper
+    core stop, readable on light grounds — forest/sienna/red vs lime/orange/coral)."""
+    module_label_color: str = ""
+    """CSS fill for module category labels. Empty (chrome/brutalist) keeps the
+    legacy ``var(--dna-ink-muted)``. Primer sets ``var(--dna-label-text)`` so the
+    marquee column label resolves to the SAME genome chromatic label value as the
+    badge label, stats card label, and strip column header — one label system."""
 
 
 class ParadigmSpec(FrozenModel):

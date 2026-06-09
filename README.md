@@ -76,6 +76,10 @@ When an agent needs to produce something visual &mdash; a status card, a dashboa
 
 HyperWeave is that primitive. One API call returns a self-contained SVG with data binding, branding, and machine-readable metadata baked in. No JavaScript, no dependencies, no runtime. It renders in GitHub READMEs, Slack, Notion, docs, your site, email, VS Code, or terminal. Every surface that renders an `<img>` tag is a HyperWeave surface.
 
+<p align="center">
+  <img src="assets/tables/hw-format-comparison-matrix.svg" alt="HyperWeave" width="100%"/>
+</p>
+
 ---
 
 ## Agentic Artifacts
@@ -123,7 +127,7 @@ Auto-detected from the session transcript. Pin a different default with `hyperwe
 
 A genome is a portable, machine-readable aesthetic specification. It encodes the complete visual identity &mdash; chromatic system, surface material, motion vocabulary, geometric form language &mdash; as a set of CSS custom properties that any agent can consume and apply consistently across every artifact type.
 
-Three production genomes ship today. Custom genome generation via AI skill files coming soon.
+Four built-in genomes ship today. Custom genome generation via AI skill files coming soon.
 
 <!--
 Why genome and not theme? Because brand isn't a design problem, it's an infrastructure problem. When an agent says "build me a status page," it has zero memory of visual identity. A genome solves that: define once, express everywhere, from a 90px badge to a 900px star history chart. The same genome produces different artifacts that feel like they came from the same hand.
@@ -135,6 +139,8 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <a href="#automata"><kbd>automata</kbd></a>
   &middot;
   <a href="#chrome"><kbd>chrome</kbd></a>
+  &middot;
+  <a href="#primer"><kbd>primer</kbd></a>
 </p>
 
 <h3 id="brutalist">brutalist</h3>
@@ -465,15 +471,123 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 </table>
+<h3 id="primer">primer</h3>
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=porcelain" alt="PYPI — porcelain variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=cream" alt="PYPI — cream variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=dusk" alt="PYPI — dusk variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=petrol" alt="PYPI — petrol variant"/>
+  <br/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=noir" alt="PYPI — noir variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=carbon" alt="PYPI — carbon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=space" alt="PYPI — space variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=anvil" alt="PYPI — anvil variant"/>
+</p>
+
+<p align="center">
+  <sub>8 variants &mdash; 4 light: <code>porcelain</code> &middot; <code>cream</code> &middot; <code>dusk</code> &middot; <code>petrol</code><br/>4 dark: <code>noir</code> &middot; <code>carbon</code> &middot; <code>space</code> &middot; <code>anvil</code></sub>
+</p>
+
+<table>
+<tr>
+<th align="left" width="160">Signals<br/><sub>animated state marks</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/badge/BUILD/passing/primer.static?state=passing&variant=porcelain" alt="passing"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/building/primer.static?state=building&variant=porcelain" alt="building"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/warning/primer.static?state=warning&variant=porcelain" alt="warning"/>
+  <img src="https://hyperweave.app/v1/badge/BUILD/critical/primer.static?state=critical&variant=porcelain" alt="critical"/>
+  <br/>
+  <ul>
+<li><sub>ping (passing) &middot; spinner (building) &middot; throb (warning) &middot; shake (critical) &mdash; one mark system, shared with the strip.</sub></li>
+<li><sub><code>/v1/badge/{title}/{value}/primer.static?state={state}&variant={porcelain|cream|dusk|petrol|noir|carbon|space|anvil}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/badge/BUILD/passing/primer.static?state=passing&variant=porcelain</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Dashboard<br/><sub>strip</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/strip/readme-ai/primer.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github&variant=porcelain" alt="strip"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/strip/{title}/primer.static?data={tokens}&subtitle={text}&glyph={glyph}&variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/strip/readme-ai/primer.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version&subtitle=eli64s/readme-ai&glyph=github&variant=porcelain</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Profile<br/><sub>stats card</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/stats/eli64s/primer.static?variant=porcelain" alt="stats" width="100%"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/stats/{username}/primer.static?variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/stats/eli64s/primer.static?variant=porcelain</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Star Chart<br/><sub>star history</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/chart/stars/eli64s/readme-ai/primer.static?variant=porcelain" alt="star chart" width="100%"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/chart/stars/{owner}/{repo}/primer.static?variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/chart/stars/eli64s/readme-ai/primer.static?variant=porcelain</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Marquee<br/><sub>horizontal ticker</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/marquee/readme-ai/primer.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,gh:eli64s/readme-ai.contributors,pypi:readmeai.downloads,gh:eli64s/readme-ai.last_push,pypi:readmeai.version,gh:eli64s/readme-ai.language&variant=porcelain" alt="marquee"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/marquee/{title}/primer.static?data={tokens}&variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/marquee/readme-ai/primer.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,gh:eli64s/readme-ai.contributors,pypi:readmeai.downloads,gh:eli64s/readme-ai.last_push,pypi:readmeai.version,gh:eli64s/readme-ai.language&variant=porcelain</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Icons<br/><sub>circle + square</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/icon/vercel/primer.static?shape=circle&variant=noir" alt="vercel — noir" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/cloudflare/primer.static?shape=circle&variant=carbon" alt="cloudflare — carbon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/primer.static?shape=circle&variant=space" alt="docker — space" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/primer.static?shape=circle&variant=anvil" alt="github — anvil" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/deepseek/primer.static?shape=square&variant=porcelain" alt="deepseek — porcelain" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/anthropic/primer.static?shape=square&variant=cream" alt="anthropic — cream" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/ollama/primer.static?shape=square&variant=dusk" alt="ollama — dusk" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/nousresearch/primer.static?shape=square&variant=petrol" alt="nousresearch — petrol" width="56"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/icon/{glyph}/primer.static?shape={circle|square}&variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/icon/github/primer.static?shape=circle&variant=noir</code></sub></li>
+</ul>
+</td>
+</tr>
+<tr>
+<th align="left">Divider<br/><sub>aura</sub></th>
+<td>
+  <img src="https://hyperweave.app/v1/divider/aura/primer.static?variant=porcelain" alt="primer aura divider"/>
+  <br/>
+  <ul>
+<li><sub><code>/v1/divider/aura/primer.static?variant={variant}</code></sub></li>
+<li><sub><code>hyperweave.app/v1/divider/aura/primer.static?variant=porcelain</code></sub></li>
+</ul>
+</td>
+</tr>
+</table>
 
 <br />
 
-| | brutalist | automata | chrome |
-|---|---|---|---|
-| Aesthetic | Raw material | Living cellular grid | Metallic precision |
-| Variants | 22 (8 dark, 14 light) | 16 tones, any two pair | 5 named |
-| Motion | Animated border SMIL | Animated cell grid | Animated border SMIL |
-| Divider | `seam` | `dissolve` | `band` |
+| | brutalist | automata | chrome | primer |
+|---|---|---|---|---|
+| Aesthetic | Raw material | Cellular | Metallic | Minimal |
+| Variants | 22 (8 dark, 14 light) | 16 tones, any two pair | 5 named | 8 (4 dark, 4 light) |
+| Motion | Animated border SMIL | Animated cell grid | Animated border SMIL | Animated state marks |
+| Divider | `seam` &middot; `sigil` | `dissolve` | `band` | `aura` |
 
 <br />
 
@@ -712,12 +826,12 @@ Every artifact ships with:
 | Dimension | Count |
 |---|---|
 | Frame types | 9 (badge, strip, icon, divider, marquee-horizontal, stats, chart, receipt, rhythm-strip) |
-| Genomes | 3 (automata, brutalist, chrome) |
+| Genomes | 4 (automata, brutalist, chrome, primer) |
 | Motion configs | 6 (1 static + 5 border SMIL) |
-| Glyphs | 104 (98 brand marks + 6 geometric shapes) |
-| Divider variants | 8 &mdash; 3 genome-themed (`band` chrome, `seam` brutalist, `dissolve` automata) + 5 genome-agnostic (`block`, `current`, `takeoff`, `void`, `zeropoint`) at <code>/a/inneraura/dividers/</code> |
+| Glyphs | 105 (99 brand marks + 6 geometric shapes) |
+| Divider variants | 10 &mdash; 5 genome-themed (`band` chrome, `seam` + `sigil` brutalist, `dissolve` automata, `aura` primer) + 5 genome-agnostic (`block`, `current`, `takeoff`, `void`, `zeropoint`) at <code>/a/inneraura/dividers/</code> |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
-| Bundled fonts | 4 (JetBrains Mono, Orbitron, Chakra Petch, Barlow Condensed) &mdash; embedded in every SVG, no external font requests |
+| Bundled fonts | 5 (JetBrains Mono, Orbitron, Chakra Petch, Barlow Condensed, Inter) &mdash; embedded per artifact, no external font requests |
 
 Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 
@@ -728,7 +842,7 @@ Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 HyperWeave binds live data into any artifact through a unified token grammar (`?data=...`). Tokens are comma-separated; each token is either a literal (`text:`, `kv:`) or a live fetch (`<provider>:<identifier>.<metric>`).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-data-connectors-matrix.svg" alt="Data connectors matrix: 9 live providers — GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions — plus text and kv literal tokens" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-data-connectors-matrix-v2.svg" alt="Data connectors matrix: 9 live providers — GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions — plus text and kv literal tokens" width="100%"/>
 </p>
 
 <details>

@@ -108,7 +108,7 @@ def test_frame_def() -> None:
 def test_genome_spec_brutalist_emerald(sample_genome: GenomeSpec) -> None:
     assert sample_genome.id == "brutalist"
     assert sample_genome.category == "dark"
-    assert sample_genome.profile == "brutalist"
+    assert sample_genome.profile == "flat"
     assert sample_genome.surface_0 == "#0A2218"
     assert sample_genome.accent == "#10B981"
     assert "static" in sample_genome.compatible_motions
@@ -135,7 +135,7 @@ def test_genome_spec_invalid_hex() -> None:
             id="bad",
             name="Bad",
             category="dark",
-            profile="brutalist",
+            profile="flat",
             surface_0="not-a-color",
             surface_1="#000000",
             surface_2="#000000",
@@ -163,7 +163,7 @@ def test_genome_spec_invalid_category() -> None:
             id="bad",
             name="Bad",
             category="medium",
-            profile="brutalist",
+            profile="flat",
             surface_0="#000000",
             surface_1="#000000",
             surface_2="#000000",
@@ -191,7 +191,7 @@ def test_genome_spec_motions_must_include_static() -> None:
             id="bad",
             name="Bad",
             category="dark",
-            profile="brutalist",
+            profile="flat",
             surface_0="#000000",
             surface_1="#000000",
             surface_2="#000000",
@@ -232,7 +232,7 @@ def test_genome_spec_paradigm_fields_default_empty() -> None:
         id="test",
         name="Test",
         category="dark",
-        profile="brutalist",
+        profile="flat",
         surface_0="#000000",
         surface_1="#111111",
         surface_2="#080808",
@@ -289,8 +289,8 @@ def test_genome_spec_brutalist_emerald_has_paradigms(sample_genome: GenomeSpec) 
 # ==========================================================================
 
 
-def test_profile_config_brutalist(sample_profile: ProfileConfig) -> None:
-    assert sample_profile.id == "brutalist"
+def test_profile_config_flat(sample_profile: ProfileConfig) -> None:
+    assert sample_profile.id == "flat"
     assert sample_profile.badge_frame_height == 20
     assert sample_profile.badge_corner == 0
     assert sample_profile.glyph_backing == "square"
@@ -521,8 +521,8 @@ def test_load_genomes(all_genomes: dict[str, GenomeSpec]) -> None:
 
 
 def test_load_profiles(all_profiles: dict[str, ProfileConfig]) -> None:
-    assert "brutalist" in all_profiles
-    assert "chrome" in all_profiles
+    assert "flat" in all_profiles
+    assert "dimensional" in all_profiles
     assert len(all_profiles) == 2
 
 

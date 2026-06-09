@@ -51,9 +51,10 @@ class ReasoningFields(FrozenModel):
 
 # Genome -> profile resolution map (matches data/genomes/*.json).
 _GENOME_PROFILE_MAP: dict[str, str] = {
-    GenomeId.BRUTALIST: ProfileId.BRUTALIST,
-    GenomeId.CHROME: ProfileId.CHROME,
-    GenomeId.AUTOMATA: ProfileId.BRUTALIST,
+    GenomeId.BRUTALIST: ProfileId.FLAT,
+    GenomeId.CHROME: ProfileId.DIMENSIONAL,
+    GenomeId.AUTOMATA: ProfileId.FLAT,
+    GenomeId.PRIMER: ProfileId.FLAT,
 }
 
 
@@ -90,7 +91,7 @@ class ComposeSpec(FrozenModel):
                 data["profile_id"] = str(override["profile"])
                 return data
             genome_raw = str(data.get("genome_id", GenomeId.BRUTALIST.value))
-            data["profile_id"] = _GENOME_PROFILE_MAP.get(genome_raw, ProfileId.BRUTALIST)
+            data["profile_id"] = _GENOME_PROFILE_MAP.get(genome_raw, ProfileId.FLAT)
         return data
 
     @model_validator(mode="before")

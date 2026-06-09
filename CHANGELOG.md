@@ -5,6 +5,23 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-alpha.1] - 2026-06-09
+
+v0.4.0-alpha.1 adds primer, a new minimal genome in eight light and dark variants, and renames the two structural profiles to describe what they are.
+
+### Added
+
+- **Primer genome** &mdash; a minimal genome in eight variants (four dark, four light) across badge, strip, stats card, chart, icon, marquee, and divider. Typeset in Inter (newly bundled) and JetBrains Mono.
+- **Primer status marks** &mdash; the badge and strip share one status mark with a symbol per state: a live ping (passing), a spinner (building), an amber `!` (warning), a red `✕` (critical).
+
+### Changed
+
+- **Profiles renamed `flat` / `dimensional`** &mdash; named for their material depth, not a genome's look. Existing artifacts are unchanged apart from their `hw:profile` value.
+
+### Fixed
+
+- **Unknown divider shows NO SIGNAL** &mdash; an unrecognized divider variant now falls back to the NO SIGNAL pattern instead of a broken image.
+
 ## [0.3.14] - 2026-06-04
 
 v0.3.14 makes the badge state indicator a configurable, proportional accent, restores the Codex telemetry receipt's glass edge, and reorganizes the test suite.

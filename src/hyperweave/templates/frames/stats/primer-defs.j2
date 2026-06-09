@@ -1,0 +1,98 @@
+{# Primer stats defs. Typography values are resolver-supplied from
+   data/paradigms/primer.yaml so measured layout and rendered CSS stay coupled. #}
+<clipPath id="{{ uid }}-clip">
+  <rect width="{{ width }}" height="{{ height }}" rx="{{ stats_layout.rects.primer_outer.rx }}"/>
+</clipPath>
+<linearGradient id="{{ uid }}-card-bg" x1="0" y1="0" x2="0" y2="1">
+{% if panel_gradient_stops %}
+{% for stop in panel_gradient_stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}{% else %}  <stop offset="0%" stop-color="var(--dna-surface-alt)"/>
+  <stop offset="100%" stop-color="var(--dna-surface)"/>
+{% endif %}</linearGradient>
+<linearGradient id="{{ uid }}-activity-fade" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0.72"/>
+  <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0.30"/>
+</linearGradient>
+{# flood-color/flood-opacity are SVG ATTRIBUTES — var() does not resolve there
+   (→ black, opacity 1.0 = a hard halo). The specimens use literal values. #}
+<filter id="{{ uid }}-lift" x="-4%" y="-12%" width="108%" height="130%">
+  <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="{{ _genome_raw.shadow_opacity }}"/>
+  <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.04"/>
+</filter>
+<style>
+{{ font_faces | safe }}
+.{{ uid }}-card text { shape-rendering: geometricPrecision; }
+.{{ uid }}-user {
+  font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif);
+  font-size: {{ identity_font_size }}px;
+  font-weight: {{ identity_font_weight }};
+  letter-spacing: {{ identity_letter_spacing_em }}em;
+  fill: var(--dna-ink-primary);
+}
+/* bio + footer are metadata/prose (muted). The LABELS (metric, hero, activity)
+   wear the unified PRIMER LABEL VOICE below — one voice, genome-driven fill. */
+.{{ uid }}-bio,
+.{{ uid }}-footer {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  fill: var(--dna-ink-muted);
+}
+.{{ uid }}-bio { font-size: 7.5px; letter-spacing: 0.03em; }
+/* PRIMER LABEL VOICE (single source: genome label_text) — JetBrains Mono, 8px,
+   700, 0.12em, uppercase, fill var(--dna-label-text). Identical to the badge label,
+   strip column header, and chart category labels. metric-label size/tracking come
+   from the paradigm (also 8 / 0.12) so the value matches this voice. */
+.{{ uid }}-metric-label,
+.{{ uid }}-activity-label {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-weight: 700;
+  text-transform: uppercase;
+  fill: var(--dna-label-text);
+}
+.{{ uid }}-hero-value {
+  font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif);
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  /* ink-primary is substrate-aware (deep navy on light, bright on dark); the
+     dark variants set ink_bright to the near-black surface tone, which made the
+     hero vanish on noir/carbon/space/anvil. */
+  fill: var(--dna-ink-primary);
+}
+.{{ uid }}-hero-label {
+  font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  /* PRIMER LABEL VOICE — fill var(--dna-label-text) (the genome's single label
+     colour, accent on light / muted on dark), matching the badge label, strip
+     column header, stats metric label, and chart category labels. */
+  fill: var(--dna-label-text);
+  text-transform: uppercase;
+}
+.{{ uid }}-metric-label {
+  font-size: {{ metric_label_font_size }}px;
+  font-weight: {{ metric_label_font_weight }};
+  letter-spacing: {{ metric_label_letter_spacing_em }}em;
+  text-transform: uppercase;
+  /* Label color is a GENOME chromatic property, not an artifact-class choice:
+     the card label resolves to the SAME --dna-label-text as the badge label and
+     the strip column header for a given variant (accent on light, muted on dark).
+     Wins over the grouped ink-muted above via source order (equal specificity). */
+  fill: var(--dna-label-text);
+}
+.{{ uid }}-metric-value {
+  font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif);
+  font-size: {{ metric_value_font_size }}px;
+  font-weight: {{ metric_value_font_weight }};
+  letter-spacing: {{ metric_value_letter_spacing_em }}em;
+  fill: var(--dna-metric-text, var(--dna-ink-primary));
+}
+.{{ uid }}-activity-label { font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.{{ uid }}-footer { font-size: 7.5px; letter-spacing: 0.12em; opacity: 0.75; }
+.{{ uid }}-brand { font-weight: 700; letter-spacing: 0.22em; opacity: 0.70; }
+.{{ uid }}-status { animation: {{ uid }}-pulse var(--dna-rhythm-base, 2.618s) ease-in-out infinite; will-change: opacity; }
+@keyframes {{ uid }}-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .{{ uid }}-status { animation: none !important; opacity: 0.8; }
+}
+</style>

@@ -208,6 +208,8 @@ def compute_badge_zones(
     left_adornment_gap: float = 0.0,
     glyph_label_gap: float = 0.0,
     visual_gap: float = 0.0,
+    indicator_leads_value: bool = False,
+    content_center_geometric: bool = False,
 ) -> BadgeZones:
     """Compute badge zone layout under the unified additive algorithm.
 
@@ -301,6 +303,12 @@ def compute_badge_zones(
     # Unrounded so each consumer rounds once (glyph_y stays byte-identical to the
     # original ``text_visual_center - glyph_size/2 + glyph_y_offset`` formula).
     content_reading_center = text_visual_center + glyph_y_offset
+    # Primer v04alpha1: the brand glyph and the state indicator sit on the badge
+    # MIDLINE (height/2), not the text-ink reading line — the value baseline already
+    # carries the optical centring, and the specimen centres both marks geometrically
+    # at y=height/2. Opt-in; every other paradigm keeps the text-ink reading line.
+    if content_center_geometric:
+        content_reading_center = height / 2.0
 
     # Structural frame ends at accent + legacy left-decoration offset, unless
     # a paradigm supplies the rendered left adornment boundary explicitly.
@@ -380,6 +388,17 @@ def compute_badge_zones(
         seam_right_x = float(right_panel_x)
         cursor = float(right_panel_x + (resolved_visual_gap if visual_gap_active else pad))
 
+    # Leading state-indicator slot (primer status-glyph): the icon precedes the
+    # value text INSIDE the value panel so the badge reads as a status pill
+    # ``[icon] value``. Reserve the indicator + one gap before placing the value,
+    # so ``value_first_x`` lands after the icon. Trailing paradigms (brutalist /
+    # chrome / cellular) leave ``indicator_leads_value`` False and skip this; the
+    # indicator goes after the value below — keeping their geometry byte-identical.
+    lead_indicator = indicator_leads_value and has_state_indicator
+    if lead_indicator:
+        indicator_x = cursor
+        cursor += indicator_size + (resolved_visual_gap if visual_gap_active else pad)
+
     # Value zone: cursor at first char.
     if visual_gap_active:
         value_ink_left = cursor
@@ -395,14 +414,15 @@ def compute_badge_zones(
     # sits at ``visible_ink_end + pad`` instead of ``advance_end + pad``.
     cursor = value_visual_right + (resolved_visual_gap if visual_gap_active else pad)
 
-    # Optional state-indicator zone. Every gap including the final one
+    # Optional trailing state-indicator zone. Every gap including the final one
     # (last content zone → right edge) is ``pad``. The cursor walk advances
     # by ``content + pad`` for each PRESENT zone, and the final pad added
-    # after the last zone is the right-edge gap itself.
-    if has_state_indicator:
+    # after the last zone is the right-edge gap itself. Skipped when the
+    # indicator already led the value (its slot is reserved above).
+    if has_state_indicator and not lead_indicator:
         indicator_x = cursor  # cursor sits at start of state-indicator slot (pad already added after value)
         cursor = indicator_x + indicator_size + (resolved_visual_gap if visual_gap_active else pad)
-    else:
+    elif not has_state_indicator:
         indicator_x = 0.0
 
     # Total width includes any paradigm-specific right-canvas inset (cellular: 2px
@@ -438,18 +458,25 @@ def compute_badge_zones(
     # still reference these). Chrome: starts at synthetic right_panel_x (the
     # etched-seam half-gap already accounted for spacing). Brutalist/cellular:
     # right_panel_x + pad (full pad gutter after the structural separator).
-    value_zone_left = (
-        float(right_panel_x)
-        if seam_render_w > 0
-        else float(right_panel_x + (resolved_visual_gap if visual_gap_active else pad))
-    )
-    # Trailing pad is part of the right-edge gap. When
-    # state indicator is present, value zone ends one pad before it. When
-    # absent, value zone ends one pad before the right edge (= total_w -
-    # right_canvas_inset - pad).
     trailing_gap = resolved_visual_gap if visual_gap_active else pad
+    if lead_indicator:
+        # Leading indicator: the value zone begins one gap after the icon and
+        # runs to the right-edge gap (no trailing indicator to bound it).
+        value_zone_left = float(indicator_x + indicator_size + trailing_gap)
+    else:
+        value_zone_left = (
+            float(right_panel_x)
+            if seam_render_w > 0
+            else float(right_panel_x + (resolved_visual_gap if visual_gap_active else pad))
+        )
+    # Trailing pad is part of the right-edge gap. When a TRAILING state
+    # indicator is present, value zone ends one pad before it. When the
+    # indicator leads (or is absent) the value zone ends one pad before the
+    # right edge (= total_w - right_canvas_inset - pad).
     value_zone_right = (
-        float(indicator_x - trailing_gap) if has_state_indicator else float(total_w - right_canvas_inset - trailing_gap)
+        float(indicator_x - trailing_gap)
+        if (has_state_indicator and not lead_indicator)
+        else float(total_w - right_canvas_inset - trailing_gap)
     )
     value_zone_width = value_zone_right - value_zone_left
 
@@ -973,6 +1000,9 @@ def compute_strip_zones(
     flank_cell_size: int = 12,
     # Strip-min-width clamp (chrome's 320).
     strip_min_width: int = 0,
+    # Adaptive paradigms can choose to distribute min-width slack into metric
+    # cells instead of leaving a transparent canvas clamp.
+    stretch_cells_to_min_width: bool = False,
     # Identity-zone right padding (adaptive paradigms — gap after identity content).
     identity_right_pad: int = 14,
     # Minimum first_divider_x floor (legacy invariant).
@@ -1114,6 +1144,12 @@ def compute_strip_zones(
             first_divider_x_floor,
         )
 
+    # ── Status indicator zone ──
+    if has_status_indicator:
+        status_zone_width = status_indicator_pre_gap + status_indicator_size + status_indicator_post_gap
+    else:
+        status_zone_width = 0
+
     # ── Per-cell positions + seam cumulator ──
     # First seam at first_divider_x + seam_offset (shifted by flank when present).
     # Then one seam per cell trailing edge, cumulative widths.
@@ -1125,6 +1161,38 @@ def compute_strip_zones(
     is_empty_strip = not cell_widths
     metrics_zone_width = sum(cell_widths) if cell_widths else 0
 
+    if (
+        not owns_strip
+        and stretch_cells_to_min_width
+        and strip_min_width > 0
+        and cell_widths
+        and first_divider_x + cell_offset + metrics_zone_width + status_zone_width + flank_total < strip_min_width
+    ):
+        extra = strip_min_width - (first_divider_x + cell_offset + metrics_zone_width + status_zone_width + flank_total)
+        base_extra = extra // len(cell_widths)
+        remainder = extra % len(cell_widths)
+        stretched_widths: list[int] = []
+        stretched_records: list[dict] = []  # type: ignore[type-arg]
+        for index, width_in in enumerate(cell_widths):
+            width_out = width_in + base_extra + (1 if index < remainder else 0)
+            record = dict(cell_layouts_records[index])
+            record["cell_w"] = width_out
+            anchor = str(record.get("text_anchor", "middle"))
+            if anchor == "middle":
+                record["label_x"] = width_out / 2.0
+                record["value_x"] = width_out / 2.0
+            elif anchor == "end":
+                label_inset = width_in - float(record.get("label_x", width_in))
+                value_inset = width_in - float(record.get("value_x", width_in))
+                record["label_x"] = width_out - label_inset
+                record["value_x"] = width_out - value_inset
+            stretched_widths.append(width_out)
+            stretched_records.append(record)
+        cell_widths = stretched_widths
+        cell_layouts_records = stretched_records
+        metrics_zone_width = sum(cell_widths)
+        metric_pitch = max(cell_widths)
+
     seams: list[float] = [float(first_divider_x + seam_offset)]
     cell_start = first_divider_x + cell_offset + seam_offset
     running = 0
@@ -1134,12 +1202,6 @@ def compute_strip_zones(
     if not cell_widths:
         # Pad seam list for zero-metric strips (preserves legacy single-divider behavior).
         seams.append(float(cell_start + metric_pitch))
-
-    # ── Status indicator zone ──
-    if has_status_indicator:
-        status_zone_width = status_indicator_pre_gap + status_indicator_size + status_indicator_post_gap
-    else:
-        status_zone_width = 0
 
     # ── Total width (additive layout) ──
     # A STATELESS strip has no status terminus, so the trailing space past the

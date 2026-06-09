@@ -1,0 +1,10 @@
+{# Primer STRIP — light substrate plate: rounded white→tint card lifted by a
+   soft drop shadow, a bevel-edge highlight (bright top → dark bottom inner
+   stroke), and a tint-hairline perimeter. The shared zone pipeline (strip.svg.j2)
+   renders glyph / identity / metric cells / dividers / status on top. All
+   geometry is resolver-supplied (strip_plate); zero arithmetic here. #}
+<g filter="url(#{{ uid }}-shadow)">
+  <rect width="{{ strip_zones.core.content_width }}" height="{{ strip_h }}" rx="{{ strip_plate.rx }}" fill="url(#{{ uid }}-bg)"/>
+</g>
+<rect x="{{ strip_plate.bevel.x }}" y="{{ strip_plate.bevel.y }}" width="{{ strip_plate.bevel.w }}" height="{{ strip_plate.bevel.h }}" rx="{{ strip_plate.bevel.rx }}" fill="none" stroke="url(#{{ uid }}-edge)"/>
+<rect x="{{ strip_plate.perimeter.x }}" y="{{ strip_plate.perimeter.y }}" width="{{ strip_plate.perimeter.w }}" height="{{ strip_plate.perimeter.h }}" rx="{{ strip_plate.perimeter.rx }}" fill="none" stroke="{{ _genome_raw.stroke }}"/>

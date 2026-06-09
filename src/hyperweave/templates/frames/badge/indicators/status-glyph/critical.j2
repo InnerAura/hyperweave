@@ -1,0 +1,9 @@
+{# ERROR / CRITICAL — shake: a solid red disc + deepened rim + light knockout
+   cross, the whole mark translateX-shaking. Disc = the universal CI red bright
+   (substrate-invariant); rim = the deepened red; the cross is the light knockout
+   (reads on the red disc). Genome-derived literals for renderer independence. #}
+<g class="hw-pri-shake">
+  <circle r="{{ status_glyph.disc_r }}" fill="{{ _genome_raw.state_critical_bright }}"/>
+  <circle r="{{ status_glyph.disc_r }}" fill="none" stroke="{{ _genome_raw.badge_status_critical_rim }}" stroke-width="{{ status_glyph.rim_stroke_w }}"/>
+  <path d="M-{{ status_glyph.cross_arm }} -{{ status_glyph.cross_arm }} L{{ status_glyph.cross_arm }} {{ status_glyph.cross_arm }} M{{ status_glyph.cross_arm }} -{{ status_glyph.cross_arm }} L-{{ status_glyph.cross_arm }} {{ status_glyph.cross_arm }}" stroke="{{ _genome_raw.badge_status_critical_knockout }}" stroke-width="{{ status_glyph.cross_stroke_w }}" stroke-linecap="round" fill="none"/>
+</g>

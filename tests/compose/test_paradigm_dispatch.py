@@ -14,8 +14,10 @@ from __future__ import annotations
 import pytest
 
 from hyperweave.compose.engine import compose
-from hyperweave.compose.resolver import _load_genome, _resolve_paradigm, resolve
+from hyperweave.compose.resolver import _load_genome, _load_profile, _resolve_paradigm, resolve
+from hyperweave.config.loader import load_profiles
 from hyperweave.core.models import ComposeSpec
+from tests.helpers import build_partial_genome_for_testing
 
 
 @pytest.fixture()
@@ -29,7 +31,7 @@ def minimal_genome_override() -> dict[str, object]:
         "id": "inline-test",
         "name": "Inline Test",
         "category": "dark",
-        "profile": "brutalist",
+        "profile": "flat",
         "surface_0": "#111111",
         "surface_1": "#1A1A1A",
         "surface_2": "#0A0A0A",
@@ -70,8 +72,8 @@ def test_compose_spec_accepts_custom_genome_slug() -> None:
     """genome_id relaxed from GenomeId StrEnum to str — custom slugs allowed."""
     spec = ComposeSpec(type="badge", genome_id="my-custom-slug")
     assert spec.genome_id == "my-custom-slug"
-    # Profile resolution falls through to brutalist default for unknown slug.
-    assert spec.profile_id == "brutalist"
+    # Profile resolution falls through to flat default for unknown slug.
+    assert spec.profile_id == "flat"
 
 
 def test_compose_spec_genome_override_sets_profile_from_dict(
@@ -83,8 +85,8 @@ def test_compose_spec_genome_override_sets_profile_from_dict(
         genome_id="inline-test",
         genome_override=minimal_genome_override,
     )
-    # genome_override.profile = "brutalist" → model_validator picks it up.
-    assert spec.profile_id == "brutalist"
+    # genome_override.profile = "flat" → model_validator picks it up.
+    assert spec.profile_id == "flat"
     assert spec.genome_override is not None
     assert spec.genome_override["accent"] == "#FF00FF"
 
@@ -210,3 +212,34 @@ def test_resolve_paradigm_differs_between_genomes() -> None:
     # brutalist-{dark,light}-content.j2 templates.
     assert br.frame_context["paradigm"] == "brutalist"
     assert ch.frame_context["paradigm"] == "chrome"
+
+
+def test_profile_less_genome_resolves_to_existing_flat_profile() -> None:
+    """A genome declaring NO ``profile`` field must resolve to an EXISTING profile
+    (``flat``), never a dangling lookup that silently degrades to ``_default_profile()``.
+
+    This is the latent-default guard for the brutalist→flat profile rename: the
+    renamed string-default fallbacks (resolver/cli/genome_validator/mcp) are never
+    exercised by the proofset (every shipped genome declares ``profile``), so a
+    missed default would only surface when a profile-less genome hits it at runtime.
+    No other test walks this path.
+    """
+    profiles = load_profiles()
+    assert "flat" in profiles, "flat profile must exist after the brutalist→flat rename"
+    # _load_profile lands on the REAL flat profile (id == 'flat'), not the fallback dict.
+    assert _load_profile("flat").get("id") == "flat"
+
+    # End-to-end: an override with no `profile` key resolves profile_id='flat' and renders.
+    override = build_partial_genome_for_testing(id="profileless-test")
+    override.pop("profile", None)
+    assert "profile" not in override
+    spec = ComposeSpec(
+        type="badge",
+        genome_id="profileless-test",
+        genome_override=override,
+        title="BUILD",
+        value="passing",
+    )
+    assert spec.profile_id == "flat"
+    result = compose(spec)
+    assert "<svg" in result.svg and "</svg>" in result.svg

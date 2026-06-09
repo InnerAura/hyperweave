@@ -1,0 +1,110 @@
+{# Primer chart. Layout records come from compute_chart_layout(); chart
+   fragments come from render/chart_engine.py. #}
+<g class="{{ uid }}-chart" clip-path="url(#{{ uid }}-clip)">
+  {# No full-bleed ground rect — the card sits on a transparent margin so it
+     blends into the README. A var()-in-attribute ground rendered a grey block in
+     real renderers (var() doesn't resolve in fill attributes). #}
+  <g filter="url(#{{ uid }}-lift)">
+    <rect x="{{ chart_layout.rects.primer_card.x }}" y="{{ chart_layout.rects.primer_card.y }}"
+          width="{{ chart_layout.rects.primer_card.w }}" height="{{ chart_layout.rects.primer_card.h }}"
+          rx="{{ chart_layout.rects.primer_card.rx }}" fill="url(#{{ uid }}-card-bg)"/>
+  </g>
+  <rect x="{{ chart_layout.rects.primer_card.x }}" y="{{ chart_layout.rects.primer_card.y }}"
+        width="{{ chart_layout.rects.primer_card.w }}" height="{{ chart_layout.rects.primer_card.h }}"
+        rx="{{ chart_layout.rects.primer_card.rx }}" fill="none" stroke="var(--dna-border)" stroke-width="0.8"/>
+
+  {# Optional identity glyph (provider mark) left of the title — accent-toned,
+     genome-literal for renderer independence. Title shifts right via chart_title_x. #}
+  {% if chart_has_glyph and chart_glyph_path %}
+  <svg x="{{ chart_layout.texts.primer_header_glyph.x }}" y="{{ chart_layout.texts.primer_header_glyph.y }}" width="{{ chart_glyph_size }}" height="{{ chart_glyph_size }}" viewBox="{{ chart_glyph_viewbox }}">
+    <path d="{{ chart_glyph_path }}" fill="{{ _genome_raw.glyph_inner }}"/>
+  </svg>
+  {% endif %}
+  <text class="{{ uid }}-title" x="{{ chart_title_x | default(100) }}" y="{{ chart_layout.texts.primer_title.y }}">{{ chart_primer_title | default('Trend') | xml_escape }}</text>
+  <text class="{{ uid }}-subtitle" x="{{ chart_title_x | default(100) }}" y="{{ chart_layout.texts.primer_subtitle.y }}">{{ chart_primer_subtitle | default('') | xml_escape }}</text>
+  {# Row 1 (right) — the hero number, on the SAME baseline as the title. #}
+  <text class="{{ uid }}-hero-value" x="{{ chart_layout.texts.primer_hero_value.x }}" y="{{ chart_layout.texts.primer_hero_value.y }}"
+        text-anchor="{{ chart_layout.texts.primer_hero_value.anchor }}">{{ chart_current_stars | xml_escape }}</text>
+  {# Row 2 (right) — "LIVE · <what it is>", on the SAME baseline as the subtitle.
+     The LIVE word itself breathes as the live indicator (no separate pill/dot),
+     so the right block is exactly two rows and reads level with the left. #}
+  <text class="{{ uid }}-hero-label" x="{{ chart_layout.texts.primer_hero_label.x }}" y="{{ chart_layout.texts.primer_hero_label.y }}"
+        text-anchor="{{ chart_layout.texts.primer_hero_label.anchor }}"><tspan class="{{ uid }}-live-word">LIVE</tspan> · {{ chart_hero_label | default('TOTAL') | xml_escape }}</text>
+
+  <g data-hw-zone="plot">
+    {# Vertical gridlines at every X-tick (primer; list is empty for other
+       paradigms). Rendered behind the horizontals so the grid reads as a field. #}
+    {%- for vg in chart_x_gridlines %}
+    <line x1="{{ vg.x1 }}" y1="{{ vg.y1 }}" x2="{{ vg.x2 }}" y2="{{ vg.y2 }}" class="{{ uid }}-vgrid{% if vg.accent %} {{ uid }}-vgrid-a{% endif %}"/>
+    {%- endfor %}
+    {%- for gl in chart_gridlines %}
+      {%- include "components/chart-gridlines.svg.j2" %}
+    {%- endfor %}
+    {%- for ax in chart_axes %}
+      {%- include "components/chart-axes.svg.j2" %}
+    {%- endfor %}
+    {% for label in chart_y_labels %}
+    <text class="{{ uid }}-axis-y{% if chart_axis_accent and label.y == chart_accent_y %} {{ uid }}-axis-accent{% endif %}" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    {% endfor %}
+    {%- if chart_area %}
+      {%- include "components/chart-area.svg.j2" %}
+    {%- endif %}
+    {%- if chart_polyline %}
+      {%- include "components/chart-polyline.svg.j2" %}
+    {%- endif %}
+    <g data-hw-zone="markers">
+    {%- for m in chart_markers %}
+      {%- set partial = 'endpoint-' ~ m.shape if m.is_endpoint else m.shape %}
+      {%- include "components/chart-markers/" ~ partial ~ ".svg.j2" %}
+    {%- endfor %}
+    </g>
+    {# Primer chart carries NO brutalist milestone tick-lines — its editorial
+       analog is the glass growth callout + metric triptych below. #}
+    {%- if chart_empty_state %}
+      {%- include "components/chart-empty-state.svg.j2" %}
+    {%- endif %}
+  </g>
+
+  <g data-hw-zone="x-axis">
+    {% for label in chart_x_labels %}
+    <text class="{{ uid }}-axis-x{% if chart_axis_accent and label.x == chart_accent_x %} {{ uid }}-axis-accent{% endif %}" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    {% endfor %}
+  </g>
+  {# Floating glass growth callout — a TRANSLUCENT WHITE frost over the substrate
+     (not a solid fill): light = frosted white panel lifted by a soft shadow; dark
+     = faint white frost + white hairline (per hw-token-trajectory.svg). Named
+     white at substrate-tuned opacity keeps it out of the genome chroma. #}
+  {% if panel_gradient_stops %}
+  <g filter="url(#{{ uid }}-glass)">
+    <rect x="{{ chart_layout.rects.primer_callout.x }}" y="{{ chart_layout.rects.primer_callout.y }}"
+          width="{{ chart_layout.rects.primer_callout.w }}" height="{{ chart_layout.rects.primer_callout.h }}"
+          rx="{{ chart_layout.rects.primer_callout.rx }}" fill="white" fill-opacity="0.72" stroke="{{ _genome_raw.stroke }}" stroke-width="1"/>
+  </g>
+  <rect x="{{ chart_layout.rects.primer_callout_hi.x }}" y="{{ chart_layout.rects.primer_callout_hi.y }}"
+        width="{{ chart_layout.rects.primer_callout_hi.w }}" height="{{ chart_layout.rects.primer_callout_hi.h }}"
+        rx="{{ chart_layout.rects.primer_callout_hi.rx }}" fill="white" fill-opacity="0.32"/>
+  {% else %}
+  <rect x="{{ chart_layout.rects.primer_callout.x }}" y="{{ chart_layout.rects.primer_callout.y }}"
+        width="{{ chart_layout.rects.primer_callout.w }}" height="{{ chart_layout.rects.primer_callout.h }}"
+        rx="{{ chart_layout.rects.primer_callout.rx }}" fill="white" fill-opacity="0.05" stroke="white" stroke-opacity="0.09" stroke-width="1"/>
+  <rect x="{{ chart_layout.rects.primer_callout_hi.x }}" y="{{ chart_layout.rects.primer_callout_hi.y }}"
+        width="{{ chart_layout.rects.primer_callout_hi.w }}" height="{{ chart_layout.rects.primer_callout_hi.h }}"
+        rx="{{ chart_layout.rects.primer_callout_hi.rx }}" fill="white" fill-opacity="0.05"/>
+  {% endif %}
+  <text class="{{ uid }}-callout-value" x="{{ chart_layout.texts.primer_callout_value.x }}" y="{{ chart_layout.texts.primer_callout_value.y }}" text-anchor="{{ chart_layout.texts.primer_callout_value.anchor }}">{{ chart_primer_callout_value | default('') | xml_escape }}</text>
+  <text class="{{ uid }}-callout-label" x="{{ chart_layout.texts.primer_callout_label.x }}" y="{{ chart_layout.texts.primer_callout_label.y }}" text-anchor="{{ chart_layout.texts.primer_callout_label.anchor }}">{{ chart_primer_callout_label | default('GROWTH') | xml_escape }}</text>
+
+  {# Metric triptych — CURRENT / DELTA / WINDOW (derived from the real series). #}
+  <line x1="{{ chart_layout.lines.primer_triptych_rule.x1 }}" y1="{{ chart_layout.lines.primer_triptych_rule.y1 }}" x2="{{ chart_layout.lines.primer_triptych_rule.x2 }}" y2="{{ chart_layout.lines.primer_triptych_rule.y2 }}" stroke="{{ _genome_raw.stroke }}" stroke-width="0.7" opacity="0.7"/>
+  <text class="{{ uid }}-tri-label" x="{{ chart_layout.texts.primer_tri_l1.x }}" y="{{ chart_layout.texts.primer_tri_l1.y }}">CURRENT</text>
+  <text class="{{ uid }}-tri-label" x="{{ chart_layout.texts.primer_tri_l2.x }}" y="{{ chart_layout.texts.primer_tri_l2.y }}">DELTA</text>
+  <text class="{{ uid }}-tri-label" x="{{ chart_layout.texts.primer_tri_l3.x }}" y="{{ chart_layout.texts.primer_tri_l3.y }}">WINDOW</text>
+  <text class="{{ uid }}-tri-value" x="{{ chart_layout.texts.primer_tri_v1.x }}" y="{{ chart_layout.texts.primer_tri_v1.y }}">{{ chart_primer_current | default('') | xml_escape }}</text>
+  <text class="{{ uid }}-tri-value {{ uid }}-tri-accent" x="{{ chart_layout.texts.primer_tri_v2.x }}" y="{{ chart_layout.texts.primer_tri_v2.y }}">{{ chart_primer_delta | default('') | xml_escape }}</text>
+  <text class="{{ uid }}-tri-value" x="{{ chart_layout.texts.primer_tri_v3.x }}" y="{{ chart_layout.texts.primer_tri_v3.y }}">{{ chart_primer_window | default('') | xml_escape }}</text>
+
+  {# Brand bar. #}
+  <line x1="{{ chart_layout.lines.primer_brand_rule.x1 }}" y1="{{ chart_layout.lines.primer_brand_rule.y1 }}" x2="{{ chart_layout.lines.primer_brand_rule.x2 }}" y2="{{ chart_layout.lines.primer_brand_rule.y2 }}" stroke="{{ _genome_raw.stroke }}" stroke-width="0.7" opacity="0.5"/>
+  <text class="{{ uid }}-footer {{ uid }}-brand" x="{{ chart_layout.texts.primer_brand.x }}" y="{{ chart_layout.texts.primer_brand.y }}">{{ chart_brand_label | default('HYPERWEAVE') | xml_escape }}</text>
+  <text class="{{ uid }}-footer" x="{{ chart_layout.texts.primer_brand_date.x }}" y="{{ chart_layout.texts.primer_brand_date.y }}" text-anchor="{{ chart_layout.texts.primer_brand_date.anchor }}">{{ chart_subject_url | default(chart_repo) | xml_escape }}</text>
+</g>

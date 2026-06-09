@@ -1,0 +1,35 @@
+{# Primer DIVIDER — "aura": a lit accent filament riding a soft blurred aura,
+   both fading to nothing at the ends. Substrate-invariant — the per-variant
+   --dna-signal / --dna-signal-dim root overrides carry the chromatic identity
+   (cobalt on porcelain, orange on carbon, teal on petrol, ...), so there is no
+   dark/light branch. Geometry (aura_*, filament_*) is resolver-supplied
+   (_divider_geometry_context); zero arithmetic here. Static glow — no motion. #}
+{% extends "document.svg.j2" %}
+
+{% block defs %}
+<linearGradient id="{{ uid }}-aura" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0"/>
+  <stop offset="50%" stop-color="var(--dna-signal)" stop-opacity="0.40"/>
+  <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0"/>
+</linearGradient>
+{# Filament: one accent hue, brightest (most opaque) mid-span, fading to nothing
+   at both ends. Center uses --dna-signal (NOT --dna-signal-dim, which on primer
+   is the muted slate/sand complement and read as a grey dip mid-filament). #}
+<linearGradient id="{{ uid }}-fil" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0%" stop-color="var(--dna-signal)" stop-opacity="0"/>
+  <stop offset="14%" stop-color="var(--dna-signal)" stop-opacity="0.7"/>
+  <stop offset="50%" stop-color="var(--dna-signal)" stop-opacity="0.98"/>
+  <stop offset="86%" stop-color="var(--dna-signal)" stop-opacity="0.7"/>
+  <stop offset="100%" stop-color="var(--dna-signal)" stop-opacity="0"/>
+</linearGradient>
+<filter id="{{ uid }}-blur" x="-10%" y="-500%" width="120%" height="1100%">
+  <feGaussianBlur stdDeviation="3.2"/>
+</filter>
+{% endblock %}
+
+{% block content %}
+<ellipse cx="{{ aura_cx }}" cy="{{ aura_cy }}" rx="{{ aura_rx }}" ry="{{ aura_ry }}"
+         fill="url(#{{ uid }}-aura)" filter="url(#{{ uid }}-blur)"/>
+<rect x="{{ filament_x }}" y="{{ filament_y }}" width="{{ filament_w }}" height="{{ filament_h }}" rx="{{ filament_rx }}"
+      fill="url(#{{ uid }}-fil)"/>
+{% endblock %}

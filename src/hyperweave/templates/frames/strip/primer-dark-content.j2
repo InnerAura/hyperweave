@@ -1,0 +1,10 @@
+{# Primer STRIP — dark substrate plate: rounded surface-alt→surface card lifted
+   by a black drop shadow, a bevel-edge highlight, and a hairline perimeter. The
+   shared zone pipeline renders content on top. Identical structure to the light
+   partial — the substrate difference (bg stops, bevel depth, shadow flood) lives
+   entirely in primer-defs.j2, split by panel_gradient_stops presence. #}
+<g filter="url(#{{ uid }}-shadow)">
+  <rect width="{{ strip_zones.core.content_width }}" height="{{ strip_h }}" rx="{{ strip_plate.rx }}" fill="url(#{{ uid }}-bg)"/>
+</g>
+<rect x="{{ strip_plate.bevel.x }}" y="{{ strip_plate.bevel.y }}" width="{{ strip_plate.bevel.w }}" height="{{ strip_plate.bevel.h }}" rx="{{ strip_plate.bevel.rx }}" fill="none" stroke="url(#{{ uid }}-edge)"/>
+<rect x="{{ strip_plate.perimeter.x }}" y="{{ strip_plate.perimeter.y }}" width="{{ strip_plate.perimeter.w }}" height="{{ strip_plate.perimeter.h }}" rx="{{ strip_plate.perimeter.rx }}" fill="none" stroke="{{ _genome_raw.stroke }}"/>

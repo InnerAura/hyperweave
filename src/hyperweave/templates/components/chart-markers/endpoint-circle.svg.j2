@@ -1,0 +1,9 @@
+{# Primer endpoint circle: three concentric circles anchored at the final data
+   point. Geometry is precomputed by render/chart_engine.py. #}
+<g data-hw-zone="endpoint">
+  <circle class="hw-chart-endpoint" cx="{{ m.x }}" cy="{{ m.y }}" r="{{ m.r1 }}"
+          fill="var(--dna-signal)" opacity="0.18"/>
+  <circle cx="{{ m.x }}" cy="{{ m.y }}" r="{{ m.r2 }}"
+          fill="var(--dna-surface-alt)" stroke="var(--dna-signal)" stroke-width="1"/>
+  <circle cx="{{ m.x }}" cy="{{ m.y }}" r="{{ m.r3 }}" fill="var(--dna-signal)"/>
+</g>

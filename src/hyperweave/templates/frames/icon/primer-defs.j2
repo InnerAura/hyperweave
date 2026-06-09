@@ -1,0 +1,27 @@
+{# Primer icon defs — vertical bg gradient + light-substrate soft drop shadow,
+   mirroring badge/primer-defs.j2. No clipPath: icon shapes (disc / rounded
+   square) are drawn directly and carry their own geometry, so there's nothing
+   to clip a rounded-rect frame against.
+
+   Substrate is distinguished by FIELD presence (panel_gradient_stops exists on
+   light variants only), never a substrate_kind conditional — same gate the
+   badge defs use. Dark icons derive the bg gradient from
+   surface-alt(top)→surface(bottom); light icons use the variant's
+   panel_gradient_stops (white→tint) and lift the tile with a two-layer shadow. #}
+<linearGradient id="{{ uid }}-bg" x1="0" y1="0" x2="0" y2="1">
+{% if panel_gradient_stops %}
+{% for stop in panel_gradient_stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}{% else %}  <stop offset="0%" stop-color="var(--dna-surface-alt)"/>
+  <stop offset="100%" stop-color="var(--dna-surface)"/>
+{% endif %}</linearGradient>
+{% if panel_gradient_stops %}
+{# flood-color/flood-opacity are SVG presentation ATTRIBUTES — var() does not
+   resolve there (browsers/Camo fall back to black + opacity 1.0 = an ugly hard
+   halo). Use the resolved-variant genome literals so the lift is a soft, correctly
+   tinted contact shadow. #}
+<filter id="{{ uid }}-shadow" x="-20%" y="-20%" width="140%" height="150%">
+  <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.10"/>
+  <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.05"/>
+</filter>
+{% endif %}
+<style>{{ font_faces | safe }}</style>

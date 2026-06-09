@@ -227,12 +227,16 @@ def _resolve_metrics_layout(mode: str, substrate_kind: str) -> str:
     variants, chrome, cellular) resolves to ``grid`` so existing geometry — and
     the byte-identical dark output — is untouched.
     """
+    if mode == "primer_editorial":
+        return "primer"
     return "row" if mode == "brutalist_grid" and substrate_kind == "light" else "grid"
 
 
 def _metric_zone_height(metric_count: int, mode: str) -> float:
     if metric_count <= 0:
         return 0.0
+    if mode == "primer_editorial":
+        return 40.0
     if mode == "cellular_inline":
         return 49.0
     if mode == "chrome_columns":
@@ -307,6 +311,18 @@ def compute_stats_card_height(
 ) -> int:
     """Compute stats card height from present data zones."""
     mode = stats.metric_layout_mode
+    if mode == "primer_editorial":
+        # Content-aware height (schema-agnostic): full card with an activity/heatmap
+        # zone; hero + a secondary metric row when 2+ metrics; a tight hero-only card
+        # when a single metric (no dead band below the hero). Matches the footer_y
+        # branch in _stats_zones.
+        if has_activity or has_heatmap:
+            return int(stats.card_height)
+        # metric_count is the SECONDARY count (the hero is extracted separately):
+        # 1+ secondary metrics → hero + row (172); none → tight hero-only card (130).
+        if metric_count >= 1:
+            return 172
+        return 130
     if _resolve_metrics_layout(mode, substrate_kind) == "row" and metric_count > 0:
         return _row_layout_height(
             stats=stats,
@@ -368,6 +384,28 @@ def _stats_zones(
     metrics_layout: str = "grid",
 ) -> dict[str, StatsZone]:
     mode = stats.metric_layout_mode
+    if mode == "primer_editorial":
+        # Footer follows content: with an activity/heatmap zone it sits at 186
+        # (full 210 card); a hero + secondary row collapses to 148; a single hero
+        # metric collapses to just below the hero so the card carries no dead band
+        # (schema-agnostic — the card sizes to the data it actually has). The
+        # secondary metric ROW is only reserved when 2+ metrics exist (metric[0] is
+        # the hero, metric[1:] the row).
+        if has_activity or has_heatmap:
+            footer_y = 186.0
+        elif metric_count >= 1:
+            footer_y = 148.0
+        else:
+            footer_y = 106.0
+        return {
+            "header": StatsZone("header", 0.0, 30.0),
+            "hero": StatsZone("hero", 30.0, 70.0),
+            "metrics": StatsZone("metrics", 100.0, 40.0, metric_count > 0),
+            "activity": StatsZone("activity", 140.0, 46.0 if has_activity else 0.0, has_activity),
+            "heatmap": StatsZone("heatmap", 0.0, 0.0, False),
+            "proportional": StatsZone("proportional", 0.0, 0.0, False),
+            "footer": StatsZone("footer", footer_y, max(0.0, float(card_height) - footer_y)),
+        }
     if metrics_layout == "row":
         # Brutalist-light horizontal row (reference hw-depth-card-mid.svg, 495x300):
         # header 0..40, accent seam at 40, hero block 43..158 (pill + Barlow-78
@@ -860,6 +898,55 @@ def _build_brutalist_row_slots(
     return slots
 
 
+def _build_primer_slots(
+    entries: Sequence[Mapping[str, object]],
+    stats: ParadigmStatsConfig,
+    *,
+    card_width: int,
+    metric_zone_y: float,
+) -> list[MetricSlot]:
+    """Primer editorial metric row: measured, centered Inter values over JBM labels."""
+    visible_entries = list(entries[:4])
+    if not visible_entries:
+        return []
+    row_left = 22.0
+    span = card_width - 2.0 * row_left
+    col_w = span / len(visible_entries)
+    slots: list[MetricSlot] = []
+    for idx, entry in enumerate(visible_entries):
+        center = round(row_left + (idx + 0.5) * col_w, 3)
+        label = _string_value(entry.get("label"), "").upper()
+        budget = max(0.0, col_w - 8.0)
+        display, force_text_length = _fit_metric_display(
+            _string_value(entry.get("value"), "—"),
+            stats=stats,
+            budget=budget,
+        )
+        natural = measure_text(
+            display,
+            font_family=stats.metric_value_font_family,
+            font_size=stats.metric_value_font_size,
+            font_weight=stats.metric_value_font_weight,
+            letter_spacing_em=stats.metric_value_letter_spacing_em,
+        )
+        text_length = budget if budget > 0 and (force_text_length or natural > budget) else 0.0
+        slots.append(
+            MetricSlot(
+                value_x=center,
+                label_x=center,
+                value_y=metric_zone_y + 34.0,
+                label_y=metric_zone_y + 15.0,
+                css_value="pval",
+                value_display=display,
+                label_text=label,
+                text_anchor="middle",
+                value_text_length=round(text_length, 3),
+                emphasis=_string_value(entry.get("emphasis")) or None,
+            )
+        )
+    return slots
+
+
 def _metric_divider_positions(
     *,
     mode: str,
@@ -871,6 +958,10 @@ def _metric_divider_positions(
     count = len(metric_slots)
     if count <= 1:
         return []
+    if mode == "primer_editorial":
+        row_left = 22.0
+        col_w = (card_width - 2.0 * row_left) / count
+        return [round(row_left + col_w * j, 3) for j in range(1, count)]
     if mode == "brutalist_grid" and metrics_layout == "row":
         row_left = 22.0
         col_w = ((card_width - 22.0) - row_left) / count
@@ -1282,6 +1373,16 @@ def _slot_layout(
     if stats.metric_layout_mode == "cellular_inline":
         entries = _cellular_metric_entries(entries, displays, hero_label)
 
+    if stats.metric_layout_mode == "primer_editorial":
+        return (
+            _build_primer_slots(
+                entries,
+                stats,
+                card_width=card_width,
+                metric_zone_y=metric_zone_y,
+            ),
+            {},
+        )
     if stats.metric_layout_mode == "chrome_columns":
         return _build_chrome_slots(
             entries,
@@ -1506,6 +1607,17 @@ def compute_stats_layout(
         "chrome_clip": RectSpec(0.0, 0.0, float(card_width), float(card_height), 6.0),
         "cellular_clip": RectSpec(0.0, 0.0, float(card_width), float(card_height), cellular_outer_rect.rx),
         "cellular_header_band": RectSpec(0.0, header_zone.y, float(card_width), header_zone.h),
+        "primer_outer": RectSpec(0.5, 0.5, card_width - 1.0, card_height - 1.0, 5.5),
+        "primer_header": RectSpec(0.0, header_zone.y, float(card_width), header_zone.h, 6.0),
+        "primer_glyph": RectSpec(18.0, 9.0, 13.0, 13.0),
+        "primer_status_dot": RectSpec(card_width - 21.0, 12.0, 6.0, 6.0, 6.0),
+        "primer_hero_rule": RectSpec(22.0, hero_zone.end_y, card_width - 44.0, 1.0),
+        # Header rule spans FULL width (x=0..card_width) to cap the full-width
+        # header band — unlike the inset hero/footer rules. The metric rule keeps
+        # the inset (it caps the inset metric row, not a full-width band).
+        "primer_header_rule": RectSpec(0.0, header_zone.end_y, float(card_width), 1.0),
+        "primer_metric_rule": RectSpec(22.0, metric_zone.end_y, card_width - 44.0, 1.0),
+        "primer_footer_rule": RectSpec(22.0, footer_zone.y, card_width - 44.0, 1.0),
     }
     lines = {
         "header_rule": LineSpec(6.0, header_zone.end_y, float(card_width), header_zone.end_y),
@@ -1541,6 +1653,8 @@ def compute_stats_layout(
             float(card_width),
             header_zone.end_y,
         ),
+        "primer_metric_divider_span": LineSpec(0.0, metric_zone.y + 6.0, 0.0, metric_zone.end_y - 6.0),
+        "primer_activity_baseline": LineSpec(22.0, activity_baseline_y, card_width - 22.0, activity_baseline_y),
     }
     texts = {
         "identity": TextSpec(float(identity_x), header_zone.y + (25.0 if metrics_layout == "row" else 22.0)),
@@ -1573,6 +1687,14 @@ def compute_stats_layout(
         "cellular_bio": TextSpec(float(bio_x), header_zone.y + 24.0),
         "cellular_brand": TextSpec(card_width - 20.0, card_height - 12.0, "end"),
         "cellular_year": TextSpec(20.0, heatmap_zone.y + 5.6),
+        "primer_identity": TextSpec(float(identity_x), header_zone.y + 19.0),
+        "primer_bio": TextSpec(float(bio_x), header_zone.y + 19.0),
+        "primer_hero_value": TextSpec(22.0, hero_zone.y + 48.0),
+        "primer_hero_label": TextSpec(22.0, hero_zone.y + 62.0),
+        "primer_activity_label": TextSpec(22.0, activity_zone.y + 12.0),
+        "primer_activity_peak": TextSpec(card_width - 22.0, activity_zone.y + 12.0, "end"),
+        "primer_footer_url": TextSpec(22.0, footer_zone.y + 16.0),
+        "primer_footer_brand": TextSpec(card_width - 22.0, footer_zone.y + 16.0, "end"),
     }
     return StatsLayout(
         width=card_width,

@@ -11,7 +11,7 @@
      data-hw-genome="chrome"
      data-hw-mode="dark"
      data-hw-status="active"
-     data-hw-profile="chrome"
+     data-hw-profile="dimensional"
      data-hw-motion="static"
      data-hw-generation="1"
      data-hw-contract="UUID"
@@ -35,7 +35,7 @@
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:frame>icon</hw:frame>
     <hw:genome>chrome@VERSION</hw:genome>
-    <hw:profile>chrome</hw:profile>
+    <hw:profile>dimensional</hw:profile>
     <hw:slots>
     </hw:slots>
     <hw:environment platform="github-readme" motion="static" status="active"/>

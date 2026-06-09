@@ -1,0 +1,6 @@
+{# Primer STRIP paradigm DISPATCHER (substrate split, Invariant 12). owns_strip
+   is false, so this only paints the background plate — the shared zone pipeline
+   in strip.svg.j2 renders glyph / identity / metric cells / dividers / status.
+   Fallback 'light' (primer flagship); context.py resolves an unset substrate_kind
+   from genome category. #}
+{% include "frames/strip/primer-" ~ (substrate_kind | default('light')) ~ "-content.j2" %}

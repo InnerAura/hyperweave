@@ -1,0 +1,14 @@
+{# Primer horizontal-marquee BACKGROUND — light substrate. Sits BELOW the scroll
+   track. A white->tint paper band lifted by a soft two-layer drop shadow
+   (the same material the primer light badge uses), a 1px hairline perimeter,
+   and a quiet accent seam at the left identity zone. The shadow filter exists
+   only on the light path (defined gated on `panel_gradient_stops` in
+   primer-defs.j2), so referencing it here is safe. ALL geometry is
+   resolver-supplied (`mw`, `mh`, `liveness`) — zero arithmetic / literals. #}
+<g filter="url(#{{ uid }}-mq-shadow)">
+  <rect width="{{ mw }}" height="{{ mh }}" fill="url(#{{ uid }}-mq-bg)"/>
+</g>
+<rect x="{{ marquee_geom.brutalist_border_x }}" y="{{ marquee_geom.brutalist_border_y }}"
+      width="{{ marquee_perimeter_w }}" height="{{ marquee_perimeter_h }}"
+      fill="none" stroke="var(--dna-border)" stroke-width="1" shape-rendering="crispEdges"/>
+{# The identity seam is owned by the cap (primer-overlay.j2, at cap_seam_x). #}

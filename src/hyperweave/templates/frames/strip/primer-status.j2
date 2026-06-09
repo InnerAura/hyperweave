@@ -1,0 +1,8 @@
+{# Primer STRIP status mark — the SAME state-glyph system as the badge (ping /
+   spin / shake / throb / dim), sub-dispatched by the normalized status_glyph_state
+   via slug interpolation. The parent strip group is already translated to the
+   status-zone center (status_x, height/2) and the partials draw around the local
+   origin, so no further translate is needed. The strip's default ACTIVE telemetry
+   resolves to the passing ping; an explicit/inferred state renders its matching
+   animated mark. Geometry from the resolver (status_glyph dict); zero arithmetic. #}
+{% include "frames/badge/indicators/status-glyph/" ~ (status_glyph_state | default('passing')) ~ ".j2" %}

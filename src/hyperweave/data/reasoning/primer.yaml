@@ -1,0 +1,194 @@
+primer:
+  badge:
+    dark:
+      intent: |-
+        CI/status chip as an editorial label — a ~158x20 frame whose single
+        vertical bg gradient (surface-alt top → surface bottom) and centred
+        accent seam at the label|value boundary keep it legible at thumbnail
+        scale without a hard plate edge.
+      approach: |-
+        One gradient ground under a 2px accent-seam fade (0→0.55→0.55→0),
+        Inter 11/700 label at the left anchor, Inter 11/600 value at the right
+        anchor, a 9px circle status dot. Rounded clip via --dna-corner.
+      tradeoffs: |-
+        Chose a gradient ground + seam fade over brutalist's two flat panels +
+        hard separator because primer earns recognition through soft material,
+        not plate geometry; a circle dot replaces the square bit so the status
+        reads as a quiet signal, not a cut.
+    light:
+      intent: |-
+        The light chip lifts off a white→tint card (panel_gradient_stops) by a
+        soft two-layer drop shadow rather than a drawn border, so a 20px-tall
+        badge keeps its edge on a white README without a hairline rule.
+      approach: |-
+        Shadow-wrapped gradient ground (dy1/sd2 @0.10 + dy4/sd8 @0.06), dark
+        Inter ink label, accent value, accent seam fade, 9px circle dot. No
+        perimeter stroke — the shadow does the edge work.
+      tradeoffs: |-
+        Dropped the hairline perimeter (and its hardcoded inset) so geometry
+        stays resolver-supplied; the shadow defines the card against the page,
+        trading a crisp rule for depth that survives the light substrate.
+  strip:
+    dark:
+      intent: |-
+        Telemetry rail — identity + 3 metric cells + a quiet status dot across
+        an 800x52 plate; numbers are the heroes, state is a 9px annotation at
+        the right terminus, not a BUILD-first dashboard.
+      approach: |-
+        The plate is a single bg gradient under the shared zone pipeline
+        (owns_strip false); Inter 11/700 identity, JBM 7px labels over Inter
+        18px values, hairline class-mode dividers, a circle status socket+dot.
+      tradeoffs: |-
+        Rode the shared zone pipeline instead of brutalist's owns_strip custom
+        grammar, trading per-cell ornament for a calmer editorial rhythm; the
+        status is a circle terminus, not a square bookend.
+    light:
+      intent: |-
+        The light rail is a white→tint card raised by a soft drop shadow over
+        its full 800px width, so the metric numerals read as ink on paper with
+        the same 52px zone rhythm as the dark plate.
+      approach: |-
+        Shadow-wrapped gradient ground, identical Inter/JBM type stack and
+        circle status as the dark partial — only the material (shadow) and ink
+        polarity differ; geometry comes from compute_strip_zones.
+      tradeoffs: |-
+        Kept the dark and light strips on one geometry so measured == rendered
+        widths agree, trading a bespoke light layout for substrate parity and a
+        single set of metric-cell positions.
+  stats:
+    dark:
+      intent: |-
+        Compact editorial profile card — Inter hero metric, thin mono labels,
+        measured metric columns, and a quiet 52-week activity strip on a shallow
+        glass surface. The card reports profile health without inheriting
+        brutalist plate mass.
+      approach: |-
+        A primer-specific stats layout mode feeds the existing stats spatial
+        engine: Inter/JBM measurement drives identity, hero, metric columns,
+        dividers, activity bars, footer, and status dot. Templates consume
+        layout records and semantic DNA roles only.
+      tradeoffs: |-
+        Kept the specimen's editorial density but routed it through layout
+        parameters instead of fixed SVG coordinates; this trades one-off pixel
+        copying for measured text safety across usernames and metric values.
+    light:
+      intent: |-
+        The light card reads as porcelain paper with cobalt/variant signal,
+        using whitespace, hairline rules, and Inter numerals instead of a heavy
+        header block or Barlow display treatment.
+      approach: |-
+        Same primer stats layout mode as dark substrates; light variants supply
+        paper gradients, border tint, shadow color, and ink roles through genome
+        DNA while the measured engine preserves column and histogram spacing.
+      tradeoffs: |-
+        Avoided separate light-only coordinates so the light card cannot drift
+        from dark metric placement; the tradeoff is that substrate nuance lives
+        in material tokens, not in a second layout stencil.
+  chart:
+    dark:
+      intent: |-
+        Editorial trend chart — soft card, thin grid, smooth Bezier area line,
+        circular callouts, and Inter title/hero typography. The series should
+        feel like a measured report, not an instrument panel.
+      approach: |-
+        A primer chart config feeds the existing chart layout and render engine:
+        projection remains data-driven, labels are measured with JBM metrics,
+        line/area/markers render from structured fragments, and colors flow
+        through primer DNA roles.
+      tradeoffs: |-
+        Chose a smooth Bezier path with gradient area fill over the brutalist
+        angular polyline because primer's spatial language is editorial and
+        quiet; the tradeoff is less mechanical edge emphasis at small sizes.
+    light:
+      intent: |-
+        Porcelain-style chart card with a pale surface, thin cobalt/variant
+        series line, subdued grid, and live pill. The chart should compare
+        directly with the specimen's soft report-card treatment.
+      approach: |-
+        The same primer chart layout runs for light and dark substrates; light
+        variants inject paper gradient, border, shadow, and accent roles, while
+        the render engine computes axes, labels, milestones, and endpoints.
+      tradeoffs: |-
+        Kept the chart static except for compositor-safe line draw and endpoint
+        opacity pulse; this preserves GitHub README compatibility while giving
+        up richer geometric animation that would complicate reduced motion.
+  icon:
+    dark:
+      intent: |-
+        Avatar/glyph tile — a 64px disc or rounded square filled with the bg
+        gradient and ringed by a 1.5px accent, the brand glyph centred in the
+        ~32px inner box.
+      approach: |-
+        Consumes icon_geometry tokens (circle r / square box) with a gradient
+        ground and thin accent ring; glyph fill in the variant glyph tone,
+        rounded square via --dna-corner.
+      tradeoffs: |-
+        Chose a thin 1.5px ring over brutalist's 2.5px structural border so the
+        accent reads as trim, not frame — primer keeps the mass in the glyph,
+        not the edge.
+    light:
+      intent: |-
+        The light tile lifts off the page by a soft drop shadow with a hairline
+        paper border, the 64px disc/square in white→tint and the glyph in dark
+        ink for contrast.
+      approach: |-
+        Shadow-wrapped gradient tile + --dna-border hairline + inset accent rim
+        (circle) or top cap (square); glyph in --dna-glyph-inner ink, geometry
+        identical to the dark partial.
+      tradeoffs: |-
+        Added the hairline border only on the light tile (gated on
+        panel_gradient_stops) because the white disc needs an edge on white;
+        the dark tile relies on its gradient alone.
+  marquee-horizontal:
+    dark:
+      intent: |-
+        Scrolling instrument ribbon — metrics flow across an 800x40 track in a
+        ribbon layout, accent dot separators marking each item, the bg a single
+        vertical gradient.
+      approach: |-
+        Gradient ground under the shared ribbon item layout, Inter values with
+        mono labels, edge-fade overlays at the ~16px clip insets; scroll honours
+        prefers-reduced-motion.
+      tradeoffs: |-
+        Chose the inline ribbon over brutalist's stacked cast-module marquee so
+        primer reads as flowing editorial text, trading the heavy module grid
+        for a lighter scroll.
+    light:
+      intent: |-
+        The light ribbon runs the same 40px track as a white→tint card raised by
+        a soft shadow, the metrics in ink so the scrolling values read on a pale
+        README band.
+      approach: |-
+        Shadow-wrapped gradient ground, identical ribbon item layout and edge
+        fades as the dark partial; substrate split gated on panel_gradient_stops.
+      tradeoffs: |-
+        Kept light and dark marquees on one ribbon geometry, trading a bespoke
+        light treatment for parity so the 16px clip window and item pitch hold
+        across substrates.
+  divider:
+    dark:
+      intent: |-
+        Section rule as a luminous accent — an 800x48 lane carrying a lit
+        filament over a soft blurred aura, both fading to nothing at the ends,
+        on a transparent ground.
+      approach: |-
+        A 1.5px filament rect over a blurred aura ellipse, both flux-gradient
+        filled with --dna-signal (opacity 0→0.7→0.95→0.7→0), geometry from the
+        resolver's aura_*/filament_* tokens.
+      tradeoffs: |-
+        Carried the light by a blur + gradient rather than a heavy bloom or
+        rainbow flux, trading spectacle for restraint; static, so the glow does
+        the work with no motion.
+    light:
+      intent: |-
+        On light substrates the same filament+aura reads as a cobalt thread on
+        white over the 800x48 lane, the per-variant --dna-signal override
+        carrying the chromatic identity.
+      approach: |-
+        Substrate-invariant — one template, the variant root vars set the hue;
+        the blurred aura ellipse and crisp filament rect consume the identical
+        resolver geometry.
+      tradeoffs: |-
+        Shipped aura as a single substrate-invariant template rather than a
+        dark/light split, trading two partials for one because the glow is pure
+        accent injection with no light-only element.

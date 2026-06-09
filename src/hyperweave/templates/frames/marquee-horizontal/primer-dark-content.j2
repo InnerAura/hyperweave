@@ -1,0 +1,12 @@
+{# Primer horizontal-marquee BACKGROUND — dark substrate. Sits BELOW the scroll
+   track. Single vertical-gradient ground (surface-alt -> surface) with a 1px
+   ink-hairline perimeter and a quiet accent seam at the left identity zone —
+   primer's editorial signature carried into the scroller. The edge fades +
+   any perimeter emphasis render ABOVE the text via primer-overlay.j2.
+   ALL geometry is resolver-supplied (`mw`, `mh`, `liveness`) — zero arithmetic
+   / literals here (spatial stencil contract). #}
+<rect width="{{ mw }}" height="{{ mh }}" fill="url(#{{ uid }}-mq-bg)"/>
+<rect x="{{ marquee_geom.brutalist_border_x }}" y="{{ marquee_geom.brutalist_border_y }}"
+      width="{{ marquee_perimeter_w }}" height="{{ marquee_perimeter_h }}"
+      fill="none" stroke="var(--dna-border)" stroke-width="1" shape-rendering="crispEdges"/>
+{# The identity seam is owned by the cap (primer-overlay.j2, at cap_seam_x). #}

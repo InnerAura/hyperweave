@@ -602,12 +602,6 @@ def _marker_spec(shape: str, x: int, y: int, size: int, *, is_endpoint: bool) ->
     # Aliases + unknown-shape fallback (parity with the old dispatch dicts).
     if shape == "square" or shape not in _MARKER_SHAPES:
         shape = "rect"
-    # Circle endpoint has no dedicated partial in the old code either — the
-    # endpoint dispatch only covered rect/diamond. Fall back to rect so a
-    # genome with data_point_shape="circle" still gets a visible endpoint.
-    if is_endpoint and shape == "circle":
-        shape = "rect"
-
     cellular_half = size // 2
     spec: dict[str, Any] = {
         "shape": shape,
@@ -623,6 +617,11 @@ def _marker_spec(shape: str, x: int, y: int, size: int, *, is_endpoint: bool) ->
     # substitution — no arithmetic in Jinja.
     if shape == "circle":
         spec["r"] = max(1, size // 2)
+        if is_endpoint:
+            r1 = max(1, size // 2 + 4)
+            r2 = max(1, size // 2 + 1)
+            r3 = max(1, size // 2 - 2)
+            spec.update({"r1": r1, "r2": r2, "r3": r3})
     elif is_endpoint and shape == "rect":
         # 3 nested squares (brutalist endpoint beacon).
         s1, s2, s3 = size + 8, size + 2, max(4, size - 4)

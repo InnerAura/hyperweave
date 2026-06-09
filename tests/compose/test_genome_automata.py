@@ -15,9 +15,9 @@ from hyperweave.core.models import _GENOME_PROFILE_MAP
 
 
 def test_automata_genome_id_enum_present() -> None:
-    """GenomeId.AUTOMATA is registered and maps to brutalist profile."""
+    """GenomeId.AUTOMATA is registered and maps to flat profile."""
     assert GenomeId.AUTOMATA == "automata"
-    assert _GENOME_PROFILE_MAP[GenomeId.AUTOMATA] == ProfileId.BRUTALIST
+    assert _GENOME_PROFILE_MAP[GenomeId.AUTOMATA] == ProfileId.FLAT
 
 
 def test_automata_genome_loads() -> None:
@@ -29,7 +29,7 @@ def test_automata_genome_loads() -> None:
     assert spec.id == "automata"
     assert spec.name == "Automata"
     assert spec.category == "dark"
-    assert spec.profile == "brutalist"
+    assert spec.profile == "flat"
 
 
 def test_automata_compositional_tones_populated() -> None:

@@ -1,0 +1,24 @@
+{# Primer ICON — dark substrate. Soft gradient-filled tile (surface-alt→surface)
+   with a thin accent ring; accent-toned glyph. Genome-derived LITERAL fills
+   (accent / glyph_inner) instead of var() for renderer independence. Geometry
+   from compose/resolver (primer_icon_* tokens); zero arithmetic here. #}
+
+{% if icon_variant == 'brutalist-circular' %}
+<circle cx="{{ icon_geometry.brutalist_circle_cx }}" cy="{{ icon_geometry.brutalist_circle_cy }}" r="{{ icon_geometry.brutalist_circle_r }}" fill="url(#{{ uid }}-bg)"/>
+<circle cx="{{ icon_geometry.brutalist_circle_cx }}" cy="{{ icon_geometry.brutalist_circle_cy }}" r="{{ icon_geometry.brutalist_circle_r }}" fill="none" stroke="{{ _genome_raw.accent }}" stroke-width="1.5"/>
+{% if glyph_path %}
+<svg x="{{ icon_geometry.primer_icon_circle_glyph_x }}" y="{{ icon_geometry.primer_icon_circle_glyph_y }}" width="{{ icon_geometry.primer_icon_glyph_size }}" height="{{ icon_geometry.primer_icon_glyph_size }}" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="{{ _genome_raw.glyph_inner }}" stroke="none"/>
+</svg>
+{% endif %}
+
+{% elif icon_variant == 'brutalist-square' %}
+<rect x="{{ icon_geometry.brutalist_square_x }}" y="{{ icon_geometry.brutalist_square_y }}" width="{{ icon_geometry.brutalist_square_w }}" height="{{ icon_geometry.brutalist_square_h }}" rx="{{ icon_geometry.primer_icon_square_rx }}" fill="url(#{{ uid }}-bg)"/>
+<rect x="{{ icon_geometry.brutalist_square_border_x }}" y="{{ icon_geometry.brutalist_square_border_y }}" width="{{ icon_geometry.brutalist_square_border_w }}" height="{{ icon_geometry.brutalist_square_border_h }}" rx="{{ icon_geometry.primer_icon_square_rx }}" fill="none" stroke="{{ _genome_raw.accent }}" stroke-width="1.5"/>
+{% if glyph_path %}
+<svg x="{{ icon_geometry.primer_icon_square_glyph_x }}" y="{{ icon_geometry.primer_icon_square_glyph_y }}" width="{{ icon_geometry.primer_icon_glyph_size }}" height="{{ icon_geometry.primer_icon_glyph_size }}" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="{{ _genome_raw.glyph_inner }}" stroke="none"/>
+</svg>
+{% endif %}
+
+{% endif %}

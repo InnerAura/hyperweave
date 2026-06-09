@@ -139,7 +139,7 @@ def test_validator_rejects_genome_missing_paradigm_required_fields() -> None:
 
     partial = build_partial_genome_for_testing(
         id="test-partial",
-        profile="chrome",
+        profile="dimensional",
         paradigms={"badge": "vellum"},
     )
     genome = GenomeSpec(**partial)

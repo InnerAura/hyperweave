@@ -1,0 +1,223 @@
+id: primer
+name: Primer
+description: >
+  Minimal editorial substrate. Inter display + JetBrains Mono numerals, thin
+  hairline rules, pill/circle status indicators, glassmorphic shallow-depth
+  cards with a three-layer drop-shadow. Substrate-aware (dark / light) on the
+  flat profile. No material-envelope requirements.
+requires_genome_fields: []
+
+badge:
+  # ONE 22px editorial badge (v04alpha1 specimen). Primer ships a single size — no
+  # compact form. Inter category LABEL (7.5/500, secondary branding) + Inter VALUE
+  # (10.5/600, primary payload) + 10px brand glyph, split into a label zone and a
+  # recessed value zone by a carved 3-layer seam. frame_height_compact ==
+  # frame_height so no distinct small badge exists.
+  default_size: default
+  # Label + value are BOTH Inter — the label is secondary BRANDING inside the left
+  # chamber (identity text), not a mono metric label (strip/stats column headers
+  # are the mono labels). One typographic family, separated by size + weight, not
+  # by font; the value must read as primary without dominating the 22px frame.
+  label_font_family: Inter
+  value_font_family: Inter
+  label_font_size: 7.5
+  value_font_size: 10.5
+  label_font_weight: 500
+  value_font_weight: 600
+  frame_height: 22
+  frame_height_compact: 22
+  glyph_size_ratio: 0.5
+  # 10px brand glyph (was 11): ratio 0.5 → 11 at h=22, capped to 10 by the max.
+  glyph_size_max: 10
+  # Optical centring per chamber, recomputed for the new (Inter) metrics — NOT the
+  # old JBM-tuned baselines. text_y = height/2 + size * factor; factor ≈ Inter
+  # cap-height/2 ≈ 0.35. VALUE 10.5 → y≈14.7, LABEL 7.5 → y≈13.6, so each text's
+  # cap-height centres in its chamber at the new sizes. Both Inter ⇒ one factor.
+  center_text_factor: 0.35
+  label_center_text_factor: 0.35
+  # Status light sized to the value cap height: 8px (= 10.5 * 0.75) base diameter.
+  # Each state renders its own animated mark (ping / spin / shake / throb) at this
+  # base radius; the disc states fill it, ping/spin inset proportionally.
+  indicator_cap_ratio: 0.75
+  # Per-state status glyph led to the LEFT of the value as a pill [icon] value —
+  # matching the specimen. Selects indicators/status-glyph-indicator.j2, which
+  # sub-dispatches by normalized state. Reused verbatim on the strip status zone.
+  indicator_shape: status-glyph
+  indicator_leads_value: true
+  # Brand glyph + state mark ride the badge midline (height/2), as the specimen
+  # places them; the value baseline carries the optical centring on its own.
+  content_center_geometric: true
+  light_indicator_inner_ratio: 0.5
+  # Carved 3-layer groove seam (faint edge + dark recess + bright highlight),
+  # centred on the engine seam midline. seam_pixel_w is the recess-core width;
+  # the resolver derives the flanking highlight rects from it.
+  seam_pixel_w: 1.1
+  # seam_pixel_w only thins the PAINTED groove; the cursor walk still reserves
+  # sep_w(2) + seam_w for the seam. The flat profile's badge_seam_width is 3, so
+  # the value zone's left edge landed ~2.5px past the 2.5px painted groove and the
+  # value drifted right. Match the reservation to the thin seam (sep_w 2 + seam_w
+  # 1 ≈ the 2.5px groove) so the seam→value gap is not over-reserved.
+  seam_w: 1
+  # Centre the value word in the VISIBLE recess (carved-seam right edge → badge
+  # edge), not the cursor-reserved value zone — symmetric seam→value / value→edge
+  # gaps at every value width. See ParadigmBadgeConfig.value_centers_in_recess.
+  value_centers_in_recess: true
+  label_letter_spacing_em: 0.04
+  value_letter_spacing_em: -0.01
+  # Proportional pad — gaps scale with the value font (value 10.5 → pad 6).
+  pad_ratio: 0.6
+
+strip:
+  # Identity (Inter 15/600 cobalt) | thin cobalt-fade inset seams | metric cells
+  # (JBM 8 muted label over Inter 17 ink value) | universal ACTIVE status light.
+  value_font_size: 17
+  value_font_family: Inter
+  label_font_size: 8
+  label_font_family: JetBrains Mono
+  # Polished material card: rounded plate + bevel-edge highlight + perimeter
+  # hairline + drop shadow (all substrates), painted by the primer content partial.
+  plate_corner: 10
+  # Identity glyph + text use the BRIGHT seam_color accent, not the muted
+  # glyph_inner (which reads dull grey on dark variants).
+  identity_accent_from_seam: true
+  # Vertical accent-fade seam (url(#{uid}-sep)), not a flat gray rule.
+  divider_render_mode: gradient
+  divider_inset: 12
+  status_shape_rendering: geometricPrecision
+  label_font_weight: 700
+  # Unified primer label voice tracking (matches badge/stats/chart at 0.12em).
+  label_letter_spacing_em: 0.12
+  value_font_weight: 700
+  value_letter_spacing_em: -0.02
+  identity_font_family: Inter
+  identity_font_size: 15
+  identity_font_weight: 600
+  identity_letter_spacing_em: -0.01
+  # The editorial ACTIVE live dot rides every strip (telemetry, not CI status).
+  status_always: true
+  # Shared zone pipeline (NOT brutalist's owns_strip custom layout): identity +
+  # metric cells + quiet status, accent-fade inset seams. Width is CONTENT-ADAPTIVE
+  # via compute_strip_zones — the natural widths grow with metric count (≈222 → 255
+  # → 289 → 335 for 1..4 metrics). No fixed floor: the prior strip_min_width=540 +
+  # stretch clamped+stretched every strip to the full 4-metric width regardless of
+  # how many metrics it carried, defeating the shared engine's adaptivity.
+  owns_strip: false
+  strip_pad: 16
+  # Constant inter-cell gutter = 2*strip_pad (matches the strip rhythm). The prior
+  # cell_pad=0 relied on stretch_cells_to_min_width to push the cells apart; with
+  # the strip now content-adaptive, an explicit gutter is what separates metrics
+  # (otherwise adjacent values collide, e.g. "12.4k1.2k").
+  cell_pad: 32
+  cell_min_width: 12
+  strip_min_width: 0
+  stretch_cells_to_min_width: false
+
+chart:
+  chart_width: 1100
+  chart_height: 660
+  viewport_x: 100
+  viewport_y: 140
+  viewport_w: 880
+  viewport_h: 340
+  # CIM motion (transform/opacity only): the line draws on, the area + markers
+  # fade in, the endpoint pings — like the chart specimens. Reduced-motion stills.
+  line_animate: true
+  # Blue axis details (top Y-tick + current X-tick accent) and vertical gridlines
+  # at every X-tick, per the porcelain chart specimen.
+  axis_accent: true
+  y_tick_target: 4
+  label_collision_font_family: JetBrains Mono
+  label_collision_font_size: 9
+  label_collision_font_weight: 700
+  label_collision_letter_spacing_em: 0.06
+  axis_y_label_x_offset: -12
+  axis_y_label_y_offset: 4
+  x_axis_label_y: 500
+  milestone_label_y_offset: -18
+  identity_font_family: Inter
+  identity_font_size: 11
+  identity_font_weight: 700
+  identity_letter_spacing_em: 0.12
+
+stats:
+  card_width: 480
+  card_height: 210
+  embeds_chart: false
+  metric_layout_mode: primer_editorial
+  metric_value_font_family: Inter
+  metric_value_font_size: 18
+  metric_value_font_weight: 700
+  metric_value_letter_spacing_em: -0.02
+  metric_label_font_family: JetBrains Mono
+  # Unified primer label voice (8px / 700 / 0.12em, matching badge/strip/chart).
+  metric_label_font_size: 8
+  metric_label_font_weight: 700
+  metric_label_letter_spacing_em: 0.12
+  activity_bar_baseline_y: 180
+  activity_bar_max_h: 24
+  activity_bar_min_h: 2
+  activity_bar_w: 7
+  activity_bar_start_x: 22
+  activity_bar_stride: 8.4
+  activity_bar_opacity_min: 0.34
+  activity_bar_opacity_max: 0.77
+  activity_bar_opacity_min_light: 0.4
+  activity_bar_opacity_max_light: 0.95
+  language_segment_opacities_light: [1.0, 0.66, 0.42, 0.26]
+  identity_x: 37
+  bio_x: 95
+  identity_padding: 8
+  identity_breathing_margin: 8
+  identity_font_family: Inter
+  identity_font_size: 11
+  identity_font_weight: 700
+  identity_letter_spacing_em: 0.12
+  identity_text_transform: uppercase
+
+icon:
+  supported_shapes: [circle, square]
+  default_shape: circle
+
+marquee:
+  width: 800
+  height: 44
+  # Identity cap (glyph + scope + LIVE pulse) leads the left; stacked
+  # label-over-value modules (the stat-card cell grammar in motion) with cobalt
+  # hairline dividers scroll under the cap seam — not an inline label/value ribbon.
+  item_layout: module
+  cap_kind: identity
+  # Hero (STARS) is the one cobalt value; state values use the deeper CORE stop
+  # (forest/sienna/red), readable on the light band.
+  hero_color_role: signal
+  state_value_stop: core
+  # Module column labels resolve to the genome chromatic label value (same as the
+  # badge label, stats card label, strip column header) — one label system.
+  module_label_color: "var(--dna-label-text)"
+  font_size: 12
+  font_weight: "700"
+  letter_spacing: "-0.02em"
+  font_family: "Inter, -apple-system, system-ui, sans-serif"
+  label_font_size: 6
+  module_value_font_family: "Inter, -apple-system, system-ui, sans-serif"
+  module_label_font_family: "var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace)"
+  module_label_font_size: 6
+  module_label_letter_spacing: "0.18em"
+  module_text_inset: 16
+  module_label_y: 16
+  module_value_y: 32
+  # Low-opacity cobalt hairline divider (not a hard full-opacity bar).
+  module_divider_w: 1
+  module_divider_y: 9
+  module_divider_h: 26
+  module_divider_opacity: 0.12
+  module_min_width: 60
+  separator_kind: glyph
+  separator_glyph: "·"
+  separator_size: 7
+  separator_color: "var(--dna-signal)"
+  # Reserve the 0..100 identity cap; modules clip to the readout window past it.
+  clip_inset_left: 108
+  clip_inset_right: 16
+  clip_inset_top: 0
+  clip_inset_bottom: 0
+  clip_rx: 0

@@ -1,0 +1,104 @@
+{# Primer stats card. Every placement value comes from stats_layout, which is
+   computed by compose/stats_layout.py from paradigm config and measured text. #}
+<g class="{{ uid }}-card" clip-path="url(#{{ uid }}-clip)">
+  <rect width="{{ stats_layout.width }}" height="{{ stats_layout.height }}" fill="url(#{{ uid }}-card-bg)"/>
+  <rect x="{{ stats_layout.rects.primer_header.x }}" y="{{ stats_layout.rects.primer_header.y }}"
+        width="{{ stats_layout.rects.primer_header.w }}" height="{{ stats_layout.rects.primer_header.h }}"
+        fill="var(--dna-surface-alt)" opacity="0.72"/>
+  {% if glyph_path %}
+  <svg x="{{ stats_layout.rects.primer_glyph.x }}" y="{{ stats_layout.rects.primer_glyph.y }}"
+       width="{{ stats_layout.rects.primer_glyph.w }}" height="{{ stats_layout.rects.primer_glyph.h }}"
+       viewBox="{{ glyph_viewbox }}">
+    <path d="{{ glyph_path }}" fill="var(--dna-glyph-inner, var(--dna-signal))"/>
+  </svg>
+  {% endif %}
+  <text class="{{ uid }}-user" x="{{ stats_layout.texts.primer_identity.x }}" y="{{ stats_layout.texts.primer_identity.y }}"
+    {%- if identity_text_length %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ stats_username | upper | xml_escape }}</text>
+  {# Subtitle: repo label + bio/topic tags (e.g. "Python / 20 repos · AI ◇ Art ◇ Meta").
+     The bio renders with its own separators; no textLength on primer, so the card
+     clip-path bounds any overflow. #}
+  <text class="{{ uid }}-bio" x="{{ stats_layout.texts.primer_bio.x }}" y="{{ stats_layout.texts.primer_bio.y }}"
+    {%- if bio_text_length %} textLength="{{ bio_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ stats_repo_label | xml_escape }}{% if stats_bio %} · {{ stats_bio | xml_escape }}{% endif %}</text>
+  <rect class="{{ uid }}-status" x="{{ stats_layout.rects.primer_status_dot.x }}" y="{{ stats_layout.rects.primer_status_dot.y }}"
+        width="{{ stats_layout.rects.primer_status_dot.w }}" height="{{ stats_layout.rects.primer_status_dot.h }}"
+        rx="{{ stats_layout.rects.primer_status_dot.rx }}" fill="var(--dna-status-passing-core, var(--dna-signal))"/>
+  {# Accent rule capping the identity/header band. #}
+  <rect x="{{ stats_layout.rects.primer_header_rule.x }}" y="{{ stats_layout.rects.primer_header_rule.y }}"
+        width="{{ stats_layout.rects.primer_header_rule.w }}" height="{{ stats_layout.rects.primer_header_rule.h }}"
+        fill="var(--dna-signal)" opacity="0.18"/>
+
+  <text class="{{ uid }}-hero-value" x="{{ stats_layout.texts.primer_hero_value.x }}" y="{{ stats_layout.texts.primer_hero_value.y }}">{{ stars_display | xml_escape }}</text>
+  <text class="{{ uid }}-hero-label" x="{{ stats_layout.texts.primer_hero_label.x }}" y="{{ stats_layout.texts.primer_hero_label.y }}">{{ hero_caption | xml_escape }}</text>
+  {# Neutral rule under the hero — border (not signal/orange), matching the
+     prototype's near-neutral metric-grid lines. GUARDED on metric presence: the
+     rule SEPARATES the hero from the metric row, so a hero-only card (no secondary
+     metrics) must not draw it — otherwise it caps nothing (orphan line above the
+     footer). #}
+  {% if metric_layouts %}
+  <rect x="{{ stats_layout.rects.primer_hero_rule.x }}" y="{{ stats_layout.rects.primer_hero_rule.y }}"
+        width="{{ stats_layout.rects.primer_hero_rule.w }}" height="{{ stats_layout.rects.primer_hero_rule.h }}"
+        fill="var(--dna-border)" opacity="0.5"/>
+  {% endif %}
+
+  {# Vertical column dividers — gradient stroke fading to nothing at top + bottom
+     (0 → peak → 0 over the span), faint neutral, per the prototype. userSpaceOnUse
+     so the fade maps along the divider's vertical span. Only emitted when there are
+     dividers (2+ metrics) — a 1-metric or hero-only card has none. #}
+  {% if stats_layout.metric_divider_xs %}
+  <linearGradient id="{{ uid }}-mdiv" gradientUnits="userSpaceOnUse" x1="0" y1="{{ stats_layout.lines.primer_metric_divider_span.y1 }}" x2="0" y2="{{ stats_layout.lines.primer_metric_divider_span.y2 }}">
+    <stop offset="0%" stop-color="var(--dna-border)" stop-opacity="0"/>
+    <stop offset="24%" stop-color="var(--dna-border)" stop-opacity="0.5"/>
+    <stop offset="76%" stop-color="var(--dna-border)" stop-opacity="0.5"/>
+    <stop offset="100%" stop-color="var(--dna-border)" stop-opacity="0"/>
+  </linearGradient>
+  {% for divider_x in stats_layout.metric_divider_xs %}
+  <line x1="{{ divider_x }}" y1="{{ stats_layout.lines.primer_metric_divider_span.y1 }}"
+        x2="{{ divider_x }}" y2="{{ stats_layout.lines.primer_metric_divider_span.y2 }}"
+        stroke="url(#{{ uid }}-mdiv)" stroke-width="0.4"/>
+  {% endfor %}
+  {% endif %}
+  {% for slot in metric_layouts %}
+  <g data-hw-metric="{{ slot.label_text }}">
+    <text class="{{ uid }}-metric-label" x="{{ slot.label_x }}" y="{{ slot.label_y }}" text-anchor="{{ slot.text_anchor }}">{{ slot.label_text | xml_escape }}</text>
+    <text class="{{ uid }}-metric-value" x="{{ slot.value_x }}" y="{{ slot.value_y }}" text-anchor="{{ slot.text_anchor }}"
+      {%- if slot.value_text_length %} textLength="{{ slot.value_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ slot.value_display | xml_escape }}</text>
+  </g>
+  {% endfor %}
+  {# Neutral rule capping the metric row, above the activity zone — border. GUARDED
+     on metrics AND activity: it separates the metric row from the activity bars, so
+     it draws only when both exist (no metrics → nothing to cap; no activity → the
+     footer rule already closes the card, so this would orphan above the footer). #}
+  {% if metric_layouts and activity %}
+  <rect x="{{ stats_layout.rects.primer_metric_rule.x }}" y="{{ stats_layout.rects.primer_metric_rule.y }}"
+        width="{{ stats_layout.rects.primer_metric_rule.w }}" height="{{ stats_layout.rects.primer_metric_rule.h }}"
+        fill="var(--dna-border)" opacity="0.5"/>
+  {% endif %}
+
+  {% if activity %}
+  <text class="{{ uid }}-activity-label" x="{{ stats_layout.texts.primer_activity_label.x }}" y="{{ stats_layout.texts.primer_activity_label.y }}">ACTIVITY · {% if activity.type == "sparkline_30d" %}30D{% else %}52W{% endif %}</text>
+  <text class="{{ uid }}-activity-label" x="{{ stats_layout.texts.primer_activity_peak.x }}" y="{{ stats_layout.texts.primer_activity_peak.y }}"
+        text-anchor="{{ stats_layout.texts.primer_activity_peak.anchor }}">PEAK · {{ activity_peak_label | default('-') }}</text>
+  {% if activity.type == "sparkline_30d" %}
+    {% set activity_sparkline_stroke = "var(--dna-signal)" %}
+    {% set activity_sparkline_stroke_width = "1.4" %}
+    {% include "frames/stats/zones/activity-sparkline.j2" %}
+  {% else %}
+    {% set activity_bar_fill = "url(#" ~ uid ~ "-activity-fade)" %}
+    {% include "frames/stats/zones/activity-bars.j2" %}
+    <line x1="{{ stats_layout.lines.primer_activity_baseline.x1 }}" y1="{{ stats_layout.lines.primer_activity_baseline.y1 }}"
+          x2="{{ stats_layout.lines.primer_activity_baseline.x2 }}" y2="{{ stats_layout.lines.primer_activity_baseline.y2 }}"
+          stroke="var(--dna-border)" stroke-width="0.5" opacity="0.5"/>
+  {% endif %}
+  {% endif %}
+
+  <rect x="{{ stats_layout.rects.primer_footer_rule.x }}" y="{{ stats_layout.rects.primer_footer_rule.y }}"
+        width="{{ stats_layout.rects.primer_footer_rule.w }}" height="{{ stats_layout.rects.primer_footer_rule.h }}"
+        fill="var(--dna-border)" opacity="0.55"/>
+  <text class="{{ uid }}-footer" x="{{ stats_layout.texts.primer_footer_url.x }}" y="{{ stats_layout.texts.primer_footer_url.y }}">{{ subject_url | default(stats_username | lower) | xml_escape }}</text>
+  <text class="{{ uid }}-footer {{ uid }}-brand" x="{{ stats_layout.texts.primer_footer_brand.x }}" y="{{ stats_layout.texts.primer_footer_brand.y }}"
+        text-anchor="{{ stats_layout.texts.primer_footer_brand.anchor }}">HYPERWEAVE</text>
+  <rect x="{{ stats_layout.rects.primer_outer.x }}" y="{{ stats_layout.rects.primer_outer.y }}"
+        width="{{ stats_layout.rects.primer_outer.w }}" height="{{ stats_layout.rects.primer_outer.h }}"
+        rx="{{ stats_layout.rects.primer_outer.rx }}" fill="none"
+        stroke="var(--dna-border)" stroke-width="0.7"/>
+</g>

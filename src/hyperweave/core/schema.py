@@ -369,6 +369,34 @@ class GenomeSpec(BaseModel):
     state_offline_core: str = Field(default="", description="State=offline core color (e.g. slate-400)")
     state_offline_bright: str = Field(default="", description="State=offline bright value-text color")
 
+    # -- Status-glyph badge indicator fills (primer). Universal CI-semantic disc
+    # colours for the per-state status icon; substrate-invariant (green/amber/red
+    # read on light AND dark). Building uses the variant accent at render time;
+    # housing uses surface/border. Default "" leaves other genomes unaffected. --
+    badge_status_passing: str = Field(default="", description="Status-glyph passing core fill (CI green)")
+    badge_status_warning: str = Field(default="", description="Status-glyph warning disc fill (CI amber)")
+    badge_status_critical: str = Field(default="", description="Status-glyph critical disc fill (CI red)")
+    badge_status_offline: str = Field(default="", description="Status-glyph offline dim core fill")
+    status_knockout: str = Field(default="", description="Status-glyph symbol knockout (cross/bang) fill")
+    badge_status_critical_rim: str = Field(
+        default="", description="Status-glyph critical disc rim stroke (deepened red)"
+    )
+    badge_status_warning_rim: str = Field(
+        default="", description="Status-glyph warning disc rim stroke (deepened amber)"
+    )
+    badge_status_critical_knockout: str = Field(
+        default="", description="Status-glyph critical X knockout (light, reads on red disc)"
+    )
+    badge_status_warning_knockout: str = Field(
+        default="", description="Status-glyph warning ! knockout (dark, reads on amber disc)"
+    )
+    strip_status_dot: str = Field(
+        default="", description="Strip ACTIVE live-dot, substrate-harmonized green (distinct from accent_signal)"
+    )
+    accent_deep: str = Field(
+        default="", description="Deep accent (darker than accent): chart hero value + line-gradient end stop"
+    )
+
     fonts: list[str] = Field(
         default_factory=lambda: ["jetbrains-mono"],
         description="Font slugs to embed as base64 WOFF2 (e.g. 'orbitron', 'jetbrains-mono')",

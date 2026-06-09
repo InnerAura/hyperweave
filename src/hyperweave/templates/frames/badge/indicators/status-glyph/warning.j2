@@ -1,0 +1,11 @@
+{# WARNING — throb: a solid amber disc + deepened rim + dark knockout bang (bar +
+   dot), the whole mark scale-throbbing. Disc = the universal CI amber
+   (substrate-invariant); rim = the deepened amber; the bang is the dark knockout
+   (reads on the bright amber disc). Genome-derived literals for renderer
+   independence. #}
+<g class="hw-pri-throb">
+  <circle r="{{ status_glyph.disc_r }}" fill="{{ _genome_raw.badge_status_warning }}"/>
+  <circle r="{{ status_glyph.disc_r }}" fill="none" stroke="{{ _genome_raw.badge_status_warning_rim }}" stroke-width="{{ status_glyph.rim_stroke_w }}"/>
+  <rect x="{{ status_glyph.bang_bar_x }}" y="{{ status_glyph.bang_bar_y }}" width="{{ status_glyph.bang_bar_w }}" height="{{ status_glyph.bang_bar_h }}" rx="{{ status_glyph.bang_bar_rx }}" fill="{{ _genome_raw.badge_status_warning_knockout }}"/>
+  <circle cx="{{ status_glyph.axis }}" cy="{{ status_glyph.bang_dot_cy }}" r="{{ status_glyph.bang_dot_r }}" fill="{{ _genome_raw.badge_status_warning_knockout }}"/>
+</g>

@@ -1,0 +1,10 @@
+{# Primer horizontal-marquee BACKGROUND DISPATCHER (substrate split, Invariant 12).
+
+   Primer spans BOTH substrates (unlike brutalist's dark-only marquee), so the
+   background layer that sits BELOW the scroll track splits into substrate-
+   specific partials. The substrate is selected by interpolating the resolved
+   `substrate_kind` slug — never an `if substrate_kind == ...` conditional.
+   Flagship is light (porcelain), so the fallback is 'light'; context.py
+   resolves an unset substrate_kind from genome `category` (light) so the bare
+   ?genome=primer URL also takes the light path. #}
+{% include "frames/marquee-horizontal/primer-" ~ (substrate_kind | default('light')) ~ "-content.j2" %}

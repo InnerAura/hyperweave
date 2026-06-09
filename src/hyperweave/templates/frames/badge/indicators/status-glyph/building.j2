@@ -1,0 +1,7 @@
+{# BUILDING — spin: a faint full track ring + a 74%-arc spinning around centre
+   (stroke-dasharray "74 26", pathLength 100 → 74% of the circumference). Track =
+   ink at low opacity; arc = the identity tone (glyph_inner: bright on dark, accent
+   on light), baked literal for renderer independence. Static renderers show the
+   resting arc. #}
+<circle r="{{ status_glyph.spin_r }}" fill="none" stroke="{{ _genome_raw.ink }}" stroke-opacity="0.16" stroke-width="{{ status_glyph.spin_track_stroke_w }}"/>
+<g class="hw-pri-spin"><circle r="{{ status_glyph.spin_r }}" fill="none" stroke="{{ _genome_raw.glyph_inner }}" stroke-width="{{ status_glyph.spin_arc_stroke_w }}" stroke-linecap="round" pathLength="100" stroke-dasharray="{{ status_glyph.spin_dash }}"/></g>

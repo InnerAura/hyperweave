@@ -241,7 +241,7 @@ async def hw_discover(
                 "id": gid,
                 "name": g.get("name", gid),
                 "category": g.get("category", "dark"),
-                "profile": g.get("profile", "brutalist"),
+                "profile": g.get("profile", "flat"),
                 "compatible_motions": g.get("compatible_motions", ["static"]),
             }
             for gid, g in loader.genomes.items()

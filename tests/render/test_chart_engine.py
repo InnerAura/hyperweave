@@ -235,9 +235,10 @@ def test_build_markers_circle_emits_circle_radius() -> None:
         "cellular_half": 3,
         "cellular_neg_half": -3,
     }
-    # Circle has no dedicated endpoint partial; falls back to rect endpoint.
-    assert out[-1]["shape"] == "rect"
+    # Circle endpoints use the dedicated concentric-circle partial.
+    assert out[-1]["shape"] == "circle"
     assert out[-1]["is_endpoint"] is True
+    assert {"r1", "r2", "r3"} <= set(out[-1])
 
 
 def test_build_markers_diamond_emits_rotation_geometry() -> None:

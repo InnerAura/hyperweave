@@ -64,6 +64,17 @@ genomes:
     marquee-horizontal: [orbitron]
     receipt: [jetbrains-mono, orbitron, chakra-petch]
     rhythm-strip: [jetbrains-mono, orbitron, chakra-petch]
+  primer:
+    # Primer renders Inter (display) + JetBrains Mono (numerals / mono labels).
+    # icon + divider carry no <text>, so they fall back to the empty defaults row.
+    # The badge is ALL Inter — both the category LABEL (secondary branding) and the
+    # VALUE are --dna-font-display, so it embeds Inter only. (strip/stats/chart keep
+    # jetbrains-mono for their mono metric column headers.)
+    badge: [inter]
+    strip: [inter, jetbrains-mono]
+    stats: [inter, jetbrains-mono]
+    chart: [inter, jetbrains-mono]
+    marquee-horizontal: [inter, jetbrains-mono]
 
 # Documentation only in v0.3.7 — no runtime consumer. When CJK
 # rendering becomes in-scope, plumb a `locale` field through

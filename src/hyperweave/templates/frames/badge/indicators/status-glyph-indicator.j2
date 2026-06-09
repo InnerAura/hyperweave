@@ -1,0 +1,13 @@
+{# Per-state STATUS GLYPH indicator (primer). A state-specific status icon —
+   housing + breathing core (passing) / spinner arc (building) / disc + cross
+   (critical) / disc + bang (warning) / dim core (offline) — that the generic
+   circle/square/diamond shapes can't express. This is a first-class, all-genome
+   slot capability: any paradigm declaring badge.indicator_shape="status-glyph"
+   gets it. Geometry is resolver-supplied (status_glyph dict); the rendered icon
+   is selected by the normalized status_glyph_state via slug interpolation — no
+   state string compare here. The group is translated to the layout-computed
+   indicator center so the icon shares the badge's reading line; partials draw
+   around the local origin (0,0). #}
+<g data-hw-zone="status" transform="translate({{ indicator_center_x }},{{ indicator_center_y }})">
+{% include "frames/badge/indicators/status-glyph/" ~ (status_glyph_state | default('passing')) ~ ".j2" %}
+</g>

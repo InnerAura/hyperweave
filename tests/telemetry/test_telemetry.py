@@ -515,7 +515,7 @@ class TestGenerationEvent:
             timestamp="2026-03-18T10:00:00Z",
             artifact_type="badge",
             genome_id="test",
-            profile_id="brutalist",
+            profile_id="flat",
             motion="static",
             regime="normal",
             metadata_tier=3,

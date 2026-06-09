@@ -119,11 +119,17 @@ def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
         # check against its own seam divider, not a hardcoded "dissolve".
         divider_slug = cfg.dividers[0] if cfg.dividers else "dissolve"
 
-        # Compact-badge gate matches the proofset script: cellular paradigm
-        # declares glyph_size_compact, chrome does not.
+        # Compact-badge gate matches the proofset script: a paradigm supports
+        # compact when it declares distinct compact geometry (explicit compact
+        # size, a compact ratio — primer: 0.5, or a differing compact height —
+        # primer: 20 vs 36). cellular/primer support it; chrome does not.
         badge_paradigm_slug = cfg.paradigms.get("badge", "default")
         badge_paradigm = paradigms.get(badge_paradigm_slug)
-        supports_compact = badge_paradigm is not None and badge_paradigm.badge.glyph_size_compact > 0
+        supports_compact = badge_paradigm is not None and (
+            badge_paradigm.badge.glyph_size_compact > 0
+            or badge_paradigm.badge.glyph_size_compact_ratio > 0
+            or badge_paradigm.badge.frame_height_compact != badge_paradigm.badge.frame_height
+        )
 
         for variant in cfg.variants:
             # Divider slug is substrate-aware for brutalist: light scholars
@@ -134,17 +140,24 @@ def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
                 variant_divider_slug = "sigil" if substrate == "light" else "seam"
             else:
                 variant_divider_slug = divider_slug
-            # Chrome and brutalist both declare ``icon.supported_shapes:
-            # [circle, square]`` in their paradigm yaml — emit both shape
-            # files per variant. Automata is square-only.
-            if genome in (GenomeId.CHROME, GenomeId.BRUTALIST):
-                icon_files = [
-                    f"icon_github_{variant}_circle.svg",
-                    f"icon_github_{variant}_square.svg",
-                ]
+            # Icon shapes are data-driven from the genome's icon paradigm
+            # ``supported_shapes`` (chrome/brutalist/primer: [circle, square];
+            # automata: [square] → single canonical icon). Mirrors the proofset.
+            icon_paradigm = paradigms.get(cfg.paradigms.get("icon", "default"))
+            icon_shapes = list(icon_paradigm.icon.supported_shapes) if icon_paradigm else []
+            if len(icon_shapes) > 1:
+                icon_files = [f"icon_github_{variant}_{shape}.svg" for shape in icon_shapes]
             else:
                 icon_files = [f"icon_github_{variant}.svg"]
+            states = (
+                ArtifactStatus.PASSING,
+                ArtifactStatus.WARNING,
+                ArtifactStatus.CRITICAL,
+                ArtifactStatus.BUILDING,
+                ArtifactStatus.OFFLINE,
+            )
             compact_files = [f"badge_pypi_{variant}_compact.svg"] if supports_compact else []
+            compact_state_files = [f"badge_{s.value}_{variant}_compact.svg" for s in states] if supports_compact else []
             expected = [
                 f"badge_pypi_{variant}_default.svg",
                 *compact_files,
@@ -153,17 +166,9 @@ def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
                 f"marquee_horizontal_{variant}.svg",
                 f"divider_{variant_divider_slug}_{variant}.svg",
                 f"stats_{variant}.svg",
-                # 5 badge states
-                *[
-                    f"badge_{s.value}_{variant}.svg"
-                    for s in (
-                        ArtifactStatus.PASSING,
-                        ArtifactStatus.WARNING,
-                        ArtifactStatus.CRITICAL,
-                        ArtifactStatus.BUILDING,
-                        ArtifactStatus.OFFLINE,
-                    )
-                ],
+                # 5 badge states (+ compact states when the paradigm supports compact)
+                *[f"badge_{s.value}_{variant}.svg" for s in states],
+                *compact_state_files,
             ]
             for filename in expected:
                 path = var_dir / filename

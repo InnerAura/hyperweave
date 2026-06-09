@@ -2,7 +2,7 @@
   "id": "telemetry-codex",
   "name": "Telemetry Codex",
   "category": "light",
-  "profile": "brutalist",
+  "profile": "flat",
   "surface_0": "rgba(255,255,255,0.74)",
   "surface_1": "rgba(255,255,255,0.62)",
   "surface_2": "rgba(255,255,255,0.85)",

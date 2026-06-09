@@ -1,0 +1,39 @@
+{# Primer horizontal-marquee OVERLAY — sits ABOVE the scroll track. Renders the
+   IDENTITY CAP (the signature the porcelain specimen leads with) then the edge
+   fades. The cap is an opaque head band hiding the scroll beneath it, carrying
+   the brand glyph + scope (spec.title) + a quiet LIVE mark + a single breathing
+   pulse, closed by a cobalt seam. All geometry is resolver-supplied (liveness.cap_*);
+   fills are genome-derived LITERALS so the cap is true in static renderers too. #}
+{% if liveness.cap_band_w %}
+<rect data-hw-zone="cap" x="{{ liveness.origin }}" y="{{ liveness.origin }}" width="{{ liveness.cap_band_w }}" height="{{ mh }}" fill="{{ _genome_raw.surface_1 }}"/>
+{% endif %}
+{# Left edge fade — dissolves passing text into the band just past the cap seam. #}
+{% if liveness.cap_l_w %}
+<rect data-hw-zone="fade-left" x="{{ liveness.cap_seam_x | default(liveness.origin) }}" y="{{ liveness.origin }}"
+      width="{{ liveness.cap_fade_w | default(liveness.cap_l_w) }}" height="{{ mh }}" fill="url(#{{ uid }}-fade-l)"/>
+{% endif %}
+{% if liveness.cap_r_w %}
+<rect data-hw-zone="fade-right" x="{{ liveness.cap_r_x }}" y="{{ liveness.origin }}"
+      width="{{ liveness.cap_r_w }}" height="{{ mh }}" fill="url(#{{ uid }}-fade-r)"/>
+{% endif %}
+{% if liveness.cap_band_w %}
+<defs><clipPath id="{{ uid }}-cap-clip"><rect x="{{ liveness.origin }}" y="{{ liveness.origin }}" width="{{ liveness.cap_seam_x }}" height="{{ mh }}"/></clipPath></defs>
+<g clip-path="url(#{{ uid }}-cap-clip)">
+{% if cap_glyph_path %}
+{# Identity glyph — same bright identity token (glyph_inner) the badge / icon /
+   strip glyphs use, so noir reads consistently across every artifact. #}
+<svg x="{{ liveness.cap_glyph_x }}" y="{{ liveness.cap_glyph_y }}" width="{{ liveness.cap_glyph_size }}" height="{{ liveness.cap_glyph_size }}" viewBox="{{ cap_glyph_viewbox }}">
+  <path d="{{ cap_glyph_path }}" fill="{{ _genome_raw.glyph_inner }}"/>
+</svg>
+{% endif %}
+{% if cap_scope %}
+{# Identity TEXT = ink (the stats-card treatment), consistent across frames; the
+   glyph above carries the accent. Literal for renderer independence. #}
+<text data-hw-zone="cap-scope" x="{{ liveness.cap_scope_x }}" y="{{ liveness.cap_scope_y }}" font-family="var(--dna-font-mono, 'JetBrains Mono', monospace)" font-size="8" font-weight="700" letter-spacing="0.06em" fill="{{ _genome_raw.ink }}">{{ cap_scope }}</text>
+{% endif %}
+<text data-hw-zone="cap-live" x="{{ liveness.cap_live_x }}" y="{{ liveness.cap_live_y }}" font-family="var(--dna-font-mono, 'JetBrains Mono', monospace)" font-size="6" font-weight="700" letter-spacing="0.18em" fill="{{ _genome_raw.ink_secondary }}">LIVE</text>
+<circle cx="{{ liveness.cap_pulse_cx }}" cy="{{ liveness.cap_pulse_cy }}" r="{{ liveness.cap_pulse_housing_r }}" fill="{{ _genome_raw.surface_1 }}"/>
+<circle class="hw-mq-pulse" cx="{{ liveness.cap_pulse_cx }}" cy="{{ liveness.cap_pulse_cy }}" r="{{ liveness.cap_pulse_dot_r }}" fill="{{ _genome_raw.badge_status_passing }}"/>
+</g>
+<line x1="{{ liveness.cap_seam_x }}" y1="{{ liveness.origin }}" x2="{{ liveness.cap_seam_x }}" y2="{{ liveness.cap_seam_y2 }}" stroke="{{ _genome_raw.accent }}" stroke-opacity="0.2" stroke-width="1"/>
+{% endif %}

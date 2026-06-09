@@ -1,5 +1,5 @@
 {
-  "profile_id": "brutalist",
+  "profile_id": "flat",
   "description": "Flat, dense, monospace-forward. Sharp corners, square status indicators, accent bars.",
   "required_dna_vars": {
     "--dna-surface": {"type": "color", "source": "surface_0"},

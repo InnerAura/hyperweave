@@ -1,5 +1,5 @@
 {
-  "profile_id": "chrome",
+  "profile_id": "dimensional",
   "description": "Metallic, beveled, display-type-forward. Rounded corners, diamond status indicators, envelope gradients.",
   "required_dna_vars": {
     "--dna-surface": {"type": "color", "source": "surface_0"},
@@ -21,13 +21,13 @@
     "--dna-font-mono": {"type": "font-family", "source": "font_mono"},
     "--dna-font-display": {"type": "font-family", "source": "font_display"}
   },
-  "chrome_required": {
+  "material_required": {
     "envelope_stops": {"type": "array", "min_items": 3, "description": "Gradient stops for satin envelope effect"},
     "well_top": {"type": "color", "description": "Well gradient top color"},
     "well_bottom": {"type": "color", "description": "Well gradient bottom color"},
     "highlight_color": {"type": "color", "description": "Specular highlight color"}
   },
-  "chrome_optional": {
+  "material_optional": {
     "chrome_text_gradient": {"type": "array", "description": "Text gradient stops"},
     "light_mode": {"type": "object", "description": "Light mode color overrides"}
   },

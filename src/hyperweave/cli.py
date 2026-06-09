@@ -1066,7 +1066,7 @@ def validate_genome(
         raise typer.Exit(1)
 
     genome = json.loads(genome_path.read_text())
-    profile_id = profile or genome.get("profile", "brutalist")
+    profile_id = profile or genome.get("profile", "flat")
 
     # Load contract schema
     contract_path = Path(__file__).parent / "data" / "profiles" / f"{profile_id}.contract.json"
@@ -1083,11 +1083,11 @@ def validate_genome(
         if source_key and not genome.get(source_key):
             errors.append(f"MISSING: {var_name} (genome key '{source_key}' not set)")
 
-    # Check chrome-specific requirements
-    for key, key_spec in contract.get("chrome_required", {}).items():
+    # Check material-layer (dimensional profile) requirements
+    for key, key_spec in contract.get("material_required", {}).items():
         val = genome.get(key)
         if not val:
-            errors.append(f"MISSING: chrome required field '{key}'")
+            errors.append(f"MISSING: material required field '{key}'")
         elif key_spec.get("type") == "array" and isinstance(val, list):
             min_items = key_spec.get("min_items", 1)
             if len(val) < min_items:

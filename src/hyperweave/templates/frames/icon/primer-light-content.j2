@@ -1,0 +1,35 @@
+{# Primer ICON — light substrate. White→tint tile (panel_gradient_stops) lifted
+   by a soft two-layer drop shadow, hairline border, and an accent-toned glyph.
+   Genome-derived LITERAL fills (glyph_inner / stroke / accent) instead of var()
+   so the icon is true in plain rsvg / VS Code / Finder as well as browsers —
+   matching the specimen's literal hex (the shadow already hardened this way).
+   Geometry from compose/resolver (primer_icon_* tokens); zero arithmetic here. #}
+
+{% if icon_variant == 'brutalist-circular' %}
+{# Circle: white disc + soft cobalt shadow + a single thin cobalt-tint ring,
+   accent glyph centred. Clean white avatar tile; differentiation is frame shape. #}
+<g filter="url(#{{ uid }}-shadow)">
+  <circle cx="{{ icon_geometry.brutalist_circle_cx }}" cy="{{ icon_geometry.brutalist_circle_cy }}" r="{{ icon_geometry.brutalist_circle_r }}" fill="url(#{{ uid }}-bg)"/>
+</g>
+<circle cx="{{ icon_geometry.brutalist_circle_cx }}" cy="{{ icon_geometry.brutalist_circle_cy }}" r="{{ icon_geometry.brutalist_circle_r }}" fill="none" stroke="{{ _genome_raw.stroke }}" stroke-width="1"/>
+{% if glyph_path %}
+<svg x="{{ icon_geometry.primer_icon_circle_glyph_x }}" y="{{ icon_geometry.primer_icon_circle_glyph_y }}" width="{{ icon_geometry.primer_icon_glyph_size }}" height="{{ icon_geometry.primer_icon_glyph_size }}" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="{{ _genome_raw.glyph_inner }}" stroke="none"/>
+</svg>
+{% endif %}
+
+{% elif icon_variant == 'brutalist-square' %}
+{# Square: white rounded tile (softer corner than brutalist) + soft cobalt shadow
+   + thin cobalt-tint ring, accent glyph centred. Clean tile — differentiation is
+   frame shape, not chrome. #}
+<g filter="url(#{{ uid }}-shadow)">
+  <rect x="{{ icon_geometry.brutalist_square_x }}" y="{{ icon_geometry.brutalist_square_y }}" width="{{ icon_geometry.brutalist_square_w }}" height="{{ icon_geometry.brutalist_square_h }}" rx="{{ icon_geometry.primer_icon_square_rx }}" fill="url(#{{ uid }}-bg)"/>
+</g>
+<rect x="{{ icon_geometry.brutalist_square_x }}" y="{{ icon_geometry.brutalist_square_y }}" width="{{ icon_geometry.brutalist_square_w }}" height="{{ icon_geometry.brutalist_square_h }}" rx="{{ icon_geometry.primer_icon_square_rx }}" fill="none" stroke="{{ _genome_raw.stroke }}" stroke-width="1"/>
+{% if glyph_path %}
+<svg x="{{ icon_geometry.primer_icon_square_glyph_x }}" y="{{ icon_geometry.primer_icon_square_glyph_y }}" width="{{ icon_geometry.primer_icon_glyph_size }}" height="{{ icon_geometry.primer_icon_glyph_size }}" viewBox="{{ glyph_viewbox }}">
+  <path d="{{ glyph_path }}" fill="{{ _genome_raw.glyph_inner }}" stroke="none"/>
+</svg>
+{% endif %}
+
+{% endif %}

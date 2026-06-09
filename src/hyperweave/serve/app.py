@@ -8,8 +8,10 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import FastAPI, Query, Request, Response
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from pydantic import ValidationError as PydanticValidationError
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -1400,3 +1402,31 @@ def _classify_compose_exception(exc: BaseException) -> int:
     if isinstance(exc, ValueError) and (str(exc).startswith("variant '") or str(exc).startswith("divider_variant '")):
         return 422
     return 500
+
+
+@app.exception_handler(PydanticValidationError)
+async def _spec_validation_error_handler(request: Request, exc: PydanticValidationError) -> Response:
+    """Degrade ComposeSpec field-validation failures to the SMPTE error SVG.
+
+    The image GET routes construct ``ComposeSpec(...)`` directly, so a bad ENUM
+    value (e.g. an unknown ``divider_variant`` like ``aura`` on a server that
+    doesn't ship that divider yet, or an unknown ``shape``/``size``) raises a
+    pydantic ``ValidationError`` in the handler body — BEFORE
+    ``_compose_and_respond``'s try/except. Without this it escapes to FastAPI's
+    default 500 ``text/plain``, which GitHub Camo refuses to proxy, rendering a
+    broken-image icon instead of the NO SIGNAL fallback. (An unknown GENOME fails
+    later, at compose, so it was already caught — hence the asymmetry the divider
+    exposed.) Returning the SMPTE SVG at HTTP 200 puts enum failures on the same
+    degradation path as every other compose error. Only GET image routes degrade
+    to the SVG; POST /v1/compose (which builds its ComposeSpec from the JSON body)
+    keeps a JSON 422 error envelope.
+    """
+    if request.method != "GET":
+        return JSONResponse(status_code=422, content={"detail": jsonable_encoder(exc.errors())})
+    status_code = _classify_compose_exception(exc)
+    return Response(
+        content=_error_badge(str(exc), status_code=status_code),
+        media_type="image/svg+xml",
+        status_code=200,
+        headers=_error_response_headers(status_code),
+    )
