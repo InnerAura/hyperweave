@@ -326,6 +326,7 @@ def _compose(
     telemetry_data: dict[str, Any] | None = None,
     connector_data: dict[str, Any] | None = None,
     data_tokens: list[Any] | None = None,
+    matrix: dict[str, Any] | None = None,
 ) -> str:
     spec = ComposeSpec(
         type=frame_type,
@@ -346,6 +347,7 @@ def _compose(
         telemetry_data=telemetry_data,
         connector_data=connector_data,
         data_tokens=list(data_tokens) if data_tokens else [],
+        matrix=matrix,
     )
     return compose(spec).svg
 
@@ -1730,6 +1732,7 @@ def generate_readme(total: int, live_total: int) -> None:
     _emit_automata_readme()
     _emit_brutalist_readme()
     _emit_primer_readme()
+    _emit_matrix_readme()
     _emit_chrome_readme()
     _emit_telemetry_readme()
     _emit_state_readme()
@@ -2468,6 +2471,722 @@ def _emit_primer_readme() -> None:
     )
 
     (OUT / "README_PRIMER.md").write_text("\n".join(lines) + "\n")
+
+
+def _matrix_fixture_specs() -> dict[str, dict[str, Any]]:
+    """The six canonical sub-variant specs: five JSON fixtures shared with the
+    test suite + the connectors matrix generated from the registry."""
+    import json as _json
+
+    from hyperweave.compose.matrix_input import build_connector_registry_matrix
+    from hyperweave.config.loader import load_connector_registry
+
+    fixtures_dir = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "matrix"
+    specs = {p.stem: _json.loads(p.read_text()) for p in sorted(fixtures_dir.glob("*.json"))}
+    specs["connectors"] = build_connector_registry_matrix(load_connector_registry()).model_dump(mode="json")
+    return specs
+
+
+def _matrix_edge_specs() -> dict[str, dict[str, Any]]:
+    """The boundary suite: the specimens prove "does it look right"; these
+    prove "does it break". Dimension, content, structural, and
+    type-isolation boundaries — every render is eyeballed in
+    README_MATRIX.md. Boundaries carry REAL-SHAPED data (actual metric
+    names, plausible values) so the geometry stays judgeable even when the
+    structure is deliberately degenerate.
+    """
+    edge: dict[str, dict[str, Any]] = {}
+    # ── Dimension boundaries (structural proof, not design targets) ──
+    edge["dim-single-row"] = {
+        "title": "Single row",
+        "subtitle": "one model across five gauged benchmarks — heat needs no neighbors",
+        "row_glyph_tint": "brand",
+        "columns": [
+            {"id": "model", "label": "MODEL", "role": "label"},
+            {"id": "mmlu", "label": "MMLU", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
+            {"id": "gsm", "label": "GSM8K", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
+            {"id": "human", "label": "HumanEval", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
+            {"id": "math", "label": "MATH", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
+            {
+                "id": "price",
+                "label": "$/Mtok",
+                "sublabel": "↓ lower",
+                "kind": "numeric",
+                "polarity": "lower",
+                "unit": "$",
+            },
+        ],
+        "rows": [
+            {
+                "label": "Claude 3.5 Sonnet",
+                "glyph": "anthropic",
+                "cells": [{"value": 88.7}, {"value": 96.4}, {"value": 92.0}, {"value": 71.1}, {"value": 3.0}],
+            }
+        ],
+    }
+    edge["dim-single-col"] = {
+        "title": "Single column",
+        "subtitle": "one artifact, tri-state support per surface — dual-coded marks down a column",
+        "columns": [
+            {"id": "surface", "label": "SURFACE", "role": "label"},
+            {"id": "svg", "label": "SVG support", "kind": "check"},
+        ],
+        "rows": [
+            {"label": "GitHub README", "cells": [{"state": "full"}]},
+            {"label": "GitHub PR / issue body", "cells": [{"state": "full"}]},
+            {"label": "Notion embed", "cells": [{"state": "partial"}]},
+            {"label": "Slack link preview", "cells": [{"state": "partial"}]},
+            {"label": "Gmail body", "cells": [{"state": "none"}]},
+            {"label": "VS Code markdown preview", "cells": [{"state": "full"}]},
+        ],
+    }
+    edge["dim-1x1"] = {
+        "title": "True minimum",
+        "subtitle": "one cell still carries a semantic mark",
+        "columns": [{"id": "svg", "label": "Renders in README", "kind": "check"}],
+        "rows": [{"label": "hyperweave SVG", "cells": [{"state": "full"}]}],
+    }
+    _ENDPOINTS = [
+        "badge",
+        "strip",
+        "icon",
+        "divider",
+        "marquee",
+        "stats",
+        "chart",
+        "matrix",
+        "compose",
+        "frames",
+        "health",
+        "kit",
+        "live",
+        "discover",
+        "genomes",
+        "motions",
+    ]
+    edge["dim-soft-cap-16"] = {
+        "title": "Soft cap",
+        "subtitle": "16 rows of gauged latency — type and pitch tighten one step",
+        "unit": "ms",
+        "columns": [
+            {"id": "route", "label": "ROUTE", "role": "label"},
+            {"id": "p50", "label": "p50", "kind": "numeric", "polarity": "lower"},
+            {"id": "p95", "label": "p95", "kind": "numeric", "polarity": "lower"},
+        ],
+        "rows": [
+            {"label": f"GET /v1/{name}", "cells": [{"value": 8 + i * 3}, {"value": 21 + i * 7}]}
+            for i, name in enumerate(_ENDPOINTS)
+        ],
+    }
+    _SURFACES = [
+        ("GitHub README", "full", "full"),
+        ("GitHub PR / issue body", "full", "full"),
+        ("GitHub wiki", "full", "partial"),
+        ("GitHub gist", "full", "partial"),
+        ("GitHub Pages", "full", "full"),
+        ("GitLab README", "full", "partial"),
+        ("Bitbucket README", "partial", "none"),
+        ("npm package page", "full", "none"),
+        ("PyPI project page", "full", "none"),
+        ("crates.io readme", "partial", "none"),
+        ("Notion embed", "partial", "none"),
+        ("Obsidian vault", "full", "partial"),
+        ("Slack link preview", "partial", "none"),
+        ("Discord embed", "partial", "none"),
+        ("VS Code markdown preview", "full", "partial"),
+        ("JetBrains markdown", "full", "none"),
+        ("Linear issue", "partial", "none"),
+        ("Jira description", "none", "none"),
+        ("Confluence page", "partial", "none"),
+        ("Reddit post", "none", "none"),
+        ("X / Twitter card", "none", "none"),
+        ("Bluesky embed", "none", "none"),
+        ("Mastodon preview", "partial", "none"),
+        ("Apple Mail", "partial", "none"),
+        ("Gmail body", "none", "none"),
+        ("Outlook body", "none", "none"),
+        ("Docusaurus site", "full", "full"),
+        ("MkDocs site", "full", "full"),
+        ("Sphinx docs", "full", "partial"),
+        ("Hugo site", "full", "full"),
+    ]
+    edge["dim-hard-cap-30"] = {
+        "title": "Hard cap",
+        "subtitle": "a 30-surface support matrix — the ceiling still renders; 31 raises",
+        "columns": [
+            {"id": "surface", "label": "SURFACE", "role": "label"},
+            {"id": "renders", "label": "Renders", "kind": "check"},
+            {"id": "animates", "label": "Animates", "kind": "check"},
+        ],
+        "rows": [
+            {"label": name, "cells": [{"state": renders}, {"state": animates}]} for name, renders, animates in _SURFACES
+        ],
+    }
+    _EVALS = [
+        ("mmlu", "MMLU", "higher"),
+        ("gsm", "GSM8K", "higher"),
+        ("human", "HumanEval", "higher"),
+        ("math", "MATH", "higher"),
+        ("gpqa", "GPQA", "higher"),
+        ("mgsm", "MGSM", "higher"),
+        ("drop", "DROP", "higher"),
+        ("price", "$/Mtok", "lower"),
+    ]
+    _MODELS = [
+        ("Claude 3.5 Sonnet", "anthropic", [88.7, 96.4, 92.0, 71.1, 59.4, 91.6, 87.1, 3.0]),
+        ("GPT-4o", "openai", [88.7, 95.8, 90.2, 76.6, 53.6, 90.5, 83.4, 2.5]),
+        ("Gemini 1.5 Pro", "gemini", [85.9, 91.7, 84.1, 67.7, 46.2, 88.7, 78.9, 1.25]),
+        ("Qwen2.5-72B", "qwen", [86.1, 91.5, 86.6, 83.1, 49.0, 89.3, 76.7, 0.4]),
+    ]
+    edge["dim-max-cols-8"] = {
+        "title": "Max columns",
+        "subtitle": "a wall of gauged tiles — eight heat columns compress toward equal widths",
+        "row_glyph_tint": "brand",
+        "columns": [{"id": "model", "label": "MODEL", "role": "label"}]
+        + [
+            {
+                "id": cid,
+                "label": label,
+                "sublabel": "↑ higher" if pol == "higher" else "↓ lower",
+                "kind": "numeric",
+                "polarity": pol,
+            }
+            for cid, label, pol in _EVALS
+        ],
+        "rows": [
+            {"label": name, "glyph": glyph, "cells": [{"value": v} for v in values]} for name, glyph, values in _MODELS
+        ],
+    }
+    edge["dim-label-floor"] = {
+        "title": "Label column squeezed to its floor",
+        "columns": [{"id": "l", "label": "CAPABILITY", "role": "label"}]
+        + [{"id": f"c{j}", "label": f"TARGET {j + 1}", "kind": "check"} for j in range(6)],
+        "rows": [
+            {
+                "label": "An extremely long capability label that must truncate with a measured ellipsis",
+                "cells": [{"state": s} for s in ("full", "partial", "none", "full", "partial", "none")],
+            }
+            for _ in range(4)
+        ],
+    }
+    # ── Cell content boundaries ──
+    edge["content-chip-overflow-cap"] = {
+        "title": "Chip overflow past the four-row cap",
+        "subtitle": "chips always wrap; +N appears only when even four rows cannot hold them",
+        "columns": [
+            {"id": "pkg", "label": "PACKAGE", "role": "label"},
+            {"id": "deps", "label": "DEPENDENCIES", "kind": "chip"},
+            {"id": "lock", "label": "LOCKED", "kind": "pill"},
+        ],
+        "rows": [
+            {
+                "label": "hyperweave",
+                "sublabel": "pyproject",
+                "cells": [
+                    {
+                        "chips": [
+                            "fastapi",
+                            "pydantic",
+                            "jinja2",
+                            "typer",
+                            "uvicorn",
+                            "httpx",
+                            "pyyaml",
+                            "fastmcp",
+                            "rich",
+                            "anyio",
+                            "starlette",
+                            "click",
+                            "fonttools",
+                            "pillow",
+                            "certifi",
+                            "idna",
+                            "sniffio",
+                            "h11",
+                            "httpcore",
+                            "annotated-types",
+                            "typing-extensions",
+                            "markupsafe",
+                            "shellingham",
+                            "pygments",
+                            "mdurl",
+                            "markdown-it-py",
+                            "python-multipart",
+                            "websockets",
+                            "watchfiles",
+                            "httptools",
+                            "uvloop",
+                            "orjson",
+                            "ujson",
+                            "email-validator",
+                            "dnspython",
+                            "itsdangerous",
+                            "pyperclip",
+                            "docutils",
+                            "packaging",
+                            "six",
+                        ]
+                    },
+                    {"state": "on"},
+                ],
+            }
+        ],
+    }
+    edge["content-text-wrap-cap"] = {
+        "title": "Long values wrap",
+        "subtitle": "full commit subjects against narrow columns — wrap first, ellipsis last",
+        "columns": [
+            {"id": "sha", "label": "COMMIT", "role": "label"},
+            {"id": "subject", "label": "SUBJECT", "kind": "text", "width": 150},
+            {"id": "body", "label": "BODY", "kind": "text", "width": 150},
+        ],
+        "rows": [
+            {
+                "label": "1e15d4f",
+                "cells": [
+                    {"value": "docs: update README assets after the proofset regeneration pass"},
+                    {
+                        "value": "Regenerates every embedded artifact, refreshes the parity manifest, "
+                        "re-runs the raster verification harness across all eight primer variants, "
+                        "and pins the new solved widths in the acceptance README"
+                    },
+                ],
+            },
+            {
+                "label": "4867b34",
+                "cells": [
+                    {"value": "feat: primer genome across all seven existing frame types"},
+                    {"value": "Badge, strip, chart, stats, icon, marquee and divider all dispatch primer"},
+                ],
+            },
+            {
+                "label": "0059902",
+                "cells": [
+                    {"value": "fix: strip layout engine cell padding on chrome variants"},
+                    {"value": "Cell padding now solves from the paradigm config"},
+                ],
+            },
+        ],
+    }
+    edge["content-bar-identical"] = {
+        "title": "Bars with identical values",
+        "subtitle": "no differentiation to gauge — every bar fills alike",
+        "unit": "ms",
+        "columns": [
+            {"id": "region", "label": "REGION", "role": "label"},
+            {"id": "p50", "label": "p50 latency", "kind": "bar", "polarity": "lower"},
+        ],
+        "rows": [
+            {"label": region, "cells": [{"value": 250}]} for region in ("us-east", "eu-west", "ap-south", "sa-east")
+        ],
+    }
+    edge["content-bar-zero"] = {
+        "title": "Bar containing a zero",
+        "unit": "tok",
+        "columns": [
+            {"id": "path", "label": "CACHE PATH", "role": "label"},
+            {"id": "tok", "label": "Tokens fetched", "kind": "bar"},
+        ],
+        "rows": [
+            {"label": "warm cache hit", "cells": [{"value": 0}]},
+            {"label": "cold fetch", "cells": [{"value": 1800}]},
+        ],
+    }
+    edge["content-scattered-empty"] = {
+        "title": "Scattered empty cells",
+        "subtitle": "missing connector values stay blank, never fabricated",
+        "columns": [
+            {"id": "pkg", "label": "PACKAGE", "role": "label"},
+            {"id": "pypi", "label": "PyPI DLs"},
+            {"id": "npm", "label": "npm DLs"},
+            {"id": "crates", "label": "Crates DLs"},
+        ],
+        "rows": [
+            {"label": "hyperweave", "cells": [{"value": 4100}, {}, {}]},
+            {"label": "readme-ai", "cells": [{"value": 9100}, {"value": 1200}, {}]},
+            {"label": "svg-forge", "cells": [{}, {}, {"value": 880}]},
+        ],
+    }
+    edge["content-empty-row"] = {
+        "title": "One fully-empty row",
+        "subtitle": "a package no connector resolves",
+        "columns": [
+            {"id": "pkg", "label": "PACKAGE", "role": "label"},
+            {"id": "ver", "label": "Version"},
+            {"id": "dls", "label": "Downloads"},
+        ],
+        "rows": [
+            {"label": "hyperweave", "cells": [{"value": "0.4.0a2"}, {"value": 4100}]},
+            {"label": "ghost-package", "cells": [{}, {}]},
+            {"label": "readme-ai", "cells": [{"value": "3.2.1"}, {"value": 9100}]},
+        ],
+    }
+    # ── Structural boundaries (each rhetoric block independently omitted) ──
+    edge["struct-no-title"] = {
+        "title": "",
+        "columns": [
+            {"id": "fmt", "label": "FORMAT", "role": "label"},
+            {"id": "size", "label": "Size KB"},
+            {"id": "tokens", "label": "Tokens"},
+        ],
+        "rows": [
+            {"label": "raw SVG", "cells": [{"value": 44}, {"value": 3420}]},
+            {"label": "hw:payload", "cells": [{"value": 2}, {"value": 480}]},
+            {"label": "hwz/1 envelope", "cells": [{"value": 1}, {"value": 210}]},
+        ],
+    }
+    edge["struct-no-sections"] = {
+        "title": "Flat rows (no sections)",
+        "columns": [
+            {"id": "field", "label": "FIELD", "role": "label"},
+            {"id": "naked", "label": "Naked", "kind": "dot"},
+            {"id": "resonant", "label": "Resonant", "kind": "dot"},
+        ],
+        "rows": [
+            {"label": "title", "cells": [{"state": "on"}, {"state": "on"}]},
+            {"label": "created", "cells": [{"state": "on"}, {"state": "on"}]},
+            {"label": "aesthetic", "cells": [{"state": "on"}, {"state": "off"}]},
+            {"label": "reasoning", "cells": [{"state": "off"}, {"state": "on"}]},
+        ],
+    }
+    edge["struct-no-headline"] = {
+        "title": "Bar scale without a headline chip",
+        "unit": "tok",
+        "columns": [
+            {"id": "form", "label": "REPRESENTATION", "role": "label"},
+            {"id": "tok", "label": "Tokens", "kind": "bar", "polarity": "lower"},
+        ],
+        "rows": [
+            {"label": "raw SVG source", "cells": [{"value": 3420}]},
+            {"label": "hw:payload", "cells": [{"value": 480}]},
+            {"label": "hwz/1 envelope", "cells": [{"value": 210}]},
+        ],
+    }
+    edge["struct-no-summary"] = {
+        "title": "Checks without a score band",
+        "columns": [{"id": "cap", "label": "CAPABILITY", "role": "label"}]
+        + [{"id": c, "label": c.upper(), "kind": "check"} for c in ("svg", "png")],
+        "rows": [
+            {"label": "Animation", "cells": [{"state": "full"}, {"state": "none"}]},
+            {"label": "Crisp at any scale", "cells": [{"state": "full"}, {"state": "none"}]},
+        ],
+    }
+    edge["struct-no-hero"] = {
+        "title": "Pills without a recommended column",
+        "columns": [{"id": "f", "label": "FEATURE", "role": "label"}]
+        + [{"id": p, "label": p.title(), "kind": "pill"} for p in ("free", "pro")],
+        "rows": [
+            {"label": "API access", "cells": [{"value": False}, {"value": True}]},
+            {"label": "SSO / SAML", "cells": [{"value": False}, {"value": True}]},
+        ],
+    }
+    edge["struct-everything"] = {
+        "title": "Everything at once",
+        "subtitle": "headline + sections + hero + summary + axis + emphasis, composed",
+        "unit": "pts",
+        "hero_column": "b",
+        "headline": {"value": "3x", "label": "hero over baseline"},
+        "sections": ["First", "Second"],
+        "summary_label": "TOTAL",
+        "columns": [
+            {"id": "l", "label": "ITEM", "role": "label"},
+            {"id": "a", "label": "Baseline", "kind": "bar"},
+            {"id": "b", "label": "Hero", "kind": "bar"},
+        ],
+        "rows": [
+            {"label": "alpha", "section": "First", "cells": [{"value": 10}, {"value": 30}]},
+            {"label": "beta", "section": "First", "emphasis": True, "cells": [{"value": 12}, {"value": 36}]},
+            {"label": "gamma", "section": "Second", "cells": [{"value": 8}, {"value": 24}]},
+        ],
+        "summary_row": [{"value": "30"}, {"value": "90"}],
+    }
+    # ── Type isolation: one matrix per cell kind as the sole data column ──
+    iso_rows = [("alpha", 0), ("beta", 1), ("gamma", 2)]
+    edge["iso-text"] = {
+        "title": "Isolation: text",
+        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "NOTE", "kind": "text"}],
+        "rows": [{"label": n, "cells": [{"value": f"note {i}"}]} for n, i in iso_rows],
+    }
+    edge["iso-check"] = {
+        "title": "Isolation: check",
+        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "STATE", "kind": "check"}],
+        "rows": [
+            {"label": n, "cells": [{"state": s}]}
+            for (n, _), s in zip(iso_rows, ("full", "partial", "none"), strict=True)
+        ],
+    }
+    edge["iso-dot"] = {
+        "title": "Isolation: dot",
+        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "TIER", "kind": "dot"}],
+        "rows": [{"label": n, "cells": [{"state": "on" if i % 2 == 0 else "off"}]} for n, i in iso_rows],
+    }
+    edge["iso-bar"] = {
+        "title": "Isolation: bar",
+        "unit": "tok",
+        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "Tokens", "kind": "bar"}],
+        "rows": [{"label": n, "cells": [{"value": (i + 1) * 700}]} for n, i in iso_rows],
+    }
+    edge["iso-pill"] = {
+        "title": "Isolation: pill",
+        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "READY", "kind": "pill"}],
+        "rows": [{"label": n, "cells": [{"value": i % 2 == 0}]} for n, i in iso_rows],
+    }
+    edge["iso-numeric"] = {
+        "title": "Isolation: numeric heat",
+        "columns": [
+            {"id": "l", "label": "ROW", "role": "label"},
+            {"id": "v", "label": "Score", "kind": "numeric", "polarity": "higher"},
+        ],
+        "rows": [{"label": n, "cells": [{"value": 60 + i * 18}]} for n, i in iso_rows],
+    }
+    edge["iso-chip"] = {
+        "title": "Isolation: chip",
+        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "TAGS", "kind": "chip"}],
+        "rows": [{"label": n, "cells": [{"chips": [f"tag_{i}_{k}" for k in range(i + 2)]}]} for n, i in iso_rows],
+    }
+    edge["iso-glyph"] = {
+        "title": "Isolation: glyph",
+        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "MARK", "kind": "glyph"}],
+        "rows": [
+            {"label": n, "cells": [{"glyph": g}]}
+            for (n, _), g in zip(iso_rows, ("github", "pypi", "huggingface"), strict=True)
+        ],
+    }
+    return edge
+
+
+_MATRIX_EDGE_NOTES: dict[str, str] = {
+    "dim-single-row": "Tests: one model row across five gauged heat columns — column normalization "
+    "with no neighbors. Correct: every tile reads the neutral mid hue (a range of one has no poles) "
+    "and the frame solves to its natural width.",
+    "dim-single-col": "Tests: one data column — the solver with nothing to balance against. Correct: "
+    "the check column floors, the legend stays inline beside the subtitle, marks stay centered.",
+    "dim-1x1": "Tests: the true minimum input (one row, one column). Correct: a complete card — "
+    "masthead, headers, one mark, footer — at the width floor.",
+    "dim-soft-cap-16": "Tests: 16 rows, the soft cap — the shrink step. Correct: the type drops one "
+    "step and the pitch tightens; nothing clips.",
+    "dim-hard-cap-30": "Tests: 30 rows, the hard cap — the engine's last legal input. Correct: every "
+    "row still renders at compact pitch; row 31 raises instead.",
+    "dim-max-cols-8": "Tests: 8 data columns, the column cap — maximum horizontal compression. "
+    "Correct: columns compress toward their floors with no negative widths and no header collisions.",
+    "dim-label-floor": "Tests: six data columns squeezing the label column to its floor. Correct: row "
+    "labels truncate with a measured ellipsis; the key takes its own row under the wide title.",
+    "content-text-wrap-cap": "Tests: prose against narrow text columns. Correct: values wrap up to "
+    "three lines (rows grow to fit), and the ellipsis appears only on the final line of content that "
+    "exceeds the cap — never as the first behavior.",
+    "content-chip-overflow-cap": "Tests: a 40-dependency chip list against the four-row cap. Correct: "
+    "chips pack and wrap; past the cap one `+N` chip absorbs the remainder (the full list stays in "
+    "hw:payload).",
+    "content-bar-identical": "Tests: every bar the same value — a range with no spread. Correct: all "
+    "bars fill alike to the axis max; no fake differentiation.",
+    "content-bar-zero": "Tests: a zero value on a bar scale. Correct: the zero keeps a minimum visible "
+    "ink sliver against its track, and the axis still spans 0 to max.",
+    "content-scattered-empty": "Tests: null/empty cells scattered through a populated table. Correct: "
+    "empty cells render honest em-dashes — no invented zeros, no collapsed columns.",
+    "content-empty-row": "Tests: one row with every cell empty. Correct: the row keeps its pitch and "
+    "label; the cells stay quiet dashes.",
+    "struct-no-title": "Tests: no title, subtitle, or headline at all. Correct: the masthead collapses "
+    "entirely — the table starts near the top with no rail, scan, or legend.",
+    "struct-no-sections": "Tests: flat rows with no section grouping, with NON-nested dot columns "
+    "(inclusion sets that are not subsets of each other — the tier-dot fallback). Correct: the per-cell "
+    "dot grid with extent bars and the included/omitted key, never spans; no bands, no indent, the "
+    "primary row-title voice.",
+    "struct-no-headline": "Tests: a bar matrix without the headline chip (top-right score badge). "
+    "Correct: the masthead carries title and rail only; the axis still closes the scale.",
+    "struct-no-hero": "Tests: a pill table without a recommended column. Correct: no hero lane, no cap "
+    "tab — all columns carry equal visual weight.",
+    "struct-no-summary": "Tests: omitting the summary row. Correct: the table closes at its last row; "
+    "no empty score band reserves space.",
+    "struct-everything": "Tests: every rhetoric block at once — headline chip, sections, hero lane, "
+    "summary row, row emphasis — composed in one artifact. Correct: each block keeps its own zone "
+    "(chip on the title line, bands behind rows, lane behind the hero column, score band before the "
+    "footer) with zero collisions.",
+    "iso-text": "Tests: text as the sole data column — the rendered CellPlacement leak test. Correct: "
+    "text runs only; zero mark/dot/bar/pill/tile/chip/glyph markup.",
+    "iso-check": "Tests: check marks as the sole kind. Correct: tri-valence vector marks and their "
+    "masthead key only; no other kind's markup anywhere.",
+    "iso-dot": "Tests: dots as the sole kind. Correct: filled/hollow dots and their key only; no other kind's markup.",
+    "iso-bar": "Tests: bars as the sole kind. Correct: tracks, fills, and the shared axis only; no "
+    "other kind's markup.",
+    "iso-pill": "Tests: pills as the sole kind. Correct: capsule geometry only (gradient Yes, neutral "
+    "values); no other kind's markup.",
+    "iso-numeric": "Tests: numeric heat as the sole kind. Correct: column washes, tinted values, and "
+    "gauged underlines only; no other kind's markup.",
+    "iso-chip": "Tests: chips as the sole kind. Correct: packed chip capsules only; no other kind's markup.",
+    "iso-glyph": "Tests: registry glyphs as the sole kind. Correct: brand marks only — and unknown "
+    "registry ids fail loud at compose time, never silently.",
+}
+
+
+def _emit_matrix_readme() -> None:
+    """Emit outputs/README_MATRIX.md + render the matrix proofset.
+
+    Two halves, both required: the six sub-variant fixtures across primer
+    variants prove "does it look right" against the porcelain-final
+    specimens; the boundary suite proves "does it break" at the edges of
+    the input space (dimension, content, structural, type isolation). The
+    over-hard-cap entry intentionally raises and embeds the SMPTE error
+    artifact a README embedder would actually see.
+    """
+    from hyperweave.compose.engine import compose as _do_compose
+    from hyperweave.core.matrix import MatrixCapacityError
+    from hyperweave.serve.app import _error_badge
+
+    out_dir = OUT / "proofset" / "primer" / "matrix"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fixtures = _matrix_fixture_specs()
+    variants = ["noir", "carbon", "space", "anvil", "porcelain", "cream", "dusk", "petrol"]
+
+    def render(name: str, spec: dict[str, Any], variant: str = "porcelain") -> str:
+        svg = _compose("matrix", "primer", variant=variant, matrix=spec)
+        fname = f"{name}_{variant}.svg"
+        _write(out_dir / fname, svg)
+        return fname
+
+    lines: list[str] = [
+        "# HyperWeave Matrix — Sub-Variants + Boundary Suite",
+        "",
+        "One generative frame renders every structured table: columns declare a",
+        "cell kind (`text · check · dot · bar · pill · numeric · chip · glyph`),",
+        "a measured solver places every coordinate, and each artifact embeds its",
+        "lossless `hw:payload` (matrix/1), an `hwz/1` envelope, and a GFM markdown",
+        "shadow. The specimens prove *does it look right*; the boundary suite",
+        "proves *does it break*. Both are required — this file is the acceptance",
+        "surface.",
+        "",
+        "---",
+        "",
+        "## Sub-variants (porcelain)",
+        "",
+    ]
+    captions = {
+        "check": "Scored comparison — tri-valence marks, hero lane, score band, masthead legend.",
+        "connectors": "Registry — row glyphs, packed metric chips with `+N` overflow, status pills, "
+        "content-height rows. Generated from `data/connector_registry.yaml`.",
+        "tiers": "Progressive inclusion — chained sets auto-select the tier-span projection: "
+        "reach bars with terminal dots (3 spans for 27 marks), hero tier through the USE-FOR row, "
+        "a one-entry tier-reach key. Non-nested dot data keeps the tier-dot grid.",
+        "readcost": "Bar scale — shared axis with nice ticks, value column, load-bearing headline chip.",
+        "plans": "Pill tags — emerald Yes capsules, neutral value capsules, recommended-column hero lane.",
+        "benchmark": "Numeric heat — diverging teal-rose tiles, gauged underlines, brand-tinted row "
+        "glyphs (Gemini's gradient spark).",
+    }
+    for name in ("check", "connectors", "tiers", "readcost", "plans", "benchmark"):
+        fname = render(name, fixtures[name])
+        lines += [f"### {name}", "", captions[name], "", f"![{name}](proofset/primer/matrix/{fname})", ""]
+
+    lines += [
+        "---",
+        "",
+        "## Substrate derivation (check across the other seven variants)",
+        "",
+        "The chassis is entirely `--dna-*`; the semantic indicator hues are",
+        "genome-invariant (one hue per state, bright enough for both poles).",
+        "",
+    ]
+    for variant in variants:
+        if variant == "porcelain":
+            continue
+        fname = render("check", fixtures["check"], variant=variant)
+        lines += [f"**{variant}**", "", f"![check-{variant}](proofset/primer/matrix/{fname})", ""]
+
+    edge = _matrix_edge_specs()
+    groups = [
+        (
+            "Dimension boundaries",
+            "dim-",
+            "*Structural proof at the dimensional limits — filled with payloads that "
+            "exercise the cell kinds the matrix was built for (heat, checks, "
+            "gauges), so the boundary render still earns the frame.*",
+        ),
+        (
+            "Cell content boundaries",
+            "content-",
+            "*Packing, truncation, gauge degeneracy, and honest emptiness — the "
+            "cell builders at the edges of their input space.*",
+        ),
+        (
+            "Structural boundaries",
+            "struct-",
+            "*Each rhetoric block independently omitted (empty slots release "
+            "their space), then everything composed at once.*",
+        ),
+        (
+            "Type isolation (one kind per matrix — the visual CellPlacement leak test)",
+            "iso-",
+            "",
+        ),
+    ]
+    lines += ["---", "", "## Boundary suite", ""]
+    for heading, prefix, note in groups:
+        lines += [f"### {heading}", ""]
+        if note:
+            lines += [note, ""]
+        for name, spec in edge.items():
+            if not name.startswith(prefix):
+                continue
+            fname = render(name, spec)
+            lines += [
+                f"### {name}",
+                "",
+                _MATRIX_EDGE_NOTES[name],
+                "",
+                f"![{name}](proofset/primer/matrix/{fname})",
+                "",
+            ]
+        if prefix == "dim-":
+            # Over-hard-cap: compose() raises; the embedder-visible artifact is
+            # the SMPTE badge GET serves at HTTP 200 / X-HW-Error-Code: 422.
+            over = {
+                "title": "Over cap",
+                "columns": [{"id": "v", "label": "V"}],
+                "rows": [{"label": f"r{i}", "cells": [{"value": i}]} for i in range(31)],
+            }
+            try:
+                _compose("matrix", "primer", variant="porcelain", matrix=over)
+                raise AssertionError("31-row matrix must raise MatrixCapacityError")
+            except MatrixCapacityError as exc:
+                _write(out_dir / "dim-over-cap-31_porcelain.svg", _error_badge(str(exc), status_code=422))
+                lines += [
+                    "### dim-over-cap-31",
+                    "",
+                    "Tests: 31 rows, one past the hard cap. Correct: `compose()` raises",
+                    "`MatrixCapacityError`; image surfaces serve this SMPTE artifact at",
+                    "HTTP 200 / `X-HW-Error-Code: 422`:",
+                    "",
+                    f"> `{exc}`",
+                    "",
+                    "![dim-over-cap-31](proofset/primer/matrix/dim-over-cap-31_porcelain.svg)",
+                    "",
+                ]
+
+    check_result = _do_compose(
+        ComposeSpec(type="matrix", genome_id="primer", variant="porcelain", matrix=fixtures["check"])
+    )
+    lines += [
+        "---",
+        "",
+        "## The markdown shadow",
+        "",
+        "Every matrix also projects to a GFM table (`--markdown-out` on the CLI,",
+        '`respond: "json"` on POST /v1/compose, `render_target="markdown"` on MCP).',
+        "This is the check fixture's actual shadow:",
+        "",
+        "<details><summary>check.md</summary>",
+        "",
+        check_result.markdown.rstrip(),
+        "",
+        "</details>",
+        "",
+        "---",
+        "",
+        "Cross-references:",
+        "",
+        "- [README_PRIMER](README_PRIMER.md) — the 8-variant substrate matrix",
+        "- [Main README](../README.md) — installation, compose grammar, all genomes",
+        "",
+    ]
+    (OUT / "README_MATRIX.md").write_text("\n".join(lines) + "\n")
 
 
 def _emit_chrome_readme() -> None:
@@ -4644,6 +5363,29 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 mcp_args=mcp2,
             )
         )
+
+    # ── Matrix (v0.4.0-alpha.2) ─────────────────────────────────────────
+    # The generated connector matrix across direct/HTTP/MCP. The envelope's
+    # content-derived id is identical on all three paths by construction;
+    # prov.ts normalizes with the other timestamps.
+    specs.append(
+        ParitySpec(
+            spec_id="primer-matrix-connectors-porcelain",
+            compose_spec=ComposeSpec(
+                type="matrix",
+                genome_id="primer",
+                variant="porcelain",
+                connector_data={"matrix_adapter": "connector-registry"},
+            ),
+            http_path="/v1/matrix/connectors/primer.static?variant=porcelain",
+            mcp_args={
+                "type": "matrix",
+                "genome": "primer",
+                "variant": "porcelain",
+                "connector_data": {"matrix_adapter": "connector-registry"},
+            },
+        )
+    )
 
     return specs
 

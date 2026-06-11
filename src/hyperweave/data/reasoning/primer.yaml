@@ -2,59 +2,65 @@ primer:
   badge:
     dark:
       intent: |-
-        CI/status chip as an editorial label — a ~158x20 frame whose single
-        vertical bg gradient (surface-alt top → surface bottom) and centred
-        accent seam at the label|value boundary keep it legible at thumbnail
-        scale without a hard plate edge.
+        Shields-size two-plate chip at 20px rx4 — a tinted label plate and a
+        clear value plate split by a dark monochrome groove, mono throughout,
+        exact width from the rail 7|12 glyph|6|label|7|2 seam|8|value|8.
       approach: |-
-        One gradient ground under a 2px accent-seam fade (0→0.55→0.55→0),
-        Inter 11/700 label at the left anchor, Inter 11/600 value at the right
-        anchor, a 9px circle status dot. Rounded clip via --dna-corner.
+        One vertical surface_1→surface_0 gradient under a rgba(0,0,0,0.14)
+        label-plate tint; the seam is a 1px black-0.45 cut + 1px white-0.08
+        catch. JBM 600 9.5 label in muted ink_secondary, JBM 700 10.5 value in
+        neutral ink; the brand glyph in glyph_inner is the sole accent.
       tradeoffs: |-
-        Chose a gradient ground + seam fade over brutalist's two flat panels +
-        hard separator because primer earns recognition through soft material,
-        not plate geometry; a circle dot replaces the square bit so the status
-        reads as a quiet signal, not a cut.
+        Seam is per-substrate (dark-on-dark here) so a white groove never
+        vanishes on noir; the value stays neutral ink, never an accent — a
+        version has no pass/fail. No textLength: mono advance is exact, and
+        the camo bound would squeeze real JetBrains Mono.
     light:
       intent: |-
-        The light chip lifts off a white→tint card (panel_gradient_stops) by a
-        soft two-layer drop shadow rather than a drawn border, so a 20px-tall
-        badge keeps its edge on a white README without a hairline rule.
+        The same 20px two-plate rail with the white-on-white seam — the split
+        reads as a pressed crease in the white ground (ink at 0.09 + white at
+        0.85), not a drawn rule, so eight variants share one anatomy.
       approach: |-
-        Shadow-wrapped gradient ground (dy1/sd2 @0.10 + dy4/sd8 @0.06), dark
-        Inter ink label, accent value, accent seam fade, 9px circle dot. No
-        perimeter stroke — the shadow does the edge work.
+        Label plate tinted rgba(ink,0.03); seam = 1px ink-0.09 groove + 1px
+        white-0.85 shine; inner white-0.55 highlight inset 0.6 at rx 3.4 under
+        a 1px stroke border; a hair drop-shadow (shadow_color at 0.16, dy 0.5
+        blur 1) lifts the chip off the README white.
       tradeoffs: |-
-        Dropped the hairline perimeter (and its hardcoded inset) so geometry
-        stays resolver-supplied; the shadow defines the card against the page,
-        trading a crisp rule for depth that survives the light substrate.
+        White-on-white plates instead of a surface_2 tone block — a tone block
+        reads as a generic two-tone shields badge. Mono label runs muted
+        ink_secondary, not accent: one accent family per chip (the glyph),
+        not three.
   strip:
     dark:
       intent: |-
-        Telemetry rail — identity + 3 metric cells + a quiet status dot across
-        an 800x52 plate; numbers are the heroes, state is a 9px annotation at
-        the right terminus, not a BUILD-first dashboard.
+        Telemetry rail sharing the badge's type language — display-face
+        identity, mono data columns, neutral dividers — on a full-bleed 46px
+        rx10 card that spans the viewBox edge to edge.
       approach: |-
-        The plate is a single bg gradient under the shared zone pipeline
-        (owns_strip false); Inter 11/700 identity, JBM 7px labels over Inter
-        18px values, hairline class-mode dividers, a circle status socket+dot.
+        Inter 800 14.5 identity (baseline 28) after an 18px glyph at x=18;
+        JBM 600 8 labels (baseline 16.5, 1px tracking) over JBM 700 16 values
+        (baseline 33), middle-anchored; dividers are paired 1px rects y10 h24
+        (black 0.45 + white 0.10); a green pulse pinned at width-18.
       tradeoffs: |-
-        Rode the shared zone pipeline instead of brutalist's owns_strip custom
-        grammar, trading per-cell ornament for a calmer editorial rhythm; the
-        status is a circle terminus, not a square bookend.
+        Values are JetBrains Mono, not Inter — fixed-advance numerals match
+        the mono chips. No shadow margin: an embedded card has no page for a
+        blur to fade into, so the lift comes from the surface_1 crown and the
+        edge highlight; dividers stay neutral hairlines, never coloured seams.
     light:
       intent: |-
-        The light rail is a white→tint card raised by a soft drop shadow over
-        its full 800px width, so the metric numerals read as ink on paper with
-        the same 52px zone rhythm as the dark plate.
+        The light rail is the same full-bleed 46px card with inverted
+        hardware: cool-on-white dividers (ink 0.10 + white 0.7) and a bright
+        edge crown, so metric numerals read as ink on paper.
       approach: |-
-        Shadow-wrapped gradient ground, identical Inter/JBM type stack and
-        circle status as the dark partial — only the material (shadow) and ink
-        polarity differ; geometry comes from compute_strip_zones.
+        Identical geometry to the dark card — identity at 47, columns
+        middle-anchored on the 16.5/33 baselines, pulse at width-18 in
+        strip_status_dot green — with a white-0.85 edge crown fading by 45%
+        into a faint ink bottom tint, ringed by the stroke-colored border.
       tradeoffs: |-
-        Kept the dark and light strips on one geometry so measured == rendered
-        widths agree, trading a bespoke light layout for substrate parity and a
-        single set of metric-cell positions.
+        Kept dark and light on one geometry so measured == rendered widths
+        agree across all eight variants; labels muted ink_secondary, not
+        cobalt — one accent family (glyph + pulse), and status lives in the
+        pulse so the columns stay numeric.
   stats:
     dark:
       intent: |-
@@ -192,3 +198,37 @@ primer:
         Shipped aura as a single substrate-invariant template rather than a
         dark/light split, trading two partials for one because the glow is pure
         accent injection with no light-only element.
+  matrix:
+    dark:
+      intent: |-
+        Generative comparison table on a 900-wide card — masthead, measured
+        columns, semantic indicator cells, optional hero lane and score band;
+        reads as a protocol sheet, not a spreadsheet.
+      approach: |-
+        Column widths solved from measured headers and cell content with the
+        label column floored at 140px; 40px uniform row pitch (34px past the
+        16-row soft cap); 33px Inter 800 masthead over an ink hairline rail
+        carrying a 220px signal-gradient scan (6.472s, transform-only).
+        Indicator cells draw 2px geometric marks; the chassis is entirely
+        --dna-* so dark substrates restate it with zero template edits.
+      tradeoffs: |-
+        Check and heat hues stay genome-invariant across all eight variants
+        — they communicate state, not skin — trading full per-variant
+        retinting for grayscale-survivable dual coding; hero emphasis and the
+        headline chip are caller-opt-in only, trading automatic salience for
+        the no-uninvited-rhetoric contract.
+    light:
+      intent: |-
+        On paper substrates the same 900-wide matrix lifts off the page via
+        the two-layer primer drop shadow inside a 14px-radius hairline card,
+        the cobalt scan and footer seam carrying the variant accent.
+      approach: |-
+        Identical solved geometry to dark — one substrate-invariant content
+        stencil; light variants supply the panel gradient, border tint and
+        shadow color through genome DNA. Ink-derived hairlines render as
+        ink-primary at 2-6% opacity so rules sit INTO the paper rather than
+        on it.
+      tradeoffs: |-
+        Kept one stencil instead of a light split so measured column geometry
+        cannot drift between substrates; substrate nuance lives entirely in
+        material tokens, at the cost of any light-only structural flourish.

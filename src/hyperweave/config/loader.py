@@ -161,6 +161,37 @@ def load_font_embedding() -> dict[str, Any]:
     }
 
 
+@lru_cache(maxsize=1)
+def load_matrix_config() -> dict[str, Any]:
+    """Load matrix engine config from data/matrix.yaml.
+
+    Frame-generic cell knobs: ``caps``, ``polarity_keywords``,
+    ``semantic_palette``, ``cell_geometry``, ``mono_triggers``. Chassis
+    values live in the paradigm YAML instead. Cached because every matrix
+    resolution reads it.
+    """
+    path = _data_path("matrix.yaml")
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path) or {}
+    return dict(raw)
+
+
+@lru_cache(maxsize=1)
+def load_connector_registry() -> tuple[dict[str, Any], ...]:
+    """Load the connector registry from data/connector_registry.yaml.
+
+    Source for the generated connector matrix (the ``connector-registry``
+    matrix adapter). Returns the ordered connector entries; an immutable
+    tuple because the result is cached and shared.
+    """
+    path = _data_path("connector_registry.yaml")
+    if not path.exists():
+        return ()
+    raw = _read_yaml(path) or {}
+    return tuple(dict(entry) for entry in raw.get("connectors") or [])
+
+
 def _available_font_slugs() -> frozenset[str]:
     """Return the set of font slugs present in data/fonts/ as .b64 + .meta.json pairs."""
     fonts_dir = _data_path("fonts")

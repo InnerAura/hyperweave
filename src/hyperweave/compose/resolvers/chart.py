@@ -190,6 +190,7 @@ def resolve_chart(
     _chart_glyph = _kw.get("glyph_data") or {}
     chart_glyph_path = str(_chart_glyph.get("path", ""))
     chart_glyph_viewbox = str(_chart_glyph.get("viewBox", "") or "0 0 64 64")
+    chart_glyph_fill_rule = str(_chart_glyph.get("fill_rule", ""))
     chart_has_glyph = bool(chart_glyph_path)
     chart_glyph_size = 20
     chart_title_x = 132.0 if chart_has_glyph else 100.0
@@ -265,6 +266,7 @@ def resolve_chart(
         "chart_primer_callout_label": chart_primer_callout_label,
         "chart_glyph_path": chart_glyph_path,
         "chart_glyph_viewbox": chart_glyph_viewbox,
+        "chart_glyph_fill_rule": chart_glyph_fill_rule,
         "chart_has_glyph": chart_has_glyph,
         "chart_glyph_size": chart_glyph_size,
         "chart_title_x": chart_title_x,

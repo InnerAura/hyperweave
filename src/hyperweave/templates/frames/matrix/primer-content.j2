@@ -1,0 +1,108 @@
+{# Primer matrix chassis — single substrate-invariant stencil.
+   Every coordinate comes from matrix_layout (frozen MatrixLayout): zero
+   arithmetic, zero hex. Chassis paints are var(--dna-*); cell indicator
+   paints arrive pre-resolved on each CellPlacement (semantic,
+   genome-invariant). Light variants lift via the drop-shadow filter
+   (gated on panel_gradient_stops, the icon/stats pattern); dark variants
+   restate the identical geometry through their --dna-* overrides.
+   Paint order: ground → stripes/bands → hero lane → guides/extents →
+   chrome text → cells → summary/axis → footer → border. #}
+<g class="{{ uid }}-card" clip-path="url(#{{ uid }}-clip)"{% if panel_gradient_stops %} filter="url(#{{ uid }}-lift)"{% endif %}>
+  <rect width="{{ width }}" height="{{ height }}" fill="url(#{{ uid }}-card-bg)"/>
+{% for stripe in matrix_layout.row_stripes %}
+  <rect x="{{ stripe.x }}" y="{{ stripe.y }}" width="{{ stripe.w }}" height="{{ stripe.h }}" rx="{{ stripe.rx }}" fill="var(--dna-ink-primary)" opacity="{{ matrix_layout.stripe_opacity }}"/>
+{% endfor %}
+{% for band in matrix_layout.section_bands %}
+  <rect x="{{ band.band.x }}" y="{{ band.band.y }}" width="{{ band.band.w }}" height="{{ band.band.h }}" rx="{{ band.band.rx }}" fill="var(--dna-ink-primary)" opacity="{{ band.band_opacity }}"/>
+  <text class="{{ uid }}-section" x="{{ band.label.x }}" y="{{ band.label.y }}">{{ band.label.text | xml_escape }}</text>
+{% endfor %}
+{% if matrix_layout.hero_band %}
+  <rect x="{{ matrix_layout.hero_band.x }}" y="{{ matrix_layout.hero_band.y }}" width="{{ matrix_layout.hero_band.w }}" height="{{ matrix_layout.hero_band.h }}" rx="{{ matrix_layout.hero_band.rx }}" fill="var(--dna-signal)" opacity="{{ matrix_layout.hero_band_opacity }}"/>
+  <rect x="{{ matrix_layout.hero_band.x }}" y="{{ matrix_layout.hero_band.y }}" width="{{ matrix_layout.hero_band.w }}" height="{{ matrix_layout.hero_band.h }}" rx="{{ matrix_layout.hero_band.rx }}" fill="none" stroke="var(--dna-signal)" stroke-opacity="0.25" stroke-width="1"/>
+{% endif %}
+{% if matrix_layout.hero_cap %}
+  <rect x="{{ matrix_layout.hero_cap.x }}" y="{{ matrix_layout.hero_cap.y }}" width="{{ matrix_layout.hero_cap.w }}" height="{{ matrix_layout.hero_cap.h }}" rx="{{ matrix_layout.hero_cap.rx }}" fill="var(--dna-signal)"/>
+{% endif %}
+{% for guide in matrix_layout.guides %}
+  <line x1="{{ guide.x1 }}" y1="{{ guide.y1 }}" x2="{{ guide.x2 }}" y2="{{ guide.y2 }}" stroke="var(--dna-ink-primary)" stroke-width="1" opacity="{{ matrix_layout.guide_opacity }}"/>
+{% endfor %}
+{% for bar in matrix_layout.extent_bars %}
+  <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.w }}" height="{{ bar.h }}" rx="{{ bar.rx }}" fill="var(--dna-signal)" opacity="0.10"/>
+{% endfor %}
+{% for span in matrix_layout.tier_spans %}
+  <rect x="{{ span.bar.x }}" y="{{ span.bar.y }}" width="{{ span.bar.w }}" height="{{ span.bar.h }}" rx="{{ span.bar.rx }}" fill="var(--dna-signal)" opacity="{{ matrix_layout.tier_span_opacity }}"/>
+  <circle cx="{{ span.dot_cx }}" cy="{{ span.dot_cy }}" r="{{ span.dot_r }}" fill="var(--dna-signal)"/>
+{% endfor %}
+  {# ── Masthead (collapses entirely on title-less specs) ── #}
+{% if matrix_layout.header.title %}
+  <text class="{{ uid }}-title" x="{{ matrix_layout.header.title.x }}" y="{{ matrix_layout.header.title.y }}">{{ matrix_layout.header.title.text | xml_escape }}</text>
+{% endif %}
+{% if matrix_layout.header.subtitle %}
+  <text class="{{ uid }}-desc" x="{{ matrix_layout.header.subtitle.x }}" y="{{ matrix_layout.header.subtitle.y }}">{{ matrix_layout.header.subtitle.text | xml_escape }}</text>
+{% endif %}
+{% if matrix_layout.header.rule %}
+  <line x1="{{ matrix_layout.header.rule.x1 }}" y1="{{ matrix_layout.header.rule.y1 }}" x2="{{ matrix_layout.header.rule.x2 }}" y2="{{ matrix_layout.header.rule.y2 }}" stroke="var(--dna-ink-primary)" stroke-width="1" opacity="0.10"/>
+{% endif %}
+{% if matrix_layout.header.scan %}
+  <g clip-path="url(#{{ uid }}-clip)">
+    <rect class="{{ uid }}-scan" x="{{ matrix_layout.header.scan.x }}" y="{{ matrix_layout.header.scan.y }}" width="{{ matrix_layout.header.scan.w }}" height="{{ matrix_layout.header.scan.h }}" rx="{{ matrix_layout.header.scan.rx }}" fill="url(#{{ uid }}-scan-g)" opacity="0.85"/>
+  </g>
+{% endif %}
+{% if matrix_layout.header.headline_chip %}
+  <rect x="{{ matrix_layout.header.headline_chip.x }}" y="{{ matrix_layout.header.headline_chip.y }}" width="{{ matrix_layout.header.headline_chip.w }}" height="{{ matrix_layout.header.headline_chip.h }}" rx="{{ matrix_layout.header.headline_chip.rx }}" fill="var(--dna-signal)" fill-opacity="0.07" stroke="var(--dna-signal)" stroke-opacity="0.45" stroke-width="1"/>
+{% endif %}
+{% if matrix_layout.header.headline_value %}
+  <text class="{{ uid }}-headline" x="{{ matrix_layout.header.headline_value.x }}" y="{{ matrix_layout.header.headline_value.y }}">{{ matrix_layout.header.headline_value.text | xml_escape }}</text>
+{% endif %}
+{% if matrix_layout.header.headline_label %}
+  <text class="{{ uid }}-desc" x="{{ matrix_layout.header.headline_label.x }}" y="{{ matrix_layout.header.headline_label.y }}" text-anchor="end">{{ matrix_layout.header.headline_label.text | xml_escape }}</text>
+{% endif %}
+{% for key_text in matrix_layout.header.key_texts %}
+  <text class="{{ uid }}-desc" x="{{ key_text.x }}" y="{{ key_text.y }}">{{ key_text.text | xml_escape }}</text>
+{% endfor %}
+{% for key_rect in matrix_layout.header.key_rects %}
+  <rect x="{{ key_rect.x }}" y="{{ key_rect.y }}" width="{{ key_rect.w }}" height="{{ key_rect.h }}" rx="{{ key_rect.rx }}" fill="var(--dna-signal)" opacity="{{ matrix_layout.tier_span_opacity }}"/>
+{% endfor %}
+{% for cell in matrix_layout.header.key_marks %}
+{% include "frames/matrix/cells/" ~ cell.kind ~ ".j2" %}
+{% endfor %}
+  {# ── Column headers ── #}
+{% for h in matrix_layout.colheaders %}
+  <text class="{{ uid }}-colhead{% if h.accent %} {{ uid }}-colhead-accent{% endif %}" x="{{ h.label.x }}" y="{{ h.label.y }}" text-anchor="{{ h.label.anchor }}">{{ h.label.text | xml_escape }}</text>
+{% if h.sublabel %}
+  <text class="{{ uid }}-colheadsub" x="{{ h.sublabel.x }}" y="{{ h.sublabel.y }}" text-anchor="{{ h.sublabel.anchor }}">{{ h.sublabel.text | xml_escape }}</text>
+{% endif %}
+{% endfor %}
+  <line x1="{{ matrix_layout.lines.colheader_rule.x1 }}" y1="{{ matrix_layout.lines.colheader_rule.y1 }}" x2="{{ matrix_layout.lines.colheader_rule.x2 }}" y2="{{ matrix_layout.lines.colheader_rule.y2 }}" stroke="var(--dna-ink-primary)" stroke-width="1" opacity="0.10"/>
+  {# ── THE CELL LOOP — the open kind registry (a new kind = a new file) ── #}
+{% for cell in matrix_layout.cells %}
+{% include "frames/matrix/cells/" ~ cell.kind ~ ".j2" %}
+{% endfor %}
+{% if matrix_layout.summary %}
+  <line x1="{{ matrix_layout.summary.rule.x1 }}" y1="{{ matrix_layout.summary.rule.y1 }}" x2="{{ matrix_layout.summary.rule.x2 }}" y2="{{ matrix_layout.summary.rule.y2 }}" stroke="var(--dna-ink-primary)" stroke-width="1" opacity="0.12"/>
+{% if matrix_layout.summary.label %}
+  <text class="{{ uid }}-colhead" x="{{ matrix_layout.summary.label.x }}" y="{{ matrix_layout.summary.label.y }}">{{ matrix_layout.summary.label.text | xml_escape }}</text>
+{% endif %}
+{% endif %}
+{% if matrix_layout.axis %}
+{% for grid in matrix_layout.axis.grid_lines %}
+  <line x1="{{ grid.x1 }}" y1="{{ grid.y1 }}" x2="{{ grid.x2 }}" y2="{{ grid.y2 }}" stroke="var(--dna-ink-primary)" stroke-width="1" opacity="0.06"/>
+{% endfor %}
+{% for tick in matrix_layout.axis.tick_labels %}
+  <text class="{{ uid }}-axis" x="{{ tick.x }}" y="{{ tick.y }}" text-anchor="{{ tick.anchor }}">{{ tick.text | xml_escape }}</text>
+{% endfor %}
+{% if matrix_layout.axis.caption %}
+  <text class="{{ uid }}-axis" x="{{ matrix_layout.axis.caption.x }}" y="{{ matrix_layout.axis.caption.y }}" text-anchor="{{ matrix_layout.axis.caption.anchor }}">{{ matrix_layout.axis.caption.text | xml_escape }}</text>
+{% endif %}
+{% endif %}
+{% if matrix_layout.footer %}
+  <line x1="{{ matrix_layout.footer.seam.x1 }}" y1="{{ matrix_layout.footer.seam.y1 }}" x2="{{ matrix_layout.footer.seam.x2 }}" y2="{{ matrix_layout.footer.seam.y2 }}" stroke="var(--dna-signal)" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
+{% if matrix_layout.footer.notes %}
+  <text class="{{ uid }}-foot" x="{{ matrix_layout.footer.notes.x }}" y="{{ matrix_layout.footer.notes.y }}">{{ matrix_layout.footer.notes.text | xml_escape }}</text>
+{% endif %}
+{% if matrix_layout.footer.brand %}
+  <text class="{{ uid }}-foot {{ uid }}-foot-brand" x="{{ matrix_layout.footer.brand.x }}" y="{{ matrix_layout.footer.brand.y }}" text-anchor="{{ matrix_layout.footer.brand.anchor }}">{{ matrix_layout.footer.brand.text | xml_escape }}</text>
+{% endif %}
+{% endif %}
+</g>
+<rect x="{{ matrix_layout.rects.outer.x }}" y="{{ matrix_layout.rects.outer.y }}" width="{{ matrix_layout.rects.outer.w }}" height="{{ matrix_layout.rects.outer.h }}" rx="{{ matrix_layout.rects.outer.rx }}" fill="none" stroke="var(--dna-border)" stroke-width="1.2"/>

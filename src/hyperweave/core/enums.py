@@ -22,6 +22,7 @@ class FrameType(StrEnum):
     RHYTHM_STRIP = "rhythm-strip"
     STATS = "stats"
     CHART = "chart"
+    MATRIX = "matrix"
 
 
 class GenomeId(StrEnum):

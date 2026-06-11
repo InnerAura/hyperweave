@@ -1,0 +1,174 @@
+{
+  "title": "Plan comparison",
+  "subtitle": "four SaaS plans by feature",
+  "hero_column": "pro",
+  "columns": [
+    {
+      "id": "f",
+      "label": "FEATURE",
+      "role": "label"
+    },
+    {
+      "id": "free",
+      "label": "Free",
+      "sublabel": "$0",
+      "kind": "pill"
+    },
+    {
+      "id": "pro",
+      "label": "Pro",
+      "sublabel": "$12",
+      "kind": "pill"
+    },
+    {
+      "id": "team",
+      "label": "Team",
+      "sublabel": "$49",
+      "kind": "pill"
+    },
+    {
+      "id": "ent",
+      "label": "Enterprise",
+      "sublabel": "Custom",
+      "kind": "pill"
+    }
+  ],
+  "rows": [
+    {
+      "label": "Projects",
+      "cells": [
+        {
+          "value": "3"
+        },
+        {
+          "value": "Unlimited"
+        },
+        {
+          "value": "Unlimited"
+        },
+        {
+          "value": "Unlimited"
+        }
+      ]
+    },
+    {
+      "label": "API access",
+      "cells": [
+        {
+          "value": false
+        },
+        {
+          "value": true
+        },
+        {
+          "value": true
+        },
+        {
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "SSO / SAML",
+      "cells": [
+        {
+          "value": false
+        },
+        {
+          "value": false
+        },
+        {
+          "value": true
+        },
+        {
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "Audit log",
+      "cells": [
+        {
+          "value": false
+        },
+        {
+          "value": false
+        },
+        {
+          "value": true
+        },
+        {
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "Custom domains",
+      "cells": [
+        {
+          "value": false
+        },
+        {
+          "value": true
+        },
+        {
+          "value": true
+        },
+        {
+          "value": true
+        }
+      ]
+    },
+    {
+      "label": "Support SLA",
+      "cells": [
+        {
+          "value": null
+        },
+        {
+          "value": "48h"
+        },
+        {
+          "value": "24h"
+        },
+        {
+          "value": "4h"
+        }
+      ]
+    },
+    {
+      "label": "Seats",
+      "cells": [
+        {
+          "value": "1"
+        },
+        {
+          "value": "1"
+        },
+        {
+          "value": "25"
+        },
+        {
+          "value": "Unlimited"
+        }
+      ]
+    },
+    {
+      "label": "On-prem deploy",
+      "cells": [
+        {
+          "value": false
+        },
+        {
+          "value": false
+        },
+        {
+          "value": false
+        },
+        {
+          "value": true
+        }
+      ]
+    }
+  ]
+}

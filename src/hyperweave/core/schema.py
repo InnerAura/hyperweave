@@ -108,6 +108,15 @@ class GenomeSpec(BaseModel):
     name: str = Field(description="Human-readable name")
     category: str = Field(description="'dark' or 'light'")
     profile: str = Field(description="Profile ID reference (e.g. 'brutalist')")
+    glyph_tint: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Per-frame default glyph fill selection (ink | brand | full), "
+            "e.g. {'matrix': 'brand'}. Callers override via ComposeSpec "
+            "glyph_tint; per-slot IR declarations outrank both. Frames "
+            "absent from the dict default to ink."
+        ),
+    )
 
     # -- Surfaces --
     surface_0: str = Field(description="Primary surface color (hex)")

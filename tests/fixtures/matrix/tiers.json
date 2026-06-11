@@ -1,0 +1,183 @@
+{
+  "title": "Metadata tiers",
+  "subtitle": "hw:metadata field coverage by tier",
+  "sections": [
+    "Identity & provenance",
+    "Aesthetic DNA",
+    "Reasoning (XAI)",
+    "Extended (L3–L8)"
+  ],
+  "hero_column": "resonant",
+  "summary_label": "USE FOR",
+  "notes": "hw:tier-map · progressive inclusion · L1–L8",
+  "columns": [
+    {
+      "id": "field",
+      "label": "FIELD",
+      "role": "label"
+    },
+    {
+      "id": "naked",
+      "label": "Naked",
+      "kind": "dot"
+    },
+    {
+      "id": "resonant",
+      "label": "Resonant",
+      "kind": "dot"
+    },
+    {
+      "id": "dialectic",
+      "label": "Dialectic",
+      "kind": "dot"
+    }
+  ],
+  "rows": [
+    {
+      "label": "id · type · version",
+      "section": "Identity & provenance",
+      "cells": [
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "provenance · created",
+      "section": "Identity & provenance",
+      "cells": [
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "spec · size · a11y",
+      "section": "Identity & provenance",
+      "cells": [
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "chromatic · motion",
+      "section": "Aesthetic DNA",
+      "cells": [
+        {
+          "state": "off"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "geometry · material",
+      "section": "Aesthetic DNA",
+      "cells": [
+        {
+          "state": "off"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "intent · approach",
+      "section": "Reasoning (XAI)",
+      "cells": [
+        {
+          "state": "off"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "tradeoffs · spatial-notes",
+      "section": "Reasoning (XAI)",
+      "cells": [
+        {
+          "state": "off"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "semantic · governance",
+      "section": "Extended (L3–L8)",
+      "cells": [
+        {
+          "state": "off"
+        },
+        {
+          "state": "off"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    },
+    {
+      "label": "spatial-trace · topology",
+      "section": "Extended (L3–L8)",
+      "cells": [
+        {
+          "state": "off"
+        },
+        {
+          "state": "off"
+        },
+        {
+          "state": "on"
+        }
+      ]
+    }
+  ],
+  "summary_row": [
+    {
+      "value": "previews"
+    },
+    {
+      "value": "production"
+    },
+    {
+      "value": "agent corpora"
+    }
+  ]
+}

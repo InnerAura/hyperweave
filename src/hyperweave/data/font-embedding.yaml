@@ -20,6 +20,7 @@ defaults:
   strip: []
   stats: []
   chart: []
+  matrix: []
   marquee-horizontal: []
   receipt: []
   rhythm-strip: []
@@ -67,13 +68,16 @@ genomes:
   primer:
     # Primer renders Inter (display) + JetBrains Mono (numerals / mono labels).
     # icon + divider carry no <text>, so they fall back to the empty defaults row.
-    # The badge is ALL Inter — both the category LABEL (secondary branding) and the
-    # VALUE are --dna-font-display, so it embeds Inter only. (strip/stats/chart keep
-    # jetbrains-mono for their mono metric column headers.)
-    badge: [inter]
+    # The badge is ALL JetBrains Mono — both the category LABEL (600) and the
+    # VALUE (700) ride the mono rail with exact advance math, so it embeds JBM
+    # only. The strip pairs the Inter 800 identity with JBM metric columns.
+    badge: [jetbrains-mono]
     strip: [inter, jetbrains-mono]
     stats: [inter, jetbrains-mono]
     chart: [inter, jetbrains-mono]
+    # Matrix masthead title + pill text are Inter; descriptors, column
+    # headers, row labels, cell values, chips, and axis ticks are JBM.
+    matrix: [inter, jetbrains-mono]
     marquee-horizontal: [inter, jetbrains-mono]
 
 # Documentation only in v0.3.7 — no runtime consumer. When CJK

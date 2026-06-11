@@ -1,49 +1,29 @@
-{# Primer strip defs — plate material (bg gradient + bevel-edge gradient +
-   substrate drop shadow) + the shared-pipeline type classes (identity /
-   metric-label / metric-value). Sizes/weights/tracking MUST match
+{# Primer strip defs (v04alpha2) — card material (bg gradient + two-layer drop
+   shadow + inner edge-highlight gradient) + the shared-pipeline type classes
+   (identity / metric-label / metric-value). Sizes/weights/tracking MUST match
    data/paradigms/primer.yaml strip config so measured width == rendered width.
    Does NOT define {{ uid }}-clip (the parent strip.svg.j2 defs do). Substrate
-   split is by panel_gradient_stops presence, never a substrate_kind conditional. #}
+   split is by panel_gradient_stops presence, never a substrate_kind conditional.
+   Paint attributes stamp resolved-variant literals (no var() cascade) so the
+   card renders true in static renderers. #}
 <linearGradient id="{{ uid }}-bg" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}
-{% for stop in panel_gradient_stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-{% endfor %}{% else %}  <stop offset="0%" stop-color="var(--dna-surface-alt)"/>
-  <stop offset="100%" stop-color="var(--dna-surface)"/>
-{% endif %}</linearGradient>
-{# Bevel edge — convex-card illusion (bright top edge → dark bottom edge inner
-   stroke). Named white/black keep the bevel substrate-agnostic and out of the
-   genome chroma; light substrates use a soft bevel, dark a deeper one. #}
-<linearGradient id="{{ uid }}-edge" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}  <stop offset="0%" stop-color="white" stop-opacity="0.85"/>
-  <stop offset="40%" stop-color="white" stop-opacity="0"/>
-  <stop offset="60%" stop-color="black" stop-opacity="0"/>
-  <stop offset="100%" stop-color="black" stop-opacity="0.06"/>
-{% else %}  <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
-  <stop offset="40%" stop-color="white" stop-opacity="0"/>
-  <stop offset="60%" stop-color="black" stop-opacity="0"/>
-  <stop offset="100%" stop-color="black" stop-opacity="0.30"/>
-{% endif %}</linearGradient>
-{# Two-layer drop shadow on EVERY variant (dark variants flood resolved-variant
-   shadow_color = black). flood-color is an ATTRIBUTE — var() never resolves
-   there (black halo); the resolved-variant literal is correct in all renderers. #}
-{% if panel_gradient_stops %}
-<filter id="{{ uid }}-shadow" x="-4%" y="-20%" width="108%" height="160%">
-  <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.07"/>
-  <feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.039"/>
-</filter>
-{% else %}
-<filter id="{{ uid }}-shadow" x="-4%" y="-20%" width="108%" height="160%">
-  <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.12"/>
-  <feDropShadow dx="0" dy="5" stdDeviation="10" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.066"/>
-</filter>
-{% endif %}
-{# Vertical accent-fade seam — the inter-zone divider (gradient render mode). #}
-<linearGradient id="{{ uid }}-sep" x1="0" y1="0" x2="0" y2="1">
-  <stop offset="0%" stop-color="var(--dna-seam-color, var(--dna-signal))" stop-opacity="0"/>
-  <stop offset="22%" stop-color="var(--dna-seam-color, var(--dna-signal))" stop-opacity="0.5"/>
-  <stop offset="78%" stop-color="var(--dna-seam-color, var(--dna-signal))" stop-opacity="0.5"/>
-  <stop offset="100%" stop-color="var(--dna-seam-color, var(--dna-signal))" stop-opacity="0"/>
+  <stop offset="0" stop-color="{{ _genome_raw.surface_1 }}"/>
+  <stop offset="1" stop-color="{{ _genome_raw.surface_0 }}"/>
 </linearGradient>
+{# Inner edge-highlight — a white crown fading by 45%, ending in a faint ink
+   tint at the bottom edge on light substrates (the card's "lit top". On dark
+   the lift comes mostly from the surface_1 crown; the highlight stays faint). #}
+<linearGradient id="{{ uid }}-lp" x1="0" y1="0" x2="0" y2="1">
+{% if panel_gradient_stops %}  <stop offset="0" stop-color="white" stop-opacity="0.85"/>
+  <stop offset="45%" stop-color="white" stop-opacity="0"/>
+  <stop offset="100%" stop-color="rgba({{ ink_rgb }},0.05)"/>
+{% else %}  <stop offset="0" stop-color="white" stop-opacity="0.08"/>
+  <stop offset="45%" stop-color="white" stop-opacity="0"/>
+  <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+{% endif %}</linearGradient>
+{# NO drop-shadow filter: a full-bleed embedded card has no canvas for a blur
+   to render into — the viewBox clips it to corner-notch smudges outside the
+   rounded edge. The surface_1 crown, edge highlight, and border do the lift. #}
 <style>
 {{ font_faces | safe }}
 /* Primer strips are FLAT — suppress the global expression.css state glow
@@ -57,19 +37,19 @@ svg[data-hw-genome="primer"][data-hw-status="offline"]{filter:none;opacity:1}
 .{{ uid }}-identity {
   font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif);
   font-size: {{ identity_font_size }}px; font-weight: {{ identity_font_weight }}; letter-spacing: {{ identity_letter_spacing_em }}em;
-  fill: var(--dna-ink-primary);
+  fill: {{ _genome_raw.ink }};
 }
 .{{ uid }}-metric-label {
-  font-family: var(--dna-font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace);
   font-size: {{ strip_metric_label_size }}px; font-weight: {{ strip_metric_label_weight }}; letter-spacing: {{ strip_metric_label_letter_spacing_em }}em; text-transform: uppercase;
-  /* Column header resolves to the same genome --dna-label-text as the badge label
-     and stats card label (accent on light, muted on dark) — one label system. */
-  fill: var(--dna-label-text);
+  /* Muted ink_secondary — labels are annotation, not accent; the glyph in
+     glyph_inner and the pulse are the only accents (one accent family). */
+  fill: {{ _genome_raw.ink_secondary }};
 }
 .{{ uid }}-metric-value {
-  font-family: var(--dna-font-display, 'Inter', system-ui, sans-serif);
+  font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace);
   font-size: {{ strip_metric_value_size }}px; font-weight: {{ strip_metric_value_weight_resolved }}; letter-spacing: {{ strip_metric_value_letter_spacing_em }}em;
-  fill: var(--dna-ink-primary);
+  fill: {{ _genome_raw.ink }};
 }
 /* Strip status mark — the same animated state-glyph set as the badge (ping /
    spin / throb / shake), all compositor (transform / opacity), reduced-motion
@@ -79,7 +59,7 @@ svg[data-hw-genome="primer"][data-hw-status="offline"]{filter:none;opacity:1}
 .hw-pri-spin{transform-box:fill-box;transform-origin:center;animation:hw-pri-spin .9s linear infinite;will-change:transform}
 .hw-pri-throb{transform-box:fill-box;transform-origin:center;animation:hw-pri-throb 1.0s ease-in-out infinite;will-change:transform}
 .hw-pri-shake{animation:hw-pri-shake .65s ease-in-out infinite;will-change:transform}
-@keyframes hw-pri-ping{0%{transform:scale(.5);opacity:0}12%{opacity:.7}100%{transform:scale(2.2);opacity:0}}
+@keyframes hw-pri-ping{0%{transform:scale(.5);opacity:0}12%{opacity:.7}100%{transform:scale(2.3);opacity:0}}
 @keyframes hw-pri-spin{to{transform:rotate(360deg)}}
 @keyframes hw-pri-throb{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 @keyframes hw-pri-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}

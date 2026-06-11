@@ -11,14 +11,14 @@
 {% if mode == 'wire' %}
   {# Wire mode: stroke-only, no fill #}
   <g transform="scale({{ scale }}) translate(-{{ vb_cx }},-{{ vb_cy }})">
-    <path d="{{ glyph_path }}" fill="none"
+    <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="none"
           stroke="var(--dna-signal)" stroke-width="16"
           stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 {% elif mode == 'fill' or mode == 'auto' %}
   {# Fill mode: solid fill with genome signal color #}
   <g transform="scale({{ scale }}) translate(-{{ vb_cx }},-{{ vb_cy }})">
-    <path d="{{ glyph_path }}" fill="var(--dna-signal)" stroke="none"/>
+    <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="var(--dna-signal)" stroke="none"/>
   </g>
 {% endif %}
 </g>

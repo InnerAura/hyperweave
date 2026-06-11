@@ -1,0 +1,114 @@
+# Connector registry — the data source for the generated connector matrix.
+#
+# Productionizes the v0.3.12 hand-built connectors artifact: the matrix
+# frame's `connector-registry` adapter reads this file and emits a
+# MatrixSpec (glyph + chip + pill columns, content-height rows). Adding a
+# connector here updates the artifact — a data edit, never a Python edit.
+#
+# Fields per entry:
+#   id:       short row id (matches the hw:payload row ids of the v0.3.12
+#             artifact where one existed)
+#   provider: canonical provider key from serve/data_tokens.py (join key
+#             for token-derived rows)
+#   name:     display name
+#   prefix:   data-token prefix users type
+#   glyph:    data/glyphs.json registry id for the row identity mark
+#   metrics:  metric tokens the connector exposes (chips; +N overflow past
+#             the packing width — the full list always lives in hw:payload)
+#   live:     fetches live values (vs static lookup)
+#   auth:     no | opt | yes — token requirement
+
+connectors:
+  - id: gh
+    provider: github
+    name: GitHub
+    prefix: "gh:"
+    glyph: github
+    metrics: [stars, forks, issues, PRs, releases, license, watchers, contributors]
+    live: true
+    auth: "opt"
+  - id: pypi
+    provider: pypi
+    name: PyPI
+    prefix: "pypi:"
+    glyph: pypi
+    metrics: [downloads, version, wheels, python, license]
+    live: true
+    auth: "no"
+  - id: npm
+    provider: npm
+    name: npm
+    prefix: "npm:"
+    glyph: npm
+    metrics: [downloads, version, deps, size]
+    live: true
+    auth: "no"
+  - id: hf
+    provider: huggingface
+    name: Hugging Face
+    prefix: "hf:"
+    glyph: huggingface
+    metrics: [downloads, likes, task, library]
+    live: true
+    auth: "no"
+  - id: arxiv
+    provider: arxiv
+    name: arXiv
+    prefix: "arxiv:"
+    glyph: arxiv
+    metrics: [title, authors, published, updated, categories, doi]
+    live: true
+    auth: "no"
+  - id: docker
+    provider: docker
+    name: Docker Hub
+    prefix: "docker:"
+    glyph: docker
+    metrics: [pull_count, star_count, last_updated]
+    live: true
+    auth: "no"
+  - id: crates
+    provider: crates
+    name: crates.io
+    prefix: "crates:"
+    glyph: rust
+    metrics: [downloads, recent_downloads, version, license]
+    live: true
+    auth: "no"
+  - id: scorecard
+    provider: scorecard
+    name: OpenSSF Scorecard
+    prefix: "scorecard:"
+    glyph: shield
+    metrics:
+      [
+        score,
+        maintained,
+        code_review,
+        dangerous_workflow,
+        branch_protection,
+        security_policy,
+        token_permissions,
+        pinned_dependencies,
+        binary_artifacts,
+        cii_best_practices,
+        fuzzing,
+        packaging,
+        sast,
+        signed_releases,
+        license,
+        vulnerabilities,
+        dependency_update,
+        ci_tests,
+        contributors,
+      ]
+    live: true
+    auth: "no"
+  - id: dora
+    provider: dora
+    name: DORA
+    prefix: "dora:"
+    glyph: githubactions
+    metrics: [deploy_frequency, lead_time, change_failure_rate, mttr]
+    live: true
+    auth: "opt"

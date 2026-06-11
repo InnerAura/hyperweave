@@ -46,7 +46,7 @@ def version() -> None:
 def compose(
     frame_type: Annotated[
         str,
-        typer.Argument(help="Frame: badge, strip, icon, divider, marquee-horizontal, stats, chart"),
+        typer.Argument(help="Frame: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix"),
     ],
     title: Annotated[str, typer.Argument(help="Primary text (label, identity, username, owner/repo, ...)")] = "",
     value: Annotated[str, typer.Argument(help="Secondary text or chart subtype (e.g. 'stars')")] = "",
@@ -105,6 +105,26 @@ def compose(
             ),
         ),
     ] = "",
+    # Matrix options
+    spec_file: Annotated[
+        Path | None,
+        typer.Option("--spec-file", help="MatrixSpec JSON file (matrix frame): columns/rows table IR"),
+    ] = None,
+    preset: Annotated[
+        str,
+        typer.Option("--preset", help="Server-known matrix preset (matrix frame): connectors"),
+    ] = "",
+    markdown_out: Annotated[
+        Path | None,
+        typer.Option("--markdown-out", help="Also write the GFM markdown shadow (matrix frame)"),
+    ] = None,
+    glyph_tint: Annotated[
+        str,
+        typer.Option(
+            "--glyph-tint",
+            help="Glyph fill selection: ink | brand | full (per-slot IR declarations outrank it)",
+        ),
+    ] = "",
     # Output
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
     metrics: Annotated[str, typer.Option("--metrics", help="Strip metrics: 'STARS:2.9k,FORKS:278'")] = "",
@@ -118,6 +138,8 @@ def compose(
       hyperweave compose chart stars <owner/repo>                  [fetches star history]
       hyperweave compose badge STARS --data gh:anthropics/claude-code.stars
       hyperweave compose marquee-horizontal --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
+      hyperweave compose matrix --spec-file table.json -g primer --variant porcelain
+      hyperweave compose matrix --preset connectors -g primer --markdown-out table.md
       hyperweave compose <any-frame> --genome-file ./x.json        [custom genome]
     """
     import asyncio
@@ -179,6 +201,28 @@ def compose(
             typer.echo(f"(warning) chart fetch failed for {chart_owner}/{chart_repo}: {exc}", err=True)
             connector_data = None
 
+    # ── Matrix input: --spec-file (caller IR) or --preset (server-known) ──
+    matrix_spec: dict[str, object] | None = None
+    if frame_type == "matrix":
+        if spec_file is not None:
+            try:
+                matrix_spec = json.loads(spec_file.read_text())
+            except FileNotFoundError as exc:
+                typer.echo(f"Error: {exc}", err=True)
+                raise typer.Exit(2) from exc
+            except json.JSONDecodeError as exc:
+                typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
+                raise typer.Exit(2) from exc
+        elif preset:
+            from hyperweave.compose.matrix_input import resolve_matrix_preset
+            from hyperweave.core.matrix import MatrixInputError
+
+            try:
+                connector_data = resolve_matrix_preset(preset)
+            except MatrixInputError as exc:
+                typer.echo(f"Error: {exc}", err=True)
+                raise typer.Exit(2) from exc
+
     # ── ?data= / --data: unified data-token grammar ──
     # Marquee-horizontal consumes spec.data_tokens directly (the resolved list);
     # other frames receive the formatted "K1:V1,K2:V2" string via spec.value.
@@ -197,7 +241,7 @@ def compose(
             typer.echo(f"Error: --data parse failed: {exc}", err=True)
             raise typer.Exit(2) from exc
 
-        if frame_type in {"marquee-horizontal", "stats"}:
+        if frame_type in {"marquee-horizontal", "stats", "matrix"}:
             data_tokens_resolved = list(resolved)
         else:
             formatted = format_for_value(resolved)
@@ -227,6 +271,8 @@ def compose(
         chart_repo=chart_repo,
         connector_data=connector_data,
         data_tokens=data_tokens_resolved,
+        matrix=matrix_spec,
+        glyph_tint=glyph_tint,
     )
 
     result = do_compose(spec)
@@ -236,6 +282,9 @@ def compose(
         typer.echo(f"Wrote {output} ({result.width}x{result.height})")
     else:
         sys.stdout.write(result.svg)
+    if markdown_out is not None and result.markdown:
+        markdown_out.write_text(result.markdown)
+        typer.echo(f"Wrote {markdown_out} (markdown shadow)", err=True)
 
 
 @app.command()

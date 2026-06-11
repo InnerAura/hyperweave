@@ -1,0 +1,12 @@
+{# bar cell — magnitude bar on the shared axis: neutral track + accent fill +
+   right-aligned value (+ unit). Empty values render the dash text only. #}
+{% if cell.track %}
+  <rect x="{{ cell.track.x }}" y="{{ cell.track.y }}" width="{{ cell.track.w }}" height="{{ cell.track.h }}" rx="{{ cell.track.rx }}" fill="var(--dna-ink-primary)" opacity="0.07"/>
+{% endif %}
+{% if cell.bar_fill %}
+  <rect x="{{ cell.bar_fill.x }}" y="{{ cell.bar_fill.y }}" width="{{ cell.bar_fill.w }}" height="{{ cell.bar_fill.h }}" rx="{{ cell.bar_fill.rx }}" fill="{{ cell.tone }}" data-hw-cell="bar"/>
+{% endif %}
+  <text class="{{ uid }}-{{ cell.cls }}" x="{{ cell.text_x }}" y="{{ cell.text_y }}" text-anchor="{{ cell.text_anchor }}">{{ cell.text | xml_escape }}</text>
+{% if cell.sub_text %}
+  <text class="{{ uid }}-{{ cell.sub_cls }}" x="{{ cell.sub_x }}" y="{{ cell.sub_y }}" text-anchor="end">{{ cell.sub_text | xml_escape }}</text>
+{% endif %}

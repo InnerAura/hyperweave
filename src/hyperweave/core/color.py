@@ -17,6 +17,19 @@ def rgb_to_hex(r: int, g: int, b: int) -> str:
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
+def hex_to_rgb_triplet(hex_color: str) -> str:
+    """Convert a hex color to an ``"r,g,b"`` string for rgba() embedding.
+
+    Returns an empty string for missing/malformed input so callers can gate
+    on truthiness instead of catching.
+    """
+    try:
+        r, g, b = hex_to_rgb(hex_color)
+    except ValueError:
+        return ""
+    return f"{r},{g},{b}"
+
+
 def relative_luminance(hex_color: str) -> float:
     """Compute WCAG 2.1 relative luminance of a hex color."""
     r, g, b = hex_to_rgb(hex_color)

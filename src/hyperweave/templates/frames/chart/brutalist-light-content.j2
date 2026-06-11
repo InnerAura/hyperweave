@@ -93,7 +93,7 @@
     {% if glyph_path %}
     <g data-hw-zone="glyph" transform="translate({{ chart_layout.rects.brutalist_glyph.x }}, {{ chart_layout.rects.brutalist_glyph.y }})">
       <svg viewBox="{{ glyph_viewbox }}" width="{{ chart_layout.rects.brutalist_glyph.w }}" height="{{ chart_layout.rects.brutalist_glyph.h }}">
-        <path d="{{ glyph_path }}" fill="var(--dna-chart-glyph, var(--dna-seam-color, var(--dna-ink-primary)))"/>
+        <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="var(--dna-chart-glyph, var(--dna-seam-color, var(--dna-ink-primary)))"/>
       </svg>
     </g>
     {% endif %}

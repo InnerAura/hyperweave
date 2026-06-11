@@ -1,0 +1,6 @@
+{# pill cell — binary Yes capsule (semantic gradient) / tri-state opt-in /
+   neutral value capsule / dash. Capsule presence dual-codes the state. #}
+{% if cell.pill %}
+  <rect x="{{ cell.pill.x }}" y="{{ cell.pill.y }}" width="{{ cell.pill.w }}" height="{{ cell.pill.h }}" rx="{{ cell.pill.rx }}" fill="{% if cell.pill_gradient %}url(#{{ uid }}-pill-yes){% else %}{{ cell.tone }}{% endif %}" data-hw-cell="pill-{{ cell.mark_state }}"/>
+{% endif %}
+  <text class="{{ uid }}-{{ cell.cls }}" x="{{ cell.text_x }}" y="{{ cell.text_y }}" text-anchor="{{ cell.text_anchor }}"{% if cell.text_fill %} style="fill:{{ cell.text_fill }}"{% endif %}>{{ cell.text | xml_escape }}</text>

@@ -8,105 +8,113 @@ description: >
 requires_genome_fields: []
 
 badge:
-  # ONE 22px editorial badge (v04alpha1 specimen). Primer ships a single size — no
-  # compact form. Inter category LABEL (7.5/500, secondary branding) + Inter VALUE
-  # (10.5/600, primary payload) + 10px brand glyph, split into a label zone and a
-  # recessed value zone by a carved 3-layer seam. frame_height_compact ==
-  # frame_height so no distinct small badge exists.
+  # Shields-anatomy two-plate badge (v04alpha2 specimen): a tinted label plate
+  # (12px brand glyph + mono label) and a clear value plate split by a paired
+  # 1px groove + 1px shine seam, inside a 20px rx4 chip with an inner white
+  # highlight, a 1px border, and a hair drop-shadow. Width is EXACT from mono
+  # advance — rail: 7 | glyph 12 | 6 | label | 7 | seam 2 | 8 | value | 8 —
+  # so the canonical PYPI/0.3.14 badge closes at 112.1 x 20. No compact form.
   default_size: default
-  # Label + value are BOTH Inter — the label is secondary BRANDING inside the left
-  # chamber (identity text), not a mono metric label (strip/stats column headers
-  # are the mono labels). One typographic family, separated by size + weight, not
-  # by font; the value must read as primary without dominating the 22px frame.
-  label_font_family: Inter
-  value_font_family: Inter
-  label_font_size: 7.5
+  frame_height: 20
+  frame_height_compact: 20
+  badge_corner: 4
+  # The rail starts at the badge edge — no accent column.
+  accent_w: 0
+  # Mono throughout: JBM 600 label (muted ink_secondary voice) + JBM 700 value
+  # (neutral ink). No textLength — mono advance is exact, and the camo bound
+  # would squeeze real JetBrains Mono (exact-rail paradigms suppress it).
+  label_font_family: JetBrains Mono
+  value_font_family: JetBrains Mono
+  label_font_size: 9.5
   value_font_size: 10.5
-  label_font_weight: 500
-  value_font_weight: 600
-  frame_height: 22
-  frame_height_compact: 22
-  glyph_size_ratio: 0.5
-  # 10px brand glyph (was 11): ratio 0.5 → 11 at h=22, capped to 10 by the max.
-  glyph_size_max: 10
-  # Optical centring per chamber, recomputed for the new (Inter) metrics — NOT the
-  # old JBM-tuned baselines. text_y = height/2 + size * factor; factor ≈ Inter
-  # cap-height/2 ≈ 0.35. VALUE 10.5 → y≈14.7, LABEL 7.5 → y≈13.6, so each text's
-  # cap-height centres in its chamber at the new sizes. Both Inter ⇒ one factor.
-  center_text_factor: 0.35
-  label_center_text_factor: 0.35
-  # Status light sized to the value cap height: 8px (= 10.5 * 0.75) base diameter.
-  # Each state renders its own animated mark (ping / spin / shake / throb) at this
-  # base radius; the disc states fill it, ping/spin inset proportionally.
+  label_font_weight: 600
+  value_font_weight: 700
+  # 0.5px tracking at 9.5px = 0.052632em; the value runs untracked.
+  label_letter_spacing_em: 0.052632
+  value_letter_spacing_em: 0.0
+  # Specimen baselines: value y=13.4 (= 10 + 10.5*0.324), label y=13.3
+  # (= 10 + 9.5*0.347) — each text optically centred in the 20px frame.
+  center_text_factor: 0.324
+  label_center_text_factor: 0.347
+  # 12px brand glyph (20 * 0.6), midline-centred at y=4 — the family-standard
+  # badge glyph weight (brutalist / chrome / cellular all run ratio 0.6 capped
+  # at 12). The specimen drew 13, but the solid silhouette blooms on the dark
+  # substrates (bright-on-dark reads larger); 12 restores the family weight.
+  glyph_size_ratio: 0.6
+  glyph_size_max: 12
+  content_center_geometric: true
+  # Explicit rail pads; pad 7 covers the remaining interior rhythm (the
+  # leading state-mark gap on stateful badges).
+  pad: 7
+  rail_start_pad: 7
+  glyph_label_gap: 6
+  rail_end_pad: 8
+  # Paired groove+shine seam rides the etched-seam slot: 2px total, the shine
+  # hairline offset 1px from the groove. Asymmetric gaps per the specimen:
+  # 7 label-side, 8 value-side.
+  seam_render_w: 2.0
+  seam_specular_offset: 1.0
+  seam_gap_left: 7
+  seam_gap_right: 8
+  text_anchor: middle
+  # Status-glyph state marks (ping / spin / shake / throb) lead the value as a
+  # pill [mark] value — the locked v04alpha1 state architecture, re-tuned into
+  # the 20px frame. Status light = value cap height (10.5 * 0.75 ≈ 8px).
   indicator_cap_ratio: 0.75
-  # Per-state status glyph led to the LEFT of the value as a pill [icon] value —
-  # matching the specimen. Selects indicators/status-glyph-indicator.j2, which
-  # sub-dispatches by normalized state. Reused verbatim on the strip status zone.
   indicator_shape: status-glyph
   indicator_leads_value: true
-  # Brand glyph + state mark ride the badge midline (height/2), as the specimen
-  # places them; the value baseline carries the optical centring on its own.
-  content_center_geometric: true
   light_indicator_inner_ratio: 0.5
-  # Carved 3-layer groove seam (faint edge + dark recess + bright highlight),
-  # centred on the engine seam midline. seam_pixel_w is the recess-core width;
-  # the resolver derives the flanking highlight rects from it.
-  seam_pixel_w: 1.1
-  # seam_pixel_w only thins the PAINTED groove; the cursor walk still reserves
-  # sep_w(2) + seam_w for the seam. The flat profile's badge_seam_width is 3, so
-  # the value zone's left edge landed ~2.5px past the 2.5px painted groove and the
-  # value drifted right. Match the reservation to the thin seam (sep_w 2 + seam_w
-  # 1 ≈ the 2.5px groove) so the seam→value gap is not over-reserved.
-  seam_w: 1
-  # Centre the value word in the VISIBLE recess (carved-seam right edge → badge
-  # edge), not the cursor-reserved value zone — symmetric seam→value / value→edge
-  # gaps at every value width. See ParadigmBadgeConfig.value_centers_in_recess.
-  value_centers_in_recess: true
-  label_letter_spacing_em: 0.04
-  value_letter_spacing_em: -0.01
-  # Proportional pad — gaps scale with the value font (value 10.5 → pad 6).
-  pad_ratio: 0.6
 
 strip:
-  # Identity (Inter 15/600 cobalt) | thin cobalt-fade inset seams | metric cells
-  # (JBM 8 muted label over Inter 17 ink value) | universal ACTIVE status light.
-  value_font_size: 17
-  value_font_family: Inter
-  label_font_size: 8
-  label_font_family: JetBrains Mono
-  # Polished material card: rounded plate + bevel-edge highlight + perimeter
-  # hairline + drop shadow (all substrates), painted by the primer content partial.
+  # Telemetry rail (v04alpha2 specimen): display-face identity (Inter 800
+  # 14.5) | paired groove/shine dividers | mono metric columns (JBM 600 8
+  # muted labels over JBM 700 16 neutral-ink values) | green pulse pinned
+  # 18px off the right edge — on a full-bleed 46px rx10 card. NO canvas
+  # inset: an embedded artifact has no page for a shadow to fade into, so an
+  # inset margin renders as a hard-clipped shadow box on the README ground.
+  # The card spans the viewBox (alpha.1 posture); the shadow filter clips
+  # behind it and the inner highlight + border carry the edge.
+  strip_height: 46
   plate_corner: 10
-  # Identity glyph + text use the BRIGHT seam_color accent, not the muted
-  # glyph_inner (which reads dull grey on dark variants).
-  identity_accent_from_seam: true
-  # Vertical accent-fade seam (url(#{uid}-sep)), not a flat gray rule.
-  divider_render_mode: gradient
-  divider_inset: 12
-  status_shape_rendering: geometricPrecision
-  label_font_weight: 700
-  # Unified primer label voice tracking (matches badge/stats/chart at 0.12em).
-  label_letter_spacing_em: 0.12
-  value_font_weight: 700
-  value_letter_spacing_em: -0.02
+  # Identity: 18px glyph at x=18, 11px gap, Inter 800 14.5 untracked,
+  # baseline 28 (card-space).
+  strip_glyph_ratio: 0.391
+  glyph_inset: 18
+  glyph_text_gap: 11
   identity_font_family: Inter
-  identity_font_size: 15
-  identity_font_weight: 600
-  identity_letter_spacing_em: -0.01
-  # The editorial ACTIVE live dot rides every strip (telemetry, not CI status).
+  identity_font_size: 14.5
+  identity_font_weight: 800
+  identity_letter_spacing_em: 0.0
+  identity_baseline_y: 28
+  # Metric columns: muted mono labels (1px tracking at 8px = 0.125em) over
+  # neutral-ink mono values, middle-anchored, baselines 16.5 / 33 (card-space).
+  label_font_family: JetBrains Mono
+  label_font_size: 8
+  label_font_weight: 600
+  label_letter_spacing_em: 0.125
+  value_font_family: JetBrains Mono
+  value_font_size: 16
+  value_font_weight: 700
+  value_letter_spacing_em: 0.0
+  metric_label_baseline_y: 16.5
+  metric_value_baseline_y: 33
+  # Paired groove+shine dividers: 24px tall, 10px below the card top —
+  # neutral hairlines that invert per substrate, never coloured seams.
+  divider_render_mode: paired-rect
+  divider_y: 10
+  divider_h: 24
+  # Status pulse: housing r 5.3 (ping core r 3.4 / ring stroke 1.6), pinned at
+  # content_width - 18. The editorial ACTIVE live dot rides every strip.
   status_always: true
-  # Shared zone pipeline (NOT brutalist's owns_strip custom layout): identity +
-  # metric cells + quiet status, accent-fade inset seams. Width is CONTENT-ADAPTIVE
-  # via compute_strip_zones — the natural widths grow with metric count (≈222 → 255
-  # → 289 → 335 for 1..4 metrics). No fixed floor: the prior strip_min_width=540 +
-  # stretch clamped+stretched every strip to the full 4-metric width regardless of
-  # how many metrics it carried, defeating the shared engine's adaptivity.
+  status_right_inset: 18
+  status_glyph_r: 5.3
+  status_shape_rendering: geometricPrecision
+  # Shared zone pipeline (NOT brutalist's owns_strip custom layout). Width is
+  # CONTENT-ADAPTIVE via compute_strip_zones; constant inter-cell gutter =
+  # cell_pad (explicit gutter separates metrics — adjacent values would
+  # otherwise collide, e.g. "12.4k1.2k").
   owns_strip: false
   strip_pad: 16
-  # Constant inter-cell gutter = 2*strip_pad (matches the strip rhythm). The prior
-  # cell_pad=0 relied on stretch_cells_to_min_width to push the cells apart; with
-  # the strip now content-adaptive, an explicit gutter is what separates metrics
-  # (otherwise adjacent values collide, e.g. "12.4k1.2k").
   cell_pad: 32
   cell_min_width: 12
   strip_min_width: 0
@@ -221,3 +229,26 @@ marquee:
   clip_inset_top: 0
   clip_inset_bottom: 0
   clip_rx: 0
+
+matrix:
+  # Comparison-table chassis (porcelain-final specimens, all 900 wide).
+  # Values restate the load-bearing ParadigmMatrixConfig defaults so the
+  # chassis numbers live in data/, not only in code; cell-kind geometry and
+  # the semantic palette are frame-generic and live in data/matrix.yaml.
+  width: 900
+  card_radius: 14
+  margin_x: 34
+  # Rail 20 below the descriptor baseline (g-specimen rhythm: 54/73/93).
+  masthead_h: 93
+  colheader_h: 33
+  row_pitch: 40
+  row_pitch_compact: 34
+  content_row_base: 46
+  # Masthead scan rail: 4 x phi x rhythm-second; transform-only animation.
+  scan_duration: "6.472s"
+  scan_w: 220
+  scan_h: 1.4
+  hero_lane_opacity: 0.055
+  title_voice: { family: Inter, size: 33, weight: 800, tracking_em: -0.02 }
+  desc_voice: { family: JetBrains Mono, size: 10.5, weight: 400 }
+  colhead_voice: { family: JetBrains Mono, size: 8.5, weight: 700, tracking_em: 0.12 }

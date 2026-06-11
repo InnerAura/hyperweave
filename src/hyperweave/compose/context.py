@@ -9,6 +9,7 @@ Motion SVG is injected by ``_inject_motion()`` after the context is built.
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -16,12 +17,14 @@ from typing import TYPE_CHECKING, Any
 
 from hyperweave import __version__
 from hyperweave.core.enums import ArtifactStatus, FrameType, MotionId
+from hyperweave.core.envelope import ENVELOPE_VERSION, build_envelope, cdata_safe_json, envelope_json
 
 if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec, ResolvedArtifact
 
 from hyperweave.compose.assembler import fonts_for_frame, frame_needs_fonts
 from hyperweave.compose.reasoning import load_reasoning
+from hyperweave.core.color import hex_to_rgb_triplet
 from hyperweave.render.fonts import load_font_face_css
 
 _CtxBuilder = Callable[["ComposeSpec", "ResolvedArtifact", dict[str, str]], dict[str, Any]]
@@ -161,6 +164,7 @@ _TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
         "chart_empty_state",
     ),
     "marquee-horizontal": ("scroll_items",),
+    "matrix": ("matrix_text_surface",),
     "receipt": (
         "hero_headline",
         "hero_subline",
@@ -263,6 +267,7 @@ def build_context(
         FrameType.RHYTHM_STRIP: _ctx_rhythm_strip,
         FrameType.STATS: _ctx_stats,
         FrameType.CHART: _ctx_chart,
+        FrameType.MATRIX: _ctx_matrix,
     }
     builder = _BUILDERS.get(spec.type, _ctx_badge)
     ctx = builder(spec, resolved, css_bundle)
@@ -336,6 +341,11 @@ def _base_context(
         # rendering gated by template `{% if panel_gradient_stops %}` guard).
         "panel_gradient_stops": resolved.genome.get("panel_gradient_stops") or [],
         "seam_color": resolved.genome.get("seam_color", ""),
+        # Ink as an "r,g,b" triplet so templates derive substrate-tinted alpha
+        # layers (light badge label tint rgba({{ ink_rgb }},0.03), seam groove
+        # rgba({{ ink_rgb }},0.09), strip edge-highlight bottom tint) without
+        # hex math in Jinja2. Empty string when the genome field is missing.
+        "ink_rgb": hex_to_rgb_triplet(str(resolved.genome.get("ink", ""))),
         "profile_id": resolved.profile_id,
         "_genome_raw": resolved.genome,
         "divider_variant": spec.divider_variant,
@@ -374,6 +384,7 @@ def _base_context(
         # Glyph
         "glyph_id": resolved.glyph_id,
         "glyph_path": resolved.glyph_path,
+        "glyph_fill_rule": resolved.glyph_fill_rule,
         "glyph_viewbox": glyph_viewbox,
         "glyph_render_viewbox": glyph_render_viewbox,
         "glyph_viewbox_cx": glyph_viewbox_cx,
@@ -413,6 +424,14 @@ def _base_context(
         "created_at": datetime.now(UTC).isoformat(),
         # Version -- read by templates/components/metadata.svg.j2
         "version": __version__,
+        # hw:payload / hwz envelope projections + sub-variant root attribute.
+        # Set by data-carrying frame builders (matrix); empty strings
+        # suppress the metadata blocks / attribute entirely on other frames.
+        "payload_json": "",
+        "payload_schema": "",
+        "envelope_json": "",
+        "envelope_format": "",
+        "data_hw_subvariant": "",
         # v0.3.2 Phase 8b: metadata-pipeline context wiring. Every field below
         # was previously hardcoded as a Jinja2 `default('...')` fallback in
         # metadata.svg.j2 — meaning the template silently emitted the same
@@ -642,6 +661,65 @@ def _ctx_chart(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     return ctx
 
 
+def _ctx_matrix(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
+    """Context builder for the ``matrix`` frame (structured comparison table)."""
+    ctx, _uid, _aid = _base_context(spec, resolved, css)
+    # StrictUndefined-safe defaults; the matrix resolver fills all of these.
+    ctx["matrix_layout"] = None
+    ctx["matrix_cfg"] = None
+    ctx["matrix_title"] = ""
+    ctx["matrix_subtitle"] = ""
+    ctx["matrix_notes"] = ""
+    ctx["matrix_subvariant"] = ""
+    ctx["semantic_palette"] = {}
+    ctx["matrix_voices"] = []
+    ctx["matrix_glyph_gradients"] = []
+    ctx["matrix_scan_travel"] = 0
+    ctx["matrix_text_surface"] = []
+    ctx["matrix_envelope_data"] = {}
+    ctx["matrix_intent"] = ""
+    ctx.update(resolved.frame_context)
+
+    payload_json = str(ctx.get("payload_json") or "")
+    if payload_json:
+        # Content-derived identity: byte-identical re-renders are the
+        # contract (ETag / Camo caching / diff / the round-trip thesis).
+        # Same payload+genome+variant+version => same uid; different specs
+        # on one page never collide.
+        digest = hashlib.sha256(
+            "|".join(
+                (
+                    payload_json,
+                    str(ctx.get("genome_id", "")),
+                    str(ctx.get("variant", "")),
+                    str(ctx.get("version", "")),
+                )
+            ).encode("utf-8")
+        ).hexdigest()
+        ctx["uid"] = f"hw-{digest[:8]}"
+        ctx["artifact_id"] = f"matrix-{digest[:16]}"
+        ctx["contract_id"] = ctx["artifact_id"]
+        # hwz/1 envelope assembled HERE — where created_at exists — so
+        # prov.ts == hw:created with no second clock read.
+        genome_id = str(ctx.get("genome_id", ""))
+        variant = str(ctx.get("variant", ""))
+        envelope = build_envelope(
+            kind="matrix",
+            title=str(ctx.get("matrix_title", "")),
+            intent=str(ctx.get("matrix_intent", "")),
+            data=dict(ctx.get("matrix_envelope_data") or {}),
+            frames=[{"t": "matrix", "l": str(ctx.get("matrix_title", ""))}],
+            payload_json=payload_json,
+            genome_label=f"{genome_id}.{variant}" if variant else genome_id,
+            version=str(ctx.get("version", "")),
+            created=str(ctx.get("created_at", "")),
+            state=str(spec.state or ""),
+        )
+        ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))
+        ctx["envelope_format"] = ENVELOPE_VERSION
+    return ctx
+
+
 def _ctx_stats(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
     """Context builder for the ``stats`` frame (GitHub profile card)."""
     ctx, _uid, _aid = _base_context(spec, resolved, css)
@@ -744,6 +822,7 @@ def _build_glyph_svg(
         {
             "glyph_viewbox": vb,
             "glyph_path": resolved.glyph_path,
+            "glyph_fill_rule": resolved.glyph_fill_rule,
             "glyph_mode": glyph_mode,
             "glyph_fill_color": glyph_fill_color,
             "glyph_size": glyph_size,

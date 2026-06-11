@@ -82,7 +82,7 @@
       "frame_fill": "#0A0A0A",
       "brand_panel_fill": "#141414",
       "chart_title_bg": "#141414",
-      "strip_status_dot": "#22C55E",
+      "strip_status_dot": "#34D17A",
       "accent_deep": "#707070"
     },
     "carbon": {
@@ -117,7 +117,7 @@
       "frame_fill": "#111111",
       "brand_panel_fill": "#181818",
       "chart_title_bg": "#181818",
-      "strip_status_dot": "#5FA83C",
+      "strip_status_dot": "#34D17A",
       "accent_deep": "#C2410C"
     },
     "space": {
@@ -152,7 +152,7 @@
       "frame_fill": "#0B1120",
       "brand_panel_fill": "#111B2E",
       "chart_title_bg": "#111B2E",
-      "strip_status_dot": "#34D399",
+      "strip_status_dot": "#34D17A",
       "accent_deep": "#0284C7"
     },
     "anvil": {
@@ -187,7 +187,7 @@
       "frame_fill": "#18181B",
       "brand_panel_fill": "#27272A",
       "chart_title_bg": "#27272A",
-      "strip_status_dot": "#5FB58A",
+      "strip_status_dot": "#34D17A",
       "accent_deep": "#71717A"
     },
     "porcelain": {
@@ -275,7 +275,7 @@
       "badge_pass_core": "#5E7A2E",
       "frame_fill": "#F8F3EB",
       "chart_title_bg": "#FDFAF5",
-      "strip_status_dot": "#4D7C4F",
+      "strip_status_dot": "#1AA35A",
       "accent_deep": "#1A130C"
     },
     "dusk": {
@@ -319,7 +319,7 @@
       "badge_pass_core": "#15803D",
       "frame_fill": "#F6ECF0",
       "chart_title_bg": "#FDF6F8",
-      "strip_status_dot": "#6B9E78",
+      "strip_status_dot": "#1AA35A",
       "accent_deep": "#6A3048"
     },
     "petrol": {
@@ -363,7 +363,7 @@
       "badge_pass_core": "#15803D",
       "frame_fill": "#ECF4F4",
       "chart_title_bg": "#F6FAFA",
-      "strip_status_dot": "#2FA086",
+      "strip_status_dot": "#1AA35A",
       "accent_deep": "#2A5858"
     }
   },
@@ -419,6 +419,7 @@
     "divider": "primer",
     "stats": "primer",
     "chart": "primer",
+    "matrix": "primer",
     "marquee-horizontal": "primer"
   },
   "structural": {

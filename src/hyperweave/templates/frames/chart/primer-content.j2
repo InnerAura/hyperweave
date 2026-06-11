@@ -17,7 +17,7 @@
      genome-literal for renderer independence. Title shifts right via chart_title_x. #}
   {% if chart_has_glyph and chart_glyph_path %}
   <svg x="{{ chart_layout.texts.primer_header_glyph.x }}" y="{{ chart_layout.texts.primer_header_glyph.y }}" width="{{ chart_glyph_size }}" height="{{ chart_glyph_size }}" viewBox="{{ chart_glyph_viewbox }}">
-    <path d="{{ chart_glyph_path }}" fill="{{ _genome_raw.glyph_inner }}"/>
+    <path d="{{ chart_glyph_path }}"{% if chart_glyph_fill_rule %} fill-rule="{{ chart_glyph_fill_rule }}"{% endif %} fill="{{ _genome_raw.glyph_inner }}"/>
   </svg>
   {% endif %}
   <text class="{{ uid }}-title" x="{{ chart_title_x | default(100) }}" y="{{ chart_layout.texts.primer_title.y }}">{{ chart_primer_title | default('Trend') | xml_escape }}</text>

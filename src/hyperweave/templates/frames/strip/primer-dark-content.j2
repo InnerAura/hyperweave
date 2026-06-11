@@ -1,10 +1,12 @@
-{# Primer STRIP — dark substrate plate: rounded surface-alt→surface card lifted
-   by a black drop shadow, a bevel-edge highlight, and a hairline perimeter. The
-   shared zone pipeline renders content on top. Identical structure to the light
-   partial — the substrate difference (bg stops, bevel depth, shadow flood) lives
-   entirely in primer-defs.j2, split by panel_gradient_stops presence. #}
-<g filter="url(#{{ uid }}-shadow)">
-  <rect width="{{ strip_zones.core.content_width }}" height="{{ strip_h }}" rx="{{ strip_plate.rx }}" fill="url(#{{ uid }}-bg)"/>
-</g>
-<rect x="{{ strip_plate.bevel.x }}" y="{{ strip_plate.bevel.y }}" width="{{ strip_plate.bevel.w }}" height="{{ strip_plate.bevel.h }}" rx="{{ strip_plate.bevel.rx }}" fill="none" stroke="url(#{{ uid }}-edge)"/>
-<rect x="{{ strip_plate.perimeter.x }}" y="{{ strip_plate.perimeter.y }}" width="{{ strip_plate.perimeter.w }}" height="{{ strip_plate.perimeter.h }}" rx="{{ strip_plate.perimeter.rx }}" fill="none" stroke="{{ _genome_raw.stroke }}"/>
+{# Primer STRIP — dark substrate card (v04alpha2): full-bleed rounded
+   surface_1→surface_0 card ringed by an inner edge-highlight stroke + 1px
+   border. NO drop shadow: on a full-bleed embedded artifact the viewBox clips
+   a shadow everywhere except the transparent corner notches outside the rx10
+   edge, where the residue reads as smudges on the README ground — the
+   surface_1 crown and the edge highlight carry the lift instead. Identical
+   structure to the light partial; substrate differences live in
+   primer-defs.j2. All geometry resolver-supplied (strip_card /
+   strip_inner_highlight / strip_outer_border); zero arithmetic. #}
+<rect x="{{ strip_card.x }}" y="{{ strip_card.y }}" width="{{ strip_card.w }}" height="{{ strip_card.h }}" rx="{{ strip_card.rx }}" fill="url(#{{ uid }}-bg)"/>
+<rect x="{{ strip_inner_highlight.x }}" y="{{ strip_inner_highlight.y }}" width="{{ strip_inner_highlight.w }}" height="{{ strip_inner_highlight.h }}" rx="{{ strip_inner_highlight.rx }}" fill="none" stroke="url(#{{ uid }}-lp)" stroke-width="{{ strip_inner_highlight.stroke_w }}"/>
+<rect x="{{ strip_outer_border.x }}" y="{{ strip_outer_border.y }}" width="{{ strip_outer_border.w }}" height="{{ strip_outer_border.h }}" rx="{{ strip_outer_border.rx }}" fill="none" stroke="{{ _genome_raw.stroke }}" stroke-width="{{ strip_outer_border.stroke_w }}"/>

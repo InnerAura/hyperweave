@@ -62,4 +62,11 @@
     <hw:spatial-notes>{{ width }}x{{ height }} ({{ spatial_aspect_ratio }}), left-to-right</hw:spatial-notes>
   </hw:reasoning>
 {% endif %}
-</metadata>
+{# hw:payload + hw:envelope — emitted at EVERY metadata tier when present:
+   the payload IS the artifact's data (data-carrying frames are lossy
+   without it), not tier-3 garnish. CDATA bodies are canonical and
+   CDATA-safe by construction (core/envelope.py:cdata_safe_json); the
+   envelope id is recomputable as sha256 of the payload bytes below. #}
+{% if payload_json %}  <hw:payload xmlns:hw="https://hyperweave.app/hw/v1.0" schema="{{ payload_schema }}" media-type="application/json"><![CDATA[{{ payload_json }}]]></hw:payload>
+{% endif %}{% if envelope_json %}  <hw:envelope xmlns:hw="https://hyperweave.app/hw/v1.0" format="{{ envelope_format }}" media-type="application/json"><![CDATA[{{ envelope_json }}]]></hw:envelope>
+{% endif %}</metadata>

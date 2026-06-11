@@ -294,15 +294,60 @@ class ParadigmStripConfig(FrozenModel):
     without per-paradigm re-tuning. v0.3.9 replaces the previous hand-synced
     pair (chrome ``glyph_size: 22`` + brutalist ``identity_glyph_size: 18``)
     that had to stay in proportional agreement by manual update."""
-    divider_render_mode: Literal["gradient", "class"] = "class"
+    divider_render_mode: Literal["gradient", "class", "paired-rect"] = "class"
     """``gradient`` routes through ``url(#{uid}-sep)`` stroke (chrome's etched
-    sep, primer's vertical accent-fade seam); ``class`` uses a flat
-    CSS-class-colored divider."""
+    sep); ``class`` uses a flat CSS-class-colored divider; ``paired-rect``
+    (primer) carves the divider as two adjacent 1px rects — a groove (dark on
+    dark substrates, ink-tinted on light) and a shine (white at substrate-tuned
+    opacity) — positioned by ``divider_y``/``divider_h``."""
     divider_inset: int = 8
     """Vertical inset (px) of the inter-zone dividers from the strip's top and
-    bottom edges (``y1 = inset``, ``y2 = height - inset``). Primer declares 12
-    for a short, breathing accent-fade seam; the flat-profile default 8 keeps
+    bottom edges (``y1 = inset``, ``y2 = height - inset``). Used by the
+    ``gradient``/``class`` divider modes; the flat-profile default 8 keeps
     chrome/cellular/default dividers unchanged."""
+    divider_y: float = 0.0
+    """Card-relative top y of ``paired-rect`` dividers. Primer: 10 (a 24px
+    groove vertically breathing inside the 46px card). Unused by other modes."""
+    divider_h: float = 0.0
+    """Height of ``paired-rect`` dividers. Primer: 24."""
+    canvas_pad_x: int = 0
+    """Horizontal canvas margin (px) on each side of the strip card. ``> 0``
+    (primer: 8) insets the card in a wider canvas so its drop shadow renders
+    instead of clipping at the viewBox; the shared zone pipeline is wrapped in
+    a ``translate(canvas_pad_x, canvas_pad_top)`` group so all zone coordinates
+    stay card-space. ``0`` keeps card == canvas (chrome/cellular/default)."""
+    canvas_pad_top: int = 0
+    """Canvas margin above the card. Primer: 6."""
+    canvas_pad_bottom: int = 0
+    """Canvas margin below the card — larger than the top pad when the shadow
+    falls downward (primer: 8, for the dy-positive feDropShadow falloff)."""
+    glyph_inset: int = 12
+    """Card-relative left inset of the bare identity glyph (no icon box).
+    Default 12 is the value previously hardcoded in ``compute_strip_zones``;
+    primer's specimen places the 18px glyph at x=18."""
+    glyph_text_gap: int = 9
+    """Gap between the bare glyph's right edge and the identity text. Default 9
+    is the previously hardcoded value; primer declares 11."""
+    identity_baseline_y: float = 0.0
+    """Card-relative identity-text baseline. ``> 0`` (primer: 28) overrides the
+    computed single-line baseline so the rendered baseline matches the specimen
+    exactly. ``0`` keeps the computed placement for every other paradigm."""
+    metric_label_baseline_y: float = 0.0
+    """Card-relative metric-label baseline within the cell group. ``> 0``
+    (primer: 16.5) overrides the profile default. Float counterpart of the
+    owns-strip-only int ``metric_label_y``."""
+    metric_value_baseline_y: float = 0.0
+    """Card-relative metric-value baseline within the cell group. ``> 0``
+    (primer: 33) overrides the profile default."""
+    status_right_inset: float = 0.0
+    """Distance from the card's right edge to the status-mark center. ``> 0``
+    (primer: 18) pins the status pulse at ``content_width - inset`` instead of
+    midpoint-centering it in the reserved status zone. ``0`` keeps the
+    midpoint placement (chrome/cellular/default byte-identical)."""
+    status_glyph_r: float = 0.0
+    """Status-glyph housing radius override for the strip's state mark. ``> 0``
+    (primer: 5.3 → ping core r 3.4 / ring stroke 1.6 via the shared ratio
+    table) overrides the default 5.5. ``0`` defers to the default."""
     plate_corner: int = 0
     """Corner radius (px) of the strip plate as a rounded material card. ``> 0``
     (primer: 10) makes the content partial paint a rounded plate + bevel-edge
@@ -310,14 +355,6 @@ class ParadigmStripConfig(FrozenModel):
     (chrome/cellular/brutalist) keeps the existing flat/owns-strip plate — the
     bevel/perimeter/shadow geometry the resolver emits is consumed only by content
     partials that opt in, so this is a pure no-op for the shipped genomes."""
-    identity_accent_from_seam: bool = False
-    """When True (primer), the identity glyph fill resolves to the variant's
-    ``seam_color`` (the BRIGHT substrate accent) instead of ``glyph_inner`` (the
-    MUTED tone). On dark variants ``glyph_inner`` reads dull grey while the
-    specimen identity is the bright accent; ``seam_color`` already equals the
-    bright identity accent for every variant. The identity TEXT routes the same
-    way via the primer-defs CSS class. Default False keeps brutalist/chrome/
-    cellular on ``glyph_inner``."""
     status_shape_rendering: Literal["crispEdges", "geometricPrecision"] = "crispEdges"
     show_status_indicator: bool = True
     """When False, the status-indicator zone (56px reserve) collapses to
@@ -474,12 +511,6 @@ class ParadigmBadgeConfig(FrozenModel):
     rendered adornment boundary instead of from an inverse offset."""
     glyph_offset_left_compact: int = 0
     """Compact-variant glyph offset. Empty (0) falls back to glyph_offset_left."""
-    pad_ratio: float = 0.0
-    """Interior pad as a fraction of the (size-scaled) value font size. ``> 0``
-    (primer: 0.6) makes the pad PROPORTIONAL to scale — ONE rule that tightens
-    the badge coherently at every size (default 36px and compact 20px are the same
-    artifact at different scales, so the gap rhythm scales with them) instead of a
-    separate per-size pad. ``0`` falls back to the fixed ``pad``."""
     center_text_factor: float = 0.0
     """When ``> 0`` (primer: 0.35), the text baseline is COMPUTED to vertically
     centre the value at any badge height: ``text_y = height/2 + value_font_size *
@@ -521,18 +552,6 @@ class ParadigmBadgeConfig(FrozenModel):
     """Optional paradigm-specific seam width. ``> 0`` overrides
     profile's ``badge_seam_width``. Provided for symmetry with ``sep_w``;
     no current paradigm needs it but keeps the override surface uniform."""
-    seam_inset_ratio: float = 0.0
-    """Vertical inset of the rendered seam as a fraction of ``frame_height``.
-    ``> 0`` (primer: 0.22) renders the panel separator as a thin hairline
-    centered vertically — top/bottom inset of ``round(height * ratio)`` — rather
-    than a full-height bar. ``0`` (brutalist/cellular) keeps the full-height
-    separator. A third seam mode beside chrome's etched seam and brutalist's
-    structural separator: primer's signature is a short cobalt-fade hairline."""
-    seam_pixel_w: float = 0.0
-    """Explicit rendered seam width in px (primer: 1.4 hairline). ``> 0``
-    overrides ``sep_w`` for the rendered seam rect only — the cursor walk still
-    reserves ``sep_w + seam_w``, so spacing is unchanged; only the painted seam
-    narrows. ``0`` paints the seam at ``sep_w``."""
     light_indicator_inner_ratio: float = 0.0
     """Inner status-dot radius as a fraction of the outer housing radius on the
     light circle indicator. ``> 0`` (primer: 0.5 — a status-light core inside a
@@ -544,16 +563,6 @@ class ParadigmBadgeConfig(FrozenModel):
     at ``x=2..width-2`` per cellular-content.j2:9). Without this override,
     ``value_zone_right`` lands ``right_canvas_inset`` past the actual slab
     edge and drifts the centered value text right by half that amount."""
-    value_centers_in_recess: bool = False
-    """When ``True`` (primer) the value word centers in the VISIBLE recess —
-    between the carved-seam right edge and the badge edge — instead of the
-    cursor-reserved ``[value_zone_left, value_zone_right]``. The flat profile
-    reserves ``sep_w + seam_w`` (5px) for the seam, but primer PAINTS a ~2.5px
-    carved groove (``seam_pixel_w``), so the reserved zone's left edge sits ~2.5px
-    past the visible seam and drifts the centered value right (an 11px seam→value
-    gap vs a 7px value→edge gap). Re-centering on the painted recess makes the two
-    gaps symmetric at every value width. ``False`` keeps reserved-zone centering
-    for every other paradigm (mirror of ``right_canvas_inset`` for the seam side)."""
     left_adornment_width: float = 0.0
     """Rendered right edge of the optional left adornment measured from x=0.
     Cellular large: 20 (= pattern x 2 + 3 cols * 6px). Zero disables
@@ -694,6 +703,39 @@ class ParadigmBadgeConfig(FrozenModel):
     """Horizontal offset (px) of the specular-catch hairline from the dark-cut
     hairline in the etched seam. Chrome declares 0.6 to match the spatial
     study prototype. Only used when ``seam_render_w > 0``."""
+
+    seam_gap_left: float = 0.0
+    """Explicit gap (px) between the label's right edge and the seam slot.
+    ``> 0`` (primer: 7) overrides the half-gap rule (``pad/2``) on the seam's
+    label side, letting a paradigm declare an asymmetric label|seam|value
+    rhythm. ``0`` keeps the half-gap rule (chrome byte-identical). Only used
+    when ``seam_render_w > 0``."""
+
+    seam_gap_right: float = 0.0
+    """Explicit gap (px) between the seam slot and the value zone. ``> 0``
+    (primer: 8) overrides the half-gap rule on the seam's value side. ``0``
+    keeps the half-gap rule. Only used when ``seam_render_w > 0``."""
+
+    rail_start_pad: float = 0.0
+    """Explicit left-edge → first-zone gap (px). ``> 0`` (primer: 7) overrides
+    the default ``pad`` for the leading gap only, so a paradigm can run a
+    tighter entry than its interior rhythm. ``0`` keeps the uniform pad."""
+
+    rail_end_pad: float = 0.0
+    """Explicit last-zone → right-edge gap (px). ``> 0`` (primer: 8) overrides
+    the default ``pad`` for the trailing gap only. ``0`` keeps the uniform
+    pad."""
+
+    accent_w: int = -1
+    """Width (px) of the left accent bar zone. ``-1`` (default) defers to the
+    resolver's flat-profile constant (4). Primer sets 0 — its rail starts at
+    the badge edge with no accent column."""
+
+    badge_corner: float = 0.0
+    """Badge frame corner radius (px). ``> 0`` (primer: 4) overrides the genome
+    ``corner`` for the badge clip + border geometry, so a paradigm can run a
+    tighter chip radius than the genome's card radius. ``0`` defers to the
+    genome value."""
 
     glyph_y_offset: float = 0.0
     """Per-paradigm vertical offset (px) applied to glyph_y AFTER frame-center
@@ -948,6 +990,130 @@ class ParadigmMarqueeConfig(FrozenModel):
     badge label, stats card label, and strip column header — one label system."""
 
 
+class MatrixVoice(FrozenModel):
+    """One named type voice for the matrix frame.
+
+    Voices are defined once in the paradigm defs CSS (``.{uid}-{voice}``)
+    and referenced by ``CellPlacement.cls``; the layout solver measures
+    text with the same family/size/weight tuple the CSS renders, keeping
+    measurement and rendering coupled.
+    """
+
+    family: str = "JetBrains Mono"
+    size: float = 11.0
+    weight: int = 400
+    tracking_em: float = 0.0
+
+
+class ParadigmMatrixConfig(FrozenModel):
+    """Matrix frame chassis config within a paradigm.
+
+    Defaults are extracted from the six porcelain-final matrix specimens
+    (v0.4.0-alpha.2 design targets, all 900 wide). Cell-kind geometry and
+    the semantic palette are frame-generic and live in ``data/matrix.yaml``
+    instead — the paradigm owns the chassis, the engine config owns the
+    cells.
+    """
+
+    width: int = 900
+    """Matrix width CEILING. The frame adapts to its content: the solved
+    width is ``clamp(content width, min_width, width)`` — 900 is the
+    maximum, not a constant. Bar matrices pin to the ceiling (a shared
+    magnitude axis wants room); height is always content-solved."""
+    min_width: int = 600
+    """Width floor. High enough that a proofset of adaptive matrices reads
+    as ONE design system (600-900 band), not a scatter of card sizes —
+    and narrow tables keep room to breathe."""
+    card_radius: float = 14.0
+    margin_x: float = 34.0
+    masthead_h: float = 93.0
+    """Masthead block height; the ink rail sits at its bottom edge — 20
+    below the descriptor baseline (the g-generation specimens' rhythm:
+    title 54, descriptor 73, rail 93)."""
+    masthead_collapsed_h: float = 18.0
+    """Masthead height when the spec carries NO title, subtitle, or
+    headline: the zone collapses to breathing room and the rail, scan, and
+    legend are suppressed — empty slots release their space (the stats-card
+    slot-removal principle, handled once in the spatial engine)."""
+    colheader_h: float = 33.0
+    """Column-header block height; the header rule closes it."""
+    row_pitch: float = 40.0
+    row_pitch_compact: float = 34.0
+    """Tightened pitch applied past the soft row cap."""
+    content_row_base: float = 46.0
+    """Minimum row height in content (chip-wrapping) mode."""
+    section_band_h: float = 28.0
+    """Section band height — a full-bleed wash flush at the section top
+    (tiers specimen: 28px tall, x=8 to width-8)."""
+    section_band_opacity: float = 0.024
+    """Section band ink wash (specimen 0.024) — slightly more present than
+    zebra stripes so groups read as structure."""
+    summary_h: float = 61.0
+    axis_h: float = 30.0
+    footer_h: float = 44.0
+    label_col_min: float = 140.0
+    label_col_max_ratio: float = 0.4
+    """Label column ceiling as a fraction of the content width."""
+    max_col: float = 240.0
+    """Per-column width ceiling for content-sized (non-flexible) columns."""
+    cell_pad_x: float = 12.0
+    hero_tab_ratio: float = 0.52
+    """Hero cap-tab width as a fraction of the hero column width."""
+    hero_tab_h: float = 3.0
+    section_indent: float = 10.0
+    """Left indent applied to section-member row labels so grouped fields
+    step in under their section header (the tiers-prototype hierarchy:
+    member labels at x=44 against the band header's 34)."""
+    desc_line_h: float = 19.0
+    """Height of the masthead descriptor line (the subtitle baseline sits
+    this far below the title's). A spec without a subtitle releases it —
+    the rail rides up and the title-to-table gap collapses."""
+    hero_lane_opacity: float = 0.055
+    stripe_opacity: float = 0.012
+    """Zebra/section band wash. Quiet by design — rows must never compete
+    with the metric cells for the eye."""
+    guide_opacity: float = 0.06
+    compact_below: float = 750.0
+    """Solved widths below this render the COMPACT masthead: the title
+    voice steps down to title_compact_size and the indicator legend leaves
+    the shared subtitle line for its own masthead line (one desc_line_h
+    below the subtitle). Wide frames keep the 33px title and the inline
+    legend — the specimen gestalt."""
+    title_compact_size: float = 29.0
+    """Title size on compact frames (~12% down from 33) — a 600px table
+    should not shout at a 900px table's volume."""
+    scan_duration: str = "6.472s"
+    """Masthead scan-rail period (4φ x rhythm base)."""
+    scan_w: float = 220.0
+    scan_h: float = 1.4
+    title_voice: MatrixVoice = Field(
+        default_factory=lambda: MatrixVoice(family="Inter", size=33, weight=800, tracking_em=-0.02)
+    )
+    desc_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=10.5))
+    colhead_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.5, weight=700, tracking_em=0.12))
+    colhead_sub_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=6.5))
+    row_label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=12.0, weight=700))
+    row_label_sub_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=11.0, weight=600))
+    """Section-member row labels: quiet field names, secondary to the cell
+    pattern (tiers specimen: mono 600 at 11px) — one step down from the
+    primary row-title voice flat tables use."""
+    row_sub_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0))
+    cell_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=11.0, weight=600))
+    cell_strong_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=11.5, weight=700))
+    section_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=700, tracking_em=0.1))
+    axis_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.0))
+    chip_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0))
+    pill_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=11.0, weight=700))
+    foot_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0))
+    headline_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=700))
+    summary_value_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=14.5, weight=700))
+    summary_hero_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=16.5, weight=700))
+    summary_qual_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.5))
+    summary_text_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0, weight=600))
+    """Summary cells holding phrases rather than scores (tiers' USE-FOR
+    row): quiet mono 600 at 9px — numbers are heroes, words annotate."""
+
+
 class ParadigmSpec(FrozenModel):
     """A declarative paradigm: frame-level config + required genome fields.
 
@@ -968,6 +1134,7 @@ class ParadigmSpec(FrozenModel):
     stats: ParadigmStatsConfig = Field(default_factory=ParadigmStatsConfig)
     icon: ParadigmIconConfig = Field(default_factory=ParadigmIconConfig)
     marquee: ParadigmMarqueeConfig = Field(default_factory=ParadigmMarqueeConfig)
+    matrix: ParadigmMatrixConfig = Field(default_factory=ParadigmMatrixConfig)
 
     requires_genome_fields: list[str] = Field(default_factory=list)
     """Genome field names that must be non-empty when a genome opts into

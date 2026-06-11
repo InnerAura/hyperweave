@@ -1,61 +1,19 @@
-{# Primer badge defs (v04alpha1) — two-zone editorial badge: a label zone + a
-   recessed value zone split by a carved 3-layer seam, a top gloss band (dark),
-   a convex bevel + hairline rim, and four animated state marks.
+{# Primer badge defs (v04alpha2) — shields-anatomy two-plate badge: a tinted
+   label plate (brand glyph + mono label) and a clear value plate split by a
+   paired 1px groove + 1px shine seam, inside a 20px rx4 chip with an inner
+   white highlight, a 1px border, and a hair drop-shadow.
 
-   Substrate is distinguished by FIELD presence (panel_gradient_stops exists on
-   light variants only), never a substrate_kind conditional — the same gate
-   brutalist uses. Named white/black keep the gloss/bevel/seam substrate-agnostic
-   and out of the genome chroma; the light branch tints the recess/highlight with
-   the genome ink (navy) so the carved groove reads on a white ground. #}
+   Substrate differences (label tint, seam pair, highlight, shadow) live in the
+   content partials dispatched by substrate_kind. The bg gradient stamps the
+   resolved-variant surface literals so the chip renders true in static
+   renderers (no var() cascade in paint attributes). #}
 <clipPath id="{{ uid }}-clip">
-  <rect width="{{ width }}" height="{{ height }}" rx="{{ _genome_raw.corner }}"/>
+  <rect width="{{ width }}" height="{{ height }}" rx="{{ badge_corner_rx }}"/>
 </clipPath>
 <linearGradient id="{{ uid }}-bg" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}
-{% for stop in panel_gradient_stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
-{% endfor %}{% else %}  <stop offset="0%" stop-color="var(--dna-surface-alt)"/>
-  <stop offset="100%" stop-color="var(--dna-surface)"/>
-{% endif %}</linearGradient>
-{# Top-plane catchlight (dark only) — the badge's top-edge highlight, from
-   components/primer-gloss.svg.j2 (badge-only; larger frames take no gloss). #}
-{%- include "components/primer-gloss.svg.j2" %}
-{# Value-zone recess — a low-opacity overlay over the bg (black on dark, ink/navy
-   on light), deepening downward, so the right half reads as a recessed panel
-   without per-variant fill colours. #}
-<linearGradient id="{{ uid }}-vz" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}  <stop offset="0%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0.07"/>
-  <stop offset="100%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0.12"/>
-{% else %}  <stop offset="0%" stop-color="black" stop-opacity="0.08"/>
-  <stop offset="100%" stop-color="black" stop-opacity="0.22"/>
-{% endif %}</linearGradient>
-{# Convex bevel edge — bright top edge → dark/ink bottom edge inner stroke. #}
-<linearGradient id="{{ uid }}-bevel" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}  <stop offset="0%" stop-color="white" stop-opacity="0.55"/>
-  <stop offset="42%" stop-color="white" stop-opacity="0"/>
-  <stop offset="58%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0"/>
-  <stop offset="100%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0.16"/>
-{% else %}  <stop offset="0%" stop-color="white" stop-opacity="0.11"/>
-  <stop offset="42%" stop-color="white" stop-opacity="0"/>
-  <stop offset="58%" stop-color="black" stop-opacity="0"/>
-  <stop offset="100%" stop-color="black" stop-opacity="0.42"/>
-{% endif %}</linearGradient>
-{# Carved seam — three vertical-fade rects: faint edge (sm0), dark recess core
-   (sm1), bright highlight (sm2). The fade (0 → full → full → 0) keeps the groove
-   off the rounded corners. Recess/edge tint = ink on light, black on dark. #}
-<linearGradient id="{{ uid }}-sm0" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}  <stop offset="0%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0"/><stop offset="20%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0.1"/><stop offset="80%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0.1"/><stop offset="100%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0"/>
-{% else %}  <stop offset="0%" stop-color="white" stop-opacity="0"/><stop offset="20%" stop-color="white" stop-opacity="0.07"/><stop offset="80%" stop-color="white" stop-opacity="0.07"/><stop offset="100%" stop-color="white" stop-opacity="0"/>
-{% endif %}</linearGradient>
-<linearGradient id="{{ uid }}-sm1" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}  <stop offset="0%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0"/><stop offset="20%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0.3"/><stop offset="80%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0.3"/><stop offset="100%" stop-color="{{ _genome_raw.ink }}" stop-opacity="0"/>
-{% else %}  <stop offset="0%" stop-color="black" stop-opacity="0"/><stop offset="20%" stop-color="black" stop-opacity="0.62"/><stop offset="80%" stop-color="black" stop-opacity="0.62"/><stop offset="100%" stop-color="black" stop-opacity="0"/>
-{% endif %}</linearGradient>
-<linearGradient id="{{ uid }}-sm2" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}  <stop offset="0%" stop-color="white" stop-opacity="0"/><stop offset="20%" stop-color="white" stop-opacity="0.9"/><stop offset="80%" stop-color="white" stop-opacity="0.9"/><stop offset="100%" stop-color="white" stop-opacity="0"/>
-{% else %}  <stop offset="0%" stop-color="white" stop-opacity="0"/><stop offset="20%" stop-color="white" stop-opacity="0.24"/><stop offset="80%" stop-color="white" stop-opacity="0.24"/><stop offset="100%" stop-color="white" stop-opacity="0"/>
-{% endif %}</linearGradient>
-{# No drop shadow on either substrate — the convex bevel + hairline rim carry the
-   edge (the specimen badges are flat, shadow-free). #}
+  <stop offset="0" stop-color="{{ _genome_raw.surface_1 }}"/>
+  <stop offset="1" stop-color="{{ _genome_raw.surface_0 }}"/>
+</linearGradient>
 <style>{{ font_faces | safe }}
 /* Primer badges are FLAT — suppress the global expression.css state glow
    (warning/critical drop-shadow, offline grayscale/dim). The state lives entirely
@@ -74,7 +32,7 @@ svg[data-hw-genome="primer"][data-hw-status="offline"]{filter:none;opacity:1}
 .hw-pri-spin{transform-box:fill-box;transform-origin:center;animation:hw-pri-spin .9s linear infinite;will-change:transform}
 .hw-pri-throb{transform-box:fill-box;transform-origin:center;animation:hw-pri-throb 1.0s ease-in-out infinite;will-change:transform}
 .hw-pri-shake{animation:hw-pri-shake .65s ease-in-out infinite;will-change:transform}
-@keyframes hw-pri-ping{0%{transform:scale(.5);opacity:0}12%{opacity:.7}100%{transform:scale(2.2);opacity:0}}
+@keyframes hw-pri-ping{0%{transform:scale(.5);opacity:0}12%{opacity:.7}100%{transform:scale(2.3);opacity:0}}
 @keyframes hw-pri-spin{to{transform:rotate(360deg)}}
 @keyframes hw-pri-throb{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 @keyframes hw-pri-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}

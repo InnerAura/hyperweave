@@ -1,0 +1,164 @@
+# Matrix frame engine configuration.
+#
+# Frame-generic, genome-blind knobs for the matrix engine: capacity caps,
+# polarity inference keywords, per-kind cell geometry, and the SEMANTIC
+# palette. Chassis values (masthead type, row pitch, margins) live in the
+# paradigm YAML instead — this file configures the cells, the paradigm
+# configures the chassis.
+#
+# Semantic palette doctrine: indicators that encode state or check are
+# genome-INVARIANT — they communicate, the genome expresses through the
+# chassis. Hex lives here (data/, per Invariant 5), reaches templates as
+# pre-resolved CellPlacement field values, and never appears in a template.
+# Every kind stays dual-coded by geometry so it survives forced-colors and
+# grayscale.
+
+caps:
+  soft_rows: 16 # past this: shrink type one step + tighten pitch
+  soft_cols: 8
+  hard_rows: 30 # past this: MatrixCapacityError (adapter must paginate)
+  hard_cols: 12
+  shrink_factor: 0.85
+
+# Conservative polarity inference: header keyword scan fires only when the
+# column declares Polarity.NONE and the column is numeric/bar. Tokenized
+# word match (not substring). A hit in both lists resolves to none.
+polarity_keywords:
+  lower:
+    [
+      latency,
+      error,
+      errors,
+      cost,
+      costs,
+      price,
+      time,
+      tokens,
+      p50,
+      p95,
+      p99,
+      size,
+      bytes,
+      ms,
+      debt,
+      failures,
+      failure,
+      mttr,
+      lead,
+      regressions,
+    ]
+  higher:
+    [
+      score,
+      scores,
+      rate,
+      count,
+      stars,
+      downloads,
+      accuracy,
+      coverage,
+      uptime,
+      likes,
+      forks,
+      throughput,
+      speedup,
+      wins,
+      passing,
+      contributors,
+    ]
+
+semantic_palette:
+  check_full: "#15803D" # emerald check (worst-pole contrast 3.20:1)
+  check_partial: "#B45309" # amber dash (worst-pole contrast 3.20:1)
+  # Rose cross: #DC2626 (primer's accent_error promoted to the semantic mark).
+  # The specimens' #B91C1C was light-substrate-tuned and fell to 2.48:1 on
+  # anvil; one invariant hue must clear 3:1 on BOTH poles (worst: dark 3.33,
+  # light 4.18). Decision locked v0.4.0-alpha.2.
+  check_none: "#DC2626"
+  pill_yes_start: "#10B981" # emerald Yes capsule gradient (top)
+  pill_yes_end: "#059669" # emerald Yes capsule gradient (bottom)
+  pill_yes_text: "#FFFFFF"
+  pill_opt_text: "#B45309" # tri-state opt-in pill text (amber family)
+  # Numeric-heat diverging ramp: good teal -> cool neutral -> bad rose
+  # (the bad pole is the check_none rose family polarity-inverted — one
+  # semantic system, reversed). Interpolated piecewise-linearly in sRGB on
+  # column-normalized t (see matrix_cells). The TILE is a full-width color
+  # field at heat_tile_opacity with the VALUE carrying the semantic hue
+  # (the ramp color darkened by heat_text_darken for AA); the thin gauged
+  # UNDERLINE encodes within-range magnitude — "fixed band · underline =
+  # gauged magnitude" per the specimen grammar.
+  # Poles are equal-intensity opposites: the bad rose is muted ~12% from
+  # the raw check_none hue so "expensive" never reads as "error".
+  heat_good: [38, 145, 127]
+  heat_mid: [120, 130, 138]
+  heat_bad: [198, 54, 54]
+  heat_tile_opacity: 0.13 # gentle wash, never a competing block
+  heat_text_darken: 0.62 # value ink = ramp color x this factor
+
+# Per-kind cell geometry (porcelain-final specimens are authoritative).
+# min_col is the kind-default column width floor — content can grow a
+# column, never shrink it below legibility.
+cell_geometry:
+  text:
+    min_col: 64
+    # Overflow wraps by default: up to max_lines runs at line_pitch, the
+    # row growing to fit (content mode). The ellipsis appears only on the
+    # final permitted line — never as the first behavior.
+    line_pitch: 16
+    max_lines: 3
+  check:
+    stroke_width: 2
+    check: "l3,3.2 l6.1,-7.3" # relative body appended to M{x},{y}
+    dash: "h8.4"
+    cross_arm: 7.4 # two absolute strokes built by the solver
+    # Mark columns demand breathing room: a 9px mark in a 64px slot reads
+    # cramped next to text columns. The floor, not a global width floor,
+    # is what widens check/dot tables.
+    min_col: 110
+  dot:
+    filled_r: 4.4
+    hollow_r: 4.1
+    hollow_stroke: 1.2
+    min_col: 110
+    # Tier-span projection (chained inclusion sets): one reach bar with a
+    # terminal dot per column replaces the dot grid. Key mark mirrors the
+    # span at legend scale.
+    span_w: 7
+    span_opacity: 0.28
+    terminal_r: 4.6
+    key_bar_w: 14
+    key_bar_h: 4.8
+    key_dot_r: 3.8
+  bar:
+    track_h: 10
+    radius: 5
+    min_bar_px: 14
+    min_col: 160
+  pill:
+    height: 20
+    radius: 10
+    pad_x: 11
+    min_col: 72
+  numeric:
+    tile_w: 96 # natural column sizing only; the tile itself fills its column
+    tile_h: 30
+    tile_radius: 6
+    underline_h: 1.5 # thin, subtle magnitude gauge
+    underline_inset: 8
+    min_col: 110
+  chip:
+    height: 17
+    radius: 5.5
+    pad_x: 8
+    gap: 6
+    row_pitch: 24
+    fill_opacity: 0.045
+    max_chip_rows: 4
+    min_col: 180
+  glyph:
+    size: 22
+    min_col: 56
+
+# Text runs containing any of these tokens route to the mono face
+# (JetBrains Mono) instead of the proportional display face.
+mono_triggers: ["→", "←", "↑", "↓", "::", "`"]

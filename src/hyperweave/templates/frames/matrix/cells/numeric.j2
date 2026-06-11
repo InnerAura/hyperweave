@@ -1,0 +1,15 @@
+{# numeric cell — value with polarity-aware heat tile + gauged underline.
+   The tile is a PALE WASH of the semantic heat hue (tone at tone_opacity,
+   value always in ink); the underline carries the hue at full strength
+   over a faint neutral track — fixed band, gauged magnitude. Polarity
+   NONE renders the plain right-aligned value. #}
+{% if cell.heat_tile %}
+  <rect x="{{ cell.heat_tile.x }}" y="{{ cell.heat_tile.y }}" width="{{ cell.heat_tile.w }}" height="{{ cell.heat_tile.h }}" rx="{{ cell.heat_tile.rx }}" fill="{{ cell.tone }}" fill-opacity="{{ cell.tone_opacity }}" data-hw-cell="numeric-heat"/>
+{% endif %}
+{% if cell.heat_track %}
+  <rect x="{{ cell.heat_track.x }}" y="{{ cell.heat_track.y }}" width="{{ cell.heat_track.w }}" height="{{ cell.heat_track.h }}" rx="{{ cell.heat_track.rx }}" fill="var(--dna-ink-primary)" opacity="0.12"/>
+{% endif %}
+{% if cell.heat_underline %}
+  <rect x="{{ cell.heat_underline.x }}" y="{{ cell.heat_underline.y }}" width="{{ cell.heat_underline.w }}" height="{{ cell.heat_underline.h }}" rx="{{ cell.heat_underline.rx }}" fill="{{ cell.tone }}"/>
+{% endif %}
+  <text class="{{ uid }}-{{ cell.cls }}" x="{{ cell.text_x }}" y="{{ cell.text_y }}" text-anchor="{{ cell.text_anchor }}"{% if cell.text_fill %} style="fill:{{ cell.text_fill }}"{% endif %}>{{ cell.text | xml_escape }}</text>

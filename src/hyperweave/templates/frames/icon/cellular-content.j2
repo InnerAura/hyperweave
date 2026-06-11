@@ -61,7 +61,7 @@
    to icon_glyph_size with the registry's glyph viewBox preserved. #}
 {% if glyph_path %}
 <svg x="{{ _glyph_inset }}" y="{{ _glyph_inset }}" width="{{ _glyph_size }}" height="{{ _glyph_size }}" viewBox="{{ glyph_viewbox }}">
-  <path d="{{ glyph_path }}" fill="{{ _info }}"/>
+  <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="{{ _info }}"/>
 </svg>
 {% endif %}
 

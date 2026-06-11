@@ -57,6 +57,11 @@
    it piggybacks on `{{ uid }}-clip` + width/height context that both code
    paths preserve. #}
 {% if not paradigm_owns_strip %}
+{# Card-inset wrapper: paradigms with canvas pads (primer) shift the whole
+   shared pipeline into the inset card — zone geometry stays CARD-space and
+   the canvas margin hosts the card's drop shadow. strip_content_offset is
+   None for every other paradigm, so no group is emitted (byte-identical). #}
+{% if strip_content_offset %}<g transform="translate({{ strip_content_offset.x }},{{ strip_content_offset.y }})">{% endif %}
 
 {# === Icon box (paradigm opts in via show_icon_box) ===
    Render only when an actual glyph is provided. Without this gate, calling
@@ -79,7 +84,7 @@
   <svg x="{{ strip_zones.core.glyph_svg_x }}" y="{{ strip_zones.core.glyph_svg_y }}"
        width="{{ gs }}" height="{{ gs }}"
        viewBox="{{ glyph_viewbox }}">
-    <path d="{{ glyph_path }}" fill="{{ glyph_fill | default(gf) }}"/>
+    <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="{{ glyph_fill | default(gf) }}"/>
   </svg>
 </g>
 {% endif %}
@@ -120,7 +125,15 @@
 {# The first divider is the identity↔metrics separator — render it only when
    metrics are present, so empty strips stay identity-only with no dangling rule. #}
 {% if metrics %}
-{% if divider_render_mode == "gradient" %}
+{% if divider_render_mode == "paired-rect" %}
+{# Paired groove+shine divider (primer): two adjacent 1px rects, colors
+   resolver-supplied per substrate — a dark groove on dark substrates,
+   cool-on-white on light. Geometry from strip_divider_pair. #}
+<g data-hw-zone="divider" transform="translate({{ first_div_x }},0)">
+  <rect x="{{ strip_divider_pair.groove_dx }}" y="{{ strip_divider_pair.y }}" width="{{ strip_divider_pair.w }}" height="{{ strip_divider_pair.h }}" fill="{{ strip_divider_groove_color }}"/>
+  <rect x="{{ strip_divider_pair.shine_dx }}" y="{{ strip_divider_pair.y }}" width="{{ strip_divider_pair.w }}" height="{{ strip_divider_pair.h }}" fill="{{ strip_divider_shine_color }}"/>
+</g>
+{% elif divider_render_mode == "gradient" %}
 <line x1="{{ first_div_x }}" y1="{{ div_y1 }}"
       x2="{{ first_div_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
@@ -157,7 +170,12 @@
    left-neighbor and pulls it off-center (automata's solid dividers exposed this;
    chrome's gradient dividers merely hid it). One divider model, every genome. #}
 {% if _layout.show_leading_rule %}
-{% if divider_render_mode == "gradient" %}
+{% if divider_render_mode == "paired-rect" %}
+<g data-hw-zone="divider" transform="translate({{ _cell_x }},0)">
+  <rect x="{{ strip_divider_pair.groove_dx }}" y="{{ strip_divider_pair.y }}" width="{{ strip_divider_pair.w }}" height="{{ strip_divider_pair.h }}" fill="{{ strip_divider_groove_color }}"/>
+  <rect x="{{ strip_divider_pair.shine_dx }}" y="{{ strip_divider_pair.y }}" width="{{ strip_divider_pair.w }}" height="{{ strip_divider_pair.h }}" fill="{{ strip_divider_shine_color }}"/>
+</g>
+{% elif divider_render_mode == "gradient" %}
 <line x1="{{ _cell_x }}" y1="{{ div_y1 }}" x2="{{ _cell_x }}" y2="{{ div_y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="1"/>
 {% else %}
@@ -206,6 +224,7 @@
 </g>
 {% endif %}
 
+{% if strip_content_offset %}</g>{% endif %}{# /card-inset wrapper #}
 {% endif %}{# /paradigm_owns_strip gate — end of shared zone pipeline #}
 
 {# ── Border motion SMIL overlay (shared across all paradigms) ── #}

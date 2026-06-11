@@ -29,7 +29,7 @@
   <rect x="{{ icon_geometry.chrome_square_inner_x }}" y="{{ icon_geometry.chrome_square_inner_y }}" width="{{ icon_geometry.chrome_square_inner_w }}" height="{{ icon_geometry.chrome_square_inner_h }}" rx="{{ icon_geometry.chrome_square_inner_rx }}" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="0.9"/>
 {% if glyph_path %}
   <svg viewBox="{{ glyph_viewbox }}" width="{{ icon_geometry.chrome_square_glyph_size }}" height="{{ icon_geometry.chrome_square_glyph_size }}" x="{{ icon_geometry.chrome_square_glyph_x }}" y="{{ icon_geometry.chrome_square_glyph_y }}" overflow="visible">
-    <path d="{{ glyph_path }}" fill="{{ glyph_fill }}"/>
+    <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="{{ glyph_fill }}"/>
   </svg>
 {% endif %}
 </g>
@@ -51,7 +51,7 @@
   <circle r="{{ icon_geometry.chrome_circle_well_r }}" fill="none" stroke="url(#{{ uid }}-rim)" stroke-width="1.0"/>
 {% if glyph_path %}
   <svg viewBox="{{ glyph_viewbox }}" width="{{ icon_geometry.chrome_circle_glyph_size }}" height="{{ icon_geometry.chrome_circle_glyph_size }}" x="{{ icon_geometry.chrome_circle_glyph_x }}" y="{{ icon_geometry.chrome_circle_glyph_y }}" overflow="visible">
-    <path d="{{ glyph_path }}" fill="{{ glyph_fill }}"/>
+    <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="{{ glyph_fill }}"/>
   </svg>
 {% endif %}
 </g>

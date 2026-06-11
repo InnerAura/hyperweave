@@ -1,0 +1,173 @@
+{
+  "title": "Format comparison",
+  "subtitle": "how each format travels through the toolchain",
+  "hero_column": "svg",
+  "summary_label": "SCORE",
+  "columns": [
+    {
+      "id": "cap",
+      "label": "CAPABILITY",
+      "role": "label"
+    },
+    {
+      "id": "svg",
+      "label": "SVG",
+      "kind": "check"
+    },
+    {
+      "id": "png",
+      "label": "PNG",
+      "kind": "check"
+    },
+    {
+      "id": "html",
+      "label": "HTML",
+      "kind": "check"
+    },
+    {
+      "id": "md",
+      "label": "Markdown",
+      "kind": "check"
+    }
+  ],
+  "rows": [
+    {
+      "label": "Renders in README",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        },
+        {
+          "state": "full"
+        }
+      ]
+    },
+    {
+      "label": "Self-contained",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "partial"
+        },
+        {
+          "state": "full"
+        }
+      ]
+    },
+    {
+      "label": "Animation",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        }
+      ]
+    },
+    {
+      "label": "Interactive",
+      "cells": [
+        {
+          "state": "partial"
+        },
+        {
+          "state": "none"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        }
+      ]
+    },
+    {
+      "label": "Semantic metadata",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "partial"
+        }
+      ]
+    },
+    {
+      "label": "Crisp at any scale",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        }
+      ]
+    },
+    {
+      "label": "Accessible (a11y)",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "partial"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "full"
+        }
+      ]
+    }
+  ],
+  "summary_row": [
+    {
+      "value": "9.5",
+      "note": "complete"
+    },
+    {
+      "value": "5.0",
+      "note": "raster"
+    },
+    {
+      "value": "6.5",
+      "note": "partial"
+    },
+    {
+      "value": "7.0",
+      "note": "text"
+    }
+  ],
+  "notes": "hw:format-score · full=1 · partial=0.5 · none=0 · illustrative"
+}

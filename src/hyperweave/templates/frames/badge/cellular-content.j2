@@ -58,7 +58,7 @@
 {% if has_glyph and glyph_path %}
 <g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y }})">
   <svg width="{{ glyph_render_size }}" height="{{ glyph_render_size }}" viewBox="{{ glyph_render_viewbox | default(glyph_viewbox) }}" overflow="visible">
-    <path d="{{ glyph_path }}" fill="{{ variant_glyph_fill }}"/>
+    <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="{{ variant_glyph_fill }}"/>
   </svg>
 </g>
 {% endif %}

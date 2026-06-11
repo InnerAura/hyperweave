@@ -52,11 +52,14 @@ async def hw_compose(
     stats_username: str = "",
     chart_owner: str = "",
     chart_repo: str = "",
+    matrix: dict[str, Any] | None = None,
+    glyph_tint: str = "",
+    render_target: str = "svg",
 ) -> str:
     """Compose a HyperWeave artifact. Returns self-contained SVG.
 
     type: badge | strip | icon | divider | marquee-horizontal |
-          receipt | rhythm-strip | stats | chart
+          receipt | rhythm-strip | stats | chart | matrix
 
     genome: brutalist (dark, sharp corners, emerald accent) |
             chrome (dark, metallic, 5 named variants: horizon/abyssal/lightning/graphite/moth) |
@@ -78,6 +81,17 @@ async def hw_compose(
       receipt:  telemetry_data={session data contract dict}
       stats:    stats_username="eli64s" + connector_data={stars_total, ...}
       chart:    chart_owner/chart_repo + connector_data={points, current_stars}
+      matrix:   matrix={"title": ..., "columns": [{"id","label","kind"?}...],
+                "rows": [{"label","cells":[{...}]}...]} — the universal table
+                IR. Columns declare kind: text|check|dot|bar|pill|numeric|
+                chip|glyph (omit for auto-inference; bar/dot are caller-only).
+                Cells carry value | state (full/partial/none/on/off) |
+                chips[] | glyph (registry id). Optional rhetoric (caller-only):
+                hero_column, headline {value,label}, summary_row, sections,
+                row_glyph_tint=ink|brand. Or use
+                connector_data={"matrix_adapter": "connector-registry"} for
+                the generated connector matrix, or data= tokens for a simple
+                metric/value table.
 
     The ``data`` parameter is the unified data-token grammar. Forms:
       text:STRING          — raw display text
@@ -112,9 +126,20 @@ async def hw_compose(
     state_glyph_shape: badge state-indicator shape override: square | circle |
           diamond. Empty = genome/paradigm default (brutalist dark=square /
           light=circle, chrome=diamond, cellular=square).
+    render_target: svg (default) | markdown (matrix: returns the GFM table
+          shadow instead of the SVG) | html (reserved seam — not implemented
+          until v0.5).
+    glyph_tint: glyph fill selection: ink | brand | full. Empty defers to
+          the genome default; per-slot IR declarations outrank it.
+          Degrades full -> gradient -> brand -> ink, never errors.
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
+
+    if render_target not in ("svg", "markdown"):
+        if render_target == "html":
+            raise ValueError("render_target 'html' is a reserved seam — not implemented until v0.5")
+        raise ValueError(f"unknown render_target {render_target!r} (svg | markdown)")
 
     final_value = value
     data_tokens_resolved: list[Any] | None = None
@@ -128,7 +153,7 @@ async def hw_compose(
 
         tokens = parse_data_tokens(data)
         resolved, _ttl = await resolve_data_tokens(tokens)
-        if type in {"marquee-horizontal", "stats"}:
+        if type in {"marquee-horizontal", "stats", "matrix"}:
             data_tokens_resolved = list(resolved)
         else:
             formatted = format_for_value(resolved)
@@ -160,9 +185,15 @@ async def hw_compose(
         chart_owner=chart_owner,
         chart_repo=chart_repo,
         data_tokens=data_tokens_resolved,
+        matrix=matrix,
+        glyph_tint=glyph_tint,
     )
 
     result = compose(spec)
+    if render_target == "markdown":
+        if not result.markdown:
+            raise ValueError(f"frame type {type!r} has no markdown projection (matrix only in v0.4)")
+        return result.markdown
     return result.svg
 
 
@@ -226,7 +257,7 @@ async def hw_discover(
 ) -> dict[str, Any]:
     """Discover available HyperWeave components.
 
-    what: all | genomes | motions | glyphs | frames | url_grammar
+    what: all | genomes | motions | glyphs | frames | matrix | url_grammar
     Returns structured data about available options for hw_compose.
     """
     from hyperweave.config.loader import get_loader
@@ -264,6 +295,20 @@ async def hw_discover(
 
     if what in ("all", "frames"):
         result["frames"] = [ft.value for ft in FrameType]
+
+    if what in ("all", "matrix"):
+        from hyperweave.compose.matrix_input import matrix_preset_names
+        from hyperweave.core.matrix import CellKind
+
+        result["matrix"] = {
+            "cell_kinds": [k.value for k in CellKind if k.value != "auto"],
+            "inferred_kinds": "text | check | dot... auto-inference covers check/chip/glyph/pill/numeric/text; "
+            "bar and dot are caller-only (declare column.kind explicitly)",
+            "presets": list(matrix_preset_names()),
+            "rhetoric_fields": "hero_column, headline, summary_row, emphasis — caller-only, never inferred",
+            "projections": "SVG + hw:payload (matrix/1) + hwz/1 envelope + GFM markdown "
+            "(render_target='markdown' or ComposeResult.markdown)",
+        }
 
     if what in ("all", "url_grammar"):
         data_grammar = (
@@ -410,6 +455,19 @@ async def hw_discover(
                     "pair": "automata only — silently ignored on stats (kept for URL grammar uniformity).",
                 },
                 "example": "/v1/stats/GLM-5/chrome.static?data=github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
+            },
+            "matrix": {
+                "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
+                "query_params": {
+                    "variant": "primer: noir | carbon | space | anvil | porcelain | cream | dusk | petrol",
+                    "spec": (
+                        "base64url-encoded MatrixSpec JSON (preset must be 'custom'; "
+                        "decoded cap 8 KB). Presets: connectors — the generated "
+                        "connector-registry matrix. Arbitrary tables also ship via "
+                        "POST /v1/compose with a `matrix` body."
+                    ),
+                },
+                "example": "/v1/matrix/connectors/primer.static?variant=porcelain",
             },
             "chart-stars": {
                 "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",

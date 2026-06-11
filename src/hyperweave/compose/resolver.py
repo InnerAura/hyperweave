@@ -105,8 +105,9 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     glyph_data = _resolve_glyph(spec)
     motion = _resolve_motion(spec, genome)
 
-    # Stats and chart resolvers live in compose/resolvers/ per Invariant 10.
+    # Stats, chart, and matrix resolvers live in compose/resolvers/ per Invariant 10.
     from hyperweave.compose.resolvers.chart import resolve_chart
+    from hyperweave.compose.resolvers.matrix import resolve_matrix
     from hyperweave.compose.resolvers.stats import resolve_stats
 
     # Dispatch to frame-specific resolver
@@ -120,6 +121,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         "rhythm-strip": resolve_rhythm_strip,
         "chart": resolve_chart,
         "stats": resolve_stats,
+        "matrix": resolve_matrix,
     }
 
     resolver_fn = frame_resolvers.get(spec.type, resolve_badge)
@@ -276,6 +278,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         glyph_id=glyph_data.get("id", ""),
         glyph_path=glyph_data.get("path", ""),
         glyph_viewbox=glyph_data.get("viewBox", ""),
+        glyph_fill_rule=glyph_data.get("fill_rule", ""),
     )
 
 
@@ -397,7 +400,15 @@ def resolve_badge(
 
     # Layout constants
     font_size = 11  # kept for letter-spacing math (chrome/brutalist default)
-    accent_w = 4
+    # Left accent-bar zone width: paradigm-declared (primer: 0 — the rail
+    # starts at the badge edge); -1 (schema default) defers to the flat-profile
+    # constant so brutalist/chrome/cellular stay byte-identical.
+    _badge_cfg_for_accent = paradigm_spec.badge if paradigm_spec else None
+    accent_w = (
+        _badge_cfg_for_accent.accent_w
+        if _badge_cfg_for_accent is not None and _badge_cfg_for_accent.accent_w >= 0
+        else 4
+    )
     # Glyph-size: paradigm-driven, compact variant may override.
     badge_cfg_for_glyph_size = paradigm_spec.badge if paradigm_spec else None
     if badge_cfg_for_glyph_size is not None:
@@ -627,10 +638,6 @@ def resolve_badge(
     # for etched seam (chrome) when seam_render_w > 0; structural separator
     # (sep_w + seam_w) for paradigms with seam_render_w == 0.
     pad = paradigm_spec.badge.pad if paradigm_spec else 8
-    if paradigm_spec and paradigm_spec.badge.pad_ratio > 0:
-        # Proportional pad — the gap rhythm scales with the badge, so default and
-        # compact tighten coherently (one rule, not a per-size pad).
-        pad = max(1, round(_value_size * paradigm_spec.badge.pad_ratio))
     text_anchor = badge_cfg.text_anchor if badge_cfg else "middle"
     seam_render_w = badge_cfg.seam_render_w if badge_cfg else 0.0
     seam_specular_offset = badge_cfg.seam_specular_offset if badge_cfg else 0.0
@@ -728,6 +735,10 @@ def resolve_badge(
         visual_gap=visual_gap,
         indicator_leads_value=indicator_leads_value,
         content_center_geometric=(badge_cfg.content_center_geometric if badge_cfg else False),
+        rail_start_pad=badge_cfg.rail_start_pad if badge_cfg else 0.0,
+        rail_end_pad=badge_cfg.rail_end_pad if badge_cfg else 0.0,
+        seam_gap_left=badge_cfg.seam_gap_left if badge_cfg else 0.0,
+        seam_gap_right=badge_cfg.seam_gap_right if badge_cfg else 0.0,
     )
 
     indicator_center_x = zones.indicator_x + zones.indicator_size / 2 if zones.show_indicator else 0.0
@@ -836,78 +847,55 @@ def resolve_badge(
     }
     badge_value_color = _value_color_by_state.get(status_glyph_state, genome.get("badge_value_text", ""))
 
-    # Thin inset-hairline seam (primer's signature). When seam_inset_ratio > 0
-    # the painted seam is a narrow rect inset vertically by round(height*ratio),
-    # centred on the engine-computed seam midline; spacing is unchanged because
-    # the cursor walk still reserved sep_w + seam_w. Zero ratio → templates that
-    # consume these still get full-height defaults, so it's a safe no-op.
-    _seam_inset_ratio = badge_cfg.seam_inset_ratio if badge_cfg else 0.0
-    _seam_inset_px = round(height * _seam_inset_ratio) if _seam_inset_ratio > 0 else 0
-    badge_seam_render_w = badge_cfg.seam_pixel_w if badge_cfg and badge_cfg.seam_pixel_w > 0 else float(sep_w)
-    badge_seam_render_x = round(zones.seam_x - badge_seam_render_w / 2.0, 2)
-    badge_seam_render_y = float(badge_origin_y + _seam_inset_px)
-    badge_seam_render_h = float(height - 2 * _seam_inset_px)
-
-    # Primer v04alpha1 badge structure (consumed only by the primer content
-    # partials; other paradigms ignore these fields). Geometry is centralized here
-    # so the templates stamp pre-computed coordinates with zero arithmetic.
-    #   - value zone: the recessed right half, from the seam midline to the edge.
-    #   - gloss band: top sheen (dark substrate), 40% of the badge height.
-    #   - carved seam: a 3-rect groove (faint edge + dark recess core + bright
-    #     highlight) centred on the seam midline; recess width = seam_pixel_w.
-    #   - bevel/rim: a convex-edge stroke inset 0.6 and a hairline rim inset 0.5,
-    #     both at the corner radius less the half-stroke (rx = corner - 0.5).
-    _seam_c = round(zones.seam_x, 2)
-    _recess_x = round(_seam_c - badge_seam_render_w / 2.0, 2)
-    # corner may carry a px suffix (chrome: "4px"); strip it before the rim radius.
+    # Badge frame corner radius: paradigm override (primer: 4 — a tighter chip
+    # radius than the genome card corner) else the genome corner. corner may
+    # carry a px suffix (chrome: "4px"); strip it before parsing.
     _corner_str = str(genome.get("corner") or "6").strip().removesuffix("px")
     try:
         _badge_corner = float(_corner_str)
     except ValueError:
         _badge_corner = 6.0
-    badge_stroke_rx = round(_badge_corner - 0.5, 2)
-    badge_vzone = {
-        "x": _seam_c,
-        "y": float(badge_origin_y),
-        "w": round(zones.width - _seam_c, 2),
+    if badge_cfg is not None and badge_cfg.badge_corner > 0:
+        _badge_corner = badge_cfg.badge_corner
+    badge_corner_rx = int(_badge_corner) if _badge_corner.is_integer() else round(_badge_corner, 1)
+
+    # Exact-width rail (primer): when the paradigm declares explicit rail pads,
+    # the advance math is exact (monospace text, no textLength) and the SVG
+    # frame carries the unrounded width so the right-edge gap is precisely the
+    # declared pad. Gate is field presence (Invariant 12), never a paradigm slug.
+    _exact_rail = badge_cfg is not None and (badge_cfg.rail_start_pad > 0 or badge_cfg.rail_end_pad > 0)
+    _frame_w: float = zones.width_exact if _exact_rail else float(zones.width)
+
+    # Two-plate frame geometry (consumed only by the primer badge partials;
+    # inert for other paradigms). The label-zone tint spans to the seam groove;
+    # the seam is a paired 1px groove + 1px shine riding the etched-seam slot
+    # (seam_render_w=2, specular offset 1); the inner highlight + outer border
+    # are the double-stroke rim. Colors live in the templates, per substrate.
+    badge_label_zone = {"x": 0.0, "y": 0.0, "w": zones.seam_left_x, "h": float(height)}
+    badge_seam_pair = {
+        "groove_x": zones.seam_left_x,
+        "shine_x": zones.seam_specular_x,
+        "w": 1,
+        "y": 0.0,
         "h": float(height),
     }
-    badge_seam_carved = {
-        "y": float(badge_origin_y),
-        "h": float(height),
-        "edge_x": round(_recess_x - 0.7, 2),
-        "edge_w": 0.5,
-        "recess_x": _recess_x,
-        "recess_w": round(badge_seam_render_w, 2),
-        "shine_x": round(_recess_x + badge_seam_render_w, 2),
-        "shine_w": 0.7,
-    }
-    badge_bevel = {
+    badge_inner_highlight = {
         "x": 0.6,
         "y": 0.6,
-        "w": round(zones.width - 1.2, 2),
+        "w": round(_frame_w - 1.2, 2),
         "h": round(height - 1.2, 2),
-        "rx": badge_stroke_rx,
+        "rx": round(max(0.0, _badge_corner - 0.6), 2),
+        "stroke_w": 0.75,
     }
-
-    # Primer v04alpha1: on a STATELESS badge the value word centers in the VISIBLE
-    # recess — between the carved-seam right edge (shine_x + shine_w) and the badge
-    # edge — not the cursor-reserved value zone. seam_pixel_w paints a thin groove
-    # but the cursor walk still reserves sep_w + seam_w for the seam, so
-    # value_zone_left sits past the painted seam and drifts the centered value
-    # right. Re-centering on the painted recess makes the seam->value and
-    # value->edge gaps symmetric at every value width.
-    #
-    # STATEFUL badges are excluded: their lead indicator occupies the seam-side of
-    # the recess, so the engine already places [indicator][gap][value] as a unit
-    # (value_zone_left = indicator_x + size + gap). Re-centering the value over the
-    # whole recess there would slide it left under the indicator. zones.value_x is
-    # unchanged for stateful badges and for every other paradigm.
+    badge_outer_border = {
+        "x": 0.5,
+        "y": 0.5,
+        "w": round(_frame_w - 1.0, 2),
+        "h": round(height - 1.0, 2),
+        "rx": badge_corner_rx,
+        "stroke_w": 1,
+    }
     badge_value_x = zones.value_x
-    if badge_cfg and badge_cfg.value_centers_in_recess and not zones.show_indicator:
-        _carved_seam_right = badge_seam_carved["shine_x"] + badge_seam_carved["shine_w"]
-        _recess_right = badge_vzone["x"] + badge_vzone["w"]
-        badge_value_x = round((_carved_seam_right + _recess_right) / 2.0, 2)
 
     # Variant resolution and profile visual context (envelope, well, specular,
     # chrome text gradients) are now applied universally by the dispatcher at
@@ -919,6 +907,10 @@ def resolve_badge(
         "height": zones.height,
         "template": "frames/badge.svg.j2",
         "context": {
+            # Exact frame width (primer): frame_context overrides the base
+            # context's int so document.svg.j2 renders the unrounded rail width
+            # (right-edge gap == declared pad). ResolvedArtifact.width stays int.
+            **({"width": int(_frame_w) if _frame_w.is_integer() else round(_frame_w, 1)} if _exact_rail else {}),
             "label": label_raw,
             "label_display": label_display,
             "value": value_raw,
@@ -950,16 +942,12 @@ def resolve_badge(
             "light_indicator_inner_r": light_indicator_inner_r,
             "light_indicator_stroke_width": light_indicator_stroke_width,
             "seam_gap_x": seam_gap_x,
-            # Primer inset-hairline seam render geometry (no-op for other paradigms).
-            "badge_seam_render_x": badge_seam_render_x,
-            "badge_seam_render_y": badge_seam_render_y,
-            "badge_seam_render_w": badge_seam_render_w,
-            "badge_seam_render_h": badge_seam_render_h,
-            # Primer v04alpha1 badge structure (consumed only by primer partials).
-            "badge_vzone": badge_vzone,
-            "badge_seam_carved": badge_seam_carved,
-            "badge_bevel": badge_bevel,
-            "badge_stroke_rx": badge_stroke_rx,
+            # Two-plate badge frame geometry (consumed only by primer partials).
+            "badge_corner_rx": badge_corner_rx,
+            "badge_label_zone": badge_label_zone,
+            "badge_seam_pair": badge_seam_pair,
+            "badge_inner_highlight": badge_inner_highlight,
+            "badge_outer_border": badge_outer_border,
             "chrome_inner_inset": chrome_inner_inset,
             "chrome_well_inset": chrome_well_inset,
             "chrome_inner_rx": chrome_inner_rx,
@@ -990,8 +978,11 @@ def resolve_badge(
             "glyph_optical_scale": glyph_optical_scale,
             "label_x": zones.label_x,
             "value_x": badge_value_x,
-            "label_text_length": zones.label_text_length,
-            "value_text_length": zones.value_text_length,
+            # Exact-rail paradigms (primer) suppress textLength entirely: the
+            # advance math is exact for monospace text, and the camo
+            # fallback-font bound would visibly squeeze real JetBrains Mono.
+            "label_text_length": 0.0 if _exact_rail else zones.label_text_length,
+            "value_text_length": 0.0 if _exact_rail else zones.value_text_length,
             # Chrome etched-seam coordinates.
             "seam_left_x": zones.seam_left_x,
             "seam_specular_x": zones.seam_specular_x,
@@ -1336,6 +1327,9 @@ def resolve_strip(
         icon_box_pad=icon_box_pad,
         has_identity_glyph=has_glyph,
         strip_glyph_size=strip_glyph_size,
+        glyph_inset=strip_cfg.glyph_inset if strip_cfg else 12,
+        glyph_text_gap=strip_cfg.glyph_text_gap if strip_cfg else 9,
+        status_right_inset=strip_cfg.status_right_inset if strip_cfg else 0.0,
         brand_panel_x=strip_cfg.brand_panel_x if strip_cfg else 0,
         brand_panel_width=strip_cfg.brand_panel_width if strip_cfg else 0,
         identity_text_x=strip_cfg.identity_text_x if strip_cfg else 0,
@@ -1379,31 +1373,77 @@ def resolve_strip(
     identity_clip_x = accent_w + glyph_zone_x_offset
     identity_clip_width = max(0.0, first_divider_x - identity_clip_x)
 
-    # Primer plate material (rounded card + bevel-edge stroke + perimeter hairline).
-    # Painted by the primer strip content partials; the bevel/perimeter rects are
-    # resolver-computed from the resolved content_width/height (zero template
-    # arithmetic) and mirror the strips specimen: rx=10 plate, rx=9 bevel inset 1px,
-    # rx=9.5 perimeter inset 0.5px. Other paradigms' content partials ignore these
-    # keys, so this is inert for chrome/cellular/brutalist.
+    # Card-in-canvas inset (primer): the card sits inset in a larger canvas so
+    # its drop shadow renders instead of clipping at the viewBox. Zone geometry
+    # stays CARD-space (strip_zones is untouched); the shared zone pipeline in
+    # strip.svg.j2 is wrapped in a translate(strip_content_offset) group, and
+    # the plate partial paints the card at canvas coordinates. Zero pads (every
+    # other paradigm) keep card == canvas and emit no wrapper group.
+    _pad_x = strip_cfg.canvas_pad_x if strip_cfg else 0
+    _pad_top = strip_cfg.canvas_pad_top if strip_cfg else 0
+    _pad_bottom = strip_cfg.canvas_pad_bottom if strip_cfg else 0
+    canvas_w = width + 2 * _pad_x
+    canvas_h = height + _pad_top + _pad_bottom
+    strip_content_offset = {"x": _pad_x, "y": _pad_top} if (_pad_x > 0 or _pad_top > 0 or _pad_bottom > 0) else None
+
+    # Card frame geometry (canvas-space; consumed only by the primer strip
+    # plate partials). Shadow-wrapped rounded card + inner edge-highlight
+    # stroke (inset 0.6, rx-0.6) + outer border stroke (inset 0.5, rx-0.5) —
+    # the strips specimen's double-stroke rim. Inert for other paradigms.
     _plate_rx = strip_cfg.plate_corner if strip_cfg and strip_cfg.plate_corner > 0 else 0
-    strip_plate = {
+    strip_card = {
+        "x": float(_pad_x),
+        "y": float(_pad_top),
+        "w": float(content_width),
+        "h": float(height),
         "rx": _plate_rx,
-        "bevel": {"x": 1, "y": 1, "w": content_width - 2, "h": height - 2, "rx": max(0, _plate_rx - 1)},
-        "perimeter": {
-            "x": 0.5,
-            "y": 0.5,
-            "w": content_width - 1,
-            "h": height - 1,
-            "rx": max(0.0, _plate_rx - 0.5),
-        },
     }
+    strip_inner_highlight = {
+        "x": round(_pad_x + 0.6, 2),
+        "y": round(_pad_top + 0.6, 2),
+        "w": round(content_width - 1.2, 2),
+        "h": round(height - 1.2, 2),
+        "rx": round(max(0.0, _plate_rx - 0.6), 2),
+        "stroke_w": 0.75,
+    }
+    strip_outer_border = {
+        "x": _pad_x + 0.5,
+        "y": _pad_top + 0.5,
+        "w": content_width - 1,
+        "h": height - 1,
+        "rx": max(0.0, _plate_rx - 0.5),
+        "stroke_w": 1,
+    }
+
+    # Paired-rect divider geometry + substrate-resolved colors (primer): a 1px
+    # groove + adjacent 1px shine. Dark substrates carve black + faint white;
+    # light substrates tint the groove with the ink and catch a strong white
+    # shine ("cool-on-white"). Resolver-computed rgba strings keep the shared
+    # strip template free of substrate conditionals. Inert for gradient/class
+    # divider modes (geometry zeroes, colors unused).
+    from hyperweave.core.color import hex_to_rgb_triplet
+
+    _divider_pair_y = strip_cfg.divider_y if strip_cfg and strip_cfg.divider_y > 0 else 0.0
+    _divider_pair_h = strip_cfg.divider_h if strip_cfg and strip_cfg.divider_h > 0 else 0.0
+    strip_divider_pair = {"y": _divider_pair_y, "h": _divider_pair_h, "w": 1, "groove_dx": 0, "shine_dx": 1}
+    _strip_is_light_substrate = str(genome.get("substrate_kind") or genome.get("category") or "dark") == "light"
+    _strip_ink_rgb = hex_to_rgb_triplet(str(genome.get("ink", "")))
+    if _strip_is_light_substrate and _strip_ink_rgb:
+        strip_divider_groove_color = f"rgba({_strip_ink_rgb},0.10)"
+        strip_divider_shine_color = "rgba(255,255,255,0.7)"
+    else:
+        strip_divider_groove_color = "rgba(0,0,0,0.45)"
+        strip_divider_shine_color = "rgba(255,255,255,0.10)"
+
     # Strip status mark — the SAME state-glyph system as the badge (ping / spin /
-    # shake / throb / dim), sized quietly to the status zone (sg_r 5.5). The strip's
-    # default ACTIVE telemetry resolves to the passing ping; an explicit/inferred
-    # state renders its matching animated mark. Consumed by primer-status.j2; other
-    # paradigms' status partials ignore these keys. Genome-derived literals inside
-    # the marks render true in static renderers (VS Code / Finder / Camo-static).
-    _strip_sg_r = 5.5
+    # shake / throb / dim), sized quietly to the status zone. Paradigms may
+    # declare the housing radius (primer: 5.3 → ping core r 3.4 / ring stroke
+    # 1.6 via the shared ratio table); default keeps 5.5. The strip's default
+    # ACTIVE telemetry resolves to the passing ping; an explicit/inferred state
+    # renders its matching animated mark. Consumed by primer-status.j2; other
+    # paradigms' status partials ignore these keys. Genome-derived literals
+    # inside the marks render true in static renderers.
+    _strip_sg_r = strip_cfg.status_glyph_r if strip_cfg and strip_cfg.status_glyph_r > 0 else 5.5
     strip_status_glyph = _status_glyph_geometry(_strip_sg_r, round(_strip_sg_r * 0.5, 1))
     strip_status_glyph_state = _normalize_status_glyph_state(spec.state)
 
@@ -1455,8 +1495,17 @@ def resolve_strip(
         "status_x": status_x,
         "status_cy": height / 2,
         "indicator_size": 14,
-        # Primer plate material (see computation above).
-        "strip_plate": strip_plate,
+        # Card-in-canvas geometry (see computation above). strip_content_offset
+        # is None for paradigms without canvas pads — the shared template's
+        # wrapper gate emits nothing.
+        "strip_content_offset": strip_content_offset,
+        "strip_card": strip_card,
+        "strip_inner_highlight": strip_inner_highlight,
+        "strip_outer_border": strip_outer_border,
+        # Paired-rect divider geometry + substrate-resolved colors.
+        "strip_divider_pair": strip_divider_pair,
+        "strip_divider_groove_color": strip_divider_groove_color,
+        "strip_divider_shine_color": strip_divider_shine_color,
         # Strip state-glyph mark (shared with the badge indicator system).
         "status_glyph": strip_status_glyph,
         "status_glyph_state": strip_status_glyph_state,
@@ -1485,7 +1534,12 @@ def resolve_strip(
         "identity_x": zones.identity_x,
         "identity_clip_x": identity_clip_x,
         "identity_clip_width": identity_clip_width,
-        "identity_single_y": height / 2 + 4,
+        # Single-line identity baseline: paradigm override (primer: 28, the
+        # specimen's display-face baseline in the 46px card) else the computed
+        # half-height placement.
+        "identity_single_y": (
+            strip_cfg.identity_baseline_y if strip_cfg and strip_cfg.identity_baseline_y > 0 else height / 2 + 4
+        ),
         "identity_stack_y": height / 2 - 4,
         "subtitle_y": height / 2 + 9,
         "strip_divider_y1": (strip_cfg.divider_inset if strip_cfg else 8),
@@ -1561,10 +1615,20 @@ def resolve_strip(
         "strip_metric_label_font_family": label_family,
         "strip_metric_label_fill": profile.get("strip_metric_label_fill", "var(--dna-ink-muted)"),
         "strip_metric_label_letter_spacing": profile.get("strip_metric_label_letter_spacing", "0.2em"),
-        "strip_metric_label_y": profile.get("strip_metric_label_y", 18),
+        # Metric baselines: paradigm float overrides (primer: 16.5 / 33 in the
+        # 46px card) else the profile defaults — chrome/cellular unchanged.
+        "strip_metric_label_y": (
+            strip_cfg.metric_label_baseline_y
+            if strip_cfg and strip_cfg.metric_label_baseline_y > 0
+            else profile.get("strip_metric_label_y", 18)
+        ),
         "strip_metric_value_weight": profile.get("strip_metric_value_weight", 900),
         "strip_metric_value_fill": profile.get("strip_metric_value_fill", "var(--dna-ink-primary)"),
-        "strip_metric_value_y": profile.get("strip_metric_value_y", 36),
+        "strip_metric_value_y": (
+            strip_cfg.metric_value_baseline_y
+            if strip_cfg and strip_cfg.metric_value_baseline_y > 0
+            else profile.get("strip_metric_value_y", 36)
+        ),
         "strip_metric_value_skew": profile.get("strip_metric_value_skew", 0),
         # Metric cell alignment — paradigm declares the text-anchor + x-offset
         # so the shared metric loop in strip.svg.j2 doesn't need per-paradigm
@@ -1615,13 +1679,9 @@ def resolve_strip(
     else:
         ctx["divider_render_mode"] = "class"
         ctx["status_shape_rendering"] = "crispEdges"
-    # Identity glyph → bright seam_color accent (primer). Set in the frame context
-    # so it wins the dispatcher's _genome_material_context setdefault (which would
-    # otherwise leave glyph_fill = glyph_inner, the muted dark-variant tone). The
-    # identity TEXT routes the same way via the primer-defs CSS class.
-    if strip_cfg is not None and strip_cfg.identity_accent_from_seam and genome.get("seam_color"):
-        ctx["glyph_fill"] = genome["seam_color"]
     # Profile visual context now injected centrally by the dispatcher.
+    # (Identity glyph fill: the dispatcher's _genome_material_context resolves
+    # glyph_fill = glyph_inner — the genome's single accent role.)
 
     # v0.3.2 Phase C brutalist strip grammar — owns_strip flag + geometry
     # plumbing. When the paradigm declares owns_strip=true (brutalist v0.3.2),
@@ -1680,9 +1740,11 @@ def resolve_strip(
         # so the content partials can paint the panel without re-reading genome.
         ctx["brand_panel_fill"] = genome.get("brand_panel_fill", "")
 
+    # Canvas dimensions: card + shadow margins (canvas == card for paradigms
+    # without canvas pads).
     return {
-        "width": width,
-        "height": height,
+        "width": canvas_w,
+        "height": canvas_h,
         "template": "frames/strip.svg.j2",
         "context": ctx,
     }
@@ -3239,11 +3301,13 @@ def _resolve_horizontal(
     # cap zone is reserved by clip_inset_left so modules scroll under the cap seam.
     cap_glyph_path = ""
     cap_glyph_viewbox = "0 0 64 64"
+    cap_glyph_fill_rule = ""
     cap_scope = ""
     if cap_kind == "identity":
         _cap_g = _resolve_glyph(spec)
         cap_glyph_path = str(_cap_g.get("path", ""))
         cap_glyph_viewbox = str(_cap_g.get("viewBox", "") or "0 0 64 64")
+        cap_glyph_fill_rule = str(_cap_g.get("fill_rule", ""))
         # Cap scope = a SHORT identity, never the raw (possibly multi-segment)
         # marquee title — a long pipe-joined title would bleed across the whole
         # band. Prefer the connector repo identity; else a clean single-token
@@ -3359,6 +3423,7 @@ def _resolve_horizontal(
         "cap_kind": cap_kind,
         "cap_glyph_path": cap_glyph_path,
         "cap_glyph_viewbox": cap_glyph_viewbox,
+        "cap_glyph_fill_rule": cap_glyph_fill_rule,
         "cap_scope": cap_scope,
         "module_value_font_family": module_value_font_family,
         "module_label_font_family": module_label_font_family,
@@ -4607,6 +4672,7 @@ def _glyph_payload(glyph_id: str, glyphs: Mapping[str, Mapping[str, object]]) ->
         "id": glyph_id,
         "path": str(glyph.get("path", "")),
         "viewBox": str(glyph.get("viewBox", "0 0 640 640")),
+        "fill_rule": str(glyph.get("fill_rule", "") or ""),
     }
 
 

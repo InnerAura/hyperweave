@@ -1,0 +1,177 @@
+{
+  "title": "Model benchmark",
+  "subtitle": "fixed band · underline = gauged magnitude",
+  "row_glyph_tint": "brand",
+  "notes": "approximate published figures · illustrative · brand marks are property of their owners",
+  "columns": [
+    {
+      "id": "m",
+      "label": "MODEL",
+      "role": "label"
+    },
+    {
+      "id": "mmlu",
+      "label": "MMLU",
+      "sublabel": "↑ higher",
+      "kind": "numeric",
+      "polarity": "higher"
+    },
+    {
+      "id": "gsm",
+      "label": "GSM8K",
+      "sublabel": "↑ higher",
+      "kind": "numeric",
+      "polarity": "higher"
+    },
+    {
+      "id": "human",
+      "label": "HumanEval",
+      "sublabel": "↑ higher",
+      "kind": "numeric",
+      "polarity": "higher"
+    },
+    {
+      "id": "math",
+      "label": "MATH",
+      "sublabel": "↑ higher",
+      "kind": "numeric",
+      "polarity": "higher"
+    },
+    {
+      "id": "price",
+      "label": "$/Mtok",
+      "sublabel": "↓ lower",
+      "kind": "numeric",
+      "polarity": "lower",
+      "unit": "$"
+    }
+  ],
+  "rows": [
+    {
+      "label": "GPT-4o",
+      "glyph": "openai",
+      "cells": [
+        {
+          "value": 88.7
+        },
+        {
+          "value": 95.8
+        },
+        {
+          "value": 90.2
+        },
+        {
+          "value": 76.6
+        },
+        {
+          "value": 10
+        }
+      ]
+    },
+    {
+      "label": "Claude 3.5 Sonnet",
+      "glyph": "anthropic",
+      "cells": [
+        {
+          "value": 88.7
+        },
+        {
+          "value": 96.4
+        },
+        {
+          "value": 92.0
+        },
+        {
+          "value": 71.1
+        },
+        {
+          "value": 15
+        }
+      ]
+    },
+    {
+      "label": "Gemini 1.5 Pro",
+      "glyph": "gemini",
+      "cells": [
+        {
+          "value": 85.9
+        },
+        {
+          "value": 91.7
+        },
+        {
+          "value": 84.1
+        },
+        {
+          "value": 67.7
+        },
+        {
+          "value": 5
+        }
+      ]
+    },
+    {
+      "label": "Qwen2.5-72B",
+      "glyph": "qwen",
+      "cells": [
+        {
+          "value": 86.1
+        },
+        {
+          "value": 95.8
+        },
+        {
+          "value": 86.6
+        },
+        {
+          "value": 83.1
+        },
+        {
+          "value": 0.4
+        }
+      ]
+    },
+    {
+      "label": "MiniMax-01",
+      "glyph": "minimax",
+      "cells": [
+        {
+          "value": 88.5
+        },
+        {
+          "value": 94.8
+        },
+        {
+          "value": 86.9
+        },
+        {
+          "value": 77.4
+        },
+        {
+          "value": 1.1
+        }
+      ]
+    },
+    {
+      "label": "Kimi k1.5",
+      "glyph": "kimi",
+      "cells": [
+        {
+          "value": 87.4
+        },
+        {
+          "value": 96.2
+        },
+        {
+          "value": 91.0
+        },
+        {
+          "value": 96.2
+        },
+        {
+          "value": 2.5
+        }
+      ]
+    }
+  ]
+}

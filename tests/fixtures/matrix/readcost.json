@@ -1,0 +1,64 @@
+{
+  "title": "Agent read cost",
+  "subtitle": "tokens to parse one matrix · fewer is better",
+  "unit": "tok",
+  "headline": {
+    "value": "16x",
+    "label": "envelope vs raw SVG"
+  },
+  "columns": [
+    {
+      "id": "fmt",
+      "label": "REPRESENTATION",
+      "role": "label"
+    },
+    {
+      "id": "tok",
+      "label": "Tokens",
+      "kind": "bar",
+      "polarity": "lower"
+    }
+  ],
+  "rows": [
+    {
+      "label": "Raw SVG source",
+      "cells": [
+        {
+          "value": 3420
+        }
+      ]
+    },
+    {
+      "label": "hw:payload (JSON)",
+      "cells": [
+        {
+          "value": 480
+        }
+      ]
+    },
+    {
+      "label": "GFM table shadow",
+      "cells": [
+        {
+          "value": 310
+        }
+      ]
+    },
+    {
+      "label": "hwz/1 envelope",
+      "cells": [
+        {
+          "value": 210
+        }
+      ]
+    },
+    {
+      "label": "prefix list",
+      "cells": [
+        {
+          "value": 60
+        }
+      ]
+    }
+  ]
+}

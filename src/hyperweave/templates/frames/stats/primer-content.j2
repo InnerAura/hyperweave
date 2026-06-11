@@ -9,7 +9,7 @@
   <svg x="{{ stats_layout.rects.primer_glyph.x }}" y="{{ stats_layout.rects.primer_glyph.y }}"
        width="{{ stats_layout.rects.primer_glyph.w }}" height="{{ stats_layout.rects.primer_glyph.h }}"
        viewBox="{{ glyph_viewbox }}">
-    <path d="{{ glyph_path }}" fill="var(--dna-glyph-inner, var(--dna-signal))"/>
+    <path d="{{ glyph_path }}"{% if glyph_fill_rule %} fill-rule="{{ glyph_fill_rule }}"{% endif %} fill="var(--dna-glyph-inner, var(--dna-signal))"/>
   </svg>
   {% endif %}
   <text class="{{ uid }}-user" x="{{ stats_layout.texts.primer_identity.x }}" y="{{ stats_layout.texts.primer_identity.y }}"

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
+from hyperweave.core.base import FrozenModel as FrozenModel
 from hyperweave.core.enums import (
     DividerVariant,
     FrameType,
@@ -14,19 +15,12 @@ from hyperweave.core.enums import (
     ProfileId,
     Regime,
 )
+from hyperweave.core.matrix import MatrixSpec  # noqa: TC001 (Pydantic needs at runtime)
 from hyperweave.core.schema import INDICATOR_SHAPES
 
-
-class FrozenModel(BaseModel):
-    """Base model with strict, frozen semantics.
-
-    All domain models inherit from this instead of repeating ConfigDict.
-    ``frozen=True`` makes instances immutable after creation.
-    ``extra="forbid"`` rejects unknown fields at construction time.
-    ``use_attribute_docstrings=True`` lets field docstrings serve as descriptions.
-    """
-
-    model_config = ConfigDict(frozen=True, extra="forbid", use_attribute_docstrings=True)
+# FrozenModel moved to core/base.py (leaf) so sibling model modules like
+# core/matrix.py can inherit it without importing this module. Imported here
+# both for use below and as a stable re-export for existing import sites.
 
 
 class SlotContent(FrozenModel):
@@ -64,7 +58,7 @@ class ComposeSpec(FrozenModel):
     # -- Core identity --
     type: FrameType = Field(
         description=(
-            "Frame type: badge, strip, icon, divider, marquee-horizontal, stats, chart, receipt, rhythm-strip"
+            "Frame type: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, receipt, rhythm-strip"
         ),
     )
     frame_id: str = Field(default="", description="Resolved frame identifier")
@@ -242,6 +236,24 @@ class ComposeSpec(FrozenModel):
         description="Resolved data tokens (list[ResolvedToken] from data_tokens.py)",
     )
 
+    # Matrix frame IR (type=matrix). Transports may pass a plain dict body;
+    # pydantic validates it into MatrixSpec. When None, coerce_matrix_input
+    # falls back to the connector-registry adapter or data tokens.
+    matrix: MatrixSpec | None = Field(
+        default=None,
+        description="Matrix frame table IR (universal columns/rows schema)",
+    )
+    glyph_tint: str = Field(
+        default="",
+        description=(
+            "Glyph fill selection: ink | brand | full. Empty defers to the "
+            "genome's per-frame default (ink when undeclared). Per-slot "
+            "declarations in the matrix IR outrank this; selection degrades "
+            "full -> gradient -> brand -> ink, never errors."
+        ),
+        pattern="^(|ink|brand|full)$",
+    )
+
 
 class ArtifactMetadata(FrozenModel):
     """Resolved metadata returned in ComposeResult."""
@@ -270,6 +282,13 @@ class ComposeResult(FrozenModel):
     metadata: ArtifactMetadata | None = Field(default=None, description="Structured metadata")
     width: int = Field(description="Artifact width in pixels")
     height: int = Field(description="Artifact height in pixels")
+    markdown: str = Field(
+        default="",
+        description=(
+            "Text-shadow projection of the artifact (GFM table for matrix). "
+            "Empty for frames without a markdown projection."
+        ),
+    )
 
 
 class ResolvedArtifact(FrozenModel):
@@ -308,6 +327,13 @@ class ResolvedArtifact(FrozenModel):
     glyph_id: str = Field(default="", description="Resolved glyph identifier")
     glyph_path: str = Field(default="", description="SVG path data for the glyph")
     glyph_viewbox: str = Field(default="", description="SVG viewBox for the glyph")
+    glyph_fill_rule: str = Field(
+        default="",
+        description=(
+            "Registry fill-rule for the glyph path (e.g. 'evenodd'). Templates "
+            "MUST stamp it when present or those marks render broken."
+        ),
+    )
 
 
 class ZoneDef(FrozenModel):

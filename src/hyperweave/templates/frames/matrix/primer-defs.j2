@@ -1,0 +1,64 @@
+{# Primer matrix defs. Type voices are resolver-supplied (matrix_voices, from
+   data/paradigms/primer.yaml) so measured layout and rendered CSS stay
+   coupled. Cell indicator paints arrive pre-resolved on each CellPlacement;
+   only chassis paints and shared gradients live here. #}
+<clipPath id="{{ uid }}-clip">
+  <rect width="{{ width }}" height="{{ height }}" rx="{{ matrix_layout.rects.outer.rx }}"/>
+</clipPath>
+<linearGradient id="{{ uid }}-card-bg" x1="0" y1="0" x2="0" y2="1">
+{% if panel_gradient_stops %}
+{% for stop in panel_gradient_stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}{% else %}  <stop offset="0%" stop-color="var(--dna-surface-alt)"/>
+  <stop offset="100%" stop-color="var(--dna-surface)"/>
+{% endif %}</linearGradient>
+<linearGradient id="{{ uid }}-scan-g" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="var(--dna-signal)" stop-opacity="0"/>
+  <stop offset="0.5" stop-color="var(--dna-signal)" stop-opacity="0.9"/>
+  <stop offset="1" stop-color="var(--dna-signal)" stop-opacity="0"/>
+</linearGradient>
+{# Semantic Yes-pill capsule — genome-invariant (communicates state, not skin). #}
+<linearGradient id="{{ uid }}-pill-yes" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0%" stop-color="{{ semantic_palette.pill_yes_start }}"/>
+  <stop offset="100%" stop-color="{{ semantic_palette.pill_yes_end }}"/>
+</linearGradient>
+{% for g in matrix_glyph_gradients %}
+{# Brand glyph gradient (e.g. Gemini's four-stop spark) — uid-scoped per artifact. #}
+<linearGradient id="{{ uid }}-gg-{{ g.id }}" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}">
+{% for stop in g.stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}</linearGradient>
+{% endfor %}
+{# flood-color/flood-opacity are SVG ATTRIBUTES — var() does not resolve there
+   (→ black, opacity 1.0 = a hard halo). Literal genome values, per the stats
+   primer defs. #}
+<filter id="{{ uid }}-lift" x="-4%" y="-12%" width="108%" height="130%">
+  <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="{{ _genome_raw.shadow_opacity }}"/>
+  <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.04"/>
+</filter>
+<style>
+{{ font_faces | safe }}
+.{{ uid }}-card text { shape-rendering: geometricPrecision; }
+{% for v in matrix_voices %}.{{ uid }}-{{ v.name }} { font-family: {{ v.stack }}; font-size: {{ v.size }}px; font-weight: {{ v.weight }}; letter-spacing: {{ v.tracking }}em; }
+{% endfor %}
+/* Chassis fills by voice role. Cell-level overrides (pill-yes white text,
+   heat strong ink, opt-in amber) arrive as inline fill attributes from the
+   CellPlacement — semantic, genome-invariant. */
+.{{ uid }}-title, .{{ uid }}-rowlabel, .{{ uid }}-rowlabelsub, .{{ uid }}-cell, .{{ uid }}-cellstrong, .{{ uid }}-pillv, .{{ uid }}-sumval, .{{ uid }}-sumvalhero, .{{ uid }}-sumtext { fill: var(--dna-ink-primary); }
+.{{ uid }}-desc, .{{ uid }}-colheadsub, .{{ uid }}-rowsub, .{{ uid }}-axis, .{{ uid }}-chip, .{{ uid }}-foot, .{{ uid }}-sumqual { fill: var(--dna-ink-muted); }
+{# No text-transform on column headers: the DATA controls casing —
+   "HumanEval" and "$/Mtok" render as provided. #}
+.{{ uid }}-colhead { fill: var(--dna-label-text); }
+/* Section headers are quiet structure (sentence case, muted) — the
+   prototype reserves accent + uppercase for column headers only. */
+.{{ uid }}-section { fill: var(--dna-ink-muted); }
+.{{ uid }}-colhead-accent { fill: var(--dna-signal); }
+.{{ uid }}-headline { fill: var(--dna-signal); }
+.{{ uid }}-foot-brand { fill: var(--dna-ink-muted); letter-spacing: 0.22em; opacity: 0.7; }
+.{{ uid }}-scan { animation: {{ uid }}-scan {{ matrix_cfg.scan_duration }} ease-in-out infinite; will-change: transform; }
+@keyframes {{ uid }}-scan { 0%, 100% { transform: translateX(-{{ matrix_scan_travel }}px); } 50% { transform: translateX({{ matrix_scan_travel }}px); } }
+@media (prefers-reduced-motion: reduce) {
+  .{{ uid }}-scan { animation: none !important; }
+}
+@media (forced-colors: active) {
+  .{{ uid }}-scan { display: none; }
+}
+</style>

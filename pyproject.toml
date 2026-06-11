@@ -9,6 +9,7 @@ readme = "README.md"
 keywords = [
     "agent-observability",
     "ai-agents",
+    "artifacts",
     "design-system",
     "developer-tools",
     "generative-ui",

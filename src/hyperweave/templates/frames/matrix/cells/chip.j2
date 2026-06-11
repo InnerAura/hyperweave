@@ -1,0 +1,6 @@
+{# chip cell — greedy-packed token capsules; the +N overflow chip carries the
+   genome accent (the full list always lives in hw:payload). #}
+{% for chip in cell.chips %}
+  <rect x="{{ chip.rect.x }}" y="{{ chip.rect.y }}" width="{{ chip.rect.w }}" height="{{ chip.rect.h }}" rx="{{ chip.rect.rx }}" fill="{% if chip.overflow %}var(--dna-signal){% else %}var(--dna-ink-primary){% endif %}" fill-opacity="{% if chip.overflow %}0.12{% else %}{{ cell.chip_fill_opacity }}{% endif %}"/>
+  <text class="{{ uid }}-chip" x="{{ chip.text_x }}" y="{{ chip.text_y }}" text-anchor="middle"{% if chip.overflow %} style="fill:var(--dna-signal)"{% endif %}>{{ chip.text | xml_escape }}</text>
+{% endfor %}

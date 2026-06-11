@@ -1,0 +1,6 @@
+{# dot cell — filled (genome accent) vs hollow ring (neutral), dual-coded by fill state. #}
+{% if cell.dot_filled %}
+  <circle cx="{{ cell.dot_cx }}" cy="{{ cell.dot_cy }}" r="{{ cell.dot_r }}" fill="{{ cell.tone }}" opacity="{{ cell.tone_opacity }}" data-hw-cell="dot-{{ cell.mark_state }}"/>
+{% else %}
+  <circle cx="{{ cell.dot_cx }}" cy="{{ cell.dot_cy }}" r="{{ cell.dot_r }}" fill="none" stroke="{{ cell.tone }}" stroke-width="{{ cell.dot_stroke_w }}" data-hw-cell="dot-{{ cell.mark_state }}"/>
+{% endif %}

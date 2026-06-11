@@ -107,6 +107,9 @@ def compose(spec: ComposeSpec) -> ComposeResult:
         metadata=metadata,
         width=resolved.width,
         height=resolved.height,
+        # Text-shadow projection (matrix GFM table). Resolvers that emit one
+        # place it in frame_context; it never enters the rendered SVG.
+        markdown=str(resolved.frame_context.get("markdown_shadow", "")),
     )
 
     # ── 7. Emit telemetry event (fire-and-forget) ──

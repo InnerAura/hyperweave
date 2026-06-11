@@ -33,6 +33,9 @@
 AI agents need to explain what they did, what they found, and what changed — HyperWeave gives them a visual language that works anywhere.
 
 ---
+HyperWeave lets agents compose portable visual artifacts that can live inside reports, detach into Slack/email/docs, and carry their source, state, and drilldown with them.
+
+---
 
 A brand agent for repos.
 Generate a cohesive visual identity layer for README, profile, status, and releases — automatically.
@@ -72,7 +75,7 @@ Prompting Guide for AI Agents
 
 ## The Problem
 
-When an agent needs to produce something visual &mdash; a status card, a dashboard, a receipt of its work &mdash; it generates React, HTML, or pixels, locked in the environment that made it. Embed it in markdown, pass it to another agent &mdash; it breaks or loses context. There's no portable visual primitive for agents.
+When an agent needs to produce something visual, it generates React, HTML, or pixels: a status card, a dashboard, a receipt of its work, locked in the environment that made it. Embed it in markdown or pass it to another agent and it breaks or loses context. There's no portable visual primitive for agents.
 
 HyperWeave is that primitive. One API call returns a self-contained SVG with data binding, branding, and machine-readable metadata baked in. No JavaScript, no dependencies, no runtime. It renders in GitHub READMEs, Slack, Notion, docs, your site, email, VS Code, or terminal. Every surface that renders an `<img>` tag is a HyperWeave surface.
 
@@ -84,7 +87,7 @@ HyperWeave is that primitive. One API call returns a self-contained SVG with dat
 
 ## Agentic Artifacts
 
-Every AI coding session produces a receipt &mdash; cost, tokens, tool distribution, session rhythm. One install, fully automatic.
+Every AI coding session produces a receipt: cost, tokens, tool distribution, session rhythm. One install, fully automatic.
 
 ```bash
 hyperweave install-hook
@@ -93,17 +96,17 @@ hyperweave install-hook
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_voltage_xlarge.svg" alt="session receipt — voltage livery showing 262M tokens, 562 calls, 52 stages, divergence flag" width="800"/>
 </p>
-<p align="center"><sub>262M tokens &middot; 562 calls &middot; 52 stages &middot; $175 &mdash; voltage</sub></p>
+<p align="center"><sub>262M tokens &middot; 562 calls &middot; 52 stages &middot; $175 &middot; voltage</sub></p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/rhythm_strip_voltage_xlarge.svg" alt="session rhythm strip — same session data at 92px tall" width="800"/>
 </p>
-<p align="center"><sub>Rhythm strip &mdash; the same session data at 92px tall</sub></p>
+<p align="center"><sub>Rhythm strip &middot; the same session data at 92px tall</sub></p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_claude-code_medium.svg" alt="session receipt — claude-code livery on warm paper substrate" width="800"/>
 </p>
-<p align="center"><sub>Same data, different livery &mdash; claude-code</sub></p>
+<p align="center"><sub>Same data, different livery &middot; claude-code</sub></p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_codex_large.svg" alt="session receipt — codex agent transcript auto-detected from JSONL shape" width="800"/>
@@ -123,9 +126,90 @@ Auto-detected from the session transcript. Pin a different default with `hyperwe
 
 ---
 
-## Genomes &mdash; Aesthetic DNA
+## Matrices - Generative Tables
 
-A genome is a portable, machine-readable aesthetic specification. It encodes the complete visual identity &mdash; chromatic system, surface material, motion vocabulary, geometric form language &mdash; as a set of CSS custom properties that any agent can consume and apply consistently across every artifact type.
+A matrix is a table described in JSON and rendered as an SVG. Columns choose from eight cell kinds (text, check, dot, bar, pill, numeric heat, chip, glyph), which is enough to cover comparisons, registries, tiers, bar scales, plans, and benchmarks. The output embeds anywhere markdown renders.
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/matrix/custom/primer.static?variant=porcelain&spec=eyJ0aXRsZSI6Ik9uZSBhcnRpZmFjdCwgbWFueSByZWFkZXJzIiwic3VidGl0bGUiOiJob3cgZWFjaCBjb25zdW1lciBpbmdlc3RzIHRoZSBzYW1lIFNWRyIsImNvbHVtbnMiOlt7ImlkIjoicmVhZGVyIiwibGFiZWwiOiJSRUFERVIiLCJyb2xlIjoibGFiZWwifSx7ImlkIjoibWFyayIsImxhYmVsIjoiIiwia2luZCI6ImdseXBoIiwiZ2x5cGhfdGludCI6ImZ1bGwifSx7ImlkIjoicGl4ZWxzIiwibGFiZWwiOiJQSVhFTFMiLCJraW5kIjoiY2hlY2sifSx7ImlkIjoibW90aW9uIiwibGFiZWwiOiJNT1RJT04iLCJraW5kIjoicGlsbCJ9LHsiaWQiOiJ2aWEiLCJsYWJlbCI6IlJFQURTIFZJQSIsImtpbmQiOiJjaGlwIn1dLCJyb3dzIjpbeyJsYWJlbCI6IkdpdEh1YiBSRUFETUUiLCJjZWxscyI6W3siZ2x5cGgiOiJnaXRodWIifSx7InN0YXRlIjoiZnVsbCJ9LHsic3RhdGUiOiJvbiJ9LHsiY2hpcHMiOlsiY2FtbyIsImNzcyBhbmltYXRpb24iXX1dfSx7ImxhYmVsIjoiVlMgQ29kZSBwcmV2aWV3IiwiY2VsbHMiOlt7ImdseXBoIjoidnNjb2RlIn0seyJzdGF0ZSI6ImZ1bGwifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJtYXJrZG93biBwcmV2aWV3Il19XX0seyJsYWJlbCI6IlNsYWNrIHVuZnVybCIsImNlbGxzIjpbeyJnbHlwaCI6InNsYWNrIn0seyJzdGF0ZSI6InBhcnRpYWwifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJpbWFnZSBwcm94eSJdfV19LHsibGFiZWwiOiJHbWFpbCBib2R5IiwiY2VsbHMiOlt7ImdseXBoIjoiZ21haWwifSx7InN0YXRlIjoicGFydGlhbCJ9LHsic3RhdGUiOiJvZmYifSx7ImNoaXBzIjpbImltZyB0YWciXX1dfSx7ImxhYmVsIjoiQUkgYWdlbnQiLCJjZWxscyI6W3siZ2x5cGgiOiJjbGF1ZGUifSx7InN0YXRlIjoibm9uZSJ9LHsic3RhdGUiOiJvZmYifSx7ImNoaXBzIjpbImh3OnBheWxvYWQiLCJod3ovMSIsIm1hcmtkb3duIHR3aW4iXX1dfV0sIm5vdGVzIjoicGl4ZWxzIGZvciBodW1hbnMgwrcgaHc6cGF5bG9hZCBmb3IgYWdlbnRzIn0" alt="comparison matrix: how GitHub, VS Code, Slack, Gmail, and AI agents each ingest the same SVG" width="780"/>
+</p>
+<p align="center"><sub>One frame, every table &middot; generated, not drawn</sub></p>
+
+Inside that SVG, alongside the pixels — two tiers, two jobs:
+
+**recreate & modify — the complete table IR**
+
+```xml
+<hw:payload schema="matrix/1" media-type="application/json">
+{
+  "title": "One artifact, many readers",
+  "subtitle": "how each consumer ingests the same SVG",
+  "columns": [
+    { "id": "reader", "label": "READER",    "kind": "text",  "align": "left",   "role": "label" },
+    { "id": "mark",   "label": "",          "kind": "glyph", "align": "center", "glyph_tint": "full" },
+    { "id": "pixels", "label": "PIXELS",    "kind": "check", "align": "center" },
+    { "id": "motion", "label": "MOTION",    "kind": "pill",  "align": "center" },
+    { "id": "via",    "label": "READS VIA", "kind": "chip",  "align": "left" }
+  ],
+  "rows": [
+    { "label": "GitHub README", "cells": [{ "glyph": "github" }, { "state": "full" }, { "state": "on" }, { "chips": ["camo", "css animation"] }] }
+    <!-- … 4 more rows · lossless -->
+  ]
+}
+</hw:payload>
+```
+
+**read at a budget — ≈200 tokens to know what an artifact is**
+
+```xml
+<hw:envelope format="hwz/1" media-type="application/json">
+{
+  "v": "hwz/1",
+  "id": "sha256:7ed541308e84d6711a3447ffb83d5c80ad1709130281919034ddf7dfafda838b",
+  "k": "matrix",
+  "title": "One artifact, many readers",
+  "intent": "structured comparison: One artifact, many readers",
+  "state": "active",
+  "data": {
+    "subvariant": "registry",
+    "cols": ["mark", "pixels", "motion", "via"],
+    "rows": {
+      "GitHub README": "github",
+      "VS Code preview": "vscode",
+      "Slack unfurl": "slack",
+      "Gmail body": "gmail",
+      "AI agent": "claude"
+    },
+    "rows_total": 5
+  },
+  "frames": [{ "t": "matrix", "l": "One artifact, many readers" }],
+  "prov": { "by": "hyperweave", "ver": "0.4.0a1", "genome": "primer.porcelain", "ts": "2026-06-11T04:30:25.568839+00:00" }
+}
+</hw:envelope>
+```
+
+The envelope is the lossy digest; only the payload round-trips.
+
+- **The round-trip:** extract `hw:payload`, edit the JSON, `POST /v1/compose` with it as `matrix`: byte-identical re-render. The envelope's `id` is the sha256 of the payload, so an agent verifies "this artifact really is this data" before trusting either.
+- **The look is a pointer, not a copy:** `prov.genome: "primer.porcelain"` names the aesthetics; payload + that one string is the entire recreation recipe.
+- **Markdown twin:** every matrix has a GFM projection. `--markdown-out` on the CLI, `respond:"json"` over HTTP, `render_target="markdown"` over MCP.
+
+```bash
+# Connectors preset
+https://hyperweave.app/v1/matrix/connectors/primer.static?variant=porcelain
+
+# Any table, one URL: base64url MatrixSpec JSON (8 KB cap)
+https://hyperweave.app/v1/matrix/custom/primer.static?spec=<base64url>
+
+# CLI, with the markdown twin alongside
+hyperweave compose matrix --spec-file table.json -g primer --variant porcelain --markdown-out table.md
+```
+
+---
+
+## Genomes - Aesthetic DNA
+
+A genome is a portable, machine-readable aesthetic specification. It encodes the complete visual identity (chromatic system, surface material, motion vocabulary, geometric form language) as a set of CSS custom properties that any agent can consume and apply consistently across every artifact type.
 
 Four built-in genomes ship today. Custom genome generation via AI skill files coming soon.
 
@@ -164,7 +248,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </p>
 
 <p align="center">
-  <sub>22 variants &mdash; 8 dark: <code>celadon</code> &middot; <code>alloy</code> &middot; <code>carbon</code> &middot; <code>pigment</code> &middot; <code>umber</code> &middot; <code>ember</code> &middot; <code>temper</code> &middot; <code>onyx</code><br/>14 light (6 shown): <code>primer</code> &middot; <code>depth</code> &middot; <code>pulse</code> &middot; <code>archive</code> &middot; <code>signal</code> &middot; <code>afterimage</code></sub>
+  <sub>22 variants &middot; 8 dark: <code>celadon</code> &middot; <code>alloy</code> &middot; <code>carbon</code> &middot; <code>pigment</code> &middot; <code>umber</code> &middot; <code>ember</code> &middot; <code>temper</code> &middot; <code>onyx</code><br/>14 light (6 shown): <code>primer</code> &middot; <code>depth</code> &middot; <code>pulse</code> &middot; <code>archive</code> &middot; <code>signal</code> &middot; <code>afterimage</code></sub>
 </p>
 
 <table>
@@ -282,7 +366,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </p>
 
 <p align="center">
-  <sub>16 tones &mdash; <code>crimson</code> &middot; <code>copper</code> &middot; <code>bone</code> &middot; <code>solar</code> &middot; <code>amber</code> &middot; <code>sulfur</code> &middot; <code>toxic</code> &middot; <code>jade</code><br/><code>abyssal</code> &middot; <code>teal</code> &middot; <code>steel</code> &middot; <code>cobalt</code> &middot; <code>indigo</code> &middot; <code>violet</code> &middot; <code>magenta</code> &middot; <code>burgundy</code><br/>pair any two via <code>?variant=primary&pair=secondary</code></sub>
+  <sub>16 tones &middot; <code>crimson</code> &middot; <code>copper</code> &middot; <code>bone</code> &middot; <code>solar</code> &middot; <code>amber</code> &middot; <code>sulfur</code> &middot; <code>toxic</code> &middot; <code>jade</code><br/><code>abyssal</code> &middot; <code>teal</code> &middot; <code>steel</code> &middot; <code>cobalt</code> &middot; <code>indigo</code> &middot; <code>violet</code> &middot; <code>magenta</code> &middot; <code>burgundy</code><br/>pair any two via <code>?variant=primary&pair=secondary</code></sub>
 </p>
 
 <table>
@@ -486,7 +570,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </p>
 
 <p align="center">
-  <sub>8 variants &mdash; 4 light: <code>porcelain</code> &middot; <code>cream</code> &middot; <code>dusk</code> &middot; <code>petrol</code><br/>4 dark: <code>noir</code> &middot; <code>carbon</code> &middot; <code>space</code> &middot; <code>anvil</code></sub>
+  <sub>8 variants &middot; 4 light: <code>porcelain</code> &middot; <code>cream</code> &middot; <code>dusk</code> &middot; <code>petrol</code><br/>4 dark: <code>noir</code> &middot; <code>carbon</code> &middot; <code>space</code> &middot; <code>anvil</code></sub>
 </p>
 
 <table>
@@ -499,7 +583,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
   <img src="https://hyperweave.app/v1/badge/BUILD/critical/primer.static?state=critical&variant=porcelain" alt="critical"/>
   <br/>
   <ul>
-<li><sub>ping (passing) &middot; spinner (building) &middot; throb (warning) &middot; shake (critical) &mdash; one mark system, shared with the strip.</sub></li>
+<li><sub>ping (passing) &middot; spinner (building) &middot; throb (warning) &middot; shake (critical). One mark system, shared with the strip.</sub></li>
 <li><sub><code>/v1/badge/{title}/{value}/primer.static?state={state}&variant={porcelain|cream|dusk|petrol|noir|carbon|space|anvil}</code></sub></li>
 <li><sub><code>hyperweave.app/v1/badge/BUILD/passing/primer.static?state=passing&variant=porcelain</code></sub></li>
 </ul>
@@ -651,7 +735,7 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </tr>
 </table>
 
-<h3 id="error-fallback">Error fallback &mdash; SMPTE NO SIGNAL</h3>
+<h3 id="error-fallback">Error fallback: SMPTE NO SIGNAL</h3>
 
 Every broken `<img>` URL renders the SMPTE RP 219 test pattern with `ERR_NNN` matching the HTTP status, instead of a browser broken-image icon.
 
@@ -818,20 +902,20 @@ ComposeSpec → engine.py → assembler.py (CSS) → lanes.py (validate) → tem
 
 Every artifact ships with:
 
-- **Semantic metadata** &mdash; provenance, reasoning, spatial trace, aesthetic DNA. Machine-readable context so the next agent in the chain knows what it's looking at and why.
-- **CSS state machines** &mdash; `data-hw-status`, `data-hw-state`, `data-hw-regime` drive visual transitions through the Custom Property Bridge. No JavaScript.
-- **Pure CSS/SMIL animation** &mdash; all motion uses compositor-safe properties (`transform`, `opacity`, `filter`). No script tags. Works inside GitHub's Camo proxy, email clients, Notion embeds &mdash; anywhere SVGs render.
-- **Accessibility** &mdash; WCAG AA, `prefers-reduced-motion`, `prefers-color-scheme`, `forced-colors`, ARIA markup. Structural, not decorative.
+- **Semantic metadata:** provenance, reasoning, spatial trace, aesthetic DNA. Machine-readable context so the next agent in the chain knows what it's looking at and why.
+- **CSS state machines:** `data-hw-status`, `data-hw-state`, `data-hw-regime` drive visual transitions through the Custom Property Bridge. No JavaScript.
+- **Pure CSS/SMIL animation:** all motion uses compositor-safe properties (`transform`, `opacity`, `filter`). No script tags. Works anywhere SVGs render: GitHub's Camo proxy, email clients, Notion embeds.
+- **Accessibility:** WCAG AA, `prefers-reduced-motion`, `prefers-color-scheme`, `forced-colors`, ARIA markup. Structural, not decorative.
 
 | Dimension | Count |
 |---|---|
-| Frame types | 9 (badge, strip, icon, divider, marquee-horizontal, stats, chart, receipt, rhythm-strip) |
+| Frame types | 10 (badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, receipt, rhythm-strip) |
 | Genomes | 4 (automata, brutalist, chrome, primer) |
 | Motion configs | 6 (1 static + 5 border SMIL) |
-| Glyphs | 105 (99 brand marks + 6 geometric shapes) |
-| Divider variants | 10 &mdash; 5 genome-themed (`band` chrome, `seam` + `sigil` brutalist, `dissolve` automata, `aura` primer) + 5 genome-agnostic (`block`, `current`, `takeoff`, `void`, `zeropoint`) at <code>/a/inneraura/dividers/</code> |
+| Glyphs | 189 (183 brand marks + 6 geometric shapes) |
+| Divider variants | 10: 5 genome-themed (`band` chrome, `seam` + `sigil` brutalist, `dissolve` automata, `aura` primer) + 5 genome-agnostic (`block`, `current`, `takeoff`, `void`, `zeropoint`) at <code>/a/inneraura/dividers/</code> |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
-| Bundled fonts | 5 (JetBrains Mono, Orbitron, Chakra Petch, Barlow Condensed, Inter) &mdash; embedded per artifact, no external font requests |
+| Bundled fonts | 5 (JetBrains Mono, Orbitron, Chakra Petch, Barlow Condensed, Inter), embedded per artifact, no external font requests |
 
 Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 
@@ -864,9 +948,9 @@ HyperWeave binds live data into any artifact through a unified token grammar (`?
 
 </details>
 
-- **Caching** &mdash; live values for 5&ndash;10 min; a failed fetch caches 60s and shows `—` rather than a fabricated zero.
-- **Isolation** &mdash; each provider has its own circuit breaker, so one upstream outage can't trip the others.
-- **Escaping** &mdash; commas inside `text:` / `kv:` values escape as `\,`.
+- **Caching:** live values for 5&ndash;10 min; a failed fetch caches 60s and shows `—` rather than a fabricated zero.
+- **Isolation:** each provider has its own circuit breaker, so one upstream outage can't trip the others.
+- **Escaping:** commas inside `text:` / `kv:` values escape as `\,`.
 
 &rarr; [Open an issue](https://github.com/InnerAura/hyperweave/issues/new) to request a connector.
 
@@ -874,7 +958,7 @@ HyperWeave binds live data into any artifact through a unified token grammar (`?
 
 ## Contributing
 
-HyperWeave is early. If you're interested in building genomes, extending frame types, or just seeing what this looks like in your own README &mdash; [join the Discord](https://discord.gg/wVmcAZPQZ8).
+HyperWeave is early. If you're interested in building genomes, extending frame types, or just seeing what this looks like in your own README, [join the Discord](https://discord.gg/wVmcAZPQZ8).
 
 ---
 

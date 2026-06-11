@@ -165,6 +165,11 @@ class BadgeZones:
     text_anchor: str = "middle"
     """SVG text-anchor for label/value. Paradigm-declared: ``middle`` (brutalist/cellular)
     centers text on ``label_x``/``value_x``; ``start`` (chrome) anchors first-character x."""
+    width_exact: float = 0.0
+    """Unrounded total width (one decimal). Paradigms whose advance math is
+    exact (primer: monospace text, no textLength) emit this as the SVG width
+    so the right-edge pad is precisely the declared rail pad. ``width`` keeps
+    the integer rounding every other consumer expects."""
 
 
 def compute_badge_zones(
@@ -210,6 +215,10 @@ def compute_badge_zones(
     visual_gap: float = 0.0,
     indicator_leads_value: bool = False,
     content_center_geometric: bool = False,
+    rail_start_pad: float = 0.0,
+    rail_end_pad: float = 0.0,
+    seam_gap_left: float = 0.0,
+    seam_gap_right: float = 0.0,
 ) -> BadgeZones:
     """Compute badge zone layout under the unified additive algorithm.
 
@@ -321,10 +330,12 @@ def compute_badge_zones(
     # ink edges, not advance boxes, define the repeated rhythm.
     visual_gap_active = visual_gap > 0 and text_anchor == "middle" and seam_render_w <= 0
     resolved_visual_gap = visual_gap if visual_gap_active else 0.0
-    first_gap = left_adornment_gap if left_adornment_width > 0 else pad
+    first_gap: float = left_adornment_gap if left_adornment_width > 0 else float(pad)
+    if rail_start_pad > 0 and left_adornment_width <= 0:
+        first_gap = rail_start_pad
     if visual_gap_active:
         first_gap = resolved_visual_gap
-    cursor = float(structural_left + first_gap)
+    cursor = float(structural_left) + first_gap
 
     # Glyph zone (skip if absent — collapse entirely, no phantom gap).
     glyph_visible_w = glyph_visual_w if glyph_visual_w > 0 else float(glyph_size)
@@ -367,12 +378,14 @@ def compute_badge_zones(
     seam_specular_x = 0.0
     seam_right_x = 0.0
     if seam_render_w > 0:
-        # Chrome etched seam: half-gaps on each side, two-hairline rendering.
-        cursor += pad / 2.0
+        # Etched-seam slot: half-gaps on each side (chrome), or explicit
+        # paradigm-declared gaps (primer: 7 label-side / 8 value-side, the
+        # specimen's asymmetric label|seam|value rhythm).
+        cursor += seam_gap_left if seam_gap_left > 0 else pad / 2.0
         seam_left_x = cursor
         seam_specular_x = cursor + seam_specular_offset
         seam_right_x = seam_left_x + seam_render_w
-        cursor += seam_render_w + pad / 2.0
+        cursor += seam_render_w + (seam_gap_right if seam_gap_right > 0 else pad / 2.0)
         # Synthetic left_panel / right_panel boundary for template backward-compat.
         seam_center_x = seam_left_x + seam_render_w / 2.0
         seam_x = round(seam_center_x, 1)
@@ -412,18 +425,24 @@ def compute_badge_zones(
     # v0.3.9 algorithmic bearing correction (mirror of label): subtract
     # value-text trailing bearing before the trailing pad so the right edge
     # sits at ``visible_ink_end + pad`` instead of ``advance_end + pad``.
-    cursor = value_visual_right + (resolved_visual_gap if visual_gap_active else pad)
+    # The FINAL gap (last content zone → right edge) is ``rail_end_pad`` when a
+    # paradigm declares one (primer: 8), else the uniform ``pad``.
+    end_gap: float = rail_end_pad if rail_end_pad > 0 else float(pad)
+    if visual_gap_active:
+        end_gap = resolved_visual_gap
 
-    # Optional trailing state-indicator zone. Every gap including the final one
-    # (last content zone → right edge) is ``pad``. The cursor walk advances
-    # by ``content + pad`` for each PRESENT zone, and the final pad added
-    # after the last zone is the right-edge gap itself. Skipped when the
-    # indicator already led the value (its slot is reserved above).
+    # Optional trailing state-indicator zone. The cursor walk advances by
+    # ``content + pad`` for each PRESENT zone, and the final gap added after
+    # the last zone is the right-edge gap itself. Skipped when the indicator
+    # already led the value (its slot is reserved above).
     if has_state_indicator and not lead_indicator:
+        cursor = value_visual_right + (resolved_visual_gap if visual_gap_active else pad)
         indicator_x = cursor  # cursor sits at start of state-indicator slot (pad already added after value)
-        cursor = indicator_x + indicator_size + (resolved_visual_gap if visual_gap_active else pad)
-    elif not has_state_indicator:
-        indicator_x = 0.0
+        cursor = indicator_x + indicator_size + end_gap
+    else:
+        cursor = value_visual_right + end_gap
+        if not has_state_indicator:
+            indicator_x = 0.0
 
     # Total width includes any paradigm-specific right-canvas inset (cellular: 2px
     # structural slab inset — adds on top of the right-edge pad gap).
@@ -434,6 +453,7 @@ def compute_badge_zones(
     # the prior flat-3px final-trim approach left visually broken (seam gap
     # was unchanged because trim affected total_w only).
     total_w = max(round(cursor + right_canvas_inset), min_total_w)
+    width_exact = max(round(cursor + right_canvas_inset, 1), float(min_total_w))
     right_panel_w = total_w - right_panel_x
 
     # Indicator vertical center: the content reading line (== the identity glyph's
@@ -476,7 +496,7 @@ def compute_badge_zones(
     value_zone_right = (
         float(indicator_x - trailing_gap)
         if (has_state_indicator and not lead_indicator)
-        else float(total_w - right_canvas_inset - trailing_gap)
+        else float(total_w - right_canvas_inset) - end_gap
     )
     value_zone_width = value_zone_right - value_zone_left
 
@@ -511,6 +531,7 @@ def compute_badge_zones(
         seam_left_x=round(seam_left_x, 1) if seam_render_w > 0 else 0.0,
         seam_specular_x=round(seam_specular_x, 1) if seam_render_w > 0 else 0.0,
         text_anchor=text_anchor,
+        width_exact=width_exact,
     )
 
 
@@ -967,6 +988,10 @@ def compute_strip_zones(
     icon_box_pad: int,
     has_identity_glyph: bool,
     strip_glyph_size: int = 18,
+    # Bare-glyph zone rhythm (adaptive paradigms, no icon box). Defaults are
+    # the long-standing constants; primer declares 18 / 11 from its specimen.
+    glyph_inset: int = 12,
+    glyph_text_gap: int = 9,
     # Owns_strip fields (used when owns_strip=True).
     brand_panel_x: int = 0,
     brand_panel_width: int = 0,
@@ -995,6 +1020,10 @@ def compute_strip_zones(
     status_indicator_size: int = 14,
     status_indicator_pre_gap: int = 16,
     status_indicator_post_gap: int = 4,
+    # Right-edge status pinning (primer: 18). > 0 places the status center at
+    # ``content_right - inset`` instead of midpoint-centering it between the
+    # last cell's content edge and the trailing content edge.
+    status_right_inset: float = 0.0,
     # Bifamily flank widths (automata strips).
     flank_width: int = 0,
     flank_cell_size: int = 12,
@@ -1070,8 +1099,8 @@ def compute_strip_zones(
         glyph_zone_width = icon_box_pad
     elif has_identity_glyph:
         glyph_size_resolved = max(1, strip_glyph_size)
-        glyph_zone_width = 12 + glyph_size_resolved + 9
-        glyph_cx = seam_offset + accent_w + 12 + glyph_size_resolved / 2.0
+        glyph_zone_width = glyph_inset + glyph_size_resolved + glyph_text_gap
+        glyph_cx = seam_offset + accent_w + glyph_inset + glyph_size_resolved / 2.0
         glyph_cy = height / 2.0
     else:
         glyph_zone_width = 0
@@ -1279,6 +1308,11 @@ def compute_strip_zones(
     elif owns_strip:
         last_seam_x = seams[-1] if seams else float(first_divider_x)
         status_x = last_seam_x + status_indicator_pre_gap
+    elif status_right_inset > 0:
+        # Right-edge pinning (primer): the status mark is a terminus anchored a
+        # fixed inset off the card's right edge, independent of the last cell's
+        # gutter width — the specimen places the pulse at content_width - 18.
+        status_x = content_width - (flank_width if has_flanks else 0) - status_right_inset
     else:
         last_pad = (
             float(cell_layouts_records[-1]["cell_w"]) - float(cell_layouts_records[-1]["content_w"])

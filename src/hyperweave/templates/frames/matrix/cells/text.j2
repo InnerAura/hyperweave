@@ -1,0 +1,13 @@
+{# text cell — measured run (+ optional sublabel line), genome ink via voice
+   class. Wrapped overflow arrives as pre-placed text_lines (multiline is
+   the default overflow behavior; the ellipsis is the last resort). Semantic
+   fill overrides use inline style (a fill ATTRIBUTE loses to the voice-class
+   CSS rule; inline style wins the cascade). #}
+{% if cell.text_lines %}{% for line in cell.text_lines %}
+  <text class="{{ uid }}-{{ cell.cls }}" x="{{ line.x }}" y="{{ line.y }}" text-anchor="{{ line.anchor }}"{% if cell.text_fill %} style="fill:{{ cell.text_fill }}"{% endif %}>{{ line.text | xml_escape }}</text>
+{% endfor %}{% else %}
+  <text class="{{ uid }}-{{ cell.cls }}" x="{{ cell.text_x }}" y="{{ cell.text_y }}" text-anchor="{{ cell.text_anchor }}"{% if cell.text_fill %} style="fill:{{ cell.text_fill }}"{% endif %}>{{ cell.text | xml_escape }}</text>
+{% endif %}
+{% if cell.sub_text %}
+  <text class="{{ uid }}-{{ cell.sub_cls }}" x="{{ cell.sub_x }}" y="{{ cell.sub_y }}" text-anchor="{{ cell.text_anchor }}"{% if cell.sub_fill %} style="fill:{{ cell.sub_fill }}"{% endif %}>{{ cell.sub_text | xml_escape }}</text>
+{% endif %}

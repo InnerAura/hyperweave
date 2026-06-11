@@ -194,6 +194,7 @@ def render_glyph_context(
         "glyph_id": glyph_id,
         "glyph_path": path,
         "glyph_viewbox": viewbox,
+        "glyph_fill_rule": str(glyph.get("fill_rule", "") or ""),
         "glyph_category": category,
         "glyph_mode": resolved_mode,
         "glyph_size": size,

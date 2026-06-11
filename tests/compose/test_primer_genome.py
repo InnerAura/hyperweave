@@ -86,7 +86,9 @@ def test_primer_strip_width_is_content_adaptive() -> None:
     four = strip("COMMITS:222,PRS:2,ISSUES:0,STREAK:26d")
     assert two.width < four.width, f"2-metric ({two.width}) must be narrower than 4-metric ({four.width})"
     assert two.width != 540 and four.width != 540, "width must be content-derived, not the old fixed 540 clamp"
-    assert four.height == 52
+    # Full-bleed 46px card (v04alpha2) — no canvas inset: an embedded artifact
+    # has no page for a shadow to fade into, so the card spans the viewBox.
+    assert four.height == 46
     assert 'data-hw-frame="strip"' in four.svg
     assert "COMMITS" in four.svg
     assert "STREAK" in four.svg

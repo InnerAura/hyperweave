@@ -1,18 +1,16 @@
-{# Primer BADGE — dark substrate (v04alpha1). Two-zone editorial badge: a label
-   zone (brand glyph + Inter category label — secondary branding) and a recessed
-   value zone (animated state mark + Inter value word), split by a carved 3-layer
-   seam, with a full-height top-gloss fade and a convex bevel + hairline rim. No
-   drop shadow — the bevel carries the edge. Everything rides inside the rounded
-   clip. Geometry from compose/layout.py + resolver; zero arithmetic here. #}
+{# Primer BADGE — dark substrate (v04alpha2). Two-plate badge: a label plate
+   (brand glyph in glyph_inner + muted mono label) tinted darker by a black
+   overlay, and a clear value plate (neutral-ink mono value, state mark when
+   stateful), split by a dark-groove seam (black cut + faint white catch). An
+   inner white highlight + 1px border carry the edge — no drop shadow: the
+   viewBox would clip it to corner-notch smudges outside the rx4 edge.
+   Geometry from compose/layout.py + resolver; zero arithmetic. #}
 <g clip-path="url(#{{ uid }}-clip)">
   <rect width="{{ width }}" height="{{ height }}" fill="url(#{{ uid }}-bg)"/>
-  <rect x="{{ badge_vzone.x }}" y="{{ badge_vzone.y }}" width="{{ badge_vzone.w }}" height="{{ badge_vzone.h }}" fill="url(#{{ uid }}-vz)"/>
-  {# Top-plane catchlight — full-height rect, shared primer-gloss. #}
-  <rect width="{{ width }}" height="{{ height }}" fill="url(#{{ uid }}-gloss)"/>
-  {# Carved seam: faint edge + dark recess core + bright highlight. #}
-  <rect x="{{ badge_seam_carved.edge_x }}" y="{{ badge_seam_carved.y }}" width="{{ badge_seam_carved.edge_w }}" height="{{ badge_seam_carved.h }}" fill="url(#{{ uid }}-sm0)"/>
-  <rect x="{{ badge_seam_carved.recess_x }}" y="{{ badge_seam_carved.y }}" width="{{ badge_seam_carved.recess_w }}" height="{{ badge_seam_carved.h }}" fill="url(#{{ uid }}-sm1)"/>
-  <rect x="{{ badge_seam_carved.shine_x }}" y="{{ badge_seam_carved.y }}" width="{{ badge_seam_carved.shine_w }}" height="{{ badge_seam_carved.h }}" fill="url(#{{ uid }}-sm2)"/>
+  {# Label-plate tint + paired groove/shine seam. #}
+  <rect x="{{ badge_label_zone.x }}" y="{{ badge_label_zone.y }}" width="{{ badge_label_zone.w }}" height="{{ badge_label_zone.h }}" fill="rgba(0,0,0,0.14)"/>
+  <rect x="{{ badge_seam_pair.groove_x }}" y="{{ badge_seam_pair.y }}" width="{{ badge_seam_pair.w }}" height="{{ badge_seam_pair.h }}" fill="rgba(0,0,0,0.45)"/>
+  <rect x="{{ badge_seam_pair.shine_x }}" y="{{ badge_seam_pair.y }}" width="{{ badge_seam_pair.w }}" height="{{ badge_seam_pair.h }}" fill="rgba(255,255,255,0.08)"/>
 
   {% if has_glyph and glyph_svg %}
   <g data-hw-zone="glyph" transform="translate({{ glyph_x }},{{ glyph_y }})">
@@ -20,30 +18,32 @@
   </g>
   {% endif %}
 
+  {# Mono label — muted ink_secondary voice; the glyph is the sole accent.
+     No textLength: mono advance is exact (exact-rail paradigm). #}
   <text data-hw-zone="label"
         x="{{ label_x }}" y="{{ badge_label_text_y }}"
         text-anchor="middle"
-        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-family="var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace)"
         font-size="{{ badge_label_font_size }}" font-weight="{{ badge_label_font_weight }}"
-        fill="{{ _genome_raw.ink }}"
-        letter-spacing="{{ badge_label_letter_spacing_em }}em"{% if label_text_length and label_text_length > 0 %} textLength="{{ label_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ label_display | default(label | upper) }}</text>
+        fill="{{ _genome_raw.ink_secondary }}"
+        letter-spacing="{{ badge_label_letter_spacing_em }}em">{{ label_display | default(label | upper) }}</text>
 
   {# Per-state animated status mark — include-dispatched by indicator_shape
-     (primer: status-glyph), sub-dispatched by status_glyph_state. Leads the value
-     word as a status pill [mark] value. Geometry + center from the layout engine. #}
+     (primer: status-glyph), sub-dispatched by status_glyph_state. Leads the
+     value word as a status pill [mark] value. #}
   {% if show_indicator %}
   {% include "frames/badge/indicators/" ~ indicator_shape ~ "-indicator.j2" %}
   {% endif %}
 
+  {# Mono value — neutral ink (a metric is data, not status); state-colored
+     only on stateful badges via badge_value_color. #}
   <text data-hw-zone="value"
         x="{{ value_x }}" y="{{ text_y }}"
         text-anchor="middle"
-        font-family="var(--dna-font-display, 'Inter', system-ui, sans-serif)"
+        font-family="var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace)"
         font-size="{{ badge_value_font_size }}" font-weight="{{ badge_value_font_weight }}"
-        fill="{{ badge_value_color }}"
-        letter-spacing="{{ badge_value_letter_spacing_em }}em"{% if value_text_length and value_text_length > 0 %} textLength="{{ value_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ value }}</text>
-
-  {# Convex bevel + hairline rim (double stroke). #}
-  <rect x="{{ badge_bevel.x }}" y="{{ badge_bevel.y }}" width="{{ badge_bevel.w }}" height="{{ badge_bevel.h }}" rx="{{ badge_bevel.rx }}" fill="none" stroke="url(#{{ uid }}-bevel)" stroke-width="1"/>
-  <rect x="{{ light_perimeter_inset }}" y="{{ light_perimeter_inset }}" width="{{ light_perimeter_w }}" height="{{ light_perimeter_h }}" rx="{{ badge_stroke_rx }}" fill="none" stroke="{{ _genome_raw.stroke }}" stroke-width="0.5"/>
+        fill="{{ badge_value_color }}">{{ value }}</text>
 </g>
+{# Inner white highlight + 1px border (double-stroke rim). #}
+<rect x="{{ badge_inner_highlight.x }}" y="{{ badge_inner_highlight.y }}" width="{{ badge_inner_highlight.w }}" height="{{ badge_inner_highlight.h }}" rx="{{ badge_inner_highlight.rx }}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="{{ badge_inner_highlight.stroke_w }}"/>
+<rect x="{{ badge_outer_border.x }}" y="{{ badge_outer_border.y }}" width="{{ badge_outer_border.w }}" height="{{ badge_outer_border.h }}" rx="{{ badge_outer_border.rx }}" fill="none" stroke="{{ _genome_raw.stroke }}" stroke-width="{{ badge_outer_border.stroke_w }}"/>

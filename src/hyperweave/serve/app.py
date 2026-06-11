@@ -202,6 +202,14 @@ class ComposeRequest(BaseModel):
     divider_variant: str = "zeropoint"
     direction: str = "ltr"
     speeds: list[float] | None = None
+    matrix: dict[str, Any] | None = None
+    """Matrix frame table IR (type=matrix) — validated into MatrixSpec."""
+    glyph_tint: str = ""
+    """Glyph fill selection: ink | brand | full (empty defers to the
+    genome default). Per-slot IR declarations outrank it."""
+    respond: str = "svg"
+    """Response shape: ``svg`` (raw image bytes, default) or ``json``
+    (``{svg, markdown, width, height}`` — the markdown shadow alongside)."""
 
 
 # Composition endpoints
@@ -662,8 +670,120 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         divider_variant=req.divider_variant,
         marquee_direction=req.direction,
         marquee_speeds=req.speeds,
+        matrix=req.matrix,
+        glyph_tint=req.glyph_tint,
     )
+    if req.respond == "json":
+        # Both projections in one response: the SVG plus its markdown
+        # shadow (POST keeps JSON semantics; GET stays pure image for Camo).
+        result = compose(spec)
+        return JSONResponse(
+            {
+                "svg": result.svg,
+                "markdown": result.markdown,
+                "width": result.width,
+                "height": result.height,
+            }
+        )
     return _compose_and_respond(spec, request)
+
+
+# ── Matrix routes ────────────────────────────────────────────────────────────
+
+_MATRIX_SPEC_PARAM_MAX_BYTES = 8192
+
+
+@app.get(
+    "/v1/matrix/{preset}/{genome_motion}",
+    response_class=Response,
+)
+async def compose_matrix_url(
+    request: Request,
+    preset: str,
+    genome_motion: str,
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    spec: Annotated[
+        str,
+        Query(
+            description=(
+                "base64url-encoded MatrixSpec JSON (preset must be 'custom'). "
+                "Decoded size cap: 8 KB. Gives arbitrary user tables a "
+                "Camo-embeddable GET URL with a per-spec ETag."
+            ),
+        ),
+    ] = "",
+    glyph_tint: Annotated[
+        str,
+        Query(
+            description=(
+                "Glyph fill selection: ink | brand | full. Per-slot IR "
+                "declarations outrank it; degrades full -> gradient -> "
+                "brand -> ink."
+            ),
+            pattern="^(|ink|brand|full)$",
+        ),
+    ] = "",
+) -> Response:
+    """Compose a matrix: /v1/matrix/{preset}/{genome}.{motion}.
+
+    ``preset`` names a server-known matrix (``connectors`` — the generated
+    connector registry, a data file away from new presets) or ``custom``
+    with an inline ``?spec=`` base64url MatrixSpec. Long-cached: matrix
+    content is request-static, so the pure-compose cache tier applies.
+    """
+    genome, motion = _parse_genome_motion(genome_motion)
+
+    matrix_payload: dict[str, Any] | None = None
+    connector_data: dict[str, Any] | None = None
+    if preset == "custom":
+        decode_error = ""
+        if not spec:
+            decode_error = "preset 'custom' requires ?spec=<base64url MatrixSpec JSON>"
+        else:
+            import base64
+            import binascii
+            import json as _json
+
+            try:
+                padded = spec + "=" * (-len(spec) % 4)
+                raw = base64.urlsafe_b64decode(padded.encode("ascii"))
+                if len(raw) > _MATRIX_SPEC_PARAM_MAX_BYTES:
+                    decode_error = f"?spec= exceeds the {_MATRIX_SPEC_PARAM_MAX_BYTES} byte cap after decoding"
+                else:
+                    matrix_payload = _json.loads(raw)
+            except (ValueError, binascii.Error) as exc:
+                decode_error = f"?spec= is not base64url-encoded JSON: {exc}"
+        if decode_error:
+            return Response(
+                content=_error_badge(decode_error, status_code=400),
+                media_type="image/svg+xml",
+                status_code=200,
+                headers=_error_response_headers(400),
+            )
+    else:
+        from hyperweave.compose.matrix_input import resolve_matrix_preset
+        from hyperweave.core.matrix import MatrixInputError
+
+        try:
+            connector_data = resolve_matrix_preset(preset)
+        except MatrixInputError as exc:
+            return Response(
+                content=_error_badge(str(exc), status_code=404),
+                media_type="image/svg+xml",
+                status_code=200,
+                headers=_error_response_headers(404),
+            )
+
+    compose_spec = ComposeSpec(
+        type="matrix",
+        genome_id=genome,
+        motion=motion,
+        variant=variant,
+        matrix=matrix_payload,
+        connector_data=connector_data,
+        glyph_tint=glyph_tint,
+    )
+    return _compose_and_respond(compose_spec, request)
 
 
 # ── Chart / Stats routes ─────────────────────────────────────────────────────
@@ -854,6 +974,10 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
     "stats": {
         "pattern": "/v1/stats/{username}/{genome}.{motion}",
         "query_params": ["data", "variant", "pair"],
+    },
+    "matrix": {
+        "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
+        "query_params": ["variant", "spec"],
     },
     "receipt": {"pattern": "POST /v1/compose", "query_params": []},
     "rhythm-strip": {"pattern": "POST /v1/compose", "query_params": []},
@@ -1400,6 +1524,15 @@ def _classify_compose_exception(exc: BaseException) -> int:
     # Detect by message prefix rather than a custom exception class to keep
     # the resolver layer dependency-free.
     if isinstance(exc, ValueError) and (str(exc).startswith("variant '") or str(exc).startswith("divider_variant '")):
+        return 422
+    # Matrix input problems are caller errors: no usable input, unknown
+    # preset/adapter/glyph id, hard-cap overflow (MatrixCapacityError is a
+    # MatrixInputError), or a genome without a matrix paradigm entry.
+    from hyperweave.core.matrix import MatrixInputError
+
+    if isinstance(exc, MatrixInputError):
+        return 422
+    if isinstance(exc, ValueError) and str(exc).startswith("matrix frame is not supported"):
         return 422
     return 500
 

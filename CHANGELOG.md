@@ -5,6 +5,27 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-alpha.2] - 2026-06-11
+
+Matrix frame, primer badge/strip redesign, expanded glyph registry.
+
+### Added
+
+- **Matrix frame** &mdash; structured comparison tables as SVG. Eight cell kinds (text, check, dot, bar, pill, numeric, chip, glyph), content-adaptive width, all eight primer variants.
+- **Embedded payload + envelope** &mdash; every matrix carries its table as JSON and a compact agent-readable digest. Identical inputs produce identical files.
+- **Markdown projection** &mdash; every matrix renders as a GFM table via `--markdown-out`, `respond: "json"`, or `render_target="markdown"`.
+- **Matrix URLs** &mdash; `GET /v1/matrix/connectors/primer.static?variant=porcelain` serves the connector registry; `GET /v1/matrix/custom/...?spec=` renders arbitrary tables from a URL.
+- **80 new glyphs** &mdash; registry grows from 109 to 189. 28 marks include full-color versions via `glyph_tint: ink | brand | full`.
+
+### Changed
+
+- **Primer badge** &mdash; flat 20px mono chip; brand glyph is the sole accent.
+- **Primer strip** &mdash; rounded card with mono metric columns and a live pulse.
+
+### Limits
+
+- 30 rows &times; 12 data columns maximum per matrix.
+
 ## [0.4.0-alpha.1] - 2026-06-09
 
 v0.4.0-alpha.1 adds primer, a new minimal genome in eight light and dark variants, and renames the two structural profiles to describe what they are.

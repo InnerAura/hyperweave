@@ -1,10 +1,10 @@
-{# Primer STRIP — light substrate plate: rounded white→tint card lifted by a
-   soft drop shadow, a bevel-edge highlight (bright top → dark bottom inner
-   stroke), and a tint-hairline perimeter. The shared zone pipeline (strip.svg.j2)
-   renders glyph / identity / metric cells / dividers / status on top. All
-   geometry is resolver-supplied (strip_plate); zero arithmetic here. #}
-<g filter="url(#{{ uid }}-shadow)">
-  <rect width="{{ strip_zones.core.content_width }}" height="{{ strip_h }}" rx="{{ strip_plate.rx }}" fill="url(#{{ uid }}-bg)"/>
-</g>
-<rect x="{{ strip_plate.bevel.x }}" y="{{ strip_plate.bevel.y }}" width="{{ strip_plate.bevel.w }}" height="{{ strip_plate.bevel.h }}" rx="{{ strip_plate.bevel.rx }}" fill="none" stroke="url(#{{ uid }}-edge)"/>
-<rect x="{{ strip_plate.perimeter.x }}" y="{{ strip_plate.perimeter.y }}" width="{{ strip_plate.perimeter.w }}" height="{{ strip_plate.perimeter.h }}" rx="{{ strip_plate.perimeter.rx }}" fill="none" stroke="{{ _genome_raw.stroke }}"/>
+{# Primer STRIP — light substrate card (v04alpha2): full-bleed rounded
+   white→tint card ringed by a bright inner edge-highlight (white crown →
+   faint ink bottom tint) + 1px border. NO drop shadow — the viewBox would
+   clip it to corner-notch smudges (see the dark partial); the white crown
+   and the stroke border carry the edge. All geometry resolver-supplied
+   (strip_card / strip_inner_highlight / strip_outer_border); zero
+   arithmetic here. #}
+<rect x="{{ strip_card.x }}" y="{{ strip_card.y }}" width="{{ strip_card.w }}" height="{{ strip_card.h }}" rx="{{ strip_card.rx }}" fill="url(#{{ uid }}-bg)"/>
+<rect x="{{ strip_inner_highlight.x }}" y="{{ strip_inner_highlight.y }}" width="{{ strip_inner_highlight.w }}" height="{{ strip_inner_highlight.h }}" rx="{{ strip_inner_highlight.rx }}" fill="none" stroke="url(#{{ uid }}-lp)" stroke-width="{{ strip_inner_highlight.stroke_w }}"/>
+<rect x="{{ strip_outer_border.x }}" y="{{ strip_outer_border.y }}" width="{{ strip_outer_border.w }}" height="{{ strip_outer_border.h }}" rx="{{ strip_outer_border.rx }}" fill="none" stroke="{{ _genome_raw.stroke }}" stroke-width="{{ strip_outer_border.stroke_w }}"/>

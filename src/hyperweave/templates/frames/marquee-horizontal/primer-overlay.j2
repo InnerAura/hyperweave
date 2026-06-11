@@ -23,7 +23,7 @@
 {# Identity glyph — same bright identity token (glyph_inner) the badge / icon /
    strip glyphs use, so noir reads consistently across every artifact. #}
 <svg x="{{ liveness.cap_glyph_x }}" y="{{ liveness.cap_glyph_y }}" width="{{ liveness.cap_glyph_size }}" height="{{ liveness.cap_glyph_size }}" viewBox="{{ cap_glyph_viewbox }}">
-  <path d="{{ cap_glyph_path }}" fill="{{ _genome_raw.glyph_inner }}"/>
+  <path d="{{ cap_glyph_path }}"{% if cap_glyph_fill_rule %} fill-rule="{{ cap_glyph_fill_rule }}"{% endif %} fill="{{ _genome_raw.glyph_inner }}"/>
 </svg>
 {% endif %}
 {% if cap_scope %}
