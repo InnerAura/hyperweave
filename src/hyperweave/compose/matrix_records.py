@@ -219,6 +219,9 @@ class MatrixLayout:
     guide_opacity: float = 0.06
     row_stripes: tuple[RectSpec, ...] = ()
     stripe_opacity: float = 0.024
+    title_size: float = 29.0
+    """Title display size — shrinks below the voice default only when a
+    long title would overhang the legend's column on the line below."""
     tier_spans: tuple[TierSpan, ...] = ()
     """Chain projection: per-column reach bars + terminal dots replacing
     the dot grid (empty for non-chain matrices)."""

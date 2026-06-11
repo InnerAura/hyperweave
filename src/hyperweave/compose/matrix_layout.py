@@ -208,6 +208,18 @@ def compute_matrix_layout(
         width = min(math.ceil(max(content_w, masthead_w, footer_w, float(cfg.min_width))), ceiling)
     avail = width - 2 * margin
 
+    # The title clears the key's column: when a legend occupies the
+    # descriptor line, a long title shrinks just enough that its right
+    # edge stops short of the legend's left edge (plus a gap) instead of
+    # overhanging it from the line above. Short titles keep the full
+    # voice; the floor keeps shrunk titles legible.
+    title_size = cfg.title_voice.size
+    legend_adjacent = has_legend and (legend_inline or not has_subtitle)
+    if spec.title and legend_adjacent:
+        title_cap = avail - masthead_right_w - 24.0
+        if 0 < title_cap < title_w:
+            title_size = max(23.0, round(cfg.title_voice.size * title_cap / title_w, 1))
+
     # ── Data column widths ─────────────────────────────────────────────
     col_w = _solve_column_widths(data_cols, naturals=naturals, floors=floors, rest=avail - label_w)
     col_x: list[float] = []
@@ -569,6 +581,7 @@ def compute_matrix_layout(
         guide_opacity=cfg.guide_opacity,
         row_stripes=row_stripes,
         stripe_opacity=cfg.stripe_opacity,
+        title_size=title_size,
         tier_spans=tuple(tier_spans),
         tier_span_opacity=float((geometry.get("dot") or {}).get("span_opacity", 0.28)),
         footer=footer,

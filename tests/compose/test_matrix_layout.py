@@ -420,6 +420,23 @@ class TestOptionalBlocks:
         # headline occupies the legend slot
         assert len(solve(load_fixture("readcost")).header.key_marks) == 0
 
+    def test_long_title_clears_the_key_column(self) -> None:
+        """A title that would overhang the legend's column from the line
+        above shrinks just enough to clear it (with a legibility floor);
+        short titles keep the full voice."""
+        from hyperweave.compose.matrix_cells import measure_voice
+
+        short = solve(load_fixture("check"))
+        assert short.title_size == CFG.title_voice.size
+        long_spec = load_fixture("check").model_copy(update={"title": "One artifact. Many readers."})
+        layout = solve(long_spec)
+        assert layout.title_size < CFG.title_voice.size
+        assert layout.header.title is not None
+        voice = CFG.title_voice.model_copy(update={"size": layout.title_size})
+        title_right = layout.header.title.x + measure_voice(long_spec.title.upper(), voice)
+        legend_left = min(m.box.x for m in layout.header.key_marks)
+        assert title_right <= legend_left + 1.0
+
     def test_legend_shares_descriptor_line_when_it_fits(self) -> None:
         """The legend rides the subtitle's line whenever the pair can share
         at the ceiling — identity left, key right, one masthead band (the

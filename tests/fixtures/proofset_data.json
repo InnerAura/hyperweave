@@ -853,7 +853,7 @@
     "value": "n/a"
   },
   "snapshot:arxiv:2602.15763": {
-    "fetched_at": 1781193145.709121,
+    "fetched_at": 1781199907.640026,
     "value": {
       "bio": "GLM-5-Team et al. \u00b7 cs.LG \u00b7 cs.CL",
       "hero": {
@@ -889,7 +889,7 @@
     }
   },
   "snapshot:huggingface:zai-org/GLM-5.1": {
-    "fetched_at": 1781193145.696002,
+    "fetched_at": 1781199907.630385,
     "value": {
       "hero": {
         "label": "DOWNLOADS/MO",
@@ -903,8 +903,8 @@
         {
           "label": "LIKES",
           "provider": "huggingface",
-          "raw_value": 1754,
-          "value": "1,754"
+          "raw_value": 1755,
+          "value": "1,755"
         },
         {
           "label": "FILES",
@@ -927,7 +927,7 @@
     }
   },
   "snapshot:pypi:readmeai": {
-    "fetched_at": 1781192403.373649,
+    "fetched_at": 1781199907.573835,
     "value": {
       "activity": {
         "peak_label": "817",
@@ -1723,7 +1723,7 @@
     }
   },
   "snapshot:pypi:vllm": {
-    "fetched_at": 1781192403.513653,
+    "fetched_at": 1781199907.700911,
     "value": {
       "activity": {
         "peak_label": "302.4K",

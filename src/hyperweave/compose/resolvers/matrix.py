@@ -78,7 +78,7 @@ def resolve_matrix(
         "matrix_notes": table.notes,
         "matrix_subvariant": subvariant,
         "semantic_palette": dict(mconf.get("semantic_palette") or {}),
-        "matrix_voices": _voice_params(cfg),
+        "matrix_voices": _voice_params(cfg, title_size=layout.title_size),
         # The scan rect is centered on the rail and sweeps ±46% of the card
         # width — out past both edges and back (the specimen's travel; the
         # card clip crops the overshoot). Transform-only, CIM.
@@ -129,12 +129,13 @@ def _apply_glyph_tint(table: MatrixSpec, spec: ComposeSpec, genome: dict[str, An
     return table.model_copy(update=updates) if updates else table
 
 
-def _voice_params(cfg: ParadigmMatrixConfig) -> list[dict[str, Any]]:
+def _voice_params(cfg: ParadigmMatrixConfig, *, title_size: float) -> list[dict[str, Any]]:
     """Type-voice CSS parameters for the defs ``<style>`` block.
 
     The same family/size/weight tuples the solver measured with — keeping
-    measurement and rendering coupled. Stacks bind the genome font roles
-    so variants restate the voices through ``--dna-font-*``.
+    measurement and rendering coupled (``title_size`` carries the layout's
+    fit-capped title). Stacks bind the genome font roles so variants
+    restate the voices through ``--dna-font-*``.
     """
 
     def stack(family: str) -> str:
@@ -143,7 +144,7 @@ def _voice_params(cfg: ParadigmMatrixConfig) -> list[dict[str, Any]]:
         return "var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace)"
 
     named = (
-        ("title", cfg.title_voice),
+        ("title", cfg.title_voice.model_copy(update={"size": title_size})),
         ("desc", cfg.desc_voice),
         ("colhead", cfg.colhead_voice),
         ("colheadsub", cfg.colhead_sub_voice),
