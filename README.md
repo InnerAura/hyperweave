@@ -131,8 +131,9 @@ Auto-detected from the session transcript. Pin a different default with `hyperwe
 A matrix is a table described in JSON and rendered as an SVG. Columns choose from eight cell kinds (text, check, dot, bar, pill, numeric heat, chip, glyph), which is enough to cover comparisons, registries, tiers, bar scales, plans, and benchmarks. The output embeds anywhere markdown renders.
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/matrix/custom/primer.static?variant=porcelain&spec=eyJ0aXRsZSI6Ik9uZSBhcnRpZmFjdCwgbWFueSByZWFkZXJzIiwic3VidGl0bGUiOiJob3cgZWFjaCBjb25zdW1lciBpbmdlc3RzIHRoZSBzYW1lIFNWRyIsImNvbHVtbnMiOlt7ImlkIjoicmVhZGVyIiwibGFiZWwiOiJSRUFERVIiLCJyb2xlIjoibGFiZWwifSx7ImlkIjoibWFyayIsImxhYmVsIjoiIiwia2luZCI6ImdseXBoIiwiZ2x5cGhfdGludCI6ImZ1bGwifSx7ImlkIjoicGl4ZWxzIiwibGFiZWwiOiJQSVhFTFMiLCJraW5kIjoiY2hlY2sifSx7ImlkIjoibW90aW9uIiwibGFiZWwiOiJNT1RJT04iLCJraW5kIjoicGlsbCJ9LHsiaWQiOiJ2aWEiLCJsYWJlbCI6IlJFQURTIFZJQSIsImtpbmQiOiJjaGlwIn1dLCJyb3dzIjpbeyJsYWJlbCI6IkdpdEh1YiBSRUFETUUiLCJjZWxscyI6W3siZ2x5cGgiOiJnaXRodWIifSx7InN0YXRlIjoiZnVsbCJ9LHsic3RhdGUiOiJvbiJ9LHsiY2hpcHMiOlsiY2FtbyIsImNzcyBhbmltYXRpb24iXX1dfSx7ImxhYmVsIjoiVlMgQ29kZSBwcmV2aWV3IiwiY2VsbHMiOlt7ImdseXBoIjoidnNjb2RlIn0seyJzdGF0ZSI6ImZ1bGwifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJtYXJrZG93biBwcmV2aWV3Il19XX0seyJsYWJlbCI6IlNsYWNrIHVuZnVybCIsImNlbGxzIjpbeyJnbHlwaCI6InNsYWNrIn0seyJzdGF0ZSI6InBhcnRpYWwifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJpbWFnZSBwcm94eSJdfV19LHsibGFiZWwiOiJHbWFpbCBib2R5IiwiY2VsbHMiOlt7ImdseXBoIjoiZ21haWwifSx7InN0YXRlIjoicGFydGlhbCJ9LHsic3RhdGUiOiJvZmYifSx7ImNoaXBzIjpbImltZyB0YWciXX1dfSx7ImxhYmVsIjoiQUkgYWdlbnQiLCJjZWxscyI6W3siZ2x5cGgiOiJjbGF1ZGUifSx7InN0YXRlIjoibm9uZSJ9LHsic3RhdGUiOiJvZmYifSx7ImNoaXBzIjpbImh3OnBheWxvYWQiLCJod3ovMSIsIm1hcmtkb3duIHR3aW4iXX1dfV0sIm5vdGVzIjoicGl4ZWxzIGZvciBodW1hbnMgwrcgaHc6cGF5bG9hZCBmb3IgYWdlbnRzIn0" alt="comparison matrix: how GitHub, VS Code, Slack, Gmail, and AI agents each ingest the same SVG" width="780"/>
+  <img src="https://hyperweave.app/v1/matrix/custom/primer.static?variant=porcelain&spec=eyJ0aXRsZSI6Ik9uZSBhcnRpZmFjdC4gTWFueSByZWFkZXJzLiIsInN1YnRpdGxlIjoiaG93IGVhY2ggY29uc3VtZXIgaW5nZXN0cyB0aGUgc2FtZSBTVkciLCJjb2x1bW5zIjpbeyJpZCI6InJlYWRlciIsImxhYmVsIjoiUkVBREVSIiwicm9sZSI6ImxhYmVsIn0seyJpZCI6Im1hcmsiLCJsYWJlbCI6IiIsImtpbmQiOiJnbHlwaCIsImdseXBoX3RpbnQiOiJmdWxsIn0seyJpZCI6InBpeGVscyIsImxhYmVsIjoiUElYRUxTIiwia2luZCI6ImNoZWNrIn0seyJpZCI6Im1vdGlvbiIsImxhYmVsIjoiTU9USU9OIiwia2luZCI6InBpbGwifSx7ImlkIjoidmlhIiwibGFiZWwiOiJSRUFEUyBWSUEiLCJraW5kIjoiY2hpcCJ9XSwicm93cyI6W3sibGFiZWwiOiJHaXRIdWIgUkVBRE1FIiwiY2VsbHMiOlt7ImdseXBoIjoiZ2l0aHViIn0seyJzdGF0ZSI6ImZ1bGwifSx7InN0YXRlIjoib24ifSx7ImNoaXBzIjpbImNhbW8iLCJjc3MgYW5pbWF0aW9uIl19XX0seyJsYWJlbCI6IlZTIENvZGUgcHJldmlldyIsImNlbGxzIjpbeyJnbHlwaCI6InZzY29kZSJ9LHsic3RhdGUiOiJmdWxsIn0seyJzdGF0ZSI6Im9mZiJ9LHsiY2hpcHMiOlsibWFya2Rvd24gcHJldmlldyJdfV19LHsibGFiZWwiOiJTbGFjayB1bmZ1cmwiLCJjZWxscyI6W3siZ2x5cGgiOiJzbGFjayJ9LHsic3RhdGUiOiJwYXJ0aWFsIn0seyJzdGF0ZSI6Im9mZiJ9LHsiY2hpcHMiOlsiaW1hZ2UgcHJveHkiXX1dfSx7ImxhYmVsIjoiR21haWwgYm9keSIsImNlbGxzIjpbeyJnbHlwaCI6ImdtYWlsIn0seyJzdGF0ZSI6InBhcnRpYWwifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJpbWcgdGFnIl19XX0seyJsYWJlbCI6IkFJIGFnZW50IiwiY2VsbHMiOlt7ImdseXBoIjoiY2xhdWRlIn0seyJzdGF0ZSI6Im5vbmUifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJodzpwYXlsb2FkIiwiaHd6LzEiLCJtYXJrZG93biB0d2luIl19XX1dLCJub3RlcyI6InBpeGVscyBmb3IgaHVtYW5zIMK3IGh3OnBheWxvYWQgZm9yIGFnZW50cyJ9&v=2" alt="comparison matrix: how GitHub, VS Code, Slack, Gmail, and AI agents each ingest the same SVG" width="100%"/>
 </p>
+
 <p align="center"><sub>One frame, every table &middot; generated, not drawn</sub></p>
 
 Inside that SVG, alongside the pixels — two tiers, two jobs:
@@ -142,7 +143,7 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
 ```xml
 <hw:payload schema="matrix/1" media-type="application/json">
 {
-  "title": "One artifact, many readers",
+  "title": "One artifact. Many readers.",
   "subtitle": "how each consumer ingests the same SVG",
   "columns": [
     { "id": "reader", "label": "READER",    "kind": "text",  "align": "left",   "role": "label" },
@@ -165,10 +166,10 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
 <hw:envelope format="hwz/1" media-type="application/json">
 {
   "v": "hwz/1",
-  "id": "sha256:7ed541308e84d6711a3447ffb83d5c80ad1709130281919034ddf7dfafda838b",
+  "id": "sha256:7021648adf306e15cc4b954d7113aaf2f8a53717e69cf3421576ce3c007ad1e6",
   "k": "matrix",
-  "title": "One artifact, many readers",
-  "intent": "structured comparison: One artifact, many readers",
+  "title": "One artifact. Many readers.",
+  "intent": "structured comparison: One artifact. Many readers.",
   "state": "active",
   "data": {
     "subvariant": "registry",
@@ -182,8 +183,8 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
     },
     "rows_total": 5
   },
-  "frames": [{ "t": "matrix", "l": "One artifact, many readers" }],
-  "prov": { "by": "hyperweave", "ver": "0.4.0a1", "genome": "primer.porcelain", "ts": "2026-06-11T04:30:25.568839+00:00" }
+  "frames": [{ "t": "matrix", "l": "One artifact. Many readers." }],
+  "prov": { "by": "hyperweave", "ver": "0.4.0a2", "genome": "primer.porcelain", "ts": "2026-06-11T15:51:03.185542+00:00" }
 }
 </hw:envelope>
 ```

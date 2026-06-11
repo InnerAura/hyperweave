@@ -150,8 +150,7 @@ def compute_matrix_layout(
     chain = is_chain(spec)
     masthead_right_w = _masthead_right_width(spec, data_cols, cfg=cfg, chain=chain) if has_masthead else 0.0
     has_legend = has_masthead and spec.headline is None and masthead_right_w > 0.0
-    title_voice = cfg.title_voice
-    title_w = measure_voice(spec.title.upper(), title_voice) if spec.title else 0.0
+    title_w = measure_voice(spec.title.upper(), cfg.title_voice) if spec.title else 0.0
     subtitle_w = measure_voice(spec.subtitle, cfg.desc_voice) if spec.subtitle else 0.0
 
     # The legend rides the subtitle's descriptor line whenever the shared
@@ -207,15 +206,6 @@ def compute_matrix_layout(
         # for (summary runs would measure past their solved column).
         masthead_w = _masthead_floor(title_w)
         width = min(math.ceil(max(content_w, masthead_w, footer_w, float(cfg.min_width))), ceiling)
-        if width < cfg.compact_below:
-            # Compact frame: the title voice steps down so the masthead
-            # stays proportionate to the table. The width re-solves with
-            # the smaller title floor (shrink-only — the decision never
-            # flips back; the legend keeps its resolved line).
-            title_voice = title_voice.model_copy(update={"size": cfg.title_compact_size})
-            title_w = measure_voice(spec.title.upper(), title_voice) if spec.title else 0.0
-            masthead_w = _masthead_floor(title_w)
-            width = min(math.ceil(max(content_w, masthead_w, footer_w, float(cfg.min_width))), ceiling)
     avail = width - 2 * margin
 
     # ── Data column widths ─────────────────────────────────────────────
@@ -579,7 +569,6 @@ def compute_matrix_layout(
         guide_opacity=cfg.guide_opacity,
         row_stripes=row_stripes,
         stripe_opacity=cfg.stripe_opacity,
-        title_voice_size=title_voice.size,
         tier_spans=tuple(tier_spans),
         tier_span_opacity=float((geometry.get("dot") or {}).get("span_opacity", 0.28)),
         footer=footer,

@@ -2,12 +2,13 @@
    Every coordinate comes from matrix_layout (frozen MatrixLayout): zero
    arithmetic, zero hex. Chassis paints are var(--dna-*); cell indicator
    paints arrive pre-resolved on each CellPlacement (semantic,
-   genome-invariant). Light variants lift via the drop-shadow filter
-   (gated on panel_gradient_stops, the icon/stats pattern); dark variants
-   restate the identical geometry through their --dna-* overrides.
+   genome-invariant). NO filter on the card: the artifact is full-bleed,
+   so a drop shadow would be clipped invisible while still forcing the
+   whole table through a low-resolution offscreen raster on mobile
+   renderers (the GitHub app blur). Lift comes from the outer hairline.
    Paint order: ground → stripes/bands → hero lane → guides/extents →
    chrome text → cells → summary/axis → footer → border. #}
-<g class="{{ uid }}-card" clip-path="url(#{{ uid }}-clip)"{% if panel_gradient_stops %} filter="url(#{{ uid }}-lift)"{% endif %}>
+<g class="{{ uid }}-card" clip-path="url(#{{ uid }}-clip)">
   <rect width="{{ width }}" height="{{ height }}" fill="url(#{{ uid }}-card-bg)"/>
 {% for stripe in matrix_layout.row_stripes %}
   <rect x="{{ stripe.x }}" y="{{ stripe.y }}" width="{{ stripe.w }}" height="{{ stripe.h }}" rx="{{ stripe.rx }}" fill="var(--dna-ink-primary)" opacity="{{ matrix_layout.stripe_opacity }}"/>

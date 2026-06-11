@@ -249,6 +249,6 @@ matrix:
   scan_w: 220
   scan_h: 1.4
   hero_lane_opacity: 0.055
-  title_voice: { family: Inter, size: 33, weight: 800, tracking_em: -0.02 }
+  title_voice: { family: Inter, size: 29, weight: 800, tracking_em: -0.02 }
   desc_voice: { family: JetBrains Mono, size: 10.5, weight: 400 }
   colhead_voice: { family: JetBrains Mono, size: 8.5, weight: 700, tracking_em: 0.12 }

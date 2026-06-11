@@ -27,13 +27,6 @@
 {% for stop in g.stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
 {% endfor %}</linearGradient>
 {% endfor %}
-{# flood-color/flood-opacity are SVG ATTRIBUTES — var() does not resolve there
-   (→ black, opacity 1.0 = a hard halo). Literal genome values, per the stats
-   primer defs. #}
-<filter id="{{ uid }}-lift" x="-4%" y="-12%" width="108%" height="130%">
-  <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="{{ _genome_raw.shadow_opacity }}"/>
-  <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.04"/>
-</filter>
 <style>
 {{ font_faces | safe }}
 .{{ uid }}-card text { shape-rendering: geometricPrecision; }

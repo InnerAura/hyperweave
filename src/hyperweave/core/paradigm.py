@@ -1073,22 +1073,15 @@ class ParadigmMatrixConfig(FrozenModel):
     """Zebra/section band wash. Quiet by design — rows must never compete
     with the metric cells for the eye."""
     guide_opacity: float = 0.06
-    compact_below: float = 750.0
-    """Solved widths below this render the COMPACT masthead: the title
-    voice steps down to title_compact_size and the indicator legend leaves
-    the shared subtitle line for its own masthead line (one desc_line_h
-    below the subtitle). Wide frames keep the 33px title and the inline
-    legend — the specimen gestalt."""
-    title_compact_size: float = 29.0
-    """Title size on compact frames (~12% down from 33) — a 600px table
-    should not shout at a 900px table's volume."""
     scan_duration: str = "6.472s"
     """Masthead scan-rail period (4φ x rhythm base)."""
     scan_w: float = 220.0
     scan_h: float = 1.4
     title_voice: MatrixVoice = Field(
-        default_factory=lambda: MatrixVoice(family="Inter", size=33, weight=800, tracking_em=-0.02)
+        default_factory=lambda: MatrixVoice(family="Inter", size=29, weight=800, tracking_em=-0.02)
     )
+    """One title size at every width — 29px holds its own on a 600px card
+    without shouting at 900."""
     desc_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=10.5))
     colhead_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.5, weight=700, tracking_em=0.12))
     colhead_sub_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=6.5))

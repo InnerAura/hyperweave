@@ -423,11 +423,8 @@ class TestOptionalBlocks:
     def test_legend_shares_descriptor_line_when_it_fits(self) -> None:
         """The legend rides the subtitle's line whenever the pair can share
         at the ceiling — identity left, key right, one masthead band (the
-        g3 specimen) — even on compact frames, where only the title steps
-        down."""
+        g3 specimen)."""
         layout = solve(load_fixture("check"))
-        assert layout.width < CFG.compact_below
-        assert layout.title_voice_size == CFG.title_compact_size
         assert layout.header.rule is not None and layout.header.subtitle is not None
         assert {t.y for t in layout.header.key_texts} == {layout.header.subtitle.y}
         assert layout.header.rule.y1 == CFG.masthead_h + 0.5
@@ -447,15 +444,12 @@ class TestOptionalBlocks:
         assert layout.header.rule.y1 == CFG.masthead_h + CFG.desc_line_h + 0.5
 
     def test_wide_solve_keeps_legend_inline(self) -> None:
-        """At or above the compact threshold the legend stays on the shared
-        descriptor line and the title keeps its full voice — the specimen
-        gestalt."""
+        """A wide solve keeps the legend on the shared descriptor line —
+        the specimen gestalt."""
         wide = load_fixture("check").model_copy(
             update={"title": "An exceptionally long masthead title that forces a wide solve"}
         )
         layout = solve(wide)
-        assert layout.width >= CFG.compact_below
-        assert layout.title_voice_size == CFG.title_voice.size
         assert {t.y for t in layout.header.key_texts} == {54.0 + CFG.desc_line_h}
         assert layout.header.rule is not None
         assert layout.header.rule.y1 == CFG.masthead_h + 0.5

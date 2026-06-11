@@ -219,9 +219,6 @@ class MatrixLayout:
     guide_opacity: float = 0.06
     row_stripes: tuple[RectSpec, ...] = ()
     stripe_opacity: float = 0.024
-    title_voice_size: float = 33.0
-    """Active title size — steps down on compact frames so the masthead
-    stays proportionate to the table. The defs voice block emits this."""
     tier_spans: tuple[TierSpan, ...] = ()
     """Chain projection: per-column reach bars + terminal dots replacing
     the dot grid (empty for non-chain matrices)."""
