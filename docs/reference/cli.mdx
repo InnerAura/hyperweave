@@ -94,7 +94,7 @@ hyperweave render --template <name> --data <path> [-o output]
 
 ### `session`
 
-Session telemetry: parse transcripts, render receipts and rhythm strips.
+Session telemetry: parse transcripts, render receipts and rhythm strips, or sync receipt files from a runtime transcript directory.
 
 ```bash
 hyperweave session <action> [transcript_path] [-o output]
@@ -105,8 +105,27 @@ hyperweave session <action> [transcript_path] [-o output]
 | `receipt` | Parse transcript and render a receipt card |
 | `strip` | Parse transcript and render a rhythm strip |
 | `parse` | Parse transcript and output JSON to stdout |
+| `sync` | Backfill missing or stale receipts from a runtime transcript directory |
 
-When invoked as a Claude Code hook, reads `transcript_path` from stdin JSON.
+| Option | Default | Description |
+|---|---|---|
+| `--output` / `-o` | `None` | Output file for `receipt` or `strip`; receipts default to `.hyperweave/receipts/` when omitted |
+| `--output-dir` | `.hyperweave/receipts` | Receipt directory for `session sync` |
+| `--genome` | auto | Pin telemetry skin (`cream`, `voltage`, `claude-code`, `codex`, or full `telemetry-*` slug) |
+| `--runtime` | `antigravity` | Runtime for `session sync`; currently supports `antigravity` |
+| `--force` | `false` | Re-render synced receipts even when the existing SVG is newer |
+
+HyperWeave auto-detects Claude Code, Codex, and Antigravity transcripts from their JSONL shape. When invoked as a hook, `session receipt` reads `transcript_path` or `transcriptPath` from stdin JSON; Antigravity hook payloads also use `workspacePaths` so receipts land in the project workspace.
+
+Examples:
+
+```bash
+hyperweave session receipt path/to/session.jsonl
+hyperweave session strip path/to/session.jsonl -o rhythm.svg
+hyperweave session parse path/to/session.jsonl
+hyperweave session sync --runtime antigravity
+hyperweave session sync --runtime antigravity --force --output-dir .hyperweave/receipts
+```
 
 ### `live`
 
@@ -140,11 +159,48 @@ hyperweave serve [--port 8000] [--host 0.0.0.0] [--reload]
 
 ### `install-hook`
 
-Install the SessionEnd hook into Claude Code settings.
+Install session-receipt hooks for supported agent runtimes.
 
 ```bash
 hyperweave install-hook
 ```
+
+Without `--runtime`, HyperWeave auto-detects initialized or installed agent runtimes and registers each one it finds. Pass `--runtime <name>` to scope installation, or `--runtime all` to force every supported runtime.
+
+| Option | Default | Description |
+|---|---|---|
+| `--genome` | auto | Pin telemetry skin for every generated receipt |
+| `--runtime` | auto | Runtime to install: `claude-code`, `codex`, `antigravity`, or `all` |
+
+| Runtime | Hook location | Event |
+|---|---|---|
+| Claude Code | `~/.claude/settings.json` | `SessionEnd` |
+| Codex | `~/.codex/hooks.json` plus `[features] hooks = true` in `~/.codex/config.toml` | `Stop` |
+| Antigravity | `~/.gemini/config/hooks.json` | `Stop` |
+
+Examples:
+
+```bash
+hyperweave install-hook
+hyperweave install-hook --runtime antigravity
+hyperweave install-hook --runtime all --genome voltage
+```
+
+### `doctor`
+
+Diagnose telemetry hook wiring, transcript discovery, and recent receipt output across supported agent runtimes. This command is read-only and exits zero even when it reports warnings.
+
+```bash
+hyperweave doctor
+```
+
+It reports:
+
+| Section | Description |
+|---|---|
+| Runtimes | Detection state and hook registration for Claude Code, Codex, and Antigravity |
+| Transcripts | JSONL transcript counts and most recent transcript timestamp per runtime |
+| Receipts | Recent and total `.hyperweave/receipts/*.svg` files in the current directory |
 
 ### `validate-genome`
 
