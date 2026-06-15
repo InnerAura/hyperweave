@@ -346,11 +346,133 @@ def render(
 # Session telemetry commands
 
 
+def _session_has_receipt_content(contract: dict[str, Any]) -> bool:
+    """Return whether a parsed session has enough signal to render a useful receipt."""
+    return bool(contract.get("tools")) or contract.get("profile", {}).get("total_cost", 0) != 0
+
+
+def _receipt_output_for_contract(contract: dict[str, Any], output_dir: Path) -> tuple[Path, str]:
+    """Return the receipt path and footer hint for a parsed telemetry contract."""
+    from datetime import datetime as _dt
+
+    from hyperweave.telemetry.receipt_paths import receipt_filename
+
+    sess = contract.get("session", {})
+    sid = sess.get("id", "unknown")
+    session_name = sess.get("name", "")
+    start_iso = sess.get("start", "")
+    try:
+        ts = _dt.fromisoformat(start_iso)
+    except (TypeError, ValueError):
+        ts = _dt.now()
+    user_events = contract.get("user_events", []) or []
+    first_prompt = user_events[0].get("preview", "") if user_events else ""
+    output = output_dir / receipt_filename(
+        timestamp=ts,
+        session_name=session_name,
+        session_id=sid,
+        prompt_text=first_prompt,
+    )
+    return output, str(output)
+
+
+def _compose_session_frame(
+    *,
+    frame_type: str,
+    contract: dict[str, Any],
+    genome_slug: str,
+    filename_hint: str = "",
+) -> str:
+    """Compose a telemetry session frame and return its SVG."""
+    from hyperweave.compose.engine import compose as do_compose
+    from hyperweave.core.models import ComposeSpec
+
+    spec = ComposeSpec(
+        type=frame_type,
+        genome_id=genome_slug,
+        telemetry_data=contract,
+        receipt_filename_hint=filename_hint,
+    )
+    return do_compose(spec).svg
+
+
+def _receipt_summary(contract: dict[str, Any], output: Path) -> str:
+    """Build the one-line receipt summary shared by manual and sync writes."""
+    from hyperweave.compose.resolver import _fmt_tok
+
+    profile = contract.get("profile", {})
+    cost = profile.get("total_cost", 0)
+    total_tok = (
+        profile.get("total_input_tokens", 0)
+        + profile.get("total_output_tokens", 0)
+        + profile.get("total_cache_read_tokens", 0)
+        + profile.get("total_cache_creation_tokens", 0)
+    )
+    dur = contract.get("session", {}).get("duration_minutes", 0)
+    tok_label = _fmt_tok(total_tok)
+    return f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}"
+
+
+def _sync_session_receipts(
+    *,
+    runtime: str,
+    output_dir: Path | None,
+    genome: str,
+    force: bool,
+) -> None:
+    """Scan a runtime transcript directory and render missing or stale receipts."""
+    if runtime != "antigravity":
+        typer.echo("Error: session sync currently supports: antigravity", err=True)
+        raise typer.Exit(1)
+
+    transcript_root = Path.home() / ".gemini" / "antigravity" / "brain"
+    receipt_dir = output_dir or Path(".hyperweave") / "receipts"
+    genome_slug = _normalize_genome_slug(genome) if genome else ""
+    rendered = 0
+    up_to_date = 0
+    failed = 0
+
+    transcripts = sorted(transcript_root.rglob("*.jsonl")) if transcript_root.exists() else []
+
+    from hyperweave.telemetry.contract import build_contract
+
+    for transcript_path in transcripts:
+        try:
+            contract = build_contract(str(transcript_path))
+            if not _session_has_receipt_content(contract):
+                up_to_date += 1
+                continue
+            output, filename_hint = _receipt_output_for_contract(contract, receipt_dir)
+            if output.exists() and not force and output.stat().st_mtime >= transcript_path.stat().st_mtime:
+                up_to_date += 1
+                continue
+            svg = _compose_session_frame(
+                frame_type="receipt",
+                contract=contract,
+                genome_slug=genome_slug,
+                filename_hint=filename_hint,
+            )
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(svg)
+            rendered += 1
+        except Exception as exc:
+            failed += 1
+            typer.echo(f"Failed to sync {transcript_path}: {exc}", err=True)
+
+    typer.echo(
+        f"Synced antigravity receipts: {rendered} rendered, {up_to_date} up-to-date, {failed} failed -> {receipt_dir}"
+    )
+
+
 @app.command()
 def session(
-    action: Annotated[str, typer.Argument(help="Action: receipt, strip, parse")],
+    action: Annotated[str, typer.Argument(help="Action: receipt, strip, parse, sync")],
     transcript: Annotated[Path | None, typer.Argument(help="Path to transcript JSONL")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("--output-dir", help="Receipt directory for session sync; default .hyperweave/receipts."),
+    ] = None,
     genome: Annotated[
         str,
         typer.Option(
@@ -362,12 +484,21 @@ def session(
             ),
         ),
     ] = "",
+    runtime: Annotated[
+        str,
+        typer.Option("--runtime", help="Runtime for session sync. Currently supports: antigravity."),
+    ] = "antigravity",
+    force: Annotated[bool, typer.Option("--force", help="Re-render receipts even when the SVG is newer.")] = False,
 ) -> None:
     """Session telemetry: parse transcripts, render receipts and rhythm strips.
 
     When invoked as a Claude Code hook, reads transcript_path from stdin JSON.
     """
     import json
+
+    if action == "sync":
+        _sync_session_receipts(runtime=runtime, output_dir=output_dir, genome=genome, force=force)
+        return
 
     # Resolve transcript path: arg > stdin JSON (hook mode)
     transcript_path = transcript
@@ -398,22 +529,19 @@ def session(
         return
 
     if action not in ("receipt", "strip"):
-        typer.echo(f"Unknown action '{action}'. Use: receipt, strip, parse", err=True)
+        typer.echo(f"Unknown action '{action}'. Use: receipt, strip, parse, sync", err=True)
         raise typer.Exit(1)
 
     # Skip empty sessions — no tool calls and no cost produces a blank receipt
     # (e.g. user opened Claude Code, did nothing, closed it; or a no-op SessionEnd).
     # Hook mode silently no-ops; interactive mode reports why.
-    if not contract.get("tools") and contract.get("profile", {}).get("total_cost", 0) == 0:
+    if not _session_has_receipt_content(contract):
         if sys.stdin.isatty():
             sid = contract.get("session", {}).get("id", "unknown")
             typer.echo(f"Skipped empty session {sid}: no tool calls, no cost.", err=True)
         return
 
     # Compose the telemetry artifact
-    from hyperweave.compose.engine import compose as do_compose
-    from hyperweave.core.models import ComposeSpec
-
     frame_type = "receipt" if action == "receipt" else "rhythm-strip"
     genome_slug = _normalize_genome_slug(genome) if genome else ""
 
@@ -427,69 +555,36 @@ def session(
     # of the constant prefix at resolver.py:_truncate_path_left.
     filename_hint = ""
     if action == "receipt" and not output:
-        from datetime import datetime as _dt
-
-        from hyperweave.telemetry.receipt_paths import receipt_filename
-
-        sess = contract.get("session", {})
-        sid = sess.get("id", "unknown")
-        session_name = sess.get("name", "")
-        start_iso = sess.get("start", "")
-        try:
-            ts = _dt.fromisoformat(start_iso)
-        except (TypeError, ValueError):
-            ts = _dt.now()
-        user_events = contract.get("user_events", []) or []
-        first_prompt = user_events[0].get("preview", "") if user_events else ""
         hw_dir = Path(".hyperweave") / "receipts"
         hw_dir.mkdir(parents=True, exist_ok=True)
-        output = hw_dir / receipt_filename(
-            timestamp=ts,
-            session_name=session_name,
-            session_id=sid,
-            prompt_text=first_prompt,
-        )
-        filename_hint = str(output)
+        output, filename_hint = _receipt_output_for_contract(contract, hw_dir)
     elif action == "receipt" and output:
         # Explicit --output: surface whatever path shape the user provided.
         filename_hint = str(output)
 
-    spec = ComposeSpec(
-        type=frame_type,
-        genome_id=genome_slug,
-        telemetry_data=contract,
-        receipt_filename_hint=filename_hint,
+    svg = _compose_session_frame(
+        frame_type=frame_type,
+        contract=contract,
+        genome_slug=genome_slug,
+        filename_hint=filename_hint,
     )
-    result = do_compose(spec)
 
     if action == "receipt":
         # output is guaranteed non-None here: the receipt branch above either
         # received an explicit --output or computed a default path.
         assert output is not None
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(result.svg)
+        output.write_text(svg)
 
         # One-line summary to stderr
-        profile = contract.get("profile", {})
-        cost = profile.get("total_cost", 0)
-        total_tok = (
-            profile.get("total_input_tokens", 0)
-            + profile.get("total_output_tokens", 0)
-            + profile.get("total_cache_read_tokens", 0)
-            + profile.get("total_cache_creation_tokens", 0)
-        )
-        dur = contract.get("session", {}).get("duration_minutes", 0)
-        from hyperweave.compose.resolver import _fmt_tok
-
-        tok_label = _fmt_tok(total_tok)
-        typer.echo(f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}", err=True)
+        typer.echo(_receipt_summary(contract, output), err=True)
     else:
         # Strip: stdout by default
         if output:
-            output.write_text(result.svg)
+            output.write_text(svg)
             typer.echo(f"Wrote {output}", err=True)
         else:
-            sys.stdout.write(result.svg)
+            sys.stdout.write(svg)
 
 
 # Live data commands
