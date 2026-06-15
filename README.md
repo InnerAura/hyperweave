@@ -87,7 +87,7 @@ HyperWeave is that primitive. One API call returns a self-contained SVG with dat
 
 ## Agentic Artifacts
 
-Every AI coding session produces a receipt: cost, tokens, tool distribution, session rhythm. One install, fully automatic (Claude Code & Codex).
+Every AI coding session produces a receipt: cost, tokens, tool distribution, session rhythm. One install, fully automatic (Claude Code, Codex & Antigravity).
 
 ```bash
 hyperweave install-hook

@@ -1,39 +1,67 @@
 ---
 title: "Install Session Telemetry"
-description: "Set up HyperWeave to automatically generate visual session receipts after every Claude Code conversation."
+description: "Set up HyperWeave to automatically generate visual session receipts for Claude Code, Codex, and Antigravity conversations."
 ---
 
-HyperWeave can parse Claude Code session transcripts and render structured telemetry artifacts -- receipts, rhythm strips, and master cards. This tutorial sets up automatic receipt generation via Claude Code hooks.
+HyperWeave can parse Claude Code, Codex, and Antigravity session transcripts and render structured telemetry artifacts -- receipts and rhythm strips. This tutorial sets up automatic receipt generation via each agent runtime's hook system.
 
 ## Prerequisites
 
 - HyperWeave installed
-- Claude Code CLI installed and configured
-- At least one completed Claude Code session (produces `.claude/` transcript files)
+- At least one supported agent runtime installed and configured: Claude Code, Codex, or Antigravity
+- At least one completed session transcript:
+  - Claude Code: `~/.claude/projects/.../*.jsonl`
+  - Codex: `~/.codex/sessions/.../*.jsonl`
+  - Antigravity: `~/.gemini/antigravity/brain/.../*.jsonl`
 
 ## Step 1: Install the Hook
 
-HyperWeave ships with a one-command hook installer:
+HyperWeave ships with a one-command hook installer. Without `--runtime`, it auto-detects installed runtimes and registers each one it finds:
 
 ```bash
 hyperweave install-hook
 ```
 
-This adds a `SessionEnd` hook to your Claude Code settings (`~/.claude/settings.json`) that runs `hw session receipt` after every conversation.
+You can also install for one runtime explicitly:
+
+```bash
+hyperweave install-hook --runtime claude-code
+hyperweave install-hook --runtime codex
+hyperweave install-hook --runtime antigravity
+```
+
+This installs:
+
+| Runtime | Hook location | Event |
+|---|---|---|
+| Claude Code | `~/.claude/settings.json` | `SessionEnd` |
+| Codex | `~/.codex/hooks.json` plus `[features] hooks = true` in `~/.codex/config.toml` | `Stop` |
+| Antigravity | `~/.gemini/config/hooks.json` | `Stop` |
 
 <Info>
-  The hook reads the transcript path from stdin (Claude Code provides it as JSON) and writes a receipt SVG to `.hyperweave/receipts/`.
+  Hooks run `hyperweave session receipt`. The command reads the transcript path from the runtime's stdin JSON and writes a receipt SVG to `.hyperweave/receipts/`. Antigravity hooks use the first `workspacePaths` entry so receipts land in the project workspace instead of the global config directory.
 </Info>
 
 ## Step 2: Verify the Hook
 
-Check your settings:
+Run the read-only doctor command:
 
 ```bash
-cat ~/.claude/settings.json
+hyperweave doctor
 ```
 
-You should see:
+You should see each detected runtime and its hook status, for example:
+
+```text
+hyperweave doctor — v0.x.y
+
+Runtimes:
+  ✓ claude-code: hook registered -- hyperweave session receipt
+  ✓ codex: hook registered -- hyperweave session receipt
+  ✓ antigravity: hook registered -- hyperweave session receipt
+```
+
+If you inspect config files directly, Claude Code should contain a `SessionEnd` hook like this:
 
 ```json
 {
@@ -43,7 +71,7 @@ You should see:
         "hooks": [
           {
             "type": "command",
-            "command": "hw session receipt",
+            "command": "hyperweave session receipt",
             "timeout": 10
           }
         ]
@@ -55,26 +83,28 @@ You should see:
 
 ## Step 3: Run a Test Session
 
-Start a Claude Code session, ask a question, then end the conversation. After the session ends, check for the receipt:
+Start a supported agent session, ask a question, then end the conversation. After the hook runs, check for the receipt in the workspace:
 
 ```bash
 ls .hyperweave/receipts/
 ```
 
-You should see an SVG file named with the session ID.
+You should see an SVG file named from the session timestamp and session title or prompt.
 
 ## Step 4: Manual Receipt Generation
 
-You can also generate receipts manually from any transcript:
+You can also generate receipts manually from any supported transcript. HyperWeave auto-detects the runtime from the JSONL shape:
 
 ```bash
-hyperweave session receipt .claude/projects/<project>/sessions/<session-id>.jsonl
+hyperweave session receipt ~/.claude/projects/<project>/sessions/<session-id>.jsonl
+hyperweave session receipt ~/.codex/sessions/.../<session-id>.jsonl
+hyperweave session receipt ~/.gemini/antigravity/brain/.../<session-id>.jsonl
 ```
 
 Or parse the raw telemetry data:
 
 ```bash
-hyperweave session parse .claude/projects/<project>/sessions/<session-id>.jsonl
+hyperweave session parse path/to/session.jsonl
 ```
 
 This outputs the telemetry contract as JSON -- useful for debugging or custom visualization.
@@ -84,7 +114,21 @@ This outputs the telemetry contract as JSON -- useful for debugging or custom vi
 Rhythm strips show tool call density over time:
 
 ```bash
-hyperweave session strip .claude/projects/<project>/sessions/<session-id>.jsonl -o strip.svg
+hyperweave session strip path/to/session.jsonl -o strip.svg
+```
+
+## Step 6: Backfill Antigravity Receipts
+
+Antigravity sessions can leave existing transcripts under `~/.gemini/antigravity/brain/`. Backfill missing or stale receipts into the current workspace:
+
+```bash
+hyperweave session sync --runtime antigravity
+```
+
+Use `--force` to re-render receipts even when an existing SVG is newer than the transcript:
+
+```bash
+hyperweave session sync --runtime antigravity --force
 ```
 
 ## What the Telemetry Pipeline Does
@@ -104,13 +148,14 @@ Then applies:
 
 All configuration lives in YAML files under `data/telemetry/`:
 - `tool-colors.yaml` -- tool name to color mapping
-- `tool-classes.yaml` -- tool name to class mapping
+- `runtimes/*.yaml` -- runtime detection rules, parser module, provider identity, and tool class mapping
 - `stage-labels.yaml` -- stage ID to label mapping
 - `stage-config.yaml` -- detector weights and thresholds
 
 ## What You Learned
 
-- `hyperweave install-hook` sets up automatic session receipts
+- `hyperweave install-hook` sets up automatic session receipts for detected supported runtimes
 - Receipts are rendered to `.hyperweave/receipts/` after each session
 - Manual generation works with `hyperweave session receipt <path>`
+- `hyperweave session sync --runtime antigravity` backfills Antigravity receipts
 - The telemetry pipeline uses a 5-pass parser with 3-signal stage detection
