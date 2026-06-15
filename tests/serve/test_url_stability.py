@@ -67,10 +67,16 @@ _TS_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2
 # A bare ``.NNN`` (path coordinate) does NOT match any suffix because it
 # isn't ``.dev/.post/.pre``.
 _VERSION_RE = re.compile(
+    r"(?:"
     r"\d+\.\d+\.\d+"
-    r"(?:[a-zA-Z]+\d+)?"  # adjacent pre-release: a1, b1, rc1
+    r"(?:(?:a|b|rc)\d+)?"  # adjacent pre-release: a1, b1, rc1
     r"(?:\.(?:dev|post|pre)\d*)?"  # PEP 440 .devN/.postN/.preN
     r"(?:[-+][0-9a-zA-Z.\-+]+)?"  # legacy -pre or +local (chained)
+    r"|"
+    r"\d+\.\d+"
+    r"(?:(?:a|b|rc)\d+|\.(?:dev|post|pre)\d*)"  # setuptools-scm fallback: 0.1.dev85
+    r"(?:[-+][0-9a-zA-Z.\-+]+)?"  # local version: +gb4a1757b0
+    r")"
 )
 
 
@@ -81,6 +87,20 @@ def _normalize(svg: str) -> str:
     svg = _TS_RE.sub("TIMESTAMP", svg)
     svg = _VERSION_RE.sub("VERSION", svg)
     return svg
+
+
+def test_normalize_scrubs_two_segment_dev_versions() -> None:
+    """CI can emit setuptools-scm fallback versions when tag discovery fails."""
+    svg = '<hw:artifact version="0.1.dev85+gb4a1757b0" />'
+
+    assert _normalize(svg) == '<hw:artifact version="VERSION" />'
+
+
+def test_normalize_keeps_xml_namespace_versions() -> None:
+    """Schema namespace versions are stable URLs, not package versions."""
+    svg = '<svg xmlns:hw="https://hyperweave.app/hw/v1.0" />'
+
+    assert _normalize(svg) == svg
 
 
 # Protective-only. Each case: (snapshot_filename, url_path).
