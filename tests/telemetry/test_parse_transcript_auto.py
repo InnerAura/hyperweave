@@ -15,6 +15,7 @@ from tests.conftest import FIXTURES_DIR
 CLAUDE_FIXTURE = str(FIXTURES_DIR / "session.jsonl")
 CODEX_FIXTURE = str(FIXTURES_DIR / "codex_session.jsonl")
 CODEX_PATCHES_FIXTURE = str(FIXTURES_DIR / "codex_session_patches.jsonl")
+ANTIGRAVITY_FIXTURE = str(FIXTURES_DIR / "antigravity_session.jsonl")
 
 
 def test_claude_fixture_routes_to_claude_parser() -> None:
@@ -35,18 +36,27 @@ def test_codex_patches_fixture_routes_to_codex_parser() -> None:
     assert t.runtime == "codex"
 
 
+def test_antigravity_fixture_routes_to_antigravity_parser() -> None:
+    """Antigravity JSONL → antigravity parser → SessionTelemetry.runtime='antigravity'."""
+    t = parse_transcript_auto(ANTIGRAVITY_FIXTURE)
+    assert t.runtime == "antigravity"
+
+
 def test_build_contract_stamps_runtime_in_session_dict() -> None:
     """The resolver reads session.runtime; ``build_contract`` must propagate it."""
     claude = build_contract(CLAUDE_FIXTURE)
     codex = build_contract(CODEX_FIXTURE)
+    antigravity = build_contract(ANTIGRAVITY_FIXTURE)
     assert claude["session"]["runtime"] == "claude-code"
     assert codex["session"]["runtime"] == "codex"
+    assert antigravity["session"]["runtime"] == "antigravity"
 
 
 def test_dispatchers_extract_distinct_tools_per_runtime() -> None:
     """Sanity: parsers extract their respective tool sets, not the wrong runtime's."""
     claude = build_contract(CLAUDE_FIXTURE)
     codex = build_contract(CODEX_FIXTURE)
+    antigravity = build_contract(ANTIGRAVITY_FIXTURE)
     # Claude fixture should have at least one Claude tool name
     claude_tools = set(claude["tools"])
     assert claude_tools & {"Read", "Bash", "Edit", "Write", "Glob", "Grep"}, (
@@ -58,3 +68,12 @@ def test_dispatchers_extract_distinct_tools_per_runtime() -> None:
         f"codex fixture missing canonical codex tools: {codex_tools}"
     )
     assert not (codex_tools & {"Read", "Bash", "Edit"}), f"codex fixture leaked Claude tool names: {codex_tools}"
+
+    # Antigravity fixture should have antigravity tool names, not other runtimes'
+    antigravity_tools = set(antigravity["tools"])
+    assert antigravity_tools & {"view_file", "run_command", "invoke_subagent"}, (
+        f"antigravity fixture missing canonical antigravity tools: {antigravity_tools}"
+    )
+    assert not (antigravity_tools & {"Read", "Bash", "Edit"}), (
+        f"antigravity fixture leaked Claude tools: {antigravity_tools}"
+    )

@@ -48,27 +48,34 @@ def _patch_which(monkeypatch: MonkeyPatch, binaries: dict[str, str | None]) -> N
 
 def test_detect_returns_empty_when_neither_dir_nor_binary_present(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     assert _detect_installed_runtimes() == []
 
 
 def test_detect_claude_dir_only(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     (tmp_path / ".claude").mkdir()
     assert _detect_installed_runtimes() == [("claude-code", "initialized")]
 
 
 def test_detect_codex_dir_only(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     (tmp_path / ".codex").mkdir()
     assert _detect_installed_runtimes() == [("codex", "initialized")]
 
 
+def test_detect_antigravity_dir_only(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
+    (tmp_path / ".gemini" / "antigravity").mkdir(parents=True)
+    assert _detect_installed_runtimes() == [("antigravity", "initialized")]
+
+
 def test_detect_both_dirs_present(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     (tmp_path / ".claude").mkdir()
     (tmp_path / ".codex").mkdir()
     assert _detect_installed_runtimes() == [
@@ -80,20 +87,26 @@ def test_detect_both_dirs_present(monkeypatch: MonkeyPatch, tmp_path: Path) -> N
 def test_detect_codex_binary_only(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     """Fresh Codex install: CLI is on PATH but ~/.codex/ hasn't been created."""
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": "/usr/local/bin/codex"})
+    _patch_which(monkeypatch, {"claude": None, "codex": "/usr/local/bin/codex", "antigravity": None})
     assert _detect_installed_runtimes() == [("codex", "binary_only")]
 
 
 def test_detect_claude_binary_only(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": "/opt/homebrew/bin/claude", "codex": None})
+    _patch_which(monkeypatch, {"claude": "/opt/homebrew/bin/claude", "codex": None, "antigravity": None})
     assert _detect_installed_runtimes() == [("claude-code", "binary_only")]
+
+
+def test_detect_antigravity_binary_only(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": "/usr/local/bin/antigravity"})
+    assert _detect_installed_runtimes() == [("antigravity", "binary_only")]
 
 
 def test_detect_dir_takes_precedence_over_binary(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     """When both signals fire, ``initialized`` wins — the dir is the stronger evidence."""
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": "/opt/homebrew/bin/claude", "codex": None})
+    _patch_which(monkeypatch, {"claude": "/opt/homebrew/bin/claude", "codex": None, "antigravity": None})
     (tmp_path / ".claude").mkdir()
     assert _detect_installed_runtimes() == [("claude-code", "initialized")]
 
@@ -105,7 +118,7 @@ def test_detect_dir_takes_precedence_over_binary(monkeypatch: MonkeyPatch, tmp_p
 
 def test_install_hook_no_runtime_no_detection_exits_one(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     runner = CliRunner()
     result = runner.invoke(app, ["install-hook"])
     assert result.exit_code == 1
@@ -114,7 +127,7 @@ def test_install_hook_no_runtime_no_detection_exits_one(monkeypatch: MonkeyPatch
 
 def test_install_hook_auto_detect_only_claude(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     (tmp_path / ".claude").mkdir()
 
     runner = CliRunner()
@@ -126,7 +139,7 @@ def test_install_hook_auto_detect_only_claude(monkeypatch: MonkeyPatch, tmp_path
 
 def test_install_hook_auto_detect_only_codex(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     (tmp_path / ".codex").mkdir()
 
     runner = CliRunner()
@@ -139,7 +152,7 @@ def test_install_hook_auto_detect_only_codex(monkeypatch: MonkeyPatch, tmp_path:
 
 def test_install_hook_auto_detect_both_runtimes(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     (tmp_path / ".claude").mkdir()
     (tmp_path / ".codex").mkdir()
 
@@ -153,7 +166,7 @@ def test_install_hook_auto_detect_both_runtimes(monkeypatch: MonkeyPatch, tmp_pa
 def test_install_hook_auto_detect_codex_binary_only_creates_dir(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     """Binary-only detection still installs — the codex installer creates ~/.codex."""
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": "/usr/local/bin/codex"})
+    _patch_which(monkeypatch, {"claude": None, "codex": "/usr/local/bin/codex", "antigravity": None})
 
     runner = CliRunner()
     result = runner.invoke(app, ["install-hook"])
@@ -166,7 +179,7 @@ def test_install_hook_auto_detect_codex_binary_only_creates_dir(monkeypatch: Mon
 def test_install_hook_runtime_all_forces_both(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     """``--runtime all`` registers for both runtimes even when neither is detected."""
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
 
     runner = CliRunner()
     result = runner.invoke(app, ["install-hook", "--runtime", "all"])
@@ -180,7 +193,7 @@ def test_install_hook_runtime_codex_with_genome_pins_command(monkeypatch: Monkey
     into the registered hook command and leaves claude-code untouched.
     """
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
 
     runner = CliRunner()
     result = runner.invoke(app, ["install-hook", "--runtime", "codex", "--genome", "telemetry-voltage"])
@@ -340,9 +353,33 @@ def test_install_hook_is_idempotent(monkeypatch: MonkeyPatch, tmp_path: Path) ->
 
 def test_install_hook_unknown_runtime_exits_one(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
 
     runner = CliRunner()
     result = runner.invoke(app, ["install-hook", "--runtime", "bogus"])
     assert result.exit_code == 1
     assert "unknown runtime 'bogus'" in result.stderr
+
+
+def test_install_hook_auto_detect_only_antigravity(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
+    (tmp_path / ".gemini" / "antigravity").mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["install-hook"])
+    assert result.exit_code == 0
+    # Antigravity does not write settings files, but prints a notice
+    assert "Notice: Antigravity runs inside a sandboxed/agentic environment" in result.stdout
+    assert not (tmp_path / ".claude").exists()
+    assert not (tmp_path / ".codex").exists()
+
+
+def test_install_hook_runtime_antigravity(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["install-hook", "--runtime", "antigravity"])
+    assert result.exit_code == 0
+    assert "Notice: Antigravity runs inside a sandboxed/agentic environment" in result.stdout

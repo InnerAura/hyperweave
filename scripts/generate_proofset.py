@@ -147,6 +147,16 @@ _FALLBACK_CODEX_TRANSCRIPTS: list[tuple[str, Path]] = [
     ),
 ]
 
+_FALLBACK_ANTIGRAVITY_TRANSCRIPTS: list[tuple[str, Path]] = [
+    (
+        "antigravity-small",
+        Path(__file__).resolve().parent.parent
+        / "tests"
+        / "fixtures"
+        / "antigravity_session.jsonl",
+    ),
+]
+
 
 def _load_real_telemetry(path: Path) -> dict[str, Any] | None:
     """Build a contract from a JSONL transcript, or return None if missing.
@@ -229,6 +239,17 @@ def _real_codex_transcripts() -> list[tuple[str, Path]]:
     """Discovered Codex transcripts (lazy + cached; not at import time)."""
     return _discover_transcripts(
         Path.home() / ".codex" / "sessions", "**/rollout-*.jsonl", "codex-", _FALLBACK_CODEX_TRANSCRIPTS
+    )
+
+
+@lru_cache(maxsize=1)
+def _real_antigravity_transcripts() -> list[tuple[str, Path]]:
+    """Discovered Antigravity transcripts (lazy + cached; not at import time)."""
+    return _discover_transcripts(
+        Path.home() / ".gemini" / "antigravity" / "brain",
+        "**/transcript.jsonl",
+        "antigravity-",
+        _FALLBACK_ANTIGRAVITY_TRANSCRIPTS,
     )
 
 
@@ -704,7 +725,7 @@ def generate_static() -> int:
 
     # Available transcripts: always include "mock"; add each real transcript
     # only when its path exists. Mock data has no inherent runtime so it
-    # renders under all four skins (chrome demonstration on a neutral base).
+    # renders under all five skins (chrome demonstration on a neutral base).
     # Real transcripts render only under (a) their runtime's matched skin and
     # (b) telemetry-voltage as the universal fallback — cross-skin renders
     # (codex data in cream skin, claude data in codex skin, etc.) produce
@@ -718,14 +739,24 @@ def generate_static() -> int:
         contract = _load_real_telemetry(transcript_path)
         if contract is not None:
             transcript_corpus.append((label, contract))
+    for label, transcript_path in _real_antigravity_transcripts():
+        contract = _load_real_telemetry(transcript_path)
+        if contract is not None:
+            transcript_corpus.append((label, contract))
 
     # ── Skin matrix per transcript ──
-    # Mock: all 4 skins (chrome showcase). Real transcript: matched-runtime skin
+    # Mock: all 5 skins (chrome showcase). Real transcript: matched-runtime skin
     # + telemetry-voltage. Matched skin is sourced from the runtime registry
     # (no string-literal coupling) — see telemetry.runtimes.get_runtime.
     from hyperweave.telemetry.runtimes import get_runtime
 
-    all_skins = ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream", "telemetry-codex")
+    all_skins = (
+        "telemetry-voltage",
+        "telemetry-claude-code",
+        "telemetry-cream",
+        "telemetry-codex",
+        "telemetry-antigravity",
+    )
 
     def _skins_for(label: str, telemetry: dict[str, Any]) -> tuple[str, ...]:
         if label == "mock":
@@ -1556,7 +1587,7 @@ def generate_readme(total: int, live_total: int) -> None:
         "- [README_CHROME.md](README_CHROME.md) — 5 chrome material identities "
         "(horizon, abyssal, lightning, graphite, moth)",
         "- [README_AUTOMATA.md](README_AUTOMATA.md) — 16 automata solo tones plus pairing-grammar showcase",
-        "- [README_TELEMETRY.md](README_TELEMETRY.md) — receipt + rhythm-strip across all 4 telemetry skins",
+        "- [README_TELEMETRY.md](README_TELEMETRY.md) — receipt + rhythm-strip across all 5 telemetry skins",
         "",
         "---",
         "",
@@ -1709,9 +1740,9 @@ def generate_readme(total: int, live_total: int) -> None:
         [
             "## Telemetry",
             "",
-            "Receipt + rhythm-strip artifacts across all 4 telemetry skins "
-            "(voltage, claude-code, cream, codex) — including mock data and "
-            "real transcripts from Claude Code and Codex sessions — live in "
+            "Receipt + rhythm-strip artifacts across all 5 telemetry skins "
+            "(voltage, claude-code, cream, codex, antigravity) — including mock data and "
+            "real transcripts from Claude Code, Codex, and Antigravity sessions — live in "
             "[README_TELEMETRY.md](README_TELEMETRY.md).",
             "",
         ]
@@ -1839,9 +1870,9 @@ def _emit_state_readme() -> None:
 def _emit_telemetry_readme() -> None:
     """Emit outputs/README_TELEMETRY.md with the full telemetry artifact tour.
 
-    Receipt + rhythm-strip rendered under each of the four telemetry skins
-    (voltage, claude-code, cream, codex) with mock data, plus real
-    transcripts from Claude Code and Codex sessions matched to their
+    Receipt + rhythm-strip rendered under each of the five telemetry skins
+    (voltage, claude-code, cream, codex, antigravity) with mock data, plus real
+    transcripts from Claude Code, Codex, and Antigravity sessions matched to their
     runtime-paired skin alongside the voltage fallback.
 
     Cross-runtime renders (codex data in cream skin, claude-code data in
@@ -1852,20 +1883,26 @@ def _emit_telemetry_readme() -> None:
         "",
         "Telemetry artifacts (receipt cards, rhythm strips) are "
         "**genome-independent at the rendering layer** but render under one of "
-        "four named skins: `telemetry-voltage` (universal fallback), "
-        "`telemetry-claude-code`, `telemetry-cream`, `telemetry-codex`.",
+        "five named skins: `telemetry-voltage` (universal fallback), "
+        "`telemetry-claude-code`, `telemetry-cream`, `telemetry-codex`, `telemetry-antigravity`.",
         "",
         "Each real transcript renders against its matched-runtime skin plus "
-        "voltage. Mock data demonstrates all 4 skins on a neutral baseline. "
+        "voltage. Mock data demonstrates all 5 skins on a neutral baseline. "
         "Skin precedence chain: explicit `--genome` override → JSONL `runtime` "
         "field → `telemetry-voltage` fallback.",
         "",
         "---",
         "",
-        "## Mock (all 4 skins — chromatic demonstration)",
+        "## Mock (all 5 skins — chromatic demonstration)",
         "",
     ]
-    for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream", "telemetry-codex"):
+    for skin in (
+        "telemetry-voltage",
+        "telemetry-claude-code",
+        "telemetry-cream",
+        "telemetry-codex",
+        "telemetry-antigravity",
+    ):
         lines.append(f"### {skin}")
         lines.append("")
         for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
@@ -1875,6 +1912,7 @@ def _emit_telemetry_readme() -> None:
     real_groups: list[tuple[str, list[tuple[str, Path]], str]] = [
         ("Claude Code transcripts", _real_transcripts(), "telemetry-claude-code"),
         ("Codex transcripts", _real_codex_transcripts(), "telemetry-codex"),
+        ("Antigravity transcripts", _real_antigravity_transcripts(), "telemetry-antigravity"),
     ]
     for group_title, group_transcripts, matched_skin in real_groups:
         labels_present = [label for label, p in group_transcripts if p.exists()]

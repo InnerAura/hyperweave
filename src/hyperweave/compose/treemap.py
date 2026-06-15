@@ -35,7 +35,7 @@ from hyperweave.core.text import measure_text
 
 # Receipt detail text is rendered via class="m" in the receipt template,
 # which the assembler maps to ``font-family: var(--dna-font-mono)``. Across
-# all four shipped telemetry skins (voltage / claude-code / cream / codex)
+# all five shipped telemetry skins (voltage / claude-code / cream / codex / antigravity)
 # that resolves to JetBrains Mono — the LUT we have a metric file for.
 # Unknown families fall back to Inter per the ``measure_text`` contract,
 # so a future skin with a different mono won't crash, just measure

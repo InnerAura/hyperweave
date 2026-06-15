@@ -83,7 +83,7 @@ def _write_codex_hook_legacy_flat(home: Path, command: str) -> None:
 
 def test_doctor_neither_runtime_detected(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
-    _patch_which(monkeypatch, {"claude": None, "codex": None})
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
     monkeypatch.chdir(tmp_path)
 
     runner = CliRunner()
@@ -91,6 +91,7 @@ def test_doctor_neither_runtime_detected(monkeypatch: MonkeyPatch, tmp_path: Pat
     assert result.exit_code == 0
     assert "✗ claude-code: not detected" in result.stdout
     assert "✗ codex: not detected" in result.stdout
+    assert "✗ antigravity: not detected" in result.stdout
 
 
 def test_doctor_codex_initialized_with_hook_and_feature_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
@@ -255,3 +256,25 @@ def test_doctor_always_exits_zero(monkeypatch: MonkeyPatch, tmp_path: Path) -> N
     assert result.exit_code == 0
     # Both runtimes report the malformed state via ⚠ markers, not crashes.
     assert "malformed" in result.stdout
+
+
+def test_doctor_antigravity_initialized_and_transcripts_counted(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
+
+    # Initialize Antigravity home directory
+    antigravity_home = tmp_path / ".gemini" / "antigravity"
+    antigravity_home.mkdir(parents=True)
+
+    # Write some transcripts
+    brain_dir = antigravity_home / "brain" / "session-123" / ".system_generated" / "logs"
+    brain_dir.mkdir(parents=True)
+    (brain_dir / "transcript.jsonl").write_text("{}\n")
+
+    monkeypatch.chdir(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(app, ["doctor"])
+
+    assert result.exit_code == 0
+    assert "✓ antigravity: initialized (sessions auto-discovered" in result.stdout
+    assert "antigravity: 1 transcript(s)" in result.stdout

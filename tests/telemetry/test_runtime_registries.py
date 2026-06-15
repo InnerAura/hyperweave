@@ -42,7 +42,9 @@ _GENOMES_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "hyperwea
 def test_all_registered_runtimes_load() -> None:
     """Both v0.2.23-shipped runtimes are present and instantiable."""
     runtimes = load_all_runtimes()
-    assert {"claude-code", "codex"} <= set(runtimes), f"expected claude-code and codex; got {sorted(runtimes)}"
+    assert {"claude-code", "codex", "antigravity"} <= set(runtimes), (
+        f"expected claude-code, codex, and antigravity; got {sorted(runtimes)}"
+    )
 
 
 def test_every_registry_has_complete_metadata() -> None:
@@ -129,6 +131,7 @@ def test_detection_rules_are_mutually_exclusive() -> None:
     canonical_lines = {
         "claude-code": {"sessionId": "x", "type": "user"},
         "codex": {"timestamp": "x", "type": "session_meta", "payload": {}},
+        "antigravity": {"step_index": 1, "type": "USER_INPUT", "source": "USER_EXPLICIT"},
     }
     for source_runtime, line in canonical_lines.items():
         for target_name, target_reg in runtimes.items():

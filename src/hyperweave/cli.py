@@ -797,13 +797,22 @@ def _install_codex_hook(hook_command: str, full_slug: str) -> None:
     )
 
 
-# Runtime → install-hook handler. Dispatch by runtime is intrinsic here
-# (different runtimes write to different config files at different paths
-# with different event names); not the polymorphism that resolver.py /
-# parser.py avoid via runtime registries.
+def _install_antigravity_hook(hook_command: str, full_slug: str) -> None:
+    """Antigravity runs inside a sandboxed/agentic environment and manages its own execution.
+
+    Programmatic hook injection is not applicable.
+    """
+    typer.echo(
+        "Notice: Antigravity runs inside a sandboxed/agentic environment. "
+        "Programmatic hook installation is not applicable; sessions are parsed directly from "
+        "transcripts."
+    )
+
+
 _HOOK_INSTALLERS = {
     "claude-code": _install_claude_code_hook,
     "codex": _install_codex_hook,
+    "antigravity": _install_antigravity_hook,
 }
 
 # Runtime → (config_dirname_under_home, cli_binary_name). Drives both the
@@ -815,6 +824,7 @@ _HOOK_INSTALLERS = {
 _RUNTIME_DETECTION = {
     "claude-code": (".claude", "claude"),
     "codex": (".codex", "codex"),
+    "antigravity": (".gemini/antigravity", "antigravity"),
 }
 
 
@@ -933,6 +943,9 @@ def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:
     The string is rendered verbatim by ``doctor``.
     """
     import json
+
+    if runtime == "antigravity":
+        return f"✓ {runtime}: initialized (sessions auto-discovered under ~/.gemini/antigravity/brain/)"
 
     if runtime == "claude-code":
         settings_path = home_dir / "settings.json"
@@ -1068,7 +1081,7 @@ def doctor() -> None:
 
     typer.echo("")
     typer.echo("Transcripts:")
-    for runtime, subdir in (("claude-code", "projects"), ("codex", "sessions")):
+    for runtime, subdir in (("claude-code", "projects"), ("codex", "sessions"), ("antigravity", "brain")):
         dirname = _RUNTIME_DETECTION[runtime][0]
         root = Path.home() / dirname / subdir
         display_root = f"~/{dirname}/{subdir}"

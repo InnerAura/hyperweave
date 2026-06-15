@@ -87,7 +87,7 @@ HyperWeave is that primitive. One API call returns a self-contained SVG with dat
 
 ## Agentic Artifacts
 
-Every AI coding session produces a receipt: cost, tokens, tool distribution, session rhythm. One install, fully automatic.
+Every AI coding session produces a receipt: cost, tokens, tool distribution, session rhythm. One install, fully automatic (Claude Code & Codex).
 
 ```bash
 hyperweave install-hook
@@ -119,10 +119,11 @@ The livery matches the agent that produced the session:
 |-------|--------|
 | Claude Code | `claude-code` |
 | Codex | `codex` |
+| Antigravity | `antigravity` |
 | &mdash; | `voltage` |
 | &mdash; | `cream` |
 
-Auto-detected from the session transcript. Pin a different default with `hyperweave install-hook --genome voltage`.
+Auto-detected from the session transcript. Pin a different default with `hyperweave install-hook --genome voltage`. (Note: Programmatic hook installation is supported for Claude Code and Codex; Antigravity transcripts are parsed directly via the CLI).
 
 ---
 

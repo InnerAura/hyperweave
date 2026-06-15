@@ -44,6 +44,8 @@ _TELEMETRY_GENOMES = (
     "telemetry-voltage",
     "telemetry-claude-code",
     "telemetry-cream",
+    "telemetry-codex",
+    "telemetry-antigravity",
 )
 
 _RECEIPT_TOKEN_FIELDS = frozenset(
@@ -340,7 +342,7 @@ def test_compute_treemap_layout_left_accent_geometry() -> None:
 def test_compute_treemap_layout_default_is_top() -> None:
     """The default accent_position must be 'top' to preserve risograph-canonical behavior.
 
-    Two of three telemetry genomes (voltage, cream) want top accents. Making
+    Three of five telemetry genomes (voltage, cream, antigravity) want top accents. Making
     'top' the default means a future genome that omits ``treemap_accent_side``
     inherits the more common case rather than silently rendering empty
     accent stripes.
@@ -356,7 +358,7 @@ def test_compute_treemap_layout_default_is_top() -> None:
 
 
 def test_three_skins_produce_distinct_pill_inner_bg() -> None:
-    """The three telemetry skins must paint pills with three different colors.
+    """All telemetry skins must paint pills with different colors.
 
     A regression where all skins inherit the same pill color (e.g. via a
     shared CSS fallback firing) would silently flatten the visual identity.
@@ -364,7 +366,9 @@ def test_three_skins_produce_distinct_pill_inner_bg() -> None:
     template path is identical.
     """
     inner_bgs = {genome_id: _load_genome(genome_id)["pill_inner_bg"] for genome_id in _TELEMETRY_GENOMES}
-    assert len(set(inner_bgs.values())) == 3, f"All 3 skins must have distinct pill_inner_bg; got {inner_bgs}"
+    assert len(set(inner_bgs.values())) == len(_TELEMETRY_GENOMES), (
+        f"All telemetry skins must have distinct pill_inner_bg; got {inner_bgs}"
+    )
 
 
 def test_pill_rx_normalized_to_square_across_skins() -> None:
@@ -397,6 +401,8 @@ def test_treemap_accent_side_per_skin_matches_specimen() -> None:
         "telemetry-voltage": "top",
         "telemetry-claude-code": "left",
         "telemetry-cream": "top",
+        "telemetry-codex": "left",
+        "telemetry-antigravity": "top",
     }
     for genome_id, expected_side in expected.items():
         genome = _load_genome(genome_id)

@@ -1,0 +1,53 @@
+# Antigravity runtime registry.
+#
+# Sourced from Antigravity's tool definitions and the empirical parser.
+# Tools are mapped to HyperWeave's ToolClass (explore, mutate, execute, coordinate).
+
+runtime: antigravity
+parser: hyperweave.telemetry.antigravity_parser
+genome: telemetry-antigravity
+glyph: antigravity-glyph
+provider_label: Antigravity
+
+# Detection: Antigravity transcripts are flat JSONL objects with step_index,
+# source, type, and created_at fields at the top level.
+detection:
+  shape: flat
+  required_keys:
+    - step_index
+    - source
+  type_values:
+    - USER_INPUT
+    - PLANNER_RESPONSE
+
+# Complete tool table mapped to ToolClass values.
+tools:
+  # ── Explore ──
+  view_file: explore
+  grep_search: explore
+  list_dir: explore
+  list_permissions: explore
+  search_web: explore
+  read_url_content: explore
+  list: explore
+  # ── Mutate ──
+  replace_file_content: mutate
+  multi_replace_file_content: mutate
+  write_to_file: mutate
+  # ── Execute ──
+  run_command: execute
+  # ── Coordinate ──
+  invoke_subagent: coordinate
+  manage_subagents: coordinate
+  send_message: coordinate
+  schedule: coordinate
+  manage_task: coordinate
+  ask_question: coordinate
+  ask_permission: coordinate
+
+# Pattern fallbacks for namespaced tool families (e.g. MCP tools).
+patterns:
+  - prefix: "mcp__"
+    class: coordinate
+
+unknown_tool_policy: warn

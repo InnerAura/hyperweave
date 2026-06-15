@@ -853,7 +853,7 @@
     "value": "n/a"
   },
   "snapshot:arxiv:2602.15763": {
-    "fetched_at": 1781199907.640026,
+    "fetched_at": 1781501650.4649222,
     "value": {
       "bio": "GLM-5-Team et al. \u00b7 cs.LG \u00b7 cs.CL",
       "hero": {
@@ -889,13 +889,13 @@
     }
   },
   "snapshot:huggingface:zai-org/GLM-5.1": {
-    "fetched_at": 1781199907.630385,
+    "fetched_at": 1781501650.464919,
     "value": {
       "hero": {
         "label": "DOWNLOADS/MO",
         "provider": "huggingface",
-        "raw_value": 123470,
-        "value": "123.5K"
+        "raw_value": 85433,
+        "value": "85.4K"
       },
       "identity": "zai-org/GLM-5.1",
       "identity_subtitle": "transformers",
@@ -903,8 +903,8 @@
         {
           "label": "LIKES",
           "provider": "huggingface",
-          "raw_value": 1755,
-          "value": "1,755"
+          "raw_value": 1783,
+          "value": "1,783"
         },
         {
           "label": "FILES",
@@ -915,8 +915,8 @@
         {
           "label": "SPACES",
           "provider": "huggingface",
-          "raw_value": 76,
-          "value": "76"
+          "raw_value": 78,
+          "value": "78"
         }
       ],
       "provider": "huggingface",
@@ -927,16 +927,12 @@
     }
   },
   "snapshot:pypi:readmeai": {
-    "fetched_at": 1781199907.573835,
+    "fetched_at": 1781501650.464915,
     "value": {
       "activity": {
         "peak_label": "817",
         "peak_value": 817,
         "points": [
-          0.1824,
-          0.1334,
-          0.1212,
-          0.0845,
           0.1652,
           0.2326,
           0.563,
@@ -962,15 +958,19 @@
           0.0955,
           0.0526,
           0.2081,
-          0.1126
+          0.1126,
+          0.2534,
+          0.1359,
+          0.1873,
+          0.1163
         ],
         "type": "sparkline_30d"
       },
       "hero": {
         "label": "DOWNLOADS/MO",
         "provider": "pypi",
-        "raw_value": 6269,
-        "value": "6,269"
+        "raw_value": 6409,
+        "value": "6,409"
       },
       "identity": "readmeai",
       "identity_subtitle": "PyPI package",
@@ -988,29 +988,13 @@
         {
           "label": "DAILY",
           "provider": "pypi",
-          "raw_value": 92,
-          "value": "92"
+          "raw_value": 95,
+          "value": "95"
         }
       ],
       "provider": "pypi",
       "series_label": "DOWNLOADS",
       "series_points": [
-        {
-          "count": 45,
-          "date": "2025-12-12"
-        },
-        {
-          "count": 347,
-          "date": "2025-12-13"
-        },
-        {
-          "count": 29,
-          "date": "2025-12-14"
-        },
-        {
-          "count": 44,
-          "date": "2025-12-15"
-        },
         {
           "count": 981,
           "date": "2025-12-16"
@@ -1714,6 +1698,22 @@
         {
           "count": 92,
           "date": "2026-06-09"
+        },
+        {
+          "count": 207,
+          "date": "2026-06-11"
+        },
+        {
+          "count": 111,
+          "date": "2026-06-12"
+        },
+        {
+          "count": 153,
+          "date": "2026-06-13"
+        },
+        {
+          "count": 95,
+          "date": "2026-06-14"
         }
       ],
       "source_url": "https://pypi.org/project/readmeai/",
@@ -1723,16 +1723,12 @@
     }
   },
   "snapshot:pypi:vllm": {
-    "fetched_at": 1781199907.700911,
+    "fetched_at": 1781501650.4649248,
     "value": {
       "activity": {
         "peak_label": "302.4K",
         "peak_value": 302448,
         "points": [
-          0.7065,
-          0.7763,
-          0.7274,
-          0.7942,
           0.6865,
           0.6801,
           0.4822,
@@ -1758,15 +1754,19 @@
           0.4736,
           0.6422,
           0.7635,
-          0.8482
+          0.8482,
+          0.8411,
+          0.6983,
+          0.4378,
+          0.3548
         ],
         "type": "sparkline_30d"
       },
       "hero": {
         "label": "DOWNLOADS/MO",
         "provider": "pypi",
-        "raw_value": 6304810,
-        "value": "6.3M"
+        "raw_value": 6101426,
+        "value": "6.1M"
       },
       "identity": "vllm",
       "identity_subtitle": "PyPI package",
@@ -1774,7 +1774,7 @@
         {
           "label": "VERSION",
           "provider": "pypi",
-          "value": "0.22.1"
+          "value": "0.23.0"
         },
         {
           "label": "PYTHON",
@@ -1784,29 +1784,13 @@
         {
           "label": "DAILY",
           "provider": "pypi",
-          "raw_value": 256527,
-          "value": "256.5K"
+          "raw_value": 107306,
+          "value": "107.3K"
         }
       ],
       "provider": "pypi",
       "series_label": "DOWNLOADS",
       "series_points": [
-        {
-          "count": 130872,
-          "date": "2025-12-12"
-        },
-        {
-          "count": 79375,
-          "date": "2025-12-13"
-        },
-        {
-          "count": 69059,
-          "date": "2025-12-14"
-        },
-        {
-          "count": 170897,
-          "date": "2025-12-15"
-        },
         {
           "count": 151514,
           "date": "2025-12-16"
@@ -2510,6 +2494,22 @@
         {
           "count": 256527,
           "date": "2026-06-09"
+        },
+        {
+          "count": 254403,
+          "date": "2026-06-11"
+        },
+        {
+          "count": 211191,
+          "date": "2026-06-12"
+        },
+        {
+          "count": 132414,
+          "date": "2026-06-13"
+        },
+        {
+          "count": 107306,
+          "date": "2026-06-14"
         }
       ],
       "source_url": "https://pypi.org/project/vllm/",

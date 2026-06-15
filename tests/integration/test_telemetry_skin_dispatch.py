@@ -73,6 +73,12 @@ def test_codex_runtime_auto_detects_skin() -> None:
     assert _resolve_telemetry_genome(spec, _tel("codex")) == "telemetry-codex"
 
 
+def test_antigravity_runtime_auto_detects_skin() -> None:
+    """antigravity runtime registry resolves to its dedicated telemetry-antigravity skin."""
+    spec = _spec("receipt")
+    assert _resolve_telemetry_genome(spec, _tel("antigravity")) == "telemetry-antigravity"
+
+
 def test_unknown_runtime_falls_back_to_voltage() -> None:
     """Truly unregistered runtimes (opencode/gemini/unknown) fall through to telemetry-voltage.
 
@@ -115,11 +121,12 @@ def test_unsupported_genome_falls_through_to_runtime() -> None:
 
 
 def test_genome_supports_receipts_for_telemetry_skins() -> None:
-    """All 4 telemetry skins declare paradigms.receipt → True."""
+    """All 5 telemetry skins declare paradigms.receipt → True."""
     assert _genome_supports_receipts("telemetry-voltage") is True
     assert _genome_supports_receipts("telemetry-claude-code") is True
     assert _genome_supports_receipts("telemetry-cream") is True
     assert _genome_supports_receipts("telemetry-codex") is True
+    assert _genome_supports_receipts("telemetry-antigravity") is True
 
 
 def test_genome_supports_receipts_returns_false_for_brutalist() -> None:
