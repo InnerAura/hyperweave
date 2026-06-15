@@ -214,6 +214,31 @@ def test_provider_glyphs_use_glyph_fill_token() -> None:
     assert "var(--dna-card-inner-glyph)" in body, "Expected --dna-card-inner-glyph for codex inner cutout"
 
 
+def test_antigravity_glyph_uses_single_color_official_silhouette() -> None:
+    """Antigravity uses the official A silhouette with the genome glyph color.
+
+    The color logo's gradient is renderer-sensitive at receipt scale. Keep
+    this mark theme-tinted and filter-free so the Antigravity skin can own the
+    blue through ``--dna-glyph-fill``.
+    """
+    body = _GLYPH_PARTIAL.read_text()
+    match = re.search(
+        r'<symbol id="antigravity-glyph"[^>]*>(?P<symbol>.*?)</symbol>',
+        body,
+        flags=re.S,
+    )
+    assert match is not None, "provider-glyphs.svg.j2 missing antigravity-glyph symbol"
+    symbol = match.group("symbol")
+
+    assert 'viewBox="8 8 96 96"' in match.group(0)
+    assert 'fill="var(--dna-glyph-fill)"' in symbol
+    assert "M89.754 92.75" in symbol
+    assert 'id="antigravity-glyph-gradient"' not in body
+    assert "<filter" not in symbol
+    assert "<mask" not in symbol
+    assert "feGaussianBlur" not in symbol
+
+
 # --------------------------------------------------------------------------- #
 # Genome JSON layer                                                           #
 # --------------------------------------------------------------------------- #
