@@ -7,6 +7,7 @@ SVGs into the current project's ``.hyperweave/receipts`` directory.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -64,3 +65,27 @@ def test_session_sync_rejects_unsupported_runtime() -> None:
 
     assert result.exit_code == 1
     assert "session sync currently supports: antigravity" in result.stderr
+
+
+def test_session_receipt_accepts_antigravity_hook_payload(monkeypatch, tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    transcript = _copy_antigravity_fixture(home)
+    _patch_home(monkeypatch, home)
+    monkeypatch.chdir(tmp_path)
+
+    payload = {
+        "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+        "workspacePaths": [str(tmp_path)],
+        "transcriptPath": str(transcript),
+        "artifactDirectoryPath": str(tmp_path / "artifacts"),
+        "fullyIdle": True,
+    }
+
+    result = CliRunner().invoke(app, ["session", "receipt"], input=json.dumps(payload) + "\n")
+
+    assert result.exit_code == 0
+    assert json.loads(result.stdout) == {"decision": "allow"}
+    assert result.stderr == ""
+    receipts = list((tmp_path / ".hyperweave" / "receipts").glob("*.svg"))
+    assert len(receipts) == 1
+    assert 'data-hw-glyph="antigravity-glyph"' in receipts[0].read_text()

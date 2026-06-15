@@ -369,8 +369,12 @@ def test_install_hook_auto_detect_only_antigravity(monkeypatch: MonkeyPatch, tmp
     runner = CliRunner()
     result = runner.invoke(app, ["install-hook"])
     assert result.exit_code == 0
-    # Antigravity does not write settings files, but prints a notice
-    assert "Notice: Antigravity runs inside a sandboxed/agentic environment" in result.stdout
+    hooks_path = tmp_path / ".gemini" / "config" / "hooks.json"
+    assert hooks_path.exists()
+    hooks = json.loads(hooks_path.read_text())
+    assert hooks["hyperweave-receipt"]["Stop"] == [
+        {"type": "command", "command": "hyperweave session receipt", "timeout": 10}
+    ]
     assert not (tmp_path / ".claude").exists()
     assert not (tmp_path / ".codex").exists()
 
@@ -380,6 +384,21 @@ def test_install_hook_runtime_antigravity(monkeypatch: MonkeyPatch, tmp_path: Pa
     _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
 
     runner = CliRunner()
-    result = runner.invoke(app, ["install-hook", "--runtime", "antigravity"])
-    assert result.exit_code == 0
-    assert "Notice: Antigravity runs inside a sandboxed/agentic environment" in result.stdout
+    first = runner.invoke(app, ["install-hook", "--runtime", "antigravity"])
+    second = runner.invoke(app, ["install-hook", "--runtime", "antigravity", "--genome", "voltage"])
+
+    assert first.exit_code == 0
+    assert second.exit_code == 0
+    hooks = json.loads((tmp_path / ".gemini" / "config" / "hooks.json").read_text())
+    handlers = [
+        handler
+        for handler in hooks["hyperweave-receipt"]["Stop"]
+        if "hyperweave session" in str(handler.get("command", ""))
+    ]
+    assert handlers == [
+        {
+            "type": "command",
+            "command": "hyperweave session receipt --genome telemetry-voltage",
+            "timeout": 10,
+        }
+    ]

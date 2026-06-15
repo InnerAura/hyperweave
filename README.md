@@ -123,7 +123,7 @@ The livery matches the agent that produced the session:
 | &mdash; | `voltage` |
 | &mdash; | `cream` |
 
-Auto-detected from the session transcript. Pin a different default with `hyperweave install-hook --genome voltage`. (Note: Programmatic hook installation is supported for Claude Code and Codex; Antigravity transcripts are parsed directly via the CLI. Run `hyperweave session sync --runtime antigravity` to materialize missing or stale Antigravity receipts from `~/.gemini/antigravity/brain/`.)
+Auto-detected from the session transcript. Pin a different default with `hyperweave install-hook --genome voltage`. Hook installation is supported for Claude Code, Codex, and Antigravity; Antigravity uses its official JSON hooks file at `~/.gemini/config/hooks.json`. Run `hyperweave session sync --runtime antigravity` to backfill missing or stale Antigravity receipts from `~/.gemini/antigravity/brain/`.
 
 ---
 
