@@ -76,6 +76,19 @@ def _write_codex_hook_legacy_flat(home: Path, command: str) -> None:
     (codex_dir / "config.toml").write_text("[features]\nhooks = true\n")
 
 
+def _write_antigravity_hook(home: Path, command: str) -> None:
+    antigravity_dir = home / ".gemini" / "antigravity"
+    antigravity_dir.mkdir(parents=True, exist_ok=True)
+    config_dir = home / ".gemini" / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    hooks = {
+        "hyperweave-receipt": {
+            "Stop": [{"type": "command", "command": command, "timeout": 10}],
+        }
+    }
+    (config_dir / "hooks.json").write_text(json.dumps(hooks, indent=2))
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Doctor — runtime detection states
 # ─────────────────────────────────────────────────────────────────────────────
@@ -189,6 +202,20 @@ def test_doctor_both_runtimes_initialized_with_hooks(monkeypatch: MonkeyPatch, t
     assert "✓ codex: hook registered" in result.stdout
 
 
+def test_doctor_antigravity_initialized_with_hook(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    _patch_home(monkeypatch, tmp_path)
+    _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
+    _write_antigravity_hook(tmp_path, "hyperweave session receipt --genome telemetry-antigravity")
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["doctor"])
+
+    assert result.exit_code == 0
+    assert "✓ antigravity: hook registered" in result.stdout
+    assert "hyperweave session receipt --genome telemetry-antigravity" in result.stdout
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Doctor — transcripts + receipts sections
 # ─────────────────────────────────────────────────────────────────────────────
@@ -258,7 +285,9 @@ def test_doctor_always_exits_zero(monkeypatch: MonkeyPatch, tmp_path: Path) -> N
     assert "malformed" in result.stdout
 
 
-def test_doctor_antigravity_initialized_and_transcripts_counted(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+def test_doctor_antigravity_initialized_without_hook_and_transcripts_counted(
+    monkeypatch: MonkeyPatch, tmp_path: Path
+) -> None:
     _patch_home(monkeypatch, tmp_path)
     _patch_which(monkeypatch, {"claude": None, "codex": None, "antigravity": None})
 
@@ -276,5 +305,5 @@ def test_doctor_antigravity_initialized_and_transcripts_counted(monkeypatch: Mon
     result = runner.invoke(app, ["doctor"])
 
     assert result.exit_code == 0
-    assert "✓ antigravity: initialized (sessions auto-discovered" in result.stdout
+    assert "✗ antigravity: initialized but no hyperweave hook" in result.stdout
     assert "antigravity: 1 transcript(s)" in result.stdout

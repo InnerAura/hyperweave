@@ -413,6 +413,13 @@ def _receipt_summary(contract: dict[str, Any], output: Path) -> str:
     return f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}"
 
 
+def _emit_antigravity_stop_allow() -> None:
+    """Return the JSON shape required by Antigravity Stop hooks."""
+    import json
+
+    sys.stdout.write(json.dumps({"decision": "allow"}) + "\n")
+
+
 def _sync_session_receipts(
     *,
     runtime: str,
@@ -492,7 +499,7 @@ def session(
 ) -> None:
     """Session telemetry: parse transcripts, render receipts and rhythm strips.
 
-    When invoked as a Claude Code hook, reads transcript_path from stdin JSON.
+    When invoked as a hook, reads transcript_path or transcriptPath from stdin JSON.
     """
     import json
 
@@ -502,16 +509,24 @@ def session(
 
     # Resolve transcript path: arg > stdin JSON (hook mode)
     transcript_path = transcript
+    antigravity_hook_mode = False
     if not transcript_path and not sys.stdin.isatty():
         try:
             hook_input = json.load(sys.stdin)
-            raw_path = hook_input.get("transcript_path", "")
+            if isinstance(hook_input, dict):
+                raw_path = hook_input.get("transcript_path") or hook_input.get("transcriptPath") or ""
+                antigravity_hook_mode = "transcriptPath" in hook_input
+            else:
+                raw_path = ""
             if raw_path:
-                transcript_path = Path(raw_path)
+                transcript_path = Path(str(raw_path))
         except (json.JSONDecodeError, KeyError):
             pass
 
     if not transcript_path or not transcript_path.exists():
+        if antigravity_hook_mode:
+            _emit_antigravity_stop_allow()
+            return
         # Graceful no-op for non-conversational sessions (e.g., `claude update`)
         # that fire SessionEnd without producing a transcript.
         if not sys.stdin.isatty():
@@ -536,6 +551,9 @@ def session(
     # (e.g. user opened Claude Code, did nothing, closed it; or a no-op SessionEnd).
     # Hook mode silently no-ops; interactive mode reports why.
     if not _session_has_receipt_content(contract):
+        if antigravity_hook_mode:
+            _emit_antigravity_stop_allow()
+            return
         if sys.stdin.isatty():
             sid = contract.get("session", {}).get("id", "unknown")
             typer.echo(f"Skipped empty session {sid}: no tool calls, no cost.", err=True)
@@ -576,8 +594,11 @@ def session(
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(svg)
 
-        # One-line summary to stderr
-        typer.echo(_receipt_summary(contract, output), err=True)
+        # One-line summary to stderr, unless Antigravity expects stdout JSON.
+        if antigravity_hook_mode:
+            _emit_antigravity_stop_allow()
+        else:
+            typer.echo(_receipt_summary(contract, output), err=True)
     else:
         # Strip: stdout by default
         if output:
@@ -892,16 +913,60 @@ def _install_codex_hook(hook_command: str, full_slug: str) -> None:
     )
 
 
-def _install_antigravity_hook(hook_command: str, full_slug: str) -> None:
-    """Antigravity runs inside a sandboxed/agentic environment and manages its own execution.
+_ANTIGRAVITY_HOOK_NAME = "hyperweave-receipt"
 
-    Programmatic hook injection is not applicable.
+
+def _antigravity_hook_command(config: object) -> str | None:
+    """Return the first registered HyperWeave command in an Antigravity hooks config."""
+    if not isinstance(config, dict):
+        return None
+    for definition in config.values():
+        if not isinstance(definition, dict):
+            continue
+        handlers = definition.get("Stop")
+        if not isinstance(handlers, list):
+            continue
+        for handler in handlers:
+            if not isinstance(handler, dict):
+                continue
+            cmd = str(handler.get("command", ""))
+            if "hyperweave session" in cmd:
+                return cmd
+    return None
+
+
+def _install_antigravity_hook(hook_command: str, full_slug: str) -> None:
+    """Write an Antigravity Stop hook to ``~/.gemini/config/hooks.json``.
+
+    Antigravity passes ``transcriptPath`` in stdin and requires Stop hooks to
+    return JSON on stdout. ``session receipt`` detects that payload shape and
+    emits the JSON allow response after refreshing the receipt.
     """
-    typer.echo(
-        "Notice: Antigravity runs inside a sandboxed/agentic environment. "
-        "Programmatic hook installation is not applicable; sessions are parsed directly from "
-        "transcripts."
-    )
+    import json
+
+    hooks_path = Path.home() / ".gemini" / "config" / "hooks.json"
+    hooks_path.parent.mkdir(parents=True, exist_ok=True)
+    if hooks_path.exists():
+        try:
+            loaded = json.loads(hooks_path.read_text())
+        except json.JSONDecodeError as exc:
+            typer.echo(f"Error: {hooks_path} is malformed; fix or remove it before installing.", err=True)
+            raise typer.Exit(1) from exc
+        config = loaded if isinstance(loaded, dict) else {}
+    else:
+        config = {}
+
+    for name, definition in list(config.items()):
+        if name == _ANTIGRAVITY_HOOK_NAME or _antigravity_hook_command({name: definition}):
+            del config[name]
+
+    config[_ANTIGRAVITY_HOOK_NAME] = {
+        "Stop": [{"type": "command", "command": hook_command, "timeout": 10}],
+    }
+    hooks_path.write_text(json.dumps(config, indent=2) + "\n")
+
+    pinned = f" (pinned to {full_slug})" if full_slug else " (auto-detect skin)"
+    typer.echo(f"Installed Stop hook in {hooks_path}{pinned}")
 
 
 _HOOK_INSTALLERS = {
@@ -966,7 +1031,9 @@ def install_hook(
                 "'codex' on PATH) and registers for each present. 'claude-code' "
                 "writes a SessionEnd hook to ~/.claude/settings.json. 'codex' writes "
                 "a Stop hook to ~/.codex/hooks.json plus [features] hooks in "
-                "~/.codex/config.toml. 'all' forces both regardless of detection."
+                "~/.codex/config.toml. 'antigravity' writes a Stop hook to "
+                "~/.gemini/config/hooks.json. 'all' forces every supported runtime "
+                "regardless of detection."
             ),
         ),
     ] = "",
@@ -974,9 +1041,9 @@ def install_hook(
     """Install session-receipt hooks for installed agent runtimes.
 
     Default behavior detects which agent CLIs are installed (Claude Code,
-    Codex) via config dir presence or binary on PATH, and registers receipt
-    hooks for each. Pass ``--runtime <name>`` to scope to a single runtime,
-    or ``--runtime all`` to force both regardless of detection.
+    Codex, Antigravity) via config dir presence or binary on PATH, and
+    registers receipt hooks for each. Pass ``--runtime <name>`` to scope to a
+    single runtime, or ``--runtime all`` to force all regardless of detection.
     """
     from hyperweave.compose.resolver import _genome_supports_receipts
 
@@ -1040,7 +1107,19 @@ def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:
     import json
 
     if runtime == "antigravity":
-        return f"✓ {runtime}: initialized (sessions auto-discovered under ~/.gemini/antigravity/brain/)"
+        hooks_path = home_dir.parent / "config" / "hooks.json"
+        if not hooks_path.exists():
+            return (
+                f"✗ {runtime}: initialized but no hyperweave hook — run 'hyperweave install-hook --runtime {runtime}'"
+            )
+        try:
+            hooks = json.loads(hooks_path.read_text())
+        except json.JSONDecodeError:
+            return f"⚠ {runtime}: ~/.gemini/config/hooks.json is malformed"
+        registered_cmd = _antigravity_hook_command(hooks)
+        if registered_cmd:
+            return f"✓ {runtime}: hook registered — {registered_cmd}"
+        return f"✗ {runtime}: initialized but no hyperweave hook — run 'hyperweave install-hook --runtime {runtime}'"
 
     if runtime == "claude-code":
         settings_path = home_dir / "settings.json"
