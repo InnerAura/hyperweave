@@ -89,3 +89,29 @@ def test_session_receipt_accepts_antigravity_hook_payload(monkeypatch, tmp_path:
     receipts = list((tmp_path / ".hyperweave" / "receipts").glob("*.svg"))
     assert len(receipts) == 1
     assert 'data-hw-glyph="antigravity-glyph"' in receipts[0].read_text()
+
+
+def test_session_receipt_uses_antigravity_workspace_when_hook_cwd_is_config(monkeypatch, tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    workspace = tmp_path / "workspace"
+    hook_cwd = home / ".gemini" / "config"
+    workspace.mkdir()
+    hook_cwd.mkdir(parents=True)
+    transcript = _copy_antigravity_fixture(home)
+    _patch_home(monkeypatch, home)
+    monkeypatch.chdir(hook_cwd)
+
+    payload = {
+        "conversationId": "ec33ebf9-0cba-4100-8142-c61503f6c587",
+        "workspacePaths": [str(workspace)],
+        "transcriptPath": str(transcript),
+        "artifactDirectoryPath": str(tmp_path / "artifacts"),
+        "fullyIdle": True,
+    }
+
+    result = CliRunner().invoke(app, ["session", "receipt"], input=json.dumps(payload) + "\n")
+
+    assert result.exit_code == 0
+    assert json.loads(result.stdout) == {"decision": "allow"}
+    assert list((workspace / ".hyperweave" / "receipts").glob("*.svg"))
+    assert not (hook_cwd / ".hyperweave" / "receipts").exists()

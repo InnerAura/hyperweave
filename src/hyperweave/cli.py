@@ -510,12 +510,16 @@ def session(
     # Resolve transcript path: arg > stdin JSON (hook mode)
     transcript_path = transcript
     antigravity_hook_mode = False
+    antigravity_workspace: Path | None = None
     if not transcript_path and not sys.stdin.isatty():
         try:
             hook_input = json.load(sys.stdin)
             if isinstance(hook_input, dict):
                 raw_path = hook_input.get("transcript_path") or hook_input.get("transcriptPath") or ""
                 antigravity_hook_mode = "transcriptPath" in hook_input
+                raw_workspaces = hook_input.get("workspacePaths")
+                if isinstance(raw_workspaces, list) and raw_workspaces:
+                    antigravity_workspace = Path(str(raw_workspaces[0]))
             else:
                 raw_path = ""
             if raw_path:
@@ -573,7 +577,8 @@ def session(
     # of the constant prefix at resolver.py:_truncate_path_left.
     filename_hint = ""
     if action == "receipt" and not output:
-        hw_dir = Path(".hyperweave") / "receipts"
+        hw_root = antigravity_workspace if antigravity_hook_mode and antigravity_workspace else Path(".")
+        hw_dir = hw_root / ".hyperweave" / "receipts"
         hw_dir.mkdir(parents=True, exist_ok=True)
         output, filename_hint = _receipt_output_for_contract(contract, hw_dir)
     elif action == "receipt" and output:
