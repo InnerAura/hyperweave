@@ -31,6 +31,7 @@ tools:
   read_url_content: explore
   list: explore
   # ── Mutate ──
+  generate_image: mutate
   replace_file_content: mutate
   multi_replace_file_content: mutate
   write_to_file: mutate

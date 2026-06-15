@@ -162,6 +162,12 @@ def test_exact_match_classification() -> None:
     assert classify_tool(cc, "Task") == ToolClass.COORDINATE
 
 
+def test_antigravity_generate_image_is_registered() -> None:
+    """Real Antigravity sessions can call generate_image; it should not warn as unknown."""
+    ag = load_all_runtimes()["antigravity"]
+    assert classify_tool(ag, "generate_image") == ToolClass.MUTATE
+
+
 def test_pattern_match_classification() -> None:
     """Tools matching a prefix pattern fall through to the pattern's class."""
     cc = load_all_runtimes()["claude-code"]
