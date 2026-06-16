@@ -1,89 +1,99 @@
 ---
-title: "Add Motion to Badges"
-description: "Apply SMIL border animations and CSS kinetic typography to your artifacts."
+title: "Add Motion to Badges, Strips, and Icons"
+description: "Apply current SMIL border motion primitives and understand regime behavior."
 ---
 
 ## The Problem
 
-You want animated badges and banners for visual interest, but need to understand which motions work where and what the compliance rules are.
+You want visible motion on badges, strips, or icons, but need to know which
+motions work with each frame, which genomes support them, and how CIM policy
+changes the rendered output.
 
-## Border Motions (Badge and Strip)
+HyperWeave's current public motion vocabulary is `static` plus five SVG-native
+SMIL border motions.
 
-Border motions are SMIL animation overlays that animate the border of badges and strips. There are 5 border motions:
+## Border Motions
 
-| Motion | Effect |
-|---|---|
-| `chromatic-pulse` | Cycling color shift on the border |
-| `corner-trace` | Animated path tracing the corners |
-| `dual-orbit` | Two particles orbiting the perimeter |
-| `entanglement` | Paired quantum-like border oscillation |
-| `rimrun` | Continuous border trace with glow |
+Border motions attach an SVG overlay to the artifact frame when both frame and
+genome compatibility allow it.
 
-```bash
-hyperweave compose badge "build" "passing" -m chromatic-pulse -g brutalist-emerald
-hyperweave compose strip "readme-ai" "STARS:2.9k" -m dual-orbit -g brutalist-emerald
-```
-
-## Kinetic Typography (Banner Only)
-
-Kinetic motions are CSS/SMIL text animations applied to banners. There are 9 kinetic motions:
-
-| Motion | Effect |
-|---|---|
-| `bars` | Horizontal bar sweep reveal |
-| `broadcast` | Radiating signal pulse |
-| `cascade` | Cascading letter stagger |
-| `collapse` | Implosion toward center |
-| `converge` | Letters converging from edges |
-| `crash` | Impact collision effect |
-| `drop` | Gravity drop with bounce |
-| `breach` | Breaking through barrier |
-| `pulse` | Rhythmic scale pulse |
+| Motion | Applies To | Effect |
+|---|---|---|
+| `chromatic-pulse` | `badge`, `strip`, `icon` | Chromatic gradient cycling with stroke-width and opacity modulation |
+| `corner-trace` | `badge`, `strip`, `icon` | Single runner tracing the rounded frame perimeter |
+| `dual-orbit` | `badge`, `strip`, `icon` | Two perimeter runners offset by half a circuit |
+| `entanglement` | `badge`, `strip`, `icon` | Coupled chromatic gradient and paired dash traversal |
+| `rimrun` | `badge` | Badge-sized frosted-prism rim runners with refraction and glare layers |
 
 ```bash
-hyperweave compose banner "HYPERWEAVE" -m cascade -g brutalist-emerald
-hyperweave compose banner "HYPERWEAVE" -m drop -g brutalist-emerald
+hyperweave compose badge "build" "passing" -g brutalist -m chromatic-pulse --regime permissive
+hyperweave compose strip "readme-ai" "" -g chrome --metrics "STARS:2.9k,FORKS:278" -m dual-orbit --regime permissive
+hyperweave compose icon "" "" --glyph github -g brutalist -m corner-trace --regime permissive
 ```
 
-<Warning>
-  Kinetic typography is only available for `brutalist-emerald`. The `chrome-horizon` genome uses environment-mapped chrome for banners, not text-split overlays.
-</Warning>
+## Frame Compatibility
+
+Frame compatibility is checked separately from CIM policy. `static` works on
+every frame.
+
+| Frame | Border Motions |
+|---|---|
+| `badge` | `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun` |
+| `strip` | `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement` |
+| `icon` | `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement` |
+| Other frames | `static` only |
 
 ## CIM Compliance
 
-The Compositional Integrity Model (CIM) governs which motions are allowed. Under the `normal` regime, only CIM-compliant motions are permitted:
+The Compositional Integrity Model (CIM) defines which motions are safe for
+governed contexts.
 
-**CIM-compliant**: `static`, `bars`, `broadcast`, `cascade`, `drop`, `crash`
+**CIM-compliant**: `static`
 
-**Non-CIM (require `permissive` regime)**: all 5 border motions + `converge`, `breach`, `pulse`, `collapse`
+**Non-CIM**: `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`,
+`rimrun`
 
 ```bash
-# This works under normal regime
-hyperweave compose banner "HYPERWEAVE" -m cascade
+# normal accepts the request but renders static output
+hyperweave compose badge "build" "passing" -g brutalist -m dual-orbit
 
-# This requires permissive regime
-hyperweave compose badge "build" "passing" -m dual-orbit --regime permissive
+# permissive renders the requested visible border motion
+hyperweave compose badge "build" "passing" -g brutalist -m dual-orbit --regime permissive
 ```
 
-Under `normal` regime, non-CIM motions are silently downgraded to `static`.
+Under `normal`, non-CIM motions are corrected to `static`. Under `permissive`,
+the requested border motion renders and HyperWeave records the policy violation.
+Under `ungoverned`, policy-lane checks are skipped, but visible output still
+requires a registered motion config and template.
 
 ## HTTP API
 
 Motion is specified in the URL grammar using dot notation:
 
 ```
-/v1/badge/{title}/{value}/{genome}.{motion}
-/v1/banner/{title}/{genome}.{motion}
+/v1/badge/{title}/{value}/{genome}.{motion}?regime=permissive
+/v1/strip/{title}/{genome}.{motion}?value=...&regime=permissive
+/v1/icon/{glyph}/{genome}.{motion}?regime=permissive
 ```
 
 ```bash
-curl localhost:8000/v1/badge/build/passing/brutalist-emerald.chromatic-pulse
-curl localhost:8000/v1/banner/HYPERWEAVE/brutalist-emerald.cascade
+curl "localhost:8000/v1/badge/build/passing/brutalist.chromatic-pulse?regime=permissive"
+curl "localhost:8000/v1/strip/readme-ai/chrome.dual-orbit?value=STARS:2.9k,FORKS:278&regime=permissive"
+curl "localhost:8000/v1/icon/github/brutalist.corner-trace?regime=permissive"
 ```
 
 ## Genome Compatibility
 
-Each genome declares which motions it supports in its config:
+Each genome declares its own compatible motion list. A motion must be supported
+by both the selected genome and the selected frame.
 
-- **brutalist-emerald**: All 5 border + all 9 kinetic
-- **chrome-horizon**: All 5 border only (no kinetic typography)
+| Genome | Compatible Motions |
+|---|---|
+| `brutalist` | `static`, `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun` |
+| `chrome` | `static`, `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun` |
+| `automata` | `static`, `chromatic-pulse`, `corner-trace`, `rimrun` |
+| `primer` | `static`, `chromatic-pulse`, `corner-trace` |
+| `telemetry-*` | `static` |
+
+For example, `rimrun` is available in the `brutalist`, `chrome`, and `automata`
+genome lists, but it is still badge-scoped by frame compatibility.
