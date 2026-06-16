@@ -6,12 +6,16 @@ description: "Install HyperWeave and compose your first artifact in under 2 minu
 ## Install
 
 <CodeGroup>
-```bash uv (recommended)
-uv add hyperweave
+```bash uv (CLI + HTTP + MCP)
+uv add "hyperweave[all]"
 ```
 
-```bash pip
-pip install hyperweave
+```bash pip (CLI + HTTP + MCP)
+pip install "hyperweave[all]"
+```
+
+```bash uv (CLI only)
+uv add hyperweave
 ```
 </CodeGroup>
 
@@ -22,11 +26,11 @@ Requires Python 3.12+.
 <Tabs>
   <Tab title="CLI">
     ```bash
-    hyperweave compose badge "build" "passing" --genome brutalist-emerald
+    hyperweave compose badge "build" "passing" --genome brutalist
     ```
     Outputs SVG to stdout. Pipe to a file:
     ```bash
-    hyperweave compose badge "build" "passing" -g brutalist-emerald -o badge.svg
+    hyperweave compose badge "build" "passing" -g brutalist -o badge.svg
     ```
   </Tab>
   <Tab title="Python">
@@ -36,7 +40,7 @@ Requires Python 3.12+.
 
     spec = ComposeSpec(
         type="badge",
-        genome_id="brutalist-emerald",
+        genome_id="brutalist",
         title="build",
         value="passing",
         state="passing",
@@ -51,12 +55,12 @@ Requires Python 3.12+.
     hyperweave serve --port 8000
 
     # URL grammar
-    curl http://localhost:8000/v1/badge/build/passing/brutalist-emerald.static
+    curl http://localhost:8000/v1/badge/build/passing/brutalist.static
 
     # POST
     curl -X POST http://localhost:8000/v1/compose \
       -H "Content-Type: application/json" \
-      -d '{"type":"badge","title":"build","value":"passing"}'
+      -d '{"type":"badge","genome":"brutalist","title":"build","value":"passing"}'
     ```
   </Tab>
   <Tab title="MCP">
@@ -73,7 +77,7 @@ Requires Python 3.12+.
     ```
     Then call the tool:
     ```
-    hw_compose(type="badge", title="build", value="passing", genome="brutalist-emerald")
+    hw_compose(type="badge", title="build", value="passing", genome="brutalist")
     ```
   </Tab>
 </Tabs>
@@ -83,25 +87,28 @@ Requires Python 3.12+.
 Apply a border animation to badges and strips:
 
 ```bash
-hyperweave compose badge "build" "passing" -g brutalist-emerald -m chromatic-pulse
+hyperweave compose badge "build" "passing" -g brutalist -m chromatic-pulse --regime permissive
 ```
 
-Apply kinetic typography to banners:
-
-```bash
-hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
-```
+Under the default `normal` regime, non-CIM-safe motions fall back to `static`.
+Use `--regime permissive` when you intentionally want the animated border
+specimen.
 
 ## Switch Genomes
 
-Every artifact renders in any genome. Same content, different aesthetic:
+Core frames render across the built-in genomes. Same content, different
+aesthetic:
 
 ```bash
-# Brutalist-emerald: dark field, emerald signal, sharp corners
-hyperweave compose badge "build" "passing" -g brutalist-emerald
+# Brutalist: dark field, emerald signal, sharp corners
+hyperweave compose badge "build" "passing" -g brutalist
 
-# Chrome-horizon: deep void, metallic blue, smooth curves
-hyperweave compose badge "build" "passing" -g chrome-horizon
+# Chrome: deep void, metallic blue, smooth curves
+hyperweave compose badge "build" "passing" -g chrome
+
+# Automata and Primer are available too
+hyperweave compose badge "build" "passing" -g automata
+hyperweave compose badge "build" "passing" -g primer
 ```
 
 ## Compose an Artifact Kit
@@ -110,25 +117,29 @@ Generate an entire artifact set in one call:
 
 ```bash
 hyperweave kit readme \
-  -g brutalist-emerald \
+  -g brutalist \
   --project "my-project" \
-  --badges "build:passing,version:v0.2.0,coverage:95%" \
+  --badges "build:passing,version:v0.6.3,coverage:95%" \
   --social "github,discord"
 ```
 
-This produces: banner, badge-build, badge-version, badge-coverage, strip, divider, icon-github, icon-discord.
+This produces: badge-build, badge-version, badge-coverage, strip, divider,
+icon-github, and icon-discord.
 
-## Live Data Badges
+## Data-Driven Artifacts
 
-Fetch real-time data from providers and render as badges:
+Use the shared `--data` token grammar for live or structured values:
 
 ```bash
-hyperweave live github anthropics/claude-code stars -g brutalist-emerald
-hyperweave live pypi fastmcp version -g chrome-horizon
-hyperweave live npm express version
+hyperweave compose badge "version" --data kv:VERSION=0.6.3 -g brutalist
+hyperweave compose strip "project" --data kv:STARS=42K,kv:VERSION=0.6.3 -g chrome
+hyperweave compose marquee-horizontal --data text:NEW,kv:STARS=42K,text:DOWNLOADS -g primer
 ```
 
-Supported providers: GitHub, PyPI, npm, arXiv, HuggingFace, Docker Hub.
+Swap `kv:` tokens for live tokens such as `gh:openai/codex.stars` or
+`pypi:fastmcp.version` when you want provider-backed values. Supported
+providers include GitHub, PyPI, npm, arXiv, HuggingFace, Docker Hub, crates.io,
+OpenSSF Scorecard, and DORA metrics.
 
 ## Next Steps
 
