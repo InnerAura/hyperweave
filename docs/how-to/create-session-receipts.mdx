@@ -1,40 +1,54 @@
 ---
 title: "Create Session Receipts"
-description: "Parse Claude Code session transcripts and render structured telemetry visualizations."
+description: "Parse supported agent session transcripts and render structured telemetry visualizations."
 ---
 
 ## The Problem
 
-You want to visualize your Claude Code session data -- tool usage, cost, token counts, and workflow stages -- as structured SVG artifacts.
+You want to visualize session data from a supported agent runtime -- tool usage, cost, token counts, and workflow stages -- as structured SVG artifacts.
 
 ## Parse a Session
 
-First, parse the raw JSONL transcript into a telemetry contract:
+First, parse the raw JSONL transcript into a telemetry contract. HyperWeave auto-detects Claude Code, Codex, and Antigravity transcripts from their JSONL shape:
 
 ```bash
-hyperweave session parse .claude/projects/<project>/sessions/<session-id>.jsonl
+hyperweave session parse path/to/session.jsonl
 ```
 
 This outputs JSON with the full session analysis: tools, stages, corrections, cost, and profile data.
+
+Common transcript locations include:
+
+```bash
+hyperweave session parse ~/.claude/projects/<project>/sessions/<session-id>.jsonl
+hyperweave session parse ~/.codex/sessions/.../<session-id>.jsonl
+hyperweave session parse ~/.gemini/antigravity/brain/.../<session-id>.jsonl
+```
 
 ## Render a Receipt
 
 Render a receipt card from a transcript:
 
 ```bash
-hyperweave session receipt .claude/projects/<project>/sessions/<session-id>.jsonl
+hyperweave session receipt path/to/session.jsonl
 ```
 
-Receipts are written to `.hyperweave/receipts/<session-id>.svg` by default. Override with `-o`:
+Receipts are written to `.hyperweave/receipts/` by default, with filenames derived from the session timestamp and title or prompt. Override the output path with `-o`:
 
 ```bash
 hyperweave session receipt transcript.jsonl -o my-receipt.svg
 ```
 
+Use `--genome` when you want to pin a consistent telemetry skin:
+
+```bash
+hyperweave session receipt transcript.jsonl --genome voltage
+```
+
 The receipt includes a one-line summary on stderr:
 
 ```
-Receipt: $0.42 · 12.5K tokens · 8m -> .hyperweave/receipts/abc123.svg
+Receipt: $0.42 · 12.5K tokens · 8m -> .hyperweave/receipts/2026-06-16-example.svg
 ```
 
 ## Render a Rhythm Strip
@@ -73,10 +87,9 @@ result = compose(spec)
 |---|---|
 | `receipt` | Session summary card with cost, tokens, duration, tools |
 | `rhythm-strip` | Timeline showing tool call density and classification |
-| `master-card` | Comprehensive session analysis card |
 
 <Info>
-  Telemetry frames are genome-independent -- they use their own built-in palette. The CLI and MCP do not accept a genome parameter for telemetry commands.
+  Session commands auto-detect the telemetry skin from the transcript runtime. Use `--genome` on CLI commands to pin a telemetry skin such as `voltage` when you want a consistent livery.
 </Info>
 
 ## MCP Integration
@@ -90,10 +103,24 @@ hw_compose(
 
 ## Hook-Based Automation
 
-For automatic receipt generation after every session, install the Claude Code hook:
+For automatic receipt generation after every session, install hooks for supported runtimes:
 
 ```bash
 hyperweave install-hook
+```
+
+You can also scope installation to one runtime:
+
+```bash
+hyperweave install-hook --runtime claude-code
+hyperweave install-hook --runtime codex
+hyperweave install-hook --runtime antigravity
+```
+
+To backfill Antigravity receipts from existing transcripts:
+
+```bash
+hyperweave session sync --runtime antigravity
 ```
 
 See the [Install Session Telemetry](/tutorials/install-session-telemetry) tutorial for details.
