@@ -27,25 +27,30 @@ Compose any HyperWeave artifact. Returns self-contained SVG string.
 | `type` | `str` | `"badge"` | Frame type |
 | `title` | `str` | `""` | Primary text |
 | `value` | `str` | `""` | Secondary text |
-| `genome` | `str` | `"brutalist-emerald"` | Genome slug |
+| `genome` | `str` | `"brutalist"` | Genome slug |
 | `state` | `str` | `"active"` | Semantic status |
 | `motion` | `str` | `"static"` | Motion primitive |
 | `glyph` | `str` | `""` | Glyph ID |
 | `glyph_mode` | `str` | `"auto"` | Glyph rendering mode |
 | `regime` | `str` | `"normal"` | Policy regime |
-| `variant` | `str` | `"default"` | Frame variant (banner: `default`/`compact`) |
+| `size` | `str` | `"default"` | Frame size |
 | `shape` | `str` | `""` | Icon frame shape: `square`, `circle` |
+| `variant` | `str` | `""` | Variant slug from the genome whitelist |
+| `pair` | `str` | `""` | Cellular pairing modifier for bifamily frames |
+| `state_glyph_shape` | `str` | `""` | Badge state-indicator shape override |
 | `divider_variant` | `str` | `"zeropoint"` | Divider variant |
 | `direction` | `str` | `"ltr"` | Marquee direction |
-| `rows` | `int` | `3` | Counter rows |
-| `speeds` | `list[float] \| None` | `None` | Per-row scroll speeds |
+| `speeds` | `list[float] \| None` | `None` | Marquee scroll speed multipliers |
+| `data` | `str` | `""` | Unified data-token grammar for live values |
 | `telemetry_data` | `dict \| None` | `None` | Telemetry contract |
+| `genome_override` | `dict \| None` | `None` | Inline genome dict (equivalent to CLI `--genome-file`) |
+| `connector_data` | `dict \| None` | `None` | Pre-fetched connector payload for stats/chart, or matrix adapter payload |
 | `stats_username` | `str` | `""` | GitHub username for `stats` frame |
 | `chart_owner` | `str` | `""` | GitHub owner for `chart` frame |
 | `chart_repo` | `str` | `""` | GitHub repo for `chart` frame |
-| `connector_data` | `dict \| None` | `None` | Pre-fetched connector payload for `stats`/`chart` frames |
-| `timeline_items` | `list[dict] \| None` | `None` | Milestone items for `timeline` frame |
-| `genome_override` | `dict \| None` | `None` | Inline genome dict (equivalent to CLI `--genome-file`) |
+| `matrix` | `dict \| None` | `None` | Matrix frame table IR |
+| `glyph_tint` | `str` | `""` | Matrix glyph fill selection |
+| `render_target` | `str` | `"svg"` | `svg`, or `markdown` for matrix frames |
 
 **Content by frame type:**
 
@@ -53,17 +58,17 @@ Compose any HyperWeave artifact. Returns self-contained SVG string.
 |---|---|---|---|
 | badge | Left panel text | Right panel text | |
 | strip | Identity text | Metrics: `"STARS:2.9k,FORKS:278"` | |
-| banner | Title text | Subtitle | |
 | icon | (unused) | (unused, use `glyph`) | |
 | divider | (unused) | (unused, use `divider_variant`) | |
-| marquee | Pipe-separated text | (unused) | |
+| marquee-horizontal | Pipe-separated text | (unused) | Can also use `data` tokens |
 | receipt | (unused) | (unused, use `telemetry_data`) | |
+| rhythm-strip | (unused) | (unused, use `telemetry_data`) | |
 | stats | (unused) | (unused) | Use `stats_username` + `connector_data` |
 | chart | (unused) | (unused) | Use `chart_owner`/`chart_repo` + `connector_data` |
-| timeline | (unused) | (unused) | Use `timeline_items` |
+| matrix | (unused) | (unused) | Use `matrix`, `connector_data={"matrix_adapter": "connector-registry"}`, or `data` tokens |
 
 <Note>
-Network I/O is intentionally excluded from `hw_compose`. For `stats`/`chart` frames, callers must pre-fetch data through `hw_live` or an out-of-band connector call and pass the result through `connector_data`. This preserves deterministic, pure-function semantics for agent workflows.
+`hw_compose` can resolve live values inline when `data` tokens are provided. For `stats`/`chart` frames, pass `connector_data` when the caller already has a pre-fetched payload. Matrix callers can pass a `matrix` table directly, or use `connector_data={"matrix_adapter": "connector-registry"}` for the generated connector matrix.
 </Note>
 
 ### `hw_live`
@@ -72,10 +77,10 @@ Compose a badge with live data fetched from a provider.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `provider` | `str` | **required** | `github`, `pypi`, `npm`, `arxiv`, `huggingface`, `docker` |
+| `provider` | `str` | **required** | `github`, `pypi`, `npm`, `arxiv`, `huggingface`, `docker`, `crates`, `scorecard`, `dora` |
 | `identifier` | `str` | **required** | Resource ID |
 | `metric` | `str` | **required** | Metric name |
-| `genome` | `str` | `"brutalist-emerald"` | Genome slug |
+| `genome` | `str` | `"brutalist"` | Genome slug |
 | `glyph` | `str` | `""` | Glyph ID |
 | `state` | `str` | `"active"` | Semantic status |
 
@@ -88,9 +93,9 @@ Compose a full artifact kit. Returns dict of SVG strings keyed by artifact name.
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `type` | `str` | `"readme"` | Kit type |
-| `genome` | `str` | `"brutalist-emerald"` | Genome slug |
+| `genome` | `str` | `"brutalist"` | Genome slug |
 | `project` | `str` | `""` | Project name |
-| `badges` | `str` | `""` | Badge pairs: `"build:passing,version:v0.2.0"` |
+| `badges` | `str` | `""` | Badge pairs: `"build:passing,version:v0.6.3"` |
 | `social` | `str` | `""` | Social glyph IDs: `"github,discord,x"` |
 
 ### `hw_discover`
@@ -99,7 +104,7 @@ Discover available HyperWeave components. Returns structured data about genomes,
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `what` | `str` | `"all"` | `all`, `genomes`, `motions`, `glyphs`, `frames`, `url_grammar` |
+| `what` | `str` | `"all"` | `all`, `genomes`, `motions`, `glyphs`, `frames`, `matrix`, `url_grammar` |
 
 ## Resources
 
@@ -109,8 +114,8 @@ ComposeSpec parameter reference. Returns JSON with all valid parameter values:
 
 ```json
 {
-  "type": ["badge", "strip", "banner", ...],
-  "genome": ["brutalist-emerald", "chrome-horizon"],
+  "type": ["badge", "strip", "icon", "divider", "marquee-horizontal", "receipt", "rhythm-strip", "stats", "chart", "matrix"],
+  "genome": ["brutalist", "chrome", "automata", "primer"],
   "motion": ["static", "chromatic-pulse", ...],
   "state": ["active", "passing", ...],
   "glyph_mode": ["auto", "fill", "wire", "none"],
