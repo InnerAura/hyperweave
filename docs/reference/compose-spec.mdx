@@ -3,7 +3,10 @@ title: "ComposeSpec Reference"
 description: "Complete parameter reference for the ComposeSpec model -- the single input to the composition pipeline."
 ---
 
-`ComposeSpec` is the Pydantic model that serves as the sole input to the composition pipeline. Every artifact -- badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, or telemetry frame -- is produced from a single `ComposeSpec`.
+`ComposeSpec` is the frozen Pydantic model that serves as the sole input to the
+composition pipeline. Every artifact -- badge, strip, icon, divider,
+marquee-horizontal, stats, chart, matrix, receipt, or rhythm-strip -- is
+produced from a single `ComposeSpec`.
 
 ## Model Definition
 
@@ -12,7 +15,7 @@ from hyperweave.core.models import ComposeSpec
 
 spec = ComposeSpec(
     type="badge",
-    genome_id="brutalist-emerald",
+    genome_id="brutalist",
     title="build",
     value="passing",
     state="passing",
@@ -20,10 +23,15 @@ spec = ComposeSpec(
     glyph="github",
     glyph_mode="auto",
     regime="normal",
-    variant="default",
+    variant="",
     metadata_tier=3,
 )
 ```
+
+Transport layers map their shorter public names into this model. For example,
+CLI, HTTP, and MCP callers usually pass `genome`, `direction`, and `speeds`;
+the model stores those values as `genome_id`, `marquee_direction`, and
+`marquee_speeds`.
 
 ## Parameters
 
@@ -32,78 +40,134 @@ spec = ComposeSpec(
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `type` | `FrameType` | **required** | Frame type to compose |
-| `genome_id` | `GenomeId` | `"brutalist-emerald"` | Genome slug |
-| `profile_id` | `str` | *auto-resolved* | Profile ID (resolved from genome if empty) |
 | `frame_id` | `str` | `""` | Resolved frame identifier |
+| `genome_id` | `str` | `"brutalist"` | Registered genome slug or custom genome slug |
+| `profile_id` | `str` | *auto-resolved* | Profile ID resolved from `genome_id` or `genome_override.profile` |
+| `genome_override` | `dict[str, Any] \| None` | `None` | Inline genome dict that bypasses the built-in registry, used by CLI `--genome-file` |
+
+`genome_id` is intentionally a string, not a closed `GenomeId` enum. The enum
+still provides stable built-in defaults, while custom genomes and telemetry
+skin slugs can ride through the same field.
 
 ### Content
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `title` | `str` | `""` | Primary text (label, identity, username, owner/repo, etc.) |
-| `value` | `str` | `""` | Secondary text, metrics, or chart subtype |
+| `title` | `str` | `""` | Primary text: badge label, strip identity, marquee title, stats username, etc. |
+| `value` | `str` | `""` | Secondary text: badge value, strip metrics, chart subtype, or formatted data-token output |
 | `slots` | `list[SlotContent]` | `[]` | Structured content filling frame zones |
 
 ### Appearance
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `state` | `str` | `"active"` | Semantic status (drives indicator color) |
-| `motion` | `str` | `"static"` | Motion primitive to apply |
-| `glyph` | `str` | `""` | Glyph ID from the 97-glyph library |
-| `glyph_mode` | `str` | `"auto"` | Glyph rendering mode |
-| `variant` | `str` | `""` | Variant slug from the genome whitelist |
-| `shape` | `str` | `""` | Icon frame shape: `square`, `circle` (genome-dependent) |
+| `state` | `str` | `"active"` | Semantic state such as `active`, `passing`, `warning`, or `failing` |
+| `motion` | `str` | `"static"` | Motion primitive from the target genome's compatible motions |
+| `glyph` | `str` | `""` | Glyph registry ID; `"none"` normalizes to `glyph_mode="none"` |
+| `glyph_mode` | `GlyphMode` | `"auto"` | Glyph rendering mode |
+| `custom_glyph_svg` | `str` | `""` | Raw SVG for custom glyphs |
+| `size` | `str` | `"default"` | Frame size class, currently `default` or `compact` |
+| `shape` | `str` | `""` | Icon frame shape: `square` or `circle` where supported |
+| `variant` | `str` | `""` | Chromatic variant slug; empty means the genome/paradigm default |
+| `pair` | `str` | `""` | Secondary tone for automata cellular pairings on bifamily frames |
+| `state_glyph_shape` | `str` | `""` | Badge state-indicator shape override: `square`, `circle`, or `diamond` |
 
-### Governance
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `regime` | `str` | `"normal"` | Policy regime for CIM enforcement |
-| `metadata_tier` | `int` | `3` | Metadata verbosity (0=silent, 3=resonant, 4=reasoning) |
-| `generation` | `int` | `1` | Generation counter (ge=1) |
-
-### Divider Options
+### Governance And Metadata
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `divider_variant` | `str` | `"zeropoint"` | Divider visual variant |
+| `regime` | `Regime` | `"normal"` | Policy lane: `normal`, `permissive`, or `ungoverned` |
+| `metadata_tier` | `int` | `3` | Metadata richness from 0 to 4 |
+| `generation` | `int` | `1` | Artifact generation counter; must be >= 1 |
+| `series` | `str` | `"core"` | Artifact series label, such as `core`, `scholarly`, `velocity`, `social`, or `telemetry` |
+| `platform` | `str` | `"github-readme"` | Target platform label for downstream policy/rendering contexts |
 
-### Marquee Options
+### Reasoning Metadata
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `marquee_direction` | `str` | `"ltr"` | Scroll direction (`ltr`, `rtl`, `up`, `down`) |
-| `marquee_rows` | `int` | `1` | Number of counter rows |
-| `marquee_speeds` | `list[float] \| None` | `None` | Per-row scroll speeds |
+| `intent` | `str` | `""` | Why this artifact was created |
+| `approach` | `str` | `""` | Key design decision |
+| `tradeoffs` | `str` | `""` | What was not done; used by tier-4 reasoning metadata |
 
-<Info>
-  The CLI, HTTP, and MCP interfaces use the short forms `direction`, `rows`, and `speeds`. The ComposeSpec model uses the prefixed `marquee_*` names internally because the model is a flat namespace shared across all frame types.
-</Info>
+### Data-Bound Fields
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `numeric_value` | `str` | `""` | Numeric value for threshold evaluation |
+| `threshold_id` | `str` | `""` | Threshold rule set identifier |
+
+### Connector And Data-Token Fields
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `connector_data` | `dict[str, Any] \| None` | `None` | Pre-fetched connector payload for stats, chart, strip subtitles, and matrix adapters |
+| `stats_username` | `str` | `""` | GitHub username for stats frames |
+| `chart_owner` | `str` | `""` | GitHub owner for chart frames |
+| `chart_repo` | `str` | `""` | GitHub repository for chart frames |
+| `data_tokens` | `list[Any] \| None` | `None` | Resolved `?data=` / `--data` / MCP `data=` tokens |
+
+Network I/O happens before composition. The CLI, HTTP API, and MCP layer fetch
+live data or resolve data tokens, then pass the resulting payload into
+`ComposeSpec`.
+
+### Matrix Fields
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `matrix` | `MatrixSpec \| None` | `None` | Matrix frame table IR: columns, rows, sections, summary row, and optional headline |
+| `glyph_tint` | `str` | `""` | Matrix glyph fill selection: `ink`, `brand`, or `full` |
+
+Matrix callers can pass a full `MatrixSpec`, use
+`connector_data={"matrix_adapter": "connector-registry"}`, or provide data
+tokens that are normalized into the matrix IR.
 
 ### Telemetry
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `telemetry_data` | `dict \| None` | `None` | Telemetry contract dict for `receipt` and `rhythm-strip` |
+| `telemetry_data` | `dict[str, object] \| None` | `None` | Session data contract dict for `receipt` and `rhythm-strip` |
+| `receipt_filename_hint` | `str` | `""` | Human-readable receipt filename/path shown in receipt footers |
+
+### Divider Options
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `divider_variant` | `DividerVariant` | `"zeropoint"` | Divider visual variant |
+
+### Marquee Options
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `marquee_direction` | `str` | `"ltr"` | Scroll direction: `ltr` or `rtl` |
+| `marquee_speeds` | `list[float] \| None` | `None` | Scroll speed multipliers; marquee-horizontal uses the first value |
+
+<Info>
+  The CLI, HTTP, and MCP interfaces use the short forms `direction` and
+  `speeds`. The `ComposeSpec` model uses prefixed `marquee_*` names internally
+  because it is a flat namespace shared across all frame types.
+</Info>
 
 ## Enum Values
 
 ### FrameType
 
-`badge`, `strip`, `icon`, `divider`, `marquee-horizontal`, `receipt`, `rhythm-strip`, `stats`, `chart`, `matrix`
+`badge`, `strip`, `icon`, `divider`, `marquee-horizontal`, `receipt`,
+`rhythm-strip`, `stats`, `chart`, `matrix`
 
 ### GenomeId
 
-`brutalist-emerald`, `chrome-horizon`
+`brutalist`, `chrome`, `automata`, `primer`
 
 ### MotionId
 
-`static`, `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`, `rimrun`, `bars`, `broadcast`, `cascade`, `collapse`, `converge`, `crash`, `drop`, `breach`, `pulse`
+`static`, `chromatic-pulse`, `corner-trace`, `dual-orbit`, `entanglement`,
+`rimrun`
 
 ### ArtifactStatus
 
-`active`, `passing`, `building`, `warning`, `critical`, `failing`, `offline`, `loop`
+`active`, `passing`, `building`, `warning`, `critical`, `failing`, `offline`,
+`loop`
 
 ### GlyphMode
 
@@ -115,7 +179,8 @@ spec = ComposeSpec(
 
 ### DividerVariant
 
-`block`, `current`, `takeoff`, `void`, `zeropoint`
+`block`, `current`, `takeoff`, `void`, `zeropoint`, `dissolve`, `band`, `seam`,
+`sigil`, `aura`
 
 ## ComposeResult
 
@@ -124,13 +189,18 @@ The output of `compose(spec)`:
 | Field | Type | Description |
 |---|---|---|
 | `svg` | `str` | Self-contained SVG string |
+| `metadata` | `ArtifactMetadata \| None` | Structured metadata when metadata emission is enabled |
 | `width` | `int` | Artifact width in pixels |
 | `height` | `int` | Artifact height in pixels |
-| `metadata` | `ArtifactMetadata \| None` | Structured metadata (when tier >= 1) |
+| `markdown` | `str` | Text-shadow projection, currently used by matrix frames |
 
 ## Model Behavior
 
-- **Frozen**: All instances are immutable after creation
-- **Extra forbidden**: Unknown fields raise `ValidationError`
-- **Auto-resolve profile**: `profile_id` is resolved from `genome_id` if not explicitly set
-- **Generation constraint**: `generation` must be >= 1
+- **Frozen**: Instances are immutable after creation.
+- **Extra forbidden**: Unknown fields raise `ValidationError`.
+- **String-compatible enums**: Enum values compare equal to their string values.
+- **Auto-resolved profile**: `profile_id` comes from `genome_override.profile`,
+  the built-in genome map, or falls back to `flat`.
+- **Custom genome ready**: `genome_id` accepts strings so `--genome-file` and
+  telemetry skin slugs are not blocked by the enum.
+- **Generation constraint**: `generation` must be >= 1.
