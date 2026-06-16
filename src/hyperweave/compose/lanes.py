@@ -65,8 +65,7 @@ def enforce(context: dict[str, Any], regime: Regime) -> dict[str, Any]:
                     motion,
                     motion_violations,
                 )
-                context["motion"] = MotionId.STATIC
-                context["motion_css"] = ""
+                _reset_motion_context(context, str(motion))
                 violations.extend(motion_violations)
             elif regime == Regime.PERMISSIVE:
                 # Warn but allow
@@ -113,6 +112,38 @@ def _check_motion_cim(motion_id: str) -> list[str]:
         return violations
     except (ImportError, Exception):
         return []
+
+
+def _reset_motion_context(context: dict[str, Any], motion_id: str) -> None:
+    """Clear every rendered motion surface after policy correction."""
+    context["motion"] = MotionId.STATIC
+    context["motion_id"] = MotionId.STATIC
+    context["motion_css"] = ""
+    context["motion_class"] = ""
+    context["motion_category"] = "none"
+    context["motion_cim_compliant"] = True
+    context["motion_svg"] = ""
+    context["motion_border_defs"] = ""
+    context["motion_border_overlay"] = ""
+    _remove_motion_css(context, motion_id)
+
+
+def _remove_motion_css(context: dict[str, Any], motion_id: str) -> None:
+    try:
+        from hyperweave.render.motion import get_motion_css
+
+        motion_css = get_motion_css(motion_id, [])
+    except Exception:
+        motion_css = ""
+
+    if not motion_css:
+        return
+
+    css = str(context.get("css", ""))
+    css = css.replace(f"\n{motion_css}", "")
+    css = css.replace(motion_css, "")
+    css = css.replace(",motion", "").replace("motion,", "")
+    context["css"] = css
 
 
 def _check_contrast(context: dict[str, Any], violations: list[str]) -> None:
