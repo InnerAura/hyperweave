@@ -11,28 +11,54 @@ hyperweave serve --port 8000
 
 ## URL Grammar Routes
 
-All URL grammar routes return `image/svg+xml` responses with ETag caching.
+URL grammar routes return `image/svg+xml` responses that are safe to embed in
+README images and other `<img>` surfaces. Pure composition routes use long cache
+headers and ETag negotiation. Routes that resolve live `data` tokens use the
+minimum upstream TTL and include `X-HW-Cache-Tier: connector`.
+
+### Data Token Grammar
+
+The `data` query parameter shares the same comma-separated token grammar as the
+CLI `--data` flag and MCP `data` argument:
+
+| Form | Meaning |
+|---|---|
+| `text:STRING` | Raw display text |
+| `kv:KEY=VALUE` | Static labeled value |
+| `<provider>:<identifier>.<metric>` | Live provider metric |
+
+Provider aliases include `gh` / `github`, `pypi`, `npm`, `hf` /
+`huggingface`, `arxiv`, `docker`, `crates` / `cargo`, `scorecard`, and `dora`.
+Embedded commas in `text:` and `kv:` payloads escape as `\,`.
 
 ### Badge
 
 ```
 GET /v1/badge/{title}/{value}/{genome}.{motion}
+GET /v1/badge/{title}/{genome}.{motion}?data=...
 ```
 
 | Parameter | Location | Description |
 |---|---|---|
 | `title` | path | Left panel text |
-| `value` | path | Right panel text |
+| `value` | path | Right panel text for the static route |
 | `genome` | path | Genome slug |
 | `motion` | path | Motion primitive (default: `static`) |
+| `data` | query | Data tokens for the two-segment data-driven route |
+| `t` | query | Title override when the title needs slashes |
 | `glyph` | query | Glyph ID |
 | `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
 | `state` | query | Semantic status |
 | `regime` | query | Policy regime |
-| `variant` | query | Frame variant |
+| `size` | query | Frame size, such as `default` or `compact` |
+| `variant` | query | Variant slug from the genome whitelist |
+| `pair` | query | Secondary tone for automata cellular pairings |
+| `state_glyph_shape` | query | Badge state indicator override: `square`, `circle`, `diamond` |
 
 ```bash
-curl localhost:8000/v1/badge/build/passing/brutalist-emerald.chromatic-pulse?glyph=github
+curl localhost:8000/v1/badge/build/passing/brutalist.chromatic-pulse?glyph=github
+
+curl "localhost:8000/v1/badge/stars/brutalist.static?data=gh:openai/codex.stars&glyph=github"
 ```
 
 ### Strip
@@ -45,38 +71,27 @@ GET /v1/strip/{title}/{genome}.{motion}
 |---|---|---|
 | `title` | path | Strip identity text |
 | `value` | query | Metric pairs: `STARS:2.9k,FORKS:278` |
-| `live` | query | Live data: `provider:id:metric,provider:id:metric` (concurrent fetch) |
+| `data` | query | Data tokens; resolved values override `value` |
+| `t` | query | Title override when the title needs slashes |
 | `glyph` | query | Glyph ID |
 | `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
 | `state` | query | Semantic status |
-| `variant` | query | Frame variant |
+| `size` | query | Frame size |
 | `regime` | query | Policy regime |
+| `variant` | query | Variant slug from the genome whitelist |
+| `pair` | query | Secondary tone for automata cellular pairings |
+| `subtitle` | query | Strip subtitle; rendered by paradigms that opt in |
 
 ```bash
 # Static metrics
-curl localhost:8000/v1/strip/readme-ai/brutalist-emerald.rimrun?value=STARS:2.9k,FORKS:278
+curl localhost:8000/v1/strip/readme-ai/brutalist.rimrun?value=STARS:2.9k,FORKS:278
 
-# Live multi-provider metrics (fetched concurrently)
-curl "localhost:8000/v1/strip/readme-ai/brutalist-emerald.static?live=github:anthropics/claude-code:stars,pypi:fastmcp:version"
+# Data-token metrics (resolved concurrently)
+curl "localhost:8000/v1/strip/readme-ai/brutalist.static?data=gh:openai/codex.stars,pypi:fastmcp.version"
 ```
 
-When `live` is provided, its resolved values override `value`. Cache TTL is the minimum across all provider responses.
-
-### Banner
-
-```
-GET /v1/banner/{title}/{genome}.{motion}
-```
-
-| Parameter | Location | Description |
-|---|---|---|
-| `title` | path | Banner title text |
-| `value` | query | Subtitle text |
-| `variant` | query | `default` or `compact` |
-| `glyph` | query | Glyph ID |
-| `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
-| `state` | query | Semantic status |
-| `regime` | query | Policy regime |
+When `data` is provided, its resolved values override `value`. Cache TTL is the
+minimum across all provider responses.
 
 ### Icon
 
@@ -88,18 +103,39 @@ GET /v1/icon/{glyph}/{genome}.{motion}
 |---|---|---|
 | `glyph` | path | Glyph ID |
 | `shape` | query | Icon frame shape: `square`, `circle` |
+| `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
+| `size` | query | Frame size |
 | `state` | query | Semantic status |
 | `regime` | query | Policy regime |
+| `variant` | query | Variant slug from the genome whitelist |
+| `pair` | query | Secondary tone for automata cellular pairings |
+
+```bash
+curl localhost:8000/v1/icon/github/chrome.static?shape=circle
+```
 
 ### Divider
 
 ```
-GET /v1/divider/{variant}/{genome}.{motion}
+GET /v1/divider/{divider_variant}/{genome}.{motion}
 ```
 
-Variants: `block`, `current`, `takeoff`, `void`, `zeropoint`.
+The `/v1/divider` route serves genome-themed divider variants declared by the
+selected genome. Editorial, genome-agnostic dividers moved to
+`/a/inneraura/dividers/{slug}`.
 
-### Marquee
+| Parameter | Location | Description |
+|---|---|---|
+| `divider_variant` | path | Genome-themed divider slug, such as `seam`, `sigil`, `band`, `dissolve`, or `aura` |
+| `variant` | query | Variant slug from the genome whitelist |
+| `pair` | query | Secondary tone for automata cellular pairings |
+
+```bash
+curl localhost:8000/v1/divider/seam/brutalist.static
+curl localhost:8000/a/inneraura/dividers/current
+```
+
+### Marquee Horizontal
 
 ```
 GET /v1/marquee/{title}/{genome}.{motion}
@@ -107,24 +143,78 @@ GET /v1/marquee/{title}/{genome}.{motion}
 
 | Parameter | Location | Description |
 |---|---|---|
-| `direction` | query | `ltr`, `rtl`, `up`, `down` |
-| `rows` | query | Counter rows (>1 = counter type) |
-| `speeds` | query | Scroll speed values |
+| `title` | path | Raw text split on vertical-bar or middle-dot separators |
+| `data` | query | Data tokens that drive the scroll; wins over raw title text |
+| `t` | query | Title override when the title needs slashes |
+| `direction` | query | `ltr` or `rtl` |
+| `speeds` | query | Scroll speed multiplier values |
 | `state` | query | Semantic status |
 | `regime` | query | Policy regime |
+| `variant` | query | Variant slug from the genome whitelist |
+| `pair` | query | Secondary tone for automata cellular pairings |
 
-### Live Data Badge
+```bash
+curl "localhost:8000/v1/marquee/HYPERWEAVE%7CSVG%7CCamo/brutalist.static?direction=rtl&speeds=1.2"
+curl "localhost:8000/v1/marquee/live/brutalist.static?data=text:stars,gh:openai/codex.stars"
+```
+
+### Matrix
 
 ```
-GET /v1/live/{provider}/{identifier}/{metric}/{genome}.{motion}
+GET /v1/matrix/{preset}/{genome}.{motion}
 ```
-
-The `{identifier}` uses path-type matching to support slashes (e.g., `owner/repo`).
 
 | Parameter | Location | Description |
 |---|---|---|
-| `glyph` | query | Glyph ID |
-| `glyph_mode` | query | `auto`, `fill`, `wire`, `none` |
+| `preset` | path | Server-known preset such as `connectors`, or `custom` |
+| `spec` | query | Base64url MatrixSpec JSON; required when `preset=custom` |
+| `variant` | query | Variant slug from the genome whitelist |
+| `glyph_tint` | query | `ink`, `brand`, or `full` |
+
+```bash
+curl localhost:8000/v1/matrix/connectors/primer.static
+```
+
+### Chart Stars
+
+```
+GET /v1/chart/stars/{owner}/{repo}/{genome}.{motion}
+```
+
+Fetches sampled stargazer history from GitHub and renders the chart frame. If
+GitHub fetches fail, HyperWeave renders a stale placeholder series instead of a
+broken image.
+
+| Parameter | Location | Description |
+|---|---|---|
+| `owner` | path | GitHub owner |
+| `repo` | path | GitHub repository |
+| `variant` | query | Variant slug from the genome whitelist |
+| `pair` | query | Secondary tone for automata cellular pairings |
+
+```bash
+curl localhost:8000/v1/chart/stars/openai/codex/chrome.static
+```
+
+### Stats
+
+```
+GET /v1/stats/{username}/{genome}.{motion}
+```
+
+Fetches GitHub profile, repository, contribution, PR, and issue data in
+parallel. Optional `data` tokens append provider metric slots.
+
+| Parameter | Location | Description |
+|---|---|---|
+| `username` | path | GitHub username |
+| `data` | query | Optional data tokens appended as provider metric slots |
+| `variant` | query | Variant slug from the genome whitelist |
+| `pair` | query | Secondary tone for automata cellular pairings |
+
+```bash
+curl "localhost:8000/v1/stats/octocat/brutalist.static?data=gh:openai/codex.stars"
+```
 
 ## Health Check
 
@@ -132,7 +222,9 @@ The `{identifier}` uses path-type matching to support slashes (e.g., `owner/repo
 GET /health
 ```
 
-Returns `{"status": "ok"}`. Use this for readiness probes and uptime monitoring.
+Returns `{"status": "ok"}` when the compositor can produce a probe artifact. If
+the compose pipeline is not ready, the route returns HTTP 503 with
+`{"status": "degraded"}`.
 
 ## POST Endpoints
 
@@ -142,12 +234,13 @@ Returns `{"status": "ok"}`. Use this for readiness probes and uptime monitoring.
 POST /v1/compose
 ```
 
-Full ComposeSpec as JSON body. Returns SVG.
+Full ComposeSpec-like JSON body. Returns SVG by default. Set
+`"respond": "json"` to receive `{svg, markdown, width, height}`.
 
 ```json
 {
   "type": "badge",
-  "genome": "brutalist-emerald",
+  "genome": "brutalist",
   "title": "build",
   "value": "passing",
   "state": "passing",
@@ -165,9 +258,9 @@ Returns JSON dict of SVG strings keyed by artifact name.
 
 ```json
 {
-  "genome": "brutalist-emerald",
+  "genome": "brutalist",
   "project": "my-project",
-  "badges": "build:passing,version:v0.2.0",
+  "badges": "build:passing,version:v0.6.3",
   "social": "github,discord"
 }
 ```
@@ -191,12 +284,12 @@ All discovery endpoints return JSON with `Cache-Control: public, max-age=3600`.
   {
     "type": "badge",
     "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
-    "query_params": ["glyph", "glyph_mode", "state", "regime", "variant"]
+    "query_params": ["glyph", "glyph_mode", "state", "regime", "size", "variant", "pair"]
   },
   {
     "type": "strip",
     "pattern": "/v1/strip/{title}/{genome}.{motion}",
-    "query_params": ["value", "live", "glyph", "glyph_mode", "state", "variant", "regime"]
+    "query_params": ["value", "data", "glyph", "glyph_mode", "state", "size", "regime", "variant", "pair", "subtitle"]
   }
 ]
 ```
@@ -205,10 +298,14 @@ All discovery endpoints return JSON with `Cache-Control: public, max-age=3600`.
 
 ```json
 [
-  {"id": "brutalist-emerald", "name": "Brutalist Emerald", "category": "dark"},
-  {"id": "chrome-horizon", "name": "Chrome Horizon", "category": "dark"}
+  {"id": "brutalist", "name": "Brutalist", "category": "dark"},
+  {"id": "chrome", "name": "Chrome", "category": "dark"},
+  {"id": "automata", "name": "Automata", "category": "light"},
+  {"id": "primer", "name": "Primer", "category": "light"}
 ]
 ```
+
+The endpoint returns all loaded genomes, including telemetry genomes.
 
 ## Namespace Routes
 
@@ -224,11 +321,15 @@ Returns genome DNA as JSON. Cache: 24h with stale-while-revalidate.
 
 ```
 GET /a/inneraura              # List all specimens
-GET /a/inneraura/{slug}       # Serve specimen SVG
-GET /a/inneraura/{slug}/meta.json  # Specimen metadata
+GET /a/inneraura/{category}/{slug}  # Serve categorized specimen SVG
+GET /a/inneraura/{slug}             # Serve legacy flat specimen SVG
+GET /a/inneraura/{slug}/meta.json   # Legacy flat specimen metadata
 ```
 
-Editorial specimens from the `specs/` directory. Cache: immutable (1 year).
+Current categorized specimens include `dividers/block`, `dividers/current`,
+`dividers/takeoff`, `dividers/void`, and `dividers/zeropoint`. Categorized
+divider specimens render through the compositor with editorial colors and
+return `X-HW-Artifact-Type: editorial-specimen`.
 
 ### `/d/` -- Drop Events
 
@@ -247,20 +348,24 @@ All SVG responses include Camo-hardening headers:
 | `Access-Control-Allow-Origin` | `*` |
 | `Vary` | `Accept` |
 | `X-Content-Type-Options` | `nosniff` |
-| `Content-Security-Policy` | `default-src 'none'; style-src 'unsafe-inline'` |
-| `ETag` | SHA-256 of ComposeSpec (16 chars) |
+| `Content-Security-Policy` | `default-src 'none'; style-src 'unsafe-inline'; font-src data:` |
+| `ETag` | SHA-256 of ComposeSpec (16 chars) on composition responses |
+| `X-HW-Genome` | Genome slug on successful composition responses |
+| `X-HW-Frame` | Frame type on successful composition responses |
+| `X-HW-Error-Code` | Underlying error class for SMPTE error SVG responses |
 | `Cache-Control` | Varies by endpoint tier |
 
 ## ETag / 304 Negotiation
 
-All composition endpoints support conditional requests. The ETag is derived from the ComposeSpec JSON hash (deterministic). Send `If-None-Match` to skip recomposition:
+Composition endpoints support conditional requests. The ETag is derived from the
+ComposeSpec JSON hash. Send `If-None-Match` to skip recomposition:
 
 ```bash
 # First request
-curl -v localhost:8000/v1/badge/build/passing/brutalist-emerald
+curl -v localhost:8000/v1/badge/build/passing/brutalist
 # Note the ETag header
 
 # Conditional request
-curl -H 'If-None-Match: "abc123"' localhost:8000/v1/badge/build/passing/brutalist-emerald
+curl -H 'If-None-Match: "abc123"' localhost:8000/v1/badge/build/passing/brutalist
 # Returns 304 if unchanged
 ```
