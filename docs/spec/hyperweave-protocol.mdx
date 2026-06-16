@@ -24,31 +24,26 @@ The sole input to the composition pipeline. A frozen Pydantic model with:
 - **Appearance**: `state`, `motion`, `glyph`, `glyph_mode`, `variant`, `shape`
 - **Governance**: `regime`, `metadata_tier`, `generation`
 - **Frame-specific**: `divider_variant`, `direction`, `rows`
-- **Telemetry**: `telemetry_data` (contract dict for receipt/rhythm-strip/master-card)
-- **Connector frames (stats/chart/timeline)**: `stats_username`, `chart_owner`, `chart_repo`, `connector_data` (pre-fetched dict), `timeline_items` (list of milestone dicts)
+- **Telemetry**: `telemetry_data` (contract dict for `receipt` and `rhythm-strip`)
+- **Connector and data frames**: `stats_username`, `chart_owner`, `chart_repo`, `connector_data` (pre-fetched dict), `matrix` (table IR)
 - **Custom genome**: `genome_override` (inline genome dict — bypasses the built-in registry, equivalent to the CLI `--genome-file` flag)
 
 ## Frame Types
 
-15 frame types, each with a distinct Jinja2 template:
+10 frame types, each with a distinct Jinja2 template:
 
 | Frame | Dimensions | Content Model |
 |---|---|---|
 | `badge` | Dynamic width x 20-22px | Two-panel: label + value |
 | `strip` | 530px+ x 36px | Identity + up to 4 metric cells |
-| `banner` | 800px x 200px | Title + optional subtitle |
 | `icon` | 64x64px | Single glyph frame |
 | `divider` | 800px x variable | 5 specimen-faithful variants |
 | `marquee-horizontal` | 800px x variable | SMIL scroll animation |
-| `marquee-vertical` | 800px x variable | Vertical SMIL scroll |
-| `marquee-counter` | 800px x variable | Multi-row counter scroll |
 | `receipt` | Variable | Session telemetry card |
 | `rhythm-strip` | Variable | Tool call density timeline |
-| `master-card` | Variable | Comprehensive session analysis |
-| `catalog` | Variable | Genome catalog page |
 | `stats` | 900x500 | GitHub profile card with language breakdown, streak, and heatmap |
 | `chart` | 900x500 | Star-history time series (polyline + area + markers) |
-| `timeline` | Variable | Vertical milestone chain with dash-flow spine |
+| `matrix` | Variable | Structured comparison table with SVG and GFM projections |
 
 ## Genome Specification
 
