@@ -5,6 +5,35 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-alpha.3] - 2026-06-15
+
+Adds the diagram frame for rendering flowcharts, architecture diagrams, and other topologies as self-contained SVGs.
+
+### Added
+
+- **Diagram frame** &mdash; pipelines, fan-outs, trees, dependency graphs, state machines, and more, each rendered as a single self-contained SVG and laid out automatically within sensible size limits.
+- **Render any diagram from a spec** &mdash; pass your own nodes and edges, or start from one of the included examples (agent plans, RAG, CI/CD, and more).
+- **Animated connectors** &mdash; four line-motion styles between nodes: `dash`, `particle`, `beam`, `flow`. On devices that can't paint smoothly, beam falls back to particle and flow to dash, and the SVG records which it used.
+- **Node logos** &mdash; a node can display a brand logo, styled as a card, a circle, or a card with a logo. If a logo is too faint against its background, it's automatically given a backing or recolored so it stays readable.
+- **Every surface** &mdash; diagrams from the URL API, `POST /v1/diagram`, the CLI (`hyperweave compose diagram`), and MCP, each with motion, performance, and chrome overrides.
+- **Embedded data** &mdash; like every artifact, each diagram carries its full spec, a short summary, a Markdown version, and an accessibility description.
+
+### Changed
+
+- **Reorganized internals** &mdash; compose code is split into per-frame packages, and data files are grouped into config, registries, and presets folders, with presets now editable as YAML.
+- **More brand logos** &mdash; full-color marks for several brands; the rest render in their single brand color.
+
+### Fixed
+
+- **Dark-theme matrices** &mdash; heat-tile numbers and single-color logos now adapt to the background instead of assuming a light page, so one table reads correctly across all eight primer color variants.
+- **Malformed titles** &mdash; titles containing `&`, `<`, or `>` no longer produce a broken image.
+- **Gauge direction** &mdash; price and benchmark gauges now fill in the correct direction, with cheaper and higher-scoring values filling fuller.
+
+### Notes
+
+- Diagram direction shows through motion and reading order, not arrowheads; static viewers see dashed lines.
+- A diagram past its size limit returns a clear placeholder instead of an unreadable tangle; split it into smaller diagrams.
+
 ## [0.4.0-alpha.2] - 2026-06-11
 
 Matrix frame, primer badge/strip redesign, expanded glyph registry.

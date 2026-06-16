@@ -79,9 +79,24 @@ When an agent needs to produce something visual, it generates React, HTML, or pi
 
 HyperWeave is that primitive. One API call returns a self-contained SVG with data binding, branding, and machine-readable metadata baked in. No JavaScript, no dependencies, no runtime. It renders in GitHub READMEs, Slack, Notion, docs, your site, email, VS Code, or terminal. Every surface that renders an `<img>` tag is a HyperWeave surface.
 
+<!--
+An artifact compiler for durable agent-readable documents, diagrams, matrices, badges, and visual knowledge objects that survive Markdown, GitHub, SVG, HTML, and future agent surfaces.
+-->
+
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-format-comparison-matrix-v2.svg" alt="HyperWeave" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-format-comparison-matrix-v2.svg" alt="Visual output formats for AI agents: SVG vs Markdown vs HTML across portability, agent-readable metadata, visual fidelity, token efficiency, and zero dependencies" width="100%"/>
 </p>
+
+<details>
+<summary>View as table</summary>
+
+| FORMAT | Portability | Agent-Readable Metadata | Visual Fidelity | Token Efficiency | Zero Dependencies | SCORE |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| SVG | ✓ | ✓ | ✓ | ~ | ✓ | 4.5 |
+| MARKDOWN | ~ | ~ | ✗ | ✓ | ✓ | 3 |
+| HTML | ✗ | ✓ | ✓ | ✗ | ~ | 2.5 |
+
+</details>
 
 ---
 
@@ -128,13 +143,26 @@ Auto-detected from the session transcript. Pin a different default with `hyperwe
 
 ## Matrices - Generative Tables
 
-A matrix is a table described in JSON and rendered as an SVG. Columns choose from eight cell kinds (text, check, dot, bar, pill, numeric heat, chip, glyph), which is enough to cover comparisons, registries, tiers, bar scales, plans, and benchmarks. The output embeds anywhere markdown renders.
+HyperWeave matrices are structured tables rendered as portable SVGs. A single JSON description can produce comparison grids, registries, tiers, benchmark tables, numeric heatmaps, chips, glyphs, bars, and status maps, while carrying a machine-readable payload for agents.
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/matrix/custom/primer.static?variant=porcelain&spec=eyJ0aXRsZSI6Ik9uZSBhcnRpZmFjdC4gTWFueSByZWFkZXJzLiIsInN1YnRpdGxlIjoiaG93IGVhY2ggY29uc3VtZXIgaW5nZXN0cyB0aGUgc2FtZSBTVkciLCJjb2x1bW5zIjpbeyJpZCI6InJlYWRlciIsImxhYmVsIjoiUkVBREVSIiwicm9sZSI6ImxhYmVsIn0seyJpZCI6Im1hcmsiLCJsYWJlbCI6IiIsImtpbmQiOiJnbHlwaCIsImdseXBoX3RpbnQiOiJmdWxsIn0seyJpZCI6InBpeGVscyIsImxhYmVsIjoiUElYRUxTIiwia2luZCI6ImNoZWNrIn0seyJpZCI6Im1vdGlvbiIsImxhYmVsIjoiTU9USU9OIiwia2luZCI6InBpbGwifSx7ImlkIjoidmlhIiwibGFiZWwiOiJSRUFEUyBWSUEiLCJraW5kIjoiY2hpcCJ9XSwicm93cyI6W3sibGFiZWwiOiJHaXRIdWIgUkVBRE1FIiwiY2VsbHMiOlt7ImdseXBoIjoiZ2l0aHViIn0seyJzdGF0ZSI6ImZ1bGwifSx7InN0YXRlIjoib24ifSx7ImNoaXBzIjpbImNhbW8iLCJjc3MgYW5pbWF0aW9uIl19XX0seyJsYWJlbCI6IlZTIENvZGUgcHJldmlldyIsImNlbGxzIjpbeyJnbHlwaCI6InZzY29kZSJ9LHsic3RhdGUiOiJmdWxsIn0seyJzdGF0ZSI6Im9mZiJ9LHsiY2hpcHMiOlsibWFya2Rvd24gcHJldmlldyJdfV19LHsibGFiZWwiOiJTbGFjayB1bmZ1cmwiLCJjZWxscyI6W3siZ2x5cGgiOiJzbGFjayJ9LHsic3RhdGUiOiJwYXJ0aWFsIn0seyJzdGF0ZSI6Im9mZiJ9LHsiY2hpcHMiOlsiaW1hZ2UgcHJveHkiXX1dfSx7ImxhYmVsIjoiR21haWwgYm9keSIsImNlbGxzIjpbeyJnbHlwaCI6ImdtYWlsIn0seyJzdGF0ZSI6InBhcnRpYWwifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJpbWcgdGFnIl19XX0seyJsYWJlbCI6IkFJIGFnZW50IiwiY2VsbHMiOlt7ImdseXBoIjoiY2xhdWRlIn0seyJzdGF0ZSI6Im5vbmUifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJodzpwYXlsb2FkIiwiaHd6LzEiLCJtYXJrZG93biB0d2luIl19XX1dLCJub3RlcyI6InBpeGVscyBmb3IgaHVtYW5zIMK3IGh3OnBheWxvYWQgZm9yIGFnZW50cyJ9&v=3" alt="comparison matrix: how GitHub, VS Code, Slack, Gmail, and AI agents each ingest the same SVG" width="100%"/>
+  <img src="https://hyperweave.app/v1/matrix/custom/primer.static?variant=porcelain&spec=eyJ0aXRsZSI6Ik9uZSBhcnRpZmFjdC4gTWFueSByZWFkZXJzLiIsInN1YnRpdGxlIjoiaG93IGVhY2ggY29uc3VtZXIgaW5nZXN0cyB0aGUgc2FtZSBTVkciLCJjb2x1bW5zIjpbeyJpZCI6InJlYWRlciIsImxhYmVsIjoiUkVBREVSIiwicm9sZSI6ImxhYmVsIn0seyJpZCI6Im1hcmsiLCJsYWJlbCI6IiIsImtpbmQiOiJnbHlwaCIsImdseXBoX3RpbnQiOiJmdWxsIn0seyJpZCI6InBpeGVscyIsImxhYmVsIjoiUElYRUxTIiwia2luZCI6ImNoZWNrIn0seyJpZCI6Im1vdGlvbiIsImxhYmVsIjoiTU9USU9OIiwia2luZCI6InBpbGwifSx7ImlkIjoidmlhIiwibGFiZWwiOiJSRUFEUyBWSUEiLCJraW5kIjoiY2hpcCJ9XSwicm93cyI6W3sibGFiZWwiOiJHaXRIdWIgUkVBRE1FIiwiY2VsbHMiOlt7ImdseXBoIjoiZ2l0aHViIn0seyJzdGF0ZSI6ImZ1bGwifSx7InN0YXRlIjoib24ifSx7ImNoaXBzIjpbImNhbW8iLCJjc3MgYW5pbWF0aW9uIl19XX0seyJsYWJlbCI6IlZTIENvZGUgcHJldmlldyIsImNlbGxzIjpbeyJnbHlwaCI6InZzY29kZSJ9LHsic3RhdGUiOiJmdWxsIn0seyJzdGF0ZSI6Im9uIn0seyJjaGlwcyI6WyJtYXJrZG93biBwcmV2aWV3Il19XX0seyJsYWJlbCI6IlNsYWNrIHVuZnVybCIsImNlbGxzIjpbeyJnbHlwaCI6InNsYWNrIn0seyJzdGF0ZSI6InBhcnRpYWwifSx7InN0YXRlIjoib2ZmIn0seyJjaGlwcyI6WyJpbWFnZSBwcm94eSJdfV19LHsibGFiZWwiOiJHbWFpbCBib2R5IiwiY2VsbHMiOlt7ImdseXBoIjoiZ21haWwifSx7InN0YXRlIjoicGFydGlhbCJ9LHsic3RhdGUiOiJvZmYifSx7ImNoaXBzIjpbImltZyB0YWciXX1dfSx7ImxhYmVsIjoiQWdlbnQiLCJjZWxscyI6W3siZ2x5cGgiOiJtY3AifSx7InN0YXRlIjoibm9uZSJ9LHsic3RhdGUiOiJvZmYifSx7ImNoaXBzIjpbImh3OnBheWxvYWQiLCJod3ovMSIsIm1hcmtkb3duIHR3aW4iXX1dfV0sIm5vdGVzIjoicGl4ZWxzIGZvciBodW1hbnMgwrcgaHc6cGF5bG9hZCBmb3IgYWdlbnRzIn0&v=4" alt="comparison matrix: how GitHub, VS Code, Slack, Gmail, and AI agents each ingest the same SVG" width="100%"/>
 </p>
 
 <p align="center"><sub>One frame, every table &middot; generated, not drawn</sub></p>
+
+<details>
+<summary>View as table</summary>
+
+| READER |  | PIXELS | MOTION | READS VIA |
+|:---|:---:|:---:|:---:|:---|
+| GitHub README | github | ✓ | Yes | camo, css animation |
+| VS Code preview | vscode | ✓ | Yes | markdown preview |
+| Slack unfurl | slack | ~ | — | image proxy |
+| Gmail body | gmail | ~ | — | img tag |
+| Agent | mcp | ✗ | — | hw:payload, hwz/1, markdown twin |
+
+</details>
 
 Inside that SVG, alongside the pixels — two tiers, two jobs:
 
@@ -166,7 +194,7 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
 <hw:envelope format="hwz/1" media-type="application/json">
 {
   "v": "hwz/1",
-  "id": "sha256:7021648adf306e15cc4b954d7113aaf2f8a53717e69cf3421576ce3c007ad1e6",
+  "id": "sha256:0077750046fc2780fa4ba19fcd884fcf39f54632306d8c3d2d97f0b7cbf2df47",
   "k": "matrix",
   "title": "One artifact. Many readers.",
   "intent": "structured comparison: One artifact. Many readers.",
@@ -179,7 +207,7 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
       "VS Code preview": "vscode",
       "Slack unfurl": "slack",
       "Gmail body": "gmail",
-      "AI agent": "claude"
+      "Agent": "mcp"
     },
     "rows_total": 5
   },
@@ -205,6 +233,306 @@ https://hyperweave.app/v1/matrix/custom/primer.static?spec=<base64url>
 # CLI, with the markdown twin alongside
 hyperweave compose matrix --spec-file table.json -g primer --variant porcelain --markdown-out table.md
 ```
+
+Another matrice configuration for visualizing benchmarks:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/frontier-benchmarks-cream.svg" alt="Frontier vs open-weights models compared on SWE-bench Verified coding score against input and output token price, June 2026" width="100%"/>
+</p>
+
+<details>
+<summary>View as table</summary>
+
+| MODEL |  | SWE-bench Verified | INPUT (per Mtok) | OUTPUT (per Mtok) |
+|:---|:---:|:---:|:---:|:---:|
+| **FRONTIER · CLOSED WEIGHTS** |   |   |   |   |
+| Claude Fable 5 | anthropic | 95 % | $10 | $50 |
+| Claude Opus 4.8 | anthropic | 88.6 % | $5 | $25 |
+| GPT-5.5 | openai | 82.6 % | $5 | $30 |
+| Gemini 3.1 Pro | gemini | 80.6 % | $2 | $12 |
+| **OPEN WEIGHTS** |   |   |   |   |
+| DeepSeek V4-Pro | deepseek | 80.6 % | $0.44 | $0.87 |
+| Kimi K2.6 | kimi | 80.2 % | $0.95 | $4 |
+| GLM-5 | zai | 77.8 % | $1 | $3.2 |
+| Mistral Medium 3.5 | mistral | 77.6 % | $1.5 | $7.5 |
+
+*SWE-bench Verified % · USD per Mtok · current flagships, jun 2026 · sources: vals.ai · artificialanalysis.ai · model cards*
+
+</details>
+
+---
+
+## Diagrams - Topologies & Motion
+
+HyperWeave diagrams are topology graphs (pipelines, fan-outs, hub-and-spoke, DAGs, sequences, state machines) rendered as portable SVGs. Like matrices, each carries the full payload / envelope / markdown projection set, so an agent reads the structure, not the pixels. Direction is carried by motion.
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/diagram/custom/primer.static?variant=porcelain&chrome=bare&spec=eyJ0b3BvbG9neSI6ImZhbm91dCIsInRpdGxlIjoiT25lIEFydGlmYWN0LCBFdmVyeSBTdXJmYWNlIiwic3VidGl0bGUiOiJhIHNlbGYtY29udGFpbmVkIFNWRyByZW5kZXJzIHdoZXJldmVyIG1hcmtkb3duIGRvZXMiLCJub3RlcyI6ImV2ZXJ5IHN1cmZhY2UiLCJnbHlwaF90aW50IjoiZnVsbCIsIm5vZGVzIjpbeyJsYWJlbCI6Ikh5cGVyV2VhdmUgU1ZHIiwiZGVzYyI6InNlbGYtY29udGFpbmVkIFx1MDBiNyBwb3J0YWJsZSIsInJvbGUiOiJoZXJvIiwiZ2x5cGgiOiJoeXBlcndlYXZlIiwic3R5bGUiOiJjYXJkK2dseXBoIn0seyJsYWJlbCI6IkdpdEh1YiIsImRlc2MiOiJSRUFETUUgXHUwMGI3IElzc3VlcyBcdTAwYjcgUFJzIiwiZ2x5cGgiOiJnaXRodWIiLCJzdHlsZSI6ImNhcmQrZ2x5cGgifSx7ImxhYmVsIjoiT2JzaWRpYW4iLCJkZXNjIjoidmF1bHQgXHUwMGI3IGRhaWx5IG5vdGVzIiwiZ2x5cGgiOiJvYnNpZGlhbiIsInN0eWxlIjoiY2FyZCtnbHlwaCJ9LHsibGFiZWwiOiJTbGFjayIsImRlc2MiOiJ0aHJlYWRzIFx1MDBiNyB1bmZ1cmxlZCIsImdseXBoIjoic2xhY2siLCJzdHlsZSI6ImNhcmQrZ2x5cGgifSx7ImxhYmVsIjoiRW1haWwiLCJkZXNjIjoiaW5saW5lIFx1MDBiNyBQREYgZXhwb3J0IiwiZ2x5cGgiOiJnbWFpbCIsInN0eWxlIjoiY2FyZCtnbHlwaCJ9LHsibGFiZWwiOiJBZ2VudCBDb250ZXh0IiwiZGVzYyI6Imh3OnJlYXNvbmluZyBwYXJzZWQiLCJnbHlwaCI6ImFudGhyb3BpYyIsInN0eWxlIjoiY2FyZCtnbHlwaCJ9XX0&v=1" alt="One artifact, every surface: a self-contained HyperWeave SVG fans out to GitHub, Obsidian, Slack, email, and agent context" width="100%"/>
+</p>
+
+<p align="center"><sub>One artifact, every surface &middot; the fan-out topology</sub></p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file /dev/stdin -g primer --variant porcelain --chrome bare -o one-artifact.svg <<'JSON'
+{
+  "topology": "fanout",
+  "title": "One Artifact, Every Surface",
+  "subtitle": "a self-contained SVG renders wherever markdown does",
+  "notes": "every surface",
+  "glyph_tint": "full",
+  "nodes": [
+    {
+      "label": "HyperWeave SVG",
+      "desc": "self-contained · portable",
+      "role": "hero",
+      "glyph": "hyperweave",
+      "style": "card+glyph"
+    },
+    {
+      "label": "GitHub",
+      "desc": "README · Issues · PRs",
+      "glyph": "github",
+      "style": "card+glyph"
+    },
+    {
+      "label": "Obsidian",
+      "desc": "vault · daily notes",
+      "glyph": "obsidian",
+      "style": "card+glyph"
+    },
+    {
+      "label": "Slack",
+      "desc": "threads · unfurled",
+      "glyph": "slack",
+      "style": "card+glyph"
+    },
+    {
+      "label": "Email",
+      "desc": "inline · PDF export",
+      "glyph": "gmail",
+      "style": "card+glyph"
+    },
+    {
+      "label": "Agent Context",
+      "desc": "hw:reasoning parsed",
+      "glyph": "anthropic",
+      "style": "card+glyph"
+    }
+  ]
+}
+JSON
+```
+
+</details>
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/diagram/custom/primer.static?variant=cream&chrome=bare&spec=eyJ0b3BvbG9neSI6ImRhZyIsInRpdGxlIjoiRnJvbnRpZXIgU2VydmluZyIsInN1YnRpdGxlIjoib25lIGtleSB0byB0aHJlZSBmcm9udGllciBsYWJzLCBzaGFyZWQgS1YsIHRlbGVtZXRyeSBza2lwcyB0aGUgcmFua3MiLCJub3RlcyI6ImZyb250aWVyIHNlcnZpbmciLCJnbHlwaF90aW50IjoiZnVsbCIsIm5vZGVzIjpbeyJpZCI6InJlcSIsImxhYmVsIjoicmVxdWVzdHMiLCJkZXNjIjoiY2xpZW50cyJ9LHsiaWQiOiJyb3V0ZXIiLCJsYWJlbCI6Ik9wZW5Sb3V0ZXIiLCJkZXNjIjoib25lIGtleSIsImdseXBoIjoib3BlbnJvdXRlciIsInN0eWxlIjoiY2FyZCtnbHlwaCJ9LHsiaWQiOiJhbnRocm9waWMiLCJsYWJlbCI6IkFudGhyb3BpYyIsImdseXBoIjoiYW50aHJvcGljIiwic3R5bGUiOiJjYXJkK2dseXBoIn0seyJpZCI6Im9wZW5haSIsImxhYmVsIjoiT3BlbkFJIiwiZ2x5cGgiOiJvcGVuYWkiLCJzdHlsZSI6ImNhcmQrZ2x5cGgifSx7ImlkIjoiZ2VtaW5pIiwibGFiZWwiOiJHZW1pbmkiLCJnbHlwaCI6ImdlbWluaSIsInN0eWxlIjoiY2FyZCtnbHlwaCJ9LHsiaWQiOiJrdiIsImxhYmVsIjoia3YtY2FjaGUiLCJkZXNjIjoicmVkaXMiLCJnbHlwaCI6InJlZGlzIiwic3R5bGUiOiJjYXJkK2dseXBoIn0seyJpZCI6Im9icyIsImxhYmVsIjoibWV0cmljcyIsImRlc2MiOiJncmFmYW5hIiwiZ2x5cGgiOiJncmFmYW5hIiwic3R5bGUiOiJjYXJkK2dseXBoIn1dLCJlZGdlcyI6W3sic291cmNlIjoicmVxIiwidGFyZ2V0Ijoicm91dGVyIn0seyJzb3VyY2UiOiJyb3V0ZXIiLCJ0YXJnZXQiOiJhbnRocm9waWMifSx7InNvdXJjZSI6InJvdXRlciIsInRhcmdldCI6Im9wZW5haSJ9LHsic291cmNlIjoicm91dGVyIiwidGFyZ2V0IjoiZ2VtaW5pIn0seyJzb3VyY2UiOiJhbnRocm9waWMiLCJ0YXJnZXQiOiJrdiJ9LHsic291cmNlIjoib3BlbmFpIiwidGFyZ2V0Ijoia3YifSx7InNvdXJjZSI6ImdlbWluaSIsInRhcmdldCI6Im9icyJ9LHsic291cmNlIjoicm91dGVyIiwidGFyZ2V0Ijoib2JzIn1dfQ&v=1" alt="Frontier serving DAG: requests through OpenRouter to Anthropic, OpenAI, and Gemini, shared Redis KV cache, Grafana metrics on a telemetry skip edge" width="100%"/>
+</p>
+
+<p align="center"><sub>Frontier serving &middot; layered DAG with a telemetry skip edge</sub></p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file /dev/stdin -g primer --variant cream --chrome bare -o frontier-serving.svg <<'JSON'
+{
+  "topology": "dag",
+  "title": "Frontier Serving",
+  "subtitle": "one key to three frontier labs, shared KV, telemetry skips the ranks",
+  "notes": "frontier serving",
+  "glyph_tint": "full",
+  "nodes": [
+    {
+      "id": "req",
+      "label": "requests",
+      "desc": "clients"
+    },
+    {
+      "id": "router",
+      "label": "OpenRouter",
+      "desc": "one key",
+      "glyph": "openrouter",
+      "style": "card+glyph"
+    },
+    {
+      "id": "anthropic",
+      "label": "Anthropic",
+      "glyph": "anthropic",
+      "style": "card+glyph"
+    },
+    {
+      "id": "openai",
+      "label": "OpenAI",
+      "glyph": "openai",
+      "style": "card+glyph"
+    },
+    {
+      "id": "gemini",
+      "label": "Gemini",
+      "glyph": "gemini",
+      "style": "card+glyph"
+    },
+    {
+      "id": "kv",
+      "label": "kv-cache",
+      "desc": "redis",
+      "glyph": "redis",
+      "style": "card+glyph"
+    },
+    {
+      "id": "obs",
+      "label": "metrics",
+      "desc": "grafana",
+      "glyph": "grafana",
+      "style": "card+glyph"
+    }
+  ],
+  "edges": [
+    {
+      "source": "req",
+      "target": "router"
+    },
+    {
+      "source": "router",
+      "target": "anthropic"
+    },
+    {
+      "source": "router",
+      "target": "openai"
+    },
+    {
+      "source": "router",
+      "target": "gemini"
+    },
+    {
+      "source": "anthropic",
+      "target": "kv"
+    },
+    {
+      "source": "openai",
+      "target": "kv"
+    },
+    {
+      "source": "gemini",
+      "target": "obs"
+    },
+    {
+      "source": "router",
+      "target": "obs"
+    }
+  ]
+}
+JSON
+```
+
+</details>
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/diagram/custom/primer.static?variant=porcelain&chrome=bare&spec=eyJ0b3BvbG9neSI6InBpcGVsaW5lIiwidGl0bGUiOiJNQ1AgR2F0ZXdheSIsInN1YnRpdGxlIjoiaG9zdCBcdTIxOTIgZ2F0ZXdheSBcdTIxOTIgc2VydmVyIFx1MDBiNyByZXF1ZXN0IGFuZCByZXNwb25zZSBhcyB0d28gbGFuZXMiLCJub3RlcyI6Im1jcCBnYXRld2F5IiwiZWRnZV9tb3Rpb24iOiJkYXNoIiwiZ2x5cGhfdGludCI6ImZ1bGwiLCJub2RlcyI6W3siaWQiOiJob3N0IiwibGFiZWwiOiJDbGF1ZGUgQ29kZSIsImRlc2MiOiJNQ1AgaG9zdCIsImdseXBoIjoiY2xhdWRlY29kZSIsInN0eWxlIjoiY2FyZCtnbHlwaCJ9LHsiaWQiOiJndyIsImxhYmVsIjoiTUNQIGdhdGV3YXkiLCJnbHlwaCI6Im1jcCIsInJvbGUiOiJoZXJvIiwic3R5bGUiOiJjYXJkK2dseXBoIn0seyJpZCI6InNlcnZlciIsImxhYmVsIjoiaHlwZXJ3ZWF2ZSIsImRlc2MiOiJNQ1Agc2VydmVyIiwiZ2x5cGgiOiJoeXBlcndlYXZlIiwic3R5bGUiOiJjYXJkK2dseXBoIn1dLCJlZGdlcyI6W3sic291cmNlIjoiaG9zdCIsInRhcmdldCI6Imd3IiwiZGlyZWN0aW9uIjoiYm90aCJ9LHsic291cmNlIjoiZ3ciLCJ0YXJnZXQiOiJzZXJ2ZXIiLCJkaXJlY3Rpb24iOiJib3RoIn1dfQ&v=1" alt="MCP gateway: Claude Code host to hyperweave MCP server through an MCP gateway, request and response as two lanes" width="100%"/>
+</p>
+
+<p align="center"><sub>MCP gateway &middot; host &rarr; gateway &rarr; server, request and response as two lanes</sub></p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file /dev/stdin -g primer --variant porcelain --chrome bare -o mcp-gateway.svg <<'JSON'
+{
+  "topology": "pipeline",
+  "title": "MCP Gateway",
+  "subtitle": "host → gateway → server · request and response as two lanes",
+  "notes": "mcp gateway",
+  "edge_motion": "dash",
+  "glyph_tint": "full",
+  "nodes": [
+    {
+      "id": "host",
+      "label": "Claude Code",
+      "desc": "MCP host",
+      "glyph": "claudecode",
+      "style": "card+glyph"
+    },
+    {
+      "id": "gw",
+      "label": "MCP gateway",
+      "glyph": "mcp",
+      "role": "hero",
+      "style": "card+glyph"
+    },
+    {
+      "id": "server",
+      "label": "hyperweave",
+      "desc": "MCP server",
+      "glyph": "hyperweave",
+      "style": "card+glyph"
+    }
+  ],
+  "edges": [
+    {
+      "source": "host",
+      "target": "gw",
+      "direction": "both"
+    },
+    {
+      "source": "gw",
+      "target": "server",
+      "direction": "both"
+    }
+  ]
+}
+JSON
+```
+
+</details>
+
+<p align="center">
+  <img src="https://hyperweave.app/v1/diagram/custom/primer.static?variant=noir&chrome=bare&spec=eyJ0b3BvbG9neSI6InBpcGVsaW5lIiwidGl0bGUiOiJGcm9udGllciBIYW5kb2ZmIiwic3VidGl0bGUiOiJvbmUgdGFzayByZWxheWVkIGFjcm9zcyBmb3VyIGxhYnMsIHRoZSBjb21ldCBpcyB0aGUgcGF5bG9hZCIsIm5vdGVzIjoiZnJvbnRpZXIgaGFuZG9mZiIsImVkZ2VfbW90aW9uIjoiYmVhbSIsIm5vZGVfc3R5bGUiOiJnbHlwaC1jaXJjbGUiLCJnbHlwaF90aW50IjoiZnVsbCIsIm5vZGVzIjpbeyJsYWJlbCI6IkdQVCIsImdseXBoIjoib3BlbmFpIn0seyJsYWJlbCI6IkNsYXVkZSIsImdseXBoIjoiYW50aHJvcGljIiwicm9sZSI6Imhlcm8ifSx7ImxhYmVsIjoiR2VtaW5pIiwiZ2x5cGgiOiJnZW1pbmkifSx7ImxhYmVsIjoiT2xsYW1hIiwiZ2x5cGgiOiJvbGxhbWEifV19&v=1" alt="Frontier handoff: one task relayed across GPT, Claude, Gemini, and Ollama as a beam comet" width="100%"/>
+</p>
+
+<p align="center"><sub>Frontier handoff &middot; beam relay across four labs</sub></p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file /dev/stdin -g primer --variant noir --chrome bare -o frontier-handoff.svg <<'JSON'
+{
+  "topology": "pipeline",
+  "title": "Frontier Handoff",
+  "subtitle": "one task relayed across four labs, the comet is the payload",
+  "notes": "frontier handoff",
+  "edge_motion": "beam",
+  "node_style": "glyph-circle",
+  "glyph_tint": "full",
+  "nodes": [
+    {
+      "label": "GPT",
+      "glyph": "openai"
+    },
+    {
+      "label": "Claude",
+      "glyph": "anthropic",
+      "role": "hero"
+    },
+    {
+      "label": "Gemini",
+      "glyph": "gemini"
+    },
+    {
+      "label": "Ollama",
+      "glyph": "ollama"
+    }
+  ]
+}
+JSON
+```
+
+</details>
 
 ---
 
@@ -876,6 +1204,11 @@ curl 'https://hyperweave.app/v1/divider/dissolve/automata.static'
 # Genome-agnostic dividers
 curl 'https://hyperweave.app/a/inneraura/dividers/zeropoint'
 
+# Structured frames: /v1/{matrix|diagram}/{preset}/{genome}.{motion}
+# (preset 'custom' takes a base64url spec; diagrams add ?chrome=bare)
+curl 'https://hyperweave.app/v1/matrix/connectors/primer.static?variant=porcelain'
+curl 'https://hyperweave.app/v1/diagram/pipeline/primer.static?variant=porcelain&chrome=bare'
+
 # POST compose
 curl -X POST https://hyperweave.app/v1/compose \
   -H "Content-Type: application/json" \
@@ -910,7 +1243,7 @@ Every artifact ships with:
 
 | Dimension | Count |
 |---|---|
-| Frame types | 10 (badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, receipt, rhythm-strip) |
+| Frame types | 11 (badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram, receipt, rhythm-strip) |
 | Genomes | 4 (automata, brutalist, chrome, primer) |
 | Motion configs | 6 (1 static + 5 border SMIL) |
 | Glyphs | 189 (183 brand marks + 6 geometric shapes) |
@@ -1002,7 +1335,7 @@ HyperWeave is early. If you're interested in building genomes, extending frame t
 <!-- REFERENCE LINKS -->
 [inneraura.ai]: https://inneraura.ai/
 [discord]: https://discord.gg/wVmcAZPQZ8
-[docs]: https://hyperweave.readthedocs.io/
+[docs]: https://hyperweave.app
 [github]: https://github.com/InnerAura/hyperweave
 [instagram]: https://www.instagram.com/hyperweave.ai/
 [linkedin]: https://www.linkedin.com/company/inneraura
