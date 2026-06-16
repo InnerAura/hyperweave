@@ -232,3 +232,49 @@ primer:
         Kept one stencil instead of a light split so measured column geometry
         cannot drift between substrates; substrate nuance lives entirely in
         material tokens, at the cost of any light-only structural flourish.
+  diagram:
+    dark:
+      intent: |-
+        Topology graph on a transparent ground — nodes as 1px cards (rx12,
+        hero rx14 at 1.5px in the signal accent), flow carried by dashed
+        connectors and the closed motion grammar; reads as the same hand
+        that drew the badges and the matrix, not a generic graphviz dump.
+      approach: |-
+        Every layout is a closed-form solve from chassis constants: the
+        pipeline distributes card widths over a 896px banner with 60px
+        gaps; fans share midpoint S-curves (control points at the chord's
+        x midpoint); the flywheel trims its 178px arcs by each card's
+        angular half-width plus 1.2 degrees (the specimen's 24-degree
+        inset at any ring count). Connectors run a marching 5-7 dash
+        (1.618s) with particle riders; beam and flow animate
+        gradientTransform only — geometry never moves. Radial spokes draw
+        under the hub card so they emanate from its surface.
+      tradeoffs: |-
+        Direction is carried by motion, never arrowheads — a reduced-motion
+        or rasterized embed falls back to dashed tubes and reading order
+        alone. Beam/flow repaint per frame, so they declare
+        performance=paint-ok and degrade to particle/dash on
+        composite-only surfaces; dark papers run brighter 400-level flow
+        hues, trading cross-variant hue identity for legible strokes on
+        near-black grounds.
+    light:
+      intent: |-
+        The same topology grammar on light paper: white cards lifted by a
+        two-layer drop shadow, royal-blue signal hero ring, 600-700-level
+        flow hues against the pale ground; the explanatory sibling of the
+        porcelain matrix.
+      approach: |-
+        Identical chassis solve as the dark substrate (the geometry is
+        substrate-blind): 64px fan pitch, 92px convergence pitch meeting
+        at one point on the hero's facing edge, sequence lifelines at a
+        255px gap with 56px message pitch on a 5.236s replay clock.
+        Cards bind --dna-surface-alt over --dna-border hairlines; node
+        dots and branch strokes cycle the genome diagram_flow palette by
+        non-hero order.
+      tradeoffs: |-
+        The 6 percent lift shadow that seats cards on light paper is a
+        literal genome value (var() never resolves in filter attributes),
+        so per-variant shadow retunes are config edits, not CSS; muted
+        comparison cards drop their accent dot entirely, trading slot
+        symmetry for the inert-versus-live read the topology exists to
+        assert.

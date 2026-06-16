@@ -60,6 +60,16 @@ def _spec(frame: FrameType) -> ComposeSpec:
         )
     if frame is FrameType.MATRIX:
         return ComposeSpec(type="matrix", genome_id="primer", matrix=_matrix())
+    if frame is FrameType.DIAGRAM:
+        return ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            diagram={
+                "topology": "pipeline",
+                "title": "Invariant probe",
+                "nodes": [{"label": "A"}, {"label": "B", "role": "hero"}, {"label": "C"}],
+            },
+        )
     raise AssertionError(f"no minimal spec registered for frame type {frame!r} — add one")
 
 

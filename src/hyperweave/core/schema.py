@@ -149,6 +149,25 @@ class GenomeSpec(BaseModel):
     accent_signal: str = Field(description="Status passing color (hex)")
     accent_warning: str = Field(description="Status warning color (hex)")
     accent_error: str = Field(description="Status error/failing color (hex)")
+    diagram_flow: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Diagram flow-accent cycle (hex): node dots, ramp-hue branch "
+            "strokes, and particle fills cycle through it by non-hero node "
+            "order. Validated (3-8 distinct #RRGGBB, redeclared per variant) "
+            "when the genome declares paradigms.diagram."
+        ),
+    )
+    diagram_plates: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Glyph contrast plates (G5): {'light': hex, 'dark': hex} drawn "
+            "from the genome's own surface family. When an identity mark "
+            "falls below the contrast threshold against its backing, the "
+            "gate swaps the plate before degrading the tint — brand colors "
+            "are never altered. Required when paradigms.diagram is declared."
+        ),
+    )
 
     # -- Structure --
     stroke: str = Field(description="Border/stroke color (hex)")

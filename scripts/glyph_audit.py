@@ -17,7 +17,7 @@ import sys
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-REGISTRY = ROOT / "src" / "hyperweave" / "data" / "glyphs.json"
+REGISTRY = ROOT / "src" / "hyperweave" / "data" / "registries" / "glyphs.json"
 
 ESCAPE_TOLERANCE = 0.02  # fraction of the viewBox's long side
 MIN_COVERAGE = 0.4  # a mark filling under 40% of its box is suspicious

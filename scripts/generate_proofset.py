@@ -327,6 +327,8 @@ def _compose(
     connector_data: dict[str, Any] | None = None,
     data_tokens: list[Any] | None = None,
     matrix: dict[str, Any] | None = None,
+    diagram: dict[str, Any] | None = None,
+    chrome: str = "card",
 ) -> str:
     spec = ComposeSpec(
         type=frame_type,
@@ -348,6 +350,8 @@ def _compose(
         connector_data=connector_data,
         data_tokens=list(data_tokens) if data_tokens else [],
         matrix=matrix,
+        diagram=diagram,
+        chrome=chrome,
     )
     return compose(spec).svg
 
@@ -1733,6 +1737,7 @@ def generate_readme(total: int, live_total: int) -> None:
     _emit_brutalist_readme()
     _emit_primer_readme()
     _emit_matrix_readme()
+    _emit_diagram_readme()
     _emit_chrome_readme()
     _emit_telemetry_readme()
     _emit_state_readme()
@@ -3018,6 +3023,419 @@ _MATRIX_EDGE_NOTES: dict[str, str] = {
 }
 
 
+def _degradation_lint(out_dir: Path) -> None:
+    """R1 regression guard: every requested-full mark renders full unless
+    the registry declares it mono or the contrast gate degraded it — those
+    are the only legal reasons. Emits outputs/degradation_report.md and
+    raises on anything unexplained (post-audit, that is a bug)."""
+    import json as _json
+    import re as _re
+
+    from hyperweave.config.loader import load_glyphs
+
+    registry = load_glyphs()
+    payload_re = _re.compile(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", _re.DOTALL)
+    rows: list[tuple[str, int, str, str, str]] = []
+    unexplained: list[str] = []
+    for svg_path in sorted(out_dir.glob("*.svg")):
+        m = payload_re.search(svg_path.read_text())
+        if not m:
+            continue
+        payload = _json.loads(m.group(1))
+        if "rendered" not in payload or "spec" not in payload:
+            continue
+        spec = payload["spec"]
+        artifact_tint = spec.get("glyph_tint", "") or "ink"
+        nodes = spec.get("nodes", [])
+        rendered_tints = payload["rendered"].get("glyph_tint", [])
+        backings = payload["rendered"].get("glyph_backing", [])
+        for i, node in enumerate(nodes):
+            requested = node.get("glyph_tint", "") or artifact_tint
+            rendered = rendered_tints[i] if i < len(rendered_tints) else ""
+            if not node.get("glyph") or not rendered or requested == rendered:
+                continue
+            entry = registry.get(node["glyph"]) or {}
+            backing = backings[i] if i < len(backings) else ""
+            if requested == "full" and rendered == "gradient" and entry.get("gradient"):
+                reason = "gradient master (full-fidelity resolution, not a loss)"
+            elif entry.get("mono"):
+                reason = "mono (official mark is single-color, by design)"
+            elif backing.startswith("tint-"):
+                reason = f"contrast gate ({backing})"
+            else:
+                reason = "UNEXPLAINED"
+                unexplained.append(f"{svg_path.stem}#{i} {node['glyph']}: {requested} -> {rendered}")
+            rows.append((svg_path.stem, i, node["glyph"], f"{requested} -> {rendered}", reason))
+    report = [
+        "# Tint Degradation Report",
+        "",
+        "Every row is a mark whose rendered tint differs from the requested",
+        "tint, with the reason. Post-audit, the only legal reasons are a",
+        "`mono: true` registry declaration or the contrast gate.",
+        "",
+        "| artifact | node | glyph | requested -> rendered | reason |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for artifact, i, glyph, change, reason in rows:
+        report.append(f"| {artifact} | {i} | {glyph} | {change} | {reason} |")
+    if not rows:
+        report.append("| _none_ | | | | every requested tint rendered as requested |")
+    _write(OUT / "degradation_report.md", "\n".join(report) + "\n")
+    print(f"  degradation lint: {len(rows)} degradations, {len(unexplained)} unexplained")
+    if unexplained:
+        raise AssertionError("unexplained full-tint degradations (registry debt in use): " + "; ".join(unexplained))
+
+
+def _emit_diagram_readme() -> None:
+    """Emit outputs/README_DIAGRAM.md + render the diagram proofset.
+
+    A gallery, not a permutation dump (P5). The showcase tier renders each
+    named real system on the variant that flatters it (stacked full-width
+    entries — agent-plan leads); the topology reference renders the
+    coverage presets on porcelain; the pipeline sweep proves chromatic
+    derivation across the other seven variants; the boundary suite proves
+    caps refuse rather than degrade. A text-only coverage matrix closes the
+    file so the set audits as coverage and browses as a gallery. Image
+    roots are relative to outputs/ (this README's own directory), so links
+    resolve locally and on GitHub.
+    """
+    from hyperweave.compose.diagram.input import diagram_preset_names, resolve_diagram_preset
+    from hyperweave.core.diagram import DiagramCapacityError
+    from hyperweave.serve.app import _error_badge
+
+    out_dir = OUT / "proofset" / "primer" / "diagram"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for stale in out_dir.glob("*.svg"):
+        stale.unlink()
+    rel = "proofset/primer/diagram"
+    variants = ["noir", "carbon", "space", "anvil", "cream", "dusk", "petrol"]
+
+    def render(name: str, payload: dict[str, Any], variant: str = "porcelain") -> str:
+        svg = _compose("diagram", "primer", variant=variant, diagram=payload)
+        fname = f"{name}_{variant}.svg"
+        _write(out_dir / fname, svg)
+        return fname
+
+    def entry(title: str, fname: str, caption: str) -> list[str]:
+        return ["", f"### {title}", "", f"![{title}]({rel}/{fname})", "", f"<sub>{caption}</sub>", ""]
+
+    # ── Showcase: named real systems on their flattering variant ─────────
+    gallery = [
+        (
+            "agent-plan",
+            "porcelain",
+            "Plan, Approve, Execute",
+            "A coding-agent session as a replayable sequence trace — plans as artifacts. Solid "
+            "= call, dashed = return, one φ replay clock.",
+        ),
+        (
+            "rag-pipeline",
+            "space",
+            "RAG, End to End",
+            "Pipeline under flow streaming on the space substrate; card+glyph identity "
+            "marks (HF, Postgres) ride the label line.",
+        ),
+        (
+            "inference-serving",
+            "cream",
+            "Inference Serving",
+            "Four-rank DAG at the announced cap — balancer fan-out, shared KV fan-in, "
+            "telemetry skip edge through the under-channel.",
+        ),
+        (
+            "model-router",
+            "dusk",
+            "One Key, Every Model",
+            "Nine-node radial fan at the cap with glyph_tint: full — Gemini's gradient star "
+            "and Mistral's color_paths render as masters.",
+        ),
+        (
+            "event-flywheel",
+            "anvil",
+            "Event Streaming Loop",
+            "Flow circulation on the flywheel ring — no events, only momentum; Kafka "
+            "and Postgres marks on glyph-circles.",
+        ),
+        (
+            "cicd-machine",
+            "porcelain",
+            "CI Run Lifecycle",
+            "State machine: initial stub, four baseline pills, failure branch drop, retry "
+            "under-loop back to queued, TERMINAL tag on deploy.",
+        ),
+        (
+            "build-migration",
+            "cream",
+            "CRA to Vite",
+            "Comparison grammar — the muted dashed card carries the React mark; the hero carries the ring.",
+        ),
+        (
+            "sync-chain",
+            "porcelain",
+            "Edge Sync Fabric",
+            "Four tiers, every link a reciprocal dashed pair — both lanes dash; no primary, no origin of truth.",
+        ),
+        (
+            "request-descent",
+            "cream",
+            "Request Descent",
+            "A stack with explicit top-to-bottom edges: reverse the edge, motion follows.",
+        ),
+        (
+            "frontier-relay",
+            "noir",
+            "Frontier Handoff",
+            "Beam relay across four labs on noir, glyph_tint: full; the near-black Anthropic mark "
+            "opts back to ink per-slot (decision 9's escape).",
+        ),
+        (
+            "gateway-classic",
+            "porcelain",
+            "MCP Gateway — Classic",
+            "The original reference composition: dash both lanes, amber out, violet back — "
+            "reciprocal pairs read as a conversation (per-direction hues, dash-dash lane gap 6).",
+        ),
+        (
+            "frontier-mindmap",
+            "petrol",
+            "The LLM Stack",
+            "Depth-3 radial tree — sectors subdivide by subtree leaf count through three "
+            "rings; branded leaves carry registry marks.",
+        ),
+        (
+            "frontier-dag",
+            "space",
+            "Data Platform Lineage",
+            "Two rank-skipping edges routed through two stacked under-channels on the space substrate.",
+        ),
+    ]
+    gallery_names = {name for name, _, _, _ in gallery}
+    coverage_rows: list[tuple[str, str, str]] = []
+
+    lines: list[str] = [
+        "# HyperWeave Diagram — Topologies + Motion Grammar",
+        "",
+        "Ten topologies, fourteen layout algorithms, one closed motion",
+        "vocabulary (`dash | particle | beam | flow` — a 2x2, never a list).",
+        "Every entry is a named real diagram; the coverage matrix at the end",
+        "maps each artifact to the combinations it proves.",
+        "",
+        "## The tint axis, once",
+        "",
+        "One spec, one parameter. `glyph_tint: ink` renders every identity",
+        "mark in the genome ink token; `glyph_tint: full` renders registry",
+        "masters — color_paths and gradients — and the contrast gate keeps",
+        "every mark legible on its paper, set-uniformly.",
+    ]
+    relay_payload = resolve_diagram_preset("pipeline-relay")
+    fname = render("pipeline-relay-ink", {**relay_payload, "glyph_tint": "ink"})
+    lines += entry("pipeline-relay · ink", fname, "`glyph_tint: ink` — the genome carries the marks.")
+    coverage_rows.append(("pipeline-relay-ink", fname, "teaching pair: ink half"))
+    fname = render("pipeline-relay-full", {**relay_payload, "glyph_tint": "full"})
+    lines += entry("pipeline-relay · full", fname, "`glyph_tint: full` — the brands carry themselves.")
+    coverage_rows.append(("pipeline-relay-full", fname, "teaching pair: full half"))
+
+    lines += [
+        "",
+        "## Gallery",
+        "",
+        "Every entry is a pair: the hero, then the same payload on the same",
+        "paper rendered `glyph_tint: full` + `chrome: bare` — full marks on",
+        "transparent paper, ready to sit in a host page.",
+    ]
+    companion_variant_overrides = {"gateway-classic": "carbon"}
+    for name, variant, title, caption in gallery:
+        payload = resolve_diagram_preset(name)
+        fname = render(name, payload, variant)
+        lines += entry(title, fname, caption)
+        already_full = str(payload.get("glyph_tint", "")) == "full"
+        comp_variant = companion_variant_overrides.get(name, variant)
+        bare_svg = _compose(
+            "diagram", "primer", variant=comp_variant, chrome="bare", diagram={**payload, "glyph_tint": "full"}
+        )
+        _write(out_dir / f"{name}-companion_{comp_variant}.svg", bare_svg)
+        if comp_variant != variant:
+            companion_caption = f"full marks · bare chrome — the same payload restated on {comp_variant}."
+        elif already_full:
+            companion_caption = "bare chrome — the hero is already full-tint; the companion proves bare alone."
+        else:
+            companion_caption = "full marks · bare chrome — same payload, same paper."
+        lines += entry(f"{title} — companion", f"{name}-companion_{comp_variant}.svg", companion_caption)
+        coverage_rows.append(
+            (f"{name}-companion", f"{name}-companion_{comp_variant}.svg", "gallery companion: full + bare")
+        )
+
+    # ── Topology reference: the coverage presets on porcelain ────────────
+    proves = {
+        "pipeline": "pipeline · card · particle/dash-march track · hero ratio",
+        "fanout-horizontal": "fanout-horizontal · card+glyph identity marks · midpoint S-curves",
+        "fanout-bilateral": "fanout-bilateral · side split · shared band",
+        "fanout-upward": "fanout-upward · headerless · inverted pyramid",
+        "fanout-radial": "fanout-radial · equiangle ring · glyph-circle hub · emanation mask",
+        "convergence": "convergence · single meet point",
+        "flywheel": "flywheel · arc insets · boundary-true trims (G1) · hero axis",
+        "stack": "stack · portrait · x operators · rising risers",
+        "tree": "tree (banner star) · 2-line descs · width solve",
+        "comparison": "comparison · muted grammar · chassis-accent connector",
+        "sequence": "sequence · replay clock · call/return semantics (P3) · labels · card+glyph headers",
+        "pipeline-relay": "beam relay · slot-locked clock · glyph-circles · paint-ok",
+        "pipeline-streaming": "flow streaming · period rule · one system hue",
+        "fanout-volley": "beam volley · staggered begins · ramp-hue comets",
+        "convergence-arrivals": "beam arrivals · absorb-at-hub parking",
+        "flywheel-circulation": "flow circulation · chord-aligned arcs · quarter stagger",
+        "integration-hub": "bilateral x glyph-circle x flow · flipped-edge directions",
+        "frontier-gateway": "per-EDGE motion mix (beam + particle) · extent-aware lane gap — the per-edge-motion proof",
+        "gateway": "reciprocal lanes (once per direction) · direction:both sugar",
+        "service-dependencies": "dag · longest-path ranks · barycenter · skip channel",
+        "order-lifecycle": "state-machine · baseline/branch/loop · TERMINAL · labels",
+        "mindmap": "tree-radial · subtree sector subdivision · glyph-circle hub",
+    }
+    gallery_proves = {
+        "agent-plan": "sequence on real content · repeated directed pairs · launch shot",
+        "rag-pipeline": "pipeline x flow x card+glyph on a dark variant",
+        "inference-serving": "dag at the 4-rank cap · rank-count canvas sizing (G3) · full tint on cream",
+        "model-router": "fanout-radial at the 9-node cap · glyph_tint: full · gradient + color_paths marks",
+        "event-flywheel": "flywheel circulation with branded glyph-circles · no-axis ring",
+        "cicd-machine": "state-machine on real content · solved baseline fit",
+        "build-migration": "comparison x card+glyph · muted identity mark",
+        "sync-chain": "reciprocal dashed pairs on every link · direction:both x dash",
+        "request-descent": "stack with reversed explicit edges · direction control",
+        "frontier-relay": "beam relay x full tint x noir · per-slot glyph_tint override",
+        "gateway-classic": "dash-dash reciprocal pairs · per-direction lane hues · composition gap",
+        "frontier-mindmap": "tree-radial at depth 3 · ring-3 placement",
+        "frontier-dag": "dag with 2 skip edges · stacked under-channels",
+    }
+    lines += [
+        "",
+        "## Topology reference (porcelain)",
+    ]
+    coverage_rows.extend((name, f"{name}_{variant}.svg", gallery_proves[name]) for name, variant, _, _ in gallery)
+    reference_companions = {"fanout-bilateral", "fanout-horizontal", "fanout-volley"}
+    for preset in sorted(diagram_preset_names()):
+        if preset in gallery_names:
+            continue
+        payload = resolve_diagram_preset(preset)
+        fname = render(preset, payload)
+        lines += entry(preset, fname, proves.get(preset, preset))
+        coverage_rows.append((preset, fname, proves.get(preset, preset)))
+        if preset in reference_companions:
+            bare_svg = _compose(
+                "diagram", "primer", variant="porcelain", chrome="bare", diagram={**payload, "glyph_tint": "full"}
+            )
+            _write(out_dir / f"{preset}-companion_porcelain.svg", bare_svg)
+            lines += entry(
+                f"{preset} — companion",
+                f"{preset}-companion_porcelain.svg",
+                "full marks · bare chrome — same payload, same paper.",
+            )
+            coverage_rows.append(
+                (f"{preset}-companion", f"{preset}-companion_porcelain.svg", "reference companion: full + bare")
+            )
+
+    # ── Chromatic derivation ──────────────────────────────────────────────
+    lines += [
+        "",
+        "## Chromatic derivation",
+        "",
+        "The chassis is substrate-blind; the pipeline preset restates the flow",
+        "palette and inks across the other seven variants through genome data",
+        "alone.",
+    ]
+    pipeline_payload = resolve_diagram_preset("pipeline")
+    for variant in variants:
+        fname = render("pipeline", pipeline_payload, variant)
+        lines += entry(f"pipeline · {variant}", fname, f"`?variant={variant}` — same chassis, different substrate.")
+        coverage_rows.append((f"pipeline ({variant})", fname, f"chromatic derivation · {variant}"))
+
+    # ── Presentation chrome: one illustration ─────────────────────────────
+    lines += [
+        "",
+        "## Presentation chrome",
+        "",
+        "`?chrome=bare` ships transparent paper with no masthead and no",
+        "footer; the title travels in hw:title/aria/markdown/payload. Every",
+        "gallery companion above is bare — this is what one looks like",
+        "living in a host page (bare callers own paper matching: the",
+        "genome's inks assume its own surface family):",
+        "",
+        "![bare chrome in a host page](raster/bare-mock-page.png)",
+    ]
+
+    # ── Genome entrance channel: the `none` cell ──────────────────────────
+    # entrance is paradigm config (frozen), so the proofset closes the
+    # cell emitter-side: swap the resolver's layout entry point for one
+    # that copies the chassis with entrance="none".
+    import hyperweave.compose.resolvers.diagram as _dres
+
+    _real_layout = _dres.compute_diagram_layout
+
+    def _entranceless(spec: Any, *, paradigm: Any, **kw: Any) -> Any:
+        return _real_layout(spec, paradigm=paradigm.model_copy(update={"entrance": "none"}), **kw)
+
+    _dres.compute_diagram_layout = _entranceless
+    try:
+        fname = render("entrance-none", pipeline_payload)
+    finally:
+        _dres.compute_diagram_layout = _real_layout
+    lines += entry(
+        "entrance: none",
+        fname,
+        "The genome entrance channel's other value — no fade-in group; content paints at full opacity from frame zero.",
+    )
+    coverage_rows.append(("entrance-none", fname, "entrance: none (genome entrance channel closes)"))
+
+    # ── Boundaries ────────────────────────────────────────────────────────
+    lines += [
+        "",
+        "## Boundaries (caps refuse rather than degrade)",
+    ]
+    minimal = {"topology": "pipeline", "title": "Minimal", "nodes": [{"label": "A"}, {"label": "B"}, {"label": "C"}]}
+    fname = render("boundary-minimal", minimal)
+    lines += entry("3-node minimum", fname, "Per-layout minimum from data/diagram.yaml.")
+    coverage_rows.append(("boundary-minimal", fname, "per-layout min"))
+    try:
+        _compose(
+            "diagram",
+            "primer",
+            diagram={
+                "topology": "comparison",
+                "nodes": [{"label": "A"}, {"label": "B"}, {"label": "C"}],
+            },
+        )
+        raise AssertionError("over-cap comparison should refuse")
+    except (DiagramCapacityError, ValueError) as exc:
+        svg = _error_badge(str(exc), status_code=422)
+        _write(out_dir / "boundary-over-cap_porcelain.svg", svg)
+        lines += entry(
+            "comparison with 3 nodes",
+            "boundary-over-cap_porcelain.svg",
+            "DiagramCapacityError -> the SMPTE artifact a README embedder would actually see.",
+        )
+        coverage_rows.append(("boundary-over-cap", "boundary-over-cap_porcelain.svg", "capacity refusal -> SMPTE"))
+
+    # ── Coverage matrix (text only) ───────────────────────────────────────
+    lines += [
+        "",
+        "## Coverage matrix",
+        "",
+        "| artifact | proves |",
+        "| --- | --- |",
+    ]
+    for name, fname, what in coverage_rows:
+        lines.append(f"| [`{name}`]({rel}/{fname}) | {what} |")
+    lines += [
+        "",
+        "Reduced-motion strengthens the tube and removes light layers/particles;",
+        "composite-only surfaces (`?performance=composite-only`) ladder",
+        "beam->particle and flow->dash, recorded in the payload's `rendered`",
+        "block (requested vs rendered never silently diverges).",
+        "",
+    ]
+    _degradation_lint(out_dir)
+    _write(OUT / "README_DIAGRAM.md", "\n".join(lines))
+    print(f"  diagram proofset: {len(list(out_dir.glob('*.svg')))} artifacts + README_DIAGRAM.md")
+
+
 def _emit_matrix_readme() -> None:
     """Emit outputs/README_MATRIX.md + render the matrix proofset.
 
@@ -3089,6 +3507,50 @@ def _emit_matrix_readme() -> None:
             continue
         fname = render("check", fixtures["check"], variant=variant)
         lines += [f"**{variant}**", "", f"![check-{variant}](proofset/primer/matrix/{fname})", ""]
+
+    # Surface-conditional derivation: the numeric-heat path re-inks the VALUE
+    # text in OKLCH by substrate and flips ACHROMATIC row glyphs to the genome
+    # ink, while chromatic marks and the genome-invariant heat hues hold. The
+    # check grid above proves indicator-hue invariance; this grid proves the
+    # surface-conditional half — one spec, all eight surfaces.
+    heat_surface = {
+        "title": "Surface derivation — numeric heat",
+        "subtitle": "value ink + achromatic glyphs flip by substrate; chromatic marks and heat hues hold",
+        "columns": [
+            {"id": "m", "label": "MODEL", "role": "label"},
+            {"id": "mark", "label": "", "kind": "glyph", "glyph_tint": "full"},
+            {"id": "swe", "label": "SWE-bench", "kind": "numeric", "polarity": "higher", "unit": "%"},
+            {
+                "id": "price",
+                "label": "PRICE",
+                "sublabel": "per Mtok",
+                "kind": "numeric",
+                "polarity": "lower",
+                "unit": "$",
+            },
+        ],
+        "rows": [
+            {"label": "Claude Opus 4.8", "cells": [{"glyph": "anthropic"}, {"value": 88.6}, {"value": 5}]},
+            {"label": "GPT-5.5", "cells": [{"glyph": "openai"}, {"value": 82.6}, {"value": 5}]},
+            {"label": "Gemini 3.1 Pro", "cells": [{"glyph": "gemini"}, {"value": 80.6}, {"value": 2}]},
+            {"label": "DeepSeek V4-Pro", "cells": [{"glyph": "deepseek"}, {"value": 80.6}, {"value": 0.44}]},
+        ],
+        "notes": "achromatic marks → genome ink · chromatic marks → brand · heat hues genome-invariant",
+    }
+    lines += [
+        "",
+        "### Numeric-heat across all eight surfaces (same spec)",
+        "",
+        "The heat-tile **value ink** is surface-derived in OKLCH — darkened on light",
+        "paper, lifted toward the light ink on dark — and **achromatic row glyphs**",
+        "(Anthropic, OpenAI) resolve to `--dna-ink-primary` so they flip with the",
+        "substrate; the **chromatic** marks (Gemini's gradient, DeepSeek's blue) and",
+        "the genome-invariant heat hues hold. One spec, eight correct renders.",
+        "",
+    ]
+    for variant in variants:
+        fname = render("heat-surface", heat_surface, variant=variant)
+        lines += [f"**{variant}**", "", f"![heat-surface-{variant}](proofset/primer/matrix/{fname})", ""]
 
     edge = _matrix_edge_specs()
     groups = [
@@ -4331,7 +4793,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
         )
 
     # ── State badges with real CI/CD titles ─────────
-    # Titles from data/badge_modes.yaml allowlist trigger indicator rendering
+    # Titles from data/config/badge-modes.yaml allowlist trigger indicator rendering
     # and state-aware CSS. Values are realistic for each domain.
     _state_badges: list[tuple[str, str, str, str, str, str]] = [
         # (spec_id, title, value, genome, variant, glyph_slug)
@@ -5296,7 +5758,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             "n8n-io/n8n",
         ),
         # state-bearing strips across paradigms.
-        # Titles from data/badge_modes.yaml allowlist trigger indicator
+        # Titles from data/config/badge-modes.yaml allowlist trigger indicator
         # rendering and (when state values use sentinel keywords) state-aware
         # CSS threshold tinting.
         (

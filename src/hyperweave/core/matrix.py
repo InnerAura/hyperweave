@@ -168,7 +168,9 @@ class MatrixCell(FrozenModel):
     chips: list[str] = Field(default_factory=list, description="chip cells: packed token list")
     glyph: str = Field(
         default="",
-        description="Glyph registry id (data/glyphs.json) for glyph cells. Registry ids only in v0.4.0-alpha.2.",
+        description=(
+            "Glyph registry id (data/registries/glyphs.json) for glyph cells. Registry ids only in v0.4.0-alpha.2."
+        ),
     )
     note: str = Field(default="", description="Tooltip / aria / markdown-cell detail (never rendered in the SVG)")
 

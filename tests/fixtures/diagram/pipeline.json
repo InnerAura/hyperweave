@@ -1,0 +1,25 @@
+{
+  "topology": "pipeline",
+  "title": "One Compositor, Four Stages",
+  "subtitle": "Agent request flows left-to-right into a rendered surface",
+  "notes": "compose pipeline",
+  "nodes": [
+    {
+      "label": "Agent",
+      "desc": "calls API · MCP"
+    },
+    {
+      "label": "Compositor",
+      "desc": "FRAME × GENOME × DATA",
+      "role": "hero"
+    },
+    {
+      "label": "Artifact",
+      "desc": "self-contained SVG"
+    },
+    {
+      "label": "Surface",
+      "desc": "renders anywhere"
+    }
+  ]
+}

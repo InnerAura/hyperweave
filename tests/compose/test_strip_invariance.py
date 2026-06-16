@@ -148,7 +148,7 @@ def test_brutalist_cells_size_to_content() -> None:
 )
 def test_brutalist_state_indicator_gates_on_stateful_titles(metrics: list[str], expected: bool, case: str) -> None:
     """Brutalist state indicator renders ONLY when at least one metric
-    title is in ``data/badge_modes.yaml`` (STATEFUL_TITLES set).
+    title is in ``data/config/badge-modes.yaml`` (STATEFUL_TITLES set).
 
     Per-metric inference via ``compose/layout.py:decide_strip_mode``;
     no per-strip "force-indicator" override. Data-only strips (high-

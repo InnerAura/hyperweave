@@ -1,0 +1,30 @@
+{
+  "topology": "stack",
+  "title": "Composited Upward",
+  "subtitle": "every layer multiplies into the artifact above it",
+  "notes": "composed stack",
+  "nodes": [
+    {
+      "label": "ARTIFACT",
+      "desc": "one self-contained SVG",
+      "role": "hero"
+    },
+    {
+      "label": "FRAME",
+      "desc": "spatial contract"
+    },
+    {
+      "label": "GENOME",
+      "desc": "chromatic DNA"
+    },
+    {
+      "label": "DATA",
+      "desc": "live connectors"
+    },
+    {
+      "label": "PARADIGM",
+      "desc": "template variant"
+    }
+  ],
+  "operator": "×"
+}

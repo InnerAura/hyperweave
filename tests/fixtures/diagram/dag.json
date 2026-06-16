@@ -1,0 +1,79 @@
+{
+  "topology": "dag",
+  "title": "Service Dependencies",
+  "subtitle": "fan-in, fan-out and a rank-skipping edge — the general-graph case",
+  "notes": "dependency dag",
+  "nodes": [
+    {
+      "id": "web",
+      "label": "web",
+      "desc": "edge frontend",
+      "glyph": "react"
+    },
+    {
+      "id": "worker",
+      "label": "worker",
+      "desc": "batch jobs",
+      "glyph": "python"
+    },
+    {
+      "id": "api",
+      "label": "api",
+      "desc": "REST · graphql",
+      "glyph": "nginx"
+    },
+    {
+      "id": "queue",
+      "label": "queue",
+      "desc": "events",
+      "glyph": "rabbitmq"
+    },
+    {
+      "id": "auth",
+      "label": "auth",
+      "desc": "tokens"
+    },
+    {
+      "id": "db",
+      "label": "db",
+      "desc": "postgres",
+      "glyph": "postgresql"
+    },
+    {
+      "id": "cache",
+      "label": "cache",
+      "desc": "redis",
+      "glyph": "redis"
+    }
+  ],
+  "edges": [
+    {
+      "source": "web",
+      "target": "api"
+    },
+    {
+      "source": "worker",
+      "target": "queue"
+    },
+    {
+      "source": "api",
+      "target": "auth"
+    },
+    {
+      "source": "api",
+      "target": "db"
+    },
+    {
+      "source": "api",
+      "target": "cache"
+    },
+    {
+      "source": "queue",
+      "target": "db"
+    },
+    {
+      "source": "worker",
+      "target": "db"
+    }
+  ]
+}

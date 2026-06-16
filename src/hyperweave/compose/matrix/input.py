@@ -8,7 +8,7 @@ order:
    body, MCP ``matrix=`` dict). Passed through untouched.
 2. **Adapter** — ``connector_data["matrix_adapter"]`` names a server-known
    generator. ``connector-registry`` builds the connector matrix from
-   ``data/connector_registry.yaml`` (productionizes the v0.3.12 hand-built
+   ``data/registries/connectors.yaml`` (productionizes the v0.3.12 hand-built
    artifact; a registry edit updates the artifact).
 3. **Data tokens** — ``spec.data_tokens`` becomes a simple two-column
    metric/value table.
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
     from hyperweave.core.models import ComposeSpec
 
+from hyperweave.config.loader import load_matrix_presets
 from hyperweave.core.matrix import (
     Align,
     CellKind,
@@ -44,17 +45,15 @@ from hyperweave.core.matrix import (
     RowHeight,
 )
 
-# Server-known preset names → the connector_data payload that produces
-# them. Transports (CLI --preset, GET /v1/matrix/{preset}, MCP) resolve a
-# preset through here so all three stay in lockstep (Invariant 9).
-_MATRIX_PRESETS: dict[str, dict[str, Any]] = {
-    "connectors": {"matrix_adapter": "connector-registry"},
-}
-
 
 def matrix_preset_names() -> tuple[str, ...]:
-    """Preset names for discovery surfaces (hw_discover, /v1/frames)."""
-    return tuple(sorted(_MATRIX_PRESETS))
+    """Preset names for discovery surfaces (hw_discover, /v1/frames).
+
+    Server-known presets live in ``data/presets/matrix.yaml`` — transports (CLI
+    --preset, GET /v1/matrix/{preset}, MCP) all resolve through here so the
+    three stay in lockstep (Invariant 9).
+    """
+    return tuple(sorted(load_matrix_presets()))
 
 
 def resolve_matrix_preset(name: str) -> dict[str, Any]:
@@ -63,10 +62,11 @@ def resolve_matrix_preset(name: str) -> dict[str, Any]:
     Raises :class:`MatrixInputError` for unknown names so image surfaces
     degrade to the error badge with a useful message.
     """
+    presets = load_matrix_presets()
     try:
-        return dict(_MATRIX_PRESETS[name])
+        return dict(presets[name])
     except KeyError:
-        known = ", ".join(matrix_preset_names())
+        known = ", ".join(sorted(presets))
         raise MatrixInputError(f"unknown matrix preset {name!r} (known presets: {known})") from None
 
 
@@ -100,7 +100,7 @@ def build_connector_registry_matrix(registry: Sequence[Mapping[str, Any]]) -> Ma
     live in the payload.
     """
     if not registry:
-        raise MatrixInputError("connector registry is empty (data/connector_registry.yaml)")
+        raise MatrixInputError("connector registry is empty (data/registries/connectors.yaml)")
 
     rows: list[MatrixRow] = []
     for entry in registry:

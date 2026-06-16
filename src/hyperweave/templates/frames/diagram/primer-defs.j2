@@ -1,0 +1,68 @@
+{# Primer diagram defs. Type voices and style scalars are resolver-supplied
+   (diagram_voices / diagram_style) so measured layout and rendered CSS stay
+   coupled. Flow-accent hex arrives pre-resolved in diagram_flow (genome
+   diagram_flow palette) — indices on placements bind the classes below.
+   Beam/flow gradients arrive as frozen GradientSpec records: the gradient
+   COORDINATES animate (animateTransform on gradientTransform —
+   transform-class CIM); geometry never moves. #}
+{# flood-color/flood-opacity are SVG ATTRIBUTES — var() does not resolve
+   there. Literal genome values, per the matrix primer defs. #}
+<filter id="{{ uid }}-lift" x="-6%" y="-10%" width="112%" height="124%">
+  <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="{{ _genome_raw.shadow_opacity }}"/>
+  <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="{{ _genome_raw.shadow_color }}" flood-opacity="0.04"/>
+</filter>
+{% if diagram_layout.gradients %}
+<filter id="{{ uid }}-blur" x="-20%" y="-400%" width="140%" height="900%">
+  <feGaussianBlur stdDeviation="{{ diagram_style.halo_blur }}"/>
+</filter>
+{% endif %}
+{% for g in diagram_layout.gradients %}
+<linearGradient id="{{ uid }}-{{ g.id_suffix }}" gradientUnits="userSpaceOnUse" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}"{% if g.spread %} spreadMethod="{{ g.spread }}"{% endif %}>
+{% for stop in g.stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"{% if stop.opacity != 1.0 %} stop-opacity="{{ stop.opacity }}"{% endif %}/>
+{% endfor %}{% if g.animate %}  <animateTransform attributeName="gradientTransform" type="translate" values="{{ g.animate.values }}"{% if g.animate.keytimes %} keyTimes="{{ g.animate.keytimes }}"{% endif %}{% if g.animate.calc_mode %} calcMode="{{ g.animate.calc_mode }}"{% endif %}{% if g.animate.keysplines %} keySplines="{{ g.animate.keysplines }}"{% endif %} dur="{{ g.animate.dur }}"{% if g.animate.begin %} begin="{{ g.animate.begin }}"{% endif %} repeatCount="indefinite"/>
+{% endif %}</linearGradient>
+{% endfor %}
+{% for g in diagram_glyph_gradients %}
+{# Brand glyph gradient — uid-scoped per artifact (the matrix idiom). #}
+<linearGradient id="{{ uid }}-gg-{{ g.id }}" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}">
+{% for stop in g.stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
+{% endfor %}</linearGradient>
+{% endfor %}
+<style>
+{{ font_faces | safe }}
+{% for v in diagram_voices %}.{{ uid }}-{{ v.name }} { font-family: {{ v.stack }}; font-size: {{ v.size }}px; font-weight: {{ v.weight }}; letter-spacing: {{ v.tracking }}em; }
+{% endfor %}
+/* Chassis paints by role — the genome expresses through --dna-*; the flow
+   palette below is the communication layer (per-variant genome data). */
+.{{ uid }}-title, .{{ uid }}-name, .{{ uid }}-hname, .{{ uid }}-op, .{{ uid }}-short, .{{ uid }}-hubshort { fill: var(--dna-ink-primary); }
+.{{ uid }}-sub, .{{ uid }}-ndesc, .{{ uid }}-mdesc, .{{ uid }}-mname, .{{ uid }}-clbl, .{{ uid }}-elbl, .{{ uid }}-key, .{{ uid }}-tag { fill: var(--dna-ink-muted); }
+.{{ uid }}-hdesc { fill: var(--dna-signal); }
+.{{ uid }}-ft { fill: var(--dna-ink-muted); opacity: 0.7; }
+.{{ uid }}-cardbg { fill: var(--dna-surface-alt); stroke: var(--dna-border); }
+.{{ uid }}-herobg { fill: var(--dna-surface-alt); stroke: var(--dna-signal); }
+.{{ uid }}-life { stroke: var(--dna-border); stroke-width: 1.2; stroke-dasharray: 3 5; }
+.{{ uid }}-act { fill: var(--dna-surface-alt); stroke: var(--dna-border); stroke-width: 1; }
+.{{ uid }}-stub { stroke: var(--dna-border); stroke-width: 1.5; }
+.{{ uid }}-idot { fill: var(--dna-ink-primary); }
+.{{ uid }}-branch { fill: none; stroke-width: {{ diagram_style.stroke_width }}; stroke-linecap: {{ diagram_style.linecap }}; }
+.{{ uid }}-tube { stroke: var(--dna-ink-muted); opacity: {{ diagram_style.tube_opacity }}; }
+.{{ uid }}-light { fill: none; stroke-linecap: round; }
+.{{ uid }}-p { will-change: transform; }
+{% for i in range(diagram_flow | length) %}.{{ uid }}-fl{{ i }} { stroke: {{ diagram_flow[i] }}; }
+.{{ uid }}-flp{{ i }} { fill: {{ diagram_flow[i] }}; }
+{% endfor %}.{{ uid }}-fls { stroke: var(--dna-signal); }
+.{{ uid }}-flps { fill: var(--dna-signal); }
+{% set ns = namespace(march=false) %}
+{% for c in diagram_layout.connectors %}{% if c.track == 'dash-march' and not c.inert %}{% set ns.march = true %}.{{ uid }}-m{{ loop.index0 }} { stroke-dasharray: {{ diagram_style.dash }};{% if diagram_style.march_opacity != 1.0 %} opacity: {{ diagram_style.march_opacity }};{% endif %} will-change: stroke-dashoffset; animation: {{ uid }}-f {{ diagram_style.ants_dur }} linear infinite;{% if c.ant_delay %} animation-delay: {{ c.ant_delay }};{% endif %} }
+{% endif %}{% endfor %}
+{% if ns.march %}@keyframes {{ uid }}-f { to { stroke-dashoffset: {{ diagram_style.ants_offset_to }}; } }
+{% endif %}
+{% if diagram_layout.entrance == 'fade' %}.{{ uid }}-in { animation: {{ uid }}-enter {{ diagram_style.fade_dur }} {{ diagram_style.fade_ease }} both; }
+@keyframes {{ uid }}-enter { from { opacity: 0; } }
+{% endif %}
+@media (prefers-reduced-motion: reduce) {
+  .{{ uid }}-branch, .{{ uid }}-in { animation: none !important; }
+  .{{ uid }}-p, .{{ uid }}-light { display: none; }
+  .{{ uid }}-tube { opacity: {{ diagram_style.tube_reduced_opacity }}; }
+}
+</style>

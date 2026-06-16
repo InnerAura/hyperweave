@@ -87,8 +87,8 @@ def load_paradigms() -> dict[str, ParadigmSpec]:
 
 
 def load_glyphs() -> dict[str, dict[str, Any]]:
-    """Load the glyph registry from data/glyphs.json."""
-    path = _data_path("glyphs.json")
+    """Load the glyph registry from data/registries/glyphs.json."""
+    path = _data_path("registries/glyphs.json")
     if not path.exists():
         return {}
     return _read_json(path)  # type: ignore[no-any-return]
@@ -96,7 +96,7 @@ def load_glyphs() -> dict[str, dict[str, Any]]:
 
 @lru_cache(maxsize=1)
 def load_badge_modes() -> frozenset[str]:
-    """Load the stateful-title allowlist from data/badge_modes.yaml.
+    """Load the stateful-title allowlist from data/config/badge-modes.yaml.
 
     Titles in the returned frozenset trigger status-indicator rendering
     AND auto-state-inference (engine.py:infer_state). Titles NOT in the
@@ -105,7 +105,7 @@ def load_badge_modes() -> frozenset[str]:
 
     Cached because every badge resolution checks against this set.
     """
-    path = _data_path("badge_modes.yaml")
+    path = _data_path("config/badge-modes.yaml")
     if not path.exists():
         return frozenset()
     raw = _read_yaml(path) or {}
@@ -114,7 +114,7 @@ def load_badge_modes() -> frozenset[str]:
 
 @lru_cache(maxsize=1)
 def load_marquee_classes() -> tuple[dict[str, str], str]:
-    """Load the marquee metric→category map from data/marquee_classes.yaml.
+    """Load the marquee metric→category map from data/config/marquee-classes.yaml.
 
     Inverts the ``categories: {category: [metric, ...]}`` lists into a flat
     ``{metric_lower: category}`` dict at load. Returns
@@ -123,7 +123,7 @@ def load_marquee_classes() -> tuple[dict[str, str], str]:
     empty map + ``"volume"`` default (all-volume fail-safe). Cached because
     every marquee resolution reads it.
     """
-    path = _data_path("marquee_classes.yaml")
+    path = _data_path("config/marquee-classes.yaml")
     if not path.exists():
         return {}, "volume"
     raw = _read_yaml(path) or {}
@@ -137,7 +137,7 @@ def load_marquee_classes() -> tuple[dict[str, str], str]:
 
 @lru_cache(maxsize=1)
 def load_font_embedding() -> dict[str, Any]:
-    """Load font embedding gate from data/font-embedding.yaml.
+    """Load font embedding gate from data/config/font-embedding.yaml.
 
     Returns a dict with three top-level keys:
 
@@ -150,7 +150,7 @@ def load_font_embedding() -> dict[str, Any]:
     Cached because the font gate fires once per compose() call across
     every HTTP/CLI/MCP entry point.
     """
-    path = _data_path("font-embedding.yaml")
+    path = _data_path("config/font-embedding.yaml")
     if not path.exists():
         return {"defaults": {}, "genomes": {}, "non_embedded_locales": []}
     raw = _read_yaml(path) or {}
@@ -163,14 +163,14 @@ def load_font_embedding() -> dict[str, Any]:
 
 @lru_cache(maxsize=1)
 def load_matrix_config() -> dict[str, Any]:
-    """Load matrix engine config from data/matrix.yaml.
+    """Load matrix engine config from data/config/matrix-frame.yaml.
 
     Frame-generic cell knobs: ``caps``, ``polarity_keywords``,
     ``semantic_palette``, ``cell_geometry``, ``mono_triggers``. Chassis
     values live in the paradigm YAML instead. Cached because every matrix
     resolution reads it.
     """
-    path = _data_path("matrix.yaml")
+    path = _data_path("config/matrix-frame.yaml")
     if not path.exists():
         return {}
     raw = _read_yaml(path) or {}
@@ -178,14 +178,61 @@ def load_matrix_config() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
+def load_diagram_config() -> dict[str, Any]:
+    """Load diagram engine config from data/config/diagram-frame.yaml.
+
+    Frame-generic flow knobs: ``caps``, ``orientation_legality``,
+    ``renders_edge_labels``, connector/track/particle/beam/flow constants,
+    ``choreography``, ``fallback_ladder``, ``mono_triggers``. Chassis values
+    and the kinetic-channel defaults live in the paradigm YAML instead.
+    Cached because every diagram resolution reads it.
+    """
+    path = _data_path("config/diagram-frame.yaml")
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path) or {}
+    return dict(raw)
+
+
+@lru_cache(maxsize=1)
+def load_diagram_presets() -> dict[str, dict[str, Any]]:
+    """Load server-known diagram presets from data/presets/diagram.yaml.
+
+    Each entry is a complete DiagramSpec dict (specimen recreations and the
+    canon applied set) keyed by preset slug. Presets are content, so they
+    live in data/ — a YAML edit updates the artifact, zero Python edits.
+    """
+    path = _data_path("presets/diagram.yaml")
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path) or {}
+    return {str(k): dict(v) for k, v in (raw.get("presets") or {}).items()}
+
+
+def load_matrix_presets() -> dict[str, dict[str, Any]]:
+    """Load server-known matrix presets from data/presets/matrix.yaml.
+
+    Same shape as :func:`load_diagram_presets`: a ``presets`` map keyed by
+    slug. Matrix presets are connector_data payloads (e.g. ``connectors`` names
+    an adapter built by ``build_connector_registry_matrix``), so the
+    declaration is data and the builder stays code.
+    """
+    path = _data_path("presets/matrix.yaml")
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path) or {}
+    return {str(k): dict(v) for k, v in (raw.get("presets") or {}).items()}
+
+
+@lru_cache(maxsize=1)
 def load_connector_registry() -> tuple[dict[str, Any], ...]:
-    """Load the connector registry from data/connector_registry.yaml.
+    """Load the connector registry from data/registries/connectors.yaml.
 
     Source for the generated connector matrix (the ``connector-registry``
     matrix adapter). Returns the ordered connector entries; an immutable
     tuple because the result is cached and shared.
     """
-    path = _data_path("connector_registry.yaml")
+    path = _data_path("registries/connectors.yaml")
     if not path.exists():
         return ()
     raw = _read_yaml(path) or {}

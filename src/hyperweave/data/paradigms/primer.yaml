@@ -252,3 +252,213 @@ matrix:
   title_voice: { family: Inter, size: 29, weight: 800, tracking_em: -0.02 }
   desc_voice: { family: JetBrains Mono, size: 10.5, weight: 400 }
   colhead_voice: { family: JetBrains Mono, size: 8.5, weight: 700, tracking_em: 0.12 }
+
+diagram:
+  # One speed of light (K1): constant-velocity transit for particles and
+  # beam comets — per-edge dur = clamp(length / v_target, dur_min, dur_max);
+  # marching tracks add the overtake cap. Phi-family values, calibrated to
+  # the fanout renders (radial holds its 2.618s exactly; horizontal drifts
+  # 2.4 -> 2.68s).
+  motion_v_target: 144
+  motion_dur_min: 2.618
+  motion_dur_max: 4.236
+  track_overtake_floor: 2.5
+  # Topology-diagram chassis + kinetic channel (canon: hw-diagram-alpha3-canon
+  # + the ten topology specimens). Values restate the load-bearing
+  # ParadigmDiagramConfig defaults so the chassis numbers live in data/;
+  # flow-grammar constants (caps, beam/flow anatomy, choreography) are
+  # frame-generic and live in data/diagram.yaml.
+  #
+  # Kinetic channel: primer's default is PARTICLE over a DASH-MARCH track —
+  # two named things (the specimen-true ants+dot treatment). Beam/flow run
+  # over a static tube; reduced-motion kills the march. The allowlist
+  # carries the full closed 2x2.
+  edge_motion_default: particle
+  edge_motion_allowlist: [dash, particle, beam, flow]
+  track_default_by_motion:
+    dash: dash-march
+    particle: dash-march
+    beam: static
+    flow: static
+  # Entrance channel: fade | none wired in alpha.3; draw-on is the vellum
+  # genome session's choreography (rejected at config load until it lands).
+  entrance: fade
+  direction_device: motion
+  title_voice: { family: Inter, size: 16, weight: 700 }
+  subtitle_voice: { family: Inter, size: 11, weight: 400 }
+  label_voice: { family: Inter, size: 13, weight: 600 }
+  desc_voice: { family: JetBrains Mono, size: 9.5, weight: 500 }
+  hero_name_voice: { family: Inter, size: 15, weight: 700 }
+  hero_desc_voice: { family: JetBrains Mono, size: 10, weight: 500 }
+  muted_name_voice: { family: Inter, size: 14, weight: 400 }
+  op_voice: { family: Inter, size: 13, weight: 600 }
+  # Rendered edge labels (sequence, state-machine) carry -> and check marks:
+  # the slot is mono structurally, never a mono_triggers special case.
+  edge_label_voice: { family: JetBrains Mono, size: 9.5, weight: 400 }
+  legend_voice: { family: JetBrains Mono, size: 8, weight: 400, tracking_em: 0.04 }
+  tag_voice: { family: JetBrains Mono, size: 8, weight: 400, tracking_em: 0.06 }
+  short_voice: { family: JetBrains Mono, size: 12, weight: 700 }
+  hub_short_voice: { family: JetBrains Mono, size: 16, weight: 700 }
+  circle_label_voice: { family: JetBrains Mono, size: 9.5, weight: 400 }
+  foot_voice: { family: JetBrains Mono, size: 7, weight: 400, tracking_em: 0.1 }
+  topologies:
+    pipeline: # 896x216 banner: cards on one baseline, 60px gaps
+      width_policy: aligned
+      channel_run_min: 144 # K3: all-reciprocal compositions are wire-major (12 dash periods)
+      width: 896
+      height: 216
+      display_w: 760
+      display_h: 183
+      margin_x: 24
+      gap: 60
+      node: { w: 160, h: 64 }
+      hero: { w: 188, h: 64, rx: 14 }
+    fanout-horizontal: # source left, dest column right, midpoint S-curves
+      width: 760
+      display_w: 740
+      margin_x: 30
+      header_h: 92
+      footer_h: 78
+      pitch: 74
+      node: { w: 156, h: 54, dot_dy: 24, label_dy: 28, desc_dy: 44 }
+      hero: { w: 210, h: 96, rx: 14 }
+    fanout-bilateral: # source centered, dests split left/right
+      width: 820
+      display_w: 760
+      margin_x: 40
+      pitch: 120
+      node: { w: 156, h: 54, dot_dy: 24, label_dy: 28, desc_dy: 44 }
+      hero: { w: 200, h: 96, rx: 14 }
+    fanout-upward: # headerless inverted pyramid, source at the bottom
+      width: 640
+      display_w: 600
+      header_mode: none
+      header_h: 0
+      footer_h: 0
+      margin_x: 20
+      margin_top: 40
+      bottom_m: 20
+      row_cap: 3
+      row_gap: 62
+      src_gap: 48
+      node: { w: 150, h: 56, dot_dy: 24, label_dy: 28, desc_dy: 44 }
+      hero: { w: 220, h: 80, rx: 14 }
+    fanout-radial: # square hub: dests on a ring, rays masked by the hub
+      aspect: square
+      width: 600
+      display_w: 480
+      margin_x: 24
+      header_h: 0
+      footer_h: 0
+      ring_r: 230
+      ring_gap: 80
+      node: { w: 150, h: 54, dot_dy: 24, label_dy: 28, desc_dy: 44 }
+      hero: { w: 184, h: 80, rx: 14 }
+      hero_circle_r: 44
+    convergence: # inputs left column, hero right, one meet point
+      width: 820
+      display_w: 760
+      margin_x: 40
+      header_h: 88
+      pitch: 92
+      bottom_m: 32
+      node: { w: 190, h: 64 }
+      hero: { w: 190, h: 100, rx: 14 }
+    flywheel: # square ring: phase cards at equal angles, arcs between
+      aspect: square
+      width: 600
+      height: 600
+      display_w: 480
+      header_mode: center
+      ring_r: 172
+      arc_r: 178
+      circle_r: 26
+      node: { w: 150, h: 56, dot_dy: 24, label_dy: 28, desc_dy: 44 }
+      hero: { w: 132, h: 46, rx: 14 }
+    stack: # portrait: hero result on top, layers below, x operators
+      width_policy: aligned
+      aspect: portrait
+      width: 480
+      display_w: 392
+      margin_x: 56
+      header_mode: center
+      header_h: 90
+      footer_h: 54
+      gap: 34
+      src_gap: 44
+      node: { w: 300, h: 58 }
+      hero: { w: 368, h: 78, rx: 14 }
+    tree: # banner star: root top-center, leaves on one baseline (depth 1)
+      width_policy: aligned
+      width: 720
+      height: 320
+      margin_x: 30
+      header_h: 56 # the root card's top edge
+      gap: 30
+      pitch: 200 # the leaves' shared top edge
+      leaf_min_w: 140
+      leaf_max_w: 220
+      node: { w: 200, h: 76, dot_dy: 24, label_dy: 28, desc_dy: 46, max_desc_lines: 2 }
+      hero: { w: 180, h: 60, rx: 14 }
+    tree-radial: # square mindmap: ring-1 sectors sized by subtree leaves
+      aspect: square
+      width: 720
+      display_w: 576
+      header_h: 0
+      footer_h: 0
+      margin_x: 24
+      r1: 160
+      r2: 280
+      node: { w: 140, h: 48, dot_dy: 20, label_dy: 24, desc_dy: 38 }
+      node2: { w: 120, h: 40, rx: 10, dot_dy: 18, label_dy: 22, desc_dy: 34 }
+      hero: { w: 160, h: 56, rx: 14 }
+      hero_circle_r: 34
+    comparison: # before/after pair: muted left, hero right, one connector
+      width_policy: aligned
+      width: 720
+      height: 240
+      margin_x: 48
+      node: { w: 268, h: 72 }
+      hero: { w: 268, h: 72, rx: 14 }
+    sequence: # lifelines + ordered messages on one replay clock
+      width_policy: aligned
+      width: 760
+      display_w: 740
+      margin_x: 40
+      header_h: 72
+      footer_h: 48
+      lifeline_gap: 85
+      msg_pitch: 56
+      first_msg_dy: 34
+      node: { w: 170, h: 46, rx: 11, dot_dy: 23, label_dy: 27, desc_dy: 35 }
+      hero: { w: 170, h: 46, rx: 12, dot_dy: 23, label_dy: 20, desc_dy: 35 }
+    dag: # layered ranks left-to-right, skip edges in under-channels
+      width_policy: aligned
+      width: 760
+      height: 360
+      display_w: 740
+      margin_x: 40
+      header_h: 66
+      footer_h: 54
+      rank_gap: 145
+      rank_pitch_max: 120
+      node: { w: 130, h: 50, rx: 11, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40 }
+      hero: { w: 130, h: 50, rx: 12, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40 }
+    state-machine: # pill baseline + branch drop + revise back-loop
+      width: 760
+      height: 300
+      display_w: 740
+      margin_x: 40
+      header_h: 88
+      footer_h: 40
+      pill_pad_x: 32
+      pill_min_w: 120
+      pill_gap: 55
+      drop_gap: 50
+      drop_dy: 92
+      loop_dx: 75
+      loop_dy: 20
+      stub_len: 14
+      tag_dy: 14
+      node: { w: 130, h: 42 }
+      hero: { w: 120, h: 42 }

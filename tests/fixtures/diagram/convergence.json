@@ -1,0 +1,29 @@
+{
+  "topology": "convergence",
+  "title": "Four Inputs, One Artifact",
+  "subtitle": "the composition formula meets at a single mouth",
+  "notes": "four inputs",
+  "nodes": [
+    {
+      "label": "FRAME",
+      "desc": "matrix · diagram · card"
+    },
+    {
+      "label": "GENOME",
+      "desc": "primer · brutalist · chrome"
+    },
+    {
+      "label": "DATA",
+      "desc": "live connectors"
+    },
+    {
+      "label": "PARADIGM",
+      "desc": "template variant"
+    },
+    {
+      "label": "ARTIFACT",
+      "desc": "one self-contained SVG",
+      "role": "hero"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 Each builder turns ``(MatrixCell, box)`` into a fully-resolved
 :class:`CellPlacement` using ``measure_text`` and the cell geometry from
-``data/matrix.yaml``. Everything a template partial emits is precomputed
+``data/config/matrix-frame.yaml``. Everything a template partial emits is precomputed
 here — paths as absolute coordinate strings, paints as ``var(--dna-*)``
 references or semantic literals, text already truncated and anchored.
 
@@ -20,8 +20,14 @@ from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.matrix.records import CellPlacement, ChipPlacement, GlyphPath
 from hyperweave.compose.spatial_records import RectSpec, TextSpec
+from hyperweave.core.color import is_achromatic, oklch_to_rgb, rgb_to_oklch
 from hyperweave.core.matrix import Align, CellKind, CellState, GlyphTint, MatrixCell, MatrixColumn
 from hyperweave.core.text import measure_text
+
+# Surface luminance at or above this reads as a LIGHT substrate (dark ink);
+# below it reads as DARK (light ink). The 8 primer variants split cleanly —
+# light surfaces sit at ~0.86-0.94, dark at <0.01.
+_LIGHT_SURFACE_MIN = 0.5
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -149,15 +155,24 @@ def heat_color(t: float, palette: Mapping[str, Any]) -> str:
     return f"rgb({round(r)},{round(g)},{round(bl)})"
 
 
-def heat_text_color(t: float, palette: Mapping[str, Any]) -> str:
-    """Value ink for a heat cell: the ramp hue darkened for AA contrast.
+def heat_text_color(t: float, palette: Mapping[str, Any], *, surface_lum: float = 1.0) -> str:
+    """Value ink for a heat cell — surface-conditional, hue preserved.
 
     The NUMBER carries the semantic color; the tile behind it is a gentle
-    wash — specimen grammar, inverted from a solid-block treatment.
+    wash. On a LIGHT substrate the hue is darkened for AA contrast (the
+    grandfathered sRGB multiply, kept byte-stable). On a DARK substrate that
+    same dark ink would vanish, so the SAME hue is re-inked in OKLCH: lightness
+    lifted toward the light pole, chroma scaled by the same factor so it stays
+    legible rather than neon. One derivation, opposite poles by surface.
     """
     darken = float(palette.get("heat_text_darken", 0.62))
     r, g, bl = _heat_rgb(t, palette)
-    return f"rgb({round(r * darken)},{round(g * darken)},{round(bl * darken)})"
+    if surface_lum >= _LIGHT_SURFACE_MIN:
+        return f"rgb({round(r * darken)},{round(g * darken)},{round(bl * darken)})"
+    lift = float(palette.get("heat_text_dark_lift", 0.16))
+    lightness, chroma, hue = rgb_to_oklch(r, g, bl)
+    nr, ng, nb = oklch_to_rgb(lightness + lift, chroma * darken, hue)
+    return f"rgb({nr},{ng},{nb})"
 
 
 _PREFIX_UNITS = frozenset({"$", "€", "£", "¥"})
@@ -257,6 +272,7 @@ def build_cell(
     glyph_entry: Mapping[str, Any] | None = None,
     value_zone_w: float = 0.0,
     content_mode: bool = False,
+    surface_lum: float = 1.0,
 ) -> CellPlacement:
     """Dispatch to the kind builder; ``kind`` must be concrete (never AUTO)."""
     builders: dict[CellKind, Callable[..., CellPlacement]] = {
@@ -284,6 +300,7 @@ def build_cell(
         glyph_entry=glyph_entry,
         value_zone_w=value_zone_w,
         content_mode=content_mode,
+        surface_lum=surface_lum,
     )
 
 
@@ -611,6 +628,7 @@ def _numeric(
     emphasis: bool,
     heat_t: float | None,
     axis_frac: float | None,
+    surface_lum: float = 1.0,
     **_kw: Any,
 ) -> CellPlacement:
     geo = geometry.get("numeric") or {}
@@ -656,13 +674,17 @@ def _numeric(
         heat_track=RectSpec(tile.x + inset, ul_y, ul_track_w, ul_h, ul_h / 2),
         heat_underline=RectSpec(tile.x + inset, ul_y, max(0.0, (axis_frac or 0.0) * ul_track_w), ul_h, ul_h / 2),
         tone=fill,
-        tone_opacity=float(palette.get("heat_tile_opacity", 0.13)),
+        tone_opacity=(
+            float(palette.get("heat_tile_opacity_dark", 0.18))
+            if surface_lum < _LIGHT_SURFACE_MIN
+            else float(palette.get("heat_tile_opacity", 0.13))
+        ),
         text=value_text,
         text_x=cx,
         text_y=_baseline(cy - 1.5, cfg.cell_strong_voice),
         text_anchor="middle",
         cls="cellstrong",
-        text_fill=heat_text_color(heat_t, palette),
+        text_fill=heat_text_color(heat_t, palette, surface_lum=surface_lum),
     )
 
 
@@ -772,6 +794,7 @@ def _glyph(
         tint=column.glyph_tint,
         emphasis=emphasis,
         note=cell.note,
+        ink_adaptive_mono=True,
     )
 
 
@@ -788,8 +811,14 @@ def glyph_mark_placement(
     tint: GlyphTint,
     emphasis: bool = False,
     note: str = "",
+    ink_adaptive_mono: bool = False,
 ) -> CellPlacement:
     """Shared glyph mark builder (data cells and row-identity marks).
+
+    ``ink_adaptive_mono`` (matrix opt-in) re-routes an achromatic brand mark
+    to the genome ink so it adapts across substrates. The diagram frame leaves
+    it off — its set-cohesion plate system handles dark-substrate contrast for
+    the same marks, so changing their fill here would fight that gate.
 
     ``tint`` is the SELECTION (ink | brand | full); rendering then DEGRADES
     through what the registry entry actually carries, never erroring:
@@ -816,7 +845,15 @@ def glyph_mark_placement(
         if mode == "gradient":
             group_fill, opacity, glyph_gradient = "", 1.0, glyph_id
         elif mode == "brand":
-            group_fill, opacity, glyph_gradient = str(entry.get("brand_color") or ""), 1.0, ""
+            brand = str(entry.get("brand_color") or "")
+            # A monochrome brand mark (black/white wordmark — anthropic, openai,
+            # mcp) baked to its literal brand black vanishes on a dark substrate.
+            # Re-route it to the genome ink so it adapts: dark-on-light,
+            # light-on-dark. Chromatic marks keep their fixed brand fill.
+            if ink_adaptive_mono and is_achromatic(brand):
+                group_fill, opacity, glyph_gradient = "var(--dna-ink-primary)", 1.0, ""
+            else:
+                group_fill, opacity, glyph_gradient = brand, 1.0, ""
         else:
             group_fill, opacity, glyph_gradient = "var(--dna-ink-primary)", 0.9, ""
 

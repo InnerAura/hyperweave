@@ -15,7 +15,7 @@ from hyperweave.core.matrix import GlyphTint
 
 GLYPHS = load_glyphs()
 
-_FIELD_ORDER = ["path", "viewBox", "brand_color", "category", "gradient", "fill_rule", "color_paths"]
+_FIELD_ORDER = ["path", "viewBox", "brand_color", "category", "mono", "gradient", "fill_rule", "color_paths"]
 _GEOMETRIC = {"circle", "diamond", "hexagon", "shield", "star", "triangle"}
 _EVENODD = {"azure", "langfuse", "msteams", "playwright", "vscode", "zoom"}
 
@@ -42,6 +42,19 @@ class TestRegistryShape:
     def test_fill_rule_entries(self) -> None:
         assert {k for k, v in GLYPHS.items() if "fill_rule" in v} == _EVENODD
         assert all(GLYPHS[k]["fill_rule"] == "evenodd" for k in _EVENODD)
+
+    def test_mono_declarations(self) -> None:
+        """A1: `mono: true` = the OFFICIAL brand mark is single-color, by
+        design forever — exclusive with full-capability, exactly the audited
+        class-(b) set; the remainder is the named class-(c) debt inventory
+        (docs/decisions/glyph-registry-full-audit.md)."""
+        monos = {k for k, v in GLYPHS.items() if "mono" in v}
+        assert all(GLYPHS[k]["mono"] is True for k in monos)
+        full = {k for k, v in GLYPHS.items() if "color_paths" in v or "gradient" in v}
+        assert not monos & full, monos & full
+        assert len(monos) == 121
+        assert len(full) == 38
+        assert len(set(GLYPHS) - monos - full) == 30  # the named wave-3 debt
 
     def test_color_paths_shape(self) -> None:
         masters = {k: v["color_paths"] for k, v in GLYPHS.items() if "color_paths" in v}

@@ -165,6 +165,7 @@ _TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
     ),
     "marquee-horizontal": ("scroll_items",),
     "matrix": ("matrix_text_surface",),
+    "diagram": ("diagram_text_surface",),
     "receipt": (
         "hero_headline",
         "hero_subline",
@@ -268,6 +269,7 @@ def build_context(
         FrameType.STATS: _ctx_stats,
         FrameType.CHART: _ctx_chart,
         FrameType.MATRIX: _ctx_matrix,
+        FrameType.DIAGRAM: _ctx_diagram,
     }
     builder = _BUILDERS.get(spec.type, _ctx_badge)
     ctx = builder(spec, resolved, css_bundle)
@@ -709,6 +711,64 @@ def _ctx_matrix(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, st
             intent=str(ctx.get("matrix_intent", "")),
             data=dict(ctx.get("matrix_envelope_data") or {}),
             frames=[{"t": "matrix", "l": str(ctx.get("matrix_title", ""))}],
+            payload_json=payload_json,
+            genome_label=f"{genome_id}.{variant}" if variant else genome_id,
+            version=str(ctx.get("version", "")),
+            created=str(ctx.get("created_at", "")),
+            state=str(spec.state or ""),
+        )
+        ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))
+        ctx["envelope_format"] = ENVELOPE_VERSION
+    return ctx
+
+
+def _ctx_diagram(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
+    """Context builder for the ``diagram`` frame (topology graph)."""
+    ctx, _uid, _aid = _base_context(spec, resolved, css)
+    # StrictUndefined-safe defaults; the diagram resolver fills all of these.
+    ctx["diagram_layout"] = None
+    ctx["diagram_cfg"] = None
+    ctx["diagram_flow"] = []
+    ctx["diagram_style"] = {}
+    ctx["diagram_voices"] = []
+    ctx["diagram_glyph_gradients"] = []
+    ctx["diagram_envelope_data"] = {}
+    ctx["diagram_intent"] = ""
+    ctx["diagram_title"] = ""
+    ctx["diagram_text_surface"] = []
+    ctx["data_hw_topology"] = ""
+    ctx["performance_tier"] = "composite-only"
+    ctx["motion_vocabulary"] = "static"
+    ctx.update(resolved.frame_context)
+
+    payload_json = str(ctx.get("payload_json") or "")
+    if payload_json:
+        # Content-derived identity (the matrix recipe): same payload +
+        # genome + variant + version => same uid. The payload includes the
+        # RENDERED motion record, so the envelope id is ARTIFACT identity —
+        # the same spec under a different edge_motion hashes differently
+        # (P4), exactly as a different genome or variant already does.
+        digest = hashlib.sha256(
+            "|".join(
+                (
+                    payload_json,
+                    str(ctx.get("genome_id", "")),
+                    str(ctx.get("variant", "")),
+                    str(ctx.get("version", "")),
+                )
+            ).encode("utf-8")
+        ).hexdigest()
+        ctx["uid"] = f"hw-{digest[:8]}"
+        ctx["artifact_id"] = f"diagram-{digest[:16]}"
+        ctx["contract_id"] = ctx["artifact_id"]
+        genome_id = str(ctx.get("genome_id", ""))
+        variant = str(ctx.get("variant", ""))
+        envelope = build_envelope(
+            kind="diagram",
+            title=str(ctx.get("diagram_title", "") or ctx.get("title_text", "")),
+            intent=str(ctx.get("diagram_intent", "")),
+            data=dict(ctx.get("diagram_envelope_data") or {}),
+            frames=[{"t": "diagram", "l": str(ctx.get("diagram_title", "") or ctx.get("title_text", ""))}],
             payload_json=payload_json,
             genome_label=f"{genome_id}.{variant}" if variant else genome_id,
             version=str(ctx.get("version", "")),

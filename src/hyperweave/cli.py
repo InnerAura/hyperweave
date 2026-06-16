@@ -46,7 +46,7 @@ def version() -> None:
 def compose(
     frame_type: Annotated[
         str,
-        typer.Argument(help="Frame: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix"),
+        typer.Argument(help="Frame: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram"),
     ],
     title: Annotated[str, typer.Argument(help="Primary text (label, identity, username, owner/repo, ...)")] = "",
     value: Annotated[str, typer.Argument(help="Secondary text or chart subtype (e.g. 'stars')")] = "",
@@ -108,21 +108,42 @@ def compose(
     # Matrix options
     spec_file: Annotated[
         Path | None,
-        typer.Option("--spec-file", help="MatrixSpec JSON file (matrix frame): columns/rows table IR"),
+        typer.Option("--spec-file", help="MatrixSpec/DiagramSpec JSON file (matrix/diagram frames)"),
     ] = None,
     preset: Annotated[
         str,
-        typer.Option("--preset", help="Server-known matrix preset (matrix frame): connectors"),
+        typer.Option("--preset", help="Server-known preset (matrix: connectors; diagram: pipeline, flywheel, ...)"),
     ] = "",
     markdown_out: Annotated[
         Path | None,
-        typer.Option("--markdown-out", help="Also write the GFM markdown shadow (matrix frame)"),
+        typer.Option("--markdown-out", help="Also write the markdown shadow (matrix/diagram frames)"),
     ] = None,
     glyph_tint: Annotated[
         str,
         typer.Option(
             "--glyph-tint",
             help="Glyph fill selection: ink | brand | full (per-slot IR declarations outrank it)",
+        ),
+    ] = "",
+    performance: Annotated[
+        str,
+        typer.Option(
+            "--performance",
+            help="Surface tier: composite-only ladders diagram beam->particle, flow->dash (recorded in the payload)",
+        ),
+    ] = "",
+    chrome: Annotated[
+        str,
+        typer.Option(
+            "--chrome",
+            help="Diagram presentation: card (default) | bare — transparent paper, no masthead/footer",
+        ),
+    ] = "card",
+    edge_motion: Annotated[
+        str,
+        typer.Option(
+            "--edge-motion",
+            help="Diagram edge-motion override: dash | particle | beam | flow (overrides the spec/preset's motion)",
         ),
     ] = "",
     # Output
@@ -140,6 +161,8 @@ def compose(
       hyperweave compose marquee-horizontal --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
       hyperweave compose matrix --spec-file table.json -g primer --variant porcelain
       hyperweave compose matrix --preset connectors -g primer --markdown-out table.md
+      hyperweave compose diagram --preset pipeline -g primer --variant porcelain
+      hyperweave compose diagram --spec-file flow.json -g primer --markdown-out flow.md
       hyperweave compose <any-frame> --genome-file ./x.json        [custom genome]
     """
     import asyncio
@@ -223,6 +246,41 @@ def compose(
                 typer.echo(f"Error: {exc}", err=True)
                 raise typer.Exit(2) from exc
 
+    # ── Diagram input: --spec-file (caller IR) or --preset (server-known) ──
+    diagram_spec: dict[str, object] | None = None
+    if frame_type == "diagram":
+        if spec_file is not None:
+            try:
+                diagram_spec = json.loads(spec_file.read_text())
+            except FileNotFoundError as exc:
+                typer.echo(f"Error: {exc}", err=True)
+                raise typer.Exit(2) from exc
+            except json.JSONDecodeError as exc:
+                typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
+                raise typer.Exit(2) from exc
+        elif preset:
+            from hyperweave.compose.diagram.input import resolve_diagram_preset
+            from hyperweave.core.diagram import DiagramInputError
+
+            try:
+                diagram_spec = resolve_diagram_preset(preset)
+            except DiagramInputError as exc:
+                typer.echo(f"Error: {exc}", err=True)
+                raise typer.Exit(2) from exc
+
+        # Artifact-level edge-motion override — mirrors the HTTP ?edge_motion=
+        # query: replaces the spec/preset's edge_motion before compose (per-edge
+        # IR declarations still outrank it). Validated against the closed 2x2.
+        if edge_motion:
+            from hyperweave.core.diagram import EdgeMotion
+
+            if edge_motion not in {e.value for e in EdgeMotion}:
+                allowed = " | ".join(e.value for e in EdgeMotion)
+                typer.echo(f"Error: --edge-motion must be one of: {allowed}", err=True)
+                raise typer.Exit(2)
+            if diagram_spec is not None:
+                diagram_spec = {**diagram_spec, "edge_motion": edge_motion}
+
     # ── ?data= / --data: unified data-token grammar ──
     # Marquee-horizontal consumes spec.data_tokens directly (the resolved list);
     # other frames receive the formatted "K1:V1,K2:V2" string via spec.value.
@@ -272,7 +330,10 @@ def compose(
         connector_data=connector_data,
         data_tokens=data_tokens_resolved,
         matrix=matrix_spec,
+        diagram=diagram_spec,
         glyph_tint=glyph_tint,
+        performance=performance,
+        chrome=chrome,
     )
 
     result = do_compose(spec)

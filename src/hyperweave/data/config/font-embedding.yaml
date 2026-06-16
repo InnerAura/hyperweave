@@ -78,6 +78,9 @@ genomes:
     # Matrix masthead title + pill text are Inter; descriptors, column
     # headers, row labels, cell values, chips, and axis ticks are JBM.
     matrix: [inter, jetbrains-mono]
+    # Diagram headers + node labels are Inter; descs, edge labels, legend,
+    # short marks, and the footer are JBM.
+    diagram: [inter, jetbrains-mono]
     marquee-horizontal: [inter, jetbrains-mono]
 
 # Documentation only in v0.3.7 — no runtime consumer. When CJK

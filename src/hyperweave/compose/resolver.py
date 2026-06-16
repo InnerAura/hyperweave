@@ -107,6 +107,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
 
     # Stats, chart, and matrix resolvers live in compose/resolvers/ per Invariant 10.
     from hyperweave.compose.resolvers.chart import resolve_chart
+    from hyperweave.compose.resolvers.diagram import resolve_diagram
     from hyperweave.compose.resolvers.matrix import resolve_matrix
     from hyperweave.compose.resolvers.stats import resolve_stats
 
@@ -122,6 +123,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         "chart": resolve_chart,
         "stats": resolve_stats,
         "matrix": resolve_matrix,
+        "diagram": resolve_diagram,
     }
 
     resolver_fn = frame_resolvers.get(spec.type, resolve_badge)
@@ -2729,10 +2731,10 @@ _CATEGORY_RANK: dict[str, int] = {"volume": 0, "activity": 1, "identity": 2}
 def _annotate_marquee_items(structured: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Tag each scroll item with category / per-cell state / hero, then group.
 
-    Genome-neutral. Category comes from ``marquee_classes.yaml`` keyed by the
+    Genome-neutral. Category comes from ``marquee-classes.yaml`` keyed by the
     token-grammar metric (live tokens) or the lowercased label (kv tokens).
     Per-cell state reuses ``core.state.infer_state`` — the exact classifier
-    strips use — gated by the ``badge_modes.yaml`` stateful allowlist, applied
+    strips use — gated by the ``badge-modes.yaml`` stateful allowlist, applied
     ONLY to activity cells. Items are stable-sorted volume→activity→identity
     (order only), and the first volume cell (kv/live, not raw text) becomes the
     hero. No color is assigned here — that's a role→CSS-var decision in
@@ -4628,7 +4630,7 @@ def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
         from hyperweave.render.glyphs import infer_glyph, load_glyphs
 
         settings = get_settings()
-        glyphs = load_glyphs(settings.data_dir / "glyphs.json")
+        glyphs = load_glyphs(settings.data_dir / "registries" / "glyphs.json")
 
         glyph_id = spec.glyph
         if glyph_id and glyph_id in glyphs:

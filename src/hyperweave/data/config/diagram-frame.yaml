@@ -1,0 +1,289 @@
+# Diagram frame engine configuration.
+#
+# Frame-generic, genome-blind knobs for the diagram engine: capacity caps,
+# orientation legality, the label-rendering rule, and the closed motion
+# grammar's constants (connector/track/particle/beam/flow, choreography,
+# the fallback ladder). Chassis values (canvas, margins, node dims, type
+# voices) and the kinetic-channel defaults live in the paradigm YAML —
+# this file configures the flow, the paradigm configures the cards.
+#
+# The motion vocabulary is CLOSED — a 2x2, not a list:
+#                  discrete    continuous
+#   composite-only  particle    dash
+#   paint-ok        beam        flow
+# New aesthetics are parameters here (and in the genome's kinetic channel),
+# never new enum values. Reference implementation for every value below is
+# the corresponding specimen in v04/specimens/diagrams/diagram-topologies/.
+
+caps:
+  soft_nodes: 12 # past this: shrink step (named gap/pitch x shrink_factor)
+  hard_nodes: 20 # past this: DiagramCapacityError
+  shrink_factor: 0.85
+  # Per-layout node-count policy. min violations -> DiagramInputError;
+  # max violations -> DiagramCapacityError ("split the diagram").
+  layouts:
+    pipeline: { min: 3, max: 7 }
+    fanout-horizontal: { min: 3, max: 9 } # source + 2..8
+    fanout-bilateral: { min: 4, max: 11 } # source + 3..10
+    fanout-upward: { min: 3, max: 7 } # source + 2..6 (two rows of 3)
+    fanout-radial: { min: 4, max: 9 } # hub + 3..8
+    convergence: { min: 3, max: 7 } # 2..6 inputs + target
+    flywheel: { min: 3, max: 7 } # 3..6 phases + optional axis
+    stack: { min: 3, max: 7 } # result + 2..6 layers
+    tree: { min: 3, max: 6 } # root + 2..5 leaves (depth 1 only)
+    tree-radial: { min: 4, max: 16 } # root + ring-1 + ring-2 (depth 2..3)
+    comparison: { min: 2, max: 2 }
+    sequence: { min: 2, max: 4 } # lifelines; messages capped below
+    dag: { min: 3, max: 12 }
+    state-machine: { min: 3, max: 7 }
+  # Honest graph caps — these keep the layered solver simple and
+  # deterministic; past them the frame refuses rather than degrades.
+  sequence_max_messages: 8
+  dag_max_ranks: 4
+  dag_max_per_rank: 4
+  dag_max_skip_edges: 3
+  sm_max_below_baseline: 2
+  sm_max_back_edges: 2
+  tree_radial_max_depth: 3
+  tree_radial_max_ring1: 7
+
+# topology x orientation legality — config, not a code branch. Widening
+# later = one entry + one solver, zero validator surgery. tree:radial
+# requires depth >= 2 (depth-1 IS fanout-radial); tree:horizontal requires
+# depth 1 (multi-level horizontal has no solver — the error names
+# tree:radial). Topologies absent here accept horizontal only.
+orientation_legality:
+  fanout: [horizontal, bilateral, upward, radial]
+  tree: [horizontal, radial]
+
+# Edge labels render only where the topology's specimen renders them —
+# sequence messages and state-machine transitions are the labels' content;
+# everywhere else explicit-edge labels reach payload/markdown, never SVG.
+renders_edge_labels:
+  sequence: true
+  state-machine: true
+
+# G7 — clearance, not just non-overlap: the minimum breathing distance
+# between any two non-nested node boxes AND between any box and a
+# non-incident connector path. Used twice: as a solver constraint
+# (radial/tree packing + relaxation) and as a structural assertion swept
+# across every preset.
+min_clearance: 18
+
+connector:
+  stroke_width: 1.5
+  standoff: 0 # endpoint clearance from the node BOUNDARY (shape-true; specimens touch)
+  hub_label_clear: 6 # radial hub-label box margin: spokes and particles keep this clearance (G4)
+  dash: "5 7"
+  linecap: round
+  ants_dur: "1.618s" # phi dash-march
+  ants_offset_to: -24
+  ant_stagger: # seconds per connector index (branch animation-delay)
+    default: 0.4
+    fanout-horizontal: 0.3
+    fanout-bilateral: 0.3
+    fanout-upward: 0.3
+    fanout-radial: 0.3
+    stack: 0.3
+
+# The track channel: the line itself, beneath whatever rides it. Which
+# track a motion value gets is genome-declared (paradigm
+# track_default_by_motion); these are the track's physical constants.
+# P3 — track yields to semantics: an edge whose stroke pattern carries
+# meaning (sequence return dash, SM loop/branch hues) resolves static.
+track:
+  march_dash: "5 7"
+  march_dur: "1.618s"
+  march_offset_to: -24
+  tube_opacity: 0.26 # static tube under beam/flow light layers
+  tube_reduced_opacity: 0.5 # reduced-motion strengthens the tube
+  march_opacity: 1.0 # specimen-true for the ten topology presets
+  return_dash: "4 5" # sequence return-message dasharray (meaning-bearing)
+  muted_dash: "4 4" # comparison inert-card border
+
+# Bidirectional connectors: a derived pair may appear once per direction;
+# the solver detects the reciprocal pair and offsets the two lanes.
+#
+# HUE-DUTY TABLE — which hue serves which duty (indices into the genome's
+# diagram_flow cycle; literal hexes never appear here):
+#   node dots / branch strokes / particles  @flow{i}: characteristic-endpoint
+#                                           accent, cycling by non-hero order
+#   hero rings / beam identity              @signal: the genome accent
+#   beam second identity hue                @signal2: diagram_flow[1]
+#   reciprocal pair, forward lane           lane_hues.forward (amber family
+#                                           in the primer base cycle)
+#   reciprocal pair, reverse lane           lane_hues.reverse (violet family)
+# Reciprocal pairs read as a CONVERSATION: per-direction hues are pair
+# data, the same across every link of a chain — never the shared
+# endpoint accent (which renders a doubled line).
+lane_offset: 4
+# Dash-dash pairs have no motion asymmetry separating the lanes; they take
+# more air. Keyed by the pair's sorted motion composition.
+lane_offset_by_composition:
+  dash-dash: 8
+# Gap is measured between RENDERED extents, not centerlines (K2): each
+# motion's half-extent (stroke/2 + glow spread) plus a minimum air floor.
+# The effective pair gap = max(composition value, ext_a + ext_b + min_air)
+# — beams carry a 5px halo + blur, so beam pairs stop bleeding.
+lane_extent:
+  dash: 1.0
+  particle: 2.0
+  beam: 5.5
+  flow: 5.5
+lane_min_air: 3
+lane_hues:
+  forward: 3
+  reverse: 1
+
+particle:
+  r: 3.5
+  # Transit speed is the ONE SPEED OF LIGHT law (K1): per-edge dur =
+  # clamp(length / v_target, dur_min, dur_max), constants on the paradigm
+  # kinetic channel. Departure choreography (the staggers below) is
+  # untouched; slot-locked clocks (beam relay, sequence replay) exempt.
+  stagger:
+    default: 0.5
+    convergence: 0.4
+    tree: 0.55
+    stack: 0.6
+    state-machine: 0.6
+    dag: 0.7
+  opacity:
+    default: { values: "0;.85;.85;0", keytimes: "0;.12;.88;1" }
+    fanout-horizontal: { values: "0;.8;.8;0", keytimes: "0;.1;.9;1" }
+    fanout-bilateral: { values: "0;.8;.8;0", keytimes: "0;.1;.9;1" }
+    fanout-upward: { values: "0;.8;.8;0", keytimes: "0;.1;.9;1" }
+    fanout-radial: { values: "0;.8;.8;0", keytimes: "0;.18;.9;1" }
+    flywheel: { values: "0;.85;.85;0", keytimes: "0;.15;.85;1" }
+    comparison: { values: "0;.9;.9;0", keytimes: "0;.15;.85;1" }
+    state-machine: { values: "0;.85;.85;0", keytimes: "0;.15;.85;1" }
+
+# Beam — the gradient-window comet (declares performance="paint-ok").
+# Anatomy: pad-guarded transparent tip -> head -> signal body -> ember tail
+# (trailing 2/3) + a near-white head filament. The gradient COORDINATES
+# animate (animateTransform on gradientTransform — transform-class);
+# geometry never moves.
+beam:
+  window_ratio: 0.55 # W = clamp(ratio x edge_length, min, max)
+  window_min: 48
+  window_max: 130
+  filament_ratio: 0.32 # filament window as a fraction of W
+  stops: # body gradient offsets/opacities (hue from duty)
+    tip: 0.0
+    head: 0.04
+    body: 0.09
+    tail: 0.35
+    tail_opacity_identity: 0.85
+    tail_opacity_ramp: 0.75
+  halo_width: 5
+  halo_opacity: 0.55
+  halo_blur: 2.2
+  core_width: 2
+  filament_width: 1.15
+  filament_head: "#F0F9FF" # white-hot — a physical constant, genome-blind
+  filament_tail: "#DBEAFE"
+  filament_head_opacity: 0.95
+  relay: # slot-locked, one phi clock (pipelines): hop_gap reads as the
+    # node "processing"; cycle_rest is the breath before the next payload
+    dur: "5.236s"
+    lead: 0.02
+    hop_gap: 0.06
+    cycle_rest: 0.08
+    travel_spline: "0.42 0 0.58 1"
+  volley: # independent phi-staggered shots (fans)
+    dur: "4.236s"
+    stagger: 0.55
+    travel_end: 0.78
+    travel_spline: "0.42 0 0.58 1"
+  arrivals: # shots absorb into the hub (convergence)
+    dur: "4.236s"
+    stagger: 0.6
+    travel_end: 0.78
+    travel_spline: "0.42 0 0.58 1"
+
+# Flow — the laminar gradient current (declares performance="paint-ok").
+# A repeating soft pulse translated exactly one period per cycle: seamless.
+flow:
+  period_ratio: 0.6 # P = clamp(ratio x edge_length, min, max)
+  period_min: 80
+  period_max: 170
+  dur: "2.6s"
+  pulse_peak: 0.45 # gradient stop where opacity peaks
+  pulse_opacity: 0.9
+  halo_width: 5
+  halo_opacity: 0.5
+  halo_blur: 2.2
+  core_width: 2.2
+  streaming_stagger: 0.3 # pipeline/stack: slight per-edge offset
+  circulation: quarter # flywheel: begins at i x dur/4
+  hub_stagger: 0.4 # bilateral hub: per-side begin step
+  hub_side_offset: 0.2 # right side leads/lags the left by this
+  # Arc-aware: gradient bands are straight in coordinate space; under the
+  # sagitta threshold a chord-aligned vector is imperceptible, beyond it
+  # the arc subdivides into segments each within the threshold, with
+  # phase-offset begins so the current reads continuous.
+  sagitta_threshold: 16
+  max_subdivisions: 6
+
+# Which choreography a (layout, motion) pair runs. Values name the timing
+# modes implemented in compose/diagram/motion.py.
+choreography:
+  beam:
+    default: volley
+    pipeline: relay
+    stack: relay
+    convergence: arrivals
+  flow:
+    default: current
+    pipeline: streaming
+    stack: streaming
+    comparison: streaming
+    flywheel: circulation
+
+# Composite-only surfaces degrade automatically; requested vs rendered is
+# recorded in the payload (never silently diverges).
+fallback_ladder:
+  beam: particle
+  flow: dash
+
+# Genome entrance channel constants (fade | none wired; draw-on lands with
+# the vellum genome session and is rejected at config load until then).
+entrance:
+  fade_dur: "0.618s"
+  fade_ease: ease-out
+
+# Sequence ordered replay (K-seq): each message is an independent comet
+# event; the shared clock is DERIVED — lead beat + per-message transits
+# under the K1 speed law + gap beats between events + a rest beat before
+# the loop. Phi-family beats.
+sequence_replay:
+  lead_beat: 0.382
+  gap_beat: 0.618
+  rest_beat: 1.618
+
+# Presentation chrome (F1): card = substrate + masthead + footer (the
+# default); bare = transparent paper, no masthead, no footer — the title
+# ships only in hw:title/aria/markdown/payload. Bare collapses the chrome
+# bands to these pads; the caller owns paper matching (the genome's inks
+# assume its own surface family).
+chrome_bare:
+  top_pad: 24
+  bottom_pad: 20
+
+# Backing-aware glyph contrast gate (G5): a mark must clear its backing
+# (plate circle / card — the genome's surface_1) by this WCAG-style ratio;
+# below it the plate swaps first, then the tint degrades toward ink.
+glyph_contrast:
+  threshold: 3.0
+  # Chromatic relief: a solid saturated mark reads through hue before it
+  # clears 3:1 (HF yellow on dusk). Plateless/pass when RGB distance >= the
+  # floor AND the WCAG ratio >= the small luminance floor.
+  chroma_floor: 120
+  chroma_lum_floor: 1.2
+
+truncation:
+  ellipsis: "…"
+
+# Node-label runs containing any of these tokens route to the mono face —
+# Inter lacks U+2192 and friends. Descs and edge labels are mono by voice.
+mono_triggers: ["→", "←", "↑", "↓", "↔", "×", "::", "`"]

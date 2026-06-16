@@ -53,7 +53,11 @@ async def hw_compose(
     chart_owner: str = "",
     chart_repo: str = "",
     matrix: dict[str, Any] | None = None,
+    diagram: dict[str, Any] | None = None,
     glyph_tint: str = "",
+    performance: str = "",
+    edge_motion: str = "",
+    chrome: str = "card",
     render_target: str = "svg",
 ) -> str:
     """Compose a HyperWeave artifact. Returns self-contained SVG.
@@ -92,6 +96,17 @@ async def hw_compose(
                 connector_data={"matrix_adapter": "connector-registry"} for
                 the generated connector matrix, or data= tokens for a simple
                 metric/value table.
+      diagram:  diagram={"topology": "pipeline|fanout|convergence|flywheel|
+                stack|tree|comparison|sequence|dag|state-machine",
+                "orientation": "horizontal|bilateral|upward|radial" (fanout;
+                tree takes radial for depth>=2 mindmaps), "title": ...,
+                "nodes": [{"label","desc"?,"role"?,"glyph"?,"short"?}...],
+                "edges": [{"source","target","label"?,"kind"?,"direction"?}]
+                — edges are required for sequence/dag/state-machine (they
+                ARE the content), optional direction overlays elsewhere.
+                edge_motion: dash|particle|beam|flow (the closed 2x2;
+                genome allowlist + composite-only fallback ladder). Or use
+                a server preset via the GET URL grammar.
 
     The ``data`` parameter is the unified data-token grammar. Forms:
       text:STRING          — raw display text
@@ -126,12 +141,23 @@ async def hw_compose(
     state_glyph_shape: badge state-indicator shape override: square | circle |
           diamond. Empty = genome/paradigm default (brutalist dark=square /
           light=circle, chrome=diamond, cellular=square).
-    render_target: svg (default) | markdown (matrix: returns the GFM table
-          shadow instead of the SVG) | html (reserved seam — not implemented
-          until v0.5).
+    render_target: svg (default) | markdown (matrix: the GFM table shadow;
+          diagram: the topology text shadow) | html (reserved seam — not
+          implemented until v0.5).
     glyph_tint: glyph fill selection: ink | brand | full. Empty defers to
           the genome default; per-slot IR declarations outrank it.
           Degrades full -> gradient -> brand -> ink, never errors.
+    performance: '' (paint-ok, default) | 'composite-only' — diagram motion
+          ladders beam->particle and flow->dash for compositor-constrained
+          surfaces; the payload's rendered block records fallback_applied.
+    edge_motion: '' (use the spec/preset's own) | dash | particle | beam | flow
+          — artifact-level override of the diagram's edge motion (per-edge IR
+          declarations still outrank it). Parity with the HTTP ?edge_motion=.
+    chrome: card (default) | bare — diagram presentation chrome. Bare ships
+          transparent paper with no masthead/footer (title lives in
+          hw:title/aria/markdown/payload); presentational, excluded from the
+          envelope digest. Bare callers own paper matching — the genome's
+          inks assume its own surface family.
     """
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
@@ -140,6 +166,18 @@ async def hw_compose(
         if render_target == "html":
             raise ValueError("render_target 'html' is a reserved seam — not implemented until v0.5")
         raise ValueError(f"unknown render_target {render_target!r} (svg | markdown)")
+
+    # Artifact-level edge-motion override — mirrors the HTTP ?edge_motion= query
+    # and the CLI --edge-motion: replaces the diagram spec's edge_motion before
+    # compose (per-edge IR declarations still outrank it). Closed 2x2.
+    if edge_motion:
+        from hyperweave.core.diagram import EdgeMotion
+
+        if edge_motion not in {e.value for e in EdgeMotion}:
+            allowed = " | ".join(e.value for e in EdgeMotion)
+            raise ValueError(f"edge_motion must be one of: {allowed}")
+        if diagram is not None:
+            diagram = {**diagram, "edge_motion": edge_motion}
 
     final_value = value
     data_tokens_resolved: list[Any] | None = None
@@ -186,13 +224,16 @@ async def hw_compose(
         chart_repo=chart_repo,
         data_tokens=data_tokens_resolved,
         matrix=matrix,
+        diagram=diagram,
         glyph_tint=glyph_tint,
+        performance=performance,
+        chrome=chrome,
     )
 
     result = compose(spec)
     if render_target == "markdown":
         if not result.markdown:
-            raise ValueError(f"frame type {type!r} has no markdown projection (matrix only in v0.4)")
+            raise ValueError(f"frame type {type!r} has no markdown projection (matrix and diagram in v0.4)")
         return result.markdown
     return result.svg
 
@@ -308,6 +349,25 @@ async def hw_discover(
             "rhetoric_fields": "hero_column, headline, summary_row, emphasis — caller-only, never inferred",
             "projections": "SVG + hw:payload (matrix/1) + hwz/1 envelope + GFM markdown "
             "(render_target='markdown' or ComposeResult.markdown)",
+        }
+
+    if what in ("all", "diagram"):
+        from hyperweave.compose.diagram import registered_slugs
+        from hyperweave.compose.diagram.input import diagram_preset_names
+        from hyperweave.core.diagram import Topology
+
+        result["diagram"] = {
+            "topologies": [t.value for t in Topology],
+            "layout_slugs": registered_slugs(),
+            "orientations": "fanout: horizontal | bilateral | upward | radial; tree: horizontal | radial "
+            "(radial requires depth >= 2 — the mindmap); everything else horizontal",
+            "edge_motion": "the closed 2x2 — composite-only {particle, dash} x paint-ok {beam, flow}; "
+            "genome allowlist enforced; composite-only surfaces ladder beam->particle, flow->dash",
+            "node_styles": "card | glyph-circle | card+glyph — caller-chosen, never inferred",
+            "roles": "default | hero | muted — hero gets the signal ring; muted is the comparison-left grammar",
+            "presets": list(diagram_preset_names()),
+            "projections": "SVG + hw:payload (diagram/1: {spec, rendered}) + hwz/1 envelope "
+            "(pattern + n + content) + markdown shadow (render_target='markdown')",
         }
 
     if what in ("all", "url_grammar"):

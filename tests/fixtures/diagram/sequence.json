@@ -1,0 +1,50 @@
+{
+  "topology": "sequence",
+  "title": "Compose, Embed, Confirm",
+  "subtitle": "an agent trace — messages replay in order on one φ clock",
+  "notes": "sequence trace",
+  "nodes": [
+    {
+      "id": "agent",
+      "label": "Agent",
+      "glyph": "claude"
+    },
+    {
+      "id": "hw",
+      "label": "hw compositor",
+      "desc": "MCP · compose",
+      "role": "hero"
+    },
+    {
+      "id": "github",
+      "label": "GitHub",
+      "glyph": "github"
+    }
+  ],
+  "edges": [
+    {
+      "source": "agent",
+      "target": "hw",
+      "label": "compose(matrix, spec)",
+      "kind": "call"
+    },
+    {
+      "source": "hw",
+      "target": "agent",
+      "label": "artifact + hwz/1",
+      "kind": "return"
+    },
+    {
+      "source": "agent",
+      "target": "github",
+      "label": "embed in PR",
+      "kind": "call"
+    },
+    {
+      "source": "github",
+      "target": "agent",
+      "label": "rendered · 200 OK",
+      "kind": "return"
+    }
+  ]
+}

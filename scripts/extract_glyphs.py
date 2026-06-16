@@ -233,7 +233,7 @@ def extract_from_npm() -> dict[str, dict[str, object]]:
 
 def main() -> None:
     """Run glyph extraction and write data/glyphs.json."""
-    output_path = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "data" / "glyphs.json"
+    output_path = Path(__file__).resolve().parent.parent / "src" / "hyperweave" / "data" / "registries" / "glyphs.json"
 
     # Extract from npm (via Node subprocess)
     glyphs = extract_from_npm()

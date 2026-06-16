@@ -53,7 +53,7 @@ _ALIGN_BY_KIND: dict[CellKind, Align] = {
 def infer_matrix(spec: MatrixSpec, *, config: Mapping[str, Any] | None = None) -> MatrixSpec:
     """Resolve AUTO kind/polarity/alignment; return a new spec.
 
-    ``config`` is the data/matrix.yaml mapping (``polarity_keywords`` is the
+    ``config`` is the data/config/matrix-frame.yaml mapping (``polarity_keywords`` is the
     only key consumed); ``None`` loads it from the package data.
     ``RowHeight.AUTO`` is *not* resolved here — it needs solved column
     widths, so it resolves in the layout solver.

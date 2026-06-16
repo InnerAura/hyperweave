@@ -19,7 +19,9 @@ import pytest
 # Fixtures
 # ==========================================================================
 
-GLYPHS_PATH = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "data" / "glyphs.json"
+GLYPHS_PATH = (
+    Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "data" / "registries" / "glyphs.json"
+)
 
 MOTIONS_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "data" / "motions"
 

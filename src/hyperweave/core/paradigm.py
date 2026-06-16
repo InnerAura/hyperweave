@@ -1010,7 +1010,7 @@ class ParadigmMatrixConfig(FrozenModel):
 
     Defaults are extracted from the six porcelain-final matrix specimens
     (v0.4.0-alpha.2 design targets, all 900 wide). Cell-kind geometry and
-    the semantic palette are frame-generic and live in ``data/matrix.yaml``
+    the semantic palette are frame-generic and live in ``data/config/matrix-frame.yaml``
     instead — the paradigm owns the chassis, the engine config owns the
     cells.
     """
@@ -1051,6 +1051,11 @@ class ParadigmMatrixConfig(FrozenModel):
     summary_h: float = 61.0
     axis_h: float = 30.0
     footer_h: float = 44.0
+    footer_gap: float = 16.0
+    """Minimum clear gap between the footer notes (left, start-anchored) and
+    the brand mark (right, end-anchored). When the notes outrun the available
+    span the layout truncates them to preserve this gap — a clearance rule, so
+    notes and brand never collide for ANY notes length or table width."""
     label_col_min: float = 140.0
     label_col_max_ratio: float = 0.4
     """Label column ceiling as a fraction of the content width."""
@@ -1092,12 +1097,18 @@ class ParadigmMatrixConfig(FrozenModel):
     primary row-title voice flat tables use."""
     row_sub_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0))
     cell_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=11.0, weight=600))
-    cell_strong_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=11.5, weight=700))
+    cell_strong_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=12.5, weight=700))
     section_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=700, tracking_em=0.1))
     axis_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.0))
     chip_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0))
     pill_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=11.0, weight=700))
     foot_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0))
+    foot_brand_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0, tracking_em=0.22))
+    """Brand mark voice — the ``.foot-brand`` CSS adds ``letter-spacing: 0.22em``
+    (primer-defs.j2), so the mark renders wider than plain ``foot_voice``.
+    Measuring the brand at its true tracked width is what makes the footer
+    clearance honest rather than a fudged offset; keep ``tracking_em`` in sync
+    with that CSS rule."""
     headline_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=700))
     summary_value_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=14.5, weight=700))
     summary_hero_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=16.5, weight=700))
@@ -1105,6 +1116,405 @@ class ParadigmMatrixConfig(FrozenModel):
     summary_text_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0, weight=600))
     """Summary cells holding phrases rather than scores (tiers' USE-FOR
     row): quiet mono 600 at 9px — numbers are heroes, words annotate."""
+
+
+class DiagramNodeChassis(FrozenModel):
+    """Card-anatomy geometry for one node class (default / hero / ring-2).
+
+    Offsets are from the card TOP edge; the solver anchors hero text from
+    the card CENTER instead (role logic, not chassis data). Glyph-circle
+    anatomy lives on the topology chassis (``circle_r`` family) because the
+    radius is a per-topology read, not a per-class one.
+    """
+
+    w: float = 160.0
+    h: float = 64.0
+    rx: float = 12.0
+    dot_inset_x: float = 20.0
+    """Accent-dot center inset from the card left edge."""
+    dot_dy: float = 26.0
+    label_dy: float = 30.0
+    desc_dy: float = 47.0
+    desc_line_pitch: float = 15.0
+    max_desc_lines: int = 1
+    label_gap: float = 14.0
+    """Dot-center to label-start gap."""
+    pad_x: float = 12.0
+    """Horizontal text padding used by truncation."""
+
+
+class DiagramTopologyChassis(FrozenModel):
+    """Per-layout-slug geometry. A union chassis: each solver reads the
+    fields its algorithm consumes (documented per field); the rest keep
+    defaults. Constants are extracted from the topology specimens
+    (``v04/specimens/diagrams/diagram-topologies/``) and the alpha.3 canon.
+    """
+
+    aspect: str = "banner"
+    """banner | square | portrait — the embedding contract."""
+    width: int = 760
+    """Canvas width. Tree and sequence treat it as a ceiling/solve target;
+    everything else renders it fixed."""
+    height: int = 0
+    """Canvas height; 0 = solved from content (fan columns, stacks)."""
+    display_w: int = 0
+    display_h: int = 0
+    """Rendered width/height attributes; 0 = same as the canvas. Banners
+    display at <=760 so a README column never downscales type."""
+    margin_x: float = 40.0
+    margin_top: float = 24.0
+    header_mode: str = "left"
+    """left | center | none."""
+    header_h: float = 80.0
+    """Vertical band the title/subtitle occupy before content starts."""
+    footer_h: float = 44.0
+    footer_dy: float = 16.0
+    """Footer baseline rises this far above the canvas bottom."""
+    node: DiagramNodeChassis = Field(default_factory=DiagramNodeChassis)
+    hero: DiagramNodeChassis = Field(default_factory=lambda: DiagramNodeChassis(w=188.0, rx=14.0))
+    node2: DiagramNodeChassis = Field(default_factory=lambda: DiagramNodeChassis(w=120.0, h=40.0, rx=10.0))
+    """Ring-2 node class (tree-radial grandchildren)."""
+    circle_r: float = 24.0
+    """Glyph-circle radius for default nodes."""
+    hero_circle_r: float = 28.0
+    """Glyph-circle radius for the hero/hub node."""
+    circle_label_dy: float = 18.0
+    """Label baseline offset below a glyph-circle's bottom edge."""
+    node_style: str = ""
+    """Per-topology default anatomy; empty falls back to card."""
+    width_policy: str = "free"
+    channel_run_min: float = 0.0
+    """Wire-major compositions (K3): when EVERY edge is a reciprocal pair,
+    the channel is the subject — each lane run must show enough dash
+    periods to read as a conversation. 0 keeps the node-major solve."""
+    """free | aligned (G3 slack rule). Free topologies content-solve each
+    card — slack never exceeds the symmetric pads; aligned topologies (rank
+    and row cohesion) share the max over members, and the centered content
+    group splits the remaining slack evenly."""
+    gap: float = 60.0
+    """Pipeline connector gap / tree leaf gap / stack layer gap."""
+    pitch: float = 64.0
+    """Fan/convergence column pitch; bilateral side pitch."""
+    hero_ratio: float = 1.175
+    """Pipeline hero width as a multiple of the solved unit width."""
+    card_min_w: float = 120.0
+    leaf_min_w: float = 140.0
+    leaf_max_w: float = 220.0
+    bottom_m: float = 32.0
+    ring_r: float = 172.0
+    """Flywheel phase-card ring / radial-fan dest ring base radius."""
+    arc_r: float = 178.0
+    arc_clear_deg: float = 1.2
+    """Extra angular clearance past each card's angular half-width."""
+    ring_gap: float = 80.0
+    """Radial perimeter spacing driving R growth past the base radius."""
+    src_gap: float = 40.0
+    """Upward fan: gap between the last dest row and the source card."""
+    row_cap: int = 3
+    row_gap: float = 54.0
+    op_dx: float = 18.0
+    op_dy: float = 4.0
+    lifeline_gap: float = 85.0
+    """Sequence: horizontal gap between lifeline header cards."""
+    msg_pitch: float = 56.0
+    first_msg_dy: float = 34.0
+    """First message drops this far below the lifelines' top."""
+    act_w: float = 8.0
+    act_pad_top: float = 12.0
+    act_pad_bottom: float = 4.0
+    legend_dy: float = 24.0
+    """Sequence key-legend baseline above the footer line."""
+    rank_gap: float = 145.0
+    """DAG: horizontal gap between rank columns (card edge to card edge)."""
+    rank_pitch_max: float = 120.0
+    skip_drop: float = 6.0
+    """DAG skip-edge channel clearance below the content band."""
+    skip_stack: float = 12.0
+    pill_pad_x: float = 32.0
+    pill_min_w: float = 120.0
+    pill_gap: float = 55.0
+    drop_gap: float = 50.0
+    """State machine: branch drop length from baseline pill bottom."""
+    drop_dy: float = 92.0
+    """Below-baseline pill center offset from the baseline center."""
+    loop_dx: float = 75.0
+    loop_dy: float = 20.0
+    stub_len: float = 14.0
+    tag_dy: float = 14.0
+    r1: float = 160.0
+    ring_chord_gap: float = 44.0
+    """tree-radial packing: minimum chord clearance between ring siblings
+    (G6) — angular entitlement is need x this, never the full circle."""
+    """Tree-radial ring-1 radius."""
+    r2: float = 280.0
+
+
+def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
+    """Specimen-extracted chassis for all 14 layout slugs."""
+    n = DiagramNodeChassis
+    return {
+        "pipeline": DiagramTopologyChassis(
+            width_policy="aligned",
+            width=896,
+            height=216,
+            display_w=760,
+            display_h=183,
+            margin_x=24.0,
+            gap=60.0,
+            node=n(w=160.0, h=64.0),
+            hero=n(w=188.0, h=64.0, rx=14.0),
+            footer_h=44.0,
+        ),
+        "fanout-horizontal": DiagramTopologyChassis(
+            width=760,
+            display_w=740,
+            margin_x=30.0,
+            header_h=92.0,
+            footer_h=78.0,
+            pitch=64.0,
+            node=n(w=156.0, h=54.0, dot_dy=24.0, label_dy=28.0, desc_dy=44.0),
+            hero=n(w=210.0, h=96.0, rx=14.0),
+        ),
+        "fanout-bilateral": DiagramTopologyChassis(
+            width=820,
+            display_w=760,
+            margin_x=40.0,
+            header_h=80.0,
+            pitch=120.0,
+            node=n(w=156.0, h=54.0, dot_dy=24.0, label_dy=28.0, desc_dy=44.0),
+            hero=n(w=200.0, h=96.0, rx=14.0),
+        ),
+        "fanout-upward": DiagramTopologyChassis(
+            width=560,
+            display_w=545,
+            header_mode="none",
+            header_h=0.0,
+            margin_top=40.0,
+            margin_x=20.0,
+            footer_h=0.0,
+            bottom_m=20.0,
+            row_cap=3,
+            row_gap=54.0,
+            src_gap=40.0,
+            node=n(w=150.0, h=56.0, dot_dy=24.0, label_dy=28.0, desc_dy=44.0),
+            hero=n(w=220.0, h=80.0, rx=14.0),
+        ),
+        "fanout-radial": DiagramTopologyChassis(
+            aspect="square",
+            width=600,
+            display_w=480,
+            margin_x=24.0,
+            header_h=0.0,
+            header_mode="left",
+            footer_h=0.0,
+            ring_r=230.0,
+            ring_gap=80.0,
+            node=n(w=150.0, h=54.0, dot_dy=24.0, label_dy=28.0, desc_dy=44.0),
+            hero=n(w=184.0, h=80.0, rx=14.0),
+            hero_circle_r=44.0,
+        ),
+        "convergence": DiagramTopologyChassis(
+            width=820,
+            display_w=760,
+            margin_x=40.0,
+            header_h=88.0,
+            pitch=92.0,
+            bottom_m=32.0,
+            node=n(w=190.0, h=64.0),
+            hero=n(w=190.0, h=100.0, rx=14.0),
+        ),
+        "flywheel": DiagramTopologyChassis(
+            aspect="square",
+            width=600,
+            height=600,
+            display_w=480,
+            header_mode="center",
+            ring_r=172.0,
+            arc_r=178.0,
+            node=n(w=150.0, h=56.0, dot_dy=24.0, label_dy=28.0, desc_dy=44.0),
+            hero=n(w=132.0, h=46.0, rx=14.0),
+            circle_r=26.0,
+        ),
+        "stack": DiagramTopologyChassis(
+            width_policy="aligned",
+            aspect="portrait",
+            width=480,
+            display_w=392,
+            margin_x=56.0,
+            header_mode="center",
+            header_h=90.0,
+            footer_h=54.0,
+            gap=34.0,
+            src_gap=44.0,
+            node=n(w=300.0, h=58.0),
+            hero=n(w=368.0, h=78.0, rx=14.0),
+        ),
+        "tree": DiagramTopologyChassis(
+            width_policy="aligned",
+            width=720,
+            height=320,
+            margin_x=30.0,
+            header_h=56.0,
+            gap=30.0,
+            pitch=200.0,
+            leaf_min_w=140.0,
+            leaf_max_w=220.0,
+            node=n(w=200.0, h=76.0, dot_dy=24.0, label_dy=28.0, desc_dy=46.0, max_desc_lines=2),
+            hero=n(w=180.0, h=60.0, rx=14.0),
+        ),
+        "tree-radial": DiagramTopologyChassis(
+            aspect="square",
+            width=720,
+            display_w=576,
+            header_mode="left",
+            header_h=0.0,
+            footer_h=0.0,
+            margin_x=24.0,
+            r1=160.0,
+            r2=280.0,
+            node=n(w=140.0, h=48.0, dot_dy=20.0, label_dy=24.0, desc_dy=38.0),
+            node2=n(w=120.0, h=40.0, rx=10.0, dot_dy=18.0, label_dy=22.0, desc_dy=34.0),
+            hero=n(w=160.0, h=56.0, rx=14.0),
+            hero_circle_r=34.0,
+        ),
+        "comparison": DiagramTopologyChassis(
+            width_policy="aligned",
+            width=720,
+            height=240,
+            margin_x=48.0,
+            node=n(w=268.0, h=72.0),
+            hero=n(w=268.0, h=72.0, rx=14.0),
+        ),
+        "sequence": DiagramTopologyChassis(
+            width_policy="aligned",
+            width=760,
+            display_w=740,
+            margin_x=40.0,
+            header_h=72.0,
+            footer_h=48.0,
+            lifeline_gap=85.0,
+            msg_pitch=56.0,
+            first_msg_dy=34.0,
+            node=n(w=170.0, h=46.0, rx=11.0, dot_dy=23.0, label_dy=27.0, desc_dy=35.0),
+            hero=n(w=170.0, h=46.0, rx=12.0, dot_dy=23.0, label_dy=20.0, desc_dy=35.0),
+        ),
+        "dag": DiagramTopologyChassis(
+            width_policy="aligned",
+            width=760,
+            height=360,
+            display_w=740,
+            margin_x=40.0,
+            header_h=66.0,
+            footer_h=54.0,
+            rank_gap=145.0,
+            rank_pitch_max=120.0,
+            node=n(w=130.0, h=50.0, rx=11.0, dot_inset_x=18.0, dot_dy=21.0, label_dy=25.0, desc_dy=40.0),
+            hero=n(w=130.0, h=50.0, rx=12.0, dot_inset_x=18.0, dot_dy=21.0, label_dy=25.0, desc_dy=40.0),
+        ),
+        "state-machine": DiagramTopologyChassis(
+            width=760,
+            height=300,
+            display_w=740,
+            margin_x=40.0,
+            header_h=88.0,
+            footer_h=40.0,
+            pill_pad_x=32.0,
+            pill_min_w=120.0,
+            pill_gap=55.0,
+            drop_gap=50.0,
+            drop_dy=92.0,
+            loop_dx=75.0,
+            loop_dy=20.0,
+            stub_len=14.0,
+            tag_dy=14.0,
+            node=n(w=130.0, h=42.0),
+            hero=n(w=120.0, h=42.0),
+        ),
+    }
+
+
+class ParadigmDiagramConfig(FrozenModel):
+    """Diagram frame chassis + kinetic-channel config within a paradigm.
+
+    The paradigm owns the cards, type voices, and the kinetic channel
+    (edge-motion default/allowlist, track mapping, entrance); the engine
+    config (``data/config/diagram-frame.yaml``) owns the flow grammar — caps, orientation
+    legality, connector/particle/beam/flow constants, choreography. Chassis
+    constants restate the topology specimens; primer.yaml carries the
+    load-bearing values per Invariant 5.
+    """
+
+    text_ascent_ratio: float = 0.74
+    """Line-metric ascent as a fraction of font size (Inter/JBM family
+    average) — node text blocks are measured with these and vertically
+    centered; chassis label_dy/desc_dy are superseded by the metric
+    engine (clipping is never legal)."""
+    text_descent_ratio: float = 0.22
+    label_desc_gap: float = 6.0
+    """Vertical gap between the label line box and the desc block."""
+    min_pad_y: float = 7.0
+    """Minimum clearance between any text ink and the card edge; desc
+    lines drop (never clip) when the block would breach it."""
+    dot_align_ratio: float = 0.31
+    # One speed of light (K1): particles and beam comets travel at constant
+    # VELOCITY — per-edge dur = clamp(length / v_target, dur_min, dur_max).
+    # Slot-locked choreographies (beam relay, sequence replay) keep their
+    # semantic clocks. All phi-family genome motion data.
+    motion_v_target: float = 144.0
+    motion_dur_min: float = 2.618
+    motion_dur_max: float = 4.236
+    track_overtake_floor: float = 2.5
+    """A particle riding a marching track must run at least this multiple
+    of the track's phase speed — it overtakes the texture, never glues."""
+    """Accent-dot center sits this fraction of the label size above its
+    baseline (optical cap-height centering)."""
+    edge_motion_default: str = "particle"
+    """Genome-declared default edge motion (the specimen-true primer
+    treatment is particle over a dash-march track — two named things)."""
+    edge_motion_allowlist: list[str] = Field(default_factory=lambda: ["dash", "particle", "beam", "flow"])
+    """Validated allowlist: a per-edge or per-spec request outside it is a
+    DiagramInputError. Motion-opting-out genomes (vellum -> [dash]) must
+    declare a static direction device — see ``direction_device``."""
+    track_default_by_motion: dict[str, str] = Field(
+        default_factory=lambda: {"dash": "dash-march", "particle": "dash-march", "beam": "static", "flow": "static"}
+    )
+    """Track (the line itself) per motion value: composite values ride a
+    marching dashed track (specimen-true); beam/flow run over a static tube
+    (a marching tube beneath animated light is noise). P3: a meaning-bearing
+    dasharray (sequence returns, SM loops) always resolves the track static."""
+    entrance: Literal["fade", "none"] = "fade"
+    """Genome entrance channel: fade | none. Validated at config load — a typo
+    or an unlanded value (draw-on is the vellum genome session's choreography)
+    raises instead of silently no-opping to no entrance."""
+    direction_device: str = "motion"
+    """motion | arrowhead. A genome whose allowlist carries no animated
+    value must declare 'arrowhead' (drawn, genome-filtered — never
+    <marker>); enforcement seam documented in validate_paradigms."""
+    genome_defs_include: str = ""
+    """Optional template path injected into the diagram defs block
+    (turbulence/displacement filters for material genomes)."""
+    title_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=16, weight=700))
+    subtitle_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=11, weight=400))
+    label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=13, weight=600))
+    desc_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=500))
+    hero_name_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=15, weight=700))
+    hero_desc_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=10, weight=500))
+    muted_name_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=14, weight=400))
+    op_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=13, weight=600))
+    edge_label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=400))
+    """Rendered edge labels (sequence, state-machine) are user content that
+    can carry -> and check marks: the whole slot is mono structurally (the
+    standing U+2192 rule), never a mono_triggers special case."""
+    legend_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.0, weight=400, tracking_em=0.04))
+    tag_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.0, weight=400, tracking_em=0.06))
+    short_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=12.0, weight=700))
+    """Mono identity text inside standard glyph-circles ('hw')."""
+    hub_short_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=16.0, weight=700))
+    circle_label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=400))
+    foot_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=7.0, weight=400, tracking_em=0.1))
+    topologies: dict[str, DiagramTopologyChassis] = Field(default_factory=_diagram_topology_defaults)
+    """Chassis per layout slug (14). A paradigm YAML may restate any subset;
+    missing slugs keep the specimen defaults."""
 
 
 class ParadigmSpec(FrozenModel):
@@ -1128,6 +1538,7 @@ class ParadigmSpec(FrozenModel):
     icon: ParadigmIconConfig = Field(default_factory=ParadigmIconConfig)
     marquee: ParadigmMarqueeConfig = Field(default_factory=ParadigmMarqueeConfig)
     matrix: ParadigmMatrixConfig = Field(default_factory=ParadigmMatrixConfig)
+    diagram: ParadigmDiagramConfig = Field(default_factory=ParadigmDiagramConfig)
 
     requires_genome_fields: list[str] = Field(default_factory=list)
     """Genome field names that must be non-empty when a genome opts into

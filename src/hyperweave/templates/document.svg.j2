@@ -31,13 +31,14 @@
 {% endif %}
 {% if data_hw_state_shape | default('') %}     data-hw-state-shape="{{ data_hw_state_shape }}"
 {% endif %}
-{% if data_hw_subvariant | default('') %}     data-hw-subvariant="{{ data_hw_subvariant }}"
+{% if data_hw_topology | default('') %}     data-hw-topology="{{ data_hw_topology }}"
+{% endif %}{% if data_hw_subvariant | default('') %}     data-hw-subvariant="{{ data_hw_subvariant }}"
 {% endif %}
 {% if inline_style_overrides | default('') %}     style="{{ inline_style_overrides }}"
 {% endif %}
      data-hw-chromatic="{{ genome_id }}">
-  <title id="{{ uid }}-title">{{ title_text }}</title>
-  <desc id="{{ uid }}-desc">{{ desc_text }}</desc>
+  <title id="{{ uid }}-title">{{ title_text | xml_escape }}</title>
+  <desc id="{{ uid }}-desc">{{ desc_text | xml_escape }}</desc>
 {% if metadata_tier >= 1 %}
 {% include "components/metadata.svg.j2" %}
 {% endif %}

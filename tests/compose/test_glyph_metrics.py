@@ -27,7 +27,7 @@ _LABEL_RE = re.compile(
 
 
 def _glyphs() -> dict[str, dict[str, str]]:
-    return load_glyphs(get_settings().data_dir / "glyphs.json")
+    return load_glyphs(get_settings().data_dir / "registries" / "glyphs.json")
 
 
 def _attr(attrs: str, name: str) -> str:

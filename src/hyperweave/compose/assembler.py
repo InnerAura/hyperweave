@@ -26,7 +26,7 @@ _MARQUEE_FRAMES: frozenset[str] = frozenset({FrameType.MARQUEE_HORIZONTAL})
 
 
 # Font embedding gate: per-(genome_id, frame_type) lookup against the YAML
-# config at ``data/font-embedding.yaml``. Replaces the v0.3.5 frozenset
+# config at ``data/config/font-embedding.yaml``. Replaces the v0.3.5 frozenset
 # table that was keyed only by frame_type — which meant the brutalist
 # badge embedded the genome's full font list (~28KB of unused Barlow
 # Condensed base64) because the genome declared Barlow for stats/strip/

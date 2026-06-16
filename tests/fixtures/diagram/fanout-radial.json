@@ -1,0 +1,33 @@
+{
+  "topology": "fanout",
+  "orientation": "radial",
+  "title": "One Artifact, Every Surface",
+  "notes": "radial hub",
+  "nodes": [
+    {
+      "label": "HyperWeave SVG",
+      "short": "hw",
+      "glyph": "hyperweave"
+    },
+    {
+      "label": "GitHub",
+      "glyph": "github"
+    },
+    {
+      "label": "Obsidian",
+      "glyph": "obsidian"
+    },
+    {
+      "label": "Slack",
+      "glyph": "slack"
+    },
+    {
+      "label": "Email",
+      "glyph": "gmail"
+    },
+    {
+      "label": "Agent Context",
+      "glyph": "anthropic"
+    }
+  ]
+}

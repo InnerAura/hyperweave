@@ -92,8 +92,13 @@ semantic_palette:
   heat_good: [38, 145, 127]
   heat_mid: [120, 130, 138]
   heat_bad: [198, 54, 54]
-  heat_tile_opacity: 0.13 # gentle wash, never a competing block
-  heat_text_darken: 0.62 # value ink = ramp color x this factor
+  heat_tile_opacity: 0.13 # gentle wash on a LIGHT substrate
+  heat_tile_opacity_dark: 0.18 # the wash needs more presence on a dark substrate
+  heat_text_darken: 0.62 # LIGHT substrate: value ink = ramp color x this factor
+  # DARK substrate: re-ink the hue in OKLCH instead — lift lightness by this
+  # amount (so the cheapest/best cell reads light, not buried) and scale chroma
+  # by heat_text_darken so the lifted hue stays legible, never neon.
+  heat_text_dark_lift: 0.16
 
 # Per-kind cell geometry (porcelain-final specimens are authoritative).
 # min_col is the kind-default column width floor — content can grow a
@@ -143,7 +148,7 @@ cell_geometry:
     tile_w: 96 # natural column sizing only; the tile itself fills its column
     tile_h: 30
     tile_radius: 6
-    underline_h: 1.5 # thin, subtle magnitude gauge
+    underline_h: 3.0 # magnitude gauge — substrate-independent, reads at thumbnail size
     underline_inset: 8
     min_col: 110
   chip:

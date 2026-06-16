@@ -1,0 +1,73 @@
+{
+  "topology": "fanout",
+  "orientation": "bilateral",
+  "title": "Integration Hub",
+  "subtitle": "six simultaneous currents, φ-staggered — one calm system of light",
+  "notes": "integration hub",
+  "edge_motion": "flow",
+  "node_style": "glyph-circle",
+  "nodes": [
+    {
+      "id": "hw",
+      "label": "hw",
+      "short": "hw",
+      "role": "hero"
+    },
+    {
+      "id": "docs",
+      "label": "docs",
+      "glyph": "notion"
+    },
+    {
+      "id": "chat",
+      "label": "chat",
+      "glyph": "slack"
+    },
+    {
+      "id": "files",
+      "label": "files",
+      "glyph": "obsidian"
+    },
+    {
+      "id": "actions",
+      "label": "actions",
+      "glyph": "github"
+    },
+    {
+      "id": "mail",
+      "label": "mail",
+      "glyph": "gmail"
+    },
+    {
+      "id": "agents",
+      "label": "agents",
+      "glyph": "anthropic"
+    }
+  ],
+  "edges": [
+    {
+      "source": "docs",
+      "target": "hw"
+    },
+    {
+      "source": "chat",
+      "target": "hw"
+    },
+    {
+      "source": "files",
+      "target": "hw"
+    },
+    {
+      "source": "hw",
+      "target": "actions"
+    },
+    {
+      "source": "hw",
+      "target": "mail"
+    },
+    {
+      "source": "hw",
+      "target": "agents"
+    }
+  ]
+}

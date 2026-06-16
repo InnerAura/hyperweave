@@ -1,0 +1,68 @@
+{# Primer diagram content — ONE generic renderer for all fourteen layouts.
+   Topology differences arrived as data (paint order, operators, lifelines,
+   light layers, replay params); there is nothing topology-shaped left to
+   branch on (Invariant 12 by construction). Draw order: header -> sequence
+   furniture -> connectors (tube + light or marching stroke) -> particles ->
+   nodes in PAINT order (a radial hub paints last, masking its spokes) ->
+   operators -> legend -> footer. #}
+{% set lay = diagram_layout %}
+{# The substrate paints OUTSIDE the entrance group — content fades in over
+   the genome surface, never over a white flash. Bare chrome (F1) ships
+   transparent paper: the page underneath is the canvas. #}
+{% if diagram_chrome != 'bare' %}<rect width="{{ viewbox_w }}" height="{{ viewbox_h }}" fill="var(--dna-surface)"/>
+{% endif %}
+<g{% if lay.entrance == 'fade' %} class="{{ uid }}-in"{% endif %}>
+{% if lay.header.title %}  <text x="{{ lay.header.title.x }}" y="{{ lay.header.title.y }}"{% if lay.header.title.anchor != 'start' %} text-anchor="{{ lay.header.title.anchor }}"{% endif %} class="{{ uid }}-title">{{ lay.header.title.text }}</text>
+{% endif %}
+{% if lay.header.subtitle %}  <text x="{{ lay.header.subtitle.x }}" y="{{ lay.header.subtitle.y }}"{% if lay.header.subtitle.anchor != 'start' %} text-anchor="{{ lay.header.subtitle.anchor }}"{% endif %} class="{{ uid }}-sub">{{ lay.header.subtitle.text }}</text>
+{% endif %}
+{% for l in lay.lifelines %}  <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" class="{{ uid }}-life"/>
+{% endfor %}
+{% for a in lay.activations %}  <rect x="{{ a.x }}" y="{{ a.y }}" width="{{ a.w }}" height="{{ a.h }}" rx="{{ a.rx }}" class="{{ uid }}-act"/>
+{% endfor %}
+{% for c in lay.connectors %}
+{% set hue_cls = (uid ~ '-fl' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-fls') %}
+{% if c.light_layers %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ (hue_cls) if c.static_dash else (uid ~ '-tube') }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
+{% for layer in c.light_layers %}  <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ layer.gradient_ref }})" stroke-width="{{ layer.width }}"{% if layer.opacity != 1.0 %} opacity="{{ layer.opacity }}"{% endif %}{% if layer.blur %} filter="url(#{{ uid }}-blur)"{% endif %}/>
+{% endfor %}{% elif c.track == 'dash-march' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ hue_cls }} {{ uid }}-m{{ loop.index0 }}"/>
+{% else %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ hue_cls }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
+{% endif %}
+{% if c.label %}  <text x="{{ c.label.x }}" y="{{ c.label.y }}"{% if c.label.anchor != 'start' %} text-anchor="{{ c.label.anchor }}"{% endif %} class="{{ uid }}-elbl">{{ c.label.text }}</text>
+{% endif %}
+{% endfor %}
+{% for p in lay.particles %}
+  <circle class="{{ uid }}-p {{ (uid ~ '-flp' ~ p.accent_index) if p.accent_index >= 0 else (uid ~ '-flps') }}" r="{{ p.r }}" opacity="0">
+    <animateMotion dur="{{ p.dur }}" repeatCount="indefinite"{% if p.begin %} begin="{{ p.begin }}"{% endif %}{% if p.calc_mode %} calcMode="{{ p.calc_mode }}"{% endif %}{% if p.keypoints %} keyPoints="{{ p.keypoints }}" keyTimes="{{ p.keytimes_motion }}"{% endif %}><mpath href="#{{ uid }}-c{{ p.connector_index }}"/></animateMotion>
+    <animate attributeName="opacity" values="{{ p.opacity_values }}" keyTimes="{{ p.opacity_keytimes }}" dur="{{ p.dur }}" repeatCount="indefinite"{% if p.begin %} begin="{{ p.begin }}"{% endif %}/>
+  </circle>
+{% endfor %}
+{% if lay.initial_dot %}  <circle cx="{{ lay.initial_dot[0] }}" cy="{{ lay.initial_dot[1] }}" r="{{ lay.initial_dot_r }}" class="{{ uid }}-idot"/>
+{% endif %}
+{% if lay.initial_stub %}  <line x1="{{ lay.initial_stub.x1 }}" y1="{{ lay.initial_stub.y1 }}" x2="{{ lay.initial_stub.x2 }}" y2="{{ lay.initial_stub.y2 }}" class="{{ uid }}-stub"/>
+{% endif %}
+{% for n in lay.nodes %}
+{% set bg_cls = (uid ~ '-herobg') if n.role == 'hero' else (uid ~ '-cardbg') %}
+{% if n.shape == 'circle' %}  <circle cx="{{ n.cx }}" cy="{{ n.cy }}" r="{{ n.r }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"{% if n.plate_fill %} style="fill:{{ n.plate_fill }}"{% endif %} filter="url(#{{ uid }}-lift)"/>
+{% else %}  <rect x="{{ n.box.x }}" y="{{ n.box.y }}" width="{{ n.box.w }}" height="{{ n.box.h }}" rx="{{ n.box.rx }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"{% if n.plate_fill %} style="fill:{{ n.plate_fill }}"{% endif %}{% if n.stroke_dasharray %} stroke-dasharray="{{ n.stroke_dasharray }}"{% endif %} filter="url(#{{ uid }}-lift)"/>
+{% endif %}
+{% if n.dot %}  <circle cx="{{ n.dot[0] }}" cy="{{ n.dot[1] }}" r="{{ n.dot_r }}" class="{{ (uid ~ '-flp' ~ n.accent_index) if n.accent_index >= 0 else (uid ~ '-flps') }}"/>
+{% endif %}
+{% if n.glyph %}  <g transform="{{ n.glyph.transform }}"{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
+{% for gp in n.glyph.paths %}    <path d="{{ gp.d }}"{% if gp.fill %} fill="{{ gp.fill }}"{% endif %}/>
+{% endfor %}  </g>
+{% endif %}
+  <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}">{{ n.label.text }}</text>
+{% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}">{{ line.text }}</text>
+{% endfor %}
+{% if n.short %}  <text x="{{ n.short.x }}" y="{{ n.short.y }}" text-anchor="middle" class="{{ uid }}-{{ n.short.cls }}"{% if n.plate_ink and n.plate_fill != 'none' %} style="fill:{{ n.plate_ink }}"{% endif %}>{{ n.short.text }}</text>
+{% endif %}
+{% if n.tag %}  <text x="{{ n.tag.x }}" y="{{ n.tag.y }}" text-anchor="middle" class="{{ uid }}-tag">{{ n.tag.text }}</text>
+{% endif %}
+{% endfor %}
+{% for op in lay.operators %}  <text x="{{ op.x }}" y="{{ op.y }}" class="{{ uid }}-op">{{ op.text }}</text>
+{% endfor %}
+{% if lay.legend %}  <text x="{{ lay.legend.x }}" y="{{ lay.legend.y }}" class="{{ uid }}-key">{{ lay.legend.text }}</text>
+{% endif %}
+{% if lay.footer %}  <text x="{{ lay.footer.x }}" y="{{ lay.footer.y }}" class="{{ uid }}-ft">{{ lay.footer.text }}</text>
+{% endif %}
+</g>

@@ -92,8 +92,14 @@ def compute_matrix_layout(
     matrix: ParadigmMatrixConfig,
     config: Mapping[str, Any],
     glyph_registry: Mapping[str, Any],
+    surface_lum: float = 1.0,
 ) -> MatrixLayout:
-    """Solve the full matrix geometry. ``spec`` must be post-inference."""
+    """Solve the full matrix geometry. ``spec`` must be post-inference.
+
+    ``surface_lum`` is the genome surface's WCAG relative luminance; it flips
+    heat-cell text ink and wash opacity between the light and dark derivations.
+    The default (1.0 = light) keeps direct callers byte-stable on porcelain.
+    """
     cfg = matrix
     geometry: Mapping[str, Any] = config.get("cell_geometry") or {}
     palette: Mapping[str, Any] = config.get("semantic_palette") or {}
@@ -388,6 +394,7 @@ def compute_matrix_layout(
                     glyph_entry=_glyph_entry(cell.glyph, glyph_registry) if column.kind is CellKind.GLYPH else None,
                     value_zone_w=value_zones.get(j, 0.0),
                     content_mode=content_mode,
+                    surface_lum=surface_lum,
                 )
             )
 
@@ -538,11 +545,32 @@ def compute_matrix_layout(
     # table FIRST, then the notes/brand line sits below it.
     seam_y = footer_top + 6.0
     footer_text_y = seam_y + 19.0
+    # Clearance rule: the brand is end-anchored at the right margin, the notes
+    # start-anchored at the left. The width solver reserves footer space, but
+    # the ceiling can clamp that reservation away; this is the hard guarantee.
+    # Measure the brand at its true tracked width (the .foot-brand 0.22em) and
+    # truncate the notes so they always clear it by footer_gap — no overlap for
+    # ANY notes length or table width, no offset tuned to one string.
+    brand_text = "hyperweave"
+    brand_w = measure_voice(brand_text, cfg.foot_brand_voice)
+    notes_text: str | None = None
+    if spec.notes:
+        notes_max_w = avail - brand_w - cfg.footer_gap
+        if notes_max_w > 0:
+            fitted = truncate_to_width(spec.notes, notes_max_w, cfg.foot_voice)
+            if measure_voice(fitted, cfg.foot_voice) <= notes_max_w:
+                notes_text = fitted
     footer = FooterBlock(
         seam=LineSpec(margin, seam_y, margin + avail, seam_y),
-        notes=TextSpec(x=margin, y=footer_text_y, anchor="start", text=spec.notes) if spec.notes else None,
-        brand=TextSpec(x=margin + avail, y=footer_text_y, anchor="end", text="hyperweave"),
+        notes=TextSpec(x=margin, y=footer_text_y, anchor="start", text=notes_text) if notes_text else None,
+        brand=TextSpec(x=margin + avail, y=footer_text_y, anchor="end", text=brand_text),
     )
+    # Structural invariant: notes ink and brand ink never intersect. Pinned so
+    # a future placement edit can't silently regress the clearance.
+    if footer.notes is not None:
+        notes_right = margin + measure_voice(footer.notes.text, cfg.foot_voice)
+        brand_left = (margin + avail) - brand_w
+        assert notes_right <= brand_left - cfg.footer_gap + 0.51, "footer notes overlap brand mark"
 
     colheader_rule_y = rows_top - 0.5
     texts_map: dict[str, TextSpec] = {}
@@ -760,11 +788,15 @@ def _column_statistics(
                 axis_frac[(i, j)] = min(1.0, max(0.0, v / axis_max)) if axis_max else 0.0
         else:
             # Heat underlines gauge WITHIN-RANGE magnitude so differences
-            # read: the column max runs nearly full, the min keeps a stub
-            # (a 96.2 is almost full, an 84.1 noticeably shorter).
+            # read: the most favourable value runs nearly full, the least
+            # keeps a stub (a 96.2 is almost full, an 84.1 noticeably shorter).
+            # Fill follows the SAME polarity as the heat colour below — on a
+            # LOWER column (price) the cheapest fills fullest, so the gauge
+            # never fights its tint. HIGHER/NONE keep the raw magnitude.
             for i, v in numbers.items():
                 t_range = 1.0 if vmax == vmin else (v - vmin) / (vmax - vmin)
-                axis_frac[(i, j)] = 0.12 + 0.88 * t_range
+                fill_t = (1.0 - t_range) if column.polarity is Polarity.LOWER else t_range
+                axis_frac[(i, j)] = 0.12 + 0.88 * fill_t
         if column.kind is CellKind.NUMERIC and column.polarity is not Polarity.NONE:
             for i, v in numbers.items():
                 t = 0.5 if vmax == vmin else (v - vmin) / (vmax - vmin)
@@ -824,6 +856,7 @@ def _label_cells(
                 cy=cy,
                 size=glyph_size,
                 tint=glyph_tint,
+                ink_adaptive_mono=True,
             )
         )
     if row.sublabel:
@@ -867,7 +900,7 @@ def _glyph_entry(glyph_id: str, glyph_registry: Mapping[str, Any]) -> Mapping[st
     entry = glyph_registry.get(glyph_id)
     if not isinstance(entry, Mapping):
         raise MatrixInputError(
-            f"unknown glyph id {glyph_id!r} — matrix glyph cells accept data/glyphs.json registry ids only"
+            f"unknown glyph id {glyph_id!r} — matrix glyph cells accept data/registries/glyphs.json registry ids only"
         )
     return entry
 

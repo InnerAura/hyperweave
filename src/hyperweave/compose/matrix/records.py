@@ -9,7 +9,7 @@ one flat record dispatched by ``kind`` — every concrete kind maps 1:1 to
 ``frames/matrix/cells/{kind}.j2``, and each partial consumes only the
 fields its kind populates. Paint fields (``text_fill``, ``tone``,
 ``glyph_fill``) arrive pre-resolved as either ``var(--dna-*)`` references
-(chassis) or semantic literals from data/matrix.yaml (genome-invariant
+(chassis) or semantic literals from data/config/matrix-frame.yaml (genome-invariant
 indicators); empty string defers to the partial's chassis default class.
 """
 

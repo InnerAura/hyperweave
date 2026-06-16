@@ -50,7 +50,7 @@ def get_profiles() -> dict[str, dict[str, Any]]:
 
 @functools.lru_cache(maxsize=1)
 def get_glyphs() -> dict[str, dict[str, Any]]:
-    """Glyph registry from data/glyphs.json."""
+    """Glyph registry from data/registries/glyphs.json."""
     return load_glyphs()
 
 

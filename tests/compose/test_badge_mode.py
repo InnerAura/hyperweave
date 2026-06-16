@@ -5,7 +5,7 @@ rendering and threshold-CSS auto-inference). The mode-resolution
 contract is what every badge resolver depends on — these tests pin it.
 
 Allowlist for tests is constructed locally (not loaded from disk) so
-the test contract is independent of the data/badge_modes.yaml content
+the test contract is independent of the data/config/badge-modes.yaml content
 and so individual cases stay legible.
 """
 
@@ -84,7 +84,7 @@ def test_separator_normalization_applied() -> None:
 
 
 def test_real_world_ci_titles_match_default_allowlist() -> None:
-    """Verify the shipped data/badge_modes.yaml covers the common
+    """Verify the shipped data/config/badge-modes.yaml covers the common
     real-world badge titles users put in their READMEs. This is the
     regression-prevention test for the v0.2.25 narrowing — pre-fix
     these titles all auto-inferred state for any title; post-fix

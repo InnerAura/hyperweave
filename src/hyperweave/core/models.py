@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import Field, field_validator, model_validator
 
 from hyperweave.core.base import FrozenModel as FrozenModel
+from hyperweave.core.diagram import DiagramSpec  # noqa: TC001 (Pydantic needs at runtime)
 from hyperweave.core.enums import (
     DividerVariant,
     FrameType,
@@ -58,7 +59,8 @@ class ComposeSpec(FrozenModel):
     # -- Core identity --
     type: FrameType = Field(
         description=(
-            "Frame type: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, receipt, rhythm-strip"
+            "Frame type: badge, strip, icon, divider, marquee-horizontal, stats, chart, "
+            "matrix, diagram, receipt, rhythm-strip"
         ),
     )
     frame_id: str = Field(default="", description="Resolved frame identifier")
@@ -243,6 +245,13 @@ class ComposeSpec(FrozenModel):
         default=None,
         description="Matrix frame table IR (universal columns/rows schema)",
     )
+    # Diagram frame IR (type=diagram). Transports may pass a plain dict body;
+    # pydantic validates it into DiagramSpec. When None, coerce_diagram_input
+    # falls back to a server-known preset or raises DiagramInputError.
+    diagram: DiagramSpec | None = Field(
+        default=None,
+        description="Diagram frame topology IR (nodes + edges + topology schema)",
+    )
     glyph_tint: str = Field(
         default="",
         description=(
@@ -252,6 +261,27 @@ class ComposeSpec(FrozenModel):
             "full -> gradient -> brand -> ink, never errors."
         ),
         pattern="^(|ink|brand|full)$",
+    )
+    performance: str = Field(
+        default="",
+        description=(
+            "Surface performance tier for diagram motion. 'composite-only' "
+            "applies the fallback ladder (beam->particle, flow->dash); the "
+            "payload's rendered block records fallback_applied so requested "
+            "vs rendered never silently diverges. Empty = paint-ok."
+        ),
+        pattern="^(|composite-only)$",
+    )
+    chrome: str = Field(
+        default="card",
+        description=(
+            "Presentation chrome (diagram). card = substrate + masthead + "
+            "footer; bare = transparent paper, no masthead, no footer — the "
+            "title ships only in hw:title/aria/markdown/payload. "
+            "Presentational: excluded from the envelope digest. Bare callers "
+            "own paper matching — the genome's inks assume its own surfaces."
+        ),
+        pattern="^(card|bare)$",
     )
 
 

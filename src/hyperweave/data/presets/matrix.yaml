@@ -1,0 +1,12 @@
+# Server-known matrix presets — name → connector_data payload. Mirrors
+# data/diagram_presets.yaml: the declaration is data, the builder is code.
+#
+# `connectors` is adapter-backed: the entry names an adapter, and the matrix is
+# assembled live by build_connector_registry_matrix() from connector_registry.yaml.
+# (The `matrix_adapter` key is the public connector_data grammar — the same key a
+# caller may pass directly via MCP hw_compose(connector_data=...).) Transports
+# (CLI --preset, GET /v1/matrix/{preset}, MCP) all resolve through this file, so
+# the three stay in lockstep (Invariant 9).
+presets:
+  connectors:
+    matrix_adapter: connector-registry

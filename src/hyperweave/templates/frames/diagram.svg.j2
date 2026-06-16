@@ -1,0 +1,12 @@
+{# Diagram frame — topology graph (nodes + connectors + closed motion grammar).
+   Paradigm dispatch via slug interpolation (Invariant 12): custom genomes add
+   diagram support by dropping frames/diagram/{paradigm}-defs.j2 +
+   {paradigm}-content.j2 and a paradigms.diagram entry — zero Python edits.
+   Primer is the diagram's first (v0.4.0-alpha.3) chassis. #}
+{% extends "document.svg.j2" %}
+{% block defs %}
+{% include "frames/diagram/" ~ (paradigm | default("primer")) ~ "-defs.j2" %}
+{% endblock %}
+{% block content %}
+{% include "frames/diagram/" ~ (paradigm | default("primer")) ~ "-content.j2" %}
+{% endblock %}

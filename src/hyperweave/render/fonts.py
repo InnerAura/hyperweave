@@ -3,7 +3,7 @@
 Reads WOFF2 base64 data from ``data/fonts/{slug}.b64`` and companion metadata
 from ``{slug}.meta.json``, then assembles ``@font-face`` CSS declarations.
 Genomes declare which fonts to embed via their ``fonts`` JSON field; the
-per-(genome, frame) gate at ``data/font-embedding.yaml`` further narrows
+per-(genome, frame) gate at ``data/config/font-embedding.yaml`` further narrows
 the embedded set per artifact.
 
 v0.3.7 added optional glyph subsetting: pass a ``char_set`` to

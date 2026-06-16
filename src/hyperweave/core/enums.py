@@ -23,6 +23,7 @@ class FrameType(StrEnum):
     STATS = "stats"
     CHART = "chart"
     MATRIX = "matrix"
+    DIAGRAM = "diagram"
 
 
 class GenomeId(StrEnum):

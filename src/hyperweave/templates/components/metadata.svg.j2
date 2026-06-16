@@ -13,7 +13,7 @@
       <hw:created>{{ created_at }}</hw:created>
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
-    <hw:spec size="{{ width }}x{{ height }}" performance="composite-only"
+    <hw:spec size="{{ width }}x{{ height }}" performance="{{ performance_tier | default('composite-only') }}"
              theme="{{ theme_category }}" a11y="WCAG-AA" platform="{{ platform }}"/>
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
@@ -33,7 +33,7 @@
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
            xmlns:dc="http://purl.org/dc/elements/1.1/">
     <rdf:Description>
-      <dc:title>{{ title_text }}</dc:title>
+      <dc:title>{{ title_text | xml_escape }}</dc:title>
       <dc:creator>HyperWeave Compositor v{{ version }} (InnerAura Labs)</dc:creator>
       <dc:date>{{ created_at }}</dc:date>
       <dc:rights>CC BY 4.0</dc:rights>
@@ -44,7 +44,7 @@
   <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:chromatic system="{{ genome_id }}" space="oklch"
                   palette="{{ palette }}" contrast-ratio="{{ contrast_ratio | default('') }}"/>
-    <hw:motion vocabulary="{{ motion_id }}" physics="none"
+    <hw:motion vocabulary="{{ motion_vocabulary | default(motion_id) }}" physics="none"
                timing="phi" duration-base="{{ rhythm_base }}"
                stagger-regime="contemplative" cim-compliant="{{ cim_compliant }}"/>
     <hw:geometry form-language="{{ form_language }}" corner-radius="{{ corner | default('5px') }}"

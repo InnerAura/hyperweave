@@ -1,0 +1,570 @@
+# Server-known diagram presets — content as data, zero Python per preset.
+#
+# Identity rule (C1): any node naming a BRANDED system carries its registry
+# glyph (data/glyphs.json, tint per genome default) via the card+glyph or
+# glyph-circle anatomy; accent dots are for abstract concepts only. Heroes
+# stay typographic by design — the signal ring is their identity — unless
+# the preset opts them into glyph-circle.
+#
+# Sections: the eleven topology presets (specimen recreations), the six
+# canon applied-motion presets, gateway + the graph specimens + mindmap,
+# the eight gallery entries (named real systems per the coverage matrix —
+# agent-plan is the launch shot), and the frontier tier (coverage-exempt,
+# marketing-grade: no specimen looks like these).
+
+presets:
+  pipeline:
+    topology: pipeline
+    title: One Compositor, Four Stages
+    subtitle: Agent request flows left-to-right into a rendered surface
+    notes: compose pipeline
+    nodes:
+      - { label: Agent, desc: calls API · MCP }
+      - { label: Compositor, desc: FRAME × GENOME × DATA, role: hero }
+      - { label: Artifact, desc: self-contained SVG }
+      - { label: Surface, desc: renders anywhere }
+
+  fanout-horizontal:
+    topology: fanout
+    title: One Artifact, Every Surface
+    subtitle: a self-contained SVG renders wherever markdown does
+    notes: every surface
+    nodes:
+      - { label: HyperWeave SVG, desc: "self-contained · portable", role: hero }
+      - { label: GitHub, desc: README · Issues · PRs, glyph: github, style: card+glyph }
+      - { label: Obsidian, desc: vault · daily notes, glyph: obsidian, style: card+glyph }
+      - { label: Slack, desc: threads · unfurled, glyph: slack, style: card+glyph }
+      - { label: Email, desc: inline · PDF export, glyph: gmail, style: card+glyph }
+      - { label: Agent Context, desc: "hw:reasoning parsed", glyph: anthropic, style: card+glyph }
+
+  fanout-bilateral:
+    topology: fanout
+    orientation: bilateral
+    title: Broadcast, Both Ways
+    subtitle: one source, surfaces on either side
+    notes: bilateral fan
+    nodes:
+      - { label: HyperWeave SVG, desc: "self-contained · portable", role: hero }
+      - { label: Obsidian, desc: vault · daily notes, glyph: obsidian, style: card+glyph }
+      - { label: Email, desc: inline · PDF export, glyph: gmail, style: card+glyph }
+      - { label: GitHub, desc: README · Issues · PRs, glyph: github, style: card+glyph }
+      - { label: Slack, desc: threads · unfurled, glyph: slack, style: card+glyph }
+      - { label: Agent Context, desc: "hw:reasoning parsed", glyph: anthropic, style: card+glyph }
+
+  fanout-upward:
+    topology: fanout
+    orientation: upward
+    title: ""
+    subtitle: ""
+    notes: compact fan
+    nodes:
+      - { label: HyperWeave SVG, desc: self-contained, role: hero }
+      - { label: GitHub, desc: README · PRs, glyph: github, style: card+glyph }
+      - { label: Obsidian, desc: vault, glyph: obsidian, style: card+glyph }
+      - { label: Slack, desc: threads, glyph: slack, style: card+glyph }
+      - { label: Email, desc: inline, glyph: gmail, style: card+glyph }
+      - { label: Agent, desc: envelope, glyph: anthropic, style: card+glyph }
+
+  fanout-radial:
+    topology: fanout
+    orientation: radial
+    title: One Artifact, Every Surface
+    notes: radial hub
+    nodes:
+      - { label: HyperWeave SVG, short: hw, glyph: hyperweave, style: glyph-circle }
+      - { label: GitHub, glyph: github, style: card+glyph }
+      - { label: Obsidian, glyph: obsidian, style: card+glyph }
+      - { label: Slack, glyph: slack, style: card+glyph }
+      - { label: Email, glyph: gmail, style: card+glyph }
+      - { label: Agent Context, glyph: anthropic, style: card+glyph }
+
+  convergence:
+    topology: convergence
+    title: Four Inputs, One Artifact
+    subtitle: the composition formula meets at a single mouth
+    notes: four inputs
+    nodes:
+      - { label: FRAME, desc: matrix · diagram · card }
+      - { label: GENOME, desc: primer · brutalist · chrome }
+      - { label: DATA, desc: live connectors }
+      - { label: PARADIGM, desc: template variant }
+      - { label: ARTIFACT, desc: one self-contained SVG, role: hero }
+
+  flywheel:
+    topology: flywheel
+    title: Data Flywheel
+    subtitle: artifacts train the model that drafts better artifacts
+    notes: data flywheel
+    nodes:
+      - { label: Generate, desc: compose }
+      - { label: Embed, desc: README · PR }
+      - { label: Record, desc: telemetry }
+      - { label: Train, desc: spatial model }
+      - { label: Spatial Model, desc: the axis, role: hero }
+
+  stack:
+    topology: stack
+    title: Composited Upward
+    subtitle: every layer multiplies into the artifact above it
+    notes: composed stack
+    operator: "×"
+    nodes:
+      - { label: ARTIFACT, desc: one self-contained SVG, role: hero }
+      - { label: FRAME, desc: spatial contract }
+      - { label: GENOME, desc: chromatic DNA }
+      - { label: DATA, desc: live connectors }
+      - { label: PARADIGM, desc: template variant }
+
+  tree:
+    topology: tree
+    title: Artifact Taxonomy
+    subtitle: every HyperWeave artifact is one of three species
+    notes: artifact taxonomy
+    nodes:
+      - { label: Artifact, desc: self-contained SVG, role: hero }
+      - { label: Static, desc: "zero JS · zero data — icons · dividers" }
+      - { label: Data-Bound, desc: "live connectors — badges · charts · matrices" }
+      - { label: Interactive, desc: "declared affordances — the v0.5 HTML twin" }
+
+  comparison:
+    topology: comparison
+    title: Brittle to Portable
+    subtitle: the same intent, restated as a contract
+    notes: brittle to portable
+    nodes:
+      - { label: Agent-generated code, desc: breaks outside its sandbox, role: muted }
+      - { label: HyperWeave SVG, desc: renders anywhere markdown does, role: hero }
+
+  sequence:
+    topology: sequence
+    title: Compose, Embed, Confirm
+    subtitle: an agent trace — messages replay in order on one φ clock
+    notes: sequence trace
+    nodes:
+      - { id: agent, label: Agent, glyph: claude, style: card+glyph }
+      - { id: hw, label: hw compositor, desc: MCP · compose, role: hero }
+      - { id: github, label: GitHub, glyph: github, style: card+glyph }
+    edges:
+      - { source: agent, target: hw, label: "compose(matrix, spec)", kind: call }
+      - { source: hw, target: agent, label: "artifact + hwz/1", kind: return }
+      - { source: agent, target: github, label: embed in PR, kind: call }
+      - { source: github, target: agent, label: "rendered · 200 OK", kind: return }
+
+  pipeline-relay:
+    topology: pipeline
+    title: Compose Pipeline — Relay
+    subtitle: the shot fires, absorbs into the node, re-fires — sequence as light
+    notes: beam applied · pipeline relay
+    edge_motion: beam
+    node_style: glyph-circle
+    nodes:
+      - { label: agent, glyph: claude }
+      - { label: hw compose, short: hw, role: hero }
+      - { label: artifact, glyph: hyperweave }
+      - { label: surface, glyph: github }
+
+  pipeline-streaming:
+    topology: pipeline
+    title: Compose Pipeline — Streaming
+    subtitle: "the relay's counterpart: throughput, not transformation"
+    notes: flow applied · pipeline streaming
+    edge_motion: flow
+    node_style: glyph-circle
+    nodes:
+      - { label: agent, glyph: claude }
+      - { label: hw compose, short: hw, role: hero }
+      - { label: artifact, glyph: hyperweave }
+      - { label: surface, glyph: github }
+
+  fanout-volley:
+    topology: fanout
+    title: Fan-out — Volley
+    subtitle: independent tool calls, φ-staggered — three or four comets airborne at once
+    notes: beam applied · volley
+    edge_motion: beam
+    nodes:
+      - { label: Claude Code, short: ai, glyph: claude, role: hero, style: glyph-circle }
+      - { label: GitHub, glyph: github, style: card+glyph }
+      - { label: Slack, glyph: slack, style: card+glyph }
+      - { label: Notion, glyph: notion, style: card+glyph }
+      - { label: Gmail, glyph: gmail, style: card+glyph }
+      - { label: Postgres, glyph: postgresql, style: card+glyph }
+
+  convergence-arrivals:
+    topology: convergence
+    title: Convergence — Arrivals
+    subtitle: each ember tail drains into the hub — ingestion as light
+    notes: beam applied · arrivals
+    edge_motion: beam
+    nodes:
+      - { label: Sessions, desc: JSONL traces }
+      - { label: Telemetry, desc: compose events }
+      - { label: Configs, desc: genomes · paradigms }
+      - { label: Fixtures, desc: committed cache }
+      - { label: registry, short: hw, role: hero, style: glyph-circle }
+
+  flywheel-circulation:
+    topology: flywheel
+    title: Data Flywheel — Circulation
+    subtitle: no events, only momentum
+    notes: flow applied · circulation
+    edge_motion: flow
+    node_style: glyph-circle
+    nodes:
+      - { label: artifacts, glyph: hyperweave }
+      - { label: usage, glyph: github }
+      - { label: telemetry, short: tx }
+      - { label: model, glyph: anthropic }
+
+  integration-hub:
+    topology: fanout
+    orientation: bilateral
+    title: Integration Hub
+    subtitle: six simultaneous currents, φ-staggered — one calm system of light
+    notes: integration hub
+    edge_motion: flow
+    node_style: glyph-circle
+    nodes:
+      - { id: hw, label: hw, short: hw, role: hero }
+      - { id: docs, label: docs, glyph: notion }
+      - { id: chat, label: chat, glyph: slack }
+      - { id: files, label: files, glyph: obsidian }
+      - { id: actions, label: actions, glyph: github }
+      - { id: mail, label: mail, glyph: gmail }
+      - { id: agents, label: agents, glyph: anthropic }
+    edges:
+      # Left side feeds the hub (currents read inward); the right side
+      # drains it — direction is the edge, not the topology.
+      - { source: docs, target: hw }
+      - { source: chat, target: hw }
+      - { source: files, target: hw }
+      - { source: hw, target: actions }
+      - { source: hw, target: mail }
+      - { source: hw, target: agents }
+
+  gateway:
+    topology: pipeline
+    title: MCP Gateway
+    subtitle: request goes one way, response comes back — two lanes per pair
+    notes: mcp gateway
+    nodes:
+      - { id: client, label: MCP client, glyph: claude, style: card+glyph }
+      - { id: hw, label: hw, role: hero }
+      - { id: server, label: MCP server, glyph: docker, style: card+glyph }
+    edges:
+      - { source: client, target: hw, direction: both }
+      - { source: hw, target: server, direction: both }
+
+  service-dependencies:
+    topology: dag
+    title: Service Dependencies
+    subtitle: fan-in, fan-out and a rank-skipping edge — the general-graph case
+    notes: dependency dag
+    nodes:
+      - { id: web, label: web, desc: edge frontend, glyph: react, style: card+glyph }
+      - { id: worker, label: worker, desc: batch jobs, glyph: python, style: card+glyph }
+      - { id: api, label: api, desc: REST · graphql, glyph: nginx, style: card+glyph }
+      - { id: queue, label: queue, desc: events, glyph: rabbitmq, style: card+glyph }
+      - { id: auth, label: auth, desc: tokens }
+      - { id: db, label: db, desc: postgres, glyph: postgresql, style: card+glyph }
+      - { id: cache, label: cache, desc: redis, glyph: redis, style: card+glyph }
+    edges:
+      - { source: web, target: api }
+      - { source: worker, target: queue }
+      - { source: api, target: auth }
+      - { source: api, target: db }
+      - { source: api, target: cache }
+      - { source: queue, target: db }
+      - { source: worker, target: db }
+
+  order-lifecycle:
+    topology: state-machine
+    title: Order Lifecycle
+    subtitle: happy path, rejection branch, revise loop — the back-edge is the point
+    notes: state machine
+    nodes:
+      - { id: draft, label: draft }
+      - { id: submitted, label: submitted }
+      - { id: approved, label: approved }
+      - { id: shipped, label: shipped, role: hero }
+      - { id: rejected, label: rejected }
+    edges:
+      - { source: draft, target: submitted, label: submit }
+      - { source: submitted, target: approved, label: "review ✓" }
+      - { source: approved, target: shipped, label: fulfill }
+      - { source: submitted, target: rejected, label: "review ✗" }
+      - { source: rejected, target: draft, label: revise }
+
+  mindmap:
+    topology: tree
+    orientation: radial
+    title: Anatomy of an Artifact
+    notes: artifact anatomy
+    nodes:
+      - { id: artifact, label: HyperWeave SVG, short: hw, glyph: hyperweave, style: glyph-circle }
+      - { id: visual, label: Visual }
+      - { id: payload, label: Payload }
+      - { id: envelope, label: Envelope }
+      - { id: geometry, label: geometry }
+      - { id: motion, label: motion }
+      - { id: spec, label: spec }
+      - { id: rendered, label: rendered }
+      - { id: pattern, label: pattern + n }
+    edges:
+      - { source: artifact, target: visual }
+      - { source: artifact, target: payload }
+      - { source: artifact, target: envelope }
+      - { source: visual, target: geometry }
+      - { source: visual, target: motion }
+      - { source: payload, target: spec }
+      - { source: payload, target: rendered }
+      - { source: envelope, target: pattern }
+
+  # ── Gallery: named real systems (P5) ──────────────────────────────────
+
+  agent-plan:
+    topology: sequence
+    title: Plan, Approve, Execute
+    subtitle: a coding-agent session as a replayable trace — plans as artifacts
+    notes: agent plan
+    nodes:
+      - { id: user, label: User, desc: reviews · approves }
+      - { id: agent, label: Claude Code, desc: plans · executes, role: hero }
+      - { id: repo, label: GitHub, glyph: github, style: card+glyph }
+    edges:
+      - { source: user, target: agent, label: "plan(feature)", kind: call }
+      - { source: agent, target: user, label: "plan + diagrams", kind: return }
+      - { source: user, target: agent, label: "approve ✓", kind: call }
+      - { source: agent, target: repo, label: "execute · commit", kind: call }
+      - { source: repo, target: agent, label: checks green, kind: return }
+      - { source: agent, target: user, label: receipt, kind: return }
+
+  rag-pipeline:
+    topology: pipeline
+    title: RAG, End to End
+    subtitle: retrieval feeds generation — one straight line from corpus to answer
+    notes: rag pipeline
+    edge_motion: flow
+    nodes:
+      - { label: Corpus, desc: docs · tickets }
+      - { label: Embedder, desc: e5 · bge, glyph: huggingface, style: card+glyph }
+      - { label: pgvector, desc: ANN index, glyph: postgresql, style: card+glyph }
+      - { label: Reranker, desc: cross-encoder }
+      - { label: Claude, short: ai, glyph: anthropic, style: glyph-circle, role: hero }
+
+  inference-serving:
+    topology: dag
+    title: Inference Serving
+    subtitle: one balancer, a vLLM pool, shared KV — telemetry skips the ranks
+    notes: inference serving
+    glyph_tint: full
+    nodes:
+      - { id: req, label: requests, desc: clients }
+      - { id: lb, label: balancer, desc: least-load, glyph: nginx, style: card+glyph }
+      - { id: pod-a, label: vllm-a, desc: H100 · tp2, glyph: vllm, style: card+glyph }
+      - { id: pod-b, label: vllm-b, desc: H100 · tp2, glyph: vllm, style: card+glyph }
+      - { id: kv, label: kv-cache, desc: paged attn, glyph: redis, style: card+glyph }
+      - { id: obs, label: metrics, desc: tokens/s, glyph: grafana, style: card+glyph }
+    edges:
+      - { source: req, target: lb }
+      - { source: lb, target: pod-a }
+      - { source: lb, target: pod-b }
+      - { source: pod-a, target: kv }
+      - { source: pod-b, target: kv }
+      - { source: pod-a, target: obs }
+      - { source: lb, target: obs }
+
+  model-router:
+    topology: fanout
+    orientation: radial
+    title: One Key, Every Model
+    notes: model router
+    glyph_tint: full
+    node_style: glyph-circle
+    nodes:
+      - { label: router, short: api, role: hero }
+      - { label: OpenAI, glyph: openai }
+      - { label: Anthropic, glyph: anthropic }
+      - { label: Gemini, glyph: gemini }
+      - { label: Mistral, glyph: mistral }
+      - { label: DeepSeek, glyph: deepseek }
+      - { label: Qwen, glyph: qwen }
+      - { label: Ollama, glyph: ollama }
+      - { label: HF, glyph: huggingface }
+
+  event-flywheel:
+    topology: flywheel
+    title: Event Streaming Loop
+    subtitle: producers feed the broker that feeds the views that feed the producers
+    notes: event streaming
+    edge_motion: flow
+    node_style: glyph-circle
+    nodes:
+      - { label: produce, short: tx }
+      - { label: Kafka, glyph: kafka }
+      - { label: consume, short: rx }
+      - { label: Postgres, glyph: postgresql }
+
+  cicd-machine:
+    topology: state-machine
+    title: CI Run Lifecycle
+    subtitle: the retry loop is why it is a state machine, not a pipeline
+    notes: ci lifecycle
+    nodes:
+      - { id: queued, label: queued }
+      - { id: building, label: build }
+      - { id: testing, label: test }
+      - { id: deployed, label: deploy, role: hero }
+      - { id: failed, label: failed }
+    edges:
+      - { source: queued, target: building, label: start }
+      - { source: building, target: testing, label: built }
+      - { source: testing, target: deployed, label: "promote ✓" }
+      - { source: testing, target: failed, label: "checks ✗" }
+      - { source: failed, target: queued, label: retry }
+
+  build-migration:
+    topology: comparison
+    title: CRA to Vite
+    subtitle: the same app, four hundred config lines lighter
+    notes: build migration
+    nodes:
+      - { label: Create React App, desc: "webpack · 28s cold start", role: muted, glyph: react, style: card+glyph }
+      - { label: Vite, desc: "esbuild · 400ms cold start", role: hero, glyph: vite, style: card+glyph }
+
+  gateway-classic:
+    topology: pipeline
+    title: MCP Gateway
+    subtitle: request and response as two lanes — amber out, violet back
+    notes: gateway classic
+    edge_motion: dash
+    nodes:
+      - { id: client, label: MCP client, glyph: claude, style: card+glyph }
+      - { id: hw, label: hw, role: hero }
+      - { id: server, label: MCP server, glyph: docker, style: card+glyph }
+    edges:
+      - { source: client, target: hw, direction: both }
+      - { source: hw, target: server, direction: both }
+
+  sync-chain:
+    topology: pipeline
+    title: Edge Sync Fabric
+    subtitle: state reconciles both ways at every hop — no origin of truth
+    notes: sync fabric
+    edge_motion: dash
+    nodes:
+      - { id: client, label: client, desc: local replica }
+      - { id: edge, label: edge, desc: PoP cache, role: hero }
+      - { id: region, label: region, desc: regional store }
+      - { id: origin, label: origin, desc: source of record }
+    edges:
+      - { source: client, target: edge, direction: both }
+      - { source: edge, target: region, direction: both }
+      - { source: region, target: origin, direction: both }
+
+  request-descent:
+    topology: stack
+    title: Request Descent
+    subtitle: reverse the edge and the motion follows
+    notes: request descent
+    edge_motion: particle
+    nodes:
+      - { id: cdn, label: CDN, desc: edge cache, role: hero }
+      - { id: lb, label: LB, desc: least-conn }
+      - { id: app, label: app, desc: stateless pods }
+      - { id: db, label: DB, desc: primary + replicas }
+    edges:
+      # The stack DERIVES rising edges; declaring them top->down reverses
+      # the travel — direction is the edge, not the topology.
+      - { source: cdn, target: lb }
+      - { source: lb, target: app }
+      - { source: app, target: db }
+
+  # ── Frontier tier: coverage-exempt, marketing-grade ───────────────────
+
+  frontier-relay:
+    topology: pipeline
+    title: Frontier Handoff
+    subtitle: one task relayed across four labs — the comet is the payload
+    notes: frontier handoff
+    edge_motion: beam
+    node_style: glyph-circle
+    glyph_tint: full
+    nodes:
+      - { label: GPT, glyph: openai }
+      # Anthropic's brand mark is near-black — on noir the hero opts back
+      # to ink (the per-slot override is the designed escape, decision 9).
+      - { label: Claude, glyph: anthropic, role: hero, glyph_tint: ink }
+      - { label: Gemini, glyph: gemini }
+      - { label: Ollama, glyph: ollama }
+
+  frontier-gateway:
+    topology: pipeline
+    title: MCP Round Trip
+    subtitle: requests fire as comets, responses return as particles
+    notes: mcp round trip
+    nodes:
+      - { id: client, label: Claude Code, glyph: claude, style: card+glyph }
+      - { id: gw, label: gateway, role: hero }
+      - { id: srv, label: tool server, glyph: docker, style: card+glyph }
+    edges:
+      - { source: client, target: gw, edge_motion: beam }
+      - { source: gw, target: client, edge_motion: particle }
+      - { source: gw, target: srv, edge_motion: beam }
+      - { source: srv, target: gw, edge_motion: particle }
+
+  frontier-mindmap:
+    topology: tree
+    orientation: radial
+    title: The LLM Stack
+    notes: llm stack
+    nodes:
+      - { id: stack, label: LLM Stack, short: ai }
+      - { id: models, label: Models }
+      - { id: serving, label: Serving }
+      - { id: data, label: Data }
+      - { id: open, label: open }
+      - { id: closed, label: closed }
+      - { id: engines, label: engines }
+      - { id: local, label: local }
+      - { id: corpora, label: corpora }
+      - { id: evals, label: evals }
+      - { id: llama, label: Llama, glyph: meta, style: card+glyph }
+      - { id: qwen, label: Qwen, glyph: qwen, style: card+glyph }
+      - { id: vllm, label: vLLM, glyph: vllm, style: card+glyph }
+      - { id: ollama, label: Ollama, glyph: ollama, style: card+glyph }
+    edges:
+      - { source: stack, target: models }
+      - { source: stack, target: serving }
+      - { source: stack, target: data }
+      - { source: models, target: open }
+      - { source: models, target: closed }
+      - { source: serving, target: engines }
+      - { source: serving, target: local }
+      - { source: data, target: corpora }
+      - { source: data, target: evals }
+      - { source: open, target: llama }
+      - { source: open, target: qwen }
+      - { source: engines, target: vllm }
+      - { source: local, target: ollama }
+
+  frontier-dag:
+    topology: dag
+    title: Data Platform Lineage
+    subtitle: two rank-skipping edges, two stacked under-channels
+    notes: platform lineage
+    nodes:
+      - { id: app, label: app, desc: clickstream, glyph: react, style: card+glyph }
+      - { id: iot, label: sensors, desc: edge fleet }
+      - { id: broker, label: Kafka, desc: 12 topics, glyph: kafka, style: card+glyph }
+      - { id: etl, label: transform, desc: dbt · spark, glyph: python, style: card+glyph }
+      - { id: dw, label: warehouse, desc: star schema, glyph: postgresql, style: card+glyph }
+      - { id: bi, label: dashboards, desc: exec views, glyph: grafana, style: card+glyph }
+    edges:
+      - { source: app, target: broker }
+      - { source: iot, target: broker }
+      - { source: broker, target: etl }
+      - { source: etl, target: dw }
+      - { source: etl, target: bi }
+      - { source: app, target: etl }
+      - { source: broker, target: bi }

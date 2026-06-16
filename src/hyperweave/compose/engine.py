@@ -17,7 +17,7 @@ def compose(spec: ComposeSpec) -> ComposeResult:
     # this step untouched. This is the single chokepoint covering HTTP,
     # CLI, MCP, and kit.
     #
-    # v0.2.25: gated on the stateful-title allowlist (data/badge_modes.yaml).
+    # v0.2.25: gated on the stateful-title allowlist (data/config/badge-modes.yaml).
     # Pre-v0.2.25 the inference fired on EVERY frame regardless of title —
     # so a STARS=42 badge was auto-inferred to state="critical" (leading
     # digit 4) and rendered an orange/red status indicator on a value with

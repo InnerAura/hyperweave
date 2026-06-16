@@ -158,7 +158,7 @@ def validate_font_embedding(
     font_embedding: dict[str, object],
     available_slugs: frozenset[str],
 ) -> None:
-    """Assert ``data/font-embedding.yaml`` is internally consistent.
+    """Assert ``data/config/font-embedding.yaml`` is internally consistent.
 
     Four checks, each contributing structured violation lines so a single
     config-load surfaces the complete remediation list:
@@ -249,7 +249,7 @@ def validate_font_embedding(
                 violations.append(f"  non_embedded_locales contains non-string entry {entry!r}")
 
     if violations:
-        raise ValueError("data/font-embedding.yaml has violations:\n" + "\n".join(violations))
+        raise ValueError("data/config/font-embedding.yaml has violations:\n" + "\n".join(violations))
 
 
 def validate_genome_against_paradigms(
@@ -510,6 +510,46 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
             violations.append(
                 f"  variants[] entries unreachable via variant_tones: {sorted(unreachable)} (tones={sorted(tones_set)})"
             )
+
+    # Check 3: diagram flow palette (active only when the genome opts into
+    # the diagram frame). Base diagram_flow must be 3-8 pairwise-distinct
+    # #RRGGBB entries, and every variant override that declares ANY
+    # chromatic field must redeclare diagram_flow — the chromatic-coverage
+    # contract that keeps one variant's cycle from bleeding into another.
+    if "diagram" in (genome.paradigms or {}):
+        import re as _re
+
+        def _flow_violations(label: str, palette: object) -> None:
+            if not isinstance(palette, list) or not 3 <= len(palette) <= 8:
+                violations.append(f"  {label}: diagram_flow must carry 3-8 entries, got {palette!r}")
+                return
+            for hexv in palette:
+                if not isinstance(hexv, str) or not _re.fullmatch(r"#[0-9A-Fa-f]{6}", hexv):
+                    violations.append(f"  {label}: diagram_flow entry {hexv!r} is not #RRGGBB")
+            lowered = [str(hexv).lower() for hexv in palette]
+            if len(set(lowered)) != len(lowered):
+                violations.append(f"  {label}: diagram_flow entries must be pairwise distinct, got {palette}")
+
+        _flow_violations(f"genome '{genome.id}'", list(genome.diagram_flow or []))
+        for v_slug, override in (genome.variant_overrides or {}).items():
+            if isinstance(override, dict) and override and "diagram_flow" not in override:
+                violations.append(
+                    f"  variant_overrides['{v_slug}'] declares chromatic fields but no diagram_flow "
+                    f"(the flow cycle must be redeclared per variant)"
+                )
+            elif isinstance(override, dict) and "diagram_flow" in override:
+                _flow_violations(f"variant_overrides['{v_slug}']", override.get("diagram_flow"))
+
+        # Contrast plates (G5): the gate's swap targets — both required,
+        # both #RRGGBB, drawn from the genome's own surface family.
+        plates = dict(genome.diagram_plates or {})
+        for key in ("light", "dark"):
+            value = plates.get(key, "")
+            if not isinstance(value, str) or not _re.fullmatch(r"#[0-9A-Fa-f]{6}", value):
+                violations.append(
+                    f"  genome '{genome.id}': diagram_plates.{key} must be #RRGGBB "
+                    f"(got {value!r}) — the glyph contrast gate swaps onto it"
+                )
 
     if violations:
         raise ValueError(f"Genome '{genome.id}' has variant grammar violations:\n" + "\n".join(violations))

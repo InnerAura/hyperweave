@@ -34,6 +34,7 @@ from hyperweave.compose.matrix.project import (
     to_markdown,
 )
 from hyperweave.config.loader import load_glyphs, load_matrix_config
+from hyperweave.core.color import relative_luminance
 from hyperweave.core.matrix import CellKind, GlyphTint
 from hyperweave.core.paradigm import ParadigmMatrixConfig
 
@@ -66,7 +67,16 @@ def resolve_matrix(
     glyphs = load_glyphs()
     table = infer_matrix(coerce_matrix_input(spec.connector_data, spec), config=mconf)
     table = _apply_glyph_tint(table, spec, genome)
-    layout = compute_matrix_layout(table, matrix=cfg, config=mconf, glyph_registry=glyphs)
+    # Genome surface luminance flips the heat-cell ink + wash between the light
+    # and dark derivations. genome already carries the resolved variant's
+    # surface_0 (variant_overrides merged upstream), so noir reads ~0, porcelain
+    # ~0.94. Fall back to light when the surface hex is absent/malformed.
+    _surface = str(genome.get("surface_0") or "")
+    try:
+        surface_lum = relative_luminance(_surface) if _surface else 1.0
+    except ValueError:
+        surface_lum = 1.0
+    layout = compute_matrix_layout(table, matrix=cfg, config=mconf, glyph_registry=glyphs, surface_lum=surface_lum)
     subvariant = derive_subvariant(table)
     payload_json = matrix_payload_json(table)
 

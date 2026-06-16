@@ -1,0 +1,56 @@
+{
+  "topology": "state-machine",
+  "title": "Order Lifecycle",
+  "subtitle": "happy path, rejection branch, revise loop — the back-edge is the point",
+  "notes": "state machine",
+  "nodes": [
+    {
+      "id": "draft",
+      "label": "draft"
+    },
+    {
+      "id": "submitted",
+      "label": "submitted"
+    },
+    {
+      "id": "approved",
+      "label": "approved"
+    },
+    {
+      "id": "shipped",
+      "label": "shipped",
+      "role": "hero"
+    },
+    {
+      "id": "rejected",
+      "label": "rejected"
+    }
+  ],
+  "edges": [
+    {
+      "source": "draft",
+      "target": "submitted",
+      "label": "submit"
+    },
+    {
+      "source": "submitted",
+      "target": "approved",
+      "label": "review ✓"
+    },
+    {
+      "source": "approved",
+      "target": "shipped",
+      "label": "fulfill"
+    },
+    {
+      "source": "submitted",
+      "target": "rejected",
+      "label": "review ✗"
+    },
+    {
+      "source": "rejected",
+      "target": "draft",
+      "label": "revise"
+    }
+  ]
+}

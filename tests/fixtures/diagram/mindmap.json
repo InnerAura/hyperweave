@@ -1,0 +1,80 @@
+{
+  "topology": "tree",
+  "orientation": "radial",
+  "title": "Anatomy of an Artifact",
+  "notes": "artifact anatomy",
+  "nodes": [
+    {
+      "id": "artifact",
+      "label": "HyperWeave SVG",
+      "short": "hw",
+      "glyph": "hyperweave"
+    },
+    {
+      "id": "visual",
+      "label": "Visual"
+    },
+    {
+      "id": "payload",
+      "label": "Payload"
+    },
+    {
+      "id": "envelope",
+      "label": "Envelope"
+    },
+    {
+      "id": "geometry",
+      "label": "geometry"
+    },
+    {
+      "id": "motion",
+      "label": "motion"
+    },
+    {
+      "id": "spec",
+      "label": "spec"
+    },
+    {
+      "id": "rendered",
+      "label": "rendered"
+    },
+    {
+      "id": "pattern",
+      "label": "pattern + n"
+    }
+  ],
+  "edges": [
+    {
+      "source": "artifact",
+      "target": "visual"
+    },
+    {
+      "source": "artifact",
+      "target": "payload"
+    },
+    {
+      "source": "artifact",
+      "target": "envelope"
+    },
+    {
+      "source": "visual",
+      "target": "geometry"
+    },
+    {
+      "source": "visual",
+      "target": "motion"
+    },
+    {
+      "source": "payload",
+      "target": "spec"
+    },
+    {
+      "source": "payload",
+      "target": "rendered"
+    },
+    {
+      "source": "envelope",
+      "target": "pattern"
+    }
+  ]
+}

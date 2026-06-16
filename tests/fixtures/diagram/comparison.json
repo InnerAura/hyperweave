@@ -1,0 +1,18 @@
+{
+  "topology": "comparison",
+  "title": "Brittle to Portable",
+  "subtitle": "the same intent, restated as a contract",
+  "notes": "brittle to portable",
+  "nodes": [
+    {
+      "label": "Agent-generated code",
+      "desc": "breaks outside its sandbox",
+      "role": "muted"
+    },
+    {
+      "label": "HyperWeave SVG",
+      "desc": "renders anywhere markdown does",
+      "role": "hero"
+    }
+  ]
+}

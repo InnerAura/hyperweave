@@ -204,9 +204,18 @@ class ComposeRequest(BaseModel):
     speeds: list[float] | None = None
     matrix: dict[str, Any] | None = None
     """Matrix frame table IR (type=matrix) — validated into MatrixSpec."""
+
+    diagram: dict[str, Any] | None = None
+    """Diagram frame topology IR (type=diagram) — validated into DiagramSpec."""
     glyph_tint: str = ""
     """Glyph fill selection: ink | brand | full (empty defers to the
     genome default). Per-slot IR declarations outrank it."""
+    performance: str = ""
+    """Surface performance tier: '' (paint-ok) | 'composite-only' (diagram
+    motion ladders beam->particle, flow->dash; recorded in the payload)."""
+    chrome: str = "card"
+    """Presentation chrome (diagram): card (default) | bare — transparent
+    paper, no masthead/footer; presentational, outside the envelope digest."""
     respond: str = "svg"
     """Response shape: ``svg`` (raw image bytes, default) or ``json``
     (``{svg, markdown, width, height}`` — the markdown shadow alongside)."""
@@ -671,7 +680,10 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         marquee_direction=req.direction,
         marquee_speeds=req.speeds,
         matrix=req.matrix,
+        diagram=req.diagram,
         glyph_tint=req.glyph_tint,
+        performance=req.performance,
+        chrome=req.chrome,
     )
     if req.respond == "json":
         # Both projections in one response: the SVG plus its markdown
@@ -686,6 +698,18 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
             }
         )
     return _compose_and_respond(spec, request)
+
+
+@app.post("/v1/diagram", response_class=Response)
+async def compose_diagram_post(request: Request, req: ComposeRequest) -> Response:
+    """Thin alias for POST /v1/compose pinned to the diagram frame.
+
+    The diagram spec rides ``req.diagram`` (edge_motion and per-edge declarations
+    live inside it); every ComposeRequest control — genome, variant, performance,
+    chrome, ``respond`` — applies unchanged. Lets a caller POST a custom diagram
+    without restating ``type``, mirroring the GET ``/v1/diagram/{preset}`` route.
+    """
+    return await compose_post(request, req.model_copy(update={"type": "diagram"}))
 
 
 # ── Matrix routes ────────────────────────────────────────────────────────────
@@ -782,6 +806,142 @@ async def compose_matrix_url(
         matrix=matrix_payload,
         connector_data=connector_data,
         glyph_tint=glyph_tint,
+    )
+    return _compose_and_respond(compose_spec, request)
+
+
+# ── Diagram routes ───────────────────────────────────────────────────────────
+
+
+@app.get(
+    "/v1/diagram/{preset}/{genome_motion}",
+    response_class=Response,
+)
+async def compose_diagram_url(
+    request: Request,
+    preset: str,
+    genome_motion: str,
+    variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
+    spec: Annotated[
+        str,
+        Query(
+            description=(
+                "base64url-encoded DiagramSpec JSON (preset must be 'custom'). "
+                "Decoded size cap: 8 KB. Gives arbitrary topologies a "
+                "Camo-embeddable GET URL with a per-spec ETag."
+            ),
+        ),
+    ] = "",
+    glyph_tint: Annotated[
+        str,
+        Query(
+            description=(
+                "Node-glyph fill selection: ink | brand | full. Per-slot IR "
+                "declarations outrank it; degrades full -> gradient -> "
+                "brand -> ink."
+            ),
+            pattern="^(|ink|brand|full)$",
+        ),
+    ] = "",
+    edge_motion: Annotated[
+        str,
+        Query(
+            description=(
+                "Artifact-level edge motion override — the closed 2x2: "
+                "dash | particle | beam | flow (genome allowlist enforced; "
+                "per-edge IR declarations outrank it)."
+            ),
+            pattern="^(|dash|particle|beam|flow)$",
+        ),
+    ] = "",
+    performance: Annotated[
+        str,
+        Query(
+            description=(
+                "Surface performance tier. 'composite-only' applies the "
+                "fallback ladder (beam->particle, flow->dash); the payload's "
+                "rendered block records fallback_applied."
+            ),
+            pattern="^(|composite-only)$",
+        ),
+    ] = "",
+    chrome: Annotated[
+        str,
+        Query(
+            description=(
+                "Presentation chrome: card (substrate + masthead + footer, "
+                "default) | bare (transparent paper, no masthead/footer; the "
+                "title ships in hw:title/aria/markdown/payload only). "
+                "Presentational — excluded from the envelope digest. Bare "
+                "callers own paper matching: the genome's inks assume its "
+                "own surface family."
+            ),
+            pattern="^(card|bare)$",
+        ),
+    ] = "card",
+) -> Response:
+    """Compose a diagram: /v1/diagram/{preset}/{genome}.{motion}.
+
+    ``preset`` names a server-known diagram (the specimen recreations in
+    ``data/presets/diagram.yaml`` — a data file away from new presets) or
+    ``custom`` with an inline ``?spec=`` base64url DiagramSpec. Long-cached:
+    diagram content is request-static, so the pure-compose cache tier
+    applies.
+    """
+    genome, motion = _parse_genome_motion(genome_motion)
+
+    diagram_payload: dict[str, Any] | None = None
+    if preset == "custom":
+        decode_error = ""
+        if not spec:
+            decode_error = "preset 'custom' requires ?spec=<base64url DiagramSpec JSON>"
+        else:
+            import base64
+            import binascii
+            import json as _json
+
+            try:
+                padded = spec + "=" * (-len(spec) % 4)
+                raw = base64.urlsafe_b64decode(padded.encode("ascii"))
+                if len(raw) > _MATRIX_SPEC_PARAM_MAX_BYTES:
+                    decode_error = f"?spec= exceeds the {_MATRIX_SPEC_PARAM_MAX_BYTES} byte cap after decoding"
+                else:
+                    diagram_payload = _json.loads(raw)
+            except (ValueError, binascii.Error) as exc:
+                decode_error = f"?spec= is not base64url-encoded JSON: {exc}"
+        if decode_error:
+            return Response(
+                content=_error_badge(decode_error, status_code=400),
+                media_type="image/svg+xml",
+                status_code=200,
+                headers=_error_response_headers(400),
+            )
+    else:
+        from hyperweave.compose.diagram.input import resolve_diagram_preset
+        from hyperweave.core.diagram import DiagramInputError
+
+        try:
+            diagram_payload = resolve_diagram_preset(preset)
+        except DiagramInputError as exc:
+            return Response(
+                content=_error_badge(str(exc), status_code=404),
+                media_type="image/svg+xml",
+                status_code=200,
+                headers=_error_response_headers(404),
+            )
+
+    if edge_motion and isinstance(diagram_payload, dict):
+        diagram_payload = {**diagram_payload, "edge_motion": edge_motion}
+
+    compose_spec = ComposeSpec(
+        type="diagram",
+        genome_id=genome,
+        motion=motion,
+        variant=variant,
+        diagram=diagram_payload,
+        glyph_tint=glyph_tint,
+        performance=performance,
+        chrome=chrome,
     )
     return _compose_and_respond(compose_spec, request)
 
@@ -975,6 +1135,11 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
         "pattern": "/v1/stats/{username}/{genome}.{motion}",
         "query_params": ["data", "variant", "pair"],
     },
+    "diagram": {
+        "pattern": "/v1/diagram/{preset}/{genome}.{motion}",
+        "query_params": ["variant", "spec", "glyph_tint", "edge_motion", "performance", "chrome"],
+        "presets": "data/presets/diagram.yaml slugs, or 'custom' + ?spec=",
+    },
     "matrix": {
         "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
         "query_params": ["variant", "spec"],
@@ -987,13 +1152,20 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
 @app.get("/v1/frames")
 async def list_frames() -> list[dict[str, Any]]:
     """List all frame types with URL grammar and query params."""
-    return [
-        {
+    from hyperweave.compose.diagram import registered_slugs
+
+    frames: list[dict[str, Any]] = []
+    for ft in FrameType:
+        entry: dict[str, Any] = {
             "type": ft.value,
             **_FRAME_URL_GRAMMAR.get(ft.value, {"pattern": "POST /v1/compose", "query_params": []}),
         }
-        for ft in FrameType
-    ]
+        if ft.value == "diagram":
+            # The flattened requestable layout set (topology x orientation), so a
+            # caller sees fanout-radial / tree-radial explicitly, not as prose.
+            entry["layout_slugs"] = registered_slugs()
+        frames.append(entry)
+    return frames
 
 
 @app.get("/v1/genomes")
@@ -1367,7 +1539,7 @@ _specimens_cache: dict[str, Any] | None = None
 
 
 def _load_specimens_registry() -> dict[str, Any]:
-    """Load the editorial specimens registry from data/specimens.yaml.
+    """Load the editorial specimens registry from data/registries/specimens.yaml.
 
     Returns a mixed dict: top-level keys may be either flat slugs (str values
     pointing at a relative file path under specs/) or categories (dict values
@@ -1381,7 +1553,7 @@ def _load_specimens_registry() -> dict[str, Any]:
 
     import yaml
 
-    registry_path = pathlib.Path(__file__).resolve().parent.parent / "data" / "specimens.yaml"
+    registry_path = pathlib.Path(__file__).resolve().parent.parent / "data" / "registries" / "specimens.yaml"
     if not registry_path.exists():
         _specimens_cache = {}
         return _specimens_cache
@@ -1528,9 +1700,14 @@ def _classify_compose_exception(exc: BaseException) -> int:
     # Matrix input problems are caller errors: no usable input, unknown
     # preset/adapter/glyph id, hard-cap overflow (MatrixCapacityError is a
     # MatrixInputError), or a genome without a matrix paradigm entry.
+    from hyperweave.core.diagram import DiagramInputError
     from hyperweave.core.matrix import MatrixInputError
 
     if isinstance(exc, MatrixInputError):
+        return 422
+    if isinstance(exc, DiagramInputError):
+        return 422
+    if isinstance(exc, ValueError) and str(exc).startswith("diagram frame is not supported"):
         return 422
     if isinstance(exc, ValueError) and str(exc).startswith("matrix frame is not supported"):
         return 422

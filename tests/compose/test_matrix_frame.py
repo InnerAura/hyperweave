@@ -11,8 +11,20 @@ from unittest.mock import patch
 import pytest
 
 from hyperweave.compose.engine import compose
+from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.matrix.infer import infer_matrix
+from hyperweave.compose.matrix.layout import _column_statistics, compute_matrix_layout
+from hyperweave.config.loader import load_glyphs, load_matrix_config, load_paradigms
 from hyperweave.core.envelope import envelope_id, validate_envelope
-from hyperweave.core.matrix import CellKind, MatrixSpec
+from hyperweave.core.matrix import (
+    CellKind,
+    ColRole,
+    MatrixCell,
+    MatrixColumn,
+    MatrixRow,
+    MatrixSpec,
+    Polarity,
+)
 from hyperweave.core.models import ComposeSpec
 from tests.compose.test_matrix_input import all_fixture_specs, load_fixture
 
@@ -219,3 +231,111 @@ class TestReasoningMetadata:
         match = re.search(r"<hw:tradeoffs>(.*?)</hw:tradeoffs>", svg, re.S)
         assert match is not None
         assert len(match.group(1).strip()) > 20
+
+
+class TestFooterClearance:
+    """Footer notes and the brand mark never overlap, for ANY notes length.
+    The width solver reserves footer space; when the ceiling clamps that
+    reservation away the notes truncate to clear the brand by ``footer_gap``."""
+
+    _LONG_NOTES = (
+        "SWE-bench Verified % (vendor + independent, varies by harness/scaffold) · "
+        "price USD per million tokens · current flagships as of jun 13 2026 · "
+        "sources: vals.ai · artificialanalysis.ai · model cards · plus a deliberately "
+        "long tail to push the footer past the width ceiling and clamp the reservation"
+    )
+
+    def _footer(self, notes: str) -> tuple[float, float, str]:
+        """(notes ink right edge, brand ink left edge, rendered notes text)."""
+        config = load_matrix_config()
+        cfg = load_paradigms()["primer"].matrix
+        spec = MatrixSpec(
+            title="Frontier benchmarks",
+            columns=[
+                MatrixColumn(id="model", label="Model", role=ColRole.LABEL),
+                MatrixColumn(id="swe", label="SWE-bench", kind=CellKind.NUMERIC, polarity=Polarity.HIGHER, unit="%"),
+                MatrixColumn(id="inp", label="Input", kind=CellKind.NUMERIC, polarity=Polarity.LOWER, unit="$"),
+            ],
+            rows=[
+                MatrixRow(label="Fable 5", cells=[MatrixCell(value=95.0), MatrixCell(value=10.0)]),
+                MatrixRow(label="Opus 4.8", cells=[MatrixCell(value=88.6), MatrixCell(value=5.0)]),
+                MatrixRow(label="DeepSeek V4-Pro", cells=[MatrixCell(value=80.6), MatrixCell(value=0.44)]),
+            ],
+            notes=notes,
+        )
+        spec = infer_matrix(spec, config=config)
+        lay = compute_matrix_layout(spec, matrix=cfg, config=config, glyph_registry=load_glyphs())
+        assert lay.footer is not None
+        assert lay.footer.notes is not None and lay.footer.brand is not None
+        notes_right = lay.footer.notes.x + measure_voice(lay.footer.notes.text, cfg.foot_voice)
+        brand_left = lay.footer.brand.x - measure_voice(lay.footer.brand.text, cfg.foot_brand_voice)
+        return notes_right, brand_left, lay.footer.notes.text
+
+    def test_long_notes_truncate_and_clear_brand(self) -> None:
+        cfg = load_paradigms()["primer"].matrix
+        notes_right, brand_left, text = self._footer(self._LONG_NOTES)
+        # The overrunning string was truncated rather than placed at full length.
+        assert text != self._LONG_NOTES
+        assert text.endswith("…")
+        # A real clearance gap separates the two — not a tuned offset.
+        assert notes_right <= brand_left + 0.51
+        assert brand_left - notes_right >= cfg.footer_gap - 0.6
+
+    def test_short_notes_untouched_and_clear(self) -> None:
+        short = "two sources · jun 2026"
+        notes_right, brand_left, text = self._footer(short)
+        # Notes that fit are placed verbatim — truncation is a no-op.
+        assert text == short
+        assert notes_right <= brand_left + 0.51
+
+
+class TestGaugePolarity:
+    """The gauge FILL is polarity-aware, mirroring the heat COLOUR. LOWER
+    columns fill fuller for LOWER values (cheapest fullest); HIGHER and NONE
+    columns keep the raw-magnitude fill unchanged."""
+
+    def _stats(
+        self,
+    ) -> tuple[list[MatrixColumn], dict[tuple[int, int], float], dict[tuple[int, int], float]]:
+        config = load_matrix_config()
+        cfg = load_paradigms()["primer"].matrix
+        spec = MatrixSpec(
+            title="Polarity probe",
+            columns=[
+                MatrixColumn(id="model", label="Model", role=ColRole.LABEL),
+                MatrixColumn(id="score", label="Score", kind=CellKind.NUMERIC, polarity=Polarity.HIGHER),
+                MatrixColumn(id="price", label="Price", kind=CellKind.NUMERIC, polarity=Polarity.LOWER, unit="$"),
+                MatrixColumn(id="count", label="Count", kind=CellKind.NUMERIC, polarity=Polarity.NONE),
+            ],
+            rows=[
+                MatrixRow(label="A", cells=[MatrixCell(value=90.0), MatrixCell(value=10.0), MatrixCell(value=5.0)]),
+                MatrixRow(label="B", cells=[MatrixCell(value=80.0), MatrixCell(value=2.0), MatrixCell(value=3.0)]),
+            ],
+        )
+        spec = infer_matrix(spec, config=config)
+        data_cols = [c for c in spec.columns if c.role is not ColRole.LABEL]
+        cells_by_col = [[row.cells[j] for row in spec.rows] for j in range(len(data_cols))]
+        heat_t, axis_frac, _ = _column_statistics(spec, data_cols, cells_by_col, cfg=cfg)
+        return data_cols, axis_frac, heat_t
+
+    def test_lower_inverts_higher_and_none_unchanged(self) -> None:
+        data_cols, axis_frac, _ = self._stats()
+        idx = {c.id: j for j, c in enumerate(data_cols)}
+        assert data_cols[idx["price"]].polarity is Polarity.LOWER  # inference kept it
+        sj, pj, nj = idx["score"], idx["price"], idx["count"]
+        # HIGHER: the larger value fills fuller (row A, 90 > 80).
+        assert axis_frac[(0, sj)] > axis_frac[(1, sj)]
+        # LOWER (price): the cheaper value fills FULLER (row B, 2 < 10) — the fix.
+        assert axis_frac[(1, pj)] > axis_frac[(0, pj)]
+        # NONE: the raw-magnitude formula, byte-for-byte (max→full, min→stub).
+        assert axis_frac[(0, nj)] == 0.12 + 0.88 * 1.0
+        assert axis_frac[(1, nj)] == 0.12 + 0.88 * 0.0
+
+    def test_fill_agrees_with_heat_colour(self) -> None:
+        # Fill and tint favour the SAME row in a LOWER column — the gauge never
+        # fights its colour. Row B (cheapest) maximises both.
+        data_cols, axis_frac, heat_t = self._stats()
+        pj = next(j for j, c in enumerate(data_cols) if c.id == "price")
+        fullest = max(range(2), key=lambda i: axis_frac[(i, pj)])
+        greenest = max(range(2), key=lambda i: heat_t[(i, pj)])
+        assert fullest == greenest == 1
