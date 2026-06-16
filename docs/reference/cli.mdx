@@ -21,41 +21,46 @@ hyperweave compose <frame_type> [title] [value] [options]
 
 | Argument | Description |
 |---|---|
-| `frame_type` | Frame: `badge`, `strip`, `banner`, `icon`, `divider`, `marquee-horizontal`, `marquee-vertical`, `marquee-counter`, `stats`, `chart`, `timeline` |
-| `title` | Primary text (label for badge, identity for strip, username for stats, chart subtype for chart) |
-| `value` | Secondary text (value for badge, metrics for strip, `owner/repo` for chart) |
+| `frame_type` | Frame: `badge`, `strip`, `icon`, `divider`, `marquee-horizontal`, `stats`, `chart`, `matrix` |
+| `title` | Primary text (label, identity, username, owner/repo, etc.) |
+| `value` | Secondary text or chart subtype (for example, `stars`) |
 
 | Option | Short | Default | Description |
 |---|---|---|---|
-| `--genome` | `-g` | `brutalist-emerald` | Genome slug |
+| `--genome` | `-g` | `brutalist` | Genome slug |
 | `--genome-file` | | `None` | Path to a local genome JSON file (validated, bypasses built-in registry) |
 | `--state` | `-s` | `active` | Semantic status |
 | `--motion` | `-m` | `static` | Motion primitive |
 | `--glyph` | | `""` | Glyph ID |
 | `--glyph-mode` | | `auto` | Glyph rendering mode |
 | `--regime` | | `normal` | Policy regime |
-| `--variant` | | `default` | Frame variant (banner: `default`/`compact`) |
+| `--size` | | `default` | Frame size |
+| `--variant` | | `""` | Variant slug from the genome whitelist |
+| `--pair` | | `""` | Cellular paradigm pairing modifier for bifamily frames |
+| `--state-glyph-shape` | | `""` | Badge state-indicator shape: `square`, `circle`, or `diamond` |
 | `--shape` | | `""` | Icon frame shape: `square`, `circle` |
 | `--divider-variant` | | `zeropoint` | Divider visual variant |
 | `--direction` | | `ltr` | Marquee scroll direction |
-| `--rows` | | `3` | Marquee counter rows |
-| `--data` | | `None` | Path to JSON data file (timeline items, custom stats data) |
+| `--data` | | `""` | Data tokens for marquee and live-data composition |
+| `--spec-file` | | `None` | MatrixSpec JSON file for the matrix frame |
+| `--preset` | | `""` | Server-known matrix preset, such as `connectors` |
+| `--markdown-out` | | `None` | Also write the matrix frame's GFM markdown shadow |
+| `--glyph-tint` | | `""` | Matrix glyph fill selection: `ink`, `brand`, or `full` |
 | `--metrics` | | `""` | Strip metrics (overrides value) |
 | `--output` | `-o` | stdout | Output file path |
 
 **Examples:**
 
 ```bash
-hyperweave compose badge "build" "passing" -g brutalist-emerald -s passing
-hyperweave compose strip "readme-ai" "" -g brutalist-emerald --metrics "STARS:2.9k,FORKS:278"
-hyperweave compose banner "HYPERWEAVE" -g brutalist-emerald -m cascade
-hyperweave compose icon "" "" --glyph github -g brutalist-emerald
-hyperweave compose divider "" "" --divider-variant void -g brutalist-emerald
+hyperweave compose badge "build" "passing" -g brutalist -s passing
+hyperweave compose strip "readme-ai" "" -g brutalist --metrics "STARS:2.9k,FORKS:278"
+hyperweave compose icon "" "" --glyph github -g brutalist
+hyperweave compose divider "" "" --divider-variant void -g brutalist
 
-# v0.2.0: live-data frames
-hyperweave compose stats eli64s -g chrome-horizon -o stats.svg
-hyperweave compose chart stars eli64s/readme-ai -g brutalist-emerald -o chart.svg
-hyperweave compose timeline --data ./items.json -g chrome-horizon -o timeline.svg
+# live-data and structured-data frames
+hyperweave compose stats eli64s -g chrome -o stats.svg
+hyperweave compose chart stars eli64s/readme-ai -g brutalist -o chart.svg
+hyperweave compose matrix --preset connectors -g primer --markdown-out table.md
 
 # v0.2.0: custom genome from local JSON
 hyperweave compose badge "DEPLOY" "live" --genome-file ./my-genome.json
@@ -88,7 +93,7 @@ hyperweave render --template <name> --data <path> [-o output]
 
 | Option | Description |
 |---|---|
-| `--template` | Template name: `receipt`, `rhythm-strip`, `master-card` |
+| `--template` | Template name: `receipt`, `rhythm-strip` |
 | `--data` | Path to data contract JSON file |
 | `--output` / `-o` | Output file path (stdout if omitted) |
 

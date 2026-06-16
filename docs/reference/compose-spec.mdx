@@ -3,7 +3,7 @@ title: "ComposeSpec Reference"
 description: "Complete parameter reference for the ComposeSpec model -- the single input to the composition pipeline."
 ---
 
-`ComposeSpec` is the Pydantic model that serves as the sole input to the composition pipeline. Every artifact -- badge, strip, banner, icon, divider, marquee, or telemetry frame -- is produced from a single `ComposeSpec`.
+`ComposeSpec` is the Pydantic model that serves as the sole input to the composition pipeline. Every artifact -- badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, or telemetry frame -- is produced from a single `ComposeSpec`.
 
 ## Model Definition
 
@@ -40,8 +40,8 @@ spec = ComposeSpec(
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `title` | `str` | `""` | Primary text (label for badge, identity for strip, title for banner) |
-| `value` | `str` | `""` | Secondary text (value for badge, metrics for strip, subtitle for banner) |
+| `title` | `str` | `""` | Primary text (label, identity, username, owner/repo, etc.) |
+| `value` | `str` | `""` | Secondary text, metrics, or chart subtype |
 | `slots` | `list[SlotContent]` | `[]` | Structured content filling frame zones |
 
 ### Appearance
@@ -52,7 +52,7 @@ spec = ComposeSpec(
 | `motion` | `str` | `"static"` | Motion primitive to apply |
 | `glyph` | `str` | `""` | Glyph ID from the 97-glyph library |
 | `glyph_mode` | `str` | `"auto"` | Glyph rendering mode |
-| `variant` | `str` | `"default"` | Frame variant (e.g., `"compact"` for banner) |
+| `variant` | `str` | `""` | Variant slug from the genome whitelist |
 | `shape` | `str` | `""` | Icon frame shape: `square`, `circle` (genome-dependent) |
 
 ### Governance
@@ -85,13 +85,13 @@ spec = ComposeSpec(
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `telemetry_data` | `dict \| None` | `None` | Telemetry contract dict for receipt/rhythm-strip/master-card |
+| `telemetry_data` | `dict \| None` | `None` | Telemetry contract dict for `receipt` and `rhythm-strip` |
 
 ## Enum Values
 
 ### FrameType
 
-`badge`, `strip`, `banner`, `icon`, `divider`, `marquee-horizontal`, `marquee-vertical`, `marquee-counter`, `receipt`, `rhythm-strip`, `master-card`, `catalog`
+`badge`, `strip`, `icon`, `divider`, `marquee-horizontal`, `receipt`, `rhythm-strip`, `stats`, `chart`, `matrix`
 
 ### GenomeId
 
