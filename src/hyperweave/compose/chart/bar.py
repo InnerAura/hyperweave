@@ -1,6 +1,6 @@
 """Variable-height bar-chart layout for the receipt's rhythm panel.
 
-Sibling to :mod:`hyperweave.compose.rhythm`, NOT a replacement. The
+Sibling to :mod:`hyperweave.compose.strip.rhythm`, NOT a replacement. The
 ``layout_rhythm_bars`` helper still produces uniform-height bars for any
 caller that wants the older treatment; this module produces variable
 heights — bar height encodes per-stage token density — for the receipt's

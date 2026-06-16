@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.assembler import compute_variant_inline_style
-from hyperweave.compose.bar_chart import compute_time_axis_ticks, layout_bar_chart
+from hyperweave.compose.chart.bar import compute_time_axis_ticks, layout_bar_chart
+from hyperweave.compose.chart.treemap import compute_treemap_layout
 from hyperweave.compose.palette import resolve_cellular_palette
-from hyperweave.compose.treemap import compute_treemap_layout
 from hyperweave.core.enums import (
     FrameType,
     GlyphMode,
@@ -412,7 +412,7 @@ def resolve_badge(
     # Glyph-size: paradigm-driven, compact variant may override.
     badge_cfg_for_glyph_size = paradigm_spec.badge if paradigm_spec else None
     if badge_cfg_for_glyph_size is not None:
-        from hyperweave.compose.layout import compute_badge_glyph_size
+        from hyperweave.compose.strip.layout import compute_badge_glyph_size
 
         glyph_ratio = (
             badge_cfg_for_glyph_size.glyph_size_compact_ratio
@@ -618,7 +618,7 @@ def resolve_badge(
     # rendering AND data-hw-statemode (which gates threshold-CSS auto-tinting).
     # Replaces the prior is_state_badge ad-hoc value-mirrors-state inference
     # with a title-allowlist + explicit-state precedence chain.
-    from hyperweave.compose.layout import (
+    from hyperweave.compose.strip.layout import (
         compute_badge_zones,
         data_hw_statemode_for,
         resolve_badge_mode,
@@ -1093,7 +1093,7 @@ def resolve_strip(
     # Algorithmic strip glyph sizing. The identity glyph derives from
     # ``strip_height * strip_glyph_ratio`` so paradigms scale uniformly
     # instead of carrying hand-synced magic numbers.
-    from hyperweave.compose.layout import compute_strip_glyph_size
+    from hyperweave.compose.strip.layout import compute_strip_glyph_size
 
     strip_glyph_size = compute_strip_glyph_size(height, strip_cfg.strip_glyph_ratio) if strip_cfg else 18
 
@@ -1274,7 +1274,7 @@ def resolve_strip(
     # no data-hw-statemode, no threshold-CSS auto-tinting. BUILD|STARS
     # (BUILD allowlisted) → strip is "auto" stateful and the right-edge
     # indicator renders. Explicit ?state= overrides everything.
-    from hyperweave.compose.layout import data_hw_statemode_for, decide_strip_mode
+    from hyperweave.compose.strip.layout import data_hw_statemode_for, decide_strip_mode
     from hyperweave.config.loader import load_badge_modes
 
     strip_mode = decide_strip_mode(
@@ -1303,7 +1303,7 @@ def resolve_strip(
     # Replaces inline arithmetic for glyph zone, identity zone, first divider,
     # cell positions, seams, status indicator, bookend, flank shifts, and
     # strip_min_width clamp. Templates consume zone fields verbatim.
-    from hyperweave.compose.layout import compute_strip_zones
+    from hyperweave.compose.strip.layout import compute_strip_zones
 
     paradigm_owns_strip = bool(strip_cfg and strip_cfg.owns_strip)
     _post_indicator_gap = 16 if show_icon_box else 4
@@ -2739,7 +2739,7 @@ def _annotate_marquee_items(structured: list[dict[str, Any]]) -> list[dict[str, 
     ``_resolve_horizontal``; this keeps classification genome-neutral and the
     color path on the per-genome cascade bridge.
     """
-    from hyperweave.compose.layout import normalize_title
+    from hyperweave.compose.strip.layout import normalize_title
     from hyperweave.config.loader import load_badge_modes, load_marquee_classes
     from hyperweave.core.state import infer_state
 
@@ -4298,7 +4298,7 @@ def resolve_rhythm_strip(
     * STATUS    (522-600px): pulsing OK/WARN/ERR dot + dominant tool class +
                               percent-time.
     """
-    from hyperweave.compose.rhythm_strip import (
+    from hyperweave.compose.strip.rhythm_strip import (
         compute_dominant_phase,
         compute_session_velocity,
         compute_status_dot,

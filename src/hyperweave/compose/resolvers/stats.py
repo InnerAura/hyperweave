@@ -18,12 +18,12 @@ from datetime import UTC
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.schema import ActivityData, coerce_stats_input, format_count
-from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
+from hyperweave.compose.stats.layout import compute_stats_card_height, compute_stats_layout
 from hyperweave.core.text import measure_text
 from hyperweave.render.chart_engine import Viewport, build_chart_svg
 
 if TYPE_CHECKING:
-    from hyperweave.compose.stats_layout import StatsLayout
+    from hyperweave.compose.stats.layout import StatsLayout
     from hyperweave.core.models import ComposeSpec
     from hyperweave.core.paradigm import ParadigmStatsConfig
 

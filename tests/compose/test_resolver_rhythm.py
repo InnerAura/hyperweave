@@ -1,4 +1,4 @@
-"""Tests for :mod:`hyperweave.compose.rhythm` and its resolver integration.
+"""Tests for :mod:`hyperweave.compose.strip.rhythm` and its resolver integration.
 
 The helper is shared between ``resolve_receipt`` (area_w=752, area_h=92)
 and ``resolve_rhythm_strip`` (area_w=484, area_h=42). These tests lock
@@ -11,7 +11,7 @@ from __future__ import annotations
 from itertools import pairwise
 from typing import Any
 
-from hyperweave.compose.rhythm import BAR_HEIGHT, layout_rhythm_bars
+from hyperweave.compose.strip.rhythm import BAR_HEIGHT, layout_rhythm_bars
 
 
 def test_empty_stages_returns_empty_list() -> None:

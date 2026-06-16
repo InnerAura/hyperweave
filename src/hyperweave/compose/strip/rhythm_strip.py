@@ -1,6 +1,6 @@
 """Rhythm-strip v2 layout helpers.
 
-Sibling to :mod:`hyperweave.compose.bar_chart`. The bar chart in the
+Sibling to :mod:`hyperweave.compose.chart.bar`. The bar chart in the
 rhythm zone of the v2 strip reuses :func:`bar_chart.layout_bar_chart`
 verbatim — same algorithm, different panel dimensions. This module
 adds the helpers that are unique to the strip:

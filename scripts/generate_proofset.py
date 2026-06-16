@@ -2478,7 +2478,7 @@ def _matrix_fixture_specs() -> dict[str, dict[str, Any]]:
     test suite + the connectors matrix generated from the registry."""
     import json as _json
 
-    from hyperweave.compose.matrix_input import build_connector_registry_matrix
+    from hyperweave.compose.matrix.input import build_connector_registry_matrix
     from hyperweave.config.loader import load_connector_registry
 
     fixtures_dir = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "matrix"

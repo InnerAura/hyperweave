@@ -30,8 +30,8 @@ import pytest
 from pydantic import ValidationError
 
 from hyperweave.compose.assembler import genome_to_css
+from hyperweave.compose.chart.treemap import compute_treemap_layout
 from hyperweave.compose.engine import compose
-from hyperweave.compose.treemap import compute_treemap_layout
 from hyperweave.core.models import ComposeSpec
 from hyperweave.core.schema import GenomeSpec
 

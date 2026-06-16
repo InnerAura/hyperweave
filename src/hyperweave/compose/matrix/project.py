@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.matrix_cells import format_value_with_unit
+from hyperweave.compose.matrix.cells import format_value_with_unit
 from hyperweave.core.envelope import cdata_safe_json
 from hyperweave.core.matrix import CellKind, CellState, ColRole, MatrixCell, MatrixSpec, Polarity, is_chain
 

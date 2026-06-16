@@ -1,4 +1,4 @@
-"""Tests for :mod:`hyperweave.compose.rhythm_strip`.
+"""Tests for :mod:`hyperweave.compose.strip.rhythm_strip`.
 
 Locks the v0.2.21 rhythm-strip-v2 helper invariants:
 
@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from hyperweave.compose.rhythm_strip import (
+from hyperweave.compose.strip.rhythm_strip import (
     ERR_ERROR_RATE,
     WARN_ABS_THRESHOLD,
     WARN_ERROR_RATE,

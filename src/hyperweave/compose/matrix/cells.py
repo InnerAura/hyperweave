@@ -18,7 +18,7 @@ from collections.abc import Mapping
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.matrix_records import CellPlacement, ChipPlacement, GlyphPath
+from hyperweave.compose.matrix.records import CellPlacement, ChipPlacement, GlyphPath
 from hyperweave.compose.spatial_records import RectSpec, TextSpec
 from hyperweave.core.matrix import Align, CellKind, CellState, GlyphTint, MatrixCell, MatrixColumn
 from hyperweave.core.text import measure_text

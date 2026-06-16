@@ -22,7 +22,7 @@ regressions:
 
 from __future__ import annotations
 
-from hyperweave.compose.layout import compute_badge_glyph_size, compute_badge_zones
+from hyperweave.compose.strip.layout import compute_badge_glyph_size, compute_badge_zones
 
 # Brutalist-paradigm constants reflecting data/paradigms/brutalist.yaml (pad=5).
 BRUTALIST_INPUTS = dict(

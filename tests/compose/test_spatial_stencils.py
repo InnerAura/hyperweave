@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from hyperweave.compose.chart_layout import compute_chart_layout
+from hyperweave.compose.chart.layout import compute_chart_layout
 from hyperweave.compose.engine import compose
-from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
+from hyperweave.compose.stats.layout import compute_stats_card_height, compute_stats_layout
 from hyperweave.config.registry import get_paradigms, reset_registry
 from hyperweave.core.models import ComposeSpec
 

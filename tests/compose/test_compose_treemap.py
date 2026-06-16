@@ -1,4 +1,4 @@
-"""Tests for :mod:`hyperweave.compose.treemap`.
+"""Tests for :mod:`hyperweave.compose.chart.treemap`.
 
 Locks the layout invariants the inline resolver implementation violated:
 
@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 
-from hyperweave.compose.treemap import (
+from hyperweave.compose.chart.treemap import (
     TreemapCell,
     _format_tokens,
     _truncate_label,
@@ -341,7 +341,7 @@ def test_tier_label_y_offsets_match_v0_2_22_baseline() -> None:
 
 def test_fit_detail_to_width_returns_input_when_already_fits() -> None:
     """Wide cells leave the detail string untouched."""
-    from hyperweave.compose.treemap import _fit_detail_to_width
+    from hyperweave.compose.chart.treemap import _fit_detail_to_width
 
     out = _fit_detail_to_width(cell_w=200, detail_text="4.2K · 1 calls", detail_size=8.0)
     assert out == "4.2K · 1 calls"
@@ -359,7 +359,7 @@ def test_fit_detail_to_width_truncates_with_ellipsis_on_narrow_cell() -> None:
     Trailing whitespace in the prefix is stripped so we get
     ``"4.2K · 1…"`` not ``"4.2K · 1 …"``.
     """
-    from hyperweave.compose.treemap import _fit_detail_to_width
+    from hyperweave.compose.chart.treemap import _fit_detail_to_width
 
     out = _fit_detail_to_width(cell_w=68, detail_text="4.2K · 1 calls", detail_size=8.0)
     # Truncation produces an ellipsis-terminated prefix, never the full string
@@ -374,7 +374,7 @@ def test_fit_detail_to_width_truncates_with_ellipsis_on_narrow_cell() -> None:
 def test_fit_detail_to_width_handles_empty_and_pathological_cells() -> None:
     """Empty input → empty output. A cell so narrow even an ellipsis
     won't fit returns empty string (template skips the line)."""
-    from hyperweave.compose.treemap import _fit_detail_to_width
+    from hyperweave.compose.chart.treemap import _fit_detail_to_width
 
     assert _fit_detail_to_width(cell_w=200, detail_text="", detail_size=8.0) == ""
     # Width below 20 (padding) leaves nothing to draw
@@ -439,7 +439,7 @@ def test_detail_y_anchors_to_cell_bottom_for_all_non_overflow_cells() -> None:
     truncation gate operates on the detail STRING, not on the y-anchor —
     so the line position stays predictable across all skin variants.
     """
-    from hyperweave.compose.treemap import _TIER_BOTTOM_PAD
+    from hyperweave.compose.chart.treemap import _TIER_BOTTOM_PAD
 
     tools = [_tool(f"Tool{i}", 1000 - i * 50, 30 - i, "explore") for i in range(7)]
     cells = compute_treemap_layout(tools)

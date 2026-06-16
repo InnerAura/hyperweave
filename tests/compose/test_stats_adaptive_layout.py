@@ -6,7 +6,7 @@ import re
 from itertools import pairwise
 
 from hyperweave.compose.engine import compose
-from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
+from hyperweave.compose.stats.layout import compute_stats_card_height, compute_stats_layout
 from hyperweave.config.registry import get_paradigms
 from hyperweave.core.models import ComposeSpec
 

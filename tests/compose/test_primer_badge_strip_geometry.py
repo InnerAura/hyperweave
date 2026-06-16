@@ -11,8 +11,8 @@ from __future__ import annotations
 import re
 
 from hyperweave.compose.engine import compose
-from hyperweave.compose.layout import compute_badge_zones
 from hyperweave.compose.resolver import resolve
+from hyperweave.compose.strip.layout import compute_badge_zones
 from hyperweave.core.models import ComposeSpec
 
 

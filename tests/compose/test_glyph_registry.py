@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from hyperweave.compose.matrix_cells import glyph_mark_placement, resolve_glyph_mode
+from hyperweave.compose.matrix.cells import glyph_mark_placement, resolve_glyph_mode
 from hyperweave.compose.spatial_records import RectSpec
 from hyperweave.config.loader import load_glyphs
 from hyperweave.core.matrix import GlyphTint

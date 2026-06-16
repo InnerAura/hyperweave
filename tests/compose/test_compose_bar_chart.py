@@ -1,4 +1,4 @@
-"""Tests for :mod:`hyperweave.compose.bar_chart`.
+"""Tests for :mod:`hyperweave.compose.chart.bar`.
 
 Locks the v0.2.21 risograph-canonical layout invariants:
 
@@ -19,7 +19,7 @@ from typing import Any
 
 import pytest
 
-from hyperweave.compose.bar_chart import (
+from hyperweave.compose.chart.bar import (
     BAR_MIN_H,
     BAR_TOP_Y,
     DEFAULT_PANEL_H,

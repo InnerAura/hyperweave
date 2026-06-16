@@ -68,7 +68,7 @@ class TestEmbeddedProjections:
         """The embedded payload is the POST-INFERENCE spec — every column
         kind concrete, alignment resolved — so a consumer can re-render it
         without re-running inference."""
-        from hyperweave.compose.matrix_infer import infer_matrix
+        from hyperweave.compose.matrix.infer import infer_matrix
 
         svg = compose_fixture("benchmark")
         match = _PAYLOAD_RE.search(svg)

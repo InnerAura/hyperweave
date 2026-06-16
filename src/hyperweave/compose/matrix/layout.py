@@ -22,7 +22,7 @@ import math
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.matrix_cells import (
+from hyperweave.compose.matrix.cells import (
     build_cell,
     chip_line_width,
     chip_rows_needed,
@@ -35,7 +35,7 @@ from hyperweave.compose.matrix_cells import (
     text_lines_needed,
     truncate_to_width,
 )
-from hyperweave.compose.matrix_records import (
+from hyperweave.compose.matrix.records import (
     AxisSpec,
     CellPlacement,
     ColHeader,

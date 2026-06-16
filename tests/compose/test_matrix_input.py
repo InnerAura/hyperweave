@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from hyperweave.compose.matrix_infer import infer_matrix
-from hyperweave.compose.matrix_input import (
+from hyperweave.compose.matrix.infer import infer_matrix
+from hyperweave.compose.matrix.input import (
     build_connector_registry_matrix,
     build_tokens_matrix,
     coerce_matrix_input,

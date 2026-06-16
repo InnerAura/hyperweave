@@ -24,7 +24,7 @@ clamping disabled.
 
 from __future__ import annotations
 
-from hyperweave.compose.layout import compute_strip_glyph_size
+from hyperweave.compose.strip.layout import compute_strip_glyph_size
 from hyperweave.config.registry import get_paradigms, reset_registry
 
 

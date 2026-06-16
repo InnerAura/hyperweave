@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.chart_layout import compute_chart_layout, position_x_labels, position_y_labels
+from hyperweave.compose.chart.layout import compute_chart_layout, position_x_labels, position_y_labels
 from hyperweave.compose.schema import coerce_chart_input
 from hyperweave.render.chart_engine import Viewport, build_chart_svg
 

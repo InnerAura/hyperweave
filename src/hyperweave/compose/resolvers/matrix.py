@@ -22,10 +22,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.matrix_infer import infer_matrix
-from hyperweave.compose.matrix_input import coerce_matrix_input
-from hyperweave.compose.matrix_layout import compute_matrix_layout
-from hyperweave.compose.matrix_project import (
+from hyperweave.compose.matrix.infer import infer_matrix
+from hyperweave.compose.matrix.input import coerce_matrix_input
+from hyperweave.compose.matrix.layout import compute_matrix_layout
+from hyperweave.compose.matrix.project import (
     PAYLOAD_SCHEMA,
     derive_subvariant,
     matrix_desc,
@@ -38,7 +38,7 @@ from hyperweave.core.matrix import CellKind, GlyphTint
 from hyperweave.core.paradigm import ParadigmMatrixConfig
 
 if TYPE_CHECKING:
-    from hyperweave.compose.matrix_records import MatrixLayout
+    from hyperweave.compose.matrix.records import MatrixLayout
     from hyperweave.core.matrix import MatrixSpec
     from hyperweave.core.models import ComposeSpec
 

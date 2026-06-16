@@ -11,7 +11,7 @@ and so individual cases stay legible.
 
 from __future__ import annotations
 
-from hyperweave.compose.layout import (
+from hyperweave.compose.strip.layout import (
     data_hw_statemode_for,
     decide_strip_mode,
     resolve_badge_mode,

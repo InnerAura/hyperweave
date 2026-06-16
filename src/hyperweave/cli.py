@@ -214,7 +214,7 @@ def compose(
                 typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
                 raise typer.Exit(2) from exc
         elif preset:
-            from hyperweave.compose.matrix_input import resolve_matrix_preset
+            from hyperweave.compose.matrix.input import resolve_matrix_preset
             from hyperweave.core.matrix import MatrixInputError
 
             try:

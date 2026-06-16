@@ -129,7 +129,7 @@ def test_stats_light_is_horizontal_row_300(variant: str) -> None:
 
 def test_stats_light_row_column_centers_pulse() -> None:
     """The 4-metric row resolves to the reference column centers + dividers + 300 height."""
-    from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
+    from hyperweave.compose.stats.layout import compute_stats_card_height, compute_stats_layout
     from hyperweave.config.registry import get_paradigms
 
     ps = get_paradigms()["brutalist"].stats
@@ -205,7 +205,7 @@ def test_stats_light_activity_bars_fit_content_width() -> None:
     """Row activity bars fit within the content margin (x=22 .. card_width-22) so
     they align with the metric row + language bar, instead of overrunning at the
     dark card's fixed stride."""
-    from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
+    from hyperweave.compose.stats.layout import compute_stats_card_height, compute_stats_layout
     from hyperweave.config.registry import get_paradigms
 
     ps = get_paradigms()["brutalist"].stats
@@ -242,7 +242,7 @@ def test_stats_light_header_square_and_baseline_aligned() -> None:
     """Row status square centers with the 40px-header username (y=16, lower than
     the dark 32px-header literal y=12), and the activity baseline ends at the
     content margin (473) instead of sticking out past the fitted bars."""
-    from hyperweave.compose.stats_layout import compute_stats_card_height, compute_stats_layout
+    from hyperweave.compose.stats.layout import compute_stats_card_height, compute_stats_layout
     from hyperweave.config.registry import get_paradigms
 
     ps = get_paradigms()["brutalist"].stats

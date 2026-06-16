@@ -297,7 +297,7 @@ async def hw_discover(
         result["frames"] = [ft.value for ft in FrameType]
 
     if what in ("all", "matrix"):
-        from hyperweave.compose.matrix_input import matrix_preset_names
+        from hyperweave.compose.matrix.input import matrix_preset_names
         from hyperweave.core.matrix import CellKind
 
         result["matrix"] = {

@@ -761,7 +761,7 @@ async def compose_matrix_url(
                 headers=_error_response_headers(400),
             )
     else:
-        from hyperweave.compose.matrix_input import resolve_matrix_preset
+        from hyperweave.compose.matrix.input import resolve_matrix_preset
         from hyperweave.core.matrix import MatrixInputError
 
         try:

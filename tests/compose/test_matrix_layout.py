@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from hyperweave.compose.matrix_infer import infer_matrix
-from hyperweave.compose.matrix_layout import compute_matrix_layout
-from hyperweave.compose.matrix_records import MatrixLayout  # noqa: TC001 (runtime return type)
+from hyperweave.compose.matrix.infer import infer_matrix
+from hyperweave.compose.matrix.layout import compute_matrix_layout
+from hyperweave.compose.matrix.records import MatrixLayout  # noqa: TC001 (runtime return type)
 from hyperweave.config.loader import load_glyphs, load_matrix_config
 from hyperweave.core.matrix import CellKind, MatrixCapacityError, MatrixCell, MatrixInputError, MatrixSpec
 from hyperweave.core.paradigm import ParadigmMatrixConfig
@@ -303,7 +303,7 @@ class TestCells:
         assert scan.x == (layout.width - CFG.scan_w) / 2
 
     def test_label_truncation_is_measured(self) -> None:
-        from hyperweave.compose.matrix_cells import measure_voice
+        from hyperweave.compose.matrix.cells import measure_voice
 
         long_label = "An extremely long capability label that cannot possibly fit the label column"
         spec = MatrixSpec(
@@ -424,7 +424,7 @@ class TestOptionalBlocks:
         """A title that would overhang the legend's column from the line
         above shrinks just enough to clear it (with a legibility floor);
         short titles keep the full voice."""
-        from hyperweave.compose.matrix_cells import measure_voice
+        from hyperweave.compose.matrix.cells import measure_voice
 
         short = solve(load_fixture("check"))
         assert short.title_size == CFG.title_voice.size
@@ -524,7 +524,7 @@ class TestOptionalBlocks:
         """Regression: summary cells occupy the same columns as the data —
         'agent corpora' under a 9px dot column must widen the column, never
         cram. Every summary run fits inside its solved column."""
-        from hyperweave.compose.matrix_cells import measure_voice
+        from hyperweave.compose.matrix.cells import measure_voice
 
         layout = solve(load_fixture("tiers"))
         summary_cells = [c for c in layout.cells if c.row == 9 and c.text]

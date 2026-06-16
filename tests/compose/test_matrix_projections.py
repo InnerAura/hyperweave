@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from hyperweave.compose.matrix_infer import infer_matrix
-from hyperweave.compose.matrix_project import (
+from hyperweave.compose.matrix.infer import infer_matrix
+from hyperweave.compose.matrix.project import (
     ENVELOPE_ROW_CAP,
     PAYLOAD_SCHEMA,
     derive_subvariant,

@@ -31,7 +31,7 @@ def compose(spec: ComposeSpec) -> ComposeResult:
     #           cells, run infer_state on each allowlisted (label, value)
     #           pair, take the most severe state.
     if spec.state == "active" and spec.value:
-        from hyperweave.compose.layout import normalize_title
+        from hyperweave.compose.strip.layout import normalize_title
         from hyperweave.config.loader import load_badge_modes
         from hyperweave.core.enums import FrameType
         from hyperweave.core.state import infer_state
@@ -88,7 +88,7 @@ def compose(spec: ComposeSpec) -> ComposeResult:
     context = build_context(spec, resolved, css_bundle)
 
     # ── 4. Enforce policy lanes ──
-    from hyperweave.compose.lanes import enforce
+    from hyperweave.compose.strip.lanes import enforce
 
     context = enforce(context, spec.regime)
 
