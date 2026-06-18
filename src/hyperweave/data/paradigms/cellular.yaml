@@ -40,7 +40,7 @@ frame_variant_defaults:
   badge: teal
   icon: teal
   strip: teal
-  marquee-horizontal: teal
+  marquee: teal
   divider: teal
   stats: teal
   chart: teal

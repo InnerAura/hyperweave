@@ -307,7 +307,7 @@
     "divider": "default",
     "stats": "chrome",
     "chart": "chrome",
-    "marquee-horizontal": "chrome"
+    "marquee": "chrome"
   },
   "structural": {
     "stroke_linejoin": "round",

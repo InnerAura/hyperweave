@@ -920,7 +920,7 @@ class ParadigmMarqueeConfig(FrozenModel):
     # ── v0.3.12 scroll-item layout dispatch ──────────────────────────────
     # The scroll-item layout is selected by this CONFIG VALUE, never by a
     # paradigm-slug branch (Invariant 12). The template resolves
-    # `frames/marquee-horizontal/item-{item_layout}.j2`, so chrome + cellular
+    # `frames/marquee/item-{item_layout}.j2`, so chrome + cellular
     # both pick `item-ribbon.j2` while brutalist picks `item-module.j2`. Two
     # paradigms can resolve to the same partial.
     item_layout: Literal["ribbon", "module"] = "ribbon"

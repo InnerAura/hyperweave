@@ -135,13 +135,13 @@ async def test_divider_url_returns_svg(client: AsyncClient, mock_compose: Any) -
     assert resp.status_code == 200
 
 
-async def test_marquee_horizontal(client: AsyncClient, mock_compose: Any) -> None:
+async def test_marquee(client: AsyncClient, mock_compose: Any) -> None:
     resp = await client.get("/v1/marquee/HYPERWEAVE/brutalist.static?direction=ltr")
     assert resp.status_code == 200
 
 
-async def test_marquee_horizontal_with_data_tokens(client: AsyncClient) -> None:
-    """marquee-horizontal accepts ?data= and routes through the data-token pipeline."""
+async def test_marquee_with_data_tokens(client: AsyncClient) -> None:
+    """marquee accepts ?data= and routes through the data-token pipeline."""
     mock_data = {"value": 12345, "ttl": 300}
     with (
         patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data),
@@ -153,7 +153,7 @@ async def test_marquee_horizontal_with_data_tokens(client: AsyncClient) -> None:
         assert resp.status_code == 200
 
 
-async def test_marquee_horizontal_data_token_comma_escape(client: AsyncClient) -> None:
+async def test_marquee_data_token_comma_escape(client: AsyncClient) -> None:
     """text: payload preserves embedded commas via the \\, escape."""
     with patch("hyperweave.serve.app.compose", return_value=MOCK_RESULT):
         resp = await client.get(

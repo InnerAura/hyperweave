@@ -125,7 +125,7 @@ FRAME_TYPES = [
     "strip",
     "icon",
     "divider",
-    "marquee-horizontal",
+    "marquee",
 ]
 
 STATES = ["active", "passing", "warning", "critical", "failing", "building", "offline", "neutral"]

@@ -25,7 +25,7 @@ def _kv(label: str, value: str) -> ResolvedToken:
 
 
 def _marquee(genome: str, tokens: list[ResolvedToken], variant: str = "") -> str:
-    spec = ComposeSpec(type="marquee-horizontal", genome_id=genome, variant=variant, data_tokens=tokens)
+    spec = ComposeSpec(type="marquee", genome_id=genome, variant=variant, data_tokens=tokens)
     return compose(spec).svg
 
 
@@ -167,7 +167,7 @@ def test_brutalist_module_value_is_barlow_label_is_mono() -> None:
     prototype (brutalist-marquee-celadon.svg). The earlier var(--dna-font-display)
     resolved to JetBrains Mono (brutalist's mono == display), which read as the
     wrong font. The small label stays JetBrains Mono via var(--dna-font-mono).
-    Barlow is embedded (font-embedding.yaml marquee-horizontal row)."""
+    Barlow is embedded (font-embedding.yaml marquee row)."""
     svg = _marquee("brutalist", [_live("STARS", "2907", "stars")], variant="celadon")
     assert re.search(r'font-family="Barlow Condensed[^"]*"[^>]*>2907</text>', svg), (
         "module value should be Barlow Condensed (matching the stat-card hero)"

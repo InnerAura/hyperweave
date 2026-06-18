@@ -22,7 +22,7 @@ _GLYPH_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP, Fra
 _BRIDGE_FRAMES: frozenset[str] = frozenset({FrameType.BADGE, FrameType.STRIP, FrameType.ICON})
 
 # Marquee frame types — need frame_fill, status colors, ink tiers
-_MARQUEE_FRAMES: frozenset[str] = frozenset({FrameType.MARQUEE_HORIZONTAL})
+_MARQUEE_FRAMES: frozenset[str] = frozenset({FrameType.MARQUEE})
 
 
 # Font embedding gate: per-(genome_id, frame_type) lookup against the YAML

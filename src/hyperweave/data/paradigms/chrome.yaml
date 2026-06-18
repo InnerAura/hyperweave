@@ -235,7 +235,7 @@ marquee:
   separator_kind: glyph
   separator_glyph: "·"
   # Every scroll item uses the chrome-text gradient (#5A8AAA→…→#FFFFFF→…→
-  # #5A8AAA). The gradient itself lives in marquee-horizontal/chrome-defs.j2
+  # #5A8AAA). The gradient itself lives in marquee/chrome-defs.j2
   # under id "{{ uid }}-ct"; the resolver constructs the full url(#…) string.
   text_fill_mode: gradient
   text_fill_gradient_id: ct

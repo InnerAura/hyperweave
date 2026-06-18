@@ -641,7 +641,7 @@ async def compose_marquee_url(
             )
 
     spec = ComposeSpec(
-        type="marquee-horizontal",
+        type="marquee",
         genome_id=genome,
         title=t or title,
         motion=motion,
@@ -1123,7 +1123,7 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
         "pattern": "/v1/divider/{variant}/{genome}.{motion}",
         "query_params": ["variant", "pair"],
     },
-    "marquee-horizontal": {
+    "marquee": {
         "pattern": "/v1/marquee/{title}/{genome}.{motion}",
         "query_params": ["data", "direction", "speeds", "state", "regime", "variant", "pair"],
     },

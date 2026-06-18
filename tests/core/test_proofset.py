@@ -163,7 +163,7 @@ def test_variant_matrix_full_artifact_coverage(static_proofset: object) -> None:
                 *compact_files,
                 *icon_files,
                 f"strip_{variant}.svg",
-                f"marquee_horizontal_{variant}.svg",
+                f"marquee_{variant}.svg",
                 f"divider_{variant_divider_slug}_{variant}.svg",
                 f"stats_{variant}.svg",
                 # 5 badge states (+ compact states when the paradigm supports compact)

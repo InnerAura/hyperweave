@@ -319,8 +319,8 @@ def run_direct_tests() -> None:
             _save(svg, gdir / f"divider_{var}.svg", "direct", f"divider_{var}")
 
         # Marquee (horizontal-only since v0.2.14)
-        svg = direct_compose("marquee-horizontal", genome, "HYPERWEAVE LIVING ARTIFACTS AI-NATIVE")
-        _save(svg, gdir / "marquee-horizontal.svg", "direct", "marquee-horizontal")
+        svg = direct_compose("marquee", genome, "HYPERWEAVE LIVING ARTIFACTS AI-NATIVE")
+        _save(svg, gdir / "marquee.svg", "direct", "marquee")
 
         # Substrate matrix
         for sub in SUBSTRATES:

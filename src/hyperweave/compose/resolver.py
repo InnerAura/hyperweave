@@ -117,7 +117,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         "strip": resolve_strip,
         "icon": resolve_icon,
         "divider": resolve_divider,
-        "marquee-horizontal": resolve_marquee,
+        "marquee": resolve_marquee,
         "receipt": resolve_receipt,
         "chart": resolve_chart,
         "stats": resolve_stats,
@@ -2401,7 +2401,7 @@ def resolve_marquee(
     paradigm_spec: Any = None,
     **_kw: Any,
 ) -> dict[str, Any]:
-    """Resolve marquee-horizontal dimensions and scroll content.
+    """Resolve marquee dimensions and scroll content.
 
     Single variant after v0.2.14: 800x40 LIVE ticker. The genome's family
     palette (cellular: paired primary/secondary tones) and the paradigm's
@@ -3442,7 +3442,7 @@ def _resolve_horizontal(
         "liveness_rail_h": liveness["rail_cell_h"],
     }
     ctx.update(chrome_ctx)
-    return {"width": width, "height": height, "template": "frames/marquee-horizontal.svg.j2", "context": ctx}
+    return {"width": width, "height": height, "template": "frames/marquee.svg.j2", "context": ctx}
 
 
 def _fmt_tok(n: int) -> str:
@@ -4418,7 +4418,7 @@ def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
         # brand mark instead of rendering empty. Other frames keep their no-glyph
         # behavior (badges stay clean). ``--glyph none`` → glyph_mode NONE
         # (returned above) still suppresses.
-        if spec.type in ("strip", "marquee-horizontal") and "hyperweave" in glyphs:
+        if spec.type in ("strip", "marquee") and "hyperweave" in glyphs:
             return _glyph_payload("hyperweave", glyphs)
     except (ImportError, Exception):
         pass

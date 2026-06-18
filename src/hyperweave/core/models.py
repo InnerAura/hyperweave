@@ -58,9 +58,7 @@ class ComposeSpec(FrozenModel):
 
     # -- Core identity --
     type: FrameType = Field(
-        description=(
-            "Frame type: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram, receipt"
-        ),
+        description=("Frame type: badge, strip, icon, divider, marquee, stats, chart, matrix, diagram, receipt"),
     )
     frame_id: str = Field(default="", description="Resolved frame identifier")
     # NOTE: relaxed from GenomeId StrEnum to str in Session 2A+2B so that
@@ -207,7 +205,7 @@ class ComposeSpec(FrozenModel):
     marquee_direction: str = Field(default="ltr", description="Scroll direction: ltr, rtl")
     marquee_speeds: list[float] | None = Field(
         default=None,
-        description="Scroll speed multipliers (only first entry used by marquee-horizontal)",
+        description="Scroll speed multipliers (only first entry used by marquee)",
     )
 
     # -- Session 2A+2B additions --
@@ -230,7 +228,7 @@ class ComposeSpec(FrozenModel):
 
     # Resolved data tokens from ?data= / --data / MCP data=. Populated by the
     # transport layer (HTTP / CLI / MCP) before compose() runs; the resolver
-    # for marquee-horizontal consumes this directly. Other frames receive the
+    # for marquee consumes this directly. Other frames receive the
     # formatted "K1:V1,K2:V2" string via spec.value instead.
     data_tokens: list[Any] | None = Field(
         default=None,
@@ -477,11 +475,11 @@ class ProfileConfig(FrozenModel):
         description="Marquee scroll text font",
     )
 
-    # -- Horizontal marquee (Tier 1A closure) --
-    marquee_horizontal_clip_inset_y: int = Field(default=4, description="Horizontal marquee clip Y inset")
-    marquee_horizontal_clip_inset_x: int = Field(default=4, description="Horizontal marquee clip X inset")
-    marquee_horizontal_show_accent_lines: bool = Field(default=True, description="Show horizontal accent lines")
-    marquee_horizontal_bold_pattern: str = Field(
+    # -- Marquee (Tier 1A closure) --
+    marquee_clip_inset_y: int = Field(default=4, description="Marquee clip Y inset")
+    marquee_clip_inset_x: int = Field(default=4, description="Marquee clip X inset")
+    marquee_show_accent_lines: bool = Field(default=True, description="Show horizontal accent lines")
+    marquee_bold_pattern: str = Field(
         default="even",
-        description="Horizontal bold pattern: 'even' or 'first'",
+        description="Bold pattern: 'even' or 'first'",
     )

@@ -65,7 +65,7 @@ marquee_clip_w: 788
 marquee_font_family: "var(--dna-font-mono, ui-monospace, monospace)"
 
 # ── Horizontal marquee (Tier 1A closure) ──
-marquee_horizontal_clip_inset_y: 4
-marquee_horizontal_clip_inset_x: 4
-marquee_horizontal_show_accent_lines: true
-marquee_horizontal_bold_pattern: "even"
+marquee_clip_inset_y: 4
+marquee_clip_inset_x: 4
+marquee_show_accent_lines: true
+marquee_bold_pattern: "even"

@@ -43,8 +43,8 @@ def _spec(frame: FrameType) -> ComposeSpec:
         return ComposeSpec(type="icon", glyph="github")
     if frame is FrameType.DIVIDER:
         return ComposeSpec(type="divider")
-    if frame is FrameType.MARQUEE_HORIZONTAL:
-        return ComposeSpec(type="marquee-horizontal", title="HW|TEST")
+    if frame is FrameType.MARQUEE:
+        return ComposeSpec(type="marquee", title="HW|TEST")
     if frame is FrameType.RECEIPT:
         return ComposeSpec(type="receipt", telemetry_data=_MINIMAL_TELEMETRY)
     if frame is FrameType.STATS:

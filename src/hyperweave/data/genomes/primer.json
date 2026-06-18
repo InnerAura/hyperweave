@@ -476,7 +476,7 @@
     "stats": "primer",
     "chart": "primer",
     "matrix": "primer",
-    "marquee-horizontal": "primer",
+    "marquee": "primer",
     "diagram": "primer"
   },
   "structural": {

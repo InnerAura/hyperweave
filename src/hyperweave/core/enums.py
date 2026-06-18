@@ -17,7 +17,7 @@ class FrameType(StrEnum):
     STRIP = "strip"
     ICON = "icon"
     DIVIDER = "divider"
-    MARQUEE_HORIZONTAL = "marquee-horizontal"
+    MARQUEE = "marquee"
     RECEIPT = "receipt"
     STATS = "stats"
     CHART = "chart"

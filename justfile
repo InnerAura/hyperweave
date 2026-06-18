@@ -32,7 +32,7 @@ smoke-receipt:
 proof-set:
     #!/usr/bin/env bash
     for genome in $(uv run hyperweave genomes list --ids-only); do
-        for frame in badge strip banner icon divider marquee-horizontal marquee-vertical marquee-counter; do
+        for frame in badge strip icon divider marquee; do
             uv run hyperweave compose $frame "test" "value" --genome $genome > /dev/null || echo "FAIL: $genome/$frame"
         done
     done

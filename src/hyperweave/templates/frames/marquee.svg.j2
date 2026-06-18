@@ -37,7 +37,7 @@
      the genome's state_* hexes so stateful (activity) cells tint their value.
      Wrapped in <style> because the partial emits bare CSS rules. #}
   <style>{% include "partials/state-signal-cascade.j2" %}</style>
-{% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
+{% include "frames/marquee/" ~ (paradigm | default("default")) ~ "-defs.j2" %}
 {% endblock %}
 
 {% block content %}
@@ -65,7 +65,7 @@
    scroll text (envelope+well for chrome, flat slab + engineering grid for
    brutalist, void ground for cellular). PERIMETER + liveness layers render
    AFTER the scroll text via {paradigm}-overlay.j2. #}
-{% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-content.j2" %}
+{% include "frames/marquee/" ~ (paradigm | default("default")) ~ "-content.j2" %}
 
 {# Scrolling track — clipped; SMIL translate from 0 to -scroll_distance over
    scroll_dur seconds, infinite loop. The Set-A/Set-B groups are rendered by
@@ -77,11 +77,11 @@
     <animateTransform attributeName="transform" type="translate"
         from="0 0" to="-{{ sd }} 0"
         dur="{{ dur }}s" repeatCount="indefinite"/>
-{% include "frames/marquee-horizontal/item-" ~ (item_layout | default("ribbon")) ~ ".j2" %}
+{% include "frames/marquee/item-" ~ (item_layout | default("ribbon")) ~ ".j2" %}
   </g>
 </g>
 
 {# Frame chrome + liveness OVERLAY — paradigm-dispatched, ABOVE the scroll
    text so passing text slides UNDER the perimeter and the liveness markup. #}
-{% include "frames/marquee-horizontal/" ~ (paradigm | default("default")) ~ "-overlay.j2" ignore missing %}
+{% include "frames/marquee/" ~ (paradigm | default("default")) ~ "-overlay.j2" ignore missing %}
 {% endblock %}

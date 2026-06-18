@@ -38,8 +38,8 @@ def test_strip_default_is_teal_under_cellular() -> None:
     assert _variant_in_context("strip") == "teal"
 
 
-def test_marquee_horizontal_default_is_teal() -> None:
-    assert _variant_in_context("marquee-horizontal") == "teal"
+def test_marquee_default_is_teal() -> None:
+    assert _variant_in_context("marquee") == "teal"
 
 
 def test_explicit_variant_overrides_default() -> None:

@@ -440,7 +440,7 @@ def format_for_badge(tokens: list[ResolvedToken]) -> str:
 
 
 def format_for_marquee(tokens: list[ResolvedToken]) -> list[dict[str, Any]]:
-    """Format resolved tokens as marquee-horizontal scroll items.
+    """Format resolved tokens as marquee scroll items.
 
     Each item carries the displayed text plus a role tag the resolver
     uses to pick chromatic / weight treatment from the genome's

@@ -451,7 +451,7 @@ def generate_static() -> int:
             _write(base / f"divider_{slug}.svg", svg)
             total += 1
 
-        # marquee-horizontal — pipe-separated items split into discrete tokens.
+        # marquee — pipe-separated items split into discrete tokens.
         # v0.2.16: paradigm-driven dimensions (chrome 1040x56, brutalist 720x32,
         # cellular 800x40), text-fill mode (chrome=gradient, brutalist=cycle,
         # cellular=bifamily palette), and separator kind (chrome=glyph,
@@ -463,8 +463,8 @@ def generate_static() -> int:
             GenomeId.AUTOMATA: "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL",
         }
         marquee_text = marquee_text_by_genome.get(genome, "HYPERWEAVE|LIVING ARTIFACTS|v0.2.16")
-        svg = _compose("marquee-horizontal", genome, marquee_text)
-        _write(base / "marquee_horizontal.svg", svg)
+        svg = _compose("marquee", genome, marquee_text)
+        _write(base / "marquee.svg", svg)
         total += 1
 
         # ── 1b. v0.3.0 Variant matrix — every shipped variant rendered for the
@@ -554,13 +554,13 @@ def generate_static() -> int:
                 # real GitHub/PyPI values (stars, forks, version, downloads).
                 # Empty token list falls back to the hardcoded text path.
                 svg = _compose(
-                    "marquee-horizontal",
+                    "marquee",
                     genome,
                     variant_marquee_text,
                     variant=variant,
                     data_tokens=marquee_data_tokens or None,
                 )
-                _write(var_dir / f"marquee_horizontal_{variant}.svg", svg)
+                _write(var_dir / f"marquee_{variant}.svg", svg)
                 total += 1
                 # Divider per variant — chrome.band (vibration sweep across env);
                 # automata.dissolve (bifamily bridge, solo synthesizes mirrored);
@@ -1372,7 +1372,7 @@ async def _generate_multi_provider_marquee(proofset_root: Path) -> int:
     """Compose a single marquee URL fanning out across GitHub + PyPI + Docker.
 
     Resolves five tokens from three providers via the unified ``?data=``
-    grammar, then composes ``marquee-horizontal`` for each of the three
+    grammar, then composes ``marquee`` for each of the three
     genomes. The same resolved token list flows into all three composes —
     only the genome (and its paradigm-specific styling) differs. This
     isolates the genome-vs-data axis: same data, three skins.
@@ -1400,7 +1400,7 @@ async def _generate_multi_provider_marquee(proofset_root: Path) -> int:
     total = 0
     for genome in GenomeId:
         spec = ComposeSpec(
-            type="marquee-horizontal",
+            type="marquee",
             genome_id=genome,
             variant="violet-teal" if genome == GenomeId.AUTOMATA else "",
             data_tokens=list(resolved),
@@ -1594,16 +1594,14 @@ def generate_readme(total: int, live_total: int) -> None:
         for slug in _genome_cfg.dividers if _genome_cfg else []:
             lines.append(f"![divider {slug}](proofset/{g}/base/divider_{slug}.svg)")
             lines.append("")
-        lines.append(f"![marquee_horizontal (custom text)](proofset/{g}/base/marquee_horizontal.svg)")
+        lines.append(f"![marquee (custom text)](proofset/{g}/base/marquee.svg)")
         lines.append("")
         # Data-token marquee inline next to its custom-text sibling — same
         # frame, same paradigm dispatch, different input mode (live `?data=`
         # tokens vs raw pipe-split text). Only present when --live was run.
         multi_path = OUT / "proofset" / g / "live-data" / "marquee_multi_provider.svg"
         if multi_path.exists():
-            lines.append(
-                f"![marquee_horizontal (multi-provider data)](proofset/{g}/live-data/marquee_multi_provider.svg)"
-            )
+            lines.append(f"![marquee (multi-provider data)](proofset/{g}/live-data/marquee_multi_provider.svg)")
             lines.append("")
             lines.append(
                 "<sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,"
@@ -1949,7 +1947,7 @@ def _emit_automata_readme() -> None:
         lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
         lines.append("")
         # Row 3: marquee
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
         lines.append("")
         # Row 4: dissolve divider — solo synthesizes mirrored bridge
         lines.append(f"![divider dissolve](proofset/{g}/variants/divider_dissolve_{v}.svg)")
@@ -2142,7 +2140,7 @@ def _emit_brutalist_readme() -> None:
         lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
         lines.append("")
         # Row 4: marquee
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
         lines.append("")
         # Row 5: both dividers — seam (concrete joint) + sigil (ink rules +
         # solid center block). Light variants default to sigil, dark to seam,
@@ -2399,7 +2397,7 @@ def _emit_primer_readme() -> None:
         lines.append("")
         lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
         lines.append("")
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
         lines.append("")
         lines.append(f"![divider aura](proofset/{g}/variants/divider_aura_{v}.svg)")
         lines.append("")
@@ -3706,7 +3704,7 @@ def _emit_chrome_readme() -> None:
         lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
         lines.append("")
         # Row 4: marquee
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_horizontal_{v}.svg)")
+        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
         lines.append("")
         # Row 5: band divider (chrome's only declared divider)
         lines.append(f"![divider band](proofset/{g}/variants/divider_band_{v}.svg)")
@@ -4002,7 +4000,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
     Coverage spans:
       - all 3 user-facing genomes (brutalist, chrome, automata)
       - all 7 user-facing frame types (badge, strip, icon, divider,
-        marquee-horizontal, stats, chart)
+        marquee, stats, chart)
       - state-bearing vs data-only strips (Bug 3 indicator gating)
       - varying metric counts (Bug 1 cell distribution + Bug 2 height inv)
       - variant query-param routing (chrome.horizon, automata.teal)
@@ -4247,14 +4245,14 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
         ParitySpec(
             spec_id="chrome-marquee-horizon",
             compose_spec=ComposeSpec(
-                type="marquee-horizontal",
+                type="marquee",
                 genome_id="chrome",
                 variant="horizon",
                 title="ITEM1 | ITEM2 | ITEM3",
             ),
             http_path="/v1/marquee/ITEM1%20%7C%20ITEM2%20%7C%20ITEM3/chrome.static?variant=horizon",
             mcp_args={
-                "type": "marquee-horizontal",
+                "type": "marquee",
                 "title": "ITEM1 | ITEM2 | ITEM3",
                 "genome": "chrome",
                 "variant": "horizon",
@@ -4467,11 +4465,11 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             # title is metadata-only (data_tokens drive content); it must match
             # the http path segment so <title>/dc:title agree across paths.
             compose_spec=ComposeSpec(
-                type="marquee-horizontal", genome_id=genome, variant=variant, title="HYPERWEAVE", data_tokens=toks
+                type="marquee", genome_id=genome, variant=variant, title="HYPERWEAVE", data_tokens=toks
             ),
             http_path=f"/v1/marquee/HYPERWEAVE/{gm}?variant={variant}&data={_urlquote(data, safe='')}",
             mcp_args={
-                "type": "marquee-horizontal",
+                "type": "marquee",
                 "title": "HYPERWEAVE",
                 "genome": genome,
                 "variant": variant,
@@ -5438,14 +5436,14 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             ParitySpec(
                 spec_id=sid,
                 compose_spec=ComposeSpec(
-                    type="marquee-horizontal",
+                    type="marquee",
                     genome_id=genome,
                     title=title,
                     **({"variant": variant} if variant else {}),
                 ),
                 http_path=f"/v1/marquee/{_q2(title, safe='')}/{http_gm}{variant_q}",
                 mcp_args={
-                    "type": "marquee-horizontal",
+                    "type": "marquee",
                     "title": title,
                     "genome": genome,
                     **({"variant": variant} if variant else {}),
@@ -5465,7 +5463,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
         ParitySpec(
             spec_id="marquee-data-flavored",
             compose_spec=ComposeSpec(
-                type="marquee-horizontal",
+                type="marquee",
                 genome_id="chrome",
                 variant="horizon",
                 title="HYPERWEAVE",
@@ -5473,7 +5471,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             ),
             http_path=f"/v1/marquee/HYPERWEAVE/chrome.static?variant=horizon&data={_urlquote(_df_data, safe='')}",
             mcp_args={
-                "type": "marquee-horizontal",
+                "type": "marquee",
                 "title": "HYPERWEAVE",
                 "genome": "chrome",
                 "variant": "horizon",
@@ -6644,7 +6642,7 @@ def _emit_edge_cases_readme_section() -> str:
 
     # Genome + frame-type ordering for predictable section sequence
     _GENOME_ORDER = ["brutalist", "chrome", "automata", "mixed"]
-    _FRAME_ORDER = ["badge", "strip", "stats", "chart", "icon", "marquee-horizontal", "divider", "mixed"]
+    _FRAME_ORDER = ["badge", "strip", "stats", "chart", "icon", "marquee", "divider", "mixed"]
 
     # Bucket groups by inferred genome + frame_type
     buckets: dict[str, dict[str, list[tuple[str, list[tuple[str, str]]]]]] = {

@@ -35,7 +35,7 @@ from hyperweave.core.models import ComposeSpec
 def test_marquee_dimensions_paradigm_driven(genome_id: str, expected_w: int, expected_h: int) -> None:
     """Each paradigm renders marquee at its declared width/height (chrome.yaml,
     brutalist.yaml, cellular.yaml). Default 800x40 is the schema baseline."""
-    spec = ComposeSpec(type="marquee-horizontal", genome_id=genome_id, title="HW|TEST")
+    spec = ComposeSpec(type="marquee", genome_id=genome_id, title="HW|TEST")
     svg = compose(spec).svg
     assert f'viewBox="0 0 {expected_w} {expected_h}"' in svg, f"{genome_id} viewBox mismatch"
     assert f'width="{expected_w}"' in svg, f"{genome_id} width mismatch"
@@ -54,15 +54,15 @@ def test_marquee_liveness_vocabulary_per_paradigm() -> None:
     square-in-square strobe-cube in the left end-cap, automata a travelling
     wave-rail. None of it binds data-hw-status (it reflects no single status —
     a marquee has N cells), and all of it is prefers-reduced-motion-guarded."""
-    chrome = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW|TEST")).svg
+    chrome = compose(ComposeSpec(type="marquee", genome_id="chrome", title="HW|TEST")).svg
     assert "LIVE</text>" in chrome, "chrome marquee missing LIVE wordmark"
     assert 'class="hw-mq-diamond"' in chrome, "chrome marquee missing pulsing diamond"
 
-    brutalist = compose(ComposeSpec(type="marquee-horizontal", genome_id="brutalist", title="HW|TEST")).svg
+    brutalist = compose(ComposeSpec(type="marquee", genome_id="brutalist", title="HW|TEST")).svg
     assert 'class="hw-mq-cube"' in brutalist, "brutalist marquee missing strobe-cube live node"
     assert 'data-hw-zone="cap-left"' in brutalist, "brutalist marquee missing left end-cap"
 
-    automata = compose(ComposeSpec(type="marquee-horizontal", genome_id="automata", title="HW|TEST")).svg
+    automata = compose(ComposeSpec(type="marquee", genome_id="automata", title="HW|TEST")).svg
     assert 'class="hw-mq-wv"' in automata, "automata marquee missing travelling wave-rail"
 
     # Liveness is DECORATIVE — no liveness element carries data-hw-status, and
@@ -90,9 +90,9 @@ def _extract_scroll_distance(svg: str) -> int:
 def test_marquee_scroll_distance_grows_with_content() -> None:
     """Long content should produce a larger scroll_distance than short content,
     proving the resolver wired _layout_marquee_items correctly."""
-    short = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW")).svg
+    short = compose(ComposeSpec(type="marquee", genome_id="chrome", title="HW")).svg
     long_text = "|".join(["A VERY LONG SCROLL ITEM"] * 8)
-    long_ = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title=long_text)).svg
+    long_ = compose(ComposeSpec(type="marquee", genome_id="chrome", title=long_text)).svg
     short_sd = _extract_scroll_distance(short)
     long_sd = _extract_scroll_distance(long_)
     assert long_sd > short_sd, f"Expected long_sd > short_sd; got long={long_sd} short={short_sd}"
@@ -101,7 +101,7 @@ def test_marquee_scroll_distance_grows_with_content() -> None:
 def test_marquee_short_content_floors_at_viewport_width() -> None:
     """When content is shorter than the viewport, scroll_distance floors at
     viewport_width so the cycle is still a full pass (matches chrome target)."""
-    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW")).svg
+    svg = compose(ComposeSpec(type="marquee", genome_id="chrome", title="HW")).svg
     sd = _extract_scroll_distance(svg)
     # Chrome viewport is 800 (v0.3.12 reconciled to the prototype); a one-item
     # "HW" marquee easily fits → floor applies.
@@ -127,7 +127,7 @@ def test_marquee_loop_boundary_matches_inter_item_rhythm() -> None:
     """
     svg = compose(
         ComposeSpec(
-            type="marquee-horizontal",
+            type="marquee",
             genome_id="automata",
             variant="bone",
             title="HYPERWEAVE|CELLULAR AUTOMATA|LIVING SVG ARTIFACTS|v0.3.12",
@@ -166,7 +166,7 @@ def test_marquee_set_b_offset_equals_scroll_distance() -> None:
     """Set-B group is offset by scroll_distance for seamless loop. The
     SMIL animateTransform translates by -scroll_distance; if Set-B isn't
     at +scroll_distance the loop has a visible jump."""
-    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW|TEST|MARQUEE")).svg
+    svg = compose(ComposeSpec(type="marquee", genome_id="chrome", title="HW|TEST|MARQUEE")).svg
     sd = _extract_scroll_distance(svg)
     # Set B is rendered as <g data-hw-zone="set-b" transform="translate(SD, 0)">.
     assert f'data-hw-zone="set-b" transform="translate({sd}, 0)"' in svg
@@ -180,7 +180,7 @@ def test_marquee_set_b_offset_equals_scroll_distance() -> None:
 def test_chrome_marquee_uses_chrome_text_gradient() -> None:
     """Chrome paradigm declares text_fill_mode=gradient + text_fill_gradient_id=ct.
     Items should reference url(#{uid}-ct) in their fill attribute (not a hex)."""
-    svg = compose(ComposeSpec(type="marquee-horizontal", genome_id="chrome", title="HW|TEST")).svg
+    svg = compose(ComposeSpec(type="marquee", genome_id="chrome", title="HW|TEST")).svg
     # The chrome-text gradient definition exists in defs.
     assert re.search(r'<linearGradient id="hw-[^"]+-ct"', svg), "chrome-text gradient missing"
     # At least one tspan/text fill references the gradient.
@@ -210,7 +210,7 @@ def test_marquee_data_token_mode_uses_paradigm_dimensions() -> None:
         ResolvedToken(kind="kv", label="VERSION", value="0.2.16", ttl=0),
     ]
     spec = ComposeSpec(
-        type="marquee-horizontal",
+        type="marquee",
         genome_id="chrome",
         data_tokens=tokens,
     )

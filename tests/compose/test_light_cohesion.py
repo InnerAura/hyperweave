@@ -92,7 +92,7 @@ def test_marquee_light_cap_is_ink_not_paper(variant: str) -> None:
     """Light marquee bookend caps carry the genome INK hex (ink mass), not the
     paper surface — the weightless-cap fix. Compares the rendered cap fill to
     the SVG-root --dna-ink-primary / --dna-surface declarations."""
-    svg = _svg("marquee-horizontal", variant, value="STARS:2.9k,FORKS:278,BUILD:passing").replace("\n", " ")
+    svg = _svg("marquee", variant, value="STARS:2.9k,FORKS:278,BUILD:passing").replace("\n", " ")
     ink = re.search(r"--dna-ink-primary:\s*(#[0-9A-Fa-f]{6})", svg)
     surface = re.search(r"--dna-surface:\s*(#[0-9A-Fa-f]{6})", svg)
     assert ink and surface, f"{variant}: missing ink/surface token declarations"

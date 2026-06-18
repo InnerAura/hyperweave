@@ -165,7 +165,7 @@ brutalist:
         gradient defs and resolver-side panel positioning. Light chart
         ships with reliable polarity inversion now.
 
-  marquee-horizontal:
+  marquee:
     dark:
       intent: |-
         Project CTA scroll band — 720×32px viewport with horizontal

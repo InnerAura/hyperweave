@@ -1,0 +1,12 @@
+{# Marquee-horizontal "default" paradigm defs.
+
+   Preserves legacy dispatch-via-envelope_stops for genomes that don't
+   declare `paradigms.marquee` in their JSON (brutalist).
+   Chrome-horizon now declares `marquee: chrome` and routes
+   directly to chrome-defs.j2. Cellular genomes declare `marquee:
+   cellular` and get the bifamily-tspan partial. #}
+{% if envelope_stops | default([]) %}
+{% include "frames/marquee/chrome-defs.j2" %}
+{% else %}
+{% include "frames/marquee/brutalist-defs.j2" %}
+{% endif %}

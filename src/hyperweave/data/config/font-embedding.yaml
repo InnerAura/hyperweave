@@ -21,7 +21,7 @@ defaults:
   stats: []
   chart: []
   matrix: []
-  marquee-horizontal: []
+  marquee: []
   receipt: []
   icon: []
   divider: []
@@ -42,13 +42,13 @@ genomes:
     # brutalist-marquee-celadon.svg); the small label row is JetBrains Mono.
     # Without this the marquee embedded nothing and Barlow fell back to a
     # system serif (the off-font in the rendered marquee).
-    marquee-horizontal: [jetbrains-mono, barlow-condensed-700, barlow-condensed-900]
+    marquee: [jetbrains-mono, barlow-condensed-700, barlow-condensed-900]
   chrome:
     badge: [jetbrains-mono, orbitron]
     strip: [jetbrains-mono, orbitron]
     stats: [jetbrains-mono, orbitron]
     chart: [jetbrains-mono, orbitron]
-    marquee-horizontal: [orbitron]
+    marquee: [orbitron]
     receipt: [jetbrains-mono, orbitron]
   automata:
     # Badge cellular-content.j2:94,104 references Orbitron + Chakra Petch.
@@ -60,7 +60,7 @@ genomes:
     # Chart cellular-defs.j2:52-66 binds Orbitron + JBM; Chakra Petch
     # has no CSS rule on chart so it drops out.
     chart: [jetbrains-mono, orbitron]
-    marquee-horizontal: [orbitron]
+    marquee: [orbitron]
     receipt: [jetbrains-mono, orbitron, chakra-petch]
   primer:
     # Primer renders Inter (display) + JetBrains Mono (numerals / mono labels).
@@ -78,7 +78,7 @@ genomes:
     # Diagram headers + node labels are Inter; descs, edge labels, legend,
     # short marks, and the footer are JBM.
     diagram: [inter, jetbrains-mono]
-    marquee-horizontal: [inter, jetbrains-mono]
+    marquee: [inter, jetbrains-mono]
 
 # Documentation only in v0.3.7 — no runtime consumer. When CJK
 # rendering becomes in-scope, plumb a `locale` field through

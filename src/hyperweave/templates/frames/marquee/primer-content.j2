@@ -7,4 +7,4 @@
    Flagship is light (porcelain), so the fallback is 'light'; context.py
    resolves an unset substrate_kind from genome `category` (light) so the bare
    ?genome=primer URL also takes the light path. #}
-{% include "frames/marquee-horizontal/primer-" ~ (substrate_kind | default('light')) ~ "-content.j2" %}
+{% include "frames/marquee/primer-" ~ (substrate_kind | default('light')) ~ "-content.j2" %}

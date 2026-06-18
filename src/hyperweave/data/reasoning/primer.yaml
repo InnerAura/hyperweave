@@ -145,7 +145,7 @@ primer:
         Added the hairline border only on the light tile (gated on
         panel_gradient_stops) because the white disc needs an edge on white;
         the dark tile relies on its gradient alone.
-  marquee-horizontal:
+  marquee:
     dark:
       intent: |-
         Scrolling instrument ribbon — metrics flow across an 800x40 track in a

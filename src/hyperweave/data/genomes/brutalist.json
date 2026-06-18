@@ -943,7 +943,7 @@
     "divider": "default",
     "stats": "brutalist",
     "chart": "brutalist",
-    "marquee-horizontal": "brutalist"
+    "marquee": "brutalist"
   },
   "structural": {
     "stroke_linejoin": "miter",

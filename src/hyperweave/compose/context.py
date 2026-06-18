@@ -163,7 +163,7 @@ _TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
         "chart_milestones",
         "chart_empty_state",
     ),
-    "marquee-horizontal": ("scroll_items",),
+    "marquee": ("scroll_items",),
     "matrix": ("matrix_text_surface",),
     "diagram": ("diagram_text_surface",),
     "receipt": (
@@ -253,7 +253,7 @@ def build_context(
         FrameType.STRIP: _ctx_strip,
         FrameType.ICON: _ctx_icon,
         FrameType.DIVIDER: _ctx_divider,
-        FrameType.MARQUEE_HORIZONTAL: _ctx_marquee,
+        FrameType.MARQUEE: _ctx_marquee,
         FrameType.RECEIPT: _ctx_receipt,
         FrameType.STATS: _ctx_stats,
         FrameType.CHART: _ctx_chart,
@@ -522,7 +522,7 @@ def _ctx_divider(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
 
 
 def _ctx_marquee(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
-    """Context defaults for the marquee-horizontal frame.
+    """Context defaults for the marquee frame.
 
     v0.2.16: LIVE label panel removed entirely. The shared template now
     expects paradigm-driven typography (font_size, font_weight,

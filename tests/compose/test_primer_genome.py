@@ -57,7 +57,7 @@ def test_primer_font_gate_uses_inter_for_stats_and_chart() -> None:
     """Primer text-bearing proof frames embed Inter + JetBrains Mono only."""
     assert fonts_for_frame(FrameType.STATS, "primer") == frozenset({"inter", "jetbrains-mono"})
     assert fonts_for_frame(FrameType.CHART, "primer") == frozenset({"inter", "jetbrains-mono"})
-    assert fonts_for_frame(FrameType.MARQUEE_HORIZONTAL, "primer") == frozenset({"inter", "jetbrains-mono"})
+    assert fonts_for_frame(FrameType.MARQUEE, "primer") == frozenset({"inter", "jetbrains-mono"})
 
     width = measure_text("deployed", font_family="Inter", font_size=9, font_weight=700, letter_spacing_em=0.06)
     assert 42 <= width <= 47

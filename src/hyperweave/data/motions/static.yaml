@@ -8,6 +8,6 @@ applies_to:
   - strip
   - icon
   - divider
-  - marquee-horizontal
+  - marquee
 css: ""
 description: "No animation. Default state."

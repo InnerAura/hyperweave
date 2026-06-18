@@ -117,7 +117,7 @@ async def test_hw_discover_frames() -> None:
     assert "frames" in result
     assert "badge" in result["frames"]
     assert "strip" in result["frames"]
-    assert "marquee-horizontal" in result["frames"]
+    assert "marquee" in result["frames"]
     # banner / marquee-counter / marquee-vertical / timeline removed in v0.2.14.
     assert "banner" not in result["frames"]
     assert "timeline" not in result["frames"]
@@ -130,7 +130,7 @@ async def test_hw_discover_url_grammar_advertises_data_token_routes() -> None:
     """
     result = await hw_discover(what="url_grammar")
     grammar = result["url_grammar"]
-    for key in ("badge (static)", "badge (data-driven)", "strip", "marquee-horizontal", "stats", "chart-stars"):
+    for key in ("badge (static)", "badge (data-driven)", "strip", "marquee", "stats", "chart-stars"):
         assert key in grammar, f"Missing {key} entry in url_grammar"
         entry = grammar[key]
         assert "pattern" in entry
@@ -139,7 +139,7 @@ async def test_hw_discover_url_grammar_advertises_data_token_routes() -> None:
     # The data-driven shapes carry the unified `data` query param.
     assert "data" in grammar["badge (data-driven)"]["query_params"]
     assert "data" in grammar["strip"]["query_params"]
-    assert "data" in grammar["marquee-horizontal"]["query_params"]
+    assert "data" in grammar["marquee"]["query_params"]
     assert "data" in grammar["stats"]["query_params"]
 
     # Route-shape assertions lock the patterns against the HTTP route source of truth.

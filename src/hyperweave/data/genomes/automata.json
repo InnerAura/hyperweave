@@ -453,7 +453,7 @@
     "badge": "cellular",
     "strip": "cellular",
     "icon": "cellular",
-    "marquee-horizontal": "cellular",
+    "marquee": "cellular",
     "divider": "cellular",
     "stats": "cellular",
     "chart": "cellular"

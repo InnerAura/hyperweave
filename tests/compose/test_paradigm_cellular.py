@@ -55,7 +55,7 @@ def test_cellular_frame_variant_defaults() -> None:
     assert cellular.frame_variant_defaults.get("badge") == "teal"
     assert cellular.frame_variant_defaults.get("icon") == "teal"
     assert cellular.frame_variant_defaults.get("strip") == "teal"
-    assert cellular.frame_variant_defaults.get("marquee-horizontal") == "teal"
+    assert cellular.frame_variant_defaults.get("marquee") == "teal"
     # banner default removed in v0.2.14 with the banner frame type.
     assert "banner" not in cellular.frame_variant_defaults
 
@@ -205,8 +205,8 @@ def test_per_genome_frame_font_filtering() -> None:
 
     # Marquee-horizontal: Orbitron only for chrome / automata (cellular scroll text).
     # Brutalist does not bind marquee → defaults row → empty.
-    assert fonts_for_frame(FrameType.MARQUEE_HORIZONTAL, "chrome") == frozenset({"orbitron"})
-    assert fonts_for_frame(FrameType.MARQUEE_HORIZONTAL, "automata") == frozenset({"orbitron"})
+    assert fonts_for_frame(FrameType.MARQUEE, "chrome") == frozenset({"orbitron"})
+    assert fonts_for_frame(FrameType.MARQUEE, "automata") == frozenset({"orbitron"})
 
     # Icon / divider: zero fonts across every genome.
     for genome_id in ("brutalist", "chrome", "automata"):

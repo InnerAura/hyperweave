@@ -67,7 +67,7 @@ marquee_clip_w: 784
 marquee_font_family: "var(--dna-font-display, system-ui, sans-serif)"
 
 # ── Horizontal marquee (Tier 1A closure) ──
-marquee_horizontal_clip_inset_y: 0
-marquee_horizontal_clip_inset_x: 0
-marquee_horizontal_show_accent_lines: false
-marquee_horizontal_bold_pattern: "first"
+marquee_clip_inset_y: 0
+marquee_clip_inset_x: 0
+marquee_show_accent_lines: false
+marquee_bold_pattern: "first"

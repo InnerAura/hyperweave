@@ -46,7 +46,7 @@ def version() -> None:
 def compose(
     frame_type: Annotated[
         str,
-        typer.Argument(help="Frame: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram"),
+        typer.Argument(help="Frame: badge, strip, icon, divider, marquee, stats, chart, matrix, diagram"),
     ],
     title: Annotated[str, typer.Argument(help="Primary text (label, identity, username, owner/repo, ...)")] = "",
     value: Annotated[str, typer.Argument(help="Secondary text or chart subtype (e.g. 'stars')")] = "",
@@ -158,7 +158,7 @@ def compose(
       hyperweave compose stats <username>                          [fetches GitHub data]
       hyperweave compose chart stars <owner/repo>                  [fetches star history]
       hyperweave compose badge STARS --data gh:anthropics/claude-code.stars
-      hyperweave compose marquee-horizontal --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
+      hyperweave compose marquee --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
       hyperweave compose matrix --spec-file table.json -g primer --variant porcelain
       hyperweave compose matrix --preset connectors -g primer --markdown-out table.md
       hyperweave compose diagram --preset pipeline -g primer --variant porcelain
@@ -299,7 +299,7 @@ def compose(
             typer.echo(f"Error: --data parse failed: {exc}", err=True)
             raise typer.Exit(2) from exc
 
-        if frame_type in {"marquee-horizontal", "stats", "matrix"}:
+        if frame_type in {"marquee", "stats", "matrix"}:
             data_tokens_resolved = list(resolved)
         else:
             formatted = format_for_value(resolved)

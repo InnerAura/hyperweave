@@ -62,7 +62,7 @@ async def hw_compose(
 ) -> str:
     """Compose a HyperWeave artifact. Returns self-contained SVG.
 
-    type: badge | strip | icon | divider | marquee-horizontal |
+    type: badge | strip | icon | divider | marquee |
           receipt | stats | chart | matrix
 
     genome: brutalist (dark, sharp corners, emerald accent) |
@@ -191,7 +191,7 @@ async def hw_compose(
 
         tokens = parse_data_tokens(data)
         resolved, _ttl = await resolve_data_tokens(tokens)
-        if type in {"marquee-horizontal", "stats", "matrix"}:
+        if type in {"marquee", "stats", "matrix"}:
             data_tokens_resolved = list(resolved)
         else:
             formatted = format_for_value(resolved)
@@ -482,7 +482,7 @@ async def hw_discover(
                 },
                 "example": "/v1/divider/dissolve/automata.static?variant=teal&pair=violet",
             },
-            "marquee-horizontal": {
+            "marquee": {
                 "pattern": "/v1/marquee/{title}/{genome}.{motion}",
                 "query_params": {
                     "data": data_grammar + " When set, drives the scroll directly and ignores title.",

@@ -68,7 +68,6 @@ take structured state, compress it into an emotionally legible surface, and make
 
 The Voiceover: "Agents don't need to generate heavy React apps that require hosting and runtimes. HyperWeave generates secure, zero-dependency SVG artifacts that travel to wherever your users actually work."
 
-Prompting Guide for AI Agents
 -->
 
 ---
@@ -81,6 +80,8 @@ HyperWeave is that primitive. One API call returns a self-contained SVG with dat
 
 <!--
 An artifact compiler for durable agent-readable documents, diagrams, matrices, badges, and visual knowledge objects that survive Markdown, GitHub, SVG, HTML, and future agent surfaces.
+
+- embeds anywhere, no host, no login, any model
 -->
 
 <p align="center">
@@ -1136,7 +1137,7 @@ hw_compose(type="strip", title="readme-ai",
            genome="chrome")
 
 # Marquee with mixed text + live tokens
-hw_compose(type="marquee-horizontal",
+hw_compose(type="marquee",
            data="text:NEW RELEASE,gh:anthropics/claude-code.stars,text:DOWNLOAD",
            genome="brutalist")
 
@@ -1160,7 +1161,7 @@ hyperweave compose strip "readme-ai" "STARS:2.9k,FORKS:278" -g brutalist
 hyperweave compose badge "STARS" --data 'gh:anthropics/claude-code.stars' -g brutalist
 
 # Marquee with mixed text + live tokens
-hyperweave compose marquee-horizontal --data 'text:NEW RELEASE,gh:owner/repo.stars,text:DOWNLOAD' -g brutalist
+hyperweave compose marquee --data 'text:NEW RELEASE,gh:owner/repo.stars,text:DOWNLOAD' -g brutalist
 
 # Artifact kit
 hyperweave kit readme -g brutalist --badges "build:passing,version:v0.2.0" --social "github,discord"
@@ -1238,7 +1239,7 @@ Every artifact ships with:
 
 | Dimension | Count |
 |---|---|
-| Frame types | 10 (badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram, receipt) |
+| Frame types | 10 (badge, strip, icon, divider, marquee, stats, chart, matrix, diagram, receipt) |
 | Genomes | 4 (automata, brutalist, chrome, primer) |
 | Motion configs | 6 (1 static + 5 border SMIL) |
 | Glyphs | 189 (183 brand marks + 6 geometric shapes) |
