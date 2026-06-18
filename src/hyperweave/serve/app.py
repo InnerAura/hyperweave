@@ -1145,7 +1145,6 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
         "query_params": ["variant", "spec"],
     },
     "receipt": {"pattern": "POST /v1/compose", "query_params": []},
-    "rhythm-strip": {"pattern": "POST /v1/compose", "query_params": []},
 }
 
 

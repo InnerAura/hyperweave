@@ -101,8 +101,7 @@
   "card_top_highlight_color": "#FFFFFF",
   "card_inset": 6,
   "paradigms": {
-    "receipt": "default",
-    "rhythm-strip": "default"
+    "receipt": "default"
   },
   "structural": {},
   "typography": {},

@@ -114,11 +114,6 @@ hyperweave install-hook
 <p align="center"><sub>262M tokens &middot; 562 calls &middot; 52 stages &middot; $175 &middot; voltage</sub></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/rhythm_strip_voltage_xlarge.svg" alt="session rhythm strip — same session data at 92px tall" width="800"/>
-</p>
-<p align="center"><sub>Rhythm strip &middot; the same session data at 92px tall</sub></p>
-
-<p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_claude-code_medium.svg" alt="session receipt — claude-code livery on warm paper substrate" width="800"/>
 </p>
 <p align="center"><sub>Same data, different livery &middot; claude-code</sub></p>
@@ -1243,7 +1238,7 @@ Every artifact ships with:
 
 | Dimension | Count |
 |---|---|
-| Frame types | 11 (badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram, receipt, rhythm-strip) |
+| Frame types | 10 (badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram, receipt) |
 | Genomes | 4 (automata, brutalist, chrome, primer) |
 | Motion configs | 6 (1 static + 5 border SMIL) |
 | Glyphs | 189 (183 brand marks + 6 geometric shapes) |

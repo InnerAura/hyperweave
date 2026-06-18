@@ -70,7 +70,7 @@ def _genome_motions(genome_id: str) -> list[str]:
     return [m for m in BorderMotionId if m.value in compatible]
 
 
-# ── Mock telemetry data for receipt / rhythm-strip ──
+# ── Mock telemetry data for receipt ──
 
 # ── Claude Code transcript fallback corpus ──
 # Pinned paths used only when live discovery (``_discover_transcripts`` below)
@@ -698,12 +698,12 @@ def generate_static() -> int:
 
         # ── 7. Kinetic typography removed in v0.2.14 with the banner frame ──
 
-    # ── 8. Telemetry frames — visual fidelity matrix (v0.2.21) ──
-    # Receipts and rhythm-strips render against 3 real session transcripts of
-    # varying size (small / medium / large) when the user has them locally,
-    # plus a baseline mock-data render. Each (skin x transcript x frame) tuple
-    # produces one SVG. Real transcripts are user-local; on machines without
-    # them, the matrix gracefully falls back to mock-only.
+    # ── 8. Telemetry receipts — visual fidelity matrix ──
+    # Receipts render against 3 real session transcripts of varying size
+    # (small / medium / large) when the user has them locally, plus a baseline
+    # mock-data render. Each (skin x transcript) tuple produces one SVG. Real
+    # transcripts are user-local; on machines without them, the matrix
+    # gracefully falls back to mock-only.
     telemetry_dir = OUT / "proofset" / "telemetry"
 
     # Available transcripts: always include "mock"; add each real transcript
@@ -747,11 +747,9 @@ def generate_static() -> int:
 
     for label, telemetry in transcript_corpus:
         for skin in _skins_for(label, telemetry):
-            for ftype in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
-                svg = _compose(ftype, skin, telemetry_data=telemetry)
-                filename = f"{ftype.value.replace('-', '_')}_{skin}_{label}.svg"
-                _write(telemetry_dir / filename, svg)
-                total += 1
+            svg = _compose(FrameType.RECEIPT, skin, telemetry_data=telemetry)
+            _write(telemetry_dir / f"receipt_{skin}_{label}.svg", svg)
+            total += 1
 
     # ── 9. Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once) ──
     # Render via compose() with a default genome — the templates hardcode their
@@ -1560,7 +1558,7 @@ def generate_readme(total: int, live_total: int) -> None:
         "- [README_CHROME.md](README_CHROME.md) — 5 chrome material identities "
         "(horizon, abyssal, lightning, graphite, moth)",
         "- [README_AUTOMATA.md](README_AUTOMATA.md) — 16 automata solo tones plus pairing-grammar showcase",
-        "- [README_TELEMETRY.md](README_TELEMETRY.md) — receipt + rhythm-strip across all 4 telemetry skins",
+        "- [README_TELEMETRY.md](README_TELEMETRY.md) — receipt across all 4 telemetry skins",
         "",
         "---",
         "",
@@ -1713,7 +1711,7 @@ def generate_readme(total: int, live_total: int) -> None:
         [
             "## Telemetry",
             "",
-            "Receipt + rhythm-strip artifacts across all 4 telemetry skins "
+            "Receipt artifacts across all 4 telemetry skins "
             "(voltage, claude-code, cream, codex) — including mock data and "
             "real transcripts from Claude Code and Codex sessions — live in "
             "[README_TELEMETRY.md](README_TELEMETRY.md).",
@@ -1844,7 +1842,7 @@ def _emit_state_readme() -> None:
 def _emit_telemetry_readme() -> None:
     """Emit outputs/README_TELEMETRY.md with the full telemetry artifact tour.
 
-    Receipt + rhythm-strip rendered under each of the four telemetry skins
+    Receipt rendered under each of the four telemetry skins
     (voltage, claude-code, cream, codex) with mock data, plus real
     transcripts from Claude Code and Codex sessions matched to their
     runtime-paired skin alongside the voltage fallback.
@@ -1853,9 +1851,9 @@ def _emit_telemetry_readme() -> None:
     codex skin) are not generated — they're noise rather than signal.
     """
     lines: list[str] = [
-        "# HyperWeave Telemetry — Receipt + Rhythm-Strip Matrix",
+        "# HyperWeave Telemetry — Receipt Matrix",
         "",
-        "Telemetry artifacts (receipt cards, rhythm strips) are "
+        "Telemetry artifacts (receipt cards) are "
         "**genome-independent at the rendering layer** but render under one of "
         "four named skins: `telemetry-voltage` (universal fallback), "
         "`telemetry-claude-code`, `telemetry-cream`, `telemetry-codex`.",
@@ -1873,9 +1871,8 @@ def _emit_telemetry_readme() -> None:
     for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream", "telemetry-codex"):
         lines.append(f"### {skin}")
         lines.append("")
-        for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
-            lines.append(f"![{ft}-{skin}-mock](proofset/telemetry/{ft.value.replace('-', '_')}_{skin}_mock.svg)")
-            lines.append("")
+        lines.append(f"![receipt-{skin}-mock](proofset/telemetry/receipt_{skin}_mock.svg)")
+        lines.append("")
 
     real_groups: list[tuple[str, list[tuple[str, Path]], str]] = [
         ("Claude Code transcripts", _real_transcripts(), "telemetry-claude-code"),
@@ -1890,11 +1887,8 @@ def _emit_telemetry_readme() -> None:
             lines.append(f"### {label}")
             lines.append("")
             for skin in (matched_skin, "telemetry-voltage"):
-                for ft in (FrameType.RECEIPT, FrameType.RHYTHM_STRIP):
-                    lines.append(
-                        f"![{ft}-{skin}-{label}](proofset/telemetry/{ft.value.replace('-', '_')}_{skin}_{label}.svg)"
-                    )
-                    lines.append("")
+                lines.append(f"![receipt-{skin}-{label}](proofset/telemetry/receipt_{skin}_{label}.svg)")
+                lines.append("")
 
     lines.extend(
         [

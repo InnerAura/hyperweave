@@ -47,8 +47,6 @@ def _spec(frame: FrameType) -> ComposeSpec:
         return ComposeSpec(type="marquee-horizontal", title="HW|TEST")
     if frame is FrameType.RECEIPT:
         return ComposeSpec(type="receipt", telemetry_data=_MINIMAL_TELEMETRY)
-    if frame is FrameType.RHYTHM_STRIP:
-        return ComposeSpec(type="rhythm-strip", telemetry_data=_MINIMAL_TELEMETRY)
     if frame is FrameType.STATS:
         return ComposeSpec(type="stats", genome_id="chrome")
     if frame is FrameType.CHART:

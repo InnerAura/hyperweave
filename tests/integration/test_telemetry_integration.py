@@ -86,28 +86,6 @@ def test_receipt_end_to_end(fixture_transcript: Path) -> None:
     assert 'data-hw-zone="rhythm"' in result.svg
 
 
-def test_rhythm_strip_end_to_end(fixture_transcript: Path) -> None:
-    """Full pipeline: transcript -> contract -> rhythm strip SVG."""
-    from hyperweave.compose.engine import compose
-    from hyperweave.core.models import ComposeSpec
-    from hyperweave.telemetry.contract import build_contract
-
-    contract = build_contract(str(fixture_transcript))
-    spec = ComposeSpec(type="rhythm-strip", telemetry_data=contract)
-    result = compose(spec)
-
-    assert "<svg" in result.svg
-    # v0.2.21 — rhythm-strip rewritten to v2 4-zone layout (600x92).
-    assert result.width == 600
-    assert result.height == 92
-
-    # v0.2.21 — strip has 4 zones: identity / velocity / rhythm / status.
-    assert 'data-hw-zone="identity"' in result.svg
-    assert 'data-hw-zone="velocity"' in result.svg
-    assert 'data-hw-zone="rhythm"' in result.svg
-    assert 'data-hw-zone="status"' in result.svg
-
-
 def test_cli_session_parse(fixture_transcript: Path) -> None:
     """CLI session parse outputs valid JSON with expected structure."""
     from typer.testing import CliRunner
@@ -138,19 +116,6 @@ def test_cli_session_receipt(fixture_transcript: Path, tmp_path: Path) -> None:
     assert out_path.exists()
     svg = out_path.read_text()
     assert "<svg" in svg
-
-
-def test_cli_session_strip(fixture_transcript: Path) -> None:
-    """CLI session strip outputs SVG to stdout."""
-    from typer.testing import CliRunner
-
-    from hyperweave.cli import app
-
-    runner = CliRunner()
-    result = runner.invoke(app, ["session", "strip", str(fixture_transcript)])
-
-    assert result.exit_code == 0, f"Exit code {result.exit_code}: {result.output}"
-    assert "<svg" in result.output
 
 
 def test_cli_stdin_hook_mode(fixture_transcript: Path, tmp_path: Path) -> None:

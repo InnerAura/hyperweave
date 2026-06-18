@@ -19,7 +19,6 @@ class FrameType(StrEnum):
     DIVIDER = "divider"
     MARQUEE_HORIZONTAL = "marquee-horizontal"
     RECEIPT = "receipt"
-    RHYTHM_STRIP = "rhythm-strip"
     STATS = "stats"
     CHART = "chart"
     MATRIX = "matrix"

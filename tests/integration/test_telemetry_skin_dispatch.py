@@ -11,11 +11,6 @@ a precedence chain that reads (in order):
 The empty-string fallback for runtime is deliberate. Pre-Phase-C JSONL has no
 ``runtime`` field; those sessions route to voltage rather than auto-classifying
 as claude-code. Explicit signal → specific skin; absent signal → fallback.
-
-Removing ``_TELEMETRY_FRAMES`` also routes rhythm-strip through the same
-precedence chain — the chromatic skin propagates so a session captured under
-Claude Code renders both its receipt and its rhythm-strip in the same warm
-cream palette.
 """
 
 from __future__ import annotations
@@ -133,29 +128,6 @@ def test_genome_supports_receipts_returns_false_for_unknown_genome() -> None:
     """Unknown slug raises GenomeNotFoundError internally; helper returns False, not raises."""
     assert _genome_supports_receipts("xyzbogus") is False
     assert _genome_supports_receipts("") is False
-
-
-# --------------------------------------------------------------------------- #
-# Rhythm-strip propagation (the load-bearing Phase D side effect)             #
-# --------------------------------------------------------------------------- #
-
-
-def test_rhythm_strip_propagates_skin_from_runtime() -> None:
-    """Rhythm-strip ALSO routes through _resolve_telemetry_genome.
-
-    Before Phase D, _TELEMETRY_FRAMES forced rhythm-strip to telemetry-void
-    regardless of session runtime. After Phase D, it picks up the same skin
-    as the session's receipt — claude-code session → warm cream rhythm-strip,
-    not dark fallback.
-    """
-    spec = _spec("rhythm-strip")
-    assert _resolve_telemetry_genome(spec, _tel("claude-code")) == "telemetry-claude-code"
-
-
-def test_rhythm_strip_honors_explicit_genome_pin() -> None:
-    """Pinning --genome on rhythm-strip works the same as on receipt."""
-    spec = _spec("rhythm-strip", genome_id="telemetry-cream")
-    assert _resolve_telemetry_genome(spec, _tel("claude-code")) == "telemetry-cream"
 
 
 # --------------------------------------------------------------------------- #

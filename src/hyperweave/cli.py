@@ -375,7 +375,7 @@ def kit(
 
 @app.command()
 def render(
-    template: Annotated[str, typer.Option("--template", help="Template name: receipt, rhythm-strip")],
+    template: Annotated[str, typer.Option("--template", help="Template name: receipt")],
     data: Annotated[Path, typer.Option("--data", help="Data contract JSON file")],
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
 ) -> None:
@@ -409,7 +409,7 @@ def render(
 
 @app.command()
 def session(
-    action: Annotated[str, typer.Argument(help="Action: receipt, strip, parse")],
+    action: Annotated[str, typer.Argument(help="Action: receipt, parse")],
     transcript: Annotated[Path | None, typer.Argument(help="Path to transcript JSONL")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
     genome: Annotated[
@@ -424,7 +424,7 @@ def session(
         ),
     ] = "",
 ) -> None:
-    """Session telemetry: parse transcripts, render receipts and rhythm strips.
+    """Session telemetry: parse transcripts and render receipts.
 
     When invoked as a Claude Code hook, reads transcript_path from stdin JSON.
     """
@@ -458,8 +458,8 @@ def session(
         typer.echo(json.dumps(contract, indent=2, default=str))
         return
 
-    if action not in ("receipt", "strip"):
-        typer.echo(f"Unknown action '{action}'. Use: receipt, strip, parse", err=True)
+    if action != "receipt":
+        typer.echo(f"Unknown action '{action}'. Use: receipt, parse", err=True)
         raise typer.Exit(1)
 
     # Skip empty sessions — no tool calls and no cost produces a blank receipt
@@ -475,7 +475,7 @@ def session(
     from hyperweave.compose.engine import compose as do_compose
     from hyperweave.core.models import ComposeSpec
 
-    frame_type = "receipt" if action == "receipt" else "rhythm-strip"
+    frame_type = "receipt"
     genome_slug = _normalize_genome_slug(genome) if genome else ""
 
     # Pre-compute the receipt's on-disk filename (when applicable) so the

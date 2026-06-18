@@ -12,9 +12,9 @@ Two new fields landed in :func:`hyperweave.telemetry.contract._assemble`:
   ``telemetry-{runtime}`` genome JSON.
 
 These three fields are additive: they don't change existing behavior
-for any rhythm-strip / receipt code paths that don't read them, but
-they unblock skin auto-detection (Phase D) and variable-height bars
-(Phase B template rewrite + bar_chart wiring).
+for any receipt code paths that don't read them, but they unblock skin
+auto-detection (Phase D) and variable-height bars (Phase B template
+rewrite + bar_chart wiring).
 """
 
 from __future__ import annotations
@@ -121,7 +121,7 @@ def test_per_stage_errors_reconcile_to_tool_summary(contract: dict[str, Any]) ->
 
 def test_existing_stage_fields_still_present(contract: dict[str, Any]) -> None:
     """Phase C patches are additive: existing fields must remain intact
-    so resolve_rhythm_strip keeps working."""
+    so resolve_receipt keeps working."""
     for s in contract["stages"]:
         for key in ("label", "dominant_class", "start", "end", "tools", "boundary_score"):
             assert key in s, f"missing pre-existing stage key: {key}"

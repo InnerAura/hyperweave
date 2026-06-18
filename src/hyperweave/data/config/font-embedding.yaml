@@ -23,7 +23,6 @@ defaults:
   matrix: []
   marquee-horizontal: []
   receipt: []
-  rhythm-strip: []
   icon: []
   divider: []
 
@@ -51,7 +50,6 @@ genomes:
     chart: [jetbrains-mono, orbitron]
     marquee-horizontal: [orbitron]
     receipt: [jetbrains-mono, orbitron]
-    rhythm-strip: [jetbrains-mono, orbitron]
   automata:
     # Badge cellular-content.j2:94,104 references Orbitron + Chakra Petch.
     # JetBrains Mono is declared in automata.json but never bound to a
@@ -64,7 +62,6 @@ genomes:
     chart: [jetbrains-mono, orbitron]
     marquee-horizontal: [orbitron]
     receipt: [jetbrains-mono, orbitron, chakra-petch]
-    rhythm-strip: [jetbrains-mono, orbitron, chakra-petch]
   primer:
     # Primer renders Inter (display) + JetBrains Mono (numerals / mono labels).
     # icon + divider carry no <text>, so they fall back to the empty defaults row.

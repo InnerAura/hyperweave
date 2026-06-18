@@ -110,7 +110,7 @@ def test_brutalist_badge_excludes_barlow() -> None:
 def test_automata_badge_excludes_jetbrains_mono() -> None:
     """Automata badge CSS classes reference Orbitron (label) + Chakra Petch
     (value). JetBrains Mono is declared in automata.json:fonts for the
-    strip/stats/receipt/rhythm-strip frames; v0.3.7 genome-aware gate
+    strip/stats/receipt frames; v0.3.7 genome-aware gate
     prevents it from shipping in the badge. Saves ~30KB raw per badge.
     """
     spec = ComposeSpec(type="badge", genome_id="automata", title="BUILD", value="passing", state="passing")

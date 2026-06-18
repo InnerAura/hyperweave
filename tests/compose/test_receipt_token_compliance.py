@@ -454,3 +454,50 @@ def test_card_top_highlight_gate_requires_color_at_load() -> None:
     raw["card_top_highlight_color"] = ""  # blank the color, keep the gate True
     with pytest.raises(ValidationError, match="card_top_highlight_color"):
         GenomeSpec(**raw)
+
+
+# --------------------------------------------------------------------------- #
+# Rhythm-bar panel geometry — high-stage-count overflow guard                  #
+# --------------------------------------------------------------------------- #
+
+
+def _stress_telemetry(n_stages: int) -> dict:
+    """Build telemetry with N stages so the 79-stage overflow can't resurface."""
+    return {
+        "session": {"id": "s", "duration_minutes": 209, "model": "claude-opus"},
+        "profile": {"total_input_tokens": 100, "total_output_tokens": 100, "total_cost": 0.1},
+        "tools": {"Read": {"total_tokens": 100, "count": 1, "tool_class": "explore"}},
+        "stages": [
+            {
+                "label": f"STG{i}",
+                "dominant_class": "explore" if i % 2 else "mutate",
+                "tools": 1,
+            }
+            for i in range(n_stages)
+        ],
+        "user_events": [],
+        "agents": [],
+    }
+
+
+def test_receipt_rhythm_bars_fit_content_width_at_high_stage_count() -> None:
+    """Receipt compose with 79 stages fits the 752px content track.
+
+    v0.2.21 — receipt rhythm switched to compose/bar_chart (variable-height bars
+    with merge/decimation when stage count exceeds max_bars=60). The original
+    79-stage bug guarded against was right-edge overflow; that invariant still
+    holds, but the bar count itself can be lower than the input stage count
+    after the helper compacts pathologically long sessions.
+    """
+    from hyperweave.compose.resolver import resolve_receipt
+
+    spec = ComposeSpec(type="receipt", telemetry_data=_stress_telemetry(79))
+    result = resolve_receipt(spec, {}, {})
+    ctx = result["context"]
+    bars = ctx["rhythm_bars"]
+    # bar_chart returns BarChartCell dataclasses — attribute access, not dict.
+    assert max(b.x + b.w for b in bars) <= 752
+    # Original stage count preserved in context for the panel header label.
+    assert ctx["rhythm_original_count"] == 79
+    # Visible bars after compaction must respect the max_bars cap.
+    assert ctx["rhythm_shown_count"] <= 60

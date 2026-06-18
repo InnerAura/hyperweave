@@ -63,7 +63,7 @@ async def hw_compose(
     """Compose a HyperWeave artifact. Returns self-contained SVG.
 
     type: badge | strip | icon | divider | marquee-horizontal |
-          receipt | rhythm-strip | stats | chart | matrix
+          receipt | stats | chart | matrix
 
     genome: brutalist (dark, sharp corners, emerald accent) |
             chrome (dark, metallic, 5 named variants: horizon/abyssal/lightning/graphite/moth) |

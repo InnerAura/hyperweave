@@ -59,8 +59,7 @@ class ComposeSpec(FrozenModel):
     # -- Core identity --
     type: FrameType = Field(
         description=(
-            "Frame type: badge, strip, icon, divider, marquee-horizontal, stats, chart, "
-            "matrix, diagram, receipt, rhythm-strip"
+            "Frame type: badge, strip, icon, divider, marquee-horizontal, stats, chart, matrix, diagram, receipt"
         ),
     )
     frame_id: str = Field(default="", description="Resolved frame identifier")

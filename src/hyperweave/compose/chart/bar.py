@@ -1,10 +1,7 @@
 """Variable-height bar-chart layout for the receipt's rhythm panel.
 
-Sibling to :mod:`hyperweave.compose.strip.rhythm`, NOT a replacement. The
-``layout_rhythm_bars`` helper still produces uniform-height bars for any
-caller that wants the older treatment; this module produces variable
-heights — bar height encodes per-stage token density — for the receipt's
-rhythm panel and (via reuse) for the rhythm-strip v2 artifact.
+This module produces variable heights — bar height encodes per-stage token
+density — for the receipt's rhythm panel.
 
 Risograph-canonical structure (matches
 ``tier2/telemetry/telemetry-redesign/receipt-genome-risograph.svg``):
@@ -109,10 +106,10 @@ PEAK_OPACITY = 0.85
 DEFAULT_PANEL_H = 130
 """Default panel height. The receipt's rhythm zone allocates 130px vertically."""
 
-# Backwards-compat constants kept so existing imports don't break. Tests +
-# rhythm-strip use these. ``BAR_MAX_H`` resolves to the value derived from
-# ``DEFAULT_PANEL_H`` so callers that read it directly still get a sensible
-# number — but ``layout_bar_chart`` recomputes per-call from its area_h arg.
+# Backwards-compat constants kept so existing imports don't break. Tests use
+# these. ``BAR_MAX_H`` resolves to the value derived from ``DEFAULT_PANEL_H``
+# so callers that read it directly still get a sensible number — but
+# ``layout_bar_chart`` recomputes per-call from its area_h arg.
 ERROR_TICK_GAP = 3
 """Legacy: vertical gap between bar top and error-tick. Unused under v0.2.21
 band-based error tick model — kept exported so test_compose_bar_chart's
@@ -124,8 +121,8 @@ def _derive_panel_geometry(panel_h: int) -> tuple[int, int, int]:
     """Return ``(baseline_y, bar_track_h, bar_max_h)`` from ``panel_h``.
 
     Every other position constant is independent of ``panel_h``. This helper
-    centralizes the parametric derivation so :func:`layout_bar_chart` and
-    the (future) rhythm-strip layout can share the same math.
+    centralizes the parametric derivation so :func:`layout_bar_chart` derives
+    every position constant from a single panel-height input.
     """
     baseline_y = panel_h - LEGEND_H
     bar_track_h = baseline_y - BAR_TOP_Y
@@ -395,16 +392,16 @@ def layout_bar_chart(
             for short sessions, 30m otherwise). Without it, no grid
             lines are emitted (caller can compute axis ticks separately
             via :func:`compute_time_axis_ticks`).
-        baseline_y_override: Optional explicit baseline y-coordinate.
-            Used by the rhythm-strip-v2 layout (small ~28px bar track)
-            to bypass the receipt's panel derivation. When provided,
-            ``area_h`` is ignored for geometry — only width math uses it.
+        baseline_y_override: Optional explicit baseline y-coordinate that
+            bypasses the panel derivation (for a caller with a small fixed
+            bar track). When provided, ``area_h`` is ignored for geometry —
+            only width math uses it.
         bar_max_h_override: Optional explicit max bar height. Required
             when ``baseline_y_override`` is supplied so the caller can
             choose the bar height proportional to its own panel.
         emit_error_ticks: When False, no :class:`ErrorTick` records are
-            emitted (the rhythm-strip-v2 doesn't render an error band —
-            errors surface via the status zone instead).
+            emitted (for a caller that surfaces errors outside the bar
+            track rather than as an inline error band).
 
     Returns:
         :class:`BarChartLayout` with bars + error_ticks + peak_marker +

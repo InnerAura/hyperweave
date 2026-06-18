@@ -178,16 +178,6 @@ _TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
         "dominant_profile",
         "phase_legend",
     ),
-    "rhythm-strip": (
-        "session_id_short",
-        "elapsed_label",
-        "token_summary",
-        "velocity_value",
-        "loop_label",
-        "loop_detail",
-        "profile_label",
-        "stages",
-    ),
 }
 
 # Conservative baseline character set. Always included even when the
@@ -265,7 +255,6 @@ def build_context(
         FrameType.DIVIDER: _ctx_divider,
         FrameType.MARQUEE_HORIZONTAL: _ctx_marquee,
         FrameType.RECEIPT: _ctx_receipt,
-        FrameType.RHYTHM_STRIP: _ctx_rhythm_strip,
         FrameType.STATS: _ctx_stats,
         FrameType.CHART: _ctx_chart,
         FrameType.MATRIX: _ctx_matrix,
@@ -603,23 +592,6 @@ def _ctx_receipt(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
     ctx["footer_left"] = ""
     ctx["footer_right"] = ""
     ctx["receipt_items"] = []
-    ctx.update(resolved.frame_context)
-    return ctx
-
-
-def _ctx_rhythm_strip(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
-    ctx, _uid, _aid = _base_context(spec, resolved, css)
-    ctx["session_id_short"] = ""
-    ctx["call_number"] = 0
-    ctx["elapsed_label"] = ""
-    ctx["token_summary"] = ""
-    ctx["velocity_value"] = ""
-    ctx["stages"] = []
-    ctx["loop_detected"] = False
-    ctx["loop_elevated"] = False
-    ctx["loop_label"] = "NOMINAL"
-    ctx["loop_detail"] = "no loop"
-    ctx["profile_label"] = ""
     ctx.update(resolved.frame_context)
     return ctx
 

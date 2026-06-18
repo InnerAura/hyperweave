@@ -67,8 +67,7 @@
   "state_offline_core": "#8a7d6e",
   "state_offline_bright": "#b2a285",
   "paradigms": {
-    "receipt": "default",
-    "rhythm-strip": "default"
+    "receipt": "default"
   },
   "structural": {},
   "typography": {},
