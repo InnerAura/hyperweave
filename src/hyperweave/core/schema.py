@@ -461,10 +461,6 @@ class GenomeSpec(BaseModel):
     card_border: str = Field(default="", description="Receipt card outer border stroke or transparent")
     card_border_top: str = Field(default="", description="Receipt card top accent stripe color or transparent")
     card_inner_glyph: str = Field(default="", description="Codex glyph inner cutout fill (typically surface)")
-    treemap_accent_side: str = Field(
-        default="top",
-        description="Treemap row accent direction: 'top' (1.5px full-width bar) or 'left' (4px full-height bar)",
-    )
 
     # -- Paradigm dispatch (Principle 26: three-layer taxonomy) --
     # Maps FrameType enum value -> paradigm slug. Resolver uses this to pick

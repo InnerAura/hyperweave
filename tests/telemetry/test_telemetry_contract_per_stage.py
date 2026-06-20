@@ -4,17 +4,15 @@ Two new fields landed in :func:`hyperweave.telemetry.contract._assemble`:
 
 * Per-stage ``tokens`` — total token count summed from each stage's
   ``ToolCall`` records (input + output + cache_read + cache_create).
-  Drives variable-height bars in :func:`compose.bar_chart.layout_bar_chart`.
 * Per-stage ``errors`` — count of tool calls with ``BLOCKED`` or ``ERROR``
-  outcome in the stage. Drives error-tick markers above bars.
+  outcome in the stage.
 * Session-level ``runtime`` — identifier ("claude-code") that the receipt
   resolver's skin precedence chain reads to auto-select the matching
   ``telemetry-{runtime}`` genome JSON.
 
 These three fields are additive: they don't change existing behavior
 for any receipt code paths that don't read them, but they unblock skin
-auto-detection (Phase D) and variable-height bars (Phase B template
-rewrite + bar_chart wiring).
+auto-detection (Phase D).
 """
 
 from __future__ import annotations

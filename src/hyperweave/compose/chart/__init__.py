@@ -1,1 +1,1 @@
-"""Chart frame engine: bar chart, line chart layout, treemap."""
+"""Chart frame engine: area/line chart layout + shared axis layout."""
