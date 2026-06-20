@@ -96,14 +96,14 @@ def test_doctor_neither_runtime_detected(monkeypatch: MonkeyPatch, tmp_path: Pat
 def test_doctor_codex_initialized_with_hook_and_feature_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     _patch_home(monkeypatch, tmp_path)
     _patch_which(monkeypatch, {"claude": None, "codex": None})
-    _write_codex_hook(tmp_path, "hyperweave session receipt --genome telemetry-voltage")
+    _write_codex_hook(tmp_path, "hyperweave session receipt --genome cream")
     monkeypatch.chdir(tmp_path)
 
     runner = CliRunner()
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     assert "✓ codex: hook registered" in result.stdout
-    assert "hyperweave session receipt --genome telemetry-voltage" in result.stdout
+    assert "hyperweave session receipt --genome cream" in result.stdout
 
 
 def test_doctor_codex_initialized_but_no_hook(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
@@ -135,7 +135,7 @@ def test_doctor_codex_hook_in_legacy_flat_format_surfaces_warning(monkeypatch: M
     """
     _patch_home(monkeypatch, tmp_path)
     _patch_which(monkeypatch, {"claude": None, "codex": None})
-    _write_codex_hook_legacy_flat(tmp_path, "hyperweave session receipt --genome telemetry-codex")
+    _write_codex_hook_legacy_flat(tmp_path, "hyperweave session receipt --genome cream")
     monkeypatch.chdir(tmp_path)
 
     runner = CliRunner()

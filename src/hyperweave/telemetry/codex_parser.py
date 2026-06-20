@@ -22,8 +22,8 @@ Codex emits THREE distinct tool-call shapes (vs Claude's one
 Token attribution differs from Claude as well: Codex emits cumulative
 ``event_msg/token_count`` events at intervals (with nullable ``info``
 in early events). Per-call attribution is not available; the parser
-distributes the session total evenly across tool calls so the treemap
-remains proportional to call frequency.
+distributes the session total evenly across tool calls so the tool-spend
+bars remain proportional to call frequency.
 """
 
 from __future__ import annotations
@@ -34,7 +34,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .context import DEFAULT_CONTEXT_WINDOW
 from .models import (
+    CommandEvent,
+    CommandResetKind,
     ConfidenceLevel,
     SessionTelemetry,
     SessionTotals,
@@ -201,6 +204,72 @@ def _build_tool_call_from_web_search(payload: _JsonObj, ts: datetime, model: str
 
 
 # --------------------------------------------------------------------------- #
+# CONTEXT-WINDOW OCCUPANCY (Codex)
+# --------------------------------------------------------------------------- #
+
+
+def _model_context_events(
+    raw_lines: list[_JsonObj],
+) -> tuple[int, int, list[CommandEvent]]:
+    """Model Codex context occupancy from ``token_count`` events.
+
+    Each ``event_msg/token_count`` event carries ``info.last_token_usage``
+    (the *current-turn* context fed to the model — gross, cached portion
+    included) and ``info.model_context_window``. We read ``last_token_usage``,
+    NOT ``total_token_usage``: the latter is the session's CUMULATIVE token count
+    (monotonic, reaching tens of millions), which would peg every curve to the
+    window ceiling and — never collapsing — defeat reset detection. The per-turn
+    series is a real occupancy trace (it rises, e.g. 18K→245K, and can drop on a
+    reset).
+
+    Codex has no explicit ``/compact`` marker in-band and ``/clear`` forks a
+    new session file, so resets are detected behaviorally: a sharp collapse
+    (>45%) from a near-ceiling peak (>80% of window) reads as auto-compaction.
+    Returns ``(window, peak, events)``; window is 0 when no token_count event
+    carried a window (the caller falls back to the default).
+    """
+    series: list[tuple[datetime, int]] = []
+    window = 0
+    for line in raw_lines:
+        if line.get("type") != "event_msg":
+            continue
+        payload = line.get("payload") or {}
+        if not isinstance(payload, dict) or payload.get("type") != "token_count":
+            continue
+        info = payload.get("info")
+        if not isinstance(info, dict):
+            continue
+        win = info.get("model_context_window")
+        if isinstance(win, int) and win > 0:
+            window = win
+        usage = info.get("last_token_usage")
+        if not isinstance(usage, dict):
+            continue
+        occ = int(usage.get("input_tokens", 0) or 0)
+        if occ <= 0:
+            continue
+        ts = _parse_timestamp(line.get("timestamp"))
+        series.append((ts, occ))
+
+    peak = max((occ for _ts, occ in series), default=0)
+    events: list[CommandEvent] = []
+    ceiling = 0.80 * window if window > 0 else float("inf")
+    for i in range(1, len(series)):
+        _prev_ts, prev_occ = series[i - 1]
+        cur_ts, cur_occ = series[i]
+        if prev_occ >= ceiling and cur_occ < 0.55 * prev_occ:
+            events.append(
+                CommandEvent(
+                    kind=CommandResetKind.AUTO,
+                    timestamp=cur_ts,
+                    occupancy_before=prev_occ,
+                    occupancy_after=cur_occ,
+                )
+            )
+    return window, peak, events
+
+
+# --------------------------------------------------------------------------- #
 # MAIN PARSER
 # --------------------------------------------------------------------------- #
 
@@ -341,7 +410,7 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
     total_cache_create = 0
 
     # Distribute session totals evenly across tool calls (best-effort —
-    # Codex doesn't attach per-call usage). The treemap stays proportional
+    # Codex doesn't attach per-call usage). The tool-spend bars stay proportional
     # to call frequency, which is the most honest summary at this resolution.
     n_calls = len(all_tool_calls)
     if n_calls:
@@ -381,6 +450,13 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
     session_start = min(timestamps) if timestamps else datetime.now()
     session_end = max(timestamps) if timestamps else session_start
     duration_minutes = max((session_end - session_start).total_seconds() / 60, 0.0)
+
+    # ── Context-window occupancy from token_count events ──
+    # Codex reports a real window + occupancy series, so the receipt's burn
+    # curve is data-backed here, not a flagged gap. Fall back to the default
+    # window only when no token_count event carried one.
+    ctx_window, peak_context_tokens, command_events = _model_context_events(raw_lines)
+    context_window = ctx_window or DEFAULT_CONTEXT_WINDOW
 
     # ── files_accessed: ordered unique file paths from apply_patch ──
     files_accessed: list[str] = []
@@ -436,10 +512,13 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         timestamp=session_start,
         duration_minutes=round(duration_minutes, 2),
         turn_duration_minutes=None,  # Codex has no per-turn duration events
+        context_window=context_window,
+        peak_context_tokens=peak_context_tokens,
         tool_calls=all_tool_calls,
         stages=[],  # populated by stages.detect_stages
         agents=[],  # Codex has no Task-style subagent dispatch
         user_events=user_events,
+        command_events=command_events,
         tool_summary=tool_summary,
         totals=totals,
         files_accessed=files_accessed,

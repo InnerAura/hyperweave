@@ -9,7 +9,7 @@ prevent the same drift from re-emerging:
 * Every YAML loads cleanly.
 * Every ``tools.*`` value is a valid ``ToolClass``.
 * Every runtime's ``parser_module`` actually resolves.
-* Every runtime's ``genome`` is a real file in ``data/genomes/``.
+* Every runtime carries an identity package (``glyph`` + ``provider_label``).
 * Detection rules across runtimes are mutually exclusive — a Claude line
   can't sniff as Codex and vice versa.
 * Unknown-tool policy emits a warning when triggered (not silent).
@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import importlib
 import logging
-from pathlib import Path
 
 import pytest
 
@@ -30,9 +29,6 @@ from hyperweave.telemetry.runtimes import (
     detect_runtime,
     load_all_runtimes,
 )
-
-_GENOMES_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "hyperweave" / "data" / "genomes"
-
 
 # --------------------------------------------------------------------------- #
 # Loading + structure                                                         #
@@ -51,7 +47,6 @@ def test_every_registry_has_complete_metadata() -> None:
         assert isinstance(reg, RuntimeRegistry), name
         assert reg.runtime == name
         assert reg.parser_module, f"{name}: parser_module empty"
-        assert reg.genome, f"{name}: genome empty"
         assert reg.glyph, f"{name}: glyph empty"
         assert reg.provider_label, f"{name}: provider_label empty"
         assert reg.detection.shape in ("flat", "envelope"), name
@@ -76,28 +71,14 @@ def test_every_pattern_class_is_a_valid_toolclass() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Parser + genome resolution                                                  #
+# Parser resolution                                                           #
 # --------------------------------------------------------------------------- #
 
 
 def test_every_parser_module_imports() -> None:
     """Each runtime's ``parser`` field points to an importable module."""
-    for name, reg in load_all_runtimes().items():
-        # codex.yaml points at hyperweave.telemetry.codex_parser which is
-        # added in Phase B; skip its import check there until B1 lands.
-        if name == "codex" and not _module_exists(reg.parser_module):
-            pytest.skip(f"{reg.parser_module} added in v0.2.23 Phase B (B1)")
+    for _name, reg in load_all_runtimes().items():
         importlib.import_module(reg.parser_module)
-
-
-def test_every_genome_file_exists() -> None:
-    """Each runtime's ``genome`` field references a real file in data/genomes/."""
-    for name, reg in load_all_runtimes().items():
-        # telemetry-codex.json is authored in v0.2.23 Phase B (B2); skip until then.
-        if name == "codex" and not (_GENOMES_DIR / f"{reg.genome}.json").is_file():
-            pytest.skip(f"{reg.genome}.json authored in v0.2.23 Phase B (B2)")
-        path = _GENOMES_DIR / f"{reg.genome}.json"
-        assert path.is_file(), f"{name}: {path} not found"
 
 
 # --------------------------------------------------------------------------- #
@@ -182,17 +163,3 @@ def test_unknown_tool_warns_not_silent(caplog: pytest.LogCaptureFixture) -> None
     assert any("unknown_tool" in r.message and "TotallyMadeUpToolName" in r.message for r in caplog.records), (
         f"expected unknown_tool warning, got: {[r.message for r in caplog.records]}"
     )
-
-
-# --------------------------------------------------------------------------- #
-# Helpers                                                                     #
-# --------------------------------------------------------------------------- #
-
-
-def _module_exists(dotted: str) -> bool:
-    """True iff ``dotted`` can be imported without raising."""
-    try:
-        importlib.import_module(dotted)
-    except ImportError:
-        return False
-    return True

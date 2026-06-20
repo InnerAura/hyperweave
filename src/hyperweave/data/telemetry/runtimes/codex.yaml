@@ -10,7 +10,6 @@
 
 runtime: codex
 parser: hyperweave.telemetry.codex_parser
-genome: telemetry-codex
 glyph: codex-glyph
 provider_label: Codex
 

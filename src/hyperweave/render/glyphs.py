@@ -18,7 +18,10 @@ GEOMETRIC_GLYPHS: frozenset[str] = frozenset(
         "triangle",
         "hexagon",
         "shield",
+        "shieldcheck",
         "star",
+        "braces",
+        "textlines",
     }
 )
 

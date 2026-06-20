@@ -1,0 +1,63 @@
+{# Primer receipt — defs.
+
+   Card background gradient, context-load area fill gradient, the two clipPaths
+   (card outline + cost-by-model bar), the runtime glyph symbol, and the
+   light-only `lift` drop-shadow filter. All colours come from the resolver's
+   pre-computed receipt_palette (per-variant) — zero specimen-color fallbacks
+   (Invariant 11). The light/dark split is keyed off substrate_kind, the same
+   axis the rest of primer uses. #}
+{% set pal = receipt_palette %}
+{% set rw = receipt_w %}
+{% set rh = receipt_h %}
+
+{# Receipt typography (mirrors the v3 specimen <style>): JetBrains Mono is the
+   DEFAULT for every <text> — the numeric/label body — so the embedded mono face
+   is actually used and fixed-advance numerals align; `.s` overrides only the
+   wordmark + hero cost to the Inter display face. The resolver MEASURES the body
+   with JetBrains Mono and the `.s` runs with Inter, so measured == rendered (no
+   position drift). The context-load axis/header/legend labels are measured as
+   Inter by compose/chart/area.py, so they carry `.s` too (in context-load.j2).
+   Defined here (not via the telemetry-gated assembler block, which primer does
+   not trigger) so the receipt is typographically self-contained. The embedded
+   @font-face subset (Inter + JetBrains Mono) is injected here too — without it
+   the computed `font_faces` payload was never written (so the embedded faces
+   were unused and the numerals fell to a system mono); now the mono default
+   actually consumes the embedded JetBrains Mono. #}
+<style>{{ font_faces | safe }}
+text{font-family:var(--dna-font-mono,"JetBrains Mono","SF Mono",ui-monospace,monospace)}
+.s{font-family:var(--dna-font-display,"Inter",system-ui,sans-serif)}
+</style>
+
+{# Runtime identity glyph (claude-glyph / codex-glyph), filled with the
+   variant's signal tone so the brand mark carries the variant chroma. #}
+{% include "frames/receipt/glyph-symbols.j2" %}
+
+{# Card substrate gradient — top→bottom. Dark: near-black; light: white→tint. #}
+<linearGradient id="{{ uid }}-card-bg" x1="0" y1="0" x2="0" y2="1">
+{% if substrate_kind == 'light' %}
+  <stop offset="0%" stop-color="{{ pal.surface_1 }}"/>
+  <stop offset="100%" stop-color="{{ pal.surface_2 if pal.surface_2 else pal.surface_1 }}"/>
+{% else %}
+  <stop offset="0%" stop-color="{{ pal.surface_1 }}"/>
+  <stop offset="100%" stop-color="{{ pal.track }}"/>
+{% endif %}
+</linearGradient>
+
+{# Context-load area fill — vertical signal-tinted wash (0.05→0.16). #}
+<linearGradient id="{{ uid }}-ctx-fill" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="{{ pal.area_fill }}" stop-opacity="0.05"/>
+  <stop offset="1" stop-color="{{ pal.area_fill }}" stop-opacity="0.16"/>
+</linearGradient>
+
+<clipPath id="{{ uid }}-card"><rect width="{{ rw }}" height="{{ rh }}" rx="{{ rg.card_rx }}"/></clipPath>
+<clipPath id="{{ uid }}-mbar"><rect x="{{ zone_cost_by_model.bar_x }}" y="{{ zone_cost_by_model.bar_y }}" width="{{ zone_cost_by_model.bar_w }}" height="{{ zone_cost_by_model.bar_h }}" rx="{{ rg.cbm_bar_rx }}"/></clipPath>
+
+{% if substrate_kind == 'light' %}
+{# Light substrate only: a soft signal-tinted drop-shadow lifts the card off a
+   white README ground. Dark cards omit it (a dark card does not cast onto a
+   dark host) — the brief's substrate_kind gate. #}
+<filter id="{{ uid }}-lift" x="-4%" y="-12%" width="108%" height="130%">
+  <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="{{ pal.signal }}" flood-opacity="0.06"/>
+  <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ pal.signal }}" flood-opacity="0.04"/>
+</filter>
+{% endif %}

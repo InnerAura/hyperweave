@@ -258,3 +258,36 @@ def test_generate_readme_includes_new_sections(static_proofset: object) -> None:
     for primary, secondary in (("teal", "violet"), ("cobalt", "magenta"), ("solar", "abyssal")):
         assert f"?variant={primary}&pair={secondary}" in automata_readme
         assert f"pairings/strip_{primary}-{secondary}.svg" in automata_readme
+
+
+def test_cost_buckets_track_session_cost_not_file_size(proofset_module: object) -> None:
+    """Telemetry size buckets are picked off the parsed session **cost**, not the
+    on-disk byte size — a small-but-costly session outranks a big-but-cheap one.
+
+    Regression guard for the v0.4 fix: file bytes are dominated by attachments +
+    file-history snapshots, so byte-size bucketing labelled a $0.34 transcript
+    'xlarge'. ``_pick_cost_buckets`` only sees ``(cost_usd, path)`` pairs, so it
+    *cannot* fall back to size; this pins the ascending-cost ordering it must keep.
+    """
+    pick = proofset_module._pick_cost_buckets  # type: ignore[attr-defined]
+    # Cost order deliberately unrelated to any notion of file size.
+    parsed = [
+        (0.34, Path("cheap_but_huge_file.jsonl")),
+        (5.43, Path("b.jsonl")),
+        (20.75, Path("c.jsonl")),
+        (91.36, Path("d.jsonl")),
+        (414.88, Path("costly_but_small_file.jsonl")),
+    ]
+    picks = pick(parsed, "")
+    labels = [label for label, _ in picks]
+    names = [p.name for _, p in picks]
+    assert labels == ["small", "medium", "large", "xlarge", "xxlarge"]
+    assert names[0] == "cheap_but_huge_file.jsonl"  # $0.34 → small
+    assert names[-1] == "costly_but_small_file.jsonl"  # $414.88 → xxlarge
+
+    cost_by_name = {p.name: c for c, p in parsed}
+    pick_costs = [cost_by_name[n] for n in names]
+    assert pick_costs == sorted(pick_costs), "buckets must ascend in session cost"
+
+    # Empty pool → empty (caller falls back to the deterministic specimen set).
+    assert pick([], "") == []

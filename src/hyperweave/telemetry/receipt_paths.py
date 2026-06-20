@@ -1,18 +1,23 @@
 """Receipt filename construction.
 
-Receipt artifacts are saved as ``{YYYYMMDD}_{slug}.svg``. The slug
-priority chain is:
+Receipt artifacts are saved as ``{YYYYMMDD}_{slug}.svg`` keyed entirely to
+signals that are IMMUTABLE across a session's lifetime, so every regenerate
+lands on the same file:
 
-1. ``session_name`` slugified — the parser-extracted human-readable name
-   (Claude Code: latest customTitle; Codex: latest thread_name).
-2. First-prompt text slugified — falls back to "what was the user actually
-   doing?" when the runtime didn't surface a session title.
-3. ``session_id`` — last-resort UUID, matches the pre-v0.3.1 behavior.
+* the date is the session START (first transcript line), not the regenerate
+  clock — a session resumed days later keeps its original date prefix;
+* the slug is the FIRST user prompt, not the session name.
 
-Filename construction is centralized here so CLI / hook / future MCP
-write paths share one slug discipline. UUID identity always lives in the
-SVG metadata (``data-hw-id`` and ``hw:artifact id``); the filename is for
-human browsing only.
+The mutable session name is deliberately NOT a slug source. A mid-session
+rename (Claude /rename, Codex thread naming) would otherwise repoint the
+filename and orphan the prior receipt on the next regenerate. The live name
+renders in the footer identity line instead (read at render time).
+
+Slug priority: first-prompt text → ``session_id`` → ``"receipt"``.
+Filename construction is centralized here so CLI / hook / future MCP write
+paths share one slug discipline. UUID identity always lives in the SVG
+metadata (``data-hw-id`` and ``hw:artifact id``); the filename is for human
+browsing only.
 """
 
 from __future__ import annotations
@@ -56,25 +61,22 @@ def slugify_session_name(raw: str) -> str:
 
 def receipt_filename(
     timestamp: datetime,
-    session_name: str = "",
     session_id: str = "",
     prompt_text: str = "",
 ) -> str:
-    """Build a human-readable receipt filename.
+    """Build a stable, human-readable receipt filename.
 
-    Format: ``{YYYYMMDD}_{slug}.svg``. Local time is assumed; the
-    receipt SVG metadata carries the canonical UTC timestamp. The HHMM
-    time segment was dropped in v0.3.3 — the YYYYMMDD prefix plus a
-    human-readable slug is sufficient identity for filesystem browsing,
-    and the full UTC timestamp survives in the SVG metadata.
+    Format: ``{YYYYMMDD}_{slug}.svg``. Both inputs are IMMUTABLE across a
+    session's lifetime, so the filename is identical on every regenerate
+    (resume re-fires the SessionEnd hook; the per-turn Codex Stop hook
+    rewrites in place): ``timestamp`` is the session START and ``prompt_text``
+    is the first user prompt. The mutable session name is intentionally absent
+    so a rename never repoints the file. Local time is assumed; the SVG
+    metadata carries the canonical UTC timestamp.
 
-    Slug source priority: ``session_name`` → ``prompt_text[:40]`` →
-    ``session_id``. Empty input at every stage falls back to ``"receipt"``
-    (date prefix still preserves uniqueness within a day).
+    Slug source priority: ``prompt_text[:40]`` → ``session_id`` → ``"receipt"``.
     """
-    slug = slugify_session_name(session_name)
-    if not slug and prompt_text:
-        slug = slugify_session_name(prompt_text[:40])
+    slug = slugify_session_name(prompt_text[:40]) if prompt_text else ""
     if not slug and session_id:
         slug = slugify_session_name(session_id)
     if not slug:

@@ -19,8 +19,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .context import window_for_model
 from .models import (
     AgentSpan,
+    CommandEvent,
+    CommandResetKind,
     ConfidenceLevel,
     SessionTelemetry,
     SessionTotals,
@@ -49,6 +52,16 @@ _ENVELOPE_ONLY = re.compile(
     r"^<[a-z][a-z0-9-]*>.*</[a-z][a-z0-9-]*>$",
     re.DOTALL,
 )
+
+# Slash-command envelopes that reset the context window. Captured by a
+# dedicated pass (`_extract_command_resets`) because `_extract_user_text`
+# discards command envelopes — they must not count as turns, but they ARE
+# context-load reset events the receipt's burn curve renders.
+_COMMAND_NAME = re.compile(r"<command-name>\s*/?([a-z][a-z0-9_-]*)\s*</command-name>")
+_RESET_COMMANDS: dict[str, CommandResetKind] = {
+    "compact": CommandResetKind.COMPACT,
+    "clear": CommandResetKind.CLEAR,
+}
 
 
 # --------------------------------------------------------------------------- #
@@ -197,8 +210,17 @@ def _extract_tool_outcomes(obj: _JsonObj) -> dict[str, ToolOutcome]:
 
 
 def _extract_user_text(obj: _JsonObj) -> str | None:
-    """Extract plain text from a user message, ignoring tool_results and meta."""
-    if obj.get("isMeta"):
+    """Extract plain text from a user message, ignoring tool_results and meta.
+
+    Compact-summary messages (``isCompactSummary: true``) are machine-injected
+    conversation summaries the harness writes after auto- or ``/compact``-
+    compaction. Their content is prose (not an envelope), so without this
+    guard they read as a human turn and inflate the turn count. They are
+    excluded here so every turn tally derived from this function counts only
+    human-authored prose; the reset itself is still captured separately by
+    ``_extract_command_resets`` for the context-load curve.
+    """
+    if obj.get("isMeta") or obj.get("isCompactSummary"):
         return None
 
     msg = obj.get("message", {})
@@ -257,6 +279,190 @@ def _detect_agent_spans(tool_calls: list[ToolCall], raw_lines: list[_JsonObj]) -
         span.tool_calls = progress_counts.get(agent_id, 0)
 
     return list(agents.values())
+
+
+# --------------------------------------------------------------------------- #
+# PASS 5: CONTEXT-WINDOW OCCUPANCY + RESET DETECTION
+# --------------------------------------------------------------------------- #
+
+
+def _assistant_occupancy(obj: _JsonObj) -> int:
+    """Modelled context occupancy at an assistant turn, in tokens.
+
+    Occupancy is the context *fed* to the model on this turn:
+    ``input_tokens + cache_read_input_tokens + cache_creation_input_tokens``.
+    Output tokens are excluded — they are produced, not loaded. This reads
+    the *undivided* per-turn usage (not the per-call-divided ToolCall
+    tokens), which is why it operates on the raw assistant line.
+    """
+    msg = obj.get("message", {})
+    if not isinstance(msg, dict):
+        return 0
+    usage = msg.get("usage", {})
+    if not isinstance(usage, dict):
+        return 0
+    return (
+        int(usage.get("input_tokens", 0) or 0)
+        + int(usage.get("cache_read_input_tokens", 0) or 0)
+        + int(usage.get("cache_creation_input_tokens", 0) or 0)
+    )
+
+
+# A genuine session reads a few percent above its nominal window on the turn
+# that triggers compaction (cache + token-accounting overhead), so only a peak
+# that exceeds the window by MORE than this tolerance indicates the session
+# actually ran on a larger window (a 200K-default model on the 1M beta). A
+# few-K ceiling overshoot is NOT a promotion — a genuine 200K session stays 200K.
+_WINDOW_PROMOTE_TOLERANCE = 1.25
+
+
+def _model_window(model: str | None, observed_peak: int) -> int:
+    """Resolve the context window, promoting only on a CLEAR overshoot.
+
+    ``window_for_model`` gives the doc-sourced baseline (Opus 4.x / Fable 5 /
+    Sonnet 4.6 = 1M; Haiku 4.5 / Sonnet 4.5 = 200K). The backstop recovers an
+    opt-in larger window (the Sonnet-4.5 1M beta) from observed occupancy — but
+    only when the peak exceeds the baseline by more than
+    :data:`_WINDOW_PROMOTE_TOLERANCE`, so a genuine 200K session sitting at its
+    ceiling (~200-215K) is NOT promoted to 1M (which would draw it ~20% full).
+    The receipt never overshoots its own ceiling.
+    """
+    window = window_for_model(model)
+    if observed_peak > window * _WINDOW_PROMOTE_TOLERANCE:
+        return 1_000_000 if observed_peak <= 1_000_000 else observed_peak
+    return window
+
+
+def _detect_context_events(
+    raw_lines: list[_JsonObj],
+    window: int,
+) -> tuple[list[CommandEvent], int]:
+    """Model context occupancy over the session and detect reset events.
+
+    Walks the transcript in order, tracking the running occupancy from each
+    assistant turn. Resets are detected from three disjoint structural
+    signals, in priority order so a single physical reset is counted once:
+
+    * ``/compact`` or ``/clear`` slash-command envelope (explicit, user-driven).
+    * ``isCompactSummary`` user message → AUTO-compaction by default. A manual
+      ``/compact`` emits both a command envelope and a summary, so the fold step
+      downgrades the summary to COMPACT when a command sits adjacent; a lone
+      summary (no nearby command) is a genuine auto-compaction.
+    * A sharp occupancy collapse near the window ceiling with no marker
+      (auto-compaction inferred behaviorally; only fires above 80% of the
+      window so ordinary cache turnover never trips it).
+
+    A reset within two assistant turns of an already-recorded reset is
+    folded into it (the explicit envelope and its summary are one event),
+    so the three signals never double-count. ``occupancy_after`` is read
+    from the first assistant turn following the reset; ``occupancy_before``
+    from the last one preceding it.
+
+    Returns ``(events, peak_occupancy)``.
+    """
+    # Build an ordered occupancy timeline of assistant turns: (line_index, ts, occ).
+    timeline: list[tuple[int, datetime, int]] = []
+    peak = 0
+    for idx, line in enumerate(raw_lines):
+        if line.get("type") != "assistant":
+            continue
+        occ = _assistant_occupancy(line)
+        if occ <= 0:
+            continue
+        ts = _parse_timestamp(line.get("timestamp"))
+        timeline.append((idx, ts, occ))
+        peak = max(peak, occ)
+
+    # Map a line index → position in the assistant timeline for fast lookup
+    # of the surrounding occupancy at any reset.
+    def _occ_around(line_idx: int) -> tuple[int, int]:
+        before = 0
+        after = 0
+        for t_idx, _ts, occ in timeline:
+            if t_idx < line_idx:
+                before = occ
+            elif t_idx >= line_idx and after == 0:
+                after = occ
+                break
+        return before, after
+
+    raw_events: list[tuple[int, datetime, CommandResetKind]] = []
+
+    # Signal 1+2: explicit command envelopes and compact-summary markers.
+    for idx, line in enumerate(raw_lines):
+        if not _is_user_entry(line):
+            continue
+        if line.get("isCompactSummary"):
+            # AUTO-compaction by default. The fold step below downgrades this to
+            # COMPACT only when an explicit /compact command envelope sits
+            # adjacent (a manual /compact emits both a command and a summary).
+            ts = _parse_timestamp(line.get("timestamp"))
+            raw_events.append((idx, ts, CommandResetKind.AUTO))
+            continue
+        msg = line.get("message", {})
+        content = msg.get("content", "") if isinstance(msg, dict) else ""
+        if not isinstance(content, str):
+            continue
+        m = _COMMAND_NAME.search(content)
+        if m and (kind := _RESET_COMMANDS.get(m.group(1).lower())):
+            ts = _parse_timestamp(line.get("timestamp"))
+            raw_events.append((idx, ts, kind))
+
+    # Signal 3: behavioral auto-compaction — a >45% occupancy collapse from a
+    # near-ceiling peak with no structural marker nearby. Only meaningful when
+    # the window is known; guards against ordinary cache eviction.
+    ceiling = 0.80 * window if window > 0 else float("inf")
+    marker_indices = {idx for idx, _ts, _k in raw_events}
+    for i in range(1, len(timeline)):
+        prev_idx, _pts, prev_occ = timeline[i - 1]
+        cur_idx, cur_ts, cur_occ = timeline[i]
+        if prev_occ >= ceiling and cur_occ < 0.55 * prev_occ:
+            # Skip if a structural marker already sits between the two turns.
+            if any(prev_idx <= mi <= cur_idx for mi in marker_indices):
+                continue
+            raw_events.append((cur_idx, cur_ts, CommandResetKind.AUTO))
+
+    # Order by line index, then fold near-duplicate resets (explicit envelope
+    # + its summary land within a couple of assistant turns of each other).
+    raw_events.sort(key=lambda e: e[0])
+    folded: list[tuple[int, datetime, CommandResetKind]] = []
+
+    def _nearest_pos(line_idx: int) -> int:
+        # Position in the assistant timeline at/after this line index.
+        for pos, (t_idx, _ts, _occ) in enumerate(timeline):
+            if t_idx >= line_idx:
+                return pos
+        return len(timeline)
+
+    for idx, ts, kind in raw_events:
+        if folded:
+            last_idx, _lts, last_kind = folded[-1]
+            if abs(_nearest_pos(idx) - _nearest_pos(last_idx)) <= 2:
+                # Same physical reset: an explicit command kind (COMPACT/CLEAR)
+                # wins over the AUTO summary inference — a manual /compact emits
+                # both a command envelope and a summary, so the pair folds to
+                # the manual kind; a lone summary stays AUTO (auto-compaction).
+                if last_kind is CommandResetKind.AUTO and kind is not CommandResetKind.AUTO:
+                    folded[-1] = (last_idx, _lts, kind)
+                continue
+        folded.append((idx, ts, kind))
+
+    # Event minutes are derived downstream (context.build_context_summary)
+    # from the timestamp so callers control rounding; we keep the timestamp
+    # authoritative here rather than baking a minute value into the model.
+    events: list[CommandEvent] = []
+    for idx, ts, kind in folded:
+        before, after = _occ_around(idx)
+        events.append(
+            CommandEvent(
+                kind=kind,
+                timestamp=ts,
+                occupancy_before=before,
+                occupancy_after=after,
+            )
+        )
+
+    return events, peak
 
 
 # --------------------------------------------------------------------------- #
@@ -368,6 +574,14 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
     session_start = min(timestamps) if timestamps else datetime.now()
     session_end = max(timestamps) if timestamps else session_start
 
+    # -- Pass 6: Context-window occupancy + reset events --
+    # Peak is observed first (some sessions run on a larger window than the
+    # model id implies); the window resolution then defends against an
+    # under-mapped id by promoting to the tier the peak demonstrates.
+    _peak_probe = max((_assistant_occupancy(ln) for ln in raw_lines if ln.get("type") == "assistant"), default=0)
+    context_window = _model_window(model, _peak_probe)
+    command_events, peak_context_tokens = _detect_context_events(raw_lines, context_window)
+
     # turn_duration_minutes is the receipt's primary "active" source when present —
     # it measures per-turn compute time and ignores idle gaps the stage detector
     # silently absorbs into a stage span. None signals the fallback path.
@@ -443,10 +657,13 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         timestamp=session_start,
         duration_minutes=round(duration_minutes, 2),
         turn_duration_minutes=(round(turn_duration_minutes, 2) if turn_duration_minutes is not None else None),
+        context_window=context_window,
+        peak_context_tokens=peak_context_tokens,
         tool_calls=all_tool_calls,
         stages=[],
         agents=agents,
         user_events=user_events,
+        command_events=command_events,
         tool_summary=tool_summary,
         totals=totals,
         files_accessed=files_accessed,

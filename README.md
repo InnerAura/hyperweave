@@ -33,40 +33,36 @@
 AI agents need to explain what they did, what they found, and what changed — HyperWeave gives them a visual language that works anywhere.
 
 ---
+
 HyperWeave lets agents compose portable visual artifacts that can live inside reports, detach into Slack/email/docs, and carry their source, state, and drilldown with them.
 
 ---
 
-A brand agent for repos.
-Generate a cohesive visual identity layer for README, profile, status, and releases — automatically.
-
 A brand agent for repos. Generate a cohesive visual identity — README, profile, metrics, releases — from a single genome.
+
 ---
 
-HyperWeave is the generative visual identity system for the agentic era. A user defines a genome — their aesthetic DNA — and HyperWeave renders coherent visual artifacts across any surface, for any context, from any data. Badges for repos. Cards for stats. Charts for data. Artifact sets for research papers. Release kits for product launches. Marketing assets for startups. Static when static. Live when live. Generated when generative. Their brand, as infrastructure, for everything their agents will ever need to render.
-
-The list in the middle ("Badges for repos. Cards for stats. Charts for data...") reads long. It proves the surface area is broad but it also reads like a features list. Investors skim past enumeration. You could collapse it: "Every surface agents render on, from repos to research papers to product launches." The breadth lands harder when it's a claim than when it's a list.
-
 HyperWeave is the brand agent for engineering teams. Define your identity once; every artifact your team ships carries it wherever their work appears.
+
+HyperWeave is the generative visual identity system for the agentic era. A user defines a genome — their aesthetic DNA — and HyperWeave renders coherent visual artifacts across any surface, for any context, from any data. Badges for repos. Cards for stats. Charts for data. Artifact sets for research papers. Release kits for product launches. Marketing assets for startups. Static when static. Live when live. Generated when generative. Their brand, as infrastructure, for everything their agents will ever need to render.
 
 Safe, Auditable, Drop-Anywhere Visuals for your Agents.
 
 ---
 
-"Hyperweave is the visual protocol for autonomous agents. We give AI agents the ability to generate high-fidelity, brand-aligned UI artifacts—roadmaps, telemetry, and status cards—so humans can monitor and trust agentic workflows."
+Hyperweave is the visual protocol for autonomous agents. We give AI agents the ability to generate high-fidelity, brand-aligned UI artifacts—roadmaps, telemetry, and status cards—so humans can monitor and trust agentic workflows.
 
 ---
 
-HyperWeave is the visual artifact layer for modern software.
-Generate branded, self-contained SVG outputs for profiles, repositories, docs, dashboards, and agent workflows.
+In a post-agi world, letting autonomous agents generate executable UI code (React/JS) is a catastrophic security risk. HyperWeave is the secure, stateless, verifiable visual protocol for the Agentic Web.
 
-“runtime-free visual compiler for structured machine outputs”
+HyperWeave generates secure, zero-dependency SVG artifacts that travel to wherever your users actually work.
 
-take structured state, compress it into an emotionally legible surface, and make it portable
+An artifact compiler for durable agent-readable documents, diagrams, matrices, badges, and visual knowledge objects that survive Markdown, GitHub, SVG, HTML, and future agent surfaces.
 
-"In a post-Mythos world, letting autonomous agents generate executable UI code (React/JS) is a catastrophic security risk. HyperWeave is the secure, stateless, verifiable visual protocol for the Agentic Web."
-
-The Voiceover: "Agents don't need to generate heavy React apps that require hosting and runtimes. HyperWeave generates secure, zero-dependency SVG artifacts that travel to wherever your users actually work."
+- take structured state, compress it into an emotionally legible surface, and make it portable
+- runtime-free visual compiler for structured machine outputs
+- embeds anywhere, no host, no login, any model
 
 -->
 
@@ -74,18 +70,12 @@ The Voiceover: "Agents don't need to generate heavy React apps that require host
 
 ## The Problem
 
-When an agent needs to produce something visual, it generates React, HTML, or pixels: a status card, a dashboard, a receipt of its work, locked in the environment that made it. Embed it in markdown or pass it to another agent and it breaks or loses context. There's no portable visual primitive for agents.
+Agents need to show their work through plans, diagrams, dashboards, status cards, receipts, and reports. Markdown is portable but visually limited. HTML is expressive but not always durable across surfaces. Images are easy to share but lose their structure. Raw model output is flexible but inconsistent.
 
-HyperWeave is that primitive. One API call returns a self-contained SVG with data binding, branding, and machine-readable metadata baked in. No JavaScript, no dependencies, no runtime. It renders in GitHub READMEs, Slack, Notion, docs, your site, email, VS Code, or terminal. Every surface that renders an `<img>` tag is a HyperWeave surface.
-
-<!--
-An artifact compiler for durable agent-readable documents, diagrams, matrices, badges, and visual knowledge objects that survive Markdown, GitHub, SVG, HTML, and future agent surfaces.
-
-- embeds anywhere, no host, no login, any model
--->
+HyperWeave turns structured specs into deterministic visual artifacts. Each artifact is a self-contained SVG with layout, branding, data binding, and machine-readable metadata baked in. No JavaScript, no runtime, no dependencies. Readable by humans, recoverable by agents, and portable anywhere an `<img>` tag renders.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-format-comparison-matrix-v2.svg" alt="Visual output formats for AI agents: SVG vs Markdown vs HTML across portability, agent-readable metadata, visual fidelity, token efficiency, and zero dependencies" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-format-comparison-matrix-cream.svg" alt="Visual output formats for AI agents: SVG vs Markdown vs HTML across portability, agent-readable metadata, visual fidelity, token efficiency, and zero dependencies" width="100%"/>
 </p>
 
 <details>
@@ -103,37 +93,30 @@ An artifact compiler for durable agent-readable documents, diagrams, matrices, b
 
 ## Agentic Artifacts
 
-Every AI coding session produces a receipt: cost, tokens, tool distribution, session rhythm. One install, fully automatic.
+HyperWeave receipts turn an AI coding session into a portable artifact that shows what it cost by model, tool usage, token spend, and context window history. Install the hook once and every session emits one:
 
 ```bash
 hyperweave install-hook
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_voltage_xlarge.svg" alt="session receipt — voltage livery showing 262M tokens, 562 calls, 52 stages, divergence flag" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_cream.svg" alt="A HyperWeave session receipt for a Claude Code run: $116.66 across 151.1M tokens and 574 calls, opus-4.8 dominant, with a tool-spend breakdown, a cost-by-model bar, and a context-load curve." width="800"/>
 </p>
-<p align="center"><sub>262M tokens &middot; 562 calls &middot; 52 stages &middot; $175 &middot; voltage</sub></p>
+<p align="center"><sub>Claude Code &middot; $116.66 &middot; 151.1M tokens &middot; 574 calls &middot; opus-4.8</sub></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_claude-code_medium.svg" alt="session receipt — claude-code livery on warm paper substrate" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_porcelain.svg" alt="A HyperWeave session receipt for a Codex run: $49.76 across 62.2M tokens and 718 calls, gpt-5.5." width="800"/>
 </p>
-<p align="center"><sub>Same data, different livery &middot; claude-code</sub></p>
+<p align="center"><sub>Codex &middot; $49.76 &middot; 62.2M tokens &middot; 718 calls &middot; gpt-5.5</sub></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_codex_large.svg" alt="session receipt — codex agent transcript auto-detected from JSONL shape" width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_raw.svg" alt="The same Claude Code session printed as a thermal register tape: tools as line items priced in tokens, models as payment tender, failed calls as voids." width="300"/>
 </p>
-<p align="center"><sub>Codex transcripts auto-detect from the JSONL shape</sub></p>
+<p align="center"><sub>The same Claude session if you fancy a proper receipt</sub></p>
 
-The livery matches the agent that produced the session:
+HyperWeave reads your JSONL transcript from disk, detects the harness (Claude Code or Codex currently supported), and can be themed in any of [8 primer variants](#primer) plus the raw receipt above. Want another agent harness? [Open an issue](https://github.com/InnerAura/hyperweave/issues).
 
-| Agent | Livery |
-|-------|--------|
-| Claude Code | `claude-code` |
-| Codex | `codex` |
-| &mdash; | `voltage` |
-| &mdash; | `cream` |
-
-Auto-detected from the session transcript. Pin a different default with `hyperweave install-hook --genome voltage`.
+Select theme at install time: `hyperweave install-hook --genome cream` (any of the eight), or `--genome raw` for the paper receipt.
 
 ---
 
@@ -157,6 +140,149 @@ HyperWeave matrices are structured tables rendered as portable SVGs. A single JS
 | Slack unfurl | slack | ~ | — | image proxy |
 | Gmail body | gmail | ~ | — | img tag |
 | Agent | mcp | ✗ | — | hw:payload, hwz/1, markdown twin |
+
+</details>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose matrix --spec-file /dev/stdin -g primer --variant porcelain -o one-artifact.svg <<'JSON'
+{
+  "title": "One artifact. Many readers.",
+  "subtitle": "how each consumer ingests the same SVG",
+  "columns": [
+    {
+      "id": "reader",
+      "label": "READER",
+      "role": "label"
+    },
+    {
+      "id": "mark",
+      "label": "",
+      "kind": "glyph",
+      "glyph_tint": "full"
+    },
+    {
+      "id": "pixels",
+      "label": "PIXELS",
+      "kind": "check"
+    },
+    {
+      "id": "motion",
+      "label": "MOTION",
+      "kind": "pill"
+    },
+    {
+      "id": "via",
+      "label": "READS VIA",
+      "kind": "chip"
+    }
+  ],
+  "rows": [
+    {
+      "label": "GitHub README",
+      "cells": [
+        {
+          "glyph": "github"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "chips": [
+            "camo",
+            "css animation"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "VS Code preview",
+      "cells": [
+        {
+          "glyph": "vscode"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "on"
+        },
+        {
+          "chips": [
+            "markdown preview"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Slack unfurl",
+      "cells": [
+        {
+          "glyph": "slack"
+        },
+        {
+          "state": "partial"
+        },
+        {
+          "state": "off"
+        },
+        {
+          "chips": [
+            "image proxy"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Gmail body",
+      "cells": [
+        {
+          "glyph": "gmail"
+        },
+        {
+          "state": "partial"
+        },
+        {
+          "state": "off"
+        },
+        {
+          "chips": [
+            "img tag"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Agent",
+      "cells": [
+        {
+          "glyph": "mcp"
+        },
+        {
+          "state": "none"
+        },
+        {
+          "state": "off"
+        },
+        {
+          "chips": [
+            "hw:payload",
+            "hwz/1",
+            "markdown twin"
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": "pixels for humans · hw:payload for agents"
+}
+JSON
+```
 
 </details>
 
@@ -208,7 +334,7 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
     "rows_total": 5
   },
   "frames": [{ "t": "matrix", "l": "One artifact. Many readers." }],
-  "prov": { "by": "hyperweave", "ver": "0.4.0a2", "genome": "primer.porcelain", "ts": "2026-06-11T15:51:03.185542+00:00" }
+  "prov": { "by": "hyperweave", "ver": "0.4.0a4", "genome": "primer.porcelain", "ts": "2026-06-11T15:51:03.185542+00:00" }
 }
 </hw:envelope>
 ```
@@ -253,6 +379,213 @@ Another matrice configuration for visualizing benchmarks:
 | Mistral Medium 3.5 | mistral | 77.6 % | $1.5 | $7.5 |
 
 *SWE-bench Verified % · USD per Mtok · current flagships, jun 2026 · sources: vals.ai · artificialanalysis.ai · model cards*
+
+</details>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose matrix --spec-file /dev/stdin -g primer --variant cream -o frontier-benchmarks.svg <<'JSON'
+{
+  "title": "Frontier vs Open",
+  "subtitle": "coding & price · SWE-bench Verified against price per million tokens · current flagships, jun 2026",
+  "columns": [
+    {
+      "id": "model",
+      "label": "MODEL",
+      "kind": "text",
+      "align": "left",
+      "role": "label"
+    },
+    {
+      "id": "mark",
+      "label": "",
+      "kind": "glyph",
+      "align": "center",
+      "glyph_tint": "full"
+    },
+    {
+      "id": "swe",
+      "label": "SWE-bench Verified",
+      "kind": "numeric",
+      "align": "center",
+      "polarity": "higher",
+      "unit": "%"
+    },
+    {
+      "id": "pin",
+      "label": "INPUT",
+      "sublabel": "per Mtok",
+      "kind": "numeric",
+      "align": "center",
+      "polarity": "lower",
+      "unit": "$"
+    },
+    {
+      "id": "pout",
+      "label": "OUTPUT",
+      "sublabel": "per Mtok",
+      "kind": "numeric",
+      "align": "center",
+      "polarity": "lower",
+      "unit": "$"
+    }
+  ],
+  "rows": [
+    {
+      "label": "Claude Fable 5",
+      "cells": [
+        {
+          "glyph": "anthropic"
+        },
+        {
+          "value": 95.0
+        },
+        {
+          "value": 10
+        },
+        {
+          "value": 50
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "Claude Opus 4.8",
+      "cells": [
+        {
+          "glyph": "anthropic"
+        },
+        {
+          "value": 88.6
+        },
+        {
+          "value": 5
+        },
+        {
+          "value": 25
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "GPT-5.5",
+      "cells": [
+        {
+          "glyph": "openai"
+        },
+        {
+          "value": 82.6
+        },
+        {
+          "value": 5
+        },
+        {
+          "value": 30
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "Gemini 3.1 Pro",
+      "cells": [
+        {
+          "glyph": "gemini"
+        },
+        {
+          "value": 80.6
+        },
+        {
+          "value": 2
+        },
+        {
+          "value": 12
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "DeepSeek V4-Pro",
+      "cells": [
+        {
+          "glyph": "deepseek"
+        },
+        {
+          "value": 80.6
+        },
+        {
+          "value": 0.44
+        },
+        {
+          "value": 0.87
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    },
+    {
+      "label": "Kimi K2.6",
+      "cells": [
+        {
+          "glyph": "kimi"
+        },
+        {
+          "value": 80.2
+        },
+        {
+          "value": 0.95
+        },
+        {
+          "value": 4.0
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    },
+    {
+      "label": "GLM-5",
+      "cells": [
+        {
+          "glyph": "zai"
+        },
+        {
+          "value": 77.8
+        },
+        {
+          "value": 1.0
+        },
+        {
+          "value": 3.2
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    },
+    {
+      "label": "Mistral Medium 3.5",
+      "cells": [
+        {
+          "glyph": "mistral"
+        },
+        {
+          "value": 77.6
+        },
+        {
+          "value": 1.5
+        },
+        {
+          "value": 7.5
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    }
+  ],
+  "sections": [
+    "FRONTIER · CLOSED WEIGHTS",
+    "OPEN WEIGHTS"
+  ],
+  "notes": "SWE-bench Verified % · USD per Mtok · current flagships, jun 2026 · sources: vals.ai · artificialanalysis.ai · model cards"
+}
+JSON
+```
 
 </details>
 
@@ -1242,7 +1575,7 @@ Every artifact ships with:
 | Frame types | 10 (badge, strip, icon, divider, marquee, stats, chart, matrix, diagram, receipt) |
 | Genomes | 4 (automata, brutalist, chrome, primer) |
 | Motion configs | 6 (1 static + 5 border SMIL) |
-| Glyphs | 189 (183 brand marks + 6 geometric shapes) |
+| Glyphs | 192 (183 brand marks + 9 geometric shapes) |
 | Divider variants | 10: 5 genome-themed (`band` chrome, `seam` + `sigil` brutalist, `dissolve` automata, `aura` primer) + 5 genome-agnostic (`block`, `current`, `takeoff`, `void`, `zeropoint`) at <code>/a/inneraura/dividers/</code> |
 | Metadata tiers | 5 (Tier 0 silent &rarr; Tier 4 reasoning) |
 | Bundled fonts | 5 (JetBrains Mono, Orbitron, Chakra Petch, Barlow Condensed, Inter), embedded per artifact, no external font requests |
@@ -1256,7 +1589,7 @@ Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 HyperWeave binds live data into any artifact through a unified token grammar (`?data=...`). Tokens are comma-separated; each token is either a literal (`text:`, `kv:`) or a live fetch (`<provider>:<identifier>.<metric>`).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-data-connectors-matrix-v2.svg" alt="Data connectors matrix: 9 live providers — GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions — plus text and kv literal tokens" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-data-connectors-matrix-cream.svg" alt="Data connectors matrix: 9 live providers — GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions — plus text and kv literal tokens" width="100%"/>
 </p>
 
 <details>

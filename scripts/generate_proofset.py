@@ -149,17 +149,47 @@ _FALLBACK_CODEX_TRANSCRIPTS: list[tuple[str, Path]] = [
 
 
 def _load_real_telemetry(path: Path) -> dict[str, Any] | None:
-    """Build a contract from a JSONL transcript, or return None if missing.
+    """Build the ``receipt/1`` payload from a JSONL transcript, or None if missing.
 
     The script ships paths to user-local Claude Code transcripts; on machines
     without those exact paths (CI, fresh checkout), this returns None and the
-    caller should fall back to MOCK_TELEMETRY.
+    caller should fall back to MOCK_RECEIPT_PAYLOAD. The v3 receipt consumes the
+    compact receipt/1 payload, so this builds that (not the legacy contract).
     """
     if not path.exists():
         return None
-    from hyperweave.telemetry.contract import build_contract
+    from hyperweave.telemetry.contract import build_receipt_contract
 
-    return build_contract(str(path))
+    return build_receipt_contract(str(path))
+
+
+_BUCKET_LABELS = ("small", "medium", "large", "xlarge", "xxlarge")
+# Fractional positions on the cost-sorted pool, avoiding degenerate extremes.
+_BUCKET_FRACTIONS = (0.08, 0.30, 0.52, 0.74, 0.94)
+
+
+def _pick_cost_buckets(parsed: list[tuple[float, Path]], label_prefix: str) -> list[tuple[str, Path]]:
+    """Pick small→xxlarge representatives off the COST spread (not file size).
+
+    ``parsed`` is ``[(cost_usd, path), ...]``. Sorted ascending by cost, one
+    representative is taken at each bucket fraction so the labels track session
+    magnitude, de-duped so no two buckets share a session. The whole point of
+    the v0.4 fix: a big *file* (attachments + snapshots) is not a big *session*.
+    """
+    if not parsed:
+        return []
+    ranked = sorted(parsed, key=lambda t: t[0])
+    m = len(ranked)
+    out: list[tuple[str, Path]] = []
+    used: set[int] = set()
+    for bucket, frac in zip(_BUCKET_LABELS, _BUCKET_FRACTIONS, strict=True):
+        idx = min(m - 1, int(frac * m))
+        while idx in used and idx < m - 1:
+            idx += 1
+        if idx not in used:
+            used.add(idx)
+            out.append((f"{label_prefix}{bucket}", ranked[idx][1]))
+    return out
 
 
 def _discover_transcripts(
@@ -171,26 +201,33 @@ def _discover_transcripts(
     max_candidates: int = 500,
     min_bytes: int = 4096,
 ) -> list[tuple[str, Path]]:
-    """Discover size-varied real transcripts under ``base``.
+    """Discover cost-varied real transcripts under ``base``.
 
     Globs ``base/pattern``, drops sub-floor / corrupt files (< ``min_bytes``),
-    sorts by on-disk byte size (a deterministic proxy for token volume — avoids
-    parsing everything), caps the candidate set at ``max_candidates`` by keeping
-    an even spread across the size range (so a 10k-file machine doesn't stat-thrash
-    and the scan stays bounded), then selects one representative per size bucket
-    (small → xxlarge) across the distribution. Only the chosen few are parsed
-    (try/except, backfilling from the next candidate on parse failure). Returns
+    then sorts by on-disk byte size to sample a bounded candidate pool biased
+    toward the large-file end (file bytes are a weak proxy mid-range —
+    attachments inflate a cheap session — but cost concentrates in the very
+    largest transcripts, so the sample must reach them, not drop the top 6%).
+    The pool is PARSED and bucketed by session **cost** (small → xxlarge across
+    the cost spread), so "large" is a costly session, not merely a big file. Returns
     ``[(f"{label_prefix}{bucket}", Path), ...]`` with stable labels, or
     ``fallback`` when nothing usable is found (clean-env reproducibility).
 
-    Selection is byte-size-spread, NOT exact token volume — a proxy that keeps the
-    scan O(stat) rather than O(parse). Files below ``min_bytes`` are skipped to
-    drop empty/corrupt sessions; this is not silent truncation of a real session.
+    Files below ``min_bytes`` are skipped to drop empty/corrupt sessions; this
+    is not silent truncation of a real session.
     """
     if not base.is_dir():
         return fallback
     sized = sorted(
-        ((p.stat().st_size, str(p), p) for p in base.glob(pattern) if p.is_file()),
+        (
+            (p.stat().st_size, str(p), p)
+            for p in base.glob(pattern)
+            # Skip Claude Code subagent sidechains: a logical session is the main
+            # file + its <uuid>/subagents/agent-*.jsonl children, which the parser
+            # folds into the parent. Counting them as standalone sessions both
+            # contaminates the buckets (1-turn fragments) and double-counts cost.
+            if p.is_file() and not p.name.startswith("agent-") and "subagents" not in p.parts
+        ),
         key=lambda t: (t[0], t[1]),
     )
     sized = [s for s in sized if s[0] >= min_bytes]
@@ -200,22 +237,31 @@ def _discover_transcripts(
     if not sized:
         return fallback
 
-    n = len(sized)
-    buckets = ("small", "medium", "large", "xlarge", "xxlarge")
-    # Fractional positions spanning small..very-large, avoiding degenerate extremes
-    # (the absolute min/max can be empty stubs or pathological multi-MB sessions).
-    fractions = (0.08, 0.30, 0.52, 0.74, 0.94)
-    out: list[tuple[str, Path]] = []
-    used: set[int] = set()
-    for bucket, frac in zip(buckets, fractions, strict=True):
-        idx = min(n - 1, int(frac * n))
-        while idx < n:
-            if idx not in used and _load_real_telemetry(sized[idx][2]) is not None:
-                used.add(idx)
-                out.append((f"{label_prefix}{bucket}", sized[idx][2]))
-                break
-            idx += 1
-    return out or fallback
+    # Bucket by PARSED session magnitude (cost), NOT file bytes. A transcript's
+    # size is dominated by attachments + file-history snapshots, not session
+    # activity, so a 3MB file can be a $0.34 session (and "medium" can outrank
+    # "large"). Parse a bounded pool sampled across the size range (so the big
+    # sessions stay in play without parsing every candidate), then pick buckets
+    # off the COST spread.
+    pool = sized
+    max_parse = 60
+    if len(pool) > max_parse:
+        last = len(pool) - 1
+        # Bias the sample toward the large-file end: a session's cost concentrates
+        # in the biggest transcripts (cache-read-heavy), and the old uniform
+        # sampler dropped the top ~6% entirely — exactly where the costly sessions
+        # rank (a $500 session is the 2nd-largest file). The power<1 curve samples
+        # denser near the large end so the high buckets land at intermediate-to-
+        # high costs, not a flat jump. Both endpoints included (smallest + the
+        # largest = costliest).
+        idxs = sorted({round(last * (i / (max_parse - 1)) ** 0.6) for i in range(max_parse)})
+        pool = [pool[i] for i in idxs]
+    parsed: list[tuple[float, Path]] = []
+    for _size, _path_str, p in pool:
+        payload = _load_real_telemetry(p)
+        if payload is not None:
+            parsed.append((float(payload.get("cost_usd", 0.0)), p))
+    return _pick_cost_buckets(parsed, label_prefix) or fallback
 
 
 @lru_cache(maxsize=1)
@@ -279,6 +325,59 @@ MOCK_TELEMETRY: dict[str, Any] = {
         {"name": "SVG template authoring", "lang": "Jinja2", "attempts": 24, "accepted": 21, "state": "learning"},
         {"name": "Pydantic model design", "lang": "Python", "attempts": 12, "accepted": 11, "state": "mastered"},
         {"name": "Test writing", "lang": "Python", "attempts": 8, "accepted": 5, "state": "learning"},
+    ],
+}
+
+# Mock ``receipt/1`` payload — the v3 receipt's canonical data contract. Used for
+# the baseline (no-transcript) receipt render so the proofset has a deterministic
+# receipt on clean checkouts. Mirrors the specimen's economics + context shape.
+MOCK_RECEIPT_PAYLOAD: dict[str, Any] = {
+    "session": "a1b2c3d4",
+    "model": "opus-4.8",
+    "cost_usd": 127.00,
+    "dominant": "opus-4.8",
+    "cost_basis": "public per-token rates",
+    "estimate": True,
+    "models": [
+        {"name": "opus-4.8", "role": "main thread", "cost_usd": 90.00, "cost_pct": 71},
+        {"name": "sonnet-4.6", "role": "subagent", "cost_usd": 29.00, "cost_pct": 23},
+        {"name": "haiku-4.5", "role": "2 subagents", "cost_usd": 8.00, "cost_pct": 6},
+    ],
+    "tokens": {
+        "total": 211_900_000,
+        "in": 152_000,
+        "out": 851_000,
+        "cache_read": 207_900_000,
+        "cache_write": 2_997_000,
+        "working": 1_003_000,
+    },
+    "calls": 519,
+    "stages": 64,
+    "turns": 29,
+    "errors": 14,
+    "active_min": 142,
+    "context": {
+        "window": 200000,
+        "peak_ctx": 196000,
+        "events": [
+            {"min": 22, "cmd": "compact", "to": 36000},
+            {"min": 51, "cmd": "clear", "to": 8000},
+            {"min": 88, "cmd": "auto", "to": 42000},
+            {"min": 121, "cmd": "compact", "to": 38000},
+        ],
+        "note": "occupancy modelled from per-stage activity; absolute scale disclosed",
+    },
+    "tools": [
+        {"name": "Edit", "tok": 612000, "calls": 198, "err": 5, "class": "mutate"},
+        {"name": "Bash", "tok": 141000, "calls": 143, "err": 4, "class": "execute"},
+        {"name": "Read", "tok": 98000, "calls": 121, "err": 1, "class": "explore"},
+        {"name": "TaskCreate", "tok": 28000, "calls": 11, "class": "coordinate"},
+        {"name": "Write", "tok": 19000, "calls": 8, "class": "mutate"},
+        {"name": "TaskUpdate", "calls": 16},
+        {"name": "Grep", "calls": 9, "err": 1, "class": "explore"},
+        {"name": "Agent", "calls": 6, "class": "coordinate"},
+        {"name": "AskUserQuestion", "calls": 4, "err": 2},
+        {"name": "ExitPlanMode", "calls": 3, "err": 1},
     ],
 }
 
@@ -698,58 +797,71 @@ def generate_static() -> int:
 
         # ── 7. Kinetic typography removed in v0.2.14 with the banner frame ──
 
-    # ── 8. Telemetry receipts — visual fidelity matrix ──
-    # Receipts render against 3 real session transcripts of varying size
-    # (small / medium / large) when the user has them locally, plus a baseline
-    # mock-data render. Each (skin x transcript) tuple produces one SVG. Real
-    # transcripts are user-local; on machines without them, the matrix
-    # gracefully falls back to mock-only.
+    # ── 8. Receipts — primer chromatic matrix ──
+    # The v3 receipt speaks the primer genome (8 variants, porcelain flagship);
+    # the agent runtime selects only the identity glyph + wordmark, not a theme.
+    # Each transcript renders against representative variants spanning the
+    # chromatic axis: porcelain (flagship light), noir (flagship dark), and cream
+    # (the second light scholar). A baseline mock-data render keeps the proofset
+    # deterministic on clean checkouts; real transcripts (when present locally)
+    # render the same variants from live receipt/1 payloads.
     telemetry_dir = OUT / "proofset" / "telemetry"
 
-    # Available transcripts: always include "mock"; add each real transcript
-    # only when its path exists. Mock data has no inherent runtime so it
-    # renders under all four skins (chrome demonstration on a neutral base).
-    # Real transcripts render only under (a) their runtime's matched skin and
-    # (b) telemetry-voltage as the universal fallback — cross-skin renders
-    # (codex data in cream skin, claude data in codex skin, etc.) produce
-    # noise rather than signal.
-    transcript_corpus: list[tuple[str, dict[str, Any]]] = [("mock", MOCK_TELEMETRY)]
-    for label, transcript_path in _real_transcripts():
-        contract = _load_real_telemetry(transcript_path)
-        if contract is not None:
-            transcript_corpus.append((label, contract))
-    for label, transcript_path in _real_codex_transcripts():
-        contract = _load_real_telemetry(transcript_path)
-        if contract is not None:
-            transcript_corpus.append((label, contract))
+    def _loaded(discovered: list[tuple[str, Path]]) -> list[tuple[str, dict[str, Any]]]:
+        out: list[tuple[str, dict[str, Any]]] = []
+        for lbl, p in discovered:
+            pay = _load_real_telemetry(p)
+            if pay is not None:
+                out.append((lbl, pay))
+        return out
 
-    # ── Skin matrix per transcript ──
-    # Mock: all 4 skins (chrome showcase). Real transcript: matched-runtime skin
-    # + telemetry-voltage. Matched skin is sourced from the runtime registry
-    # (no string-literal coupling) — see telemetry.runtimes.get_runtime.
-    from hyperweave.telemetry.runtimes import get_runtime
+    claude_sessions = _loaded(_real_transcripts())
+    codex_sessions = _loaded(_real_codex_transcripts())
 
-    all_skins = ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream", "telemetry-codex")
+    # Claude Code → one livery (cream), size progression small→xxlarge. Identity is
+    # runtime-only, so a single colour reads the size range without 3x repetition.
+    for label, payload in claude_sessions[:5]:
+        _write(
+            telemetry_dir / f"receipt_claude-{label}.svg",
+            _compose(FrameType.RECEIPT, "primer", variant="cream", telemetry_data=payload),
+        )
+        total += 1
+    # Codex → the other livery (porcelain). Labels already carry the "codex-" prefix.
+    for label, payload in codex_sessions[:5]:
+        _write(
+            telemetry_dir / f"receipt_{label}.svg",
+            _compose(FrameType.RECEIPT, "primer", variant="porcelain", telemetry_data=payload),
+        )
+        total += 1
 
-    def _skins_for(label: str, telemetry: dict[str, Any]) -> tuple[str, ...]:
-        if label == "mock":
-            return all_skins
-        runtime = telemetry.get("session", {}).get("runtime", "")
-        if not runtime:
-            return ("telemetry-voltage",)
-        try:
-            matched = get_runtime(runtime).genome
-        except KeyError:
-            return ("telemetry-voltage",)
-        if matched == "telemetry-voltage":
-            return (matched,)
-        return (matched, "telemetry-voltage")
+    # One representative session across all eight chromatic variants + raw — the
+    # chromatic + edge-case showcase. The enriched mock exercises all three reset
+    # kinds (compact/clear/auto) + tool overflow + 3 models in one payload — a
+    # coverage convenience, since one real session rarely carries all three (a
+    # `/clear` forks a fresh session). The size-range sections above stay real.
+    showcase = MOCK_RECEIPT_PAYLOAD
+    eight_variants = ("porcelain", "cream", "noir", "carbon", "space", "anvil", "dusk", "petrol")
+    for variant in eight_variants:
+        _write(
+            telemetry_dir / f"receipt_showcase-{variant}.svg",
+            _compose(FrameType.RECEIPT, "primer", variant=variant, telemetry_data=showcase),
+        )
+        total += 1
+    _write(telemetry_dir / "receipt_showcase-raw.svg", _compose(FrameType.RECEIPT, "raw", telemetry_data=showcase))
+    total += 1
 
-    for label, telemetry in transcript_corpus:
-        for skin in _skins_for(label, telemetry):
-            svg = _compose(FrameType.RECEIPT, skin, telemetry_data=telemetry)
-            _write(telemetry_dir / f"receipt_{skin}_{label}.svg", svg)
-            total += 1
+    # Mock baseline — deterministic on clean checkouts (the two liveries + raw).
+    for variant in ("cream", "porcelain"):
+        _write(
+            telemetry_dir / f"receipt_mock-{variant}.svg",
+            _compose(FrameType.RECEIPT, "primer", variant=variant, telemetry_data=MOCK_RECEIPT_PAYLOAD),
+        )
+        total += 1
+    _write(
+        telemetry_dir / "receipt_mock-raw.svg",
+        _compose(FrameType.RECEIPT, "raw", telemetry_data=MOCK_RECEIPT_PAYLOAD),
+    )
+    total += 1
 
     # ── 9. Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once) ──
     # Render via compose() with a default genome — the templates hardcode their
@@ -1838,55 +1950,70 @@ def _emit_state_readme() -> None:
 
 
 def _emit_telemetry_readme() -> None:
-    """Emit outputs/README_TELEMETRY.md with the full telemetry artifact tour.
+    """Emit outputs/README_TELEMETRY.md with the receipt tour.
 
-    Receipt rendered under each of the four telemetry skins
-    (voltage, claude-code, cream, codex) with mock data, plus real
-    transcripts from Claude Code and Codex sessions matched to their
-    runtime-paired skin alongside the voltage fallback.
-
-    Cross-runtime renders (codex data in cream skin, claude-code data in
-    codex skin) are not generated — they're noise rather than signal.
+    The v3 receipt speaks the primer genome. Each session renders across
+    representative variants spanning the chromatic axis — porcelain (flagship
+    light), noir (flagship dark), cream (second light scholar) — plus the raw
+    register-tape chassis, all carrying the same receipt/1 payload. Real
+    transcripts (when present locally) render the same set from live payloads;
+    a mock baseline keeps the tour deterministic on clean checkouts.
     """
+    tdir = OUT / "proofset" / "telemetry"
+    sizes = ("small", "medium", "large", "xlarge", "xxlarge")
+    eight = ("porcelain", "cream", "noir", "carbon", "space", "anvil", "dusk", "petrol")
+
+    def img(stem: str, alt: str) -> list[str]:
+        return [f"![{alt}](proofset/telemetry/{stem}.svg)", ""] if (tdir / f"{stem}.svg").exists() else []
+
     lines: list[str] = [
-        "# HyperWeave Telemetry — Receipt Matrix",
+        "# HyperWeave Telemetry — Receipt Tour",
         "",
-        "Telemetry artifacts (receipt cards) are "
-        "**genome-independent at the rendering layer** but render under one of "
-        "four named skins: `telemetry-voltage` (universal fallback), "
-        "`telemetry-claude-code`, `telemetry-cream`, `telemetry-codex`.",
-        "",
-        "Each real transcript renders against its matched-runtime skin plus "
-        "voltage. Mock data demonstrates all 4 skins on a neutral baseline. "
-        "Skin precedence chain: explicit `--genome` override → JSONL `runtime` "
-        "field → `telemetry-voltage` fallback.",
+        "Receipts speak the **primer** genome; the chromatic variant is a free "
+        "choice (porcelain, cream, noir, carbon, space, anvil, dusk, petrol). The "
+        "agent runtime sets only the identity glyph + wordmark, never a theme — so "
+        "the size range stays in one livery per runtime (Claude Code in cream, "
+        "Codex in porcelain), and the chromatic range gets its own showcase at the "
+        "end.",
         "",
         "---",
         "",
-        "## Mock (all 4 skins — chromatic demonstration)",
+        "## Claude Code — size range (cream)",
         "",
     ]
-    for skin in ("telemetry-voltage", "telemetry-claude-code", "telemetry-cream", "telemetry-codex"):
-        lines.append(f"### {skin}")
-        lines.append("")
-        lines.append(f"![receipt-{skin}-mock](proofset/telemetry/receipt_{skin}_mock.svg)")
-        lines.append("")
 
-    real_groups: list[tuple[str, list[tuple[str, Path]], str]] = [
-        ("Claude Code transcripts", _real_transcripts(), "telemetry-claude-code"),
-        ("Codex transcripts", _real_codex_transcripts(), "telemetry-codex"),
+    def sized_section(prefix: str, runtime: str, fallback_stem: str) -> list[str]:
+        out: list[str] = []
+        for s in sizes:
+            block = img(f"{prefix}-{s}", f"{runtime} {s}")
+            if block:
+                out += [f"### {s}", "", *block]
+        if not out:  # clean checkout — no local transcripts for this runtime
+            out += ["### baseline (mock)", "", *img(fallback_stem, f"{runtime} mock baseline")]
+        return out
+
+    lines += sized_section("receipt_claude", "claude code", "receipt_mock-cream")
+
+    lines += ["", "## Codex — size range (porcelain)", ""]
+    lines += sized_section("receipt_codex", "codex", "receipt_mock-porcelain")
+
+    lines += [
+        "",
+        "## Eight chromatic variants — one session",
+        "",
+        "A representative session exercising every reset kind (compact · clear · "
+        "auto-compact) and the +N tool overflow — across all eight primer variants, "
+        "then the raw tape. A single real session rarely carries all three reset "
+        "kinds in one transcript (a `/clear` forks a fresh session), so this payload "
+        "rounds out the reset vocabulary for the renderer. The size-range sections "
+        "above are real auto-compacted sessions.",
+        "",
     ]
-    for group_title, group_transcripts, matched_skin in real_groups:
-        labels_present = [label for label, p in group_transcripts if p.exists()]
-        if not labels_present:
-            continue
-        lines.extend([f"## {group_title} ({matched_skin} + telemetry-voltage)", ""])
-        for label in labels_present:
-            lines.append(f"### {label}")
-            lines.append("")
-            for skin in (matched_skin, "telemetry-voltage"):
-                lines.append(f"![receipt-{skin}-{label}](proofset/telemetry/receipt_{skin}_{label}.svg)")
-                lines.append("")
+    for v in eight:
+        block = img(f"receipt_showcase-{v}", f"primer {v}")
+        if block:
+            lines += [f"### {v}", "", *block]
+    lines += ["### raw", "", *img("receipt_showcase-raw", "raw register tape")]
 
     lines.extend(
         [

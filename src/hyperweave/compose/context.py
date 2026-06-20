@@ -166,18 +166,7 @@ _TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
     "marquee": ("scroll_items",),
     "matrix": ("matrix_text_surface",),
     "diagram": ("diagram_text_surface",),
-    "receipt": (
-        "hero_headline",
-        "hero_subline",
-        "hero_right_stats",
-        "treemap_legend",
-        "metadata_left",
-        "metadata_right",
-        "footer_left",
-        "footer_right",
-        "dominant_profile",
-        "phase_legend",
-    ),
+    "receipt": ("receipt_text_surface",),
 }
 
 # Conservative baseline character set. Always included even when the
@@ -312,7 +301,6 @@ def _base_context(
         "contract_id": artifact_id,
         "frame_type": spec.type,
         "genome_id": resolved.genome.get("id", spec.genome_id),
-        "genome_category": resolved.genome.get("category", "dark"),
         # v0.3.2: variant + substrate_kind plumbed through to templates.
         # substrate_kind drives the brutalist split-template dispatcher
         # (`brutalist-{substrate_kind}-content.j2`). When a variant override
@@ -571,28 +559,71 @@ def _ctx_marquee(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
 
 
 def _ctx_receipt(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str]) -> dict[str, Any]:
+    """Context builder for the ``receipt`` frame (economics + context-window).
+
+    The resolver (``compose/resolvers/receipt.py``) pre-computes every zone as a
+    dataclass and forwards the compact ``receipt/1`` ``payload_json`` plus the
+    envelope's human fields. This builder only seeds StrictUndefined-safe
+    defaults, merges the resolver's ``frame_context``, then assembles the
+    ``hwz/1`` envelope HERE (where ``created_at`` exists) so ``prov.ts`` matches
+    ``hw:created`` from a single clock read — the same recipe matrix/diagram use.
+    The envelope id is ``sha256`` over the EXACT emitted payload bytes, so the
+    payload must already be compact, single-line, data-only (it is — see
+    ``receipt_payload.build_receipt_payload``).
+    """
     ctx, _uid, _aid = _base_context(spec, resolved, css)
-    ctx["hero_profile"] = ""
-    ctx["hero_tool_class"] = "explore"
-    ctx["hero_headline"] = ""
-    ctx["hero_subline"] = ""
-    ctx["hero_right_stats"] = []
-    ctx["treemap_legend"] = []
-    ctx["treemap_cells"] = []
-    ctx["stage_count"] = 0
-    ctx["duration_minutes"] = 0
-    ctx["rhythm_bars"] = []
-    ctx["bar_area_h"] = 92
-    ctx["phase_legend"] = []
-    ctx["dominant_profile"] = ""
-    ctx["tools"] = []
-    ctx["stages"] = []
-    ctx["metadata_left"] = ""
-    ctx["metadata_right"] = ""
-    ctx["footer_left"] = ""
-    ctx["footer_right"] = ""
-    ctx["receipt_items"] = []
+    # StrictUndefined-safe defaults; the resolver fills these for real.
+    ctx["receipt_palette"] = {}
+    ctx["zone_identity"] = None
+    ctx["zone_model_mix"] = None
+    ctx["zone_hero"] = None
+    ctx["zone_metrics"] = None
+    ctx["zone_tool_spend"] = None
+    ctx["zone_cost_by_model"] = None
+    ctx["zone_context_load"] = None
+    ctx["zone_footer"] = None
+    ctx["ctx_plot"] = None
+    ctx["ctx_reset_glyphs"] = []
+    ctx["ctx_legend"] = []
+    ctx["ctx_legend_y"] = 0.0
+    ctx["ctx_legend_text_y"] = 0.0
     ctx.update(resolved.frame_context)
+
+    payload_json = str(ctx.get("payload_json") or "")
+    if payload_json:
+        # Content-derived identity: byte-identical re-renders are the contract
+        # (ETag / Camo caching / the round-trip thesis). Same payload + genome +
+        # variant + version => same uid.
+        digest = hashlib.sha256(
+            "|".join(
+                (
+                    payload_json,
+                    str(ctx.get("genome_id", "")),
+                    str(ctx.get("variant", "")),
+                    str(ctx.get("version", "")),
+                )
+            ).encode("utf-8")
+        ).hexdigest()
+        ctx["uid"] = f"hw-{digest[:8]}"
+        ctx["artifact_id"] = f"receipt-{digest[:16]}"
+        ctx["contract_id"] = ctx["artifact_id"]
+        genome_id = str(ctx.get("genome_id", ""))
+        variant = str(ctx.get("variant", ""))
+        envelope = build_envelope(
+            kind="receipt",
+            title=str(ctx.get("receipt_envelope_title", "")),
+            intent=str(ctx.get("receipt_envelope_intent", "")),
+            data=dict(ctx.get("receipt_envelope_data") or {}),
+            frames=[{"t": "receipt", "l": str(ctx.get("receipt_envelope_title", ""))}],
+            payload_json=payload_json,
+            genome_label=f"{genome_id}.{variant}" if variant else genome_id,
+            version=str(ctx.get("version", "")),
+            created=str(ctx.get("created_at", "")),
+            state=str(spec.state or ""),
+        )
+        ctx["payload_schema"] = "receipt/1"
+        ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))
+        ctx["envelope_format"] = ENVELOPE_VERSION
     return ctx
 
 

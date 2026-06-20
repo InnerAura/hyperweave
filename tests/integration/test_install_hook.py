@@ -176,21 +176,23 @@ def test_install_hook_runtime_all_forces_both(monkeypatch: MonkeyPatch, tmp_path
 
 
 def test_install_hook_runtime_codex_with_genome_pins_command(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
-    """Explicit ``--runtime codex --genome telemetry-voltage`` pins the genome
-    into the registered hook command and leaves claude-code untouched.
+    """Explicit ``--runtime codex --genome primer`` pins the genome into the
+    registered hook command and leaves claude-code untouched.
+
+    The genome must be receipt-capable (the install-hook validates this); primer
+    is the receipt genome under the v3 rebuild.
     """
     _patch_home(monkeypatch, tmp_path)
     _patch_which(monkeypatch, {"claude": None, "codex": None})
 
     runner = CliRunner()
-    result = runner.invoke(app, ["install-hook", "--runtime", "codex", "--genome", "telemetry-voltage"])
+    result = runner.invoke(app, ["install-hook", "--runtime", "codex", "--genome", "primer"])
     assert result.exit_code == 0
     hooks = json.loads((tmp_path / ".codex" / "hooks.json").read_text())
     stop_groups = hooks["hooks"]["Stop"]
     inner_handlers = [handler for group in stop_groups for handler in group.get("hooks", [])]
     assert any(
-        "hyperweave session receipt --genome telemetry-voltage" in str(handler.get("command", ""))
-        for handler in inner_handlers
+        "hyperweave session receipt --genome primer" in str(handler.get("command", "")) for handler in inner_handlers
     ), f"expected genome-pinned command under wrapper.Stop, got {stop_groups!r}"
     assert not (tmp_path / ".claude").exists()
 
@@ -242,7 +244,7 @@ def test_install_hook_codex_lifts_legacy_flat_hooks_json(monkeypatch: MonkeyPatc
         "Stop": [
             {
                 "type": "command",
-                "command": "hyperweave session receipt --genome telemetry-codex",
+                "command": "hyperweave session receipt --genome cream",
                 "timeout": 10,
             },
             {"type": "command", "command": "/usr/local/bin/some-other-hook", "timeout": 30},

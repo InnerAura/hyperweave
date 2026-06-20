@@ -87,28 +87,19 @@ def _ts(year: int = 2026, month: int = 5, day: int = 7, hour: int = 13, minute: 
     return datetime(year, month, day, hour, minute, 0)
 
 
-def test_filename_uses_session_name_when_present() -> None:
-    name = receipt_filename(_ts(), session_name="chrome_automata_variants_v03")
-    assert name == "20260507_chrome_automata_variants_v03.svg"
-
-
-def test_filename_falls_back_to_prompt_text() -> None:
-    """Empty session_name → use first 40 chars of prompt_text slugified."""
+def test_filename_uses_first_prompt() -> None:
+    """The slug is the first prompt, sliced to 40 chars then slugified."""
     name = receipt_filename(
         _ts(),
-        session_name="",
         prompt_text="Build the new auth flow with OAuth and JWT",
     )
-    # "Build the new auth flow with OAuth and JWT" → first 40 chars sliced first,
-    # then slugified.
     assert "build_the_new_auth_flow" in name
 
 
 def test_filename_falls_back_to_session_id() -> None:
-    """Empty session_name and prompt → use session_id slugified."""
+    """Empty prompt → use session_id slugified."""
     name = receipt_filename(
         _ts(),
-        session_name="",
         prompt_text="",
         session_id="5748cb2b-6dc5-4cda-a498-aea13bcfecfc",
     )
@@ -121,20 +112,21 @@ def test_filename_uses_receipt_literal_when_all_empty() -> None:
     assert name == "20260507_receipt.svg"
 
 
-def test_filename_priority_session_name_wins_over_prompt() -> None:
-    """session_name takes precedence even when prompt_text is also present."""
-    name = receipt_filename(
-        _ts(),
-        session_name="primary_name",
-        prompt_text="some other prompt",
-    )
-    assert "primary_name" in name
-    assert "some_other_prompt" not in name
+def test_filename_is_stable_across_rename_and_resume() -> None:
+    """Same start date + first prompt → same filename, no matter the session name.
+
+    The filename keys only on immutable signals, so a mid-session /rename or a
+    resume on a later day never repoints the file (the resume-orphan + Codex
+    rename fix). The session name is not even an input.
+    """
+    first = receipt_filename(_ts(), prompt_text="closing out alpha4 for tag", session_id="abc")
+    again = receipt_filename(_ts(), prompt_text="closing out alpha4 for tag", session_id="abc")
+    assert first == again == "20260507_closing_out_alpha4_for_tag.svg"
 
 
 def test_filename_compact_date_no_separators_inside_date() -> None:
     """YYYYMMDD: no dashes, no underscores INSIDE the date prefix."""
-    name = receipt_filename(_ts(year=2026, month=1, day=8), session_name="x")
+    name = receipt_filename(_ts(year=2026, month=1, day=8), prompt_text="x")
     # date prefix is exactly 8 digits, followed by a single underscore separator
     assert name.startswith("20260108_")
     # First underscore must be the slug separator, not inside the date.
@@ -143,23 +135,26 @@ def test_filename_compact_date_no_separators_inside_date() -> None:
     assert "-" not in date_segment
 
 
-def test_filename_no_hhmm_segment() -> None:
-    """v0.3.3 dropped the HHMM time segment — date prefix only."""
-    # Same date, different times — same filename (only date + slug count).
-    early = receipt_filename(datetime(2026, 5, 7, 0, 59), session_name="abc")
-    late = receipt_filename(datetime(2026, 5, 7, 23, 1), session_name="abc")
+def test_filename_date_is_start_not_regenerate_clock() -> None:
+    """Same date, different times → same filename (date prefix only, no HHMM).
+
+    A resume hours later re-fires the hook; because the date prefix is the
+    session START, the regenerate lands on the same file.
+    """
+    early = receipt_filename(datetime(2026, 5, 7, 0, 59), prompt_text="abc")
+    late = receipt_filename(datetime(2026, 5, 7, 23, 1), prompt_text="abc")
     assert early == late == "20260507_abc.svg"
 
 
-def test_filename_target_shape_receipt_debug_v0226() -> None:
-    """Lock the exact v0.3.3 target shape from the bug report."""
+def test_filename_slugifies_prompt_dots_and_spaces() -> None:
+    """A versiony first prompt slugifies cleanly (dots dropped, spaces → _)."""
     name = receipt_filename(
         datetime(2026, 5, 8, 0, 59),
-        session_name="Receipt Debug v0.2.26",
+        prompt_text="Receipt Debug v0.2.26",
     )
     assert name == "20260508_receipt_debug_v0226.svg"
 
 
 def test_filename_extension_is_svg() -> None:
-    name = receipt_filename(_ts(), session_name="x")
+    name = receipt_filename(_ts(), prompt_text="x")
     assert name.endswith(".svg")

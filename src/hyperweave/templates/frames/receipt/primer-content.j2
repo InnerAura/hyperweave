@@ -1,0 +1,102 @@
+{# Primer receipt — content body (8 zones, the v3 prototype).
+
+   Stamps the resolver's pre-computed zone dataclasses. ZERO geometry numbers:
+   every x/y/width/size/radius is read from a zone dataclass or the `rg` (receipt
+   geometry) constants dict (stencil invariant — compose owns geometry). The
+   light-only `lift` filter is applied via substrate_kind. Colours come from
+   receipt_palette (per-variant); the only genome-invariant tone is the semantic
+   error red (pal.error). #}
+{% set pal = receipt_palette %}
+{% set i = zone_identity %}
+{% set mm = zone_model_mix %}
+{% set h = zone_hero %}
+{% set m = zone_metrics %}
+{% set ts = zone_tool_spend %}
+{% set cbm = zone_cost_by_model %}
+{% set cl = zone_context_load %}
+{% set ft = zone_footer %}
+
+<g clip-path="url(#{{ uid }}-card)"{% if substrate_kind == 'light' %} filter="url(#{{ uid }}-lift)"{% endif %}>
+<rect width="{{ receipt_w }}" height="{{ receipt_h }}" rx="{{ rg.card_rx }}" fill="url(#{{ uid }}-card-bg)"/>
+
+{# ── identity ──────────────────────────────────────────────────────────── #}
+<g data-hw-zone="identity">
+{% if i.glyph_id %}<use href="#{{ i.glyph_id }}" x="{{ i.glyph_x }}" y="{{ i.glyph_y }}" width="{{ i.glyph_size }}" height="{{ i.glyph_size }}"/>{% endif %}
+<text x="{{ i.wordmark_x }}" y="{{ i.wordmark_y }}" font-size="14" fill="{{ pal.ink }}" class="s" font-weight="700">{{ i.wordmark | xml_escape }}</text>
+{% if mm.show %}<g data-hw-zone="model-mix"><text x="{{ mm.anchor_x }}" y="{{ mm.eyebrow_y }}" font-size="7" fill="{{ pal.dim_ink }}" font-weight="700" letter-spacing="0.14em" text-anchor="end">{{ mm.eyebrow | xml_escape }}</text>
+<text x="{{ mm.anchor_x }}" y="{{ mm.dominant_y }}" text-anchor="end"><tspan font-size="13" fill="{{ pal.ink }}" font-weight="700">{{ mm.dominant | xml_escape }}</tspan><tspan font-size="8" fill="{{ pal.signal }}" font-weight="700" letter-spacing="0.12em" dx="6">{{ mm.dominant_suffix }}</tspan></text>
+<text x="{{ mm.anchor_x }}" y="{{ mm.split_y }}" font-size="8.5" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end">{{ mm.split | xml_escape }}</text></g>{% endif %}</g>
+
+{# ── hero ──────────────────────────────────────────────────────────────── #}
+<g data-hw-zone="hero">
+<text x="{{ h.cost_x }}" y="{{ h.cost_y }}" font-size="{{ h.cost_size }}" fill="{{ pal.signal }}" class="s" font-weight="800" letter-spacing="-0.01em">{{ h.cost }}</text>
+{% if h.show_est %}<text x="{{ h.est_x }}" y="{{ h.est_y }}" font-size="8" fill="{{ pal.dim_ink }}" font-weight="700" letter-spacing="0.14em">{{ h.est_label }}</text>{% endif %}
+<text x="{{ h.subline_x }}" y="{{ h.subline_y }}" font-size="13" fill="{{ pal.ink_secondary }}" font-weight="400">{{ h.subline | xml_escape }}</text>
+</g>
+
+{# ── metrics ───────────────────────────────────────────────────────────── #}
+<g data-hw-zone="metrics">
+{% for c in m.cells %}<text x="{{ c.value_x }}" y="{{ m.y }}" font-size="11" fill="{{ pal.error if c.is_error else pal.ink }}" font-weight="700">{{ c.value }}</text>
+<text x="{{ c.label_x }}" y="{{ m.y }}" font-size="8" fill="{{ pal.ink_secondary }}" font-weight="700" letter-spacing="0.1em">{{ c.label }}</text>
+{% if c.show_sep %}<text x="{{ c.sep_x }}" y="{{ m.y }}" font-size="11" fill="{{ pal.dim_ink }}" font-weight="400">·</text>
+{% endif %}{% endfor %}</g>
+<line x1="{{ left_rail }}" y1="{{ rule_metrics_y }}" x2="{{ right_rail }}" y2="{{ rule_metrics_y }}" stroke="{{ pal.ink }}" stroke-width="{{ rg.rule_sw }}" opacity="{{ rg.rule_opacity }}"/>
+
+{# ── tool-spend ────────────────────────────────────────────────────────── #}
+<g data-hw-zone="tool-spend">
+<text x="{{ ts.eyebrow_x }}" y="{{ ts.header_y }}" font-size="7" fill="{{ pal.ink_secondary }}" font-weight="700" letter-spacing="0.22em">{{ ts.eyebrow }}</text>
+<text x="{{ ts.eyebrow_cont_x }}" y="{{ ts.header_y }}" font-size="9" fill="{{ pal.ink_secondary }}" font-weight="400">{{ ts.eyebrow_cont }}</text>
+<text x="{{ ts.cache_working_x }}" y="{{ ts.header_y }}" font-size="9" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end">{{ ts.cache_working }}</text>
+<text x="{{ ts.cache_sep_x }}" y="{{ ts.header_y }}" font-size="9" fill="{{ pal.dim_ink }}" font-weight="400" text-anchor="end">·</text>
+<text x="{{ ts.cache_summary_x }}" y="{{ ts.header_y }}" font-size="9" fill="{{ pal.ink }}" font-weight="400" text-anchor="end">{{ ts.cache_summary }}</text>
+<text x="{{ ts.cache_pct_x }}" y="{{ ts.header_y }}" font-size="9" fill="{{ pal.ink }}" font-weight="700" text-anchor="end">{{ ts.cache_pct }}</text>
+{% for r in ts.rows %}<rect x="{{ left_rail }}" y="{{ r.accent_y }}" width="{{ rg.ts_accent_w }}" height="{{ rg.ts_accent_h }}" fill="{{ r.accent_fill }}" rx="{{ rg.ts_accent_rx }}"/>
+<text x="{{ r.name_x }}" y="{{ r.label_y }}" font-size="12" fill="{{ pal.ink_secondary if r.is_tail else pal.ink }}" font-weight="{{ 400 if r.is_tail else 700 }}">{{ r.name | xml_escape }}</text>
+<rect x="{{ rg.ts_bar_x }}" y="{{ r.bar_track_y }}" width="{{ rg.ts_bar_w }}" height="{{ rg.ts_bar_h }}" fill="{{ pal.track }}" rx="{{ rg.ts_bar_rx }}"/>
+<rect x="{{ rg.ts_bar_x }}" y="{{ r.bar_track_y }}" width="{{ rg.ts_bar_w }}" height="{{ rg.ts_bar_h }}" fill="none" rx="{{ rg.ts_bar_rx }}" stroke="{{ pal.track_stroke }}" stroke-width="{{ rg.ts_track_sw }}"/>
+<rect x="{{ rg.ts_bar_x }}" y="{{ r.bar_track_y }}" width="{{ r.bar_fill_w }}" height="{{ rg.ts_bar_h }}" fill="{{ r.bar_fill }}" rx="{{ rg.ts_bar_rx }}"/>
+<text x="{{ rg.ts_pct_x }}" y="{{ r.text_y }}" font-size="12.5" fill="{{ r.pct_fill }}" font-weight="700">{{ r.pct }}</text>
+<text x="{{ rg.ts_tokens_x }}" y="{{ r.text_y }}" font-size="11.5" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end">{{ r.tokens }}</text>
+<text x="{{ rg.ts_calls_x }}" y="{{ r.text_y }}" font-size="10" fill="{{ pal.dim_ink }}" font-weight="400" text-anchor="end">{{ r.calls }}</text>
+{% if r.err > 0 %}<g data-hw-zone="errcount"><rect x="{{ rg.ts_err_x }}" y="{{ r.err_y }}" width="{{ rg.ts_err_w }}" height="{{ rg.ts_err_h }}" fill="{{ pal.surface_1 }}" rx="{{ rg.ts_err_rx }}" stroke="{{ pal.error }}" stroke-width="{{ rg.ts_err_sw }}"/><text x="{{ rg.ts_err_text_x }}" y="{{ r.err_text_y }}" font-size="9" fill="{{ pal.error }}" font-weight="700" text-anchor="middle">{{ r.err }}</text></g>
+{% endif %}{% endfor %}
+{% for chip in ts.legend_chips %}<rect x="{{ chip.swatch_x }}" y="{{ ts.legend_swatch_y }}" width="{{ rg.ts_swatch_w }}" height="{{ rg.ts_swatch_h }}" fill="{{ chip.swatch_fill }}" rx="{{ rg.ts_swatch_rx }}"/>
+<text x="{{ chip.label_x }}" y="{{ ts.legend_y }}" font-size="8.5" fill="{{ pal.ink_secondary }}" font-weight="400">{{ chip.label | xml_escape }}</text>
+{% endfor %}{% if ts.show_err_legend %}<rect x="{{ ts.err_legend_x }}" y="{{ ts.legend_swatch_y }}" width="{{ rg.ts_errswatch_w }}" height="{{ rg.ts_errswatch_h }}" fill="{{ pal.surface_1 }}" rx="{{ rg.ts_errswatch_rx }}" stroke="{{ pal.error }}" stroke-width="{{ rg.ts_err_sw }}"/>
+<text x="{{ ts.err_legend_label_x }}" y="{{ ts.legend_y }}" font-size="8.5" fill="{{ pal.ink_secondary }}" font-weight="400">= errors</text>{% endif %}
+</g>
+<line x1="{{ left_rail }}" y1="{{ rule_tools_y }}" x2="{{ right_rail }}" y2="{{ rule_tools_y }}" stroke="{{ pal.ink }}" stroke-width="{{ rg.rule_sw }}" opacity="{{ rg.rule_opacity }}"/>
+
+{# ── cost-by-model (present iff the session has models) ─────────────────── #}
+{% if cbm.show %}<g data-hw-zone="cost-by-model">
+<text x="{{ cbm.eyebrow_x }}" y="{{ cbm.eyebrow_y }}" font-size="7" fill="{{ pal.eyebrow }}" font-weight="700" letter-spacing="0.18em">{{ cbm.eyebrow }}</text>
+{% if cbm.count_label %}<text x="{{ cbm.count_label_x }}" y="{{ cbm.eyebrow_y }}" font-size="7" fill="{{ pal.dim_ink }}" font-weight="700" letter-spacing="0.14em" text-anchor="end">{{ cbm.count_label }}</text>{% endif %}
+<rect x="{{ cbm.bar_x }}" y="{{ cbm.bar_y }}" width="{{ cbm.bar_w }}" height="{{ cbm.bar_h }}" rx="{{ rg.cbm_bar_rx }}" fill="{{ pal.track }}"/>
+<g clip-path="url(#{{ uid }}-mbar)">
+{% for seg in cbm.segments %}<rect x="{{ seg.x }}" y="{{ cbm.bar_y }}" width="{{ seg.w }}" height="{{ cbm.bar_h }}" fill="{{ seg.fill }}"/>
+{% endfor %}{% for dx in cbm.dividers %}<rect x="{{ dx }}" y="{{ cbm.bar_y }}" width="{{ rg.cbm_divider_w }}" height="{{ cbm.bar_h }}" fill="{{ pal.surface_1 }}"/>
+{% endfor %}</g>
+{% for bn in cbm.bar_names %}<text x="{{ bn.x }}" y="{{ bn.y }}" font-size="10" fill="{{ pal.on_accent }}" font-weight="700">{{ bn.text | xml_escape }}</text>
+{% endfor %}<rect x="{{ cbm.bar_x }}" y="{{ cbm.bar_y }}" width="{{ cbm.bar_w }}" height="{{ cbm.bar_h }}" rx="{{ rg.cbm_bar_rx }}" fill="none" stroke="{{ pal.track_stroke }}" stroke-width="{{ rg.cbm_border_sw }}"/>
+{% for row in cbm.rows %}<rect x="{{ row.marker_x }}" y="{{ row.marker_y }}" width="{{ rg.cbm_marker_w }}" height="{{ rg.cbm_marker_w }}" rx="{{ rg.cbm_marker_rx }}" fill="{{ row.marker_fill }}"/>
+<text x="{{ row.text_x }}" y="{{ row.text_y }}" font-size="11" fill="{{ pal.ink }}" font-weight="700">{{ row.name | xml_escape }}<tspan fill="{{ pal.eyebrow }}" font-weight="400"> · {{ row.role | xml_escape }}</tspan></text>
+<text x="{{ cbm.cost_x }}" y="{{ row.text_y }}" font-size="11" fill="{{ pal.ink }}" font-weight="700" text-anchor="end">{{ row.cost }}</text>
+<text x="{{ cbm.pct_x }}" y="{{ row.text_y }}" font-size="11" fill="{{ pal.ink }}" font-weight="700" text-anchor="end">{{ row.pct }}</text>
+{% endfor %}</g>
+{% if cbm.rich %}<line x1="{{ left_rail }}" y1="{{ cbm.separator_y }}" x2="{{ right_rail }}" y2="{{ cbm.separator_y }}" stroke="{{ pal.ink }}" stroke-width="{{ rg.rule_sw }}" opacity="{{ rg.rule_opacity }}"/>{% endif %}{% endif %}
+
+{# ── context-load (present iff the session has occupancy data) ──────────── #}
+{% if cl.show %}<g transform="translate({{ cl.translate_x }},{{ cl.translate_y }})" data-hw-zone="context-load" data-hw-field="burn-curve">
+{% include "frames/receipt/context-load.j2" %}
+</g>{% endif %}
+
+{# ── footer ────────────────────────────────────────────────────────────── #}
+<line x1="{{ left_rail }}" y1="{{ ft.rule_y }}" x2="{{ right_rail }}" y2="{{ ft.rule_y }}" stroke="{{ pal.signal }}" stroke-width="{{ rg.footer_rule_sw }}" stroke-linecap="round" opacity="{{ rg.footer_rule_opacity }}"/>
+<g data-hw-zone="footer">
+<text x="{{ left_rail }}" y="{{ ft.tl_y }}" font-size="9" fill="{{ pal.ink_secondary }}" font-weight="400" letter-spacing="0.02em">{{ ft.tl | xml_escape }}</text>
+<text x="{{ right_rail }}" y="{{ ft.tr_y }}" font-size="9" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end" letter-spacing="0.02em">{{ ft.tr | xml_escape }}</text>
+<text x="{{ left_rail }}" y="{{ ft.bl_y }}" font-size="9" fill="{{ pal.dim_ink }}" font-weight="400" letter-spacing="0.02em" style="font-style:italic">{{ ft.bl }}</text>
+<text x="{{ right_rail }}" y="{{ ft.br_y }}" font-size="9" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end" letter-spacing="0.18em" opacity="0.7">{{ ft.br }}</text>
+</g>
+</g>
+<rect x="{{ rg.card_border_x }}" y="{{ rg.card_border_y }}" width="{{ card_border_w }}" height="{{ card_border_h }}" rx="{{ rg.card_border_rx }}" fill="none" stroke="{{ pal.track_stroke }}" stroke-width="{{ rg.card_border_sw }}"/>

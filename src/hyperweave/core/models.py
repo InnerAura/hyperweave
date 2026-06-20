@@ -184,15 +184,16 @@ class ComposeSpec(FrozenModel):
     telemetry_data: dict[str, object] | None = Field(
         default=None, description="Session data contract JSON (telemetry frames only)"
     )
-    receipt_filename_hint: str = Field(
+    receipt_display_name: str = Field(
         default="",
         description=(
-            "Human-readable filename basename for the receipt footer (e.g. "
-            "'20260508_receipt_debug_v0226.svg'). Set by the CLI write path "
-            "after computing the on-disk filename so the footer's filepath "
-            "token matches the file the user sees. Empty string falls back "
-            "to the legacy '.hyperweave/receipts/{uuid}.svg' path so HTTP / "
-            "MCP callers that don't set the hint keep rendering."
+            "Live human-readable session name for the receipt footer identity "
+            "line (e.g. 'review_alpha_v04a4'). Read at render time from the "
+            "session's latest title (Claude Code customTitle / Codex "
+            "thread_name) so a mid-session rename is reflected. The on-disk "
+            "filename is keyed to immutable signals (start date + first prompt) "
+            "instead, so a rename never repoints the file. Empty string renders "
+            "the footer identity as 'repo · branch' with no name segment."
         ),
     )
 

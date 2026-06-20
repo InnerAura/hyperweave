@@ -551,5 +551,55 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
                     f"(got {value!r}) — the glyph contrast gate swaps onto it"
                 )
 
+    # Check 4: receipt palette fields (active only when the genome opts into the
+    # receipt frame). The receipt's tool-spend ramp, cost-by-model segment ramp,
+    # and context-load area-fill/signal draw from per-variant palette fields, NOT
+    # chassis constants. The dispatcher merges variant_overrides over the base
+    # naively, so a variant that forgets the ramp silently renders an empty one —
+    # the "variant looks identical to base" bug. Every variant override must
+    # declare the full receipt palette so the failure surfaces at config load.
+    if "receipt" in (genome.paradigms or {}):
+        import re as _re2
+
+        _ramp_len = 5
+        _receipt_hex_fields = (
+            "receipt_area_fill",
+            "receipt_signal",
+            "receipt_track",
+            "receipt_track_stroke",
+            "receipt_grid_ink",
+            "receipt_eyebrow",
+            "receipt_label_ink",
+            "receipt_value_ink",
+            "receipt_dim_ink",
+        )
+
+        def _receipt_violations(label: str, override: dict[str, object]) -> None:
+            ramp = override.get("receipt_ramp")
+            if not isinstance(ramp, list) or len(ramp) != _ramp_len:
+                violations.append(
+                    f"  {label}: receipt_ramp must be a list of {_ramp_len} #RRGGBB tiers "
+                    f"(brightest→dimmest), got {ramp!r}"
+                )
+            else:
+                for hexv in ramp:
+                    if not isinstance(hexv, str) or not _re2.fullmatch(r"#[0-9A-Fa-f]{6}", hexv):
+                        violations.append(f"  {label}: receipt_ramp tier {hexv!r} is not #RRGGBB")
+            for fieldname in _receipt_hex_fields:
+                value = override.get(fieldname)
+                if not isinstance(value, str) or not _re2.fullmatch(r"#[0-9A-Fa-f]{6}", value):
+                    violations.append(
+                        f"  {label}: {fieldname} must be #RRGGBB (got {value!r}) — "
+                        f"the receipt draws this per-variant, never from a chassis constant"
+                    )
+
+        # Every variant override carries the full receipt palette. A receipt
+        # genome with no variant overrides would need the palette on the base,
+        # but primer (the only receipt genome) keys all 8 variants — so the
+        # per-override contract is the load-bearing one.
+        for v_slug, override in (genome.variant_overrides or {}).items():
+            if isinstance(override, dict):
+                _receipt_violations(f"variant_overrides['{v_slug}']", override)
+
     if violations:
         raise ValueError(f"Genome '{genome.id}' has variant grammar violations:\n" + "\n".join(violations))

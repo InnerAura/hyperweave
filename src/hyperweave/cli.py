@@ -15,23 +15,34 @@ app = typer.Typer(
 )
 
 
-def _normalize_genome_slug(slug: str) -> str:
-    """Expand short-form telemetry skin slugs (e.g. ``cream`` → ``telemetry-cream``).
+# Primer's chromatic variants. Receipts render on the primer genome; the only
+# axis a user picks is which variant supplies the chromatics. Typing a bare
+# variant name (``--genome noir``) resolves to genome=primer / variant=noir so
+# the ergonomic short-form survives the retirement of the pre-genome skins.
+_PRIMER_VARIANTS = frozenset({"noir", "carbon", "space", "anvil", "porcelain", "cream", "dusk", "petrol"})
 
-    Lets users type ``--genome cream`` instead of ``--genome telemetry-cream`` for
-    the three v0.2.21 telemetry skins. Pass-through for slugs that already carry
-    the ``telemetry-`` prefix or any non-telemetry genome (brutalist, chrome, etc.).
+
+def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
+    """Resolve a receipt ``--genome`` slug to a ``(genome, variant)`` pair.
+
+    Three cases:
+
+    * a bare primer variant (``noir`` … ``petrol``) → ``("primer", <name>)`` so
+      ``--genome cream`` renders a primer **cream** receipt (no skin collision);
+    * a real receipt-capable genome slug (``primer``, ``raw``) → ``(slug, "")``;
+    * empty / anything else → ``("", "")``, letting the resolver fall back to
+      primer/porcelain.
+
+    The pre-genome ``telemetry-*`` skins (and their ``cream``/``voltage``/
+    ``claude-code`` short-forms) are retired: they were never variants and no
+    longer resolve here.
     """
-    if not slug or slug.startswith("telemetry-"):
-        return slug
-    candidate = f"telemetry-{slug}"
-    # Only auto-prefix when the prefixed form actually exists; otherwise pass
-    # the original through so non-telemetry genomes (brutalist, chrome) still work.
-    from hyperweave.compose.resolver import _genome_supports_receipts
-
-    if _genome_supports_receipts(candidate):
-        return candidate
-    return slug
+    s = (slug or "").strip().lower()
+    if not s:
+        return "", ""
+    if s in _PRIMER_VARIANTS:
+        return "primer", s
+    return s, ""
 
 
 @app.command()
@@ -417,16 +428,27 @@ def session(
         typer.Option(
             "--genome",
             help=(
-                "Pin telemetry skin (cream, voltage, claude-code, or full slug like "
-                "telemetry-cream). Empty = auto-detect from JSONL runtime field, "
-                "fall back to telemetry-voltage."
+                "Receipt genome or primer variant. A primer variant name (noir, "
+                "carbon, space, anvil, porcelain, cream, dusk, petrol) renders that "
+                "primer receipt; 'primer'/'raw' select the genome directly. "
+                "Empty = primer/porcelain."
             ),
+        ),
+    ] = "",
+    variant: Annotated[
+        str,
+        typer.Option(
+            "--variant",
+            help="Primer variant (noir … petrol). Empty = porcelain (light flagship).",
         ),
     ] = "",
 ) -> None:
     """Session telemetry: parse transcripts and render receipts.
 
-    When invoked as a Claude Code hook, reads transcript_path from stdin JSON.
+    The receipt always renders on the **primer** genome; ``--variant`` (or a bare
+    variant name passed to ``--genome``) selects the chromatics. The agent runtime
+    contributes identity only — the glyph + wordmark — never a theme. When invoked
+    as a Claude Code hook, reads transcript_path from stdin JSON.
     """
     import json
 
@@ -476,50 +498,55 @@ def session(
     from hyperweave.core.models import ComposeSpec
 
     frame_type = "receipt"
-    genome_slug = _normalize_genome_slug(genome) if genome else ""
+    # Receipts speak primer; --genome may name a genome OR a bare primer variant.
+    # An explicit --variant wins over a variant inferred from --genome.
+    genome_slug, inferred_variant = _resolve_receipt_genome(genome)
+    variant_slug = variant or inferred_variant
 
-    # Pre-compute the receipt's on-disk filename (when applicable) so the
-    # footer can render the same path as the file the user sees. The compose
-    # pipeline reads receipt_filename_hint when set; an empty hint falls back
-    # to the legacy UUID-path footer (HTTP / MCP). Pass the FULL relative
-    # path (not just the basename) so the footer is self-documenting — a
-    # reader sees ".hyperweave/receipts/{slug}.svg" and knows where to find
-    # the file without prior context. Long footers trigger left-truncation
-    # of the constant prefix at resolver.py:_truncate_path_left.
-    filename_hint = ""
-    if action == "receipt" and not output:
+    # Footer identity = the LIVE session name (reflects a /rename), read here
+    # from the legacy contract which carries the latest title; falls back to the
+    # first prompt so a never-named session still reads meaningfully. The on-disk
+    # filename is keyed separately to immutable signals (start date + first
+    # prompt) so a rename or resume never repoints the file.
+    display_name = ""
+    if action == "receipt":
         from datetime import datetime as _dt
 
-        from hyperweave.telemetry.receipt_paths import receipt_filename
+        from hyperweave.telemetry.receipt_paths import receipt_filename, slugify_session_name
 
         sess = contract.get("session", {})
-        sid = sess.get("id", "unknown")
         session_name = sess.get("name", "")
-        start_iso = sess.get("start", "")
-        try:
-            ts = _dt.fromisoformat(start_iso)
-        except (TypeError, ValueError):
-            ts = _dt.now()
         user_events = contract.get("user_events", []) or []
         first_prompt = user_events[0].get("preview", "") if user_events else ""
-        hw_dir = Path(".hyperweave") / "receipts"
-        hw_dir.mkdir(parents=True, exist_ok=True)
-        output = hw_dir / receipt_filename(
-            timestamp=ts,
-            session_name=session_name,
-            session_id=sid,
-            prompt_text=first_prompt,
-        )
-        filename_hint = str(output)
-    elif action == "receipt" and output:
-        # Explicit --output: surface whatever path shape the user provided.
-        filename_hint = str(output)
+        # Live title when the session was named; otherwise the first-prompt slug
+        # (same register as a name, never a raw mid-word truncation).
+        display_name = session_name or slugify_session_name(first_prompt[:40])
+        if not output:
+            sid = sess.get("id", "unknown")
+            start_iso = sess.get("start", "")
+            try:
+                ts = _dt.fromisoformat(start_iso)
+            except (TypeError, ValueError):
+                ts = _dt.now()
+            hw_dir = Path(".hyperweave") / "receipts"
+            hw_dir.mkdir(parents=True, exist_ok=True)
+            output = hw_dir / receipt_filename(timestamp=ts, session_id=sid, prompt_text=first_prompt)
+
+    # The receipt frame consumes the compact receipt/1 payload (the same dict
+    # embedded as hw:payload and hashed into the envelope). build_contract above
+    # still drives the CLI's filesystem bookkeeping (filename, empty-check,
+    # summary) — that richer legacy shape carries user_events + session.name the
+    # payload intentionally drops.
+    from hyperweave.telemetry.contract import build_receipt_contract
+
+    receipt_payload = build_receipt_contract(str(transcript_path))
 
     spec = ComposeSpec(
         type=frame_type,
         genome_id=genome_slug,
-        telemetry_data=contract,
-        receipt_filename_hint=filename_hint,
+        variant=variant_slug,
+        telemetry_data=receipt_payload,
+        receipt_display_name=display_name,
     )
     result = do_compose(spec)
 
@@ -530,19 +557,11 @@ def session(
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(result.svg)
 
-        # One-line summary to stderr
-        profile = contract.get("profile", {})
-        cost = profile.get("total_cost", 0)
-        total_tok = (
-            profile.get("total_input_tokens", 0)
-            + profile.get("total_output_tokens", 0)
-            + profile.get("total_cache_read_tokens", 0)
-            + profile.get("total_cache_creation_tokens", 0)
-        )
-        dur = contract.get("session", {}).get("duration_minutes", 0)
-        from hyperweave.compose.resolver import _fmt_tok
-
-        tok_label = _fmt_tok(total_tok)
+        # One-line summary to stderr — read straight off the receipt/1 payload.
+        cost = receipt_payload.get("cost_usd", 0)
+        total_tok = receipt_payload.get("tokens", {}).get("total", 0)
+        dur = receipt_payload.get("active_min", 0)
+        tok_label = f"{total_tok / 1_000_000:.1f}M" if total_tok >= 1_000_000 else f"{total_tok / 1000:.1f}K"
         typer.echo(f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}", err=True)
     else:
         # Strip: stdout by default
@@ -633,7 +652,7 @@ def genomes_cmd(
             typer.echo(f"  {gid:<30} {g.get('name', gid)}")
 
 
-def _install_claude_code_hook(hook_command: str, full_slug: str) -> None:
+def _install_claude_code_hook(hook_command: str, pin: str) -> None:
     """Write a SessionEnd hook to ``~/.claude/settings.json``.
 
     Idempotent: prior hyperweave hook entries are removed before the new
@@ -682,7 +701,7 @@ def _install_claude_code_hook(hook_command: str, full_slug: str) -> None:
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
-    pinned = f" (pinned to {full_slug})" if full_slug else " (auto-detect skin)"
+    pinned = f" (pinned to {pin})" if pin else " (primer/porcelain)"
     typer.echo(f"Installed SessionEnd hook in {settings_path}{pinned}")
 
 
@@ -723,7 +742,7 @@ def _wrap_legacy_codex_hook_entry(entry: object) -> object:
     return entry  # unknown shape — preserve as-is
 
 
-def _install_codex_hook(hook_command: str, full_slug: str) -> None:
+def _install_codex_hook(hook_command: str, pin: str) -> None:
     """Write a Stop hook to ``~/.codex/hooks.json`` + enable hooks feature.
 
     Per developers.openai.com/codex/hooks, Codex CLI fires Stop hooks
@@ -848,7 +867,7 @@ def _install_codex_hook(hook_command: str, full_slug: str) -> None:
                 break
     config_path.write_text("\n".join(config_lines) + "\n")
 
-    pinned = f" (pinned to {full_slug})" if full_slug else " (auto-detect skin)"
+    pinned = f" (pinned to {pin})" if pin else " (primer/porcelain)"
     typer.echo(f"Installed Stop hook in {hooks_path}{pinned}")
     typer.echo(f"Set [features] hooks = true in {config_path}")
     typer.echo(
@@ -906,9 +925,9 @@ def install_hook(
         typer.Option(
             "--genome",
             help=(
-                "Pin telemetry skin for every session receipt (cream, voltage, "
-                "claude-code, codex, or full slug like telemetry-cream). Empty = "
-                "auto-detect from JSONL runtime field at session-end time."
+                "Pin a primer variant (noir, carbon, space, anvil, porcelain, "
+                "cream, dusk, petrol) for every session receipt, or 'primer'/'raw' "
+                "for the genome directly. Empty = primer/porcelain."
             ),
         ),
     ] = "",
@@ -934,7 +953,7 @@ def install_hook(
     hooks for each. Pass ``--runtime <name>`` to scope to a single runtime,
     or ``--runtime all`` to force both regardless of detection.
     """
-    from hyperweave.compose.resolver import _genome_supports_receipts
+    from hyperweave.compose.resolver import _RECEIPT_DEFAULT_GENOME, _genome_supports_receipts
 
     # Resolve targets:
     #   ""     (default) → auto-detect installed runtimes (config dir OR binary)
@@ -966,22 +985,28 @@ def install_hook(
     # (unlike the receipt CLI which silently falls through) because pinning
     # a bad genome would produce silent surprises every session-end until
     # someone notices. Validate once even when targeting multiple runtimes.
-    full_slug = ""
+    # A primer variant (cream …) resolves to genome=primer, which is
+    # receipt-capable; a bare genome slug must declare paradigms.receipt.
+    pin = ""
     if genome:
-        full_slug = _normalize_genome_slug(genome)
-        if not _genome_supports_receipts(full_slug):
+        resolved_genome, _resolved_variant = _resolve_receipt_genome(genome)
+        check_genome = resolved_genome or _RECEIPT_DEFAULT_GENOME
+        if not _genome_supports_receipts(check_genome):
             typer.echo(
-                f"Error: genome '{genome}' (resolved to '{full_slug}') does not support receipts. "
-                "Telemetry skins must declare paradigms.receipt — try 'cream', 'voltage', "
-                "'claude-code', or 'codex'.",
+                f"Error: genome '{genome}' (resolved to '{check_genome}') does not support receipts. "
+                "Use a primer variant (noir, carbon, space, anvil, porcelain, cream, dusk, petrol) "
+                "or 'primer'/'raw'.",
                 err=True,
             )
             raise typer.Exit(1)
+        # Re-emit the user's token verbatim: session parses primer variants and
+        # genome slugs identically, so the command round-trips at session-end.
+        pin = genome
 
-    hook_command = f"hyperweave session receipt --genome {full_slug}" if full_slug else "hyperweave session receipt"
+    hook_command = f"hyperweave session receipt --genome {pin}" if pin else "hyperweave session receipt"
 
     for target in targets:
-        _HOOK_INSTALLERS[target](hook_command, full_slug)
+        _HOOK_INSTALLERS[target](hook_command, pin)
 
 
 def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:

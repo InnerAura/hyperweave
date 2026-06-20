@@ -1,0 +1,57 @@
+raw:
+  receipt:
+    # The raw genome's category is `light`, so the resolver reads the `light`
+    # block; `dark` is the substrate-agnostic fallback the loader uses when a
+    # substrate key is absent. Both describe the SAME fixed paper chassis (a
+    # thermal receipt is never a dark print), so they read nearly alike — the
+    # fixed-substrate doctrine is the point.
+    light:
+      intent: |-
+        The same receipt/1 economics rendered as the universally-recognised CVS
+        till receipt: a 300x835 cream register tape (~9:25 to trigger the
+        disproportion gag) where the joke is legible before any number is read.
+        Tools are line items priced in tokens, the model split is the payment
+        tender, failed calls are VOID returns — one printed proof of one agent
+        run, made to be screenshotted.
+      approach: |-
+        Vertical y-cursor on ~12% thermal margins (rails x18/x282, centre x150):
+        centred header lockup over left-justified itemisation (POS layout); TOOL
+        QTY/TOKENS columns with '% of basket' sublines and a '+N OTHERS' collapse
+        when the list overflows 5 rows; a per-tool VOID/FAILED breakdown sorted
+        by error count; the IN/OUT/CACHED/WRITTEN/SUBTOTAL ledger; TOTAL DUE; the
+        TENDERED models. The barcode + footer ride the fixed optical base (y773/
+        y807) and the feed-edge curl fills the blank tape above. Monospace
+        throughout; the thermal-red accent marks only VOIDs.
+      tradeoffs: |-
+        Adaptation is removed entirely — the raw genome declares no light_mode,
+        so no prefers-color-scheme swap ships: a dark thermal print destroys the
+        CVS recognition that is the whole memetic payload, so the paper stays
+        cream on any host ground. The height is fixed at 835 regardless of
+        content (the disproportion IS the gag), so a short session leaves more
+        blank tape rather than shrinking. The promotional meme filler is dropped
+        — every line binds to real session data, never fabricated coupons.
+    dark:
+      intent: |-
+        The same receipt/1 economics rendered as the universally-recognised CVS
+        till receipt: a 300x835 cream register tape (~9:25 to trigger the
+        disproportion gag) where the joke is legible before any number is read.
+        Tools are line items priced in tokens, the model split is the payment
+        tender, failed calls are VOID returns — one printed proof of one agent
+        run, made to be screenshotted.
+      approach: |-
+        Vertical y-cursor on ~12% thermal margins (rails x18/x282, centre x150):
+        centred header lockup over left-justified itemisation (POS layout); TOOL
+        QTY/TOKENS columns with '% of basket' sublines and a '+N OTHERS' collapse
+        when the list overflows 5 rows; a per-tool VOID/FAILED breakdown sorted
+        by error count; the IN/OUT/CACHED/WRITTEN/SUBTOTAL ledger; TOTAL DUE; the
+        TENDERED models. The barcode + footer ride the fixed optical base (y773/
+        y807) and the feed-edge curl fills the blank tape above. Monospace
+        throughout; the thermal-red accent marks only VOIDs.
+      tradeoffs: |-
+        Adaptation is removed entirely — the raw genome declares no light_mode,
+        so no prefers-color-scheme swap ships: a dark thermal print destroys the
+        CVS recognition that is the whole memetic payload, so the paper stays
+        cream on any host ground. The height is fixed at 835 regardless of
+        content (the disproportion IS the gag), so a short session leaves more
+        blank tape rather than shrinking. The promotional meme filler is dropped
+        — every line binds to real session data, never fabricated coupons.

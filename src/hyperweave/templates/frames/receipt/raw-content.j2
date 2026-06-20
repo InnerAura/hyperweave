@@ -1,0 +1,70 @@
+{# Raw thermal-tape receipt — content body (the meme receipt, 300x835).
+
+   Stamps the resolver's pre-computed RawReceipt dataclass + the `rg` geometry
+   constants. ZERO geometry numbers and ZERO arithmetic: every x/y/size/width is
+   read off the tape dataclass or the rg dict (stencil invariant — compose owns
+   geometry). Every colour is the literal thermal hex on the dataclass (t.paper /
+   t.ink / t.faint / t.rule / t.accent) — never a CSS var — so the paper renders
+   identically in browsers and static renderers. Monospace throughout (JetBrains
+   Mono); adaptation OFF. #}
+{% set t = receipt_tape %}
+
+{# Tone → literal hex lookups (the dataclass carries 'ink'/'faint'/'accent'
+   tone tags; resolve each to its baked colour here so rows stay declarative). #}
+{% macro tone(name) %}{% if name == 'accent' %}{{ t.accent }}{% elif name == 'faint' %}{{ t.faint }}{% else %}{{ t.ink }}{% endif %}{% endmacro %}
+
+{# ── Paper material — vellum onionskin: cockle relief + translucency + grain +
+   sheen. Five layered rects, each self-clipping to its own alpha (no margin halo). #}
+<rect x="{{ rg.card_x }}" y="{{ rg.card_y }}" width="{{ rg.card_w }}" height="{{ t.card_h }}" rx="{{ rg.card_rx }}" fill="{{ t.paper }}" filter="url(#{{ uid }}-cockle)"/>
+<rect x="{{ rg.card_x }}" y="{{ rg.card_y }}" width="{{ rg.card_w }}" height="{{ t.card_h }}" rx="{{ rg.card_rx }}" fill="{{ t.paper }}" filter="url(#{{ uid }}-translucent)"/>
+<rect x="{{ rg.card_x }}" y="{{ rg.card_y }}" width="{{ rg.card_w }}" height="{{ t.card_h }}" rx="{{ rg.card_rx }}" fill="{{ t.paper }}" filter="url(#{{ uid }}-grain)"/>
+<rect x="{{ rg.card_x }}" y="{{ rg.card_y }}" width="{{ rg.card_w }}" height="{{ t.card_h }}" rx="{{ rg.card_rx }}" fill="url(#{{ uid }}-sheen-h)"/>
+<rect x="{{ rg.card_x }}" y="{{ rg.card_y }}" width="{{ rg.card_w }}" height="{{ t.card_h }}" rx="{{ rg.card_rx }}" fill="url(#{{ uid }}-sheen-v)"/>
+
+{# ── Section rules (perforation / dashed dividers / heavy ink totals) ─────── #}
+{% for r in t.rules %}{% if r.kind == 'perf' %}<path d="M6 {{ r.y }} H294" stroke="{{ t.rule }}" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
+{% elif r.kind == 'solid' %}<path d="M16 {{ r.y }} H284" stroke="{{ t.ink }}" stroke-width="1.5"/>
+{% else %}<path d="M16 {{ r.y }} H284" stroke="{{ t.rule }}" stroke-width="1" stroke-dasharray="2 2"/>
+{% endif %}{% endfor %}
+
+{# ── Header lockup: HW diamond sigil + wordmark + store lines ─────────────── #}
+<g transform="translate({{ t.glyph_translate_x }},{{ t.glyph_translate_y }}) scale({{ t.glyph_scale }})" fill="{{ t.ink }}">
+  <path fill-rule="evenodd" d="{{ diamond_path }}"/>
+{% for dot in diamond_dots %}  <circle cx="{{ dot.cx }}" cy="{{ dot.cy }}" r="{{ dot.r }}" opacity="{{ dot.opacity }}"/>
+{% endfor %}</g>
+{% for line in t.header_lines %}<text x="{{ line.x }}" y="{{ line.y }}" font-size="{{ line.size }}" font-weight="{{ line.weight }}" fill="{{ tone(line.tone) }}" text-anchor="{{ line.anchor }}"{% if line.size == 16.0 %} letter-spacing="0.04em"{% endif %}>{{ line.text | xml_escape }}</text>
+{% endfor %}
+
+{# ── Session + cashier block ─────────────────────────────────────────────── #}
+{% for line in t.session_lines %}<text x="{{ line.x }}" y="{{ line.y }}" font-size="{{ line.size }}" font-weight="{{ line.weight }}" fill="{{ tone(line.tone) }}" text-anchor="{{ line.anchor }}">{{ line.text | xml_escape }}</text>
+{% endfor %}
+
+{# ── Tool / VOID / ledger itemisation (left-label / right-value rows) ─────── #}
+{% macro itemrow(row) %}<text x="{{ rg.left_rail }}" y="{{ row.y }}" font-size="{{ row.label_size }}" font-weight="{{ row.label_weight }}" fill="{{ tone(row.label_tone) }}">{{ row.label | xml_escape }}</text>
+<text x="{{ rg.right_rail }}" y="{{ row.y }}" font-size="{{ row.value_size }}" font-weight="{{ row.value_weight }}" fill="{{ tone(row.value_tone) }}" text-anchor="end">{{ row.value | xml_escape }}</text>
+{% if row.sub %}<text x="{{ rg.sub_indent }}" y="{{ row.sub_y }}" font-size="{{ rg.sub_font }}" font-weight="500" fill="{{ t.faint }}">{{ row.sub | xml_escape }}</text>
+{% endif %}{% endmacro %}
+{{ itemrow(t.tool_header) }}
+{% for row in t.tool_rows %}{{ itemrow(row) }}{% endfor %}
+{{ itemrow(t.void_header) }}
+{% for row in t.void_rows %}{{ itemrow(row) }}{% endfor %}
+{% for row in t.ledger_rows %}{{ itemrow(row) }}{% endfor %}
+
+{# ── Grand total ─────────────────────────────────────────────────────────── #}
+<text x="{{ rg.left_rail }}" y="{{ t.total_y }}" font-size="{{ t.total_label_size }}" font-weight="700" fill="{{ t.ink }}">{{ t.total_label }}</text>
+<text x="{{ rg.right_rail }}" y="{{ t.total_y }}" font-size="{{ t.total_value_size }}" font-weight="700" fill="{{ t.ink }}" text-anchor="end" letter-spacing="0.04em">{{ t.total_value }}</text>
+<text x="{{ rg.left_rail }}" y="{{ t.disclaimer_y }}" font-size="{{ rg.sub_font }}" font-weight="500" fill="{{ t.faint }}">{{ t.disclaimer | xml_escape }}</text>
+
+{# ── Tendered models ─────────────────────────────────────────────────────── #}
+<text x="{{ t.tender_header.x }}" y="{{ t.tender_header.y }}" font-size="{{ t.tender_header.size }}" font-weight="700" fill="{{ t.ink }}">{{ t.tender_header.text }}</text>
+<text x="{{ rg.right_rail }}" y="{{ t.tender_count_y }}" font-size="{{ rg.sub_font }}" font-weight="500" fill="{{ t.faint }}" text-anchor="end">{{ t.tender_count }}</text>
+{% for tr in t.tender_rows %}<text x="{{ rg.left_rail }}" y="{{ tr.y }}" font-size="9"><tspan font-weight="700" fill="{{ tone(tr.tone) }}">{{ tr.name | xml_escape }}</tspan><tspan font-weight="500" fill="{{ t.faint }}">{{ tr.detail | xml_escape }}</tspan></text>
+<text x="{{ rg.right_rail }}" y="{{ tr.y }}" font-size="9" font-weight="700" fill="{{ tone(tr.tone) }}" text-anchor="end">{{ tr.cost }}</text>
+{% endfor %}{% if t.tender_summary %}<text x="{{ rg.left_rail }}" y="{{ t.tender_summary_y }}" font-size="{{ rg.sub_font }}" font-weight="500" fill="{{ t.faint }}">{{ t.tender_summary | xml_escape }}</text>
+{% endif %}
+
+{# ── Barcode furniture (session hash repurposed as machine-readable identity) #}
+<g transform="translate({{ t.barcode_translate_x }},{{ t.barcode_translate_y }})" fill="{{ t.ink }}">
+{% for bar in t.barcode_bars %}<rect x="{{ bar.x }}" y="{{ rg.barcode_y0 }}" width="{{ bar.w }}" height="{{ rg.barcode_h }}"/>{% endfor %}
+</g>
+<text x="{{ t.footer_line.x }}" y="{{ t.footer_line.y }}" font-size="{{ t.footer_line.size }}" font-weight="500" fill="{{ t.faint }}" text-anchor="middle">{{ t.footer_line.text | xml_escape }}</text>

@@ -79,6 +79,14 @@ genomes:
     # short marks, and the footer are JBM.
     diagram: [inter, jetbrains-mono]
     marquee: [inter, jetbrains-mono]
+    # Receipt identity wordmark + hero cost are Inter; metrics, tool rows,
+    # cost-by-model legend, context-load axis labels, and footer are JBM.
+    receipt: [inter, jetbrains-mono]
+  raw:
+    # The thermal register-tape receipt is monospace end to end (JetBrains
+    # Mono) — wordmark, itemisation, VOID rows, ledger, total, tender, footer.
+    # No Inter: a till receipt is one typeface.
+    receipt: [jetbrains-mono]
 
 # Documentation only in v0.3.7 — no runtime consumer. When CJK
 # rendering becomes in-scope, plumb a `locale` field through

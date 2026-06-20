@@ -266,3 +266,43 @@ def measure_text_trailing_bearing(
         font_size=font_size,
         font_weight=font_weight,
     ).trailing_bearing
+
+
+def format_duration(minutes: float) -> str:
+    """Format a duration in minutes as a compact human label.
+
+    Long agent sessions run for thousands of minutes — "3334m" is unreadable on
+    an axis tick or a hero subline. This collapses the magnitude to the largest
+    sensible unit, dropping a trailing ``.0`` so clean values stay terse:
+
+    * ``< 60``       -> ``"{m}m"``         (e.g. ``45m``, ``0m``)
+    * ``< 1440``     -> ``"{h}h"`` /``"{h.h}h"`` (e.g. ``2h``, ``10.8h``)
+    * ``>= 1440``    -> ``"{d}d"`` /``"{d}d {h}h"`` (e.g. ``2d``, ``2d 8h``)
+
+    The day form rounds the remainder to whole hours (a sub-hour remainder is
+    dropped: ``2880`` → ``"2d"``, ``3334`` → ``"2d 8h"``). The hour form keeps
+    one decimal only when it isn't whole, so adaptive "nice" tick steps that land
+    on exact hours read as ``"10h"`` not ``"10.0h"``. Negative inputs clamp to 0.
+    """
+    if minutes < 0:
+        minutes = 0.0
+
+    if minutes < 60:
+        return f"{round(minutes)}m"
+
+    if minutes < 1440:
+        hours = minutes / 60.0
+        rounded = round(hours, 1)
+        if rounded == int(rounded):
+            return f"{int(rounded)}h"
+        return f"{rounded:.1f}h"
+
+    days = int(minutes // 1440)
+    remainder_hours = round((minutes - days * 1440) / 60.0)
+    # A remainder that rounds up to a full day rolls into the day count.
+    if remainder_hours >= 24:
+        days += remainder_hours // 24
+        remainder_hours %= 24
+    if remainder_hours == 0:
+        return f"{days}d"
+    return f"{days}d {remainder_hours}h"

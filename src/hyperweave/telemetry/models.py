@@ -4,8 +4,8 @@ These models represent the structured output of parsing a JSONL
 transcript -- tool calls, agent spans, detected stages, user events,
 and aggregate session metrics. Multi-runtime as of v0.2.23: each
 SessionTelemetry instance carries the runtime that produced it
-(``claude-code``, ``codex``, ...) so downstream consumers (resolver,
-receipt skin precedence) can dispatch without sniffing.
+(``claude-code``, ``codex``, ...) so the receipt resolver can resolve
+the identity glyph + wordmark without sniffing.
 
 Ported from aura-research/systems/hooks/hw_claude_code_hook/models.py.
 ``STAGE_LABEL_MAP`` loaded from YAML at import time; tool-class
@@ -127,6 +127,14 @@ class ToolCall(BaseModel):
     )
     parent_uuid: str | None = Field(default=None, description="Parent message UUID for tree reconstruction")
     model: str | None = Field(default=None, description="Model that generated this tool call")
+    is_subagent: bool = Field(
+        default=False,
+        description=(
+            "True when this call came from a subagent sidechain folded into the "
+            "parent session (Claude Code session reconstruction), not the main "
+            "thread. Drives cost-by-model role attribution by origin."
+        ),
+    )
     # Hyperweave additions for codebase heatmap
     file_path: str | None = Field(default=None, description="Resolved file path from tool input")
     command: str | None = Field(default=None, description="Command string from Bash tool input")
@@ -163,6 +171,15 @@ class AgentSpan(BaseModel):
         default="general-purpose",
         description="Agent type (general-purpose, Explore, Plan, etc.)",
     )
+    model: str | None = Field(
+        default=None,
+        description=(
+            "Model the subagent ran on, when distinguishable. Used by the "
+            "receipt payload to attribute cost-by-model roles (a model that "
+            "is not the session's main-thread model is attributed to "
+            "subagents). None when the runtime gives no per-span model signal."
+        ),
+    )
     tool_calls: int = Field(default=0, description="Number of tool calls within span")
     total_tokens: int = Field(default=0, description="Total tokens consumed")
     start_time: datetime | None = None
@@ -173,6 +190,47 @@ class AgentSpan(BaseModel):
         if self.start_time and self.end_time:
             return int((self.end_time - self.start_time).total_seconds() * 1000)
         return 0
+
+
+class CommandResetKind(StrEnum):
+    """Kind of context-window reset event.
+
+    ``COMPACT`` / ``CLEAR`` are user slash-commands; ``AUTO`` is the
+    harness auto-compacting near the window ceiling with no explicit
+    command. Maps verbatim to the ``receipt/1`` ``context.events[].cmd``
+    field, so the string values are part of the data contract.
+    """
+
+    COMPACT = "compact"
+    CLEAR = "clear"
+    AUTO = "auto"
+
+
+class CommandEvent(BaseModel):
+    """A context-window reset event detected in the transcript.
+
+    Emitted by the parser when it sees a ``/compact`` or ``/clear``
+    slash-command envelope, an ``isCompactSummary`` auto-compaction
+    marker, or (Codex) a sharp occupancy drop near the ceiling. The
+    receipt's context-load curve renders one reset glyph per event;
+    ``occupancy_after`` anchors the curve's post-reset descent.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: CommandResetKind = Field(description="compact | clear | auto")
+    timestamp: datetime = Field(description="When the reset occurred")
+    occupancy_before: int = Field(
+        default=0,
+        description="Modelled context occupancy (tokens) at the turn before the reset",
+    )
+    occupancy_after: int = Field(
+        default=0,
+        description=(
+            "Modelled context occupancy (tokens) at the first turn after the "
+            "reset. The receipt's ``context.events[].to`` value."
+        ),
+    )
 
 
 class Stage(BaseModel):
@@ -264,13 +322,31 @@ class SessionTelemetry(BaseModel):
     runtime: str = Field(
         description=(
             "Agent runtime identifier (claude-code, codex, ...). Stamped by the "
-            "parser; consumed by resolver._resolve_telemetry_genome and ._resolve_provider "
-            "to route skin + identity (genome JSON, glyph id, provider label) without "
-            "any 'if runtime == ...' branching. See telemetry.runtimes."
+            "parser; consumed by the receipt resolver to select the identity "
+            "package (glyph id + wordmark) only — never a theme. Receipts always "
+            "render on the primer genome. See telemetry.runtimes."
         ),
     )
     timestamp: datetime = Field(description="Session start time")
     duration_minutes: float = Field(default=0.0, description="Wall-clock duration")
+    context_window: int = Field(
+        default=0,
+        description=(
+            "Model context window in tokens (200000 for Claude 200K models, "
+            "1000000 for opus -1m, the runtime-reported window for Codex). "
+            "0 signals the parser could not determine a window; the receipt "
+            "falls back to the default-window map keyed on the model id."
+        ),
+    )
+    peak_context_tokens: int = Field(
+        default=0,
+        description=(
+            "Maximum modelled context occupancy across the session "
+            "(input + cache_read + cache_create at any single assistant "
+            "turn). Drives the receipt's peak marker. 0 when no assistant "
+            "turn carried usage."
+        ),
+    )
     turn_duration_minutes: float | None = Field(
         default=None,
         description=(
@@ -290,6 +366,16 @@ class SessionTelemetry(BaseModel):
     stages: list[Stage] = Field(default_factory=list)
     agents: list[AgentSpan] = Field(default_factory=list)
     user_events: list[UserEvent] = Field(default_factory=list)
+    command_events: list[CommandEvent] = Field(
+        default_factory=list,
+        description=(
+            "Context-window reset events (/compact, /clear, auto-compaction) "
+            "in transcript order. Each carries the modelled occupancy on "
+            "either side of the reset; the receipt's context-load curve "
+            "renders one typed glyph per event and uses ``occupancy_after`` "
+            "as the post-reset floor. Empty when no resets are detected."
+        ),
+    )
     tool_summary: dict[str, ToolSummary] = Field(
         default_factory=dict,
         description="tool_name -> aggregate stats",

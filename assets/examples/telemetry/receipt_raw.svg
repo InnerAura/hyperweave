@@ -1,0 +1,297 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
+     role="img"
+     aria-labelledby="hw-d854964b-title hw-d854964b-desc"
+     viewBox="0 0 300 684"
+     width="300" height="684"
+     shape-rendering="geometricPrecision"
+     data-hw-id="receipt-d854964b6a696249"
+     data-hw-type="receipt"
+     data-hw-frame="receipt"
+     data-hw-genome="raw"
+     data-hw-mode="light"
+     data-hw-status="active"
+     data-hw-profile="flat"
+     data-hw-motion="static"
+     data-hw-generation="1"
+     data-hw-contract="receipt-d854964b6a696249"
+     data-hw-size="default"
+     data-hw-fonts="self-contained"
+     data-hw-regime="normal"
+     data-hw-chromatic="raw">
+  <title id="hw-d854964b-title">HyperWeave receipt artifact</title>
+  <desc id="hw-d854964b-desc">A receipt artifact, using raw genome.</desc>
+  <metadata>
+  <hw:artifact id="receipt-d854964b6a696249" type="receipt" series="core" version="0.4.0a3"
+               xmlns:hw="https://hyperweave.app/hw/v1.0">
+    <hw:provenance>
+      <hw:generator>HyperWeave Compositor v0.4.0a3 (InnerAura Labs)</hw:generator>
+      <hw:created>2026-06-20T04:20:49.707589+00:00</hw:created>
+      <hw:human-directed>true</hw:human-directed>
+    </hw:provenance>
+    <hw:spec size="300x684" performance="composite-only"
+             theme="light" a11y="WCAG-AA" platform="github-readme"/>
+  </hw:artifact>
+  <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
+    <hw:frame>receipt</hw:frame>
+    <hw:genome>raw@0.4.0a3</hw:genome>
+    <hw:profile>flat</hw:profile>
+    <hw:stratum>002-TRIBE</hw:stratum>
+    <hw:slots>
+    </hw:slots>
+    <hw:environment platform="github-readme" motion="static" status="active"/>
+  </hw:composition>
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+           xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:title>HyperWeave receipt artifact</dc:title>
+      <dc:creator>HyperWeave Compositor v0.4.0a3 (InnerAura Labs)</dc:creator>
+      <dc:date>2026-06-20T04:20:49.707589+00:00</dc:date>
+      <dc:rights>CC BY 4.0</dc:rights>
+    </rdf:Description>
+  </rdf:RDF>
+  <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
+    <hw:chromatic system="raw" space="oklch"
+                  palette="raw" contrast-ratio="12.7:1"/>
+    <hw:motion vocabulary="static" physics="none"
+               timing="phi" duration-base="2.618s"
+               stagger-regime="contemplative" cim-compliant="true"/>
+    <hw:geometry form-language="register-tape" corner-radius="5px"
+                 grid="auto" proportional-system="phi"
+                 mathematical-basis="golden-ratio" symmetry="bilateral"/>
+    <hw:typography stack="'JetBrains Mono','SF Mono',ui-monospace,monospace, 'JetBrains Mono','SF Mono',ui-monospace,monospace" hierarchy="11/18/8"
+                   weight-range="500-900" metrics-method="lut"/>
+    <hw:material surface="genome-native" depth="shallow" texture="none"/>
+  </hw:aesthetic>
+  <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
+    <hw:intent>The same receipt/1 economics rendered as the universally-recognised CVS
+till receipt: a 300x835 cream register tape (~9:25 to trigger the
+disproportion gag) where the joke is legible before any number is read.
+Tools are line items priced in tokens, the model split is the payment
+tender, failed calls are VOID returns — one printed proof of one agent
+run, made to be screenshotted.</hw:intent>
+    <hw:approach>Vertical y-cursor on ~12% thermal margins (rails x18/x282, centre x150):
+centred header lockup over left-justified itemisation (POS layout); TOOL
+QTY/TOKENS columns with '% of basket' sublines and a '+N OTHERS' collapse
+when the list overflows 5 rows; a per-tool VOID/FAILED breakdown sorted
+by error count; the IN/OUT/CACHED/WRITTEN/SUBTOTAL ledger; TOTAL DUE; the
+TENDERED models. The barcode + footer ride the fixed optical base (y773/
+y807) and the feed-edge curl fills the blank tape above. Monospace
+throughout; the thermal-red accent marks only VOIDs.</hw:approach>
+    <hw:tradeoffs>Adaptation is removed entirely — the raw genome declares no light_mode,
+so no prefers-color-scheme swap ships: a dark thermal print destroys the
+CVS recognition that is the whole memetic payload, so the paper stays
+cream on any host ground. The height is fixed at 835 regardless of
+content (the disproportion IS the gag), so a short session leaves more
+blank tape rather than shrinking. The promotional meme filler is dropped
+— every line binds to real session data, never fabricated coupons.</hw:tradeoffs>
+    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>300x684 (0.44), left-to-right</hw:spatial-notes>
+  </hw:reasoning>
+  <hw:payload xmlns:hw="https://hyperweave.app/hw/v1.0" schema="receipt/1" media-type="application/json"><![CDATA[{"session":"4cf230aa-423b-457e-9992-ec4b68e5f921","model":"opus-4.8","cost_usd":116.66,"dominant":"opus-4.8","cost_basis":"public per-token rates","estimate":true,"models":[{"name":"opus-4.8","role":"main thread","cost_usd":114.29,"cost_pct":98},{"name":"haiku-4.5","role":"7 subagents","cost_usd":2.37,"cost_pct":2}],"tokens":{"total":151111280,"in":210834,"out":1006572,"cache_read":145549613,"cache_write":4344261,"working":1217406},"calls":574,"stages":101,"turns":19,"errors":4,"active_min":162,"context":{"window":1000000,"peak_ctx":961541,"span_min":2326,"events":[],"error_min":[1077,1112,1231,1403],"note":"occupancy modelled from per-stage activity; resets at slash-command and auto-compaction; absolute scale disclosed"},"tools":[{"name":"Bash","tok":369407,"calls":276,"class":"execute"},{"name":"Edit","tok":226290,"calls":65,"err":2,"class":"mutate"},{"name":"Agent","tok":157601,"calls":7,"class":"execute"},{"name":"Read","tok":141426,"calls":173,"class":"explore"},{"name":"Write","tok":124800,"calls":27,"err":1,"class":"mutate"},{"name":"TaskUpdate","tok":91338,"calls":13,"class":"coordinate"},{"name":"TaskCreate","tok":83524,"calls":7,"class":"coordinate"},{"name":"ToolSearch","tok":10630,"calls":3,"class":"coordinate"},{"name":"AskUserQuestion","tok":10253,"calls":1,"class":"coordinate"},{"name":"ExitPlanMode","tok":2137,"calls":2,"err":1,"class":"coordinate"}]}]]></hw:payload>
+  <hw:envelope xmlns:hw="https://hyperweave.app/hw/v1.0" format="hwz/1" media-type="application/json"><![CDATA[{"v":"hwz/1","id":"sha256:ec5c30aff891fd9eedb4fa5cc42f25093fdf416f71915653319ba8d80bffa213","k":"receipt","title":"Claude Code session 4cf230aa-423b-457e-9992-ec4b68e5f921 — $116.66","intent":"Single-glance economics and context-window history for one Claude Code session.","state":"active","data":{"cost_usd":116.66,"tokens":151111280,"cache_pct":96,"calls":574,"errors":4,"peak_ctx":961541,"window":1000000,"resets":0,"top_tool":"Bash"},"frames":[{"t":"receipt","l":"Claude Code session 4cf230aa-423b-457e-9992-ec4b68e5f921 — $116.66"}],"prov":{"by":"hyperweave","ver":"0.4.0a3","genome":"raw","ts":"2026-06-20T04:20:49.707589+00:00"}}]]></hw:envelope>
+</metadata>
+  <style>/* hw:css-modules: genome,accessibility,fonts */
+svg, :root {
+  --dna-surface: #f3f1ea;
+  --dna-surface-alt: #f3f1ea;
+  --dna-surface-deep: #e8e5db;
+  --dna-ink-primary: #2d2a24;
+  --dna-ink-muted: #918c80;
+  --dna-ink-on-accent: #f3f1ea;
+  --dna-ink-bright: #2d2a24;
+  --dna-ink-sub: #918c80;
+  --dna-signal: #a64536;
+  --dna-signal-dim: #918c80;
+  --dna-border: #ded8cc;
+  --dna-border-tint: #ded8cc;
+  --dna-shadow-color: #2d2a24;
+  --dna-shadow-opacity: 0.10;
+  --dna-glow: 0px;
+  --dna-corner: 1;
+  --dna-rhythm-base: 2.618s;
+  --dna-bg: #f3f1ea;
+  --dna-bg-alt: #e8e5db;
+  --dna-brand-text: #2d2a24;
+  --dna-font-display: 'JetBrains Mono','SF Mono',ui-monospace,monospace;
+  --dna-font-mono: 'JetBrains Mono','SF Mono',ui-monospace,monospace;
+  --dna-sep: #ded8cc;
+  --dna-status-delta-positive: #22C55E;
+  --dna-status-delta-negative: #DC2626;
+}
+/* === HyperWeave Accessibility Layer ===
+ * Non-negotiable media queries for motion, color scheme, and forced colors.
+ * Included in EVERY artifact.
+ *
+ * CAMO NOTE: @media (prefers-color-scheme) and @media (forced-colors: active)
+ * are INERT when served through GitHub Camo as img tags. The img element
+ * creates an isolated browsing context — the parent document's color scheme
+ * and forced-colors mode do not propagate into it. Artifacts will always
+ * render in their default (dark) theme on GitHub READMEs.
+ *
+ * These queries DO activate when the SVG is embedded directly (svg inline,
+ * object, or opened as a standalone document). This is a known accepted
+ * tradeoff: dark-default through Camo, adaptive in direct embed.
+ */
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hw-logic-bit { animation: none !important; opacity: .8; }
+  .hw-scanner { animation: none; opacity: 0; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  animate, animateTransform, animateMotion, set {
+    display: none !important;
+  }
+}
+
+/* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
+/* Light mode: genome alleles injected by CSS assembler into per-artifact @media block. */
+
+/* ── Forced Colors (Windows High Contrast) ── */
+@media (forced-colors: active) {
+  text { fill: CanvasText !important; }
+  rect, path, circle, ellipse, polygon, polyline, line {
+    stroke: CanvasText;
+  }
+  .hw-frame-bg { fill: Canvas !important; }
+  .hw-accent-bar { fill: Highlight !important; }
+  .hw-signal { fill: Highlight !important; }
+  .hw-logic-bit { fill: Highlight !important; }
+}
+</style>
+  <defs>
+
+<style>@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url(data:font/woff2;base64,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) format('woff2');
+}
+text{font-family:var(--dna-font-mono,"JetBrains Mono","SF Mono",ui-monospace,monospace)}
+</style>
+
+<linearGradient id="hw-d854964b-sheen-h" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#d8d2c4" stop-opacity="0.12"/>
+  <stop offset="0.10" stop-color="#d8d2c4" stop-opacity="0"/>
+  <stop offset="0.50" stop-color="#fffffa" stop-opacity="0.14"/>
+  <stop offset="0.90" stop-color="#d8d2c4" stop-opacity="0"/>
+  <stop offset="1" stop-color="#d8d2c4" stop-opacity="0.12"/>
+</linearGradient>
+<linearGradient id="hw-d854964b-sheen-v" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#fffffa" stop-opacity="0.1"/>
+  <stop offset="0.04" stop-color="#fffffa" stop-opacity="0"/>
+  <stop offset="0.955" stop-color="#4c4636" stop-opacity="0"/>
+  <stop offset="1" stop-color="#4c4636" stop-opacity="0.1"/>
+</linearGradient>
+
+<filter id="hw-d854964b-cockle" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.006 0.008" numOctaves="2" seed="13" result="c"/>
+  <feDiffuseLighting in="c" surfaceScale="1.7" diffuseConstant="1.16" lighting-color="#fffefb" result="l">
+    <feDistantLight azimuth="245" elevation="68"/>
+  </feDiffuseLighting>
+  <feComposite in="l" in2="SourceGraphic" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/>
+</filter>
+<filter id="hw-d854964b-translucent" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.01 0.012" numOctaves="2" seed="17" result="t"/>
+  <feColorMatrix in="t" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 0.98  0 0 0 0.11 0"/>
+  <feComposite in2="SourceAlpha" operator="in"/>
+</filter>
+<filter id="hw-d854964b-grain" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+  <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="11" result="g"/>
+  <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.02 0"/>
+  <feComposite in2="SourceAlpha" operator="in"/>
+</filter>
+  </defs>
+
+
+<rect x="6.0" y="6.0" width="288.0" height="672.0" rx="1.5" fill="#f3f1ea" filter="url(#hw-d854964b-cockle)"/>
+<rect x="6.0" y="6.0" width="288.0" height="672.0" rx="1.5" fill="#f3f1ea" filter="url(#hw-d854964b-translucent)"/>
+<rect x="6.0" y="6.0" width="288.0" height="672.0" rx="1.5" fill="#f3f1ea" filter="url(#hw-d854964b-grain)"/>
+<rect x="6.0" y="6.0" width="288.0" height="672.0" rx="1.5" fill="url(#hw-d854964b-sheen-h)"/>
+<rect x="6.0" y="6.0" width="288.0" height="672.0" rx="1.5" fill="url(#hw-d854964b-sheen-v)"/>
+
+<path d="M6 10.0 H294" stroke="#ded8cc" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
+<path d="M16 99.0 H284" stroke="#ded8cc" stroke-width="1" stroke-dasharray="2 2"/>
+<path d="M16 148.0 H284" stroke="#ded8cc" stroke-width="1" stroke-dasharray="2 2"/>
+<path d="M16 311.0 H284" stroke="#ded8cc" stroke-width="1" stroke-dasharray="2 2"/>
+<path d="M16 378.0 H284" stroke="#ded8cc" stroke-width="1" stroke-dasharray="2 2"/>
+<path d="M16 479.0 H284" stroke="#2d2a24" stroke-width="1.5"/>
+<path d="M16 517.0 H284" stroke="#2d2a24" stroke-width="1.5"/>
+<path d="M16 616.0 H284" stroke="#ded8cc" stroke-width="1" stroke-dasharray="2 2"/>
+<path d="M6 678.0 H294" stroke="#ded8cc" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>
+
+<g transform="translate(139.4,13.0) scale(0.33)" fill="#2d2a24">
+  <path fill-rule="evenodd" d="M32 3 C39.25 10.25 53.75 24.75 61 32 C53.75 39.25 39.25 53.75 32 61 C24.75 53.75 10.25 39.25 3 32 C10.25 24.75 24.75 10.25 32 3 Z M26.56 10.25 15.69 21.12 C10.25 26.56 10.25 37.44 15.69 42.88 L26.56 53.75 37.44 53.75 48.31 42.88 C53.75 37.44 53.75 26.56 48.31 21.12 L37.44 10.25 Z"/>
+  <circle cx="32.0" cy="32.0" r="3.2" opacity="0.15"/>
+  <circle cx="32.0" cy="32.0" r="2.0" opacity="1.0"/>
+</g>
+<text x="150.0" y="52.0" font-size="16.0" font-weight="700" fill="#2d2a24" text-anchor="middle" letter-spacing="0.04em">HYPERWEAVE</text>
+<text x="150.0" y="65.0" font-size="7.5" font-weight="500" fill="#918c80" text-anchor="middle">SELF-CONTAINED VISUAL ARTIFACTS</text>
+<text x="150.0" y="76.0" font-size="7.5" font-weight="500" fill="#918c80" text-anchor="middle">hyperweave.app · STORE #0001</text>
+<text x="150.0" y="87.0" font-size="7.5" font-weight="500" fill="#918c80" text-anchor="middle">REGISTER /receipts/4cf230aa · main</text>
+
+<text x="150.0" y="115.0" font-size="9.0" font-weight="500" fill="#2d2a24" text-anchor="middle">SESSION 4CF230AA</text>
+<text x="150.0" y="127.0" font-size="7.5" font-weight="500" fill="#918c80" text-anchor="middle">CASHIER: Claude Code · 19 TURNS · 162m</text>
+<text x="150.0" y="138.0" font-size="7.5" font-weight="500" fill="#918c80" text-anchor="middle">REGISTER 1000K · PEAK 962K · CLEARED 0×</text>
+
+<text x="18.0" y="164.0" font-size="9.0" font-weight="500" fill="#2d2a24">TOOL QTY</text>
+<text x="282.0" y="164.0" font-size="9.0" font-weight="500" fill="#2d2a24" text-anchor="end">TOKENS</text>
+
+<text x="18.0" y="180.0" font-size="11.0" font-weight="700" fill="#2d2a24">BASH ×276</text>
+<text x="282.0" y="180.0" font-size="11.0" font-weight="700" fill="#2d2a24" text-anchor="end">369.4K</text>
+<text x="24.0" y="191.0" font-size="7.5" font-weight="500" fill="#918c80">30% of basket</text>
+<text x="18.0" y="207.0" font-size="11.0" font-weight="700" fill="#2d2a24">EDIT ×65</text>
+<text x="282.0" y="207.0" font-size="11.0" font-weight="700" fill="#2d2a24" text-anchor="end">226.3K</text>
+<text x="24.0" y="218.0" font-size="7.5" font-weight="500" fill="#918c80">19% of basket</text>
+<text x="18.0" y="234.0" font-size="11.0" font-weight="700" fill="#2d2a24">AGENT ×7</text>
+<text x="282.0" y="234.0" font-size="11.0" font-weight="700" fill="#2d2a24" text-anchor="end">157.6K</text>
+<text x="24.0" y="245.0" font-size="7.5" font-weight="500" fill="#918c80">13% of basket</text>
+<text x="18.0" y="261.0" font-size="11.0" font-weight="700" fill="#2d2a24">READ ×173</text>
+<text x="282.0" y="261.0" font-size="11.0" font-weight="700" fill="#2d2a24" text-anchor="end">141.4K</text>
+<text x="24.0" y="272.0" font-size="7.5" font-weight="500" fill="#918c80">12% of basket</text>
+<text x="18.0" y="288.0" font-size="9.0" font-weight="500" fill="#918c80">+6 OTHERS ×53</text>
+<text x="282.0" y="288.0" font-size="9.0" font-weight="500" fill="#918c80" text-anchor="end">322.7K</text>
+<text x="24.0" y="299.0" font-size="7.5" font-weight="500" fill="#918c80">27% · write taskupdate taskcreate toolsearch askuserques…</text>
+<text x="18.0" y="326.0" font-size="7.5" font-weight="500" fill="#918c80">VOID / FAILED CALLS</text>
+<text x="282.0" y="326.0" font-size="7.5" font-weight="500" fill="#a64536" text-anchor="end">−4</text>
+
+<text x="18.0" y="340.0" font-size="9.0" font-weight="500" fill="#2d2a24">VOID EDIT-RETRY</text>
+<text x="282.0" y="340.0" font-size="9.0" font-weight="500" fill="#a64536" text-anchor="end">×2</text>
+<text x="18.0" y="354.0" font-size="9.0" font-weight="500" fill="#2d2a24">VOID WRITE-RETRY</text>
+<text x="282.0" y="354.0" font-size="9.0" font-weight="500" fill="#a64536" text-anchor="end">×1</text>
+<text x="18.0" y="368.0" font-size="9.0" font-weight="500" fill="#2d2a24">VOID EXITPLANMODE-ABORT</text>
+<text x="282.0" y="368.0" font-size="9.0" font-weight="500" fill="#a64536" text-anchor="end">×1</text>
+<text x="18.0" y="393.0" font-size="9.0" font-weight="500" fill="#2d2a24">TOKENS IN</text>
+<text x="282.0" y="393.0" font-size="9.0" font-weight="500" fill="#2d2a24" text-anchor="end">210.8K</text>
+<text x="18.0" y="408.0" font-size="9.0" font-weight="500" fill="#2d2a24">TOKENS OUT</text>
+<text x="282.0" y="408.0" font-size="9.0" font-weight="500" fill="#2d2a24" text-anchor="end">1.0M</text>
+<text x="18.0" y="423.0" font-size="9.0" font-weight="500" fill="#2d2a24">CACHED</text>
+<text x="282.0" y="423.0" font-size="9.0" font-weight="500" fill="#2d2a24" text-anchor="end">145.5M</text>
+<text x="18.0" y="438.0" font-size="9.0" font-weight="500" fill="#2d2a24">WRITTEN</text>
+<text x="282.0" y="438.0" font-size="9.0" font-weight="500" fill="#2d2a24" text-anchor="end">4.3M</text>
+<text x="18.0" y="453.0" font-size="9.0" font-weight="500" fill="#2d2a24">SUBTOTAL</text>
+<text x="282.0" y="453.0" font-size="9.0" font-weight="500" fill="#2d2a24" text-anchor="end">151.1M tok</text>
+<text x="18.0" y="468.0" font-size="9.0" font-weight="500" fill="#2d2a24">VOIDED CALLS</text>
+<text x="282.0" y="468.0" font-size="9.0" font-weight="500" fill="#a64536" text-anchor="end">4</text>
+
+<text x="18.0" y="497.0" font-size="11.0" font-weight="700" fill="#2d2a24">TOTAL DUE</text>
+<text x="282.0" y="497.0" font-size="16.0" font-weight="700" fill="#2d2a24" text-anchor="end" letter-spacing="0.04em">$116.66</text>
+<text x="18.0" y="509.0" font-size="7.5" font-weight="500" fill="#918c80">est. at public per-token rates · 574 calls · 101 stages</text>
+
+<text x="18.0" y="533.0" font-size="11.0" font-weight="700" fill="#2d2a24">TENDERED</text>
+<text x="282.0" y="533.0" font-size="7.5" font-weight="500" fill="#918c80" text-anchor="end">2 MODELS</text>
+<text x="18.0" y="548.0" font-size="9"><tspan font-weight="700" fill="#2d2a24">OPUS-4.8</tspan><tspan font-weight="500" fill="#918c80"> · main thread · 98%</tspan></text>
+<text x="282.0" y="548.0" font-size="9" font-weight="700" fill="#2d2a24" text-anchor="end">$114.29</text>
+<text x="18.0" y="563.0" font-size="9"><tspan font-weight="700" fill="#918c80">HAIKU-4.5</tspan><tspan font-weight="500" fill="#918c80"> · 7 subagents · 2%</tspan></text>
+<text x="282.0" y="563.0" font-size="9" font-weight="700" fill="#918c80" text-anchor="end">$2.37</text>
+<text x="18.0" y="578.0" font-size="7.5" font-weight="500" fill="#918c80">opus-4.8 dominant · 98% of charge</text>
+
+<g transform="translate(94.0,624.0)" fill="#2d2a24">
+<rect x="0.0" y="0.0" width="1.0" height="22.0"/><rect x="3.0" y="0.0" width="1.0" height="22.0"/><rect x="6.0" y="0.0" width="2.0" height="22.0"/><rect x="10.0" y="0.0" width="1.0" height="22.0"/><rect x="13.0" y="0.0" width="3.0" height="22.0"/><rect x="18.0" y="0.0" width="1.0" height="22.0"/><rect x="21.0" y="0.0" width="2.0" height="22.0"/><rect x="25.0" y="0.0" width="1.0" height="22.0"/><rect x="28.0" y="0.0" width="2.0" height="22.0"/><rect x="32.0" y="0.0" width="3.0" height="22.0"/><rect x="37.0" y="0.0" width="1.0" height="22.0"/><rect x="40.0" y="0.0" width="2.0" height="22.0"/><rect x="44.0" y="0.0" width="1.0" height="22.0"/><rect x="47.0" y="0.0" width="1.0" height="22.0"/><rect x="50.0" y="0.0" width="1.0" height="22.0"/><rect x="53.0" y="0.0" width="2.0" height="22.0"/><rect x="57.0" y="0.0" width="3.0" height="22.0"/><rect x="62.0" y="0.0" width="1.0" height="22.0"/><rect x="65.0" y="0.0" width="3.0" height="22.0"/><rect x="70.0" y="0.0" width="3.0" height="22.0"/><rect x="75.0" y="0.0" width="1.0" height="22.0"/><rect x="78.0" y="0.0" width="3.0" height="22.0"/><rect x="83.0" y="0.0" width="1.0" height="22.0"/><rect x="86.0" y="0.0" width="2.0" height="22.0"/><rect x="90.0" y="0.0" width="1.0" height="22.0"/><rect x="93.0" y="0.0" width="1.0" height="22.0"/><rect x="96.0" y="0.0" width="3.0" height="22.0"/><rect x="101.0" y="0.0" width="1.0" height="22.0"/><rect x="104.0" y="0.0" width="1.0" height="22.0"/><rect x="107.0" y="0.0" width="2.0" height="22.0"/><rect x="111.0" y="0.0" width="1.0" height="22.0"/></g>
+<text x="150.0" y="658.0" font-size="7.5" font-weight="500" fill="#918c80" text-anchor="middle">HW · 4CF230AA · MADE BY AGENTS · hyperweave.app</text>
+</svg>

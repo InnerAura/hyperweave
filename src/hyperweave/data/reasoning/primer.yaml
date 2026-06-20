@@ -278,3 +278,51 @@ primer:
         comparison cards drop their accent dot entirely, trading slot
         symmetry for the inert-versus-live read the topology exists to
         assert.
+  receipt:
+    dark:
+      intent: |-
+        Single-glance economics for one agent run as a printed proof on an
+        800x578 card (24px rails, 752px content): what it cost, where working
+        tokens went, and the lived history of the context window filling and
+        being reset. The lower burn curve reads the session as its resets
+        across the active span.
+      approach: |-
+        Accent-forward standard layout: the cost outcome sits at y72 (38px)
+        hard left, counterweighted by a right-aligned three-line MODEL MIX
+        block at y17/33/46; tool-spend bars run from y137 at a 23px pitch; a
+        COST BY MODEL proportion bar (y288, h20) partitions cost share with
+        segment widths closing exactly on the 752 right rail; the context
+        burn curve translates to y350. The genome signal hue carries the data
+        (cost, ramp, curve, ceiling), ink holds structure, eyebrows sit in
+        ink-secondary. Flat dark substrate with no lift.
+      tradeoffs: |-
+        No motion — a receipt is a frozen post-execution artifact. Dominance
+        is stated once in the corner and not repeated in the shelf header,
+        accepting mild split-figure duplication to de-load the band. The
+        proportion bar carries no inline text, leaning on the keyed legend.
+        Context occupancy and the error marks are a disclosed per-stage model,
+        not per-call telemetry; semantic red lifts to #EF4444 for AA and the
+        lift shadow is dropped, because a dark card casts nothing on a dark
+        host.
+    light:
+      intent: |-
+        The same 800x578 economics proof on paper — cost outcome, working-token
+        spend, the cost-by-model shelf and the context burn curve — seated on
+        the README white by the two-layer primer drop shadow inside the
+        14px-radius card.
+      approach: |-
+        Identical solved geometry to the dark substrate (zones at y28/72/93,
+        tool rows at the 23px pitch, shelf bar at y288, curve at y350): one
+        substrate-invariant stencil. Light variants supply the paper-card
+        gradient, the cobalt/variant signal and the dy2/dy6 lift drop-shadow,
+        whose flood-color is a literal genome value because var() never
+        resolves in filter attributes. The tool ramp and the area fill draw
+        from the genome's receipt_ramp tiers, not chassis constants.
+      tradeoffs: |-
+        Kept one geometry across dark and light so measured == rendered
+        coordinates cannot drift across the eight variants; substrate nuance
+        lives in material tokens (paper gradient, lift, ink roles), never a
+        second layout stencil. Semantic red steps to #DC2626 for AA on paper
+        while staying genome-invariant — state is not skin. The burn curve is
+        modelled per-stage from the compact payload, trading exact per-call
+        occupancy for a disclosed summary.

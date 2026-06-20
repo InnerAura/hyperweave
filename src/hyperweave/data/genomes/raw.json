@@ -1,0 +1,72 @@
+{
+  "id": "raw",
+  "name": "Raw",
+  "category": "light",
+  "profile": "flat",
+  "surface_0": "#f3f1ea",
+  "surface_1": "#f3f1ea",
+  "surface_2": "#e8e5db",
+  "ink": "#2d2a24",
+  "ink_secondary": "#918c80",
+  "ink_on_accent": "#f3f1ea",
+  "accent": "#a64536",
+  "accent_complement": "#918c80",
+  "accent_signal": "#a64536",
+  "accent_warning": "#a64536",
+  "accent_error": "#a64536",
+  "stroke": "#ded8cc",
+  "shadow_color": "#2d2a24",
+  "shadow_opacity": "0.10",
+  "glow": "0px",
+  "corner": "1",
+  "rhythm_base": "2.618s",
+  "density": "0.5",
+  "compatible_motions": [
+    "static"
+  ],
+  "variants": [],
+  "flagship_variant": "",
+  "stratum": "002-TRIBE",
+  "bg": "#f3f1ea",
+  "bg_alt": "#e8e5db",
+  "ink_bright": "#2d2a24",
+  "ink_sub": "#918c80",
+  "brand_text": "#2d2a24",
+  "metric_text": "#2d2a24",
+  "label_text": "#2d2a24",
+  "border_tint": "#ded8cc",
+  "glyph_inner": "#2d2a24",
+  "frame_fill": "#f3f1ea",
+  "fonts": [
+    "jetbrains-mono"
+  ],
+  "font_display": "'JetBrains Mono','SF Mono',ui-monospace,monospace",
+  "font_mono": "'JetBrains Mono','SF Mono',ui-monospace,monospace",
+  "material_specular": "0.0",
+  "material_roughness": "0.9",
+  "paradigms": {
+    "receipt": "raw"
+  },
+  "structural": {
+    "stroke_linejoin": "miter",
+    "data_point_shape": "square",
+    "data_layout": "register-tape",
+    "fill_density": "flat",
+    "shape_rendering": "geometricPrecision"
+  },
+  "typography": {
+    "hero_font": "'JetBrains Mono','SF Mono',ui-monospace,monospace",
+    "mono_font": "'JetBrains Mono','SF Mono',ui-monospace,monospace",
+    "hero_weight": 700,
+    "weight_hierarchy": "700/500"
+  },
+  "material": {
+    "surface": "onionskin-vellum",
+    "depth": "shallow",
+    "filter_chain": "cockle-translucent-grain",
+    "sheen_dim": "#d8d2c4",
+    "sheen_bright": "#fffffa",
+    "sheen_shadow": "#4c4636",
+    "cockle_light": "#fffefb"
+  }
+}

@@ -4,13 +4,15 @@ Replaces the single empirical ``data/telemetry/tool-classes.yaml`` (which
 co-mingled every runtime's tools in one namespace) with per-runtime
 registries at ``data/telemetry/runtimes/{runtime}.yaml``. Each registry
 declares its detection rule (how to recognize a JSONL of this runtime
-from its first line), parser module (for dispatcher import), genome /
-glyph / provider_label (for resolver lookup), tool table, and pattern
+from its first line), parser module (for dispatcher import), glyph +
+provider_label (the receipt's identity package), tool table, and pattern
 rules (for namespaced families like MCP).
 
 Adding a new runtime is a YAML drop-in: one file in ``runtimes/``, one
-parser module, one genome JSON. No dispatcher edits, no resolver
-branching — mirrors the paradigm-dispatch pattern (Invariant 12).
+parser module. No dispatcher edits, no resolver branching — mirrors the
+paradigm-dispatch pattern (Invariant 12). The runtime contributes
+**identity only** (glyph + wordmark); receipts always render on the
+primer genome, so a runtime never names a theme.
 """
 
 from __future__ import annotations
@@ -74,13 +76,14 @@ class RuntimeRegistry:
 
     Holds enough metadata to (a) detect when a JSONL belongs to this
     runtime, (b) dispatch to the correct parser, and (c) resolve the
-    receipt's identity package (genome, glyph, provider label) without
-    any ``if runtime == "..."`` branching.
+    receipt's identity package (glyph + provider label) without any
+    ``if runtime == "..."`` branching. A runtime supplies **identity only**
+    (glyph + wordmark) — never a theme; the receipt always renders on the
+    primer genome and the variant carries the chromatics.
     """
 
     runtime: str
     parser_module: str
-    genome: str
     glyph: str
     provider_label: str
     detection: DetectionRule
@@ -109,7 +112,6 @@ def _build_registry(data: Mapping[str, Any]) -> RuntimeRegistry:
     return RuntimeRegistry(
         runtime=str(data["runtime"]),
         parser_module=str(data["parser"]),
-        genome=str(data["genome"]),
         glyph=str(data["glyph"]),
         provider_label=str(data["provider_label"]),
         detection=detection,

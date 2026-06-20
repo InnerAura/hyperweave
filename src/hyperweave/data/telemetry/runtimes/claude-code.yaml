@@ -7,7 +7,6 @@
 
 runtime: claude-code
 parser: hyperweave.telemetry.parser
-genome: telemetry-claude-code
 glyph: claude-glyph
 provider_label: Claude Code
 

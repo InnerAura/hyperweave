@@ -1,0 +1,59 @@
+{# Context-load burn-curve panel — stamps the ContextLoadLayout geometry.
+
+   All coordinates are group-local (the parent translates to 24,350). Every
+   path / mark / tick / label is pre-computed by compose/chart/area.py and the
+   resolver's glyph-prep; this partial only supplies colour (from the palette)
+   and stamps. Mirrors the specimen's context-load group (lines 157-223). #}
+{% set pal = receipt_palette %}
+{% set lay = zone_context_load.layout %}
+{% set hdr = lay.header %}
+
+{# header row #}
+<text class="s" x="{{ hdr.eyebrow_x }}" y="{{ hdr.y }}" font-size="7" fill="{{ pal.ink_secondary }}" font-weight="700" letter-spacing="0.22em">{{ hdr.eyebrow }}</text>
+<text class="s" x="{{ hdr.detail_x }}" y="{{ hdr.y }}" font-size="7.5" fill="{{ pal.ink_secondary }}" font-weight="400" letter-spacing="0.04em">{{ hdr.detail }}</text>
+<text class="s" x="{{ hdr.peak_label_x }}" y="{{ hdr.y }}" font-size="7.5" fill="{{ pal.ink }}" font-weight="700" text-anchor="end" letter-spacing="0.06em">{{ hdr.peak_label }}</text>
+{% if hdr.resets_label %}<text class="s" x="{{ hdr.sep_x }}" y="{{ hdr.y }}" font-size="7.5" fill="{{ pal.dim_ink }}" font-weight="400" text-anchor="end">·</text>
+<text class="s" x="{{ hdr.resets_label_x }}" y="{{ hdr.y }}" font-size="7.5" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end" letter-spacing="0.04em">{{ hdr.resets_label }}</text>{% endif %}
+
+{# plot box #}
+<rect x="{{ ctx_plot.box_x }}" y="{{ ctx_plot.box_y }}" width="{{ ctx_plot.box_w }}" height="{{ ctx_plot.box_h }}" fill="{{ pal.track }}" rx="{{ rg.ctx_box_rx }}"/>
+<rect x="{{ ctx_plot.box_x }}" y="{{ ctx_plot.box_y }}" width="{{ ctx_plot.box_w }}" height="{{ ctx_plot.box_h }}" fill="none" rx="{{ rg.ctx_box_rx }}" stroke="{{ pal.track_stroke }}" stroke-width="{{ rg.ctx_box_sw }}"/>
+
+{# y-axis: baseline, mid gridlines, ceiling #}
+<line x1="{{ lay.baseline.x1 }}" y1="{{ lay.baseline.y }}" x2="{{ lay.baseline.x2 }}" y2="{{ lay.baseline.y }}" stroke="{{ pal.grid_ink }}" stroke-width="0.8" opacity="0.18"/>
+<text class="s" x="{{ lay.baseline.label_x }}" y="{{ lay.baseline.label_y }}" font-size="7.5" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end">{{ lay.baseline.label }}</text>
+{% for g in lay.gridlines %}<line x1="{{ g.x1 }}" y1="{{ g.y }}" x2="{{ g.x2 }}" y2="{{ g.y }}" stroke="{{ pal.grid_ink }}" stroke-width="0.6" stroke-dasharray="3,4" opacity="0.07"/>
+<text class="s" x="{{ g.label_x }}" y="{{ g.label_y }}" font-size="7.5" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="end">{{ g.label }}</text>
+{% endfor %}<line x1="{{ lay.ceiling_line.x1 }}" y1="{{ lay.ceiling_line.y }}" x2="{{ lay.ceiling_line.x2 }}" y2="{{ lay.ceiling_line.y }}" stroke="{{ pal.signal }}" stroke-width="0.75" stroke-dasharray="2,3" opacity="0.35"/>
+<text class="s" x="{{ lay.ceiling_line.label_x }}" y="{{ lay.ceiling_line.label_y }}" font-size="7.5" fill="{{ pal.signal }}" font-weight="700" text-anchor="end">{{ lay.ceiling_line.label }}</text>
+
+{# time ticks (marks + labels + interior gridlines). area.py emits exact floats;
+   round for clean output (the specimen carries 2dp tick x's). #}
+{% for t in lay.time_ticks %}{% if t.gridline %}<line x1="{{ t.x | round(2) }}" y1="{{ t.gridline_y1 }}" x2="{{ t.x | round(2) }}" y2="{{ t.gridline_y2 }}" stroke="{{ pal.grid_ink }}" stroke-width="0.5" opacity="0.05"/>
+{% endif %}<line x1="{{ t.x | round(2) }}" y1="{{ t.mark_y1 }}" x2="{{ t.x | round(2) }}" y2="{{ t.mark_y2 }}" stroke="{{ pal.grid_ink }}" stroke-width="0.9" opacity="0.3"/>
+<text class="s" x="{{ t.x | round(2) }}" y="{{ t.label_y }}" font-size="8" fill="{{ pal.ink_secondary }}" font-weight="400" text-anchor="{{ t.label_anchor }}">{{ t.label }}</text>
+{% endfor %}
+
+{# occupancy curve: filled area + signal stroke line #}
+<path d="{{ lay.area_path }}" fill="url(#{{ uid }}-ctx-fill)"/>
+<path d="{{ lay.line_path }}" fill="none" stroke="{{ pal.signal }}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+
+{# reset glyphs (typed: compact chevron / clear circle / auto diamond) #}
+{% for gl in ctx_reset_glyphs %}{% if gl.kind == 'clear' %}<circle cx="{{ gl.cx }}" cy="{{ gl.cy }}" r="{{ gl.r }}" fill="none" stroke="{{ pal.grid_ink }}" stroke-width="1.4"/>
+{% elif gl.kind == 'auto' %}<path d="{{ gl.path }}" fill="{{ pal.grid_ink }}"/>
+{% else %}<path d="{{ gl.path }}" fill="none" stroke="{{ pal.grid_ink }}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+{% endif %}{% endfor %}
+
+{# error ticks: short red marks in the axis margin at each main-thread error's
+   real minute (anchored to WHEN, below the baseline — never collide with the curve) #}
+{% for tk in lay.error_ticks %}<line x1="{{ tk.x }}" y1="{{ tk.y1 }}" x2="{{ tk.x }}" y2="{{ tk.y2 }}" stroke="{{ pal.error }}" stroke-width="1.4" opacity="0.95"/>
+{% endfor %}
+
+{# legend row (context line + reset glyphs + error) #}
+{% for item in ctx_legend %}{% if item.kind == 'line' %}<line x1="{{ item.swatch_x }}" y1="{{ ctx_legend_y }}" x2="{{ item.swatch_x2 }}" y2="{{ ctx_legend_y }}" stroke="{{ pal.signal }}" stroke-width="2" stroke-linecap="round"/>
+{% elif item.kind == 'clear' %}<circle cx="{{ item.cx }}" cy="{{ ctx_legend_y }}" r="{{ rg.ctx_legend_clear_r }}" fill="none" stroke="{{ pal.grid_ink }}" stroke-width="1.4"/>
+{% elif item.kind == 'auto' %}<path d="{{ item.path }}" fill="{{ pal.grid_ink }}"/>
+{% elif item.kind == 'error' %}<line x1="{{ item.cx }}" y1="{{ ctx_legend_y - 3.4 }}" x2="{{ item.cx }}" y2="{{ ctx_legend_y + 3.4 }}" stroke="{{ pal.error }}" stroke-width="1.6"/>
+{% else %}<path d="{{ item.path }}" fill="none" stroke="{{ pal.grid_ink }}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+{% endif %}<text class="s" x="{{ item.label_x }}" y="{{ ctx_legend_text_y }}" font-size="8.5" fill="{{ pal.ink_secondary }}" font-weight="400">{{ item.label }}</text>
+{% endfor %}

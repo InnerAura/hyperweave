@@ -5,6 +5,34 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-alpha.4] - 2026-06-20
+
+Rebuilds the session receipt: new structure, genome-unified rendering across all variants, multi-model cost attribution, and a paper-receipt variant.
+
+### Added
+
+- **Cost by model** — per-model cost breakdown, with subagent work folded into the parent session's totals.
+- **Context load** — context-window occupancy over the session, with compaction and reset markers against the window ceiling.
+- **Raw receipt** — the same session as a paper register receipt, tools as line items, models as payment tender.
+- **Embedded payload** — every receipt carries its session data as JSON plus a compact digest; identical inputs produce identical files.
+
+### Changed
+
+- **Receipt rendering** — tool spend is now proportional bars; the receipt renders on the primer genome in eight color variants.
+- **Filename** — keyed to the session start date and first prompt; the live session name shows in the footer.
+- **Pricing** — adds Fable 5 and current Claude and OpenAI rates.
+
+### Fixed
+
+- **Context occupancy** — corrects the window ceiling and Codex per-turn measurement so the curve reflects true context usage.
+- **Turn count** — no longer inflated by compaction summaries.
+- **Error count** — tool, header, and curve error counts now reconcile to one definition.
+
+### Notes
+
+- Receipts have no URL form: they render from a transcript via the CLI, `POST /v1/compose`, or MCP.
+- Breaking: the rhythm strip frame is removed and `marquee-horizontal` is renamed `marquee`.
+
 ## [0.4.0-alpha.3] - 2026-06-15
 
 Adds the diagram frame for rendering flowcharts, architecture diagrams, and other topologies as self-contained SVGs.

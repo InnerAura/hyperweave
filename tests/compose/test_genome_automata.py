@@ -123,9 +123,7 @@ def test_state_palette_backfilled_across_shipped_genomes() -> None:
         "automata",
         "brutalist",
         "chrome",
-        "telemetry-voltage",
-        "telemetry-claude-code",
-        "telemetry-cream",
+        "primer",
     ):
         spec = genomes[slug]
         assert spec.state_passing_core, f"{slug} missing state_passing_core"
@@ -148,8 +146,7 @@ def test_automata_paradigm_validation_passes_with_unknown_cellular() -> None:
 
 def test_every_shipped_genome_still_passes_validation_after_backfill() -> None:
     """Regression: backfilling state-palette fields must not break validation
-    for brutalist/chrome/telemetry-voltage and the new telemetry-claude-code
-    and telemetry-cream skins."""
+    for any shipped genome (brutalist, chrome, automata, primer)."""
     paradigms = get_paradigms()
     for genome in get_genome_specs().values():
         validate_genome_against_paradigms(genome, paradigms)

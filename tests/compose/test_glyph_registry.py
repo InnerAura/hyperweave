@@ -16,7 +16,17 @@ from hyperweave.core.matrix import GlyphTint
 GLYPHS = load_glyphs()
 
 _FIELD_ORDER = ["path", "viewBox", "brand_color", "category", "mono", "gradient", "fill_rule", "color_paths"]
-_GEOMETRIC = {"circle", "diamond", "hexagon", "shield", "star", "triangle"}
+_GEOMETRIC = {
+    "circle",
+    "diamond",
+    "hexagon",
+    "shield",
+    "shieldcheck",
+    "star",
+    "triangle",
+    "braces",
+    "textlines",
+}
 _EVENODD = {"azure", "langfuse", "msteams", "playwright", "vscode", "zoom"}
 
 
@@ -52,7 +62,7 @@ class TestRegistryShape:
         assert all(GLYPHS[k]["mono"] is True for k in monos)
         full = {k for k, v in GLYPHS.items() if "color_paths" in v or "gradient" in v}
         assert not monos & full, monos & full
-        assert len(monos) == 121
+        assert len(monos) == 124
         assert len(full) == 38
         assert len(set(GLYPHS) - monos - full) == 30  # the named wave-3 debt
 
