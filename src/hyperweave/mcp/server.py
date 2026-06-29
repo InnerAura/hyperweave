@@ -1,6 +1,6 @@
 """FastMCP v3 server -- MCP tools and resources for HyperWeave.
 
-4 tools (compose, live, kit, discover) + 3 resources (schema, genomes, motions).
+Tools: compose, validate, discover + 3 resources (schema, genomes, motions).
 """
 
 from __future__ import annotations
@@ -17,7 +17,8 @@ mcp = FastMCP(
     version=__version__,
     instructions=(
         "Compositor API for self-contained SVG artifacts from semantic parameters. "
-        "Use hw_compose for any artifact type. Use hw_live for live-data badges. "
+        "Use hw_compose for any artifact type (returns {envelope, url}, never inline SVG). "
+        "Use hw_validate to check a spec without rendering. "
         "Use hw_discover to see available genomes, motions, glyphs, and frame types."
     ),
 )
@@ -59,13 +60,24 @@ async def hw_compose(
     edge_motion: str = "",
     chrome: str = "card",
     render_target: str = "svg",
-) -> str:
-    """Compose a HyperWeave artifact. Returns self-contained SVG.
+    respond: str = "envelope",
+) -> dict[str, Any] | str:
+    """Compose a HyperWeave artifact.
+
+    Returns ``{envelope, url, width, height, genome, variant}`` — the actionable
+    hwz/1 envelope plus a content-addressed handle to the pixels. The SVG bytes
+    are cached and served at ``url``; they never travel inline (emit ``![](url)``,
+    not tens of KB of markup). With ``render_target='markdown'`` returns the text
+    shadow string instead. Set ``respond='svg'`` to get the raw SVG markup inline
+    instead of the ``{envelope, url}`` handle — for a caller that must embed the
+    pixels directly (the artifact is still cached under ``url``).
 
     type: badge | strip | icon | divider | marquee |
-          receipt | stats | chart | matrix
+          receipt | stats | chart | matrix | diagram
 
-    genome: brutalist (dark, sharp corners, emerald accent) |
+    genome: primer (the on-ramp — light/dark, 8 variants noir/carbon/space/anvil/
+              porcelain/cream/dusk/petrol; the ONLY diagram-capable genome) |
+            brutalist (dark, sharp corners, emerald accent) |
             chrome (dark, metallic, 5 named variants: horizon/abyssal/lightning/graphite/moth) |
             automata (cellular, 16 solo tones: violet/teal/bone/steel/amber/jade/magenta/
               cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper
@@ -233,63 +245,126 @@ async def hw_compose(
     result = compose(spec)
     if render_target == "markdown":
         if not result.markdown:
-            raise ValueError(f"frame type {type!r} has no markdown projection (matrix and diagram in v0.4)")
+            raise ValueError(f"frame type {type!r} has no markdown projection")
         return result.markdown
-    return result.svg
+
+    # {envelope, url} contract — cache the pixels under their content digest and
+    # return only the actionable envelope + a content-addressed handle. The SVG
+    # bytes never enter the agent's context: it emits ![](url) (~10 tokens), not
+    # tens of KB of markup. This is what makes the multi-turn loop cheap.
+    from hyperweave.compose.artifact_store import store_artifact
+    from hyperweave.compose.surface import build_artifact_url
+    from hyperweave.config.settings import get_settings
+    from hyperweave.core.envelope import extract_envelope
+
+    envelope = extract_envelope(result.svg) or {}
+    digest = str(envelope.get("id", ""))
+    url = ""
+    if digest:
+        store_artifact(digest, result.svg)
+        url = build_artifact_url(digest, get_settings().public_base_url)
+    if respond == "svg":
+        # Opt-in inline pixels for a caller that must embed the markup directly.
+        # The artifact is still cached under `url`, so the handle stays valid.
+        return result.svg
+    return {
+        "envelope": envelope,
+        "url": url,
+        "width": result.width,
+        "height": result.height,
+        "genome": spec.genome_id,
+        "variant": spec.variant,
+    }
 
 
 @mcp.tool()
-async def hw_live(
-    provider: str,
-    identifier: str,
-    metric: str,
-    genome: str = "brutalist",
-    glyph: str = "",
-    state: str = "active",
-) -> str:
-    """Compose a data-driven badge — convenience wrapper over hw_compose.
+async def hw_validate(spec: dict[str, Any]) -> dict[str, Any]:
+    """Validate a spec envelope without rendering — returns a {valid, ...} report.
 
-    Equivalent to ``hw_compose(type="badge", title=metric.upper(),
-    data=f"{provider}:{identifier}.{metric}", ...)``. Kept as a separate
-    tool because the (provider, identifier, metric) triple is more
-    discoverable than the colon/dot DSL for first-time agents. New code
-    should prefer ``hw_compose`` with the unified ``data`` parameter.
-
-    provider: gh | github | pypi | npm | arxiv | huggingface | hf | docker |
-              crates | cargo | scorecard | dora
-    identifier: owner/repo (github/scorecard/dora), package-name (pypi/npm/crates),
-                paper-id (arxiv)
-    metric: stars | forks | version | downloads | likes | pull_count |
-            score (scorecard) | deploy_frequency (dora)
+    spec: the canonical spec envelope, e.g.
+        {"type": "matrix", "genome": "primer", "variant": "porcelain",
+         "spec": {...frame IR...}}
+    On failure the report carries the structured error envelope
+    (``{"valid": false, "error": {code, message, fix, detail}}``).
     """
-    return await hw_compose(
-        type="badge",
-        title=metric.upper(),
-        data=f"{provider}:{identifier}.{metric}",
-        genome=genome,
-        glyph=glyph,
-        state=state,
+    from hyperweave.compose.surface import SpecEnvelope, validate_surface
+
+    return validate_surface(
+        SpecEnvelope(
+            type=str(spec.get("type", "")),
+            genome=str(spec.get("genome", "primer")),
+            variant=str(spec.get("variant", "")),
+            spec=dict(spec.get("spec") or {}),
+        )
     )
 
 
+def _verb_result(fn: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Run a verb, returning its result dict or the structured error envelope."""
+    from hyperweave.core.errors import HwError
+
+    try:
+        return fn(*args, **kwargs).to_dict()  # type: ignore[no-any-return]
+    except HwError as exc:
+        return exc.envelope()
+
+
 @mcp.tool()
-async def hw_kit(
-    type: str = "readme",
-    genome: str = "brutalist",
-    project: str = "",
-    badges: str = "",
-    social: str = "",
-) -> dict[str, str]:
-    """Compose a full artifact kit. Returns dict of SVGs keyed by artifact name.
+async def hw_extract(svg_or_url: str, respond: str = "envelope") -> dict[str, Any]:
+    """Extract the seed at a depth — envelope (compact digest) | payload (lossless) | markdown.
 
-    type: readme (default)
-    badges: comma-separated "label:value" pairs, e.g. "build:passing,version:v0.6.3"
-    social: comma-separated glyph IDs, e.g. "github,discord,x"
+    The payload replants to a byte-identical artifact; the envelope is the
+    ~200-token actionable read. ``hw_compress`` is the alias for envelope depth.
     """
-    from hyperweave.kit import compose_kit
+    from hyperweave.verbs import extract
 
-    results = compose_kit(type, genome, project, badges, social)
-    return {name: result.svg for name, result in results.items()}
+    return _verb_result(extract, svg_or_url, respond=respond)
+
+
+@mcp.tool()
+async def hw_compress(svg_or_url: str) -> dict[str, Any]:
+    """Alias for hw_extract(respond='envelope') — the kept name for the envelope-depth read."""
+    from hyperweave.verbs import extract
+
+    return _verb_result(extract, svg_or_url, respond="envelope")
+
+
+@mcp.tool()
+async def hw_verify(svg: str) -> dict[str, Any]:
+    """Recompute the hash; prove the artifact verifiably IS its data (id == sha256(payload))."""
+    from hyperweave.verbs import verify
+
+    return _verb_result(verify, svg)
+
+
+@mcp.tool()
+async def hw_transform(svg_or_id: str, mutations: list[dict[str, Any]]) -> dict[str, Any]:
+    """Mutate an artifact via structural JSON patch → a new artifact.
+
+    Returns {envelope, url, lineage} — the SVG is cached, never inlined. The
+    mutation is a list of RFC-6902 ops (add/remove/replace/move/copy/test); a
+    patch that breaks the frame schema fails cleanly as SPEC_INVALID.
+    """
+    from hyperweave.config.settings import get_settings
+    from hyperweave.verbs import transform
+
+    return _verb_result(transform, svg_or_id, mutations, base_url=get_settings().public_base_url)
+
+
+@mcp.tool()
+async def hw_diff(svg_a: str, svg_b: str) -> dict[str, Any]:
+    """Payload-bound structured delta between two artifacts (added/removed/changed)."""
+    from hyperweave.verbs import diff
+
+    return _verb_result(diff, svg_a, svg_b)
+
+
+@mcp.tool()
+async def hw_query(svg: str, question: str) -> dict[str, Any]:
+    """Answer a question about an artifact from its compact envelope (cheap, not faithful)."""
+    from hyperweave.verbs import query
+
+    return _verb_result(query, svg, question)
 
 
 @mcp.tool()
@@ -336,6 +411,11 @@ async def hw_discover(
 
     if what in ("all", "frames"):
         result["frames"] = [ft.value for ft in FrameType]
+
+    if what in ("all", "verbs"):
+        from hyperweave.core.contract import discover_verbs
+
+        result["verbs"] = discover_verbs()
 
     if what in ("all", "matrix"):
         from hyperweave.compose.matrix.input import matrix_preset_names

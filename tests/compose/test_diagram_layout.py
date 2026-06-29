@@ -245,7 +245,7 @@ class TestSequence:
         assert len(lay.activations) == 3
         assert len(lay.particles) == len(lay.connectors)  # one dot per message
         assert all(not c.light_layers for c in lay.connectors)  # strokes stay full-weight
-        labels = [c.label.text for c in lay.connectors if c.label]
+        labels = [line.text for c in lay.connectors for line in c.label_lines]
         assert labels == ["call()", "ret", "notify"]
         ret = lay.connectors[1]
         assert ret.semantic_dash == "4 5"

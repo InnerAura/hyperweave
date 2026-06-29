@@ -250,6 +250,12 @@ def compute_matrix_layout(
             display_value(row.cells[j].value), col_w[j] - 2 * cfg.cell_pad_x, voice, max_lines=text_max_lines
         )
 
+    def _note_overflow_lines(row: MatrixRow, j: int) -> int:
+        note = row.cells[j].note
+        if not note:
+            return 0
+        return text_lines_needed(note, col_w[j] - 2 * cfg.cell_pad_x, cfg.row_sub_voice, max_lines=2)
+
     mode = spec.row_height
     chip_wraps = any(
         column.kind is CellKind.CHIP
@@ -263,7 +269,13 @@ def compute_matrix_layout(
         column.kind is CellKind.TEXT and any(_text_overflow_lines(row, j) > 1 for row in spec.rows)
         for j, column in enumerate(data_cols)
     )
-    if chip_wraps or text_wraps:
+    # A note that wraps (BUG-001) also forces CONTENT mode: even with a
+    # single-line value, the second note line needs the row to grow.
+    note_wraps = any(
+        column.kind is CellKind.TEXT and any(_note_overflow_lines(row, j) > 1 for row in spec.rows)
+        for j, column in enumerate(data_cols)
+    )
+    if chip_wraps or text_wraps or note_wraps:
         # Chip and text columns ALWAYS grow rows to fit — packed lists and
         # wrapped runs are the standard rendering; truncation/overflow caps
         # are for the extreme case (past max_chip_rows / max_lines). A
@@ -285,7 +297,12 @@ def compute_matrix_layout(
                 h = max(h, (lines - 1) * chip_pitch + float(chip_geo.get("height", 17)) + 24.0)
             elif column.kind is CellKind.TEXT:
                 lines = _text_overflow_lines(row, j)
-                extra = cfg.row_sub_voice.size + 6.0 if (lines > 1 and row.cells[j].note) else 0.0
+                note_lines = _note_overflow_lines(row, j)
+                # A single-line value tucks one note line into row_pitch; extra
+                # rows are needed only beyond that. A multi-line value sends the
+                # whole note below its stack, so every note line is extra.
+                extra_note = note_lines if lines > 1 else max(0, note_lines - 1)
+                extra = extra_note * (cfg.row_sub_voice.size + 6.0)
                 h = max(h, (lines - 1) * text_pitch + cfg.row_pitch + extra)
         row_h.append(h)
 

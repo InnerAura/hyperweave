@@ -17,15 +17,16 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
 from hyperweave import __version__
+from hyperweave.compose.artifact_store import get_artifact
 from hyperweave.compose.engine import compose
 from hyperweave.compose.resolver import GenomeNotFoundError
+from hyperweave.compose.surface import SpecEnvelope, validate_surface
 from hyperweave.config.loader import get_loader
 from hyperweave.config.settings import get_settings
 from hyperweave.connectors.base import close_client, get_client
 from hyperweave.connectors.github import fetch_stargazer_history, fetch_user_stats
 from hyperweave.core.enums import FrameType
 from hyperweave.core.models import ComposeSpec
-from hyperweave.kit import compose_kit
 from hyperweave.render.fonts import load_font_face_css
 from hyperweave.render.templates import render_template
 from hyperweave.serve.data_tokens import (
@@ -219,6 +220,18 @@ class ComposeRequest(BaseModel):
     respond: str = "svg"
     """Response shape: ``svg`` (raw image bytes, default) or ``json``
     (``{svg, markdown, width, height}`` — the markdown shadow alongside)."""
+
+
+class SpecEnvelopeBody(BaseModel):
+    """The canonical spec-envelope POST body (unified surface)."""
+
+    type: str
+    genome: str = "primer"
+    variant: str = ""
+    spec: dict[str, Any] = {}
+    data: str = ""
+    target: str = "web"
+    emit: list[str] = ["svg"]
 
 
 # Composition endpoints
@@ -700,16 +713,153 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
     return _compose_and_respond(spec, request)
 
 
-@app.post("/v1/diagram", response_class=Response)
-async def compose_diagram_post(request: Request, req: ComposeRequest) -> Response:
-    """Thin alias for POST /v1/compose pinned to the diagram frame.
+@app.post("/v1/validate", response_model=None)
+async def validate_post(body: SpecEnvelopeBody) -> JSONResponse:
+    """Validate a spec envelope without rendering. Returns a {valid, ...} report."""
+    report = validate_surface(
+        SpecEnvelope(
+            type=body.type,
+            genome=body.genome,
+            variant=body.variant,
+            spec=body.spec,
+            data=body.data,
+            target=body.target,
+            emit=tuple(body.emit),
+        )
+    )
+    return JSONResponse(report, status_code=200 if report.get("valid") else 400)
 
-    The diagram spec rides ``req.diagram`` (edge_motion and per-edge declarations
-    live inside it); every ComposeRequest control — genome, variant, performance,
-    chrome, ``respond`` — applies unchanged. Lets a caller POST a custom diagram
-    without restating ``type``, mirroring the GET ``/v1/diagram/{preset}`` route.
+
+@app.get("/v1/a/{digest}", response_class=Response)
+async def serve_artifact(digest: str) -> Response:
+    """Content-addressed handle: GET /v1/a/{digest} serves the stored SVG.
+
+    The compact handle the round-trip loop embeds. Served from the in-process
+    LRU, falling back to the durable disk tier when ``HW_ARTIFACT_CACHE_DIR`` is
+    set — so a cold handle (per-process eviction or a restart) still resolves
+    cross-session from disk. Only when neither tier holds the id does it 404, and
+    the caller falls back to the self-describing spec URL.
     """
-    return await compose_post(request, req.model_copy(update={"type": "diagram"}))
+    svg = get_artifact(digest)
+    if svg is None:
+        return JSONResponse(
+            {
+                "error": {
+                    "code": "ENVELOPE_CORRUPT",
+                    "message": "artifact not in cache",
+                    "fix": "recompose; the content cache is per-process and may have evicted this id",
+                    "detail": {},
+                }
+            },
+            status_code=404,
+        )
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
+
+
+# ── Verb routes (read/write algebra over the seed) ───────────────────────────
+
+
+class _ExtractBody(BaseModel):
+    source: str  # SVG string or /v1/a/{digest} url
+    respond: str = "envelope"
+
+
+class _VerifyBody(BaseModel):
+    svg: str
+
+
+class _TransformBody(BaseModel):
+    source: str
+    mutations: list[dict[str, Any]]
+
+
+class _DiffBody(BaseModel):
+    a: str
+    b: str
+
+
+class _QueryBody(BaseModel):
+    svg: str
+    question: str
+
+
+def _verb_response(fn: Any, *args: Any, **kwargs: Any) -> JSONResponse:
+    """Run a verb, return its result dict or the structured error envelope + 4xx."""
+    from hyperweave.core.errors import HwError
+
+    try:
+        return JSONResponse(fn(*args, **kwargs).to_dict())
+    except HwError as exc:
+        return JSONResponse(exc.envelope(), status_code=exc.http_status)
+
+
+@app.post("/v1/extract", response_model=None)
+async def extract_post(body: _ExtractBody) -> JSONResponse:
+    """Extract the seed at envelope | payload | markdown depth."""
+    from hyperweave.verbs import extract
+
+    return _verb_response(extract, body.source, respond=body.respond)
+
+
+@app.post("/v1/verify", response_model=None)
+async def verify_post(body: _VerifyBody) -> JSONResponse:
+    """Recompute the hash; prove id == sha256(payload)."""
+    from hyperweave.verbs import verify
+
+    return _verb_response(verify, body.svg)
+
+
+@app.post("/v1/transform", response_model=None)
+async def transform_post(body: _TransformBody) -> JSONResponse:
+    """Mutate an artifact via structural JSON patch → new artifact ({envelope, url})."""
+    from hyperweave.verbs import transform
+
+    return _verb_response(transform, body.source, body.mutations, base_url=get_settings().public_base_url)
+
+
+@app.post("/v1/diff", response_model=None)
+async def diff_post(body: _DiffBody) -> JSONResponse:
+    """Payload-bound structured delta between two artifacts."""
+    from hyperweave.verbs import diff
+
+    return _verb_response(diff, body.a, body.b)
+
+
+@app.post("/v1/query", response_model=None)
+async def query_post(body: _QueryBody) -> JSONResponse:
+    """Answer a question about an artifact from its compact envelope."""
+    from hyperweave.verbs import query
+
+    return _verb_response(query, body.svg, body.question)
+
+
+@app.get("/llms.txt", response_class=Response)
+async def llms_txt() -> Response:
+    """The agent contract — a cold agent reads this to discover the protocol."""
+    from hyperweave.core.contract import LLMS_TXT
+
+    return Response(
+        content=LLMS_TXT,
+        media_type="text/plain; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/skill", response_class=Response)
+async def skill_md() -> Response:
+    """The shippable agent SKILL file (the verb workflow)."""
+    path = get_settings().data_dir / "skills" / "hyperweave-verbs" / "SKILL.md"
+    if not path.exists():
+        return Response(content="SKILL file not packaged", media_type="text/plain", status_code=404)
+    return Response(
+        content=path.read_text(encoding="utf-8"),
+        media_type="text/markdown; charset=utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 # ── Matrix routes ────────────────────────────────────────────────────────────
@@ -1070,22 +1220,6 @@ async def compose_stats(
         pair=pair,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl=ttl)
-
-
-class KitRequest(BaseModel):
-    """Kit compose request."""
-
-    genome: str = "brutalist"
-    project: str = ""
-    badges: str = ""
-    social: str = ""
-
-
-@app.post("/v1/kit/readme", response_model=None)
-async def compose_kit_post(req: KitRequest) -> dict[str, str]:
-    """Compose a full artifact kit. Returns dict of SVG strings."""
-    results = compose_kit("readme", req.genome, req.project, req.badges, req.social)
-    return {name: result.svg for name, result in results.items()}
 
 
 # Discovery endpoints

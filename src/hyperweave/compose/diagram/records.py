@@ -151,7 +151,9 @@ class ConnectorPlacement:
     static_dash: str = ""
     """The dasharray a static-track stroke stamps ('' = solid): the
     semantic dash, or the default dash for inert edges."""
-    label: DiagramText | None = None
+    label_lines: tuple[DiagramText, ...] = ()
+    """Edge label, wrapped to at most two lines (BUG-001) and centered on the
+    label anchor; the ellipsis lands only on the final permitted line."""
     light_layers: tuple[LightLayer, ...] = ()
     length: float = 0.0
     lane: int = 0

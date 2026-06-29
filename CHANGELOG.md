@@ -5,6 +5,35 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-alpha.5] - 2026-06-28
+
+Turns every artifact into a re-ingestible object and adds a read/write verb algebra, a composition layer, and content-addressed transport.
+
+### Added
+
+- **Embedded payload** — every artifact carries its full spec plus a compact `hwz/1` envelope (sha256 id); identical inputs produce identical files.
+- **Verb algebra** — extract, verify, transform, diff, and query run over any artifact, on HTTP (`POST /v1/{verb}`) and MCP.
+- **DocumentSpec composition** — assemble prose, headings, captions, and embedded artifacts into one SVG or Markdown document.
+- **Content-addressed transport** — `compose` and MCP return a link to the cached pixels (`/v1/a/{id}`), not inline SVG; an opt-in disk tier serves them across restarts.
+- **Discoverability** — `GET /llms.txt`, an agent-instructions doc at `GET /skill`, and the `hw_discover` MCP tool expose the contract to agents.
+- **Validate + font modes** — `hyperweave validate` and `POST /v1/validate`; `--font-mode embed|cdn|system`.
+
+### Changed
+
+- **Default response** — `compose` and MCP return `{envelope, url}`; pass `respond="svg"` for inline markup.
+- **Receipt entry point** — receipts render through `compose receipt x.jsonl` and `compose -`; `session` stays only as a hidden compatibility alias for installed hooks.
+
+### Fixed
+
+- **Codex error counts** — interrupted and never-resolved tool calls are classified honestly, neither a pass nor a fail.
+- **Off-web rendering** — custom properties flatten to literal hex so artifacts render in non-browser rasterizers.
+- **Label wrap** — overflowing diagram edge labels and matrix notes wrap instead of truncating mid-word.
+- **Mobile receipt shadow** — the light receipt casts its shadow from a backing rectangle, so its text no longer blurs.
+
+### Removed
+
+- **render, live, kit** — and `POST /v1/diagram`, `/v1/kit/readme`; everything composes through `compose`.
+
 ## [0.4.0-alpha.4] - 2026-06-20
 
 Rebuilds the session receipt: new structure, genome-unified rendering across all variants, multi-model cost attribution, and a paper-receipt variant.

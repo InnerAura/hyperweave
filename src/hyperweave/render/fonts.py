@@ -93,6 +93,29 @@ def _subset_b64(slug: str, char_set_str: str) -> str:
         return base64.b64encode(woff2).decode("ascii")
 
 
+_GOOGLE_FAMILIES = {
+    "jetbrains-mono": "JetBrains+Mono:wght@400;700",
+    "inter": "Inter:wght@400;500;700;800",
+    "orbitron": "Orbitron:wght@400;700;900",
+    "chakra-petch": "Chakra+Petch:wght@400;700",
+    "barlow-condensed-700": "Barlow+Condensed:wght@700",
+    "barlow-condensed-900": "Barlow+Condensed:wght@900",
+}
+
+
+def font_import_css(font_slugs: list[str]) -> str:
+    """A Google Fonts ``@import`` for the given slugs (the ``cdn`` font-mode).
+
+    Lighter than embedding when the surface can fetch fonts; breaks the
+    self-contained guarantee, so it is opt-in.
+    """
+    families = [_GOOGLE_FAMILIES[s] for s in font_slugs if s in _GOOGLE_FAMILIES]
+    if not families:
+        return ""
+    query = "&".join(f"family={fam}" for fam in families)
+    return f"@import url('https://fonts.googleapis.com/css2?{query}&display=swap');"
+
+
 def load_font_face_css(font_slugs: list[str], char_set: frozenset[str] | None = None) -> str:
     """Return ``@font-face`` CSS for the given font slugs, with base64 data URIs.
 

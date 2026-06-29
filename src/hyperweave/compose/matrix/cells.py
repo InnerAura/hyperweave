@@ -131,6 +131,26 @@ def text_lines_needed(text: str, max_w: float, voice: MatrixVoice, *, max_lines:
     return max(1, len(wrap_text_lines(text, max_w, voice, max_lines=max_lines)))
 
 
+def _note_sub_fields(
+    note: str, *, x: float, y0: float, max_w: float, voice: MatrixVoice, anchor: str
+) -> dict[str, Any]:
+    """Resolve a cell note into sub-line placement fields (BUG-001).
+
+    A note that fits stays in the single ``sub_text`` slot; one that overflows
+    wraps to at most two lines stacked from ``y0`` and rides ``sub_lines``, the
+    ellipsis landing only on the final line — never a mid-word ``Claude C…``.
+    The row-height pre-pass reserves the matching vertical budget.
+    """
+    lines = wrap_text_lines(note, max_w, voice, max_lines=2)
+    if len(lines) <= 1:
+        return {"sub_text": lines[0] if lines else "", "sub_x": x, "sub_y": y0, "sub_cls": "rowsub"}
+    pitch = voice.size + 4.0
+    return {
+        "sub_lines": tuple(TextSpec(x=x, y=y0 + k * pitch, anchor=anchor, text=line) for k, line in enumerate(lines)),
+        "sub_cls": "rowsub",
+    }
+
+
 def _heat_rgb(t: float, palette: Mapping[str, Any]) -> tuple[float, float, float]:
     bad = palette.get("heat_bad", [220, 38, 38])
     mid = palette.get("heat_mid", [120, 130, 138])
@@ -363,12 +383,13 @@ def _text(
             text_lines=text_lines,
         )
         if cell.note and row >= 0:
+            sub_voice = cfg.row_sub_voice
+            y0 = _baseline(cy + (n - 1) / 2 * pitch + sub_voice.size + 4.0, sub_voice)
             placement = _with(
                 placement,
-                sub_text=truncate_to_width(cell.note, box.w - 2 * cfg.cell_pad_x, cfg.row_sub_voice),
-                sub_x=x,
-                sub_y=_baseline(cy + (n - 1) / 2 * pitch + cfg.row_sub_voice.size + 4.0, cfg.row_sub_voice),
-                sub_cls="rowsub",
+                **_note_sub_fields(
+                    cell.note, x=x, y0=y0, max_w=box.w - 2 * cfg.cell_pad_x, voice=sub_voice, anchor=anchor
+                ),
             )
         return placement
     placement = CellPlacement(
@@ -386,13 +407,11 @@ def _text(
     )
     if cell.note and row >= 0:
         sub_voice = cfg.row_sub_voice
+        y0 = _baseline(cy + voice.size * 0.62, sub_voice)
         placement = _with(
             placement,
             text_y=_baseline(cy - sub_voice.size * 0.7, voice),
-            sub_text=truncate_to_width(cell.note, box.w - 2 * cfg.cell_pad_x, sub_voice),
-            sub_x=x,
-            sub_y=_baseline(cy + voice.size * 0.62, sub_voice),
-            sub_cls="rowsub",
+            **_note_sub_fields(cell.note, x=x, y0=y0, max_w=box.w - 2 * cfg.cell_pad_x, voice=sub_voice, anchor=anchor),
         )
     return placement
 

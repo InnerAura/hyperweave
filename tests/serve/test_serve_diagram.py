@@ -166,21 +166,12 @@ class TestGrammar:
         assert "/v1/diagram/{preset}/{genome}.{motion}" in response.text
 
 
-class TestPostDiagramAlias:
-    """POST /v1/diagram — thin alias for POST /v1/compose pinned to diagram."""
+class TestPostDiagramRetired:
+    """POST /v1/diagram was retired in alpha.5 — use POST /v1/compose with type=diagram."""
 
-    def test_post_returns_diagram_svg(self, client: TestClient) -> None:
+    def test_post_diagram_is_gone(self, client: TestClient) -> None:
         r = client.post("/v1/diagram", json={"genome": "primer", "diagram": TINY})
-        assert r.status_code == 200
-        assert r.text.lstrip().startswith("<svg")
-        assert 'data-hw-type="diagram"' in r.text
-
-    def test_post_json_respond_carries_markdown(self, client: TestClient) -> None:
-        r = client.post("/v1/diagram", json={"genome": "primer", "diagram": TINY, "respond": "json"})
-        assert r.status_code == 200
-        body = r.json()
-        assert body["svg"].lstrip().startswith("<svg")
-        assert body["markdown"].startswith("**Tiny**")
+        assert r.status_code in (404, 405)
 
 
 class TestFramesLayoutSlugs:

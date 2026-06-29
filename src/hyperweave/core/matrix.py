@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import itertools
 from enum import StrEnum
+from typing import Any
 
 from pydantic import Field, model_validator
 
@@ -225,6 +226,15 @@ class MatrixSpec(FrozenModel):
     )
     unit: str = Field(default="", description="Default value unit for bar/numeric columns")
     notes: str = Field(default="", description="Footer legend text")
+    lineage: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "Append-only edit history written by `transform` — each entry "
+            "{parent_id, op, patch, ts}. Empty by default and excluded from the "
+            "payload dump, so untransformed artifacts stay byte-identical; once "
+            "populated it rides inside the hashed payload (tamper-evident)."
+        ),
+    )
 
     @model_validator(mode="after")
     def _validate_shape(self) -> MatrixSpec:

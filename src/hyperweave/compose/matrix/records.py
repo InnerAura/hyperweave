@@ -75,6 +75,10 @@ class CellPlacement:
     sub_y: float = 0.0
     sub_cls: str = ""
     sub_fill: str = ""
+    sub_lines: tuple[TextSpec, ...] = ()
+    """Note wrapped to >1 line (BUG-001). When present, the cell renders
+    these instead of the single ``sub_text`` run — a note wraps before it
+    ellipsizes, the same discipline as ``text_lines`` for the value."""
     # -- indicator paint --
     tone: str = ""
     tone_opacity: float = 1.0

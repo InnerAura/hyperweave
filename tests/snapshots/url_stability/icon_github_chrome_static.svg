@@ -5,24 +5,26 @@
      viewBox="0 0 108 108"
      width="64" height="64"
      shape-rendering="geometricPrecision"
-     data-hw-id="UUID"
+     data-hw-id="icon-ccfaa04fa6109f87"
      data-hw-type="icon"
      data-hw-frame="icon"
      data-hw-genome="chrome"
      data-hw-mode="dark"
      data-hw-status="active"
+     data-hw-state="static"
      data-hw-profile="dimensional"
      data-hw-motion="static"
      data-hw-generation="1"
-     data-hw-contract="UUID"
+     data-hw-contract="icon-ccfaa04fa6109f87"
      data-hw-size="default"
      data-hw-regime="normal"
      data-hw-glyph="github"
      data-hw-chromatic="chrome">
   <title id="hw-UID-title">github</title>
   <desc id="hw-UID-desc">A icon artifact, using chrome genome.</desc>
+  <!-- agents: this is a HyperWeave living artifact. Its data is in <metadata> — hw:payload (lossless seed, replant to regenerate) and hw:envelope (compact hwz/1 digest, ~200 tokens, actionable). Verbs over the seed: extract · verify · transform · diff · query. Contract: https://hyperweave.app/llms.txt -->
   <metadata>
-  <hw:artifact id="UUID" type="icon" series="core" version="VERSION"
+  <hw:artifact id="icon-ccfaa04fa6109f87" type="icon" series="core" version="VERSION"
                xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
       <hw:generator>HyperWeave Compositor vVERSION (InnerAura Labs)</hw:generator>
@@ -69,6 +71,8 @@
     <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
     <hw:spatial-notes>64x64 (1.00), left-to-right</hw:spatial-notes>
   </hw:reasoning>
+  <hw:payload xmlns:hw="https://hyperweave.app/hw/v1.0" schema="icon/1" media-type="application/json"><![CDATA[{"glyph":"github","shape":"binary-circular"}]]></hw:payload>
+  <hw:envelope xmlns:hw="https://hyperweave.app/hw/v1.0" format="hwz/1" media-type="application/json"><![CDATA[{"v":"hwz/1","id":"sha256:22b9ca62a3446e4e4484bf2bd3c81e75f46d769b862b5c15b1975e733ca651fa","k":"icon","title":"github","intent":"icon artifact","state":"active","data":{"glyph":"github"},"frames":[{"t":"icon","l":"github"}],"prov":{"by":"hyperweave","ver":"VERSION","genome":"chrome","ts":"TIMESTAMP"}}]]></hw:envelope>
 </metadata>
   <style>/* hw:css-modules: genome,accessibility,bridge */
 svg, :root {

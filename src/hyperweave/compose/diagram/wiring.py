@@ -23,7 +23,7 @@ from hyperweave.compose.diagram.records import (
     LightLayer,
     ParticlePlacement,
 )
-from hyperweave.compose.matrix.cells import truncate_to_width
+from hyperweave.compose.matrix.cells import wrap_text_lines
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -136,11 +136,28 @@ def wire_motion(
                 static_dash = geo.semantic_dash or ("" if geo.track_override else str(engine["connector"]["dash"]))
         else:
             static_dash = ""
-        label = None
+        # Edge labels wrap to two lines before ellipsizing (BUG-001): a short
+        # edge span fits ~1.5 words, so a two-word label like "Claude Code"
+        # would otherwise truncate mid-word. The stack centers vertically on
+        # the label anchor — the edge has no container, so growth is free.
+        label_lines: tuple[DiagramText, ...] = ()
         if renders_labels and edge.label and geo.label_pos is not None:
             max_w = geo.label_max_w or max(24.0, geo.length - 16.0)
-            text = truncate_to_width(edge.label, max_w, ctx.cfg.edge_label_voice)
-            label = DiagramText(x=geo.label_pos[0], y=geo.label_pos[1], text=text, cls="elbl", anchor=geo.label_anchor)
+            voice = ctx.cfg.edge_label_voice
+            wrapped = wrap_text_lines(edge.label, max_w, voice, max_lines=2)
+            lx, ly = geo.label_pos
+            pitch = voice.size + 2.5
+            n = len(wrapped)
+            label_lines = tuple(
+                DiagramText(
+                    x=lx,
+                    y=ly + (k - (n - 1) / 2.0) * pitch,
+                    text=line,
+                    cls="elbl",
+                    anchor=geo.label_anchor,
+                )
+                for k, line in enumerate(wrapped)
+            )
         layers: tuple[LightLayer, ...] = ()
         ant_delay = ""
         if not inert and track == "dash-march" and m in ("dash", "particle"):
@@ -304,7 +321,7 @@ def wire_motion(
                             track=track,
                             semantic_dash=geo.semantic_dash,
                             static_dash="",
-                            label=label if si == 0 else None,
+                            label_lines=label_lines if si == 0 else (),
                             light_layers=seg_layers,
                             length=seg_len,
                             lane=ctx.lanes[geo.index],
@@ -347,7 +364,7 @@ def wire_motion(
                 ant_delay="" if inert else ant_delay,
                 semantic_dash=geo.semantic_dash,
                 static_dash=static_dash if (inert or track == "static") else "",
-                label=label,
+                label_lines=label_lines,
                 light_layers=() if inert else layers,
                 length=geo.length,
                 lane=ctx.lanes[geo.index],

@@ -30,6 +30,14 @@ class HyperWeaveSettings(BaseSettings):
     # -- Server --
     host: str = Field(default="0.0.0.0", description="Bind address")
     port: int = Field(default=8000, description="Server port")
+    public_base_url: str = Field(
+        default="https://hyperweave.app",
+        description=(
+            "Absolute origin the agent-facing {envelope, url} handles point at "
+            "(content-addressed /v1/a/{digest}). Override via HW_PUBLIC_BASE_URL "
+            "for a self-hosted deployment; empty yields relative handles."
+        ),
+    )
 
     # -- Caching --
     # Cache TTLs split by route role so static-compose artifacts (no upstream

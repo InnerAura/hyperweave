@@ -34,12 +34,22 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
 ENVELOPE_VERSION = "hwz/1"
+
+# Extraction patterns — match the CDATA bodies byte-for-byte (no XML parse, so
+# the payload bytes stay hash-stable for id recomputation). The payload schema
+# is captured so callers route the seed to the right frame model.
+_PAYLOAD_RE = re.compile(
+    r'<hw:payload[^>]*\bschema="([^"]+)"[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>',
+    re.DOTALL,
+)
+_ENVELOPE_RE = re.compile(r"<hw:envelope[^>]*><!\[CDATA\[(.*?)\]\]></hw:envelope>", re.DOTALL)
 
 REQUIRED_KEYS: frozenset[str] = frozenset({"v", "id", "k", "title", "intent", "data", "frames", "prov"})
 OPTIONAL_KEYS: frozenset[str] = frozenset({"state", "ref"})
@@ -49,6 +59,28 @@ PROV_KEYS: frozenset[str] = frozenset({"by", "ver", "genome", "ts"})
 def envelope_id(payload_json: str) -> str:
     """Content id: sha256 of the canonical payload JSON text."""
     return "sha256:" + hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
+
+
+def extract_payload(svg: str) -> tuple[str, str] | None:
+    """Return ``(schema, payload_json)`` from an artifact's ``hw:payload``.
+
+    ``None`` when the artifact carries no payload. The payload JSON is the exact
+    embedded bytes, so ``envelope_id(payload_json)`` recomputes the id.
+    """
+    m = _PAYLOAD_RE.search(svg)
+    return (m.group(1), m.group(2)) if m else None
+
+
+def extract_envelope(svg: str) -> dict[str, Any] | None:
+    """Return the parsed ``hw:envelope`` dict from an artifact, or ``None``."""
+    m = _ENVELOPE_RE.search(svg)
+    if not m:
+        return None
+    try:
+        parsed = json.loads(m.group(1))
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def cdata_safe_json(text: str) -> str:

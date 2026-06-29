@@ -27,8 +27,8 @@
 {% endfor %}{% elif c.track == 'dash-march' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ hue_cls }} {{ uid }}-m{{ loop.index0 }}"/>
 {% else %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ hue_cls }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
 {% endif %}
-{% if c.label %}  <text x="{{ c.label.x }}" y="{{ c.label.y }}"{% if c.label.anchor != 'start' %} text-anchor="{{ c.label.anchor }}"{% endif %} class="{{ uid }}-elbl">{{ c.label.text }}</text>
-{% endif %}
+{% for line in c.label_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-elbl">{{ line.text }}</text>
+{% endfor %}
 {% endfor %}
 {% for p in lay.particles %}
   <circle class="{{ uid }}-p {{ (uid ~ '-flp' ~ p.accent_index) if p.accent_index >= 0 else (uid ~ '-flps') }}" r="{{ p.r }}" opacity="0">

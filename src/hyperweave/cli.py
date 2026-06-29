@@ -15,6 +15,25 @@ app = typer.Typer(
 )
 
 
+def _version_callback(value: bool) -> None:
+    """Eager ``--version`` — print and exit before any subcommand resolves."""
+    if value:
+        from hyperweave import __version__
+
+        typer.echo(f"hyperweave v{__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def _main(
+    version: Annotated[
+        bool,
+        typer.Option("--version", callback=_version_callback, is_eager=True, help="Print the version and exit."),
+    ] = False,
+) -> None:
+    """Compositor API for self-contained SVG artifacts."""
+
+
 # Primer's chromatic variants. Receipts render on the primer genome; the only
 # axis a user picks is which variant supplies the chromatics. Typing a bare
 # variant name (``--genome noir``) resolves to genome=primer / variant=noir so
@@ -45,12 +64,142 @@ def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
     return s, ""
 
 
+def _render_receipt_from_transcript(
+    transcript_path: Path | None,
+    genome: str = "",
+    variant: str = "",
+    output: Path | None = None,
+    *,
+    hook_mode: bool = False,
+) -> None:
+    """Parse an agent ``.jsonl`` transcript and render a session receipt.
+
+    The single receipt-from-transcript path: powers ``compose receipt x.jsonl``,
+    ``compose x.jsonl`` (extension-inferred), and ``compose -`` (reads hook JSON
+    from stdin). The receipt renders on the primer genome; a primer variant
+    (noir…petrol) selects the chromatics. Hook mode no-ops silently when a
+    SessionEnd fires with no transcript.
+    """
+    import json
+
+    # Resolve the transcript path: explicit arg > stdin hook JSON (hook mode).
+    if transcript_path is None and not sys.stdin.isatty():
+        try:
+            hook_input = json.load(sys.stdin)
+            raw_path = hook_input.get("transcript_path", "")
+            if raw_path:
+                transcript_path = Path(raw_path)
+        except (json.JSONDecodeError, AttributeError):
+            pass
+
+    if not transcript_path or not transcript_path.exists():
+        if hook_mode or not sys.stdin.isatty():
+            return  # graceful no-op for a hook SessionEnd with no transcript
+        typer.echo("Error: no transcript found (pass a .jsonl path or pipe hook JSON on stdin)", err=True)
+        raise typer.Exit(1)
+
+    from datetime import datetime as _dt
+
+    from hyperweave.compose.engine import compose as do_compose
+    from hyperweave.core.models import ComposeSpec
+    from hyperweave.telemetry.contract import build_contract, build_receipt_contract
+    from hyperweave.telemetry.receipt_paths import receipt_filename, slugify_session_name
+
+    contract = build_contract(str(transcript_path))
+
+    # Skip empty sessions (opened, did nothing, closed) — a blank receipt is noise.
+    if not contract.get("tools") and contract.get("profile", {}).get("total_cost", 0) == 0:
+        if sys.stdin.isatty():
+            sid = contract.get("session", {}).get("id", "unknown")
+            typer.echo(f"Skipped empty session {sid}: no tool calls, no cost.", err=True)
+        return
+
+    genome_slug, inferred_variant = _resolve_receipt_genome(genome)
+    variant_slug = variant or inferred_variant
+
+    sess = contract.get("session", {})
+    user_events = contract.get("user_events", []) or []
+    first_prompt = user_events[0].get("preview", "") if user_events else ""
+    display_name = sess.get("name", "") or slugify_session_name(first_prompt[:40])
+
+    if not output:
+        try:
+            ts = _dt.fromisoformat(sess.get("start", ""))
+        except (TypeError, ValueError):
+            ts = _dt.now()
+        hw_dir = Path(".hyperweave") / "receipts"
+        hw_dir.mkdir(parents=True, exist_ok=True)
+        output = hw_dir / receipt_filename(timestamp=ts, session_id=sess.get("id", "unknown"), prompt_text=first_prompt)
+
+    receipt_payload = build_receipt_contract(str(transcript_path))
+    spec = ComposeSpec(
+        type="receipt",
+        genome_id=genome_slug,
+        variant=variant_slug,
+        telemetry_data=receipt_payload,
+        receipt_display_name=display_name,
+    )
+    result = do_compose(spec)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(result.svg)
+
+    cost = receipt_payload.get("cost_usd", 0)
+    total_tok = receipt_payload.get("tokens", {}).get("total", 0)
+    dur = receipt_payload.get("active_min", 0)
+    tok_label = f"{total_tok / 1_000_000:.1f}M" if total_tok >= 1_000_000 else f"{total_tok / 1000:.1f}K"
+    typer.echo(f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}", err=True)
+
+
 @app.command()
 def version() -> None:
     """Print the HyperWeave version."""
     from hyperweave import __version__
 
     typer.echo(f"hyperweave v{__version__}")
+
+
+@app.command()
+def validate(
+    spec_file: Annotated[Path | None, typer.Argument(help="Spec envelope JSON file, or '-' for stdin.")] = None,
+    spec: Annotated[str, typer.Option("--spec", help="Inline spec envelope JSON.")] = "",
+) -> None:
+    """Validate a spec envelope without rendering. Exits non-zero when invalid."""
+    import json as _json
+
+    from hyperweave.compose.surface import SpecEnvelope, validate_surface
+
+    if spec:
+        raw = spec
+    elif spec_file is not None and str(spec_file) == "-":
+        raw = sys.stdin.read()
+    elif spec_file is not None:
+        raw = spec_file.read_text()
+    else:
+        typer.echo("provide a spec file, --spec '{...}', or - for stdin", err=True)
+        raise typer.Exit(code=2)
+
+    try:
+        data = _json.loads(raw)
+    except _json.JSONDecodeError as exc:
+        typer.echo(f"invalid JSON: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    report = validate_surface(
+        SpecEnvelope(
+            type=str(data.get("type", "")),
+            genome=str(data.get("genome", "primer")),
+            variant=str(data.get("variant", "")),
+            spec=dict(data.get("spec") or {}),
+        )
+    )
+    if report.get("valid"):
+        typer.echo(f"valid: {report['type']} ({report['genome']})")
+        return
+    err = report.get("error", {})
+    typer.echo(f"INVALID [{err.get('code')}]: {err.get('message')}", err=True)
+    if err.get("fix"):
+        typer.echo(f"  fix: {err['fix']}", err=True)
+    raise typer.Exit(code=1)
 
 
 @app.command()
@@ -150,6 +299,21 @@ def compose(
             help="Diagram presentation: card (default) | bare — transparent paper, no masthead/footer",
         ),
     ] = "card",
+    target: Annotated[
+        str,
+        typer.Option(
+            "--target",
+            help="Surface pack: web (default) | github | email | pdf | obsidian | slack — "
+            "flattens var()->hex and strips motion for non-browser surfaces",
+        ),
+    ] = "web",
+    font_mode: Annotated[
+        str,
+        typer.Option(
+            "--font-mode",
+            help="Font embedding: embed (default, self-contained) | cdn (Google Fonts) | system (bare fallbacks)",
+        ),
+    ] = "embed",
     edge_motion: Annotated[
         str,
         typer.Option(
@@ -175,7 +339,27 @@ def compose(
       hyperweave compose diagram --preset pipeline -g primer --variant porcelain
       hyperweave compose diagram --spec-file flow.json -g primer --markdown-out flow.md
       hyperweave compose <any-frame> --genome-file ./x.json        [custom genome]
+      hyperweave compose receipt session.jsonl                     [render a session receipt]
+      hyperweave compose -  < hook.json                            [Claude Code SessionEnd hook]
     """
+    # ── Receipt-from-transcript dispatch ─────────────────────────────
+    # The receipt frame reads an agent's existing .jsonl transcript, never flags:
+    #   compose -                  → hook mode: read hook JSON (transcript_path) on stdin
+    #   compose <x>.jsonl          → infer the receipt from the transcript path
+    #   compose receipt <x>.jsonl  → receipt from the named transcript path
+    # Receipts speak primer only, so the brutalist compose default (or any non-primer
+    # slug) falls back to primer/porcelain; a real primer variant still selects chroma.
+    receipt_src: Path | None = None
+    hook_mode = frame_type == "-"
+    if frame_type.endswith(".jsonl"):
+        receipt_src = Path(frame_type)
+    elif frame_type == "receipt" and title.endswith(".jsonl"):
+        receipt_src = Path(title)
+    if hook_mode or receipt_src is not None:
+        receipt_genome = genome if (genome in {"primer", "raw"} or genome in _PRIMER_VARIANTS) else ""
+        _render_receipt_from_transcript(receipt_src, receipt_genome, variant, output, hook_mode=hook_mode)
+        return
+
     import asyncio
     import json
 
@@ -327,6 +511,7 @@ def compose(
         motion=motion,
         glyph=glyph,
         glyph_mode=glyph_mode,
+        font_mode=font_mode,
         regime=regime,
         size=size,
         shape=shape,
@@ -348,79 +533,28 @@ def compose(
     )
 
     result = do_compose(spec)
+    svg = result.svg
+    if target and target != "web":
+        from hyperweave.compose.targets import apply_target
+
+        svg = apply_target(svg, target)
 
     if output:
-        output.write_text(result.svg)
+        output.write_text(svg)
         typer.echo(f"Wrote {output} ({result.width}x{result.height})")
     else:
-        sys.stdout.write(result.svg)
+        sys.stdout.write(svg)
     if markdown_out is not None and result.markdown:
         markdown_out.write_text(result.markdown)
         typer.echo(f"Wrote {markdown_out} (markdown shadow)", err=True)
 
 
-@app.command()
-def kit(
-    kit_type: Annotated[str, typer.Argument(help="Kit type: readme")] = "readme",
-    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist",
-    project: Annotated[str, typer.Option("--project")] = "",
-    badges: Annotated[str, typer.Option("--badges", help="'build:passing,version:v0.6.3'")] = "",
-    social: Annotated[str, typer.Option("--social", help="'github,discord,x'")] = "",
-    output_dir: Annotated[Path | None, typer.Option("--output", "-o")] = None,
-) -> None:
-    """Compose a full artifact kit."""
-    from hyperweave.kit import compose_kit
-
-    results = compose_kit(kit_type, genome, project, badges, social)
-
-    out = output_dir or Path(".")
-    out.mkdir(parents=True, exist_ok=True)
-
-    for name, result in results.items():
-        path = out / f"{name}.svg"
-        path.write_text(result.svg)
-        typer.echo(f"  {name}.svg ({result.width}x{result.height})")
-
-    typer.echo(f"Kit '{kit_type}': {len(results)} artifacts -> {out}")
+# Session telemetry — hidden back-compat alias for the agent-runtime hook.
 
 
-@app.command()
-def render(
-    template: Annotated[str, typer.Option("--template", help="Template name: receipt")],
-    data: Annotated[Path, typer.Option("--data", help="Data contract JSON file")],
-    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
-) -> None:
-    """Render a telemetry artifact from a data contract.
-
-    Telemetry frames use their own built-in palette (no genome selection).
-    """
-    import json
-
-    from hyperweave.compose.engine import compose as do_compose
-    from hyperweave.core.models import ComposeSpec
-
-    telemetry_data = json.loads(data.read_text())
-
-    spec = ComposeSpec(
-        type=template,
-        telemetry_data=telemetry_data,
-    )
-
-    result = do_compose(spec)
-
-    if output:
-        output.write_text(result.svg)
-        typer.echo(f"Wrote {output}")
-    else:
-        sys.stdout.write(result.svg)
-
-
-# Session telemetry commands
-
-
-@app.command()
+@app.command(hidden=True)
 def session(
-    action: Annotated[str, typer.Argument(help="Action: receipt, parse")],
+    action: Annotated[str, typer.Argument(help="receipt")] = "receipt",
     transcript: Annotated[Path | None, typer.Argument(help="Path to transcript JSONL")] = None,
     output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
     genome: Annotated[
@@ -428,10 +562,9 @@ def session(
         typer.Option(
             "--genome",
             help=(
-                "Receipt genome or primer variant. A primer variant name (noir, "
-                "carbon, space, anvil, porcelain, cream, dusk, petrol) renders that "
-                "primer receipt; 'primer'/'raw' select the genome directly. "
-                "Empty = primer/porcelain."
+                "Receipt genome or primer variant (noir, carbon, space, anvil, "
+                "porcelain, cream, dusk, petrol); 'primer'/'raw' select the genome "
+                "directly. Empty = primer/porcelain."
             ),
         ),
     ] = "",
@@ -443,182 +576,22 @@ def session(
         ),
     ] = "",
 ) -> None:
-    """Session telemetry: parse transcripts and render receipts.
+    """Hidden back-compat alias for the Claude Code / Codex session-receipt hook.
 
-    The receipt always renders on the **primer** genome; ``--variant`` (or a bare
-    variant name passed to ``--genome``) selects the chromatics. The agent runtime
-    contributes identity only — the glyph + wordmark — never a theme. When invoked
-    as a Claude Code hook, reads transcript_path from stdin JSON.
+    Equivalent to ``compose -`` (stdin hook JSON) or ``compose <transcript>.jsonl``.
+    Hooks already registered as ``hyperweave session receipt`` keep working
+    unchanged; new callers should use ``compose``. Only the ``receipt`` action is
+    supported — ``session parse`` retired with the unified verb surface.
     """
-    import json
-
-    # Resolve transcript path: arg > stdin JSON (hook mode)
-    transcript_path = transcript
-    if not transcript_path and not sys.stdin.isatty():
-        try:
-            hook_input = json.load(sys.stdin)
-            raw_path = hook_input.get("transcript_path", "")
-            if raw_path:
-                transcript_path = Path(raw_path)
-        except (json.JSONDecodeError, KeyError):
-            pass
-
-    if not transcript_path or not transcript_path.exists():
-        # Graceful no-op for non-conversational sessions (e.g., `claude update`)
-        # that fire SessionEnd without producing a transcript.
-        if not sys.stdin.isatty():
-            return
-        typer.echo("Error: no transcript found (pass path or pipe hook JSON on stdin)", err=True)
-        raise typer.Exit(1)
-
-    from hyperweave.telemetry.contract import build_contract
-
-    contract = build_contract(str(transcript_path))
-
-    if action == "parse":
-        # Parse-only: print JSON to stdout
-        typer.echo(json.dumps(contract, indent=2, default=str))
-        return
-
     if action != "receipt":
-        typer.echo(f"Unknown action '{action}'. Use: receipt, parse", err=True)
+        typer.echo(f"Unknown action '{action}'. Use: receipt (or run 'hyperweave compose').", err=True)
         raise typer.Exit(1)
-
-    # Skip empty sessions — no tool calls and no cost produces a blank receipt
-    # (e.g. user opened Claude Code, did nothing, closed it; or a no-op SessionEnd).
-    # Hook mode silently no-ops; interactive mode reports why.
-    if not contract.get("tools") and contract.get("profile", {}).get("total_cost", 0) == 0:
-        if sys.stdin.isatty():
-            sid = contract.get("session", {}).get("id", "unknown")
-            typer.echo(f"Skipped empty session {sid}: no tool calls, no cost.", err=True)
-        return
-
-    # Compose the telemetry artifact
-    from hyperweave.compose.engine import compose as do_compose
-    from hyperweave.core.models import ComposeSpec
-
-    frame_type = "receipt"
-    # Receipts speak primer; --genome may name a genome OR a bare primer variant.
-    # An explicit --variant wins over a variant inferred from --genome.
-    genome_slug, inferred_variant = _resolve_receipt_genome(genome)
-    variant_slug = variant or inferred_variant
-
-    # Footer identity = the LIVE session name (reflects a /rename), read here
-    # from the legacy contract which carries the latest title; falls back to the
-    # first prompt so a never-named session still reads meaningfully. The on-disk
-    # filename is keyed separately to immutable signals (start date + first
-    # prompt) so a rename or resume never repoints the file.
-    display_name = ""
-    if action == "receipt":
-        from datetime import datetime as _dt
-
-        from hyperweave.telemetry.receipt_paths import receipt_filename, slugify_session_name
-
-        sess = contract.get("session", {})
-        session_name = sess.get("name", "")
-        user_events = contract.get("user_events", []) or []
-        first_prompt = user_events[0].get("preview", "") if user_events else ""
-        # Live title when the session was named; otherwise the first-prompt slug
-        # (same register as a name, never a raw mid-word truncation).
-        display_name = session_name or slugify_session_name(first_prompt[:40])
-        if not output:
-            sid = sess.get("id", "unknown")
-            start_iso = sess.get("start", "")
-            try:
-                ts = _dt.fromisoformat(start_iso)
-            except (TypeError, ValueError):
-                ts = _dt.now()
-            hw_dir = Path(".hyperweave") / "receipts"
-            hw_dir.mkdir(parents=True, exist_ok=True)
-            output = hw_dir / receipt_filename(timestamp=ts, session_id=sid, prompt_text=first_prompt)
-
-    # The receipt frame consumes the compact receipt/1 payload (the same dict
-    # embedded as hw:payload and hashed into the envelope). build_contract above
-    # still drives the CLI's filesystem bookkeeping (filename, empty-check,
-    # summary) — that richer legacy shape carries user_events + session.name the
-    # payload intentionally drops.
-    from hyperweave.telemetry.contract import build_receipt_contract
-
-    receipt_payload = build_receipt_contract(str(transcript_path))
-
-    spec = ComposeSpec(
-        type=frame_type,
-        genome_id=genome_slug,
-        variant=variant_slug,
-        telemetry_data=receipt_payload,
-        receipt_display_name=display_name,
-    )
-    result = do_compose(spec)
-
-    if action == "receipt":
-        # output is guaranteed non-None here: the receipt branch above either
-        # received an explicit --output or computed a default path.
-        assert output is not None
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(result.svg)
-
-        # One-line summary to stderr — read straight off the receipt/1 payload.
-        cost = receipt_payload.get("cost_usd", 0)
-        total_tok = receipt_payload.get("tokens", {}).get("total", 0)
-        dur = receipt_payload.get("active_min", 0)
-        tok_label = f"{total_tok / 1_000_000:.1f}M" if total_tok >= 1_000_000 else f"{total_tok / 1000:.1f}K"
-        typer.echo(f"Receipt: ${cost:.2f} · {tok_label} tokens · {int(dur)}m -> {output}", err=True)
-    else:
-        # Strip: stdout by default
-        if output:
-            output.write_text(result.svg)
-            typer.echo(f"Wrote {output}", err=True)
-        else:
-            sys.stdout.write(result.svg)
+    # No explicit transcript → behave as a hook (read transcript_path from stdin,
+    # silently no-op on an empty SessionEnd). An explicit path renders directly.
+    _render_receipt_from_transcript(transcript, genome, variant, output, hook_mode=transcript is None)
 
 
 # Live data commands
-
-
-@app.command()
-def live(
-    provider: Annotated[
-        str,
-        typer.Argument(help="Provider: github, pypi, npm, arxiv, huggingface, docker, crates, scorecard, dora"),
-    ],
-    identifier: Annotated[str, typer.Argument(help="Resource ID: owner/repo, package-name, paper-id")],
-    metric: Annotated[str, typer.Argument(help="Metric: stars, forks, version, downloads, likes")],
-    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist",
-    glyph: Annotated[str, typer.Option("--glyph")] = "",
-    state: Annotated[str, typer.Option("--state", "-s")] = "active",
-    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
-) -> None:
-    """Compose a badge with live data from a provider."""
-    import asyncio
-
-    from hyperweave.connectors import fetch_metric
-
-    label = metric
-    value = "n/a"
-    try:
-        data = asyncio.run(fetch_metric(provider, identifier, metric))
-        value = str(data.get("value", "n/a"))
-    except Exception as exc:
-        value = f"error: {exc!s}"[:30]
-
-    from hyperweave.compose.engine import compose as do_compose
-    from hyperweave.core.models import ComposeSpec
-
-    spec = ComposeSpec(
-        type="badge",
-        genome_id=genome,
-        title=label,
-        value=value,
-        state=state,
-        glyph=glyph,
-    )
-    result = do_compose(spec)
-
-    if output:
-        output.write_text(result.svg)
-        typer.echo(f"Wrote {output} ({result.width}x{result.height})")
-    else:
-        sys.stdout.write(result.svg)
 
 
 # Admin commands

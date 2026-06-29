@@ -14,6 +14,7 @@
      data-hw-genome="{{ genome_id }}"
      data-hw-mode="{{ theme_category | default('dark') }}"
      data-hw-status="{{ status }}"
+     data-hw-state="{{ lifecycle }}"
      data-hw-profile="{{ profile_id }}"
      data-hw-motion="{{ motion_id }}"
      data-hw-generation="1"
@@ -39,6 +40,7 @@
      data-hw-chromatic="{{ genome_id }}">
   <title id="{{ uid }}-title">{{ title_text | xml_escape }}</title>
   <desc id="{{ uid }}-desc">{{ desc_text | xml_escape }}</desc>
+  <!-- {{ self_instruct }} -->
 {% if metadata_tier >= 1 %}
 {% include "components/metadata.svg.j2" %}
 {% endif %}

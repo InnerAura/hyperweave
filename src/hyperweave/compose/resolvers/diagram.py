@@ -255,8 +255,7 @@ def _text_surface(layout: DiagramLayout) -> list[str]:
         if n.tag is not None:
             strings.append(n.tag.text)
     for c in layout.connectors:
-        if c.label is not None:
-            strings.append(c.label.text)
+        strings.extend(line.text for line in c.label_lines)
     strings.extend(op.text for op in layout.operators)
     if layout.legend is not None:
         strings.append(layout.legend.text)

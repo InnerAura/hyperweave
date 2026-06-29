@@ -72,6 +72,16 @@ class ComposeSpec(FrozenModel):
 
     @model_validator(mode="before")
     @classmethod
+    def _canonicalize_type_alias(cls, data: object) -> object:
+        """``card`` is an accepted alias for the ``stats`` frame; canonicalize it to
+        the internal ``stats`` type so either name works at the input boundary
+        (routes, CLI, and ``data-hw-frame`` all stay ``stats``)."""
+        if isinstance(data, dict) and str(data.get("type", "")) == "card":
+            data["type"] = "stats"
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
     def _resolve_profile_from_genome(cls, data: object) -> object:
         """Auto-resolve profile_id from genome_id when not explicitly set."""
         if not isinstance(data, dict):
@@ -127,6 +137,14 @@ class ComposeSpec(FrozenModel):
     motion: str = Field(default="static", description="Animation primitive (genome.compatible_motions)")
     glyph: str = Field(default="", description="Glyph identifier")
     glyph_mode: GlyphMode = Field(default=GlyphMode.AUTO, description="Glyph rendering mode: auto, fill, wire, none")
+    font_mode: str = Field(
+        default="embed",
+        description=(
+            "Font embedding: embed (default — self-contained subset, full portability) | "
+            "cdn (Google Fonts @import, lighter where the surface fetches fonts) | "
+            "system (no @font-face — the fallback stacks render)"
+        ),
+    )
     custom_glyph_svg: str = Field(default="", description="Raw SVG for custom glyphs")
     size: str = Field(default="default", description="Frame size: default, compact")
     shape: str = Field(default="", description="Icon frame shape: square, circle")

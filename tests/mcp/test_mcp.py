@@ -1,8 +1,9 @@
 """Tests for mcp/server.py -- MCP tools and resources.
 
-Covers the 4 tools (hw_compose, hw_live, hw_kit, hw_discover) and
-3 resources (schema, genomes, motions). Tool functions are called
-directly with real compose for integration coverage.
+Covers the tools (hw_compose, hw_validate, hw_discover) and 3 resources
+(schema, genomes, motions). Tool functions are called directly with real
+compose for integration coverage. hw_compose returns {envelope, url}; the
+pixels are fetched from the content cache by digest when a test needs them.
 """
 
 from __future__ import annotations
@@ -10,15 +11,23 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock, patch
 
+from hyperweave.compose.artifact_store import get_artifact
 from hyperweave.mcp.server import (
     genomes_resource,
     hw_compose,
     hw_discover,
-    hw_kit,
-    hw_live,
+    hw_validate,
     motions_resource,
     schema_resource,
 )
+
+
+def _cached_svg(result: dict) -> str:
+    """Resolve the SVG behind a {envelope, url} result via the content cache."""
+    svg = get_artifact(result["url"].rsplit("/", 1)[-1])
+    assert svg is not None, "composed artifact should be in the per-process cache"
+    return svg
+
 
 # ===========================================================================
 # Tools
@@ -34,15 +43,18 @@ def test_hw_compose_docstring_advertises_16_automata_tones() -> None:
         assert tone in doc
 
 
-async def test_hw_compose_badge() -> None:
+async def test_hw_compose_badge_returns_envelope_and_url() -> None:
     result = await hw_compose(type="badge", title="build", value="passing")
-    assert isinstance(result, str)
-    assert "<svg" in result
+    assert isinstance(result, dict)
+    assert result["url"].endswith(tuple("0123456789abcdef"))  # content-addressed handle
+    assert result["envelope"]["id"].startswith("sha256:")
+    assert result["envelope"]["k"] == "badge"
+    assert "<svg" in _cached_svg(result)  # pixels live in the cache, not the result
 
 
 async def test_hw_compose_strip() -> None:
     result = await hw_compose(type="strip", title="readme-ai", value="STARS:2.9k,FORKS:278")
-    assert "<svg" in result
+    assert result["url"] and "<svg" in _cached_svg(result)
 
 
 async def test_hw_compose_stats_accepts_multi_provider_data_tokens() -> None:
@@ -58,35 +70,38 @@ async def test_hw_compose_stats_accepts_multi_provider_data_tokens() -> None:
             data="github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
         )
 
-    assert "<svg" in result
-    assert "GH STARS" in result
-    assert "HF DL" in result
+    svg = _cached_svg(result)
+    assert "GH STARS" in svg
+    assert "HF DL" in svg
 
 
 async def test_hw_compose_divider() -> None:
     result = await hw_compose(type="divider", divider_variant="void")
-    assert "<svg" in result
+    assert result["url"] and "<svg" in _cached_svg(result)
 
 
-async def test_hw_live_success() -> None:
-    mock_data = {"value": 5000, "ttl": 300}
-    with patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, return_value=mock_data):
-        result = await hw_live(provider="github", identifier="anthropics/claude-code", metric="stars")
-        assert "<svg" in result
+async def test_hw_compose_markdown_target_returns_string() -> None:
+    md = await hw_compose(type="badge", title="BUILD", value="passing", render_target="markdown")
+    assert isinstance(md, str)
+    assert "BUILD" in md
 
 
-async def test_hw_live_error_fallback() -> None:
-    with patch("hyperweave.connectors.fetch_metric", new_callable=AsyncMock, side_effect=Exception("timeout")):
-        result = await hw_live(provider="github", identifier="anthropics/claude-code", metric="stars")
-        assert "<svg" in result  # Still returns a badge with "error" value
+async def test_hw_compose_respond_svg_returns_raw_markup() -> None:
+    # Opt-in inline pixels: respond="svg" returns the raw SVG string, while the
+    # default still returns the {envelope, url} handle.
+    svg = await hw_compose(type="badge", title="BUILD", value="passing", respond="svg")
+    assert isinstance(svg, str)
+    assert svg.lstrip().startswith("<svg") or "<svg" in svg
+    default = await hw_compose(type="badge", title="BUILD", value="passing")
+    assert isinstance(default, dict) and "url" in default
 
 
-async def test_hw_kit_readme() -> None:
-    result = await hw_kit(type="readme", genome="brutalist", project="test", badges="build:passing")
-    assert isinstance(result, dict)
-    assert "badge-build" in result
-    assert "divider" in result
-    assert all("<svg" in svg for svg in result.values())
+async def test_hw_validate_good_and_bad() -> None:
+    good = await hw_validate({"type": "badge", "genome": "primer", "spec": {"title": "X"}})
+    assert good["valid"] is True
+    bad = await hw_validate({"type": "not-a-frame"})
+    assert bad["valid"] is False
+    assert bad["error"]["code"] == "TYPE_UNKNOWN"
 
 
 async def test_hw_discover_all() -> None:

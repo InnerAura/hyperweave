@@ -162,6 +162,22 @@ def load_font_embedding() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
+def load_envelope_tiers() -> dict[str, str]:
+    """Load the per-frame envelope-depth map from data/config/envelope-tiers.yaml.
+
+    Returns ``{frame_type: "minimal" | "full"}``. Frames absent from the file
+    fall back to ``minimal`` at resolve time (the conservative default — a
+    frame the map forgot still emits a valid, if shallow, envelope). Cached
+    because the tier gate fires once per compose() for every frame type.
+    """
+    path = _data_path("config/envelope-tiers.yaml")
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path) or {}
+    return {str(k): str(v) for k, v in (raw.get("tiers") or {}).items()}
+
+
+@lru_cache(maxsize=1)
 def load_matrix_config() -> dict[str, Any]:
     """Load matrix engine config from data/config/matrix-frame.yaml.
 

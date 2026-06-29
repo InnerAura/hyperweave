@@ -1,0 +1,25 @@
+# Envelope metadata depth per frame type (alpha.5 — Layer 0, the envelope floor).
+#
+# Every frame emits a valid hwz/1 envelope (schema is always consistent). What
+# varies is the DEPTH of the `data` digest:
+#
+#   minimal — identity + provenance + a compact content digest. For lightweight
+#             frames (badge, strip, icon, divider, marquee) whose value is the
+#             render itself, not a salience-rankable dataset.
+#   full    — salience-ranked frame data. For structural frames (chart, stats,
+#             matrix, diagram, receipt) that carry a dataset worth ranking.
+#
+# This is the same insight as per-frame budgets: the envelope scales to what the
+# frame actually contains. A badge's envelope need not pretend to carry
+# diagram-level structure. Adding a frame here is a YAML edit, zero Python.
+tiers:
+  badge: minimal
+  strip: minimal
+  icon: minimal
+  divider: minimal
+  marquee: minimal
+  chart: full
+  stats: full
+  matrix: full
+  diagram: full
+  receipt: full

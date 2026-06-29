@@ -16,7 +16,14 @@
 {% set cl = zone_context_load %}
 {% set ft = zone_footer %}
 
-<g clip-path="url(#{{ uid }}-card)"{% if substrate_kind == 'light' %} filter="url(#{{ uid }}-lift)"{% endif %}>
+{# BUG-004: cast the lift shadow from a behind-silhouette rect, NOT from the
+   text-bearing content group. A filter on the full ~740x244 card forces mobile
+   Safari/Chrome to rasterize the whole subtree — text included — into a
+   resolution-capped offscreen buffer (the uniform blur). The shadow caster is a
+   lone rect: its filter region downsamples a soft shadow (invisible), while the
+   content group below renders unfiltered at full device resolution. #}
+<rect width="{{ receipt_w }}" height="{{ receipt_h }}" rx="{{ rg.card_rx }}" fill="{{ receipt_palette.surface_1 }}"{% if substrate_kind == 'light' %} filter="url(#{{ uid }}-lift)"{% endif %}/>
+<g clip-path="url(#{{ uid }}-card)">
 <rect width="{{ receipt_w }}" height="{{ receipt_h }}" rx="{{ rg.card_rx }}" fill="url(#{{ uid }}-card-bg)"/>
 
 {# ── identity ──────────────────────────────────────────────────────────── #}

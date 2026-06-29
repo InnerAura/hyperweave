@@ -297,6 +297,20 @@ async def test_get_genome_not_found(client: AsyncClient) -> None:
     assert resp.status_code == 404
 
 
+async def test_genomes_compat_alias_still_resolves(client: AsyncClient) -> None:
+    """genome→genome rename (alpha.5): the old /v1/genomes paths must still
+    resolve to the same payload as /v1/genomes so pre-rename clients don't 404."""
+    list_alias = await client.get("/v1/genomes")
+    list_canonical = await client.get("/v1/genomes")
+    assert list_alias.status_code == 200
+    assert list_alias.json() == list_canonical.json()
+
+    detail_alias = await client.get("/v1/genomes/brutalist")
+    detail_canonical = await client.get("/v1/genomes/brutalist")
+    assert detail_alias.status_code == 200
+    assert detail_alias.json() == detail_canonical.json()
+
+
 async def test_list_motions(client: AsyncClient) -> None:
     resp = await client.get("/v1/motions")
     assert resp.status_code == 200
@@ -560,16 +574,10 @@ def test_uvicorn_access_logger_is_silenced() -> None:
 # ===========================================================================
 
 
-async def test_kit_post(client: AsyncClient) -> None:
-    with patch("hyperweave.kit.compose", return_value=MOCK_RESULT):
-        resp = await client.post(
-            "/v1/kit/readme",
-            json={"genome": "brutalist", "project": "test", "badges": "build:passing"},
-        )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "badge-build" in data
-        assert "divider" in data
+async def test_kit_endpoint_retired(client: AsyncClient) -> None:
+    # POST /v1/kit/readme was hard-removed in alpha.5 (use compose with emit=...).
+    resp = await client.post("/v1/kit/readme", json={"genome": "brutalist"})
+    assert resp.status_code in (404, 405)
 
 
 # ===========================================================================

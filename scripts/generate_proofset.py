@@ -818,7 +818,7 @@ def generate_static() -> int:
     claude_sessions = _loaded(_real_transcripts())
     codex_sessions = _loaded(_real_codex_transcripts())
 
-    # Claude Code → one livery (cream), size progression small→xxlarge. Identity is
+    # Claude Code → one genome (cream), size progression small→xxlarge. Identity is
     # runtime-only, so a single colour reads the size range without 3x repetition.
     for label, payload in claude_sessions[:5]:
         _write(
@@ -826,7 +826,7 @@ def generate_static() -> int:
             _compose(FrameType.RECEIPT, "primer", variant="cream", telemetry_data=payload),
         )
         total += 1
-    # Codex → the other livery (porcelain). Labels already carry the "codex-" prefix.
+    # Codex → the other genome (porcelain). Labels already carry the "codex-" prefix.
     for label, payload in codex_sessions[:5]:
         _write(
             telemetry_dir / f"receipt_{label}.svg",
@@ -850,7 +850,7 @@ def generate_static() -> int:
     _write(telemetry_dir / "receipt_showcase-raw.svg", _compose(FrameType.RECEIPT, "raw", telemetry_data=showcase))
     total += 1
 
-    # Mock baseline — deterministic on clean checkouts (the two liveries + raw).
+    # Mock baseline — deterministic on clean checkouts (the two genomes + raw).
     for variant in ("cream", "porcelain"):
         _write(
             telemetry_dir / f"receipt_mock-{variant}.svg",
@@ -1972,7 +1972,7 @@ def _emit_telemetry_readme() -> None:
         "Receipts speak the **primer** genome; the chromatic variant is a free "
         "choice (porcelain, cream, noir, carbon, space, anvil, dusk, petrol). The "
         "agent runtime sets only the identity glyph + wordmark, never a theme — so "
-        "the size range stays in one livery per runtime (Claude Code in cream, "
+        "the size range stays in one genome per runtime (Claude Code in cream, "
         "Codex in porcelain), and the chromatic range gets its own showcase at the "
         "end.",
         "",

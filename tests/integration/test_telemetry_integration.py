@@ -112,22 +112,6 @@ def test_receipt_embeds_payload_and_envelope(fixture_transcript: Path) -> None:
     assert f"sha256:{digest}" in svg
 
 
-def test_cli_session_parse(fixture_transcript: Path) -> None:
-    """CLI session parse outputs valid JSON with expected structure."""
-    from typer.testing import CliRunner
-
-    from hyperweave.cli import app
-
-    runner = CliRunner()
-    result = runner.invoke(app, ["session", "parse", str(fixture_transcript)])
-
-    assert result.exit_code == 0, f"Exit code {result.exit_code}: {result.output}"
-    data = json.loads(result.output)
-    assert "session" in data
-    assert "tools" in data
-    assert "stages" in data
-
-
 def test_cli_session_receipt(fixture_transcript: Path, tmp_path: Path) -> None:
     """CLI session receipt writes a v3 receipt SVG to the output path."""
     from typer.testing import CliRunner
@@ -166,6 +150,35 @@ def test_cli_stdin_hook_mode(fixture_transcript: Path, tmp_path: Path) -> None:
     assert out_path.exists()
     svg = out_path.read_text()
     assert "<svg" in svg
+
+
+def test_compose_receipt_from_transcript_paths(fixture_transcript: Path, tmp_path: Path) -> None:
+    """The canonical receipt surface: ``compose receipt x.jsonl``, ``compose x.jsonl``
+    (extension-inferred), and ``compose -`` (stdin hook JSON) all render a receipt."""
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app
+
+    runner = CliRunner()
+
+    # 1) explicit frame + transcript path
+    a = tmp_path / "a.svg"
+    r = runner.invoke(app, ["compose", "receipt", str(fixture_transcript), "-o", str(a)])
+    assert r.exit_code == 0, r.output
+    assert 'data-hw-frame="receipt"' in a.read_text()
+
+    # 2) a .jsonl path alone infers the receipt frame
+    b = tmp_path / "b.svg"
+    r = runner.invoke(app, ["compose", str(fixture_transcript), "-o", str(b)])
+    assert r.exit_code == 0, r.output
+    assert 'data-hw-frame="receipt"' in b.read_text()
+
+    # 3) `compose -` reads transcript_path from hook JSON on stdin
+    c = tmp_path / "c.svg"
+    hook = json.dumps({"transcript_path": str(fixture_transcript), "hook_event_name": "SessionEnd"})
+    r = runner.invoke(app, ["compose", "-", "-o", str(c)], input=hook)
+    assert r.exit_code == 0, r.output
+    assert 'data-hw-frame="receipt"' in c.read_text()
 
 
 # ── Hook-mode silent-no-op behavior ──────────────────────────────────────

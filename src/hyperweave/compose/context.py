@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from hyperweave import __version__
+from hyperweave.core.contract import SELF_INSTRUCT
 from hyperweave.core.enums import ArtifactStatus, FrameType, MotionId
 from hyperweave.core.envelope import ENVELOPE_VERSION, build_envelope, cdata_safe_json, envelope_json
 
@@ -23,9 +24,10 @@ if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec, ResolvedArtifact
 
 from hyperweave.compose.assembler import fonts_for_frame, frame_needs_fonts
+from hyperweave.compose.payload import build_simple_payload
 from hyperweave.compose.reasoning import load_reasoning
 from hyperweave.core.color import hex_to_rgb_triplet
-from hyperweave.render.fonts import load_font_face_css
+from hyperweave.render.fonts import font_import_css, load_font_face_css
 
 _CtxBuilder = Callable[["ComposeSpec", "ResolvedArtifact", dict[str, str]], dict[str, Any]]
 
@@ -102,6 +104,7 @@ def _load_font_faces(
     genome: dict[str, Any],
     frame_type: str,
     char_set: frozenset[str] | None = None,
+    font_mode: str = "embed",
 ) -> str:
     """Load embedded font CSS for ``(frame_type, genome.id)``.
 
@@ -120,6 +123,8 @@ def _load_font_faces(
     list so ``@font-face`` declarations render in genome-author intent
     order.
     """
+    if font_mode == "system":
+        return ""  # no @font-face — the var(--dna-font-*, …fallbacks) stacks render
     declared = genome.get("fonts") or ["jetbrains-mono"]
     if not isinstance(declared, list):
         declared = ["jetbrains-mono"]
@@ -128,6 +133,10 @@ def _load_font_faces(
     if not allowed:
         return ""
     filtered = [slug for slug in declared if slug in allowed]
+    if not filtered:
+        return ""
+    if font_mode == "cdn":
+        return font_import_css(filtered)
     return load_font_face_css(filtered, char_set)
 
 
@@ -251,11 +260,31 @@ def build_context(
     }
     builder = _BUILDERS.get(spec.type, _ctx_badge)
     ctx = builder(spec, resolved, css_bundle)
+    # Envelope floor: frames without a resolver-emitted payload (the seven
+    # lightweight frames) get a compact, re-ingestible payload + hwz/1 envelope
+    # here. Structural frames (matrix/diagram/receipt) emit theirs inside the
+    # builder, so payload_json is already set and this is skipped. Emit BEFORE
+    # motion injection so the content-derived uid is final when motion defs
+    # reference it.
+    if not ctx.get("payload_json"):
+        simple = build_simple_payload(spec, resolved, ctx)
+        if simple is not None:
+            _emit_envelope(
+                ctx,
+                kind=str(spec.type),
+                title=simple.title,
+                intent=simple.intent,
+                data=simple.data,
+                payload_json=simple.payload_json,
+                state=str(spec.state or ""),
+                schema=simple.schema,
+                markdown=simple.markdown,
+            )
     _inject_motion(ctx, spec, resolved)
     genome_id = resolved.genome.get("id", "")
     if frame_needs_fonts(spec.type, genome_id):
         char_set = _extract_char_set(ctx, spec.type)
-        ctx["font_faces"] = _load_font_faces(resolved.genome, spec.type, char_set)
+        ctx["font_faces"] = _load_font_faces(resolved.genome, spec.type, char_set, spec.font_mode)
     return ctx
 
 
@@ -331,6 +360,17 @@ def _base_context(
         "status": spec.state,
         "state": spec.state,
         "regime": spec.regime,
+        # data-hw-state — the third triad axis: data-binding / read-time
+        # freshness, genuinely distinct from status (health) and regime
+        # (policy). "bound" when the artifact carries a live, re-pullable source
+        # (data tokens or connector data) so it re-renders with fresh data at
+        # read time; "static" for frozen content — literal values AND a
+        # single-session receipt (a telemetry RECORD doesn't re-pull, so it is
+        # NOT bound). The value follows the SOURCE per artifact, never the
+        # frame kind — an aggregated report that re-pulls across sessions is
+        # "bound" while a one-shot receipt of the same frame is "static".
+        # Independent of spec.state by construction — vocabularies are disjoint.
+        "lifecycle": "bound" if (spec.data_tokens or spec.connector_data) else "static",
         "size": spec.size,
         "motion_id": resolved.motion,
         "motion": resolved.motion,
@@ -410,6 +450,12 @@ def _base_context(
         "payload_schema": "",
         "envelope_json": "",
         "envelope_format": "",
+        # Text-shadow projection (the live-text the document agent leads with).
+        # Set by _emit_envelope; lifted to ComposeResult.markdown by the engine.
+        "markdown_shadow": "",
+        # Self-instruction comment — the discoverability gate. A cold agent given
+        # only the SVG reads this and finds the contract (verbs + llms.txt).
+        "self_instruct": SELF_INSTRUCT,
         "data_hw_subvariant": "",
         # v0.3.2 Phase 8b: metadata-pipeline context wiring. Every field below
         # was previously hardcoded as a Jinja2 `default('...')` fallback in
@@ -478,6 +524,68 @@ def _base_context(
         "font_faces": "",
     }
     return ctx, uid, artifact_id
+
+
+def _emit_envelope(
+    ctx: dict[str, Any],
+    *,
+    kind: str,
+    title: str,
+    intent: str,
+    data: dict[str, Any],
+    payload_json: str,
+    state: str,
+    schema: str = "",
+    markdown: str = "",
+) -> None:
+    """Assemble the hwz/1 envelope into ``ctx`` from a resolved payload.
+
+    The single envelope-emission chokepoint shared by every frame: the
+    structural frames pass their resolver payload (matrix/diagram/receipt),
+    the lightweight frames pass ``build_simple_payload`` output. Content-derived
+    identity (``uid``/``artifact_id`` = ``sha256(payload|genome|variant|version)``)
+    makes byte-identical re-renders the contract; ``prov.ts`` reads the single
+    ``created_at`` clock so envelope and metadata always agree. No-op when
+    ``payload_json`` is empty. ``schema``/``markdown`` are set only when given
+    (the structural frames carry their schema from the resolver already).
+    """
+    if not payload_json:
+        return
+    genome_id = str(ctx.get("genome_id", ""))
+    variant = str(ctx.get("variant", ""))
+    version = str(ctx.get("version", ""))
+    digest = hashlib.sha256("|".join((payload_json, genome_id, variant, version)).encode("utf-8")).hexdigest()
+    ctx["uid"] = f"hw-{digest[:8]}"
+    ctx["artifact_id"] = f"{kind}-{digest[:16]}"
+    ctx["contract_id"] = ctx["artifact_id"]
+    envelope = build_envelope(
+        kind=kind,
+        title=title,
+        intent=intent,
+        data=dict(data),
+        frames=[{"t": kind, "l": title}],
+        payload_json=payload_json,
+        genome_label=f"{genome_id}.{variant}" if variant else genome_id,
+        version=version,
+        created=str(ctx.get("created_at", "")),
+        state=state,
+    )
+    ctx["payload_json"] = payload_json
+    if schema:
+        ctx["payload_schema"] = schema
+    ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))
+    ctx["envelope_format"] = ENVELOPE_VERSION
+    if markdown:
+        ctx["markdown_shadow"] = markdown
+    elif not ctx.get("markdown_shadow"):
+        # Fallback text-shadow from title + scalar digest — keeps every
+        # data-carrying frame's markdown_present green even when its resolver
+        # emitted no richer GFM/topology projection (e.g. receipt). Matrix and
+        # diagram already set markdown_shadow via their resolvers, so this is
+        # skipped for them.
+        scalars = " · ".join(f"{k}: {v}" for k, v in data.items() if not isinstance(v, list | dict | tuple))
+        head = f"**{title}**" if title else ""
+        ctx["markdown_shadow"] = " — ".join(p for p in (head, scalars) if p) or (title or kind)
 
 
 # ── Per-frame builders ───────────────────────────────────────────────
@@ -589,41 +697,18 @@ def _ctx_receipt(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
     ctx["ctx_legend_text_y"] = 0.0
     ctx.update(resolved.frame_context)
 
-    payload_json = str(ctx.get("payload_json") or "")
-    if payload_json:
-        # Content-derived identity: byte-identical re-renders are the contract
-        # (ETag / Camo caching / the round-trip thesis). Same payload + genome +
-        # variant + version => same uid.
-        digest = hashlib.sha256(
-            "|".join(
-                (
-                    payload_json,
-                    str(ctx.get("genome_id", "")),
-                    str(ctx.get("variant", "")),
-                    str(ctx.get("version", "")),
-                )
-            ).encode("utf-8")
-        ).hexdigest()
-        ctx["uid"] = f"hw-{digest[:8]}"
-        ctx["artifact_id"] = f"receipt-{digest[:16]}"
-        ctx["contract_id"] = ctx["artifact_id"]
-        genome_id = str(ctx.get("genome_id", ""))
-        variant = str(ctx.get("variant", ""))
-        envelope = build_envelope(
-            kind="receipt",
-            title=str(ctx.get("receipt_envelope_title", "")),
-            intent=str(ctx.get("receipt_envelope_intent", "")),
-            data=dict(ctx.get("receipt_envelope_data") or {}),
-            frames=[{"t": "receipt", "l": str(ctx.get("receipt_envelope_title", ""))}],
-            payload_json=payload_json,
-            genome_label=f"{genome_id}.{variant}" if variant else genome_id,
-            version=str(ctx.get("version", "")),
-            created=str(ctx.get("created_at", "")),
-            state=str(spec.state or ""),
-        )
-        ctx["payload_schema"] = "receipt/1"
-        ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))
-        ctx["envelope_format"] = ENVELOPE_VERSION
+    # hwz/1 envelope from the receipt/1 payload; the schema is set HERE because
+    # the receipt resolver emits payload_json but not payload_schema.
+    _emit_envelope(
+        ctx,
+        kind="receipt",
+        title=str(ctx.get("receipt_envelope_title", "")),
+        intent=str(ctx.get("receipt_envelope_intent", "")),
+        data=dict(ctx.get("receipt_envelope_data") or {}),
+        payload_json=str(ctx.get("payload_json") or ""),
+        state=str(spec.state or ""),
+        schema="receipt/1",
+    )
     return ctx
 
 
@@ -685,43 +770,17 @@ def _ctx_matrix(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, st
     ctx["matrix_intent"] = ""
     ctx.update(resolved.frame_context)
 
-    payload_json = str(ctx.get("payload_json") or "")
-    if payload_json:
-        # Content-derived identity: byte-identical re-renders are the
-        # contract (ETag / Camo caching / diff / the round-trip thesis).
-        # Same payload+genome+variant+version => same uid; different specs
-        # on one page never collide.
-        digest = hashlib.sha256(
-            "|".join(
-                (
-                    payload_json,
-                    str(ctx.get("genome_id", "")),
-                    str(ctx.get("variant", "")),
-                    str(ctx.get("version", "")),
-                )
-            ).encode("utf-8")
-        ).hexdigest()
-        ctx["uid"] = f"hw-{digest[:8]}"
-        ctx["artifact_id"] = f"matrix-{digest[:16]}"
-        ctx["contract_id"] = ctx["artifact_id"]
-        # hwz/1 envelope assembled HERE — where created_at exists — so
-        # prov.ts == hw:created with no second clock read.
-        genome_id = str(ctx.get("genome_id", ""))
-        variant = str(ctx.get("variant", ""))
-        envelope = build_envelope(
-            kind="matrix",
-            title=str(ctx.get("matrix_title", "")),
-            intent=str(ctx.get("matrix_intent", "")),
-            data=dict(ctx.get("matrix_envelope_data") or {}),
-            frames=[{"t": "matrix", "l": str(ctx.get("matrix_title", ""))}],
-            payload_json=payload_json,
-            genome_label=f"{genome_id}.{variant}" if variant else genome_id,
-            version=str(ctx.get("version", "")),
-            created=str(ctx.get("created_at", "")),
-            state=str(spec.state or ""),
-        )
-        ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))
-        ctx["envelope_format"] = ENVELOPE_VERSION
+    # hwz/1 envelope from the resolver-emitted payload (content-derived uid +
+    # single created_at clock); the matrix resolver already set payload_schema.
+    _emit_envelope(
+        ctx,
+        kind="matrix",
+        title=str(ctx.get("matrix_title", "")),
+        intent=str(ctx.get("matrix_intent", "")),
+        data=dict(ctx.get("matrix_envelope_data") or {}),
+        payload_json=str(ctx.get("payload_json") or ""),
+        state=str(spec.state or ""),
+    )
     return ctx
 
 
@@ -744,42 +803,19 @@ def _ctx_diagram(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
     ctx["motion_vocabulary"] = "static"
     ctx.update(resolved.frame_context)
 
-    payload_json = str(ctx.get("payload_json") or "")
-    if payload_json:
-        # Content-derived identity (the matrix recipe): same payload +
-        # genome + variant + version => same uid. The payload includes the
-        # RENDERED motion record, so the envelope id is ARTIFACT identity —
-        # the same spec under a different edge_motion hashes differently
-        # (P4), exactly as a different genome or variant already does.
-        digest = hashlib.sha256(
-            "|".join(
-                (
-                    payload_json,
-                    str(ctx.get("genome_id", "")),
-                    str(ctx.get("variant", "")),
-                    str(ctx.get("version", "")),
-                )
-            ).encode("utf-8")
-        ).hexdigest()
-        ctx["uid"] = f"hw-{digest[:8]}"
-        ctx["artifact_id"] = f"diagram-{digest[:16]}"
-        ctx["contract_id"] = ctx["artifact_id"]
-        genome_id = str(ctx.get("genome_id", ""))
-        variant = str(ctx.get("variant", ""))
-        envelope = build_envelope(
-            kind="diagram",
-            title=str(ctx.get("diagram_title", "") or ctx.get("title_text", "")),
-            intent=str(ctx.get("diagram_intent", "")),
-            data=dict(ctx.get("diagram_envelope_data") or {}),
-            frames=[{"t": "diagram", "l": str(ctx.get("diagram_title", "") or ctx.get("title_text", ""))}],
-            payload_json=payload_json,
-            genome_label=f"{genome_id}.{variant}" if variant else genome_id,
-            version=str(ctx.get("version", "")),
-            created=str(ctx.get("created_at", "")),
-            state=str(spec.state or ""),
-        )
-        ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))
-        ctx["envelope_format"] = ENVELOPE_VERSION
+    # hwz/1 envelope from the resolver payload (which includes the RENDERED
+    # motion record, so the id is artifact identity — a different edge_motion
+    # hashes differently). The diagram resolver already set payload_schema.
+    diagram_title = str(ctx.get("diagram_title", "") or ctx.get("title_text", ""))
+    _emit_envelope(
+        ctx,
+        kind="diagram",
+        title=diagram_title,
+        intent=str(ctx.get("diagram_intent", "")),
+        data=dict(ctx.get("diagram_envelope_data") or {}),
+        payload_json=str(ctx.get("payload_json") or ""),
+        state=str(spec.state or ""),
+    )
     return ctx
 
 

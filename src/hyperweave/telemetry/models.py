@@ -46,6 +46,12 @@ class ToolOutcome(StrEnum):
     SUCCESS = "success"
     BLOCKED = "blocked"
     ERROR = "error"
+    # Control-signal kills (SIGINT/SIGKILL/SIGTERM) — not failures. Excluded from
+    # the receipt's `errors` count; surfaced as a quiet `interrupted` detail.
+    INTERRUPTED = "interrupted"
+    # Backgrounded process with no terminal verdict yet — neither pass nor fail.
+    # Excluded from both error and success totals.
+    NO_VERDICT = "no_verdict"
 
 
 class ToolClass(StrEnum):

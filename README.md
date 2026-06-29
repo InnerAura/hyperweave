@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hyperweave-banner-chirp.svg" alt="HyperWeave" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-logo.svg" alt="HyperWeave" width="100%"/>
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
 -->
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/chrome.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/primer.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave&variant=porcelain" alt="strip"/>
 </p>
 
 <!--
@@ -30,7 +30,7 @@
 -->
 
 <!--
-AI agents need to explain what they did, what they found, and what changed — HyperWeave gives them a visual language that works anywhere.
+AI agents need to explain what they did, what they found, and what changed - HyperWeave gives them a visual language that works anywhere.
 
 ---
 
@@ -38,19 +38,19 @@ HyperWeave lets agents compose portable visual artifacts that can live inside re
 
 ---
 
-A brand agent for repos. Generate a cohesive visual identity — README, profile, metrics, releases — from a single genome.
+A brand agent for repos. Generate a cohesive visual identity - README, profile, metrics, releases - from a single genome.
 
 ---
 
 HyperWeave is the brand agent for engineering teams. Define your identity once; every artifact your team ships carries it wherever their work appears.
 
-HyperWeave is the generative visual identity system for the agentic era. A user defines a genome — their aesthetic DNA — and HyperWeave renders coherent visual artifacts across any surface, for any context, from any data. Badges for repos. Cards for stats. Charts for data. Artifact sets for research papers. Release kits for product launches. Marketing assets for startups. Static when static. Live when live. Generated when generative. Their brand, as infrastructure, for everything their agents will ever need to render.
+HyperWeave is the generative visual identity system for the agentic era. A user defines a genome - their aesthetic DNA - and HyperWeave renders coherent visual artifacts across any surface, for any context, from any data. Badges for repos. Cards for stats. Charts for data. Artifact sets for research papers. Release kits for product launches. Marketing assets for startups. Static when static. Live when live. Generated when generative. Their brand, as infrastructure, for everything their agents will ever need to render.
 
 Safe, Auditable, Drop-Anywhere Visuals for your Agents.
 
 ---
 
-Hyperweave is the visual protocol for autonomous agents. We give AI agents the ability to generate high-fidelity, brand-aligned UI artifacts—roadmaps, telemetry, and status cards—so humans can monitor and trust agentic workflows.
+Hyperweave is the visual protocol for autonomous agents. We give AI agents the ability to generate high-fidelity, brand-aligned UI artifacts-roadmaps, telemetry, and status cards-so humans can monitor and trust agentic workflows.
 
 ---
 
@@ -75,13 +75,13 @@ Agents need to show their work through plans, diagrams, dashboards, status cards
 HyperWeave turns structured specs into deterministic visual artifacts. Each artifact is a self-contained SVG with layout, branding, data binding, and machine-readable metadata baked in. No JavaScript, no runtime, no dependencies. Readable by humans, recoverable by agents, and portable anywhere an `<img>` tag renders.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-format-comparison-matrix-cream.svg" alt="Visual output formats for AI agents: SVG vs Markdown vs HTML across portability, agent-readable metadata, visual fidelity, token efficiency, and zero dependencies" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-format-comparison-matrix-cream.svg" alt="Visual output formats for AI agents: SVG vs Markdown vs HTML across cross-surface rendering, agent-readable metadata, visual fidelity, token efficiency, and zero dependencies" width="100%"/>
 </p>
 
 <details>
 <summary>View as table</summary>
 
-| FORMAT | Portability | Agent-Readable Metadata | Visual Fidelity | Token Efficiency | Zero Dependencies | SCORE |
+| FORMAT | Renders identically across surfaces | Agent-Readable Metadata | Visual Fidelity | Token Efficiency | Zero Dependencies | SCORE |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | SVG | ✓ | ✓ | ✓ | ~ | ✓ | 4.5 |
 | MARKDOWN | ~ | ~ | ✗ | ✓ | ✓ | 3 |
@@ -96,27 +96,33 @@ HyperWeave turns structured specs into deterministic visual artifacts. Each arti
 HyperWeave receipts turn an AI coding session into a portable artifact that shows what it cost by model, tool usage, token spend, and context window history. Install the hook once and every session emits one:
 
 ```bash
+pip install hyperweave
 hyperweave install-hook
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_cream.svg" alt="A HyperWeave session receipt for a Claude Code run: $116.66 across 151.1M tokens and 574 calls, opus-4.8 dominant, with a tool-spend breakdown, a cost-by-model bar, and a context-load curve." width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_cream.svg" alt="A HyperWeave session receipt for a Claude Code run: &#36;116.66 across 151.1M tokens and 574 calls, opus-4.8 dominant, with a tool-spend breakdown, a cost-by-model bar, and a context-load curve." width="800"/>
 </p>
-<p align="center"><sub>Claude Code &middot; $116.66 &middot; 151.1M tokens &middot; 574 calls &middot; opus-4.8</sub></p>
+<p align="center"><sub>Claude Code &middot; &#36;116.66 &middot; 151.1M tokens &middot; 574 calls &middot; opus-4.8</sub></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_porcelain.svg" alt="A HyperWeave session receipt for a Codex run: $49.76 across 62.2M tokens and 718 calls, gpt-5.5." width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_porcelain.svg" alt="A HyperWeave session receipt for a Codex run: &#36;49.76 across 62.2M tokens and 718 calls, gpt-5.5." width="800"/>
 </p>
-<p align="center"><sub>Codex &middot; $49.76 &middot; 62.2M tokens &middot; 718 calls &middot; gpt-5.5</sub></p>
+<p align="center"><sub>Codex &middot; &#36;49.76 &middot; 62.2M tokens &middot; 718 calls &middot; gpt-5.5</sub></p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_raw.svg" alt="The same Claude Code session printed as a thermal register tape: tools as line items priced in tokens, models as payment tender, failed calls as voids." width="300"/>
 </p>
 <p align="center"><sub>The same Claude session if you fancy a proper receipt</sub></p>
 
-HyperWeave reads your JSONL transcript from disk, detects the harness (Claude Code or Codex currently supported), and can be themed in any of [8 primer variants](#primer) plus the raw receipt above. Want another agent harness? [Open an issue](https://github.com/InnerAura/hyperweave/issues).
+It reads your session's JSONL transcript from disk and detects the harness automatically (Claude Code or Codex). Theme it with any of the [8 primer variants](#primer), or the raw register tape:
 
-Select theme at install time: `hyperweave install-hook --genome cream` (any of the eight), or `--genome raw` for the paper receipt.
+```bash
+hyperweave install-hook --genome cream   # any primer variant
+hyperweave install-hook --genome raw     # the paper register tape
+```
+
+Want a different agent harness? [Open an issue](https://github.com/InnerAura/hyperweave/issues).
 
 ---
 
@@ -137,9 +143,9 @@ HyperWeave matrices are structured tables rendered as portable SVGs. A single JS
 |:---|:---:|:---:|:---:|:---|
 | GitHub README | github | ✓ | Yes | camo, css animation |
 | VS Code preview | vscode | ✓ | Yes | markdown preview |
-| Slack unfurl | slack | ~ | — | image proxy |
-| Gmail body | gmail | ~ | — | img tag |
-| Agent | mcp | ✗ | — | hw:payload, hwz/1, markdown twin |
+| Slack unfurl | slack | ~ | - | image proxy |
+| Gmail body | gmail | ~ | - | img tag |
+| Agent | mcp | ✗ | - | hw:payload, hwz/1, markdown twin |
 
 </details>
 
@@ -286,9 +292,9 @@ JSON
 
 </details>
 
-Inside that SVG, alongside the pixels — two tiers, two jobs:
+Inside that SVG, alongside the pixels - two tiers, two jobs:
 
-**recreate & modify — the complete table IR**
+**recreate & modify - the complete table IR**
 
 ```xml
 <hw:payload schema="matrix/1" media-type="application/json">
@@ -310,7 +316,7 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
 </hw:payload>
 ```
 
-**read at a budget — ≈200 tokens to know what an artifact is**
+**read at a budget - ≈200 tokens to know what an artifact is**
 
 ```xml
 <hw:envelope format="hwz/1" media-type="application/json">
@@ -334,7 +340,7 @@ Inside that SVG, alongside the pixels — two tiers, two jobs:
     "rows_total": 5
   },
   "frames": [{ "t": "matrix", "l": "One artifact. Many readers." }],
-  "prov": { "by": "hyperweave", "ver": "0.4.0a4", "genome": "primer.porcelain", "ts": "2026-06-11T15:51:03.185542+00:00" }
+  "prov": { "by": "hyperweave", "ver": "0.4.0a5", "genome": "primer.porcelain", "ts": "2026-06-11T15:51:03.185542+00:00" }
 }
 </hw:envelope>
 ```
@@ -368,15 +374,15 @@ Another matrice configuration for visualizing benchmarks:
 | MODEL |  | SWE-bench Verified | INPUT (per Mtok) | OUTPUT (per Mtok) |
 |:---|:---:|:---:|:---:|:---:|
 | **FRONTIER · CLOSED WEIGHTS** |   |   |   |   |
-| Claude Fable 5 | anthropic | 95 % | $10 | $50 |
-| Claude Opus 4.8 | anthropic | 88.6 % | $5 | $25 |
-| GPT-5.5 | openai | 82.6 % | $5 | $30 |
-| Gemini 3.1 Pro | gemini | 80.6 % | $2 | $12 |
+| Claude Fable 5 | anthropic | 95 % | &#36;10 | &#36;50 |
+| Claude Opus 4.8 | anthropic | 88.6 % | &#36;5 | &#36;25 |
+| GPT-5.5 | openai | 82.6 % | &#36;5 | &#36;30 |
+| Gemini 3.1 Pro | gemini | 80.6 % | &#36;2 | &#36;12 |
 | **OPEN WEIGHTS** |   |   |   |   |
-| DeepSeek V4-Pro | deepseek | 80.6 % | $0.44 | $0.87 |
-| Kimi K2.6 | kimi | 80.2 % | $0.95 | $4 |
-| GLM-5 | zai | 77.8 % | $1 | $3.2 |
-| Mistral Medium 3.5 | mistral | 77.6 % | $1.5 | $7.5 |
+| DeepSeek V4-Pro | deepseek | 80.6 % | &#36;0.44 | &#36;0.87 |
+| Kimi K2.6 | kimi | 80.2 % | &#36;0.95 | &#36;4 |
+| GLM-5 | zai | 77.8 % | &#36;1 | &#36;3.2 |
+| Mistral Medium 3.5 | mistral | 77.6 % | &#36;1.5 | &#36;7.5 |
 
 *SWE-bench Verified % · USD per Mtok · current flagships, jun 2026 · sources: vals.ai · artificialanalysis.ai · model cards*
 
@@ -865,6 +871,44 @@ JSON
 
 ---
 
+## The Verb Algebra
+
+Every HyperWeave artifact is a re-ingestible object, not just an image. It carries its full spec (`hw:payload`) and a hash-verified digest (`hwz/1` envelope), so an agent can work with it directly, never parsing pixels.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/verb_algebra_v04a5.svg" alt="" width="100%"/>
+</p>
+
+Six verbs, split two ways.
+
+**Write** &middot; mints a new artifact, returns a content-addressed link (`/v1/a/{id}`), never inline SVG:
+
+| Verb | What it does |
+|:---|:---|
+| `compose` | a spec &rarr; an artifact |
+| `transform` | edit an artifact's spec &rarr; a new artifact (new id + lineage) |
+
+**Read** &middot; never mutates the artifact:
+
+| Verb | What it does | Returns |
+|:---|:---|:---|
+| `extract` | pull the payload, envelope, or markdown back out | the requested depth |
+| `verify` | recompute the id, proving the artifact *is* its data | `{valid, id}` |
+| `diff` | compare two artifacts | the structural delta |
+| `query` | ask a question of the envelope | the answer |
+
+Every verb runs the same over **HTTP** (`POST /v1/{verb}`) and **MCP** (`hw_{verb}`):
+
+```bash
+# compose an artifact, then read its spec straight back, no rendering
+hyperweave compose matrix --spec-file table.json -g primer -o table.svg
+curl -X POST https://hyperweave.app/v1/extract \
+  -H 'Content-Type: application/json' \
+  -d '{"source": "<svg or /v1/a/{id} url>", "respond": "payload"}'
+```
+
+---
+
 ## Genomes - Aesthetic DNA
 
 A genome is a portable, machine-readable aesthetic specification. It encodes the complete visual identity (chromatic system, surface material, motion vocabulary, geometric form language) as a set of CSS custom properties that any agent can consume and apply consistently across every artifact type.
@@ -888,21 +932,21 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="brutalist">brutalist</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=celadon" alt="PYPI — celadon variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=alloy" alt="PYPI — alloy variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=carbon" alt="PYPI — carbon variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=pigment" alt="PYPI — pigment variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=umber" alt="PYPI — umber variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=ember" alt="PYPI — ember variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=temper" alt="PYPI — temper variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=celadon" alt="PYPI - celadon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=alloy" alt="PYPI - alloy variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=carbon" alt="PYPI - carbon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=pigment" alt="PYPI - pigment variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=umber" alt="PYPI - umber variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=ember" alt="PYPI - ember variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=temper" alt="PYPI - temper variant"/>
   <br/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=onyx" alt="PYPI — onyx variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=primer" alt="PYPI — primer variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=depth" alt="PYPI — depth variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=pulse" alt="PYPI — pulse variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=archive" alt="PYPI — archive variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=signal" alt="PYPI — signal variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=afterimage" alt="PYPI — afterimage variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=onyx" alt="PYPI - onyx variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=primer" alt="PYPI - primer variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=depth" alt="PYPI - depth variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=pulse" alt="PYPI - pulse variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=archive" alt="PYPI - archive variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=signal" alt="PYPI - signal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=afterimage" alt="PYPI - afterimage variant"/>
 </p>
 
 <p align="center">
@@ -937,9 +981,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Profile<br/><sub>stats card</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=pulse" alt="stats — pulse (light)"/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=pulse" alt="stats - pulse (light)"/>
   <br/>
-  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon" alt="stats — celadon (dark)"/>
+  <img src="https://hyperweave.app/v1/stats/eli64s/brutalist.static?variant=celadon" alt="stats - celadon (dark)"/>
   <br/>
   <ul>
 <li><sub><code>/v1/stats/{username}/{genome}.static?variant={variant}</code></sub></li>
@@ -972,14 +1016,14 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=circle&variant=celadon" alt="spotify — celadon" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/docker/brutalist.static?shape=circle&variant=alloy" alt="docker — alloy" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=carbon" alt="github — carbon" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=circle&variant=pigment" alt="discord — pigment" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/rust/brutalist.static?shape=square&variant=umber" alt="rust — umber" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/anthropic/brutalist.static?shape=square&variant=ember" alt="anthropic — ember" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/codex/brutalist.static?shape=square&variant=temper" alt="codex — temper" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/hyperweave/brutalist.static?shape=square&variant=onyx" alt="hyperweave — onyx" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/brutalist.static?shape=circle&variant=celadon" alt="spotify - celadon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/brutalist.static?shape=circle&variant=alloy" alt="docker - alloy" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/brutalist.static?shape=circle&variant=carbon" alt="github - carbon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/discord/brutalist.static?shape=circle&variant=pigment" alt="discord - pigment" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/rust/brutalist.static?shape=square&variant=umber" alt="rust - umber" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/anthropic/brutalist.static?shape=square&variant=ember" alt="anthropic - ember" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/codex/brutalist.static?shape=square&variant=temper" alt="codex - temper" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/hyperweave/brutalist.static?shape=square&variant=onyx" alt="hyperweave - onyx" width="56"/>
   <br/>
   <ul>
 <li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}&variant={variant}</code></sub></li>
@@ -1004,23 +1048,23 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="automata">automata</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=crimson&size=compact" alt="PYPI — crimson variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=copper&size=compact" alt="PYPI — copper variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=bone&size=compact" alt="PYPI — bone variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=solar&size=compact" alt="PYPI — solar variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=amber&size=compact" alt="PYPI — amber variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=sulfur&size=compact" alt="PYPI — sulfur variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=toxic&size=compact" alt="PYPI — toxic variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=jade&size=compact" alt="PYPI — jade variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=crimson&size=compact" alt="PYPI - crimson variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=copper&size=compact" alt="PYPI - copper variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=bone&size=compact" alt="PYPI - bone variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=solar&size=compact" alt="PYPI - solar variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=amber&size=compact" alt="PYPI - amber variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=sulfur&size=compact" alt="PYPI - sulfur variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=toxic&size=compact" alt="PYPI - toxic variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=jade&size=compact" alt="PYPI - jade variant"/>
   <br/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=abyssal&size=compact" alt="PYPI — abyssal variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=teal&size=compact" alt="PYPI — teal variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=steel&size=compact" alt="PYPI — steel variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=cobalt&size=compact" alt="PYPI — cobalt variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=indigo&size=compact" alt="PYPI — indigo variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=violet&size=compact" alt="PYPI — violet variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=magenta&size=compact" alt="PYPI — magenta variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=burgundy&size=compact" alt="PYPI — burgundy variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=abyssal&size=compact" alt="PYPI - abyssal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=teal&size=compact" alt="PYPI - teal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=steel&size=compact" alt="PYPI - steel variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=cobalt&size=compact" alt="PYPI - cobalt variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=indigo&size=compact" alt="PYPI - indigo variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=violet&size=compact" alt="PYPI - violet variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=magenta&size=compact" alt="PYPI - magenta variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=burgundy&size=compact" alt="PYPI - burgundy variant"/>
 </p>
 
 <p align="center">
@@ -1117,11 +1161,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="chrome">chrome</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=horizon" alt="PYPI — horizon variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=lightning" alt="PYPI — lightning variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=abyssal" alt="PYPI — abyssal variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=moth" alt="PYPI — moth variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=graphite" alt="PYPI — graphite variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=horizon" alt="PYPI - horizon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=lightning" alt="PYPI - lightning variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=abyssal" alt="PYPI - abyssal variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=moth" alt="PYPI - moth variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=graphite" alt="PYPI - graphite variant"/>
 </p>
 
 <p align="center">
@@ -1189,11 +1233,11 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/github/chrome.static?shape=circle&variant=horizon" alt="github — horizon" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/notion/chrome.static?shape=circle&variant=graphite" alt="notion — graphite" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/rust/chrome.static?shape=square&variant=moth" alt="rust — moth" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/docker/chrome.static?shape=square&variant=lightning" alt="docker — lightning" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/spotify/chrome.static?shape=square&variant=abyssal" alt="spotify — abyssal" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/chrome.static?shape=circle&variant=horizon" alt="github - horizon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/notion/chrome.static?shape=circle&variant=graphite" alt="notion - graphite" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/rust/chrome.static?shape=square&variant=moth" alt="rust - moth" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/chrome.static?shape=square&variant=lightning" alt="docker - lightning" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/spotify/chrome.static?shape=square&variant=abyssal" alt="spotify - abyssal" width="56"/>
   <br/>
   <ul>
 <li><sub><code>/v1/icon/{glyph}/{genome}.static?shape={circle|square}&variant={variant}</code></sub></li>
@@ -1216,15 +1260,15 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <h3 id="primer">primer</h3>
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=porcelain" alt="PYPI — porcelain variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=cream" alt="PYPI — cream variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=dusk" alt="PYPI — dusk variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=petrol" alt="PYPI — petrol variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=porcelain" alt="PYPI - porcelain variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=cream" alt="PYPI - cream variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=dusk" alt="PYPI - dusk variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=petrol" alt="PYPI - petrol variant"/>
   <br/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=noir" alt="PYPI — noir variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=carbon" alt="PYPI — carbon variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=space" alt="PYPI — space variant"/>
-  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=anvil" alt="PYPI — anvil variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=noir" alt="PYPI - noir variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=carbon" alt="PYPI - carbon variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=space" alt="PYPI - space variant"/>
+  <img src="https://hyperweave.app/v1/badge/PYPI/primer.static?data=pypi:hyperweave.version&glyph=python&variant=anvil" alt="PYPI - anvil variant"/>
 </p>
 
 <p align="center">
@@ -1294,14 +1338,14 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <tr>
 <th align="left">Icons<br/><sub>circle + square</sub></th>
 <td>
-  <img src="https://hyperweave.app/v1/icon/vercel/primer.static?shape=circle&variant=noir" alt="vercel — noir" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/cloudflare/primer.static?shape=circle&variant=carbon" alt="cloudflare — carbon" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/docker/primer.static?shape=circle&variant=space" alt="docker — space" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/github/primer.static?shape=circle&variant=anvil" alt="github — anvil" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/deepseek/primer.static?shape=square&variant=porcelain" alt="deepseek — porcelain" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/anthropic/primer.static?shape=square&variant=cream" alt="anthropic — cream" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/ollama/primer.static?shape=square&variant=dusk" alt="ollama — dusk" width="56"/>
-  <img src="https://hyperweave.app/v1/icon/nousresearch/primer.static?shape=square&variant=petrol" alt="nousresearch — petrol" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/vercel/primer.static?shape=circle&variant=noir" alt="vercel - noir" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/cloudflare/primer.static?shape=circle&variant=carbon" alt="cloudflare - carbon" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/docker/primer.static?shape=circle&variant=space" alt="docker - space" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/github/primer.static?shape=circle&variant=anvil" alt="github - anvil" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/deepseek/primer.static?shape=square&variant=porcelain" alt="deepseek - porcelain" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/anthropic/primer.static?shape=square&variant=cream" alt="anthropic - cream" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/ollama/primer.static?shape=square&variant=dusk" alt="ollama - dusk" width="56"/>
+  <img src="https://hyperweave.app/v1/icon/nousresearch/primer.static?shape=square&variant=petrol" alt="nousresearch - petrol" width="56"/>
   <br/>
   <ul>
 <li><sub><code>/v1/icon/{glyph}/primer.static?shape={circle|square}&variant={variant}</code></sub></li>
@@ -1461,7 +1505,7 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
 # Static badge
 hw_compose(type="badge", title="BUILD", value="passing", genome="brutalist")
 
-# Data-driven badge — unified token grammar (gh:owner/repo.metric, pypi:pkg.metric, ...)
+# Data-driven badge - unified token grammar (gh:owner/repo.metric, pypi:pkg.metric, ...)
 hw_compose(type="badge", title="STARS", data="gh:anthropics/claude-code.stars", genome="brutalist")
 
 # Strip with multiple live metrics
@@ -1474,10 +1518,11 @@ hw_compose(type="marquee",
            data="text:NEW RELEASE,gh:anthropics/claude-code.stars,text:DOWNLOAD",
            genome="brutalist")
 
-# Discoverable shortcut for single-metric live badges
-hw_live(provider="github", identifier="anthropics/claude-code", metric="stars")
+# Read or edit an existing artifact - the verb algebra
+hw_extract(svg_or_url="<svg or /v1/a/{id} url>", respond="payload")
+hw_transform(svg_or_id="<svg or /v1/a/{id} url>",
+             mutations=[{"op": "replace", "path": "/title", "value": "SHIPPED"}])
 
-hw_kit(type="readme", genome="brutalist", badges="build:passing")
 hw_discover(what="all")
 ```
 
@@ -1496,8 +1541,11 @@ hyperweave compose badge "STARS" --data 'gh:anthropics/claude-code.stars' -g bru
 # Marquee with mixed text + live tokens
 hyperweave compose marquee --data 'text:NEW RELEASE,gh:owner/repo.stars,text:DOWNLOAD' -g brutalist
 
-# Artifact kit
-hyperweave kit readme -g brutalist --badges "build:passing,version:v0.2.0" --social "github,discord"
+# Session receipt from an agent transcript (Claude Code / Codex)
+hyperweave compose receipt session.jsonl -o receipt.svg
+
+# Validate a spec without rendering
+hyperweave validate spec.json
 
 # Profile card (live GitHub data, path-segment identity)
 hyperweave compose stats eli64s -g chrome -o stats.svg
@@ -1543,6 +1591,11 @@ curl -X POST https://hyperweave.app/v1/compose \
   -H "Content-Type: application/json" \
   -d '{"type":"strip","title":"hyperweave","genome":"brutalist","value":"STARS:2.9k"}'
 
+# Verb algebra over an existing artifact: extract · verify · transform · diff · query
+curl -X POST https://hyperweave.app/v1/extract \
+  -H "Content-Type: application/json" \
+  -d '{"source":"<svg or /v1/a/{id} url>","respond":"payload"}'
+
 # Local server
 hyperweave serve --port 8000
 ```
@@ -1565,6 +1618,7 @@ ComposeSpec → engine.py → assembler.py (CSS) → lanes.py (validate) → tem
 
 Every artifact ships with:
 
+- **Re-ingestible payload:** the full spec (`hw:payload`) plus a hash-verified `hwz/1` envelope, so an agent can recover, verify, and edit it - the basis of [the verb algebra](#the-verb-algebra).
 - **Semantic metadata:** provenance, reasoning, spatial trace, aesthetic DNA. Machine-readable context so the next agent in the chain knows what it's looking at and why.
 - **CSS state machines:** `data-hw-status`, `data-hw-state`, `data-hw-regime` drive visual transitions through the Custom Property Bridge. No JavaScript.
 - **Pure CSS/SMIL animation:** all motion uses compositor-safe properties (`transform`, `opacity`, `filter`). No script tags. Works anywhere SVGs render: GitHub's Camo proxy, email clients, Notion embeds.
@@ -1589,7 +1643,7 @@ Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 HyperWeave binds live data into any artifact through a unified token grammar (`?data=...`). Tokens are comma-separated; each token is either a literal (`text:`, `kv:`) or a live fetch (`<provider>:<identifier>.<metric>`).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-data-connectors-matrix-cream.svg" alt="Data connectors matrix: 9 live providers — GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions — plus text and kv literal tokens" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-data-connectors-matrix-cream.svg" alt="Data connectors matrix: 9 live providers - GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions - plus text and kv literal tokens" width="100%"/>
 </p>
 
 <details>
@@ -1606,12 +1660,12 @@ HyperWeave binds live data into any artifact through a unified token grammar (`?
 | `arxiv` | [arXiv](https://arxiv.org) | `id` (e.g. `2310.06825`) | `title`, `authors`, `published`, `updated`, `categories`, `summary`, `journal_ref`, `doi` |
 | `scorecard` | [OpenSSF Scorecard](https://github.com/ossf/scorecard) | `owner/repo` | `score` (overall trust), plus per-check: `code_review`, `maintained`, `vulnerabilities`, `token_permissions`, ... |
 | `dora` | [GitHub Actions](https://github.com/features/actions) | `owner/repo` | `deploy_frequency`, `lead_time`, `change_failure_rate`, `mttr` (30-day window) |
-| `text` | literal | &mdash; | renders the payload as displayed text |
+| `text` | literal | - | renders the payload as displayed text |
 | `kv` | literal | `KEY=VALUE` | static role-tagged value |
 
 </details>
 
-- **Caching:** live values for 5&ndash;10 min; a failed fetch caches 60s and shows `—` rather than a fabricated zero.
+- **Caching:** live values for 5&ndash;10 min; a failed fetch caches 60s and shows `-` rather than a fabricated zero.
 - **Isolation:** each provider has its own circuit breaker, so one upstream outage can't trip the others.
 - **Escaping:** commas inside `text:` / `kv:` values escape as `\,`.
 

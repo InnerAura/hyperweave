@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import json
 import logging
+import re
+import shlex
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -87,6 +89,61 @@ def _safe_json_loads(s: str) -> _JsonObj:
     except (TypeError, json.JSONDecodeError):
         return {}
     return result if isinstance(result, dict) else {}
+
+
+# ── Codex shell exit-code classification (BUG-005) ───────────────────────────
+# Codex encodes shell success/failure as "Process exited with code N" in the
+# output preamble, not the word "error". Outcome is a command-aware table, not a
+# `!= 0` test: exit-1 from a predicate tool (grep/rg/test/diff) means "no match" —
+# a normal SUCCESS — while the same code from anything else is a real ERROR.
+# Every runtime parser must have a STRUCTURED outcome path, never a substring guess.
+_EXIT_RE = re.compile(r"Process exited with code (\d+)")
+_RUNNING_RE = re.compile(r"Process running with session ID")
+_PREDICATE_TOOLS = frozenset({"grep", "rg", "test", "diff", "cmp", "["})
+_INTERRUPTED_CODES = frozenset({130, 137, 143})  # SIGINT / SIGKILL / SIGTERM
+_CRASH_CODES = frozenset({134, 139})  # SIGABRT / SIGSEGV — crashes, not interrupts
+
+
+def _leading_program(command: str) -> str:
+    """The effective leading program: unwrap ``bash -lc "…"``, strip ``cd … &&``
+    and ``VAR=val`` env prefixes, descend the first pipeline stage, drop any path."""
+    try:
+        toks = shlex.split(command)
+    except ValueError:
+        toks = command.split()
+    if not toks:
+        return ""
+    if toks[0] in ("bash", "sh", "zsh") and len(toks) >= 3 and toks[1] in ("-c", "-lc", "-lic", "-ic"):
+        return _leading_program(toks[2])
+    i = 0
+    while i < len(toks):
+        t = toks[i]
+        if t == "cd" and i + 1 < len(toks):  # cd DIR && …
+            i += 2
+            if i < len(toks) and toks[i] in ("&&", ";", "||"):
+                i += 1
+            continue
+        if t in ("env", "exec", "command", "sudo", "time"):
+            i += 1
+            continue
+        if "=" in t and not t.startswith(("-", "/")) and t.split("=", 1)[0].replace("_", "").isalnum():
+            i += 1  # VAR=val env prefix
+            continue
+        break
+    return toks[i].rsplit("/", 1)[-1] if i < len(toks) else ""
+
+
+def _classify_exit(code: int, command: str | None) -> ToolOutcome:
+    """Map a shell exit code (+ its command) to an outcome — the BUG-005 table."""
+    if code == 0:
+        return ToolOutcome.SUCCESS
+    if code in _INTERRUPTED_CODES:
+        return ToolOutcome.INTERRUPTED
+    if code in _CRASH_CODES:
+        return ToolOutcome.ERROR
+    if code == 1 and command and _leading_program(command) in _PREDICATE_TOOLS:
+        return ToolOutcome.SUCCESS  # predicate "no match / false" — a normal result
+    return ToolOutcome.ERROR
 
 
 def _extract_command(args: _JsonObj) -> str | None:
@@ -352,33 +409,40 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         if tc is not None:
             all_tool_calls.append(tc)
 
-    # ── Pass 3: outcomes from *_output payloads (matched by call_id) ──
-    outcome_map: dict[str, ToolOutcome] = {}
+    # ── Pass 3: shell outcomes from function_call_output exit codes (BUG-005) ──
+    # Codex shells report "Process exited with code N" in the output preamble (not
+    # the word "error"). apply_patch / web_search are NOT touched here — their
+    # status field already classified them at build time. Classification joins the
+    # exit code (here) with the command (Pass 1) by call_id, since the command and
+    # the exit code never co-occur in one payload.
+    exit_code_map: dict[str, int] = {}
+    backgrounded: set[str] = set()
     for line in raw_lines:
         if line.get("type") != "response_item":
             continue
         payload = line.get("payload") or {}
-        if not isinstance(payload, dict):
-            continue
-        if payload.get("type") not in ("function_call_output", "custom_tool_call_output"):
+        if not isinstance(payload, dict) or payload.get("type") != "function_call_output":
             continue
         call_id = str(payload.get("call_id", ""))
         if not call_id:
             continue
         output = payload.get("output", "")
-        # Codex output is plain text; check for error markers.
-        # We treat any output text as success unless it explicitly mentions
-        # an error envelope. The runtime's own ``status`` field on the call
-        # payload already classified completion/error in pass 2; this pass
-        # only flips outcomes when the output text disagrees.
-        if isinstance(output, str) and ("error:" in output.lower()[:80] or '"error"' in output[:200]):
-            outcome_map[call_id] = ToolOutcome.ERROR
-        else:
-            outcome_map.setdefault(call_id, ToolOutcome.SUCCESS)
+        text = output if isinstance(output, str) else str(output)
+        match = _EXIT_RE.search(text)
+        if match is not None:
+            exit_code_map[call_id] = int(match.group(1))
+        elif _RUNNING_RE.search(text):
+            backgrounded.add(call_id)
 
-    for tc in all_tool_calls:
-        if tc.tool_id and tc.tool_id in outcome_map:
-            tc.outcome = outcome_map[tc.tool_id]
+    by_id = {tc.tool_id: tc for tc in all_tool_calls if tc.tool_id}
+    for call_id, code in exit_code_map.items():
+        tc = by_id.get(call_id)
+        if tc is not None:
+            tc.outcome = _classify_exit(code, tc.command)
+    for call_id in backgrounded - set(exit_code_map):
+        tc = by_id.get(call_id)
+        if tc is not None:
+            tc.outcome = ToolOutcome.NO_VERDICT
 
     # ── Pass 4: token totals from event_msg/token_count (last non-null wins) ──
     last_total_usage: _JsonObj | None = None

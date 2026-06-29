@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
@@ -203,6 +203,15 @@ class DiagramSpec(FrozenModel):
         description="Artifact-level tint override; None defers to the genome per-frame default",
     )
     notes: str = Field(default="", description="Footer slug; empty renders the topology name uppercased")
+    lineage: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "Append-only edit history written by `transform` — each entry "
+            "{parent_id, op, patch, ts}. Empty by default and excluded from the "
+            "payload dump, so untransformed artifacts stay byte-identical; once "
+            "populated it rides inside the hashed payload (tamper-evident)."
+        ),
+    )
     operator: str = Field(
         default="",
         max_length=4,

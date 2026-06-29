@@ -8,6 +8,8 @@
 {% endfor %}{% else %}
   <text class="{{ uid }}-{{ cell.cls }}" x="{{ cell.text_x }}" y="{{ cell.text_y }}" text-anchor="{{ cell.text_anchor }}"{% if cell.text_fill %} style="fill:{{ cell.text_fill }}"{% endif %}>{{ cell.text | xml_escape }}</text>
 {% endif %}
-{% if cell.sub_text %}
+{% if cell.sub_lines %}{% for s in cell.sub_lines %}
+  <text class="{{ uid }}-{{ cell.sub_cls }}" x="{{ s.x }}" y="{{ s.y }}" text-anchor="{{ cell.text_anchor }}"{% if cell.sub_fill %} style="fill:{{ cell.sub_fill }}"{% endif %}>{{ s.text | xml_escape }}</text>
+{% endfor %}{% elif cell.sub_text %}
   <text class="{{ uid }}-{{ cell.sub_cls }}" x="{{ cell.sub_x }}" y="{{ cell.sub_y }}" text-anchor="{{ cell.text_anchor }}"{% if cell.sub_fill %} style="fill:{{ cell.sub_fill }}"{% endif %}>{{ cell.sub_text | xml_escape }}</text>
 {% endif %}
