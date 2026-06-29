@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-logo.svg" alt="HyperWeave" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-logo.svg" alt="HyperWeave" width="75%"/>
 </p>
 
 <p align="center">

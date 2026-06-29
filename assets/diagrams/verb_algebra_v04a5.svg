@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
-     id="blueprintroot" viewBox="0 0 768 500" width="768" height="500" role="img"
-     aria-labelledby="blueprintt blueprintd" data-hw-frame="diagram"
-     data-hw-genome="blueprint">
-    <title id="blueprintt">The Verb Algebra — one artifact: compose it, transform it,
-        read it, ship it</title>
-    <desc id="blueprintd">Hub-and-spoke verb algebra (blueprint mapping). The artifact
-        is composed from a spec, transformed (new id), and read without mutation
-        (extract, verify, diff, query); it ships to documents (many into one) and
-        surfaces (via --target). The accent is the verb algebra and destinations; one
-        edge in, four out.</desc>
+     id="bproot" viewBox="0 0 768 424" width="768" height="424" role="img"
+     aria-labelledby="vt vd" shape-rendering="geometricPrecision"
+     data-hw-frame="diagram" data-hw-genome="blueprint" data-hw-theme="adaptive">
+    <title id="vt">The Verb Algebra — one artifact: compose it, transform it, read it,
+        ship it</title>
+    <desc id="vd">Hub-and-spoke verb algebra, blueprint mapping, adaptive light/dark,
+        hand-drawn via baked vertex displacement. The artifact is composed from a spec,
+        transformed (new id), and read without mutation (extract, verify, diff, query);
+        it ships to documents (many into one) and surfaces (via --target). The accent is
+        the verb algebra and destinations; one edge in, four out.</desc>
     <metadata>
         <hw:hyperweave xmlns:hw="https://hyperweave.app/hw/v1.0">
             <hw:artifact id="hw-verb-algebra-blueprint" type="diagram"
@@ -19,35 +19,38 @@
                     <hw:created>2026-06-24T00:00:00Z</hw:created>
                     <hw:human-directed>true</hw:human-directed>
                 </hw:provenance>
-                <hw:spec size="768x500" performance="paint-ok" theme="light"
+                <hw:spec size="768x424" performance="composite-only" theme="adaptive"
                          a11y="WCAG-AA" />
                 <hw:aesthetic>
-                    <hw:chromatic system="blueprint" space="oklch"
-                                  contrast-ratio="AA" />
+                    <hw:chromatic system="blueprint" space="oklch" contrast-ratio="AA"
+                                  mode="light-dark" />
                     <hw:geometry form-language="organic" proportional-system="grid"
-                                 mathematical-basis="hub-and-spoke radial; destinations share x/width, symmetric about hub centerline; one inbound, four outbound"
+                                 mathematical-basis="hub-and-spoke radial; hand-drawn via displacement field baked into subdivided path vertices (v'=v+D(v)) rather than a pixel-space filter; one inbound, four outbound"
                                  symmetry="bilateral" />
                     <hw:material surface="paper" depth="flat" />
                 </hw:aesthetic>
                 <hw:reasoning>
-                    <hw:intent>One of five chromatic mappings of the verb algebra; the
-                        keystone is the focal block and the diagram stands alone via
-                        title and subtitle.</hw:intent>
-                    <hw:approach>The accent is carried as a solid fill on the keystone
-                        artifact plus the destination titles and the arrows that reach
-                        them; every paper box keeps a single dark ink outline. The eye
-                        reads ink as the operation scaffold and accent as the artifact
-                        and where it ships.</hw:approach>
-                    <hw:tradeoffs>No accent outlines on paper — an accent stroke on a
-                        tinted fill muddies both, so the accent is a fill or text
-                        instead. Labels reflect only what ships (documents 'many into
-                        one', surfaces 'via --target'); HTML stays off-diagram as that
-                        seam raises NotImplementedError. No background; resting state is
-                        fully visible so it renders in any viewer, draw-on layered where
-                        supported.</hw:tradeoffs><hw:spatial-notes>768x500 grid radial;
-                        keystone at (384,300). spec left and transform/read on the hub
+                    <hw:intent>Restore the hand-drawn wobble lost when the displacement
+                        filter was removed, without reintroducing the mobile blur.
+                    </hw:intent>
+                    <hw:approach>The wobble is a displacement field D. feDisplacementMap
+                        applied D in pixel space (post-rasterization, resolution-bound);
+                        here the same field is applied to geometry — each box side and
+                        arrow shaft is bowed by D sampled at its vertices, doubled with
+                        a second independently re-jittered pass for the sketch feel.
+                        Pure vector: crisp at any DPI, computed once at author time.
+                    </hw:approach>
+                    <hw:tradeoffs>Isomorphic to the filter on the shared structure 'warp
+                        by D', differing only in domain (vertices vs pixels) and time
+                        (author vs frame); for thin strokes where D's wavelength exceeds
+                        stroke width the two coincide. No filter means no linearRGB wash
+                        and no high-DPI softening. Labels reflect only what ships; HTML
+                        stays off-diagram as that seam raises NotImplementedError.
+                        Resting state fully visible; draw-on layered where animation
+                        runs.</hw:tradeoffs><hw:spatial-notes>768x424 grid radial;
+                        keystone at (384,228). spec left and transform/read on the hub
                         centerline; documents and surfaces share left edge x560 and
-                        width 152, symmetric about y300; their arrows land on each
+                        width 152, symmetric about y228; arrows land on each
                         left-center. One inbound (compose), four
                         outbound.</hw:spatial-notes>
                 </hw:reasoning>
@@ -59,16 +62,98 @@
             user-select: none
         }
 
-        .blueprintfi {
-            animation: blueprintF .5s ease-out var(--t, 0s) backwards
+        .bpinkf {
+            fill: #16314E
         }
 
-        .blueprintdr {
+        .bpinks {
+            stroke: #16314E
+        }
+
+        .bpaccf {
+            fill: #2D6CDF
+        }
+
+        .bpacDf {
+            fill: #1D5AC4
+        }
+
+        .bpacDs {
+            stroke: #1D5AC4
+        }
+
+        .bppaf {
+            fill: #DCE6F4
+        }
+
+        .bpmutf {
+            fill: #51637C
+        }
+
+        .bpktf {
+            fill: #F4F8FF
+        }
+
+        .bpkmf {
+            fill: #C8DAF6
+        }
+
+        .bpghs {
+            stroke: #16314E
+        }
+
+        @media(prefers-color-scheme:dark) {
+            .bpinkf {
+                fill: #C2D4EF
+            }
+
+            .bpinks {
+                stroke: #C2D4EF
+            }
+
+            .bpaccf {
+                fill: #3E7CEC
+            }
+
+            .bpacDf {
+                fill: #83B0F8
+            }
+
+            .bpacDs {
+                stroke: #83B0F8
+            }
+
+            .bppaf {
+                fill: #172A47
+            }
+
+            .bpmutf {
+                fill: #8DA0C0
+            }
+
+            .bpktf {
+                fill: #EAF2FF
+            }
+
+            .bpkmf {
+                fill: #C6D9F8
+            }
+
+            .bpghs {
+                stroke: #C2D4EF
+            }
+        }
+
+        .bpfi {
+            animation: bpF .5s ease-out var(--t, 0s) backwards
+        }
+
+        .bpdr {
             stroke-dasharray: 1;
-            animation: blueprintD var(--d, .5s) cubic-bezier(.42, .04, .32, 1) var(--t, 0s) backwards
+            animation: bpD var(--d, .5s) cubic-bezier(.42, .04, .32, 1) var(--t, 0s) backwards
         }
 
-        @keyframes blueprintF {
+        @keyframes bpF {
             from {
                 opacity: 0
             }
@@ -78,7 +163,7 @@
             }
         }
 
-        @keyframes blueprintD {
+        @keyframes bpD {
             from {
                 stroke-dashoffset: 1
             }
@@ -88,172 +173,137 @@
             }
         }
 
-        .blueprinth {
-            filter: url(#blueprintink)
-        }
-
         @media(prefers-reduced-motion:reduce) {
 
-            .blueprintdr,
-            .blueprintfi {
+            .bpdr,
+            .bpfi {
                 animation: none
             }
         }
-
-        @media(forced-colors:active) {
-            .blueprinth {
-                filter: none
-            }
-        }
-    </style>
-    <defs>
-        <filter id="blueprintink" filterUnits="userSpaceOnUse" x="-20" y="-20"
-                width="808" height="540">
-            <feTurbulence type="fractalNoise" baseFrequency="0.009 0.012" numOctaves="2"
-                          seed="7" result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="1.3"
-                               xChannelSelector="R" yChannelSelector="G" result="dd" />
-            <feGaussianBlur in="dd" stdDeviation="0.35" result="b" />
-            <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="dd" />
-            </feMerge>
-        </filter>
-    </defs><text class="blueprintfi" x="40" y="48"
+    </style><text class="bpfi bpinkf" x="40" y="34"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="26" font-weight="800" fill="#16314E" style="--t:0s">The Verb
-        Algebra</text><text class="blueprintfi" x="40" y="72"
+          font-size="9.5" font-weight="600" letter-spacing="0.18em"
+          style="--t:0s">OPERATIONS</text><text class="bpfi bpacDf" x="712" y="34"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="14.5" fill="#51637C" style="--t:.06s">one artifact — compose it,
-        transform it, read it, ship it</text><text class="blueprintfi" x="40" y="112"
+          font-size="9.5" font-weight="600" letter-spacing="0.18em" text-anchor="end"
+          style="--t:0s">DESTINATIONS</text>
+    <path class="bpdr bpinks"
+          d="M 180.00,228.00 C 214.33,227.89 248.67,228.14 283.00,228.00 M 274.91,224.05 L 283.00,228.00 L 274.91,231.95"
+          fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:0.3s;--d:.32s" />
+    <path class="bpdr bpinks"
+          d="M 384.00,176.00 C 383.94,157.67 384.38,139.33 384.00,121.00 M 380.05,129.09 L 384.00,121.00 L 387.95,129.09"
+          fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:1.05s;--d:.30s" />
+    <path class="bpdr bpinks"
+          d="M 384.00,280.00 C 384.58,297.00 383.56,314.00 384.00,331.00 M 387.95,322.91 L 384.00,331.00 L 380.05,322.91"
+          fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:1.8s;--d:.30s" />
+    <path class="bpdr bpacDs"
+          d="M 484.00,200.00 C 508.56,185.83 534.23,173.76 559.00,160.00 M 550.01,160.33 L 559.00,160.00 L 553.72,167.29"
+          fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:1.33s;--d:.30s" />
+    <path class="bpdr bpacDs"
+          d="M 484.00,256.00 C 508.47,270.32 534.55,281.63 559.00,296.00 M 553.72,288.71 L 559.00,296.00 L 550.01,295.67"
+          fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:1.61s;--d:.30s" /><text class="bpfi bpmutf" x="231"
+          y="218"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="9.5" font-weight="600" letter-spacing="0.18em" fill="#16314E"
-          style="--t:.1s">OPERATIONS</text><text class="blueprintfi" x="712" y="112"
+          font-size="13" text-anchor="middle" style="--t:.5s">compose</text><text
+          class="bpfi bpmutf" x="396" y="154"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="9.5" font-weight="600" letter-spacing="0.18em" fill="#1D5AC4"
-          text-anchor="end" style="--t:.1s">DESTINATIONS</text>
-    <path class="blueprinth blueprintdr"
-          d="M 180,300 L 283,300 M 272,294.5 L 283,300 L 272,305.5" fill="none"
-          stroke="#16314E" stroke-width="1.6" stroke-linecap="round"
-          stroke-linejoin="round" pathLength="1" style="--t:0.55s;--d:.32s" />
-    <path class="blueprinth blueprintdr"
-          d="M 384,248 L 384,197 M 378.5,208 L 384,197 L 389.5,208" fill="none"
-          stroke="#16314E" stroke-width="1.6" stroke-linecap="round"
-          stroke-linejoin="round" pathLength="1" style="--t:1.3s;--d:.30s" />
-    <path class="blueprinth blueprintdr"
-          d="M 384,352 L 384,403 M 378.5,392 L 384,403 L 389.5,392" fill="none"
-          stroke="#16314E" stroke-width="1.6" stroke-linecap="round"
-          stroke-linejoin="round" pathLength="1" style="--t:2.05s;--d:.30s" />
-    <path class="blueprinth blueprintdr"
-          d="M 484,268 L 559,232 M 553.3,239 L 559,232 L 550,232.1" fill="none"
-          stroke="#1D5AC4" stroke-width="1.6" stroke-linecap="round"
-          stroke-linejoin="round" pathLength="1" style="--t:1.58s;--d:.30s" />
-    <path class="blueprinth blueprintdr"
-          d="M 484,332 L 559,368 M 550,367.9 L 559,368 L 553.3,361" fill="none"
-          stroke="#1D5AC4" stroke-width="1.6" stroke-linecap="round"
-          stroke-linejoin="round" pathLength="1" style="--t:1.86s;--d:.30s" /><text
-          class="blueprintfi" x="231" y="290"
+          font-size="13" style="--t:1.25s">edit</text><text class="bpfi bpmutf" x="396"
+          y="310"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="13" fill="#51637C" text-anchor="middle"
-          style="--t:.72s">compose</text><text class="blueprintfi" x="396" y="226"
+          font-size="13" style="--t:2.0s">read</text>
+    <path class="bpdr bpghs"
+          d="M 50.02,196.23 C 90.00,195.06 130.00,198.04 170.00,196.00 Q 180.00,196.00 180.00,206.00 C 178.91,220.67 178.76,235.33 180.00,250.00 Q 180.00,260.00 170.00,260.00 C 130.00,260.20 90.00,258.41 50.00,260.00 Q 40.00,260.00 40.00,250.00 C 41.11,235.33 40.44,220.67 40.00,206.00 Q 40.00,196.00 50.00,196.00 Z"
+          fill="none" stroke-width="1.35" opacity="0.16" transform="translate(0.5,0.6)"
+          pathLength="1" style="--t:0.0s;--d:.55s" />
+    <path class="bpdr bppaf bpinks"
+          d="M 49.36,196.36 C 90.00,196.51 130.00,195.92 170.00,196.00 Q 180.00,196.00 180.00,206.00 C 181.08,220.67 178.89,235.33 180.00,250.00 Q 180.00,260.00 170.00,260.00 C 130.00,258.83 90.00,259.95 50.00,260.00 Q 40.00,260.00 40.00,250.00 C 40.02,235.33 39.00,220.67 40.00,206.00 Q 40.00,196.00 50.00,196.00 Z"
+          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:0.0s;--d:.55s" /><text class="bpfi bpinkf" x="110.0"
+          y="230"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="13" fill="#51637C" style="--t:1.5s">edit</text><text
-          class="blueprintfi" x="396" y="382"
+          font-size="18" font-weight="700" text-anchor="middle" style="--t:0.3s">the
+        spec</text><text class="bpfi bpmutf" x="110.0" y="250"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="13" fill="#51637C" style="--t:2.25s">read</text>
-    <path class="blueprinth blueprintdr"
-          d="M 110.0,268 H 170 Q 180,268 180,278 V 322 Q 180,332 170,332 H 50 Q 40,332 40,322 V 278 Q 40,268 50,268 Z"
-          fill="none" stroke="#16314E" stroke-width="1.35" opacity="0.16"
-          transform="translate(0.8,0.9)" pathLength="1" style="--t:0.25s;--d:.55s" />
-    <path class="blueprinth blueprintdr"
-          d="M 110.0,268 H 170 Q 180,268 180,278 V 322 Q 180,332 170,332 H 50 Q 40,332 40,322 V 278 Q 40,268 50,268 Z"
-          fill="#EAF0F7" stroke="#16314E" stroke-width="1.5" stroke-linejoin="round"
-          pathLength="1" style="--t:0.25s;--d:.55s" /><text class="blueprintfi"
-          x="110.0" y="302"
+          font-size="12.5" text-anchor="middle" style="--t:0.35s">the recipe</text>
+    <path class="bpdr bpghs"
+          d="M 308.94,55.02 C 359.33,55.56 408.67,54.14 458.00,56.00 Q 468.00,56.00 468.00,66.00 C 466.09,80.67 470.19,95.33 468.00,110.00 Q 468.00,120.00 458.00,120.00 C 408.67,119.83 359.33,120.80 310.00,120.00 Q 300.00,120.00 300.00,110.00 C 301.67,95.33 298.38,80.67 300.00,66.00 Q 300.00,56.00 310.00,56.00 Z"
+          fill="none" stroke-width="1.35" opacity="0.16" transform="translate(0.5,0.6)"
+          pathLength="1" style="--t:0.85s;--d:.55s" />
+    <path class="bpdr bppaf bpinks"
+          d="M 310.87,55.32 C 359.33,54.19 408.67,57.89 458.00,56.00 Q 468.00,56.00 468.00,66.00 C 469.20,80.67 469.44,95.33 468.00,110.00 Q 468.00,120.00 458.00,120.00 C 408.67,119.42 359.33,120.59 310.00,120.00 Q 300.00,120.00 300.00,110.00 C 301.48,95.33 298.98,80.67 300.00,66.00 Q 300.00,56.00 310.00,56.00 Z"
+          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:0.85s;--d:.55s" /><text class="bpfi bpinkf"
+          x="384.0" y="90"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="18" font-weight="700" fill="#16314E" text-anchor="middle"
-          style="--t:0.55s">the spec</text><text class="blueprintfi" x="110.0" y="322"
+          font-size="18" font-weight="700" text-anchor="middle"
+          style="--t:1.1s">transform</text><text class="bpfi bpmutf" x="384.0" y="110"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="12.5" fill="#51637C" text-anchor="middle"
-          style="--t:0.6000000000000001s">the recipe</text>
-    <path class="blueprinth blueprintdr"
-          d="M 384.0,132 H 458 Q 468,132 468,142 V 186 Q 468,196 458,196 H 310 Q 300,196 300,186 V 142 Q 300,132 310,132 Z"
-          fill="none" stroke="#16314E" stroke-width="1.35" opacity="0.16"
-          transform="translate(0.8,0.9)" pathLength="1" style="--t:1.1s;--d:.55s" />
-    <path class="blueprinth blueprintdr"
-          d="M 384.0,132 H 458 Q 468,132 468,142 V 186 Q 468,196 458,196 H 310 Q 300,196 300,186 V 142 Q 300,132 310,132 Z"
-          fill="#EAF0F7" stroke="#16314E" stroke-width="1.5" stroke-linejoin="round"
-          pathLength="1" style="--t:1.1s;--d:.55s" /><text class="blueprintfi" x="384.0"
-          y="166"
+          font-size="12.5" text-anchor="middle" style="--t:1.1500000000000001s">new id +
+        lineage</text>
+    <path class="bpdr bpghs"
+          d="M 283.09,332.11 C 350.00,330.47 418.00,334.21 486.00,332.00 Q 496.00,332.00 496.00,342.00 C 496.40,356.67 494.63,371.33 496.00,386.00 Q 496.00,396.00 486.00,396.00 C 418.00,398.22 350.00,397.59 282.00,396.00 Q 272.00,396.00 272.00,386.00 C 274.22,371.33 273.50,356.67 272.00,342.00 Q 272.00,332.00 282.00,332.00 Z"
+          fill="none" stroke-width="1.35" opacity="0.16" transform="translate(0.5,0.6)"
+          pathLength="1" style="--t:1.85s;--d:.55s" />
+    <path class="bpdr bppaf bpinks"
+          d="M 282.81,332.85 C 350.00,333.49 418.00,330.42 486.00,332.00 Q 496.00,332.00 496.00,342.00 C 495.65,356.67 496.29,371.33 496.00,386.00 Q 496.00,396.00 486.00,396.00 C 418.00,395.89 350.00,397.40 282.00,396.00 Q 272.00,396.00 272.00,386.00 C 270.83,371.33 271.79,356.67 272.00,342.00 Q 272.00,332.00 282.00,332.00 Z"
+          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:1.85s;--d:.55s" /><text class="bpfi bpinkf"
+          x="384.0" y="366"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="18" font-weight="700" fill="#16314E" text-anchor="middle"
-          style="--t:1.35s">transform</text><text class="blueprintfi" x="384.0" y="186"
+          font-size="17" font-weight="700" text-anchor="middle" style="--t:2.1s">read,
+        never mutates</text><text class="bpfi bpmutf" x="384.0" y="386"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="12.5" fill="#51637C" text-anchor="middle"
-          style="--t:1.4000000000000001s">new id + lineage</text>
-    <path class="blueprinth blueprintdr"
-          d="M 384.0,404 H 486 Q 496,404 496,414 V 458 Q 496,468 486,468 H 282 Q 272,468 272,458 V 414 Q 272,404 282,404 Z"
-          fill="none" stroke="#16314E" stroke-width="1.35" opacity="0.16"
-          transform="translate(0.8,0.9)" pathLength="1" style="--t:2.1s;--d:.55s" />
-    <path class="blueprinth blueprintdr"
-          d="M 384.0,404 H 486 Q 496,404 496,414 V 458 Q 496,468 486,468 H 282 Q 272,468 272,458 V 414 Q 272,404 282,404 Z"
-          fill="#EAF0F7" stroke="#16314E" stroke-width="1.5" stroke-linejoin="round"
-          pathLength="1" style="--t:2.1s;--d:.55s" /><text class="blueprintfi" x="384.0"
-          y="438"
+          font-size="12.5" text-anchor="middle" style="--t:2.15s">extract · verify ·
+        diff · query</text>
+    <path class="bpdr bpghs"
+          d="M 570.95,128.34 C 614.00,130.46 658.00,128.05 702.00,129.00 Q 712.00,129.00 712.00,139.00 C 710.87,153.00 712.71,167.00 712.00,181.00 Q 712.00,191.00 702.00,191.00 C 658.00,190.49 614.00,190.45 570.00,191.00 Q 560.00,191.00 560.00,181.00 C 557.65,167.00 560.99,153.00 560.00,139.00 Q 560.00,129.00 570.00,129.00 Z"
+          fill="none" stroke-width="1.35" opacity="0.16" transform="translate(0.5,0.6)"
+          pathLength="1" style="--t:1.37s;--d:.55s" />
+    <path class="bpdr bppaf bpinks"
+          d="M 570.40,129.65 C 614.00,127.79 658.00,130.89 702.00,129.00 Q 712.00,129.00 712.00,139.00 C 713.16,153.00 711.35,167.00 712.00,181.00 Q 712.00,191.00 702.00,191.00 C 658.00,192.55 614.00,190.02 570.00,191.00 Q 560.00,191.00 560.00,181.00 C 558.67,167.00 560.78,153.00 560.00,139.00 Q 560.00,129.00 570.00,129.00 Z"
+          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:1.37s;--d:.55s" /><text class="bpfi bpacDf"
+          x="636.0" y="163"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="17" font-weight="700" fill="#16314E" text-anchor="middle"
-          style="--t:2.35s">read, never mutates</text><text class="blueprintfi"
-          x="384.0" y="458"
+          font-size="17" font-weight="700" text-anchor="middle"
+          style="--t:1.61s">documents</text><text class="bpfi bpmutf" x="636.0" y="183"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="12.5" fill="#51637C" text-anchor="middle" style="--t:2.4s">extract
-        · verify · diff · query</text>
-    <path class="blueprinth blueprintdr"
-          d="M 636.0,201 H 702 Q 712,201 712,211 V 253 Q 712,263 702,263 H 570 Q 560,263 560,253 V 211 Q 560,201 570,201 Z"
-          fill="none" stroke="#16314E" stroke-width="1.35" opacity="0.16"
-          transform="translate(0.8,0.9)" pathLength="1" style="--t:1.62s;--d:.55s" />
-    <path class="blueprinth blueprintdr"
-          d="M 636.0,201 H 702 Q 712,201 712,211 V 253 Q 712,263 702,263 H 570 Q 560,263 560,253 V 211 Q 560,201 570,201 Z"
-          fill="#EAF0F7" stroke="#16314E" stroke-width="1.5" stroke-linejoin="round"
-          pathLength="1" style="--t:1.62s;--d:.55s" /><text class="blueprintfi"
-          x="636.0" y="235"
+          font-size="12.5" text-anchor="middle" style="--t:1.6600000000000001s">many
+        into one</text>
+    <path class="bpdr bpghs"
+          d="M 570.17,265.19 C 614.00,264.79 658.00,265.69 702.00,265.00 Q 712.00,265.00 712.00,275.00 C 712.13,289.00 712.13,303.00 712.00,317.00 Q 712.00,327.00 702.00,327.00 C 658.00,328.63 614.00,328.74 570.00,327.00 Q 560.00,327.00 560.00,317.00 C 560.60,303.00 558.04,289.00 560.00,275.00 Q 560.00,265.00 570.00,265.00 Z"
+          fill="none" stroke-width="1.35" opacity="0.16" transform="translate(0.5,0.6)"
+          pathLength="1" style="--t:1.65s;--d:.55s" />
+    <path class="bpdr bppaf bpinks"
+          d="M 569.77,265.81 C 614.00,266.31 658.00,263.91 702.00,265.00 Q 712.00,265.00 712.00,275.00 C 710.59,289.00 711.48,303.00 712.00,317.00 Q 712.00,327.00 702.00,327.00 C 658.00,328.74 614.00,325.28 570.00,327.00 Q 560.00,327.00 560.00,317.00 C 559.07,303.00 559.26,289.00 560.00,275.00 Q 560.00,265.00 570.00,265.00 Z"
+          stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          pathLength="1" style="--t:1.65s;--d:.55s" /><text class="bpfi bpacDf"
+          x="636.0" y="299"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="17" font-weight="700" fill="#1D5AC4" text-anchor="middle"
-          style="--t:1.86s">documents</text><text class="blueprintfi" x="636.0" y="255"
+          font-size="17" font-weight="700" text-anchor="middle"
+          style="--t:1.89s">surfaces</text><text class="bpfi bpmutf" x="636.0" y="319"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="12.5" fill="#51637C" text-anchor="middle"
-          style="--t:1.9100000000000001s">many into one</text>
-    <path class="blueprinth blueprintdr"
-          d="M 636.0,337 H 702 Q 712,337 712,347 V 389 Q 712,399 702,399 H 570 Q 560,399 560,389 V 347 Q 560,337 570,337 Z"
-          fill="none" stroke="#16314E" stroke-width="1.35" opacity="0.16"
-          transform="translate(0.8,0.9)" pathLength="1" style="--t:1.9s;--d:.55s" />
-    <path class="blueprinth blueprintdr"
-          d="M 636.0,337 H 702 Q 712,337 712,347 V 389 Q 712,399 702,399 H 570 Q 560,399 560,389 V 347 Q 560,337 570,337 Z"
-          fill="#EAF0F7" stroke="#16314E" stroke-width="1.5" stroke-linejoin="round"
-          pathLength="1" style="--t:1.9s;--d:.55s" /><text class="blueprintfi" x="636.0"
-          y="371"
+          font-size="12.5" text-anchor="middle" style="--t:1.94s">via --target</text>
+    <path class="bpdr bpacDs"
+          d="M 292.92,176.29 C 354.00,176.30 414.00,174.09 474.00,176.00 Q 484.00,176.00 484.00,186.00 C 486.23,214.00 481.91,242.00 484.00,270.00 Q 484.00,280.00 474.00,280.00 C 414.00,280.44 354.00,280.95 294.00,280.00 Q 284.00,280.00 284.00,270.00 C 284.80,242.00 286.06,214.00 284.00,186.00 Q 284.00,176.00 294.00,176.00 Z"
+          fill="none" stroke-width="1.80" opacity="0.28" transform="translate(0.5,0.6)"
+          pathLength="1" style="--t:0.55s;--d:.55s" />
+    <path class="bpdr bpaccf bpinks"
+          d="M 294.47,175.44 C 354.00,174.88 414.00,176.38 474.00,176.00 Q 484.00,176.00 484.00,186.00 C 485.68,214.00 482.95,242.00 484.00,270.00 Q 484.00,280.00 474.00,280.00 C 414.00,279.00 354.00,281.74 294.00,280.00 Q 284.00,280.00 284.00,270.00 C 284.70,242.00 284.01,214.00 284.00,186.00 Q 284.00,176.00 294.00,176.00 Z"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="1"
+          style="--t:0.55s;--d:.55s" /><text class="bpfi bpktf" x="384.0" y="210"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="17" font-weight="700" fill="#1D5AC4" text-anchor="middle"
-          style="--t:2.14s">surfaces</text><text class="blueprintfi" x="636.0" y="391"
+          font-size="19" font-weight="700" text-anchor="middle" style="--t:0.8s">the
+        artifact</text><text class="bpfi bpkmf" x="384.0" y="230"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="12.5" fill="#51637C" text-anchor="middle" style="--t:2.19s">via
-        --target</text>
-    <path class="blueprinth blueprintdr"
-          d="M 384.0,248 H 474 Q 484,248 484,258 V 342 Q 484,352 474,352 H 294 Q 284,352 284,342 V 258 Q 284,248 294,248 Z"
-          fill="none" stroke="#1D5AC4" stroke-width="1.80" opacity="0.30"
-          transform="translate(0.8,0.9)" pathLength="1" style="--t:0.8s;--d:.55s" />
-    <path class="blueprinth blueprintdr"
-          d="M 384.0,248 H 474 Q 484,248 484,258 V 342 Q 484,352 474,352 H 294 Q 284,352 284,342 V 258 Q 284,248 294,248 Z"
-          fill="#2D6CDF" stroke="#16314E" stroke-width="2" stroke-linejoin="round"
-          pathLength="1" style="--t:0.8s;--d:.55s" /><text class="blueprintfi" x="384.0"
-          y="282"
+          font-size="13" text-anchor="middle" style="--t:0.8500000000000001s">payload +
+        envelope</text><text class="bpfi bpkmf" x="384.0" y="248"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="19" font-weight="700" fill="#F4F8FF" text-anchor="middle"
-          style="--t:1.05s">the artifact</text><text class="blueprintfi" x="384.0"
-          y="302"
-          font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="13" fill="#C8DAF6" text-anchor="middle" style="--t:1.1s">payload +
-        envelope</text><text class="blueprintfi" x="384.0" y="320"
-          font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="12.5" fill="#C8DAF6" text-anchor="middle"
-          style="--t:1.1400000000000001s">re-renderable seed</text>
+          font-size="12.5" text-anchor="middle"
+          style="--t:0.8900000000000001s">re-renderable seed</text>
 </svg>

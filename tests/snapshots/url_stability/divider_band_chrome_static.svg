@@ -5,7 +5,7 @@
      viewBox="0 0 800 22"
      width="800" height="22"
      shape-rendering="geometricPrecision"
-     data-hw-id="divider-6b3ab6217e679e2e"
+     data-hw-id="divider-035a187e40869bbb"
      data-hw-type="divider"
      data-hw-frame="divider"
      data-hw-genome="chrome"
@@ -15,7 +15,7 @@
      data-hw-profile="dimensional"
      data-hw-motion="static"
      data-hw-generation="1"
-     data-hw-contract="divider-6b3ab6217e679e2e"
+     data-hw-contract="divider-035a187e40869bbb"
      data-hw-size="default"
      data-hw-regime="normal"
      data-hw-chromatic="chrome">
@@ -23,7 +23,7 @@
   <desc id="hw-UID-desc">A divider artifact, using chrome genome.</desc>
   <!-- agents: this is a HyperWeave living artifact. Its data is in <metadata> — hw:payload (lossless seed, replant to regenerate) and hw:envelope (compact hwz/1 digest, ~200 tokens, actionable). Verbs over the seed: extract · verify · transform · diff · query. Contract: https://hyperweave.app/llms.txt -->
   <metadata>
-  <hw:artifact id="divider-6b3ab6217e679e2e" type="divider" series="core" version="VERSION"
+  <hw:artifact id="divider-035a187e40869bbb" type="divider" series="core" version="VERSION"
                xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
       <hw:generator>HyperWeave Compositor vVERSION (InnerAura Labs)</hw:generator>

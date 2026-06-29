@@ -543,7 +543,7 @@ def _emit_envelope(
     The single envelope-emission chokepoint shared by every frame: the
     structural frames pass their resolver payload (matrix/diagram/receipt),
     the lightweight frames pass ``build_simple_payload`` output. Content-derived
-    identity (``uid``/``artifact_id`` = ``sha256(payload|genome|variant|version)``)
+    identity (``uid``/``artifact_id`` = ``sha256(payload|genome|variant)``)
     makes byte-identical re-renders the contract; ``prov.ts`` reads the single
     ``created_at`` clock so envelope and metadata always agree. No-op when
     ``payload_json`` is empty. ``schema``/``markdown`` are set only when given
@@ -554,7 +554,11 @@ def _emit_envelope(
     genome_id = str(ctx.get("genome_id", ""))
     variant = str(ctx.get("variant", ""))
     version = str(ctx.get("version", ""))
-    digest = hashlib.sha256("|".join((payload_json, genome_id, variant, version)).encode("utf-8")).hexdigest()
+    # artifact_id is a content address — payload + genome + variant only. Version is
+    # deliberately excluded: it lives in prov.ver (normalized in snapshots), and folding
+    # it in here would churn every artifact's data-hw-id on each release, breaking the
+    # byte-stability contract the url_stability test protects.
+    digest = hashlib.sha256("|".join((payload_json, genome_id, variant)).encode("utf-8")).hexdigest()
     ctx["uid"] = f"hw-{digest[:8]}"
     ctx["artifact_id"] = f"{kind}-{digest[:16]}"
     ctx["contract_id"] = ctx["artifact_id"]

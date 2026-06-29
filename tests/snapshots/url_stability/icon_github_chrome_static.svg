@@ -5,7 +5,7 @@
      viewBox="0 0 108 108"
      width="64" height="64"
      shape-rendering="geometricPrecision"
-     data-hw-id="icon-ccfaa04fa6109f87"
+     data-hw-id="icon-b1d9360a915a5270"
      data-hw-type="icon"
      data-hw-frame="icon"
      data-hw-genome="chrome"
@@ -15,7 +15,7 @@
      data-hw-profile="dimensional"
      data-hw-motion="static"
      data-hw-generation="1"
-     data-hw-contract="icon-ccfaa04fa6109f87"
+     data-hw-contract="icon-b1d9360a915a5270"
      data-hw-size="default"
      data-hw-regime="normal"
      data-hw-glyph="github"
@@ -24,7 +24,7 @@
   <desc id="hw-UID-desc">A icon artifact, using chrome genome.</desc>
   <!-- agents: this is a HyperWeave living artifact. Its data is in <metadata> — hw:payload (lossless seed, replant to regenerate) and hw:envelope (compact hwz/1 digest, ~200 tokens, actionable). Verbs over the seed: extract · verify · transform · diff · query. Contract: https://hyperweave.app/llms.txt -->
   <metadata>
-  <hw:artifact id="icon-ccfaa04fa6109f87" type="icon" series="core" version="VERSION"
+  <hw:artifact id="icon-b1d9360a915a5270" type="icon" series="core" version="VERSION"
                xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:provenance>
       <hw:generator>HyperWeave Compositor vVERSION (InnerAura Labs)</hw:generator>
