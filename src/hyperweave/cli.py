@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Annotated, Any
@@ -39,6 +40,26 @@ def _main(
 # variant name (``--genome noir``) resolves to genome=primer / variant=noir so
 # the ergonomic short-form survives the retirement of the pre-genome skins.
 _PRIMER_VARIANTS = frozenset({"noir", "carbon", "space", "anvil", "porcelain", "cream", "dusk", "petrol"})
+
+
+def _hyperweave_root() -> Path:
+    """Resolve the project-root anchor for the ``.hyperweave`` telemetry corpus.
+
+    Session-receipt hooks fire with whatever working directory the session was
+    left in -- often a subdirectory the agent ``cd``'d into. A bare relative
+    ``Path(".hyperweave")`` would then scatter receipts into that subdirectory.
+    Anchor to the project root instead: honor ``CLAUDE_PROJECT_DIR`` (set by the
+    Claude Code hook runner), else walk up to the nearest ``.git`` marker, else
+    fall back to the current directory.
+    """
+    env_root = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env_root and Path(env_root).is_dir():
+        return Path(env_root)
+    here = Path.cwd()
+    for candidate in (here, *here.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    return here
 
 
 def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
@@ -127,7 +148,7 @@ def _render_receipt_from_transcript(
             ts = _dt.fromisoformat(sess.get("start", ""))
         except (TypeError, ValueError):
             ts = _dt.now()
-        hw_dir = Path(".hyperweave") / "receipts"
+        hw_dir = _hyperweave_root() / ".hyperweave" / "receipts"
         hw_dir.mkdir(parents=True, exist_ok=True)
         output = hw_dir / receipt_filename(timestamp=ts, session_id=sess.get("id", "unknown"), prompt_text=first_prompt)
 
@@ -1143,10 +1164,10 @@ def doctor() -> None:
         typer.echo(f"  {runtime}: {len(files)} transcript(s), most recent {mtime:%Y-%m-%d %H:%M}")
 
     typer.echo("")
-    typer.echo("Receipts (./.hyperweave/receipts/):")
-    receipts_dir = Path(".hyperweave") / "receipts"
+    receipts_dir = _hyperweave_root() / ".hyperweave" / "receipts"
+    typer.echo(f"Receipts ({receipts_dir}/):")
     if not receipts_dir.exists():
-        typer.echo("  (no receipts directory in cwd)")
+        typer.echo("  (no receipts directory)")
         return
     svgs = [p for p in receipts_dir.iterdir() if p.is_file() and p.suffix == ".svg"]
     if not svgs:

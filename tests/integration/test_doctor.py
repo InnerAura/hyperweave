@@ -235,7 +235,7 @@ def test_doctor_reports_no_receipts_directory(monkeypatch: MonkeyPatch, tmp_path
     runner = CliRunner()
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
-    assert "no receipts directory in cwd" in result.stdout
+    assert "no receipts directory" in result.stdout
 
 
 def test_doctor_always_exits_zero(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
