@@ -795,14 +795,11 @@ hyperweave compose diagram --spec-file service-dependencies -g primer --variant 
 **Transform** it through the artifact itself. `transform` verifies the hash, applies the patch to the embedded spec, re-validates, and mints a new artifact with a lineage entry recording exactly what changed:
 
 ```bash
-cat > add-billing.json <<'JSON'
-[
+hyperweave transform services.svg --patch-json '[
   {"op": "add", "path": "/nodes/-", "value": {"id": "billing", "label": "Billing", "desc": "invoices", "glyph": "stripe"}},
   {"op": "add", "path": "/edges/-", "value": {"source": "gateway", "target": "billing", "relation": "assert"}},
   {"op": "add", "path": "/edges/-", "value": {"source": "billing", "target": "postgres", "label": "writes", "label_style": "chip", "relation": "assert"}}
-]
-JSON
-hyperweave transform services.svg --patch add-billing.json
+]'
 ```
 
 **The result** is a new artifact: new id, one more service in the fan, and the response carries the new envelope, the lineage, and a `/v1/a/{id}` link to the new pixels:

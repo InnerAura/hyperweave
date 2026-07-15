@@ -81,6 +81,8 @@ def test_specimen_satisfies_own_laws(name: str) -> None:
     """Grader validation: the hand-authored ground truth passes its own laws."""
     fixture = _fixture(name)
     source = _REPO / str(fixture["source"])
+    if not source.exists():
+        pytest.skip(f"hand specimen not present in this checkout: {fixture['source']}")
     facts = parse_svg(source.read_text())
     failures = [r for r in geometry_laws(facts, fixture, mode="self") if not r.ok]
     assert not failures, f"{name} (SPECIMEN — grader bug, not engine bug):\n" + "\n".join(str(f) for f in failures)

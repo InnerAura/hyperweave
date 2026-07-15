@@ -106,3 +106,24 @@ def test_unsupported_frame_rejected() -> None:
     with pytest.raises(HwError) as exc:
         transform(badge, [{"op": "replace", "path": "/value", "value": "Z"}], ts=_FIXED_TS)
     assert exc.value.code.value == "SPEC_INVALID"
+
+
+def test_transform_preserves_surface() -> None:
+    """A bare adaptive inlay source must not re-render as the plate default —
+    transform changes content, never presentation."""
+    svg0 = compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant="porcelain",
+            ground="bare",
+            palette="adaptive",
+            diagram=_DIAGRAM,
+        )
+    ).svg
+    assert 'data-hw-surface="inlay"' in svg0
+    res = transform(svg0, [{"op": "replace", "path": "/title", "value": "Flow 2"}], ts=_FIXED_TS)
+    assert 'data-hw-surface="inlay"' in res.svg
+    assert 'data-hw-ground="bare"' in res.svg
+    surface = extract_embedded(res.svg).payload["spec"].get("surface") or {}
+    assert surface == {"ground": "bare", "palette": "adaptive"}
