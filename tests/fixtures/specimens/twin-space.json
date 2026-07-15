@@ -25,6 +25,17 @@
       "stroke": "#CBDAEA"
     }
   },
+  "faces_superseded": {
+    "dark": {
+      "ink": "#CBD5E1",
+      "ink2": "#8B95A3",
+      "s0": "#0B1120",
+      "s1": "#191E2F",
+      "sig": "#38BDF8",
+      "sigt": "#8CF0FF"
+    }
+  },
+  "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family \u2014 ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark \u2014 is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read \u2014 the language-law suite grades it directly.",
   "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-space.svg",
   "variant": "space"
 }

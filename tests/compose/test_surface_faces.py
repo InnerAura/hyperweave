@@ -6,7 +6,10 @@ reach ``compose_surface`` from every transport, that the twin faces round-trip
 (the two URLs resolve to artifacts content-identical to a direct face compose),
 that the bare+fixed trap is rejected on each surface, that ``surface=`` sugar
 expands to axes before ComposeSpec, and that plate/inlay/twin/faces stay distinct
-content addresses.
+content addresses. It also pins the singular ``face=`` axis (HTTP GET diagram/
+matrix, POST /v1/compose, MCP hw_compose) reaching the resolver with CLI
+``--face``-identical override semantics — the face commits palette=fixed even
+over an explicit adaptive surface/palette request.
 """
 
 from __future__ import annotations
@@ -408,6 +411,173 @@ async def test_mcp_trap_rejected() -> None:
 
     with pytest.raises(ValueError, match="trap"):
         await hw_compose(type="matrix", genome="primer", matrix=_matrix_ir(), ground="bare", palette="fixed")
+
+
+# ── face= (singular): CLI --face-identical override, HTTP + MCP ────────────
+# Unlike `faces` (bakes both, twin-only), `face` bakes ONE scheme and commits
+# palette=fixed even over an explicit adaptive surface/palette request — the
+# face wins. No 'auto' on these transports (OSC 11 terminal detection is
+# CLI-only); light/dark are the shared, scriptable values.
+
+
+def test_http_get_diagram_face_dark_bakes_face() -> None:
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.get("/v1/diagram/rag-pipeline/primer.static", params={"face": "dark"})
+    assert r.status_code == 200
+    assert 'data-hw-face="dark"' in r.text
+
+
+def test_http_get_matrix_face_dark_bakes_face() -> None:
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.get("/v1/matrix/connectors/primer.static", params={"face": "dark"})
+    assert r.status_code == 200
+    assert 'data-hw-face="dark"' in r.text
+
+
+def test_http_get_diagram_face_invalid_value_422() -> None:
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.get("/v1/diagram/rag-pipeline/primer.static", params={"face": "chartreuse"})
+    assert r.status_code == 422
+
+
+def test_http_get_matrix_face_invalid_value_422() -> None:
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.get("/v1/matrix/connectors/primer.static", params={"face": "chartreuse"})
+    assert r.status_code == 422
+
+
+def test_http_get_diagram_face_rejects_auto() -> None:
+    """'auto' (OSC 11 terminal detection) is CLI-only — the HTTP axis 422s it."""
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.get("/v1/diagram/rag-pipeline/primer.static", params={"face": "auto"})
+    assert r.status_code == 422
+
+
+def test_http_post_face_commits_over_adaptive_surface() -> None:
+    """face wins: it commits palette=fixed even over surface=twin (adaptive)."""
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.post(
+        "/v1/compose",
+        json={"type": "matrix", "genome": "primer", "matrix": _matrix_ir(), "surface": "twin", "face": "dark"},
+    )
+    assert r.status_code == 200
+    assert 'data-hw-face="dark"' in r.text
+    assert 'data-hw-adapt="adaptive"' not in r.text
+
+
+def test_http_post_face_and_faces_exclusive() -> None:
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.post(
+        "/v1/compose",
+        json={
+            "type": "matrix",
+            "genome": "primer",
+            "matrix": _matrix_ir(),
+            "surface": "twin",
+            "face": "dark",
+            "faces": True,
+            "respond": "json",
+        },
+    )
+    assert r.status_code == 400
+    assert "exclusive" in r.json()["error"]["message"]
+
+
+def test_http_post_face_invalid_value_rejected() -> None:
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.post(
+        "/v1/compose",
+        json={"type": "matrix", "genome": "primer", "matrix": _matrix_ir(), "face": "mauve"},
+    )
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == HwErrorCode.SPEC_INVALID.value
+
+
+def test_http_post_envelope_forwards_face() -> None:
+    """The envelope path (registry dispatch → compose_surface) forwards face too."""
+    from fastapi.testclient import TestClient
+
+    from hyperweave.serve.app import app
+
+    client = TestClient(app)
+    r = client.post(
+        "/v1/compose",
+        json={"type": "matrix", "genome": "primer", "matrix": _matrix_ir(), "face": "dark", "respond": "envelope"},
+    )
+    assert r.status_code == 200
+    url = r.json()["url"]
+    digest = url.rsplit("/", 1)[-1]
+    fetched = client.get(f"/v1/a/{digest}")
+    assert 'data-hw-face="dark"' in fetched.text
+
+
+@pytest.mark.asyncio
+async def test_mcp_face_dark_bakes_face() -> None:
+    from hyperweave.mcp.server import hw_compose
+
+    svg = await hw_compose(type="matrix", genome="primer", matrix=_matrix_ir(), face="dark", respond="svg")
+    assert isinstance(svg, str)
+    assert 'data-hw-face="dark"' in svg
+
+
+@pytest.mark.asyncio
+async def test_mcp_face_commits_over_adaptive_surface() -> None:
+    from hyperweave.mcp.server import hw_compose
+
+    svg = await hw_compose(
+        type="matrix", genome="primer", matrix=_matrix_ir(), surface="twin", face="dark", respond="svg"
+    )
+    assert isinstance(svg, str)
+    assert 'data-hw-face="dark"' in svg
+    assert 'data-hw-adapt="adaptive"' not in svg
+
+
+@pytest.mark.asyncio
+async def test_mcp_face_invalid_value_raises() -> None:
+    from hyperweave.mcp.server import hw_compose
+
+    with pytest.raises(ValueError, match="face must be"):
+        await hw_compose(type="matrix", genome="primer", matrix=_matrix_ir(), face="mauve")
+
+
+@pytest.mark.asyncio
+async def test_mcp_face_and_faces_exclusive_raises() -> None:
+    from hyperweave.mcp.server import hw_compose
+
+    with pytest.raises(ValueError, match="exclusive"):
+        await hw_compose(type="matrix", genome="primer", matrix=_matrix_ir(), surface="twin", face="dark", faces=True)
 
 
 # ── embed seam: faces pair feeds embed_snippets as [dark, light] ───────────

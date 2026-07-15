@@ -68,6 +68,19 @@ async def test_hw_discover_verbs_has_signatures_and_example() -> None:
 
 
 @pytest.mark.asyncio
+async def test_url_grammar_advertises_diagram_and_surface_axes() -> None:
+    """The discovery grammar must advertise what the routes accept — the
+    diagram entry went missing entirely once, and the surface axes
+    (surface/ground/palette/face) lagged the routes that honored them."""
+    grammar = (await hw_discover("url_grammar"))["url_grammar"]
+    for frame in ("diagram", "matrix"):
+        params = grammar[frame]["query_params"]
+        for axis in ("surface", "ground", "palette", "face"):
+            assert axis in params, f"{frame} grammar missing the {axis} axis"
+    assert "/v1/diagram/" in grammar["diagram"]["pattern"]
+
+
+@pytest.mark.asyncio
 async def test_mcp_verb_round_trip() -> None:
     composed = await hw_compose(type="matrix", genome="primer", matrix=_MATRIX)
     svg = get_artifact(composed["url"].rsplit("/", 1)[-1])

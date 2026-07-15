@@ -13,7 +13,7 @@
    into a phantom box around the card group. Both layers stay low-opacity
    for the mobile-raster discipline. Adaptive twins re-tint via the scoped
    CSS rule below. #}
-<filter id="{{ uid }}-lift" x="-70%" y="-80%" width="240%" height="280%">
+<filter id="{{ uid }}-lift" color-interpolation-filters="sRGB" x="-70%" y="-80%" width="240%" height="280%">
   <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.05"/>
   <feDropShadow dx="0" dy="9" stdDeviation="20" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.055"/>
 </filter>
@@ -21,10 +21,20 @@
 {# Dark plate physics (primer_diagram_language, per-variant genome
    diagram_dark): cards fill a top-lit vertical gradient (card_hi over
    card_lo), the rim is an edge-stroke gradient fading down its ladder, and
-   elevation is the SEAT shadow (0/6/12 black @.3) — never the light face's
-   paper lift. Baked dark faces only; adaptive twins keep flat var fills. #}
+   elevation is GROUND-KEYED — the SEAT shadow (0/6/12 black @.3) on a plate
+   the artifact owns, the lift pair + grain on bare grounds. Emitted for
+   every render whose scheme includes the dark face (baked, fixed dark
+   variant, or adaptive dark branch) — the defs are inert until the CSS
+   block below references them, so the adaptive light base never sees
+   them. #}
+{# Card-ramp ruling: a 3-stop EASED face — the crown (card_hi) falls fast to
+   the derived card_mid at the chassis offset, then runs a long quiet tail to
+   card_lo. A 2-stop linear ramp reads as two planes meeting at a crease
+   ("a bend in the middle"); the ease reads as sheen. Recipe: the brutalist
+   strip plate (surface → alt @40% → deep). #}
 <linearGradient id="{{ uid }}-cf" x1="0" y1="0" x2="0" y2="1">
   <stop offset="0" stop-color="{{ diagram_dark.card_hi }}"/>
+  <stop offset="{{ diagram_style.ramp_mid_offset }}" stop-color="{{ diagram_dark.card_mid }}"/>
   <stop offset="1" stop-color="{{ diagram_dark.card_lo }}"/>
 </linearGradient>
 <linearGradient id="{{ uid }}-es" x1="0" y1="0" x2="0" y2="1">
@@ -32,10 +42,39 @@
   <stop offset="0.35" stop-color="{{ diagram_dark.edge_mid }}"/>
   <stop offset="1" stop-color="{{ diagram_dark.edge_lo }}"/>
 </linearGradient>
-<filter id="{{ uid }}-seat" x="-40%" y="-60%" width="180%" height="220%">
-  <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ diagram_dark.seat }}" flood-opacity="0.3"/>
+{# GRAIN pass (shared tail of both material filters below): monochrome
+   darkening fractal noise clipped to the card's own shape — dithers the
+   ramp's quantization steps so they never cohere into full-width Mach bands
+   (petrol's saturated teal showed them as colored stripes). Scalars are the
+   brutalist strip celadon panel filter verbatim; the feComposite clips the
+   noise to SourceAlpha so rounded corners stay clean. #}
+{% macro grain_pass(merge_in) %}  <feTurbulence type="fractalNoise" baseFrequency="{{ diagram_style.grain_base_frequency }}" numOctaves="{{ diagram_style.grain_octaves }}" seed="{{ diagram_style.grain_seed }}" result="n"/>
+  <feColorMatrix in="n" type="luminanceToAlpha" result="nl"/>
+  <feColorMatrix in="nl" type="matrix" values="0 0 0 0 {{ diagram_style.grain_tint }}
+                                               0 0 0 0 {{ diagram_style.grain_tint }}
+                                               0 0 0 0 {{ diagram_style.grain_tint }}
+                                               0 0 0 {{ diagram_style.grain_alpha }} 0" result="nt"/>
+  <feComposite in="nt" in2="SourceAlpha" operator="in" result="grain"/>
+  <feMerge><feMergeNode in="{{ merge_in }}"/><feMergeNode in="grain"/></feMerge>
+{%- endmacro %}
+{% if surface_ground != 'bare' %}{# The seat casts ink OUTSIDE the card onto the ground — legal only on a
+   plate this artifact OWNS (the language specimens always paint var(--hw-ground)
+   first). On a bare ground the host's tone is unknown; a 30% black band over a
+   host lighter than the cards reads as a two-toned stripe under every bottom
+   edge (the no-drop-shadows-on-unowned-grounds law). #}
+<filter id="{{ uid }}-seat" color-interpolation-filters="sRGB" x="-40%" y="-60%" width="180%" height="220%">
+  <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ diagram_dark.seat }}" flood-opacity="0.3" result="seated"/>
+{{ grain_pass("seated") }}
 </filter>
-{% endif %}
+{% else %}{# Bare grounds: no seat (unowned ground) — the lift pair from the light
+   face carries elevation, and the grain pass rides the same chain so the
+   dark face dithers identically on every surface. #}
+<filter id="{{ uid }}-liftg" color-interpolation-filters="sRGB" x="-70%" y="-80%" width="240%" height="280%">
+  <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.05"/>
+  <feDropShadow dx="0" dy="9" stdDeviation="20" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.055" result="lifted"/>
+{{ grain_pass("lifted") }}
+</filter>
+{% endif %}{% endif %}
 {% for g in diagram_glyph_gradients %}
 {# Brand glyph gradient — uid-scoped per artifact (the matrix idiom). #}
 <linearGradient id="{{ uid }}-gg-{{ g.id }}" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}">
@@ -267,18 +306,38 @@
 {% if diagram_dark %}
 /* Dark plate physics: material + the dark ink family (genome
    diagram_dark, extracted from the language specimen). Declared LAST so the
-   overrides win the cascade at equal specificity. */
+   overrides win the cascade at equal specificity. Scheme-keyed, never
+   delivery-keyed: a committed dark scheme (baked face / fixed dark variant)
+   emits the block bare; an adaptive render keeps the light base (normalized
+   ordering) and ships the SAME block inside the dark @media branch —
+   fill/stroke/filter are CSS presentation properties, so url(#…) material
+   flips where var()-in-stop-color cannot. */
 {# diagram_dark.border is the BOUNDARY stroke (plateless glyph circles have
    no fill to fall back on); edge_faint stays a bevel-highlight stop — at 7%
-   alpha it made a noir medallion outline invisible. #}
-#{{ uid }} { --dna-signal: {{ diagram_dark.accent }}; --dna-signal-text: {{ diagram_dark.accent_text }}; --dna-ink-primary: {{ diagram_dark.ink }}; --dna-ink-muted: {{ diagram_dark.ink_dim }}; --dna-border: {{ diagram_dark.border }}; --dna-surface: {{ diagram_dark.chip }}; --dna-surface-alt: {{ diagram_dark.card_hi }}; }
-.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { fill: url(#{{ uid }}-cf); stroke: url(#{{ uid }}-es); filter: url(#{{ uid }}-seat); }
+   alpha it made a noir medallion outline invisible. The #uid rule out-
+   cascades the assembler's badge-allele block (equal specificity, later in
+   document order) so the dark branch wears the diagram family, and pins
+   --dna-frame-fill to the language plate for opaque grounds.
+   REGISTER SPLIT: --dna-surface is the PAGE-GROUND register (the plate rect
+   in primer-content.j2 fills it; mcardbg recesses to it) and takes
+   diagram_dark.ground — the language ladder's darkest rung (ground < card_lo
+   < card_hi < chip). Assigning the chip rung here repainted the whole plate
+   lighter than the card bottoms (inverted figure-ground) and exposed the
+   seat shadow as a two-toned band under every card. Chips keep their own
+   rung via the literal .chipbg rule below — never through the shared var. #}
+{% if diagram_dark_adaptive %}@media (prefers-color-scheme: dark) {
+{% endif %}#{{ uid }} { --dna-signal: {{ diagram_dark.accent }}; --dna-signal-text: {{ diagram_dark.accent_text }}; --dna-ink-primary: {{ diagram_dark.ink }}; --dna-ink-muted: {{ diagram_dark.ink_dim }}; --dna-border: {{ diagram_dark.border }}; --dna-surface: {{ diagram_dark.ground }}; --dna-surface-alt: {{ diagram_dark.card_hi }}; --dna-frame-fill: {{ diagram_dark.ground }}; }
+.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { fill: url(#{{ uid }}-cf); stroke: url(#{{ uid }}-es); }
+{% if surface_ground != 'bare' %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { filter: url(#{{ uid }}-seat); }
+{% else %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { filter: url(#{{ uid }}-liftg); }
+{% endif %}
 .{{ uid }}-hname { fill: {{ diagram_dark.ink_hero }}; }
 .{{ uid }}-chipbg { fill: {{ diagram_dark.chip }}; stroke: {{ diagram_dark.edge_faint }}; }
-.{{ uid }}-connmuted { stroke: {{ diagram_dark.conn }}; }
+{% if conn_muted %}.{{ uid }}-connmuted { stroke: {{ diagram_dark.conn }}; }
 .{{ uid }}-connmutedf { fill: {{ diagram_dark.conn }}; }
-{% if health_nodes or health_ns.legend %}.{{ uid }}-warn { fill: {{ _genome_raw.diagram_status_warning_dark }}; }
+{% endif %}{% if health_nodes or health_ns.legend %}.{{ uid }}-warn { fill: {{ _genome_raw.diagram_status_warning_dark }}; }
 .{{ uid }}-crit { fill: {{ _genome_raw.diagram_status_critical_dark }}; }
+{% endif %}{% if diagram_dark_adaptive %}}
 {% endif %}
 {% endif %}
 </style>

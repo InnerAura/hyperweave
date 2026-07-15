@@ -146,19 +146,25 @@ class TestMotionAnatomy:
         assert "prefers-reduced-motion" in svg
         assert "display: none" in svg
 
-    def test_non_adaptive_diagram_classes(self) -> None:
-        # The palette layer's id-scoped var swap (#uid { --dna-... }) is the
-        # ONLY adaptive machinery (primer defaults to twin now); the diagram
-        # TEMPLATES must add no adaptive block of their own — no uid-prefixed
-        # CLASS selector may appear inside any prefers-color-scheme body.
+    def test_dark_branch_class_overrides_are_material_only(self) -> None:
+        # The palette layer's id-scoped var swap (#uid { --dna-... }) plus the
+        # material law's dark-branch override block are the ONLY adaptive
+        # machinery. The material block re-declares a CLOSED class set (card
+        # faces, hero ink, chip, muted wires, health marks) with the
+        # diagram_dark family; any OTHER uid-prefixed class selector inside a
+        # prefers-color-scheme body is the espresso-bug shape — a hue held
+        # across faces by a late class override.
         svg = compose_fixture("pipeline")
         uid = re.search(r'id="(hw-[0-9a-f]{8})-lift"', svg).group(1)  # type: ignore[union-attr]
+        material = ("cardbg", "herobg", "mcardbg", "hname", "chipbg", "connmuted", "connmutedf", "warn", "crit")
+        allowed = {f"{uid}-{cls}" for cls in material}
         for m in re.finditer(r"@media[^{]*prefers-color-scheme[^{]*\{", svg):
             depth, i = 1, m.end()
             while depth and i < len(svg):
                 depth += {"{": 1, "}": -1}.get(svg[i], 0)
                 i += 1
-            assert f".{uid}-" not in svg[m.end() : i]
+            found = set(re.findall(rf"\.({re.escape(uid)}-[\w-]+)", svg[m.end() : i]))
+            assert found <= allowed, f"unsanctioned adaptive class overrides: {sorted(found - allowed)}"
 
     def test_sequence_uses_single_traversing_particle(self) -> None:
         # The sequence-replay law: ONE persistent dot hops message-to-message in replay

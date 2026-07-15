@@ -120,7 +120,7 @@ def _deliver_projection(data: bytes, *, is_text: bool, output: Path | None, widt
 
         if kitty.terminal_supports_graphics():
             kitty.blit(data, sys.stdout.buffer)
-            typer.echo("previewed inline — nothing written; use -o <path> to save", err=True)
+            typer.echo("shown in the terminal only — add -o out.png to save a file", err=True)
         else:
             typer.echo(
                 "raster output is binary; this terminal can't display it inline. "
@@ -471,10 +471,10 @@ def compose(
         typer.Option(
             "--face",
             help=(
-                "Bake ONE scheme (light | dark | auto): fixed palette, explicit face. With --surface inlay "
-                "this is the bare terminal-inlay face — pair with --format png to composite inks over the "
-                "terminal ground (alpha preserved). 'auto' OPTS IN to OSC 11 terminal-background detection "
-                "(interactive terminals only); light/dark stay the explicit, scriptable path."
+                "Render ONE fixed color scheme (light | dark | auto). With --surface inlay the image keeps "
+                "a transparent background — the viewer's background shows through; use --surface plate for "
+                "an image that draws its own. 'auto' detects the terminal's background (interactive "
+                "terminals only); light/dark stay the explicit, scriptable path."
             ),
         ),
     ] = "",

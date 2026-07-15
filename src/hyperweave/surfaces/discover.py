@@ -480,6 +480,25 @@ def _url_grammar() -> dict[str, Any]:
             },
             "example": "/v1/card/GLM-5/chrome.static?data=github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
         },
+        "diagram": {
+            "pattern": "/v1/diagram/{preset}/{genome}.{motion}",
+            "query_params": {
+                "variant": "primer: noir | carbon | space | anvil | porcelain | cream | dusk | petrol",
+                "spec": (
+                    "base64url-encoded DiagramSpec JSON (preset must be 'custom'; decoded cap 8 KB). "
+                    "Presets: the bundled recreations in data/presets/diagram.yaml. Arbitrary "
+                    "topologies also ship via POST /v1/compose with a `diagram` body."
+                ),
+                "glyph_tint": "ink | brand | full — node-glyph fill selection (per-slot IR declarations outrank it)",
+                "edge_motion": "dash | particle — artifact-level edge-motion override (genome allowlist enforced)",
+                "performance": "composite-only — surface performance tier",
+                "surface": "plate | inlay | twin — surface preset (expands to ground/palette)",
+                "ground": "opaque | bare — surface ground axis",
+                "palette": "fixed | adaptive — surface palette axis",
+                "face": "light | dark — bake ONE scheme; commits palette=fixed (face wins over adaptive)",
+            },
+            "example": "/v1/diagram/frontier-serving/primer.static?variant=noir&surface=inlay",
+        },
         "matrix": {
             "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
             "query_params": {
@@ -489,6 +508,10 @@ def _url_grammar() -> dict[str, Any]:
                     "Presets: connectors — the generated connector-registry matrix. Arbitrary tables "
                     "also ship via POST /v1/compose with a `matrix` body."
                 ),
+                "surface": "plate | inlay | twin — surface preset (expands to ground/palette)",
+                "ground": "opaque | bare — surface ground axis",
+                "palette": "fixed | adaptive — surface palette axis",
+                "face": "light | dark — bake ONE scheme; commits palette=fixed (face wins over adaptive)",
             },
             "example": "/v1/matrix/connectors/primer.static?variant=porcelain",
         },

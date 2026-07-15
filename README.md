@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-logo.svg" alt="HyperWeave" width="75%"/>
+  <img src="./assets/banners/hw-mercury.svg" alt="HyperWeave" width="75%"/>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 -->
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/primer.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave&variant=porcelain" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/primer.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave&variant=petrol" alt="strip"/>
 </p>
 
 <!--
@@ -149,6 +149,7 @@ hyperweave compose diagram --spec-file /dev/stdin -g primer --variant porcelain 
   "subtitle": "One artifact, every surface · a self-contained SVG renders wherever markdown does",
   "notes": "every surface",
   "glyph_tint": "full",
+  "connector_palette": "colored",
   "nodes": [
     {
       "id": "artifact",
@@ -161,35 +162,35 @@ hyperweave compose diagram --spec-file /dev/stdin -g primer --variant porcelain 
     {
       "id": "github",
       "label": "GitHub",
-      "desc": "README · Issues · PRs",
+      "desc": "README · PRs",
       "glyph": "github",
       "style": "card+glyph"
     },
     {
       "id": "obsidian",
       "label": "Obsidian",
-      "desc": "vault · daily notes",
+      "desc": "vault · notes",
       "glyph": "obsidian",
       "style": "card+glyph"
     },
     {
       "id": "slack",
       "label": "Slack",
-      "desc": "threads · unfurled",
+      "desc": "threads · unfurls",
       "glyph": "slack",
       "style": "card+glyph"
     },
     {
       "id": "email",
       "label": "Email",
-      "desc": "inline · PDF export",
+      "desc": "inline · PDF",
       "glyph": "gmail",
       "style": "card+glyph"
     },
     {
       "id": "agent",
       "label": "Agent Context",
-      "desc": "hw:reasoning parsed",
+      "desc": "hw:reasoning",
       "glyph": "anthropic",
       "style": "card+glyph"
     }

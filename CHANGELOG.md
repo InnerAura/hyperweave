@@ -5,6 +5,23 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-alpha.7] - Unreleased
+
+Dark diagrams now look the same on every surface and interface.
+
+### Added
+
+- **Force a color scheme** — the HTTP API and MCP accept `face=light|dark` to render one fixed scheme, matching the CLI's `--face` flag.
+- **Diagram discovery** — the discovery listing now includes the diagram URL pattern and its query options.
+
+### Fixed
+
+- **Dark diagrams on every surface** — dark diagrams render identically on plate, inlay, twin, and adaptive surfaces, from CLI, HTTP, or MCP; previously the full dark styling applied only to explicitly baked dark renders.
+
+### Changed
+
+- **README diagrams** — regenerated: the fan-out example rides accent-blue wires with single-line node subtitles, and the frontier-serving hub wears the OpenRouter brand glyph.
+
 ## [0.4.0-alpha.6] - 2026-07-14
 
 Rebuilds diagrams as one visual system, adds light/dark adaptive output, and exports any artifact as PNG, WebP, static SVG, or terminal text.

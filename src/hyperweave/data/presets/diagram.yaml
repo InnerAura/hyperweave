@@ -906,7 +906,7 @@ presets:
     node_style: card+glyph
     nodes:
       - { id: requests, label: requests, desc: clients, kind: globe }
-      - { id: hub, label: OpenRouter, desc: one key, role: hero, kind: router, gather: true }
+      - { id: hub, label: OpenRouter, desc: one key, role: hero, glyph: openrouter, gather: true }
       - { id: anthropic, label: Anthropic, desc: claude, glyph: anthropic }
       - { id: openai, label: OpenAI, desc: gpt-4o, glyph: openai }
       - { id: gemini, label: Gemini, desc: flash, glyph: gemini }

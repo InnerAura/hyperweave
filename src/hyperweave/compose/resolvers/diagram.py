@@ -274,6 +274,33 @@ def resolve_diagram(
 
     regions_json = _json.dumps([r.as_payload() for r in layout.regions], separators=(",", ":"))
 
+    # Scheme-keyed material gate (surface invariance): the rendered look is a
+    # pure function of (spec, genome, variant, scheme) — never of the delivery
+    # mechanism. A baked face commits its scheme; a fixed palette renders the
+    # variant's native substrate; an adaptive palette is light-base +
+    # dark-@media-branch (normalized ordering — surface_modes invariant 3), so
+    # the material rides the media block: fill/stroke/filter are CSS
+    # presentation properties, url(#…) material flips where
+    # var()-in-stop-color cannot.
+    native_dark = str(genome.get("substrate_kind") or genome.get("category") or "light") == "dark"
+    if spec.surface_face:
+        dark_scheme = spec.surface_face == "dark"
+        dark_branch = False
+    elif surface_adapt:
+        dark_scheme = False
+        dark_branch = True
+    else:
+        dark_scheme = native_dark
+        dark_branch = False
+    diagram_dark = genome.get("diagram_dark") if (dark_scheme or dark_branch) else None
+    if diagram_dark:
+        # Card-ramp ruling: the face is a 3-stop EASED ramp — card_mid is
+        # DERIVED (hi mixed toward lo by the chassis fraction), never authored
+        # per variant, so every variant's crown falls at the same eased rate.
+        mix_t = float((engine.get("material") or {}).get("ramp_mid_mix", 0.58))
+        card_mid = _mix_hex(str(diagram_dark["card_hi"]), str(diagram_dark["card_lo"]), mix_t)
+        diagram_dark = {**diagram_dark, "card_mid": card_mid}
+
     context: dict[str, Any] = {
         "diagram_layout": layout,
         "diagram_chrome": spec.chrome,
@@ -293,10 +320,14 @@ def resolve_diagram(
         "conn_muted": conn_muted,
         # Dark plate physics (primer_diagram_language): the variant's
         # extracted material block — cf/es gradients + seat shadow + the dark
-        # ink family — applies when THIS render bakes the dark face. Adaptive
-        # twins keep the flat var-driven fallback (a gradient fill cannot
-        # flip via custom properties).
-        "diagram_dark": (genome.get("diagram_dark") if spec.surface_face == "dark" else None),
+        # ink family — applies on every render whose resolved scheme includes
+        # the dark face: baked dark face, fixed dark-substrate variant, or the
+        # dark branch of an adaptive render.
+        "diagram_dark": diagram_dark,
+        # True when the material belongs to the adaptive DARK BRANCH rather
+        # than the committed base scheme — the template ships the override
+        # block inside @media (prefers-color-scheme: dark).
+        "diagram_dark_adaptive": bool(diagram_dark) and dark_branch,
         "diagram_conn_muted": str(genome.get("diagram_conn_muted", "")),
         "diagram_conn_muted_far": diagram_conn_muted_far,
         "diagram_style": _style_params(engine),
@@ -383,6 +414,16 @@ def _resolve_connector_palette(dspec: DiagramSpec, genome: dict[str, Any]) -> tu
     return True, []
 
 
+def _mix_hex(a: str, b: str, t: float) -> str:
+    """``a`` mixed toward ``b`` by ``t`` in sRGB, rounded once per channel —
+    the card-ramp mid stop derivation (compose owns the color math; the
+    template stamps the result)."""
+    ar, ag, ab = (int(a.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
+    br, bg, bb = (int(b.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
+    mr, mg, mb = round(ar + (br - ar) * t), round(ag + (bg - ag) * t), round(ab + (bb - ab) * t)
+    return f"#{mr:02X}{mg:02X}{mb:02X}"
+
+
 def _style_params(engine: dict[str, Any]) -> dict[str, Any]:
     """The scalar style constants the defs CSS stamps (engine-config
     sourced; the chassis paints arrive as --dna-* roles instead)."""
@@ -401,6 +442,14 @@ def _style_params(engine: dict[str, Any]) -> dict[str, Any]:
         "gather_pulse_dur": conn.get("gather_pulse_dur", "2.6s"),
         "health_dot_r": (engine.get("health") or {}).get("dot_r", 5),
         "health_pulse_dur": (engine.get("health") or {}).get("pulse_dur", "2.618s"),
+        # Dark-face card material (card-ramp ruling): eased ramp midpoint +
+        # the strip-recipe grain scalars the material filters stamp.
+        "ramp_mid_offset": (engine.get("material") or {}).get("ramp_mid_offset", "0.4"),
+        "grain_base_frequency": (engine.get("material") or {}).get("grain_base_frequency", "1.6"),
+        "grain_octaves": (engine.get("material") or {}).get("grain_octaves", "2"),
+        "grain_seed": (engine.get("material") or {}).get("grain_seed", "19"),
+        "grain_tint": (engine.get("material") or {}).get("grain_tint", "0.04"),
+        "grain_alpha": (engine.get("material") or {}).get("grain_alpha", "0.08"),
         "march_opacity": track["march_opacity"],
         "return_drift_dash": track["return_drift_dash"],
         "return_drift_dur": track["return_drift_dur"],

@@ -227,6 +227,11 @@ class ComposeRequest(BaseModel):
     faces: bool = False
     """Twin only: with ``respond=json``, also bake the light + dark faces and
     return their URLs under ``faces:{light,dark}`` (the <picture> pair)."""
+    face: str = ""
+    """Bake ONE scheme: '' (default) | 'light' | 'dark'. Commits palette=fixed
+    for this face, overriding an adaptive surface/palette request — the face
+    wins (CLI ``--face`` parity; no 'auto', that's CLI-only terminal
+    detection). Exclusive with ``faces``."""
     respond: str = "svg"
     """Response shape: ``svg`` (raw image bytes, default) | ``json``
     (``{svg, markdown, width, height}`` — the markdown shadow alongside) |
@@ -715,6 +720,26 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         )
         return JSONResponse(err.envelope(), status_code=err.http_status)
 
+    # ── face: bake ONE scheme (fixed palette, explicit face) ──
+    # Mirrors CLI --face: validated once, ahead of both response paths below,
+    # so the envelope path and the direct-spec path can't drift. An explicit
+    # face commits palette=fixed even over an adaptive surface/palette
+    # request (the face wins) — applied further down, after axis expansion.
+    if req.face and req.face not in ("light", "dark"):
+        err = HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"face must be 'light' or 'dark' (got {req.face!r})",
+            fix="set face=light or face=dark (no 'auto' — terminal detection is CLI-only)",
+        )
+        return JSONResponse(err.envelope(), status_code=err.http_status)
+    if req.face and req.faces:
+        err = HwError(
+            HwErrorCode.SPEC_INVALID,
+            "face (one baked scheme) and faces (the twin pair) are exclusive",
+            fix="drop one: face bakes a single scheme, faces bakes the twin light+dark pair",
+        )
+        return JSONResponse(err.envelope(), status_code=err.http_status)
+
     if req.respond == "envelope":
         # Route through the shared compose capability so the {envelope, url}
         # shape is byte-identical to the CLI/MCP surfaces (no drift).
@@ -732,6 +757,8 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         surface_ground, surface_palette = _resolve_surface_axes(req.surface, req.ground, req.palette)
     except HwError as exc:
         return JSONResponse(exc.envelope(), status_code=exc.http_status)
+    if req.face:
+        surface_palette = "fixed"
 
     spec = ComposeSpec(
         type=req.type,
@@ -756,6 +783,7 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         performance=req.performance,
         ground=surface_ground,
         palette=surface_palette,
+        surface_face=req.face,
     )
     if req.respond == "json":
         # Both projections in one response: the SVG plus its markdown
@@ -829,10 +857,14 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
     # expand it to ground/palette here so only the axes travel; a bad preset/axis
     # combo raises HwError, which the caller (compose_post) maps to a 4xx.
     surface_ground, surface_palette = _resolve_surface_axes(req.surface, req.ground, req.palette)
+    if req.face:
+        surface_palette = "fixed"
     if surface_ground:
         spec["ground"] = surface_ground
     if surface_palette:
         spec["palette"] = surface_palette
+    if req.face:
+        spec["surface_face"] = req.face
     return {
         "type": req.type,
         "genome": req.genome,
@@ -1039,6 +1071,17 @@ async def compose_matrix_url(
         str,
         Query(description="Surface palette axis: fixed | adaptive.", pattern="^(|fixed|adaptive)$"),
     ] = "",
+    face: Annotated[
+        str,
+        Query(
+            description=(
+                "Bake ONE scheme: light | dark. Commits palette=fixed for this "
+                "face, overriding an adaptive surface/palette request (the face "
+                "wins). No 'auto' — that's CLI-only terminal detection."
+            ),
+            pattern="^(|light|dark)$",
+        ),
+    ] = "",
 ) -> Response:
     """Compose a matrix: /v1/matrix/{preset}/{genome}.{motion}.
 
@@ -1099,6 +1142,10 @@ async def compose_matrix_url(
             status_code=200,
             headers=_error_response_headers(400),
         )
+    # face wins: an explicit face commits palette=fixed even over an
+    # adaptive surface/palette request (CLI --face parity).
+    if face:
+        surface_palette = "fixed"
 
     compose_spec = ComposeSpec(
         type="matrix",
@@ -1110,6 +1157,7 @@ async def compose_matrix_url(
         glyph_tint=glyph_tint,
         ground=surface_ground,
         palette=surface_palette,
+        surface_face=face,
     )
     return _compose_and_respond(compose_spec, request)
 
@@ -1184,6 +1232,17 @@ async def compose_diagram_url(
         str,
         Query(description="Surface palette axis: fixed | adaptive.", pattern="^(|fixed|adaptive)$"),
     ] = "",
+    face: Annotated[
+        str,
+        Query(
+            description=(
+                "Bake ONE scheme: light | dark. Commits palette=fixed for this "
+                "face, overriding an adaptive surface/palette request (the face "
+                "wins). No 'auto' — that's CLI-only terminal detection."
+            ),
+            pattern="^(|light|dark)$",
+        ),
+    ] = "",
 ) -> Response:
     """Compose a diagram: /v1/diagram/{preset}/{genome}.{motion}.
 
@@ -1247,6 +1306,10 @@ async def compose_diagram_url(
             status_code=200,
             headers=_error_response_headers(400),
         )
+    # face wins: an explicit face commits palette=fixed even over an
+    # adaptive surface/palette request (CLI --face parity).
+    if face:
+        surface_palette = "fixed"
 
     compose_spec = ComposeSpec(
         type="diagram",
@@ -1258,6 +1321,7 @@ async def compose_diagram_url(
         performance=performance,
         ground=surface_ground,
         palette=surface_palette,
+        surface_face=face,
     )
     return _compose_and_respond(compose_spec, request)
 
@@ -1450,12 +1514,22 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
     },
     "diagram": {
         "pattern": "/v1/diagram/{preset}/{genome}.{motion}",
-        "query_params": ["variant", "spec", "glyph_tint", "edge_motion", "performance"],
+        "query_params": [
+            "variant",
+            "spec",
+            "glyph_tint",
+            "edge_motion",
+            "performance",
+            "surface",
+            "ground",
+            "palette",
+            "face",
+        ],
         "presets": "data/presets/diagram.yaml slugs, or 'custom' + ?spec=",
     },
     "matrix": {
         "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
-        "query_params": ["variant", "spec"],
+        "query_params": ["variant", "spec", "surface", "ground", "palette", "face"],
     },
     "receipt": {"pattern": "POST /v1/compose", "query_params": []},
 }

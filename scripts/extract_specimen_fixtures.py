@@ -606,6 +606,15 @@ def main() -> None:
         path = TWIN_DIR / f"verb-algebra-primer-{variant}.svg"
         fixture = extract_twin(variant, path)
         out = OUT / f"twin-{variant}.json"
+        # faces_superseded is an owner-triaged supersession record (standing
+        # law #3), same survival rule as census_amendments: the authored twin
+        # specimen still validates itself via `faces`, the engine render
+        # grades against the amendment overlay.
+        if out.exists():
+            existing = json.loads(out.read_text())
+            for key in ("faces_superseded", "faces_superseded_note"):
+                if key in existing:
+                    fixture[key] = existing[key]
         out.write_text(json.dumps(fixture, indent=2, sort_keys=True) + "\n")
         written.append(out.name)
     print(f"wrote {len(written)} fixtures to {OUT.relative_to(REPO)}")

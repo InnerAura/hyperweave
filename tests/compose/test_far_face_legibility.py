@@ -48,6 +48,32 @@ _VAR_REF_RE = re.compile(r"var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)")
 # selector in this codebase's diagram defs is exactly this shape.
 _RULE_RE = re.compile(r"((?:\.[\w-]+\s*,\s*)*\.[\w-]+)\s*\{([^}]*)\}")
 _CLASS_ATTR_RE = re.compile(r'<(text|rect|circle|line|path)\b[^>]*\bclass="([^"]+)"[^>]*>(?:([^<]*)</\1>)?')
+_GRADIENT_RE = re.compile(
+    r'<(?:linear|radial)Gradient\b[^>]*\bid="([^"]+)"[^>]*>(.*?)</(?:linear|radial)Gradient>', re.S
+)
+_STOP_COLOR_RE = re.compile(r'\bstop-color="([^"]+)"')
+_URL_REF_RE = re.compile(r"url\(#([^)]+)\)")
+_RGBA_RE = re.compile(r"rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)")
+
+
+def _composite_over(paint: str, bg_hex: str) -> str | None:
+    """A concrete hex for ``paint`` as it renders over ``bg_hex``: hex passes
+    through, ``rgba()`` alpha-composites (the material law's --dna-border is an
+    rgba sheen — its rendered color depends on what it sits on), anything else
+    (var chains already resolved upstream, url() handled by the caller) is None."""
+    direct = _hex_only(paint)
+    if direct is not None:
+        return direct
+    m = _RGBA_RE.match(paint.strip())
+    if m is None:
+        return None
+    r, g, b, a = int(m.group(1)), int(m.group(2)), int(m.group(3)), float(m.group(4))
+    bg = bg_hex.lstrip("#")
+    if len(bg) == 3:
+        bg = "".join(ch * 2 for ch in bg)
+    br, bgc, bb = int(bg[0:2], 16), int(bg[2:4], 16), int(bg[4:6], 16)
+    cr, cg, cb = round(a * r + (1 - a) * br), round(a * g + (1 - a) * bgc), round(a * b + (1 - a) * bb)
+    return f"#{cr:02X}{cg:02X}{cb:02X}"
 
 
 def _brace_block(text: str, search_from: int) -> tuple[int, int, str] | None:
@@ -66,10 +92,25 @@ def _brace_block(text: str, search_from: int) -> tuple[int, int, str] | None:
     return None
 
 
-def _parse_rules(css: str) -> list[tuple[str, dict[str, str]]]:
+def _parse_rules(css: str) -> list[tuple[str, dict[str, str], str]]:
     """Every ``.class { prop: value; }`` rule, compound selectors exploded, in
-    document order (needed so "last rule wins" cascade resolution is correct)."""
-    rules: list[tuple[str, dict[str, str]]] = []
+    document order (needed so "last rule wins" cascade resolution is correct),
+    tagged with its color scheme scope: ``base`` outside any
+    ``@media (prefers-color-scheme)`` block, else the scheme name. Class rules
+    are face-scoped since the diagram material law — the dark branch of an
+    adaptive render re-declares card/chip/conn rules with literal values
+    inside the dark media block, so a face-blind parse would leak the dark
+    material onto the near face."""
+    scheme_spans: list[tuple[int, int, str]] = []
+    for m in _MEDIA_RE.finditer(css):
+        blk = _brace_block(css, m.end())
+        if blk:
+            scheme_spans.append((blk[0], blk[1], m.group(1)))
+
+    def _scope(pos: int) -> str:
+        return next((scheme for s, e, scheme in scheme_spans if s <= pos <= e), "base")
+
+    rules: list[tuple[str, dict[str, str], str]] = []
     for m in _RULE_RE.finditer(css):
         selector, body = m.group(1), m.group(2)
         classes = [c.strip().lstrip(".") for c in selector.split(",")]
@@ -80,16 +121,23 @@ def _parse_rules(css: str) -> list[tuple[str, dict[str, str]]]:
                 continue
             k, v = decl.split(":", 1)
             props[k.strip()] = v.strip()
+        scope = _scope(m.start())
         for cls in classes:
-            rules.append((cls, props))
+            rules.append((cls, props, scope))
     return rules
 
 
-def _effective(rules: list[tuple[str, dict[str, str]]], classes: set[str], prop: str) -> str | None:
-    """The LAST rule (source order) among an element's classes that sets `prop` —
-    same-specificity CSS cascade (every selector here is a single class, 0-1-0)."""
+def _effective(rules: list[tuple[str, dict[str, str], str]], classes: set[str], prop: str, face: str) -> str | None:
+    """The LAST rule (source order) among an element's classes that sets `prop`
+    AND applies on ``face`` — same-specificity CSS cascade (every selector here
+    is a single class, 0-1-0). The near face is the base scope plus any light
+    media block; the far face is the base scope plus the dark media block
+    (normalized ordering: base is always the light face, media always dark)."""
+    skip = "dark" if face == "near" else "light"
     value = None
-    for cls, props in rules:
+    for cls, props, scope in rules:
+        if scope == skip:
+            continue
         if cls in classes and prop in props:
             value = props[prop]
     return value
@@ -162,10 +210,30 @@ class _Rendered:
         self.css = "\n".join(style_blocks)
         self.rules = _parse_rules(self.css)
         self.near_vars, self.far_vars = _css_vars(self.css, self.uid)
+        # Paint-server defs (the material law's cf/es gradients): id → raw
+        # stop-color list, so a url(#…) fill/stroke resolves to its stops and
+        # a pair grades against the WORST stop (text sits over the whole span).
+        self.gradients: dict[str, list[str]] = {
+            gm.group(1): _STOP_COLOR_RE.findall(gm.group(2)) for gm in _GRADIENT_RE.finditer(svg)
+        }
 
     def color(self, classes: set[str], prop: str, face: str) -> str | None:
-        raw = _effective(self.rules, classes, prop)
+        raw = _effective(self.rules, classes, prop, face)
         return _resolve(raw, self.near_vars, self.far_vars, face)
+
+    def paints(self, classes: set[str], prop: str, face: str) -> list[str]:
+        """Every concrete paint the effective value can render: a plain value
+        resolves to itself; ``url(#gradient)`` explodes to its stop colors.
+        Values stay raw (hex OR rgba) — pair grading composites rgba over the
+        counter-color before measuring."""
+        raw = _effective(self.rules, classes, prop, face)
+        if raw is None:
+            return []
+        url = _URL_REF_RE.match(raw.strip())
+        if url is not None:
+            return list(self.gradients.get(url.group(1), []))
+        resolved = _resolve(raw, self.near_vars, self.far_vars, face)
+        return [resolved] if resolved is not None else []
 
     def instances(self, marker_class: str) -> list[set[str]]:
         """Distinct class-sets of every rendered element carrying `marker_class`
@@ -204,12 +272,25 @@ def _assert_pair(
     face: str,
     label: str,
 ) -> None:
-    fg = _hex_only(rendered.color(fg_classes, fg_prop, face))
-    bg = _hex_only(rendered.color(bg_classes, bg_prop, face))
-    if fg is None or bg is None:
-        pytest.fail(f"{label} [{face}]: could not resolve a concrete color (fg={fg!r} bg={bg!r})")
-    ratio = contrast_ratio(fg, bg)
-    assert ratio >= floor, f"{label} [{face}]: {fg} vs {bg} = {ratio:.2f} < {floor} ({fg_classes} vs {bg_classes})"
+    fg_paints = rendered.paints(fg_classes, fg_prop, face)
+    bg_paints = [h for h in (_hex_only(p) for p in rendered.paints(bg_classes, bg_prop, face)) if h is not None]
+    if not fg_paints or not bg_paints:
+        pytest.fail(f"{label} [{face}]: could not resolve a concrete color (fg={fg_paints!r} bg={bg_paints!r})")
+    # Worst case across the pair: every fg paint (rgba composited over each
+    # bg candidate) against every bg stop — text over a material gradient
+    # card grades at the harshest stop it can sit on.
+    worst: tuple[float, str, str] | None = None
+    for bg in bg_paints:
+        for fp in fg_paints:
+            fg = _composite_over(fp, bg)
+            if fg is None:
+                pytest.fail(f"{label} [{face}]: unresolvable fg paint {fp!r}")
+            ratio = contrast_ratio(fg, bg)
+            if worst is None or ratio < worst[0]:
+                worst = (ratio, fg, bg)
+    assert worst is not None and worst[0] >= floor, (
+        f"{label} [{face}]: {worst[1]} vs {worst[2]} = {worst[0]:.2f} < {floor} ({fg_classes} vs {bg_classes})"
+    )
 
 
 # ── page ground + card fills (always single-rule, resolved once per variant) ──
@@ -294,11 +375,15 @@ def _assert_furniture_vs_ground(r: _Rendered, marker: str, face: str, label: str
     if not instances:
         pytest.skip(f"{label}: cicd-gate has no {marker} instances")
     for instance in instances:
-        fg = _hex_only(r.color(instance, "stroke", face))
-        if fg is None or bg is None:
-            pytest.fail(f"{label} [{face}]: unresolved color (fg={fg!r} bg={bg!r})")
-        ratio = contrast_ratio(fg, bg)
-        assert ratio >= _FURNITURE_FLOOR, f"{label} [{face}]: {fg} vs {bg} = {ratio:.2f} < {_FURNITURE_FLOOR}"
+        paints = r.paints(instance, "stroke", face)
+        if not paints or bg is None:
+            pytest.fail(f"{label} [{face}]: unresolved color (fg={paints!r} bg={bg!r})")
+        for paint in paints:
+            fg = _composite_over(paint, bg)
+            if fg is None:
+                pytest.fail(f"{label} [{face}]: unresolvable fg paint {paint!r}")
+            ratio = contrast_ratio(fg, bg)
+            assert ratio >= _FURNITURE_FLOOR, f"{label} [{face}]: {fg} vs {bg} = {ratio:.2f} < {_FURNITURE_FLOOR}"
 
 
 @pytest.mark.parametrize("variant", _VARIANTS)

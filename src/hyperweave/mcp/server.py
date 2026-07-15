@@ -62,6 +62,7 @@ async def hw_compose(
     ground: str = "",
     palette: str = "",
     faces: bool = False,
+    face: str = "",
     render_target: str = "svg",
     format: str = "svg",
     respond: str = "envelope",
@@ -180,6 +181,11 @@ async def hw_compose(
           ground/palette are the raw axes if you'd rather set them directly.
     faces: twin only — also bake the light + dark faces; returns their URLs
           under faces:{light,dark} (the <picture> pair for a README).
+    face (matrix/diagram): '' (default) | light | dark — bake ONE scheme:
+          commits palette=fixed for this face, overriding an adaptive
+          surface/palette request (the face wins). No 'auto' — that's
+          CLI-only terminal (OSC 11) detection; MCP takes only the explicit,
+          scriptable values. Exclusive with faces.
     """
     from hyperweave.compose.surface import SpecEnvelope, compose_surface
     from hyperweave.config.settings import get_settings
@@ -233,6 +239,16 @@ async def hw_compose(
         resolved_surface = expand_surface_preset(surface, ground, palette)
         surface_ground = resolved_surface.ground.value
         surface_palette = resolved_surface.palette.value
+
+    # face wins: an explicit face commits palette=fixed even over an adaptive
+    # surface/palette request just resolved above (CLI --face parity; no
+    # 'auto' here — that's CLI-only terminal detection).
+    if face:
+        if face not in ("light", "dark"):
+            raise ValueError(f"face must be 'light' or 'dark' (got {face!r})")
+        if faces:
+            raise ValueError("face (one baked scheme) and faces (the twin pair) are exclusive")
+        surface_palette = "fixed"
 
     # markdown render_target wants the text shadow, not a byte projection — emit
     # `md` and return it directly (the compose_surface md path preserves the
@@ -298,6 +314,8 @@ async def hw_compose(
         content["ground"] = surface_ground
     if surface_palette:
         content["palette"] = surface_palette
+    if face:
+        content["surface_face"] = face
 
     env = SpecEnvelope(type=type, genome=genome, variant=variant, spec=content, format=format, emit=emit)
     response = compose_surface(env, base_url=get_settings().public_base_url, data_tokens=data_tokens_resolved)

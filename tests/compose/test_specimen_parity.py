@@ -131,6 +131,13 @@ def test_twin_tokens(variant: str) -> None:
     fixture = _fixture(f"twin-{variant}")
     faces = fixture["faces"]
     assert isinstance(faces, dict)
+    # faces_superseded (standing law #3): the language sheet's dark-face
+    # material family outranks the authored twin dress for the tokens the
+    # material block re-declares — the authored specimen still records
+    # itself in `faces`; the engine grades against the overlay.
+    superseded = fixture.get("faces_superseded")
+    if isinstance(superseded, dict):
+        faces = {face: {**tokens, **(superseded.get(face) or {})} for face, tokens in faces.items()}
     svg = _render(_TWIN_PRESET, variant=variant, palette="adaptive")
     facts = parse_svg(svg)
     engine_faces = css_tokens(facts.style_text)

@@ -22,6 +22,7 @@ import pytest
 
 from hyperweave.compose.bundled_specs import resolve_bundled_spec
 from hyperweave.compose.engine import compose
+from hyperweave.config.loader import load_diagram_config
 from hyperweave.core.models import ComposeSpec
 
 _PORCELAIN = json.loads((Path(__file__).parents[1] / "fixtures" / "primer_diagram_language.json").read_text())[
@@ -196,13 +197,72 @@ def test_dark_cards_ride_plate_physics(emitted_dark: str) -> None:
     assert re.search(r"-cardbg[^}]*url\(#hw-[0-9a-f]+-seat\)", emitted_dark), "dark cards must sit on the seat"
 
 
+# Card-ramp ruling (2026-07-15, owner triage after the banding report): the
+# sheet's card_hi/card_lo pair spans only ~4/255 per channel — below display
+# quantization resolution, so every renderer posterizes the face into flat
+# bands with a mid-card seam (measured on the sheet AND the engine render).
+# The ruling widens each variant's pair symmetrically around its own midpoint
+# to >=10/255 max-channel delta, hue direction preserved — the top-lit intent
+# the sheet AUTHORED, at a delta the medium can actually render. The fixture
+# stays a byte-accurate transcription of the sheet as authored (same rule as
+# the hero-ring amendment above); the engine grades against the genome's
+# amended pair, and the delta law below pins the ramp for every variant.
 def test_dark_gradient_stops_match_law(emitted_dark: str) -> None:
     v = _DARK["vars"]
     cf = re.search(
-        r'-cf"[^>]*>\s*<stop offset="0" stop-color="([^"]+)"/>\s*<stop offset="1" stop-color="([^"]+)"', emitted_dark
+        r'-cf"[^>]*>\s*<stop offset="0" stop-color="([^"]+)"/>\s*'
+        r'<stop offset="([\d.]+)" stop-color="([^"]+)"/>\s*<stop offset="1" stop-color="([^"]+)"',
+        emitted_dark,
     )
-    assert cf, "cf gradient missing"
-    assert (cf.group(1), cf.group(2)) == (v["--hw-card-hi"].strip(), v["--hw-card-lo"].strip())
+    assert cf, "cf gradient missing its 3-stop eased ramp"
+    genome_dark = _genome_diagram_dark("porcelain")
+    assert (cf.group(1), cf.group(4)) == (genome_dark["card_hi"], genome_dark["card_lo"])
+    # The eased mid stop is DERIVED, never authored: hi mixed toward lo by the
+    # chassis fraction at the chassis offset (the strip-plate recipe).
+    material = load_diagram_config().get("material") or {}
+    assert cf.group(2) == str(material.get("ramp_mid_offset", "0.4"))
+    mix_t = float(material.get("ramp_mid_mix", 0.58))
+    hi_rgb, lo_rgb = _rgb(genome_dark["card_hi"]), _rgb(genome_dark["card_lo"])
+    want_mid = "#{:02X}{:02X}{:02X}".format(*(round(a + (b - a) * mix_t) for a, b in zip(hi_rgb, lo_rgb, strict=True)))
+    assert cf.group(3) == want_mid, f"card_mid {cf.group(3)} vs derived {want_mid}"
+    # The amended pair keeps the sheet's hue direction: per-channel deltas
+    # scale uniformly from the sheet pair, so sign and ratio survive.
+    sheet_hi, sheet_lo = _rgb(v["--hw-card-hi"].strip()), _rgb(v["--hw-card-lo"].strip())
+    hi, lo = _rgb(genome_dark["card_hi"]), _rgb(genome_dark["card_lo"])
+    sheet_deltas = [a - b for a, b in zip(sheet_hi, sheet_lo, strict=True)]
+    amended_deltas = [a - b for a, b in zip(hi, lo, strict=True)]
+    for sheet_d, d in zip(sheet_deltas, amended_deltas, strict=True):
+        assert (sheet_d > 0) == (d > 0) or (sheet_d == 0 and abs(d) <= 1), "hue direction diverged from the sheet"
+
+
+def _rgb(hexstr: str) -> tuple[int, int, int]:
+    h = hexstr.lstrip("#")
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _lum(c: tuple[int, int, int]) -> float:
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def _genome_diagram_dark(variant: str) -> dict[str, str]:
+    genome_path = Path(__file__).parents[2] / "src" / "hyperweave" / "data" / "genomes" / "primer.json"
+    payload = json.loads(genome_path.read_text())
+    block = payload["variant_overrides"][variant]["diagram_dark"]
+    assert isinstance(block, dict)
+    return {k: str(val) for k, val in block.items()}
+
+
+@pytest.mark.parametrize("variant", ["porcelain", "noir", "carbon", "space", "anvil", "cream", "dusk", "petrol"])
+def test_card_ramp_renders_continuous(variant: str) -> None:
+    """The card-ramp law: every variant's cf pair spans >=10/255 on its widest
+    channel (below that, displays posterize the face into a banded two-tone)
+    and the luminance ladder holds — ground < card_lo < card_hi < chip."""
+    d = _genome_diagram_dark(variant)
+    hi, lo = _rgb(d["card_hi"]), _rgb(d["card_lo"])
+    assert max(abs(a - b) for a, b in zip(hi, lo, strict=True)) >= 10, (
+        f"{variant}: cf ramp below quantization threshold"
+    )
+    assert _lum(_rgb(d["ground"])) < _lum(lo) < _lum(hi) < _lum(_rgb(d["chip"])), f"{variant}: ladder order broken"
 
 
 def test_dark_seat_matches_law(emitted_dark: str) -> None:
@@ -221,3 +281,144 @@ def test_dark_ink_family_matches_law(emitted_dark: str) -> None:
     assert f"--dna-signal: {v['--hw-accent'].strip()}" in emitted_dark
     hname = re.findall(r"\.hw-[0-9a-f]+-hname \{ fill: ([^;}]+)", emitted_dark)
     assert v["--hw-ink-hero"].strip() in [h.strip() for h in hname], hname
+
+
+# ── surface invariance: one look through every door ──────────────────────────
+#
+# The rendered look is a pure function of (spec, genome, variant, scheme) —
+# surface mode and delivery adapter choose packaging, never appearance. The
+# material law fires on every render whose scheme includes the dark face:
+# the baked dark face, a fixed dark-substrate variant, and the dark @media
+# branch of an adaptive render (normalized ordering: the base scope is always
+# the light face, the media query always dark). These tests enroll every
+# surface preset and substrate in that law, so a render path that silently
+# drops the material — the flat-README regression — fails here.
+
+_HUB_SPEC = resolve_bundled_spec("diagram", "hub").value
+_UID_NORM = re.compile(r"hw-[0-9a-f]{8}")
+_DARK_WRAPPER = "@media (prefers-color-scheme: dark) {"
+
+_SURFACES = {
+    "plate": ("opaque", "fixed"),
+    "inlay": ("bare", "adaptive"),
+    "twin": ("opaque", "adaptive"),
+}
+
+
+def _compose_surface_svg(variant: str, ground: str, palette: str, face: str = "") -> str:
+    return compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant=variant,
+            ground=ground,
+            palette=palette,
+            surface_face=face,
+            diagram=_HUB_SPEC,
+        )
+    ).svg
+
+
+def _material_block(svg: str) -> list[str]:
+    """The dark material override block as uid-normalized lines: from the
+    ``#UID { --dna-signal:`` rule to the block's end (the wrapper's lone ``}``
+    on an adaptive render, ``</style>`` on a committed one). Empty when the
+    render carries no material."""
+    out: list[str] = []
+    taking = False
+    for ln in _UID_NORM.sub("UID", svg).splitlines():
+        if not taking and ln.startswith("#UID { --dna-signal:"):
+            taking = True
+        if taking:
+            if ln.strip() in ("}", "</style>"):
+                break
+            if ln.strip():
+                out.append(ln)
+    return out
+
+
+def _material_scope(svg: str) -> str:
+    """``none`` (no material block), ``committed`` (declared bare, wins the
+    cascade on the render's one scheme) or ``dark-branch`` (inside the dark
+    @media wrapper of an adaptive render)."""
+    lines = _UID_NORM.sub("UID", svg).splitlines()
+    for i, ln in enumerate(lines):
+        if ln.startswith("#UID { --dna-signal:"):
+            prev = next((p for p in reversed(lines[:i]) if p.strip()), "")
+            return "dark-branch" if prev.strip() == _DARK_WRAPPER else "committed"
+    return "none"
+
+
+@pytest.mark.parametrize(("variant", "substrate"), [("porcelain", "light"), ("noir", "dark")])
+@pytest.mark.parametrize("surface", sorted(_SURFACES))
+def test_material_presence_matrix(variant: str, substrate: str, surface: str) -> None:
+    """Every surface preset resolves the material by SCHEME, never delivery:
+    adaptive surfaces carry it in the dark branch, a fixed surface carries it
+    exactly when the variant's substrate is dark. The SEAT is ground-keyed on
+    top of that: a shadow casts ink outside the card, so it fires only on a
+    plate the artifact OWNS — a bare ground rides the lift+grain chain
+    instead (no drop shadows on unowned grounds)."""
+    ground, palette = _SURFACES[surface]
+    svg = _compose_surface_svg(variant, ground, palette)
+    scope = _material_scope(svg)
+    has_defs = '-cf"' in svg
+    has_material = palette == "adaptive" or substrate == "dark"
+    if palette == "adaptive":
+        assert scope == "dark-branch", f"{surface}/{variant}: material must ride the dark @media branch"
+        assert has_defs, f"{surface}/{variant}: cf/es defs missing"
+    elif substrate == "dark":
+        assert scope == "committed", f"{surface}/{variant}: fixed dark substrate must commit the material"
+        assert has_defs, f"{surface}/{variant}: cf/es defs missing"
+    else:
+        assert scope == "none" and not has_defs, f"{surface}/{variant}: light committed render must stay paper-flat"
+    if has_material and ground == "opaque":
+        assert '-seat"' in svg and "-seat)" in svg, f"{surface}/{variant}: owned plate must seat its cards"
+        assert "feTurbulence" in svg, f"{surface}/{variant}: seat chain missing its grain pass"
+    elif has_material:
+        assert '-liftg"' in svg and "-liftg)" in svg, f"{surface}/{variant}: bare material must ride lift+grain"
+        assert '-seat"' not in svg and "-seat)" not in svg, f"{surface}/{variant}: seat shadow on an unowned ground"
+        assert "feTurbulence" in svg, f"{surface}/{variant}: liftg chain missing its grain pass"
+    else:
+        assert '-seat"' not in svg and "-seat)" not in svg and '-liftg"' not in svg, (
+            f"{surface}/{variant}: material filters on a light committed render"
+        )
+        assert "feTurbulence" not in svg, f"{surface}/{variant}: grain on the light face"
+
+
+@pytest.mark.parametrize("variant", ["porcelain", "noir"])
+@pytest.mark.parametrize("surface", ["inlay", "twin"])
+def test_adaptive_dark_branch_equals_baked_dark_face(variant: str, surface: str) -> None:
+    """The invariance property itself: the dark branch an adaptive render
+    ships is rule-for-rule the baked dark face OF THE SAME GROUND — same
+    material, same family, through every door. (The seat is ground-keyed, so
+    the baked reference must own or not own its plate exactly as the surface
+    under test does.)"""
+    ground, palette = _SURFACES[surface]
+    adaptive_block = _material_block(_compose_surface_svg(variant, ground, palette))
+    baked_block = _material_block(_compose_surface_svg(variant, ground, "fixed", face="dark"))
+    assert adaptive_block, f"{surface}/{variant}: adaptive render carries no material block"
+    assert adaptive_block == baked_block, f"{surface}/{variant}: dark branch diverges from the baked dark face"
+
+
+def test_fixed_dark_plate_equals_baked_dark_face() -> None:
+    """A fixed-palette dark-substrate plate has no adaptivity excuse — it
+    commits the same material block the baked dark face (same ground) bakes."""
+    plate_block = _material_block(_compose_surface_svg("noir", "opaque", "fixed"))
+    baked_block = _material_block(_compose_surface_svg("noir", "opaque", "fixed", face="dark"))
+    assert plate_block, "noir plate carries no material block"
+    assert plate_block == baked_block, "noir plate material diverges from the baked dark face"
+
+
+@pytest.mark.parametrize("variant", ["porcelain", "noir"])
+def test_adaptive_light_base_stays_flat_paper(variant: str) -> None:
+    """The adaptive base scope is the light face law: flat var-driven card
+    fills, the material urls referenced nowhere outside the dark branch."""
+    svg = _UID_NORM.sub("UID", _compose_surface_svg(variant, "bare", "adaptive"))
+    assert ".UID-cardbg { fill: var(--dna-surface-alt); stroke: var(--dna-border); }" in svg
+    assert svg.count("url(#UID-cf)") == 1, "cf gradient must be referenced exactly once — inside the dark branch"
+
+
+def test_baked_light_face_carries_no_material() -> None:
+    svg = _compose_surface_svg("porcelain", "bare", "fixed", face="light")
+    assert '-cf"' not in svg and '-seat"' not in svg
+    assert _material_scope(svg) == "none"

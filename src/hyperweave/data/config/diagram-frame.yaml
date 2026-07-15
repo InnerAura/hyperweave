@@ -306,6 +306,25 @@ health:
   dot_inset_y: 13
   pulse_dur: "2.618s"
 
+# Dark-face card material (card-ramp ruling, 2026-07-15). Two halves, both
+# from the brutalist strip's celadon panel recipe (frames/strip/
+# brutalist-defs.j2 — the system that already solved this on badges/strips):
+# a 3-stop EASED face ramp (the 2-stop linear ramp reads as a crease — "a
+# bend in the middle" — because two planes meet at the midpoint; the eased
+# mid drops the crown fast and runs a long quiet tail, reading as sheen),
+# and a monochrome darkening GRAIN that dithers the ramp's quantization
+# steps (a shallow dark ramp renders as full-width Mach bands — petrol's
+# saturated teal showed them as colored stripes; noise breaks the band
+# coherence). Grain scalars are the strip filter verbatim.
+material:
+  ramp_mid_offset: "0.4"
+  ramp_mid_mix: 0.58 # card_mid = card_hi mixed toward card_lo by this fraction
+  grain_base_frequency: "1.6"
+  grain_octaves: "2"
+  grain_seed: "19"
+  grain_tint: "0.04"
+  grain_alpha: "0.08"
+
 # Compound-region chrome pads (graph.py build_region_bands), DERIVED from what
 # the region frames, never authored per-spec. Two region kinds: BAND (a filled
 # panel) and ENCLOSURE (a hairline box); a band's own pads split further on
