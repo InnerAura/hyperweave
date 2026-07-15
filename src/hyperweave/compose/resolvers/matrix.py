@@ -33,7 +33,8 @@ from hyperweave.compose.matrix.project import (
     matrix_payload_json,
     to_markdown,
 )
-from hyperweave.config.loader import load_glyphs, load_matrix_config
+from hyperweave.compose.surface_modes import stamp_surface, surface_from_props
+from hyperweave.config.loader import load_glyphs, load_matrix_config, load_surface_modes
 from hyperweave.core.color import relative_luminance
 from hyperweave.core.matrix import CellKind, GlyphTint
 from hyperweave.core.paradigm import ParadigmMatrixConfig
@@ -78,6 +79,17 @@ def resolve_matrix(
         surface_lum = 1.0
     layout = compute_matrix_layout(table, matrix=cfg, config=mconf, glyph_registry=glyphs, surface_lum=surface_lum)
     subvariant = derive_subvariant(table)
+    # Stamp the resolved surface (plate/inlay/twin) onto the IR before the
+    # payload dump, so a non-plate surface serializes into the hashed payload and
+    # gives each surface a distinct content address. Plate leaves the IR
+    # untouched (surface=None), keeping pre-existing payloads byte-identical.
+    table = stamp_surface(
+        table,
+        surface_from_props(spec.ground, spec.palette, spec.surface_face),
+        genome,
+        "matrix",
+        load_surface_modes(),
+    )
     payload_json = matrix_payload_json(table)
 
     context: dict[str, Any] = {
@@ -89,10 +101,12 @@ def resolve_matrix(
         "matrix_subvariant": subvariant,
         "semantic_palette": dict(mconf.get("semantic_palette") or {}),
         "matrix_voices": _voice_params(cfg, title_size=layout.title_size),
-        # The scan rect is centered on the rail and sweeps ±46% of the card
-        # width — out past both edges and back (the specimen's travel; the
-        # card clip crops the overshoot). Transform-only, CIM.
-        "matrix_scan_travel": round(0.46 * layout.width, 1),
+        # The scan rect is centered on the rail and sweeps to the CONTENT
+        # edges and back — travel binds to content width, never the canvas
+        # (the old ±46%-of-card overshoot relied on the card clip; on a
+        # bare/inlay ground there is no card, and the sweep escaped wider
+        # than any content). Transform-only, CIM.
+        "matrix_scan_travel": round(max(0.0, (layout.width - 2 * cfg.margin_x - cfg.scan_w) / 2), 1),
         "matrix_glyph_gradients": _used_glyph_gradients(layout, glyphs),
         "payload_json": payload_json,
         "payload_schema": PAYLOAD_SCHEMA,

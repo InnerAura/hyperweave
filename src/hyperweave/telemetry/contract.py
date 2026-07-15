@@ -175,7 +175,7 @@ def build_contract(transcript_path: str) -> dict[str, Any]:
 
     Emits the legacy nested ``{session, profile, tools, stages, ...}`` shape
     consumed by the current ``resolve_receipt`` and the proofset script. For
-    the ``receipt/1`` payload that the v3 receipt embeds and renders, use
+    the ``receipt/1`` payload that the receipt frame embeds and renders, use
     :func:`build_receipt_contract`.
     """
     t = parse_transcript_auto(transcript_path)

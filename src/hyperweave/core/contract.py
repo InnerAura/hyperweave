@@ -15,7 +15,13 @@ SELF_INSTRUCT = (
     "verify · transform · diff · query. Contract: https://hyperweave.app/llms.txt"
 )
 
-LLMS_TXT = """# HyperWeave
+# The narrative head of /llms.txt — hand-authored teaching prose. The
+# ``## Surfaces`` block is NOT hard-coded here: it is generated from the
+# capability registry at request time (see surfaces/discover.py:render_llms_txt),
+# so the surface enumeration cannot drift from the code as CLI/HTTP/MCP
+# reachability changes. The full doc (/llms-full.txt) appends the SKILL body and
+# the per-capability index to this same head.
+LLMS_TXT_HEAD = """# HyperWeave
 
 HyperWeave artifacts are polyglot containers: a branded SVG whose data also
 travels as a structured payload, so agents reason about them instead of
@@ -40,12 +46,6 @@ transform/diff bind to the payload (lossless); query/verify use the envelope
   create → embed → extract → transform → re-embed. Semantic identity is the
   guarantee: the geometry is reproducible from payload + genome; the payload is
   the source of truth, the visual is one projection.
-
-## Surfaces
-
-  MCP:  hw_compose · hw_extract · hw_verify · hw_transform · hw_diff · hw_query · hw_discover
-  HTTP: POST /v1/{compose,validate,extract,verify,transform,diff,query} · GET /v1/a/{digest}
-  CLI:  hyperweave compose|validate
 """
 
 

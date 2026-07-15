@@ -27,6 +27,7 @@ from typing import Any
 from pydantic import Field, model_validator
 
 from hyperweave.core.base import FrozenModel
+from hyperweave.core.surface_spec import SurfaceSpec  # noqa: TC001 (Pydantic needs at runtime)
 
 
 class CellKind(StrEnum):
@@ -169,9 +170,7 @@ class MatrixCell(FrozenModel):
     chips: list[str] = Field(default_factory=list, description="chip cells: packed token list")
     glyph: str = Field(
         default="",
-        description=(
-            "Glyph registry id (data/registries/glyphs.json) for glyph cells. Registry ids only in v0.4.0-alpha.2."
-        ),
+        description=("Glyph registry id (data/registries/glyphs.json) for glyph cells. Registry ids only."),
     )
     note: str = Field(default="", description="Tooltip / aria / markdown-cell detail (never rendered in the SVG)")
 
@@ -233,6 +232,15 @@ class MatrixSpec(FrozenModel):
             "{parent_id, op, patch, ts}. Empty by default and excluded from the "
             "payload dump, so untransformed artifacts stay byte-identical; once "
             "populated it rides inside the hashed payload (tamper-evident)."
+        ),
+    )
+    surface: SurfaceSpec | None = Field(
+        default=None,
+        description=(
+            "Surface mode (plate/inlay/twin) this projection renders on. Additive "
+            "and None by default, so `exclude_defaults` keeps pre-existing payloads "
+            "byte-identical; a non-plate surface serializes into the payload and "
+            "gives plate/inlay/twin (and each twin face) distinct content addresses."
         ),
     )
 

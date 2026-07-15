@@ -76,7 +76,7 @@ class CellPlacement:
     sub_cls: str = ""
     sub_fill: str = ""
     sub_lines: tuple[TextSpec, ...] = ()
-    """Note wrapped to >1 line (BUG-001). When present, the cell renders
+    """Note wrapped to >1 line (the note-wrap law). When present, the cell renders
     these instead of the single ``sub_text`` run — a note wraps before it
     ellipsizes, the same discipline as ``text_lines`` for the value."""
     # -- indicator paint --
@@ -112,6 +112,15 @@ class CellPlacement:
     glyph_opacity: float = 1.0
     glyph_gradient: str = ""
     glyph_fill_rule: str = ""
+    glyph_stroke_w: float = 0.0
+    """Stroke-icon channel (core glyph set): >0 renders the paths as 2px-era
+    STROKE geometry (fill none, round caps/joins) in the resolved ink/brand
+    paint; 0 keeps the fill pipeline (brand marks)."""
+    glyph_accent_index: int = -1
+    """Diagrams only: the node's flow-palette slot when ``resolve_glyph_mode``
+    degraded to ``hue`` (-1 = not hue mode). The template adds the matching
+    ``-fl{i}``/``-flp{i}`` class, which wins the cascade over ``glyph_fill``'s
+    presentation-attribute fallback (SVG2: attributes are lowest specificity)."""
     """Registry fill-rule (e.g. 'evenodd'), stamped on the mark group —
     inherited by every path; the evenodd marks break without it."""
     """Registry id whose brand gradient fills this mark. Non-empty routes the

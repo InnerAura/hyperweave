@@ -1,0 +1,93 @@
+{
+ "aspect": 1.508,
+ "back_edge_routes": {
+  "failed->running": {
+   "chord_dev": 32.2,
+   "chord_dev_amended": 22.5,
+   "chord_dev_note": "snug-width ruling 2026-07-14: the lens bow is span-proportional; the snug chain shortens the span, so the render's shallower 22.5 dev is the same construction at the new chain width",
+   "clearance": 248.6,
+   "exit_side": "top"
+  },
+  "running->failed": {
+   "chord_dev": 32.2,
+   "chord_dev_amended": 22.5,
+   "chord_dev_note": "snug-width ruling 2026-07-14: the lens bow is span-proportional; the snug chain shortens the span, so the render's shallower 22.5 dev is the same construction at the new chain width",
+   "clearance": 249.3,
+   "exit_side": "bottom"
+  }
+ },
+ "caption_text": "State machine \u00b7 a job runs to a terminal success, or fails and retries back into running",
+ "cards": {
+  "back_edge": "failed->running",
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 1.0,
+  "hero_h": 80.0,
+  "hero_w": 171.0,
+  "std_h_med": 80.0,
+  "std_w_med": 171.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 4,
+  "card_rx": 13.0,
+  "cards": 4,
+  "chips": 4,
+  "coins": 0,
+  "desc_lines": 4,
+  "drift_edges": 1,
+  "gather_knots": 0,
+  "glyph_marks": 4,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 0,
+  "shell_marks": 1,
+  "solid_edges": 3,
+  "terminal_dots": 0,
+  "zone_headers": 1
+ },
+ "chip_homes": {
+  "in_card": 0,
+  "on_wire": 4,
+  "wire_offset_max": 12.8
+ },
+ "chip_stub_min": 71.7,
+ "edge_dress": {
+  "failed->running": {
+   "dashed": true,
+   "role": "accent"
+  },
+  "running->failed": {
+   "dashed": false,
+   "role": "neutral"
+  }
+ },
+ "edge_label_seats": {
+  "retry": 13.36,
+  "throw": 13.36
+ },
+ "height": 491.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "occupancy": 0.373,
+ "plate": {
+  "caption_pad": 32.0,
+  "caption_y": 688.0,
+  "content_bottom": 560.0,
+  "content_top": 240.0,
+  "zone_y": 58.0
+ },
+ "port_tolerance": 6.5,
+ "port_tolerance_note": "USER RULING (term-ring-aware boundaries): the succeeded hero's terminal ring (sm-term) draws 6px past its plain card, but this hand specimen's own arrival still tips at the plain face (an authoring inconsistency, not a law) -- arrivals now stop at the ring's outer face, superseding the specimen's own 0.5px envelope. card_rects()/measure_port_max() do not read the ring shape, so this fixture cites the amendment directly rather than a re-extraction silently reverting it.",
+ "source": "v04/alpha/v04a6/diagrams-v3/pp-state-machine-alt1.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1086.0,
+  720.0
+ ],
+ "width": 740.0
+}

@@ -599,7 +599,7 @@ SYNTHETIC_FIXTURE = FIXTURES_DIR / "synthetic_session.jsonl"
 
 
 class TestEnvelopeFilter:
-    """Bug A: parser must filter ALL XML envelope wrappers, not just command-name."""
+    """The parser must filter ALL XML envelope wrappers, not just command-name."""
 
     def test_local_command_stdout_excluded_from_user_events(self) -> None:
         tel = parse_transcript(SYNTHETIC_FIXTURE)
@@ -624,7 +624,7 @@ class TestEnvelopeFilter:
 
 
 class TestContractPreservesAllEvents:
-    """Bug B: the contract must NOT drop continuation events."""
+    """The contract must NOT drop continuation events."""
 
     def test_contract_user_events_includes_continuations(self) -> None:
         c = build_contract(str(SYNTHETIC_FIXTURE))
@@ -642,7 +642,7 @@ class TestContractPreservesAllEvents:
 
 
 class TestTotalUserMessages:
-    """Bug D: total_user_messages must count only filtered prose, not raw user records."""
+    """total_user_messages must count only filtered prose, not raw user records."""
 
     def test_total_user_messages_excludes_tool_results_and_envelopes(self) -> None:
         tel = parse_transcript(SYNTHETIC_FIXTURE)

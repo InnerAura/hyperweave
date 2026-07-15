@@ -1,0 +1,60 @@
+{
+  "aspect": 3.25,
+  "caption_text": "Pipeline \u00b7 a query is encoded, searched, augmented with retrieved context, and grounded into a cited answer",
+  "cards": {
+    "hero_area_ratio": 1.242,
+    "hero_h": 128.0,
+    "hero_w": 137.9,
+    "std_h_med": 128.0,
+    "std_w_med": 111.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 4,
+    "card_rx": 13.0,
+    "cards": 5,
+    "chips": 6,
+    "coins": 0,
+    "desc_lines": 5,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 5,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 1,
+    "shell_marks": 0,
+    "solid_edges": 4,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_homes": {
+    "in_card": 2,
+    "on_wire": 4,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 40.5,
+  "height": 228.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.317,
+  "plate": {
+    "caption_pad": 36.0,
+    "caption_y": 404.0,
+    "content_bottom": 290.0,
+    "content_top": 130.0,
+    "zone_y": 46.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-pipeline.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1430.0,
+    440.0
+  ],
+  "width": 740.0
+}

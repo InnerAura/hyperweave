@@ -34,12 +34,14 @@ async def test_hw_compose_diagram_svg() -> None:
 
 
 @pytest.mark.asyncio
-async def test_composite_only_records_fallback() -> None:
+async def test_composite_only_is_the_only_tier() -> None:
+    # The kit grammar is compositor-only by construction (dash | particle) —
+    # performance is always composite-only and nothing ladders down.
     svg = _cached_svg(
         await hw_compose(
             type="diagram",
             genome="primer",
-            diagram=dict(TINY, edge_motion="beam"),
+            diagram=dict(TINY, edge_motion="particle"),
             performance="composite-only",
         )
     )
@@ -47,9 +49,8 @@ async def test_composite_only_records_fallback() -> None:
     assert m, "hw:payload missing"
     payload = json.loads(m.group(1))
     assert payload["rendered"]["performance"] == "composite-only"
-    assert payload["rendered"]["fallback_applied"] is True
     assert set(payload["rendered"]["edge_motion"]) == {"particle"}
-    assert payload["spec"]["edge_motion"] == "beam"  # requested stays intact
+    assert payload["spec"]["edge_motion"] == "particle"
 
 
 @pytest.mark.asyncio
@@ -61,7 +62,7 @@ async def test_render_target_markdown() -> None:
 
 @pytest.mark.asyncio
 async def test_markdown_available_on_lightweight_frames() -> None:
-    # Post-envelope-floor (alpha.5): every frame has a text-shadow projection,
+    # Post-envelope-floor: every frame has a text-shadow projection,
     # so render_target=markdown returns it for a badge instead of rejecting.
     md = await hw_compose(type="badge", title="X", value="y", render_target="markdown")
     assert md.strip() and "X" in md
@@ -73,27 +74,39 @@ async def test_hw_discover_diagram_section() -> None:
     section = result["diagram"]
     assert "sequence" in section["topologies"]
     assert "state-machine" in section["topologies"]
-    assert "pipeline" in section["presets"]
-    assert "beam" in section["edge_motion"]
+    assert "rag-pipeline" in section["presets"]
+    assert "dash" in section["edge_motion"] and "particle" in section["edge_motion"]
+    assert "beam" not in section["edge_motion"] and "flow" not in section["edge_motion"]
 
 
 @pytest.mark.asyncio
-async def test_chrome_bare_parity() -> None:
-    card = _cached_svg(await hw_compose(type="diagram", genome="primer", diagram=TINY))
-    bare = _cached_svg(await hw_compose(type="diagram", genome="primer", diagram=TINY, chrome="bare"))
-    assert "INNERAURA LABS" in card and "INNERAURA LABS" not in bare
-    assert 'fill="var(--dna-surface)"' not in bare
+async def test_diagram_renders_caption_not_masthead() -> None:
+    """The public diagram axis always renders kit chrome (caption): no
+    masthead band, no brand-footer line. `chrome` is retired from hw_compose
+    — bare only exists internally for sec 12.1 recursive embeds."""
+    svg = _cached_svg(await hw_compose(type="diagram", genome="primer", diagram=TINY))
+    assert "INNERAURA LABS" not in svg
+    assert 'data-hw-region="masthead"' not in svg
+    assert ">Tiny</text>" in svg  # the caption sentence (subtitle falls back to title)
+
+
+@pytest.mark.asyncio
+async def test_hw_compose_rejects_stray_chrome_kwarg() -> None:
+    with pytest.raises(TypeError):
+        await hw_compose(type="diagram", genome="primer", diagram=TINY, chrome="bare")  # type: ignore[call-arg]
 
 
 @pytest.mark.asyncio
 async def test_edge_motion_override() -> None:
     """hw_compose edge_motion overrides the spec's own (HTTP/CLI parity)."""
     svg = _cached_svg(
-        await hw_compose(type="diagram", genome="primer", diagram=dict(TINY, edge_motion="dash"), edge_motion="flow")
+        await hw_compose(
+            type="diagram", genome="primer", diagram=dict(TINY, edge_motion="dash"), edge_motion="particle"
+        )
     )
     m = _PAYLOAD_RE.search(svg)
     assert m, "hw:payload missing"
-    assert "flow" in json.loads(m.group(1))["rendered"]["edge_motion"]
+    assert "particle" in json.loads(m.group(1))["rendered"]["edge_motion"]
 
 
 @pytest.mark.asyncio
@@ -108,5 +121,5 @@ async def test_discover_emits_layout_slugs() -> None:
     res = await hw_discover("diagram")
     data = json.loads(res) if isinstance(res, str) else res
     slugs = data["diagram"]["layout_slugs"]
-    assert len(slugs) == 14
-    assert {"fanout-radial", "tree-radial", "dag", "state-machine"} <= set(slugs)
+    assert len(slugs) == 18
+    assert {"fanout-radial", "fanout-downward", "tree-radial", "dag", "state-machine", "hub", "lanes"} <= set(slugs)

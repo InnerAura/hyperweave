@@ -177,7 +177,7 @@ stats:
 icon:
   supported_shapes: [square, circle]
   default_shape: circle
-  # Internal viewBox = 108 (the v2 specimens' tuned coordinate system, trimmed
+  # Internal viewBox = 108 (the chrome icon specimens' tuned coordinate system, trimmed
   # of excess padding) while rendered width/height stays at 64. The material
   # stack is unchanged — specimen r=46/r=42 bezel, 96×96 card, 6-unit rail,
   # 0.6-unit hairlines — but the frame now fills the box at the same ~85-89%

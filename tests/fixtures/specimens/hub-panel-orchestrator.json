@@ -1,0 +1,85 @@
+{
+ "aspect": 1.429,
+ "caption_text": "the hub stays small; the work lives in the labels",
+ "cards": {
+  "dims_superseded": "typographic satellites carry no card rects (containers earn their existence) \u2014 the engine's only rect is the hub hero; std dims are n/a",
+  "hero_h": 136.0,
+  "hero_w": 232.0,
+  "std_h_med": 136.0,
+  "std_w_med": 232.0
+ },
+ "census": {
+  "animated": false,
+  "arrow_terminals": 4,
+  "card_rx": 16.0,
+  "cards": 1,
+  "chips": 0,
+  "coins": 0,
+  "desc_lines": 1,
+  "drift_edges": 0,
+  "gather_knots": 0,
+  "glyph_marks": 0,
+  "hero_cards": 0,
+  "hero_rx": 0.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 0,
+  "shell_marks": 0,
+  "solid_edges": 4,
+  "terminal_dots": 0,
+  "zone_headers": 0
+ },
+ "census_amendments": {
+  "cards": 1,
+  "glyph_marks": 1,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "note": "kit vocabulary: the engine renders the orchestrator hub as the kit's HERO card (accent ring, rx16, workflow mark) with a zone header and ndesc-classed satellite lines; the hand panel predates those classes (hp2-*), so its own census reads them as a plain card and uncounted text. (desc_lines amendment retired: the census counts in-card desc rows \u2014 both sides read 1; the 8 satellite lines are containerless text, and the stale amended 8 was masked by the retired either-accept.)",
+  "zone_headers": 1
+ },
+ "chip_stub_min": null,
+ "height": 504.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "hub_seats": [
+  {
+   "angle": -152.9,
+   "dist": 505.4,
+   "label": "researcher"
+  },
+  {
+   "angle": -42.6,
+   "dist": 339.7,
+   "label": "coder"
+  },
+  {
+   "angle": 38.4,
+   "dist": 318.9,
+   "label": "reviewer"
+  },
+  {
+   "angle": 156.3,
+   "dist": 491.6,
+   "label": "writer"
+  }
+ ],
+ "occupancy": 0.031,
+ "plate": {
+  "caption_pad": 58.0,
+  "caption_y": 782.0,
+  "content_bottom": 664.0,
+  "content_top": 178.0,
+  "zone_y": 84.0
+ },
+ "port_tolerance": 24.2,
+ "source": "v04/alpha/v04a6/diagrams-v4/hub-panel-02-orchestrator.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1200.0,
+  840.0
+ ],
+ "width": 720.0
+}

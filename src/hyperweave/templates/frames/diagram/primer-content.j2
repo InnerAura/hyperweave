@@ -4,36 +4,89 @@
    branch on (Invariant 12 by construction). Draw order: header -> sequence
    furniture -> connectors (tube + light or marching stroke) -> particles ->
    nodes in PAINT order (a radial hub paints last, masking its spokes) ->
-   operators -> legend -> footer. #}
+   annotation chrome (text above cards, never under) -> operators ->
+   legend -> footer. #}
 {% set lay = diagram_layout %}
 {# The substrate paints OUTSIDE the entrance group — content fades in over
-   the genome surface, never over a white flash. Bare chrome (F1) ships
-   transparent paper: the page underneath is the canvas. #}
-{% if diagram_chrome != 'bare' %}<rect width="{{ viewbox_w }}" height="{{ viewbox_h }}" fill="var(--dna-surface)"/>
+   the genome surface, never over a white flash. Two orthogonal axes drop it:
+   bare CHROME (F1) ships transparent paper (masthead/footer gone too), and an
+   inlay GROUND borrows the host surface (chrome stays). Either bare condition
+   suppresses the backdrop; the hairline/inks re-ink via var either way. #}
+{% if diagram_chrome != 'bare' and surface_ground != 'bare' %}<rect width="{{ viewbox_w }}" height="{{ viewbox_h }}" fill="var(--dna-surface)"/>
 {% endif %}
 <g{% if lay.entrance == 'fade' %} class="{{ uid }}-in"{% endif %}>
-{% if lay.header.title %}  <text x="{{ lay.header.title.x }}" y="{{ lay.header.title.y }}"{% if lay.header.title.anchor != 'start' %} text-anchor="{{ lay.header.title.anchor }}"{% endif %} class="{{ uid }}-title">{{ lay.header.title.text }}</text>
+{# §2 region anatomy: the masthead is a PUBLIC region (agents address it by
+   name); the wrapped title emits every line (wrap-before-truncate). #}
+{% if lay.header.title_lines or lay.header.subtitle %}<g data-hw-region="masthead">
+{% for tl in lay.header.title_lines %}  <text x="{{ tl.x }}" y="{{ tl.y }}"{% if tl.anchor != 'start' %} text-anchor="{{ tl.anchor }}"{% endif %} class="{{ uid }}-title">{{ tl.text }}</text>
+{% endfor %}{% if lay.header.subtitle %}  <text x="{{ lay.header.subtitle.x }}" y="{{ lay.header.subtitle.y }}"{% if lay.header.subtitle.anchor != 'start' %} text-anchor="{{ lay.header.subtitle.anchor }}"{% endif %} class="{{ uid }}-sub">{{ lay.header.subtitle.text }}</text>
+{% endif %}</g>
 {% endif %}
-{% if lay.header.subtitle %}  <text x="{{ lay.header.subtitle.x }}" y="{{ lay.header.subtitle.y }}"{% if lay.header.subtitle.anchor != 'start' %} text-anchor="{{ lay.header.subtitle.anchor }}"{% endif %} class="{{ uid }}-sub">{{ lay.header.subtitle.text }}</text>
+{# Sequence call/return mini-legend (masthead furniture, top-right): a wire
+   sample IS its own swatch — solid+gray for call, accent dash-drift for
+   return — so the legend reads in the exact ink the messages use. #}
+{% for w in lay.wire_legend %}
+{% set wlstroke = (uid ~ '-fls') if w.accent else ((uid ~ '-connmuted') if conn_muted else (uid ~ '-fls')) %}
+{% set wlfill = (uid ~ '-flps') if w.accent else ((uid ~ '-connmutedf') if conn_muted else (uid ~ '-flps')) %}
+  <path d="{{ w.stub_d }}" class="{{ uid }}-branch {{ wlstroke }}{% if w.drift %} {{ uid }}-retdrift{% endif %}"/>
+  <path d="{{ w.marker_d }}" class="{{ uid }}-mk {{ wlfill }}"/>
+  <text x="{{ w.label.x }}" y="{{ w.label.y }}" class="{{ uid }}-{{ w.label.cls }}">{{ w.label.text }}</text>
+{% endfor %}
+{% for l in lay.lifelines %}  <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" class="{{ uid }}-life{{ 'h' if loop.index0 == lay.hero_lifeline_index else '' }}"/>
+{% endfor %}
+{% for a in lay.activations %}  <rect x="{{ a.x }}" y="{{ a.y }}" width="{{ a.w }}" height="{{ a.h }}" rx="{{ a.rx }}" class="{{ uid }}-act{{ 'h' if loop.index0 == lay.hero_activation_index else '' }}"/>
+{% endfor %}
+{% if lay.time_axis %}  <path d="{{ lay.time_axis.stub_d }}" class="{{ uid }}-taxis"/>
+  <path d="{{ lay.time_axis.marker_d }}" class="{{ uid }}-taxism"/>
+  <text x="{{ lay.time_axis.label.x }}" y="{{ lay.time_axis.label.y }}" class="{{ uid }}-{{ lay.time_axis.label.cls }}">{{ lay.time_axis.label.text }}</text>
 {% endif %}
-{% for l in lay.lifelines %}  <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" class="{{ uid }}-life"/>
-{% endfor %}
-{% for a in lay.activations %}  <rect x="{{ a.x }}" y="{{ a.y }}" width="{{ a.w }}" height="{{ a.h }}" rx="{{ a.rx }}" class="{{ uid }}-act"/>
-{% endfor %}
+{# Lanes category bands (the lanes solver fills lay.lane_bands; empty for every
+   other topology). Bands paint beneath connectors so wires cross them. The
+   ground knob rides band DATA: 'panel' draws the contained rect; 'typographic'
+   dissolves it into header + count + one hairline rule (the obi-engine flagship). #}
+{% for band in lay.lane_bands %}{% if band.ground == 'panel' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-laneband"/>
+{% endif %}{% if band.ground == 'enclosure' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-encl"/>
+{% endif %}{% if band.rule %}  <line x1="{{ band.rule.x1 }}" y1="{{ band.rule.y1 }}" x2="{{ band.rule.x2 }}" y2="{{ band.rule.y2 }}" class="{{ uid }}-lanerule"/>
+{% endif %}  <text x="{{ band.header.x }}" y="{{ band.header.y }}"{% if band.header.anchor != 'start' %} text-anchor="{{ band.header.anchor }}"{% endif %} class="{{ uid }}-{{ band.header.cls }}">{{ band.header.text }}</text>
+{% if band.count %}  <text x="{{ band.count.x }}" y="{{ band.count.y }}"{% if band.count.anchor != 'start' %} text-anchor="{{ band.count.anchor }}"{% endif %} class="{{ uid }}-{{ band.count.cls }}">{{ band.count.text }}</text>
+{% endif %}{% endfor %}
 {% for c in lay.connectors %}
 {% set hue_cls = (uid ~ '-fl' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-fls') %}
-{% if c.light_layers %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ (hue_cls) if c.static_dash else (uid ~ '-tube') }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
-{% for layer in c.light_layers %}  <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ layer.gradient_ref }})" stroke-width="{{ layer.width }}"{% if layer.opacity != 1.0 %} opacity="{{ layer.opacity }}"{% endif %}{% if layer.blur %} filter="url(#{{ uid }}-blur)"{% endif %}/>
-{% endfor %}{% elif c.track == 'dash-march' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ hue_cls }} {{ uid }}-m{{ loop.index0 }}"/>
-{% else %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ hue_cls }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
+{# Muted-connector knob: NEUTRAL static/dash wires quiet to the muted gray;
+   the SPINE (accent-indexed) edge keeps its hue — the kit's one privileged
+   relationship reads in accent while everything else recedes. Particles +
+   markers keep hue_cls. Geometry-neutral — only the stroke class changes. #}
+{% set wire_cls = (uid ~ '-connmuted') if (conn_muted and not c.accent_wire and c.accent_index < 0) else hue_cls %}
+{% if c.beam %}{# Beam edge (reference recipe): the generic wire yields entirely to the 5-stroke
+   stack on ONE path — glass conduit (casing + rail, survives reduced motion
+   and static faces) under blurred glow, gradient core, and the comet front.
+   Paint order is the law: the conduit never covers the light. #}
+  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-case"/>
+  <path d="{{ c.path_d }}" class="{{ uid }}-rail"/>
+  <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ c.beam[0].id_suffix }})" stroke-width="{{ diagram_style.beam_glow_w }}" opacity="{{ diagram_style.beam_glow_op }}" filter="url(#{{ uid }}-beam-blur)"/>
+  <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ c.beam[0].id_suffix }})" stroke-width="{{ diagram_style.beam_core_w }}"/>
+  <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ c.beam[1].id_suffix }})" stroke-width="{{ diagram_style.beam_front_w }}"/>
+{% elif c.track == 'dash-march' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }} {{ uid }}-m{{ loop.index0 }}"/>
+{% elif c.track == 'dash-drift' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }} {{ uid }}-retdrift"/>
+{% else %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
 {% endif %}
-{% for line in c.label_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-elbl">{{ line.text }}</text>
+{% if c.marker_d %}{% set mk_fill = (uid ~ '-connmutedf') if (conn_muted and not c.accent_wire and c.accent_index < 0) else ((uid ~ '-flp' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-flps')) %}  <path d="{{ c.marker_d }}" class="{{ uid }}-mk {{ mk_fill }}"/>
+{% endif %}
 {% endfor %}
+{# Gather-fan ornaments: above the wires they bundle, below the cards. A
+   seat ON a node boundary (solver.py's GatherPoint occlusion law) clips
+   both the ring and its core dot to the boundary's outside — paint order
+   alone only hides the inward half on an OPAQUE card, never a bare-ring
+   circle node or a containerless text satellite; a mid-air trunk knot
+   carries no clip_shape and draws the full ring, byte-stable. #}
+{% for gp in lay.gathers %}  <circle cx="{{ gp.x }}" cy="{{ gp.y }}" r="{{ diagram_style.gather_ring_r }}" class="{{ uid }}-gr"{% if gp.clip_shape %} clip-path="url(#{{ uid }}-gp{{ loop.index0 }}-clip)"{% endif %}/>
+  <circle cx="{{ gp.x }}" cy="{{ gp.y }}" r="{{ diagram_style.gather_core_r }}" class="{{ uid }}-gc"{% if gp.clip_shape %} clip-path="url(#{{ uid }}-gp{{ loop.index0 }}-clip)"{% endif %}/>
 {% endfor %}
 {% for p in lay.particles %}
   <circle class="{{ uid }}-p {{ (uid ~ '-flp' ~ p.accent_index) if p.accent_index >= 0 else (uid ~ '-flps') }}" r="{{ p.r }}" opacity="0">
-    <animateMotion dur="{{ p.dur }}" repeatCount="indefinite"{% if p.begin %} begin="{{ p.begin }}"{% endif %}{% if p.calc_mode %} calcMode="{{ p.calc_mode }}"{% endif %}{% if p.keypoints %} keyPoints="{{ p.keypoints }}" keyTimes="{{ p.keytimes_motion }}"{% endif %}><mpath href="#{{ uid }}-c{{ p.connector_index }}"/></animateMotion>
-    <animate attributeName="opacity" values="{{ p.opacity_values }}" keyTimes="{{ p.opacity_keytimes }}" dur="{{ p.dur }}" repeatCount="indefinite"{% if p.begin %} begin="{{ p.begin }}"{% endif %}/>
+{% if p.path_override %}    <animateMotion dur="{{ p.dur }}" repeatCount="indefinite" path="{{ p.path_override }}" rotate="auto"{% if p.begin %} begin="{{ p.begin }}"{% endif %}{% if p.calc_mode %} calcMode="{{ p.calc_mode }}"{% endif %}{% if p.keypoints %} keyPoints="{{ p.keypoints }}" keyTimes="{{ p.keytimes_motion }}"{% endif %}/>
+{% else %}    <animateMotion dur="{{ p.dur }}" repeatCount="indefinite"{% if p.begin %} begin="{{ p.begin }}"{% endif %}{% if p.calc_mode %} calcMode="{{ p.calc_mode }}"{% endif %}{% if p.keypoints %} keyPoints="{{ p.keypoints }}" keyTimes="{{ p.keytimes_motion }}"{% endif %}><mpath href="#{{ uid }}-c{{ p.connector_index }}"/></animateMotion>
+{% endif %}    <animate attributeName="opacity" values="{{ p.opacity_values }}" keyTimes="{{ p.opacity_keytimes }}" dur="{{ p.dur }}" repeatCount="indefinite"{% if p.begin %} begin="{{ p.begin }}"{% endif %}/>
   </circle>
 {% endfor %}
 {% if lay.initial_dot %}  <circle cx="{{ lay.initial_dot[0] }}" cy="{{ lay.initial_dot[1] }}" r="{{ lay.initial_dot_r }}" class="{{ uid }}-idot"/>
@@ -41,28 +94,98 @@
 {% if lay.initial_stub %}  <line x1="{{ lay.initial_stub.x1 }}" y1="{{ lay.initial_stub.y1 }}" x2="{{ lay.initial_stub.x2 }}" y2="{{ lay.initial_stub.y2 }}" class="{{ uid }}-stub"/>
 {% endif %}
 {% for n in lay.nodes %}
-{% set bg_cls = (uid ~ '-herobg') if n.role == 'hero' else (uid ~ '-cardbg') %}
-{% if n.shape == 'circle' %}  <circle cx="{{ n.cx }}" cy="{{ n.cy }}" r="{{ n.r }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"{% if n.plate_fill %} style="fill:{{ n.plate_fill }}"{% endif %} filter="url(#{{ uid }}-lift)"/>
-{% else %}  <rect x="{{ n.box.x }}" y="{{ n.box.y }}" width="{{ n.box.w }}" height="{{ n.box.h }}" rx="{{ n.box.rx }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"{% if n.plate_fill %} style="fill:{{ n.plate_fill }}"{% endif %}{% if n.stroke_dasharray %} stroke-dasharray="{{ n.stroke_dasharray }}"{% endif %} filter="url(#{{ uid }}-lift)"/>
+{# A circle carries no card plate (kit anatomy: a bare ring on the paper) —
+   its own bg classes, never the card/hero fill. #}
+{# Rect card fill by role: hero > muted (recessed page-toned card, MUTED family)
+   > default. A circle carries no plate (bare ring on the paper). #}
+{% set rect_bg = (uid ~ '-cardhbg') if n.card_accent else ((uid ~ '-herobg') if n.role == 'hero' else ((uid ~ '-mcardbg') if n.role == 'muted' else (uid ~ '-cardbg'))) %}
+{% set bg_cls = ((uid ~ '-herocirclebg') if n.role == 'hero' else (uid ~ '-circlebg')) if n.shape == 'circle' else rect_bg %}
+{% if n.shape == 'circle' %}  <circle cx="{{ n.cx }}" cy="{{ n.cy }}" r="{{ n.r }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"/>
+{% elif n.shape == 'text' %}{# typographic satellite (hub-panel doctrine): containers earn their
+   existence — no plate, no mark; the type below IS the node #}
+{% else %}  <rect x="{{ n.box.x }}" y="{{ n.box.y }}" width="{{ n.box.w }}" height="{{ n.box.h }}" rx="{{ n.box.rx }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"{% if n.stroke_dasharray %} stroke-dasharray="{{ n.stroke_dasharray }}"{% endif %}{% if n.role != 'muted' %} filter="url(#{{ uid }}-lift)"{% endif %}/>
 {% endif %}
-{% if n.dot %}  <circle cx="{{ n.dot[0] }}" cy="{{ n.dot[1] }}" r="{{ n.dot_r }}" class="{{ (uid ~ '-flp' ~ n.accent_index) if n.accent_index >= 0 else (uid ~ '-flps') }}"/>
+{% if n.term_box %}  <rect x="{{ n.term_box.x }}" y="{{ n.term_box.y }}" width="{{ n.term_box.w }}" height="{{ n.term_box.h }}" rx="{{ n.term_box.rx }}" class="{{ uid }}-term"/>
 {% endif %}
-{% if n.glyph %}  <g transform="{{ n.glyph.transform }}"{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
+{# Lanes morphology mark (the ONLY node dot): shape+tone names the category,
+   never hue — the accent slot never colours it (obi-engine doctrine). #}
+{% if n.dot %}
+{% if n.dot_shape == 'diamond' or n.dot_shape == 'square' %}  <path d="{{ n.dot_path }}" class="{{ uid }}-idot"/>
+{% elif n.dot_shape == 'ring' %}  <circle cx="{{ n.dot[0] }}" cy="{{ n.dot[1] }}" r="{{ n.dot_r }}" class="{{ uid }}-{{ 'mkh' if n.card_accent else 'mkr' }}"/>
+{% elif n.dot_shape == 'disc-muted' %}  <circle cx="{{ n.dot[0] }}" cy="{{ n.dot[1] }}" r="{{ n.dot_r }}" class="{{ uid }}-mkx"/>
+{% else %}  <circle cx="{{ n.dot[0] }}" cy="{{ n.dot[1] }}" r="{{ n.dot_r }}" class="{{ uid }}-idot"/>
+{% endif %}
+{% endif %}
+{# Dependency-audit health-channel dot: a SEPARATE mark from the lanes dot
+   above (trailing-corner, state-palette colored) — the two compose
+   independently on the same card. #}
+{% if n.health %}  <circle cx="{{ n.health_dot[0] }}" cy="{{ n.health_dot[1] }}" r="{{ diagram_style.health_dot_r }}" class="{{ uid }}-{{ 'crit' if n.health == 'vulnerable' else 'warn' }}{% if n.health == 'vulnerable' %} {{ uid }}-critp{% endif %}"/>
+{% endif %}
+{% if n.glyph %}{% set glyph_hue_cls = (uid ~ '-fl' ~ n.glyph.accent_index) if n.glyph.tint == 'hue' else '' %}{% if n.glyph.stroke_w %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls %} class="{{ glyph_hue_cls }}"{% endif %} fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ n.glyph.gradient ~ ')') if n.glyph.gradient else n.glyph.fill }}" stroke-width="{{ n.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ n.glyph.opacity }}">
+{% else %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls %} class="{{ uid }}-flp{{ n.glyph.accent_index }}"{% endif %}{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
+{% endif %}
 {% for gp in n.glyph.paths %}    <path d="{{ gp.d }}"{% if gp.fill %} fill="{{ gp.fill }}"{% endif %}/>
 {% endfor %}  </g>
 {% endif %}
-  <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}">{{ n.label.text }}</text>
+  <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ n.label.text }}</text>
 {% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}">{{ line.text }}</text>
 {% endfor %}
-{% if n.short %}  <text x="{{ n.short.x }}" y="{{ n.short.y }}" text-anchor="middle" class="{{ uid }}-{{ n.short.cls }}"{% if n.plate_ink and n.plate_fill != 'none' %} style="fill:{{ n.plate_ink }}"{% endif %}>{{ n.short.text }}</text>
+{% for cb in n.chip_boxes %}  <rect x="{{ cb.x }}" y="{{ cb.y }}" width="{{ cb.w }}" height="{{ cb.h }}" rx="{{ cb.rx }}" class="{{ uid }}-chipbg"/>
+{% endfor %}
+{# sec 12.1 nested composition: the inner artifact is a complete bare-chrome
+   document riding a scaled child <svg> — its own uid-scoped styles travel
+   with it; width/height vs viewBox does the scaling, no transform math. #}
+{% if n.embed_box %}  <svg x="{{ n.embed_box.x }}" y="{{ n.embed_box.y }}" width="{{ n.embed_box.w }}" height="{{ n.embed_box.h }}" viewBox="0 0 {{ embed_markup[n.index].vw }} {{ embed_markup[n.index].vh }}" data-hw-embed="1"{% if embed_markup[n.index].id %} data-hw-embed-id="{{ embed_markup[n.index].id }}"{% endif %}>{{ embed_markup[n.index].body }}</svg>
+{% endif %}{% for ct in n.chip_texts %}  <text x="{{ ct.x }}" y="{{ ct.y }}" text-anchor="middle" class="{{ uid }}-{{ ct.cls }}">{{ ct.text }}</text>
+{% endfor %}
+{% if n.short %}  <text x="{{ n.short.x }}" y="{{ n.short.y }}" text-anchor="middle" class="{{ uid }}-{{ n.short.cls }}">{{ n.short.text }}</text>
 {% endif %}
 {% if n.tag %}  <text x="{{ n.tag.x }}" y="{{ n.tag.y }}" text-anchor="middle" class="{{ uid }}-tag">{{ n.tag.text }}</text>
 {% endif %}
 {% endfor %}
-{% for op in lay.operators %}  <text x="{{ op.x }}" y="{{ op.y }}" class="{{ uid }}-op">{{ op.text }}</text>
+{# Annotation chrome (edge labels subsumed here + caller callouts/asides/
+   legends). Paints AFTER the node cards: text is never under a card (a
+   back-edge label once vanished beneath the state chain) — wires stay
+   beneath nodes (hub masking unchanged); only this text/pill layer
+   rises. Zero arithmetic: every coordinate is pre-solved. #}
+{% for a in lay.annotations %}
+{% set acc_cls = (uid ~ '-flp' ~ a.accent_index) if a.accent_index >= 0 else '' %}
+{% if a.leader %}  <path d="{{ a.leader }}" class="{{ uid }}-lead"/>
+{% endif %}
+{% if a.box and a.kind == 'edge-chip' %}  <rect x="{{ a.box.x }}" y="{{ a.box.y }}" width="{{ a.box.w }}" height="{{ a.box.h }}" rx="{{ a.box.rx }}" class="{{ uid }}-chipbg"/>
+{% endif %}
+{% for e in a.entries %}{% if e.swatch_r > 0 %}
+{% if e.health %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-{{ 'crit' if e.health == 'vulnerable' else 'warn' }}"/>
+{% elif e.swatch_shape == 'diamond' or e.swatch_shape == 'square' %}  <path d="{{ e.swatch_path }}" class="{{ (uid ~ '-flp' ~ e.accent_index) if e.accent_index >= 0 else (uid ~ '-idot') }}"/>
+{% elif e.swatch_shape == 'line' %}  <path d="{{ e.swatch_path }}" class="{{ uid }}-branch {{ uid }}-connmuted"/>
+{% elif e.swatch_shape == 'line-dashed' %}  <path d="{{ e.swatch_path }}" class="{{ uid }}-branch {{ uid }}-connmuted" stroke-dasharray="{{ diagram_style.legend_dash }}"/>
+{% elif e.swatch_shape == 'ring' %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-mkr"/>
+{% elif e.swatch_shape == 'disc' %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-idot"/>
+{% elif e.swatch_shape == 'disc-muted' %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-mkx"/>
+{% else %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ (uid ~ '-flp' ~ e.accent_index) if e.accent_index >= 0 else (uid ~ '-flps') }}"/>
+{% endif %}
+{% endif %}  <text x="{{ e.text.x }}" y="{{ e.text.y }}"{% if e.text.anchor != 'start' %} text-anchor="{{ e.text.anchor }}"{% endif %} class="{{ uid }}-{{ e.text.cls }}">{{ e.text.text }}</text>
+{% endfor %}
+{# Accent-paint annotation TEXT for callout/aside kinds only. Chip kinds
+   (edge-chip, and the node -tag pill) are the NEUTRAL family — their text
+   rides --dna-ink-muted, never the accent/flow hue (P5 chip contract; the
+   espresso-chip-on-cream illegibility bug). 'label' is the subsumed edge
+   label, neutral UNLESS annotate.py marked it lane_dress (the gateway
+   specimen's request/response text bound to its own lane's hue — a bare
+   label sitting on the paper, never inside a chip's colored fill, so the
+   P5 illegibility risk that keeps chips neutral doesn't apply). #}
+{% for line in a.lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if acc_cls and (a.lane_dress or a.kind not in ('label', 'edge-chip')) %} {{ acc_cls }}{% endif %}">{{ line.text }}</text>
+{% endfor %}
+{% endfor %}
+{# Stack inter-layer compose operator (the stack specimen): a quiet ring + cross,
+   the ring riding the card surface, the cross riding the muted-connector
+   tone — the same drawn geometry a plain wire between layers uses. #}
+{% for op in lay.operators %}  <circle cx="{{ op.cx }}" cy="{{ op.cy }}" r="{{ op.r }}" class="{{ uid }}-cardbg"/><path d="{{ op.cross_d }}" class="{{ (uid ~ '-connmuted') if conn_muted else (uid ~ '-fls') }}"/>
+
 {% endfor %}
 {% if lay.legend %}  <text x="{{ lay.legend.x }}" y="{{ lay.legend.y }}" class="{{ uid }}-key">{{ lay.legend.text }}</text>
 {% endif %}
-{% if lay.footer %}  <text x="{{ lay.footer.x }}" y="{{ lay.footer.y }}" class="{{ uid }}-ft">{{ lay.footer.text }}</text>
+{% if lay.footer %}<g data-hw-region="footer">  <text x="{{ lay.footer.x }}" y="{{ lay.footer.y }}" class="{{ uid }}-{{ lay.footer.cls }}">{{ lay.footer.text }}</text>
+</g>
 {% endif %}
 </g>

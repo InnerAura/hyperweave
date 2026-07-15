@@ -47,14 +47,14 @@
 <text x="{{ stats_layout.texts.cellular_bio.x }}" y="{{ stats_layout.texts.cellular_bio.y }}" class="{{ uid }}-bio"
   {%- if bio_text_length %} textLength="{{ bio_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{% if stats_repo_label %}{{ stats_repo_label | xml_escape }}{% endif %}{% if stats_repo_label and stats_bio %} · {% endif %}{% if stats_bio %}{{ stats_bio | xml_escape }}{% endif %}</text>
 {% endif %}
-{# v0.3.9 Bug A + Bug #5: HYPERWEAVE branding lives in the footer band
+{# HYPERWEAVE branding lives in the footer band
    on the same baseline as the language labels (y=221). Sharing the
    baseline produces visual alignment between the right-anchored
    HYPERWEAVE text and the left-packed language pills, both rendering
    small monospace text in the same footer band y=216-221. #}
 <text x="{{ stats_layout.texts.cellular_brand.x }}" y="{{ stats_layout.texts.cellular_brand.y }}" class="{{ uid }}-brand" text-anchor="{{ stats_layout.texts.cellular_brand.anchor }}">HYPERWEAVE</text>
 
-{# ZONE 2: METRIC STRIP (y≈73). v0.3.9 Bug B: x positions computed
+{# ZONE 2: METRIC STRIP (y≈73). x positions computed
    algorithmically in compose/resolvers/stats.py by measuring each value
    at its CSS class font (.mvh/.mvm/.mvs/.mvg via Chakra Petch) and each
    label at .mlb (JBM 6.5/500/0.22em). Left four metrics pack left-to-right

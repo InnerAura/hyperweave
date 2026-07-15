@@ -96,8 +96,11 @@ _CORE_CSS_MAPPING: list[tuple[str, str]] = [
     ("ink_on_accent", "--dna-ink-on-accent"),
     ("ink_bright", "--dna-ink-bright"),
     ("ink_sub", "--dna-ink-sub"),
-    # Signals
+    # Signals — two-weight split: `accent` paints strokes/fills/particles,
+    # `accent_text` the brighter TEXT weight (a diagram twin's dark face lifts
+    # the signal hue for legible ink; equal to `accent` on most light faces).
     ("accent", "--dna-signal"),
+    ("accent_text", "--dna-signal-text"),
     ("accent_complement", "--dna-signal-dim"),
     # Component-specific (chrome diamond — single-responsibility, no aliasing)
     ("diamond_stroke", "--dna-diamond-stroke"),
@@ -120,6 +123,17 @@ _CORE_CSS_MAPPING: list[tuple[str, str]] = [
     # Shadow / Glow
     ("shadow_color", "--dna-shadow-color"),
     ("shadow_opacity", "--dna-shadow-opacity"),
+    # Diagram carries its own neutral drop-shadow tint (distinct from the shared
+    # shadow_color the other frames use); adaptive twins flip this var via the
+    # scoped feDropShadow rule in frames/diagram/primer-defs.j2.
+    ("diagram_shadow_color", "--dna-diagram-shadow-color"),
+    # Diagram region-band ground (dag-seq-tree pool/enclosure bands): a solid
+    # wash distinct from --dna-surface-alt (the card tone) — the plate rect
+    # sits BEHIND cards, so it needs its own fill/stroke pair rather than the
+    # card's own tone at reduced opacity. Diagram-scoped only, same var-mapping
+    # pattern as diagram_shadow_color above.
+    ("region_fill", "--dna-region"),
+    ("region_stroke", "--dna-region-border"),
     ("glow", "--dna-glow"),
     # Geometry
     ("corner", "--dna-corner"),
@@ -223,6 +237,35 @@ for _mapping in (
             _ALL_CSS_MAPPING[_field].append(_prop)
 
 
+def variant_override_declarations(genome: dict[str, Any], resolved_variant: str) -> list[str]:
+    """Return the fanned-out ``--dna-*:value;`` declarations for a variant override.
+
+    The declaration list behind :func:`compute_variant_inline_style` — factored
+    out so the Surface Modes adaptive near block can UNION these with the core
+    genome-layer declarations. Fields with multiple CSS-var targets
+    (``ink_secondary`` → both ``--dna-ink-muted`` and ``--dna-ink-secondary``,
+    ``label_text`` → ``--dna-label-text``) fan out, which is exactly the set of
+    vars that reach the matrix template ONLY via the inline ``style=`` attribute
+    today; adaptive mode suppresses that attribute, so the near block must carry
+    them or those vars vanish. Values are HTML-attribute-escaped. Empty when the
+    genome declares no override for this variant.
+    """
+    if not resolved_variant:
+        return []
+    overrides = (genome.get("variant_overrides") or {}).get(resolved_variant) or {}
+    if not overrides:
+        return []
+    declarations: list[str] = []
+    for field, value in overrides.items():
+        props = _ALL_CSS_MAPPING.get(field)
+        if not props or not value:
+            continue
+        safe = str(value).replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+        for prop in props:
+            declarations.append(f"{prop}:{safe};")
+    return declarations
+
+
 def compute_variant_inline_style(genome: dict[str, Any], resolved_variant: str) -> str:
     """Return CSS declarations for the SVG-root style attribute (chrome variant overrides).
 
@@ -244,24 +287,7 @@ def compute_variant_inline_style(genome: dict[str, Any], resolved_variant: str) 
     Values are HTML-attribute-escaped (``"``, ``<``, ``>``) to prevent
     inline-style attribute injection from a malicious genome JSON.
     """
-    if not resolved_variant:
-        return ""
-    overrides = (genome.get("variant_overrides") or {}).get(resolved_variant) or {}
-    if not overrides:
-        return ""
-
-    declarations: list[str] = []
-    for field, value in overrides.items():
-        props = _ALL_CSS_MAPPING.get(field)
-        if not props or not value:
-            continue
-        safe = str(value).replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-        # Emit one declaration per target CSS var. Fields with multiple
-        # targets (ink_secondary, label_text) fan out so every consumer
-        # reads the variant's override instead of the base genome value.
-        for prop in props:
-            declarations.append(f"{prop}:{safe};")
-    return " ".join(declarations)
+    return " ".join(variant_override_declarations(genome, resolved_variant))
 
 
 def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, str]:
@@ -310,19 +336,13 @@ def assemble_css(resolved: ResolvedArtifact, frame_type: str = "") -> dict[str, 
     return css
 
 
-def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
-    """Convert genome JSON fields to CSS custom properties.
+def _frame_css_mapping(genome: dict[str, Any], frame_type: str) -> list[tuple[str, str]]:
+    """The frame-aware field→CSS-var mapping for ``genome_to_css`` / declarations.
 
-    Frame-aware: badge/strip-only variables are excluded from other frame types.
-    Consumes the module-level mapping constants so compute_variant_inline_style()
-    shares the same translation table — adding a new genome chromatic field that
-    participates in chrome-style variant overrides means adding it to one of the
-    mapping tables once.
+    Combines the core mapping with the frame-specific extension. Telemetry skin
+    is presence-gated: any genome declaring tool_* fields gets the tool-class +
+    status-color + extended-ink mappings regardless of frame. Fonts append last.
     """
-    # Build the frame-aware mapping by combining the core mapping with the
-    # appropriate frame-specific extension. Telemetry skin is presence-gated:
-    # any genome declaring tool_* fields gets the tool-class + status-color +
-    # extended-ink mappings regardless of frame.
     mapping: list[tuple[str, str]] = list(_CORE_CSS_MAPPING)
     if frame_type in _GLYPH_FRAMES:
         mapping.extend(_GLYPH_CSS_MAPPING)
@@ -332,27 +352,47 @@ def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
         mapping.extend(_MARQUEE_CSS_MAPPING)
     elif any(genome.get(f) for f in _TELEMETRY_GENOME_FIELDS):
         mapping.extend(_TELEMETRY_CSS_MAPPING)
+    mapping.extend(_FONT_CSS_MAPPING)
+    return mapping
 
-    lines = ["svg, :root {"]
 
-    for field, prop in mapping:
+def css_declarations(genome: dict[str, Any], frame_type: str = "") -> list[str]:
+    """Return the genome's ``--dna-*: value;`` declarations for a frame.
+
+    The mapping-application core of :func:`genome_to_css`, factored out so the
+    Surface Modes adaptive near block reuses the EXACT declaration set the plate
+    genome layer emits — guaranteeing the near face is byte-identical to plate at
+    the genome-layer level. Skips empty/None values (letting CSS var() fallbacks
+    activate) and appends the sep/status-delta defaults ``genome_to_css`` adds.
+    Declarations are unindented ``prop: value;`` strings (the caller wraps them
+    in whatever selector it needs — ``svg, :root`` for plate, ``#uid`` for
+    adaptive).
+    """
+    decls: list[str] = []
+    for field, prop in _frame_css_mapping(genome, frame_type):
         val = genome.get(field)
         if val:  # skip empty/None — lets CSS var() fallbacks activate
-            lines.append(f"  {prop}: {val};")
-
-    for field, prop in _FONT_CSS_MAPPING:
-        val = genome.get(field)
-        if val:  # skip empty — lets CSS var() fallbacks activate
-            lines.append(f"  {prop}: {val};")
-
+            decls.append(f"{prop}: {val};")
     if "sep" not in genome and "stroke" in genome:
-        lines.append(f"  --dna-sep: {genome['stroke']};")
-
+        decls.append(f"--dna-sep: {genome['stroke']};")
     if "status_delta_positive" not in genome:
-        lines.append("  --dna-status-delta-positive: #22C55E;")
+        decls.append("--dna-status-delta-positive: #22C55E;")
     if "status_delta_negative" not in genome:
-        lines.append("  --dna-status-delta-negative: #DC2626;")
+        decls.append("--dna-status-delta-negative: #DC2626;")
+    return decls
 
+
+def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
+    """Convert genome JSON fields to CSS custom properties.
+
+    Frame-aware: badge/strip-only variables are excluded from other frame types.
+    Consumes the module-level mapping constants so compute_variant_inline_style()
+    shares the same translation table — adding a new genome chromatic field that
+    participates in chrome-style variant overrides means adding it to one of the
+    mapping tables once.
+    """
+    lines = ["svg, :root {"]
+    lines.extend(f"  {decl}" for decl in css_declarations(genome, frame_type))
     lines.append("}")
 
     # Telemetry typography utility classes — used by the receipt template

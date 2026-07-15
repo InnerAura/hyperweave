@@ -269,7 +269,7 @@ def compute_matrix_layout(
         column.kind is CellKind.TEXT and any(_text_overflow_lines(row, j) > 1 for row in spec.rows)
         for j, column in enumerate(data_cols)
     )
-    # A note that wraps (BUG-001) also forces CONTENT mode: even with a
+    # A note that wraps (the note-wrap law) also forces CONTENT mode: even with a
     # single-line value, the second note line needs the row to grow.
     note_wraps = any(
         column.kind is CellKind.TEXT and any(_note_overflow_lines(row, j) > 1 for row in spec.rows)

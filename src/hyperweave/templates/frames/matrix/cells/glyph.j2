@@ -2,7 +2,9 @@
    (ink / brand / full) degrades through what the entry carries: multicolor
    color_paths master, uid-scoped gradient, scalar brand color, genome ink.
    A registry fill-rule rides the group (evenodd marks break without it). #}
-  <g transform="{{ cell.glyph_transform }}"{% if cell.glyph_gradient %} fill="url(#{{ uid }}-gg-{{ cell.glyph_gradient }})"{% elif cell.glyph_fill %} fill="{{ cell.glyph_fill }}"{% endif %}{% if cell.glyph_fill_rule %} fill-rule="{{ cell.glyph_fill_rule }}"{% endif %} opacity="{{ cell.glyph_opacity }}" data-hw-cell="glyph">
+{% if cell.glyph_stroke_w %}  <g transform="{{ cell.glyph_transform }}" fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ cell.glyph_gradient ~ ')') if cell.glyph_gradient else cell.glyph_fill }}" stroke-width="{{ cell.glyph_stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ cell.glyph_opacity }}" data-hw-cell="glyph">
+{% else %}  <g transform="{{ cell.glyph_transform }}"{% if cell.glyph_gradient %} fill="url(#{{ uid }}-gg-{{ cell.glyph_gradient }})"{% elif cell.glyph_fill %} fill="{{ cell.glyph_fill }}"{% endif %}{% if cell.glyph_fill_rule %} fill-rule="{{ cell.glyph_fill_rule }}"{% endif %} opacity="{{ cell.glyph_opacity }}" data-hw-cell="glyph">
+{% endif %}
 {% for p in cell.glyph_paths %}
     <path d="{{ p.d }}"{% if p.fill %} fill="{{ p.fill }}"{% endif %}/>
 {% endfor %}

@@ -8,7 +8,7 @@ description: >
 requires_genome_fields: []
 
 badge:
-  # Shields-anatomy two-plate badge (v04alpha2 specimen): a tinted label plate
+  # Shields-anatomy two-plate badge (the badge specimen): a tinted label plate
   # (12px brand glyph + mono label) and a clear value plate split by a paired
   # 1px groove + 1px shine seam, inside a 20px rx4 chip with an inner white
   # highlight, a 1px border, and a hair drop-shadow. Width is EXACT from mono
@@ -58,7 +58,7 @@ badge:
   seam_gap_right: 8
   text_anchor: middle
   # Status-glyph state marks (ping / spin / shake / throb) lead the value as a
-  # pill [mark] value — the locked v04alpha1 state architecture, re-tuned into
+  # pill [mark] value — the locked state architecture, re-tuned into
   # the 20px frame. Status light = value cap height (10.5 * 0.75 ≈ 8px).
   indicator_cap_ratio: 0.75
   indicator_shape: status-glyph
@@ -66,13 +66,13 @@ badge:
   light_indicator_inner_ratio: 0.5
 
 strip:
-  # Telemetry rail (v04alpha2 specimen): display-face identity (Inter 800
+  # Telemetry rail (the strip specimen): display-face identity (Inter 800
   # 14.5) | paired groove/shine dividers | mono metric columns (JBM 600 8
   # muted labels over JBM 700 16 neutral-ink values) | green pulse pinned
   # 18px off the right edge — on a full-bleed 46px rx10 card. NO canvas
   # inset: an embedded artifact has no page for a shadow to fade into, so an
   # inset margin renders as a hard-clipped shadow box on the README ground.
-  # The card spans the viewBox (alpha.1 posture); the shadow filter clips
+  # The card spans the viewBox (the original plate posture); the shadow filter clips
   # behind it and the inner highlight + border carry the edge.
   strip_height: 46
   plate_corner: 10
@@ -269,69 +269,153 @@ diagram:
   # flow-grammar constants (caps, beam/flow anatomy, choreography) are
   # frame-generic and live in data/diagram.yaml.
   #
-  # Kinetic channel: primer's default is PARTICLE over a DASH-MARCH track —
-  # two named things (the specimen-true ants+dot treatment). Beam/flow run
-  # over a static tube; reduced-motion kills the march. The allowlist
-  # carries the full closed 2x2.
-  edge_motion_default: particle
-  edge_motion_allowlist: [dash, particle, beam, flow]
+  # Kinetic channel: primer's default is the DOTTED-DRIFT (dash over a
+  # dash-march track — the diagrams-v3 kit's quiet flow line). Particle is
+  # the opt-in accent rider; beam/flow run over a static tube;
+  # reduced-motion kills the march. The allowlist carries the closed 2x2.
+  edge_motion_default: dash
+  edge_motion_allowlist: [dash, particle, beam]
   track_default_by_motion:
     dash: dash-march
-    particle: dash-march
-    beam: static
-    flow: static
-  # Entrance channel: fade | none wired in alpha.3; draw-on is the vellum
+    particle: static # riders never dash their rail (specimens: solid rails WITH particles)
+    beam: static # the gradient window animates OVER a static tube; the stroke never marches
+  # Entrance channel: fade | none wired; draw-on is the vellum
   # genome session's choreography (rejected at config load until it lands).
   entrance: fade
   direction_device: motion
   title_voice: { family: Inter, size: 16, weight: 700 }
   subtitle_voice: { family: Inter, size: 11, weight: 400 }
-  label_voice: { family: Inter, size: 13, weight: 600 }
-  desc_voice: { family: JetBrains Mono, size: 9.5, weight: 500 }
-  hero_name_voice: { family: Inter, size: 15, weight: 700 }
-  hero_desc_voice: { family: JetBrains Mono, size: 10, weight: 500 }
-  muted_name_voice: { family: Inter, size: 14, weight: 400 }
+  # Card typography is the diagrams-v3 kit hierarchy: name Inter 600 15,
+  # hero Inter 700 17, sub JetBrains Mono 400 11 (.01em), micro-label mono
+  # 400 10 (.08em air).
+  label_voice: { family: Inter, size: 15, weight: 600 }
+  desc_voice: { family: JetBrains Mono, size: 11, weight: 400, tracking_em: 0.01 }
+  hero_name_voice: { family: Inter, size: 17, weight: 700 }
+  hero_desc_voice: { family: JetBrains Mono, size: 11, weight: 500, tracking_em: 0.01 }
+  muted_name_voice: { family: Inter, size: 15, weight: 600 }
   op_voice: { family: Inter, size: 13, weight: 600 }
-  # Rendered edge labels (sequence, state-machine) carry -> and check marks:
+  # Rendered edge labels (the kit micro-label) carry -> and check marks:
   # the slot is mono structurally, never a mono_triggers special case.
-  edge_label_voice: { family: JetBrains Mono, size: 9.5, weight: 400 }
-  legend_voice: { family: JetBrains Mono, size: 8, weight: 400, tracking_em: 0.04 }
-  tag_voice: { family: JetBrains Mono, size: 8, weight: 400, tracking_em: 0.06 }
+  edge_label_voice: { family: JetBrains Mono, size: 10, weight: 400, tracking_em: 0.08 }
+  legend_voice: { family: JetBrains Mono, size: 9.5, weight: 400, tracking_em: 0.04 }
+  tag_voice: { family: JetBrains Mono, size: 11, weight: 400, tracking_em: 0.06 }
   short_voice: { family: JetBrains Mono, size: 12, weight: 700 }
   hub_short_voice: { family: JetBrains Mono, size: 16, weight: 700 }
   circle_label_voice: { family: JetBrains Mono, size: 9.5, weight: 400 }
   foot_voice: { family: JetBrains Mono, size: 7, weight: 400, tracking_em: 0.1 }
+  # Annotation overlays + lanes furniture. annotation_voice: mono chrome, a
+  # step below a card desc. lane_header_voice: display, tracked band title.
+  # count_voice: small mono member-count numeral. region_label_voice:
+  # compound-region band header (pp-gateway-balanced.svg .gw-cnt: 9px mono,
+  # 400 weight, .14em tracking) — wider-tracked and lighter than count_voice,
+  # a chip label rather than a numeral badge.
+  annotation_voice: { family: JetBrains Mono, size: 9.5, weight: 500 }
+  lane_header_voice: { family: Inter, size: 12.5, weight: 700, tracking_em: 0.08 }
+  count_voice: { family: JetBrains Mono, size: 8, weight: 700, tracking_em: 0.04 }
+  region_label_voice: { family: JetBrains Mono, size: 9, weight: 400, tracking_em: 0.14 }
+  # ── Root rhythm law ───────────────────────────────────────────────────
+  # System-wide vertical rhythm + glyph-circle radii EVERY topology family
+  # inherits when its own block below doesn't cite an override
+  # (ParadigmDiagramConfig._resolve_topology_rhythm, core/paradigm.py — a
+  # model_validator that resolves family-then-root onto every topology
+  # immediately after this file loads, so a solver never reads an unresolved
+  # field). These are not invented numbers — they ARE the
+  # primer_diagram_language sheet's own measured law, hoisted from where
+  # they were already cited per-family:
+  #   node: the uniform 165x76 satellite (model-router's own preset
+  #     citation: pad_y 22, label_desc_gap 7.5; desc_line_pitch/
+  #     max_desc_lines from the satellite's own single-line demonstration).
+  #   hero: the 206x104 router hero (fanout-horizontal's own topology
+  #     citation: pad_y 25.5, label_desc_gap 8.5, desc_line_pitch 18,
+  #     max_desc_lines 2 — the hero's own two-line demonstration).
+  #   circle_r/hero_circle_r: the bilateral canon (hw-diagram-alpha3-
+  #     canon.html "Integration Hub v2": satellites r=30, hub r=44),
+  #     previously duplicated identically across four fanout orientations.
+  # A family whose own hand specimen measures a different rhythm (dag/
+  # state-machine's 62-tall two-row cards, flywheel-circles' r56 medallion)
+  # cites its own override below; every other family — including any
+  # topology added in the future without its own rhythm keys — inherits
+  # this without ever touching a number.
+  node: { pad_y: 22, label_desc_gap: 7.5, desc_line_pitch: 19, max_desc_lines: 1 }
+  hero: { pad_y: 25.5, label_desc_gap: 8.5, desc_line_pitch: 18, max_desc_lines: 2 }
+  circle_r: 30
+  hero_circle_r: 44
   topologies:
     pipeline: # 896x216 banner: cards on one baseline, 60px gaps
       width_policy: aligned
       channel_run_min: 144 # K3: all-reciprocal compositions are wire-major (12 dash periods)
-      width: 896
+      width: 1000
       height: 216
-      display_w: 760
-      display_h: 183
-      margin_x: 24
-      gap: 60
-      node: { w: 160, h: 64 }
-      hero: { w: 188, h: 64, rx: 14 }
+      display_w: 740
+      margin_x: 40
+      gap: 120 # equal runs; label-row stages widened the banner — 120 keeps the 0.51 scale governor
+      # Chassis default anatomy is the LABEL-ROW card (glyph LEFT of the text
+      # block), two-line unified h60, ink-derived widths (the axial 144/184
+      # family) — the anatomy for the lifecycle pipelines (artifact-roundtrip/
+      # gateway) and bare topology="pipeline". rag-pipeline opts into the
+      # portrait HEAD anatomy per its own specimen (the rag-pipeline prototype) at the preset
+      # level (node_anatomy: head + a portrait chassis override).
+      card_min_w: 120
+      h_max: 200
+      node: { w: 144, h: 60, rx: 13, label_dy: 25, desc_dy: 44, desc_line_pitch: 19, pad_y: 13.5, max_desc_lines: 2, label_gap: 22 }
+      hero: { w: 176, h: 72, rx: 16, max_desc_lines: 2, pad_y: 16, desc_line_pitch: 19 }
     fanout-horizontal: # source left, dest column right, midpoint S-curves
-      width: 760
+      width_floor: true # content-fit audit: fan solvers proportionally split WITHIN the fixed frame
+      width_policy: aligned # dest column shares one solved width (group-uniform)
+      depart_trunk: 133 # model-router: mouth 317 -> knot 450, one drift wire then the spread; route chip (60) + 2*36.5 stubs
+      # Chipless trunk departs FLUSH (depart_trunk_bare unset, 0 = mouth):
+      # primer-fanout-refined.html — the spread bursts off the card face
+      # through a bezel AT the mouth, no stub, no floating knot.
+      width: 920
       display_w: 740
       margin_x: 30
       header_h: 92
       footer_h: 78
-      pitch: 74
-      node: { w: 156, h: 54, dot_dy: 24, label_dy: 28, desc_dy: 44 }
-      hero: { w: 210, h: 96, rx: 14 }
+      # The language specimen (router): providers uniform
+      # 165x76 at pitch 118 (gap ≈ card height — the balance law); hub
+      # 206x104 with the 32 glyph and centered block.
+      pitch: 118
+      h_max: 120 # card-anatomy: dest cards grow to hold a wrapped desc
+      # Kit column default (144); the model-router preset pins its specimen's 165 doors.
+      # NOTE: pad_y/label_desc_gap stay UNCITED at this shared topology level —
+      # parity-beam shares this chassis with its OWN uniform 160x60 doors
+      # (no desc-driven growth wanted); the 165x76 satellite's generous rhythm
+      # is a model-router SPECIMEN fact, cited on that preset's own chassis
+      # override in diagram.yaml, never leaked onto every fanout-horizontal user.
+      node: { w: 144, h: 76, dot_dy: 24, label_dy: 28, desc_dy: 47, desc_line_pitch: 19, max_desc_lines: 4, label_gap: 22 }
+      # Vertical rhythm (primer_diagram_language, name 38.6 desc-gap 21 pitch
+      # 18 on the 206x104 router hero): pad_y/label_desc_gap/desc_line_pitch
+      # content-solve to 104 on the sheet's own 3-row content instead of
+      # relying solely on the w/h citation as a floor.
+      hero: { w: 206, h: 104, rx: 16, max_desc_lines: 4, pad_x: 24, pad_y: 25.5, label_desc_gap: 8.5, desc_line_pitch: 18 }
+      # circle_r/hero_circle_r: the bilateral canon (hw-diagram-alpha3-
+      # canon.html, "Integration Hub v2": glyph circles r=30, hub r=44) —
+      # hoisted to the paradigm root (this file's own node:/hero: block
+      # above `topologies:`), inherited here without restating the pair.
     fanout-bilateral: # source centered, dests split left/right
-      width: 820
-      display_w: 760
+      width_floor: true # content-fit audit: fan solvers proportionally split WITHIN the fixed frame
+      width_policy: aligned # both dest columns share one solved width
+      width: 960
+      display_w: 740
       margin_x: 40
       pitch: 120
-      node: { w: 156, h: 54, dot_dy: 24, label_dy: 28, desc_dy: 44 }
-      hero: { w: 200, h: 96, rx: 14 }
-    fanout-upward: # headerless inverted pyramid, source at the bottom
-      width: 640
-      display_w: 600
+      h_max: 120
+      # Generous source-to-sink cards (reverse-etl 168x76): floor the width
+      # and height so the dest columns read as full plates, not shrink-wrapped.
+      card_min_w: 120 # kit column floor; reverse-etl pins its specimen's 168 doors
+      node: { w: 144, h: 76, dot_dy: 24, label_dy: 28, desc_dy: 44, max_desc_lines: 4, label_gap: 22 }
+      hero: { w: 210, h: 96, rx: 16, max_desc_lines: 4 }
+      # circle_r/hero_circle_r: the same bilateral canon (hw-diagram-alpha3-
+      # canon.html, "Integration Hub v2", hw:spatial-notes: 820x420,
+      # bilateral about x=410, hub r=44 (410,225), glyph circles r=30 at
+      # x=110/710 y=105/225/345: center-to-center / satellite_r = 10.0,
+      # boundary-gap / satellite_r = 7.53) — hoisted to the paradigm root,
+      # inherited here without restating the pair.
+    fanout-upward: # headerless inverted pyramid, source at the bottom (display_w bumped below)
+      width_floor: true # content-fit audit: fan solvers proportionally split WITHIN the fixed frame
+      width_policy: aligned # dest row shares one solved width
+      width: 920
+      display_w: 740 # inverted pyramid fills the page width like the other banners
       header_mode: none
       header_h: 0
       footer_h: 0
@@ -342,123 +426,460 @@ diagram:
       row_gap: 62
       src_gap: 48
       node: { w: 150, h: 56, dot_dy: 24, label_dy: 28, desc_dy: 44 }
-      hero: { w: 220, h: 80, rx: 14 }
+      # sibling parity: fanout-downward/convergence/tree/hub heroes all
+      # declare max_desc_lines: 2 — this hero had none, defaulting to the
+      # class floor of 1 (the latent trap: a 2-paragraph authored hero desc
+      # silently lost its second paragraph before wrap_text_lines's
+      # paragraph-floor guard existed).
+      # pad_y/label_desc_gap: no fanout-upward hand specimen exists in
+      # GEOMETRY_SPECIMENS to cite directly, so this inherits state-
+      # machine's own hero citation (pad_y 21 / label_desc_gap 9.1) — the
+      # nearest sibling by both role (single/double-line hero crown) and
+      # absolute scale (176x78 vs this hero's 220x80). Same failure mode as
+      # dag/state-machine's uncited heroes: fan.py also gates its height
+      # floor on hero_declared (empty for a preset with no chassis.hero
+      # override), so integration-roster's "webhooks" hero — a gallery-only
+      # story with zero chassis override — content-solved to a ~47-tall
+      # oval against the paradigm's tight 7/6 defaults before this citation.
+      hero: { w: 220, h: 80, rx: 16, pad_y: 21, label_desc_gap: 9.1, max_desc_lines: 2 }
+      # circle_r/hero_circle_r: same bilateral-canon citation as fanout-
+      # bilateral/fanout-horizontal (hw-diagram-alpha3-canon.html,
+      # "Integration Hub v2") — hoisted to the paradigm root, inherited
+      # here without restating the pair.
+    fanout-downward: # source top-center, dest ROW at the bottom, S-curves fan DOWN (router-descent)
+      width_floor: true # content-fit audit: fixed banner (hero top, provider row bottom, generous fan reach)
+      width_policy: aligned # the provider row shares one solved width
+      depart_trunk: 66 # hero bottom -> knot, one wire carrying the route chip then the spread; CHIP_H (26) + 2*20 stubs
+      # Chipless trunk departs FLUSH (depart_trunk_bare unset, 0 = mouth) —
+      # the same law as fanout-horizontal (primer-fanout-refined.html).
+      width: 1240
+      display_w: 740
+      height: 740 # fixed banner: hero top, provider row bottom, generous fan reach
+      margin_x: 30
+      margin_top: 60
+      header_mode: none
+      header_h: 0
+      footer_h: 40
+      bottom_m: 102
+      pitch: 188 # provider cards pitch (119w + gap)
+      node_anatomy: head # portrait provider cards: brand glyph ABOVE the name
+      node: { w: 119, h: 96, dot_dy: 24, label_dy: 28, desc_dy: 44, max_desc_lines: 1 }
+      hero: { w: 206, h: 104, rx: 16, max_desc_lines: 2 }
+      # circle_r/hero_circle_r: bilateral-canon citation (hw-diagram-
+      # alpha3-canon.html, "Integration Hub v2": satellites r=30, hub r=44)
+      # — hoisted to the paradigm root, inherited here without restating
+      # the pair.
     fanout-radial: # square hub: dests on a ring, rays masked by the hub
+      width_floor: true # content-fit audit: square ring frame — the ring solves within it
       aspect: square
-      width: 600
-      display_w: 480
+      width_policy: aligned # ring card dests share one solved width
+      width: 920
+      display_w: 740 # square ring renders at the shared page width, not a small 480
       margin_x: 24
       header_h: 0
       footer_h: 0
-      ring_r: 230
+      ring_r: 250
       ring_gap: 80
-      node: { w: 150, h: 54, dot_dy: 24, label_dy: 28, desc_dy: 44 }
-      hero: { w: 184, h: 80, rx: 14 }
-      hero_circle_r: 44
+      # Ring cards seat at a uniform 165 (model-router), floored so short
+      # provider labels don't shrink the ring dest below its siblings.
+      card_min_w: 120 # kit column floor (no rect-radial specimen pins a wider one)
+      node: { w: 144, h: 76, dot_dy: 24, label_dy: 28, desc_dy: 44 }
+      # pad_y/label_desc_gap/desc_line_pitch match the paradigm root exactly
+      # (the same router-hero rhythm fanout-horizontal cites) — inherited,
+      # not restated. max_desc_lines DOES diverge from the root's 2: it was
+      # uncited here before (default 1), and the ring hero silently dropped
+      # the sheet's second desc row before it could content-solve past ~86
+      # tall; 4 matches the horizontal twin, so this stays an explicit
+      # per-family override. hero_circle_r inherits the root canon (44).
+      hero: { w: 206, h: 104, rx: 16, max_desc_lines: 4 }
     convergence: # inputs left column, hero right, one meet point
-      width: 820
-      display_w: 760
-      margin_x: 40
+      # Edge-run law (2026-07-14): the citation is the members'-faces →
+      # hero-face RUN (the gathered-seed hand file: members' right edge 282
+      # → hero 806 = 524); positions and the canvas derive from cards +
+      # this run. The retired fixed 1180 frame held old positions while
+      # snug cards shrank, stretching every approach.
+      focal_run: 524
+      # convergence-arrivals: knot 700 -> mouth 800; hint-gated (plain convergence has no trunk)
+      join_trunk: 100
+      width_policy: aligned # the arrivals column shares one solved width
+      width: 1180
+      display_w: 740
+      margin_x: 60
       header_h: 88
-      pitch: 92
-      bottom_m: 32
-      node: { w: 190, h: 64 }
-      hero: { w: 190, h: 100, rx: 14 }
-    flywheel: # square ring: phase cards at equal angles, arcs between
+      pitch: 118 # language balance law: gap ≈ card height
+      bottom_m: 44
+      node: { w: 210, h: 60, label_dy: 25, desc_dy: 44, desc_line_pitch: 19, pad_y: 13.5, label_gap: 22 }
+      # Box dims borrowed from the nucleus family (232x112, pads 32/27,
+      # label_desc_gap 12 content-solves to 112 on a 2-line desc) — but the
+      # MARK is the standard 24 slot: the convergence hand hero draws its
+      # glyph at ~26 (a 1.1-scaled standard mark) with text at card+56, the
+      # router-hero family's column, never the nucleus' 32/82. The borrowed
+      # glyph_w: 32 dragged the anchored text column to +68.
+      hero: { w: 232, h: 112, rx: 16, pad_x: 32, pad_y: 27, label_gap: 22, desc_line_pitch: 19, label_desc_gap: 12, max_desc_lines: 2 }
+    flywheel: # square ring (flywheel-orbit): near-square phase CARDS at the
+      width_floor: true # content-fit audit: square ring frame, fixed by the specimen
+      arc_clear_deg: 12.9 # flywheel-orbit: arc ends float ~52px off the cards (measured)
+      # cardinal points (the chassis default anatomy — glyph-circle stays
+      # spec-selectable via node_style/style), spokeless arcs between them.
       aspect: square
-      width: 600
-      height: 600
-      display_w: 480
+      width: 920
+      height: 920
+      display_w: 740
       header_mode: center
-      ring_r: 172
-      arc_r: 178
-      circle_r: 26
-      node: { w: 150, h: 56, dot_dy: 24, label_dy: 28, desc_dy: 44 }
-      hero: { w: 132, h: 46, rx: 14 }
-    stack: # portrait: hero result on top, layers below, x operators
-      width_policy: aligned
-      aspect: portrait
-      width: 480
-      display_w: 392
-      margin_x: 56
+      ring_r: 250 # flywheel-orbit: the rim the stages ride
+      arc_r: 250
+      circle_r: 26 # glyph-circle anatomy bounds (spec-selectable variants only)
+      node_anatomy: head # stacked portrait phases (glyph above, name + sub below)
+      node: { w: 124, h: 124, rx: 13, dot_dy: 24, label_dy: 28, desc_dy: 44, max_desc_lines: 1 }
+      hero: { w: 164, h: 120, rx: 16, max_desc_lines: 1 }
+    ring: # the equal-stage loop (the agent-loop-ring specimen): medallions at
+      # even pitch on R=270, empty centre, congruent arc arrows; annotations
+      # stack BELOW every node (name +18, desc pitch 16) and the arcs trim
+      # past the text blocks.
+      width_floor: true # square ring frame, fixed by the specimen (1080x1044)
+      aspect: square
+      width: 1080
+      display_w: 740
       header_mode: center
-      header_h: 90
-      footer_h: 54
-      gap: 34
-      src_gap: 44
-      node: { w: 300, h: 58 }
-      hero: { w: 368, h: 78, rx: 14 }
-    tree: # banner star: root top-center, leaves on one baseline (depth 1)
+      ring_r: 270
+      arc_r: 270
+      arc_clear_deg: 13 # specimen: arcs trimmed 13° per side, congruent
+      circle_r: 44
+      circle_label_dy: 24 # name baseline cy+68 = r44 + 24
+      node: { max_desc_lines: 3 } # wrapped stage descs (2-3 lines in the specimen)
+    stack: # landscape (stack): hero crown top-center, layer column
+      # below it, gray ring+cross operators between consecutive layers.
+      width_floor: true # content-fit audit: fixed landscape banner — the specimen explicitly rejects shrink-wrap
       width_policy: aligned
-      width: 720
-      height: 320
+      aspect: landscape
+      width: 900
+      display_w: 740
+      margin_x: 60
+      header_mode: center
+      header_h: 80
+      footer_h: 44
+      gap: 74 # inter-layer gap (stack measured)
+      src_gap: 96 # hero-to-first-layer gap (stack measured)
+      card_min_w: 140
+      op_r: 11
+      op_cross: 4
+      # pad_y/label_desc_gap: pp-stack-v2.svg's own layer card (163x64 rx13):
+      # name->desc gap 19.0 gives label_desc_gap 7.6 at the 15/11 label/desc
+      # voices; pad_y 15.7 solves the pair back to the card's own 64 exactly
+      # (the height target, not the name-baseline reading alone — the two
+      # independently-measured facts disagree by ~1px of font-metric slop,
+      # and the total height is the one that must land exactly, since a
+      # preset's own ``node.h`` is a FLOOR content-solve can grow past).
+      node: { w: 164, h: 64, rx: 13, pad_y: 15.7, label_desc_gap: 7.6, max_desc_lines: 1 }
+      # Hero: pp-stack-v2.svg's own crown (193x104 rx16) measures name
+      # baseline 38.6 / gap 21.0 — the SAME rhythm the paradigm root
+      # carries (pad_y 25.5 / label_desc_gap 8.5 / desc_line_pitch 18,
+      # itself fanout-horizontal's own 104-tall hero citation), so stack
+      # inherits root rather than restating a duplicate. max_desc_lines: 1
+      # stays explicit — it diverges from the root's 2 (stack's own preset
+      # override raises it back to 2 for the "artifact" hero's authored
+      # 2-line desc; the topology default here is single-line).
+      hero: { w: 194, h: 104, rx: 16, max_desc_lines: 1 }
+    tree: # orthogonal-bus hierarchy (tree/dep-audit): root top-center,
+      # each level's members proportionally split their parent's span; depth
+      # 1 is the derived star, depth 2 the taxonomy/dependency-audit ceiling.
+      width_policy: aligned
+      width: 1000
       margin_x: 30
       header_h: 56 # the root card's top edge
       gap: 30
-      pitch: 200 # the leaves' shared top edge
+      row_gap: 130 # vertical clearance between a row's bottom and the next row's top (bus curvature)
       leaf_min_w: 140
       leaf_max_w: 220
-      node: { w: 200, h: 76, dot_dy: 24, label_dy: 28, desc_dy: 46, max_desc_lines: 2 }
-      hero: { w: 180, h: 60, rx: 14 }
+      # depth-weighted anatomy: the root's hero card is the tallest (the
+      # crown), intermediate rows use node, and the DEEPEST row uses the
+      # smaller node2 floor — content (a desc line) still grows it past that
+      # floor (dep-audit's transitive deps carry a version desc and land at
+      # the same height as their direct-dep parents; tree's leaves carry
+      # no desc and stay at the smaller floor).
+      node_anatomy: head # stacked portrait rows (tree / dep-audit)
+      card_min_w: 88
+      # head_pad_y/label_desc_gap (HEAD anatomy — solve_head_box/place_head,
+      # wired through label_desc_gap_for same as CARD/HERO): dag-seq-tree/
+      # pp-tree.svg's own intermediate row (129x104, WITH desc) measures name
+      # baseline 68.2 / name->desc gap 16.0; solving for the 104 target at
+      # the kit's 7.5 label_desc_gap (the value repeatedly cross-validated
+      # across dag/stack/comparison's own card-anatomy specimens) gives
+      # head_pad_y 21.3. desc_line_pitch inherits the kit-wide 19 — no tree
+      # row wraps to 2+ desc lines to measure its own. Without this citation
+      # a WITH-desc row content-solved against the 76 floor shared with the
+      # name-only leaf tier (node/node2 coincided at h:76) instead of its
+      # own specimen's 104.
+      node: { w: 96, h: 76, rx: 13, dot_dy: 24, label_dy: 28, desc_dy: 46, head_pad_y: 21.3, label_desc_gap: 7.5, desc_line_pitch: 19, max_desc_lines: 3 }
+      # node2 (deepest/leaf row): pp-tree.svg's own leaf (94x76, name-only —
+      # flow/tree/banner/etc carry no desc) measures name baseline 54.1;
+      # solving with the default HEAD_GLYPH_GAP(7) gives head_pad_y ~15.
+      # label_desc_gap/desc_line_pitch inherit the family node citation for
+      # any leaf that DOES carry a desc (dep-audit's own node2 override
+      # supplies its own h floor separately).
+      node2: { w: 90, h: 64, rx: 13, dot_dy: 22, label_dy: 26, desc_dy: 42, head_pad_y: 15, label_desc_gap: 7.5, desc_line_pitch: 19, max_desc_lines: 3 }
+      # Hero: pp-tree.svg's own crown (156.8x116 rx16) measures name baseline
+      # 74.9 / gap 16.0; solving for the 116 target at label_desc_gap 7.5
+      # gives head_pad_y 26.3.
+      hero: { w: 104, h: 112, rx: 16, head_pad_y: 26.3, label_desc_gap: 7.5, desc_line_pitch: 19, max_desc_lines: 2 }
     tree-radial: # square mindmap: ring-1 sectors sized by subtree leaves
+      width_floor: true # content-fit audit: square mindmap ring frame
       aspect: square
-      width: 720
-      display_w: 576
+      width: 1000
+      display_w: 740 # mindmap ring renders at the shared page width
       header_h: 0
       footer_h: 0
       margin_x: 24
-      r1: 160
-      r2: 280
-      node: { w: 140, h: 48, dot_dy: 20, label_dy: 24, desc_dy: 38 }
-      node2: { w: 120, h: 40, rx: 10, dot_dy: 18, label_dy: 22, desc_dy: 34 }
-      hero: { w: 160, h: 56, rx: 14 }
+      # Pre-occupancy-scale BASE radii, citing both tree-radial specimens'
+      # hw:spatial-notes: pp-tree-radial.svg (mindmap) "R1=205 R2=395" (4
+      # ring-1 @ 129x102, 8 ring-2 @ 94x76) and pp-tree-radial-v2.svg
+      # (dep-audit-radial) "R1=225 R2=420" (6 ring-1 @ 109x100, 3 ring-2 @
+      # 166x94). The occupancy scale (min floor 0.72) and the clearance
+      # relaxation loop (G7, ×1.12 per bump) both apply BEFORE these reach
+      # the canvas, and neither preset needs the same bump count, so no
+      # single base reproduces both specimens' radii exactly — these two
+      # values were solved so BOTH renders land within ~8% of their own
+      # specimen (mindmap 216/356 vs 205/395, dep-audit-radial 242/399 vs
+      # 225/420) while staying clearly differentiated (dep-audit-radial's
+      # denser ring reads wider than mindmap's, as the specimens do). The
+      # previous r1:180/r2:300 pinned BOTH presets to an identical
+      # clearance-floor radius (162.6) regardless of content — the cramped,
+      # undifferentiated "inner ring hugs the centre" defect. G7 (min_clearance
+      # relaxation) supersedes this as a magnitude pin — see
+      # test_diagram_layout.py::TestTreeRadial.
+      r1: 300
+      r2: 495
+      node_anatomy: head # stacked portrait ring members (mindmap)
+      card_min_w: 88
+      node: { w: 96, h: 76, rx: 13, dot_dy: 20, label_dy: 24, desc_dy: 38 }
+      node2: { w: 90, h: 64, rx: 12, dot_dy: 18, label_dy: 22, desc_dy: 34 }
+      hero: { w: 104, h: 116, rx: 16 }
       hero_circle_r: 34
     comparison: # before/after pair: muted left, hero right, one connector
+      # Edge-run law (2026-07-14): the frame DERIVES from panels + the 220
+      # face-to-face run (the hand pair's own construction: 380s at
+      # x=100/700); ``width`` below stays the scale reference only. The
+      # retired fixed frame held positions while snug panels shrank,
+      # stretching the run +55%.
+      width_floor: false
       width_policy: aligned
-      width: 720
-      height: 240
-      margin_x: 48
-      node: { w: 268, h: 72 }
-      hero: { w: 268, h: 72, rx: 14 }
-    sequence: # lifelines + ordered messages on one replay clock
+      width: 1180
+      height: 600
+      margin_x: 100
+      header_h: 100
+      # Fixed before/after panels: floor the card at its full width so the two
+      # panels read as equal 380-wide plates (content fits under this).
+      card_min_w: 380
+      # pad_y/label_desc_gap: pp-comparison-v2.svg's own muted (380x160 rx13)
+      # and hero (380x160 rx16) panels both measure name baseline 42 / gap
+      # 19 from their own card top — solving at each side's own voice gives
+      # pad_y ~30.9 (muted, 15pt name) / ~29.4 (hero, 17pt name); 29 splits
+      # the two. label_desc_gap 7.5 matches the kit-wide value repeatedly
+      # measured across dag/stack/tree's own specimens. Both panels already
+      # content-solve well under the fixed 160 floor even with chip rows
+      # (~124-126), so this citation is defensive completeness, not a
+      # currently-visible fix — the panels already render at their specimen
+      # height via the width_floor/aligned-pair mechanism.
+      node: { w: 380, h: 160, pad_y: 29, label_desc_gap: 7.5 }
+      hero: { w: 380, h: 160, rx: 16, pad_y: 29, label_desc_gap: 7.5 }
+    sequence: # participant heads + lifelines + ordered messages on one replay clock
       width_policy: aligned
-      width: 760
+      width: 900
       display_w: 740
-      margin_x: 40
+      # Message labels are native trace text (auth-sequence: seq-msg), not floated
+      # micro-labels — solver-anchored labels emit the uncounted 'msg' class.
+      edge_label_cls: msg
+      margin_x: 56 # reserves the left gutter the time-axis furniture sits in
       header_h: 72
       footer_h: 48
-      lifeline_gap: 85
-      msg_pitch: 56
+      lifeline_gap: 150
+      msg_pitch: 72
       first_msg_dy: 34
-      node: { w: 170, h: 46, rx: 11, dot_dy: 23, label_dy: 27, desc_dy: 35 }
-      hero: { w: 170, h: 46, rx: 12, dot_dy: 23, label_dy: 20, desc_dy: 35 }
+      # Compact near-square HEAD anatomy (auth-sequence): glyph above the
+      # name, name below — the hero differs only in rx/ring. label_desc_gap/
+      # desc_line_pitch are genuinely N/A: solve_sequence (sequence.py) never
+      # calls solve_card_box or solve_head_box, so participant height is
+      # nch.h taken VERBATIM (never content-solved) — h:64 is itself the
+      # citation (pp-sequence.svg's own 83x64 rx13 card, measured exact).
+      # head_pad_y IS read here, though, by place_head (chrome.py) — it does
+      # not affect the fixed box height, only where the glyph+name block
+      # ANCHORS inside it: undeclared, the block centers, so a story whose
+      # participants carry a desc line (mcp-handshake's host/server/engine)
+      # renders a taller block that centers higher, crowding the glyph
+      # against the card top — a different rhythm per story despite sharing
+      # one chassis. 5.3 is pp-sequence.svg's own glyph-top-to-card-top gap
+      # (measured on 3 of 4 heads exactly; the fourth is 5.0, within noise),
+      # pinning one rhythm regardless of what a story's participants carry —
+      # max_desc_lines: 0 is the other half: no hand specimen EVER renders a
+      # head desc line (the anatomy is glyph+name only, chrome.py's own
+      # "fixed chip-free token" doctrine), so a story's desc field must not
+      # inflate the block past what the pinned pad_y budgets for (without
+      # this the taller block still overflows 2*pad_y+block_h<=h and falls
+      # back to centering anyway, reproducing the same crowded read).
+      node: { w: 83, h: 64, rx: 13, head_pad_y: 5.3, max_desc_lines: 0 }
+      hero: { w: 83, h: 64, rx: 15, head_pad_y: 5.3, max_desc_lines: 0 }
     dag: # layered ranks left-to-right, skip edges in under-channels
+      depart_trunk: 72 # frontier-serving: hub mouth 536 -> knot 608, solid stub then the fan
       width_policy: aligned
-      width: 760
-      height: 360
+      width: 1000
+      height: 400
       display_w: 740
       margin_x: 40
       header_h: 66
       footer_h: 54
-      rank_gap: 145
-      rank_pitch_max: 120
-      node: { w: 130, h: 50, rx: 11, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40 }
-      hero: { w: 130, h: 50, rx: 12, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40 }
-    state-machine: # pill baseline + branch drop + revise back-loop
-      width: 760
-      height: 300
+      rank_gap: 150
+      rank_pitch_max: 118 # language pitch floor (router providers ride cy step 118)
+      # Language fan gap measured off the sheet itself: providers are 76 tall
+      # at cy step 118 → gap 42 (the prior 58 mis-derived the gap from h60
+      # cards and pushed every h66 dag rank to pitch 124, past the sheet's
+      # own 118). Per-rank pitch = max(rank_pitch_max, max_h + row_gap);
+      # canvas grows. Presets whose hand file packs tighter cite their own
+      # pair (model-gateway-tiers: 92 on h62).
+      row_gap: 42
+      h_max: 140 # card-anatomy: rank cards grow to hold a wrapped desc
+      # pad_y/label_desc_gap: dag-seq-tree/pp-gateway-balanced.svg's own std
+      # card (150-164x62 rx13, name->desc gap 19.0) gives label_desc_gap 7.6
+      # at the kit's 15/11 label/desc voices; pad_y 14.7 solves the pair
+      # back to the card's own 62 exactly (the height target — gateway-
+      # balanced's own ``node.h: 62`` preset floor is a FLOOR content-solve
+      # can grow past, so the name-baseline reading alone, ~1px looser,
+      # isn't the number to chase here). Without this citation an uncited
+      # hero (no preset chassis.hero override — hero_height_floor gates on
+      # hero_declared, empty for a preset that never re-declares hero.h)
+      # content-solves against the paradigm's tight 7/6 defaults and renders
+      # a ~47-tall "oval" instead of the family's 62-66 rhythm (cache-
+      # aside-mesh/monorepo-build-graph, both galleries-only presets with
+      # zero chassis override, were the reproduction case).
+      node: { w: 180, h: 66, rx: 13, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40, desc_line_pitch: 19, pad_y: 14.7, label_desc_gap: 7.6, max_desc_lines: 4, label_gap: 22 }
+      # Hero inherits the std card's own pad_y/label_desc_gap: gateway-
+      # balanced's hero (230x62 rx16) is single-row (no desc), so it cannot
+      # independently demonstrate a 2-row hero gap — every other dag hero
+      # (cicd-gate/observability-converge/frontier-serving/scatter-gather)
+      # already floors on its OWN preset citation, so this pair only feeds
+      # PURE content-solve for a future hero that declares neither.
+      hero: { w: 210, h: 112, rx: 16, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40, desc_line_pitch: 19, pad_y: 14.7, label_desc_gap: 7.6, max_desc_lines: 4 }
+    state-machine: # glyph-card chain + branch drop + revise back-loop (all three specimens are rx-13 cards)
+      node_style: card+glyph # chassis default anatomy; an explicit node/spec style wins
+      width: 1000
+      height: 340
       display_w: 740
       margin_x: 40
       header_h: 88
       footer_h: 40
-      pill_pad_x: 32
-      pill_min_w: 120
-      pill_gap: 55
+      chain_gap: 70
       drop_gap: 50
-      drop_dy: 92
-      loop_dx: 75
-      loop_dy: 20
-      stub_len: 14
+      drop_dy: 170
+      loop_dx: 110
+      loop_dy: -10 # recovery-climb archetype's c1 base (graph.py): re-recalibrated against the exact-angle c2
+      # construction (SM arrival-angle fix) so agent-task-lifecycle's retry (failed->planning) both stays a true
+      # monotonic climb (no dip below its own source — the old +9.48 value dipped, contradicting its own citation)
+      # and lands within 0.1px of pp-state-machine-alt2.svg's own retry chord_dev, 32.9px — see graph.py's citation
+      stub_len: 0 # initial pseudo-state is AUTHORED per preset (cicd-machine has none; the alts declare 26/16)
       tag_dy: 14
-      node: { w: 130, h: 42 }
-      hero: { w: 120, h: 42 }
+      # pad_y/label_desc_gap: cross-validated identical on TWO independent
+      # hand files (pp-state-machine.svg AND pp-state-machine-alt2.svg) —
+      # std card (120-140x62 rx13) name->desc gap 18 on both gives
+      # label_desc_gap 6.6 at 15/11 voices; pad_y 15.2 solves the pair back
+      # to the card's own 62 exactly (the height target the shared
+      # ``node.h: 62`` floor must land on, not the ~1px-looser name-baseline
+      # reading alone). desc_line_pitch inherits the kit-wide 19 (pipeline/
+      # dag/hub/convergence) — no SM specimen carries a 2-line desc to
+      # measure its own. Was previously uncited entirely (only w/h/rx), so
+      # cicd-machine's DEPLOY hero (no preset chassis override) content-
+      # solved against the paradigm's tight 7/6 defaults whenever it lacked
+      # its own hero.h citation — the same "tight oval" failure mode as
+      # dag's hero.
+      node: { w: 140, h: 62, pad_y: 15.2, label_desc_gap: 6.6, desc_line_pitch: 19 }
+      # Hero: pp-state-machine.svg's own DEPLOY crown (175x78 rx16), name
+      # baseline 34, name->desc gap 21 — solves to pad_y 21 / label_desc_gap
+      # 9.1 at the hero voices (17/11), a genuinely measured 2-row hero
+      # citation (unlike dag's single-row-only hero specimen).
+      hero: { w: 176, h: 78, rx: 16, pad_y: 21, label_desc_gap: 9.1, desc_line_pitch: 19 }
+    hub: # content-fit canvas: center node + compass-sector spokes on a ring
+      aspect: square
+      width_policy: aligned # spokes share one solved box (a regular ring)
+      width: 1000
+      display_w: 740 # landscape axial cross renders at banner width (hub is 740), not a 512 square — so the verb algebra fills the page like the swimlane/fanout diagrams
+      header_h: 88 # title band above the cropped content (R3 content-fit)
+      footer_h: 40
+      margin_x: 24
+      hero_circle_r_hub: 44
+      # The clearance law owns the ring radius (rect support + hub_clearance
+      # + rect support, per spoke). No topology floor: the prior uncited 260
+      # pinned frame-engine's N spoke 18px past the hand file's kissing
+      # radius (base 242). A preset whose specimen holds air BEYOND kissing
+      # pins its own measured ring (hub-panel 397).
+      ring_r_hub: 0
+      # Compass spoke air: hub RECT edge to satellite rect edge along each
+      # spoke (the hub specimen 167-220, the verb-reads specimen 230). Per-axis — the rect
+      # support law, never a center-radius circle.
+      hub_clearance: 170
+      card_min_w: 150
+      # Compass card ceiling (keeps ring cards from ballooning on long content);
+      # the AXIAL read chip-card gets a wider ceiling via axial.satellite_max_w.
+      w_max: 240
+      h_max: 130
+      # The language specimen (verb-algebra axial): ink-
+      # derived satellite boxes on a 4px grid, two-line cards unified at h60
+      # (name +25, sub +44, pitch 19); the 144 floor is the narrowest
+      # specimen card (the spec 144x60).
+      node: { w: 144, h: 60, dot_dy: 24, label_dy: 25, desc_dy: 44, desc_line_pitch: 19, pad_y: 13.5, label_gap: 22 }
+      # Hub crowns are ORDINARY kit heroes: the 232x112 box archetype with
+      # the kit's own anchor pair (22/14, 24 glyph) and root rhythm — event
+      # bus and every other hub-family crown reads exactly like a fan
+      # family's crown. The NUCLEUS dress (pad 32, glyph 32, gap 18, pad_y
+      # 27, label_desc_gap 12 — the verb-algebra sheet's own crown) is a
+      # per-preset citation on the three verb-algebra entries, never a
+      # topology fact: carrying it here dressed every hub crown in the
+      # nucleus anatomy and they read inflated beside their satellites.
+      hero: { w: 232, h: 112, rx: 16, max_desc_lines: 2, desc_line_pitch: 19 }
+    lanes: # swimlane banner: typographic category lanes + gutter bus + perimeter channel
+      width_policy: aligned # a band's cards share its clamped width
+      # The obi-engine specimen's node descs are JBM 10px UNTRACKED (the kit desc voice is
+      # 11/0.01em — at 11 three obi descs wrap where the specimen keeps
+      # single lines; the tracking alone is 3.7px on a 37-char desc).
+      desc_voice_size: 10
+      desc_voice_tracking_em: 0
+      # The one inter-lane label ("pinned priors") rides its connector as native
+      # text, not a floated micro-label (obi-engine).
+      edge_label_cls: msg
+      width: 1100
+      display_w: 740
+      margin_x: 30
+      header_h: 80
+      footer_h: 48
+      lane_header_h: 44
+      gutter_w: 82 # scale governor: 740 display over content-solved width must stay >= 0.51
+      row_pitch: 80
+      lane_w_min: 150
+      lane_w_max: 244
+      # A card may grow to the band's max so a label + identity glyph never
+      # truncates (obi-engine "Every AI surface" + mark overran the 150 floor).
+      # solve_card_box's ceiling is w_max; the band re-clamps to [min, max].
+      w_max: 244
+      lane_pad: 12
+      channel_gap: 24
+      channel_stack: 12
+      lane_ground: typographic # D1: typographic | panel
+      lane_rule_dy: 10 # D2: header baseline -> hairline rule
+      lane_rule_to_row: 15 # D2: rule -> first card row
+      legend_home: masthead # D3: masthead | footer
+      bus_bundling: shared-rail # D6: shared-rail | per-edge
+      # Bands are width-clamped (5 lanes fit one display row), so a long
+      # descriptor WRAPS to a second line rather than truncating; the shared
+      # band height grows to hold it. Cards that fit one line stay one line.
+      # pad_x 16 = the obi-engine specimen's bulleted-card content inset (mark ink +
+      # desc at card+16, mark center +20, label +34).
+      # pad_y/label_desc_gap: pp-swimlanes.svg's own bulleted card (216x66
+      # rx12) measures name baseline 28 / name->desc gap 19 at the lane's
+      # own 10pt (untracked) desc voice — solves to pad_y 16.9 /
+      # label_desc_gap 8.3, landing want_h at 66.1 (matches obi-engine's own
+      # preset-cited 66 within a rounding hair). desc_line_pitch inherits
+      # the kit-wide 19 — no lanes card wraps to 2 desc lines in the hand
+      # file to measure its own.
+      node: { w: 150, h: 54, dot_dy: 24, label_dy: 28, desc_dy: 44, pad_y: 16.9, label_desc_gap: 8.3, desc_line_pitch: 19, max_desc_lines: 2, pad_x: 16 }
+      # No lanes specimen demonstrates a distinct hero card (pp-swimlanes.svg's
+      # obix/model-router hub nodes are `hub: true`, a different flag, never
+      # role: hero) — inherits the node's own measured rhythm rather than a
+      # borrowed sibling family's.
+      hero: { w: 160, h: 56, rx: 16, pad_y: 16.9, label_desc_gap: 8.3, desc_line_pitch: 19 }

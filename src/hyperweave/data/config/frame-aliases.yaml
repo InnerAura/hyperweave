@@ -1,0 +1,14 @@
+# Public frame names.
+#
+# The internal frame id (the FrameType enum value, payload schema id, template
+# key) is the stable identity. A frame may present a different PUBLIC name to
+# callers — the string emitted in data-hw-frame, <hw:frame>, and the envelope
+# `k`, and the primary route/CLI verb noun. This map is sparse: only frames
+# whose public name differs from their internal id appear here; every other
+# frame is identity-mapped (public name == internal id).
+#
+# `stats` is the internal id; `card` is its public name. `stats` stays a
+# permanent input alias (routes, CLI, and the ComposeSpec type field all still
+# accept it), so existing embeds keep resolving.
+public_names:
+  stats: card

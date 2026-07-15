@@ -26,9 +26,11 @@ from hyperweave.config.settings import get_settings
 from hyperweave.connectors.base import close_client, get_client
 from hyperweave.connectors.github import fetch_stargazer_history, fetch_user_stats
 from hyperweave.core.enums import FrameType
+from hyperweave.core.errors import HwError, HwErrorCode
 from hyperweave.core.models import ComposeSpec
 from hyperweave.render.fonts import load_font_face_css
 from hyperweave.render.templates import render_template
+from hyperweave.serve.capability_routes import register_capability_routes
 from hyperweave.serve.data_tokens import (
     format_for_badge,
     format_for_value,
@@ -212,29 +214,46 @@ class ComposeRequest(BaseModel):
     """Glyph fill selection: ink | brand | full (empty defers to the
     genome default). Per-slot IR declarations outrank it."""
     performance: str = ""
-    """Surface performance tier: '' (paint-ok) | 'composite-only' (diagram
-    motion ladders beam->particle, flow->dash; recorded in the payload)."""
-    chrome: str = "card"
-    """Presentation chrome (diagram): card (default) | bare — transparent
-    paper, no masthead/footer; presentational, outside the envelope digest."""
+    """Surface performance tier: '' (paint-ok) | 'composite-only'. The kit
+    grammar (dash | particle) is compositor-only by construction — both
+    tiers render identically; the payload records the tier."""
+    surface: str = ""
+    """Surface preset (matrix/diagram): plate | inlay | twin. Expands to the
+    ground/palette axes; a preset plus a contradicting axis is rejected."""
+    ground: str = ""
+    """Surface ground axis: opaque (own background) | bare (borrow host)."""
+    palette: str = ""
+    """Surface palette axis: fixed (one scheme) | adaptive (light/dark @media)."""
+    faces: bool = False
+    """Twin only: with ``respond=json``, also bake the light + dark faces and
+    return their URLs under ``faces:{light,dark}`` (the <picture> pair)."""
     respond: str = "svg"
-    """Response shape: ``svg`` (raw image bytes, default) or ``json``
-    (``{svg, markdown, width, height}`` — the markdown shadow alongside)."""
-
-
-class SpecEnvelopeBody(BaseModel):
-    """The canonical spec-envelope POST body (unified surface)."""
-
-    type: str
-    genome: str = "primer"
-    variant: str = ""
-    spec: dict[str, Any] = {}
-    data: str = ""
-    target: str = "web"
-    emit: list[str] = ["svg"]
+    """Response shape: ``svg`` (raw image bytes, default) | ``json``
+    (``{svg, markdown, width, height}`` — the markdown shadow alongside) |
+    ``envelope`` (``{envelope, url}`` — the actionable read + content handle,
+    no pixels inline; the same shape the CLI/MCP surfaces return)."""
 
 
 # Composition endpoints
+
+
+def _resolve_surface_axes(surface: str, ground: str, palette: str) -> tuple[str, str]:
+    """Expand a surface preset/axes into (ground, palette), or raise HwError.
+
+    Shared by the matrix/diagram GET routes: ``expand_surface_preset`` resolves
+    ``surface=plate|inlay|twin`` (or explicit axes) and rejects a preset/axis
+    contradiction and the bare+fixed trap. Empty everywhere ⇒ ("", "") (plate
+    default; the ComposeSpec leaves the surface pathway untouched).
+    """
+    if not (surface or ground or palette):
+        return "", ""
+    from hyperweave.core.surface_spec import expand_surface_preset
+
+    try:
+        resolved = expand_surface_preset(surface, ground, palette)
+    except ValueError as exc:
+        raise HwError(HwErrorCode.SPEC_INVALID, str(exc)) from exc
+    return resolved.ground.value, resolved.palette.value
 
 
 @app.get(
@@ -674,7 +693,46 @@ async def compose_marquee_url(
 
 @app.post("/v1/compose", response_class=Response)
 async def compose_post(request: Request, req: ComposeRequest) -> Response:
-    """Compose any artifact via POST with full ComposeSpec."""
+    """Compose any artifact via POST with a full ComposeSpec.
+
+    ``respond`` selects the shape: ``svg`` (image/svg+xml bytes + ETag, the Camo
+    default) | ``json`` (svg + markdown shadow + dims) | ``envelope`` (the
+    ``{envelope, url}`` handle — the actionable read, pixels served at ``url``).
+    A ``target`` key is rejected with migration text (the destination concept was
+    replaced by the ``format`` axis).
+    """
+    # The destination concept is gone — a `target` key gets a migration error
+    # rather than a silent drop (pydantic ignores it, so detect it on raw body).
+    raw = await request.json()
+    if isinstance(raw, dict) and "target" in raw:
+        err = HwError(
+            HwErrorCode.SPEC_INVALID,
+            "the `target` destination axis was removed",
+            fix=(
+                "drop `target` — github/web serve the live svg (default); for a static "
+                "image use `format: svg-static` (obsidian/email/pdf) or `format: png` (slack)"
+            ),
+        )
+        return JSONResponse(err.envelope(), status_code=err.http_status)
+
+    if req.respond == "envelope":
+        # Route through the shared compose capability so the {envelope, url}
+        # shape is byte-identical to the CLI/MCP surfaces (no drift).
+        from hyperweave.surfaces.registry import CallContext, dispatch
+
+        payload = _flat_body_to_compose_input(req, raw)
+        ctx = CallContext(surface="http", base_url=get_settings().public_base_url)
+        try:
+            result_dict = await dispatch("compose", payload, ctx)
+        except HwError as exc:
+            return JSONResponse(exc.envelope(), status_code=exc.http_status)
+        return JSONResponse(result_dict)
+
+    try:
+        surface_ground, surface_palette = _resolve_surface_axes(req.surface, req.ground, req.palette)
+    except HwError as exc:
+        return JSONResponse(exc.envelope(), status_code=exc.http_status)
+
     spec = ComposeSpec(
         type=req.type,
         genome_id=req.genome,
@@ -696,51 +754,164 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         diagram=req.diagram,
         glyph_tint=req.glyph_tint,
         performance=req.performance,
-        chrome=req.chrome,
+        ground=surface_ground,
+        palette=surface_palette,
     )
     if req.respond == "json":
         # Both projections in one response: the SVG plus its markdown
         # shadow (POST keeps JSON semantics; GET stays pure image for Camo).
+        # A twin with ?faces bakes the light + dark faces and returns their URLs.
         result = compose(spec)
-        return JSONResponse(
-            {
-                "svg": result.svg,
-                "markdown": result.markdown,
-                "width": result.width,
-                "height": result.height,
-            }
-        )
+        body: dict[str, Any] = {
+            "svg": result.svg,
+            "markdown": result.markdown,
+            "width": result.width,
+            "height": result.height,
+        }
+        if req.faces:
+            from hyperweave.compose.surface import _emit_faces
+
+            if not (surface_palette == "adaptive" and surface_ground != "bare"):
+                err = HwError(
+                    HwErrorCode.SPEC_INVALID,
+                    "faces requires a twin surface (surface=twin)",
+                    fix="set surface=twin (opaque + adaptive), or drop faces",
+                )
+                return JSONResponse(err.envelope(), status_code=err.http_status)
+            body["faces"] = _emit_faces(spec, base_url=get_settings().public_base_url, data_tokens=None)
+        return JSONResponse(body)
     return _compose_and_respond(spec, request)
 
 
+def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dict[str, Any]:
+    """Map the flat POST body to the compose-capability input model.
+
+    The flat body carries content fields (title/value/matrix/diagram/…) at the
+    top level; the capability's ``ComposeInput`` nests them under ``spec``. IR
+    frames (matrix/diagram) pass their whole IR dict as ``spec``; other frames
+    fold the scalar content fields. ``data``/``format`` ride through when present.
+    """
+    if req.type in {"matrix", "diagram"}:
+        # The IR schema PLUS the ComposeSpec-level params a matrix/diagram caller
+        # may set (matrix's connector-registry adapter via `connector_data`;
+        # diagram's performance tier). compose_surface's envelope mapping
+        # lifts these back out to ComposeSpec top-level fields — the same
+        # forwarding contract the MCP/CLI surfaces honor.
+        spec: dict[str, Any] = dict(raw.get(req.type) or {})
+        spec["performance"] = req.performance
+        # glyph_tint's diagram-IR field is enum-strict (no ''); forward only a
+        # real selection (a matrix caller's rides the top-level ComposeSpec field).
+        if req.glyph_tint:
+            spec["glyph_tint"] = req.glyph_tint
+        connector = raw.get("connector_data")
+        if connector is not None:
+            spec["connector_data"] = connector
+    else:
+        spec = {
+            "title": req.title,
+            "value": req.value,
+            "state": req.state,
+            "motion": req.motion,
+            "glyph": req.glyph,
+            "glyph_mode": req.glyph_mode,
+            "regime": req.regime,
+            "size": req.size,
+            "shape": req.shape,
+            "divider_variant": req.divider_variant,
+            "marquee_direction": req.direction,
+            "glyph_tint": req.glyph_tint,
+            "performance": req.performance,
+        }
+        if req.speeds is not None:
+            spec["marquee_speeds"] = req.speeds
+    # Surface axes forward through compose_surface's model_fields partition as
+    # ComposeSpec top-level fields. `surface` is a preset (no ComposeSpec field) —
+    # expand it to ground/palette here so only the axes travel; a bad preset/axis
+    # combo raises HwError, which the caller (compose_post) maps to a 4xx.
+    surface_ground, surface_palette = _resolve_surface_axes(req.surface, req.ground, req.palette)
+    if surface_ground:
+        spec["ground"] = surface_ground
+    if surface_palette:
+        spec["palette"] = surface_palette
+    return {
+        "type": req.type,
+        "genome": req.genome,
+        "variant": req.variant,
+        "spec": spec,
+        "data": str(raw.get("data", "")),
+        "format": str(raw.get("format", "svg")),
+    }
+
+
 @app.post("/v1/validate", response_model=None)
-async def validate_post(body: SpecEnvelopeBody) -> JSONResponse:
-    """Validate a spec envelope without rendering. Returns a {valid, ...} report."""
-    report = validate_surface(
-        SpecEnvelope(
-            type=body.type,
-            genome=body.genome,
-            variant=body.variant,
-            spec=body.spec,
-            data=body.data,
-            target=body.target,
-            emit=tuple(body.emit),
-        )
-    )
+async def validate_post(body: SpecEnvelope) -> JSONResponse:
+    """Validate a spec envelope without rendering. Returns a {valid, ...} report.
+
+    Binds the canonical :class:`SpecEnvelope` (pydantic) directly — the twin body
+    model is gone, so the HTTP wire contract is the same model the core uses.
+    """
+    report = validate_surface(body)
     return JSONResponse(report, status_code=200 if report.get("valid") else 400)
 
 
-@app.get("/v1/a/{digest}", response_class=Response)
-async def serve_artifact(digest: str) -> Response:
-    """Content-addressed handle: GET /v1/a/{digest} serves the stored SVG.
+# Format suffix → FormatId. Order matters: `.static.svg` before `.svg` so the
+# longer suffix wins. A bare digest (no suffix) is the live svg.
+_ARTIFACT_SUFFIXES: list[tuple[str, str]] = [
+    (".static.svg", "svg-static"),
+    (".svg", "svg"),
+    (".png", "png"),
+    (".webp", "webp"),
+    (".gif", "gif"),
+]
+_ARTIFACT_CACHE_HEADER = "public, max-age=31536000, immutable"
+_RASTER_FORMAT_IDS = frozenset({"png", "webp"})
 
-    The compact handle the round-trip loop embeds. Served from the in-process
-    LRU, falling back to the durable disk tier when ``HW_ARTIFACT_CACHE_DIR`` is
-    set — so a cold handle (per-process eviction or a restart) still resolves
-    cross-session from disk. Only when neither tier holds the id does it 404, and
-    the caller falls back to the self-describing spec URL.
+
+def _split_artifact_suffix(digest: str) -> tuple[str, str]:
+    """Split a ``/v1/a/{digest}`` path segment into ``(hex, format_id)``.
+
+    A bare hex (no suffix) resolves to the live ``svg``. The longest matching
+    suffix wins (``.static.svg`` before ``.svg``).
     """
-    svg = get_artifact(digest)
+    for suffix, fmt in _ARTIFACT_SUFFIXES:
+        if digest.endswith(suffix):
+            return digest[: -len(suffix)], fmt
+    return digest, "svg"
+
+
+@app.get("/v1/a/{digest}", response_class=Response)
+async def serve_artifact(
+    digest: str,
+    w: Annotated[int | None, Query(ge=100, le=2000, description="Raster width cap (png/webp only).")] = None,
+) -> Response:
+    """Content-addressed handle: ``GET /v1/a/{digest}[.{ext}]`` serves the artifact.
+
+    The bare digest (or ``.svg``) serves the live SVG; ``.static.svg`` / ``.png`` /
+    ``.webp`` serve derived projections (derived on demand, then cached in the
+    artifact store's derived tier); ``.gif`` returns 501. ``?w=`` (100-2000) caps
+    the raster width. All hits are immutable-cached. A cold source digest 404s
+    with the self-describing miss envelope.
+    """
+    from hyperweave.compose.artifact_store import get_derived, store_derived
+    from hyperweave.formats import FormatId, format_ext, project
+
+    hexd, fmt = _split_artifact_suffix(digest)
+
+    # gif has no path — 501 before any source lookup (the answer is the same
+    # whether or not the source is cached).
+    if fmt == FormatId.GIF.value:
+        err = HwError(
+            HwErrorCode.FORMAT_UNAVAILABLE,
+            "gif output is not available",
+            fix="use .png for a static image or the bare digest for the live svg",
+        )
+        return JSONResponse(err.envelope(), status_code=err.http_status)
+
+    # `?w=` only applies to raster formats; ignore it elsewhere so the derived
+    # key stays canonical (an SVG projection has no width variants).
+    width = w if (w is not None and fmt in _RASTER_FORMAT_IDS) else None
+
+    svg = get_artifact(hexd)
     if svg is None:
         return JSONResponse(
             {
@@ -753,111 +924,67 @@ async def serve_artifact(digest: str) -> Response:
             },
             status_code=404,
         )
+
+    # Live SVG — no projection, no derived-store round trip.
+    if fmt == FormatId.SVG.value:
+        return Response(content=svg, media_type="image/svg+xml", headers={"Cache-Control": _ARTIFACT_CACHE_HEADER})
+
+    fid = FormatId(fmt)
+    derived_key = format_ext(fid) if width is None else f"{format_ext(fid)}@w={width}"
+    cached = get_derived(hexd, derived_key)
+    if cached is not None:
+        media = "image/svg+xml" if fid is FormatId.SVG_STATIC else f"image/{fmt}"
+        return Response(content=cached, media_type=media, headers={"Cache-Control": _ARTIFACT_CACHE_HEADER})
+
+    try:
+        projection = project(svg, fid, max_width=width)
+    except HwError as exc:
+        return JSONResponse(exc.envelope(), status_code=exc.http_status)
+    store_derived(hexd, derived_key, projection.data)
     return Response(
-        content=svg,
-        media_type="image/svg+xml",
-        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+        content=projection.data,
+        media_type=projection.media_type,
+        headers={"Cache-Control": _ARTIFACT_CACHE_HEADER},
     )
 
 
 # ── Verb routes (read/write algebra over the seed) ───────────────────────────
-
-
-class _ExtractBody(BaseModel):
-    source: str  # SVG string or /v1/a/{digest} url
-    respond: str = "envelope"
-
-
-class _VerifyBody(BaseModel):
-    svg: str
-
-
-class _TransformBody(BaseModel):
-    source: str
-    mutations: list[dict[str, Any]]
-
-
-class _DiffBody(BaseModel):
-    a: str
-    b: str
-
-
-class _QueryBody(BaseModel):
-    svg: str
-    question: str
-
-
-def _verb_response(fn: Any, *args: Any, **kwargs: Any) -> JSONResponse:
-    """Run a verb, return its result dict or the structured error envelope + 4xx."""
-    from hyperweave.core.errors import HwError
-
-    try:
-        return JSONResponse(fn(*args, **kwargs).to_dict())
-    except HwError as exc:
-        return JSONResponse(exc.envelope(), status_code=exc.http_status)
-
-
-@app.post("/v1/extract", response_model=None)
-async def extract_post(body: _ExtractBody) -> JSONResponse:
-    """Extract the seed at envelope | payload | markdown depth."""
-    from hyperweave.verbs import extract
-
-    return _verb_response(extract, body.source, respond=body.respond)
-
-
-@app.post("/v1/verify", response_model=None)
-async def verify_post(body: _VerifyBody) -> JSONResponse:
-    """Recompute the hash; prove id == sha256(payload)."""
-    from hyperweave.verbs import verify
-
-    return _verb_response(verify, body.svg)
-
-
-@app.post("/v1/transform", response_model=None)
-async def transform_post(body: _TransformBody) -> JSONResponse:
-    """Mutate an artifact via structural JSON patch → new artifact ({envelope, url})."""
-    from hyperweave.verbs import transform
-
-    return _verb_response(transform, body.source, body.mutations, base_url=get_settings().public_base_url)
-
-
-@app.post("/v1/diff", response_model=None)
-async def diff_post(body: _DiffBody) -> JSONResponse:
-    """Payload-bound structured delta between two artifacts."""
-    from hyperweave.verbs import diff
-
-    return _verb_response(diff, body.a, body.b)
-
-
-@app.post("/v1/query", response_model=None)
-async def query_post(body: _QueryBody) -> JSONResponse:
-    """Answer a question about an artifact from its compact envelope."""
-    from hyperweave.verbs import query
-
-    return _verb_response(query, body.svg, body.question)
+# Mounted by the capability route factory (serve/capability_routes.py) so the
+# five verbs (extract/verify/transform/diff/query) share one registry roster
+# with the CLI and MCP surfaces — the parity test proves no drift. The
+# hand-written routes + per-verb body models that lived here are gone; the
+# canonical input models live in surfaces/capabilities.py.
+register_capability_routes(app)
 
 
 @app.get("/llms.txt", response_class=Response)
 async def llms_txt() -> Response:
-    """The agent contract — a cold agent reads this to discover the protocol."""
-    from hyperweave.core.contract import LLMS_TXT
+    """The agent contract — a cold agent reads this to discover the protocol.
+
+    The ``## Surfaces`` block is generated from the capability registry (so the
+    surface enumeration cannot drift), and the doc links to /llms-full.txt.
+    """
+    from hyperweave.surfaces.discover import render_llms_txt
 
     return Response(
-        content=LLMS_TXT,
+        content=render_llms_txt(),
         media_type="text/plain; charset=utf-8",
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
 
-@app.get("/skill", response_class=Response)
-async def skill_md() -> Response:
-    """The shippable agent SKILL file (the verb workflow)."""
-    path = get_settings().data_dir / "skills" / "hyperweave-verbs" / "SKILL.md"
-    if not path.exists():
-        return Response(content="SKILL file not packaged", media_type="text/plain", status_code=404)
+@app.get("/llms-full.txt", response_class=Response)
+async def llms_full_txt() -> Response:
+    """The full agent reference: the contract + the verb SKILL + the generated
+    capability index (name, summary, per-surface reachability). One document a
+    cold agent reads to learn the entire protocol; the capability index is
+    derived from the registry, so every capability is documented by construction.
+    """
+    from hyperweave.surfaces.discover import render_llms_full_txt
+
     return Response(
-        content=path.read_text(encoding="utf-8"),
-        media_type="text/markdown; charset=utf-8",
+        content=render_llms_full_txt(),
+        media_type="text/plain; charset=utf-8",
         headers={"Cache-Control": "public, max-age=3600"},
     )
 
@@ -896,6 +1023,21 @@ async def compose_matrix_url(
             ),
             pattern="^(|ink|brand|full)$",
         ),
+    ] = "",
+    surface: Annotated[
+        str,
+        Query(
+            description="Surface preset: plate | inlay | twin (expands to ground/palette).",
+            pattern="^(|plate|inlay|twin)$",
+        ),
+    ] = "",
+    ground: Annotated[
+        str,
+        Query(description="Surface ground axis: opaque | bare.", pattern="^(|opaque|bare)$"),
+    ] = "",
+    palette: Annotated[
+        str,
+        Query(description="Surface palette axis: fixed | adaptive.", pattern="^(|fixed|adaptive)$"),
     ] = "",
 ) -> Response:
     """Compose a matrix: /v1/matrix/{preset}/{genome}.{motion}.
@@ -948,6 +1090,16 @@ async def compose_matrix_url(
                 headers=_error_response_headers(404),
             )
 
+    try:
+        surface_ground, surface_palette = _resolve_surface_axes(surface, ground, palette)
+    except HwError as exc:
+        return Response(
+            content=_error_badge(exc.message, status_code=400),
+            media_type="image/svg+xml",
+            status_code=200,
+            headers=_error_response_headers(400),
+        )
+
     compose_spec = ComposeSpec(
         type="matrix",
         genome_id=genome,
@@ -956,6 +1108,8 @@ async def compose_matrix_url(
         matrix=matrix_payload,
         connector_data=connector_data,
         glyph_tint=glyph_tint,
+        ground=surface_ground,
+        palette=surface_palette,
     )
     return _compose_and_respond(compose_spec, request)
 
@@ -997,38 +1151,39 @@ async def compose_diagram_url(
         str,
         Query(
             description=(
-                "Artifact-level edge motion override — the closed 2x2: "
-                "dash | particle | beam | flow (genome allowlist enforced; "
-                "per-edge IR declarations outrank it)."
+                "Artifact-level edge motion override — the closed kit pair: "
+                "dash | particle (genome allowlist enforced; per-edge IR "
+                "declarations outrank it)."
             ),
-            pattern="^(|dash|particle|beam|flow)$",
+            pattern="^(|dash|particle)$",
         ),
     ] = "",
     performance: Annotated[
         str,
         Query(
             description=(
-                "Surface performance tier. 'composite-only' applies the "
-                "fallback ladder (beam->particle, flow->dash); the payload's "
-                "rendered block records fallback_applied."
+                "Surface performance tier. The kit grammar (dash | particle) "
+                "is compositor-only by construction — both tiers render "
+                "identically; the payload records the tier."
             ),
             pattern="^(|composite-only)$",
         ),
     ] = "",
-    chrome: Annotated[
+    surface: Annotated[
         str,
         Query(
-            description=(
-                "Presentation chrome: card (substrate + masthead + footer, "
-                "default) | bare (transparent paper, no masthead/footer; the "
-                "title ships in hw:title/aria/markdown/payload only). "
-                "Presentational — excluded from the envelope digest. Bare "
-                "callers own paper matching: the genome's inks assume its "
-                "own surface family."
-            ),
-            pattern="^(card|bare)$",
+            description="Surface preset: plate | inlay | twin (expands to ground/palette).",
+            pattern="^(|plate|inlay|twin)$",
         ),
-    ] = "card",
+    ] = "",
+    ground: Annotated[
+        str,
+        Query(description="Surface ground axis: opaque | bare.", pattern="^(|opaque|bare)$"),
+    ] = "",
+    palette: Annotated[
+        str,
+        Query(description="Surface palette axis: fixed | adaptive.", pattern="^(|fixed|adaptive)$"),
+    ] = "",
 ) -> Response:
     """Compose a diagram: /v1/diagram/{preset}/{genome}.{motion}.
 
@@ -1083,6 +1238,16 @@ async def compose_diagram_url(
     if edge_motion and isinstance(diagram_payload, dict):
         diagram_payload = {**diagram_payload, "edge_motion": edge_motion}
 
+    try:
+        surface_ground, surface_palette = _resolve_surface_axes(surface, ground, palette)
+    except HwError as exc:
+        return Response(
+            content=_error_badge(exc.message, status_code=400),
+            media_type="image/svg+xml",
+            status_code=200,
+            headers=_error_response_headers(400),
+        )
+
     compose_spec = ComposeSpec(
         type="diagram",
         genome_id=genome,
@@ -1091,7 +1256,8 @@ async def compose_diagram_url(
         diagram=diagram_payload,
         glyph_tint=glyph_tint,
         performance=performance,
-        chrome=chrome,
+        ground=surface_ground,
+        palette=surface_palette,
     )
     return _compose_and_respond(compose_spec, request)
 
@@ -1148,6 +1314,15 @@ async def compose_chart_stars(
     return _compose_and_respond_with_ttl(spec, request, ttl=3600)
 
 
+# card is the public frame name; /v1/card is the primary route. /v1/stats is a
+# permanent alias bound to the SAME handler (not a redirect — Camo-embedded
+# READMEs must not depend on redirect-following). Both paths compose the
+# internal `stats` frame; only the emitted data-hw-frame/hw:frame/envelope-k
+# read "card".
+@app.get(
+    "/v1/card/{username}/{genome_motion}",
+    response_class=Response,
+)
 @app.get(
     "/v1/stats/{username}/{genome_motion}",
     response_class=Response,
@@ -1178,7 +1353,7 @@ async def compose_stats(
         ),
     ] = "",
 ) -> Response:
-    """Compose a GitHub stats card: /v1/stats/{username}/{genome}.{motion}.
+    """Compose a GitHub card: /v1/card/{username}/{genome}.{motion} (/v1/stats alias).
 
     Fetches user profile + repos + commits + PRs + issues + contribution
     calendar in parallel (cached 1h) and renders through the stats frame.
@@ -1265,13 +1440,17 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
         "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
         "query_params": ["variant", "pair"],
     },
+    # Keyed by the internal frame id ("stats") so the FrameType-value lookup in
+    # list_frames() resolves; the pattern presents the public "card" primary
+    # with the stats alias noted.
     "stats": {
-        "pattern": "/v1/stats/{username}/{genome}.{motion}",
+        "pattern": "/v1/card/{username}/{genome}.{motion}",
+        "alias": "/v1/stats/{username}/{genome}.{motion}",
         "query_params": ["data", "variant", "pair"],
     },
     "diagram": {
         "pattern": "/v1/diagram/{preset}/{genome}.{motion}",
-        "query_params": ["variant", "spec", "glyph_tint", "edge_motion", "performance", "chrome"],
+        "query_params": ["variant", "spec", "glyph_tint", "edge_motion", "performance"],
         "presets": "data/presets/diagram.yaml slugs, or 'custom' + ?spec=",
     },
     "matrix": {

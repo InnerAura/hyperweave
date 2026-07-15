@@ -5,7 +5,7 @@ to `compute_badge_zones` under a single equal-spacing rule:
 
     Every gap between PRESENT zones equals `pad`. Absent zones (no glyph,
     no state indicator) collapse entirely — no reserved width, no phantom
-    gap. The Bug 3 fix (chrome no-glyph long-label badges had ~16px of
+    gap. The no-glyph fix (chrome no-glyph long-label badges had ~16px of
     empty space before the label) lives here.
 
 Cases mirror real GitHub/PyPI data so failures map cleanly to user-visible
@@ -17,7 +17,7 @@ regressions:
 * license SPDX ("Apache-2.0")
 * python_requires (">=3.12")
 * stateless STARS-like value ("42") with has_state_indicator=False
-* no-glyph long label (the Bug 3 trigger from the v0.3.9 visual review)
+* no-glyph long label (the trigger case from a visual review)
 """
 
 from __future__ import annotations
@@ -109,12 +109,12 @@ def _assert_value_x_at_zone_center(zones) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Equal-spacing rule — Bug 3 fix verification
+# Equal-spacing rule — no-glyph fix verification
 # ─────────────────────────────────────────────────────────────────────
 
 
 def test_no_glyph_no_phantom_left_gap() -> None:
-    """Bug 3 fix: glyph-absent badges have no reserved glyph slot.
+    """Glyph-absent badges have no reserved glyph slot.
     Label first char starts at `accent_w + pad`, no extra offset."""
     zones = _zones(label_w=50.0, value_w=30.0)
     pad = BRUTALIST_INPUTS["pad"]

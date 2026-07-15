@@ -107,6 +107,26 @@ def wrap_text_lines(text: str, max_w: float, voice: MatrixVoice, *, max_lines: i
     """
     if not text:
         return []
+    # Honor AUTHORED line breaks first, then greedy-wrap each paragraph into
+    # the remaining budget — an explicit break beats the heuristic, so a
+    # two-phrase subtitle can declare exactly where it splits. Paragraphs
+    # never drop (boxes grow to hold what the author wrote; max_lines is the
+    # WRAP cap for one long paragraph, never a paragraph-count cap): the
+    # effective budget floors at the authored paragraph count, and each
+    # paragraph's own slice reserves one line for every paragraph still to
+    # come, so an early long paragraph can no longer eat the whole budget
+    # and silently erase a later one — the old `if len(out) >= max_lines:
+    # break` dropped a whole paragraph with no ellipsis, no trace.
+    if "\n" in text:
+        paras = text.split("\n")
+        n = len(paras)
+        effective_max_lines = max(max_lines, n)
+        out: list[str] = []
+        for k, para in enumerate(paras):
+            reserve = n - k - 1
+            budget = max(1, effective_max_lines - len(out) - reserve)
+            out.extend(wrap_text_lines(para, max_w, voice, max_lines=budget))
+        return out[:effective_max_lines]
     if max_lines <= 1 or measure_voice(text, voice) <= max_w:
         return [truncate_to_width(text, max_w, voice)]
     words = text.split(" ")
@@ -134,7 +154,7 @@ def text_lines_needed(text: str, max_w: float, voice: MatrixVoice, *, max_lines:
 def _note_sub_fields(
     note: str, *, x: float, y0: float, max_w: float, voice: MatrixVoice, anchor: str
 ) -> dict[str, Any]:
-    """Resolve a cell note into sub-line placement fields (BUG-001).
+    """Resolve a cell note into sub-line placement fields (the note-wrap law).
 
     A note that fits stays in the single ``sub_text`` slot; one that overflows
     wraps to at most two lines stacked from ``y0`` and rides ``sub_lines``, the
@@ -623,12 +643,10 @@ def _pill(
         text_y=_baseline(cy, cfg.pill_voice),
         text_anchor="middle",
         cls="pillv",
+        # Tri-state text rides the VARIANT accent (the capsule is chrome —
+        # hairline + tint — so its ink is identity-family, not a state hue).
         text_fill=(
-            str(palette.get("pill_yes_text", "#FFFFFF"))
-            if affirmative
-            else str(palette.get("pill_opt_text", ""))
-            if opt_in
-            else ""
+            str(palette.get("pill_yes_text", "#FFFFFF")) if affirmative else "var(--dna-signal)" if opt_in else ""
         ),
         mark_state=(cell.state.value if cell.state else ""),
     )
@@ -831,6 +849,7 @@ def glyph_mark_placement(
     emphasis: bool = False,
     note: str = "",
     ink_adaptive_mono: bool = False,
+    accent_index: int = -1,
 ) -> CellPlacement:
     """Shared glyph mark builder (data cells and row-identity marks).
 
@@ -843,13 +862,14 @@ def glyph_mark_placement(
     through what the registry entry actually carries, never erroring:
     full → multicolor ``color_paths`` master (its OWN viewBox/coordinate
     space) → ``gradient`` (routed through ``glyph_gradient`` so the defs
-    emit one linearGradient per id used) → scalar ``brand_color`` →
-    genome ink. Mono renders use the top-level viewBox; a registry
-    ``fill_rule`` is stamped on the group (the evenodd marks break
-    without it).
+    emit one linearGradient per id used) → scalar ``brand_color`` → this
+    node's own flow-palette slot (``accent_index``, diagrams only — the
+    matrix frame never passes one) → genome ink. Mono renders use the
+    top-level viewBox; a registry ``fill_rule`` is stamped on the group
+    (the evenodd marks break without it).
     """
     entry = glyph_entry or {}
-    mode = resolve_glyph_mode(entry, tint)
+    mode = resolve_glyph_mode(entry, tint, has_flow_hue=accent_index >= 0)
 
     color_master = entry.get("color_paths") if mode == "full" else None
     if isinstance(color_master, Mapping):
@@ -860,7 +880,8 @@ def glyph_mark_placement(
     else:
         viewbox_src = str(entry.get("viewBox", "0 0 24 24"))
         d = str(entry.get("path", ""))
-        paths = (GlyphPath(d=d),) if d else ()
+        raw_multi = entry.get("paths") or ([d] if d else [])
+        paths = tuple(GlyphPath(d=str(pd)) for pd in raw_multi if pd)
         if mode == "gradient":
             group_fill, opacity, glyph_gradient = "", 1.0, glyph_id
         elif mode == "brand":
@@ -873,6 +894,13 @@ def glyph_mark_placement(
                 group_fill, opacity, glyph_gradient = "var(--dna-ink-primary)", 1.0, ""
             else:
                 group_fill, opacity, glyph_gradient = brand, 1.0, ""
+        elif mode == "hue":
+            # This literal is only what renders if a caller ever reads
+            # .glyph_fill directly without the accent class — the template's
+            # -fl{i}/-flp{i} class (stamped from glyph_accent_index below)
+            # wins the cascade over this presentation-attribute fallback
+            # (SVG2: presentation attributes are the lowest specificity).
+            group_fill, opacity, glyph_gradient = "var(--dna-ink-primary)", 1.0, ""
         else:
             group_fill, opacity, glyph_gradient = "var(--dna-ink-primary)", 0.9, ""
 
@@ -900,18 +928,33 @@ def glyph_mark_placement(
         glyph_paths=paths,
         glyph_transform=transform,
         glyph_fill=group_fill,
+        glyph_stroke_w=float(entry.get("stroke") or 0.0),
         glyph_opacity=opacity,
         glyph_gradient=glyph_gradient,
         glyph_fill_rule=str(entry.get("fill_rule", "") or ""),
+        glyph_accent_index=accent_index if mode == "hue" else -1,
     )
 
 
-def resolve_glyph_mode(entry: Mapping[str, Any], tint: GlyphTint) -> str:
+def resolve_glyph_mode(entry: Mapping[str, Any], tint: GlyphTint, *, has_flow_hue: bool = False) -> str:
     """Degrade the tint selection through what the entry carries.
 
-    ``full → gradient → brand → ink`` — silent degradation, never an
+    ``full → gradient → brand → hue → ink`` — silent degradation, never an
     error. The resolved mode is what actually renders (and what the
     matrix payload records via its resolved tint fields).
+
+    ``hue`` (diagrams only): a generic stroke-only mark — a registry ``kind``
+    entry carrying no ``color_paths``/``gradient``/``brand_color`` (every
+    entry in glyphs-core.json, today) — takes its node's OWN flow-palette
+    slot instead of collapsing straight to ink. Canon:
+    hw-diagram-alpha3-canon.html "COMPOSITION PROOF — INTEGRATION HUB"
+    (Integration Hub v2): its six perimeter glyph circles each carry their
+    adjoining current's exact hue (h2-g1..h2-g6), never plain ink; only the
+    hub itself stays unmarked. ``has_flow_hue`` is True only when the caller
+    resolved a REAL palette slot for this node (Semantic Chromatics still
+    governs which nodes get one — ``node.accent`` or the spine cycle
+    assignment; this function never invents membership, it only lets a
+    mark honor membership the node already carries).
     """
     if tint is GlyphTint.INK:
         return "ink"
@@ -923,6 +966,8 @@ def resolve_glyph_mode(entry: Mapping[str, Any], tint: GlyphTint) -> str:
         return "gradient"
     if entry.get("brand_color"):
         return "brand"
+    if has_flow_hue:
+        return "hue"
     return "ink"
 
 

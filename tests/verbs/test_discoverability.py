@@ -1,4 +1,4 @@
-"""Discoverability gate + verb transport integration (alpha.5, Gate 3).
+"""Discoverability gate + verb transport integration.
 
 The gate: a cold agent given only an SVG finds the contract and round-trips it.
 """
@@ -92,11 +92,11 @@ async def test_http_verb_routes() -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:
         e = await c.post("/v1/extract", json={"source": svg, "respond": "envelope"})
         assert e.json()["envelope"]["k"] == "matrix"
-        v = await c.post("/v1/verify", json={"svg": svg})
+        v = await c.post("/v1/verify", json={"source": svg})
         assert v.json()["valid"] is True
         t = await c.post(
             "/v1/transform", json={"source": svg, "mutations": [{"op": "replace", "path": "/title", "value": "Q"}]}
         )
         assert "url" in t.json() and t.json()["url"]
-        q = await c.post("/v1/query", json={"svg": svg, "question": "how many rows?"})
+        q = await c.post("/v1/query", json={"source": svg, "question": "how many rows?"})
         assert q.json()["answer"] == "1"

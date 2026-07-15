@@ -1,0 +1,60 @@
+{
+  "aspect": 1.311,
+  "caption_text": "Fan-out \u00b7 a live accent current routes each call to the right model",
+  "cards": {
+    "hero_area_ratio": 1.708,
+    "hero_h": 104.0,
+    "hero_w": 206.0,
+    "std_h_med": 76.0,
+    "std_w_med": 165.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 6,
+    "card_rx": 13.0,
+    "cards": 7,
+    "chips": 1,
+    "coins": 0,
+    "desc_lines": 7,
+    "drift_edges": 7,
+    "gather_knots": 1,
+    "glyph_marks": 7,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 0,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 1,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 36.5,
+  "height": 564.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 2
+  },
+  "occupancy": 0.565,
+  "plate": {
+    "caption_pad": 44.0,
+    "caption_y": 856.0,
+    "content_bottom": 783.0,
+    "content_top": 117.0,
+    "zone_y": 72.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-router-flow-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1180.0,
+    900.0
+  ],
+  "width": 740.0
+}

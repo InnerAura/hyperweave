@@ -1,0 +1,60 @@
+{
+  "aspect": 2.467,
+  "caption_text": null,
+  "cards": {
+    "std_h_med": 66.0,
+    "std_w_med": 216.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 12,
+    "card_rx": 12.0,
+    "cards": 13,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 13,
+    "drift_edges": 1,
+    "gather_knots": 0,
+    "glyph_marks": 0,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 4,
+    "shell_marks": 0,
+    "solid_edges": 16,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "chip_stub_min": null,
+  "height": null,
+  "lane_marks": [
+    "disc",
+    "diamond",
+    "ring",
+    "ring",
+    "ring",
+    "ring",
+    "ring",
+    "ring",
+    "ring",
+    "ring",
+    "disc-muted",
+    "disc-muted",
+    "disc-muted"
+  ],
+  "occupancy": 0.682,
+  "plate": {
+    "content_bottom": 608.0,
+    "content_top": 28.0
+  },
+  "port_tolerance": 1.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-swimlanes.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1584.0,
+    642.0
+  ],
+  "width": null
+}

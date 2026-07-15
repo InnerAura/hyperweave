@@ -1,0 +1,60 @@
+{
+  "aspect": 1.771,
+  "caption_text": "Arrows point from each service to what it depends on \u2014 core is required by four, the one bottleneck",
+  "cards": {
+    "dims_superseded": "objecthood law: the in-degree metric folds into the hero's sub line (the hand file floated it as a below-card pill), widening the crown past the hand ratio; census and structure laws still pin",
+    "hero_area_ratio": 1.034,
+    "hero_h": 60.0,
+    "hero_w": 150.0,
+    "std_h_med": 60.0,
+    "std_w_med": 145.0
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 8,
+    "card_rx": 13.0,
+    "cards": 8,
+    "chips": 1,
+    "coins": 0,
+    "desc_lines": 8,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 8,
+    "hero_cards": 1,
+    "hero_rx": 13.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 8,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "census_amendments": {
+    "chips": 0,
+    "note": "objecthood law (ratified): frames confer objecthood \u2014 the specimen's below-card in-degree pill reads as a sibling object, not an annotation; the metric folds into the hero's sub line and the render carries no floating pill. Badge/pin annotation kinds are deleted under this law."
+  },
+  "chip_stub_min": null,
+  "height": 418.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.403,
+  "plate": {
+    "caption_pad": 24.0,
+    "caption_y": 676.0,
+    "content_bottom": 597.0,
+    "content_top": 273.0,
+    "zone_y": 64.0
+  },
+  "port_tolerance": 1.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-dep-mesh-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    700.0
+  ],
+  "width": 740.0
+}

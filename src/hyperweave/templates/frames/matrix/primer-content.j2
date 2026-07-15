@@ -9,7 +9,9 @@
    Paint order: ground → stripes/bands → hero lane → guides/extents →
    chrome text → cells → summary/axis → footer → border. #}
 <g class="{{ uid }}-card" clip-path="url(#{{ uid }}-clip)">
+{% if surface_ground != 'bare' %}
   <rect width="{{ width }}" height="{{ height }}" fill="url(#{{ uid }}-card-bg)"/>
+{% endif %}
 {% for stripe in matrix_layout.row_stripes %}
   <rect x="{{ stripe.x }}" y="{{ stripe.y }}" width="{{ stripe.w }}" height="{{ stripe.h }}" rx="{{ stripe.rx }}" fill="var(--dna-ink-primary)" opacity="{{ matrix_layout.stripe_opacity }}"/>
 {% endfor %}
@@ -106,4 +108,11 @@
 {% endif %}
 {% endif %}
 </g>
+{# The outer container border is CHROME — it frames the artifact as a contained
+   card. On a bare (inlay) ground it must go entirely: keeping it makes the
+   dissolved artifact read as a translucent plate. Internal structure hairlines
+   (column/row rules, guides, seams) STAY — the table skeleton is content, not
+   the container. Plate/twin keep the frame; inlay drops it. #}
+{% if surface_ground != 'bare' %}
 <rect x="{{ matrix_layout.rects.outer.x }}" y="{{ matrix_layout.rects.outer.y }}" width="{{ matrix_layout.rects.outer.w }}" height="{{ matrix_layout.rects.outer.h }}" rx="{{ matrix_layout.rects.outer.rx }}" fill="none" stroke="var(--dna-border)" stroke-width="1.2"/>
+{% endif %}

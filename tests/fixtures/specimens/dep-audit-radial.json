@@ -1,0 +1,56 @@
+{
+ "aspect": 1.036,
+ "caption_text": "Radial dependency audit \u00b7 your package at centre, direct deps on the inner ring, transitive deps outward; the health channel surfaces the vulnerable chain at a glance",
+ "cards": {
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 1.088,
+  "hero_h": 114.0,
+  "hero_w": 104.0,
+  "std_h_med": 100.0,
+  "std_w_med": 109.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 0,
+  "card_rx": 13.0,
+  "cards": 10,
+  "chips": 0,
+  "coins": 0,
+  "desc_lines": 10,
+  "drift_edges": 0,
+  "gather_knots": 0,
+  "glyph_marks": 10,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 0,
+  "shell_marks": 0,
+  "solid_edges": 0,
+  "terminal_dots": 0,
+  "zone_headers": 1
+ },
+ "chip_stub_min": null,
+ "height": 714.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "occupancy": 0.51,
+ "plate": {
+  "caption_pad": 30.0,
+  "caption_y": 1090.0,
+  "content_bottom": 1027.0,
+  "content_top": 285.0,
+  "zone_y": 52.0
+ },
+ "port_tolerance": 0.5,
+ "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-tree-radial-v2.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1160.0,
+  1120.0
+ ],
+ "width": 740.0
+}

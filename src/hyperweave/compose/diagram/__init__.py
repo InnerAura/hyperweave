@@ -4,7 +4,15 @@ Importing this package registers every layout solver (the slug -> solver
 dispatch dict in ``solver.py``) — the matrix kind -> builder precedent.
 """
 
-from hyperweave.compose.diagram import fan, graph, linear, radial, sequence  # noqa: F401  (solver registration)
-from hyperweave.compose.diagram.solver import compute_diagram_layout, registered_slugs
+from hyperweave.compose.diagram import (  # noqa: F401  (solver registration)
+    fan,
+    graph,
+    hub,
+    lanes,
+    linear,
+    radial,
+    sequence,
+)
+from hyperweave.compose.diagram.solver import compute_diagram_layout, effective_render_cfg, registered_slugs
 
-__all__ = ["compute_diagram_layout", "registered_slugs"]
+__all__ = ["compute_diagram_layout", "effective_render_cfg", "registered_slugs"]

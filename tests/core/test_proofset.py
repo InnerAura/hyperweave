@@ -260,6 +260,43 @@ def test_generate_readme_includes_new_sections(static_proofset: object) -> None:
         assert f"pairings/strip_{primary}-{secondary}.svg" in automata_readme
 
 
+def test_verb_readme_emits_chains_with_embedded_artifacts(proofset_module: object) -> None:
+    """README_VERB.md is the three workflow chains, each paired with real renders.
+
+    Guards the proofset convention the user's feedback pinned: every operation is
+    embedded next to the artifact it produced (no expected-output prose). The
+    generator runs the verbs for real — this asserts the chains, the appendix, and
+    that every embedded SVG path actually exists on disk. Save/restore the doc so
+    a test run doesn't clobber the dev's visual-review surface.
+    """
+    out_dir = proofset_module.OUT  # type: ignore[attr-defined]
+    verb_readme = out_dir / "README_VERB.md"
+    pre = verb_readme.read_text() if verb_readme.exists() else None
+    try:
+        proofset_module._emit_verb_readme()  # type: ignore[attr-defined]
+        doc = verb_readme.read_text()
+        # The spine is three chains + the flat contract appendix.
+        assert "## Chain A — artifact lifecycle" in doc
+        assert "## Chain B — diagram evolution" in doc
+        assert "## Chain C — cross-surface identity" in doc
+        assert "## Appendix — surface contract" in doc
+        # Depth is verified visually: every embedded SVG resolves to a real file.
+        import re
+
+        embeds = re.findall(r"\((proofset/verbs/[^)]+\.svg)\)", doc)
+        assert len(embeds) >= 6, f"expected the chain renders embedded, found {embeds}"
+        for path in embeds:
+            svg = (out_dir / path).read_text()
+            assert svg.startswith("<svg") or "<svg" in svg[:200], f"{path} is not an SVG"
+        # Chain A's transform is a real content edit: parent and child differ.
+        parent = (out_dir / "proofset/verbs/chainA-1-parent.svg").read_text()
+        child = (out_dir / "proofset/verbs/chainA-2-child.svg").read_text()
+        assert parent != child, "the transformed matrix must differ from its parent"
+    finally:
+        if pre is not None:
+            verb_readme.write_text(pre)
+
+
 def test_cost_buckets_track_session_cost_not_file_size(proofset_module: object) -> None:
     """Telemetry size buckets are picked off the parsed session **cost**, not the
     on-disk byte size — a small-but-costly session outranks a big-but-cheap one.
@@ -291,3 +328,23 @@ def test_cost_buckets_track_session_cost_not_file_size(proofset_module: object) 
 
     # Empty pool → empty (caller falls back to the deterministic specimen set).
     assert pick([], "") == []
+
+
+def test_mock_receipt_payload_error_ticks_are_self_consistent(proofset_module: object) -> None:
+    """The context-load plot draws one red tick per main-thread error's REAL
+    minute (``error_min``); a count without minutes renders "14 errors, zero
+    ticks" — the self-inconsistency that flattened the committed examples
+    once. The shared mock must carry one minute per declared error, inside
+    the active window, and its render must actually emit the ticks."""
+    payload = proofset_module.MOCK_RECEIPT_PAYLOAD
+    minutes = payload["context"]["error_min"]
+    assert len(minutes) == payload["errors"]
+    assert all(0 <= m <= payload["active_min"] for m in minutes)
+
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    svg = compose(ComposeSpec(type="receipt", genome_id="primer", variant="cream", telemetry_data=payload)).svg
+    # The tick template stamps this exact stroke signature per error tick.
+    assert svg.count('stroke-width="1.4" opacity="0.95"') > 0
+    assert "= errors" in svg  # the legend names them

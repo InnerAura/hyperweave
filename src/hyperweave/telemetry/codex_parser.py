@@ -91,7 +91,7 @@ def _safe_json_loads(s: str) -> _JsonObj:
     return result if isinstance(result, dict) else {}
 
 
-# ── Codex shell exit-code classification (BUG-005) ───────────────────────────
+# ── Codex shell exit-code classification (the shell-outcome table) ───────────
 # Codex encodes shell success/failure as "Process exited with code N" in the
 # output preamble, not the word "error". Outcome is a command-aware table, not a
 # `!= 0` test: exit-1 from a predicate tool (grep/rg/test/diff) means "no match" —
@@ -134,7 +134,7 @@ def _leading_program(command: str) -> str:
 
 
 def _classify_exit(code: int, command: str | None) -> ToolOutcome:
-    """Map a shell exit code (+ its command) to an outcome — the BUG-005 table."""
+    """Map a shell exit code (+ its command) to an outcome — the shell-outcome table."""
     if code == 0:
         return ToolOutcome.SUCCESS
     if code in _INTERRUPTED_CODES:
@@ -409,7 +409,7 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         if tc is not None:
             all_tool_calls.append(tc)
 
-    # ── Pass 3: shell outcomes from function_call_output exit codes (BUG-005) ──
+    # ── Pass 3: shell outcomes from function_call_output exit codes ──
     # Codex shells report "Process exited with code N" in the output preamble (not
     # the word "error"). apply_patch / web_search are NOT touched here — their
     # status field already classified them at build time. Classification joins the

@@ -262,7 +262,7 @@ stats:
   heatmap_cell_size: 11.080
   heatmap_cell_gap: 1.2
   heatmap_zone_height: 84.76
-  # Username header layout. v0.3.9 Bug #1 follow-up: bio_x is the ADAPTIVE
+  # Username header layout. bio_x is the ADAPTIVE
   # CEILING (only fires when identity is so long it would push bio off the
   # card). Post-Bug-A the HYPERWEAVE branding moved from the header right
   # zone (was at sw-20 y=22) to the footer (y=221), so the header right is
@@ -282,7 +282,7 @@ stats:
   # For ELI64S (short, ~52px ink): bio at x=80. For VLLM-PROJECT
   # (~130px ink): bio at x=158 (no clamp, no squish).
   identity_breathing_margin: 8
-  # Bug A folded HYPERWEAVE into the footer, eliminating the header-row
+  # HYPERWEAVE folds into the footer band, eliminating the header-row
   # collision that bio_collision_clamp was defending against. With
   # HYPERWEAVE at y=221 there's no right-side header element to collide
   # with — bio can extend naturally up to the card edge.

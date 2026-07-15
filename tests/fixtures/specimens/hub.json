@@ -1,0 +1,94 @@
+{
+ "aspect": 1.512,
+ "caption_text": "The verb algebra \u00b7 operations touch the seed, destinations receive the render",
+ "cards": {
+  "dims_superseded": "primer_diagram_language: the verb-algebra cross re-derives to ink-solved satellite boxes (the spec 144x60, the narrowest card) with a 232x112 nucleus, superseding this earlier topology specimen's uniform-floor cards; the hand file still validates its own dims.",
+  "hero_area_ratio": 2.386,
+  "hero_h": 120.0,
+  "hero_w": 280.0,
+  "std_h_med": 64.0,
+  "std_w_med": 220.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 4,
+  "card_rx": 13.0,
+  "cards": 6,
+  "chips": 5,
+  "coins": 0,
+  "desc_lines": 5,
+  "drift_edges": 1,
+  "gather_knots": 1,
+  "glyph_marks": 6,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 2,
+  "muted_cards": 0,
+  "particles": 2,
+  "shell_marks": 0,
+  "solid_edges": 4,
+  "terminal_dots": 1,
+  "zone_headers": 2
+ },
+ "chip_homes": {
+  "in_card": 4,
+  "on_wire": 1,
+  "wire_offset_max": 0.0
+ },
+ "chip_stub_min": 50.0,
+ "height": 489.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 2
+ },
+ "hub_seats": [
+  {
+   "angle": -179.3,
+   "dist": 475.0,
+   "label": "the spec"
+  },
+  {
+   "angle": -103.7,
+   "dist": 273.8,
+   "label": "transform"
+  },
+  {
+   "angle": 115.7,
+   "dist": 288.5,
+   "label": "read, never mutates"
+  },
+  {
+   "angle": -17.3,
+   "dist": 424.1,
+   "label": "documents"
+  },
+  {
+   "angle": 15.7,
+   "dist": 420.7,
+   "label": "surfaces"
+  }
+ ],
+ "hub_seats_superseded": {
+  "documents": "snug-width ruling 2026-07-14: the E satellites solve to their own ink, moving the name-run seat ~6% inside the hand file's wide-card throw",
+  "read, never mutates": "primer_diagram_language's ink-solved satellite family (cards.dims_superseded) is narrower than this specimen's own now-superseded wide-floor cards; a spine-centered sole S satellite's incidental icon+text lean shallows to ~109.1deg/262.0 (\u0394angle 6.6deg, \u0394throw 9.2%, both outside the +/-4deg/+/-6% band) instead of this specimen's measured 115.7deg/288.5. A card-position nudge used to close the gap but un-verticalized the connector (M 620,470 L 620,634 in the specimen \u2014 zero x-delta) along with it; the connector is the higher-fidelity ground truth, so the seat target is amended here instead.",
+  "surfaces": "snug-width ruling 2026-07-14: the E satellites solve to their own ink, moving the name-run seat ~6% inside the hand file's wide-card throw",
+  "transform": "primer_diagram_language's ink-solved satellite family (cards.dims_superseded) is narrower than this specimen's own now-superseded wide-floor cards; a spine-centered sole N satellite's incidental icon+text lean shallows to ~-97.1deg/262.4 (\u0394angle 6.6deg, within throw tolerance but outside the +/-4deg angle band) instead of this specimen's measured -103.7deg/273.8. A card-position nudge used to close the gap but un-verticalized the connector (M 620,350 L 620,184 in the specimen \u2014 zero x-delta) along with it; the connector is the higher-fidelity ground truth, so the seat target is amended here instead."
+ },
+ "occupancy": 0.655,
+ "plate": {
+  "caption_pad": 34.0,
+  "caption_y": 786.0,
+  "content_bottom": 723.0,
+  "content_top": 118.0,
+  "zone_y": 70.0
+ },
+ "port_tolerance": 4.5,
+ "source": "v04/alpha/v04a6/diagrams-v3/pp-verb-ontology.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1240.0,
+  820.0
+ ],
+ "width": 740.0
+}

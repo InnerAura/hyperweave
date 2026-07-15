@@ -1,4 +1,4 @@
-{# Primer receipt — content body (8 zones, the v3 prototype).
+{# Primer receipt — content body (8 zones, the receipt specimen).
 
    Stamps the resolver's pre-computed zone dataclasses. ZERO geometry numbers:
    every x/y/width/size/radius is read from a zone dataclass or the `rg` (receipt
@@ -16,7 +16,7 @@
 {% set cl = zone_context_load %}
 {% set ft = zone_footer %}
 
-{# BUG-004: cast the lift shadow from a behind-silhouette rect, NOT from the
+{# Mobile-safe shadow law: cast the lift shadow from a behind-silhouette rect, NOT from the
    text-bearing content group. A filter on the full ~740x244 card forces mobile
    Safari/Chrome to rasterize the whole subtree — text included — into a
    resolution-capped offscreen buffer (the uniform blur). The shadow caster is a

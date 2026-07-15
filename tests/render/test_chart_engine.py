@@ -842,13 +842,13 @@ def test_x_date_labels_no_visual_overlap_on_cellular_viewport() -> None:
     _assert_no_visual_overlap(labels)
 
 
-# ── Zero-time-span defense (bug 2 reproducer) ────────────────────────
+# ── Zero-time-span defense ───────────────────────────────────────────
 
 
 def test_project_points_identical_timestamps_distributes_by_index(
     sample_viewport: Viewport,
 ) -> None:
-    """All-same-timestamp points must not collapse to vp.x (bug 2 defense)."""
+    """All-same-timestamp points must not collapse to vp.x (zero-span defense)."""
     same_date = datetime(2025, 5, 1, tzinfo=UTC)
     pts = [ChartPoint(date=same_date, value=i + 1) for i in range(4)]
     projected = _project_points(pts, sample_viewport)

@@ -1,4 +1,4 @@
-"""Matrix CLI surface: --spec-file, --preset, --markdown-out."""
+"""Matrix CLI surface: --spec-file (path or bundled-spec name), --markdown-out."""
 
 from __future__ import annotations
 
@@ -43,17 +43,25 @@ def test_spec_file_with_markdown_sidecar(tmp_path: Path) -> None:
     assert out_md.read_text().startswith("**Format comparison**")
 
 
-def test_preset_connectors(tmp_path: Path) -> None:
+def test_bundled_spec_name_connectors(tmp_path: Path) -> None:
+    """A bare --spec-file name resolves against the bundled-spec store."""
     out_svg = tmp_path / "connectors.svg"
-    result = runner.invoke(app, ["compose", "matrix", "--preset", "connectors", "-g", "primer", "-o", str(out_svg)])
+    result = runner.invoke(app, ["compose", "matrix", "--spec-file", "connectors", "-g", "primer", "-o", str(out_svg)])
     assert result.exit_code == 0, result.output
     assert 'data-hw-subvariant="registry"' in out_svg.read_text()
 
 
-def test_unknown_preset_exits_2(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["compose", "matrix", "--preset", "nope", "-g", "primer"])
+def test_unknown_bundled_spec_exits_2(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["compose", "matrix", "--spec-file", "nope", "-g", "primer"])
     assert result.exit_code == 2
-    assert "unknown matrix preset" in result.output
+    assert "unknown matrix spec" in result.output
+
+
+def test_retired_preset_flag_exits_2(tmp_path: Path) -> None:
+    """--preset is retired for one release with a migration message."""
+    result = runner.invoke(app, ["compose", "matrix", "--preset", "connectors", "-g", "primer"])
+    assert result.exit_code == 2
+    assert "--preset was removed" in result.output
 
 
 def test_invalid_spec_file_exits_2(tmp_path: Path) -> None:

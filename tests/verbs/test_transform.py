@@ -1,4 +1,4 @@
-"""transform — the write half (alpha.5, Gate 2)."""
+"""transform — the write half."""
 
 from __future__ import annotations
 

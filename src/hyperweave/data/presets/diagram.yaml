@@ -1,570 +1,1260 @@
-# Server-known diagram presets — content as data, zero Python per preset.
+# Server-known diagram presets — the kit prototype recreations, one per
+# prototype (DIAGRAM_KIT_BRIEF: "Presets are the prototypes — nothing
+# else."). Each preset's content is the prototype's hw:payload spec where the
+# payload carries nodes; where the prototype shipped a title-only payload the
+# node/edge content is the prototype's rendered figure (labels/roles/chips read
+# off the specimen), and the census fixture (tests/fixtures/specimens/*.json)
+# is the geometric ground truth every preset is tuned against.
 #
-# Identity rule (C1): any node naming a BRANDED system carries its registry
-# glyph (data/glyphs.json, tint per genome default) via the card+glyph or
-# glyph-circle anatomy; accent dots are for abstract concepts only. Heroes
-# stay typographic by design — the signal ring is their identity — unless
-# the preset opts them into glyph-circle.
+# Identity rule: a node naming a BRANDED system carries its registry glyph
+# (data/registries/glyphs.json) in `glyph`; a semantic archetype carries a core
+# glyph (data/registries/glyphs-core.json) in `kind`. Icon-or-nothing — a slug
+# resolving in neither registry stays off. No node renders as a glyph-circle
+# coin (every prototype census declares coins: 0).
 #
-# Sections: the eleven topology presets (specimen recreations), the six
-# canon applied-motion presets, gateway + the graph specimens + mindmap,
-# the eight gallery entries (named real systems per the coverage matrix —
-# agent-plan is the launch shot), and the frontier tier (coverage-exempt,
-# marketing-grade: no specimen looks like these).
+# A second combinatorial tier (owner-review candidates) lives OUT of the
+# bundled library, in v04/alpha/v04a6/preset-candidates.yaml.
 
 presets:
-  pipeline:
+  # ── Pipeline ────────────────────────────────────────────────────────────
+  rag-pipeline:
     topology: pipeline
-    title: One Compositor, Four Stages
-    subtitle: Agent request flows left-to-right into a rendered surface
-    notes: compose pipeline
-    nodes:
-      - { label: Agent, desc: calls API · MCP }
-      - { label: Compositor, desc: FRAME × GENOME × DATA, role: hero }
-      - { label: Artifact, desc: self-contained SVG }
-      - { label: Surface, desc: renders anywhere }
-
-  fanout-horizontal:
-    topology: fanout
-    title: One Artifact, Every Surface
-    subtitle: a self-contained SVG renders wherever markdown does
-    notes: every surface
-    nodes:
-      - { label: HyperWeave SVG, desc: "self-contained · portable", role: hero }
-      - { label: GitHub, desc: README · Issues · PRs, glyph: github, style: card+glyph }
-      - { label: Obsidian, desc: vault · daily notes, glyph: obsidian, style: card+glyph }
-      - { label: Slack, desc: threads · unfurled, glyph: slack, style: card+glyph }
-      - { label: Email, desc: inline · PDF export, glyph: gmail, style: card+glyph }
-      - { label: Agent Context, desc: "hw:reasoning parsed", glyph: anthropic, style: card+glyph }
-
-  fanout-bilateral:
-    topology: fanout
-    orientation: bilateral
-    title: Broadcast, Both Ways
-    subtitle: one source, surfaces on either side
-    notes: bilateral fan
-    nodes:
-      - { label: HyperWeave SVG, desc: "self-contained · portable", role: hero }
-      - { label: Obsidian, desc: vault · daily notes, glyph: obsidian, style: card+glyph }
-      - { label: Email, desc: inline · PDF export, glyph: gmail, style: card+glyph }
-      - { label: GitHub, desc: README · Issues · PRs, glyph: github, style: card+glyph }
-      - { label: Slack, desc: threads · unfurled, glyph: slack, style: card+glyph }
-      - { label: Agent Context, desc: "hw:reasoning parsed", glyph: anthropic, style: card+glyph }
-
-  fanout-upward:
-    topology: fanout
-    orientation: upward
-    title: ""
-    subtitle: ""
-    notes: compact fan
-    nodes:
-      - { label: HyperWeave SVG, desc: self-contained, role: hero }
-      - { label: GitHub, desc: README · PRs, glyph: github, style: card+glyph }
-      - { label: Obsidian, desc: vault, glyph: obsidian, style: card+glyph }
-      - { label: Slack, desc: threads, glyph: slack, style: card+glyph }
-      - { label: Email, desc: inline, glyph: gmail, style: card+glyph }
-      - { label: Agent, desc: envelope, glyph: anthropic, style: card+glyph }
-
-  fanout-radial:
-    topology: fanout
-    orientation: radial
-    title: One Artifact, Every Surface
-    notes: radial hub
-    nodes:
-      - { label: HyperWeave SVG, short: hw, glyph: hyperweave, style: glyph-circle }
-      - { label: GitHub, glyph: github, style: card+glyph }
-      - { label: Obsidian, glyph: obsidian, style: card+glyph }
-      - { label: Slack, glyph: slack, style: card+glyph }
-      - { label: Email, glyph: gmail, style: card+glyph }
-      - { label: Agent Context, glyph: anthropic, style: card+glyph }
-
-  convergence:
-    topology: convergence
-    title: Four Inputs, One Artifact
-    subtitle: the composition formula meets at a single mouth
-    notes: four inputs
-    nodes:
-      - { label: FRAME, desc: matrix · diagram · card }
-      - { label: GENOME, desc: primer · brutalist · chrome }
-      - { label: DATA, desc: live connectors }
-      - { label: PARADIGM, desc: template variant }
-      - { label: ARTIFACT, desc: one self-contained SVG, role: hero }
-
-  flywheel:
-    topology: flywheel
-    title: Data Flywheel
-    subtitle: artifacts train the model that drafts better artifacts
-    notes: data flywheel
-    nodes:
-      - { label: Generate, desc: compose }
-      - { label: Embed, desc: README · PR }
-      - { label: Record, desc: telemetry }
-      - { label: Train, desc: spatial model }
-      - { label: Spatial Model, desc: the axis, role: hero }
-
-  stack:
-    topology: stack
-    title: Composited Upward
-    subtitle: every layer multiplies into the artifact above it
-    notes: composed stack
-    operator: "×"
-    nodes:
-      - { label: ARTIFACT, desc: one self-contained SVG, role: hero }
-      - { label: FRAME, desc: spatial contract }
-      - { label: GENOME, desc: chromatic DNA }
-      - { label: DATA, desc: live connectors }
-      - { label: PARADIGM, desc: template variant }
-
-  tree:
-    topology: tree
-    title: Artifact Taxonomy
-    subtitle: every HyperWeave artifact is one of three species
-    notes: artifact taxonomy
-    nodes:
-      - { label: Artifact, desc: self-contained SVG, role: hero }
-      - { label: Static, desc: "zero JS · zero data — icons · dividers" }
-      - { label: Data-Bound, desc: "live connectors — badges · charts · matrices" }
-      - { label: Interactive, desc: "declared affordances — the v0.5 HTML twin" }
-
-  comparison:
-    topology: comparison
-    title: Brittle to Portable
-    subtitle: the same intent, restated as a contract
-    notes: brittle to portable
-    nodes:
-      - { label: Agent-generated code, desc: breaks outside its sandbox, role: muted }
-      - { label: HyperWeave SVG, desc: renders anywhere markdown does, role: hero }
-
-  sequence:
-    topology: sequence
-    title: Compose, Embed, Confirm
-    subtitle: an agent trace — messages replay in order on one φ clock
-    notes: sequence trace
-    nodes:
-      - { id: agent, label: Agent, glyph: claude, style: card+glyph }
-      - { id: hw, label: hw compositor, desc: MCP · compose, role: hero }
-      - { id: github, label: GitHub, glyph: github, style: card+glyph }
+    zones: ["retrieval-augmented generation"] # specimen -zone runs, verbatim
+    title: A RAG pipeline, stage by stage
+    subtitle: Pipeline · a query is encoded, searched, augmented with retrieved context, and grounded into a cited answer
+    notes: rag pipeline
+    node_style: card+glyph
+    glyph_tint: full
+    node_anatomy: head # the rag-pipeline specimen's stages are portrait (glyph ABOVE the name); the chassis default is label-row for lifecycle pipelines (artifact-roundtrip/gateway)
+    chassis: { margin_x: 92, gap: 150, width: 1430, height: 440, card_min_w: 111, node: { w: 111, h: 128 }, hero: { w: 138, h: 128, rx: 16 } , zone_content_gap: 84, caption_gap: 100, caption_pad: 33} # the rag-pipeline specimen's portrait canvas: 111x128 stages, 138x128 answer crown, four equal 150px runs
+    nodes: # labels/descs/glyphs verbatim from the rag-pipeline specimen (parity content)
+      - { id: corpus, label: Query, desc: user ask, kind: search }
+      - { id: embed, label: Embed, desc: → vector, glyph: huggingface }
+      - { id: index, label: Retrieve, desc: vector search, glyph: postgresql, glyph_tint: ink, chips: ["top-k 5", cosine] }
+      - { id: rerank, label: Generate, desc: grounded, glyph: anthropic }
+      - { id: answer, label: Answer, desc: cited response, kind: file-text, role: hero } # specimen draws the folded document, not a speech bubble
     edges:
-      - { source: agent, target: hw, label: "compose(matrix, spec)", kind: call }
-      - { source: hw, target: agent, label: "artifact + hwz/1", kind: return }
-      - { source: agent, target: github, label: embed in PR, kind: call }
-      - { source: github, target: agent, label: "rendered · 200 OK", kind: return }
+      - { source: corpus, target: embed, label: encode, label_style: chip, edge_motion: particle, relation: assert }
+      - { source: embed, target: index, label: search, label_style: chip, relation: assert }
+      - { source: index, target: rerank, label: augment, label_style: chip, relation: assert }
+      - { source: rerank, target: answer, label: ground, label_style: chip, relation: assert }
 
-  pipeline-relay:
+  artifact-roundtrip:
     topology: pipeline
-    title: Compose Pipeline — Relay
-    subtitle: the shot fires, absorbs into the node, re-fires — sequence as light
-    notes: beam applied · pipeline relay
-    edge_motion: beam
-    node_style: glyph-circle
+    title: The round trip
+    subtitle: The round trip · pixels for humans, hw:payload for agents
+    notes: artifact lifecycle roundtrip
+    node_style: card+glyph
+    node_anatomy: row # artifact-roundtrip: landscape lifecycle cards, not portrait heads
+    # hero label_desc_gap 5.1: this preset's OWN hero (pp-roundtrip.svg "the
+    # artifact", name baseline 26, gap 19 on a 228x64 rx16 crown) is tighter
+    # than the paradigm root's generic hero rhythm (label_desc_gap 8.5,
+    # calibrated for the taller 206x104 router hero) — inheriting root
+    # without this citation overshoots this hero's own 64 to ~67.4.
+    chassis: { card_min_w: 228, node: { w: 228, h: 64 }, hero: { w: 228, h: 64, label_desc_gap: 5.1 }, hero_ratio: 1.0 , caption_gap: 124, caption_pad: 33.1} # hero_ratio 1.0: specimen hero == std width (the pipeline default 1.175 inflated 228 to 267.9)
+    edge_motion: particle
+    marker: dot
     nodes:
-      - { label: agent, glyph: claude }
-      - { label: hw compose, short: hw, role: hero }
-      - { label: artifact, glyph: hyperweave }
-      - { label: surface, glyph: github }
-
-  pipeline-streaming:
-    topology: pipeline
-    title: Compose Pipeline — Streaming
-    subtitle: "the relay's counterpart: throughput, not transformation"
-    notes: flow applied · pipeline streaming
-    edge_motion: flow
-    node_style: glyph-circle
-    nodes:
-      - { label: agent, glyph: claude }
-      - { label: hw compose, short: hw, role: hero }
-      - { label: artifact, glyph: hyperweave }
-      - { label: surface, glyph: github }
-
-  fanout-volley:
-    topology: fanout
-    title: Fan-out — Volley
-    subtitle: independent tool calls, φ-staggered — three or four comets airborne at once
-    notes: beam applied · volley
-    edge_motion: beam
-    nodes:
-      - { label: Claude Code, short: ai, glyph: claude, role: hero, style: glyph-circle }
-      - { label: GitHub, glyph: github, style: card+glyph }
-      - { label: Slack, glyph: slack, style: card+glyph }
-      - { label: Notion, glyph: notion, style: card+glyph }
-      - { label: Gmail, glyph: gmail, style: card+glyph }
-      - { label: Postgres, glyph: postgresql, style: card+glyph }
-
-  convergence-arrivals:
-    topology: convergence
-    title: Convergence — Arrivals
-    subtitle: each ember tail drains into the hub — ingestion as light
-    notes: beam applied · arrivals
-    edge_motion: beam
-    nodes:
-      - { label: Sessions, desc: JSONL traces }
-      - { label: Telemetry, desc: compose events }
-      - { label: Configs, desc: genomes · paradigms }
-      - { label: Fixtures, desc: committed cache }
-      - { label: registry, short: hw, role: hero, style: glyph-circle }
-
-  flywheel-circulation:
-    topology: flywheel
-    title: Data Flywheel — Circulation
-    subtitle: no events, only momentum
-    notes: flow applied · circulation
-    edge_motion: flow
-    node_style: glyph-circle
-    nodes:
-      - { label: artifacts, glyph: hyperweave }
-      - { label: usage, glyph: github }
-      - { label: telemetry, short: tx }
-      - { label: model, glyph: anthropic }
-
-  integration-hub:
-    topology: fanout
-    orientation: bilateral
-    title: Integration Hub
-    subtitle: six simultaneous currents, φ-staggered — one calm system of light
-    notes: integration hub
-    edge_motion: flow
-    node_style: glyph-circle
-    nodes:
-      - { id: hw, label: hw, short: hw, role: hero }
-      - { id: docs, label: docs, glyph: notion }
-      - { id: chat, label: chat, glyph: slack }
-      - { id: files, label: files, glyph: obsidian }
-      - { id: actions, label: actions, glyph: github }
-      - { id: mail, label: mail, glyph: gmail }
-      - { id: agents, label: agents, glyph: anthropic }
+      - { id: spec, label: the spec, desc: "diagram/1 · json", kind: file-text }
+      - { id: artifact, label: the artifact, desc: "hw:payload · hwz/1", role: hero, glyph: hyperweave } # the crown's own diamond (pp-roundtrip draws ring+core at the hero; census amended 3→4)
+      - { id: surface, label: the surface, desc: "camo · img tag", kind: image } # specimen: framed-window mark
+      - { id: agent, label: the agent, desc: "read · transform", kind: terminal } # specimen: >_ prompt mark
     edges:
-      # Left side feeds the hub (currents read inward); the right side
-      # drains it — direction is the edge, not the topology.
-      - { source: docs, target: hw }
-      - { source: chat, target: hw }
-      - { source: files, target: hw }
-      - { source: hw, target: actions }
-      - { source: hw, target: mail }
-      - { source: hw, target: agents }
+      - { source: spec, target: artifact, label: compose, relation: drift }
+      - { source: artifact, target: surface, label: "publish --format", relation: drift }
+      - { source: surface, target: agent, label: re-read, relation: drift }
+      - { source: agent, target: artifact, label: "transform → artifact′", relation: bypass }
 
   gateway:
     topology: pipeline
-    title: MCP Gateway
-    subtitle: request goes one way, response comes back — two lanes per pair
+    title: MCP gateway
+    subtitle: host → gateway → server · request and response as two lanes
     notes: mcp gateway
+    node_style: card+glyph
+    node_anatomy: row # gateway: landscape request/response cards
+    chassis: { card_min_w: 142, node: { w: 142, h: 54, rx: 12 }, hero: { w: 167, h: 54, rx: 12 } , caption_gap: 4, caption_pad: 11.4}
     nodes:
-      - { id: client, label: MCP client, glyph: claude, style: card+glyph }
-      - { id: hw, label: hw, role: hero }
-      - { id: server, label: MCP server, glyph: docker, style: card+glyph }
-    edges:
-      - { source: client, target: hw, direction: both }
-      - { source: hw, target: server, direction: both }
+      - { id: client, label: Claude Code, desc: MCP host, glyph: anthropic }
+      - { id: hw, label: MCP gateway, role: hero, glyph: hyperweave }
+      - { id: server, label: hyperweave, desc: MCP server, kind: server }
+    edges: # per-lane request/response labels (gateway)
+      - { source: client, target: hw, relation: drift, marker: none, label: "request →" }
+      - { source: hw, target: client, relation: drift, marker: none, label: "← response" }
+      - { source: hw, target: server, direction: both, relation: drift, marker: none }
 
-  service-dependencies:
-    topology: dag
-    title: Service Dependencies
-    subtitle: fan-in, fan-out and a rank-skipping edge — the general-graph case
-    notes: dependency dag
-    nodes:
-      - { id: web, label: web, desc: edge frontend, glyph: react, style: card+glyph }
-      - { id: worker, label: worker, desc: batch jobs, glyph: python, style: card+glyph }
-      - { id: api, label: api, desc: REST · graphql, glyph: nginx, style: card+glyph }
-      - { id: queue, label: queue, desc: events, glyph: rabbitmq, style: card+glyph }
-      - { id: auth, label: auth, desc: tokens }
-      - { id: db, label: db, desc: postgres, glyph: postgresql, style: card+glyph }
-      - { id: cache, label: cache, desc: redis, glyph: redis, style: card+glyph }
-    edges:
-      - { source: web, target: api }
-      - { source: worker, target: queue }
-      - { source: api, target: auth }
-      - { source: api, target: db }
-      - { source: api, target: cache }
-      - { source: queue, target: db }
-      - { source: worker, target: db }
-
-  order-lifecycle:
-    topology: state-machine
-    title: Order Lifecycle
-    subtitle: happy path, rejection branch, revise loop — the back-edge is the point
-    notes: state machine
-    nodes:
-      - { id: draft, label: draft }
-      - { id: submitted, label: submitted }
-      - { id: approved, label: approved }
-      - { id: shipped, label: shipped, role: hero }
-      - { id: rejected, label: rejected }
-    edges:
-      - { source: draft, target: submitted, label: submit }
-      - { source: submitted, target: approved, label: "review ✓" }
-      - { source: approved, target: shipped, label: fulfill }
-      - { source: submitted, target: rejected, label: "review ✗" }
-      - { source: rejected, target: draft, label: revise }
-
-  mindmap:
-    topology: tree
-    orientation: radial
-    title: Anatomy of an Artifact
-    notes: artifact anatomy
-    nodes:
-      - { id: artifact, label: HyperWeave SVG, short: hw, glyph: hyperweave, style: glyph-circle }
-      - { id: visual, label: Visual }
-      - { id: payload, label: Payload }
-      - { id: envelope, label: Envelope }
-      - { id: geometry, label: geometry }
-      - { id: motion, label: motion }
-      - { id: spec, label: spec }
-      - { id: rendered, label: rendered }
-      - { id: pattern, label: pattern + n }
-    edges:
-      - { source: artifact, target: visual }
-      - { source: artifact, target: payload }
-      - { source: artifact, target: envelope }
-      - { source: visual, target: geometry }
-      - { source: visual, target: motion }
-      - { source: payload, target: spec }
-      - { source: payload, target: rendered }
-      - { source: envelope, target: pattern }
-
-  # ── Gallery: named real systems (P5) ──────────────────────────────────
-
-  agent-plan:
-    topology: sequence
-    title: Plan, Approve, Execute
-    subtitle: a coding-agent session as a replayable trace — plans as artifacts
-    notes: agent plan
-    nodes:
-      - { id: user, label: User, desc: reviews · approves }
-      - { id: agent, label: Claude Code, desc: plans · executes, role: hero }
-      - { id: repo, label: GitHub, glyph: github, style: card+glyph }
-    edges:
-      - { source: user, target: agent, label: "plan(feature)", kind: call }
-      - { source: agent, target: user, label: "plan + diagrams", kind: return }
-      - { source: user, target: agent, label: "approve ✓", kind: call }
-      - { source: agent, target: repo, label: "execute · commit", kind: call }
-      - { source: repo, target: agent, label: checks green, kind: return }
-      - { source: agent, target: user, label: receipt, kind: return }
-
-  rag-pipeline:
+  # frontier-handoff: the beam relay reference specimen. Four lab
+  # medallions on one straight relay — a beam reference, not a kit-prototype
+  # recreation; r 32/38(hero), runs locked 232 between
+  # silhouettes (node:run 1:3.6), three sequential beam windows on the
+  # shared 5.236s clock. The comet is the payload; direction is motion —
+  # no arrowheads.
+  frontier-handoff:
     topology: pipeline
-    title: RAG, End to End
-    subtitle: retrieval feeds generation — one straight line from corpus to answer
-    notes: rag pipeline
-    edge_motion: flow
-    nodes:
-      - { label: Corpus, desc: docs · tickets }
-      - { label: Embedder, desc: e5 · bge, glyph: huggingface, style: card+glyph }
-      - { label: pgvector, desc: ANN index, glyph: postgresql, style: card+glyph }
-      - { label: Reranker, desc: cross-encoder }
-      - { label: Claude, short: ai, glyph: anthropic, style: glyph-circle, role: hero }
-
-  inference-serving:
-    topology: dag
-    title: Inference Serving
-    subtitle: one balancer, a vLLM pool, shared KV — telemetry skips the ranks
-    notes: inference serving
+    zones: ["frontier handoff"] # specimen zone header, accent voice
+    title: Frontier Handoff
+    subtitle: Frontier handoff · one task relayed across four labs — the comet is the payload
+    notes: frontier handoff beam relay
+    node_style: glyph-circle
     glyph_tint: full
+    edge_motion: beam
+    chassis: { circle_r: 32, hero_circle_r: 38, gap: 232 , zone_content_gap: 92, caption_gap: 38, caption_pad: 41}
     nodes:
-      - { id: req, label: requests, desc: clients }
-      - { id: lb, label: balancer, desc: least-load, glyph: nginx, style: card+glyph }
-      - { id: pod-a, label: vllm-a, desc: H100 · tp2, glyph: vllm, style: card+glyph }
-      - { id: pod-b, label: vllm-b, desc: H100 · tp2, glyph: vllm, style: card+glyph }
-      - { id: kv, label: kv-cache, desc: paged attn, glyph: redis, style: card+glyph }
-      - { id: obs, label: metrics, desc: tokens/s, glyph: grafana, style: card+glyph }
+      - { id: gpt, label: GPT, glyph: openai }
+      - { id: claude, label: Claude, glyph: anthropic, role: hero }
+      - { id: gemini, label: Gemini, glyph: gemini }
+      - { id: ollama, label: Ollama, glyph: ollama }
     edges:
-      - { source: req, target: lb }
-      - { source: lb, target: pod-a }
-      - { source: lb, target: pod-b }
-      - { source: pod-a, target: kv }
-      - { source: pod-b, target: kv }
-      - { source: pod-a, target: obs }
-      - { source: lb, target: obs }
+      - { source: gpt, target: claude }
+      - { source: claude, target: gemini }
+      - { source: gemini, target: ollama }
+
+  # ── Fanout ──────────────────────────────────────────────────────────────
+  reverse-etl:
+    topology: fanout
+    zones: ["sources", "destinations"] # specimen -zone runs, verbatim
+    orientation: bilateral
+    chassis: { card_min_w: 168, hero: { w: 236.3, h: 104 } , zone_content_gap: 118, caption_gap: 128, caption_pad: 37} # specimen doors are 168x76 verbatim (pp-integration); hero 236.3x104 verbatim (pp-integration sync engine)
+    title: Sync sources to destinations
+    subtitle: Fan-out (bilateral) · pull from sources on the left, sync, push to destinations on the right
+    notes: reverse etl sync
+    glyph_tint: full
+    node_style: card+glyph
+    nodes:
+      - { id: sync, label: sync engine, desc: "pull → transform → push\n3 in · 3 out", role: hero, kind: refresh-cw }
+      - { id: postgres, label: Postgres, desc: app database, glyph: postgresql }
+      - { id: stripe, label: Stripe, desc: payments, glyph: stripe }
+      - { id: salesforce, label: Salesforce, desc: CRM records, glyph: salesforce }
+      - { id: slack, label: Slack, desc: alerts, glyph: slack }
+      - { id: notion, label: Notion, desc: team docs, glyph: notion }
+      - { id: drive, label: Drive, desc: exports, glyph: googledrive }
+    edges:
+      - { source: postgres, target: sync, edge_motion: particle, relation: assert }
+      - { source: stripe, target: sync, edge_motion: particle, relation: assert }
+      - { source: salesforce, target: sync, edge_motion: particle, relation: assert }
+      - { source: sync, target: slack, relation: assert }
+      - { source: sync, target: notion, relation: assert }
+      - { source: sync, target: drive, relation: assert }
 
   model-router:
     topology: fanout
-    orientation: radial
-    title: One Key, Every Model
+    zones: ["router", "providers"] # specimen -zone runs, verbatim
+    orientation: horizontal # model-router DRAWS a horizontal fan (hero→knot→column), not radial
+    # node.pad_y/label_desc_gap: primer_diagram_language's uniform 165x76
+    # satellite (name 33.9, desc-gap 19) — a THIS-SPECIMEN citation, not a
+    # fanout-horizontal-topology default (parity-beam shares that chassis
+    # with its own uniform 160x60 doors and must not inherit the growth).
+    chassis: { card_min_w: 165, node: { pad_y: 22, label_desc_gap: 7.5 }, hero: { w: 206, h: 104, max_desc_lines: 2 } , zone_content_gap: 45, caption_gap: 59, caption_pad: 41}
+    title: One call, best model
+    subtitle: Fan-out · a live accent current routes each call to the right model
     notes: model router
     glyph_tint: full
-    node_style: glyph-circle
+    node_style: card+glyph
     nodes:
-      - { label: router, short: api, role: hero }
-      - { label: OpenAI, glyph: openai }
-      - { label: Anthropic, glyph: anthropic }
-      - { label: Gemini, glyph: gemini }
-      - { label: Mistral, glyph: mistral }
-      - { label: DeepSeek, glyph: deepseek }
-      - { label: Qwen, glyph: qwen }
-      - { label: Ollama, glyph: ollama }
-      - { label: HF, glyph: huggingface }
+      # gather: true — the specimen's depart trunk (gather_knots: 1) needs the
+      # fanout gather-gate now that it matches join/dag instead of firing
+      # unconditionally on >=2 spokes.
+      - { id: router, label: model router, desc: "1 call, best model\ncapability-routed", role: hero, kind: router, gather: true }
+      - { id: claude, label: Claude, desc: long-context, glyph: anthropic }
+      - { id: gemini, label: Gemini, desc: multimodal, glyph: gemini }
+      - { id: mistral, label: Mistral, desc: low-latency, glyph: mistral }
+      - { id: cohere, label: Cohere, desc: retrieval, glyph: cohere }
+      - { id: perplexity, label: Perplexity, desc: web-grounded, glyph: perplexity }
+      - { id: openai, label: OpenAI, desc: tool-use, glyph: openai }
+    edges:
+      - { source: router, target: claude, label: route, label_style: chip, relation: drift, marker: arrow }
+      - { source: router, target: gemini, relation: drift, marker: arrow }
+      - { source: router, target: mistral, relation: drift, marker: arrow }
+      - { source: router, target: cohere, relation: drift, marker: arrow }
+      - { source: router, target: perplexity, relation: drift, marker: arrow }
+      - { source: router, target: openai, relation: drift, marker: arrow }
 
-  event-flywheel:
+  # router-descent: the same router, drawn as a DOWNWARD fan — hero top-center,
+  # a depart trunk dropping to a knot, then six provider cards fanning down into a
+  # bottom row (solid arrowed spokes, route chip on the trunk, single ROUTER zone).
+  router-descent:
+    topology: fanout
+    orientation: downward
+    chassis: { width_floor: true , zone_content_gap: 14, caption_gap: 42} # the hand file's fixed frame — a preset fact, not topology law
+    zones: ["router"]
+    title: Route one call to the best model
+    subtitle: Fan-out · one call routes down to the right frontier model by capability
+    notes: model router downward
+    glyph_tint: full
+    node_style: card+glyph
+    nodes:
+      # gather: true — the specimen's depart trunk (gather_knots: 1) needs the
+      # fanout gather-gate now that it matches join/dag instead of firing
+      # unconditionally on >=2 spokes.
+      - { id: router, label: model router, desc: "1 call, best model\ncapability-routed", role: hero, kind: router, gather: true }
+      - { id: claude, label: Claude, desc: long-context, glyph: anthropic }
+      - { id: gemini, label: Gemini, desc: multimodal, glyph: gemini }
+      - { id: mistral, label: Mistral, desc: low-latency, glyph: mistral }
+      - { id: cohere, label: Cohere, desc: retrieval, glyph: cohere }
+      - { id: perplexity, label: Perplexity, desc: web-grounded, glyph: perplexity }
+      - { id: openai, label: OpenAI, desc: tool-use, glyph: openai }
+    edges:
+      - { source: router, target: claude, label: route, label_style: chip, relation: assert }
+      - { source: router, target: gemini, relation: assert }
+      - { source: router, target: mistral, relation: assert }
+      - { source: router, target: cohere, relation: assert }
+      - { source: router, target: perplexity, relation: assert }
+      - { source: router, target: openai, relation: assert }
+
+  # parity-beam: the beam fanout reference specimen. One spec travels a
+  # trunk beam to the knot,
+  # then relays as three SIMULTANEOUS beams down the door lanes —
+  # simultaneity IS the byte-identical claim (trunk window .02-.30, lanes
+  # .32-.62 on the shared 5.236s clock). Compose chip rides the trunk at
+  # even thread; the beam sweeps beneath it — paint order is the law.
+  parity-beam:
+    topology: fanout
+    orientation: horizontal
+    zones: ["one spec", "three doors"]
+    title: The parity harness — one spec, three doors
+    subtitle: The parity harness · CLI, HTTP, and MCP ship byte-identical artifacts — the beam is the payload
+    notes: parity beam fanout
+    node_style: card+glyph
+    edge_motion: beam
+    # Doors 160x60 per the specimen; drift relations put the compose chip on
+    # the trunk (trunk_wins) — the beam replaces the wire entirely, so the
+    # dress never draws; markers off (direction is motion, no chevrons).
+    # node pad_y 13.7/label_desc_gap 7.6: this preset's OWN doors
+    # (diagram-parity-beam-pp.svg, name baseline 25, gap 19 on 160x60 rx13)
+    # are a compact door, not the paradigm root's taller 165x76 satellite
+    # rhythm (pad_y 22) — inheriting root without this citation overshoots
+    # this door's own 60 to ~76.
+    chassis: { card_min_w: 160, node: { w: 160, h: 60, pad_y: 13.7, label_desc_gap: 7.6 }, hero: { w: 206, h: 104, max_desc_lines: 2 } , zone_content_gap: 130, caption_gap: 128, caption_pad: 97}
+    nodes:
+      # gather: true — the specimen's depart trunk (gather_knots: 1) needs the
+      # fanout gather-gate now that it matches join/dag instead of firing
+      # unconditionally on >=2 spokes.
+      - { id: spec, label: one spec, desc: "diagram/1 · json", role: hero, kind: file-text, gather: true }
+      - { id: cli, label: CLI, desc: the binary, kind: terminal }
+      - { id: http, label: HTTP API, desc: POST /compose, kind: globe }
+      - { id: mcp, label: MCP server, desc: hw_compose, kind: plug } # specimen draws the plug
+    edges:
+      - { source: spec, target: cli, label: compose, label_style: chip, relation: drift, marker: none }
+      - { source: spec, target: http, relation: drift, marker: none }
+      - { source: spec, target: mcp, relation: drift, marker: none }
+
+  # ── Convergence ─────────────────────────────────────────────────────────
+  convergence:
+    topology: convergence
+    zones: ["inputs"] # specimen -zone runs, verbatim
+    title: Four inputs, one artifact
+    subtitle: The composition formula · four inputs meet at a single mouth
+    notes: four inputs
+    node_style: card+glyph
+    chassis: { card_min_w: 210, hero: { w: 280, h: 120 }, pitch: 148, margin_x: 86, zone_content_gap: 42, caption_gap: 116, caption_pad: 37} # convergence: fixed 210-wide input cards; short descs never shrink them; hero 280x120 specimen (never-clip content alone solved 262 — floored to the hand rect). Pair-consistency ruling (2026-07-14, supersedes the per-file approach-angle pins 110/125): the TWO convergence entries are one family and share one compositional envelope — the gathered-seed composition (pitch 148, margin_x 86) is canonical, so adjacent gallery renders align instead of reading as an inconsistency; pp-convergence.svg's own 20.6deg approach is the superseded dress
+    # Solid convergent inputs meeting at one gather mouth — no terminals (the
+    # ring+core knot is the terminus); two inputs carry particle riders.
+    wire: solid
+    marker: none
+    nodes:
+      - { id: frame, label: FRAME, desc: spatial contract, kind: layout-grid }
+      - { id: genome, label: GENOME, desc: chromatic DNA, kind: droplet }
+      - { id: data, label: DATA, desc: live connectors, kind: database }
+      - { id: paradigm, label: PARADIGM, desc: template variant, kind: layers }
+      - { id: artifact, label: the artifact, desc: one self-contained SVG, role: hero, glyph: hyperweave }
+    edges:
+      # The prototype's two riders leave FRAME and DATA (measured: particle
+      # paths start y=190 and y=410) — authored per edge, never inferred.
+      - { source: frame, target: artifact, edge_motion: particle }
+      - { source: genome, target: artifact }
+      - { source: data, target: artifact, edge_motion: particle }
+      - { source: paradigm, target: artifact }
+
+  convergence-arrivals:
+    topology: convergence
+    zones: ["sources", "artifact"] # specimen -zone runs, verbatim
+    # Distinct title from the plain convergence preset: the two are different
+    # hand compositions (meet-at-a-mouth vs gather-into-a-knot with arrival
+    # dots) — one shared gallery heading read as a duplicated, inconsistent
+    # render.
+    title: Four sources, one gathered seed
+    subtitle: Convergence · four inputs gather into one re-renderable seed
+    notes: convergence arrivals
+    node_style: card+glyph
+    chassis: { card_min_w: 210, hero: { w: 280, h: 120, max_desc_lines: 2 }, pitch: 148, margin_x: 86, zone_content_gap: 56, caption_gap: 80, caption_pad: 31} # convergence-arrivals: wide arrival cards, two-line crown; hero 280x120 specimen (content alone solved 270 — floored to the hand rect); pitch 148 + margin_x 86 together reproduce pp-convergence-flow.svg's own outer/inner approach angle to the KNOT (27.9/10.0deg, half-spread 222 over run 418) — pitch alone (the shared 118 default) undershot because the shared margin_x (60) left a longer run than the specimen's own composition
+    nodes:
+      - { id: payload, label: payload, desc: the seed data, kind: braces } # specimen: { } braces
+      - { id: genome, label: genome, desc: aesthetic dna, kind: dna } # specimen: double-helix (the shuffle stand-in retired once lucide dna landed)
+      - { id: frame, label: frame, desc: the skeleton, kind: frame } # specimen: corner-bracket frame (the box stand-in retired once lucide frame landed)
+      - { id: spec, label: spec, desc: "size · platform", kind: file-text }
+      - { id: artifact, label: the artifact, desc: "payload + envelope\none seed, every surface", role: hero, glyph: hyperweave, gather: true }
+    # Four ember spokes drain into the seed; the gather-join collapses them to
+    # one mouth + a solid+arrow trunk (spokes lose their dots, keep riders).
+    edges:
+      - { source: payload, target: artifact, relation: drift, edge_motion: particle, label: compose, label_style: chip }
+      - { source: genome, target: artifact, relation: drift, edge_motion: particle }
+      - { source: frame, target: artifact, relation: drift, edge_motion: particle }
+      - { source: spec, target: artifact, relation: drift, edge_motion: particle }
+
+  # ── Flywheel ────────────────────────────────────────────────────────────
+  # flywheel-circles: the medallion-face reference specimen. Four r44
+  # glyph medallions seated ON the
+  # R=250 ring at the cardinals, congruent solid arc-arrows in the gaps
+  # (trim = node half-width + 4°), the r56 accent axis medallion at centre;
+  # names + subs leave the ring outward by seat. Static — direction survives
+  # as geometry.
+  flywheel-circles:
     topology: flywheel
-    title: Event Streaming Loop
-    subtitle: producers feed the broker that feeds the views that feed the producers
-    notes: event streaming
-    edge_motion: flow
+    zones: ["data flywheel"]
+    title: The data flywheel — circle face
+    subtitle: Flywheel · each artifact ships, is captured as corpus, trains the model, and returns as better generation
+    notes: flywheel circle face
+    node_style: glyph-circle
+    chassis: { width: 1000, ring_r: 250, arc_r: 250, arc_clear_deg: 4, circle_r: 44, hero_circle_r: 56, circle_label_dy: 18, node: { max_desc_lines: 2 } , zone_content_gap: 70, caption_gap: 70, caption_pad: 41}
+    nodes:
+      - { id: generate, label: Generate, desc: agents create, kind: zap }
+      - { id: distribute, label: Distribute, desc: ship anywhere, kind: send }
+      - { id: capture, label: Capture, desc: corpus grows, kind: database }
+      - { id: improve, label: Improve, desc: model learns, kind: cpu }
+      - { id: axis, label: the flywheel, desc: compounds each turn, role: hero, kind: refresh-cw }
+
+  flywheel-orbit:
+    topology: flywheel
+    chassis: { zone_content_gap: 90, caption_gap: 100, caption_pad: 31 }
+    zones: ["data flywheel"] # specimen -zone runs, verbatim
+    title: The data flywheel
+    subtitle: Flywheel · each artifact ships, is captured as corpus, trains the model, and returns as better generation
+    notes: flywheel orbit
+    edge_motion: particle
+    marker: arrow # flywheel-orbit: four discrete arrowed turns
+    node_style: card+glyph
+    nodes:
+      - { label: Generate, desc: agents create, kind: zap }
+      - { label: Distribute, desc: ship anywhere, kind: external-link }
+      - { label: Capture, desc: corpus grows, kind: database }
+      - { label: Improve, desc: model learns, kind: refresh-cw }
+      - { label: the flywheel, desc: compounds each turn, role: hero, kind: repeat }
+
+  flywheel-flow:
+    topology: flywheel
+    chassis: { zone_content_gap: 90, caption_gap: 100, caption_pad: 31 }
+    zones: ["data flywheel"] # specimen -zone runs, verbatim
+    title: The data flywheel
+    subtitle: Flywheel · each artifact ships, is captured as corpus, trains the model, and returns as better generation
+    notes: flywheel flow
+    node_style: card+glyph
+    nodes:
+      - { id: generate, label: Generate, desc: agents create, kind: zap }
+      - { id: distribute, label: Distribute, desc: ship anywhere, kind: external-link }
+      - { id: capture, label: Capture, desc: corpus grows, kind: database }
+      - { id: improve, label: Improve, desc: model learns, kind: refresh-cw }
+      - { id: flywheel, label: the flywheel, desc: compounds each turn, role: hero, kind: repeat }
+    # One continuous current around the rim: dashed marching arcs, no terminals.
+    # The ring is furniture (tree-family census-skip) — it animates, nothing counts.
+    edges:
+      - { source: generate, target: distribute, relation: drift, marker: none }
+      - { source: distribute, target: capture, relation: drift, marker: none }
+      - { source: capture, target: improve, relation: drift, marker: none }
+      - { source: improve, target: generate, relation: drift, marker: none }
+
+  # ── Ring ────────────────────────────────────────────────────────────────
+  # agent-loop-ring: the equal-stage loop reference specimen. Six numbered
+  # medallions at even 60° pitch
+  # on R=270, EMPTY centre — no hero, no accent stage (the loop argues every
+  # stage is equal; accent spends only on the zone mark). Congruent arc
+  # arrows carry the circulation; every annotation stacks below its node
+  # (upper text falls inside the ring) and the side arcs start beneath the
+  # upper text so the arrowhead emerges under the ink.
+  agent-loop-ring:
+    topology: ring
+    chassis: { zone_content_gap: 188, caption_gap: 50, caption_pad: 41 }
+    zones: ["agent delivery loop"]
+    title: The agent delivery loop
+    subtitle: The loop · pair, understand, identify, build, validate, ship — then pair again
+    notes: agent delivery loop ring
     node_style: glyph-circle
     nodes:
-      - { label: produce, short: tx }
-      - { label: Kafka, glyph: kafka }
-      - { label: consume, short: rx }
-      - { label: Postgres, glyph: postgresql }
+      - { id: pair, label: "1. Pair", desc: "engineers and domain experts work together", kind: users }
+      - { id: understand, label: "2. Understand", desc: "shadow the work to deeply understand real workflows", kind: eye }
+      - { id: identify, label: "3. Identify", desc: "find and prioritize high-impact automation opportunities", kind: search }
+      - { id: build, label: "4. Build", desc: "build agents and workflows against real systems", kind: code }
+      - { id: validate, label: "5. Validate", desc: "validate with users, measure impact, iterate fast", kind: circle-check } # specimen draws circle+check, not the shield
+      - { id: ship, label: "6. Ship", desc: "ship solutions that save time, improve decisions, scale value", kind: rocket } # specimen draws the rocket
 
+  # ── Stack ───────────────────────────────────────────────────────────────
+  stack:
+    topology: stack
+    zones: ["layers", "composite"] # the stack band pair, preset words (Invariant 5)
+    title: The artifact composes up
+    subtitle: Composition · geometry × structure × chromatic × motion resolve to one artifact
+    notes: composed stack
+    operator: "×"
+    wire: solid
+    node_style: card+glyph
+    # hero.w/.h 194x104: pp-stack-v2.svg's own crown, verbatim — the stack
+    # hero-floor migration (JOB2) content-solves an uncited crown pure
+    # (layer-column dominance on width, no floor on height), and this
+    # one's own content never earns the crown on its own.
+    chassis: { card_min_w: 163, hero: { max_desc_lines: 2, w: 194, h: 104 } , zone_content_gap: 14, caption_gap: 50, caption_pad: 35} # stack: fixed 163-wide layers + two-line crown subtitle
+    nodes:
+      - { id: artifact, label: the artifact, desc: "payload + envelope\nthe composite seed", role: hero, glyph: hyperweave }
+      - { id: motion, label: motion, desc: the animation, kind: waves } # specimen: sine-wave squiggle (census amended: the hand marks were uncounted bare paths)
+      - { id: chromatic, label: chromatic, desc: the palette, kind: blend } # specimen: overlapping colour-cluster (droplet stand-in retired for lucide blend)
+      - { id: structure, label: structure, desc: the skeleton, kind: hash } # specimen: crosshatch grid
+      - { id: geometry, label: geometry, desc: the form, kind: triangle } # specimen: plain outline triangle
+    edges:
+      - { source: motion, target: artifact, edge_motion: particle, marker: arrow, label: compose, label_style: chip, relation: assert }
+      - { source: chromatic, target: motion, state: inert, marker: none }
+      - { source: structure, target: chromatic, state: inert, marker: none }
+      - { source: geometry, target: structure, state: inert, marker: none }
+
+  # ── Comparison ──────────────────────────────────────────────────────────
+  comparison:
+    topology: comparison
+    chassis: { zone_content_gap: 148, caption_gap: 166, caption_pad: 37 }
+    zones: ["before", "after"] # specimen -zone runs, verbatim
+    title: Portable replaces per-surface code
+    subtitle: Comparison · one self-contained artifact replaces per-surface code
+    notes: brittle to portable
+    node_style: card+glyph
+    nodes:
+      - { id: react, label: React / HTML, desc: the current default, kind: code, role: muted, chips: ["runtime JS", brittle, pixels] } # specimen: </> code mark
+      - { id: artifact, label: HyperWeave SVG, desc: "self-contained · portable", role: hero, glyph: hyperweave, chips: ["zero deps", "any surface", "hw: legible"] }
+    edges:
+      - { source: react, target: artifact, label: replaces, label_style: chip, relation: assert }
+
+  # ── Sequence ────────────────────────────────────────────────────────────
+  auth-sequence:
+    topology: sequence
+    chassis: { zone_content_gap: 11, caption_gap: 46, caption_pad: 23 }
+    zones: ["auth sequence"] # specimen -zone runs, verbatim
+    title: Auth sequence diagram
+    subtitle: Sequence · time flows down; the Client lifeline is the protagonist, calls go out in gray, responses return in accent up the stack
+    notes: auth sequence trace
+    nodes:
+      - { id: client, label: Client, role: hero, kind: user }
+      - { id: api, label: API, kind: server }
+      - { id: auth, label: Auth, kind: key } # specimen draws the key
+      - { id: db, label: DB, glyph: postgresql }
+    edges:
+      - { source: client, target: api, label: "POST /login", kind: call }
+      - { source: api, target: auth, label: "verify(creds)", kind: call }
+      - { source: auth, target: db, label: "query user", kind: call }
+      - { source: db, target: auth, label: "user record", kind: return }
+      - { source: auth, target: api, label: token, kind: return }
+      - { source: api, target: client, label: "200 + session", kind: return }
+
+  # ── State machine ───────────────────────────────────────────────────────
   cicd-machine:
     topology: state-machine
-    title: CI Run Lifecycle
-    subtitle: the retry loop is why it is a state machine, not a pipeline
+    node_style: card+glyph # cicd-machine: glyph cards, never pills
+    chassis: { card_min_w: 140 , caption_gap: 94, caption_pad: 27} # cicd-machine: 140-wide state cards
+    title: CI run lifecycle
+    subtitle: CI run lifecycle · the retry loop is why it is a state machine, not a pipeline
     notes: ci lifecycle
     nodes:
-      - { id: queued, label: queued }
-      - { id: building, label: build }
-      - { id: testing, label: test }
-      - { id: deployed, label: deploy, role: hero }
-      - { id: failed, label: failed }
+      - { id: queued, label: QUEUED, desc: waiting, kind: clock, role: ground }
+      - { id: build, label: BUILD, desc: compile, kind: box, role: ground }
+      - { id: test, label: TEST, desc: suite, kind: shield-check, role: ground }
+      - { id: deploy, label: DEPLOY, desc: green · shipped, kind: upload, role: hero }
+      - { id: failed, label: FAILED, desc: blocked, kind: circle-x, role: muted }
     edges:
-      - { source: queued, target: building, label: start }
-      - { source: building, target: testing, label: built }
-      - { source: testing, target: deployed, label: "promote ✓" }
-      - { source: testing, target: failed, label: "checks ✗" }
-      - { source: failed, target: queued, label: retry }
+      - { source: queued, target: build, label: start }
+      - { source: build, target: test, label: built }
+      - { source: test, target: deploy, label: "promote ✓" }
+      - { source: test, target: failed, label: "checks ✗" }
+      - { source: failed, target: queued, label: retry, relation: drift, marker: arrow }
 
-  build-migration:
-    topology: comparison
-    title: CRA to Vite
-    subtitle: the same app, four hundred config lines lighter
-    notes: build migration
+  order-lifecycle:
+    topology: state-machine
+    zones: ["job lifecycle"] # specimen -zone runs, verbatim
+    chassis: { card_min_w: 171, chain_gap: 199, node: { h: 80 }, hero: { w: 171, h: 80 }, stub_len: 26 , zone_content_gap: 176, caption_gap: 114, caption_pad: 29} # specimen verbatim: 171x80 cards, 199px chip-bearing runs, 26.5px initial stub
+    title: A job state machine
+    subtitle: State machine · a job runs to a terminal success, or fails and retries back into running
+    notes: job state machine
+    node_style: card+glyph
+    # The retry accent is the figure (specimen sm-acc); a spine binds it.
+    spine: [failed, running]
     nodes:
-      - { label: Create React App, desc: "webpack · 28s cold start", role: muted, glyph: react, style: card+glyph }
-      - { label: Vite, desc: "esbuild · 400ms cold start", role: hero, glyph: vite, style: card+glyph }
-
-  gateway-classic:
-    topology: pipeline
-    title: MCP Gateway
-    subtitle: request and response as two lanes — amber out, violet back
-    notes: gateway classic
-    edge_motion: dash
-    nodes:
-      - { id: client, label: MCP client, glyph: claude, style: card+glyph }
-      - { id: hw, label: hw, role: hero }
-      - { id: server, label: MCP server, glyph: docker, style: card+glyph }
+      # The specimen's payload declares four states — entry is the UML
+      # initial pseudo-state (the solver's dot + stub furniture), not a card.
+      - { id: queued, label: Queued, desc: waiting, kind: inbox, role: ground }
+      - { id: running, label: Running, desc: in progress, kind: activity, role: ground }
+      - { id: succeeded, label: Succeeded, desc: done, kind: circle-check, role: hero, terminal: true }
+      - { id: failed, label: Failed, desc: errored, kind: circle-x, role: default } # specimen draws circle+X, not a warning triangle
     edges:
-      - { source: client, target: hw, direction: both }
-      - { source: hw, target: server, direction: both }
+      # Transitions ride EDGE chips (the specimen threads start/done on the
+      # forward runs and seats throw/retry at the lens bellies) — the earlier
+      # in-card chip rows matched the census COUNT with the wrong home.
+      - { source: queued, target: running, label: start, label_style: chip }
+      - { source: running, target: succeeded, label: done, label_style: chip }
+      - { source: running, target: failed, label: throw, label_style: chip }
+      # The specimen's own payload: back_edge failed->running (the retry
+      # re-enters RUNNING; targeting the queue was authored wrong from day 1).
+      - { source: failed, target: running, label: retry, label_style: chip, relation: drift, marker: arrow }
 
-  sync-chain:
-    topology: pipeline
-    title: Edge Sync Fabric
-    subtitle: state reconciles both ways at every hop — no origin of truth
-    notes: sync fabric
-    edge_motion: dash
+  agent-task-lifecycle:
+    topology: state-machine
+    node_style: card+glyph # agent-task-lifecycle: glyph cards, never pills
+    # hero (done) ≈ std (specimen ratio 0.93). pad_y 13.42/label_desc_gap
+    # 7.12: this preset's OWN hero (pp-state-machine-alt2.svg "done", name
+    # baseline 26, gap 19) is a compact same-height-as-std crown — the
+    # state-machine topology's shared hero rhythm (pad_y 21/label_desc_gap
+    # 9.1, cited from cicd-machine's taller 78-tall DEPLOY) overshoots this
+    # one's own 62 floor without its own citation.
+    chassis: { hero: { w: 130, h: 62, rx: 13, pad_y: 13.42, label_desc_gap: 7.12 }, stub_len: 16 , caption_gap: 105, caption_pad: 37.4} # agent-task-lifecycle: 16px initial stub, hero rx 13
+    title: Agent task lifecycle
+    subtitle: State machine · full-lifecycle form — a forward path and a bounded recovery, converging on planning
+    notes: agent task lifecycle
+    # The specimen's done hero and failed card each draw a concentric double
+    # rect (outer glow + inner body); the census coalesces doubles to their
+    # bodies on both sides, so cards count named states.
     nodes:
-      - { id: client, label: client, desc: local replica }
-      - { id: edge, label: edge, desc: PoP cache, role: hero }
-      - { id: region, label: region, desc: regional store }
-      - { id: origin, label: origin, desc: source of record }
+      - { id: idle, label: idle, desc: waiting, kind: clock }
+      - { id: planning, label: planning, desc: draft, kind: list }
+      - { id: executing, label: executing, desc: running, kind: cpu }
+      - { id: review, label: review, desc: inspect, kind: eye }
+      - { id: done, label: done, desc: shipped, kind: circle-check, role: hero, terminal: true }
+      - { id: failed, label: failed, desc: errored, kind: circle-x, role: muted }
+    regions:
+      - { label: recovery, members: [failed] }
     edges:
-      - { source: client, target: edge, direction: both }
-      - { source: edge, target: region, direction: both }
-      - { source: region, target: origin, direction: both }
+      - { source: idle, target: planning, label: assigned }
+      - { source: planning, target: executing, label: approved }
+      - { source: executing, target: review, label: ready }
+      - { source: review, target: done, label: approved }
+      - { source: executing, target: executing, label: "tool call", relation: drift, marker: arrow }
+      - { source: review, target: planning, label: revise, relation: drift, marker: arrow }
+      - { source: executing, target: failed, label: error }
+      - { source: failed, target: planning, label: retry, relation: drift, marker: arrow }
 
-  request-descent:
-    topology: stack
-    title: Request Descent
-    subtitle: reverse the edge and the motion follows
-    notes: request descent
-    edge_motion: particle
-    nodes:
-      - { id: cdn, label: CDN, desc: edge cache, role: hero }
-      - { id: lb, label: LB, desc: least-conn }
-      - { id: app, label: app, desc: stateless pods }
-      - { id: db, label: DB, desc: primary + replicas }
-    edges:
-      # The stack DERIVES rising edges; declaring them top->down reverses
-      # the travel — direction is the edge, not the topology.
-      - { source: cdn, target: lb }
-      - { source: lb, target: app }
-      - { source: app, target: db }
-
-  # ── Frontier tier: coverage-exempt, marketing-grade ───────────────────
-
-  frontier-relay:
-    topology: pipeline
-    title: Frontier Handoff
-    subtitle: one task relayed across four labs — the comet is the payload
-    notes: frontier handoff
-    edge_motion: beam
+  # ── Hub ─────────────────────────────────────────────────────────────────
+  # config-radial-circles: the circles-on-hub reference specimen — topology
+  # fanout, orientation radial (the OLD name's "hub" was a lie an author
+  # would generalize from: this is NOT topology:hub).
+  # Uniform r44 medallions at even 72° pitch — circles have no corners, so
+  # every spoke is the same length BY CONSTRUCTION and every arrival is
+  # face-perpendicular; radial layouts demand uniform mass. All text leaves
+  # the ring outward by seat; the hub annotates beneath itself; the
+  # invariant chip rides the north spoke at even thread.
+  config-radial-circles:
+    topology: fanout
+    orientation: radial
+    zones: ["data, one door", "config is data"]
+    title: Config is data — radial hub, circle nodes
+    subtitle: Config is data · every mapping lives in YAML or JSON — the loader is the only door
+    notes: config data radial circles
     node_style: glyph-circle
+    wire: solid
+    chassis: { width: 1240, ring_r: 252, circle_r: 44, hero_circle_r: 56, circle_label_dy: 18, node: { max_desc_lines: 2 } , zone_content_gap: 80, caption_gap: 36, caption_pad: 40.5}
+    nodes:
+      # Hero sub rows match the specimen's own hsub pair (diagram-data-hub-circles-pp.svg);
+      # the circle hero's outboard stack is graded row-for-row.
+      - { id: loader, label: the loader, desc: "config/loader.py\nvalidation is loud", role: hero, glyph: hyperweave }
+      - { id: paradigms, label: paradigms, desc: template variants, kind: layout-grid } # specimen draws the 2x2 grid
+      - { id: genomes, label: genomes, desc: chromatic dna, kind: droplet }
+      - { id: registries, label: registries, desc: glyphs · idioms, kind: boxes }
+      - { id: reasoning, label: reasoning, desc: spatial strings, kind: file-text } # specimen draws the folded document
+      - { id: policies, label: policies, desc: caps · legality, kind: shield }
+    # The sources DRAIN INTO the loader (the specimen's converging arrows) —
+    # every spoke arrow arrives at the hub; the invariant chip rides the
+    # north spoke at even thread.
+    edges:
+      - { source: paradigms, target: loader, label: invariant 5, label_style: chip, marker: arrow }
+      - { source: genomes, target: loader, marker: arrow }
+      - { source: registries, target: loader, marker: arrow }
+      - { source: reasoning, target: loader, marker: arrow }
+      - { source: policies, target: loader, marker: arrow }
+
+  # hub-panel-orchestrator: the typographic delegation reference specimen.
+  # Containers earn their existence — the four
+  # satellites carry enough text to be their own shapes, so the boxes are
+  # gone: a modest hub card, four quadrant text blocks, neutral arrows
+  # reaching out. Accent spends on the hub ring + glyph only; the eye lands
+  # centre first and reads outward.
+  hub-panel-orchestrator:
+    topology: hub
+    hub_policy: compass
+    zones: ["multi-agent · delegation"]
+    title: One plan, four hands
+    subtitle: the hub stays small; the work lives in the labels
+    notes: orchestrator delegation panel
+    node_style: text
+    # Stacked crown (hand file: glyph centred on x=600, name and chips
+    # centred beneath — rect 232×136). Without the head anatomy the hero
+    # solves as a label ROW (glyph left, text right) and the never-clip
+    # width rule pushes the row past the 232 pin (270×87 rendered).
+    node_anatomy: head
+    wire: solid
+    # ring_r_hub 397: the hand file holds its block centers at dx≈340,
+    # dy≈205 from the hub center — √(340²+205²) ≈ 397, air beyond the
+    # kissing base (the wide throw is the delegation read).
+    # head_pad_y/head_glyph_gap: hand file measures icon [380,401] (22px,
+    # box top 352 → 28px top air) and name baseline y=440 (box-relative 88).
+    # Solving 88 = head_pad_y + 22 + head_glyph_gap + 17*.74 (hero name
+    # ascent) at head_pad_y=27 gives head_glyph_gap=26.42 — content then
+    # solves to 135.3, 0.7px under the 136 pin (the pin still wins as the
+    # floor). desc baseline lands 105.88 vs the hand file's 110 (4.12px
+    # short) since the name→desc gap stays the kit's shared label_desc_gap.
+    chassis: { hub_clearance: 96, ring_r_hub: 397, hero: { w: 232, h: 136, rx: 16, head_pad_y: 27, head_glyph_gap: 26.42 } , zone_content_gap: 86.9, caption_gap: 97.6, caption_pad: 55}
+    nodes:
+      - { id: orchestrator, label: orchestrator, desc: "plan · dispatch · merge", role: hero, style: card+glyph, kind: workflow }
+      - { id: researcher, label: researcher, desc: "gathers sources, extracts claims,\nreturns cited notes", anchor: NW }
+      - { id: coder, label: coder, desc: "implements against the plan,\ntests in a sandbox", anchor: NE }
+      - { id: reviewer, label: reviewer, desc: "checks diffs against intent,\nflags regressions early", anchor: SE }
+      - { id: writer, label: writer, desc: "assembles the deliverable,\nkeeps a single voice", anchor: SW }
+    # Accent stays in the hero card alone (the hand file's edges are
+    # conn-gray, names ink) — a singleton spine binds no edge, so the
+    # inference cannot paint all four spokes (chromatic law: ≤3 figures).
+    spine: [orchestrator]
+    edges:
+      # Seat angles measured from the hand file's block centers: ±30° off
+      # horizontal (dx≈340 vs dy≈205 from the hub center) — the wide throw
+      # is why the arrivals read diagonal, corner to corner.
+      - { source: orchestrator, target: researcher, marker: arrow, routing: curved, angle: -150 }
+      - { source: orchestrator, target: coder, marker: arrow, routing: curved, angle: -30 }
+      - { source: orchestrator, target: reviewer, marker: arrow, routing: curved, angle: 30 }
+      - { source: orchestrator, target: writer, marker: arrow, routing: curved, angle: 150 }
+
+  # frame-engine-hub: the compass-dispatch reference specimen ("the
+  # starfish dies here"). Rect tiles
+  # seat on the COMPASS: cardinals axis-aligned, the lower pair mirrored
+  # about the vertical axis (mirror symmetry + axis alignment outrank even
+  # pitch); every spoke holds one constant silhouette-to-silhouette gap
+  # (hub_clearance) — the kissing law. Uniform portrait tiles (head
+  # anatomy: glyph top-centre over centred name/sub) — ink-derived widths
+  # are a linear-flow doctrine; radial layouts demand uniform mass.
+  frame-engine-hub:
+    topology: hub
+    hub_policy: compass
+    zones: ["diagram frames"]
+    title: The frame engine — compass dispatch
+    subtitle: Compass dispatch · the spec declares the meaning, the engine places, routes, labels, and renders the form
+    notes: frame engine compass dispatch
+    node_style: card+glyph
+    node_anatomy: head
+    wire: solid
+    # Satellite tiles 124 wide (hand file measures 123.2×124, even-rounded
+    # like the 163.5→164 hero). The prior 132 was unsourced and fed the
+    # pairwise crowding law extra mass — N/W/E spokes rendered 18-22px past
+    # the kissing radius. pad_x 8: the hand file holds Cascade's 107.25px
+    # mono run (tracked) inside the 123.2 tile — (123.2 − 107.25) / 2.
+    chassis: { hub_clearance: 120, card_min_w: 124, node: { w: 124, h: 124, max_desc_lines: 1, pad_x: 8 }, hero: { w: 164, h: 120 } , zone_content_gap: 130, caption_gap: 100.9, caption_pad: 40.9}
+    nodes:
+      - { id: engine, label: frame engine, desc: "one spec, five forms", role: hero, style: card+glyph, glyph: hyperweave }
+      - { id: architecture, label: Architecture, desc: system maps, kind: network, anchor: N }
+      - { id: flow, label: Flow, desc: step by step, kind: workflow, anchor: W }
+      - { id: cascade, label: Cascade, desc: waterfall stages, kind: chart-bar, anchor: E }
+      # S-pair declaration order = arc order (the quantizer assigns slots
+      # along the sector in projected-axis rank): the hand file seats Eval
+      # matrix at 62.5° (right of the cardinal) and Comparison at 117.5°.
+      - { id: evalmatrix, label: Eval matrix, desc: scored grid, kind: layout-grid, anchor: S }
+      - { id: comparison, label: Comparison, desc: side by side, kind: table, anchor: S }
+    # Hand file spends accent on the hub alone — satellite names ink, wires
+    # conn-gray. A singleton spine binds no edge, so the hub inference
+    # cannot paint five spokes + five sink titles (chromatic law: ≤3
+    # figures; unset spine made accent_index=0 on every edge and name).
+    spine: [engine]
+    edges:
+      - { source: engine, target: architecture, marker: arrow }
+      - { source: engine, target: flow, marker: arrow }
+      - { source: engine, target: cascade, marker: arrow }
+      - { source: engine, target: comparison, marker: arrow }
+      - { source: engine, target: evalmatrix, marker: arrow }
+
+  hub:
+    topology: hub
+    # Crown cited from THIS preset's own hand file (pp-verb-ontology: 280x120
+    # rx16, ~26 diamond at +18.8, text column +56 — the same species as the
+    # convergence-flow crown) in the kit dress; hero_declared pins the box
+    # against prominence drift. The 232x112/+82 nucleus belongs to the sheet
+    # twins (the hand-maintained verb-algebra README asset), not this fixture.
+    chassis: { hero: { w: 280, h: 120, rx: 16, max_desc_lines: 2 }, caption_gap: 49, caption_pad: 30.9 }
+    hub_policy: axial
+    title: The verb algebra
+    subtitle: The verb algebra · operations touch the seed, destinations receive the render
+    notes: verb algebra
+    zones: ["operations", "destinations"] # the corner pair, preset words (Invariant 5)
+    node_style: card+glyph
+    spine: [artifact, documents, surfaces]
+    nodes:
+      - { id: artifact, label: the artifact, desc: "payload + envelope\nre-renderable seed", role: hero, glyph: hyperweave }
+      - { id: spec, label: the spec, desc: the recipe, kind: file-text }
+      - { id: transform, label: transform, desc: new id + lineage, kind: repeat }
+      - { id: read, label: "read, never mutates", kind: eye, chips: [extract, verify, diff, query] }
+      - { id: documents, label: documents, desc: many into one, kind: files } # specimen draws overlapping pages, not boxes
+      - { id: surfaces, label: surfaces, desc: via --format, kind: layout-grid }
+    edges:
+      # Two particle riders on the non-accent write spokes (in + edit): the out
+      # family is spine-bound (accent-still — invisible-riders §11 keeps accent
+      # rails solid). The read spoke is the one marching drift rail; a particle
+      # can't ride a marching rail on one edge, so its rider seats on edit.
+      - { source: spec, target: artifact, role: in, label: compose, label_style: chip, edge_motion: particle, relation: assert }
+      - { source: artifact, target: transform, role: edit, label: edit, edge_motion: particle, relation: assert }
+      - { source: artifact, target: read, role: read, label: read, relation: drift }
+      - { source: artifact, target: documents, role: out, relation: assert }
+      - { source: artifact, target: surfaces, role: out, relation: assert }
+
+  # axial: the verb algebra cross, sibling to hub/hub — glyphless
+  # cards, all five spokes dotted-drift + particle + terminal dot, a lower-
+  # prominence nucleus and wider satellites (per-spec axial override).
+  axial:
+    topology: hub
+    # Crown cited from THIS preset's own hand file (pp-axial: 264x100 rx16,
+    # diamond at +24, text column +45 — kit dress in production) and pinned
+    # against prominence drift; its one-line payload desc fits the 264 run
+    # whole, matching the fixture's hero-stack law.
+    chassis: { hero: { w: 264, h: 100, rx: 16, max_desc_lines: 2 }, caption_gap: 62, caption_pad: 32.9 }
+    hub_policy: axial
+    title: The verb algebra
+    subtitle: The verb algebra · operations touch the seed, destinations receive the render
+    notes: verb algebra axial
+    # caption carries the half-plane split — no corner headers, so no zones
+    node_style: card+glyph
+    # Satellites + nucleus inherit the corrected frame defaults (144x60 cards, 232x112 crown) —
+    # the language specimen the hub preset also recreates; the stale 236/70 + 1.6/2.64 override
+    # (tuned against the superseded axial draft specimen) is retired.
+    spine: [artifact] # nucleus only — every spoke drifts (no solid accent rail; census: 0 solid edges)
+    nodes:
+      - { id: artifact, label: the artifact, desc: "hw:payload · hwz/1 · sha", role: hero, glyph: hyperweave } # the verb-algebra crown's own diamond (the sheet nucleus carries it; census amended 5→6)
+      - { id: spec, label: the spec, desc: the recipe, kind: file-text }
+      - { id: transform, label: transform, desc: new id + lineage, kind: repeat }
+      - { id: read, label: "read, never mutates", kind: eye, chips: [extract, verify, diff, query] }
+      - { id: documents, label: documents, desc: many into one, kind: files } # specimen draws overlapping pages, not boxes
+      - { id: surfaces, label: surfaces, desc: via --format, kind: layout-grid }
+    edges:
+      - { source: spec, target: artifact, role: in, label: compose, edge_motion: particle, marker: dot, relation: drift }
+      - { source: artifact, target: transform, role: edit, label: edit, edge_motion: particle, marker: dot, relation: drift }
+      - { source: artifact, target: read, role: read, label: read, edge_motion: particle, marker: dot, relation: drift }
+      - { source: artifact, target: documents, role: out, edge_motion: particle, marker: dot, relation: drift }
+      - { source: artifact, target: surfaces, role: out, edge_motion: particle, marker: dot, relation: drift }
+
+  # verb-reads: the verb algebra as an axial cross with the read family expanded
+  # into a four-card S rank — compose in (W), transform out (E), extract/verify/
+  # diff/query gathering up from the S row. Glyphless, every spoke a dotted-drift
+  # rail + particle rider + terminal dot. Per-spec axial override widens the S
+  # rank to four and sets the specimen's nucleus prominence.
+  verb-reads:
+    topology: hub
+    hub_policy: axial
+    title: Six verbs, one object
+    subtitle: Six verbs, one object · write mints, read observes
+    notes: radial verb object
+    node_style: card+glyph
+    # hero 280×92 is pp-radial verbatim (rect x=480 w=280 h=92) — the hub
+    # topology chassis carries the verb-ONTOLOGY language nucleus (232×112),
+    # whose 112 height floor squared this sheet's wide-short crown into
+    # 240×112. node h 58: verb-reads satellites are 58-tall (below the hub
+    # 64 floor).
+    chassis: { node: { h: 58 }, hero: { w: 280, h: 92, max_desc_lines: 2 } , caption_gap: 121, caption_pad: 33.5} # crown box pp-radial verbatim (280x92) in the kit dress (its hand crown's own +45 column is the small-mark twin of the production +60)
+    # satellite 200x58 is pp-radial verbatim — radial uniform mass, every satellite one width
+    # S-rank reach: pp-radial's own read row sits at cy=700 against a hero
+    # bottom of 426 (hero y 334 + h 92 / 2... 334+92=426) = a 245 boundary
+    # gap, hero_seam.md style, matching axis_gap's own citation method.
+    # Pitch/tilt are NOT a raw specimen citation: hub_seats() grades each
+    # member's rendered NAME-TEXT anchor, and each of the four read verbs
+    # carries a DIFFERENT glyph (download/none/layers/search) whose
+    # incidental left-pad offset varies per member — no single uniform
+    # pitch reproduces all four card centers exactly (the specimen's own
+    # 300/513/727/940 answer only fits ITS hand-drawn, evenly-offset icons).
+    # Recalibrated instead against the four RENDERED text anchors: each
+    # member's needed shift is a rigid translation of its own card (same
+    # method as n_tilt_dx/s_tilt_dx), fit to one shared pitch + one shared
+    # rank-wide lean (never a per-node value — Invariant 12) that clears
+    # every member within the law's +/-4deg/+/-6% band. Pitch floors at
+    # card width (200) + min_clearance (18, G7) — a tighter fit satisfies
+    # the seat band but crowds adjacent cards under the clearance law; 220
+    # (a 20px card gap, 2px above the floor) keeps both green (worst case:
+    # diff at 3.3deg, verify at 3.4%).
+    # Edge-run law, polar case (2026-07-14): the S fan cites its ANGLE
+    # FAMILY — the hand file's spread-to-drop construction (row pitch
+    # 213.25 over the 245 face-to-face gap = 0.87, symmetric about the
+    # south port) — never absolute seats. The retired pitch/tilt pins
+    # (220/-40) were fitted to one render's 200-wide cards and skewed the
+    # fan the moment widths changed; prominence/satellite floors retired
+    # with the snug-width ruling.
+    axial: { satellite_min_h: 58, max_per_axis: 4, s_rank_axis_gap: 245, s_rank_spread_ratio: 0.87 }
+    spine: [artifact]
+    nodes:
+      - { id: artifact, label: the artifact, desc: "hw:payload · hwz/1", role: hero, glyph: hyperweave } # the verb-algebra crown's own diamond (family identity; census amended 5→7 with verify's check)
+      - { id: compose, label: compose, desc: "spec → artifact", kind: workflow }
+      - { id: transform, label: transform, desc: "artifact → artifact′", kind: repeat }
+      - { id: extract, label: extract, desc: payload out, kind: download } # specimen: down-arrow-to-tray
+      - { id: verify, label: verify, desc: hash check, kind: check } # the hand card's own bare checkmark, now a counted mark
+      - { id: diff, label: diff, desc: a vs b, kind: layers } # specimen: two-offset-squares
+      - { id: query, label: query, desc: field read, kind: search } # specimen: magnifier
+    edges:
+      - { source: compose, target: artifact, role: in, label: "write · mints", edge_motion: particle, marker: dot, relation: drift }
+      - { source: artifact, target: transform, role: out, label: "write · mints", edge_motion: particle, marker: dot, relation: drift }
+      - { source: extract, target: artifact, role: read, label: "read · observes", edge_motion: particle, marker: dot, relation: drift }
+      - { source: verify, target: artifact, role: read, edge_motion: particle, marker: dot, relation: drift }
+      - { source: diff, target: artifact, role: read, edge_motion: particle, marker: dot, relation: drift }
+      - { source: query, target: artifact, role: read, edge_motion: particle, marker: dot, relation: drift }
+
+  # ── Lanes ───────────────────────────────────────────────────────────────
+  obi-engine:
+    topology: lanes
+    title: Obi — one engine under every surface
+    subtitle: one registry of tools, one model router under all of them — no second engine, ever
+    notes: obi-engine structural reference at full scale
+    # The hand sheet renders captionless (no -cap run anywhere in
+    # pp-swimlanes) — the masthead legend is its only chrome sentence.
+    chrome: plain
+    lanes: [Callers, The Registry, Tools, Model Routing, Providers]
+    node_style: card+glyph
+    chassis: { card_min_w: 212, node: { w: 212, h: 66, rx: 12 } } # obi-engine: bulleted lane cards — a leading category mark on the label row, a full-width desc line below; 212 floors the 5-lane canvas, TOOLS grows to lane_w_max for its descs
+    nodes: # every card carries a desc (specimen-verbatim); the leading mark's shape+tone
+      # encodes the archetype (surface/store/engine/external), never hue. obix and
+      # model-router are the singular convergence hubs (hub: true = the ONE accent).
+      - { id: every-ai-surface, label: Every AI surface, desc: "chat · planner · triage · crons", category: Callers, morphology: surface }
+      - { id: pins, label: Pins, desc: "standing intents — priors", category: Callers, morphology: store }
+      - { id: obix, label: obi.*, desc: the five-door taxonomy, category: The Registry, morphology: engine, hub: true }
+      - { id: propose, label: propose, desc: "campaign · planner · opportunities", category: Tools, morphology: engine }
+      - { id: route, label: route, desc: "which space? keep/drop? merge?", category: Tools, morphology: engine }
+      - { id: consolidate, label: consolidate, desc: "space synthesis · overnight rethought", category: Tools, morphology: engine }
+      - { id: learn, label: learn, desc: "engagement + conversation digests", category: Tools, morphology: engine }
+      - { id: reconcile, label: reconcile, desc: "drafts ↔ live posts + metrics", category: Tools, morphology: engine }
+      - { id: utilities, label: utilities, desc: "search · vision · voice context", category: Tools, morphology: engine }
+      - { id: model-router, label: Model router, desc: "fast / deep / vision tiers", category: Model Routing, morphology: engine, hub: true }
+      - { id: anthropic, label: Anthropic, desc: "newest-in-family, vault key", category: Providers, morphology: external }
+      - { id: workers-ai, label: Workers AI, desc: "free fallback, keyless dev", category: Providers, morphology: external }
+      - { id: ai-gateway, label: AI Gateway, desc: "multi-vendor, pinned", category: Providers, morphology: external }
+    edges:
+      - { source: every-ai-surface, target: obix, relation: assert }
+      - { source: obix, target: propose, relation: assert }
+      - { source: obix, target: route, relation: assert }
+      - { source: obix, target: consolidate, relation: assert }
+      - { source: obix, target: learn, relation: assert }
+      - { source: obix, target: reconcile, relation: assert }
+      - { source: obix, target: utilities, relation: assert }
+      - { source: propose, target: model-router, relation: assert }
+      - { source: route, target: model-router, relation: assert }
+      - { source: consolidate, target: model-router, relation: assert }
+      - { source: learn, target: model-router, relation: assert }
+      - { source: reconcile, target: model-router, relation: assert }
+      - { source: utilities, target: model-router, relation: assert }
+      - { source: model-router, target: anthropic, edge_motion: particle, relation: assert }
+      - { source: model-router, target: workers-ai, edge_motion: particle, relation: assert }
+      - { source: model-router, target: ai-gateway, edge_motion: particle, relation: assert }
+      - { source: pins, target: utilities, label: pinned priors, route: around, edge_motion: particle, relation: drift, marker: arrow }
+
+  # ── DAG ─────────────────────────────────────────────────────────────────
+  cicd-gate:
+    topology: dag
+    # hero.h 112: pp-dag-cicd-v4.svg's own crown (deploy), verbatim — the
+    # dag hero-floor migration (JOB2) content-solves an uncited crown pure
+    # (no std-height fallback), and this one's own content never earns 112
+    # on its own; hero_min_w alone floors width, not height.
+    chassis: { hero_min_w: 210, hero: { h: 112 } , zone_content_gap: 113, caption_gap: 159, caption_pad: 23} # specimen crown, verbatim from the hand file
+    zones: ["commit", "ship"] # specimen -zone runs, verbatim
+    title: CI/CD pipeline DAG
+    subtitle: DAG · a push builds an image, three checks run in parallel and gate the release, then it rolls out to prod
+    notes: cicd release gate
+    glyph_tint: full
+    node_style: card+glyph
+    nodes:
+      - { id: push, label: push, desc: main, glyph: github }
+      - { id: build, label: build, desc: image, glyph: docker }
+      - { id: e2e, label: test, desc: e2e, glyph: playwright }
+      - { id: lint, label: lint, desc: style, glyph: eslint }
+      - { id: scan, label: scan, desc: cve, kind: shield-check }
+      - { id: deploy, label: deploy, desc: rollout, role: hero, gather: true, glyph: kubernetes, chips: [staging, prod] }
+    edges:
+      - { source: push, target: build, relation: drift, marker: arrow }
+      - { source: build, target: e2e, relation: drift, marker: arrow }
+      - { source: build, target: lint, relation: drift, marker: arrow }
+      - { source: build, target: scan, relation: drift, marker: arrow }
+      # Gathered release into deploy: branches meet at the knot (no terminals);
+      # "on green" floats as the gate caption.
+      - { source: e2e, target: deploy, label: on green, relation: drift, marker: none }
+      - { source: lint, target: deploy, relation: drift, marker: none }
+      - { source: scan, target: deploy, label: release, label_style: chip, relation: drift, marker: none }
+
+  observability-converge:
+    topology: dag
+    zones: ["telemetry", "dashboards"] # specimen -zone runs, verbatim
+    # hero.h 112: pp-dag-observability-v4.svg's own crown, verbatim — the
+    # dag hero-floor migration (JOB2) content-solves an uncited crown pure;
+    # hero_min_w alone floors width, not height.
+    chassis: { hero_min_w: 220, card_min_w: 155, hero: { pad_x: 6.0, h: 112 } , zone_content_gap: 133, caption_gap: 159, caption_pad: 23} # observability-converge: uniform 155-wide rank cards; hero pad_x 6.0: the chip row (latency/errors/uptime) sets the crown's width — the generic 12px text pad over-margined it 232 vs the specimen's 220 (8.25px chip-row margin, measured off pp-dag-observability-v4.svg)
+    title: Observability signals DAG
+    subtitle: DAG · one collector fans three signals — metrics, logs, traces — into distinct stores, unified in one dashboard
+    notes: observability signals
+    glyph_tint: full
+    node_style: card+glyph
+    spine: [services, collector, traces, grafana]
+    nodes:
+      - { id: services, label: services, desc: fleet, kind: boxes }
+      - { id: collector, label: collector, desc: otel, kind: radio-tower } # specimen draws the antenna
+      - { id: metrics, label: metrics, desc: prometheus, glyph: prometheus }
+      - { id: logs, label: logs, desc: elastic, glyph: elasticsearch }
+      - { id: traces, label: traces, desc: sentry, glyph: sentry }
+      - { id: grafana, label: dashboards, desc: grafana, role: hero, gather: true, glyph: grafana, chips: [latency, errors, uptime] }
+    edges:
+      - { source: services, target: collector, relation: drift, marker: arrow }
+      - { source: collector, target: metrics, relation: drift, marker: arrow }
+      - { source: collector, target: logs, relation: drift, marker: arrow }
+      - { source: collector, target: traces, relation: drift, marker: arrow }
+      # Converging into the gather knot: no per-edge terminal (the knot is the
+      # terminus); "one pane" floats as the convergence caption.
+      - { source: metrics, target: grafana, label: one pane, relation: drift, marker: none }
+      - { source: logs, target: grafana, relation: drift, marker: none }
+      - { source: traces, target: grafana, label: unify, label_style: chip, relation: drift, marker: none }
+
+  frontier-serving:
+    topology: dag
+    zones: ["frontier serving", "providers · sinks"] # specimen -zone runs, verbatim
+    chassis: { hero_min_w: 195, card_min_w: 176, hero: { h: 104 } , zone_content_gap: 89, caption_gap: 4, caption_pad: 23} # frontier-serving: uniform 176-wide rank cards; hero h 104 (unpinned default 112 over-grew the crown; width already floors correctly at hero_min_w)
+    title: Frontier serving DAG
+    subtitle: DAG · one key routes to three frontier labs, two share the cache, telemetry skips the ranks to metrics
+    notes: frontier serving dag
+    glyph_tint: full
+    node_style: card+glyph
+    nodes:
+      - { id: requests, label: requests, desc: clients, kind: globe }
+      - { id: hub, label: OpenRouter, desc: one key, role: hero, kind: router, gather: true }
+      - { id: anthropic, label: Anthropic, desc: claude, glyph: anthropic }
+      - { id: openai, label: OpenAI, desc: gpt-4o, glyph: openai }
+      - { id: gemini, label: Gemini, desc: flash, glyph: gemini }
+      - { id: cache, label: kv-cache, desc: redis, glyph: redis, gather: true }
+      - { id: metrics, label: metrics, desc: grafana, glyph: grafana }
+    edges:
+      - { source: requests, target: hub, edge_motion: particle, relation: drift, marker: arrow }
+      - { source: hub, target: anthropic, label: route, label_style: chip, edge_motion: particle, relation: drift, marker: arrow }
+      - { source: hub, target: openai, edge_motion: particle, relation: drift, marker: arrow }
+      - { source: hub, target: gemini, edge_motion: particle, relation: drift, marker: arrow }
+      - { source: anthropic, target: cache, label: cache, label_style: chip, relation: drift, marker: none }
+      - { source: openai, target: cache, edge_motion: particle, relation: drift, marker: none }
+      - { source: gemini, target: metrics, relation: drift, marker: arrow }
+      - { source: hub, target: metrics, relation: drift, label: telemetry, label_style: chip, marker: arrow, exit: bottom }
+
+  scatter-gather:
+    topology: dag
+    zones: ["request", "response"] # specimen -zone runs, verbatim
+    # hero.h 112: pp-dag-scatter-v4.svg's own crown (gather), verbatim — the
+    # dag hero-floor migration (JOB2) content-solves an uncited crown pure;
+    # hero_min_w alone floors width, not height.
+    chassis: { hero_min_w: 214, card_min_w: 165, hero: { h: 112 } , zone_content_gap: 152, caption_gap: 138, caption_pad: 23} # scatter-gather: uniform 165-wide rank cards
+    title: Scatter-gather aggregation DAG
+    subtitle: DAG · one request scatters across four services, their results gather into a single composed response
+    notes: scatter-gather aggregation
+    glyph_tint: full
+    node_style: card+glyph
+    spine: [client, gateway, users, aggregator]
+    nodes:
+      - { id: client, label: client, desc: browser, kind: globe }
+      - { id: gateway, label: gateway, desc: nginx, glyph: nginx }
+      - { id: users, label: users, desc: postgres, glyph: postgresql }
+      - { id: orders, label: orders, desc: mongo, glyph: mongodb }
+      - { id: inventory, label: inventory, desc: redis, glyph: redis }
+      - { id: payments, label: payments, desc: stripe, glyph: stripe }
+      - { id: aggregator, label: aggregator, desc: graphql, role: hero, gather: true, glyph: graphql, chips: [user, cart, total] }
+    edges:
+      - { source: client, target: gateway, relation: drift, marker: arrow }
+      - { source: gateway, target: users, relation: drift, marker: arrow }
+      - { source: gateway, target: orders, relation: drift, marker: arrow }
+      - { source: gateway, target: inventory, relation: drift, marker: arrow }
+      - { source: gateway, target: payments, relation: drift, marker: arrow }
+      # Converging into the gather knot: no per-edge terminals; "one response"
+      # floats as the aggregation caption.
+      - { source: users, target: aggregator, label: resolve, label_style: chip, relation: drift, marker: none }
+      - { source: orders, target: aggregator, label: one response, relation: drift, marker: none }
+      - { source: inventory, target: aggregator, relation: drift, marker: none }
+      - { source: payments, target: aggregator, relation: drift, marker: none }
+
+  kernel-bottleneck:
+    topology: dag
+    zones: ["service dependencies"] # specimen -zone runs, verbatim
+    chassis: { card_min_w: 145, node: { w: 145, h: 60 }, hero: { w: 145, h: 60, rx: 13 } , zone_content_gap: 209, caption_gap: 65, caption_pad: 21} # kernel-bottleneck: compact uniform glyph cards, hero == std
+    title: Service dependency graph
+    subtitle: Arrows point from each service to what it depends on — core is required by four, the one bottleneck
+    notes: dependency bottleneck
+    node_style: card+glyph
     glyph_tint: full
     nodes:
-      - { label: GPT, glyph: openai }
-      # Anthropic's brand mark is near-black — on noir the hero opts back
-      # to ink (the per-slot override is the designed escape, decision 9).
-      - { label: Claude, glyph: anthropic, role: hero, glyph_tint: ink }
-      - { label: Gemini, glyph: gemini }
-      - { label: Ollama, glyph: ollama }
-
-  frontier-gateway:
-    topology: pipeline
-    title: MCP Round Trip
-    subtitle: requests fire as comets, responses return as particles
-    notes: mcp round trip
-    nodes:
-      - { id: client, label: Claude Code, glyph: claude, style: card+glyph }
-      - { id: gw, label: gateway, role: hero }
-      - { id: srv, label: tool server, glyph: docker, style: card+glyph }
+      - { id: web, label: web, desc: nextjs, glyph: nextjs }
+      - { id: api, label: api, desc: go, glyph: go }
+      - { id: worker, label: worker, desc: python, glyph: python }
+      - { id: mobile, label: mobile, desc: react, glyph: react }
+      - { id: core, label: core, desc: kernel · ×4 in-degree, role: hero, kind: cpu }
+      - { id: postgres, label: postgres, desc: store, glyph: postgresql }
+      - { id: cache, label: cache, desc: redis, glyph: redis }
+      - { id: search, label: search, desc: elastic, glyph: elasticsearch }
     edges:
-      - { source: client, target: gw, edge_motion: beam }
-      - { source: gw, target: client, edge_motion: particle }
-      - { source: gw, target: srv, edge_motion: beam }
-      - { source: srv, target: gw, edge_motion: particle }
+      - { source: web, target: core, relation: assert }
+      - { source: api, target: core, relation: assert }
+      - { source: worker, target: core, relation: assert }
+      - { source: mobile, target: core, relation: assert }
+      - { source: core, target: postgres, relation: assert }
+      - { source: core, target: cache, relation: assert }
+      - { source: postgres, target: search, relation: assert }
+      - { source: cache, target: search, relation: assert }
 
-  frontier-mindmap:
-    topology: tree
-    orientation: radial
-    title: The LLM Stack
-    notes: llm stack
-    nodes:
-      - { id: stack, label: LLM Stack, short: ai }
-      - { id: models, label: Models }
-      - { id: serving, label: Serving }
-      - { id: data, label: Data }
-      - { id: open, label: open }
-      - { id: closed, label: closed }
-      - { id: engines, label: engines }
-      - { id: local, label: local }
-      - { id: corpora, label: corpora }
-      - { id: evals, label: evals }
-      - { id: llama, label: Llama, glyph: meta, style: card+glyph }
-      - { id: qwen, label: Qwen, glyph: qwen, style: card+glyph }
-      - { id: vllm, label: vLLM, glyph: vllm, style: card+glyph }
-      - { id: ollama, label: Ollama, glyph: ollama, style: card+glyph }
-    edges:
-      - { source: stack, target: models }
-      - { source: stack, target: serving }
-      - { source: stack, target: data }
-      - { source: models, target: open }
-      - { source: models, target: closed }
-      - { source: serving, target: engines }
-      - { source: serving, target: local }
-      - { source: data, target: corpora }
-      - { source: data, target: evals }
-      - { source: open, target: llama }
-      - { source: open, target: qwen }
-      - { source: engines, target: vllm }
-      - { source: local, target: ollama }
-
-  frontier-dag:
+  model-gateway-tiers:
     topology: dag
-    title: Data Platform Lineage
-    subtitle: two rank-skipping edges, two stacked under-channels
-    notes: platform lineage
+    zones: ["subsystems"] # specimen -zone runs, verbatim
+    chassis: { card_min_w: 210, node: { h: 62 }, hero: { h: 62 }, hero_min_w: 210, rank_pitch_max: 92, row_gap: 30, rank_gap: 142, depart_trunk: 0, join_trunk: 0 } # model-gateway-tiers: wide uniform tiers; the hub gathers knot-only (no stub); hero_min_w decouples the height floor from the dag default node.h so the 62 pin holds; join_trunk 0 — the gateway hand file's kv-cache join has no knot either, just fast/deep's own arrows coinciding at one point. Rank rhythm cited whole from that file: EVERY card 62 tall, tiers ride cy step 92 (row_gap 30), rank run 142 (tier east 914 -> next rank 1056) — the even-rise law: every converging curve crosses the same 46px rise, so the fan joins read as one family
+
+    title: Model gateway
+    subtitle: Model gateway · one key fans to every tier; telemetry skips straight to metrics
+    notes: model gateway tiers
+    glyph_tint: full
+    node_style: card+glyph
     nodes:
-      - { id: app, label: app, desc: clickstream, glyph: react, style: card+glyph }
-      - { id: iot, label: sensors, desc: edge fleet }
-      - { id: broker, label: Kafka, desc: 12 topics, glyph: kafka, style: card+glyph }
-      - { id: etl, label: transform, desc: dbt · spark, glyph: python, style: card+glyph }
-      - { id: dw, label: warehouse, desc: star schema, glyph: postgresql, style: card+glyph }
-      - { id: bi, label: dashboards, desc: exec views, glyph: grafana, style: card+glyph }
+      - { id: requests, label: requests, desc: clients, kind: users } # model-gateway-tiers: clients ride a user glyph
+      - { id: gateway, label: Model gateway, role: hero, gather: true, kind: router }
+      - { id: fast, label: Fast tier, desc: Haiku, kind: zap } # the specimen's own lightning, now a counted mark (census amended 6→7)
+      - { id: deep, label: Deep tier, desc: Opus, kind: cpu }
+      - { id: vision, label: Vision tier, desc: multimodal, kind: eye }
+      - { id: cache, label: kv-cache, desc: redis, glyph: redis, gather: true } # fast+deep converge here; gather:true collapses them to one coincident arrival (pp-gateway-refined.svg's own mechanic)
+      - { id: metrics, label: metrics, desc: grafana, kind: layout-grid } # model-gateway-tiers: 2x2 dashboard grid
     edges:
-      - { source: app, target: broker }
-      - { source: iot, target: broker }
-      - { source: broker, target: etl }
-      - { source: etl, target: dw }
-      - { source: etl, target: bi }
-      - { source: app, target: etl }
-      - { source: broker, target: bi }
+      # Ruling 2026-07-14: call/telemetry ride CHIP pills (the gateway-balanced
+      # dress), superseding pp-gateway-refined.svg's own bare micro-labels.
+      - { source: requests, target: gateway, label: call, label_style: chip, relation: assert }
+      - { source: gateway, target: fast, relation: assert }
+      - { source: gateway, target: deep, relation: assert }
+      - { source: gateway, target: vision, relation: assert }
+      - { source: fast, target: cache, relation: assert }
+      - { source: deep, target: cache, relation: assert }
+      - { source: vision, target: metrics, relation: assert }
+      - { source: gateway, target: metrics, relation: drift, label: telemetry, label_style: chip, marker: arrow, exit: bottom }
+
+  service-dependencies:
+    topology: dag
+    zones: ["subsystems"] # specimen -zone runs, verbatim
+    chassis: { card_min_w: 146, hero: { h: 62 }, hero_min_w: 204 } # service-dependencies: uniform 146-wide cards, hero == std height; hero_min_w 204 specimen crown (content alone solved 164 — the API gateway label doesn't reach the specimen's width)
+    title: Service dependencies
+    subtitle: Service dependencies · a gateway fans to domain services, each grounding on its store
+    notes: dependency dag
+    glyph_tint: full
+    node_style: card+glyph
+    nodes:
+      - { id: web, label: web, desc: "React SPA", glyph: react }
+      - { id: gateway, label: API gateway, role: hero, kind: router }
+      - { id: auth, label: Auth, desc: tokens, kind: shield } # specimen draws the plain shield
+      - { id: orders, label: Orders, desc: "Python svc", glyph: python }
+      - { id: search, label: Search, desc: "query svc", kind: search }
+      - { id: postgres, label: Postgres, desc: primary, glyph: postgresql }
+      - { id: kafka, label: Kafka, desc: events, glyph: kafka }
+      - { id: redis, label: Redis, desc: cache, glyph: redis }
+    # Postgres is the figure three paths converge on: Auth reads, Orders writes,
+    # the gateway keeps a direct read across the ranks (the one non-obvious skip).
+    edges:
+      - { source: web, target: gateway, relation: assert }
+      - { source: gateway, target: auth, relation: assert }
+      - { source: gateway, target: orders, relation: assert }
+      - { source: gateway, target: search, relation: assert }
+      - { source: auth, target: postgres, label: reads, label_style: chip, relation: assert }
+      - { source: orders, target: postgres, relation: assert }
+      - { source: orders, target: kafka, label: emits, label_style: chip, relation: assert }
+      - { source: search, target: redis, label: cache, label_style: chip, relation: assert }
+      - { source: gateway, target: postgres, label: "direct read", label_style: chip, relation: drift, marker: arrow, exit: top }
+
+  # gateway-balanced: the bilaterally symmetric gateway diamond. One entry
+  # fans to a three-tier MODEL POOL (a filled band, no over-arc → snug header
+  # strip, concentric with the middle tier so it censuses as a shell), every
+  # tier converges on ONE shared cache (no gather knot — three arrowed
+  # convergents), and telemetry drifts out-of-band to a rank-pinned metrics
+  # sink below the request path. 7 solid arrows + the dotted telemetry drift.
+  gateway-balanced:
+    topology: dag
+    zones: ["subsystems"] # specimen -zone run, verbatim
+    chassis: { card_min_w: 158, node: { h: 62 }, hero: { w: 230, h: 62 }, hero_min_w: 230, rank_pitch_max: 84, row_gap: 22, rank_gap: 92, join_trunk: 0 } # gateway-balanced: uniform 158-wide tiers, 62-tall cards, 230-wide hero (specimen ratio 1.456); hero_min_w 230: the dag hero floors at the family's std column (158), not the hero.w pin, so the pin alone never took effect; join_trunk 0 — pp-gateway-balanced.svg's kv-cache join has no knot, three arrows coincide at one point. Rank rhythm cited whole from the hand file: tiers ride cy step 84 (h62 + 22 gap), every rank run 92 (hero east 542→634, tier east 798→890); metrics is the LANE member (all-under-channel sink), seated on the telemetry run itself
+    regions:
+      - { label: MODEL POOL, members: [fast, deep, vision], kind: band }
+    title: Model gateway
+    subtitle: Model gateway · one entrypoint fans to the model pool, every tier converges on the shared cache; telemetry runs out-of-band
+    notes: model gateway balanced
+    glyph_tint: full
+    node_style: card+glyph
+    nodes:
+      - { id: requests, label: requests, desc: clients, kind: users }
+      - { id: gateway, label: Model gateway, role: hero, kind: router }
+      - { id: fast, label: Fast tier, desc: Haiku, kind: zap } # the specimen's own lightning, now a counted mark (census amended 6→7: the hand file drew it as a bare path the extractor never counted)
+      - { id: deep, label: Deep tier, desc: Opus, kind: cpu }
+      - { id: vision, label: Vision tier, desc: multimodal, kind: eye }
+      - { id: cache, label: kv-cache, desc: redis, glyph: redis, gather: true } # fast+deep+vision all converge here; gather:true collapses them to one coincident arrival (pp-gateway-balanced.svg's own mechanic)
+      - { id: metrics, label: metrics, desc: grafana, kind: layout-grid, rank: 3 } # 2x2 dashboard grid; telemetry sink shares the cache column, below the request path
+    edges:
+      - { source: requests, target: gateway, label: call, label_style: chip, relation: assert }
+      - { source: gateway, target: fast, relation: assert }
+      - { source: gateway, target: deep, relation: assert }
+      - { source: gateway, target: vision, relation: assert }
+      - { source: fast, target: cache, relation: assert }
+      - { source: deep, target: cache, relation: assert }
+      - { source: vision, target: cache, relation: assert }
+      - { source: gateway, target: metrics, relation: drift, marker: arrow, label: telemetry, label_style: chip, exit: bottom, entry: left } # specimen: exits the hero's south face, runs the under-channel, enters metrics' west face (not south — model-gateway-tiers' symmetric case doesn't apply here)
+
+  # agent-runtime: the plan-act-observe control loop. A state-machine chain
+  # (User→Plan→Act→Observe→Response) with the re-plan return OVER-arcing above the
+  # row (exit: top — the underside is the tool pool), a CONTROL LOOP zone header,
+  # and an AGENT RUNTIME band region (filled control-loop frame) enclosing the
+  # over-arc. Three tools drop below Act (per-spec cap 3). 7 solid arrows + the
+  # dotted re-plan return.
+  agent-runtime:
+    topology: state-machine
+    title: Agent runtime
+    subtitle: Agent runtime · plan, act, observe — then re-plan or finish; the accent edge is the one transition that leaves the loop
+    notes: agent runtime control loop
+    zones: ["control loop"]
+    node_style: card+glyph
+    caps: { sm_max_below_baseline: 3 }
+    chassis: { card_min_w: 152, node: { w: 165 } , zone_content_gap: 113, caption_gap: 51, caption_pad: 21}
+    regions:
+      - { label: AGENT RUNTIME, members: [plan, act, observe], kind: band }
+    nodes:
+      - { id: user, label: User, desc: "chat · api", kind: user }
+      - { id: plan, label: Plan, desc: decompose, kind: workflow }
+      - { id: act, label: Act, desc: "tools · models", kind: cpu } # specimen draws the chip
+      - { id: observe, label: Observe, desc: inspect, kind: eye }
+      - { id: response, label: Response, desc: grounded, kind: send } # specimen draws the paper plane
+      - { id: search, label: Search, desc: web, kind: search }
+      - { id: code, label: Code, desc: sandbox, kind: code }
+      - { id: models, label: Models, desc: "fast · deep", kind: layers } # specimen draws the stack
+    edges:
+      - { source: user, target: plan }
+      - { source: plan, target: act, label: dispatch }
+      - { source: act, target: observe }
+      - { source: observe, target: response, label: done }
+      - { source: observe, target: plan, label: re-plan, relation: drift, marker: arrow, exit: top }
+      - { source: act, target: search }
+      - { source: act, target: code }
+      - { source: act, target: models }
+
+  # ── Tree ────────────────────────────────────────────────────────────────
+  tree:
+    topology: tree
+    zones: ["artifact taxonomy"] # specimen -zone runs, verbatim
+    chassis: { hero: { w: 156.8, h: 116 }, node2: { h: 76 } , caption_gap: 58, caption_pad: 27} # tree: dominant crown (156.8x116 verbatim, pp-taxonomy-tree), name-only leaves at full height
+    title: Artifact taxonomy tree
+    subtitle: Hierarchy · one composite root decomposes by depth into classes and their concrete artifact types
+    notes: artifact taxonomy
+    node_style: card+glyph
+    nodes:
+      - { id: artifact, label: Artifact, desc: the composite root, role: hero, glyph: hyperweave }
+      - { id: diagram, label: diagram, desc: structure, kind: workflow }
+      - { id: component, label: component, desc: surface, kind: component }
+      - { id: instrument, label: instrument, desc: telemetry, kind: gauge }
+      - { id: flow, label: flow, kind: git-branch }
+      - { id: tree, label: tree, kind: network }
+      - { id: banner, label: banner, kind: image }
+      - { id: badge, label: badge, kind: tag }
+      - { id: chart, label: chart, kind: chart-line }
+      - { id: gauge, label: gauge, kind: activity }
+    edges:
+      - { source: artifact, target: diagram }
+      - { source: artifact, target: component }
+      - { source: artifact, target: instrument }
+      - { source: diagram, target: flow }
+      - { source: diagram, target: tree }
+      - { source: component, target: banner }
+      - { source: component, target: badge }
+      - { source: instrument, target: chart }
+      - { source: instrument, target: gauge }
+
+  dep-audit:
+    topology: tree
+    zones: ["dependency audit"] # specimen -zone runs, verbatim
+    # hero head_pad_y 26/label_desc_gap 4.12: this preset's OWN hero
+    # (pp-tree-v2.svg "my-app", name baseline 72.9, gap 16.0 on a 104x112
+    # crown) is more compact than tree's own root crown (156.8x116) — the
+    # tree topology's shared hero rhythm (head_pad_y 26.3/label_desc_gap
+    # 7.5, cited from tree's own taller root) overshoots this one's own 112
+    # floor without its own citation.
+    chassis: { node: { w: 89, h: 100 }, node2: { h: 100 }, hero: { head_pad_y: 26, label_desc_gap: 4.12 } , zone_content_gap: 8, caption_gap: 58, caption_pad: 25} # dep-audit: taller version-bearing package cards
+    title: Dependency audit tree
+    subtitle: Dependency audit · your package roots the tree; solid edges are direct deps, dashed are transitive; the health channel flags what needs attention
+    notes: dependency health tree
+    node_style: card+glyph
+    nodes:
+      - { id: my-app, label: my-app, desc: "2.1.0", role: hero, kind: package }
+      - { id: react, label: react, desc: "18.3.1", kind: package }
+      - { id: lodash, label: lodash, desc: "4.17.20", kind: package, health: outdated }
+      - { id: axios, label: axios, desc: "0.21.1", kind: package, health: vulnerable }
+      - { id: scheduler, label: scheduler, desc: "0.23.0", kind: package }
+      - { id: follow-redirects, label: follow-redirects, desc: "1.14.0", kind: package, health: vulnerable }
+    edges:
+      - { source: my-app, target: react, relation: assert }
+      - { source: my-app, target: lodash, relation: assert }
+      - { source: my-app, target: axios, relation: assert }
+      - { source: react, target: scheduler, relation: drift }
+      - { source: axios, target: follow-redirects, relation: drift }
+    annotations:
+      - { text: vulnerable, kind: legend, health: vulnerable, region: header }
+      - { text: outdated, kind: legend, health: outdated, region: header }
+      - { text: direct dep, kind: legend, shape: line, region: header }
+      - { text: transitive, kind: legend, shape: line-dashed, region: header }
+
+  mindmap:
+    topology: tree
+    zones: ["artifact taxonomy · radial"] # specimen -zone runs, verbatim
+    orientation: radial
+    wire: solid # mindmap: the dendrogram is static furniture, no marching rays
+    title: Artifact taxonomy, radial
+    subtitle: Radial hierarchy · the composite root at centre, classes on the inner ring, concrete types on the outer ring
+    notes: artifact anatomy radial
+    node_style: card+glyph
+    chassis: { node: { rx: 13 }, node2: { h: 76, rx: 13 } , zone_content_gap: 79.8, caption_gap: 91.8, caption_pad: 27.1} # mindmap: ring cards rx 13, name-only leaves at full height
+    nodes: # 4 class rays x 2 leaves, verbatim from the mindmap specimen (parity content)
+      - { id: artifact, label: artifact, desc: the root, role: hero, glyph: hyperweave }
+      - { id: diagram, label: diagram, desc: class, kind: workflow }
+      - { id: component, label: component, desc: class, kind: component }
+      - { id: instrument, label: instrument, desc: class, kind: gauge }
+      - { id: brand, label: brand, desc: class, kind: star }
+      - { id: flow, label: flow, kind: git-branch }
+      - { id: tree, label: tree, kind: network }
+      - { id: banner, label: banner, kind: image }
+      - { id: badge, label: badge, kind: tag }
+      - { id: chart, label: chart, kind: chart-line }
+      - { id: gauge, label: gauge, kind: activity }
+      - { id: logo, label: logo, kind: flame } # specimen draws the lucide flame verbatim
+      - { id: icon, label: icon, kind: box }
+    edges:
+      - { source: artifact, target: diagram }
+      - { source: artifact, target: component }
+      - { source: artifact, target: instrument }
+      - { source: artifact, target: brand }
+      - { source: diagram, target: flow }
+      - { source: diagram, target: tree }
+      - { source: component, target: banner }
+      - { source: component, target: badge }
+      - { source: instrument, target: chart }
+      - { source: instrument, target: gauge }
+      - { source: brand, target: logo }
+      - { source: brand, target: icon }
+
+  dep-audit-radial:
+    topology: tree
+    zones: ["dependency audit · radial"] # specimen -zone runs, verbatim
+    orientation: radial
+    chassis: { card_min_w: 109, node: { h: 100 }, node2: { h: 100 } , zone_content_gap: 233, caption_gap: 49, caption_pad: 27.3} # dep-audit-radial: wider, taller ring members
+    title: Radial dependency audit
+    subtitle: Radial dependency audit · your package at centre, direct deps on the inner ring, transitive deps outward; the health channel surfaces the vulnerable chain at a glance
+    notes: dependency health radial
+    node_style: card+glyph
+    nodes:
+      - { id: my-app, label: my-app, desc: "2.1.0", role: hero, kind: package }
+      - { id: react, label: react, desc: "18.3.1", kind: package }
+      - { id: axios, label: axios, desc: "0.21.1", kind: package, health: vulnerable }
+      - { id: lodash, label: lodash, desc: "4.17.20", kind: package, health: outdated }
+      - { id: express, label: express, desc: "4.18.2", kind: package }
+      - { id: webpack, label: webpack, desc: "5.88.0", kind: package }
+      - { id: jest, label: jest, desc: "29.5.0", kind: package }
+      - { id: follow-redirects, label: follow-redirects, desc: "1.14.0", kind: package, health: vulnerable }
+      - { id: qs, label: qs, desc: "6.11.0", kind: package, health: outdated }
+      - { id: terser, label: terser, desc: "5.19.0", kind: package }
+    edges:
+      - { source: my-app, target: react, relation: assert }
+      - { source: my-app, target: axios, relation: assert }
+      - { source: my-app, target: lodash, relation: assert }
+      - { source: my-app, target: express, relation: assert }
+      - { source: my-app, target: webpack, relation: assert }
+      - { source: my-app, target: jest, relation: assert }
+      - { source: axios, target: follow-redirects, relation: drift }
+      - { source: express, target: qs, relation: drift }
+      - { source: webpack, target: terser, relation: drift }
+    # placement: left — the specimen's own key sits top-left, flush under the
+    # kicker (pp-tree-radial-v2.svg's tr2-leg rows start at x66, the kicker's
+    # own x56 margin), the opposite corner from dep-audit's plain sibling
+    # (tr2-leg there sits top-RIGHT) — each composition keeps its own cited
+    # corner, never a shared default.
+    annotations:
+      - { text: vulnerable, kind: legend, health: vulnerable, region: header, placement: left }
+      - { text: outdated, kind: legend, health: outdated, region: header, placement: left }
+      - { text: direct dep, kind: legend, shape: line, region: header, placement: left }
+      - { text: transitive, kind: legend, shape: line-dashed, region: header, placement: left }

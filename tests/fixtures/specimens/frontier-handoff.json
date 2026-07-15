@@ -1,0 +1,69 @@
+{
+  "aspect": 3.471,
+  "beam": {
+    "clock": "5.236s",
+    "windows": [
+      [
+        0.02,
+        0.28
+      ],
+      [
+        0.34,
+        0.6
+      ],
+      [
+        0.66,
+        0.92
+      ]
+    ]
+  },
+  "caption_text": "Frontier handoff \u00b7 one task relayed across four labs \u2014 the comet is the payload",
+  "cards": {
+    "hero_h": 76.0,
+    "hero_w": 76.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 0,
+    "card_rx": 0.0,
+    "cards": 0,
+    "chips": 0,
+    "coins": 4,
+    "desc_lines": 0,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 4,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 6,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 213.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 0
+  },
+  "occupancy": 0.183,
+  "plate": {
+    "caption_pad": 44.0,
+    "caption_y": 296.0,
+    "content_bottom": 244.0,
+    "content_top": 140.0,
+    "zone_y": 48.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v4/diagram-frontier-handoff-pp-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1180.0,
+    340.0
+  ],
+  "width": 740.0
+}

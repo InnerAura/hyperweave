@@ -24,10 +24,10 @@ snapshots:
     uv run pytest tests/ -k snapshot --snapshot-update
 
 smoke:
-    uv run hyperweave compose badge "build" "passing" --genome brutalist-emerald
+    uv run hyperweave compose badge "build" "passing" --genome brutalist
 
 smoke-receipt:
-    uv run hyperweave render --template receipt --data tests/fixtures/session.json
+    uv run hyperweave compose receipt tests/fixtures/session.jsonl -o /tmp/hw-smoke-receipt.svg
 
 proof-set:
     #!/usr/bin/env bash
@@ -43,8 +43,20 @@ serve:
 extract-glyphs:
     uv run python scripts/extract_glyphs.py
 
-docs:
-    cd docs && mintlify dev
+fetch-core-glyphs:
+    uv run python scripts/fetch_core_glyphs.py
+
+# Run after any glyph registry rebuild: renders every entry in headless
+# Chromium and asserts the geometry stays inside its viewBox (needs Playwright).
+glyph-audit:
+    uv run python scripts/glyph_audit.py
+
+# Re-render the committed telemetry example receipts (assets/examples/telemetry/).
+# Default renders from real local transcripts (skips loudly if none found);
+# `--mock` is dev-only synthetic data and must never be committed.
+refresh-examples *ARGS:
+    uv run python scripts/refresh_examples.py {{ARGS}}
+
 
 build:
     uv build

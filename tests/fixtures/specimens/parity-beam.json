@@ -1,0 +1,79 @@
+{
+ "aspect": 1.595,
+ "beam": {
+  "clock": "5.236s",
+  "windows": [
+   [
+    0.02,
+    0.3
+   ],
+   [
+    0.32,
+    0.62
+   ]
+  ]
+ },
+ "caption_text": "The parity harness \u00b7 CLI, HTTP, and MCP ship byte-identical artifacts \u2014 the beam is the payload",
+ "cards": {
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 2.232,
+  "hero_h": 104.0,
+  "hero_w": 206.0,
+  "std_h_med": 60.0,
+  "std_w_med": 160.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 0,
+  "card_rx": 13.0,
+  "cards": 4,
+  "chips": 1,
+  "coins": 0,
+  "desc_lines": 4,
+  "drift_edges": 0,
+  "gather_knots": 1,
+  "glyph_marks": 4,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 0,
+  "shell_marks": 0,
+  "solid_edges": 0,
+  "terminal_dots": 0,
+  "zone_headers": 2
+ },
+ "census_amendments": {
+  "drift_edges": 0,
+  "note": "v2 conduit doctrine (diagram-frontier-handoff-pp-v2 hw:tradeoffs): the dashed track is retired \u2014 a beam moves through glass, so the engine renders a SOLID casing+rail conduit (two strokes per edge) where this earlier hand file still drew a dashed tube.",
+  "solid_edges": 8
+ },
+ "chip_homes": {
+  "in_card": 0,
+  "on_wire": 1,
+  "wire_offset_max": 0.0
+ },
+ "chip_stub_min": 33.5,
+ "height": 464.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "occupancy": 0.304,
+ "plate": {
+  "caption_pad": 100.0,
+  "caption_y": 640.0,
+  "content_bottom": 498.0,
+  "content_top": 202.0,
+  "zone_y": 72.0
+ },
+ "port_tolerance": 0.5,
+ "source": "v04/alpha/v04a6/diagrams-v4/diagram-parity-beam-pp.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1180.0,
+  740.0
+ ],
+ "width": 740.0
+}

@@ -70,7 +70,7 @@ def test_primer_badge_label_is_muted_ink_secondary() -> None:
     """Label = muted ink_secondary; value = neutral ink; glyph carries the
     sole accent (porcelain: cobalt #1D4ED8)."""
     svg = compose(_badge()).svg
-    assert 'fill="#5C7C9E"' in svg  # porcelain ink_secondary label
+    assert 'fill="#537395"' in svg  # porcelain ink_secondary label
     assert 'fill="#1E3A5F"' in svg  # porcelain neutral-ink value
     noir = compose(_badge(variant="noir")).svg
     assert 'fill="#8A8A8A"' in noir  # noir ink_secondary label
@@ -170,7 +170,7 @@ def test_primer_strip_card_is_full_bleed() -> None:
     An embedded artifact has no page for a drop shadow to fade into: an inset
     margin renders as a hard-clipped shadow box on the README ground (the
     blur far exceeds any practical margin), so the card spans the viewBox and
-    the shadow clips behind it, exactly like the alpha.1 plate."""
+    the shadow clips behind it, exactly like the original plate."""
     resolved = resolve(_strip())
     ctx = resolved.frame_context
     assert resolved.height == 46
@@ -214,7 +214,7 @@ def test_primer_strip_type_voices() -> None:
     match = re.search(r"\.\S+-metric-label \{[^}]+\}", svg)
     assert match is not None
     label_class = match.group(0)
-    assert "fill: #5C7C9E" in label_class  # porcelain ink_secondary, not accent
+    assert "fill: #537395" in label_class  # porcelain ink_secondary, not accent
     assert "font-weight: 600" in label_class
     match = re.search(r"\.\S+-metric-value \{[^}]+\}", svg)
     assert match is not None

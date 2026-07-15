@@ -153,7 +153,7 @@ def _load_real_telemetry(path: Path) -> dict[str, Any] | None:
 
     The script ships paths to user-local Claude Code transcripts; on machines
     without those exact paths (CI, fresh checkout), this returns None and the
-    caller should fall back to MOCK_RECEIPT_PAYLOAD. The v3 receipt consumes the
+    caller should fall back to MOCK_RECEIPT_PAYLOAD. The receipt frame consumes the
     compact receipt/1 payload, so this builds that (not the legacy contract).
     """
     if not path.exists():
@@ -328,7 +328,7 @@ MOCK_TELEMETRY: dict[str, Any] = {
     ],
 }
 
-# Mock ``receipt/1`` payload — the v3 receipt's canonical data contract. Used for
+# Mock ``receipt/1`` payload — the receipt frame's canonical data contract. Used for
 # the baseline (no-transcript) receipt render so the proofset has a deterministic
 # receipt on clean checkouts. Mirrors the specimen's economics + context shape.
 MOCK_RECEIPT_PAYLOAD: dict[str, Any] = {
@@ -359,6 +359,11 @@ MOCK_RECEIPT_PAYLOAD: dict[str, Any] = {
     "context": {
         "window": 200000,
         "peak_ctx": 196000,
+        # One minute per declared error — the context-load plot draws a red
+        # tick at each main-thread error's REAL minute, so a count without
+        # minutes renders "14 errors, zero ticks" (the self-inconsistency
+        # that shipped once). Clustered mid-session like real transcripts.
+        "error_min": [18, 24, 31, 44, 47, 52, 68, 71, 90, 95, 103, 118, 126, 131],
         "events": [
             {"min": 22, "cmd": "compact", "to": 36000},
             {"min": 51, "cmd": "clear", "to": 8000},
@@ -427,7 +432,10 @@ def _compose(
     data_tokens: list[Any] | None = None,
     matrix: dict[str, Any] | None = None,
     diagram: dict[str, Any] | None = None,
-    chrome: str = "card",
+    chrome: str = "caption",
+    ground: str = "",
+    palette: str = "",
+    surface_face: str = "",
 ) -> str:
     spec = ComposeSpec(
         type=frame_type,
@@ -451,6 +459,9 @@ def _compose(
         matrix=matrix,
         diagram=diagram,
         chrome=chrome,
+        ground=ground,
+        palette=palette,
+        surface_face=surface_face,
     )
     return compose(spec).svg
 
@@ -798,7 +809,7 @@ def generate_static() -> int:
         # ── 7. Kinetic typography removed in v0.2.14 with the banner frame ──
 
     # ── 8. Receipts — primer chromatic matrix ──
-    # The v3 receipt speaks the primer genome (8 variants, porcelain flagship);
+    # The receipt frame speaks the primer genome (8 variants, porcelain flagship);
     # the agent runtime selects only the identity glyph + wordmark, not a theme.
     # Each transcript renders against representative variants spanning the
     # chromatic axis: porcelain (flagship light), noir (flagship dark), and cream
@@ -1845,7 +1856,7 @@ def generate_readme(total: int, live_total: int) -> None:
     _emit_brutalist_readme()
     _emit_primer_readme()
     _emit_matrix_readme()
-    _emit_diagram_readme()
+    _emit_verb_readme()
     _emit_chrome_readme()
     _emit_telemetry_readme()
     _emit_state_readme()
@@ -1952,7 +1963,7 @@ def _emit_state_readme() -> None:
 def _emit_telemetry_readme() -> None:
     """Emit outputs/README_TELEMETRY.md with the receipt tour.
 
-    The v3 receipt speaks the primer genome. Each session renders across
+    The receipt frame speaks the primer genome. Each session renders across
     representative variants spanning the chromatic axis — porcelain (flagship
     light), noir (flagship dark), cream (second light scholar) — plus the raw
     register-tape chassis, all carrying the same receipt/1 payload. Real
@@ -2589,7 +2600,7 @@ def _emit_primer_readme() -> None:
             "## Cross-reference",
             "",
             "- [Main README](../README.md) — installation, compose grammar, all genomes",
-            "- [CHANGELOG](../CHANGELOG.md) — v0.4.0-alpha.1 release notes",
+            "- [CHANGELOG](../CHANGELOG.md) — release notes",
             "",
         ]
     )
@@ -3142,417 +3153,543 @@ _MATRIX_EDGE_NOTES: dict[str, str] = {
 }
 
 
-def _degradation_lint(out_dir: Path) -> None:
-    """R1 regression guard: every requested-full mark renders full unless
-    the registry declares it mono or the contrast gate degraded it — those
-    are the only legal reasons. Emits outputs/degradation_report.md and
-    raises on anything unexplained (post-audit, that is a bug)."""
-    import json as _json
-    import re as _re
+_SURFACE_MODES: tuple[tuple[str, str, str, str], ...] = (
+    # (preset slug, ground, palette, one-line what-it-is)
+    ("plate", "opaque", "fixed", "opaque · fixed — carries its own ground, ignores the reader's theme."),
+    ("inlay", "bare", "adaptive", "bare · adaptive — no ground, borrows the host page, re-inks to the reader's theme."),
+    ("twin", "opaque", "adaptive", "opaque · adaptive — a light face and a dark face; contained, follows the theme."),
+)
 
-    from hyperweave.config.loader import load_glyphs
 
-    registry = load_glyphs()
-    payload_re = _re.compile(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", _re.DOTALL)
-    rows: list[tuple[str, int, str, str, str]] = []
-    unexplained: list[str] = []
-    for svg_path in sorted(out_dir.glob("*.svg")):
-        m = payload_re.search(svg_path.read_text())
-        if not m:
-            continue
-        payload = _json.loads(m.group(1))
-        if "rendered" not in payload or "spec" not in payload:
-            continue
-        spec = payload["spec"]
-        artifact_tint = spec.get("glyph_tint", "") or "ink"
-        nodes = spec.get("nodes", [])
-        rendered_tints = payload["rendered"].get("glyph_tint", [])
-        backings = payload["rendered"].get("glyph_backing", [])
-        for i, node in enumerate(nodes):
-            requested = node.get("glyph_tint", "") or artifact_tint
-            rendered = rendered_tints[i] if i < len(rendered_tints) else ""
-            if not node.get("glyph") or not rendered or requested == rendered:
-                continue
-            entry = registry.get(node["glyph"]) or {}
-            backing = backings[i] if i < len(backings) else ""
-            if requested == "full" and rendered == "gradient" and entry.get("gradient"):
-                reason = "gradient master (full-fidelity resolution, not a loss)"
-            elif entry.get("mono"):
-                reason = "mono (official mark is single-color, by design)"
-            elif backing.startswith("tint-"):
-                reason = f"contrast gate ({backing})"
-            else:
-                reason = "UNEXPLAINED"
-                unexplained.append(f"{svg_path.stem}#{i} {node['glyph']}: {requested} -> {rendered}")
-            rows.append((svg_path.stem, i, node["glyph"], f"{requested} -> {rendered}", reason))
-    report = [
-        "# Tint Degradation Report",
+def _surface_render(
+    out_dir: Path,
+    rel: str,
+    frame: str,
+    name: str,
+    payload: dict[str, Any],
+    variant: str,
+    ground: str,
+    palette: str,
+) -> str:
+    """Compose a surface-mode artifact and write it; return the filename.
+
+    The frame kwarg routes the payload to the right ComposeSpec slot (diagram vs
+    matrix); the ground/palette axes carry the surface mode. Content-addressed by
+    construction — plate/inlay/twin of one artifact are distinct addresses."""
+    kw: dict[str, Any] = {"variant": variant, "ground": ground, "palette": palette}
+    kw["diagram" if frame == "diagram" else "matrix"] = payload
+    svg = _compose(frame, "primer", **kw)
+    fname = f"{name}_{variant}.svg"
+    _write(out_dir / fname, svg)
+    _ = rel
+    return fname
+
+
+def _emit_surface_mode_section(
+    *,
+    render_fn: Any,
+    frame_label: str,
+    rel: str,
+    payload: dict[str, Any],
+    base_name: str,
+    coverage_rows: list[tuple[str, str, str]],
+) -> list[str]:
+    """The Surface Modes section, shared by the diagram and matrix READMEs.
+
+    plate / inlay / twin on ONE real artifact, across an accent-carrying variant
+    (porcelain) and a monochrome one (cream) — so the reader sees the mode on a
+    browsable artifact in context, distinct from the dense surface-matrix
+    gallery. Each cell is content-addressed (the three modes are three artifacts;
+    a twin additionally splits into two faces), which is the point: the surface
+    rides the payload, so the address changes with it. ``rel`` is the image root
+    relative to the README's own directory."""
+    section: list[str] = [
         "",
-        "Every row is a mark whose rendered tint differs from the requested",
-        "tint, with the reason. Post-audit, the only legal reasons are a",
-        "`mono: true` registry declaration or the contrast gate.",
+        "## Surface Modes",
         "",
-        "| artifact | node | glyph | requested -> rendered | reason |",
-        "| --- | --- | --- | --- | --- |",
+        "One artifact, three ways it can meet a host page. `plate` is the",
+        "self-contained default; `inlay` drops its ground and re-inks to the",
+        "reader's light/dark theme; `twin` carries both faces in a contained",
+        "card. The mode serializes into the payload, so plate/inlay/twin of the",
+        "same spec are distinct content addresses by construction.",
+        "",
+        f"Shown on an accent-carrying variant (porcelain) and a monochrome one (cream) — the {frame_label} frame.",
+        "",
+        "This is the one section in this document that stays adaptive on",
+        "purpose — `inlay` and `twin` below re-ink live via",
+        "`prefers-color-scheme`, so they follow whichever color scheme the",
+        "*viewer* resolves for this page, not necessarily the page's visible",
+        "background (a markdown preview pane can disagree with its editor's",
+        "own theme). Every other artifact in this document bakes one fixed",
+        "face so it reads the same everywhere.",
     ]
-    for artifact, i, glyph, change, reason in rows:
-        report.append(f"| {artifact} | {i} | {glyph} | {change} | {reason} |")
-    if not rows:
-        report.append("| _none_ | | | | every requested tint rendered as requested |")
-    _write(OUT / "degradation_report.md", "\n".join(report) + "\n")
-    print(f"  degradation lint: {len(rows)} degradations, {len(unexplained)} unexplained")
-    if unexplained:
-        raise AssertionError("unexplained full-tint degradations (registry debt in use): " + "; ".join(unexplained))
+    for variant in ("porcelain", "cream"):
+        section += ["", f"### {variant}"]
+        for slug, ground, palette, what in _SURFACE_MODES:
+            name = f"surface-{base_name}-{slug}"
+            fname = render_fn(name, payload, variant, ground, palette)
+            section += [
+                "",
+                f"**{slug}** — {what}",
+                "",
+                f"![{base_name} {slug} on {variant}]({rel}/{fname})",
+            ]
+            coverage_rows.append((f"{name} ({variant})", fname, f"surface mode: {slug} · {variant}"))
+    return section
 
 
-def _emit_diagram_readme() -> None:
-    """Emit outputs/README_DIAGRAM.md + render the diagram proofset.
+def _verb_appendix() -> list[str]:
+    """The per-surface error model + name-divergence tables (the doc's appendix).
 
-    A gallery, not a permutation dump (P5). The showcase tier renders each
-    named real system on the variant that flatters it (stacked full-width
-    entries — agent-plan leads); the topology reference renders the
-    coverage presets on porcelain; the pipeline sweep proves chromatic
-    derivation across the other seven variants; the boundary suite proves
-    caps refuse rather than degrade. A text-only coverage matrix closes the
-    file so the set audits as coverage and browses as a gallery. Image
-    roots are relative to outputs/ (this README's own directory), so links
-    resolve locally and on GitHub.
+    These survive from the first README_VERB cut as reference — the chains above
+    are the spine (operations paired with rendered artifacts); this closes the
+    file with the flat contract a scripter checks when moving across surfaces.
     """
-    from hyperweave.compose.diagram.input import diagram_preset_names, resolve_diagram_preset
-    from hyperweave.core.diagram import DiagramCapacityError
-    from hyperweave.serve.app import _error_badge
+    return [
+        "",
+        "## Appendix — surface contract",
+        "",
+        "The chains above run the verbs for real and embed what they produce. This"
+        " appendix is the flat reference: the error model and how each surface names"
+        " the same input.",
+        "",
+        "### Error model",
+        "",
+        "| Surface | Success | Bad request field | Business-logic reject |",
+        "| --- | --- | --- | --- |",
+        "| CLI | exit `0`, JSON on stdout | usage error, exit `2` | `HwError.cli_text()` on stderr, exit `1` |",
+        "| HTTP | `200` | `422` (Pydantic — missing/typed field) | `400` + `{error:{code,message,fix}}` |",
+        "| MCP | tool result dict | tool-arg error | `SPEC_INVALID` in the result envelope |",
+        "",
+        "The HTTP layering: a **`422`** means the body was malformed (a required field"
+        " like `source`/`mutations` absent); a **`400`** means it parsed but the"
+        " operation was invalid (mismatched frame types, a source with no payload, a"
+        " patch that breaks the schema). The `400` body always carries `code` +"
+        " `message` + `fix`.",
+        "",
+        "### Surface vocabulary",
+        "",
+        "One capability core, three thin adapters — results agree byte-for-byte. The"
+        " HTTP body and MCP params share ONE vocabulary (`source`, `a`/`b`,"
+        " `mutations`); the CLI differs only in surface idiom — positional arguments"
+        " and `--patch` as a file-path convenience.",
+        "",
+        "| Verb | CLI | HTTP body | MCP params |",
+        "| --- | --- | --- | --- |",
+        "| extract | `SOURCE`, `--respond` | `source`, `respond` | `source`, `respond` |",
+        "| verify | `SOURCE` | `source` | `source` |",
+        "| diff | `A` `B`, `--exit-code` | `a`, `b` | `a`, `b` |",
+        "| query | `SOURCE` `QUESTION` | `source`, `question` | `source`, `question` |",
+        "| transform | `SOURCE`, `--patch`/`--patch-json` | `source`, `mutations` | `source`, `mutations` |",
+        "",
+        "- **The only naming difference is the CLI idiom**: positional `SOURCE`/`A`/`B`"
+        " arguments, and `--patch`/`--patch-json` (a file-path/inline convenience) vs"
+        " the HTTP/MCP `mutations` field — the RFC-6902 op-list content is identical.",
+        "- **`source` accepts more than a file** on the CLI: `-` (stdin), a path, an"
+        " `http(s)` URL, a raw `<svg…>`, or a `/v1/a/{digest}` handle (resolved over"
+        " the render tier; format suffixes stripped first).",
+        "- **transform returns a handle on every surface** — `{envelope, url, lineage,"
+        " …}`, never raw bytes; the SVG is cached, so fetch the `url` to render it.",
+        "",
+    ]
 
-    out_dir = OUT / "proofset" / "primer" / "diagram"
+
+def _emit_verb_readme() -> None:
+    """Emit outputs/README_VERB.md — the verb algebra as agentic workflow chains.
+
+    Not a per-verb reference (that is the appendix): the spine is three chains of
+    REAL operations over VISIBLE artifacts, following the proofset convention that
+    every operation is paired with its rendered SVG so depth is verified by eye,
+    never asserted in prose. The verbs run for real here — Chain A/B via the
+    in-process Python API, Chain C additionally through the CLI (subprocess) and
+    HTTP (in-process ASGI) to PROVE byte-equal digests across surfaces. Renders
+    are written under ``outputs/proofset/verbs/`` with paths relative to this
+    README's directory.
+    """
+    import json as _json
+
+    from hyperweave.compose.artifact_store import store_artifact
+    from hyperweave.core.envelope import extract_envelope
+    from hyperweave.verbs import diff, extract, query, transform, verify
+
+    out_dir = OUT / "proofset" / "verbs"
     out_dir.mkdir(parents=True, exist_ok=True)
     for stale in out_dir.glob("*.svg"):
         stale.unlink()
-    rel = "proofset/primer/diagram"
-    variants = ["noir", "carbon", "space", "anvil", "cream", "dusk", "petrol"]
+    rel = "proofset/verbs"
 
-    def render(name: str, payload: dict[str, Any], variant: str = "porcelain") -> str:
-        svg = _compose("diagram", "primer", variant=variant, diagram=payload)
-        fname = f"{name}_{variant}.svg"
-        _write(out_dir / fname, svg)
-        return fname
-
-    def entry(title: str, fname: str, caption: str) -> list[str]:
-        return ["", f"### {title}", "", f"![{title}]({rel}/{fname})", "", f"<sub>{caption}</sub>", ""]
-
-    # ── Showcase: named real systems on their flattering variant ─────────
-    gallery = [
-        (
-            "agent-plan",
-            "porcelain",
-            "Plan, Approve, Execute",
-            "A coding-agent session as a replayable sequence trace — plans as artifacts. Solid "
-            "= call, dashed = return, one φ replay clock.",
-        ),
-        (
-            "rag-pipeline",
-            "space",
-            "RAG, End to End",
-            "Pipeline under flow streaming on the space substrate; card+glyph identity "
-            "marks (HF, Postgres) ride the label line.",
-        ),
-        (
-            "inference-serving",
-            "cream",
-            "Inference Serving",
-            "Four-rank DAG at the announced cap — balancer fan-out, shared KV fan-in, "
-            "telemetry skip edge through the under-channel.",
-        ),
-        (
-            "model-router",
-            "dusk",
-            "One Key, Every Model",
-            "Nine-node radial fan at the cap with glyph_tint: full — Gemini's gradient star "
-            "and Mistral's color_paths render as masters.",
-        ),
-        (
-            "event-flywheel",
-            "anvil",
-            "Event Streaming Loop",
-            "Flow circulation on the flywheel ring — no events, only momentum; Kafka "
-            "and Postgres marks on glyph-circles.",
-        ),
-        (
-            "cicd-machine",
-            "porcelain",
-            "CI Run Lifecycle",
-            "State machine: initial stub, four baseline pills, failure branch drop, retry "
-            "under-loop back to queued, TERMINAL tag on deploy.",
-        ),
-        (
-            "build-migration",
-            "cream",
-            "CRA to Vite",
-            "Comparison grammar — the muted dashed card carries the React mark; the hero carries the ring.",
-        ),
-        (
-            "sync-chain",
-            "porcelain",
-            "Edge Sync Fabric",
-            "Four tiers, every link a reciprocal dashed pair — both lanes dash; no primary, no origin of truth.",
-        ),
-        (
-            "request-descent",
-            "cream",
-            "Request Descent",
-            "A stack with explicit top-to-bottom edges: reverse the edge, motion follows.",
-        ),
-        (
-            "frontier-relay",
-            "noir",
-            "Frontier Handoff",
-            "Beam relay across four labs on noir, glyph_tint: full; the near-black Anthropic mark "
-            "opts back to ink per-slot (decision 9's escape).",
-        ),
-        (
-            "gateway-classic",
-            "porcelain",
-            "MCP Gateway — Classic",
-            "The original reference composition: dash both lanes, amber out, violet back — "
-            "reciprocal pairs read as a conversation (per-direction hues, dash-dash lane gap 6).",
-        ),
-        (
-            "frontier-mindmap",
-            "petrol",
-            "The LLM Stack",
-            "Depth-3 radial tree — sectors subdivide by subtree leaf count through three "
-            "rings; branded leaves carry registry marks.",
-        ),
-        (
-            "frontier-dag",
-            "space",
-            "Data Platform Lineage",
-            "Two rank-skipping edges routed through two stacked under-channels on the space substrate.",
-        ),
-    ]
-    gallery_names = {name for name, _, _, _ in gallery}
-    coverage_rows: list[tuple[str, str, str]] = []
+    def _short_id(env: dict[str, Any]) -> str:
+        """The envelope id trimmed to a readable prefix (full ids are 64 hex)."""
+        raw = str(env.get("id", ""))
+        body = raw.split(":", 1)[1] if ":" in raw else raw
+        return f"sha256:{body[:12]}…" if body else "(none)"
 
     lines: list[str] = [
-        "# HyperWeave Diagram — Topologies + Motion Grammar",
+        "# HyperWeave Verbs — agentic workflow chains",
         "",
-        "Ten topologies, fourteen layout algorithms, one closed motion",
-        "vocabulary (`dash | particle | beam | flow` — a 2x2, never a list).",
-        "Every entry is a named real diagram; the coverage matrix at the end",
-        "maps each artifact to the combinations it proves.",
+        "Every HyperWeave artifact carries its own spec: an embedded `hw:payload`"
+        " (lossless) and an `hwz/1` envelope (the ~200-token actionable digest). The"
+        " **verbs** — `extract`, `verify`, `diff`, `query`, `transform` (plus"
+        " `compose`/`validate`) — are the read/write algebra over that contract,"
+        " served identically across CLI / HTTP / MCP by one registry.",
         "",
-        "## The tint axis, once",
+        "This doc is a **proof, not a reference**: each chain below is a real agentic"
+        " workflow, every operation paired with the artifact it produced so you can"
+        " *see* that the depth is real — the transformed cell actually changed, the"
+        " added node actually appears, the two surfaces actually agree. The artifacts"
+        " and this file are emitted by `scripts/generate_proofset.py` (the verbs run"
+        " for real), never hand-authored. The flat per-surface contract is the"
+        " [appendix](#appendix--surface-contract).",
         "",
-        "One spec, one parameter. `glyph_tint: ink` renders every identity",
-        "mark in the genome ink token; `glyph_tint: full` renders registry",
-        "masters — color_paths and gradients — and the contrast gate keeps",
-        "every mark legible on its paper, set-uniformly.",
+        "---",
     ]
-    relay_payload = resolve_diagram_preset("pipeline-relay")
-    fname = render("pipeline-relay-ink", {**relay_payload, "glyph_tint": "ink"})
-    lines += entry("pipeline-relay · ink", fname, "`glyph_tint: ink` — the genome carries the marks.")
-    coverage_rows.append(("pipeline-relay-ink", fname, "teaching pair: ink half"))
-    fname = render("pipeline-relay-full", {**relay_payload, "glyph_tint": "full"})
-    lines += entry("pipeline-relay · full", fname, "`glyph_tint: full` — the brands carry themselves.")
-    coverage_rows.append(("pipeline-relay-full", fname, "teaching pair: full half"))
+
+    # ══ Chain A — artifact lifecycle over a real status matrix ═══════════════
+    tiers = _json.loads((Path("tests/fixtures/matrix/tiers.json")).read_text())
+    parent_svg = _compose("matrix", "primer", variant="porcelain", matrix=tiers)
+    parent_env = extract_envelope(parent_svg) or {}
+    parent_digest = str(parent_env.get("id", ""))
+    if parent_digest:
+        store_artifact(parent_digest, parent_svg)
+    _write(out_dir / "chainA-1-parent.svg", parent_svg)
+
+    # query — a real question answered from the envelope (deterministic, exact).
+    q_rows = query(parent_svg, "how many rows does this matrix have?")
+    q_title = query(parent_svg, "what is the title?")
+
+    # transform — flip a real cell: the "chromatic · motion" row's Naked column
+    # (off → on) via an RFC-6902 replace on the payload path. Row 3 (index 3),
+    # column 0 (Naked). This is a genuine content edit, not a title tweak.
+    patch = [{"op": "replace", "path": "/rows/3/cells/0/state", "value": "on"}]
+    t = transform(parent_svg, patch)
+    child_svg = t.svg
+    _write(out_dir / "chainA-2-child.svg", child_svg)
+
+    # diff — parent vs child: the structured delta (payload-bound, not pixels).
+    d = diff(parent_svg, child_svg)
+
+    # verify — both artifacts prove id == sha256(payload).
+    vp = verify(parent_svg)
+    vc = verify(child_svg)
 
     lines += [
         "",
-        "## Gallery",
+        "## Chain A — artifact lifecycle",
         "",
-        "Every entry is a pair: the hero, then the same payload on the same",
-        "paper rendered `glyph_tint: full` + `chrome: bare` — full marks on",
-        "transparent paper, ready to sit in a host page.",
+        "*compose → query → transform → diff → verify.* An agent mints a status"
+        " matrix, asks it a question, patches one cell, proves what changed, and"
+        " confirms both artifacts are internally consistent — the read/write loop an"
+        " agent actually runs.",
+        "",
+        "**1. compose** — a real metadata-tier matrix (9 rows, 4 columns, sectioned;"
+        " `tests/fixtures/matrix/tiers.json`):",
+        "",
+        f"![Chain A parent matrix]({rel}/chainA-1-parent.svg)",
+        "",
+        f"<sub>`{_short_id(parent_env)}` · schema `{vp.to_dict().get('schema', 'matrix/1')}`</sub>",
+        "",
+        "**2. query** — answered from the envelope digest, deterministic and exact:",
+        "",
+        "```",
+        '$ hyperweave query tiers.svg "how many rows does this matrix have?"',
+        f'→ {{"answer": "{q_rows.answer}", "field": "{q_rows.field}",'
+        f' "mechanism": "{q_rows.mechanism}", "confidence": "{q_rows.confidence}"}}',
+        '$ hyperweave query tiers.svg "what is the title?"',
+        f'→ {{"answer": "{q_title.answer}", "field": "{q_title.field}"}}',
+        "```",
+        "",
+        "**3. transform** — patch the `chromatic · motion` row's *Naked* cell"
+        " `off → on` (RFC-6902 on the payload), yielding a NEW artifact:",
+        "",
+        "```json",
+        _json.dumps(patch),
+        "```",
+        "",
+        f"![Chain A transformed matrix]({rel}/chainA-2-child.svg)",
+        "",
+        f"<sub>parent `{_short_id(parent_env)}` → child `{_short_id(t.envelope)}`"
+        f" · lineage depth {len(t.lineage)}</sub>",
+        "",
+        "The two renders side by side ARE the proof: the third row's first dot fills"
+        " in the child. The change is content-addressed — a different payload hashes"
+        " to a different id.",
+        "",
+        "**4. diff** — the structured delta (payload-bound, not pixel diffing):",
+        "",
+        "```json",
+        _json.dumps(d.to_dict(), indent=2)[:900],
+        "```",
+        "",
+        "**5. verify** — both artifacts prove `id == sha256(payload)`:",
+        "",
+        "```",
+        f'$ hyperweave verify parent.svg → {{"valid": {str(vp.to_dict()["valid"]).lower()},'
+        f' "schema": "{vp.to_dict().get("schema", "")}"}}',
+        f'$ hyperweave verify child.svg  → {{"valid": {str(vc.to_dict()["valid"]).lower()},'
+        f' "schema": "{vc.to_dict().get("schema", "")}"}}',
+        "```",
+        "",
+        "---",
     ]
-    companion_variant_overrides = {"gateway-classic": "carbon"}
-    for name, variant, title, caption in gallery:
-        payload = resolve_diagram_preset(name)
-        fname = render(name, payload, variant)
-        lines += entry(title, fname, caption)
-        already_full = str(payload.get("glyph_tint", "")) == "full"
-        comp_variant = companion_variant_overrides.get(name, variant)
-        bare_svg = _compose(
-            "diagram", "primer", variant=comp_variant, chrome="bare", diagram={**payload, "glyph_tint": "full"}
-        )
-        _write(out_dir / f"{name}-companion_{comp_variant}.svg", bare_svg)
-        if comp_variant != variant:
-            companion_caption = f"full marks · bare chrome — the same payload restated on {comp_variant}."
-        elif already_full:
-            companion_caption = "bare chrome — the hero is already full-tint; the companion proves bare alone."
-        else:
-            companion_caption = "full marks · bare chrome — same payload, same paper."
-        lines += entry(f"{title} — companion", f"{name}-companion_{comp_variant}.svg", companion_caption)
-        coverage_rows.append(
-            (f"{name}-companion", f"{name}-companion_{comp_variant}.svg", "gallery companion: full + bare")
-        )
 
-    # ── Topology reference: the coverage presets on porcelain ────────────
-    proves = {
-        "pipeline": "pipeline · card · particle/dash-march track · hero ratio",
-        "fanout-horizontal": "fanout-horizontal · card+glyph identity marks · midpoint S-curves",
-        "fanout-bilateral": "fanout-bilateral · side split · shared band",
-        "fanout-upward": "fanout-upward · headerless · inverted pyramid",
-        "fanout-radial": "fanout-radial · equiangle ring · glyph-circle hub · emanation mask",
-        "convergence": "convergence · single meet point",
-        "flywheel": "flywheel · arc insets · boundary-true trims (G1) · hero axis",
-        "stack": "stack · portrait · x operators · rising risers",
-        "tree": "tree (banner star) · 2-line descs · width solve",
-        "comparison": "comparison · muted grammar · chassis-accent connector",
-        "sequence": "sequence · replay clock · call/return semantics (P3) · labels · card+glyph headers",
-        "pipeline-relay": "beam relay · slot-locked clock · glyph-circles · paint-ok",
-        "pipeline-streaming": "flow streaming · period rule · one system hue",
-        "fanout-volley": "beam volley · staggered begins · ramp-hue comets",
-        "convergence-arrivals": "beam arrivals · absorb-at-hub parking",
-        "flywheel-circulation": "flow circulation · chord-aligned arcs · quarter stagger",
-        "integration-hub": "bilateral x glyph-circle x flow · flipped-edge directions",
-        "frontier-gateway": "per-EDGE motion mix (beam + particle) · extent-aware lane gap — the per-edge-motion proof",
-        "gateway": "reciprocal lanes (once per direction) · direction:both sugar",
-        "service-dependencies": "dag · longest-path ranks · barycenter · skip channel",
-        "order-lifecycle": "state-machine · baseline/branch/loop · TERMINAL · labels",
-        "mindmap": "tree-radial · subtree sector subdivision · glyph-circle hub",
+    # ══ Chain B — diagram evolution ══════════════════════════════════════════
+    # A real DAG (explicit nodes + edges) so adding a node + wiring an edge is a
+    # genuine structural edit the layout solver must re-rank on recompose.
+    dag = _json.loads((Path("tests/fixtures/diagram/dag.json")).read_text())
+    dia_parent_svg = _compose("diagram", "primer", variant="porcelain", diagram=dag)
+    dia_parent_env = extract_envelope(dia_parent_svg) or {}
+    if dia_parent_env.get("id"):
+        store_artifact(str(dia_parent_env["id"]), dia_parent_svg)
+    _write(out_dir / "chainB-1-pipeline.svg", dia_parent_svg)
+
+    # transform — append a node and wire an edge into it. For diagram/1 the patch
+    # is relative to the spec, so nodes/edges grow directly; the solver re-runs.
+    last_id = dag["nodes"][-1].get("id") or f"n{len(dag['nodes']) - 1}"
+    dia_patch = [
+        {"op": "add", "path": "/nodes/-", "value": {"id": "audit", "label": "Audit"}},
+        {"op": "add", "path": "/edges/-", "value": {"source": last_id, "target": "audit"}},
+    ]
+    dt = transform(dia_parent_svg, dia_patch)
+    dia_child_svg = dt.svg
+    _write(out_dir / "chainB-2-evolved.svg", dia_child_svg)
+
+    # extract markdown shadow — the plain-text projection shown next to the render.
+    md_shadow = extract(dia_child_svg, respond="markdown").to_dict().get("markdown", "")
+    child_env_excerpt = _json.dumps(dt.envelope, indent=2)
+
+    lines += [
+        "",
+        "## Chain B — diagram evolution",
+        "",
+        "*compose → transform (add node + edge) → extract markdown shadow.* An agent"
+        " grows a topology by patching its structure, then reads back the text shadow"
+        " an LLM would consume instead of the pixels.",
+        "",
+        "**1. compose** — a real DAG (7 nodes, 7 edges; `tests/fixtures/diagram/dag.json`):",
+        "",
+        f"<sub>`primer.porcelain | plate | {dag['topology']} — {dag['subtitle']}`</sub>",
+        "",
+        f"![Chain B source DAG]({rel}/chainB-1-pipeline.svg)",
+        "",
+        "**2. transform** — append an `Audit` node and an edge into it:",
+        "",
+        "```json",
+        _json.dumps(dia_patch, indent=2),
+        "```",
+        "",
+        f"<sub>`primer.porcelain | plate | {dag['topology']} — the same graph, an Audit node"
+        f" and its edge appended` · parent `{_short_id(dia_parent_env)}` →"
+        f" child `{_short_id(dt.envelope)}`"
+        f" · the solver re-ran; the new terminal node and its edge appear</sub>",
+        "",
+        f"![Chain B evolved pipeline]({rel}/chainB-2-evolved.svg)",
+        "",
+        "**3. extract** — the evolved diagram's markdown shadow (what an agent reads"
+        " instead of the SVG), shown next to the render above:",
+        "",
+        "```",
+        md_shadow.strip()[:600],
+        "```",
+        "",
+        "The envelope excerpt — the ~200-token actionable digest the child carries:",
+        "",
+        "```json",
+        child_env_excerpt[:700],
+        "```",
+        "",
+        "---",
+    ]
+
+    # ══ Chain D — promotion under the verb algebra ═══════════════════════════
+    # The cyclic-dag promotion proven THROUGH the verbs: the payload
+    # keeps the caller's declared topology, the envelope carries the rendered
+    # pattern, and a transform that removes the cycle un-promotes the child —
+    # the seam is a pure function of the spec, reversible by patch.
+    from hyperweave.compose.engine import compose as _engine_compose
+    from hyperweave.core.models import ComposeSpec as _CS
+
+    # The preset library is the kit prototypes only, so the cyclic-dag
+    # promotion demo carries its own inline spec (a release train: a flake
+    # self-loop at index 1 and a requeue back-edge at index 4).
+    train = {
+        "topology": "dag",
+        "title": "Release train",
+        "subtitle": "a flake self-loop and a requeue cycle promote the declared dag",
+        "nodes": [
+            {"id": "build", "label": "build"},
+            {"id": "test", "label": "test"},
+            {"id": "stage", "label": "stage"},
+            {"id": "ship", "label": "ship", "role": "hero"},
+        ],
+        "edges": [
+            {"source": "build", "target": "test"},
+            {"source": "test", "target": "test", "label": "flake"},
+            {"source": "test", "target": "stage"},
+            {"source": "stage", "target": "ship"},
+            {"source": "ship", "target": "build", "label": "requeue"},
+        ],
     }
-    gallery_proves = {
-        "agent-plan": "sequence on real content · repeated directed pairs · launch shot",
-        "rag-pipeline": "pipeline x flow x card+glyph on a dark variant",
-        "inference-serving": "dag at the 4-rank cap · rank-count canvas sizing (G3) · full tint on cream",
-        "model-router": "fanout-radial at the 9-node cap · glyph_tint: full · gradient + color_paths marks",
-        "event-flywheel": "flywheel circulation with branded glyph-circles · no-axis ring",
-        "cicd-machine": "state-machine on real content · solved baseline fit",
-        "build-migration": "comparison x card+glyph · muted identity mark",
-        "sync-chain": "reciprocal dashed pairs on every link · direction:both x dash",
-        "request-descent": "stack with reversed explicit edges · direction control",
-        "frontier-relay": "beam relay x full tint x noir · per-slot glyph_tint override",
-        "gateway-classic": "dash-dash reciprocal pairs · per-direction lane hues · composition gap",
-        "frontier-mindmap": "tree-radial at depth 3 · ring-3 placement",
-        "frontier-dag": "dag with 2 skip edges · stacked under-channels",
-    }
+    train_result = _engine_compose(_CS(type="diagram", genome_id="primer", variant="porcelain", diagram=train))
+    train_svg = train_result.svg
+    train_env = extract_envelope(train_svg) or {}
+    if train_env.get("id"):
+        store_artifact(str(train_env["id"]), train_svg)
+    _write(out_dir / "chainD-1-promoted.svg", train_svg)
+    train_payload = extract(train_svg, respond="payload").to_dict().get("payload", {})
+    train_spec_topology = str(train_payload.get("spec", {}).get("topology", ""))
+    train_pattern = str((train_env.get("data") or {}).get("pattern", "?"))
+
+    # Remove the requeue back-edge (index 4) THEN the flake self-loop (index 1)
+    # — both cycles gone, the same declared dag now renders as a dag.
+    unpromote_patch = [{"op": "remove", "path": "/edges/4"}, {"op": "remove", "path": "/edges/1"}]
+    ut = transform(train_svg, unpromote_patch)
+    _write(out_dir / "chainD-2-unpromoted.svg", ut.svg)
+    child_env = ut.envelope
+    child_pattern = str((child_env.get("data") or {}).get("pattern", "?"))
+    ud = diff(train_svg, ut.svg)
+
     lines += [
         "",
-        "## Topology reference (porcelain)",
-    ]
-    coverage_rows.extend((name, f"{name}_{variant}.svg", gallery_proves[name]) for name, variant, _, _ in gallery)
-    reference_companions = {"fanout-bilateral", "fanout-horizontal", "fanout-volley"}
-    for preset in sorted(diagram_preset_names()):
-        if preset in gallery_names:
-            continue
-        payload = resolve_diagram_preset(preset)
-        fname = render(preset, payload)
-        lines += entry(preset, fname, proves.get(preset, preset))
-        coverage_rows.append((preset, fname, proves.get(preset, preset)))
-        if preset in reference_companions:
-            bare_svg = _compose(
-                "diagram", "primer", variant="porcelain", chrome="bare", diagram={**payload, "glyph_tint": "full"}
-            )
-            _write(out_dir / f"{preset}-companion_porcelain.svg", bare_svg)
-            lines += entry(
-                f"{preset} — companion",
-                f"{preset}-companion_porcelain.svg",
-                "full marks · bare chrome — same payload, same paper.",
-            )
-            coverage_rows.append(
-                (f"{preset}-companion", f"{preset}-companion_porcelain.svg", "reference companion: full + bare")
-            )
-
-    # ── Chromatic derivation ──────────────────────────────────────────────
-    lines += [
+        "## Chain D — promotion, proven through the verbs",
         "",
-        "## Chromatic derivation",
+        "*compose (cyclic dag) → extract → transform (remove the cycle) → diff.*"
+        " The release-train spec declares `topology: dag`, but its flake self-loop and"
+        " revert cycle have no rank — the input seam promotes it to state-machine"
+        " with a warning. The verbs make the whole mechanism legible:",
         "",
-        "The chassis is substrate-blind; the pipeline preset restates the flow",
-        "palette and inks across the other seven variants through genome data",
-        "alone.",
-    ]
-    pipeline_payload = resolve_diagram_preset("pipeline")
-    for variant in variants:
-        fname = render("pipeline", pipeline_payload, variant)
-        lines += entry(f"pipeline · {variant}", fname, f"`?variant={variant}` — same chassis, different substrate.")
-        coverage_rows.append((f"pipeline ({variant})", fname, f"chromatic derivation · {variant}"))
-
-    # ── Presentation chrome: one illustration ─────────────────────────────
-    lines += [
+        "**1. compose** — the declared dag renders as a state machine:",
         "",
-        "## Presentation chrome",
+        f"<sub>`primer.porcelain | plate | {train_pattern} — a flake self-loop and requeue cycle"
+        f" promote the declared dag` · `{_short_id(train_env)}` ·"
+        f" warning: `{'; '.join(train_result.warnings) or '(none)'}`</sub>",
         "",
-        "`?chrome=bare` ships transparent paper with no masthead and no",
-        "footer; the title travels in hw:title/aria/markdown/payload. Every",
-        "gallery companion above is bare — this is what one looks like",
-        "living in a host page (bare callers own paper matching: the",
-        "genome's inks assume its own surface family):",
+        f"![Chain D promoted release train]({rel}/chainD-1-promoted.svg)",
         "",
-        "![bare chrome in a host page](raster/bare-mock-page.png)",
+        "**2. extract** — the payload keeps the CALLER's declaration; the envelope"
+        " carries the RENDERED pattern (declared vs rendered never silently merge):",
+        "",
+        "```",
+        f"payload spec.topology  → {train_spec_topology!r}   (the caller's dag, preserved)",
+        f"envelope data.pattern  → {train_pattern!r}   (what actually rendered)",
+        "```",
+        "",
+        "**3. transform** — remove the two cycle-closing edges; the SAME declared"
+        " topology now renders as a plain dag (no promotion, no warning):",
+        "",
+        "```json",
+        _json.dumps(unpromote_patch),
+        "```",
+        "",
+        f"<sub>`primer.porcelain | plate | {child_pattern} — cycle edges removed, no promotion` ·"
+        f" parent `{_short_id(train_env)}` → child `{_short_id(child_env)}` ·"
+        f" child pattern `{child_pattern}` — promotion is a pure"
+        " function of the spec, reversible by patch</sub>",
+        "",
+        f"![Chain D un-promoted release train]({rel}/chainD-2-unpromoted.svg)",
+        "",
+        "**4. diff** — the structured delta names exactly the removed edges:",
+        "",
+        "```json",
+        _json.dumps(ud.to_dict(), indent=2)[:700],
+        "```",
+        "",
+        "---",
     ]
 
-    # ── Genome entrance channel: the `none` cell ──────────────────────────
-    # entrance is paradigm config (frozen), so the proofset closes the
-    # cell emitter-side: swap the resolver's layout entry point for one
-    # that copies the chassis with entrance="none".
-    import hyperweave.compose.resolvers.diagram as _dres
+    # ══ Chain C — cross-surface byte-equality ════════════════════════════════
+    # The SAME spec composed through the CLI (subprocess) and HTTP (in-process
+    # ASGI); the embedded envelope ids must match byte-for-byte (Invariant 9).
+    c_lines = _emit_verb_chain_c(out_dir, rel)
+    lines += c_lines
 
-    _real_layout = _dres.compute_diagram_layout
+    lines += _verb_appendix()
 
-    def _entranceless(spec: Any, *, paradigm: Any, **kw: Any) -> Any:
-        return _real_layout(spec, paradigm=paradigm.model_copy(update={"entrance": "none"}), **kw)
+    _write(OUT / "README_VERB.md", "\n".join(lines) + "\n")
+    print(f"  verb proofset: {len(list(out_dir.glob('*.svg')))} artifacts + README_VERB.md")
 
-    _dres.compute_diagram_layout = _entranceless
-    try:
-        fname = render("entrance-none", pipeline_payload)
-    finally:
-        _dres.compute_diagram_layout = _real_layout
-    lines += entry(
-        "entrance: none",
-        fname,
-        "The genome entrance channel's other value — no fade-in group; content paints at full opacity from frame zero.",
+
+def _emit_verb_chain_c(out_dir: Path, rel: str) -> list[str]:
+    """Chain C — the same artifact through CLI then HTTP, digests proven equal.
+
+    Runs `hyperweave compose` as a real subprocess and the HTTP compose handler
+    in-process (ASGI), then extracts both envelope ids and asserts equality. The
+    byte-equality is COMPUTED at generation time — if the surfaces diverged, this
+    raises and the proofset build fails (the claim can't rot into stale prose).
+    """
+    import subprocess
+    import sys as _sys
+
+    from hyperweave.core.envelope import extract_envelope
+
+    badge_args = ["badge", "STARS", "1234", "-g", "primer", "--variant", "porcelain"]
+
+    # CLI surface — a real subprocess writing the SVG to stdout.
+    cli_proc = subprocess.run(
+        [_sys.executable, "-m", "hyperweave", "compose", *badge_args],
+        capture_output=True,
+        text=True,
+        check=True,
     )
-    coverage_rows.append(("entrance-none", fname, "entrance: none (genome entrance channel closes)"))
+    cli_svg = cli_proc.stdout
+    _write(out_dir / "chainC-cli.svg", cli_svg)
+    cli_env = extract_envelope(cli_svg) or {}
 
-    # ── Boundaries ────────────────────────────────────────────────────────
-    lines += [
-        "",
-        "## Boundaries (caps refuse rather than degrade)",
-    ]
-    minimal = {"topology": "pipeline", "title": "Minimal", "nodes": [{"label": "A"}, {"label": "B"}, {"label": "C"}]}
-    fname = render("boundary-minimal", minimal)
-    lines += entry("3-node minimum", fname, "Per-layout minimum from data/diagram.yaml.")
-    coverage_rows.append(("boundary-minimal", fname, "per-layout min"))
-    try:
-        _compose(
-            "diagram",
-            "primer",
-            diagram={
-                "topology": "comparison",
-                "nodes": [{"label": "A"}, {"label": "B"}, {"label": "C"}],
-            },
-        )
-        raise AssertionError("over-cap comparison should refuse")
-    except (DiagramCapacityError, ValueError) as exc:
-        svg = _error_badge(str(exc), status_code=422)
-        _write(out_dir / "boundary-over-cap_porcelain.svg", svg)
-        lines += entry(
-            "comparison with 3 nodes",
-            "boundary-over-cap_porcelain.svg",
-            "DiagramCapacityError -> the SMPTE artifact a README embedder would actually see.",
-        )
-        coverage_rows.append(("boundary-over-cap", "boundary-over-cap_porcelain.svg", "capacity refusal -> SMPTE"))
+    # HTTP surface — the in-process ASGI app, respond=svg (the image path).
+    import asyncio
 
-    # ── Coverage matrix (text only) ───────────────────────────────────────
-    lines += [
+    from httpx import ASGITransport, AsyncClient
+
+    from hyperweave.serve.app import app
+
+    async def _http_compose() -> str:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://proofset") as client:
+            resp = await client.post(
+                "/v1/compose",
+                json={"type": "badge", "title": "STARS", "value": "1234", "genome": "primer", "variant": "porcelain"},
+            )
+            resp.raise_for_status()
+            return resp.text
+
+    http_svg = asyncio.run(_http_compose())
+    _write(out_dir / "chainC-http.svg", http_svg)
+    http_env = extract_envelope(http_svg) or {}
+
+    cli_id = str(cli_env.get("id", ""))
+    http_id = str(http_env.get("id", ""))
+    # Fail the build if the surfaces diverge — the parity claim is computed, not asserted in prose.
+    if not cli_id or cli_id != http_id:
+        raise AssertionError(f"cross-surface digest divergence: CLI {cli_id!r} != HTTP {http_id!r}")
+
+    short = f"sha256:{cli_id.split(':', 1)[-1][:12]}…"
+    return [
         "",
-        "## Coverage matrix",
+        "## Chain C — cross-surface identity",
         "",
-        "| artifact | proves |",
-        "| --- | --- |",
+        "*the same spec, composed through the CLI then HTTP.* The content-addressed"
+        " envelope id is computed at generation time on both surfaces and asserted"
+        " equal — if they diverged, this doc would fail to build. Parity is proven,"
+        " not claimed.",
+        "",
+        "```",
+        "# CLI (subprocess)",
+        f"$ hyperweave compose {' '.join(badge_args)} > cli.svg",
+        "",
+        "# HTTP (POST /v1/compose)",
+        '$ curl -s .../v1/compose -d \'{"type":"badge","title":"STARS",'
+        '"value":"1234","genome":"primer","variant":"porcelain"}\' > http.svg',
+        "```",
+        "",
+        "| surface | rendered | envelope id |",
+        "| --- | --- | --- |",
+        f"| CLI | ![CLI]({rel}/chainC-cli.svg) | `{short}` |",
+        f"| HTTP | ![HTTP]({rel}/chainC-http.svg) | `{short}` |",
+        "",
+        f"Both surfaces produced the identical id `{short}` — same input, same"
+        " content, same address. The pixels are the same artifact; the digest proves"
+        " it without a byte-by-byte compare.",
+        "",
+        "---",
     ]
-    for name, fname, what in coverage_rows:
-        lines.append(f"| [`{name}`]({rel}/{fname}) | {what} |")
-    lines += [
-        "",
-        "Reduced-motion strengthens the tube and removes light layers/particles;",
-        "composite-only surfaces (`?performance=composite-only`) ladder",
-        "beam->particle and flow->dash, recorded in the payload's `rendered`",
-        "block (requested vs rendered never silently diverges).",
-        "",
-    ]
-    _degradation_lint(out_dir)
-    _write(OUT / "README_DIAGRAM.md", "\n".join(lines))
-    print(f"  diagram proofset: {len(list(out_dir.glob('*.svg')))} artifacts + README_DIAGRAM.md")
 
 
 def _emit_matrix_readme() -> None:
@@ -3740,6 +3877,24 @@ def _emit_matrix_readme() -> None:
                     "![dim-over-cap-31](proofset/primer/matrix/dim-over-cap-31_porcelain.svg)",
                     "",
                 ]
+
+    # ── Surface Modes ───────────────────────────────────────────────────────
+    # plate / inlay / twin on a real support matrix — the same section shape the
+    # diagram README carries, so the surface story reads consistently across
+    # frames. Distinct from the surface-matrix gallery (that is the dense grid;
+    # this is the mode shown in context on a browsable table).
+    matrix_rel = "proofset/primer/matrix"
+    _surface_scratch: list[tuple[str, str, str]] = []
+    lines += _emit_surface_mode_section(
+        render_fn=lambda name, payload, variant, ground, palette: _surface_render(
+            out_dir, matrix_rel, "matrix", name, payload, variant, ground, palette
+        ),
+        frame_label="matrix",
+        rel=matrix_rel,
+        payload=fixtures["check"],
+        base_name="support",
+        coverage_rows=_surface_scratch,
+    )
 
     check_result = _do_compose(
         ComposeSpec(type="matrix", genome_id="primer", variant="porcelain", matrix=fixtures["check"])
@@ -4128,8 +4283,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
       - all 3 user-facing genomes (brutalist, chrome, automata)
       - all 7 user-facing frame types (badge, strip, icon, divider,
         marquee, stats, chart)
-      - state-bearing vs data-only strips (Bug 3 indicator gating)
-      - varying metric counts (Bug 1 cell distribution + Bug 2 height inv)
+      - state-bearing vs data-only strips (indicator gating)
+      - varying metric counts (cell distribution + height invariance)
       - variant query-param routing (chrome.horizon, automata.teal)
       - long-namespace via subtitle (Significant-Gravitas/AutoGPT)
       - **real-data via 6 live connectors** (gh, pypi, npm, docker, hf,
@@ -4197,7 +4352,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
     )
 
     # ── Strips: cell distribution + state-indicator gating ──────────────
-    # Bug 1 (n metrics fill canvas) — 4 brutalist strips at counts 1/2/3/4.
+    # Fill law (n metrics fill canvas) — 4 brutalist strips at counts 1/2/3/4.
     for n, metrics_csv in [
         (1, "STARS:2.9k"),
         (2, "STARS:2.9k,FORKS:278"),
@@ -4223,7 +4378,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             )
         )
 
-    # Bug 2 (chrome height invariance) — 4 chrome strips at counts 1/2/3/4.
+    # Height invariance — 4 chrome strips at counts 1/2/3/4.
     for n, metrics_csv in [
         (1, "STARS:2.9k"),
         (2, "STARS:2.9k,FORKS:278"),
@@ -4249,7 +4404,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             )
         )
 
-    # Bug 3 (state indicator gating) — BUILD title triggers indicator.
+    # State indicator gating — BUILD title triggers indicator.
     specs.append(
         ParitySpec(
             spec_id="brutalist-strip-state-bearing",
@@ -5163,7 +5318,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
     # below without overflow, blank space, or stretched cells.
 
     # --- vllm ecosystem strip (4 cells across vllm's footprint on 4 connectors) ---
-    # v0.3.9 Bug 2 fix: was "ECOSYSTEM" (abstract; reviewer couldn't identify
+    # Was "ECOSYSTEM" (abstract; reviewer couldn't identify
     # the project). Renamed to "vllm" — every metric is from vllm-project
     # across github / pypi / docker / hf so the strip reads as "vllm's
     # cross-ecosystem footprint" instead of an opaque label.
@@ -5945,7 +6100,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             )
         )
 
-    # ── Matrix (v0.4.0-alpha.2) ─────────────────────────────────────────
+    # ── Matrix ──────────────────────────────────────────────────────────
     # The generated connector matrix across direct/HTTP/MCP. The envelope's
     # content-derived id is identical on all three paths by construction;
     # prov.ts normalizes with the other timestamps.

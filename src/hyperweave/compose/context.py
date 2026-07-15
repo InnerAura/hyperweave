@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 from hyperweave.compose.assembler import fonts_for_frame, frame_needs_fonts
 from hyperweave.compose.payload import build_simple_payload
 from hyperweave.compose.reasoning import load_reasoning
+from hyperweave.config.loader import frame_public_name
 from hyperweave.core.color import hex_to_rgb_triplet
 from hyperweave.render.fonts import font_import_css, load_font_face_css
 
@@ -271,7 +272,11 @@ def build_context(
         if simple is not None:
             _emit_envelope(
                 ctx,
-                kind=str(spec.type),
+                # Public frame name for the envelope `k` (stats→card). The
+                # payload schema id stays the internal frame_type (set by
+                # build_simple_payload). frame_public is identity for every
+                # non-aliased frame, so only card artifacts see a changed k.
+                kind=str(ctx.get("frame_public", spec.type)),
                 title=simple.title,
                 intent=simple.intent,
                 data=simple.data,
@@ -280,12 +285,111 @@ def build_context(
                 schema=simple.schema,
                 markdown=simple.markdown,
             )
+    # Surface modes: for an adaptive artifact, swap the global genome CSS layer
+    # for a #uid-scoped block + a prefers-color-scheme @media far block, and
+    # suppress the inline style= attribute (its declarations fold into the near
+    # block). MUST run AFTER _emit_envelope rebinds uid to the content digest
+    # (the scope selector) and BEFORE _inject_motion (motion defs reference #uid).
+    # Plate/face renders skip this entirely — byte-identical.
+    if resolved.surface_adapt:
+        _apply_adaptive_css(ctx, spec, resolved)
     _inject_motion(ctx, spec, resolved)
     genome_id = resolved.genome.get("id", "")
     if frame_needs_fonts(spec.type, genome_id):
         char_set = _extract_char_set(ctx, spec.type)
         ctx["font_faces"] = _load_font_faces(resolved.genome, spec.type, char_set, spec.font_mode)
     return ctx
+
+
+def _apply_adaptive_css(ctx: dict[str, Any], spec: ComposeSpec, resolved: ResolvedArtifact) -> None:
+    """Rewrite the genome CSS layer to #uid scoping + a dark @media block.
+
+    Replaces the global ``svg, :root { … }`` genome rule (always the first CSS
+    part) with the Surface Modes adaptive stylesheet: ``#uid { color-scheme:
+    light dark; <near> }`` + ``@media (prefers-color-scheme: dark) { #uid {
+    <far> } }``. NORMALIZED ORDERING: every hand-authored twin
+    prototype — including the dark-native ones (primer.noir/.carbon/.space/
+    .anvil) — puts the LIGHT face in the base scope and the DARK face behind
+    the media query, because the universal fallback for a renderer without
+    ``prefers-color-scheme`` support is always light (surface_modes.py
+    invariant 3). A light-native genome's own declarations already ARE the
+    light face, so its near/far assignment is unchanged: near = genome as-is,
+    far = ``resolved.far_palette`` (flip_palette's computed dark). A
+    dark-native genome's assignment SWAPS: near must become the computed light
+    face (``resolved.far_palette``, patched over the genome via
+    ``overlay_face_palette`` so both CSS sinks see it) and far becomes the
+    genome's OWN native dark tokens (``native_palette``) — genuinely no-op
+    math, just relocating which scope reads which already-known palette.
+
+    The near block is the UNION of the genome-layer declarations
+    (``css_declarations``) and the variant inline-style fan-out
+    (``variant_override_declarations``) — the latter carries vars like
+    ``--dna-label-text`` that reach the matrix template ONLY via the inline
+    attribute, which adaptive mode suppresses. Also suppresses
+    ``inline_style_overrides`` so document.svg.j2 drops the root ``style=`` attr.
+    """
+    from hyperweave.compose.assembler import css_declarations, variant_override_declarations
+    from hyperweave.compose.surface_modes import (
+        adaptive_css,
+        authored_diagram_faces,
+        native_palette,
+        overlay_face_palette,
+    )
+    from hyperweave.config.loader import load_surface_modes
+
+    genome = resolved.genome
+    uid = str(ctx["uid"])
+    is_dark_native = str(genome.get("substrate_kind") or "light") == "dark"
+
+    faces = authored_diagram_faces(genome, str(getattr(spec.type, "value", spec.type)))
+    if faces is not None:
+        # Authored twin faces are ABSOLUTE (a hand-authored light face + dark
+        # face, verbatim from verb-algebra-primer-*.svg), so they bypass the
+        # native/far flip asymmetry entirely: the base scope is ALWAYS the
+        # authored light face, the @media(dark) block ALWAYS the authored dark
+        # face — regardless of the variant's own substrate. This is the P5
+        # "prefer authored faces" contract; the flip branches below are the
+        # fallback for genomes/frames without authored faces (the matrix frame).
+        base_genome = overlay_face_palette(genome, faces["light"], resolved.resolved_variant)
+        dark_face = faces["dark"]
+    elif is_dark_native:
+        base_genome = overlay_face_palette(genome, resolved.far_palette, resolved.resolved_variant)
+        dark_face = native_palette(genome, load_surface_modes())
+    else:
+        base_genome = genome
+        dark_face = resolved.far_palette
+
+    near_decls = " ".join(css_declarations(base_genome, str(spec.type)))
+    override_decls = " ".join(variant_override_declarations(base_genome, resolved.resolved_variant))
+    scoped = adaptive_css(
+        base_genome,
+        dark_face,
+        uid,
+        near_decls=near_decls,
+        override_decls=override_decls,
+    )
+
+    css = str(ctx.get("css", ""))
+    marker = "svg, :root {"
+    start = css.find(marker)
+    if start != -1:
+        depth = 0
+        end = start
+        for i in range(start, len(css)):
+            if css[i] == "{":
+                depth += 1
+            elif css[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i + 1
+                    break
+        ctx["css"] = css[:start] + scoped + css[end:]
+    else:
+        # No global genome block found (unexpected) — prepend the scoped block so
+        # the adaptive vars still land rather than silently dropping.
+        ctx["css"] = scoped + "\n" + css
+    # Fold the inline overrides into the near block instead of the root attr.
+    ctx["inline_style_overrides"] = ""
 
 
 # ── Base context (shared by all frames) ──────────────────────────────
@@ -322,6 +426,11 @@ def _base_context(
     glyph_viewbox = resolved.glyph_viewbox or "0 0 640 640"
     glyph_render_viewbox = str(resolved.frame_context.get("glyph_render_viewbox") or glyph_viewbox)
     glyph_viewbox_cx, glyph_viewbox_cy = _viewbox_center(glyph_viewbox)
+    # Display aspect, single-sourced for spatial_aspect_ratio + the honest
+    # spatial_notes default. Diagrams (whose viewBox differs from render size)
+    # override spatial_notes/data_hw_motion via frame_context; non-diagram
+    # frames keep viewBox == render, so display dims are the honest canvas.
+    spatial_aspect = f"{resolved.width / resolved.height:.2f}" if resolved.height else "0.00"
 
     ctx: dict[str, Any] = {
         # Identity
@@ -329,6 +438,11 @@ def _base_context(
         "artifact_id": artifact_id,
         "contract_id": artifact_id,
         "frame_type": spec.type,
+        # Public frame name (data-hw-frame, <hw:frame>, envelope k). Identity for
+        # every frame except the aliased ones (stats→card); the internal
+        # frame_type stays the payload schema id + template key. See
+        # config/loader.py:frame_public_name.
+        "frame_public": frame_public_name(str(spec.type)),
         "genome_id": resolved.genome.get("id", spec.genome_id),
         # v0.3.2: variant + substrate_kind plumbed through to templates.
         # substrate_kind drives the brutalist split-template dispatcher
@@ -374,11 +488,21 @@ def _base_context(
         "size": spec.size,
         "motion_id": resolved.motion,
         "motion": resolved.motion,
+        # data-hw-motion root flag: distinct from motion_id (which selects the
+        # badge/strip BORDER-motion system read by _inject_motion). For frames
+        # whose only animation IS the border motion, the two coincide; the
+        # diagram resolver overrides this with a layout-derived truth so the
+        # flag never claims static over an animating artifact (honesty.motion-flag).
+        "data_hw_motion": resolved.motion,
         "metadata_tier": spec.metadata_tier,
         # Dimensions
         "width": resolved.width,
         "height": resolved.height,
-        "spatial_aspect_ratio": f"{resolved.width / resolved.height:.2f}" if resolved.height else "0.00",
+        "spatial_aspect_ratio": spatial_aspect,
+        # hw:spatial-notes MEASURED clause. Default is honest for frames whose
+        # viewBox == render (badge/strip/icon/divider); the diagram resolver
+        # overrides with real canvas dims + slug orientation (honesty.notes-*).
+        "spatial_notes": f"{resolved.width}x{resolved.height} ({spatial_aspect}), left-to-right",
         # CSS
         "css": css_assembled,
         # Content
@@ -457,6 +581,19 @@ def _base_context(
         # only the SVG reads this and finds the contract (verbs + llms.txt).
         "self_instruct": SELF_INSTRUCT,
         "data_hw_subvariant": "",
+        # Surface modes (plate / inlay / twin). StrictUndefined-safe defaults =
+        # plate, so every non-adaptive artifact's template branches evaluate to
+        # the plate path and the output is byte-identical. Adaptive artifacts
+        # carry surface_adapt=True; the CSS swap + document root attrs fire off
+        # these. `data_hw_adapt` / `data_hw_face` are the root-attribute strings
+        # (empty = attribute omitted). Sourced from the resolved artifact's
+        # surface state (resolver._resolve_surface_state).
+        "surface_adapt": resolved.surface_adapt,
+        "surface_ground": resolved.surface_ground,
+        "surface_preset": resolved.surface_preset,
+        "surface_face": resolved.surface_face,
+        "data_hw_adapt": "adaptive" if resolved.surface_adapt else "",
+        "data_hw_face": resolved.surface_face,
         # v0.3.2 Phase 8b: metadata-pipeline context wiring. Every field below
         # was previously hardcoded as a Jinja2 `default('...')` fallback in
         # metadata.svg.j2 — meaning the template silently emitted the same
@@ -493,7 +630,7 @@ def _base_context(
         # Material filter chain — from genome.material.filter_chain (e.g.
         # "specular-bevel", "none"). Templates conditionally emit
         # feSpecularLighting + feComposite when set to "specular-bevel"
-        # (chrome v0.3.9 Bug H — restores the specular pass on chart bevels
+        # (restores the specular pass on chart bevels
         # that the chart template had silently dropped to a plain feDropShadow).
         "material_filter_chain": (resolved.genome.get("material") or {}).get("filter_chain", "none"),
         # Form language — from genome.structural.data_layout (e.g.
@@ -575,6 +712,9 @@ def _emit_envelope(
         state=state,
     )
     ctx["payload_json"] = payload_json
+    # §2 sidecar default: only the diagram resolver fills the region map;
+    # every other frame renders the metadata partial without it.
+    ctx.setdefault("regions_json", "")
     if schema:
         ctx["payload_schema"] = schema
     ctx["envelope_json"] = cdata_safe_json(envelope_json(envelope))

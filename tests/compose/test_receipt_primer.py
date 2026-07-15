@@ -1,4 +1,4 @@
-"""Receipt resolver + section-layout tests (the v3 primer receipt).
+"""Receipt resolver + section-layout tests (the primer receipt).
 
 Covers the section dataclasses' extremes (the explicit quality bar):
 * tool-spend top-N + '+N OTHERS' overflow; remainder-token accounting
@@ -435,7 +435,7 @@ class TestPayloadEnvelope:
 
 
 def test_specimen_payload_renders_all_zones() -> None:
-    """The canonical specimen payload renders every v3 zone end-to-end."""
+    """The canonical specimen payload renders every receipt zone end-to-end."""
     svg = compose(ComposeSpec(type="receipt", genome_id="primer", variant="noir", telemetry_data=SPECIMEN_PAYLOAD)).svg
     for needle in ("$175.01", "MODEL MIX · 3 MODELS", "opus-4.7", "562", "CALLS", "196K PEAK", "+6 others"):
         assert needle in svg, f"missing {needle!r}"

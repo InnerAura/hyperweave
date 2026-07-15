@@ -112,6 +112,11 @@ def compose(spec: ComposeSpec) -> ComposeResult:
         # lightweight frames get it from _emit_envelope. Reading the built
         # context unifies both sources. It never enters the rendered SVG.
         markdown=str(context.get("markdown_shadow", "")),
+        # Non-fatal normalization notes (e.g. cyclic-dag promotion) the
+        # resolver placed in the context. Empty for the common path; the CLI
+        # relays them to stderr.
+        warnings=list(context.get("warnings") or []),
+        diagnostics=list(context.get("diagnostics") or []),
     )
 
     # ── 7. Emit telemetry event (fire-and-forget) ──

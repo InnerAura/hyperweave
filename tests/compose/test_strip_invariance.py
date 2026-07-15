@@ -252,7 +252,7 @@ def test_chrome_strip_glyph_identity_gap_is_rendered_from_zone_geometry() -> Non
 
 @pytest.mark.parametrize("n", [1, 2, 3])
 def test_chrome_strip_clamps_to_min_width(n: int) -> None:
-    """Bug 5b fix: chrome.yaml declares ``strip_min_width: 320`` so 1-metric
+    """chrome.yaml declares ``strip_min_width: 320`` so 1-metric
     chrome strips don't aspect-warp in README columns. The clamp applies to
     the natural width when below 320; wider strips pass through unchanged."""
     svg = _render_strip("chrome", METRIC_POOL[:n])

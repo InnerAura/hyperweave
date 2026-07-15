@@ -1,0 +1,96 @@
+{
+ "aspect": 1.867,
+ "back_edge_routes": {
+  "failed->planning": {
+   "arrival_angle": 71.1,
+   "belly_x": null,
+   "chord_dev": 32.9,
+   "clearance": 132.8,
+   "exit_side": "left"
+  },
+  "review->planning": {
+   "arrival_angle": 23.6,
+   "belly_x": 0.554,
+   "chord_dev": 36.8,
+   "clearance": 31.2,
+   "exit_side": "bottom"
+  }
+ },
+ "caption_text": "State machine \u00b7 full-lifecycle form \u2014 a forward path and a bounded recovery, converging on planning",
+ "cards": {
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 1.0,
+  "hero_h": 62.0,
+  "hero_w": 130.0,
+  "std_h_med": 62.0,
+  "std_w_med": 130.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 8,
+  "card_rx": 13.0,
+  "cards": 6,
+  "chips": 0,
+  "coins": 0,
+  "desc_lines": 6,
+  "drift_edges": 3,
+  "gather_knots": 0,
+  "glyph_marks": 6,
+  "hero_cards": 1,
+  "hero_rx": 13.0,
+  "micro_labels": 8,
+  "muted_cards": 1,
+  "particles": 0,
+  "shell_marks": 2,
+  "solid_edges": 5,
+  "terminal_dots": 0,
+  "zone_headers": 0
+ },
+ "chip_stub_min": null,
+ "edge_dress": {
+  "failed->planning": {
+   "dashed": true,
+   "role": "neutral"
+  },
+  "review->planning": {
+   "dashed": true,
+   "role": "neutral"
+  }
+ },
+ "edge_label_seats": {
+  "retry": 15.54,
+  "revise": 13.24
+ },
+ "edge_set": {
+  "executing->executing": "tool call",
+  "executing->failed": "error",
+  "executing->review": "ready",
+  "failed->planning": "retry",
+  "idle->planning": "assigned",
+  "planning->executing": "approved",
+  "review->done": "approved",
+  "review->planning": "revise"
+ },
+ "height": 396.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "occupancy": 0.391,
+ "plate": {
+  "caption_pad": 40.0,
+  "caption_y": 560.0,
+  "content_bottom": 435.0,
+  "content_top": 81.0
+ },
+ "port_tolerance": 6.5,
+ "port_tolerance_note": "USER RULING (term-ring-aware boundaries): the done hero's terminal ring (a2-term) draws 6px past its plain card, but this hand specimen's own arrival still tips at the plain face (an authoring inconsistency, not a law) -- arrivals now stop at the ring's outer face, superseding the specimen's own 2.5px envelope. card_rects()/measure_port_max() do not read the ring shape, so this fixture cites the amendment directly rather than a re-extraction silently reverting it.",
+ "source": "v04/alpha/v04a6/diagrams-v3/pp-state-machine-alt2.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1120.0,
+  600.0
+ ],
+ "width": 740.0
+}

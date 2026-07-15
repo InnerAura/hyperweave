@@ -112,8 +112,10 @@ def font_import_css(font_slugs: list[str]) -> str:
     families = [_GOOGLE_FAMILIES[s] for s in font_slugs if s in _GOOGLE_FAMILIES]
     if not families:
         return ""
-    query = "&".join(f"family={fam}" for fam in families)
-    return f"@import url('https://fonts.googleapis.com/css2?{query}&display=swap');"
+    # The style block lives inside XML — a raw '&' is a malformed entity
+    # (browsers forgive it; strict parsers like resvg refuse the document).
+    query = "&amp;".join(f"family={fam}" for fam in families)
+    return f"@import url('https://fonts.googleapis.com/css2?{query}&amp;display=swap');"
 
 
 def load_font_face_css(font_slugs: list[str], char_set: frozenset[str] | None = None) -> str:

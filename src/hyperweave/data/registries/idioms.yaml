@@ -1,0 +1,140 @@
+# Idiom registry — the middle tier of the diagram grammar (§3, diagrams-v2).
+#
+#   primitives  →  idioms  →  topologies
+#
+# Line idioms are RELATIONS, not dresses: they name what an edge MEANS and
+# bind to a default dress drawn from the EXISTING vocabulary (texture solid/
+# dash, terminals arrow/dot/none, motions dash|particle|beam|flow, routes).
+# Spec key `relation:` is distinct from `edge-motion:` — no collision.
+# Distinguishability law: any two relations co-present in one diagram MUST
+# differ on ≥1 dress channel (texture, terminal, motion, route) — diagnostic
+# `relation-ambiguous` fires otherwise.
+#
+# `scope: universal` idioms render on every topology; `class-native` idioms
+# are one class's structural rhetoric, discoverable by name. `rhetoric`
+# (§10.1e) feeds extract/query ("what is the core claim") and the document
+# agent's density reduction. `obstacle` declares collision behavior.
+
+line:
+  assert: # L1 — causes / writes / publishes
+    scope: universal
+    rhetoric: relation-assert
+    dress: { texture: solid, terminal: arrow, motion: none }
+    obstacle: polyline
+    use_when: a call, write, or publish — one party ACTS on the other (request paths, commands)
+  drift: # L2 — passive / ambient / read
+    scope: universal
+    rhetoric: relation-support
+    dress: { texture: dash, terminal: dot, motion: dash }
+    obstacle: polyline
+    use_when: a passive dependency — reads, observations, lookups; nothing changes on the far side
+  flow: # L3 — data/energy in motion
+    scope: universal
+    rhetoric: relation-flow
+    dress: { texture: dash, terminal: none, motion: particle }
+    obstacle: polyline
+    use_when: a continuous or async stream — events, queues, replication; direction reads from the particles
+  bypass: # L4 — exception / privileged path (the 9s skip sweep)
+    scope: universal
+    rhetoric: relation-bypass
+    dress: { texture: dash, terminal: dot, motion: dash, route: around }  # piece 4 skips end in a terminal dot (grammar-inventory)
+    obstacle: polyline
+    use_when: the exception lane — cache hits, fast paths, breakers skipping the normal chain
+
+box:
+  gather-fan: # one-to-many bundle from an explicit gather point
+    scope: universal
+    rhetoric: satellite
+    obstacle: point
+  card: # B6 — standard node
+    scope: universal
+    rhetoric: satellite
+    obstacle: box
+  hero-ring: # B6 — ringed hero (the nucleus)
+    scope: universal
+    rhetoric: nucleus
+    obstacle: box
+  chip: # inline pill (in-card chip rows)
+    scope: universal
+    rhetoric: satellite
+    obstacle: box
+  edge-chip: # pill riding a line
+    scope: universal
+    rhetoric: relation-assert
+    obstacle: box
+  micro-label: # B8 — ink glyph + micro caption beside a wire
+    scope: universal
+    rhetoric: satellite
+    obstacle: box
+
+class-native:
+  lane-header: # S1
+    scope: class-native
+    class: lanes
+    rhetoric: satellite
+    meaning: uppercase header + count sharing the baseline, one hairline rule spanning the card column
+  shared-datum: # S2
+    scope: class-native
+    class: lanes
+    rhetoric: satellite
+    meaning: the top rule every lane hangs from; unequal depths legal because they share it
+  gutter-bus: # S3
+    scope: class-native
+    class: lanes
+    rhetoric: relation-flow
+    meaning: fan-in merges arrowless into a shared gutter rail (the gather-fan's lanes form)
+  rank-band: # S4
+    scope: class-native
+    class: dag
+    rhetoric: satellite
+    meaning: rank row as causal/temporal stratum
+  axial-cross: # hub/axial — from the grammar-inventory extraction
+    scope: class-native
+    class: hub
+    rhetoric: nucleus
+    meaning: hero on the spine crossing; roles map to axes (edit/N, read/S, in/W); destinations fan E from a gather
+  over-arc-return: # state-machine — agent-runtime's re-plan return
+    scope: class-native
+    class: state-machine
+    rhetoric: relation-support
+    meaning: a back-edge whose underside is occupied bows ABOVE the row (authored exit:top) — leaves the source top, peaks over the loop, enters the target top; the composer owns the trigger, G7 clears the crossed cards
+  control-loop-band: # state-machine — agent-runtime's AGENT RUNTIME frame
+    scope: class-native
+    class: state-machine
+    rhetoric: satellite
+    meaning: a FILLED region panel framing a cyclic loop, reserving the over-arc space above the row, a small top-left count-voice label — distinct from the concentric hairline enclosure (RECOVERY)
+  downward-fan: # fanout — router-descent's model router
+    scope: class-native
+    class: fanout
+    rhetoric: satellite
+    meaning: the vertical mirror of the horizontal fan — source top-center, a depart trunk dropping to a knot (route chip riding it), then a bottom ROW of dests fanning down on vertical S-curves to their top edges
+  pool-band: # dag — gateway-balanced's MODEL POOL frame
+    scope: class-native
+    class: dag
+    rhetoric: satellite
+    meaning: a FILLED panel framing a rank of peer tiers a symmetric fan converges through — no over-arc, so a snug header strip (26 top / 12 bottom) with a centred column label leaves it concentric with the rank's middle member, censusing as that member's shell (distinct from control-loop-band, which reserves 65px over-arc clearance and censuses as its own card)
+
+# Dress textures resolve to dasharray literals (dotted-drift, diagrams-v3 kit).
+dress_textures:
+  solid: ""
+  dash: "2 7"
+  dash-petite: "2 4"
+
+# Lanes category-by-MARK (obi-engine): each category shows a small leading
+# mark whose SHAPE + TONE names its archetype — never hue, so category
+# survives grayscale print and forced-colors and the one hue stays reserved
+# for meaning. Mark tokens: 'disc' filled ink · 'diamond'/'square' filled ink
+# · 'ring' open (paper fill + ink stroke, reads as "not yet filled in") ·
+# 'disc-muted' filled muted-ink (a recessed endpoint).
+#
+# `archetypes` maps a declared ``morphology`` slug to its mark token — the
+# specimen's four system roles, reusable across lanes diagrams. A node whose
+# ``morphology`` is unlisted (or absent) falls back to `shapes`: the Nth
+# distinct morphology/category (first-appearance order) takes cycle shape N.
+morphology:
+  archetypes:
+    surface: disc # a caller-facing entry point — filled
+    store: diamond # a data store / standing prior — filled
+    engine: ring # an active engine surface — open
+    external: disc-muted # an external provider — filled, recessed
+  shapes: [disc, ring, diamond, square]

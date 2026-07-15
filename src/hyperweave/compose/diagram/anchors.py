@@ -23,6 +23,7 @@ from hyperweave.compose.diagram.paths import point_on
 
 if TYPE_CHECKING:
     from hyperweave.compose.diagram.records import NodePlacement
+    from hyperweave.compose.spatial_records import RectSpec
 
 
 def _center(p: NodePlacement) -> tuple[float, float]:
@@ -43,12 +44,27 @@ def rect_distance(cx: float, cy: float, w: float, h: float, rx: float, x: float,
     return outside + inside - rx
 
 
+def _boundary_box(p: NodePlacement) -> RectSpec:
+    """The rect a rect-shaped node's boundary is actually measured against:
+    the terminal ring's outer face (``term_box``) when the node carries one
+    — a state-machine final's ring is its TRUE outer face, 6px past the
+    plain card on every side (graph.py computes it before any arrival
+    resolves) — else the plain card box. Circles never carry a ``term_box``,
+    so this is a no-op there (the ``shape == "circle"`` branches above never
+    call it). The one primitive both ``boundary_distance`` and
+    ``side_anchor`` read, so an arrival/label boundary check can no longer
+    silently disagree about which face is the real one (recenter.py's own
+    ``term_box=... if n.term_box is not None else None`` translation is the
+    same presence check, applied to geometry instead of a boundary query)."""
+    return p.term_box if p.term_box is not None else p.box
+
+
 def boundary_distance(p: NodePlacement, x: float, y: float) -> float:
     """Signed distance from a point to the node boundary (negative inside)."""
     cx, cy = _center(p)
     if p.shape == "circle":
         return math.hypot(x - cx, y - cy) - p.r
-    b = p.box
+    b = _boundary_box(p)
     return rect_distance(cx, cy, b.w, b.h, b.rx, x, y)
 
 
@@ -73,6 +89,51 @@ def boundary_anchor(p: NodePlacement, from_x: float, from_y: float, standoff: fl
             hi = mid
     t = (lo + hi) / 2
     return (cx + ux * t, cy + uy * t)
+
+
+def side_anchor(
+    p: NodePlacement,
+    *,
+    side: str,
+    at: float,
+    standoff: float = 0.0,
+) -> tuple[float, float]:
+    """Boundary crossing of the axis-aligned approach line through ``at``.
+
+    ``side`` names the node face the connector meets (``left``/``right`` take
+    ``at`` as the approach y; ``top``/``bottom`` take it as the approach x).
+    Exact-equivalent to the bbox extent for straight-sided rects — so rect
+    layouts are byte-stable — while circles and pill caps resolve to the true
+    rim instead of the bounding-box corner void (the 4.5px floating-arrowhead
+    class). ``at`` is clamped into the shape's usable band so the line always
+    intersects."""
+    cx, cy = _center(p)
+    b = _boundary_box(p)
+    if side in ("left", "right"):
+        half_band = (p.r if p.shape == "circle" else b.h / 2) - 1.0
+        y = min(max(at, cy - half_band), cy + half_band)
+        sign = 1.0 if side == "right" else -1.0
+        reach = (p.r if p.shape == "circle" else b.w / 2) + standoff + 2.0
+        lo, hi = 0.0, reach
+        for _ in range(28):
+            mid = (lo + hi) / 2
+            if boundary_distance(p, cx + sign * mid, y) < standoff:
+                lo = mid
+            else:
+                hi = mid
+        return (cx + sign * (lo + hi) / 2, y)
+    half_band = (p.r if p.shape == "circle" else b.w / 2) - 1.0
+    x = min(max(at, cx - half_band), cx + half_band)
+    sign = 1.0 if side == "bottom" else -1.0
+    reach = (p.r if p.shape == "circle" else b.h / 2) + standoff + 2.0
+    lo, hi = 0.0, reach
+    for _ in range(28):
+        mid = (lo + hi) / 2
+        if boundary_distance(p, x, cy + sign * mid) < standoff:
+            lo = mid
+        else:
+            hi = mid
+    return (x, cy + sign * (lo + hi) / 2)
 
 
 def trim_arc_angle(

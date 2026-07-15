@@ -1,0 +1,63 @@
+{
+ "aspect": 1.475,
+ "caption_text": "The verb algebra \u00b7 operations touch the seed, destinations receive the render",
+ "cards": {
+  "dims_superseded": "primer_diagram_language: the verb-algebra cross re-derives to ink-solved satellite boxes (the spec 144x60, the narrowest card) with a 232x112 nucleus, superseding this earlier topology specimen's uniform-floor cards; the hand file still validates its own dims.",
+  "hero_area_ratio": 1.598,
+  "hero_h": 100.0,
+  "hero_w": 264.0,
+  "std_h_med": 70.0,
+  "std_w_med": 236.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 0,
+  "card_rx": 13.0,
+  "cards": 6,
+  "chips": 4,
+  "coins": 0,
+  "desc_lines": 5,
+  "drift_edges": 5,
+  "gather_knots": 1,
+  "glyph_marks": 5,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 3,
+  "muted_cards": 0,
+  "particles": 5,
+  "shell_marks": 0,
+  "solid_edges": 0,
+  "terminal_dots": 5,
+  "zone_headers": 0
+ },
+ "census_amendments": {
+  "glyph_marks": 6,
+  "note": "glyph_marks 5->6: the crown carries the verb-algebra family diamond the sheet nucleus draws (the hand file's own crown omitted it)."
+ },
+ "chip_homes": {
+  "in_card": 4,
+  "on_wire": 0
+ },
+ "chip_stub_min": null,
+ "height": 502.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "occupancy": 0.625,
+ "plate": {
+  "caption_pad": 36.0,
+  "caption_y": 764.0,
+  "content_bottom": 688.0,
+  "content_top": 121.0
+ },
+ "port_tolerance": 0.5,
+ "source": "v04/alpha/v04a6/diagrams-v3/pp-axial.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1180.0,
+  800.0
+ ],
+ "width": 740.0
+}

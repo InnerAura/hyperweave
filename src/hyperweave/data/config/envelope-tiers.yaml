@@ -1,4 +1,4 @@
-# Envelope metadata depth per frame type (alpha.5 — Layer 0, the envelope floor).
+# Envelope metadata depth per frame type (Layer 0, the envelope floor).
 #
 # Every frame emits a valid hwz/1 envelope (schema is always consistent). What
 # varies is the DEPTH of the `data` digest:

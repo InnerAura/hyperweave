@@ -1,0 +1,61 @@
+{
+ "aspect": 2.122,
+ "caption_text": "Service dependencies \u00b7 a gateway fans to domain services, each grounding on its store",
+ "cards": {
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 1.396,
+  "hero_h": 62.0,
+  "hero_w": 204.0,
+  "std_h_med": 62.0,
+  "std_w_med": 146.1
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 9,
+  "card_rx": 13.0,
+  "cards": 8,
+  "chips": 0,
+  "coins": 0,
+  "desc_lines": 7,
+  "drift_edges": 1,
+  "gather_knots": 0,
+  "glyph_marks": 8,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 4,
+  "muted_cards": 0,
+  "particles": 0,
+  "shell_marks": 0,
+  "solid_edges": 8,
+  "terminal_dots": 0,
+  "zone_headers": 1
+ },
+ "census_amendments": {
+  "chips": 4,
+  "micro_labels": 0,
+  "note": "primer_diagram_language: the four relations (reads, emits, cache, direct read) ground as on-wire edge-chips, not free micro-labels \u2014 an amendment over this specimen's earlier free-label reading; the render carries 4 edge-chips and 0 micro-labels."
+ },
+ "chip_stub_min": null,
+ "height": null,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 0
+ },
+ "occupancy": 0.413,
+ "plate": {
+  "caption_pad": 26.0,
+  "caption_y": 474.0,
+  "content_bottom": 119.0,
+  "content_top": -143.6
+ },
+ "plate_amendment": "plate bands not law: unfinished sheet proportions (caption air ~355px of dead band); renders grade against family air",
+ "port_tolerance": 1.5,
+ "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-service-deps.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1061.0,
+  500.0
+ ],
+ "width": null
+}

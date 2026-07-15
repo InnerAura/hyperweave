@@ -1,4 +1,4 @@
-"""Receipt frame resolver — economics + context-window proof (v3 prototype).
+"""Receipt frame resolver — economics + context-window proof (the receipt specimen).
 
 Consumes the canonical ``receipt/1`` payload (``spec.telemetry_data``, produced
 by :func:`hyperweave.telemetry.receipt_payload.build_receipt_payload`) and the

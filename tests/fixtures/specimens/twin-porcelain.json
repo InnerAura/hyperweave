@@ -1,0 +1,30 @@
+{
+  "faces": {
+    "dark": {
+      "conn": "#4C5F82",
+      "ink": "#D9E4F5",
+      "ink2": "#8296B4",
+      "inkhi": "#EDF3FC",
+      "s0": "#0C1220",
+      "s1": "#141E31",
+      "s2": "#1B2740",
+      "sig": "#7591D8",
+      "sigt": "#AAC6FF",
+      "stroke": "#2A3A58"
+    },
+    "light": {
+      "conn": "#A9B4C6",
+      "ink": "#1E293B",
+      "ink2": "#647588",
+      "inkhi": "#0F172A",
+      "s0": "#F7F9FC",
+      "s1": "#FFFFFF",
+      "s2": "#F7F9FC",
+      "sig": "#2563EB",
+      "sigt": "#2563EB",
+      "stroke": "#E9EDF3"
+    }
+  },
+  "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-porcelain.svg",
+  "variant": "porcelain"
+}

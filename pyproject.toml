@@ -57,6 +57,10 @@ dependencies = [
 serve = ["fastapi>=0.115", "uvicorn[standard]>=0.34"]
 # MCP server (`hyperweave mcp`, stdio). mcp/server.py is the only fastmcp user.
 mcp = ["fastmcp>=3.0"]
+# Raster projections (png/webp). formats/raster.py is the only user; imports are
+# lazy so a core install never loads them. resvg-py ships statically-bundled resvg
+# (no system binary); pillow converts the png to webp.
+raster = ["resvg-py>=0.3.3", "pillow>=11.0"]
 # Convenience: both servers.
 all = ["hyperweave[serve,mcp]"]
 
@@ -92,6 +96,10 @@ dev = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
     "fastmcp>=3.0",
+    # Raster extra — kept OUT of the core install ([raster]) but installed for
+    # dev/CI so the png/webp projection + font-bridge tests run under pytest.
+    "resvg-py>=0.3.3",
+    "pillow>=11.0",
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "pytest-cov>=6.0",

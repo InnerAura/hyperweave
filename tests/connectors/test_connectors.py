@@ -1906,7 +1906,7 @@ class TestArxivExtendedFields:
 # =========================================================================
 
 
-class TestDispatcherV0312:
+class TestDispatcherCursorPointerPins:
     """Route the three new providers + the cargo alias through the dispatcher."""
 
     @pytest.fixture(autouse=True)

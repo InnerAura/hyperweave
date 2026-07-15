@@ -230,13 +230,13 @@ def test_chrome_icon_circle_uses_108_unit_viewbox_at_64px() -> None:
     """Chrome paradigm's icon block declares viewbox_w=108, viewbox_h=108 (v0.3.12:
     trimmed from 120 to remove excess padding so the Ø92 bezel fills the box at
     ~85% — matching automata 100% / brutalist 94% — not 77%). Rendered output is
-    64x64; the v2 specimen geometry (r=46/r=42 bezel, 0.6-unit hairlines) is
+    64x64; the chrome-icon specimen geometry (r=46/r=42 bezel, 0.6-unit hairlines) is
     preserved byte-for-byte — only the group origin recenters (54, not 60)."""
     svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="circle")).svg
     assert 'viewBox="0 0 108 108"' in svg
     assert 'width="64"' in svg
     assert 'height="64"' in svg
-    # 5-layer chrome bezel uses the v2 specimen radii (unchanged by the trim).
+    # 5-layer chrome bezel uses the chrome-icon specimen radii (unchanged by the trim).
     assert 'r="46"' in svg, "circle bezel outer radius (envelope ring) missing"
     assert 'r="42"' in svg, "circle bezel inner radius (well/hairline/rim) missing"
     # Recentered group origin: 108/2 = 54 (was 60 in the 120-unit field).
@@ -249,7 +249,7 @@ def test_chrome_icon_square_uses_108_unit_viewbox_at_64px() -> None:
     svg = compose(ComposeSpec(type="icon", genome_id="chrome", glyph="github", shape="square")).svg
     assert 'viewBox="0 0 108 108"' in svg
     assert 'width="64"' in svg
-    # 96x96 card body (v2 specimen dimensions, unchanged by the trim).
+    # 96x96 card body (chrome-icon specimen dimensions, unchanged by the trim).
     assert 'width="96" height="96" rx="6"' in svg
     assert "translate(6, 6)" in svg, "square card group should recenter at (6, 6) in the 108 viewBox"
 

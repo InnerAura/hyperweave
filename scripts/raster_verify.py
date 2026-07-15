@@ -14,6 +14,9 @@ Usage:
     # default: outputs/proofset/primer/matrix/*.svg -> outputs/raster/matrix/
     python scripts/raster_verify.py --contact-sheet
     # one PNG grid of EVERY proofset artifact -> outputs/raster/contact-sheet.png
+    python scripts/raster_verify.py --scheme both outputs/proofset/primer/surface/matrix/*.svg
+    # + a light AND dark emulated-color-scheme capture per artifact (the surface-
+    #   modes adaptive check — inlay/twin only flip in a real browser)
 
 Playwright is a dev-only dependency (same harness as render_demo_video.py);
 run under an interpreter that has it installed.
@@ -46,7 +49,7 @@ def out_dir_for(paths: list[Path]) -> Path:
         return ROOT / "outputs" / "raster" / parent.name
 
 
-async def raster(paths: list[Path]) -> int:
+async def raster(paths: list[Path], *, scheme: str = "") -> int:
     from playwright.async_api import async_playwright
 
     out_dir = out_dir_for(paths)
@@ -70,6 +73,20 @@ async def raster(paths: list[Path]) -> int:
             # looping motion stays live by design.
             await page.wait_for_timeout(900)
             await element.screenshot(path=str(out_dir / f"{path.stem}.png"))
+
+            # Surface Modes: --scheme both captures each artifact under an emulated
+            # light AND dark color scheme (light|dark captures just one). This is
+            # the ONLY way to see an adaptive (inlay/twin) artifact flip — its
+            # @media (prefers-color-scheme) block fires in a real browser, never in
+            # rsvg. Suffixed _scheme-light / _scheme-dark.
+            schemes = ("light", "dark") if scheme == "both" else ((scheme,) if scheme else ())
+            for cs in schemes:
+                await page.emulate_media(color_scheme=cs)
+                await page.goto(path.resolve().as_uri())
+                await page.wait_for_timeout(400)
+                await page.locator("svg").screenshot(path=str(out_dir / f"{path.stem}_scheme-{cs}.png"))
+            if schemes:
+                await page.emulate_media(color_scheme="no-preference")
 
             await page.emulate_media(reduced_motion="reduce")
             await page.goto(path.resolve().as_uri())
@@ -160,11 +177,21 @@ def main() -> int:
             print("no SVGs found for the contact sheet")
             return 1
         return asyncio.run(contact_sheet(paths))
+    # --scheme both: add a light + dark emulated-color-scheme capture per artifact
+    # (the surface-modes adaptive check). Consumed here, stripped before glob expand.
+    scheme = ""
+    if "--scheme" in args:
+        idx = args.index("--scheme")
+        scheme = args[idx + 1] if idx + 1 < len(args) else ""
+        if scheme not in ("both", "light", "dark"):
+            print("--scheme takes: both | light | dark")
+            return 1
+        args = args[:idx] + args[idx + 2 :]
     paths = expand(args) if args else sorted(DEFAULT_GLOB.glob("*.svg"))
     if not paths:
         print(f"no SVGs found (looked in {DEFAULT_GLOB})")
         return 1
-    return asyncio.run(raster(paths))
+    return asyncio.run(raster(paths, scheme=scheme))
 
 
 if __name__ == "__main__":

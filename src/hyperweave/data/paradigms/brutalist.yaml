@@ -249,8 +249,8 @@ marquee:
   # principle), giving a provably seamless loop with no width-estimate drift.
   module_min_width: 136
   # Ribbon-path separator (free-text marquees): a heavy ▮ bar at the ribbon
-  # separator size, accent-toned via --dna-signal — the scroll-v2 inline
-  # separator. The module layout draws its own per-module dividers
+  # separator size, accent-toned via --dna-signal — the inline-scroll
+  # specimen's separator. The module layout draws its own per-module dividers
   # (module_divider_*) and ignores separator_*.
   separator_kind: glyph
   separator_glyph: "▮"

@@ -145,7 +145,7 @@ async def test_hw_discover_url_grammar_advertises_data_token_routes() -> None:
     """
     result = await hw_discover(what="url_grammar")
     grammar = result["url_grammar"]
-    for key in ("badge (static)", "badge (data-driven)", "strip", "marquee", "stats", "chart-stars"):
+    for key in ("badge (static)", "badge (data-driven)", "strip", "marquee", "card", "chart-stars"):
         assert key in grammar, f"Missing {key} entry in url_grammar"
         entry = grammar[key]
         assert "pattern" in entry
@@ -155,10 +155,14 @@ async def test_hw_discover_url_grammar_advertises_data_token_routes() -> None:
     assert "data" in grammar["badge (data-driven)"]["query_params"]
     assert "data" in grammar["strip"]["query_params"]
     assert "data" in grammar["marquee"]["query_params"]
-    assert "data" in grammar["stats"]["query_params"]
+    assert "data" in grammar["card"]["query_params"]
 
     # Route-shape assertions lock the patterns against the HTTP route source of truth.
-    assert grammar["stats"]["pattern"] == "/v1/stats/{username}/{genome}.{motion}"
+    # card is the promoted public name; /v1/stats stays a permanent alias (named
+    # on the card entry, no standalone stats entry).
+    assert grammar["card"]["pattern"] == "/v1/card/{username}/{genome}.{motion}"
+    assert "/v1/stats/" in grammar["card"]["alias"]
+    assert "stats" not in grammar
     assert grammar["chart-stars"]["pattern"] == "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}"
     # Banner / timeline routes were deleted in v0.2.14.
     assert "banner" not in grammar

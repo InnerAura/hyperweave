@@ -1,4 +1,4 @@
-{# Cellular chart defs — v0.3.0 visual refresh.
+{# Cellular chart defs — the cellular visual refresh.
 
    Replaces the prior 5-class animation system (cc1-cc4 + ccf fast variant)
    with a 4-phase b1-b4 system staggered 0/1.5/3/4.5s. The keyframe is
@@ -6,14 +6,14 @@
    card's ``breathe-stats`` if both ever embed in the same document.
 
    Header band typography migrates from the prior translate(100,50) /
-   translate(820,80) floating-text layout to the v2 prototype's HUD-style
+   translate(820,80) floating-text layout to the specimen's HUD-style
    header band: repo identifier (Orbitron 10px 700) at left y=30; STAR
    HISTORY title (Orbitron 17px 900) at left y=52; hero metric (Orbitron
    34px 900) right-aligned at y=32; hero subtitle (JBM 7.5px 700) right-
    aligned at y=50. All header text filtered through the HUD drop-shadow
    so labels stay readable against the busy cell substrate.
 
-   Polyline stroke drops from 4px to 3px (v2 prototype literal); double
+   Polyline stroke drops from 4px to 3px (specimen literal); double
    drop-shadow glow uses info_accent (mid-bright tint) + a tight white
    inner glow for the white-hot core feel. #}
 {# Outer clipPath — rounds the chart frame's corners (rx=10) so background +
@@ -59,7 +59,7 @@ text{font-family:'JetBrains Mono',monospace;shape-rendering:geometricPrecision}
 .b4{animation:breathe-chart {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
 .ccd{opacity:.07}
 @keyframes breathe-chart{0%,100%{opacity:.45}30%{opacity:1}50%{opacity:.6}70%{opacity:.85}}
-{# Header band typography — v2 prototype layout. info_accent fills the title +
+{# Header band typography — specimen layout. info_accent fills the title +
    hero subtitle; hero_white-equivalent (genome value_text) fills hero metric.
    The HUD filter applied at the group level (template) lifts text from
    substrate. #}
@@ -67,18 +67,18 @@ text{font-family:'JetBrains Mono',monospace;shape-rendering:geometricPrecision}
 .{{ uid }}-title-main{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;letter-spacing:0.05em;fill:{{ chart_info_accent }}}
 .{{ uid }}-hero-value{font-family:'Orbitron',sans-serif;font-size:34px;font-weight:900;fill:{{ cellular_palette.primary.value_text }}}
 .{{ uid }}-hero-label{font-family:'JetBrains Mono',monospace;font-size:7.5px;font-weight:700;letter-spacing:0.2em;fill:{{ chart_info_accent }};opacity:0.55}
-{# Axis labels — info_accent at lower opacity. Matches v2 prototype's quieter
+{# Axis labels — info_accent at lower opacity. Matches the specimen's quieter
    axis presence (was 0.95 / 0.85 in pre-refresh). #}
 .{{ uid }}-axis-y{font-size:10px;font-weight:700;fill:{{ chart_info_accent }};opacity:0.65;letter-spacing:0.08em}
 .{{ uid }}-axis-x{font-size:10px;font-weight:700;fill:{{ chart_info_accent }};opacity:0.55;letter-spacing:0.1em}
 {# Footer typography — repo URL (mid_accent at low opacity, left), brand stamp
-   (info_accent at very low opacity, right). v2 prototype simplifies the
+   (info_accent at very low opacity, right). The specimen simplifies the
    footer to a small hairline + identifier line. #}
 .{{ uid }}-foot{font-size:8px;font-weight:400;letter-spacing:0.04em;fill:{{ chart_mid_accent }};opacity:0.45}
 .{{ uid }}-foot-brand{font-size:7px;font-weight:600;letter-spacing:0.12em;fill:{{ chart_info_accent }};opacity:0.15}
 .hw-chart-axis{stroke:{{ chart_info_accent }};stroke-width:0.5;opacity:0.25;fill:none}
 .hw-chart-gridline{stroke:{{ chart_info_accent }};stroke-width:0.5;opacity:0.06;fill:none}
-{# v2 polyline: 3px white core with double drop-shadow glow — tinted info_accent
+{# Specimen polyline: 3px white core with double drop-shadow glow — tinted info_accent
    outer halo (10px) + tight white inner glow (3px). The white core dominates;
    the tinted halo carries variant chromatic identity around it. #}
 .hw-chart-line{stroke:var(--dna-chart-line-core, var(--dna-ink-primary));stroke-width:3;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 10px {{ chart_info_accent }}) drop-shadow(0 0 3px var(--dna-chart-line-core, var(--dna-ink-primary)))}

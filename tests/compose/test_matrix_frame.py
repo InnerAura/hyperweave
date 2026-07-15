@@ -113,7 +113,7 @@ class TestEmbeddedProjections:
         assert "| CAPABILITY |" not in result.svg
 
     def test_lightweight_frames_carry_the_envelope_floor(self) -> None:
-        # alpha.5 envelope floor: every frame emits a re-ingestible payload +
+        # Envelope floor: every frame emits a re-ingestible payload +
         # hwz/1 envelope + a markdown shadow — badges included.
         badge = compose(ComposeSpec(type="badge", title="BUILD", value="passing"))
         assert 'schema="badge/1"' in badge.svg

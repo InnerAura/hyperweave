@@ -1,0 +1,63 @@
+{
+ "aspect": 1.553,
+ "caption_text": "Convergence \u00b7 four inputs gather into one re-renderable seed",
+ "cards": {
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 2.667,
+  "hero_h": 120.0,
+  "hero_w": 280.0,
+  "std_h_med": 60.0,
+  "std_w_med": 210.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 1,
+  "card_rx": 13.0,
+  "cards": 5,
+  "chips": 1,
+  "coins": 0,
+  "desc_lines": 5,
+  "drift_edges": 4,
+  "gather_knots": 1,
+  "glyph_marks": 5,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 4,
+  "shell_marks": 0,
+  "solid_edges": 1,
+  "terminal_dots": 0,
+  "zone_headers": 2
+ },
+ "chip_homes": {
+  "in_card": 0,
+  "on_wire": 1,
+  "wire_offset_max": 0.0
+ },
+ "chip_stub_min": 14.0,
+ "convergence_outer_angle_deg": 28.0,
+ "gather_trunk_chip": true,
+ "height": 477.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 2
+ },
+ "occupancy": 0.57,
+ "plate": {
+  "caption_pad": 34.0,
+  "caption_y": 726.0,
+  "content_bottom": 632.0,
+  "content_top": 128.0,
+  "zone_y": 72.0
+ },
+ "port_tolerance": 6.5,
+ "source": "v04/alpha/v04a6/diagrams-v3/pp-convergence-flow.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1180.0,
+  760.0
+ ],
+ "width": 740.0
+}

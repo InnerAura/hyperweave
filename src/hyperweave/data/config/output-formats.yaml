@@ -1,0 +1,16 @@
+# Output-format pass pipelines.
+#
+# Each SVG-shaped format is an ordered list of named string passes over the
+# assembled SVG. The pass names resolve against the registry in
+# formats/static.py (`vars` = resolve var(--dna-*) to hex, `noanim` = strip
+# animation, `clamp` = cap width). Adding a pass is a Python function in
+# static.py plus a name here — never a treatment map in Python.
+#
+# svg     : the live artifact, unchanged (var()-based, animated). No passes.
+# svg-static: browser-independent — vars flattened to hex + motion stripped, so
+#             non-browser rasterizers (resvg, email, PDF) render real pixels.
+# png/webp : rasterize the svg-static projection (Pillow/resvg); no SVG passes
+#            of their own — they inherit svg-static's flatten.
+pipelines:
+  svg: []
+  svg-static: [vars, noanim]

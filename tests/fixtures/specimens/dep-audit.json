@@ -1,0 +1,55 @@
+{
+  "aspect": 1.55,
+  "caption_text": "Dependency audit \u00b7 your package roots the tree; solid edges are direct deps, dashed are transitive; the health channel flags what needs attention",
+  "cards": {
+    "hero_area_ratio": 1.309,
+    "hero_h": 112.0,
+    "hero_w": 104.0,
+    "std_h_med": 100.0,
+    "std_w_med": 89.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 0,
+    "card_rx": 13.0,
+    "cards": 6,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 6,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 6,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 0,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 477.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.517,
+  "plate": {
+    "caption_pad": 28.0,
+    "caption_y": 772.0,
+    "content_bottom": 700.0,
+    "content_top": 64.0,
+    "zone_y": 56.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-tree-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    800.0
+  ],
+  "width": 740.0
+}

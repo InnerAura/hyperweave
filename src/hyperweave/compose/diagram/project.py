@@ -38,16 +38,22 @@ def diagram_payload_json(spec: DiagramSpec, rendered: RenderedMotion) -> str:
     requested motions intact (round-trip source: re-render ``spec`` under
     the same constraint and you reproduce the artifact); ``rendered``
     records what actually drew."""
-    body = {
+    rendered_block: dict[str, Any] = {
+        "edge_motion": list(rendered.edge_motion),
+        "track": list(rendered.track),
+        "glyph_tint": list(rendered.glyph_tint),
+        "glyph_backing": list(rendered.glyph_backing),
+        "performance": rendered.performance,
+        "fallback_applied": rendered.fallback_applied,
+    }
+    # Warnings ride the payload ONLY when present — an unpromoted diagram
+    # emits no key, keeping its payload byte-identical to the pre-promotion
+    # schema (diagram/1 stays additive).
+    if rendered.warnings:
+        rendered_block["warnings"] = list(rendered.warnings)
+    body: dict[str, Any] = {
         "spec": spec.model_dump(mode="json", exclude_defaults=True),
-        "rendered": {
-            "edge_motion": list(rendered.edge_motion),
-            "track": list(rendered.track),
-            "glyph_tint": list(rendered.glyph_tint),
-            "glyph_backing": list(rendered.glyph_backing),
-            "performance": rendered.performance,
-            "fallback_applied": rendered.fallback_applied,
-        },
+        "rendered": rendered_block,
     }
     text = json.dumps(body, separators=(",", ":"), ensure_ascii=False)
     return cdata_safe_json(text)
@@ -84,7 +90,7 @@ def diagram_envelope_data(spec: DiagramSpec) -> dict[str, Any]:
     hero = next((n for n in spec.nodes if n.role is NodeRole.HERO), None)
     if hero is not None:
         data["hero"] = hero.label
-    nodes = {n.label: n.desc for n in spec.nodes[:ENVELOPE_NODE_CAP]}
+    nodes = {n.label: n.desc.replace("\n", " · ") for n in spec.nodes[:ENVELOPE_NODE_CAP]}
     data["nodes"] = nodes
     if len(spec.nodes) > ENVELOPE_NODE_CAP:
         data["nodes_total"] = len(spec.nodes)
@@ -112,7 +118,7 @@ def to_markdown(spec: DiagramSpec) -> str:
     for n in spec.nodes:
         item = f"- **{n.label}**"
         if n.desc:
-            item += f" — {n.desc}"
+            item += f" — {n.desc.replace(chr(10), ' · ')}"
         if n.role is NodeRole.HERO:
             item += " *(hero)*"
         elif n.role is NodeRole.MUTED:

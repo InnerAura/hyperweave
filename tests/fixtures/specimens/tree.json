@@ -1,0 +1,54 @@
+{
+  "aspect": 1.632,
+  "caption_text": "Hierarchy \u00b7 one composite root decomposes by depth into classes and their concrete artifact types",
+  "cards": {
+    "hero_area_ratio": 2.546,
+    "hero_h": 116.0,
+    "hero_w": 156.8,
+    "std_h_med": 76.0,
+    "std_w_med": 94.0
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 0,
+    "card_rx": 13.0,
+    "cards": 10,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 4,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 10,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 0,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 454.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.671,
+  "plate": {
+    "caption_pad": 30.0,
+    "caption_y": 730.0,
+    "content_bottom": 658.0,
+    "content_top": 52.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-tree.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    760.0
+  ],
+  "width": 740.0
+}

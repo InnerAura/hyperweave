@@ -1,0 +1,84 @@
+{
+  "aspect": 1.442,
+  "caption_text": "Config is data \u00b7 every mapping lives in YAML or JSON \u2014 the loader is the only door",
+  "cards": {
+    "hero_h": 112.0,
+    "hero_w": 112.0
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 5,
+    "card_rx": 0.0,
+    "cards": 0,
+    "chips": 1,
+    "coins": 6,
+    "desc_lines": 0,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 6,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 5,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 1,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 54.0,
+  "height": 513.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 2
+  },
+  "hub_seats": [
+    {
+      "angle": -90.0,
+      "dist": 332.0,
+      "label": "paradigms"
+    },
+    {
+      "angle": -164.7,
+      "dist": 311.0,
+      "label": "genomes"
+    },
+    {
+      "angle": -15.3,
+      "dist": 311.0,
+      "label": "registries"
+    },
+    {
+      "angle": 118.4,
+      "dist": 311.4,
+      "label": "reasoning"
+    },
+    {
+      "angle": 61.6,
+      "dist": 311.4,
+      "label": "policies"
+    }
+  ],
+  "occupancy": 0.29,
+  "plate": {
+    "caption_pad": 44.0,
+    "caption_y": 816.0,
+    "content_bottom": 766.0,
+    "content_top": 126.0,
+    "zone_y": 46.0
+  },
+  "port_tolerance": 11.2,
+  "source": "v04/alpha/v04a6/diagrams-v4/diagram-data-hub-circles-pp.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    860.0
+  ],
+  "width": 740.0
+}

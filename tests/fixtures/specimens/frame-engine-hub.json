@@ -1,0 +1,82 @@
+{
+  "aspect": 1.348,
+  "caption_text": "Compass dispatch \u00b7 the spec declares the meaning, the engine places, routes, labels, and renders the form",
+  "cards": {
+    "hero_area_ratio": 1.284,
+    "hero_h": 120.0,
+    "hero_w": 163.5,
+    "std_h_med": 124.0,
+    "std_w_med": 123.2
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 5,
+    "card_rx": 13.0,
+    "cards": 6,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 6,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 6,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 5,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 549.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "hub_seats": [
+    {
+      "angle": -90.0,
+      "dist": 225.8,
+      "label": "architecture"
+    },
+    {
+      "angle": 176.5,
+      "dist": 263.8,
+      "label": "flow"
+    },
+    {
+      "angle": 3.5,
+      "dist": 263.9,
+      "label": "cascade"
+    },
+    {
+      "angle": 115.9,
+      "dist": 261.5,
+      "label": "comparison"
+    },
+    {
+      "angle": 64.1,
+      "dist": 261.5,
+      "label": "eval matrix"
+    }
+  ],
+  "occupancy": 0.333,
+  "plate": {
+    "caption_pad": 44.0,
+    "caption_y": 876.0,
+    "content_bottom": 761.1,
+    "content_top": 176.0,
+    "zone_y": 46.0
+  },
+  "port_tolerance": 0.6,
+  "source": "v04/alpha/v04a6/diagrams-v4/diagram-frame-engine-hub-pp-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    920.0
+  ],
+  "width": 740.0
+}

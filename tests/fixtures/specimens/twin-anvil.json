@@ -1,0 +1,30 @@
+{
+  "faces": {
+    "dark": {
+      "conn": "#4C4C55",
+      "ink": "#E5E5E9",
+      "ink2": "#97979F",
+      "inkhi": "#F4F4F7",
+      "s0": "#18181B",
+      "s1": "#212125",
+      "s2": "#292930",
+      "sig": "#8A97B5",
+      "sigt": "#B9C6E4",
+      "stroke": "#3A3A42"
+    },
+    "light": {
+      "conn": "#B4B4BE",
+      "ink": "#212126",
+      "ink2": "#6A6A73",
+      "inkhi": "#101014",
+      "s0": "#F2F2F5",
+      "s1": "#FBFBFD",
+      "s2": "#F0F0F4",
+      "sig": "#3D4E70",
+      "sigt": "#3D4E70",
+      "stroke": "#D8D8DF"
+    }
+  },
+  "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-anvil.svg",
+  "variant": "anvil"
+}

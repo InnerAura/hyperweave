@@ -1,4 +1,4 @@
-"""Content-addressed artifact store (alpha.5 transport).
+"""Content-addressed artifact store.
 
 The envelope id (``sha256`` of the payload) doubles as the artifact's ADDRESS.
 ``compose`` stores the rendered SVG under its digest; the read-only
@@ -30,6 +30,13 @@ from pathlib import Path
 _MAX_ENTRIES = 512
 _cache: OrderedDict[str, str] = OrderedDict()
 _disk_dir: Path | None = None
+
+# Derived-projection tier: png/webp/static.svg bytes keyed by (source digest,
+# format-ext). Smaller cap than the SVG tier — raster bytes are heavier and the
+# common README path re-fetches the SVG, not the raster. Keys are
+# ``{hex}.{key-ext}`` so they sit beside ``{hex}.svg`` on disk.
+_MAX_DERIVED = 128
+_derived: OrderedDict[str, bytes] = OrderedDict()
 
 
 def _normalize(digest: str) -> str:
@@ -85,9 +92,58 @@ def get_artifact(digest: str) -> str | None:
     return None
 
 
+def store_derived(digest: str, key: str, data: bytes) -> str:
+    """Cache a derived projection (png/webp/static.svg) for a source digest.
+
+    ``key`` is the derived-store key — the format extension, optionally with a
+    width suffix (``png``, ``webp``, ``static.svg``, ``png@w=400``). Stored in an
+    own byte LRU (cap 128) and, when the disk tier is on, as ``{hex}.{key}``
+    beside the source ``{hex}.svg``. Returns the composite cache key.
+    """
+    ckey = f"{_normalize(digest)}.{key}"
+    if ckey in _derived:
+        _derived.move_to_end(ckey)
+    _derived[ckey] = data
+    while len(_derived) > _MAX_DERIVED:
+        _derived.popitem(last=False)
+    if _disk_dir is not None:
+        with contextlib.suppress(OSError):
+            (_disk_dir / _disk_derived_name(_normalize(digest), key)).write_bytes(data)
+    return ckey
+
+
+def get_derived(digest: str, key: str) -> bytes | None:
+    """Return a cached derived projection — LRU first, then the durable disk tier."""
+    ckey = f"{_normalize(digest)}.{key}"
+    data = _derived.get(ckey)
+    if data is not None:
+        _derived.move_to_end(ckey)
+        return data
+    if _disk_dir is not None:
+        path = _disk_dir / _disk_derived_name(_normalize(digest), key)
+        if path.exists():
+            try:
+                data = path.read_bytes()
+            except OSError:
+                return None
+            _derived[ckey] = data  # warm the LRU
+            return data
+    return None
+
+
+def _disk_derived_name(hexd: str, key: str) -> str:
+    """Disk filename for a derived projection. A ``@w=`` cap becomes ``.w{N}``
+    so the on-disk name stays a plain filename (no ``@``/``=`` reserved chars)."""
+    if "@w=" in key:
+        base, width = key.split("@w=", 1)
+        return f"{hexd}.w{width}.{base}"
+    return f"{hexd}.{key}"
+
+
 def reset_cache() -> None:
-    """Drop the in-memory tier (tests + the loader reset path). Disk is untouched."""
+    """Drop both in-memory tiers (tests + the loader reset path). Disk is untouched."""
     _cache.clear()
+    _derived.clear()
 
 
 # Durability is opt-in via the environment so `pip install hyperweave` writes no

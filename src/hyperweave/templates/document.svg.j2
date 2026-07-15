@@ -10,13 +10,13 @@
      shape-rendering="geometricPrecision"
      data-hw-id="{{ artifact_id }}"
      data-hw-type="{{ frame_type }}"
-     data-hw-frame="{{ frame_type }}"
+     data-hw-frame="{{ frame_public | default(frame_type) }}"
      data-hw-genome="{{ genome_id }}"
      data-hw-mode="{{ theme_category | default('dark') }}"
      data-hw-status="{{ status }}"
      data-hw-state="{{ lifecycle }}"
      data-hw-profile="{{ profile_id }}"
-     data-hw-motion="{{ motion_id }}"
+     data-hw-motion="{{ data_hw_motion }}"
      data-hw-generation="1"
      data-hw-contract="{{ contract_id }}"
      data-hw-size="{{ size | default('default') }}"
@@ -36,6 +36,13 @@
 {% endif %}{% if data_hw_subvariant | default('') %}     data-hw-subvariant="{{ data_hw_subvariant }}"
 {% endif %}
 {% if inline_style_overrides | default('') %}     style="{{ inline_style_overrides }}"
+{% endif %}
+{% if surface_adapt | default(false) %}     id="{{ uid }}"
+     data-hw-adapt="{{ data_hw_adapt }}"
+     data-hw-ground="{{ surface_ground }}"
+     data-hw-surface="{{ surface_preset }}"
+{% endif %}
+{% if data_hw_face | default('') %}     data-hw-face="{{ data_hw_face }}"
 {% endif %}
      data-hw-chromatic="{{ genome_id }}">
   <title id="{{ uid }}-title">{{ title_text | xml_escape }}</title>

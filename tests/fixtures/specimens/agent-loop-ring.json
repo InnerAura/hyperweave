@@ -1,0 +1,53 @@
+{
+  "aspect": 1.034,
+  "caption_text": "The loop \u00b7 pair, understand, identify, build, validate, ship \u2014 then pair again",
+  "cards": {},
+  "census": {
+    "animated": false,
+    "arrow_terminals": 6,
+    "card_rx": 0.0,
+    "cards": 0,
+    "chips": 0,
+    "coins": 6,
+    "desc_lines": 0,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 6,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 6,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 715.0,
+  "occupancy": 0.31,
+  "plate": {
+    "caption_pad": 44.0,
+    "caption_y": 1000.0,
+    "content_bottom": 936.0,
+    "content_top": 246.0,
+    "zone_y": 58.0
+  },
+  "port_tolerance": 17.7,
+  "ring_arcs": [
+    20.8,
+    20.8,
+    34.0,
+    34.0,
+    34.0,
+    34.0
+  ],
+  "source": "v04/alpha/v04a6/diagrams-v4/diagram-agent-loop-ring-pp.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1080.0,
+    1044.0
+  ],
+  "width": 740.0
+}

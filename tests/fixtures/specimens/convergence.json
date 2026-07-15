@@ -1,0 +1,59 @@
+{
+ "aspect": 1.639,
+ "caption_text": "The composition formula \u00b7 four inputs meet at a single mouth",
+ "cards": {
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 2.667,
+  "hero_h": 120.0,
+  "hero_w": 280.0,
+  "std_h_med": 60.0,
+  "std_w_med": 210.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 0,
+  "card_rx": 13.0,
+  "cards": 5,
+  "chips": 0,
+  "coins": 0,
+  "desc_lines": 5,
+  "drift_edges": 0,
+  "gather_knots": 1,
+  "glyph_marks": 5,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 2,
+  "shell_marks": 0,
+  "solid_edges": 4,
+  "terminal_dots": 0,
+  "zone_headers": 1
+ },
+ "chip_stub_min": null,
+ "convergence_outer_angle_amended": 23.2,
+ "convergence_outer_angle_deg": 20.6,
+ "convergence_outer_angle_note": "pair-consistency ruling 2026-07-14: the two convergence entries share the gathered-seed envelope (pitch 148, margin 86); the hand file's own 20.6deg approach (pitch 110, margin ~90) is the superseded dress \u2014 the SELF law still grades the specimen at 20.6.",
+ "height": 452.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "occupancy": 0.427,
+ "plate": {
+  "caption_pad": 40.0,
+  "caption_y": 680.0,
+  "content_bottom": 550.0,
+  "content_top": 160.0,
+  "zone_y": 118.0
+ },
+ "port_tolerance": 0.5,
+ "source": "v04/alpha/v04a6/diagrams-v3/pp-convergence.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1180.0,
+  720.0
+ ],
+ "width": 740.0
+}

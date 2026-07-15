@@ -18,7 +18,7 @@ from typing import Any
 
 
 class HwErrorCode(StrEnum):
-    """The closed error-code registry (alpha.5)."""
+    """The closed error-code registry."""
 
     DAG_RANK_CAP = "DAG_RANK_CAP"
     DAG_NODE_CAP = "DAG_NODE_CAP"
@@ -34,6 +34,7 @@ class HwErrorCode(StrEnum):
     ENVELOPE_CORRUPT = "ENVELOPE_CORRUPT"
     TYPE_UNKNOWN = "TYPE_UNKNOWN"
     DATA_RESOLVE_FAIL = "DATA_RESOLVE_FAIL"
+    FORMAT_UNAVAILABLE = "FORMAT_UNAVAILABLE"  # raster extra missing / gif unsupported
 
 
 # code → HTTP status. Most are client errors (400); a few map more precisely.
@@ -44,6 +45,9 @@ _STATUS_BY_CODE: dict[HwErrorCode, int] = {
     HwErrorCode.PRESET_UNKNOWN: 404,
     HwErrorCode.TOPOLOGY_UNKNOWN: 404,
     HwErrorCode.DATA_RESOLVE_FAIL: 502,
+    # 501 Not Implemented — the format is known but this build can't produce it
+    # (the [raster] extra is not installed, or gif has no supported path).
+    HwErrorCode.FORMAT_UNAVAILABLE: 501,
 }
 
 

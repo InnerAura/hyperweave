@@ -119,3 +119,21 @@ def oklch_to_rgb(lightness: float, chroma: float, hue_deg: float) -> tuple[int, 
     lg = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
     lb = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
     return tuple(max(0, min(255, round(_linear_to_srgb(v) * 255))) for v in (lr, lg, lb))  # type: ignore[return-value]
+
+
+def adjust_oklch(hex_color: str, *, dl: float = 0.0, dc: float = 1.0, dh: float = 0.0) -> str:
+    """Shift a hex color in OKLCH and return the re-encoded hex.
+
+    ``dl`` is ADDED to lightness (clamped 0..1), ``dc`` MULTIPLIES chroma
+    (clamped >=0), ``dh`` is ADDED to hue in degrees (wrapped). OKLCH is
+    perceptually uniform, so hue holds while lightness/chroma move — the
+    right space for deriving an in-family tint from one accent without the
+    hue drifting. Gamut-clamped per channel on return.
+    """
+    lightness, chroma, hue = rgb_to_oklch(*hex_to_rgb(hex_color))
+    r, g, b = oklch_to_rgb(
+        max(0.0, min(1.0, lightness + dl)),
+        max(0.0, chroma * dc),
+        (hue + dh) % 360.0,
+    )
+    return rgb_to_hex(r, g, b)

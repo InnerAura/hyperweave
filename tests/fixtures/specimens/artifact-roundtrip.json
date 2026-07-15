@@ -1,0 +1,59 @@
+{
+ "aspect": 1.938,
+ "caption_text": "The round trip \u00b7 pixels for humans, hw:payload for agents",
+ "cards": {
+  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+  "hero_area_ratio": 1.0,
+  "hero_h": 64.0,
+  "hero_w": 228.0,
+  "std_h_med": 64.0,
+  "std_w_med": 228.0
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 0,
+  "card_rx": 13.0,
+  "cards": 4,
+  "chips": 0,
+  "coins": 0,
+  "desc_lines": 4,
+  "drift_edges": 4,
+  "gather_knots": 0,
+  "glyph_marks": 3,
+  "hero_cards": 1,
+  "hero_rx": 16.0,
+  "micro_labels": 4,
+  "muted_cards": 0,
+  "particles": 4,
+  "shell_marks": 0,
+  "solid_edges": 0,
+  "terminal_dots": 4,
+  "zone_headers": 0
+ },
+ "census_amendments": {
+  "glyph_marks": 4,
+  "note": "glyph_marks 3->4: the crown's diamond (drawn ring+core in the hand file) counts as its hyperweave mark."
+ },
+ "chip_stub_min": null,
+ "height": 382.0,
+ "hero_stack": {
+  "name_rows": 1,
+  "sub_rows": 1
+ },
+ "occupancy": 0.091,
+ "plate": {
+  "caption_pad": 36.0,
+  "caption_y": 604.0,
+  "content_bottom": 466.0,
+  "content_top": 220.0
+ },
+ "port_tolerance": 2.5,
+ "source": "v04/alpha/v04a6/diagrams-v3/pp-roundtrip.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1240.0,
+  640.0
+ ],
+ "width": 740.0
+}

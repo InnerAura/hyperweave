@@ -1,4 +1,4 @@
-"""--font-mode: embed (default) | cdn | system (alpha.5 font work)."""
+"""--font-mode: embed (default) | cdn | system."""
 
 from __future__ import annotations
 

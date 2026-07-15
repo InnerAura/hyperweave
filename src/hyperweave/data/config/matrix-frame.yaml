@@ -73,7 +73,7 @@ semantic_palette:
   # Rose cross: #DC2626 (primer's accent_error promoted to the semantic mark).
   # The specimens' #B91C1C was light-substrate-tuned and fell to 2.48:1 on
   # anvil; one invariant hue must clear 3:1 on BOTH poles (worst: dark 3.33,
-  # light 4.18). Decision locked v0.4.0-alpha.2.
+  # light 4.18). Decision locked.
   check_none: "#DC2626"
   pill_yes_start: "#10B981" # emerald Yes capsule gradient (top)
   pill_yes_end: "#059669" # emerald Yes capsule gradient (bottom)

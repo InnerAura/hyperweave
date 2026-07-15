@@ -1,6 +1,6 @@
 {# Chrome icon content: 5/6-layer chrome material stack.
    Specimens: chrome-social-icon-circle-v2.svg + -square-v2.svg.
-   v0.2.16: full rewrite to match v2 specimens. Both variants render at
+   A full rewrite to match those specimens. Both variants render at
    width=64 height=64 with viewBox=0 0 120 120 (chrome paradigm declares
    icon.viewbox_w=120 in chrome.yaml). Internal coordinates are in 120-unit
    space — every hairline, rail width, and bezel radius from v1's tuned
@@ -12,7 +12,7 @@
 #}
 {% if icon_variant | default('binary-circular') == 'binary-square' %}
 {# ─── Square variant ─── 96×96 rx=6 card at (12, 12) · 6-layer stack
-       Layer order (matches v2 spec):
+       Layer order (matches the specimens):
          1. envelope-fill rect with bevel filter
          2. inner hairline from chrome_icon_inner_stroke
          3. icon-well radial gradient
@@ -36,7 +36,7 @@
 
 {% else %}
 {# ─── Circle variant ─── 92-unit chrome ring centered at (60, 60) · 4-layer stack
-       Layer order (matches v2 spec):
+       Layer order (matches the specimens):
          1. envelope-gradient bezel ring
          2. radial icon-well
          3. chrome_icon_inner_stroke hairline between bezel and well

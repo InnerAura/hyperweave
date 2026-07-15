@@ -166,7 +166,7 @@ def test_full_session_reaches_specimen_height() -> None:
     """A maximal multi-model session (3 per-model cost rows + 5 tool rows +
     overflow + all zones) renders a tall content-aware card — the height band's
     upper anchor. The per-model cost rows lift it past the single-legend 578px
-    of the original v3 single-model specimen, in step with the multi-agent
+    of the original single-model receipt specimen, in step with the multi-agent
     specimens (cream/2-model 594, porcelain/4-model 615)."""
     full = dict(_PAYLOAD)
     # Pad tools to the 5-row maximum (4 token tools + a collapsed overflow).

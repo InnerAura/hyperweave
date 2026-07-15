@@ -1,6 +1,6 @@
 """Tests for the ``receipt/1`` payload assembler and parser extensions.
 
-Covers the data contract that the v3 receipt embeds (``hw:payload``) and the
+Covers the data contract that the receipt frame embeds (``hw:payload``) and the
 resolver consumes:
 
 * token identities (working = in + out; total = in+out+cache_read+cache_write)
@@ -668,7 +668,7 @@ class TestFieldNameRoundTrip:
         assert set(specimen.keys()) <= set(ours.keys()) | {"models"}
         assert set(specimen["tokens"].keys()) == set(ours["tokens"].keys())
         # span_min (elapsed wall-clock span) and error_min (real error minutes) are
-        # our v0.4 extensions beyond the v3 specimen — the burn curve runs on them,
+        # our extensions beyond the receipt specimen — the burn curve runs on them,
         # so the specimen's names are a subset of ours, with these two added.
         assert set(specimen["context"].keys()) <= set(ours["context"].keys())
         assert set(ours["context"].keys()) - set(specimen["context"].keys()) == {"span_min", "error_min"}

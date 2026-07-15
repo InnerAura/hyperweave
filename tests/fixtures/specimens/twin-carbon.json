@@ -1,0 +1,30 @@
+{
+  "faces": {
+    "dark": {
+      "conn": "#474747",
+      "ink": "#E6E6E6",
+      "ink2": "#8F8F8F",
+      "inkhi": "#F5F5F5",
+      "s0": "#111111",
+      "s1": "#1A1A1A",
+      "s2": "#212121",
+      "sig": "#C06A32",
+      "sigt": "#E89050",
+      "stroke": "#303030"
+    },
+    "light": {
+      "conn": "#B1B1AB",
+      "ink": "#1F1F1F",
+      "ink2": "#6C6C68",
+      "inkhi": "#0F0F0F",
+      "s0": "#F4F4F3",
+      "s1": "#FDFDFC",
+      "s2": "#F1F1EF",
+      "sig": "#D14508",
+      "sigt": "#C2410C",
+      "stroke": "#DDDDD9"
+    }
+  },
+  "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-carbon.svg",
+  "variant": "carbon"
+}

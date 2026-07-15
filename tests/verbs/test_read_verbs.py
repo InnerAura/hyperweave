@@ -1,4 +1,4 @@
-"""extract / verify / diff / query — the read half (alpha.5, Gate 3)."""
+"""extract / verify / diff / query — the read half."""
 
 from __future__ import annotations
 

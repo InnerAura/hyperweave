@@ -17,7 +17,7 @@
              theme="{{ theme_category }}" a11y="WCAG-AA" platform="{{ platform }}"/>
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
-    <hw:frame>{{ frame_type }}</hw:frame>
+    <hw:frame>{{ frame_public | default(frame_type) }}</hw:frame>
     <hw:genome>{{ genome_id }}@{{ version }}</hw:genome>
 {% if variant %}    <hw:variant>{{ variant }}</hw:variant>
 {% endif %}{% if profile_id %}    <hw:profile>{{ profile_id }}</hw:profile>
@@ -27,7 +27,7 @@
       <hw:slot zone="{{ slot.zone }}" {% if slot.value %}value="{{ slot.value }}"{% endif %}{% if slot.data %} data="{{ slot.data | e }}"{% endif %}/>
 {% endfor %}
     </hw:slots>
-    <hw:environment platform="{{ platform }}" motion="{{ motion_id }}" status="{{ status }}"/>
+    <hw:environment platform="{{ platform }}" motion="{{ data_hw_motion }}" status="{{ status }}"/>
   </hw:composition>
 {% if metadata_tier >= 2 %}
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -59,7 +59,7 @@
     <hw:approach>{{ reasoning_approach | default('') }}</hw:approach>
     <hw:tradeoffs>{{ reasoning_tradeoffs | default('') }}</hw:tradeoffs>
     <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
-    <hw:spatial-notes>{{ width }}x{{ height }} ({{ spatial_aspect_ratio }}), left-to-right</hw:spatial-notes>
+    <hw:spatial-notes>{{ spatial_notes }}</hw:spatial-notes>
   </hw:reasoning>
 {% endif %}
 {# hw:payload + hw:envelope — emitted at EVERY metadata tier when present:
@@ -69,4 +69,5 @@
    envelope id is recomputable as sha256 of the payload bytes below. #}
 {% if payload_json %}  <hw:payload xmlns:hw="https://hyperweave.app/hw/v1.0" schema="{{ payload_schema }}" media-type="application/json"><![CDATA[{{ payload_json }}]]></hw:payload>
 {% endif %}{% if envelope_json %}  <hw:envelope xmlns:hw="https://hyperweave.app/hw/v1.0" format="{{ envelope_format }}" media-type="application/json"><![CDATA[{{ envelope_json }}]]></hw:envelope>
+{% endif %}{% if regions_json %}  <hw:regions xmlns:hw="https://hyperweave.app/hw/v1.0" media-type="application/json"><![CDATA[{{ regions_json }}]]></hw:regions>
 {% endif %}</metadata>

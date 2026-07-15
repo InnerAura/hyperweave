@@ -73,9 +73,12 @@ class ComposeSpec(FrozenModel):
     @model_validator(mode="before")
     @classmethod
     def _canonicalize_type_alias(cls, data: object) -> object:
-        """``card`` is an accepted alias for the ``stats`` frame; canonicalize it to
-        the internal ``stats`` type so either name works at the input boundary
-        (routes, CLI, and ``data-hw-frame`` all stay ``stats``)."""
+        """``card`` is the public name of this frame; ``stats`` is the internal id
+        (the FrameType value, payload schema id, template key) and an accepted
+        input alias. Canonicalize ``card`` to ``stats`` here so either name works
+        at the input boundary; the public name is re-derived downstream for the
+        emitted ``data-hw-frame`` / ``<hw:frame>`` / envelope ``k`` (all read
+        ``card``). See config/loader.py:frame_public_name."""
         if isinstance(data, dict) and str(data.get("type", "")) == "card":
             data["type"] = "stats"
         return data
@@ -206,7 +209,7 @@ class ComposeSpec(FrozenModel):
         default="",
         description=(
             "Live human-readable session name for the receipt footer identity "
-            "line (e.g. 'review_alpha_v04a4'). Read at render time from the "
+            "line (e.g. 'review_settlement'). Read at render time from the "
             "session's latest title (Claude Code customTitle / Codex "
             "thread_name) so a mid-session rename is reflected. The on-disk "
             "filename is keyed to immutable signals (start date + first prompt) "
@@ -281,24 +284,81 @@ class ComposeSpec(FrozenModel):
     performance: str = Field(
         default="",
         description=(
-            "Surface performance tier for diagram motion. 'composite-only' "
-            "applies the fallback ladder (beam->particle, flow->dash); the "
-            "payload's rendered block records fallback_applied so requested "
-            "vs rendered never silently diverges. Empty = paint-ok."
+            "Surface performance tier for diagram motion. The kit grammar "
+            "(dash | particle) is compositor-only by construction, so both "
+            "tiers render identically; the payload's rendered block records "
+            "the tier. Empty = paint-ok."
         ),
         pattern="^(|composite-only)$",
     )
     chrome: str = Field(
-        default="card",
+        default="caption",
         description=(
-            "Presentation chrome (diagram). card = substrate + masthead + "
-            "footer; bare = transparent paper, no masthead, no footer — the "
-            "title ships only in hw:title/aria/markdown/payload. "
-            "Presentational: excluded from the envelope digest. Bare callers "
-            "own paper matching — the genome's inks assume its own surfaces."
+            "Internal diagram solver plumbing — NOT part of the public API "
+            "(no CLI/HTTP/MCP surface sets this; bundled presets may). Every "
+            "public diagram compose renders 'caption' (kit chrome): no "
+            "masthead band, ONE caption sentence at the base — the host page "
+            "owns the heading, the title ships only in "
+            "hw:title/aria/markdown/payload. 'plain' keeps the full plate but "
+            "drops the caption line (the lanes hand sheet renders "
+            "captionless). 'bare' (transparent paper, no caption) exists "
+            "solely for sec 12.1's recursive embed compose "
+            "(compose/resolvers/diagram.py). Presentational: excluded from "
+            "the envelope digest."
         ),
-        pattern="^(card|bare)$",
+        pattern="^(bare|caption|plain)$",
     )
+
+    # -- Surface modes (plate / inlay / twin) --
+    # Two orthogonal format axes; the `surface=<name>` sugar expands into them
+    # BEFORE ComposeSpec construction (never persists). Only matrix/diagram
+    # consume them today (frame allowlist in surface-modes.yaml).
+    ground: str = Field(
+        default="",
+        description=(
+            "Surface ground axis: '' (defer to plate), 'opaque' (own ground), "
+            "'bare' (borrow the host surface). Paired with `palette` into a "
+            "plate/inlay/twin preset."
+        ),
+        pattern="^(|opaque|bare)$",
+    )
+    palette: str = Field(
+        default="",
+        description=(
+            "Surface palette axis: '' (defer to plate), 'fixed' (one baked "
+            "scheme), 'adaptive' (light/dark pair via prefers-color-scheme)."
+        ),
+        pattern="^(|fixed|adaptive)$",
+    )
+    surface_face: str = Field(
+        default="",
+        description=(
+            "Which face to bake — '' (adaptive, both faces in one SVG), "
+            "'light', or 'dark'. Set by the faces emit target (<picture> "
+            "source pair) and by CLI --face; on a bare ground a face is the "
+            "terminal-inlay render (theme-committed, rasterizes with alpha)."
+        ),
+        pattern="^(|light|dark)$",
+    )
+
+    @model_validator(mode="after")
+    def _reject_surface_trap(self) -> ComposeSpec:
+        """bare + fixed with NO face is the trap corner — theme-blind.
+
+        Caught here (as well as on SurfaceSpec) so a raw ComposeSpec built with
+        the axes directly, bypassing the `surface=` preset sugar, still fails
+        loud instead of emitting a transparent artifact tuned for one scheme.
+        An explicit ``surface_face`` exempts: the caller commits the scheme
+        for a KNOWN host ground — the terminal-inlay face.
+        """
+        if self.ground == "bare" and self.palette == "fixed" and not self.surface_face:
+            raise ValueError(
+                "ground=bare with palette=fixed is the trap corner (transparent "
+                "but theme-blind); use a preset: plate (opaque+fixed), inlay "
+                "(bare+adaptive), twin (opaque+adaptive) — or commit to one "
+                "scheme with surface_face=light|dark (the bare inlay face)"
+            )
+        return self
 
 
 class ArtifactMetadata(FrozenModel):
@@ -335,6 +395,22 @@ class ComposeResult(FrozenModel):
             "Empty for frames without a markdown projection."
         ),
     )
+    warnings: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Non-fatal normalization notes surfaced to the caller (e.g. a "
+            "cyclic diagram declared as 'dag' promoted to 'state-machine'). "
+            "Empty for the common path; the CLI prints these to stderr."
+        ),
+    )
+    diagnostics: list[dict[str, str]] = Field(
+        default_factory=list,
+        description=(
+            "sec 6 compiler diagnostics: advisory {rule, measured, band, suggestion} "
+            "records from the diagram compiler. Empty = the passing grade. The CLI "
+            "prints them to stderr; HTTP JSON and MCP carry them verbatim."
+        ),
+    )
 
 
 class ResolvedArtifact(FrozenModel):
@@ -367,6 +443,42 @@ class ResolvedArtifact(FrozenModel):
             "'--dna-surface:#020E12; --dna-ink-primary:#C8F0E8'). Empty when genome "
             "declares no variant_overrides[resolved_variant] entry; suppresses the "
             "style attribute entirely so bare/horizon URLs stay byte-equal."
+        ),
+    )
+    # -- Surface modes (plate / inlay / twin) — additive; defaults = plate --
+    surface_adapt: bool = Field(
+        default=False,
+        description=(
+            "True for an adaptive surface (inlay/twin). Drives the context CSS "
+            "swap to #uid scoping + a prefers-color-scheme @media far block, and "
+            "the document.svg.j2 root adaptive attrs. False = plate (byte-identical)."
+        ),
+    )
+    surface_ground: str = Field(
+        default="opaque",
+        description="Resolved ground axis: 'opaque' (own ground) | 'bare' (borrow host). Default plate = opaque.",
+    )
+    surface_preset: str = Field(
+        default="plate",
+        description="Resolved preset slug: plate | inlay | twin. Emitted as data-hw-surface on adaptive artifacts.",
+    )
+    surface_face: str = Field(
+        default="",
+        description=(
+            "Which twin face this render bakes: '' (plate/adaptive-both), 'light', "
+            "or 'dark' — ABSOLUTE (the named scheme), not relative to the genome's "
+            "own substrate. When the request matches the genome's native face the "
+            "genome renders untouched; otherwise flip_palette() has already been "
+            "merged over it so the plate pipeline renders the requested face. "
+            "Emitted as data-hw-face."
+        ),
+    )
+    far_palette: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "The sparse flipped palette (flip_palette output) for an adaptive "
+            "artifact's @media far block. Empty on plate and on baked faces. The "
+            "context CSS swap reads it to build the scoped adaptive stylesheet."
         ),
     )
     motion: str = Field(default="static", description="Resolved motion identifier")

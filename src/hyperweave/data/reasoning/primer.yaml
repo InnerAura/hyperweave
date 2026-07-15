@@ -246,9 +246,9 @@ primer:
         x midpoint); the flywheel trims its 178px arcs by each card's
         angular half-width plus 1.2 degrees (the specimen's 24-degree
         inset at any ring count). Connectors run a marching 5-7 dash
-        (1.618s) with particle riders; beam and flow animate
-        gradientTransform only — geometry never moves. Radial spokes draw
-        under the hub card so they emanate from its surface.
+        (1.618s) with particle riders — compositor-only properties;
+        geometry never moves. Radial spokes draw under the hub card so
+        they emanate from its surface.
       tradeoffs: |-
         Direction is carried by motion, never arrowheads — a reduced-motion
         or rasterized embed falls back to dashed tubes and reading order

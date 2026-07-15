@@ -1,0 +1,55 @@
+{
+  "aspect": 7.694,
+  "caption_text": "host \u2192 gateway \u2192 server \u00b7 request and response as two lanes",
+  "cards": {
+    "dims_superseded": "the 24px glyph-slot law (kit sheet, ratified) re-derives card widths (+8 over the 16px-era hand dims); content, census, and structure laws still pin",
+    "hero_area_ratio": 1.176,
+    "hero_h": 54.0,
+    "hero_w": 167.0,
+    "std_h_med": 54.0,
+    "std_w_med": 142.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 0,
+    "card_rx": 12.0,
+    "cards": 3,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 2,
+    "drift_edges": 4,
+    "gather_knots": 0,
+    "glyph_marks": 3,
+    "hero_cards": 1,
+    "hero_rx": 12.0,
+    "micro_labels": 2,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 0,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "chip_stub_min": null,
+  "height": null,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 0
+  },
+  "occupancy": 0.351,
+  "plate": {
+    "caption_pad": 14.0,
+    "caption_y": 120.0,
+    "content_bottom": 89.0,
+    "content_top": 35.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-mcp-gateway-v4.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1031.0,
+    134.0
+  ],
+  "width": null
+}

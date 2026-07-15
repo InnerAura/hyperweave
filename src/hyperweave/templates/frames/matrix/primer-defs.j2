@@ -6,7 +6,7 @@
   <rect width="{{ width }}" height="{{ height }}" rx="{{ matrix_layout.rects.outer.rx }}"/>
 </clipPath>
 <linearGradient id="{{ uid }}-card-bg" x1="0" y1="0" x2="0" y2="1">
-{% if panel_gradient_stops %}
+{% if panel_gradient_stops and not surface_adapt %}
 {% for stop in panel_gradient_stops %}  <stop offset="{{ stop.offset }}" stop-color="{{ stop.color }}"/>
 {% endfor %}{% else %}  <stop offset="0%" stop-color="var(--dna-surface-alt)"/>
   <stop offset="100%" stop-color="var(--dna-surface)"/>

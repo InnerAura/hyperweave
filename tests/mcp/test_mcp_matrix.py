@@ -51,7 +51,7 @@ async def test_render_target_html_is_a_reserved_seam() -> None:
 
 @pytest.mark.asyncio
 async def test_render_target_markdown_badge_returns_shadow() -> None:
-    # The alpha.5 envelope floor gives every frame a text-shadow projection, so
+    # The envelope floor gives every frame a text-shadow projection, so
     # render_target=markdown now works for lightweight frames too (it no longer
     # rejects badges as "no markdown projection").
     md = await hw_compose(type="badge", title="BUILD", value="passing", render_target="markdown")

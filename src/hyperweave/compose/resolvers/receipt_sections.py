@@ -1,4 +1,4 @@
-"""Receipt zone dataclasses + layout pass (the v3 prototype, data computed once).
+"""Receipt zone dataclasses + layout pass (the receipt specimen, data computed once).
 
 One pure dataclass per visual zone, plus a ``build_*`` function that folds the
 ``receipt/1`` payload into it with every coordinate pinned to the specimen's

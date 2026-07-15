@@ -151,12 +151,32 @@ class TestStructuralValidators:
                 edges=[{"source": "a", "target": "ghost"}],
             )
 
-    def test_self_loop_rejected(self) -> None:
+    def test_self_loop_legal_on_data_topology(self) -> None:
+        # Self-loops are the state/step revisiting itself — legal on the data
+        # topologies where an edge IS content (state-machine here).
+        s = DiagramSpec(
+            topology="state-machine",
+            nodes=ided("A", "B"),
+            edges=[{"source": "a", "target": "b"}, {"source": "a", "target": "a", "label": "retry"}],
+        )
+        assert any(e.source == e.target for e in s.edges)
+
+    def test_self_loop_rejected_on_closed_topology(self) -> None:
+        # On a closed topology the node ORDER is the structure — a self-loop
+        # has no derived-pair meaning, so it stays illegal.
         with pytest.raises(ValueError, match="self-loop"):
+            DiagramSpec(
+                topology="pipeline",
+                nodes=ided("A", "B", "C"),
+                edges=[{"source": "a", "target": "a"}],
+            )
+
+    def test_bidirectional_self_loop_rejected(self) -> None:
+        with pytest.raises(ValueError, match="bidirectional"):
             DiagramSpec(
                 topology="state-machine",
                 nodes=ided("A", "B"),
-                edges=[{"source": "a", "target": "a"}],
+                edges=[{"source": "a", "target": "b"}, {"source": "a", "target": "a", "direction": "both"}],
             )
 
     def test_duplicate_directed_edge_rejected(self) -> None:
@@ -219,17 +239,21 @@ class TestStructuralValidators:
         flows = [(e.source, e.target) for e in resolved_edges(s)]
         assert flows == [(1, 0), (0, 2)]
 
-    def test_dag_cycle_names_state_machine(self) -> None:
-        with pytest.raises(ValueError, match="state-machine"):
-            DiagramSpec(
-                topology="dag",
-                nodes=ided("A", "B", "C"),
-                edges=[
-                    {"source": "a", "target": "b"},
-                    {"source": "b", "target": "c"},
-                    {"source": "c", "target": "a"},
-                ],
-            )
+    def test_dag_cycle_is_legal_at_ir(self) -> None:
+        # The IR no longer hard-raises on a cyclic dag: a frozen model can't
+        # re-dispatch its own topology, so the decision moved to the input
+        # seam (promote_cyclic_dag → state-machine). Construction succeeds;
+        # promotion is exercised in TestPromotion.
+        s = DiagramSpec(
+            topology="dag",
+            nodes=ided("A", "B", "C"),
+            edges=[
+                {"source": "a", "target": "b"},
+                {"source": "b", "target": "c"},
+                {"source": "c", "target": "a"},
+            ],
+        )
+        assert s.topology is Topology.DAG
 
     def test_tree_root_with_parent_rejected(self) -> None:
         with pytest.raises(ValueError, match=r"root .* cannot have a parent"):

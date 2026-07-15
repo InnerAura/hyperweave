@@ -7,7 +7,7 @@
     <desc id="vd">Hub-and-spoke verb algebra, blueprint mapping, adaptive light/dark,
         hand-drawn via baked vertex displacement. The artifact is composed from a spec,
         transformed (new id), and read without mutation (extract, verify, diff, query);
-        it ships to documents (many into one) and surfaces (via --target). The accent is
+        it ships to documents (many into one) and surfaces (via --format). The accent is
         the verb algebra and destinations; one edge in, four out.</desc>
     <metadata>
         <hw:hyperweave xmlns:hw="https://hyperweave.app/hw/v1.0">
@@ -288,7 +288,7 @@
           font-size="17" font-weight="700" text-anchor="middle"
           style="--t:1.89s">surfaces</text><text class="bpfi bpmutf" x="636.0" y="319"
           font-family="Inter,'SF Pro Display',-apple-system,'Segoe UI',Roboto,sans-serif"
-          font-size="12.5" text-anchor="middle" style="--t:1.94s">via --target</text>
+          font-size="12.5" text-anchor="middle" style="--t:1.94s">via --format</text>
     <path class="bpdr bpacDs"
           d="M 292.92,176.29 C 354.00,176.30 414.00,174.09 474.00,176.00 Q 484.00,176.00 484.00,186.00 C 486.23,214.00 481.91,242.00 484.00,270.00 Q 484.00,280.00 474.00,280.00 C 414.00,280.44 354.00,280.95 294.00,280.00 Q 284.00,280.00 284.00,270.00 C 284.80,242.00 286.06,214.00 284.00,186.00 Q 284.00,176.00 294.00,176.00 Z"
           fill="none" stroke-width="1.80" opacity="0.28" transform="translate(0.5,0.6)"

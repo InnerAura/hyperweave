@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.assembler import compute_variant_inline_style
@@ -33,7 +34,7 @@ _RECEIPT_DEFAULT_GENOME = "primer"
 # Receipt paradigms that have a real template partial under frames/receipt/.
 # The retired telemetry-* genomes declare `receipt: default` (the pre-genome
 # monolith), which has no partial — so they are NOT receipt-capable under the
-# v3 rebuild and fall back to primer. Workstream E removes those genomes.
+# primer rebuild and fall back to primer until those genomes are removed.
 _RECEIPT_PARADIGMS = frozenset({"primer", "raw"})
 
 
@@ -84,8 +85,160 @@ def resolve_variant(spec: ComposeSpec, genome: dict[str, Any], paradigm_spec: An
     return resolved
 
 
+def _reject_unsupported_surface(spec: ComposeSpec) -> None:
+    """Fail loud when a non-plate surface is requested on an unsupported frame.
+
+    Surface modes (inlay/twin, or an explicit face) only apply to the frames in
+    ``surface-modes.yaml``'s allowlist (matrix + diagram today). A surface
+    prop set on any other frame is a caller error, caught here at the resolver
+    boundary so the enforcement is universal and single-sourced — not deferred to
+    the per-frame stamping that only matrix/diagram opt into. Plate (the empty/
+    opaque+fixed default) is always allowed on every frame.
+    """
+    if not (spec.ground or spec.palette or spec.surface_face):
+        return
+    is_plate = spec.ground in ("", "opaque") and spec.palette in ("", "fixed") and not spec.surface_face
+    if is_plate:
+        return
+    from hyperweave.config.loader import load_surface_modes
+    from hyperweave.core.errors import HwError, HwErrorCode
+
+    cfg = load_surface_modes()
+    if spec.type.value not in cfg.frames:
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"surface modes (inlay/twin) are not available on the {spec.type.value!r} frame",
+            fix=f"supported frames: {sorted(cfg.frames)}; use surface=plate elsewhere",
+        )
+
+
+@dataclass(frozen=True)
+class _SurfaceState:
+    """Resolved surface outcome the dispatcher threads into the ResolvedArtifact.
+
+    ``face_palette`` is non-empty ONLY for a baked twin face (surface_face set)
+    whose REQUEST does not match the genome's native substrate face — absolute
+    ``--face`` semantics: ``--face light`` on a light-native
+    variant and ``--face dark`` on a dark-native one are both pass-through
+    (empty), since the genome's own values already ARE that face; the other
+    request in each case merges :func:`~hyperweave.compose.surface_modes.flip_palette`
+    over the genome so the plate pipeline renders the requested face.
+    ``far_palette`` is non-empty ONLY for an adaptive (inlay/twin) render with
+    no face: the sparse @media far block (always the OPPOSITE of native — see
+    ``compose/context.py:_apply_adaptive_css`` for which CSS scope it lands in).
+    Plate leaves both empty.
+    """
+
+    adapt: bool = False
+    ground: str = "opaque"
+    preset: str = "plate"
+    face: str = ""
+    far_palette: dict[str, str] = field(default_factory=dict)
+    face_palette: dict[str, str] = field(default_factory=dict)
+
+
+def _genome_default_surface(genome: dict[str, Any], frame_type: str) -> Any:
+    """A genome may prefer a non-plate DEFAULT surface (primer: twin).
+
+    The preference applies only on frames in the surface-modes allowlist —
+    everywhere else it silently resolves plate (a preference, never a demand:
+    a badge composed on primer must not error). Explicit caller props always
+    outrank it (the caller checked before calling)."""
+    name = str(genome.get("default_surface") or "")
+    if not name or name == "plate":
+        return None
+    from hyperweave.config.loader import load_surface_modes
+    from hyperweave.core.surface_spec import expand_surface_preset
+
+    if frame_type not in load_surface_modes().frames:
+        return None
+    try:
+        return expand_surface_preset(name, "", "")
+    except ValueError as exc:
+        from hyperweave.core.errors import HwError, HwErrorCode
+
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"genome default_surface {name!r} is not a valid surface preset",
+            fix="use plate | inlay | twin",
+        ) from exc
+
+
+def _resolve_surface_state(spec: ComposeSpec, genome: dict[str, Any]) -> _SurfaceState:
+    """Resolve the surface (plate/inlay/twin[/face]) into a threading record.
+
+    Reads the ComposeSpec surface props (already validated + trap-checked at the
+    model boundary; frame allowlist enforced by ``_reject_unsupported_surface``).
+    Plate short-circuits to the default record — the whole surface pathway is a
+    no-op, keeping plate byte-identical. For a face render the flipped palette is
+    computed once here and merged over the genome by the caller; for an adaptive
+    render the far palette is carried onward for the context CSS swap.
+    """
+    from hyperweave.compose.surface_modes import (
+        authored_diagram_faces,
+        flip_palette,
+        resolve_surface,
+        surface_from_props,
+    )
+    from hyperweave.config.loader import load_surface_modes
+    from hyperweave.core.surface_spec import preset_name
+
+    requested = surface_from_props(spec.ground, spec.palette, spec.surface_face)
+    if requested is None and not (spec.ground or spec.palette or spec.surface_face):
+        # TRULY unset (an explicit plate writes "opaque"/"fixed" and stays
+        # plate) — the genome may prefer a non-plate default (primer: twin).
+        requested = _genome_default_surface(genome, spec.type.value)
+    if requested is None:
+        return _SurfaceState()  # plate
+
+    cfg = load_surface_modes()
+    resolved = resolve_surface(requested, genome, spec.type.value, cfg)
+    ground = resolved.ground.value
+    preset = preset_name(resolved.ground, resolved.palette) or "twin"
+
+    # P5 chroma contract: a diagram variant may carry hand-authored twin faces
+    # (``diagram_faces``); the surface pipeline PREFERS them over the computed
+    # flip. flip_palette is the fallback (matrix, and genomes without faces).
+    authored = authored_diagram_faces(genome, spec.type.value)
+
+    # A baked face is a PLATE render of the requested-vs-native comparison:
+    # pass-through (native values verbatim) when the request matches the
+    # genome's own substrate face, flip_palette() merged in when it doesn't.
+    # ABSOLUTE semantics — `--face dark` always yields the
+    # dark-scheme face, regardless of which side is native; the pre-fix
+    # relative reading (dark == always-flip) inverted the meaning on a
+    # dark-native genome (`--face dark` on noir used to yield noir's computed
+    # LIGHT palette). Either way the face is fixed/opaque downstream —
+    # surface_adapt stays False so no @media block is emitted, only the
+    # data-hw-face attr.
+    if resolved.face:
+        if authored is not None:
+            # Diagram baked face renders the AUTHORED tokens verbatim, always
+            # overlaid — they differ from the genome plate palette, so even the
+            # native-substrate face is NOT pass-through. Keeps the <picture>
+            # pair byte-agreeing with the adaptive twin's near/@media scopes.
+            face_palette: dict[str, str] = dict(authored[resolved.face])
+        else:
+            native_face = "dark" if str(genome.get("substrate_kind") or "light") == "dark" else "light"
+            face_palette = {} if resolved.face == native_face else flip_palette(genome, cfg)
+        return _SurfaceState(adapt=False, ground=ground, preset=preset, face=resolved.face, face_palette=face_palette)
+
+    # Adaptive (inlay/twin): carry the sparse far palette for the context CSS
+    # swap AND the diagram resolver's far-face derivations (diagram_flow_far /
+    # conn). PREFER the authored OPPOSITE-of-native face so those derivations
+    # track the authored palette; the @media emission itself reads the authored
+    # faces directly in context.py:_apply_adaptive_css.
+    if authored is not None:
+        opposite = "dark" if str(genome.get("substrate_kind") or "light") == "light" else "light"
+        far = dict(authored[opposite])
+    else:
+        far = flip_palette(genome, cfg)
+    return _SurfaceState(adapt=True, ground=ground, preset=preset, far_palette=far)
+
+
 def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     """Resolve a ComposeSpec into a typed ResolvedArtifact."""
+    _reject_unsupported_surface(spec)
     # Receipts speak the primer genome (8 chromatic variants, porcelain flagship).
     # The agent runtime selects only the identity glyph + wordmark — never the
     # theme. One guard: ComposeSpec.genome_id defaults to brutalist (never
@@ -161,6 +314,29 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         if _vo:
             genome = {**genome, **_vo}
 
+    # Surface modes (plate / inlay / twin). Resolve after the variant merge so the
+    # projection reads the variant's own palette. Three outcomes:
+    #   - plate (default): everything below is unchanged, byte-identical.
+    #   - face render (surface_face set): merge flip_palette() OVER the genome so
+    #     the untouched plate pipeline renders the far face — a twin's second
+    #     target falls out for free (option c: palette-level, zero per-frame code).
+    #   - adaptive (inlay/twin, no face): carry surface_* + the sparse far_palette
+    #     on ResolvedArtifact; context.py swaps the CSS to #uid scoping + @media.
+    surface_state = _resolve_surface_state(spec, genome)
+    if surface_state.face_palette:
+        # A baked face overlays its palette OVER the genome so the plate
+        # pipeline renders the requested face. Two sinks must both see it: the
+        # top-level genome (→ the svg,:root stylesheet) AND the resolved
+        # variant's override sub-dict (→ the root inline style= attr, via
+        # compute_variant_inline_style) — the inline attr WINS over the
+        # stylesheet, so patching only the top level left a baked face
+        # rendering the variant's untouched values for every override field
+        # (surface/ink/label_text/…). overlay_face_palette() does both (and
+        # never mutates the shared variant_overrides config object).
+        from hyperweave.compose.surface_modes import overlay_face_palette
+
+        genome = overlay_face_palette(genome, surface_state.face_palette, resolved_variant)
+
     inline_style_overrides = compute_variant_inline_style(genome, resolved_variant)
     if spec.type == FrameType.BADGE and resolved_variant and genome.get("highlight_color"):
         _safe_specular = str(genome["highlight_color"]).replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
@@ -218,6 +394,14 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         paradigm_spec=paradigm_spec,
         resolved_variant=resolved_variant,
         cellular_palette=cellular_palette,
+        # Surface Modes: threading the already-resolved adaptive state (WC-1)
+        # lets a frame resolver re-derive its own genome-adjacent, resolver-
+        # computed (not genome-scalar) palettes for the far face — e.g. the
+        # diagram resolver's diagram_flow ramp — using the SAME far ground/
+        # accent flip_palette() already computed here. Every resolver accepts
+        # **_kw, so this is a no-op for frames that don't need it.
+        surface_adapt=surface_state.adapt,
+        far_palette=surface_state.far_palette,
     )
 
     # Session 2A+2B: inject paradigm + structural hints into every frame_context
@@ -229,7 +413,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     # chrome+hero text gradients) applied universally at the dispatcher.
     # Replaces manual _genome_material_context(...) calls previously scattered
     # across badge/strip/icon/divider/marquee/stats/chart resolvers —
-    # the forgetting of which caused Bug D (stats + chart rendered chrome
+    # the forgetting of which once left stats + chart rendering chrome
     # envelopes regardless of genome). setdefault semantics: a frame resolver
     # that legitimately pre-computes one of these keys still wins.
     for _k, _v in _genome_material_context(genome, profile).items():
@@ -278,6 +462,11 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
         frame_context=ctx,
         resolved_variant=resolved_variant,
         inline_style_overrides=inline_style_overrides,
+        surface_adapt=surface_state.adapt,
+        surface_ground=surface_state.ground,
+        surface_preset=surface_state.preset,
+        surface_face=surface_state.face,
+        far_palette=surface_state.far_palette,
         motion=motion,
         glyph_id=glyph_data.get("id", ""),
         glyph_path=glyph_data.get("path", ""),
@@ -328,7 +517,7 @@ def _normalize_status_glyph_state(state: object) -> str:
 
 def _status_glyph_geometry(sg_r: float, core_r: float) -> dict[str, object]:
     """Ratio-based geometry for the four animated state marks at base radius
-    ``sg_r``. Reproduces the v04alpha1 badge specimen at sg_r≈4.5 (value 12); the
+    ``sg_r``. Reproduces the badge specimen at sg_r≈4.5 (value 12); the
     strip passes its own (smaller) sg_r so the same marks ride the status zone."""
     return {
         "axis": 0,  # local origin (the group is translated to the mark center)
@@ -832,7 +1021,7 @@ def resolve_badge(
 
     # Primer status-glyph indicator geometry (shared helper) — the four animated
     # state marks at base radius _sg_r (= value cap-height / 2). Reproduces the
-    # v04alpha1 specimen at _sg_r≈4.5 (value 12). The selected partial differs per
+    # badge specimen at _sg_r≈4.5 (value 12). The selected partial differs per
     # normalized state; geometry is scale-free so the mark tracks the badge height.
     status_glyph_geometry = _status_glyph_geometry(light_indicator_outer_r, light_indicator_inner_r)
     status_glyph_state = _normalize_status_glyph_state(spec.state)
@@ -3830,7 +4019,7 @@ def _genome_material_context(genome: dict[str, Any], profile: dict[str, Any]) ->
         "well_top": genome.get("well_top", ""),
         "well_bottom": genome.get("well_bottom", ""),
         # Icon-specific well colors (v0.2.16): chrome icons use a more saturated
-        # navy (#0C1E2E -> #06101A per v2 spec) than the wider marquee/strip
+        # navy (#0C1E2E -> #06101A per the icon specimen) than the wider marquee/strip
         # well (#020617 -> #0B1121). Falls back to well_top/well_bottom when not
         # declared, so non-chrome genomes don't need these fields.
         "icon_well_top": genome.get("icon_well_top", "") or genome.get("well_top", ""),

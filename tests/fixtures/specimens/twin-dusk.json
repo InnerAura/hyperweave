@@ -1,0 +1,30 @@
+{
+  "faces": {
+    "dark": {
+      "conn": "#684A5C",
+      "ink": "#F2DEE8",
+      "ink2": "#B78BA0",
+      "inkhi": "#FAEDF4",
+      "s0": "#191016",
+      "s1": "#251720",
+      "s2": "#2D1D28",
+      "sig": "#A6708A",
+      "sigt": "#EDACC7",
+      "stroke": "#412C3A"
+    },
+    "light": {
+      "conn": "#C8A3B4",
+      "ink": "#3A1A28",
+      "ink2": "#906272",
+      "inkhi": "#26101A",
+      "s0": "#F6ECF0",
+      "s1": "#FDF7FA",
+      "s2": "#F5EAEF",
+      "sig": "#8F3E5C",
+      "sigt": "#8F3E5C",
+      "stroke": "#DCC5CF"
+    }
+  },
+  "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-dusk.svg",
+  "variant": "dusk"
+}

@@ -152,26 +152,33 @@ class GenomeSpec(BaseModel):
     diagram_flow: list[str] = Field(
         default_factory=list,
         description=(
-            "Diagram flow-accent cycle (hex): node dots, ramp-hue branch "
-            "strokes, and particle fills cycle through it by non-hero node "
-            "order. Validated (3-8 distinct #RRGGBB, redeclared per variant) "
-            "when the genome declares paradigms.diagram."
+            "Diagram flow-accent cycle (hex). OPTIONAL: derived from the "
+            "variant accent by default (compose/diagram/palette.py) — slot 0 "
+            "is the accent (the spine), slots 1+ an in-family tint ramp lanes "
+            "read as category tints. Author an explicit 3-8 distinct #RRGGBB "
+            "palette only to opt out of derivation."
         ),
     )
-    diagram_plates: dict[str, str] = Field(
-        default_factory=dict,
+    diagram_conn_muted: str = Field(
+        default="",
         description=(
-            "Glyph contrast plates (G5): {'light': hex, 'dark': hex} drawn "
-            "from the genome's own surface family. When an identity mark "
-            "falls below the contrast threshold against its backing, the "
-            "gate swaps the plate before degrading the tint — brand colors "
-            "are never altered. Required when paradigms.diagram is declared."
+            "Quiet neutral (hex) for the muted-connector knob — static/dash "
+            "wires draw in this tone when connector_palette=muted (flowing "
+            "particles keep the flow accent). Required at config load when a "
+            "diagram genome ships connector_palette=muted support."
         ),
     )
 
     # -- Structure --
     stroke: str = Field(description="Border/stroke color (hex)")
     shadow_color: str = Field(description="Shadow color (hex)")
+    diagram_shadow_color: str = Field(
+        default="",
+        description=(
+            "Diagram drop-shadow tint (hex) — a neutral slate distinct from the "
+            "shared shadow_color other frames use. Empty defers to shadow_color."
+        ),
+    )
     shadow_opacity: str = Field(description="Shadow opacity (e.g. '0.08')")
     glow: str = Field(default="0px", description="Glow radius (CSS value)")
     corner: str = Field(description="Corner radius (CSS value)")
@@ -212,7 +219,7 @@ class GenomeSpec(BaseModel):
     # When non-empty, the receipt renders a full-canvas linear gradient as the
     # backdrop and insets the substrate card by ``card_inset`` pixels so the
     # atmosphere is visible as a colored ring around the card. Sourced from
-    # the v9 codex specimen's ``codex-atmo`` gradient (linear top-left → bottom-right).
+    # the codex receipt specimen's ``codex-atmo`` gradient (linear top-left → bottom-right).
     atmosphere_stops: list[dict[str, str]] = Field(
         default_factory=list,
         description="Linear gradient stops painted full-canvas behind the substrate",
@@ -222,14 +229,14 @@ class GenomeSpec(BaseModel):
         description=(
             "Radial gradient overlays painted between atmosphere and substrate. "
             "Each entry: {id, cx, cy, r, stops: [{offset, color, opacity}]}. "
-            "Sourced from v9 codex ``bloom-cool`` and ``bloom-violet``."
+            "Sourced from the codex receipt specimen's ``bloom-cool`` and ``bloom-violet``."
         ),
     )
     card_top_highlight: bool = Field(
         default=False,
         description=(
             "When True, paint a 32px <color>→transparent linear gradient over the "
-            "card's top edge (glass-edge highlight; v9 codex specimen). The color "
+            "card's top edge (glass-edge highlight; the codex receipt specimen). The color "
             "is ``card_top_highlight_color`` (required when this is True) — NOT "
             "ink, which is text tone and turns the edge into a dark wash on light "
             "skins."
@@ -245,7 +252,7 @@ class GenomeSpec(BaseModel):
     )
     card_inset: int = Field(
         default=0,
-        description="Substrate inset in px when atmosphere_stops is active (v9 codex uses 6px)",
+        description="Substrate inset in px when atmosphere_stops is active (the codex receipt specimen uses 6px)",
     )
 
     # -- Badge state-indicator shape (optional) --
@@ -307,6 +314,14 @@ class GenomeSpec(BaseModel):
     flagship_variant: str = Field(
         default="",
         description="Default variant when spec.variant is empty and no paradigm default exists.",
+    )
+    default_surface: str = Field(
+        default="",
+        description=(
+            "Preferred surface preset (plate | inlay | twin) when the caller "
+            "requests none. Applies only on surface-mode frames (matrix, "
+            "diagram); everywhere else it silently resolves plate. Empty = plate."
+        ),
     )
     variant_overrides: dict[str, dict[str, Any]] = Field(
         default_factory=dict,
@@ -420,6 +435,21 @@ class GenomeSpec(BaseModel):
     )
     strip_status_dot: str = Field(
         default="", description="Strip ACTIVE live-dot, substrate-harmonized green (distinct from accent_signal)"
+    )
+
+    # -- Diagram health-channel status dot fills (primer). A flat card-corner
+    # disc (dep-audit's health channel) — unlike the badge status-glyph above,
+    # a diagram is a single adaptive document (light+dark in ONE svg via
+    # @media), so this pair genuinely swaps per substrate rather than staying
+    # invariant: pp-tree-radial-v2.svg/pp-tree-v2.svg cite light #DC2626/
+    # #F59E0B, dark #F87171/#FBBF24. Default "" leaves other genomes unaffected. --
+    diagram_status_warning: str = Field(default="", description="Health-dot outdated fill, light substrate (amber)")
+    diagram_status_warning_dark: str = Field(
+        default="", description="Health-dot outdated fill, dark substrate (amber-400)"
+    )
+    diagram_status_critical: str = Field(default="", description="Health-dot vulnerable fill, light substrate (red)")
+    diagram_status_critical_dark: str = Field(
+        default="", description="Health-dot vulnerable fill, dark substrate (red-400)"
     )
     accent_deep: str = Field(
         default="", description="Deep accent (darker than accent): chart hero value + line-gradient end stop"

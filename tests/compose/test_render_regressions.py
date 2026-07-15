@@ -34,7 +34,7 @@ def test_brutalist_stateless_strip_trailing_is_minimal() -> None:
 
 
 def test_chrome_badge_label_measured_uppercase_matches_render() -> None:
-    """Bug 3: chrome badge labels RENDER uppercase, so the label zone must be
+    """Chrome badge labels RENDER uppercase, so the label zone must be
     MEASURED uppercase too. A lowercase title 'chrome' must yield the
     uppercase-width textLength (~47), not the lowercase ~40 — else the wider
     uppercase render overflows the seam (the 'CHROME' overflow). Root cause was

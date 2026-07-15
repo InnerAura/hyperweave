@@ -1,0 +1,30 @@
+{
+  "faces": {
+    "dark": {
+      "conn": "#3F3F3F",
+      "ink": "#D4D4D4",
+      "ink2": "#868686",
+      "inkhi": "#E8E8E8",
+      "s0": "#0A0A0A",
+      "s1": "#141414",
+      "s2": "#1C1C1C",
+      "sig": "#FFFFFF",
+      "sigt": "#FFFFFF",
+      "stroke": "#2B2B2B"
+    },
+    "light": {
+      "conn": "#B4B4B4",
+      "ink": "#3A3A3A",
+      "ink2": "#747474",
+      "inkhi": "#262626",
+      "s0": "#F4F4F4",
+      "s1": "#FEFEFE",
+      "s2": "#F2F2F2",
+      "sig": "#000000",
+      "sigt": "#000000",
+      "stroke": "#DDDDDD"
+    }
+  },
+  "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-noir.svg",
+  "variant": "noir"
+}

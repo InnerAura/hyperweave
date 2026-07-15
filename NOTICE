@@ -1,0 +1,15 @@
+HyperWeave — third-party asset attribution
+
+Core glyph set (src/hyperweave/data/registries/glyphs-core.json)
+  Derived from Lucide v0.525.0 (https://lucide.dev), ISC License.
+  Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022
+  as part of Feather (MIT). All other copyright (c) for Lucide are held
+  by Lucide Contributors 2022.
+  Geometry converted to path data by scripts/fetch_core_glyphs.py;
+  no visual modifications.
+
+Brand glyph registry (src/hyperweave/data/registries/glyphs.json)
+  Brand marks sourced from their owners' published brand assets via the
+  Simple Icons collection (https://simpleicons.org, CC0-1.0). Company
+  names, logos, and trademarks remain property of their respective
+  owners and are used solely for identification.

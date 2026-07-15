@@ -1,30 +1,36 @@
-"""Backing-aware glyph contrast gate (G5 v3).
+"""Backing-aware glyph contrast gate.
 
 Runs RESOLVER-side, after hue substitution — the solver stays genome-blind;
 this pass knows the genome's actual surface hexes.
 
-Plate tokens are a SET-LEVEL invariant: the glyph-circle class of a layout
-is treated uniformly — plateless together, or on ONE shared plate — never a
-per-node checkerboard. The remedy ladder per node class per paper:
+Neither shape carries a plate: a card's mark checks against the card surface
+(``surface_1``); a circle carries no independent backing and sits bare on the
+paper (``surface_0``), so it checks directly against that. The remedy ladder
+is the same for both, keyed only by which surface the shape reads against:
 
-0. PLATELESS — if every gated mark reads directly on the paper
-   (``surface_0``), the circles drop their fill and the marks sit on the
-   paper, full color intact. "Reads" = the WCAG ratio clears the threshold
-   OR the mark is chromatically distinct (RGB distance) with a small
-   luminance floor — a solid saturated mark (HF yellow on dusk) reads
-   through hue long before it clears 3:1.
-1. UNIFORM PLATE — when the paper swallows any mark, the WHOLE class takes
-   the genome plate (light or dark) that carries the set best. Ink-mode
-   marks and mono shorts riding a swapped plate take the plate's
-   counter-ink (the sibling plate's fill) so "ink contrasts by
-   construction" stays true on the plate.
-2. DEGRADE — marks that still fail on the shared plate degrade toward ink
-   (brand, then ink). Brand colors are never altered.
+0. DEFAULT / PLATELESS — the mark reads directly on its surface (the WCAG
+   ratio clears the threshold, or the mark is chromatically distinct — a
+   solid saturated color reads through hue long before it clears 3:1, e.g.
+   HF yellow on a dusk paper) — full color, unchanged.
+1. DEGRADE — a mark that fails its surface degrades toward ink (brand, then
+   ink), evaluated per node. Brand colors are never altered.
 
-Cards have no plate construct: their marks check against the card surface
-and degrade tint directly. Per-node outcomes are recorded in the payload's
-``rendered.glyph_backing`` so requested vs rendered never silently
-diverges.
+Ink-tint marks are exempt (ink is designed to read on every surface the
+genome ships — it paints with ``var(--dna-ink-primary)``, which the twin's
+far ``@media`` block re-declares for free). Per-node outcomes are recorded in
+the payload's ``rendered.glyph_backing`` so requested vs rendered never
+silently diverges.
+
+TWIN AWARENESS: a brand/full/gradient mark paints with a LITERAL hex or a
+fixed SVG gradient — neither re-inks when an adaptive twin's far face flips
+(unlike ink, there is no var to ride). Checking only the near surface passes
+an achromatic brand mark that happens to read fine on its OWN face (e.g. an
+anthropic/openai near-black wordmark on a light near card) while it goes
+invisible on the twin's far face, whose card flips dark. ``far_genome``
+(optional; the sparse ``flip_palette()`` dict, ``surface_0``/``surface_1``
+only needed) extends every readability check to require BOTH faces clear the
+threshold — empty/absent for a plate render, so the gate's plate behavior is
+byte-identical to before.
 """
 
 from __future__ import annotations
@@ -104,99 +110,59 @@ def apply_glyph_contrast(
     registry: Mapping[str, Any],
     engine: Mapping[str, Any],
     rebuild: Any,
+    far_genome: Mapping[str, Any] | None = None,
 ) -> DiagramLayout:
-    """Gate the layout's identity marks per the v3 ladder; returns the
-    layout with the class treatment applied and per-node outcomes on
+    """Gate every node's identity mark against the surface(s) it actually sits
+    on (bare paper for a circle, the card fill for a card/pill); returns the
+    layout with degraded marks applied and per-node outcomes on
     ``rendered.glyph_backing``. ``rebuild`` is
-    ``(glyph_id, tint, cx, cy, size) -> GlyphArt | None``."""
+    ``(glyph_id, tint, cx, cy, size) -> GlyphArt | None``. ``far_genome``
+    (sparse ``flip_palette()`` output) adds the twin's far surface to every
+    check — a mark must clear the threshold on BOTH faces or it degrades."""
     cfg = engine.get("glyph_contrast") or {}
     paper = str(genome.get("surface_0", "#FFFFFF"))
     card = str(genome.get("surface_1", "#FFFFFF"))
-    plates = genome.get("diagram_plates") or {}
-    plate_fill = {"plate-light": str(plates.get("light", "#FFFFFF")), "plate-dark": str(plates.get("dark", "#141414"))}
-    counter_ink = {"plate-light": plate_fill["plate-dark"], "plate-dark": plate_fill["plate-light"]}
+    far_paper = str((far_genome or {}).get("surface_0") or "")
+    far_card = str((far_genome or {}).get("surface_1") or "")
 
     outcomes: dict[int, str] = {}
     nodes = list(layout.nodes)
 
-    def degrade(n: NodePlacement, art: GlyphArt, surface: str, ink_fill: str) -> NodePlacement:
-        """Brand, then ink (ink fill overridable for plated classes)."""
+    def reads(hexes: list[str], surfaces: list[str]) -> bool:
+        return all(_reads_on(hexes, surface, cfg) for surface in surfaces)
+
+    def degrade(n: NodePlacement, art: GlyphArt, surfaces: list[str]) -> NodePlacement:
+        """Brand, then ink — the only remedy past a failing full-color mark."""
         for mode in _DEGRADE:
             candidate = rebuild(art.glyph_id, mode, art.cx, art.cy, art.size)
             if candidate is None:
                 continue
             if candidate.tint == "ink":
-                if ink_fill:
-                    candidate = replace(candidate, fill=ink_fill)
                 outcomes[n.index] = "tint-ink"
                 return replace(n, glyph=candidate)
-            if _reads_on(_mark_hexes(candidate, registry), surface, cfg):
+            if reads(_mark_hexes(candidate, registry), surfaces):
                 outcomes[n.index] = f"tint-{candidate.tint}"
                 return replace(n, glyph=candidate)
         return n
 
-    # ── The glyph-circle class: one uniform treatment (v2 cohesion law) ──
-    circle_ix = [i for i, n in enumerate(nodes) if n.shape == "circle"]
-
-    def gated_art(i: int) -> GlyphArt:
-        art = nodes[i].glyph
-        assert art is not None  # membership in `gated` guarantees it
-        return art
-
-    gated = [i for i in circle_ix if (a := nodes[i].glyph) is not None and a.tint != "ink" and _mark_hexes(a, registry)]
-    if not gated:
-        # No color marks under the gate: the class keeps its canon coins.
-        for i in circle_ix:
-            art0 = nodes[i].glyph
-            if art0 is not None and art0.tint == "ink":
-                outcomes[nodes[i].index] = "exempt-ink"
-    elif circle_ix:
-        if all(_reads_on(_mark_hexes(gated_art(i), registry), paper, cfg) for i in gated):
-            # Step 0: plateless — marks sit on the paper, full color intact.
-            for i in circle_ix:
-                nodes[i] = replace(nodes[i], plate_fill="none")
-                art1 = nodes[i].glyph
-                if art1 is not None:
-                    outcomes[nodes[i].index] = "exempt-ink" if art1.tint == "ink" else "plateless"
-        else:
-            # Step 1: ONE plate for the whole class — scored by the worst
-            # gated mark's best color (set-min lum ratio).
-            def plate_score(token: str) -> float:
-                surface = plate_fill[token]
-                return min(
-                    (max(contrast_ratio(h, surface) for h in _mark_hexes(gated_art(i), registry)) for i in gated),
-                    default=21.0,
-                )
-
-            token = max(("plate-light", "plate-dark"), key=plate_score)
-            surface = plate_fill[token]
-            ink_fill = counter_ink[token]
-            for i in circle_ix:
-                n = nodes[i]
-                n = replace(n, plate_fill=surface, plate_ink=ink_fill)
-                art = n.glyph
-                if art is not None:
-                    if art.tint == "ink":
-                        n = replace(n, glyph=replace(art, fill=ink_fill))
-                        outcomes[n.index] = token
-                    elif _reads_on(_mark_hexes(art, registry), surface, cfg):
-                        outcomes[n.index] = token
-                    else:
-                        n = degrade(n, art, surface, ink_fill)
-                nodes[i] = n
-
-    # ── Cards: no plate construct — check the card surface, degrade tint ─
     for i, n in enumerate(nodes):
-        if n.shape == "circle" or n.glyph is None:
+        if n.glyph is None:
             continue
+        # A circle carries no plate (kit anatomy: a bare ring on the paper);
+        # a card/pill checks against its own surface fill. The far surface
+        # (twin only) rides alongside — both must clear, or the mark degrades.
+        is_circle = n.shape == "circle"
+        surface = paper if is_circle else card
+        far_surface = far_paper if is_circle else far_card
+        surfaces = [surface, far_surface] if far_surface else [surface]
         if n.glyph.tint == "ink":
             outcomes[n.index] = "exempt-ink"
             continue
         hexes = _mark_hexes(n.glyph, registry)
-        if not hexes or _reads_on(hexes, card, cfg):
-            outcomes[n.index] = "default"
+        if not hexes or reads(hexes, surfaces):
+            outcomes[n.index] = "plateless" if is_circle else "default"
             continue
-        nodes[i] = degrade(n, n.glyph, card, "")
+        nodes[i] = degrade(n, n.glyph, surfaces)
 
     n_nodes = len(layout.rendered.glyph_tint)
     tint_by_index = dict(zip(range(n_nodes), layout.rendered.glyph_tint, strict=False))

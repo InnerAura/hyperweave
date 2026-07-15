@@ -6,7 +6,7 @@ master in a browser, measures the true bounding box with getBBox(), and
 fails when a drawing escapes its declared viewBox or fills almost none of
 it. This is the check a non-blank raster audit cannot do: a mark drawn at
 2x scale still has pixels — it is just the wrong glyph everywhere it ships
-(the v0.4.0-alpha.2 vscode/slack corruption shipped exactly that way).
+(a vscode/slack glyph corruption shipped exactly that way).
 """
 
 from __future__ import annotations

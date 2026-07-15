@@ -74,7 +74,7 @@ def transform(
     if emb.schema not in _TRANSFORMABLE:
         raise HwError(
             HwErrorCode.SPEC_INVALID,
-            f"transform supports {' and '.join(_TRANSFORMABLE)} in alpha.5, not {emb.schema!r}",
+            f"transform supports {' and '.join(_TRANSFORMABLE)}, not {emb.schema!r}",
             fix="transform a matrix or diagram artifact",
         )
 

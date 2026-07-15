@@ -86,12 +86,35 @@ def load_paradigms() -> dict[str, ParadigmSpec]:
     return result
 
 
-def load_glyphs() -> dict[str, dict[str, Any]]:
-    """Load the glyph registry from data/registries/glyphs.json."""
-    path = _data_path("registries/glyphs.json")
+def load_idioms() -> dict[str, Any]:
+    """Load the idiom registry (§3 diagrams-v2) from data/registries/idioms.yaml.
+
+    The middle grammar tier: relations (line idioms) binding default dress,
+    box/label idioms with scope + rhetoric + collision behavior. Chrome
+    vocabulary — implemented once, consumed by every topology."""
+    path = _data_path("registries/idioms.yaml")
     if not path.exists():
         return {}
-    return _read_json(path)  # type: ignore[no-any-return]
+    return _read_yaml(path)  # type: ignore[no-any-return]
+
+
+def load_glyphs() -> dict[str, dict[str, Any]]:
+    """Load the merged glyph registry: brand marks (glyphs.json) over the
+    CORE set (glyphs-core.json — generic systems vocabulary a node ``kind``
+    resolves; Lucide-derived stroke geometry, see NOTICE). A brand slug
+    wins a name collision — brands are the more specific claim."""
+    core_path = _data_path("registries/glyphs-core.json")
+    core: dict[str, dict[str, Any]] = _read_json(core_path) if core_path.exists() else {}
+    path = _data_path("registries/glyphs.json")
+    brands: dict[str, dict[str, Any]] = _read_json(path) if path.exists() else {}
+    merged = {**core, **brands}
+    # Every core mark ALSO registers under ``kind:<slug>`` so a node ``kind``
+    # reaches the generic mark even where a brand shadows the bare name
+    # (shield/star/braces are brands AND generic words — each channel keeps
+    # its own claim).
+    for k, v in core.items():
+        merged[f"kind:{k}"] = v
+    return merged
 
 
 @lru_cache(maxsize=1)
@@ -110,6 +133,30 @@ def load_badge_modes() -> frozenset[str]:
         return frozenset()
     raw = _read_yaml(path) or {}
     return frozenset(str(t).lower() for t in raw.get("stateful_types", []))
+
+
+@lru_cache(maxsize=1)
+def load_frame_aliases() -> dict[str, str]:
+    """Load the internal→public frame-name map from data/config/frame-aliases.yaml.
+
+    Returns the sparse ``{internal_id: public_name}`` map (only frames whose
+    public name differs from their internal id). Callers resolve a name through
+    :func:`frame_public_name`, which identity-maps anything absent. Drives the
+    string emitted in ``data-hw-frame``, ``<hw:frame>``, and the envelope ``k``;
+    the internal id (FrameType value, payload schema id, template key) is
+    unchanged. Missing file → empty map (every frame identity-mapped). Cached
+    because the resolver fires once per compose() for every frame type.
+    """
+    path = _data_path("config/frame-aliases.yaml")
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path) or {}
+    return {str(k): str(v) for k, v in (raw.get("public_names") or {}).items()}
+
+
+def frame_public_name(internal: str) -> str:
+    """Public name for a frame's internal id (identity when unaliased)."""
+    return load_frame_aliases().get(internal, internal)
 
 
 @lru_cache(maxsize=1)
@@ -162,6 +209,46 @@ def load_font_embedding() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
+def load_output_format_pipelines() -> dict[str, list[str]]:
+    """Load format→pass-pipeline map from data/config/output-formats.yaml.
+
+    Returns ``{format_id: [pass_name, ...]}`` — the ordered static passes for
+    each SVG-shaped format (``svg`` is empty; ``svg-static`` = flatten + strip
+    motion). Pass names resolve against ``formats/static.py``. Missing file →
+    the built-in defaults (svg empty, svg-static = vars + noanim) so a partial
+    install never loses the projection. Cached because the format projection
+    reads it on every derive.
+    """
+    default = {"svg": [], "svg-static": ["vars", "noanim"]}
+    path = _data_path("config/output-formats.yaml")
+    if not path.exists():
+        return default
+    raw = _read_yaml(path) or {}
+    pipelines = raw.get("pipelines") or {}
+    if not pipelines:
+        return default
+    return {str(fmt): [str(p) for p in (passes or [])] for fmt, passes in pipelines.items()}
+
+
+@lru_cache(maxsize=1)
+def load_surface_modes() -> Any:
+    """Load Surface Modes projection constants from data/config/surface-modes.yaml.
+
+    Returns a validated :class:`~hyperweave.compose.surface_modes.SurfaceModesConfig`
+    carrying the chroma classifier threshold, the calibrated re-ground lightness
+    poles + tier offsets + chroma boost/cap, per-role contrast floors, the AA
+    floor, the palette field→role map, and the frame allowlist. Every plate /
+    inlay / twin decision reads it, so it is cached like the other config gates.
+    The import is local to avoid a config→compose cycle at module load.
+    """
+    from hyperweave.compose.surface_modes import SurfaceModesConfig
+
+    path = _data_path("config/surface-modes.yaml")
+    raw = _read_yaml(path) or {}
+    return SurfaceModesConfig(**raw)
+
+
+@lru_cache(maxsize=1)
 def load_envelope_tiers() -> dict[str, str]:
     """Load the per-frame envelope-depth map from data/config/envelope-tiers.yaml.
 
@@ -198,7 +285,8 @@ def load_diagram_config() -> dict[str, Any]:
     """Load diagram engine config from data/config/diagram-frame.yaml.
 
     Frame-generic flow knobs: ``caps``, ``orientation_legality``,
-    ``renders_edge_labels``, connector/track/particle/beam/flow constants,
+    ``routing_overridable``, connector/track/particle/beam/flow constants,
+    ``annotate`` (the chrome pass's slide/push/callout constants),
     ``choreography``, ``fallback_ladder``, ``mono_triggers``. Chassis values
     and the kinetic-channel defaults live in the paradigm YAML instead.
     Cached because every diagram resolution reads it.
@@ -378,12 +466,20 @@ class ConfigLoader:
         from hyperweave.compose.validate_paradigms import (
             validate_font_embedding,
             validate_genome_against_paradigms,
+            validate_genome_surface_contract,
             validate_genome_variants,
         )
+
+        # Surface Modes supply contract: a genome opting into a surface-capable
+        # frame (matrix/diagram per surface-modes.yaml) must carry the role
+        # fields the adaptive projection needs on every variant — the gate that
+        # lets a future genome (vellum) inherit inlay/twin with zero code.
+        surface_frames = frozenset(load_surface_modes().frames)
 
         for genome_spec in self.genome_specs.values():
             validate_genome_against_paradigms(genome_spec, self.paradigms)
             validate_genome_variants(genome_spec)
+            validate_genome_surface_contract(genome_spec, surface_frames)
 
         # Cross-validate the font embedding gate against the loaded genomes
         # and the on-disk font files. Catches typos, missing .b64 files,

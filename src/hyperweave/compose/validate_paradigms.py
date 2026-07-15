@@ -129,7 +129,7 @@ _TONE_ACCENT_KEYS: tuple[str, ...] = ("info_accent", "mid_accent", "header_band"
 _TONE_HEADER_BAND_DISTINCT_FROM: tuple[str, ...] = ("canvas_top", "canvas_bottom")
 
 # Expected length of the area_tiers list (brightest → darkest). Pinned at 5 to
-# match the v2 specimen's 5-band brightness mapping (used by stat card heatmap).
+# match the stat-card specimen's 5-band brightness mapping.
 _AREA_TIERS_LENGTH: int = 5
 
 # Expected length of the chart_levels list (darkest → brightest). Pinned at 6
@@ -151,6 +151,29 @@ _SUBSTRATE_KINDS: frozenset[str] = frozenset({"dark", "light"})
 # (header rect background, language strip background). Two-stop linear gradient
 # top→bottom is the minimum producing the depth-effect the prototype specifies.
 _PANEL_GRADIENT_MIN_STOPS: int = 2
+
+# Every token a hand-authored diagram twin face (``diagram_faces.{light,dark}``)
+# must carry — genome field names, sourced verbatim from verb-algebra-primer-*.
+# The adaptive emit path (surface_modes.authored_diagram_faces) PREFERS these
+# over flip computation, so a half-declared face would silently ship a partial
+# palette; fail loud at config load instead (P5 chroma contract). Keys map to
+# --dna-* via the assembler / surface_modes _VAR_NAMES tables.
+_DIAGRAM_FACE_TOKENS: frozenset[str] = frozenset(
+    {
+        "surface_0",
+        "surface_1",
+        "surface_2",
+        "ink",
+        "ink_secondary",
+        "ink_bright",
+        "accent",
+        "accent_text",
+        "stroke",
+        "diagram_conn_muted",
+        "region_fill",
+        "region_stroke",
+    }
+)
 
 
 def validate_font_embedding(
@@ -435,6 +458,36 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
                         f"'panel_gradient_stops' (panel is a light-substrate-only construct)"
                     )
 
+        # Authored diagram twin faces: if a variant declares diagram_faces, BOTH
+        # faces must be present and each must carry the full token set. The
+        # adaptive emit path prefers these over flip computation, so a partial
+        # face would silently render a half palette — fail loud at load instead.
+        for variant_slug, override in genome.variant_overrides.items():
+            if not isinstance(override, dict):
+                continue
+            faces = override.get("diagram_faces")
+            if faces is None:
+                continue
+            if not isinstance(faces, dict) or set(faces.keys()) != {"light", "dark"}:
+                got = sorted(faces.keys()) if isinstance(faces, dict) else type(faces).__name__
+                violations.append(
+                    f"  variant_overrides['{variant_slug}'].diagram_faces must declare exactly "
+                    f"'light' and 'dark' (got {got})"
+                )
+                continue
+            for face_name, face in faces.items():
+                if not isinstance(face, dict):
+                    violations.append(
+                        f"  variant_overrides['{variant_slug}'].diagram_faces['{face_name}'] must be a dict"
+                    )
+                    continue
+                missing_tokens = _DIAGRAM_FACE_TOKENS - set(face.keys())
+                if missing_tokens:
+                    violations.append(
+                        f"  variant_overrides['{variant_slug}'].diagram_faces['{face_name}'] missing tokens: "
+                        f"{sorted(missing_tokens)}"
+                    )
+
     # Check 2: variant_tones structural shape
     tones_set: set[str] = set()
     if genome.variant_tones:
@@ -511,15 +564,19 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
                 f"  variants[] entries unreachable via variant_tones: {sorted(unreachable)} (tones={sorted(tones_set)})"
             )
 
-    # Check 3: diagram flow palette (active only when the genome opts into
-    # the diagram frame). Base diagram_flow must be 3-8 pairwise-distinct
-    # #RRGGBB entries, and every variant override that declares ANY
-    # chromatic field must redeclare diagram_flow — the chromatic-coverage
-    # contract that keeps one variant's cycle from bleeding into another.
+    # Check 3: diagram flow palette (active only when the genome opts into the
+    # diagram frame). The flow cycle is DERIVED from the variant accent by
+    # default (compose/diagram/palette.py) — deriving makes the leak this
+    # contract once guarded against (one variant's cycle copied onto another)
+    # structurally impossible, so diagram_flow is now OPTIONAL. A genome MAY
+    # still author an explicit palette to opt out; when present (base or
+    # variant), it must be 3-8 pairwise-distinct #RRGGBB entries.
     if "diagram" in (genome.paradigms or {}):
         import re as _re
 
         def _flow_violations(label: str, palette: object) -> None:
+            if not palette:
+                return  # empty/absent = derived from the accent (the default)
             if not isinstance(palette, list) or not 3 <= len(palette) <= 8:
                 violations.append(f"  {label}: diagram_flow must carry 3-8 entries, got {palette!r}")
                 return
@@ -532,24 +589,29 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
 
         _flow_violations(f"genome '{genome.id}'", list(genome.diagram_flow or []))
         for v_slug, override in (genome.variant_overrides or {}).items():
-            if isinstance(override, dict) and override and "diagram_flow" not in override:
-                violations.append(
-                    f"  variant_overrides['{v_slug}'] declares chromatic fields but no diagram_flow "
-                    f"(the flow cycle must be redeclared per variant)"
-                )
-            elif isinstance(override, dict) and "diagram_flow" in override:
+            if isinstance(override, dict) and "diagram_flow" in override:
                 _flow_violations(f"variant_overrides['{v_slug}']", override.get("diagram_flow"))
 
-        # Contrast plates (G5): the gate's swap targets — both required,
-        # both #RRGGBB, drawn from the genome's own surface family.
-        plates = dict(genome.diagram_plates or {})
-        for key in ("light", "dark"):
-            value = plates.get(key, "")
+        # Muted-connector knob (connector_palette=muted): the neutral wire tone.
+        # A diagram genome ships it so the knob never silently no-ops; every
+        # variant that declares chromatic fields must redeclare its muted tone
+        # too (the flow palette now derives, but the muted wire is a genuine
+        # per-variant neutral that the derivation does not produce).
+        def _muted_violations(label: str, value: object) -> None:
             if not isinstance(value, str) or not _re.fullmatch(r"#[0-9A-Fa-f]{6}", value):
+                violations.append(f"  {label}: diagram_conn_muted must be #RRGGBB (got {value!r})")
+
+        _muted_violations(f"genome '{genome.id}'", genome.diagram_conn_muted)
+        for v_slug, override in (genome.variant_overrides or {}).items():
+            if not isinstance(override, dict):
+                continue
+            if (set(override.keys()) & _CHROMATIC_FIELDS) and "diagram_conn_muted" not in override:
                 violations.append(
-                    f"  genome '{genome.id}': diagram_plates.{key} must be #RRGGBB "
-                    f"(got {value!r}) — the glyph contrast gate swaps onto it"
+                    f"  variant_overrides['{v_slug}'] declares chromatic fields but no diagram_conn_muted "
+                    f"(the muted wire tone must be redeclared per variant)"
                 )
+            elif "diagram_conn_muted" in override:
+                _muted_violations(f"variant_overrides['{v_slug}']", override.get("diagram_conn_muted"))
 
     # Check 4: receipt palette fields (active only when the genome opts into the
     # receipt frame). The receipt's tool-spend ramp, cost-by-model segment ramp,
@@ -603,3 +665,61 @@ def validate_genome_variants(genome: GenomeSpec) -> None:
 
     if violations:
         raise ValueError(f"Genome '{genome.id}' has variant grammar violations:\n" + "\n".join(violations))
+
+
+# Palette fields the Surface Modes projection MUST find on every variant of a
+# surface-capable genome to compute a coherent adaptive far face: a ground, the
+# ink, the accent, and substrate_kind (which picks the flip direction). Border
+# and on-accent degrade gracefully, so they are not gated. This is the "vellum
+# lands with zero code" contract — a new genome that declares these on each
+# variant inherits inlay/twin for free; one that forgets fails loud at load
+# rather than rendering a half-adaptive artifact at request time.
+_SURFACE_REQUIRED_VARIANT_FIELDS: tuple[str, ...] = ("surface_0", "ink", "accent", "substrate_kind")
+
+
+def validate_genome_surface_contract(genome: GenomeSpec, surface_frames: frozenset[str]) -> None:
+    """Assert a surface-capable genome satisfies the Surface Modes supply contract.
+
+    A genome is surface-capable when it opts into a frame in the Surface Modes
+    allowlist (``surface_frames`` — matrix/diagram today, read from
+    ``data/config/surface-modes.yaml``). For such a genome, every variant override
+    must declare the role fields the adaptive projection needs
+    (:data:`_SURFACE_REQUIRED_VARIANT_FIELDS`). Genomes that opt into no
+    surface-capable frame are skipped entirely (chrome/automata/brutalist pay
+    nothing). A surface-capable genome with NO variant overrides must instead
+    carry the fields on the base — primer keys all eight variants, so the
+    per-variant contract is the load-bearing one there.
+
+    :raises ValueError: enumerating every missing (variant, field) in one pass.
+    """
+    opts_in_surface = bool(set((genome.paradigms or {}).keys()) & surface_frames)
+    if not opts_in_surface:
+        return
+
+    violations: list[str] = []
+    overrides = genome.variant_overrides or {}
+    if overrides:
+        for variant_slug, override in overrides.items():
+            if not isinstance(override, dict):
+                continue
+            for field in _SURFACE_REQUIRED_VARIANT_FIELDS:
+                if not override.get(field):
+                    violations.append(
+                        f"  variant_overrides['{variant_slug}'] missing '{field}' "
+                        f"(surface-capable genome — every variant must carry the surface role fields)"
+                    )
+    else:
+        for field in _SURFACE_REQUIRED_VARIANT_FIELDS:
+            if field == "substrate_kind":
+                # a no-variant genome derives direction from its category
+                if not (getattr(genome, "category", "") or ""):
+                    violations.append("  base genome missing 'category' (needed to pick the flip direction)")
+                continue
+            if not getattr(genome, field, ""):
+                violations.append(f"  base genome missing surface role field '{field}'")
+
+    if violations:
+        raise ValueError(
+            f"Genome '{genome.id}' opts into a surface-capable frame but breaks the Surface Modes "
+            f"supply contract:\n" + "\n".join(violations)
+        )

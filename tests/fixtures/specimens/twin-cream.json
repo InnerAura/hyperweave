@@ -1,0 +1,30 @@
+{
+  "faces": {
+    "dark": {
+      "conn": "#5D4A33",
+      "ink": "#EFE3D3",
+      "ink2": "#A78D6E",
+      "inkhi": "#F9F1E6",
+      "s0": "#171009",
+      "s1": "#211811",
+      "s2": "#2B2015",
+      "sig": "#B07F3C",
+      "sigt": "#DDA95E",
+      "stroke": "#3E2F1F"
+    },
+    "light": {
+      "conn": "#C3AE88",
+      "ink": "#2C2014",
+      "ink2": "#856D4F",
+      "inkhi": "#1B1209",
+      "s0": "#F8F3EB",
+      "s1": "#FEFBF5",
+      "s2": "#F5EFE3",
+      "sig": "#8A5A0F",
+      "sigt": "#8A5A0F",
+      "stroke": "#E0D4BE"
+    }
+  },
+  "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-cream.svg",
+  "variant": "cream"
+}

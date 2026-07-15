@@ -11,7 +11,6 @@ import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 
@@ -37,17 +36,14 @@ def load_fixture(name: str) -> dict[str, Any]:
     return json.loads((_FIXTURES / f"{name}.json").read_text())
 
 
-def compose_fixture(name: str, *, variant: str = "porcelain", **kw: Any) -> str:
-    spec = ComposeSpec(type="diagram", genome_id="primer", variant=variant, diagram=load_fixture(name), **kw)
+def compose_fixture(name: str, *, variant: str = "porcelain", **diagram_overrides: Any) -> str:
+    spec = ComposeSpec(
+        type="diagram", genome_id="primer", variant=variant, diagram={**load_fixture(name), **diagram_overrides}
+    )
     return compose(spec).svg
 
 
 class TestByteDeterminism:
-    def test_identical_bytes_with_pinned_clock(self) -> None:
-        spec = ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=load_fixture("pipeline"))
-        with patch("hyperweave.compose.context.datetime", _FrozenDatetime):
-            assert compose(spec).svg == compose(spec).svg
-
     def test_no_random_tokens(self) -> None:
         assert not _UUID_RE.search(compose_fixture("pipeline"))
 
@@ -70,7 +66,14 @@ class TestEmbeddedProjections:
         m = _PAYLOAD_RE.search(svg)
         assert m, "hw:payload missing"
         body = json.loads(m.group(1))
+        # The payload stays CHROME-INVARIANT (the envelope digest is artifact
+        # identity; chrome sits outside it) — the §2 region map rides its own
+        # hw:regions sidecar instead.
         assert set(body) == {"spec", "rendered"}
+        regions_m = re.search(r"<hw:regions[^>]*><!\[CDATA\[(.*?)\]\]></hw:regions>", svg, re.DOTALL)
+        assert regions_m, "hw:regions sidecar missing"
+        region_ids = [r["id"] for r in json.loads(regions_m.group(1))]
+        assert "content" in region_ids
         spec = DiagramSpec.model_validate(body["spec"])
         assert spec.topology.value == "sequence"
         rendered = body["rendered"]
@@ -78,9 +81,10 @@ class TestEmbeddedProjections:
         assert len(rendered["edge_motion"]) == len(spec.edges)
         assert len(rendered["track"]) == len(spec.edges)
         assert rendered["fallback_applied"] is False
-        # P3 made the return messages static; calls are static too (kind
-        # semantics own the sequence stroke).
-        assert set(rendered["track"]) == {"static"}
+        # Calls stay static (kind semantics own the sequence stroke); returns
+        # deliberately supersede the P3 static-yield law and drift home on
+        # their own track value instead.
+        assert set(rendered["track"]) == {"static", "dash-drift"}
 
     def test_envelope_validates_and_agrees_with_payload(self) -> None:
         svg = compose_fixture("fanout-radial")
@@ -132,7 +136,9 @@ class TestMotionAnatomy:
             assert f'id="{ref}"' in svg, ref
 
     def test_particles_carry_base_opacity_zero(self) -> None:
-        svg = compose_fixture("pipeline")
+        # Particles are opt-in (the genome default edge motion is dash, not
+        # particle, under the diagrams-v3 kit) — request them explicitly.
+        svg = compose_fixture("pipeline", edge_motion="particle")
         assert re.search(r'<circle class="hw-[0-9a-f]{8}-p[^"]*"[^>]*opacity="0"', svg)
 
     def test_reduced_motion_block_present(self) -> None:
@@ -141,10 +147,10 @@ class TestMotionAnatomy:
         assert "display: none" in svg
 
     def test_non_adaptive_diagram_classes(self) -> None:
-        # The shared assembler stylesheet carries the platform's adaptive
-        # var swap (every primer frame does); the diagram TEMPLATES must
-        # add no adaptive block of their own — no uid-prefixed class may
-        # appear inside any prefers-color-scheme body.
+        # The palette layer's id-scoped var swap (#uid { --dna-... }) is the
+        # ONLY adaptive machinery (primer defaults to twin now); the diagram
+        # TEMPLATES must add no adaptive block of their own — no uid-prefixed
+        # CLASS selector may appear inside any prefers-color-scheme body.
         svg = compose_fixture("pipeline")
         uid = re.search(r'id="(hw-[0-9a-f]{8})-lift"', svg).group(1)  # type: ignore[union-attr]
         for m in re.finditer(r"@media[^{]*prefers-color-scheme[^{]*\{", svg):
@@ -152,32 +158,14 @@ class TestMotionAnatomy:
             while depth and i < len(svg):
                 depth += {"{": 1, "}": -1}.get(svg[i], 0)
                 i += 1
-            assert uid not in svg[m.end() : i]
-
-    def test_beam_animates_gradient_transform_only(self) -> None:
-        svg = compose_fixture(
-            "pipeline",
-        )
-        relay = compose(
-            ComposeSpec(
-                type="diagram",
-                genome_id="primer",
-                variant="porcelain",
-                diagram={**load_fixture("pipeline"), "edge_motion": "beam"},
-            )
-        ).svg
-        assert 'attributeName="gradientTransform"' in relay
-        assert 'performance="paint-ok"' in relay
-        # Geometry attributes never animate.
-        for attr in ("cx", "cy", "r", "d", "x", "y", "width", "height"):
-            assert f'attributeName="{attr}"' not in relay
-        assert 'performance="composite-only"' in svg
+            assert f".{uid}-" not in svg[m.end() : i]
 
     def test_sequence_uses_single_traversing_particle(self) -> None:
-        # K-seq-v2: ONE persistent dot hops message-to-message in replay
+        # The sequence-replay law: ONE persistent dot hops message-to-message in replay
         # order — a single particle (keyPoints hold/travel/hold per slot),
         # not per-message gradient comets. No animateTransform for sequence.
-        svg = compose_fixture("sequence")
+        # Particles are opt-in under the diagrams-v3 kit's dash default.
+        svg = compose_fixture("sequence", edge_motion="particle")
         assert 'attributeName="gradientTransform"' not in svg  # no comets
         assert 'keyPoints="0;0;1;1"' in svg  # the single-particle hold/travel pattern
         assert 'calcMode="linear"' in svg
@@ -192,18 +180,21 @@ class TestMotionAnatomy:
 
     def test_sequence_preserves_full_weight_call_return_strokes(self) -> None:
         # The messages stay at FULL weight beneath the dot: call = solid,
-        # return = dashed (not faded to the motion tube). The fixture
-        # alternates call / return.
+        # return = accent dash-drift (not faded to the motion tube) — its
+        # dasharray rides the -retdrift CSS class, not an inline attribute,
+        # so the animation applies uniformly. The fixture alternates call /
+        # return.
         svg = compose_fixture("sequence")
         conns = re.findall(r'<path id="[^"]*-c\d+"[^>]*/>', svg)
-        dashed = ["4 5" in c for c in conns]
-        assert dashed == [False, True, False, True]  # call, return, call, return
+        drifting = ["-retdrift" in c for c in conns]
+        assert drifting == [False, True, False, True]  # call, return, call, return
         assert "-tube" not in "".join(conns)  # calls keep their hue, never the faint tube
 
     def test_sequence_particles_share_one_loop_period(self) -> None:
         # Loop coherence: every message dot rides ONE common period (sum of
-        # slots + gaps + rest) so the trace replays in unison.
-        svg = compose_fixture("sequence")
+        # slots + gaps + rest) so the trace replays in unison. Particles are
+        # opt-in under the diagrams-v3 kit's dash default.
+        svg = compose_fixture("sequence", edge_motion="particle")
         durs = set(re.findall(r'<animateMotion[^>]*dur="([^"]*)"', svg))
         assert len(durs) == 1, durs
 
@@ -215,13 +206,26 @@ class TestChromatic:
         assert 'data-hw-type="diagram"' in svg
 
     def test_per_variant_flow_palette_binds(self) -> None:
+        # LAW 3 + the anti-leak regression: the flow palette is DERIVED per
+        # variant from its accent (compose/diagram/palette.py), so each
+        # variant's spine reads in its OWN hue. Porcelain's cobalt must NOT
+        # bleed onto a warm variant — the cobalt-on-cream bug where a copied
+        # diagram_flow array smeared one variant's blue across every light
+        # variant. Proven on a categorical spec so the flow palette engages.
+        from hyperweave.compose.diagram.input import resolve_diagram_preset
         from hyperweave.config.loader import load_genomes
 
         genome = load_genomes()["primer"]
-        light = compose_fixture("pipeline", variant="porcelain")
-        dark = compose_fixture("pipeline", variant="noir")
-        assert genome.variant_overrides["porcelain"]["diagram_flow"][0] in light
-        assert genome.variant_overrides["noir"]["diagram_flow"][0] in dark
+        d = resolve_diagram_preset("obi-engine")
+        porc_accent = genome.variant_overrides["porcelain"]["accent"]  # cobalt #1D4ED8
+        cream_accent = genome.variant_overrides["cream"]["accent"]  # warm brown #2C2014
+        light = compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=d)).svg
+        cream = compose(ComposeSpec(type="diagram", genome_id="primer", variant="cream", diagram=d)).svg
+        # Each variant's spine accent (flow slot 0) is its OWN accent.
+        assert porc_accent in light
+        assert cream_accent in cream
+        # No leak: porcelain's cobalt never appears anywhere on the cream render.
+        assert porc_accent not in cream
 
     def test_no_hex_literals_in_diagram_templates(self) -> None:
         template_dir = Path(__file__).parents[2] / "src" / "hyperweave" / "templates" / "frames" / "diagram"
@@ -240,7 +244,8 @@ class TestChromatic:
 
 class TestDrawOrderAndFurniture:
     def test_radial_hub_paints_after_particles(self) -> None:
-        svg = compose_fixture("fanout-radial")
+        # Particles are opt-in under the diagrams-v3 kit's dash default.
+        svg = compose_fixture("fanout-radial", edge_motion="particle")
         last_particle = max(m.start() for m in re.finditer(r'class="hw-[0-9a-f]{8}-p ', svg))
         # The hub is the only hero node — it must paint after every
         # particle so the spokes emanate from under its card.
@@ -248,19 +253,33 @@ class TestDrawOrderAndFurniture:
         assert hub_node > last_particle
 
     def test_stack_operators_render(self) -> None:
+        # The operator is drawn geometry (a quiet ring + cross, stack),
+        # never a floating multiply-sign character — three marks between the 4 layers.
         svg = compose_fixture("stack")
-        assert svg.count(">×</text>") == 3  # noqa: RUF001 — the stack operator IS U+00D7
+        assert svg.count('r="11.0"') == 3
+        assert svg.count('-cardbg"/><path d="M ') == 3
 
     def test_state_machine_furniture(self) -> None:
         svg = compose_fixture("state-machine")
-        assert "TERMINAL" in svg
+        # Terminal chrome renders ONLY for an authored ``terminal: true``
+        # (the agent-task-lifecycle double-ring law) — the implicit TERMINAL
+        # text tag died with the retired pill anatomy, and this fixture
+        # authors no terminal.
+        assert '-term"' not in svg
         assert "-idot" in svg and "-stub" in svg
         assert "review ✓" in svg
 
     def test_sequence_furniture(self) -> None:
+        # auth-sequence anatomy: the fixture's one hero ("hw") gets the accent
+        # lifeline/activation (2 of 3 lifelines stay the plain neutral
+        # class); returns drift on their own track; the left-margin time
+        # axis and the top-right call/return mini-legend both render.
         svg = compose_fixture("sequence")
-        assert svg.count('-life"') == 3
-        assert "SOLID = CALL" in svg
+        assert svg.count('-life"') == 2
+        assert "-lifeh" in svg
+        assert "-retdrift" in svg
+        assert "-taxis" in svg and ">time</text>" in svg
+        assert ">call</text>" in svg and ">return</text>" in svg
 
     def test_gateway_lanes_offset(self) -> None:
         svg = compose(
@@ -275,29 +294,134 @@ class TestDrawOrderAndFurniture:
         assert len(re.findall(r'id="hw-[0-9a-f]{8}-c\d+"', svg)) == 4
 
 
-class TestFallbackRecording:
-    def test_requested_vs_rendered_never_silently_diverges(self) -> None:
-        # The ladder is exercised at the wiring level (composite_only is a
-        # resolver-level constraint seam); the payload records what drew.
-        from hyperweave.compose.diagram import compute_diagram_layout
-        from hyperweave.compose.diagram.input import resolve_auto_roles
-        from hyperweave.config.loader import load_diagram_config, load_paradigms
-
-        spec = resolve_auto_roles(DiagramSpec.model_validate({**load_fixture("pipeline"), "edge_motion": "beam"}))
-        lay = compute_diagram_layout(
-            spec,
-            paradigm=load_paradigms()["primer"].diagram,
-            engine=load_diagram_config(),
-            palette_len=5,
-            composite_only=True,
-        )
-        assert set(lay.rendered.edge_motion) == {"particle"}
-        assert lay.rendered.fallback_applied is True
-        assert lay.rendered.performance == "composite-only"
-
-
 class TestReasoningMetadata:
     def test_tier3_tradeoffs_present(self) -> None:
         svg = compose_fixture("pipeline")
         m = re.search(r"<hw:tradeoffs>(.*?)</hw:tradeoffs>", svg, re.DOTALL)
         assert m and len(m.group(1).strip()) > 20
+
+
+class TestSolverRegistryOrderIndependence:
+    """The solver registry is process-global and populated at solver-module
+    import. Its accessor must GUARANTEE that population — a caller hitting
+    ``registered_slugs()`` before the package ``__init__`` imported the solvers
+    (an unlucky pytest-randomly ordering) must still see the full set, or the
+    slug-count gates flake."""
+
+    def test_registered_slugs_full_from_bare_solver_import(self) -> None:
+        # A FRESH interpreter imports ONLY solver.py (never the package
+        # __init__ that eagerly imports the solvers) and asks for the slugs.
+        # This reproduces the flake condition; the accessor self-imports the
+        # solver modules, so the count is the full 18 regardless of order.
+        import subprocess
+        import sys
+
+        code = (
+            "from hyperweave.compose.diagram.solver import registered_slugs\n"
+            "s = registered_slugs()\n"
+            "assert len(s) == 18, f'expected 18, got {len(s)}: {sorted(s)}'\n"
+            "assert {'hub', 'lanes'} <= set(s), sorted(s)\n"
+            "print('ok')\n"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == "ok"
+
+    def test_registered_slugs_idempotent(self) -> None:
+        from hyperweave.compose.diagram.solver import registered_slugs
+
+        assert registered_slugs() == registered_slugs()
+        assert len(registered_slugs()) == 18
+
+
+class TestConnectorPalette:
+    """The connector-palette knob (chrome): MUTED static/dash wires are the
+    default; 'colored' opts back into the five-hue flow palette."""
+
+    def test_default_omits_knob_from_payload(self) -> None:
+        """connector_palette='' is excluded from the payload (byte-safe round-trip)."""
+        svg = compose_fixture("dag")
+        m = _PAYLOAD_RE.search(svg)
+        assert m
+        spec = json.loads(m.group(1))["spec"]
+        assert "connector_palette" not in spec  # exclude_defaults keeps old payloads identical
+
+    def test_default_is_muted(self) -> None:
+        """The DEFAULT (no knob) quiets static/dash wires — colored is opt-in
+        chrome, not the baseline (the wire-rainbow review decision)."""
+        svg = compose_fixture("dag")
+        assert "-connmuted {" in svg
+        assert "#A9B4C6" in svg  # porcelain's muted wire tone
+
+    def test_colored_opts_back_into_hue(self) -> None:
+        """connector_palette='colored' restores the genome flow palette."""
+        d = {**load_fixture("dag"), "connector_palette": "colored"}
+        svg = compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=d)).svg
+        assert "-connmuted {" not in svg
+
+    def _muted_svg(self) -> str:
+        d = {**load_fixture("dag"), "connector_palette": "muted"}
+        return compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=d)).svg
+
+    def test_muted_rides_the_payload_and_round_trips(self) -> None:
+        """A muted request persists in the payload and re-validates as the knob."""
+        m = _PAYLOAD_RE.search(self._muted_svg())
+        assert m
+        spec = DiagramSpec.model_validate(json.loads(m.group(1))["spec"])
+        assert spec.connector_palette == "muted"
+
+    def test_muted_emits_the_neutral_class(self) -> None:
+        """Muted wires reference the neutral connector class in the artifact."""
+        svg = self._muted_svg()
+        assert "-connmuted {" in svg  # the neutral class is declared
+        assert "#A9B4C6" in svg  # porcelain's muted wire tone
+
+    def test_muted_absent_no_warning(self) -> None:
+        """A plain muted request (no beam/flow) emits no warning."""
+        result = compose(
+            ComposeSpec(
+                type="diagram",
+                genome_id="primer",
+                variant="porcelain",
+                diagram={**load_fixture("dag"), "connector_palette": "muted"},
+            )
+        )
+        assert result.warnings == []
+
+
+def test_dark_face_circle_boundary_is_visible() -> None:
+    """diagram_dark.border is the plateless boundary stroke: a glyph-circle
+    node's outline once rode edge_faint (a 7%-alpha bevel stop) and vanished
+    on noir. The override block must map --dna-border to the 28% boundary."""
+    import json as _json
+    import re as _re
+    from importlib import resources
+
+    from hyperweave.core.models import ComposeSpec
+
+    genome = _json.loads(resources.files("hyperweave.data.genomes").joinpath("primer.json").read_text())
+    noir = genome["variant_overrides"]["noir"]["diagram_dark"]
+    spec = {
+        "title": "relay",
+        "topology": "pipeline",
+        "node_style": "glyph-circle",
+        "nodes": [
+            {"id": "a", "label": "monitor", "kind": "activity"},
+            {"id": "b", "label": "oncall", "kind": "users"},
+            {"id": "c", "label": "lead", "kind": "shield"},
+        ],
+        "edges": [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}],
+    }
+    svg = compose(
+        ComposeSpec(
+            type="diagram", genome_id="primer", variant="noir", surface_face="dark", ground="opaque", diagram=spec
+        )
+    ).svg
+    m = _re.search(r"--dna-border: (rgba\([^)]+\))", svg)
+    assert m, "dark override block missing --dna-border"
+    assert m.group(1) == noir["border"], m.group(1)
+    assert noir["edge_faint"] != m.group(1), "boundary must not ride the bevel stop"

@@ -1,6 +1,6 @@
 {# Chrome chart defs: envelope + well + text gradients + rim + filters + CSS.
    Ported from tier2/genomes/chrome/horizon/github-star-history-card-v6.svg,
-   then refactored (v0.2.6 Bug D' fix) so every color comes from the genome
+   then refactored so every color comes from the genome
    via the shared _profile_visual_context. chrome's 11-stop envelope
    is preserved as the fallback when a genome doesn't declare envelope_stops
    — so the specimen still renders identically. #}
@@ -60,7 +60,7 @@
   <animate attributeName="x2" values="0.4;1.8;0.4"  dur="18s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
 </linearGradient>
 
-{# v0.3.9 Bug H: bevel filter restores the specular-lighting composite when
+{# The bevel filter restores the specular-lighting composite when
    the genome declares ``material.filter_chain: "specular-bevel"`` (chrome).
    Reference implementation: templates/frames/icon/chrome-defs.j2 — same
    chain (feDropShadow + feSpecularLighting + feComposite arithmetic) so
@@ -79,7 +79,7 @@
   {% endif %}
 </filter>
 
-{# v0.3.9 Bug H: lineglow opacity hierarchy inverted so the line stroke
+{# Lineglow opacity hierarchy inverted so the line stroke
    reads as the BRIGHTEST element (was: specular halo at 0.95 outshone the
    line at full-opacity; user reported "line should be brighter than the
    glow bloom around it"). Outer white at 0.35, inner specular at 0.55 —

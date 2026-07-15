@@ -1,4 +1,4 @@
-"""Diagram CLI surface: --spec-file, --preset, --markdown-out."""
+"""Diagram CLI surface: --spec-file (path or bundled-spec name), --markdown-out."""
 
 from __future__ import annotations
 
@@ -42,23 +42,31 @@ def test_spec_file_with_markdown_sidecar(tmp_path: Path) -> None:
     assert out_md.read_text().startswith("**One Compositor")
 
 
-def test_preset_flywheel(tmp_path: Path) -> None:
+def test_bundled_spec_name_flywheel(tmp_path: Path) -> None:
+    """A bare --spec-file name resolves against the bundled-spec store."""
     out_svg = tmp_path / "flywheel.svg"
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--preset", "flywheel", "-g", "primer", "-o", str(out_svg)],
+        ["compose", "diagram", "--spec-file", "flywheel-orbit", "-g", "primer", "-o", str(out_svg)],
     )
     assert result.exit_code == 0, result.output
     assert 'data-hw-subvariant="flywheel"' in out_svg.read_text()
 
 
-def test_unknown_preset_exits_2(tmp_path: Path) -> None:
+def test_unknown_bundled_spec_exits_2(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--preset", "no-such", "-g", "primer", "-o", str(tmp_path / "x.svg")],
+        ["compose", "diagram", "--spec-file", "no-such", "-g", "primer", "-o", str(tmp_path / "x.svg")],
     )
     assert result.exit_code == 2
-    assert "known presets" in result.output
+    assert "unknown diagram spec" in result.output
+
+
+def test_retired_preset_flag_exits_2(tmp_path: Path) -> None:
+    """--preset is retired for one release with a migration message."""
+    result = runner.invoke(app, ["compose", "diagram", "--preset", "pipeline", "-g", "primer"])
+    assert result.exit_code == 2
+    assert "--preset was removed" in result.output
 
 
 def test_invalid_spec_file_exits_2(tmp_path: Path) -> None:
@@ -71,9 +79,10 @@ def test_invalid_spec_file_exits_2(tmp_path: Path) -> None:
     assert result.exit_code == 2
 
 
-def test_performance_composite_only_ladders(tmp_path: Path) -> None:
-    """--performance composite-only: beam ladders to particle, recorded in
-    the payload (CLI parity with ?performance= and the POST/MCP fields)."""
+def test_performance_composite_only_same_grammar(tmp_path: Path) -> None:
+    """--performance composite-only renders the same kit grammar (dash |
+    particle is compositor-only by construction) — CLI parity with
+    ?performance= and the POST/MCP fields."""
     import json
     import re
 
@@ -83,8 +92,8 @@ def test_performance_composite_only_ladders(tmp_path: Path) -> None:
         [
             "compose",
             "diagram",
-            "--preset",
-            "pipeline-relay",
+            "--spec-file",
+            "rag-pipeline",
             "-g",
             "primer",
             "--performance",
@@ -98,20 +107,32 @@ def test_performance_composite_only_ladders(tmp_path: Path) -> None:
     m = re.search(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", svg, re.DOTALL)
     assert m, "hw:payload missing"
     payload = json.loads(m.group(1))
-    assert payload["rendered"]["fallback_applied"] is True
-    assert set(payload["rendered"]["edge_motion"]) == {"particle"}
+    assert payload["rendered"]["performance"] == "composite-only"
+    assert set(payload["rendered"]["edge_motion"]) <= {"dash", "particle"}
 
 
-def test_chrome_bare_flag(tmp_path: Path) -> None:
-    out = tmp_path / "bare.svg"
+def test_diagram_renders_caption_not_masthead(tmp_path: Path) -> None:
+    """`--chrome` is retired — every CLI diagram compose renders kit chrome
+    (caption): no masthead band, no brand-footer line."""
+    out = tmp_path / "caption.svg"
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--preset", "pipeline", "-g", "primer", "--chrome", "bare", "-o", str(out)],
+        ["compose", "diagram", "--spec-file", "rag-pipeline", "-g", "primer", "-o", str(out)],
     )
     assert result.exit_code == 0, result.output
     svg = out.read_text()
     assert "INNERAURA LABS" not in svg
-    assert 'fill="var(--dna-surface)"' not in svg
+    assert 'data-hw-region="masthead"' not in svg
+
+
+def test_chrome_flag_removed(tmp_path: Path) -> None:
+    out = tmp_path / "rejected.svg"
+    result = runner.invoke(
+        app,
+        ["compose", "diagram", "--spec-file", "rag-pipeline", "-g", "primer", "--chrome", "bare", "-o", str(out)],
+    )
+    assert result.exit_code != 0
+    assert "--chrome" in result.output or "no such option" in result.output.lower()
 
 
 def test_edge_motion_override(tmp_path: Path) -> None:
@@ -122,18 +143,29 @@ def test_edge_motion_override(tmp_path: Path) -> None:
     out = tmp_path / "ov.svg"
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--preset", "pipeline", "-g", "primer", "--edge-motion", "beam", "-o", str(out)],
+        [
+            "compose",
+            "diagram",
+            "--spec-file",
+            "rag-pipeline",
+            "-g",
+            "primer",
+            "--edge-motion",
+            "dash",
+            "-o",
+            str(out),
+        ],
     )
     assert result.exit_code == 0, result.output
     m = re.search(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", out.read_text(), re.DOTALL)
     assert m, "hw:payload missing"
-    assert "beam" in json.loads(m.group(1))["rendered"]["edge_motion"]
+    assert "dash" in json.loads(m.group(1))["rendered"]["edge_motion"]
 
 
 def test_edge_motion_invalid_exits_2() -> None:
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--preset", "pipeline", "-g", "primer", "--edge-motion", "zoom"],
+        ["compose", "diagram", "--spec-file", "rag-pipeline", "-g", "primer", "--edge-motion", "zoom"],
     )
     assert result.exit_code == 2
     assert "must be one of" in result.output

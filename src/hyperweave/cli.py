@@ -62,6 +62,97 @@ def _hyperweave_root() -> Path:
     return here
 
 
+def _resolve_spec_file(frame_type: str, spec_file: Path | None) -> Any:
+    """Resolve ``--spec-file`` for matrix/diagram: a JSON path OR a bundled name.
+
+    The retired ``--preset`` flag folds into ``--spec-file``: if the value
+    is an existing file it is parsed as the frame's IR (``diagram`` key); if it is
+    not a path it resolves against the single bundled-spec store (the same store
+    the HTTP GET ``/v1/{matrix,diagram}/{name}`` routes read). Returns a
+    :class:`~hyperweave.compose.bundled_specs.BundledSpec` (``field``/``value``)
+    or ``None`` when no ``--spec-file`` was given. Exits 2 on a bad file / name.
+    """
+    from hyperweave.compose.bundled_specs import BundledSpec, resolve_bundled_spec
+
+    if spec_file is None:
+        return None
+    ir_field = "diagram" if frame_type == "diagram" else "matrix"
+    if spec_file.exists():
+        import json
+
+        try:
+            return BundledSpec(field=ir_field, value=json.loads(spec_file.read_text()))
+        except json.JSONDecodeError as exc:
+            typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
+            raise typer.Exit(2) from exc
+    # Not a path — treat the bare name as a bundled-spec name.
+    from hyperweave.core.errors import HwError
+
+    try:
+        return resolve_bundled_spec(frame_type, str(spec_file))
+    except HwError as exc:
+        typer.echo(f"Error: {exc.cli_text()}", err=True)
+        raise typer.Exit(2) from exc
+
+
+def _deliver_projection(data: bytes, *, is_text: bool, output: Path | None, width: int, height: int) -> None:
+    """Write a projection's bytes to a file, stdout, or a terminal blit.
+
+    The one delivery model the CLI names is bytes to ``-o``/stdout. A file always
+    gets raw bytes. For stdout, text projections (svg/svg-static) print as text;
+    raster projections (png/webp) blit into a graphics-capable interactive
+    terminal (kitty protocol, auto-detected — no flag), print a redirect hint to
+    an interactive non-capable terminal (never binary at a TTY), and stream raw
+    bytes when piped/redirected (``not isatty`` — the ls/git/bat convention).
+    """
+    if output is not None:
+        output.write_bytes(data)
+        typer.echo(f"Wrote {output} ({width}x{height})", err=True)
+        return
+
+    if is_text:
+        sys.stdout.write(data.decode("utf-8"))
+        return
+
+    # Raster bytes to stdout: blit / hint / raw depending on the stream.
+    if sys.stdout.isatty():
+        from hyperweave.delivery import kitty
+
+        if kitty.terminal_supports_graphics():
+            kitty.blit(data, sys.stdout.buffer)
+            typer.echo("previewed inline — nothing written; use -o <path> to save", err=True)
+        else:
+            typer.echo(
+                "raster output is binary; this terminal can't display it inline. "
+                "save to a file: hyperweave compose ... -o out.png",
+                err=True,
+            )
+            raise typer.Exit(2)
+    else:
+        sys.stdout.buffer.write(data)
+
+
+def _split_dotted_genome(genome: str, variant: str) -> tuple[str, str]:
+    """Split a dotted ``--genome g.variant`` into ``(genome, variant)``.
+
+    ``--genome primer.porcelain`` is sugar for ``--genome primer --variant
+    porcelain``: split on the FIRST ``.`` (so a genome slug can't itself carry a
+    dot without meaning "variant"). An explicit ``--variant`` alongside a dotted
+    form is fine only when they agree; a contradiction is a caller error naming
+    both. A genome with no dot passes through untouched (with whatever ``--variant``
+    was given). Raises ``ValueError`` on the contradiction.
+    """
+    if "." not in genome:
+        return genome, variant
+    base, _, dotted_variant = genome.partition(".")
+    if variant and dotted_variant and variant != dotted_variant:
+        raise ValueError(
+            f"--genome {genome!r} sets variant {dotted_variant!r}, but --variant {variant!r} was also given; "
+            f"drop one (use --genome {base}.{variant} or --genome {base} --variant {variant})"
+        )
+    return base, (variant or dotted_variant)
+
+
 def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
     """Resolve a receipt ``--genome`` slug to a ``(genome, variant)`` pair.
 
@@ -73,6 +164,10 @@ def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
     * empty / anything else → ``("", "")``, letting the resolver fall back to
       primer/porcelain.
 
+    A dotted slug (``primer.cream``) splits into ``("primer", "cream")`` so every
+    receipt entry point (compose, the session alias, install-hook) accepts the
+    dotted ``--genome`` form. The bare primer-variant shorthand still works.
+
     The pre-genome ``telemetry-*`` skins (and their ``cream``/``voltage``/
     ``claude-code`` short-forms) are retired: they were never variants and no
     longer resolve here.
@@ -80,6 +175,9 @@ def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
     s = (slug or "").strip().lower()
     if not s:
         return "", ""
+    if "." in s:
+        base, _, dotted_variant = s.partition(".")
+        return base, dotted_variant
     if s in _PRIMER_VARIANTS:
         return "primer", s
     return s, ""
@@ -227,11 +325,14 @@ def validate(
 def compose(
     frame_type: Annotated[
         str,
-        typer.Argument(help="Frame: badge, strip, icon, divider, marquee, stats, chart, matrix, diagram"),
+        typer.Argument(help="Frame: badge, strip, icon, divider, marquee, card, chart, matrix, diagram"),
     ],
     title: Annotated[str, typer.Argument(help="Primary text (label, identity, username, owner/repo, ...)")] = "",
     value: Annotated[str, typer.Argument(help="Secondary text or chart subtype (e.g. 'stars')")] = "",
-    genome: Annotated[str, typer.Option("--genome", "-g")] = "brutalist",
+    genome: Annotated[
+        str,
+        typer.Option("--genome", "-g", help="Genome id, or dotted 'genome.variant' (e.g. primer.porcelain)."),
+    ] = "brutalist",
     genome_file: Annotated[
         Path | None,
         typer.Option(
@@ -289,11 +390,14 @@ def compose(
     # Matrix options
     spec_file: Annotated[
         Path | None,
-        typer.Option("--spec-file", help="MatrixSpec/DiagramSpec JSON file (matrix/diagram frames)"),
+        typer.Option(
+            "--spec-file",
+            help="MatrixSpec/DiagramSpec JSON file, OR a bundled-spec name (matrix: connectors; diagram: pipeline, ..)",
+        ),
     ] = None,
     preset: Annotated[
         str,
-        typer.Option("--preset", help="Server-known preset (matrix: connectors; diagram: pipeline, flywheel, ...)"),
+        typer.Option("--preset", hidden=True, help="Removed — pass the bundled-spec name to --spec-file instead."),
     ] = "",
     markdown_out: Annotated[
         Path | None,
@@ -310,24 +414,24 @@ def compose(
         str,
         typer.Option(
             "--performance",
-            help="Surface tier: composite-only ladders diagram beam->particle, flow->dash (recorded in the payload)",
+            help="Surface tier (diagram motion is composite-only by construction; recorded in the payload)",
         ),
     ] = "",
-    chrome: Annotated[
+    output_format: Annotated[
         str,
         typer.Option(
-            "--chrome",
-            help="Diagram presentation: card (default) | bare — transparent paper, no masthead/footer",
+            "--format",
+            help="Output byte format: svg (live, default) | svg-static (flattened, static) | png | webp | ansi",
         ),
-    ] = "card",
+    ] = "svg",
     target: Annotated[
         str,
         typer.Option(
             "--target",
-            help="Surface pack: web (default) | github | email | pdf | obsidian | slack — "
-            "flattens var()->hex and strips motion for non-browser surfaces",
+            hidden=True,
+            help="Removed — use --format (svg-static for obsidian/email/pdf, png for slack).",
         ),
-    ] = "web",
+    ] = "",
     font_mode: Annotated[
         str,
         typer.Option(
@@ -339,11 +443,43 @@ def compose(
         str,
         typer.Option(
             "--edge-motion",
-            help="Diagram edge-motion override: dash | particle | beam | flow (overrides the spec/preset's motion)",
+            help="Diagram edge-motion override: dash | particle (overrides the spec/preset's motion)",
+        ),
+    ] = "",
+    # Surface modes (matrix + diagram): how the artifact meets the host page.
+    surface: Annotated[
+        str,
+        typer.Option(
+            "--surface",
+            help="Surface preset: plate (opaque, fixed) | inlay (bare, adaptive) | twin (opaque, adaptive)",
+        ),
+    ] = "",
+    ground: Annotated[
+        str,
+        typer.Option("--ground", help="Surface ground axis: opaque (own background) | bare (borrow host)"),
+    ] = "",
+    palette: Annotated[
+        str,
+        typer.Option("--palette", help="Surface palette axis: fixed (one scheme) | adaptive (light/dark via @media)"),
+    ] = "",
+    faces: Annotated[
+        bool,
+        typer.Option("--faces", help="Twin: also write <out>-light.svg / <out>-dark.svg (the <picture> pair)"),
+    ] = False,
+    face: Annotated[
+        str,
+        typer.Option(
+            "--face",
+            help=(
+                "Bake ONE scheme (light | dark | auto): fixed palette, explicit face. With --surface inlay "
+                "this is the bare terminal-inlay face — pair with --format png to composite inks over the "
+                "terminal ground (alpha preserved). 'auto' OPTS IN to OSC 11 terminal-background detection "
+                "(interactive terminals only); light/dark stay the explicit, scriptable path."
+            ),
         ),
     ] = "",
     # Output
-    output: Annotated[Path | None, typer.Option("--output", "-o")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Write the artifact to this file path")] = None,
     metrics: Annotated[str, typer.Option("--metrics", help="Strip metrics: 'STARS:2.9k,FORKS:278'")] = "",
 ) -> None:
     """Compose a single HyperWeave artifact.
@@ -351,18 +487,42 @@ def compose(
     Examples:
 
     \b
-      hyperweave compose stats <username>                          [fetches GitHub data]
+      hyperweave compose card <username>                           [fetches GitHub data; 'stats' is an alias]
       hyperweave compose chart stars <owner/repo>                  [fetches star history]
       hyperweave compose badge STARS --data gh:anthropics/claude-code.stars
       hyperweave compose marquee --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
       hyperweave compose matrix --spec-file table.json -g primer --variant porcelain
-      hyperweave compose matrix --preset connectors -g primer --markdown-out table.md
-      hyperweave compose diagram --preset pipeline -g primer --variant porcelain
+      hyperweave compose matrix --spec-file connectors -g primer --markdown-out table.md
+      hyperweave compose diagram --spec-file pipeline -g primer --variant porcelain
       hyperweave compose diagram --spec-file flow.json -g primer --markdown-out flow.md
+      hyperweave compose badge STARS 1234 --format png -o badge.png  [rasterize; needs hyperweave[raster]]
       hyperweave compose <any-frame> --genome-file ./x.json        [custom genome]
       hyperweave compose receipt session.jsonl                     [render a session receipt]
       hyperweave compose -  < hook.json                            [Claude Code SessionEnd hook]
     """
+    # ── Retired-flag migration (one release) ─────────────────────────
+    if target:
+        typer.echo(
+            "Error: --target was removed. Use --format: svg (default, github/web serve the "
+            "live svg) | svg-static (obsidian/email/pdf) | png (slack).",
+            err=True,
+        )
+        raise typer.Exit(2)
+    if preset:
+        typer.echo(
+            "Error: --preset was removed. Pass the bundled-spec name to --spec-file (e.g. --spec-file pipeline).",
+            err=True,
+        )
+        raise typer.Exit(2)
+    # ── Dotted --genome sugar (before both the receipt and compose paths) ──
+    # `--genome primer.porcelain` == `--genome primer --variant porcelain`. Split
+    # here so the receipt dispatch below and the ComposeSpec build both see the
+    # resolved (genome, variant); a dotted/explicit contradiction errors cleanly.
+    try:
+        genome, variant = _split_dotted_genome(genome, variant)
+    except ValueError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2) from exc
     # ── Receipt-from-transcript dispatch ─────────────────────────────
     # The receipt frame reads an agent's existing .jsonl transcript, never flags:
     #   compose -                  → hook mode: read hook JSON (transcript_path) on stdin
@@ -440,53 +600,26 @@ def compose(
             typer.echo(f"(warning) chart fetch failed for {chart_owner}/{chart_repo}: {exc}", err=True)
             connector_data = None
 
-    # ── Matrix input: --spec-file (caller IR) or --preset (server-known) ──
+    # ── Matrix input: --spec-file — a path (caller IR) OR a bundled-spec name ──
     matrix_spec: dict[str, object] | None = None
     if frame_type == "matrix":
-        if spec_file is not None:
-            try:
-                matrix_spec = json.loads(spec_file.read_text())
-            except FileNotFoundError as exc:
-                typer.echo(f"Error: {exc}", err=True)
-                raise typer.Exit(2) from exc
-            except json.JSONDecodeError as exc:
-                typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
-                raise typer.Exit(2) from exc
-        elif preset:
-            from hyperweave.compose.matrix.input import resolve_matrix_preset
-            from hyperweave.core.matrix import MatrixInputError
+        resolved_spec = _resolve_spec_file("matrix", spec_file)
+        if resolved_spec is not None:
+            if resolved_spec.field == "connector_data":
+                connector_data = resolved_spec.value  # bundled matrix spec = adapter payload
+            else:
+                matrix_spec = resolved_spec.value
 
-            try:
-                connector_data = resolve_matrix_preset(preset)
-            except MatrixInputError as exc:
-                typer.echo(f"Error: {exc}", err=True)
-                raise typer.Exit(2) from exc
-
-    # ── Diagram input: --spec-file (caller IR) or --preset (server-known) ──
+    # ── Diagram input: --spec-file — a path (caller IR) OR a bundled-spec name ──
     diagram_spec: dict[str, object] | None = None
     if frame_type == "diagram":
-        if spec_file is not None:
-            try:
-                diagram_spec = json.loads(spec_file.read_text())
-            except FileNotFoundError as exc:
-                typer.echo(f"Error: {exc}", err=True)
-                raise typer.Exit(2) from exc
-            except json.JSONDecodeError as exc:
-                typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
-                raise typer.Exit(2) from exc
-        elif preset:
-            from hyperweave.compose.diagram.input import resolve_diagram_preset
-            from hyperweave.core.diagram import DiagramInputError
-
-            try:
-                diagram_spec = resolve_diagram_preset(preset)
-            except DiagramInputError as exc:
-                typer.echo(f"Error: {exc}", err=True)
-                raise typer.Exit(2) from exc
+        resolved_spec = _resolve_spec_file("diagram", spec_file)
+        if resolved_spec is not None:
+            diagram_spec = resolved_spec.value
 
         # Artifact-level edge-motion override — mirrors the HTTP ?edge_motion=
         # query: replaces the spec/preset's edge_motion before compose (per-edge
-        # IR declarations still outrank it). Validated against the closed 2x2.
+        # IR declarations still outrank it). Validated against the closed pair.
         if edge_motion:
             from hyperweave.core.diagram import EdgeMotion
 
@@ -522,6 +655,23 @@ def compose(
             if formatted:
                 final_value = formatted
 
+    # ── Surface modes: expand the preset/axes sugar BEFORE ComposeSpec ──
+    # surface=plate|inlay|twin OR explicit --ground/--palette resolve to the two
+    # axes here so the ComposeSpec carries only ground/palette (never the preset
+    # name). expand_surface_preset raises on a preset/axis contradiction or the
+    # trap corner (bare+fixed); surface the ValueError as a clean CLI error.
+    surface_ground, surface_palette = "", ""
+    if surface or ground or palette:
+        from hyperweave.core.surface_spec import expand_surface_preset
+
+        try:
+            resolved_surface = expand_surface_preset(surface, ground, palette)
+        except ValueError as exc:
+            typer.echo(f"Error: {exc}", err=True)
+            raise typer.Exit(2) from exc
+        surface_ground = resolved_surface.ground.value
+        surface_palette = resolved_surface.palette.value
+
     spec = ComposeSpec(
         type=frame_type,
         genome_id=genome,
@@ -550,21 +700,92 @@ def compose(
         diagram=diagram_spec,
         glyph_tint=glyph_tint,
         performance=performance,
-        chrome=chrome,
+        ground=surface_ground,
+        palette=surface_palette,
     )
 
+    # ── --face: bake ONE scheme (the single twin face / the bare inlay face) ──
+    # An explicit face commits the palette: palette=fixed + surface_face. On a
+    # bare ground this is the TERMINAL-INLAY face — bare+fixed is legal with a
+    # face (theme-committed, not theme-blind) — and --format png then composites
+    # the inks over the terminal ground (alpha preserved, no plate, no box).
+    if face:
+        if face == "auto":
+            # sec 12.3: the caller opted into detection — OSC 11 asks the
+            # terminal; silence or a non-tty refuses with the explicit fix.
+            from hyperweave.core.errors import HwError
+            from hyperweave.delivery.face_detect import detect_terminal_face
+
+            try:
+                face = detect_terminal_face()
+            except HwError as exc:
+                typer.echo(exc.cli_text(), err=True)
+                raise typer.Exit(2) from exc
+            typer.echo(f"face auto: terminal reports {face}", err=True)
+        if face not in ("light", "dark"):
+            typer.echo(f"Error: --face must be 'light', 'dark', or 'auto' (got {face!r})", err=True)
+            raise typer.Exit(2)
+        if faces:
+            typer.echo("Error: --face (one baked scheme) and --faces (the twin pair) are exclusive", err=True)
+            raise typer.Exit(2)
+        spec = spec.model_copy(update={"palette": "fixed", "surface_face": face})
+
+    # ── --faces: twin → write both baked faces beside -o ──
+    # A twin's light + dark faces are plain plate renders (surface_face pinned; the
+    # resolver merges the flipped palette for dark). Each writes to a suffixed path
+    # next to -o (<out>-light.svg / <out>-dark.svg) — the <picture> pair. Requires
+    # -o (two files can't stream to stdout) and a twin surface.
+    if faces:
+        if output is None:
+            typer.echo("Error: --faces needs -o/--output (writes <out>-light.svg and <out>-dark.svg)", err=True)
+            raise typer.Exit(2)
+        if not (surface_palette == "adaptive" and surface_ground != "bare"):
+            typer.echo("Error: --faces requires a twin surface (--surface twin)", err=True)
+            raise typer.Exit(2)
+        for face_name in ("light", "dark"):
+            face_result = do_compose(spec.model_copy(update={"palette": "fixed", "surface_face": face_name}))
+            dest = output.with_name(f"{output.stem}-{face_name}{output.suffix}")
+            dest.write_text(face_result.svg)
+            typer.echo(f"Wrote {dest} ({face_result.width}x{face_result.height})", err=True)
+        return
+
     result = do_compose(spec)
-    svg = result.svg
-    if target and target != "web":
-        from hyperweave.compose.targets import apply_target
 
-        svg = apply_target(svg, target)
+    # Non-fatal normalization notes (e.g. a cyclic diagram declared as 'dag'
+    # promoted to 'state-machine') go to stderr so they never corrupt bytes on
+    # stdout.
+    for warning in result.warnings:
+        typer.echo(f"warning: {warning}", err=True)
+    # sec 6 compiler diagnostics — advisory, stderr-only (stdout stays bytes).
+    for diag in result.diagnostics:
+        typer.echo(
+            f"diagnostic: {diag['rule']} — {diag['measured']} (band: {diag['band']}) → {diag['suggestion']}",
+            err=True,
+        )
 
-    if output:
-        output.write_text(svg)
-        typer.echo(f"Wrote {output} ({result.width}x{result.height})")
-    else:
-        sys.stdout.write(svg)
+    # Project the live SVG into the requested --format (svg passes through;
+    # svg-static flattens vars + strips motion; png/webp rasterize the static
+    # projection). project() enforces the adaptive x flatten guard and raster
+    # availability, surfacing a structured error to stderr.
+    from hyperweave.core.errors import HwError
+    from hyperweave.formats import is_flattening, project
+
+    # A genome-DEFAULTED adaptive surface (primer twins by default) commits to
+    # its plate for a flattening format instead of failing — the plate IS the
+    # native face. An EXPLICIT adaptive request still fails loud in project().
+    surface_explicit = bool(surface or ground or palette or face)
+    if not surface_explicit and is_flattening(output_format) and 'data-hw-adapt="adaptive"' in result.svg:
+        result = do_compose(spec.model_copy(update={"ground": "opaque", "palette": "fixed"}))
+
+    try:
+        projection = project(result.svg, output_format, is_face=spec.surface_face != "")
+    except HwError as exc:
+        typer.echo(f"Error: {exc.cli_text()}", err=True)
+        raise typer.Exit(2) from exc
+
+    _deliver_projection(
+        projection.data, is_text=projection.is_text, output=output, width=result.width, height=result.height
+    )
     if markdown_out is not None and result.markdown:
         markdown_out.write_text(result.markdown)
         typer.echo(f"Wrote {markdown_out} (markdown shadow)", err=True)
@@ -1301,3 +1522,11 @@ def serve(
         port=port,
         reload=reload,
     )
+
+
+# Verb-capability commands (extract/verify/diff/query/transform) — attached from
+# the surface layer so the registry is the single roster. Adding a verb adds a
+# command in surfaces/cli.py, never here.
+from hyperweave.surfaces.cli import register_capability_commands  # noqa: E402
+
+register_capability_commands(app)

@@ -69,9 +69,10 @@ def unwrap_mcp_svg(call_result: Any) -> str:
     """Extract raw SVG from MCP CallToolResult envelope.
 
     FastMCP wraps tool returns in ``CallToolResult.content`` as a list of
-    ``TextContent`` (or similar) blocks. For ``hw_compose`` the first
-    block's ``text`` is the SVG. Comparing the envelope to a bare SVG
-    string would be a guaranteed false negative — always unwrap first.
+    ``TextContent`` (or similar) blocks. For ``hw_compose`` invoked with
+    ``respond="svg"`` the first block's ``text`` is the SVG markup. Comparing
+    the FastMCP content envelope to a bare SVG string would be a guaranteed
+    false negative — always unwrap first.
     """
     content = call_result.content
     if not content:
@@ -226,7 +227,11 @@ async def render_three_paths(
     http_resp.raise_for_status()
     http_svg = http_resp.text
 
-    mcp_result = await mcp.call_tool(spec.mcp_tool, spec.mcp_args)
+    # hw_compose defaults to respond="envelope" (the ~200-token handle, not
+    # inline markup). Parity compares pixels across surfaces, so
+    # ask MCP for the pixels explicitly — spec.mcp_args stays a pure description
+    # of the semantic request; the SVG opt-in is a comparison detail.
+    mcp_result = await mcp.call_tool(spec.mcp_tool, {**spec.mcp_args, "respond": "svg"})
     mcp_svg = unwrap_mcp_svg(mcp_result)
 
     return direct_svg, http_svg, mcp_svg

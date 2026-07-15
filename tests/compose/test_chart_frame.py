@@ -161,7 +161,7 @@ def test_chart_zero_stars_renders_empty_state() -> None:
 def test_chart_six_stars_renders_real_polyline_with_derived_labels() -> None:
     """A repo with 6 real stars must render a real polyline + derived axis labels.
 
-    Covers bug 2 (low-star empty plot) at the compose level: the stargazer
+    Covers the low-star empty-plot regression at the compose level: the stargazer
     timestamps yield distinct x-coordinates, and the derived Y ticks show
     [0, 2, 4, 6] — never the hardcoded "3K".
     """
@@ -199,7 +199,7 @@ def test_chart_six_stars_renders_real_polyline_with_derived_labels() -> None:
 async def test_fetch_stargazer_history_single_page_uses_per_stargazer_timestamps() -> None:
     """Low-star repos (total_pages == 1) emit one point per stargazer entry.
 
-    Bug 2 fix: the previous logic took only the first starred_at per page and
+    The previous logic took only the first starred_at per page and
     appended a duplicate "now" point, collapsing the polyline's time range to
     zero. This test verifies that each stargazer's real timestamp is used and
     every point has a distinct date.
@@ -229,7 +229,7 @@ async def test_fetch_stargazer_history_single_page_uses_per_stargazer_timestamps
 
     assert result["current_stars"] == 6
     assert len(result["points"]) == 6
-    # All points have distinct timestamps (bug 2 fix).
+    # All points have distinct timestamps (regression pin).
     dates = [p["date"] for p in result["points"]]
     assert len(set(dates)) == 6
     # Cumulative counts are 1..6.

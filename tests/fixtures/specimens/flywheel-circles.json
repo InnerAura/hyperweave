@@ -1,0 +1,52 @@
+{
+  "aspect": 1.064,
+  "caption_text": "Flywheel \u00b7 each artifact ships, is captured as corpus, trains the model, and returns as better generation",
+  "cards": {
+    "hero_h": 112.0,
+    "hero_w": 112.0
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 0,
+    "card_rx": 0.0,
+    "cards": 0,
+    "chips": 0,
+    "coins": 5,
+    "desc_lines": 0,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 5,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 0,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 696.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.368,
+  "plate": {
+    "caption_pad": 44.0,
+    "caption_y": 896.0,
+    "content_bottom": 812.0,
+    "content_top": 128.0,
+    "zone_y": 58.0
+  },
+  "port_tolerance": 17.5,
+  "source": "v04/alpha/v04a6/diagrams-v4/diagram-flywheel-circles-pp.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1000.0,
+    940.0
+  ],
+  "width": 740.0
+}

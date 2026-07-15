@@ -1,11 +1,13 @@
 """The closed edge-motion grammar's math — pure functions over config.
 
-The vocabulary is a 2x2 ({composite-only, paint-ok} x {discrete,
-continuous} = particle | dash | beam | flow); everything here is a
-PARAMETER of those four values, never a fifth. Beam and flow animate
-gradient COORDINATES (animateTransform on gradientTransform —
-transform-class CIM); geometry never moves. All constants arrive from
-``data/config/diagram-frame.yaml`` — this module owns formulas, not numbers.
+Three kinetic pieces: dash march and particle riders (composite-only) plus
+the BEAM — a gradient-window comet pair on one shared relay clock
+(paint-ok; the recipe generalizes the frontier-handoff and parity-beam
+reference specimens). The beam animates
+gradient COORDINATES only (animateTransform on gradientTransform —
+transform-class CIM); geometry never moves. The flow tube grammar stays
+retired. All constants arrive from ``data/config/diagram-frame.yaml`` —
+this module owns formulas, not numbers.
 """
 
 from __future__ import annotations
@@ -14,8 +16,7 @@ import math
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.diagram.paths import chord_unit, fmt
-from hyperweave.compose.diagram.records import GradientAnimate, GradientSpec, GradientStop
-from hyperweave.core.diagram import DiagramInputError, EdgeMotion, ResolvedEdge
+from hyperweave.core.diagram import DiagramInputError, EdgeMotion, ResolvedEdge, Topology
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -38,12 +39,16 @@ def resolve_edge_motions(
     allowlist: Sequence[str],
     composite_only: bool,
     ladder: Mapping[str, str],
+    stage_exempt: bool = False,
 ) -> tuple[list[str], bool]:
     """Concrete per-edge motion: edge override -> spec override -> genome
     default, allowlist-validated, then the fallback ladder under a
-    composite-only constraint. Returns (per-edge values, fallback_applied)
-    — requested vs rendered never silently diverges (the caller records
-    both in the payload)."""
+    composite-only constraint. ``stage_exempt`` routes ladder-listed motions
+    through the same fallback for topologies that own their own replay
+    grammar (sequence: its single traversing particle IS the clock — a beam
+    would fight it), keeping the payload's requested/rendered record honest
+    instead of silently diverging inside wire_motion. Returns (per-edge
+    values, fallback_applied)."""
     allowed = set(allowlist)
     out: list[str] = []
     fallback = False
@@ -54,7 +59,7 @@ def resolve_edge_motions(
         if requested not in allowed:
             raise DiagramInputError(f"edge_motion {requested!r} is outside the genome allowlist {sorted(allowed)}")
         rendered = requested
-        if composite_only and requested in ladder:
+        if (composite_only or stage_exempt) and requested in ladder:
             rendered = ladder[requested]
             fallback = True
         out.append(rendered)
@@ -71,42 +76,12 @@ def resolve_track(motion: str, *, track_map: Mapping[str, str], semantic_dash: s
 
 
 def performance_tier(motions: Sequence[str], inert: Sequence[bool]) -> str:
-    """paint-ok iff any rendered edge runs an animated-paint value."""
-    for m, dead in zip(motions, inert, strict=True):
-        if not dead and m in ("beam", "flow"):
-            return "paint-ok"
-    return "composite-only"
-
-
-def beam_window(length: float, beam_cfg: Mapping[str, Any]) -> float:
-    """W = round10(clamp(ratio x length, min, max)) — 142px edges get the
-    canon's 80, ~430px fan edges cap at 130."""
-    w = float(beam_cfg["window_ratio"]) * length
-    w = max(float(beam_cfg["window_min"]), min(float(beam_cfg["window_max"]), w))
-    return _round10(w)
-
-
-def flow_period(length: float, flow_cfg: Mapping[str, Any]) -> float:
-    """P = round10(clamp(ratio x length, min, max)); the translate moves
-    exactly one period per cycle so the current is seamless."""
-    p = float(flow_cfg["period_ratio"]) * length
-    p = max(float(flow_cfg["period_min"]), min(float(flow_cfg["period_max"]), p))
-    return _round10(p)
-
-
-def relay_slots(n: int, relay_cfg: Mapping[str, Any]) -> list[tuple[float, float]]:
-    """Slot-locked relay on one phi clock: travel windows separated by
-    hop_gap (the node 'processing'), cycle_rest before the next payload."""
-    lead = float(relay_cfg["lead"])
-    gap = float(relay_cfg["hop_gap"])
-    rest = float(relay_cfg["cycle_rest"])
-    travel = (1.0 - lead - rest - (n - 1) * gap) / n
-    travel = math.floor(travel * 100) / 100
-    out: list[tuple[float, float]] = []
-    for i in range(n):
-        start = round(lead + i * (travel + gap), 4)
-        out.append((start, round(start + travel, 4)))
-    return out
+    """The beam animates PAINT (a gradient window over a static tube), so an
+    artifact carrying a rendered beam declares performance="paint-ok". The other
+    kinetic pieces (dash march, particle riders) animate transform/dashoffset
+    only — a beam-free artifact stays composite-only."""
+    del inert
+    return "paint-ok" if any(m == EdgeMotion.BEAM.value for m in motions) else "composite-only"
 
 
 def replay_clock(
@@ -117,7 +92,7 @@ def replay_clock(
     dur_max: float,
     seq_cfg: Mapping[str, Any],
 ) -> tuple[float, list[tuple[float, float]]]:
-    """Sequence ordered replay under the speed law (K-seq): each message is
+    """Sequence ordered replay under the speed law: each message is
     an independent EVENT whose transit obeys clamp(span / v_target,
     dur_min, dur_max); the shared clock is DERIVED — lead beat + Σ slots +
     gap beats between events + a rest beat before the loop. Order
@@ -137,7 +112,7 @@ def replay_clock(
 
 def replay_particle_params(slot: tuple[float, float], fade: float) -> tuple[str, str, str, str]:
     """(keyPoints, keyTimes, opacity values, opacity keyTimes) for ONE
-    persistent replay particle's slot (K-seq-v2): the dot holds at the
+    persistent replay particle's slot (the sequence-replay specimen): the dot holds at the
     message's start, travels its slot at lawful velocity, then holds
     invisible for the rest of the cycle. Sequential non-overlapping slots
     mean exactly one dot is visible at a time — a single particle hopping
@@ -159,7 +134,14 @@ def detect_lanes(edges: Sequence[ResolvedEdge], lane_offset: float) -> list[int]
     """Reciprocal-pair lanes: a derived pair may appear once per direction;
     the first-declared direction takes the -1 lane, its reciprocal +1,
     singles 0. The offset itself is applied to endpoints by the solver
-    (perpendicular, +/- lane_offset)."""
+    (perpendicular, +/- lane_offset).
+
+    Topology-blind by design: this is a pure structural fact about the edge
+    set, computed the same way whatever solver runs. State-machine's
+    reciprocal pairs (order-lifecycle's throw/retry) ride their own return
+    grammar instead of the generic lane-hue channel — that exemption is
+    consumed at ``lane_dress_applies``, the semantic-chromatics owner
+    deciding which topologies PAINT the lane, not detected here."""
     lanes = [0] * len(edges)
     seen: dict[tuple[int, int], int] = {}
     for i, e in enumerate(edges):
@@ -169,6 +151,25 @@ def detect_lanes(edges: Sequence[ResolvedEdge], lane_offset: float) -> list[int]
             lanes[i] = 1
         seen[(e.source, e.target)] = i
     return lanes
+
+
+def lane_dress_applies(topology: Topology, lane: int) -> bool:
+    """True where a reciprocal-lane edge paints ITS OWN lane dress — hue
+    (``solver.connector_accents``), march dasharray (``wiring.wire_motion``),
+    and label hue (``annotate.subsume_edge_labels``) all gate on this ONE
+    predicate so the three channels of "lane dress" can never drift apart.
+
+    Lanes topology paints category on the node marks, never the wire
+    (a colored rail would re-encode the same axis twice); sequence's
+    reciprocal-looking call/return pairs read their own kind grammar
+    (solid call, dashed return) independent of lane parity; state-machine's
+    reciprocal pairs (order-lifecycle's throw/retry) ride the back-edge
+    accent instead — the lens bow's geometry already separates the two
+    directions, so a second axis of meaning over the same pair would
+    contradict it (see ``connector_accents``). Every other topology's
+    reciprocal pair (the gateway specimen's request/response) is a
+    CONVERSATION: forward reads accent, reverse reads muted."""
+    return lane != 0 and topology not in (Topology.LANES, Topology.SEQUENCE, Topology.STATE_MACHINE)
 
 
 def lane_offsets(
@@ -229,146 +230,147 @@ def _translate_values(sx: float, sy: float, ux: float, uy: float, distances: Seq
     return ";".join(f"{fmt(sx + ux * d)} {fmt(sy + uy * d)}" for d in distances)
 
 
-def beam_gradients(
+def beam_windows(n: int, cfg: Mapping[str, Any], *, family: str) -> list[tuple[float, float]]:
+    """Stage windows on the shared beam relay clock.
+
+    ``family='relay'`` (the frontier-handoff specimen): a lead beat, ``n``
+    equal spans separated by gap beats, and a rest beat before the loop —
+    ``span = (1 - lead - (n-1)*gap - rest) / n``, capped per below. n=3
+    reproduces the specimen's .02-.28 / .34-.60 / .66-.92 exactly.
+    ``max(span, gap)`` is a defensive floor the topology caps never reach.
+    ``family='branch'`` (the parity-beam specimen):
+    exactly two stages — the trunk fires, then every branch shares one
+    simultaneous window (.02-.30 / .32-.62): simultaneity IS the parity
+    argument. ``family='bilateral'``: the fan-out mirror of ``branch`` for a
+    topology with no trunk to lead — two EQUAL simultaneous stages (west
+    converges as one wave, a beat at the hub, east emerges as the next),
+    keyed by ``EdgeGeo.flow_side`` rather than stage order. No bilateral
+    beam specimen exists to cite its own span, so it's derived from
+    ``relay``'s own n=2 shape (same lead/gap/rest law, dedicated so it never
+    degenerates to the n=1 near-full sweep when one side happens to hold
+    every beam-lit edge — relay's generic by-count path would collapse to
+    ``len(order)==1`` there, which is tuned for a genuinely solo relay leg,
+    not a two-sided wave).
+
+    ``relay``/``bilateral`` divide the WHOLE clock across n stages
+    (``span = (1 - lead - (n-1)*gap - rest) / n``), which only reproduces
+    the specimen band at n=3 (its citation, span .26): at n=1 (a flush
+    single-group fan — artifact-fanout-beam's chipless depart, no trunk
+    stub to key a second stage on) or n=2 (bilateral's own west/east split;
+    a 2-rank DAG transition — settlement-relay) the raw division balloons
+    to span .42-.90, a comet crawling 2.2-4.7s across one window instead of
+    the ~1.5s both specimens converge on regardless of stage count (branch
+    .28-.30, relay-n=3 .26). ``relay_span_cap`` (.30, the wider of the two
+    citations) is the per-stage window LAW; ``min(computed, cap)`` lets it
+    bind only where the by-count division would exceed what either
+    specimen ever licensed, leaving n=3 (and any n whose computed span
+    already undercuts the cap) byte-identical."""
+    if family == "branch":
+        r = cfg.get("relay_branch") or {}
+        t0 = float(r.get("trunk_lead", 0.02))
+        ts = float(r.get("trunk_span", 0.28))
+        bg = float(r.get("branch_gap", 0.02))
+        bs = float(r.get("branch_span", 0.30))
+        return [(round(t0, 4), round(t0 + ts, 4)), (round(t0 + ts + bg, 4), round(t0 + ts + bg + bs, 4))]
+    cap = float(cfg.get("relay_span_cap", 0.30))
+    if family == "bilateral":
+        r = cfg.get("relay_bilateral") or {}
+        lead = float(r.get("lead", 0.02))
+        gap = float(r.get("gap", 0.06))
+        rest = float(r.get("rest", 0.08))
+        span = max(min((1.0 - lead - gap - rest) / 2, cap), gap)
+        west = (round(lead, 4), round(lead + span, 4))
+        east = (round(lead + span + gap, 4), round(lead + span + gap + span, 4))
+        return [west, east]
+    r = cfg.get("relay") or {}
+    lead = float(r.get("lead", 0.02))
+    gap = float(r.get("gap", 0.06))
+    rest = float(r.get("rest", 0.08))
+    n = max(n, 1)
+    span = max(min((1.0 - lead - (n - 1) * gap - rest) / n, cap), gap)
+    out: list[tuple[float, float]] = []
+    for i in range(n):
+        s = lead + i * (span + gap)
+        out.append((round(s, 4), round(s + span, 4)))
+    return out
+
+
+def beam_gradient(
+    index: int,
+    sx: float,
+    sy: float,
+    tx: float,
+    ty: float,
     *,
-    id_base: str,
-    x1: float,
-    y1: float,
-    x2: float,
-    y2: float,
-    length: float,
-    hue: str,
-    hue2: str | None,
-    choreo: str,
-    slot: tuple[float, float] | None,
-    begin: str,
-    beam_cfg: Mapping[str, Any],
-    travel_end: float | None = None,
-    clock: float | None = None,
-) -> tuple[GradientSpec, GradientSpec]:
-    """The comet: a body gradient (pad-guarded tip -> head -> signal body ->
-    ember tail) plus the near-white head filament, both translated along the
-    chord. Identity shots are two-hue (hue -> hue2); ramp edges single-hue.
-    The gradient axis points BACKWARD along travel so the head leads."""
-    w = beam_window(length, beam_cfg)
-    ux, uy = chord_unit(x1, y1, x2, y2)
-    stops_cfg = beam_cfg["stops"]
-    tail_op = float(stops_cfg["tail_opacity_identity"] if hue2 else stops_cfg["tail_opacity_ramp"])
-    tail_hue = hue2 or hue
-    body_stops = (
-        GradientStop(offset=float(stops_cfg["tip"]), color=hue, opacity=0.0),
-        GradientStop(offset=float(stops_cfg["head"]), color=hue),
-        GradientStop(offset=float(stops_cfg["body"]), color=hue),
-        GradientStop(offset=float(stops_cfg["tail"]), color=tail_hue, opacity=tail_op),
-        GradientStop(offset=1.0, color=tail_hue, opacity=0.0),
-    )
-    if choreo == "relay":
-        if slot is None:
-            raise ValueError("relay choreography requires a slot")
-        relay = beam_cfg["relay"]
-        s, e = slot
-        distances = [-w, -w, length, length]
-        keytimes = f"0;{s:g};{e:g};1"
-        keysplines = f"0 0 1 1;{relay['travel_spline']};0 0 1 1"
-        dur = f"{clock:g}s" if clock is not None else str(relay["dur"])
-        anim_begin = ""
-    else:
-        mode = beam_cfg["arrivals"] if choreo == "arrivals" else beam_cfg["volley"]
-        distances = [-w, length, length]
-        # One speed of light (K1): the caller passes a per-edge travel
-        # fraction (transit time / shared clock) so comets cross every
-        # chord at the same velocity; departures stay phi-staggered.
-        end = float(mode["travel_end"]) if travel_end is None else travel_end
-        keytimes = f"0;{end:g};1"
-        keysplines = f"{mode['travel_spline']};0 0 1 1"
-        dur = str(mode["dur"])
-        anim_begin = begin
+    stage: tuple[float, float],
+    cfg: Mapping[str, Any],
+) -> tuple[BeamGradient, BeamGradient]:
+    """The specimen beam pair (the frontier-handoff and parity-beam
+    references): a BODY window (blue head → purple tail,
+    true-zero ends) and a narrower accent-deep COMET FRONT, sharing ONE
+    GradientAnimate — both translate one full run + window along the chord
+    inside this edge's ``stage`` of the shared relay clock (hold → eased
+    sweep → hold; calcMode spline). The gradient geometry BAKES the edge
+    start (x1,y1 = the source point, the vector pointing back one window)
+    and the animation translates RELATIVE from '0 0' — bit-identical to the
+    hand files when animated, and safe at identity transform when SMIL is
+    stripped (svg-static, rasterizers): the window rests entirely behind the
+    start point, so a static face shows the bare glass conduit, never a
+    frozen half-comet. No spreadMethod (pad) + true-zero end stops keep the
+    sweep a single comet, not a barber-pole. Identity fixed blue/purple
+    across every variant (beam-relay.md), never genome-derived."""
+    from hyperweave.compose.diagram.records import BeamGradient, GradientAnimate, GradientStop
+
+    ux, uy = chord_unit(sx, sy, tx, ty)
+    w = float(cfg.get("window", 120))
+    front_span = float(cfg.get("front_span", 38))
+    travel = math.hypot(tx - sx, ty - sy) + w
+    s, e = stage
     animate = GradientAnimate(
-        values=_translate_values(x1, y1, ux, uy, distances),
-        keytimes=keytimes,
-        keysplines=keysplines,
-        dur=dur,
-        begin=anim_begin,
+        values=_translate_values(0.0, 0.0, ux, uy, [0.0, 0.0, travel, travel]),
+        keytimes=f"0;{round(s, 4):g};{round(e, 4):g};1",
+        keysplines=str(cfg.get("keysplines", "0 0 1 1;0.42 0 0.58 1;0 0 1 1")),
+        dur=fmt_s(float(cfg.get("dur", 5.236))),
         calc_mode="spline",
     )
-    body = GradientSpec(
-        id_suffix=f"{id_base}b",
-        x1=ux * w,
-        y1=uy * w,
-        x2=0.0,
-        y2=0.0,
-        stops=body_stops,
-        animate=animate,
-    )
-    fil_w = round(float(beam_cfg["filament_ratio"]) * w / 2) * 2
-    fil_stops = (
-        GradientStop(offset=0.0, color=str(beam_cfg["filament_head"]), opacity=0.0),
-        GradientStop(
-            offset=0.12,
-            color=str(beam_cfg["filament_head"]),
-            opacity=float(beam_cfg["filament_head_opacity"]),
+    color_a = str(cfg.get("color_a", "#60A5FA"))
+    color_b = str(cfg.get("color_b", "#A78BFA"))
+    front_a = str(cfg.get("front_a", "#2563EB"))
+    front_b = str(cfg.get("front_b", "#93C5FD"))
+    body = BeamGradient(
+        id_suffix=f"beam{index}body",
+        x1=round(sx, 3),
+        y1=round(sy, 3),
+        x2=round(sx - ux * w, 3),
+        y2=round(sy - uy * w, 3),
+        # The reference stops verbatim: a 4% transparent nose, solid blue head,
+        # purple body at .85, fading to TRUE zero at the tail.
+        stops=(
+            GradientStop(offset=0.0, color=color_a, opacity=0.0),
+            GradientStop(offset=0.04, color=color_a, opacity=1.0),
+            GradientStop(offset=0.09, color=color_a, opacity=1.0),
+            GradientStop(offset=0.35, color=color_b, opacity=0.85),
+            GradientStop(offset=1.0, color=color_b, opacity=0.0),
         ),
-        GradientStop(offset=1.0, color=str(beam_cfg["filament_tail"]), opacity=0.0),
-    )
-    filament = GradientSpec(
-        id_suffix=f"{id_base}f",
-        x1=ux * w,
-        y1=uy * w,
-        x2=ux * (w - fil_w),
-        y2=uy * (w - fil_w),
-        stops=fil_stops,
         animate=animate,
+        spread="",
     )
-    return body, filament
-
-
-def flow_gradient(
-    *,
-    id_base: str,
-    x1: float,
-    y1: float,
-    x2: float,
-    y2: float,
-    length: float,
-    hue: str,
-    begin: str,
-    flow_cfg: Mapping[str, Any],
-    phase_px: float = 0.0,
-) -> GradientSpec:
-    """The laminar current: a repeating soft pulse translated exactly one
-    period per cycle. Arc segments pass their cumulative length as
-    ``phase_px`` so the current reads continuous across a subdivision."""
-    p = flow_period(length, flow_cfg)
-    ux, uy = chord_unit(x1, y1, x2, y2)
-    phase = ""
-    if phase_px:
-        frac = (phase_px % p) / p
-        dur_s = float(str(flow_cfg["dur"]).rstrip("s"))
-        offset = round(frac * dur_s, 4)
-        phase = fmt_s(-offset) if offset else ""
-    stops = (
-        GradientStop(offset=0.0, color=hue, opacity=0.0),
-        GradientStop(offset=float(flow_cfg["pulse_peak"]), color=hue, opacity=float(flow_cfg["pulse_opacity"])),
-        GradientStop(offset=1.0, color=hue, opacity=0.0),
-    )
-    animate = GradientAnimate(
-        values=f"0 0;{fmt(ux * p)} {fmt(uy * p)}",
-        dur=str(flow_cfg["dur"]),
-        begin=begin or phase,
-    )
-    return GradientSpec(
-        id_suffix=f"{id_base}l",
-        x1=0.0,
-        y1=0.0,
-        x2=ux * p,
-        y2=uy * p,
-        stops=stops,
-        spread="repeat",
+    front = BeamGradient(
+        id_suffix=f"beam{index}front",
+        x1=round(sx, 3),
+        y1=round(sy, 3),
+        x2=round(sx - ux * front_span, 3),
+        y2=round(sy - uy * front_span, 3),
+        stops=(
+            GradientStop(offset=0.0, color=front_a, opacity=0.0),
+            GradientStop(offset=0.12, color=front_a, opacity=0.95),
+            GradientStop(offset=1.0, color=front_b, opacity=0.0),
+        ),
         animate=animate,
+        spread="",
     )
+    return body, front
 
 
-def choreography_for(layout_slug: str, motion: str, choreo_cfg: Mapping[str, Any]) -> str:
-    """Which timing mode a (layout, motion) pair runs."""
-    table = choreo_cfg.get(motion) or {}
-    return str(table.get(layout_slug, table.get("default", "volley" if motion == "beam" else "current")))
+if TYPE_CHECKING:
+    from hyperweave.compose.diagram.records import BeamGradient

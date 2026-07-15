@@ -1,4 +1,4 @@
-"""BUG-004 — the receipt must not blur on mobile.
+"""Mobile-safe shadow law — the receipt must not blur on mobile.
 
 A filter on the full text-bearing card group forces mobile Safari/Chrome to
 rasterize the whole subtree (text included) into a resolution-capped offscreen

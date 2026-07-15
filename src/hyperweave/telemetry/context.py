@@ -34,7 +34,7 @@ DEFAULT_CONTEXT_WINDOW = 200_000
 # Window in tokens for the extended-context (-1m / [1m]) tier.
 _EXTENDED_WINDOW = 1_000_000
 
-# Self-disclosure carried verbatim from the v3 receipt specimen. The receipt
+# Self-disclosure carried verbatim from the receipt specimen. The receipt
 # embeds this in the context block so a reader knows the curve is a model of
 # occupancy from per-turn activity, not a billed measurement.
 CONTEXT_NOTE = (

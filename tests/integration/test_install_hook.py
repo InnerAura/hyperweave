@@ -180,7 +180,7 @@ def test_install_hook_runtime_codex_with_genome_pins_command(monkeypatch: Monkey
     registered hook command and leaves claude-code untouched.
 
     The genome must be receipt-capable (the install-hook validates this); primer
-    is the receipt genome under the v3 rebuild.
+    is the receipt genome under the primer rebuild.
     """
     _patch_home(monkeypatch, tmp_path)
     _patch_which(monkeypatch, {"claude": None, "codex": None})

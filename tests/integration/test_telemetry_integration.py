@@ -1,9 +1,9 @@
 """Integration tests for the telemetry delivery pipeline.
 
 Tests the full chain: transcript JSONL -> parser -> contract / receipt payload
--> compose -> SVG. The v3 receipt (primer genome, 8 variants) replaced the
-pre-genome treemap/rhythm artifact in v0.4.0-alpha.4; these tests assert the
-end-to-end CLI + hook behavior and the v3 zone structure. The receipt/1 payload
+-> compose -> SVG. The primer receipt (8 variants) replaced the
+earlier pre-genome treemap/rhythm artifact; these tests assert the
+end-to-end CLI + hook behavior and the receipt zone structure. The receipt/1 payload
 assembler + section-layout extremes are unit-tested in
 ``tests/telemetry/test_receipt_payload.py`` and ``tests/compose/test_receipt_primer.py``.
 """
@@ -63,7 +63,7 @@ def test_contract_structure(fixture_transcript: Path) -> None:
 
 
 def test_receipt_end_to_end(fixture_transcript: Path) -> None:
-    """Full pipeline: transcript -> receipt/1 payload -> v3 receipt SVG."""
+    """Full pipeline: transcript -> receipt/1 payload -> receipt SVG."""
     from hyperweave.compose.engine import compose
     from hyperweave.core.models import ComposeSpec
     from hyperweave.telemetry.contract import build_receipt_contract
@@ -78,7 +78,7 @@ def test_receipt_end_to_end(fixture_transcript: Path) -> None:
     # reaches the specimen's 578, a sparse one is shorter.
     assert 300 <= result.height <= 578
 
-    # The v3 zones are present (the treemap/rhythm artifact is retired).
+    # The receipt zones are present (the treemap/rhythm artifact is retired).
     for zone in ("identity", "hero", "metrics", "tool-spend", "cost-by-model", "footer"):
         assert f'data-hw-zone="{zone}"' in result.svg, f"missing zone {zone}"
     assert 'data-hw-field="burn-curve"' in result.svg
@@ -113,7 +113,7 @@ def test_receipt_embeds_payload_and_envelope(fixture_transcript: Path) -> None:
 
 
 def test_cli_session_receipt(fixture_transcript: Path, tmp_path: Path) -> None:
-    """CLI session receipt writes a v3 receipt SVG to the output path."""
+    """CLI session receipt writes a receipt SVG to the output path."""
     from typer.testing import CliRunner
 
     from hyperweave.cli import app

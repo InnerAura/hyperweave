@@ -137,3 +137,21 @@ def test_chrome_skips_chromatic_coverage(loaded: ConfigLoader) -> None:
     genomes so v0.3.2's stricter contract doesn't retroactively break chrome."""
     chrome = loaded.genome_specs["chrome"]
     validate_genome_variants(chrome)  # raises if validator over-reaches into chrome
+
+
+def test_primer_passes_with_muted_connector_field(loaded: ConfigLoader) -> None:
+    """primer ships diagram_conn_muted on base + every variant (the muted knob)."""
+    validate_genome_variants(loaded.genome_specs["primer"])  # raises if any variant lacks it
+
+
+def test_validator_catches_missing_diagram_conn_muted(loaded: ConfigLoader) -> None:
+    """A variant that declares chromatic fields but omits diagram_conn_muted fails
+    loud at config load — the muted knob must never silently no-op per variant.
+    (The flow palette now derives from the accent, but the muted wire is a
+    genuine per-variant neutral the derivation does not produce.)"""
+    primer = loaded.genome_specs["primer"].model_copy(deep=True)
+    primer.variant_overrides["cream"] = dict(primer.variant_overrides["cream"])
+    del primer.variant_overrides["cream"]["diagram_conn_muted"]
+
+    with pytest.raises(ValueError, match="diagram_conn_muted"):
+        validate_genome_variants(primer)

@@ -58,8 +58,12 @@ async def hw_compose(
     glyph_tint: str = "",
     performance: str = "",
     edge_motion: str = "",
-    chrome: str = "card",
+    surface: str = "",
+    ground: str = "",
+    palette: str = "",
+    faces: bool = False,
     render_target: str = "svg",
+    format: str = "svg",
     respond: str = "envelope",
 ) -> dict[str, Any] | str:
     """Compose a HyperWeave artifact.
@@ -116,9 +120,9 @@ async def hw_compose(
                 "edges": [{"source","target","label"?,"kind"?,"direction"?}]
                 — edges are required for sequence/dag/state-machine (they
                 ARE the content), optional direction overlays elsewhere.
-                edge_motion: dash|particle|beam|flow (the closed 2x2;
-                genome allowlist + composite-only fallback ladder). Or use
-                a server preset via the GET URL grammar.
+                edge_motion: dash|particle (the closed kit pair; the
+                grammar is compositor-only by construction). Or use a
+                server preset via the GET URL grammar.
 
     The ``data`` parameter is the unified data-token grammar. Forms:
       text:STRING          — raw display text
@@ -156,23 +160,29 @@ async def hw_compose(
     render_target: svg (default) | markdown (matrix: the GFM table shadow;
           diagram: the topology text shadow) | html (reserved seam — not
           implemented until v0.5).
+    format: byte format of the artifact — svg (default) | svg-static (vars
+          flattened, motion stripped) | png | webp. png/webp are served at
+          `url` (never inline); svg-static/png/webp of an adaptive artifact are
+          rejected (use faces). Orthogonal to render_target (which picks svg vs
+          the markdown shadow).
     glyph_tint: glyph fill selection: ink | brand | full. Empty defers to
           the genome default; per-slot IR declarations outrank it.
           Degrades full -> gradient -> brand -> ink, never errors.
-    performance: '' (paint-ok, default) | 'composite-only' — diagram motion
-          ladders beam->particle and flow->dash for compositor-constrained
-          surfaces; the payload's rendered block records fallback_applied.
-    edge_motion: '' (use the spec/preset's own) | dash | particle | beam | flow
-          — artifact-level override of the diagram's edge motion (per-edge IR
+    performance: '' (paint-ok, default) | 'composite-only' — the kit grammar
+          is compositor-only by construction, so both values render the same
+          artifact; the payload's rendered block records the tier.
+    edge_motion: '' (use the spec/preset's own) | dash | particle —
+          artifact-level override of the diagram's edge motion (per-edge IR
           declarations still outrank it). Parity with the HTTP ?edge_motion=.
-    chrome: card (default) | bare — diagram presentation chrome. Bare ships
-          transparent paper with no masthead/footer (title lives in
-          hw:title/aria/markdown/payload); presentational, excluded from the
-          envelope digest. Bare callers own paper matching — the genome's
-          inks assume its own surface family.
+    surface (matrix/diagram): '' (plate) | plate | inlay | twin — how the
+          artifact meets the host: plate carries its own ground, inlay borrows
+          the host + adapts to its theme, twin bakes a light+dark pair.
+          ground/palette are the raw axes if you'd rather set them directly.
+    faces: twin only — also bake the light + dark faces; returns their URLs
+          under faces:{light,dark} (the <picture> pair for a README).
     """
-    from hyperweave.compose.engine import compose
-    from hyperweave.core.models import ComposeSpec
+    from hyperweave.compose.surface import SpecEnvelope, compose_surface
+    from hyperweave.config.settings import get_settings
 
     if render_target not in ("svg", "markdown"):
         if render_target == "html":
@@ -191,9 +201,11 @@ async def hw_compose(
         if diagram is not None:
             diagram = {**diagram, "edge_motion": edge_motion}
 
+    # Live data-token resolution (async, frame-aware) — the shared path; the
+    # rich MCP params below pack into the SpecEnvelope's `spec` dict, which the
+    # unified core maps onto the ComposeSpec.
     final_value = value
     data_tokens_resolved: list[Any] | None = None
-
     if data:
         from hyperweave.serve.data_tokens import (
             format_for_value,
@@ -210,71 +222,107 @@ async def hw_compose(
             if formatted:
                 final_value = formatted
 
-    spec = ComposeSpec(
-        type=type,
-        genome_id=genome,
-        title=title,
-        value=final_value,
-        state=state,
-        motion=motion,
-        glyph=glyph,
-        glyph_mode=glyph_mode,
-        regime=regime,
-        size=size,
-        shape=shape,
-        variant=variant,
-        pair=pair,
-        state_glyph_shape=state_glyph_shape,
-        divider_variant=divider_variant,
-        marquee_direction=direction,
-        marquee_speeds=speeds,
-        telemetry_data=telemetry_data,
-        genome_override=genome_override,
-        connector_data=connector_data,
-        stats_username=stats_username,
-        chart_owner=chart_owner,
-        chart_repo=chart_repo,
-        data_tokens=data_tokens_resolved,
-        matrix=matrix,
-        diagram=diagram,
-        glyph_tint=glyph_tint,
-        performance=performance,
-        chrome=chrome,
-    )
+    # Surface preset/axes → the two ComposeSpec axes. `surface` is a preset name
+    # (no ComposeSpec field), so expand it here; ground/palette pack into `content`
+    # and forward through compose_surface's field partition. A bad preset/axis or
+    # the bare+fixed trap raises ValueError (surfaced to the MCP caller).
+    surface_ground, surface_palette = "", ""
+    if surface or ground or palette:
+        from hyperweave.core.surface_spec import expand_surface_preset
 
-    result = compose(spec)
+        resolved_surface = expand_surface_preset(surface, ground, palette)
+        surface_ground = resolved_surface.ground.value
+        surface_palette = resolved_surface.palette.value
+
+    # markdown render_target wants the text shadow, not a byte projection — emit
+    # `md` and return it directly (the compose_surface md path preserves the
+    # existing "no markdown projection" error). `faces` (twin only) adds the
+    # face-bake target so the response carries the light/dark URL pair.
     if render_target == "markdown":
-        if not result.markdown:
+        emit: tuple[str, ...] = ("md",)
+    else:
+        emit = ("svg", "compressed", "faces") if faces else ("svg", "compressed")
+
+    if type in {"matrix", "diagram"}:
+        # The IR schema PLUS the ComposeSpec-level params a matrix/diagram caller
+        # may set (matrix's connector-registry adapter; diagram's performance
+        # tier). compose_surface's envelope mapping lifts these back out to
+        # top-level ComposeSpec fields, so every hw_compose param survives the
+        # round-trip regardless of frame type (the forwarding contract).
+        content: dict[str, Any] = dict((matrix if type == "matrix" else diagram) or {})
+        content["performance"] = performance
+        # glyph_tint's diagram-IR field is enum-strict (no ''), so forward only a
+        # real selection; a matrix caller's lands as the top-level ComposeSpec
+        # field (MatrixSpec has no glyph_tint) where '' is a valid default.
+        if glyph_tint:
+            content["glyph_tint"] = glyph_tint
+        if connector_data is not None:
+            content["connector_data"] = connector_data
+        if genome_override is not None:
+            content["genome_override"] = genome_override
+    else:
+        content = {
+            "title": title,
+            "value": final_value,
+            "state": state,
+            "motion": motion,
+            "glyph": glyph,
+            "glyph_mode": glyph_mode,
+            "regime": regime,
+            "size": size,
+            "shape": shape,
+            "pair": pair,
+            "state_glyph_shape": state_glyph_shape,
+            "divider_variant": divider_variant,
+            "marquee_direction": direction,
+            "glyph_tint": glyph_tint,
+            "performance": performance,
+        }
+        if speeds is not None:
+            content["marquee_speeds"] = speeds
+        if telemetry_data is not None:
+            content["telemetry_data"] = telemetry_data
+        if genome_override is not None:
+            content["genome_override"] = genome_override
+        if connector_data is not None:
+            content["connector_data"] = connector_data
+        if stats_username:
+            content["stats_username"] = stats_username
+        if chart_owner:
+            content["chart_owner"] = chart_owner
+        if chart_repo:
+            content["chart_repo"] = chart_repo
+
+    # Surface axes forward as top-level ComposeSpec fields via the partition.
+    if surface_ground:
+        content["ground"] = surface_ground
+    if surface_palette:
+        content["palette"] = surface_palette
+
+    env = SpecEnvelope(type=type, genome=genome, variant=variant, spec=content, format=format, emit=emit)
+    response = compose_surface(env, base_url=get_settings().public_base_url, data_tokens=data_tokens_resolved)
+
+    if render_target == "markdown":
+        if not response.md:
             raise ValueError(f"frame type {type!r} has no markdown projection")
-        return result.markdown
+        return response.md
 
-    # {envelope, url} contract — cache the pixels under their content digest and
-    # return only the actionable envelope + a content-addressed handle. The SVG
-    # bytes never enter the agent's context: it emits ![](url) (~10 tokens), not
-    # tens of KB of markup. This is what makes the multi-turn loop cheap.
-    from hyperweave.compose.artifact_store import store_artifact
-    from hyperweave.compose.surface import build_artifact_url
-    from hyperweave.config.settings import get_settings
-    from hyperweave.core.envelope import extract_envelope
-
-    envelope = extract_envelope(result.svg) or {}
-    digest = str(envelope.get("id", ""))
-    url = ""
-    if digest:
-        store_artifact(digest, result.svg)
-        url = build_artifact_url(digest, get_settings().public_base_url)
+    # {envelope, url} contract — the SVG bytes never enter the agent's context: it
+    # emits ![](url) (~10 tokens), not tens of KB of markup. `respond='svg'` opts
+    # into inline pixels; the artifact is cached under `url` either way.
     if respond == "svg":
-        # Opt-in inline pixels for a caller that must embed the markup directly.
-        # The artifact is still cached under `url`, so the handle stays valid.
-        return result.svg
-    return {
-        "envelope": envelope,
-        "url": url,
-        "width": result.width,
-        "height": result.height,
-        "genome": spec.genome_id,
-        "variant": spec.variant,
+        return response.svg
+    result: dict[str, Any] = {
+        "envelope": response.envelope,
+        "url": response.url,
+        "width": response.width,
+        "height": response.height,
+        "genome": response.genome,
+        "variant": response.variant,
     }
+    if response.faces is not None:
+        result["faces"] = response.faces
+    return result
 
 
 @mcp.tool()
@@ -299,72 +347,79 @@ async def hw_validate(spec: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-def _verb_result(fn: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
-    """Run a verb, returning its result dict or the structured error envelope."""
-    from hyperweave.core.errors import HwError
+async def _dispatch(name: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Dispatch a capability on the MCP surface, rendering HwError to an envelope.
 
+    The MCP tool bodies are one-line calls to this: the registry (not each tool)
+    owns validation and the error contract, so CLI / HTTP / MCP cannot drift.
+    """
+    from hyperweave.config.settings import get_settings
+    from hyperweave.core.errors import HwError
+    from hyperweave.surfaces.registry import CallContext, dispatch
+
+    ctx = CallContext(surface="mcp", base_url=get_settings().public_base_url)
     try:
-        return fn(*args, **kwargs).to_dict()  # type: ignore[no-any-return]
+        return await dispatch(name, payload, ctx)
     except HwError as exc:
         return exc.envelope()
 
 
 @mcp.tool()
-async def hw_extract(svg_or_url: str, respond: str = "envelope") -> dict[str, Any]:
+async def hw_extract(source: str, respond: str = "envelope") -> dict[str, Any]:
     """Extract the seed at a depth — envelope (compact digest) | payload (lossless) | markdown.
 
-    The payload replants to a byte-identical artifact; the envelope is the
-    ~200-token actionable read. ``hw_compress`` is the alias for envelope depth.
+    ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id
+    (the same input the HTTP/CLI extract verbs take). The payload replants to a
+    byte-identical artifact; the envelope is the ~200-token actionable read.
+    ``hw_compress`` is the alias for envelope depth.
     """
-    from hyperweave.verbs import extract
-
-    return _verb_result(extract, svg_or_url, respond=respond)
+    return await _dispatch("extract", {"source": source, "respond": respond})
 
 
 @mcp.tool()
-async def hw_compress(svg_or_url: str) -> dict[str, Any]:
+async def hw_compress(source: str) -> dict[str, Any]:
     """Alias for hw_extract(respond='envelope') — the kept name for the envelope-depth read."""
-    from hyperweave.verbs import extract
-
-    return _verb_result(extract, svg_or_url, respond="envelope")
+    return await _dispatch("extract", {"source": source, "respond": "envelope"})
 
 
 @mcp.tool()
-async def hw_verify(svg: str) -> dict[str, Any]:
-    """Recompute the hash; prove the artifact verifiably IS its data (id == sha256(payload))."""
-    from hyperweave.verbs import verify
+async def hw_verify(source: str) -> dict[str, Any]:
+    """Recompute the hash; prove the artifact verifiably IS its data (id == sha256(payload)).
 
-    return _verb_result(verify, svg)
+    ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
+    """
+    return await _dispatch("verify", {"source": source})
 
 
 @mcp.tool()
-async def hw_transform(svg_or_id: str, mutations: list[dict[str, Any]]) -> dict[str, Any]:
+async def hw_transform(source: str, mutations: list[dict[str, Any]]) -> dict[str, Any]:
     """Mutate an artifact via structural JSON patch → a new artifact.
 
-    Returns {envelope, url, lineage} — the SVG is cached, never inlined. The
-    mutation is a list of RFC-6902 ops (add/remove/replace/move/copy/test); a
+    ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
+    Returns a handle {envelope, url, lineage, parent_id, new_id} on EVERY surface
+    by design — the SVG is cached, never inlined; fetch the ``url`` to render it.
+    ``mutations`` is a list of RFC-6902 ops (add/remove/replace/move/copy/test); a
     patch that breaks the frame schema fails cleanly as SPEC_INVALID.
     """
-    from hyperweave.config.settings import get_settings
-    from hyperweave.verbs import transform
-
-    return _verb_result(transform, svg_or_id, mutations, base_url=get_settings().public_base_url)
+    return await _dispatch("transform", {"source": source, "mutations": mutations})
 
 
 @mcp.tool()
-async def hw_diff(svg_a: str, svg_b: str) -> dict[str, Any]:
-    """Payload-bound structured delta between two artifacts (added/removed/changed)."""
-    from hyperweave.verbs import diff
+async def hw_diff(a: str, b: str) -> dict[str, Any]:
+    """Payload-bound structured delta between two artifacts (added/removed/changed).
 
-    return _verb_result(diff, svg_a, svg_b)
+    ``a`` and ``b`` are each an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
+    """
+    return await _dispatch("diff", {"a": a, "b": b})
 
 
 @mcp.tool()
-async def hw_query(svg: str, question: str) -> dict[str, Any]:
-    """Answer a question about an artifact from its compact envelope (cheap, not faithful)."""
-    from hyperweave.verbs import query
+async def hw_query(source: str, question: str) -> dict[str, Any]:
+    """Answer a question about an artifact from its compact envelope (cheap, not faithful).
 
-    return _verb_result(query, svg, question)
+    ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
+    """
+    return await _dispatch("query", {"source": source, "question": question})
 
 
 @mcp.tool()
@@ -373,256 +428,19 @@ async def hw_discover(
 ) -> dict[str, Any]:
     """Discover available HyperWeave components.
 
-    what: all | genomes | motions | glyphs | frames | matrix | url_grammar
-    Returns structured data about available options for hw_compose.
+    what: all | genomes | motions | glyphs | frames | verbs | capabilities |
+          matrix | diagram | url_grammar
+    Returns structured data about available options for hw_compose. The
+    ``capabilities`` view is the living registry roster (name, summary,
+    per-surface reachability) — what HyperWeave can do and where.
     """
-    from hyperweave.config.loader import get_loader
-    from hyperweave.core.enums import FrameType
+    # One implementation of the discovery body lives in surfaces.discover so
+    # the MCP / HTTP / CLI faces cannot drift (they served hand-copied dicts
+    # that fell out of sync — the diagram mechanism prose and the card rename
+    # landed on one face only). Delegating keeps this tool a thin adapter.
+    from hyperweave.surfaces.discover import discover
 
-    loader = get_loader()
-    result: dict[str, Any] = {}
-
-    if what in ("all", "genomes"):
-        result["genomes"] = [
-            {
-                "id": gid,
-                "name": g.get("name", gid),
-                "category": g.get("category", "dark"),
-                "profile": g.get("profile", "flat"),
-                "compatible_motions": g.get("compatible_motions", ["static"]),
-            }
-            for gid, g in loader.genomes.items()
-        ]
-
-    if what in ("all", "motions"):
-        result["motions"] = [
-            {
-                "id": mid,
-                "name": m.get("name", mid),
-                "type": m.get("type", "unknown"),
-                "applies_to": m.get("applies_to", m.get("frames", [])),
-                "cim_compliant": m.get("cim_compliant", True),
-            }
-            for mid, m in loader.motions.items()
-        ]
-
-    if what in ("all", "glyphs"):
-        result["glyphs"] = sorted(loader.glyphs.keys())
-
-    if what in ("all", "frames"):
-        result["frames"] = [ft.value for ft in FrameType]
-
-    if what in ("all", "verbs"):
-        from hyperweave.core.contract import discover_verbs
-
-        result["verbs"] = discover_verbs()
-
-    if what in ("all", "matrix"):
-        from hyperweave.compose.matrix.input import matrix_preset_names
-        from hyperweave.core.matrix import CellKind
-
-        result["matrix"] = {
-            "cell_kinds": [k.value for k in CellKind if k.value != "auto"],
-            "inferred_kinds": "text | check | dot... auto-inference covers check/chip/glyph/pill/numeric/text; "
-            "bar and dot are caller-only (declare column.kind explicitly)",
-            "presets": list(matrix_preset_names()),
-            "rhetoric_fields": "hero_column, headline, summary_row, emphasis — caller-only, never inferred",
-            "projections": "SVG + hw:payload (matrix/1) + hwz/1 envelope + GFM markdown "
-            "(render_target='markdown' or ComposeResult.markdown)",
-        }
-
-    if what in ("all", "diagram"):
-        from hyperweave.compose.diagram import registered_slugs
-        from hyperweave.compose.diagram.input import diagram_preset_names
-        from hyperweave.core.diagram import Topology
-
-        result["diagram"] = {
-            "topologies": [t.value for t in Topology],
-            "layout_slugs": registered_slugs(),
-            "orientations": "fanout: horizontal | bilateral | upward | radial; tree: horizontal | radial "
-            "(radial requires depth >= 2 — the mindmap); everything else horizontal",
-            "edge_motion": "the closed 2x2 — composite-only {particle, dash} x paint-ok {beam, flow}; "
-            "genome allowlist enforced; composite-only surfaces ladder beam->particle, flow->dash",
-            "node_styles": "card | glyph-circle | card+glyph — caller-chosen, never inferred",
-            "roles": "default | hero | muted — hero gets the signal ring; muted is the comparison-left grammar",
-            "presets": list(diagram_preset_names()),
-            "projections": "SVG + hw:payload (diagram/1: {spec, rendered}) + hwz/1 envelope "
-            "(pattern + n + content) + markdown shadow (render_target='markdown')",
-        }
-
-    if what in ("all", "url_grammar"):
-        data_grammar = (
-            "Comma-separated tokens: text:STRING | kv:KEY=VALUE | "
-            "gh:owner/repo.metric | pypi:pkg.metric | npm:pkg.metric | "
-            "hf:org/model.metric | arxiv:id.metric | docker:owner/image.metric | "
-            "crates:pkg.metric | scorecard:owner/repo.metric | dora:owner/repo.metric. "
-            "Embedded commas in text/kv payloads escape as \\,."
-        )
-        result["url_grammar"] = {
-            "badge (static)": {
-                "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
-                "query_params": {
-                    "glyph": "Glyph identifier (e.g. github, python)",
-                    "glyph_mode": "auto | fill | wire | none",
-                    "state": "active | passing | building | warning | critical | failing | offline",
-                    "regime": "normal | permissive | ungoverned",
-                    "size": "default | compact",
-                    "variant": (
-                        "chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
-                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
-                    ),
-                    "pair": (
-                        "automata only — second solo tone for bifamily strip + divider. "
-                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
-                        "Other frame types silently ignore the parameter."
-                    ),
-                    "t": "Title override (use when title contains slashes)",
-                },
-                "example": "/v1/badge/build/passing/brutalist.static",
-            },
-            "badge (data-driven)": {
-                "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
-                "query_params": {
-                    "data": data_grammar,
-                    "glyph": "Glyph identifier",
-                    "glyph_mode": "auto | fill | wire | none",
-                    "state": "Semantic state",
-                    "regime": "normal | permissive | ungoverned",
-                    "size": "default | compact",
-                    "variant": (
-                        "chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
-                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
-                    ),
-                    "pair": (
-                        "automata only — second solo tone for bifamily strip + divider. "
-                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
-                        "Other frame types silently ignore the parameter."
-                    ),
-                },
-                "example": "/v1/badge/STARS/brutalist.static?data=gh:anthropics/claude-code.stars",
-            },
-            "strip": {
-                "pattern": "/v1/strip/{title}/{genome}.{motion}",
-                "query_params": {
-                    "value": "Static metrics: STARS:2.9k,FORKS:278",
-                    "data": data_grammar,
-                    "subtitle": "Subtitle under identity (cellular paradigm)",
-                    "glyph": "Glyph identifier",
-                    "state": "Semantic state",
-                    "variant": (
-                        "chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
-                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
-                    ),
-                    "pair": (
-                        "automata only — second solo tone for bifamily strip + divider. "
-                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
-                        "Other frame types silently ignore the parameter."
-                    ),
-                    "t": "Title override (use when title contains slashes)",
-                },
-                "example": (
-                    "/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks"
-                ),
-            },
-            "icon": {
-                "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
-                "query_params": {
-                    "shape": "square | circle",
-                    "glyph_mode": "auto | fill | wire | none",
-                    "state": "Semantic state",
-                    "variant": (
-                        "chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
-                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
-                    ),
-                    "pair": (
-                        "automata only — second solo tone for bifamily strip + divider. "
-                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
-                        "Other frame types silently ignore the parameter."
-                    ),
-                },
-                "example": "/v1/icon/github/chrome.static?shape=circle",
-            },
-            "divider": {
-                "pattern": "/v1/divider/{divider_slug}/{genome}.{motion}",
-                "query_params": {
-                    "divider_slug (path)": "block | current | takeoff | void | zeropoint | dissolve | seam | band",
-                    "variant": (
-                        "Chromatic variant. chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
-                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
-                    ),
-                    "pair": (
-                        "automata only — second solo tone for bifamily dissolve divider. "
-                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet)."
-                    ),
-                },
-                "example": "/v1/divider/dissolve/automata.static?variant=teal&pair=violet",
-            },
-            "marquee": {
-                "pattern": "/v1/marquee/{title}/{genome}.{motion}",
-                "query_params": {
-                    "data": data_grammar + " When set, drives the scroll directly and ignores title.",
-                    "direction": "ltr | rtl",
-                    "speeds": "Single float scroll speed multiplier",
-                    "variant": (
-                        "chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
-                        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
-                    ),
-                    "pair": (
-                        "automata only — second solo tone for bifamily strip + divider. "
-                        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
-                        "Other frame types silently ignore the parameter."
-                    ),
-                    "t": "Title override (use when title contains slashes)",
-                },
-                "example": (
-                    "/v1/marquee/SCROLL/brutalist.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars"
-                ),
-            },
-            "stats": {
-                "pattern": "/v1/stats/{username}/{genome}.{motion}",
-                "query_params": {
-                    "data": "Optional live data tokens appended as stats metric slots.",
-                    "variant": (
-                        "Chromatic variant. chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones."
-                    ),
-                    "pair": "automata only — silently ignored on stats (kept for URL grammar uniformity).",
-                },
-                "example": "/v1/stats/GLM-5/chrome.static?data=github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
-            },
-            "matrix": {
-                "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
-                "query_params": {
-                    "variant": "primer: noir | carbon | space | anvil | porcelain | cream | dusk | petrol",
-                    "spec": (
-                        "base64url-encoded MatrixSpec JSON (preset must be 'custom'; "
-                        "decoded cap 8 KB). Presets: connectors — the generated "
-                        "connector-registry matrix. Arbitrary tables also ship via "
-                        "POST /v1/compose with a `matrix` body."
-                    ),
-                },
-                "example": "/v1/matrix/connectors/primer.static?variant=porcelain",
-            },
-            "chart-stars": {
-                "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
-                "query_params": {
-                    "variant": (
-                        "Chromatic variant. chrome: horizon | abyssal | lightning | graphite | moth. "
-                        "automata: 16 solo tones."
-                    ),
-                    "pair": "automata only — silently ignored on chart (kept for URL grammar uniformity).",
-                },
-                "example": "/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone",
-            },
-        }
-
-    return result
+    return discover(what)
 
 
 # ── Resources ────────────────────────────────────────────────────────
@@ -678,6 +496,24 @@ async def motions_resource() -> str:
         {mid: m for mid, m in loader.motions.items()},
         indent=2,
     )
+
+
+@mcp.resource("hyperweave://artifact/{digest}")
+async def artifact_resource(digest: str) -> str:
+    """Fetch a cached artifact's SVG by content digest.
+
+    The artifact-fetch capability as an MCP resource (not a tool) — resources
+    don't flood the tool context. ``digest`` is the bare hex (or ``sha256:...``)
+    of a composed artifact; resolves against the in-process LRU + the durable
+    ``HW_ARTIFACT_CACHE_DIR`` disk tier, mirroring ``GET /v1/a/{digest}``. An
+    uncached digest returns a short miss note (recompose to repopulate).
+    """
+    from hyperweave.compose.artifact_store import get_artifact
+
+    svg = get_artifact(digest.rsplit("/", 1)[-1])
+    if svg is None:
+        return f"artifact {digest} not in cache — recompose (the content cache is per-process)"
+    return svg
 
 
 if __name__ == "__main__":

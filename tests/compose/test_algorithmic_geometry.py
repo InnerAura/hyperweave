@@ -63,7 +63,7 @@ def test_chrome_and_brutalist_strips_share_glyph_ratio() -> None:
 def test_cellular_identity_zone_width_derived_from_layout() -> None:
     """Cellular: bio_x(410) - identity_x(20) - identity_padding(2) = 388.
 
-    bio_x widened from 110 → 410 in v0.3.9 Bug #1 follow-up after Bug A
+    bio_x widened from 110 → 410 after HYPERWEAVE branding moved
     moved HYPERWEAVE branding to the footer. The header right zone is now
     free so bio can adapt without crowding any right-anchored header
     element. The 388 zone is effectively "no clamp for any realistic
@@ -98,7 +98,7 @@ def test_brutalist_identity_zone_width_derived_from_layout() -> None:
 
 
 def test_bio_collision_clamp_disabled_after_hyperweave_moved_to_footer() -> None:
-    """After Bug A moved HYPERWEAVE to footer, cellular header right is empty.
+    """After HYPERWEAVE branding moved to the footer, cellular header right is empty.
 
     Pre-Bug-A cellular set bio_collision_clamp=True because the HYPERWEAVE
     branding at y=22 (right-anchored) could collide with long bios.
@@ -230,7 +230,7 @@ def test_brutalist_adaptive_bio_x_short_username() -> None:
     )
 
 
-def test_brutalist_adaptive_bio_x_long_username_matches_clamped_v038() -> None:
+def test_brutalist_adaptive_bio_x_long_username_matches_clamped_precedent() -> None:
     """Long clamped identity reproduces v0.3.8 bio_x=122 from derivation.
 
     For VLLM-PROJECT (12 chars at JBM 11/800/0.22em ≈ 130+ px), identity
@@ -264,7 +264,7 @@ def test_cellular_streak_slot_fits_1000d_value() -> None:
 
     Pre-v0.3.9 cellular template hardcoded STREAK value at x=459 + label at
     x=479 (20px gap). Value "21d" (~18px) fit; "1000d" (~40px) overflowed.
-    Bug B: resolver computes slot widths from per-value measurement and
+    The resolver computes slot widths from per-value measurement and
     right-anchors STREAK so the value floats left of the label regardless
     of width.
 

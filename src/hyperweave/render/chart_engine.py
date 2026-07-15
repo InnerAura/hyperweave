@@ -291,7 +291,7 @@ def _build_area_path(projected: list[tuple[int, int]], baseline_y: int) -> str:
     return f"{curve} L{last_x},{baseline_y} L{first_x},{baseline_y} Z"
 
 
-# ── Cellular area-fill (v2 star chart) ────────────────────────────────────
+# ── Cellular area-fill (the cellular star-chart specimen) ─────────────────
 #
 # Area-fill approach: cells exist only under the data polyline, with
 # brightness encoding vertical proximity to the curve. The chart's chromatic
@@ -341,9 +341,9 @@ _CHART_HASH_SALT: int = 0xDEAD  # non-zero so corner cell (0,0) doesn't hash to 
 # dominant signal so adjacent cells have visually similar colors.
 _CHART_NOISE_AMPLITUDE: float = 0.16
 # Inset between cells (cell_size - inset = rendered cell width). v0.3.0 visual
-# refresh sets this to 1 to match the v2 prototype's 18x18 cells in 19px stride
+# refresh sets this to 1 to match the specimen's 18x18 cells in 19px stride
 # (1px hairline between cells). Earlier rounds used 0 (edge-to-edge), but the
-# v2 prototype's slight gap reads as a deliberate cellular grid boundary
+# the specimen's slight gap reads as a deliberate cellular grid boundary
 # rather than visual noise — the chart operates at a denser 30-col x 13-row
 # grid (vs prior 18x10) where the per-cell boundary is what carries the
 # cellular automata identity.
@@ -828,7 +828,7 @@ def _build_milestones(
     def _to_bound(d: dict[str, Any]) -> dict[str, Any]:
         return {"x": float(d["x"]), "text": str(d["text"]), "anchor": d.get("anchor", "middle")}
 
-    # v0.3.9 Bug D: include data-point markers in the collision pass.
+    # Include data-point markers in the collision pass.
     # Milestones render labels 24px above the curve, but they extend
     # laterally for the label's full width. A long milestone label centered
     # at one data point can extend over an ADJACENT data point's diamond
@@ -1078,7 +1078,7 @@ def _build_x_date_labels(
 ) -> list[dict[str, Any]]:
     """Adaptive x-axis date labels — count-driven (~6 labels across any span).
 
-    v0.3.9 Bug #4 refactor: pre-fix this was STEP-driven (fixed 7-day
+    This replaced a STEP-driven approach (fixed 7-day
     step for spans <90d, 30-day step for <2y, etc.), producing 8+ weekly
     labels on short-span repos and dense monthly labels on multi-year
     spans. Now COUNT-DRIVEN: target ~6 labels, compute the raw step

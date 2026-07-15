@@ -54,7 +54,9 @@ def test_stats_compose_brutalist_emerald_renders() -> None:
     result = compose(_spec("brutalist"))
     assert result.width == 495
     assert result.height == 280
-    assert 'data-hw-frame="stats"' in result.svg
+    # data-hw-frame emits the PUBLIC name (card); data-hw-type keeps the internal id.
+    assert 'data-hw-frame="card"' in result.svg
+    assert 'data-hw-type="stats"' in result.svg
     # Hero number formatted compactly (12847 → "12.8K")
     assert "12.8K" in result.svg
     # Horizontal metric row labels present
@@ -116,7 +118,7 @@ def test_stats_compose_with_minimal_connector_data() -> None:
         connector_data={"username": "anon", "stars_total": 12},
     )
     result = compose(spec)
-    assert 'data-hw-frame="stats"' in result.svg
+    assert 'data-hw-frame="card"' in result.svg
 
 
 def test_brutalist_stats_omits_absent_hero_delta_text() -> None:
@@ -148,8 +150,8 @@ def test_stats_chrome_zero_stars_does_not_synthesize_placeholder() -> None:
     # No placeholder leakage in the embedded chart.
     assert "1200" not in svg
     assert "1,200" not in svg
-    # Compose still completes successfully with data-hw-frame marker.
-    assert 'data-hw-frame="stats"' in svg
+    # Compose still completes successfully with data-hw-frame marker (public name).
+    assert 'data-hw-frame="card"' in svg
 
 
 # ── fetch_user_stats parallel aggregation ─────────────────────────────

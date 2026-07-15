@@ -9,7 +9,7 @@ the embedded form is a hashed contract, the payload is **compact and data-only**
 never ``"$175.01"``; ``cost_pct: 73``, never ``"73% spend"``). Human-readable
 strings live in the render layer and the envelope's unhashed human fields.
 
-Field shape (matches the v3 specimen exactly)::
+Field shape (matches the receipt specimen exactly)::
 
     session, model, cost_usd, dominant,
     cost_basis = "public per-token rates", estimate = true,

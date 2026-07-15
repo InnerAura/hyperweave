@@ -1,4 +1,4 @@
-"""Unified surface + content-addressed transport (alpha.5, Gate 1)."""
+"""Unified surface + content-addressed transport."""
 
 from __future__ import annotations
 
@@ -61,6 +61,25 @@ def test_validate_surface_good_and_bad() -> None:
     assert bad["error"]["code"] == HwErrorCode.TYPE_UNKNOWN.value
 
 
+def test_validate_shares_composes_gate_on_ir_frames() -> None:
+    """Validate runs the IR frame's structural coercion, so it refuses
+    anything compose refuses — no false green on an empty/misshaped IR
+    envelope (the cold-agent dogfood finding)."""
+    # Empty IR spec: composes to DiagramInputError → must NOT validate True.
+    assert validate_surface(SpecEnvelope(type="diagram", spec={}))["valid"] is False
+    assert validate_surface(SpecEnvelope(type="matrix", spec={}))["valid"] is False
+    # A well-formed diagram still validates.
+    good = {
+        "topology": "pipeline",
+        "title": "T",
+        "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+    }
+    assert validate_surface(SpecEnvelope(type="diagram", spec=good))["valid"] is True
+    # A preset carried via connector_data (empty schema) is legal.
+    preset = SpecEnvelope(type="diagram", spec={"connector_data": {"diagram_preset": "rag-pipeline"}})
+    assert validate_surface(preset)["valid"] is True
+
+
 def test_unknown_emit_target_raises_structured_error() -> None:
     with pytest.raises(HwError) as exc:
         compose_surface(SpecEnvelope(type="badge", spec={"title": "X"}, emit=("svg", "gif")))
@@ -72,6 +91,79 @@ def test_unknown_emit_target_raises_structured_error() -> None:
 def test_card_alias_canonicalizes_to_stats() -> None:
     spec = ComposeSpec(type="card", genome_id="brutalist", stats_username="eli64s")
     assert spec.type == "stats"
+
+
+def test_ir_frame_lifts_compose_fields_but_keeps_ir_title() -> None:
+    """The forwarding contract: an IR frame's `spec` may carry ComposeSpec-level
+    fields alongside the nested schema. `performance` lifts to a top-level
+    ComposeSpec field; the IR's own `title` stays in the diagram schema."""
+    from hyperweave.compose.surface import SpecEnvelope, _to_compose_spec
+
+    env = SpecEnvelope(
+        type="diagram",
+        genome="primer",
+        spec={
+            "topology": "pipeline",
+            "title": "My Flow",
+            "nodes": [{"label": "A"}, {"label": "B"}],
+            "performance": "composite-only",
+        },
+    )
+    spec = _to_compose_spec(env)
+    assert spec.performance == "composite-only"  # lifted
+    assert spec.diagram is not None
+    assert spec.diagram.title == "My Flow"  # IR title stays in the schema
+    assert spec.title == ""  # never became a badge label
+
+
+def test_stray_chrome_key_is_silently_dropped_not_lifted() -> None:
+    """`chrome` was the pre-gut diagram presentation axis (card/bare/caption),
+    publicly settable via CLI/HTTP/MCP. It is now internal-only solver
+    plumbing (sec 12.1 embeds); a stray key from an old stored payload must
+    not reach ComposeSpec at all — it is dropped before the IR lift, so it
+    can neither 500 nor resurrect external control of the retired axis."""
+    from hyperweave.compose.surface import SpecEnvelope, _to_compose_spec
+
+    env = SpecEnvelope(
+        type="diagram",
+        genome="primer",
+        spec={
+            "topology": "pipeline",
+            "title": "My Flow",
+            "nodes": [{"label": "A"}, {"label": "B"}],
+            "chrome": "bare",
+        },
+    )
+    spec = _to_compose_spec(env)
+    assert spec.chrome == "caption"  # the internal default, NOT the stray "bare"
+    assert spec.diagram is not None
+    assert spec.diagram.title == "My Flow"
+
+
+def test_matrix_empty_ir_with_connector_data_uses_adapter() -> None:
+    """A matrix with only `connector_data` (no IR) leaves `matrix` None so the
+    connector-registry adapter engages — the empty IR must not become `matrix={}`."""
+    from hyperweave.compose.surface import SpecEnvelope, _to_compose_spec
+
+    env = SpecEnvelope(
+        type="matrix",
+        genome="primer",
+        spec={"connector_data": {"matrix_adapter": "connector-registry"}},
+    )
+    spec = _to_compose_spec(env)
+    assert spec.matrix is None  # empty IR → adapter path, not a bad empty MatrixSpec
+    assert spec.connector_data == {"matrix_adapter": "connector-registry"}
+
+
+def test_format_axis_projects_static() -> None:
+    """The `format` axis projects the response SVG (svg-static flattens vars)."""
+    reset_cache()
+    resp = compose_surface(
+        SpecEnvelope(
+            type="badge", genome="primer", variant="porcelain", spec={"title": "X", "value": "1"}, format="svg-static"
+        )
+    )
+    assert "var(--dna" not in resp.svg  # flattened
 
 
 @pytest.mark.asyncio

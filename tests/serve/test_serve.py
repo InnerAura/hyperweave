@@ -298,7 +298,7 @@ async def test_get_genome_not_found(client: AsyncClient) -> None:
 
 
 async def test_genomes_compat_alias_still_resolves(client: AsyncClient) -> None:
-    """genome→genome rename (alpha.5): the old /v1/genomes paths must still
+    """The old /v1/genomes paths must still
     resolve to the same payload as /v1/genomes so pre-rename clients don't 404."""
     list_alias = await client.get("/v1/genomes")
     list_canonical = await client.get("/v1/genomes")
@@ -575,7 +575,7 @@ def test_uvicorn_access_logger_is_silenced() -> None:
 
 
 async def test_kit_endpoint_retired(client: AsyncClient) -> None:
-    # POST /v1/kit/readme was hard-removed in alpha.5 (use compose with emit=...).
+    # POST /v1/kit/readme was hard-removed (use compose with emit=...).
     resp = await client.post("/v1/kit/readme", json={"genome": "brutalist"})
     assert resp.status_code in (404, 405)
 

@@ -99,9 +99,9 @@
   <text class="{{ uid }}-tri-label" x="{{ chart_layout.texts.primer_tri_l1.x }}" y="{{ chart_layout.texts.primer_tri_l1.y }}">CURRENT</text>
   <text class="{{ uid }}-tri-label" x="{{ chart_layout.texts.primer_tri_l2.x }}" y="{{ chart_layout.texts.primer_tri_l2.y }}">DELTA</text>
   <text class="{{ uid }}-tri-label" x="{{ chart_layout.texts.primer_tri_l3.x }}" y="{{ chart_layout.texts.primer_tri_l3.y }}">WINDOW</text>
-  <text class="{{ uid }}-tri-value" x="{{ chart_layout.texts.primer_tri_v1.x }}" y="{{ chart_layout.texts.primer_tri_v1.y }}">{{ chart_primer_current | default('') | xml_escape }}</text>
-  <text class="{{ uid }}-tri-value {{ uid }}-tri-accent" x="{{ chart_layout.texts.primer_tri_v2.x }}" y="{{ chart_layout.texts.primer_tri_v2.y }}">{{ chart_primer_delta | default('') | xml_escape }}</text>
-  <text class="{{ uid }}-tri-value" x="{{ chart_layout.texts.primer_tri_v3.x }}" y="{{ chart_layout.texts.primer_tri_v3.y }}">{{ chart_primer_window | default('') | xml_escape }}</text>
+  <text class="{{ uid }}-tri-value" x="{{ chart_layout.texts.primer_tri_current.x }}" y="{{ chart_layout.texts.primer_tri_current.y }}">{{ chart_primer_current | default('') | xml_escape }}</text>
+  <text class="{{ uid }}-tri-value {{ uid }}-tri-accent" x="{{ chart_layout.texts.primer_tri_delta.x }}" y="{{ chart_layout.texts.primer_tri_delta.y }}">{{ chart_primer_delta | default('') | xml_escape }}</text>
+  <text class="{{ uid }}-tri-value" x="{{ chart_layout.texts.primer_tri_window.x }}" y="{{ chart_layout.texts.primer_tri_window.y }}">{{ chart_primer_window | default('') | xml_escape }}</text>
 
   {# Brand bar. #}
   <line x1="{{ chart_layout.lines.primer_brand_rule.x1 }}" y1="{{ chart_layout.lines.primer_brand_rule.y1 }}" x2="{{ chart_layout.lines.primer_brand_rule.x2 }}" y2="{{ chart_layout.lines.primer_brand_rule.y2 }}" stroke="{{ _genome_raw.stroke }}" stroke-width="0.7" opacity="0.5"/>

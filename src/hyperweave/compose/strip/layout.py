@@ -312,7 +312,7 @@ def compute_badge_zones(
     # Unrounded so each consumer rounds once (glyph_y stays byte-identical to the
     # original ``text_visual_center - glyph_size/2 + glyph_y_offset`` formula).
     content_reading_center = text_visual_center + glyph_y_offset
-    # Primer v04alpha1: the brand glyph and the state indicator sit on the badge
+    # Primer badge law: the brand glyph and the state indicator sit on the badge
     # MIDLINE (height/2), not the text-ink reading line — the value baseline already
     # carries the optical centring, and the specimen centres both marks geometrically
     # at y=height/2. Opt-in; every other paradigm keeps the text-ink reading line.

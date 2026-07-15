@@ -1,4 +1,4 @@
-"""Conformance census — the envelope-floor tag gate (alpha.5, Layer 0).
+"""Conformance census — the envelope-floor tag gate (Layer 0).
 
 Every frame must emit a valid, re-ingestible ``hwz/1`` envelope. This census is
 the proof the floor holds:
@@ -7,7 +7,7 @@ the proof the floor holds:
              hash_valid, prov_valid, triad_valid}
 
 It is also the training-corpus integrity check — every artifact entering the
-spatial-model training set passes here. No alpha.5 tag without this green.
+spatial-model training set passes here. No release tag without this green.
 
 The triad check is frame-aware: ``data-hw-status`` (health/severity) and
 ``data-hw-regime`` (policy lane) are universal; ``data-hw-state`` (lifecycle:

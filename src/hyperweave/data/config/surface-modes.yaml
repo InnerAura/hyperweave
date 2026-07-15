@@ -1,0 +1,159 @@
+# Surface Modes projection constants.
+#
+# How a HyperWeave artifact meets the host surface it lands on. Three presets
+# over two orthogonal format axes — ground {opaque, bare} × palette {fixed,
+# adaptive}:
+#
+#   plate — opaque · fixed    — carries its own ground, ignores reader theme.
+#   inlay — bare   · adaptive — no ground, borrows the host, re-inks to theme.
+#   twin  — opaque · adaptive — carries a ground both ways (light + dark face).
+#
+# Every threshold and floor the projection needs lives HERE, not in Python.
+# The genome supplies palettes; the frame consumes token vars; this config is
+# the calibration between them. Later genomes and frames extend
+# the model by editing this file — zero new code.
+#
+# The math model is CONTRAST PARITY, not a naive OKLCH lightness mirror. A
+# mirror does not reproduce the authored prototypes; parity does: for each
+# flipping token choose a far lightness (hue held; chroma held, gamut-reduced
+# only as needed) such that contrast(far_token, far_ground) matches
+# contrast(near_token, near_ground), clamped up to per-role floors. Re-ground
+# is a calibrated lightness target with the hue held and chroma boosted toward
+# a cap. Constants below were solved against the two on-disk prototypes
+# (v04/alpha/v04a6/surface-modes/{cream,porcelain}-twin.svg).
+
+# ── Classifier ───────────────────────────────────────────────────────────
+# A variant is accent-carrying (keeps its identity through a ground flip) when
+# its accent chroma clears this OKLCH threshold; below it the accent is the ink
+# (cream) or a neutral (noir/anvil) — monochrome, identity lives in the ground.
+# This is metadata only: the emit math never branches on the classification.
+chroma_threshold: 0.045
+
+# ── Re-ground (twin far face ground) ─────────────────────────────────────
+# The far ground is a calibrated lightness pole with the near ground's hue held
+# and its chroma boosted toward a cap. dark/light are the two flip directions
+# (a light variant flips toward dark; a dark variant toward light). Calibrated:
+# porcelain #F5F8FF → #0B1220 (L 0.183), cream #F8F3EB → #1E140D (L 0.202).
+ground_l_dark: 0.19
+ground_l_light: 0.97
+# surface_1/surface_2 tier lightness offsets from the base ground, applied in
+# the flip direction (added toward dark, subtracted toward light). Kept small —
+# the base ground (surface_0) is the anchor; tiers are subtle separation.
+ground_tier_offsets:
+  surface_1: 0.02
+  surface_2: 0.035
+# Chroma boost carries the near ground's faint tint into the deep far ground so
+# it reads as (e.g.) deep navy, not flat black. Capped so the ground never
+# saturates into a colored panel.
+ground_chroma_boost: 3.0
+ground_chroma_cap: 0.05
+
+# ── Role contrast floors ─────────────────────────────────────────────────
+# Minimum WCAG contrast a flipped token must hold against its far ground. The
+# parity target is max(near_contrast, role_floor); text roles additionally
+# clamp to aa_floor. ink is deliberately high (12.0) — body text stays crisp on
+# either substrate; border is low (1.3) — a hairline separator, not a mark.
+role_floors:
+  ink: 12.0
+  ink_muted: 5.5
+  accent: 4.5
+  border: 1.3
+# WCAG AA text floor — every text-role token clears this in both directions.
+aa_floor: 4.5
+
+# ── Field → role map ─────────────────────────────────────────────────────
+# Every color-bearing field of a primer palette (base + variant_overrides)
+# maps to a projection role. Roles:
+#   ground    — background paints; re-grounded on twin, dropped on inlay.
+#   figure    — ink / marks; parity-flipped (ink, ink_muted floors).
+#   accent    — identity hue; parity-flipped, hue held (the variant's soul).
+#   on_accent — text ON the accent chip; solves vs the FAR ACCENT, not ground.
+#   shadow    — drop-shadow tint; stays dark in both directions.
+#   status    — semantic (pass/warn/fail); NEVER flips (structurally omitted).
+#   held      — communication palette held genome-invariant across faces.
+# Fields absent here are non-color (opacity, corner, font) and are ignored.
+field_roles:
+  # grounds
+  surface_0: ground
+  surface_1: ground
+  surface_2: ground
+  bg: ground
+  bg_alt: ground
+  frame_fill: ground
+  seam_gap: ground
+  chart_title_bg: ground
+  brand_panel_fill: ground
+  # figure (ink-hued body text / marks — the ink contrast tier)
+  ink: figure
+  ink_secondary: figure
+  ink_bright: figure
+  ink_sub: figure
+  brand_text: figure
+  metric_text: figure
+  badge_value_text: figure
+  receipt_grid_ink: figure
+  receipt_eyebrow: figure
+  receipt_label_ink: figure
+  receipt_dim_ink: figure
+  # accent (identity hue) — every field that carries the variant's accent color
+  # must flip identically to `accent` so the identity holds. label_text (column
+  # headers), glyph_inner (mark fill), and the receipt signal/value/area fields
+  # are all the accent hue in the primer palettes; the twin prototypes prove
+  # --dna-label-text == --dna-signal on the far face.
+  accent: accent
+  accent_text: accent
+  accent_complement: accent
+  accent_deep: accent
+  seam_color: accent
+  badge_pass_sep: accent
+  label_text: accent
+  glyph_inner: accent
+  receipt_signal: accent
+  receipt_area_fill: accent
+  receipt_value_ink: accent
+  # on-accent text (solves vs far accent)
+  ink_on_accent: on_accent
+  # border / stroke
+  stroke: border
+  border_tint: border
+  receipt_track: border
+  receipt_track_stroke: border
+  # shadow (stays dark)
+  shadow_color: shadow
+  diagram_shadow_color: shadow
+  # status — NEVER flips
+  accent_signal: status
+  accent_warning: status
+  accent_error: status
+  strip_status_dot: status
+  badge_pass_core: status
+  badge_warn_color: status
+  state_passing_core: status
+  state_passing_bright: status
+  state_warning_core: status
+  state_warning_bright: status
+  state_critical_core: status
+  state_critical_bright: status
+  state_building_core: status
+  state_building_bright: status
+  state_offline_core: status
+  state_offline_bright: status
+  badge_status_passing: status
+  badge_status_warning: status
+  badge_status_critical: status
+  badge_status_offline: status
+  badge_status_critical_rim: status
+  badge_status_warning_rim: status
+  status_knockout: status
+  badge_status_critical_knockout: status
+  badge_status_warning_knockout: status
+  # held — communication palette, genome-invariant across faces
+  diagram_flow: held
+  receipt_ramp: held
+
+# ── Frame allowlist ──────────────────────────────────────────────────────
+# Which frame types accept a non-plate surface. Matrix + diagram ship today;
+# adding a frame is a YAML edit once its templates satisfy the 4-rule contract.
+frames:
+  - matrix
+  - diagram

@@ -1,11 +1,12 @@
-"""Polar-family solvers: fanout-radial, flywheel, and the multi-level
+"""Polar-family solvers: fanout-radial, flywheel, ring, and the multi-level
 radial tree (per-subtree angular subdivision).
 
 The radial fan's connectors are drawn from the HUB CENTER and the hub
 paints last — the card masks the inner stubs so spokes appear to emanate
 from its surface (paint order is data, never a template branch). Flywheel
 arcs trim each card's angular half-width plus a clearance, reproducing the
-specimen's 24-degree insets at any ring count.
+specimen's 24-degree insets at any ring count; the ring adds the
+text-aware trim (arcs also clear each stage's stacked annotation block).
 """
 
 from __future__ import annotations
@@ -17,42 +18,24 @@ from typing import TYPE_CHECKING
 
 from hyperweave.compose.diagram.anchors import boundary_anchor, rect_distance, trim_arc_angle
 from hyperweave.compose.diagram.chrome import (
-    glyph_slot_builder,
-    mark_w_for,
-    place_card,
-    place_circle,
-    solve_card_w,
+    apply_health_dot,
+    place_node,
+    style_of,
     voice_for,
 )
-from hyperweave.compose.diagram.motion import lane_endpoints
-from hyperweave.compose.diagram.paths import arc_d, arc_len, line_len, point_on, ray_d
+from hyperweave.compose.diagram.motion import fmt_s, lane_endpoints
+from hyperweave.compose.diagram.paths import arc_d, arc_len, fmt, line_len, point_on, ray_d
+from hyperweave.compose.diagram.recenter import translate_path
+from hyperweave.compose.diagram.records import ParticlePlacement
+from hyperweave.compose.diagram.sizing import hero_height_floor, solve_node_box
 from hyperweave.compose.diagram.solver import finish_layout, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
-from hyperweave.core.diagram import DiagramNode, NodeRole, NodeStyle, resolved_edges
+from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.core.diagram import DiagramInputError, NodeRole, NodeStyle, resolved_edges
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from hyperweave.compose.diagram.records import DiagramLayout, DiagramText, GlyphArt, NodePlacement
-
-
-def _style_of(ctx: SolverContext, node: DiagramNode) -> str:
-    if node.style is not None:
-        return node.style.value
-    if ctx.spec.node_style is not None:
-        return ctx.spec.node_style.value
-    return ctx.ch.node_style or NodeStyle.CARD.value
-
-
-def _muted_dash(ctx: SolverContext) -> str:
-    return str(ctx.engine["track"]["muted_dash"])
-
-
-def _card_art(ctx: SolverContext, i: int, node: DiagramNode) -> Callable[[float, float], GlyphArt | None] | None:
-    """card+glyph anatomy: the identity mark takes the dot slot."""
-    if _style_of(ctx, node) != NodeStyle.CARD_GLYPH.value or not node.glyph:
-        return None
-    return glyph_slot_builder(node.glyph, ctx.glyph_registry, ctx.glyph_selections[i])
+    from hyperweave.compose.diagram.records import DiagramLayout, DiagramText, NodePlacement
+    from hyperweave.core.diagram import DiagramNode
 
 
 def _place_at_center(
@@ -65,48 +48,41 @@ def _place_at_center(
     hero: bool,
     nch_name: str = "",
     ring_center: tuple[float, float] | None = None,
+    w_group: float = 0.0,
 ) -> NodePlacement:
     ch = ctx.ch
+    # ``nch`` computed here (not via the seam's own ``chassis_class`` hint)
+    # so ``hero`` always wins over ``nch_name`` exactly as the original
+    # ternary orders it — passed as an explicit ``chassis=`` override, the
+    # seam's highest-priority chassis source, so this call site's priority
+    # can never drift from the shared function's own default ordering.
     nch = ch.hero if hero else (ch.node2 if nch_name == "node2" else ch.node)
-    if _style_of(ctx, node) == NodeStyle.GLYPH_CIRCLE.value:
+    if style_of(node, ctx.spec, ctx.ch) == NodeStyle.GLYPH_CIRCLE.value:
         r = ch.hero_circle_r if hero else ch.circle_r
-        return place_circle(
-            index=i,
-            node=node,
-            cx=cx,
-            cy=cy,
-            r=r,
-            cfg=ctx.cfg,
-            ch=ch,
-            accent_index=ctx.node_accents[i],
-            hub=hero,
-            registry=ctx.glyph_registry,
-            glyph_selection=ctx.glyph_selections[i],
-            ring_center=ring_center,
-        )
-    w = solve_card_w(
+        return place_node(ctx, node, i, cx, cy, w=2 * r, h=2 * r, hero=hero, ring_center=ring_center)
+    # A group-normalized width (``w_group``, from the aligned ring policy)
+    # fixes every spoke card to the group max (a content-derived share) and
+    # re-solves the height at that width; 0 = the card's own snug solve.
+    # Snug-width ruling: no other floor — crowns and members alike solve to
+    # their own content, with citations bounding growth as ceilings inside
+    # the sizing seam (the HEAD-anatomy crown keeps its family frame there).
+    min_w = w_group or 0.0
+    w, h, _ = solve_node_box(
+        ctx,
         node,
-        nch,
-        ctx.cfg,
-        ctx.mono_triggers,
+        i,
         hero=hero,
-        min_w=ch.card_min_w,
-        mark_w=mark_w_for(_style_of(ctx, node), node),
+        chassis=nch,
+        min_w=min_w,
+        h_floor=hero_height_floor(ch) if hero else None,
     )
-    x0, y0 = cx - w / 2, cy - nch.h / 2
-    return place_card(
-        index=i,
-        node=node,
-        x=x0,
-        y=y0,
-        nch=nch,
-        cfg=ctx.cfg,
-        accent_index=ctx.node_accents[i],
-        mono_triggers=ctx.mono_triggers,
-        muted_dash=_muted_dash(ctx),
-        w_override=w,
-        glyph_builder=_card_art(ctx, i, node),
-    )
+    if w_group:
+        w = w_group
+    # A spoke node centers on its solved box (width AND height), so a wrapped
+    # desc grows the card symmetrically about the ring anchor. Byte-identical
+    # when the desc fits (solved height == chassis h).
+    placed = place_node(ctx, node, i, cx, cy, w=w, h=h, hero=hero, chassis=nch)
+    return apply_health_dot(ctx, node, placed)
 
 
 def _facing_anchor(ctx: SolverContext, p: NodePlacement, hub_cx: float, hub_cy: float) -> tuple[float, float]:
@@ -190,8 +166,13 @@ def _hub_clearance_anchor(
     def sdf(x: float, y: float) -> float:
         d = math.hypot(x - hub.cx, y - hub.cy) - hub.r
         if label_box is not None:
+            # Uniform ``clear`` padding with ROUND corners: distance to the
+            # true ink box minus clear. Inflating the box by 2*clear kept
+            # sharp corners, so a diagonal ray paid ~clear*sqrt(2) at the
+            # corner — the display-voice hub name pushed that over-claim to
+            # a 17px off-rim stop on spokes that never touch the ink.
             lcx, lcy, w, h = label_box
-            d = min(d, rect_distance(lcx, lcy, w + 2 * clear, h + 2 * clear, 0.0, x, y))
+            d = min(d, rect_distance(lcx, lcy, w, h, 0.0, x, y) - clear)
         return d
 
     dist = math.hypot(to_x - hub.cx, to_y - hub.cy)
@@ -217,6 +198,22 @@ def _hub_clearance_anchor(
     return (hub.cx + ux * travel, hub.cy + uy * travel)
 
 
+def _ring_group_width(ctx: SolverContext, nodes: list[DiagramNode]) -> float:
+    """Group-max card width across the ring's CARD dests under the aligned
+    policy (glyph-circle dests carry no card width). 0 when the policy is free
+    or every dest is a circle — then each card keeps its own solved width."""
+    if ctx.ch.width_policy != "aligned":
+        return 0.0
+    # Role-derived (mismatch class FIXED): a declared hero dest measures
+    # with the chassis its placement renders.
+    widths = [
+        solve_node_box(ctx, n, i)[0]
+        for i, n in enumerate(nodes)
+        if style_of(n, ctx.spec, ctx.ch) != NodeStyle.GLYPH_CIRCLE.value
+    ]
+    return max(widths) if widths else 0.0
+
+
 def solve_fanout_radial(ctx: SolverContext) -> DiagramLayout:
     """Hub centered, dests on a ring at equal angles from the top; rays
     drawn under the hub. The ring grows past its base radius when the
@@ -224,20 +221,42 @@ def solve_fanout_radial(ctx: SolverContext) -> DiagramLayout:
     ch = ctx.ch
     spec = ctx.spec
     k = len(spec.nodes) - 1
-    radius = max(ch.ring_r, k * (ch.node.w + ch.ring_gap) / (2 * math.pi))
-    size = math.ceil(2 * (radius + ch.node.w / 2) + 16) if radius > ch.ring_r else ch.width
+    # Aligned ring: every card dest takes the group-max width, so the ring is
+    # uniform (0 = free policy / all circles → each keeps its solved width).
+    dest_w = _ring_group_width(ctx, list(spec.nodes[1:]))
+    card_unit = max(ch.node.w, dest_w)  # the packing width the ring must clear
+    radius = max(ch.ring_r, k * (card_unit + ch.ring_gap) / (2 * math.pi))
+    size = math.ceil(2 * (radius + card_unit / 2) + 16) if radius > ch.ring_r else ch.width
     c = size / 2
     dests: list[NodePlacement] = []
     spoke_angles: list[float] = []
+    pitch = 360 / k
+    # Seat assignment (diagram-data-hub-circles-pp.svg's own hw:spatial-notes:
+    # "node centres R=252 at theta 90/162/18/234/306" for its 5 satellites in
+    # payload order — the specimen's theta is the CCW-from-east / y-up
+    # convention; this engine's ``point_on`` adds sin(deg) straight to a
+    # y-DOWN svg coordinate, so engine-theta = -specimen-theta. Converted:
+    # -90, -162, -18, -234(=126), -306(=54) — a NORTH-ANCHORED ALTERNATING
+    # WALK off the first satellite (paradigms, already north under the old
+    # sequential walk and unmoved here): pitch steps 0, -1, +1, -2, +2, ...
+    # (alternate side, growing magnitude every 2 seats) rather than one
+    # direction in seat order. Generalizes past k=5: the step sequence visits
+    # every one of the k distinct pitch multiples exactly once for any k.
     for i, node in enumerate(spec.nodes[1:], start=1):
-        theta = -90 + (i - 1) * 360 / k
+        pos = i - 1  # 0-indexed walk position
+        if pos == 0:
+            step = 0
+        else:
+            magnitude = (pos + 1) // 2
+            step = -magnitude if pos % 2 == 1 else magnitude
+        theta = -90 + step * pitch
         spoke_angles.append(theta)
         cx, cy = point_on(c, c, radius, theta)
         # Radial-outboard labels (K-radial-general): glyph-circle dests
         # label along the spoke away from the hub; a below-label would
         # point inward and the spoke would cross it. Card dests carry their
         # label inside the card — ring_center is inert for them.
-        dests.append(_place_at_center(ctx, i, node, cx, cy, hero=False, ring_center=(c, c)))
+        dests.append(_place_at_center(ctx, i, node, cx, cy, hero=False, ring_center=(c, c), w_group=dest_w))
     hub = _place_at_center(ctx, 0, spec.nodes[0], c, c, hero=True)
     hub, label_box = _hub_label_box(ctx, hub, spoke_angles)
     clear = float(ctx.engine["connector"].get("hub_label_clear", 6))
@@ -259,58 +278,139 @@ def solve_fanout_radial(ctx: SolverContext) -> DiagramLayout:
     return finish_layout(ctx, width=size, height=size, nodes_paint=[*dests, hub], geos=geos)
 
 
-def solve_flywheel(ctx: SolverContext) -> DiagramLayout:
-    """K phase nodes on a ring, arcs between consecutive phases trimmed by
-    each node's angular half-width plus a clearance; an optional hero is
-    the center axis, not a fifth step. Arc geometry rides EdgeGeo.arc so
-    flow currents can subdivide past the sagitta threshold."""
+def _solve_cyclic(ctx: SolverContext) -> DiagramLayout:
+    """Shared ring-placement machinery for the cyclic pair. RING (slug
+    "ring") is the semantic claim "every stage equal, no hero" — enforced
+    here by raising. FLYWHEEL (slug "flywheel") is "a cyclic process with an
+    OPTIONAL central axis". Hero-PRESENCE, not the requested word, drives the
+    rest of the expression: label anchoring (outboard-radial when a center
+    hero exists, below-stacked when the center is empty — below earns the
+    empty centre as text room) and the arc-trim law. The two arc-trim laws
+    were tuned against different specimens and are NOT interchangeable: with
+    a hero, the simple silhouette-plus-clearance trim floats the arc past the
+    node's own boundary (flywheel-orbit's card phases); with no hero, the
+    newer centre-measured law takes max(node_angle + clear, silhouette trim)
+    — clear is a floor, never added ON TOP of the silhouette trim (that
+    double-counted and halved every span) — then walks each end past the
+    endpoint's own stacked annotation block (ring's per-line text-aware
+    trim). Flywheel's two pure-data-gated forms fold in unchanged: the FLOW
+    full-circle collapse (every edge dressed drift+markerless) and the orbit
+    rim-riders (``"particle" in ctx.motions``) — both gates already read the
+    edges/motions, never the topology word, so they apply identically
+    whichever slug reaches here."""
     ch = ctx.ch
     spec = ctx.spec
+    if ctx.slug == "ring" and any(node.role is NodeRole.HERO for node in spec.nodes):
+        raise DiagramInputError("ring holds every stage equal — no hero; a centred axis belongs to flywheel")
     size = ch.width
     c = size / 2
     ring = [i for i, node in enumerate(spec.nodes) if node.role is not NodeRole.HERO]
     k = len(ring)
+    hero_i = next((i for i, node in enumerate(spec.nodes) if node.role is NodeRole.HERO), None)
     angle_of: dict[int, float] = {}
     placed: dict[int, NodePlacement] = {}
     for pos, i in enumerate(ring):
         theta = -90 + pos * 360 / k
         angle_of[i] = theta
         cx, cy = point_on(c, c, ch.ring_r, theta)
-        # Labels place RADIALLY outboard (K-radial-label): the ring stroke
-        # runs through these node centers, so a below-label collides at 3
-        # and 9 o'clock — the spoke direction from the ring center keeps it
-        # in open air.
-        placed[i] = _place_at_center(ctx, i, spec.nodes[i], cx, cy, hero=False, ring_center=(c, c))
-    hero_node = next((i for i, node in enumerate(spec.nodes) if node.role is NodeRole.HERO), None)
+        # Radially outboard labels when a center hero claims the middle
+        # (K-radial-label: the ring stroke runs through these node centers,
+        # so a below-label collides at 3 and 9 o'clock); below-stacked labels
+        # (ring_center=None) when the centre is empty — upper text falls
+        # inward, toward the empty centre, which earns its keep as text room.
+        placed[i] = _place_at_center(
+            ctx, i, spec.nodes[i], cx, cy, hero=False, ring_center=(c, c) if hero_i is not None else None
+        )
+    if hero_i is not None:
+        placed[hero_i] = _place_at_center(ctx, hero_i, spec.nodes[hero_i], c, c, hero=True)
     paint: list[NodePlacement] = [placed[i] for i in ring]
-    if hero_node is not None:
-        paint.append(_place_at_center(ctx, hero_node, spec.nodes[hero_node], c, c, hero=True))
+    if hero_i is not None:
+        paint.append(placed[hero_i])
     standoff = float(ctx.engine["connector"].get("standoff", 0))
+    # Per-line padded boxes of each node's OUTSIDE text (ring only — a
+    # center hero's ring_center labels never stack below, so there is
+    # nothing here for the arc trim to walk past).
+    text_bb: dict[int, list[tuple[float, float, float, float]]] = (
+        {i: _annotation_line_boxes(ctx, placed[i], pad=8.0) for i in placed} if hero_i is None else {}
+    )
+
+    def _inside(boxes: list[tuple[float, float, float, float]], ang: float) -> bool:
+        px, py = point_on(c, c, ch.arc_r, ang)
+        return any(b[0] <= px <= b[2] and b[1] <= py <= b[3] for b in boxes)
+
     geos: list[EdgeGeo] = []
     for j, edge in enumerate(ctx.edges):
-        # Trim each arc end at the actual node boundary (shape-true): a
-        # half-height side approach stops where the card stops, not at a
-        # half-width-as-radius estimate.
-        a0 = trim_arc_angle(
-            placed[edge.source],
-            arc_cx=c,
-            arc_cy=c,
-            arc_r=ch.arc_r,
-            node_angle_deg=angle_of[edge.source],
-            direction=+1,
-            standoff=standoff + ch.arc_clear_deg * 0,
-        )
-        a1 = trim_arc_angle(
-            placed[edge.target],
-            arc_cx=c,
-            arc_cy=c,
-            arc_r=ch.arc_r,
-            node_angle_deg=angle_of[edge.target],
-            direction=-1,
-            standoff=standoff,
-        )
-        if a1 <= a0:
-            a1 += 360 if angle_of[edge.target] <= angle_of[edge.source] else 0
+        if hero_i is None:
+            # ring's centre-measured arc_clear law (the hand file's arcs
+            # start exactly ±13° off each medallion centre, emerging from
+            # behind the circle): the silhouette trim survives only as a
+            # FLOOR for a node too big for the clear.
+            sil0 = trim_arc_angle(
+                placed[edge.source],
+                arc_cx=c,
+                arc_cy=c,
+                arc_r=ch.arc_r,
+                node_angle_deg=angle_of[edge.source],
+                direction=+1,
+                standoff=standoff,
+            )
+            a0 = max(angle_of[edge.source] + ch.arc_clear_deg, sil0)
+            sil1 = trim_arc_angle(
+                placed[edge.target],
+                arc_cx=c,
+                arc_cy=c,
+                arc_r=ch.arc_r,
+                node_angle_deg=angle_of[edge.target],
+                direction=-1,
+                standoff=standoff,
+            )
+            a1 = min(angle_of[edge.target] - ch.arc_clear_deg, sil1)
+            if a1 <= a0:
+                a1 += 360 if angle_of[edge.target] <= angle_of[edge.source] else 0
+            # Text-aware trim: walk each end past the endpoint node's
+            # annotation block (1° steps, bounded well inside the arc span)
+            # so the arc starts below the upper stage's text and its
+            # arrowhead lands clear of the next stage's ink.
+            guard = 0
+            while _inside(text_bb[edge.source], a0) and a0 < a1 - 4 and guard < 120:
+                a0 += 1.0
+                guard += 1
+            guard = 0
+            while _inside(text_bb[edge.target], a1) and a1 > a0 + 4 and guard < 120:
+                a1 -= 1.0
+                guard += 1
+        else:
+            # flywheel's silhouette-plus-clearance trim: FLOAT the boundary
+            # crossing by arc_clear_deg — the specimen's arcs deliberately do
+            # not touch the cards (flywheel-orbit: boundary + 1.2deg of air
+            # per end — the cycle reads as motion BETWEEN phases, not
+            # plumbing into them).
+            a0 = (
+                trim_arc_angle(
+                    placed[edge.source],
+                    arc_cx=c,
+                    arc_cy=c,
+                    arc_r=ch.arc_r,
+                    node_angle_deg=angle_of[edge.source],
+                    direction=+1,
+                    standoff=standoff,
+                )
+                + ch.arc_clear_deg
+            )
+            a1 = (
+                trim_arc_angle(
+                    placed[edge.target],
+                    arc_cx=c,
+                    arc_cy=c,
+                    arc_r=ch.arc_r,
+                    node_angle_deg=angle_of[edge.target],
+                    direction=-1,
+                    standoff=standoff,
+                )
+                - ch.arc_clear_deg
+            )
+            if a1 <= a0:
+                a1 += 360 if angle_of[edge.target] <= angle_of[edge.source] else 0
         p0 = point_on(c, c, ch.arc_r, a0)
         p1 = point_on(c, c, ch.arc_r, a1)
         geos.append(
@@ -325,7 +425,73 @@ def solve_flywheel(ctx: SolverContext) -> DiagramLayout:
                 arc=(c, c, ch.arc_r, a0, a1),
             )
         )
-    return finish_layout(ctx, width=size, height=size, nodes_paint=paint, geos=geos)
+    # The FLOW form (flywheel-flow): when every ring edge dresses as a
+    # markerless drift, there are no discrete turns — the rim is ONE
+    # continuous current, a single closed circle behind the cards, not four
+    # floated arcs. Form follows dress; no extra field.
+    ring_edges = [ctx.edges[g.index] for g in geos]
+    if geos and all(e.relation == "drift" and (e.marker or "") == "none" for e in ring_edges):
+        top = point_on(c, c, ch.arc_r, -90)
+        bottom = point_on(c, c, ch.arc_r, 90)
+        full = (
+            f"M {fmt(top[0])},{fmt(top[1])} "
+            f"A {fmt(ch.arc_r)},{fmt(ch.arc_r)} 0 0 1 {fmt(bottom[0])},{fmt(bottom[1])} "
+            f"A {fmt(ch.arc_r)},{fmt(ch.arc_r)} 0 0 1 {fmt(top[0])},{fmt(top[1])}"
+        )
+        geos = [
+            EdgeGeo(
+                index=geos[0].index,
+                d=full,
+                sx=top[0],
+                sy=top[1],
+                tx=top[0],
+                ty=top[1],
+                length=arc_len(ch.arc_r, 0, 360),
+                arc=(c, c, ch.arc_r, -90, 270),
+                marker_override="none",
+            )
+        ]
+    # flywheel-orbit's signature ornament: a FIXED count of accent particles
+    # ride the FULL closed rim as one continuous loop, independent of the
+    # per-arc edges above (a rider must not restart at each ring card) — the
+    # rim path shares the arcs' own radius (invisible-rider rule) and starts
+    # at the top, matching the specimen. Gated on the artifact actually
+    # requesting particle motion (flywheel-orbit); every other motion, or
+    # none, leaves the rim ornament-free.
+    extra_particles: tuple[ParticlePlacement, ...] = ()
+    if "particle" in ctx.motions:
+        orbit = ctx.engine["particle"]["orbit"]
+        count = int(orbit["count"])
+        top = point_on(c, c, ch.arc_r, -90)
+        bottom = point_on(c, c, ch.arc_r, 90)
+        rim_d = (
+            f"M {fmt(top[0])},{fmt(top[1])} A {fmt(ch.arc_r)},{fmt(ch.arc_r)} 0 0 1 "
+            f"{fmt(bottom[0])},{fmt(bottom[1])} A {fmt(ch.arc_r)},{fmt(ch.arc_r)} 0 0 1 {fmt(top[0])},{fmt(top[1])}"
+        )
+        dur = str(orbit["dur"])
+        step = float(dur.rstrip("s")) / count
+        accent = 0 if ctx.palette_len else -1
+        extra_particles = tuple(
+            ParticlePlacement(
+                connector_index=-1,
+                accent_index=accent,
+                r=float(orbit["r"]),
+                dur=dur,
+                begin=fmt_s(-(i * step)),
+                path_override=rim_d,
+            )
+            for i in range(count)
+        )
+    return finish_layout(ctx, width=size, height=size, nodes_paint=paint, geos=geos, extra_particles=extra_particles)
+
+
+def solve_flywheel(ctx: SolverContext) -> DiagramLayout:
+    """K phase nodes on a ring, arcs between consecutive phases trimmed by
+    each node's angular half-width plus a clearance; an optional hero is
+    the center axis, not a fifth step. Arc geometry rides EdgeGeo.arc so
+    flow currents can subdivide past the sagitta threshold. The cyclic
+    family's hero-bearing expression."""
+    return _solve_cyclic(ctx)
 
 
 def _shift_placement(p: NodePlacement, dx: float, dy: float) -> NodePlacement:
@@ -350,6 +516,8 @@ def _shift_placement(p: NodePlacement, dx: float, dy: float) -> NodePlacement:
         label=label,
         desc_lines=tuple(sh_text(d) for d in p.desc_lines if d is not None),  # type: ignore[misc]
         dot=(p.dot[0] + dx, p.dot[1] + dy) if p.dot else None,
+        dot_path=translate_path(p.dot_path, dx, dy),
+        health_dot=(p.health_dot[0] + dx, p.health_dot[1] + dy) if p.health_dot else None,
         short=sh_text(p.short),
         tag=sh_text(p.tag),
         glyph=glyph,
@@ -359,12 +527,19 @@ def _shift_placement(p: NodePlacement, dx: float, dy: float) -> NodePlacement:
 
 
 def solve_tree_radial(ctx: SolverContext) -> DiagramLayout:
-    """The mindmap: root centered, ring radii scaled by OCCUPANCY and child
-    sectors sized by packing NEED (G6) — angular entitlement floors the
-    minimum chord separation instead of distributing the full circle, ring
-    radii shrink with sparse trees, and the canvas crops to the placed
-    content's bbox + pad. Hierarchy arrives through the hybrid edge model
-    (explicit parent edges, validated as a rooted tree)."""
+    """The mindmap: root centered, ring radii scaled by OCCUPANCY, ring-1
+    UNIFORM at 360/k1 starting straight up (both specimens: the mindmap's 4
+    classes sit dead on the compass at 90 deg apart, dep-audit-radial's 6
+    direct deps at 60 deg apart, EACH regardless of whether that sibling
+    carries a transitive child) — a subtree's own packing NEED (G6) grows
+    the RADIUS when it doesn't fit its uniform slice, it never claims a
+    bigger slice off a plainer sibling. Below ring-1, a parent's own sector
+    subdivides by leaf count (mindmap's 2-leaf classes fan +/-22 deg; a
+    single child inherits the whole parent sector, landing on the parent's
+    own bearing — dep-audit-radial's transitives). Ring radii shrink with
+    sparse trees, and the canvas crops to the placed content's bbox + pad.
+    Hierarchy arrives through the hybrid edge model (explicit parent edges,
+    validated as a rooted tree)."""
     ch = ctx.ch
     spec = ctx.spec
     cfg = ctx.cfg
@@ -395,21 +570,21 @@ def solve_tree_radial(ctx: SolverContext) -> DiagramLayout:
     # span per child sums each member's SOLVED box width + min_clearance at
     # its ring radius; scaling every radius by total/360 re-expands the
     # packing to the circle (span scales 1/r), so sparse trees pull their
-    # rings IN instead of holding specimen radii.
+    # rings IN instead of holding specimen radii. ``ch.r1``/``ch.r2`` (the
+    # PRE-scale base, primer.yaml's tree-radial block) carry the mindmap +
+    # dep-audit-radial specimen citations — see that block's own comment for
+    # the two hw:spatial-notes R1/R2 pairs and why one base can't hit both
+    # exactly.
     clearance = float(ctx.engine.get("min_clearance", 20))
     pitch_r = ch.r2 - ch.r1
     base_radius = {1: ch.r1, 2: ch.r2, 3: ch.r2 + pitch_r}
 
     def node_w(i: int, depth: int) -> float:
-        nch = ch.node if depth <= 1 else ch.node2
-        return solve_card_w(
-            spec.nodes[i],
-            nch,
-            ctx.cfg,
-            ctx.mono_triggers,
-            min_w=ch.card_min_w,
-            mark_w=mark_w_for(_style_of(ctx, spec.nodes[i]), spec.nodes[i]),
-        )
+        # Role-derived (mismatch class FIXED); the depth-tier chassis class
+        # is the one positional pick the solver still owns.
+        chassis_class = "" if depth <= 1 else "node2"
+        w, _, _ = solve_node_box(ctx, spec.nodes[i], i, chassis_class=chassis_class)
+        return w
 
     def ring_members(i: int, depth: int, acc: dict[int, list[int]]) -> None:
         if depth > 0:
@@ -430,8 +605,13 @@ def solve_tree_radial(ctx: SolverContext) -> DiagramLayout:
     radius_of = {d: r * scale for d, r in base_radius.items()}
     # Hub clearance floor (G7): ring-1 centers stay a hub-half + card-half
     # + clearance out, whatever occupancy did.
-    hub_is_circle = _style_of(ctx, spec.nodes[0]) == NodeStyle.GLYPH_CIRCLE.value
-    hub_w = 2 * ch.hero_circle_r if hub_is_circle else node_w(0, 0)
+    hub_is_circle = style_of(spec.nodes[0], ctx.spec, ctx.ch) == NodeStyle.GLYPH_CIRCLE.value
+    if hub_is_circle:
+        hub_w = 2 * ch.hero_circle_r
+    else:
+        # Snug-width ruling: the hub solves to its own content; chassis
+        # archetypes only bound growth as ceilings inside the sizing seam.
+        hub_w, _, _ = solve_node_box(ctx, spec.nodes[0], 0)
     max_w1 = max((node_w(i, 1) for i in ring1), default=ch.node.w)
     radius_of[1] = max(radius_of[1], hub_w / 2 + max_w1 / 2 + clearance)
     # Ring-pitch floor: adjacent rings keep a card height + breathing room
@@ -484,19 +664,27 @@ def solve_tree_radial(ctx: SolverContext) -> DiagramLayout:
                 worst = min(worst, math.hypot(gx, gy))
         return worst
 
+    # Ring-1 sector: UNIFORM (both specimens split 360 evenly across their
+    # direct children — 4x90deg, 6x60deg — with no wider slice for a sibling
+    # that happens to carry a transitive child). A lopsided subtree instead
+    # grows the RADIUS below (relaxation), never claims more arc than its
+    # equal-born siblings. ``place_subtree`` seats a node at its SECTOR's
+    # midpoint (so a parent's own inherited sector still centers its
+    # children below), so ring-1's own first sector starts a HALF-pitch
+    # before due north — its midpoint then lands exactly on -90, matching
+    # both specimens' first-declared child (mindmap's "diagram", dep-audit-
+    # radial's "react") sitting dead straight up, not half a pitch off it.
+    k1 = len(ring1)
+    uniform_span = 360.0 / k1 if k1 else 0.0
     # Relaxation (G7): packing is need-based but cross-ring adjacency can
     # still kiss; scale the rings out in bounded deterministic steps until
     # every box pair clears min_clearance.
     for _ in range(8):
         placed.clear()
-        spans = {kid: needed_deg(kid, radius_of) for kid in ring1}
-        span_total = sum(spans.values())
-        norm = 360.0 / span_total if span_total > 0 else 1.0
-        cursor = -90.0
+        cursor = -90.0 - uniform_span / 2.0
         for kid in ring1:
-            span = spans[kid] * norm
-            place_subtree(kid, 1, cursor, span)
-            cursor += span
+            place_subtree(kid, 1, cursor, uniform_span)
+            cursor += uniform_span
         hub = _place_at_center(ctx, 0, spec.nodes[0], c, c, hero=True)
         if min_box_clearance() >= clearance:
             break
@@ -561,18 +749,55 @@ def solve_tree_radial(ctx: SolverContext) -> DiagramLayout:
                 EdgeGeo(index=j, d=ray_d(bx, by, ax, ay), sx=bx, sy=by, tx=ax, ty=ay, length=line_len(bx, by, ax, ay))
             )
     paint = [placed[i] for i in sorted(placed)] + [hub]
-    # The chassis display_w was tuned for the specimen square; a cropped
-    # canvas renders 1:1 (display never downscales type, G6).
-    from dataclasses import replace as _dc_replace
-
-    ctx = _dc_replace(ctx, ch=ch.model_copy(update={"display_w": 0, "display_h": 0}))
+    # The cropped canvas still honours the page scale law: floor it at the
+    # chassis width so the display pin downscales (never magnifies) type.
+    size_w = max(size_w, int(ch.width))
     return finish_layout(ctx, width=size_w, height=size_h, nodes_paint=paint, geos=geos)
+
+
+def _annotation_line_boxes(ctx: SolverContext, p: NodePlacement, pad: float) -> list[tuple[float, float, float, float]]:
+    """Per-LINE padded boxes of a placed node's OUTSIDE text — the obstruction
+    a ring arc must clear beyond the node silhouette. Per line, never the
+    stack union: the union rectangle claims the empty ragged corners beside
+    short runs and over-trimmed ring arcs to a 12.1° mean span where the
+    hand file holds 34° on four arcs and walks text on only two ends
+    (+13.2° exactly where the arc strikes an actual run)."""
+    boxes: list[tuple[float, float, float, float]] = []
+    for t in (p.label, *p.desc_lines):
+        if t is None or not t.text:
+            continue
+        voice = voice_for(ctx.cfg, t.cls)
+        w = measure_voice(t.text, voice)
+        x0 = t.x - (w / 2 if t.anchor == "middle" else (w if t.anchor == "end" else 0.0))
+        boxes.append(
+            (
+                x0 - pad,
+                t.y - voice.size * ctx.cfg.text_ascent_ratio - pad,
+                x0 + w + pad,
+                t.y + voice.size * ctx.cfg.text_descent_ratio + pad,
+            )
+        )
+    return boxes
+
+
+def solve_ring(ctx: SolverContext) -> DiagramLayout:
+    """RING (the agent-loop-ring specimen): K equal medallions at even pitch
+    from the top on one ring, EMPTY centre — no hero, every stage equal.
+    Congruent arcs trim each node's angular half-width plus the clearance,
+    then extend past the endpoint node's stacked annotation block (the
+    specimen starts its side arcs beneath the upper text, so the arrowhead
+    emerges under the ink, never through it). Annotations stack BELOW every
+    node — one rule, K identical applications; upper text falls inside the
+    ring toward the empty centre, which earns its keep as text room. The
+    cyclic family's hero-less expression (raises if a hero is declared)."""
+    return _solve_cyclic(ctx)
 
 
 register_solvers(
     {
         "fanout-radial": solve_fanout_radial,
         "flywheel": solve_flywheel,
+        "ring": solve_ring,
         "tree-radial": solve_tree_radial,
     }
 )

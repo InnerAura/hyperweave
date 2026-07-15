@@ -6,14 +6,21 @@ bad rebuild fails loud at CI instead of rendering broken marks.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
+import hyperweave
 from hyperweave.compose.matrix.cells import glyph_mark_placement, resolve_glyph_mode
 from hyperweave.compose.spatial_records import RectSpec
-from hyperweave.config.loader import load_glyphs
 from hyperweave.core.matrix import GlyphTint
 
-GLYPHS = load_glyphs()
+# The BRAND file itself — this suite gates the data file's shape. The
+# runtime loader merges it with the core set (glyphs-core.json) and adds
+# kind: namespace entries; that merged view has its own pins in
+# test_glyph_kinds.py.
+GLYPHS = json.loads((Path(hyperweave.__file__).parent / "data" / "registries" / "glyphs.json").read_text())
 
 _FIELD_ORDER = ["path", "viewBox", "brand_color", "category", "mono", "gradient", "fill_rule", "color_paths"]
 _GEOMETRIC = {
@@ -46,8 +53,11 @@ class TestRegistryShape:
             assert entry.get("category"), key
 
     def test_brand_color_null_only_on_geometric_and_sigil(self) -> None:
+        # hyperweave carries its own brand color (the hero
+        # mark renders signal blue under glyph_tint: brand/full, matching the
+        # primer-diagrams-v3 prototypes, instead of degrading to plain ink).
         nulls = {k for k, v in GLYPHS.items() if v.get("brand_color") is None}
-        assert nulls == _GEOMETRIC | {"hyperweave"}
+        assert nulls == _GEOMETRIC
 
     def test_fill_rule_entries(self) -> None:
         assert {k for k, v in GLYPHS.items() if "fill_rule" in v} == _EVENODD
@@ -62,9 +72,9 @@ class TestRegistryShape:
         assert all(GLYPHS[k]["mono"] is True for k in monos)
         full = {k for k, v in GLYPHS.items() if "color_paths" in v or "gradient" in v}
         assert not monos & full, monos & full
-        assert len(monos) == 124
+        assert len(monos) == 125  # elasticsearch promoted from wave-3 debt: single-color mark, no gradient/color_paths
         assert len(full) == 38
-        assert len(set(GLYPHS) - monos - full) == 30  # the named wave-3 debt
+        assert len(set(GLYPHS) - monos - full) == 29  # the named wave-3 debt
 
     def test_color_paths_shape(self) -> None:
         masters = {k: v["color_paths"] for k, v in GLYPHS.items() if "color_paths" in v}
@@ -103,7 +113,12 @@ class TestTintSelection:
 
     def test_ink_is_ink_and_the_null_brand_fallback(self) -> None:
         assert resolve_glyph_mode(GLYPHS["github"], GlyphTint.INK) == "ink"
-        assert resolve_glyph_mode(GLYPHS["hyperweave"], GlyphTint.BRAND) == "ink"
+        # "circle" is one of the geometric entries with no brand identity —
+        # brand_color stays null by design, so BRAND degrades to ink.
+        assert resolve_glyph_mode(GLYPHS["circle"], GlyphTint.BRAND) == "ink"
+        # hyperweave now carries its own brand color: BRAND
+        # resolves to the mark itself instead of degrading.
+        assert resolve_glyph_mode(GLYPHS["hyperweave"], GlyphTint.BRAND) == "brand"
 
     @pytest.mark.parametrize("tint", list(GlyphTint))
     def test_every_entry_renders_under_every_tint(self, tint: GlyphTint) -> None:

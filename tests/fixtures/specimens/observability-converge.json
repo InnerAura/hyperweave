@@ -1,0 +1,61 @@
+{
+  "aspect": 1.771,
+  "caption_text": "DAG \u00b7 one collector fans three signals \u2014 metrics, logs, traces \u2014 into distinct stores, unified in one dashboard",
+  "cards": {
+    "hero_area_ratio": 2.409,
+    "hero_h": 112.0,
+    "hero_w": 220.0,
+    "std_h_med": 66.0,
+    "std_w_med": 155.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 5,
+    "card_rx": 13.0,
+    "cards": 6,
+    "chips": 4,
+    "coins": 0,
+    "desc_lines": 6,
+    "drift_edges": 7,
+    "gather_knots": 1,
+    "glyph_marks": 6,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 1,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 1,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "chip_homes": {
+    "in_card": 3,
+    "on_wire": 1,
+    "wire_offset_max": 22.0
+  },
+  "chip_stub_min": null,
+  "gather_trunk_chip": true,
+  "height": 418.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 4
+  },
+  "occupancy": 0.401,
+  "plate": {
+    "caption_pad": 26.0,
+    "caption_y": 674.0,
+    "content_bottom": 501.0,
+    "content_top": 199.0,
+    "zone_y": 66.0
+  },
+  "port_tolerance": 2.0,
+  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-dag-observability-v4.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    700.0
+  ],
+  "width": 740.0
+}

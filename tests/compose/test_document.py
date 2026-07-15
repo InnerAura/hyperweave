@@ -1,4 +1,4 @@
-"""DocumentSpec composition layer (alpha.5, Session 7 / v0.4.0 tail)."""
+"""DocumentSpec composition layer."""
 
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def test_render_json_is_payload_plus_envelope() -> None:
     assert r.envelope is not None and r.envelope["k"] == "visual-doc"
 
 
-def test_html_target_is_the_v05_seam() -> None:
+def test_html_target_is_a_reserved_seam() -> None:
     with pytest.raises(NotImplementedError):
         render(_doc(), "html")
 

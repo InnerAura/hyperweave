@@ -1,0 +1,30 @@
+{
+  "faces": {
+    "dark": {
+      "conn": "#436260",
+      "ink": "#D8ECEA",
+      "ink2": "#7FA3A1",
+      "inkhi": "#EBF7F6",
+      "s0": "#0C1414",
+      "s1": "#142121",
+      "s2": "#1B2C2C",
+      "sig": "#55948B",
+      "sigt": "#95D6CA",
+      "stroke": "#2C4444"
+    },
+    "light": {
+      "conn": "#9CBDBE",
+      "ink": "#16302F",
+      "ink2": "#587D7D",
+      "inkhi": "#0B1F1E",
+      "s0": "#ECF4F4",
+      "s1": "#FAFDFD",
+      "s2": "#EDF4F4",
+      "sig": "#2F6B6B",
+      "sigt": "#2F6B6B",
+      "stroke": "#C2D6D8"
+    }
+  },
+  "source": "v04/alpha/v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-petrol.svg",
+  "variant": "petrol"
+}

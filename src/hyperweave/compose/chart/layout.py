@@ -218,9 +218,9 @@ def compute_chart_layout(*, chart: ParadigmChartConfig, repo: str, header_label:
         "primer_tri_l1": TextSpec(100.0, float(chart.chart_height - 108), anchor="start"),
         "primer_tri_l2": TextSpec(410.0, float(chart.chart_height - 108), anchor="start"),
         "primer_tri_l3": TextSpec(720.0, float(chart.chart_height - 108), anchor="start"),
-        "primer_tri_v1": TextSpec(100.0, float(chart.chart_height - 84), anchor="start"),
-        "primer_tri_v2": TextSpec(410.0, float(chart.chart_height - 84), anchor="start"),
-        "primer_tri_v3": TextSpec(720.0, float(chart.chart_height - 84), anchor="start"),
+        "primer_tri_current": TextSpec(100.0, float(chart.chart_height - 84), anchor="start"),
+        "primer_tri_delta": TextSpec(410.0, float(chart.chart_height - 84), anchor="start"),
+        "primer_tri_window": TextSpec(720.0, float(chart.chart_height - 84), anchor="start"),
         # Brand bar.
         "primer_brand": TextSpec(100.0, float(chart.chart_height - 44), anchor="start"),
         "primer_brand_date": TextSpec(float(chart.chart_width - 100), float(chart.chart_height - 44), anchor="end"),

@@ -26,26 +26,37 @@ caps:
     fanout-horizontal: { min: 3, max: 9 } # source + 2..8
     fanout-bilateral: { min: 4, max: 11 } # source + 3..10
     fanout-upward: { min: 3, max: 7 } # source + 2..6 (two rows of 3)
+    fanout-downward: { min: 3, max: 8 } # source + 2..7 (one bottom row; router-descent)
     fanout-radial: { min: 4, max: 9 } # hub + 3..8
     convergence: { min: 3, max: 7 } # 2..6 inputs + target
     flywheel: { min: 3, max: 7 } # 3..6 phases + optional axis
+    ring: { min: 3, max: 8 } # equal stages, empty centre (agent-loop runs 6)
     stack: { min: 3, max: 7 } # result + 2..6 layers
-    tree: { min: 3, max: 6 } # root + 2..5 leaves (depth 1 only)
+    tree: { min: 3, max: 16 } # root + 2..15 nodes across depth 1..tree_horizontal_max_depth
     tree-radial: { min: 4, max: 16 } # root + ring-1 + ring-2 (depth 2..3)
     comparison: { min: 2, max: 2 }
     sequence: { min: 2, max: 4 } # lifelines; messages capped below
     dag: { min: 3, max: 12 }
-    state-machine: { min: 3, max: 7 }
+    state-machine: { min: 3, max: 8 }
+    hub: { min: 3, max: 13 } # center + 2..12 spokes (16-slot canonical grid; 3-per-zone cap binds first)
+    lanes: { min: 4, max: 18 } # nodes distributed across category bands
   # Honest graph caps — these keep the layered solver simple and
   # deterministic; past them the frame refuses rather than degrades.
   sequence_max_messages: 8
-  dag_max_ranks: 4
+  dag_max_ranks: 5 # the kit's reference pipeline is 5 stages (push -> build -> checks -> gate -> deploy)
   dag_max_per_rank: 4
   dag_max_skip_edges: 3
   sm_max_below_baseline: 2
   sm_max_back_edges: 2
+  sm_max_self_loops: 2 # self-loops on state-machine/dag (the revise-in-place arc)
   tree_radial_max_depth: 3
   tree_radial_max_ring1: 7
+  tree_horizontal_max_depth: 2 # tree/dep-audit ceiling; deeper hierarchies use orientation 'radial'
+  hub_max_per_zone: 3 # spokes crowded into one compass sector
+  lanes_max_lanes: 5 # category bands
+  lanes_max_rows: 6 # nodes stacked within one band
+  lanes_max_long_haul: 3 # perimeter-channel edges (|Δlane| >= 2 or route:around)
+  annotations_max: 8 # caller annotations per artifact
 
 # topology x orientation legality — config, not a code branch. Widening
 # later = one entry + one solver, zero validator surgery. tree:radial
@@ -53,15 +64,228 @@ caps:
 # depth 1 (multi-level horizontal has no solver — the error names
 # tree:radial). Topologies absent here accept horizontal only.
 orientation_legality:
-  fanout: [horizontal, bilateral, upward, radial]
+  fanout: [horizontal, bilateral, upward, downward, radial]
   tree: [horizontal, radial]
+  # convergence was silently horizontal-only (the fallback default below);
+  # this widens it to the fan family's own set. Additive only — no solver
+  # yet reads a non-horizontal convergence orientation, so this unlocks
+  # future specs to ASK for one without changing any existing render.
+  convergence: [horizontal, bilateral, upward, downward, radial]
 
-# Edge labels render only where the topology's specimen renders them —
-# sequence messages and state-machine transitions are the labels' content;
-# everywhere else explicit-edge labels reach payload/markdown, never SVG.
-renders_edge_labels:
-  sequence: true
-  state-machine: true
+# Honest orientation phrase per layout_slug — the MEASURED clause of
+# hw:spatial-notes (never rhetoric; the reasoning quality bar lives on
+# hw:reasoning). Keyed by the 16 concrete layout_slug values (core/diagram.py
+# layout_slug). Radial slugs (flywheel, hub, tree-radial, fanout-radial) must
+# NOT read "left-to-right" — the honesty.notes-orientation law forbids it on
+# radial topologies. A missing slug falls back to the slug string itself.
+orientation_phrases:
+  pipeline: left-to-right
+  fanout-horizontal: left-to-right fan-out
+  fanout-bilateral: bilateral fan-out
+  fanout-upward: upward fan-out
+  fanout-downward: downward fan-out
+  fanout-radial: radial fan-out
+  convergence: converging left-to-right
+  flywheel: radial orbit
+  ring: radial loop
+  stack: bottom-to-top stack
+  tree: top-down tree
+  tree-radial: radial tree
+  comparison: side-by-side
+  sequence: top-down replay
+  dag: layered left-to-right
+  state-machine: directed state graph
+  hub: radial hub
+  lanes: horizontal swimlanes
+
+# Per-topology static-wire grammar (D5): FLOW topologies read solid hairline
+# rails + terminal arrowheads (dash stays reserved for semantic edges —
+# returns, bypasses, muted roles); unlisted (radial: hub, fanout, mindmap)
+# stay dashed and markerless. Spec-level `wire` / `marker` chrome knobs
+# override per artifact; per-edge `marker` overrides per edge.
+wire_defaults:
+  sequence: { wire: solid, terminal: arrow }
+  state-machine: { wire: solid, terminal: arrow }
+  # dag reads the kit's dotted-drift rails WITH flush terminal arrows
+  # (dag specimens).
+  dag: { terminal: arrow }
+  # obi-engine: ordinary edges are solid + arrowed; the one declared
+  # bypass (relation: bypass) keeps its dashed drift regardless (dress
+  # motion wins over this default, same rule as every other topology).
+  lanes: { wire: solid, terminal: arrow }
+  # hub: every v4 hub hand file (frame-engine, data-hub-circles, hub-panel)
+  # draws solid arrowed spokes; the dashed-observe default read as noise on
+  # bare stories. Presets/stories still dress per-edge (drift etc. wins).
+  hub: { wire: solid, terminal: arrow }
+  # ring (the agent-loop-ring specimen): the medallion loop is built for
+  # stills — direction must survive as geometry, so solid arcs + drawn
+  # arrowheads are the topology's own grammar, not preset ornament.
+  ring: { wire: solid, terminal: arrow }
+  # flywheel-orbit: the ring reads as solid gray arcs + drawn arrowheads;
+  # motion (particle/beam/flow) is opt-in per preset and stays unaffected.
+  flywheel: { wire: solid, terminal: arrow }
+  # tree/dep-audit: the hierarchy is fully static (a pulsing tree would be
+  # gratuitous) — NO terminal, direction reads from vertical position, never
+  # an arrowhead (wiring.py's tree_exempt suppresses one regardless).
+  tree: { wire: solid }
+
+# Which topologies accept explicit connector routing/exit overrides
+# (edge.routing / edge.exit). Everywhere else those fields error at the
+# input seam — a fixed-geometry topology (pipeline star, radial fan) owns
+# its connector shape. The routable set is the graph-family layouts plus
+# pipeline (its chain can bus or elbow).
+routing_overridable: [dag, state-machine, hub, lanes, pipeline]
+
+# Hub topology — a center node with spokes on canonical compass slots.
+# The sector table maps a compass token to a center angle (degrees, 0=E,
+# 90=S clockwise). Spoke angles QUANTIZE to the rose's half-step grid
+# (22.5° for this table): one member = the cardinal exactly, multiples =
+# symmetric uniform-pitch arrangements about it. role_zones is the default
+# sector per spoke role.
+hub:
+  # Compass hero aspect cap = the frame-engine-hub specimen's own hero,
+  # 163.5x120 (w/h = 1.36) — measured, not chosen.
+  hero_aspect_max: 1.36
+  role_zones: { in: W, out: E, read: S, edit: N }
+  zone_centers: { N: -90, NE: -45, E: 0, SE: 45, S: 90, SW: 135, W: 180, NW: -135 }
+  # A 2-occupant sector packs at the measured splay, not the q-grid: the
+  # frame-engine-hub hand file seats its S pair's card centers at
+  # 62.5/117.5 (±27.5 about the cardinal); ±45 spread the pair across the
+  # whole sector and the compass read as exaggerated.
+  pair_splay: 27.5
+
+# Axial hub policy (§1.2, axial): the semantic cross. Axis gaps are
+# hero-edge -> satellite-edge distances; the destination fan hangs E of a
+# gather point offset from the hero edge; prominence sizes the nucleus
+# against its largest satellite (the 264x100-vs-220x64 specimen factor).
+axial:
+  # Gaps measured from the hub specimen (viewBox 1240x820): hero 280x120 at
+  # (620,410); spec right 310 -> hero left 480 = 170; hero top 350 -> transform
+  # bottom 182 = 168; hero bottom 470 -> read top 637 = 167; gather 760 -> dest
+  # left 980 = 220; destinations at cy 290/530 = +/-120 about 410 (pitch 240).
+  axis_gap: 168 # hero-boundary -> satellite-boundary along N/S
+  # W's own reach: hub_seats() (tests/compose/parity/pieces.py) grades the
+  # satellite's rendered NAME-TEXT anchor, not its card or box boundary —
+  # the census's own reference point. The 170 raw boundary gap above was
+  # measured on the specimen's uniform-floor 210-wide card; the engine's
+  # ink-solved satellite family runs narrower (144-basis), so the shared
+  # axis_gap under-throws the W text anchor by ~100px with nothing to lean
+  # on. Recalibrated so the RENDERED text anchor lands on the specimen's
+  # measured seat (-179.3deg, 475.0 from hero center): w_axis_gap 270 puts
+  # it at (-179.5deg, 476.0). W's reach extends along its own connector
+  # axis, so this never bends anything — unlike N/S (see below).
+  w_axis_gap: 270
+  # N/S satellites carry NO x-nudge: a sole N or S satellite centers its
+  # card ON the spine, full stop — the hub specimen's own N/S connectors are
+  # dead-vertical L commands (M 620,350 L 620,184; M 620,470 L 620,634), and
+  # the card IS the connector's endpoint, so any x-offset that chases the
+  # specimen's measured text-anchor lean (transform -103.7deg, read
+  # 115.7deg vs hero center) un-verticals the connector along with it. A
+  # prior revision nudged the card to close that angle band and broke the
+  # connector doing it (visibly slanted spokes — not in any specimen). The
+  # engine's narrower ink-solved cards produce a real but shallower lean
+  # from the satellite's own icon+left-aligned text than the specimen's
+  # now-superseded wide-floor cards did; the shortfall is recorded as a
+  # documented amendment on the fixture (tests/fixtures/specimens/hub.json
+  # hub_seats_superseded), never compensated for by moving the card.
+  fan_reach: 220 # hero east boundary -> destination west edge
+  fan_pitch: 240 # vertical pitch between destination centers (+/-120)
+  gather_dx: 0 # hub measured: the gather point sits ON the hero boundary
+  prominence_factor: 2.6 # language specimen: 232x112 nucleus scaled over the 144x60 satellite family
+  hero_aspect: 2.07 # nucleus grows to this w:h (232x112, the language nucleus), not the content's own
+  # Ink-bound nucleus law: prominence width is CONTENT-BOUNDED — the golden axial hero
+  # (primer_diagram_language.html verb-algebra nucleus) is content-fit:
+  # 232 = pad 32 + glyph lead + ink + pad 32 exactly, its widest text run
+  # ending ~25-30px (≈ the pad) short of the card edge. The content solve
+  # already floors at the family width (chassis hero.w), so the cap is one
+  # 4px-snap breath past that — prominence keeps its HEIGHT meaning (the
+  # tall nucleus) and the family floor keeps presence, but the area formula
+  # can no longer widen the card into a dead band (verb-reads carried
+  # ~95-125px of empty width right of its text).
+  hero_breathing_cap: 8
+  # satellite floor falls through to the chassis node box (primer.yaml hub node 144x60 — the language
+  # specimen's narrowest card, "the spec"); an explicit satellite_min_w only where a spec needs a wider floor
+  satellite_max_w: 340 # ceiling for the widest cross card (the read chip-card seats extract/verify/diff/query)
+  max_fan: 8 # destinations in the E half-plane
+
+# sec 12.1 nested composition: an inner artifact (chrome:bare) scales into
+# its container card's content box. max_w caps the display width (scale =
+# min(1, max_w / natural_w)); pad insets the mini-canvas from the card edge.
+embed:
+  max_w: 360
+  max_h: 240 # container reserve cap — a tall inner canvas scales down, never stretches its host
+  pad: 12
+
+# sec 6 compiler diagnostics — ADVISORY bands (rule/measured/band/suggestion
+# on every surface; never a refusal). mass bands are per-class ink-mass
+# fractions centered on specimen ink (sec 11.5a: axial ~= 0.19); crossing
+# bands are per-topology tolerable wire intersections.
+diagnostics:
+  # Per-class ink-mass fractions. Airy topologies (lifelines with whitespace,
+  # hollow-centered rings, wide bilateral fans) carry a lower natural floor —
+  # the bands reflect each class's intrinsic density, not one global number.
+  mass_bands:
+    axial: [0.10, 0.30]
+    sequence: [0.03, 0.42]
+    flywheel: [0.03, 0.42]
+    fanout-bilateral: [0.04, 0.42]
+    default: [0.05, 0.45]
+  crossing_bands:
+    dag: 3 # a dense general graph (fan-in + fan-out + skip edges) crosses a few by nature
+    state-machine: 3
+    lanes: 3
+    default: 0
+  margin_spread_max: 12 # tolerated NSEW inset asymmetry before a band overran an edge
+  nested_density_max: 7
+  sector_spread_max: 2
+
+# Annotation placement (the annotate chrome pass). candidate_slides are the
+# fractional positions along an anchor's free axis the anti-collision ladder
+# tries; push_step/max bound outward nudges; the callout box wraps to
+# callout_max_w; legend rows are legend_row_h tall. The box/dot/swatch scalars
+# below are the re-skin surface for annotation chrome — a genome re-skin tunes
+# annotation proportions HERE (plus the annotation voices), never in the
+# placement math (compose/diagram/chrome_kinds.py reads every value from this
+# block so the structure/layout/chrome split stays genuinely swappable).
+annotate:
+  candidate_slides: [0.5, 0.38, 0.62, 0.26, 0.74]
+  push_step: 4
+  push_max: 28
+  callout_max_w: 150
+  legend_row_h: 16
+  box_pad_x: 6 # callout/aside/pin text-box horizontal inset
+  box_pad_y: 4 # callout/aside text-box vertical inset
+  line_pad: 2.5 # extra leading between wrapped annotation lines
+  callout_lead: 8 # callout box float beyond leader_gap (so the leader reads)
+  # Edge-chip seat law (AMENDED from the kit sheet's "pinned to the run
+  # midpoint · stage 4 never nudges it"): seated at the run midpoint; when a
+  # FOREIGN wire crosses the pill, the chip slides along its OWN run to the
+  # nearest clear seat — it never leaves the wire, and the anti-overlap pass
+  # still never moves it off-run. Recorded here, in annotate.py's seat code,
+  # and in the kit explainer's thread-law callout.
+  # Zone header air above the content top (labels included) — verb-algebra
+  # hand file: header baseline to card top = 48.
+  zone_header_gap: 48
+  # Caption air below the caption line (both v4 hand sheets: 44 to the edge).
+  caption_bottom_pad: 44
+  freetext_standoff: 16 # gap from an anchor card edge to a callout/pin block near-edge (the scatter-gather specimen's note sits ~20px off its chip)
+  # Caption-band annotation → footer caption clearance. No hand specimen
+  # composes this pairing (it only becomes visible once anchored placement
+  # stops the two texts x-stacking); 40 matches the primer family's dominant
+  # margin_x rhythm (paradigms/primer.yaml topologies.*.margin_x), so the
+  # annotation returns to full outer-margin air instead of the compressed
+  # min(margin_x,24) inter-region gap. Retune here if publish-path reads wrong.
+  annotation_footer_gap: 40
+  pin_dot_r: 3 # pin dot radius
+  pin_label_gap: 4 # gap from pin dot to its outboard label
+  legend_swatch_r: 4 # legend accent-swatch circle radius
+  legend_gap: 6 # legend swatch-to-label and inter-entry gap
+  # dep-audit's masthead key (pp-tree-v2.svg .tr2-leg, pp-tree-radial-v2.svg
+  # .trr2-leg): the direct-dep/transitive rows draw a wire-stub swatch
+  # instead of a dot — measured 12px (x60->72 solid, x982->994 dashed in the
+  # two hand files, byte-identical span in both).
+  legend_stub_len: 12
+  badge_pad_y: 4 # badge pill vertical padding (pill h = line box + this)
 
 # G7 — clearance, not just non-overlap: the minimum breathing distance
 # between any two non-nested node boxes AND between any box and a
@@ -70,21 +294,87 @@ renders_edge_labels:
 # across every preset.
 min_clearance: 18
 
+# Dependency-audit health channel: a card-corner status dot, orthogonal to
+# identity accent (pp-tree-v2.svg + pp-tree-radial-v2.svg both measure the
+# SAME dot law: center at card.x+card.w-13, card.y+13, r=5). pulse_dur is
+# the exact phi timing both specimens cite (hw:motion "status-pulse(2.618s,
+# critical only)") — CLAUDE.md's Motion table's own 2.618s rung, distinct
+# from the gather-knot's unrelated 2.6s.
+health:
+  dot_r: 5
+  dot_inset_x: 13
+  dot_inset_y: 13
+  pulse_dur: "2.618s"
+
+# Compound-region chrome pads (graph.py build_region_bands), DERIVED from what
+# the region frames, never authored per-spec. Two region kinds: BAND (a filled
+# panel) and ENCLOSURE (a hairline box); a band's own pads split further on
+# whether it frames an over-arc return (the tall top pad lifts the panel off
+# the row so the re-plan bow clears it — see build_region_bands' docstring).
+region_band:
+  # gateway-balanced's MODEL POOL (pp-gateway-balanced.svg .gw-act): a snug
+  # 200x268 band around its 164-wide/230-tall three-card stack — 18px side,
+  # 26px header strip above the first card, 12px below the last.
+  band_side_pad: 18
+  band_top_pad: 26
+  band_bottom_pad: 12
+  # agent-runtime's AGENT RUNTIME control loop (pp-agent-runtime.svg .fd-act):
+  # a 710.8x140 band around its 3-member row — 22px side, 65px top (clears the
+  # re-plan over-arc bow above the row), 13px below.
+  band_over_arc_side_pad: 22
+  band_over_arc_top_pad: 65
+  band_over_arc_bottom_pad: 13
+  # agent-task-lifecycle's RECOVERY enclosure (pp-state-machine-alt2.svg
+  # .a2-region): a hairline 170x112 box around its single member — 20px
+  # sides, 22px top, 28px bottom (the label strip).
+  enclosure_side_pad: 20
+  enclosure_top_pad: 22
+  enclosure_bottom_pad: 28
+  # Chip clear-seat vs a region band's OUTLINE (never its filled interior —
+  # a chip fully inside or fully outside a band is fine, straddling the
+  # hairline border is the defect): gateway-balanced's telemetry chip
+  # (pp-gateway-balanced.svg .gw-chip, y=357) sits 20px below the MODEL
+  # POOL band's own bottom edge (.gw-act, y=69+268=337) — 357-337=20.
+  band_chip_clearance: 20
+
+# Universal display pin (the prototypes render at exactly this width, every
+# topology): a chassis without its own display_w scales its canvas to this
+# instead of rendering 1:1.
+display_w_default: 740
+
 connector:
   stroke_width: 1.5
   standoff: 0 # endpoint clearance from the node BOUNDARY (shape-true; specimens touch)
   hub_label_clear: 6 # radial hub-label box margin: spokes and particles keep this clearance (G4)
-  dash: "5 7"
+  dash: "2 7" # dotted-drift (diagrams-v3 kit)
   linecap: round
-  ants_dur: "1.618s" # phi dash-march
-  ants_offset_to: -24
-  ant_stagger: # seconds per connector index (branch animation-delay)
-    default: 0.4
-    fanout-horizontal: 0.3
-    fanout-bilateral: 0.3
-    fanout-upward: 0.3
-    fanout-radial: 0.3
-    stack: 0.3
+  ants_dur: "7s" # dotted-drift period (diagrams-v3 kit)
+  ants_dur_bypass: "9s" # the skip sweep — privileged/lineage paths drift slower
+  ants_offset_to: -108 # 12 dash periods (2+7) — seamless loop
+  # Connector-grammar geometry (the route.py slice consumes these): the drawn
+  # end-marker chevron size + its half-angle fraction; the orthogonal elbow
+  # radius; the self-loop mouth/reach/pinch (generalizing the FSM back-arc);
+  # the leader gap from a callout box to its anchor; the label lift above a
+  # connector midpoint.
+  marker_size: 8
+  marker_half: 0.45
+  # Gather-fan ornament: quiet ring + accent core at a structural
+  # one-to-many junction, pulsing gently.
+  gather_ring_r: 5
+  gather_core_r: 2.5
+  gather_pulse_dur: "2.6s"
+  elbow_r: 10
+  loop_mouth: 32 # agent-task-lifecycle: the only loop specimen draws a 32px mouth
+  loop_reach: 46
+  loop_pinch: 18
+  loop_label_max_w: 96 # wrap width for a self-loop's outboard label
+  leader_gap: 10
+  label_lift: 16 # language specimen: micro-labels sit 16px off their wire (verb-algebra edit/read)
+  sm_label_lift: 8 # state-machine specimens: solver-anchored micro-labels clear their wire by 8px (pp-state-machine(-alt2).svg chain/back-edge/over-arc guards)
+  # One shared drift clock (diagrams-v3 kit): every marching wire rides the
+  # same 7s phase — staggered delays made overlapping fan origins shimmer.
+  ant_stagger:
+    default: 0
 
 # The track channel: the line itself, beneath whatever rides it. Which
 # track a motion value gets is genome-declared (paradigm
@@ -92,30 +382,49 @@ connector:
 # P3 — track yields to semantics: an edge whose stroke pattern carries
 # meaning (sequence return dash, SM loop/branch hues) resolves static.
 track:
-  march_dash: "5 7"
-  march_dur: "1.618s"
-  march_offset_to: -24
-  tube_opacity: 0.26 # static tube under beam/flow light layers
-  tube_reduced_opacity: 0.5 # reduced-motion strengthens the tube
+  march_dash: "2 7"
+  march_dur: "7s"
+  march_offset_to: -108
   march_opacity: 1.0 # specimen-true for the ten topology presets
   return_dash: "4 5" # sequence return-message dasharray (meaning-bearing)
   muted_dash: "4 4" # comparison inert-card border
+  # Sequence RETURN messages supersede the P3 static-yield law on purpose
+  # (auth-sequence): responses drift home rather than sitting still. Own track
+  # value ("dash-drift"), one shared clock — every return in a trace is in
+  # phase, unlike the marching-ants per-edge stagger.
+  return_drift_dash: "5 4"
+  return_drift_dur: "3s"
+  return_drift_offset: -108
+  # dep-audit's legend key (pp-tree-v2.svg/pp-tree-radial-v2.svg .*-dash):
+  # the transitive-dep stub is a QUIET static reference, never the marching
+  # texture its actual edges animate with (a legend distracting with motion
+  # reads wrong) — matching the hand files' own legend, which is static too.
+  legend_dash: "5 5"
 
 # Bidirectional connectors: a derived pair may appear once per direction;
 # the solver detects the reciprocal pair and offsets the two lanes.
 #
 # HUE-DUTY TABLE — which hue serves which duty (indices into the genome's
-# diagram_flow cycle; literal hexes never appear here):
+# diagram_flow cycle; -1 is the true muted connector, never a flow tint;
+# literal hexes never appear here):
 #   node dots / branch strokes / particles  @flow{i}: characteristic-endpoint
 #                                           accent, cycling by non-hero order
-#   hero rings / beam identity              @signal: the genome accent
-#   beam second identity hue                @signal2: diagram_flow[1]
-#   reciprocal pair, forward lane           lane_hues.forward (amber family
-#                                           in the primer base cycle)
-#   reciprocal pair, reverse lane           lane_hues.reverse (violet family)
+#   hero rings                              @signal: the genome accent
+#   reciprocal pair, forward lane           lane_hues.forward (accent, flow
+#                                           slot 0 — the gateway v4
+#                                           specimen's request lane)
+#   reciprocal pair, reverse lane           lane_hues.reverse (muted, -1 —
+#                                           the specimen's response lane)
+# Beam identity is NOT in this table — it is a fixed blue/purple pair
+# (beam.color_a/b + front_a/b below), constant across every variant, never
+# accent-derived (the fixed-identity doctrine; beam-relay.md).
 # Reciprocal pairs read as a CONVERSATION: per-direction hues are pair
 # data, the same across every link of a chain — never the shared
-# endpoint accent (which renders a doubled line).
+# endpoint accent (which renders a doubled line). A two-DISTINCT-flow-tint
+# pairing (the earlier amber/violet cycle indices) reads as "both accent"
+# once diagram_flow became a monochrome tint ramp off ONE accent hue
+# (compose/diagram/palette.py) — accent-vs-muted is the only pairing that
+# survives every genome, chromatic or grey.
 lane_offset: 4
 # Dash-dash pairs have no motion asymmetry separating the lanes; they take
 # more air. Keyed by the pair's sorted motion composition.
@@ -128,15 +437,43 @@ lane_offset_by_composition:
 lane_extent:
   dash: 1.0
   particle: 2.0
-  beam: 5.5
-  flow: 5.5
 lane_min_air: 3
 lane_hues:
-  forward: 3
-  reverse: 1
+  forward: 0
+  reverse: -1
+# Reciprocal-lane march dasharray (gateway v4 specimen citation:
+# pp-mcp-gateway-v4.svg .fm-req/.fm-resp, both lanes, stroke-dasharray
+# "5 7") — a longer dash than the kit's shared ants default so the two
+# lanes read as deliberate traffic, not the generic marching-dots texture.
+# '' would fall back to diagram_style.dash; only lane_dress_applies()
+# edges (compose/diagram/motion.py) ever read this key.
+lane_dash: "5 7"
+
+# Flow-palette DERIVATION (Semantic Chromatics). The diagram flow cycle is
+# derived from the variant accent, not authored per variant — a copied array
+# leaks one variant's hue onto another (cobalt on cream). Slot 0 is the accent
+# verbatim (the spine); slots 1+ are an in-family tint ramp holding the accent
+# hue + chroma and stepping lightness across a substrate legibility band, so a
+# grey accent yields a grey ramp and a chromatic one yields tints of its own
+# hue. A genome may still author an explicit diagram_flow to opt out. See
+# compose/diagram/palette.py:derive_diagram_flow.
+flow_derivation:
+  slots: 5
+  bands:
+    light: [0.24, 0.50] # dark tints read on a pale ground (all >= AA)
+    dark: [0.60, 0.85] # light tints read on a dark ground
 
 particle:
-  r: 3.5
+  r: 3
+  # Flywheel rim orbit (flywheel-orbit): a FIXED count of accent particles
+  # ride the FULL closed rim as one continuous loop — never per-arc segments
+  # (a rider must not restart at each ring card) — staggered evenly across
+  # one true-phi period. Independent of the per-edge particle wiring above;
+  # gated on flywheel requesting particle motion (flywheel-orbit).
+  orbit:
+    count: 3
+    r: 4
+    dur: "4.236s"
   # Transit speed is the ONE SPEED OF LIGHT law (K1): per-edge dur =
   # clamp(length / v_target, dur_min, dur_max), constants on the paradigm
   # kinetic channel. Departure choreography (the staggers below) is
@@ -148,103 +485,78 @@ particle:
     stack: 0.6
     state-machine: 0.6
     dag: 0.7
+  # One ramp for every topology (diagrams-v3 kit): fade in over the first
+  # seventh, ride full, fade out over the last fifth.
   opacity:
-    default: { values: "0;.85;.85;0", keytimes: "0;.12;.88;1" }
-    fanout-horizontal: { values: "0;.8;.8;0", keytimes: "0;.1;.9;1" }
-    fanout-bilateral: { values: "0;.8;.8;0", keytimes: "0;.1;.9;1" }
-    fanout-upward: { values: "0;.8;.8;0", keytimes: "0;.1;.9;1" }
-    fanout-radial: { values: "0;.8;.8;0", keytimes: "0;.18;.9;1" }
-    flywheel: { values: "0;.85;.85;0", keytimes: "0;.15;.85;1" }
-    comparison: { values: "0;.9;.9;0", keytimes: "0;.15;.85;1" }
-    state-machine: { values: "0;.85;.85;0", keytimes: "0;.15;.85;1" }
+    default: { values: "0;1;1;0", keytimes: "0;.14;.82;1" }
 
 # Beam — the gradient-window comet (declares performance="paint-ok").
-# Anatomy: pad-guarded transparent tip -> head -> signal body -> ember tail
-# (trailing 2/3) + a near-white head filament. The gradient COORDINATES
-# animate (animateTransform on gradientTransform — transform-class);
-# geometry never moves.
+# Specimen recipe (the frontier-handoff and parity-beam reference files
+# under v04/alpha/v04a6/diagrams-v4/): per beam edge, FIVE stacked strokes on one
+# path d — casing + rail (the solid glass conduit that survives reduced
+# motion; the frontier-handoff specimen's hw:tradeoffs retires the dashed track: "dashes belong to
+# plain edges — a beam moves through glass") beneath glow, core, and the
+# comet front (the paint; ONLY gradientTransform animates — transform-class
+# CIM, geometry never moves). Identity hues are HELD blue/purple across
+# every variant (beam-relay.md: "keep it blue/purple for all variants") —
+# never accent- or genome-derived. Every edge's window rides ONE shared
+# relay clock in staged keyTimes windows.
 beam:
-  window_ratio: 0.55 # W = clamp(ratio x edge_length, min, max)
-  window_min: 48
-  window_max: 130
-  filament_ratio: 0.32 # filament window as a fraction of W
-  stops: # body gradient offsets/opacities (hue from duty)
-    tip: 0.0
-    head: 0.04
-    body: 0.09
-    tail: 0.35
-    tail_opacity_identity: 0.85
-    tail_opacity_ramp: 0.75
-  halo_width: 5
-  halo_opacity: 0.55
-  halo_blur: 2.2
-  core_width: 2
-  filament_width: 1.15
-  filament_head: "#F0F9FF" # white-hot — a physical constant, genome-blind
-  filament_tail: "#DBEAFE"
-  filament_head_opacity: 0.95
-  relay: # slot-locked, one phi clock (pipelines): hop_gap reads as the
-    # node "processing"; cycle_rest is the breath before the next payload
-    dur: "5.236s"
+  color_a: "#60A5FA" # body head (both reference specimens, body gradient first stop)
+  color_b: "#A78BFA" # body tail (body gradient last stop)
+  front_a: "#2563EB" # comet front, accent-deep — reads on light AND dark (specimen tradeoffs)
+  front_b: "#93C5FD" # comet front fade
+  window: 120 # body window span along the chord, px (specimen spatial-notes: "windows w=120")
+  front_span: 38 # front window span = 120 − the specimen's local x2=82
+  dur: 5.236 # the shared relay clock, seconds (2 × 2.618, phi family; both specimens)
+  keysplines: "0 0 1 1;0.42 0 0.58 1;0 0 1 1" # hold → eased sweep → hold (both specimens)
+  casing: { width: 6, opacity: 0.07 } # the conduit's outer glass (specimen casing stroke)
+  rail: { width: 1.5, opacity: 0.26 } # the rail inside it (specimen tube stroke)
+  glow: { width: 5, opacity: 0.55, blur_stddev: 2.2 } # blurred body halo
+  core: { width: 2 } # body core stroke
+  front: { width: 1.15 } # comet front filament
+  blur_region: { x: "-20%", y: "-400%", width: "140%", height: "900%" } # the specimen glow-blur filter region
+  reduced_motion_rail_opacity: 0.5 # the relay reference's prefers-reduced-motion conduit opacity
+  # Relay staging — three families, chosen structurally (a knot trunk
+  # present or not; a bilateral west/east split; DAG stages by rank
+  # transition), never by topology name.
+  relay_span_cap: 0.30 # the per-stage window LAW, cited from both specimens: parity-beam's
+  # branch span (.30) and the relay reference's own n=3 span (.26) sit within ~.04 of each
+  # other despite completely different stage counts — window DURATION is ~constant, only
+  # edge length drives velocity. `relay`/`relay_bilateral` below pack the whole clock across
+  # n stages, which only reproduces that band at n=3; at n=1 or n=2 (artifact-fanout-beam's
+  # flush single-group fan, compose-gate/rollout-beam-split's bilateral split, settlement-
+  # relay's 2-rank DAG transition) the raw division balloons to .42-.90 span — a comet taking
+  # 2.2-4.7s to cross instead of ~1.5s, the corpus-wide crawl this cap forecloses.
+  relay: # sequential family (the relay reference: N=3 → .02-.28 / .34-.60 / .66-.92 exactly)
     lead: 0.02
-    hop_gap: 0.06
-    cycle_rest: 0.08
-    travel_spline: "0.42 0 0.58 1"
-  volley: # independent phi-staggered shots (fans)
-    dur: "4.236s"
-    stagger: 0.55
-    travel_end: 0.78
-    travel_spline: "0.42 0 0.58 1"
-  arrivals: # shots absorb into the hub (convergence)
-    dur: "4.236s"
-    stagger: 0.6
-    travel_end: 0.78
-    travel_spline: "0.42 0 0.58 1"
+    gap: 0.06
+    rest: 0.08
+  relay_branch: # trunk-then-branches family (parity-beam: .02-.30 / .32-.62)
+    trunk_lead: 0.02
+    trunk_span: 0.28
+    branch_gap: 0.02
+    branch_span: 0.30
+  # Bilateral fan-out family (west converges as one wave, a beat at the hub,
+  # east emerges as the next): two EQUAL stages, no trunk to lead with. No
+  # bilateral beam specimen exists yet to cite its own span, so this shares
+  # ``relay``'s own lead/gap/rest law — a dedicated family only so it always
+  # yields exactly two stages (relay's generic by-count path degenerates to
+  # the n=1 near-full sweep whenever one side alone holds every beam edge).
+  relay_bilateral:
+    lead: 0.02
+    gap: 0.06
+    rest: 0.08
+  # Sequence owns its own replay grammar (one traversing particle IS the
+  # clock) — a requested beam there falls back through the ladder with
+  # honest requested/rendered bookkeeping.
+  stage_exempt_topologies: [sequence]
 
-# Flow — the laminar gradient current (declares performance="paint-ok").
-# A repeating soft pulse translated exactly one period per cycle: seamless.
-flow:
-  period_ratio: 0.6 # P = clamp(ratio x edge_length, min, max)
-  period_min: 80
-  period_max: 170
-  dur: "2.6s"
-  pulse_peak: 0.45 # gradient stop where opacity peaks
-  pulse_opacity: 0.9
-  halo_width: 5
-  halo_opacity: 0.5
-  halo_blur: 2.2
-  core_width: 2.2
-  streaming_stagger: 0.3 # pipeline/stack: slight per-edge offset
-  circulation: quarter # flywheel: begins at i x dur/4
-  hub_stagger: 0.4 # bilateral hub: per-side begin step
-  hub_side_offset: 0.2 # right side leads/lags the left by this
-  # Arc-aware: gradient bands are straight in coordinate space; under the
-  # sagitta threshold a chord-aligned vector is imperceptible, beyond it
-  # the arc subdivides into segments each within the threshold, with
-  # phase-offset begins so the current reads continuous.
-  sagitta_threshold: 16
-  max_subdivisions: 6
-
-# Which choreography a (layout, motion) pair runs. Values name the timing
-# modes implemented in compose/diagram/motion.py.
-choreography:
-  beam:
-    default: volley
-    pipeline: relay
-    stack: relay
-    convergence: arrivals
-  flow:
-    default: current
-    pipeline: streaming
-    stack: streaming
-    comparison: streaming
-    flywheel: circulation
-
-# Composite-only surfaces degrade automatically; requested vs rendered is
-# recorded in the payload (never silently diverges).
-fallback_ladder:
-  beam: particle
-  flow: dash
+# dash | particle are compositor-only by construction (requested == rendered).
+# The beam is paint-ok (an animated gradient window) — it degrades to a particle
+# rider on composite-only surfaces (or on stage_exempt_topologies), where
+# animated paint won't run / doesn't compose with the topology's own grammar.
+fallback_ladder: { beam: particle }
 
 # Genome entrance channel constants (fade | none wired; draw-on lands with
 # the vellum genome session and is rejected at config load until then).
@@ -252,7 +564,7 @@ entrance:
   fade_dur: "0.618s"
   fade_ease: ease-out
 
-# Sequence ordered replay (K-seq): each message is an independent comet
+# Sequence ordered replay: each message is an independent comet
 # event; the shared clock is DERIVED — lead beat + per-message transits
 # under the K1 speed law + gap beats between events + a rest beat before
 # the loop. Phi-family beats.
@@ -261,11 +573,11 @@ sequence_replay:
   gap_beat: 0.618
   rest_beat: 1.618
 
-# Presentation chrome (F1): card = substrate + masthead + footer (the
-# default); bare = transparent paper, no masthead, no footer — the title
-# ships only in hw:title/aria/markdown/payload. Bare collapses the chrome
-# bands to these pads; the caller owns paper matching (the genome's inks
-# assume its own surface family).
+# Presentation chrome (F1, internal-only — sec 12.1 recursive embeds): caption
+# is the public default (no masthead, ONE caption sentence at the base — the
+# title ships only in hw:title/aria/markdown/payload); bare = transparent
+# paper, no caption. Bare collapses the chrome bands to these pads; the caller
+# owns paper matching (the genome's inks assume its own surface family).
 chrome_bare:
   top_pad: 24
   bottom_pad: 20
@@ -287,3 +599,8 @@ truncation:
 # Node-label runs containing any of these tokens route to the mono face —
 # Inter lacks U+2192 and friends. Descs and edge labels are mono by voice.
 mono_triggers: ["→", "←", "↑", "↓", "↔", "×", "::", "`"]
+
+sequence:
+  # Air between the rightmost participant head and the call/return legend —
+  # the old 16px floor let the legend crowd the head column.
+  legend_clearance: 40
