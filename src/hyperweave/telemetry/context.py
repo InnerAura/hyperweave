@@ -42,18 +42,19 @@ CONTEXT_NOTE = (
 )
 
 
-# Doc-sourced context windows (Anthropic, June 2026). In Claude Code, Opus
-# 4.6/4.7/4.8, Fable 5, Mythos 5, and Sonnet 4.6 run a 1M window (with usage
-# credits); Haiku 4.5, Sonnet 4.5 (default — 1M is an opt-in beta) and the
-# legacy lines are 200K. Matched by longest id prefix. The Sonnet-4.5 beta and
-# any future 1M usage is recovered from observed occupancy by the parser's
-# tolerance backstop, so this table is the BASELINE, not the last word.
+# Doc-sourced context windows (Anthropic, July 2026). In Claude Code, Opus
+# 4.6/4.7/4.8, Fable 5, Mythos 5, Sonnet 5, and Sonnet 4.6 run a 1M window
+# (with usage credits); Haiku 4.5, Sonnet 4.5 (default — 1M is an opt-in beta)
+# and the legacy lines are 200K. Matched by longest id prefix. The Sonnet-4.5
+# beta and any future 1M usage is recovered from observed occupancy by the
+# parser's tolerance backstop, so this table is the BASELINE, not the last word.
 _MODEL_WINDOWS: dict[str, int] = {
     "claude-opus-4-8": _EXTENDED_WINDOW,
     "claude-opus-4-7": _EXTENDED_WINDOW,
     "claude-opus-4-6": _EXTENDED_WINDOW,
     "claude-fable-5": _EXTENDED_WINDOW,
     "claude-mythos-5": _EXTENDED_WINDOW,
+    "claude-sonnet-5": _EXTENDED_WINDOW,
     "claude-sonnet-4-6": _EXTENDED_WINDOW,
     "claude-sonnet-4-5": DEFAULT_CONTEXT_WINDOW,
     "claude-haiku-4-5": DEFAULT_CONTEXT_WINDOW,

@@ -7,20 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0-alpha.7] - Unreleased
 
-Dark diagrams now look the same on every surface and interface.
+Dark diagrams now look the same on every surface and interface, card faces render smooth, and Claude Code and Codex telemetry configs now reflect the latest release of models and pricing.
 
 ### Added
 
 - **Force a color scheme** — the HTTP API and MCP accept `face=light|dark` to render one fixed scheme, matching the CLI's `--face` flag.
 - **Diagram discovery** — the discovery listing now includes the diagram URL pattern and its query options.
+- **New model pricing** — Claude Fable 5, Mythos 5, and Sonnet 5, plus the GPT-5.6 tiers (Sol, Terra, Luna) from the Codex rate card; Sonnet 5 resolves to its 1M context window.
 
 ### Fixed
 
 - **Dark diagrams on every surface** — dark diagrams render identically on plate, inlay, twin, and adaptive surfaces, from CLI, HTTP, or MCP; previously the full dark styling applied only to explicitly baked dark renders.
+- **Fable 5 rates** — receipts price Fable 5 sessions at the published $10/$50 per MTok instead of the Opus line.
+- **1-hour cache writes** — cache writes bill at 2× for 1-hour entries and 1.25× for 5-minute entries, reading the per-turn split; flat totals previously all billed at 1.25×.
+- **GPT-5.4 mini rates** — corrected to the current Codex rate card.
+- **Subagent lanes** — subagent dispatch is detected on current Claude Code sessions via the `Agent` tool, carrying the declared agent type.
+- **Session titles** — a session never renamed shows its auto-generated title instead of a blank name.
+- **Codex compaction** — the burn curve reads Codex's explicit compaction events, catching resets the occupancy heuristic missed.
+- **Codex patch outcomes** — a rejected `apply_patch` counts as an error instead of a success.
 
 ### Changed
 
 - **README diagrams** — regenerated: the fan-out example rides accent-blue wires with single-line node subtitles, and the frontier-serving hub wears the OpenRouter brand glyph.
+
+### Notes
+
+- Receipt costs use sticker per-token rates; Sonnet 5's introductory rate (through August 2026) is not modeled.
 
 ## [0.4.0-alpha.6] - 2026-07-14
 

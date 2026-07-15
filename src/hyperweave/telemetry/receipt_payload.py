@@ -77,15 +77,20 @@ def _model_label(raw: str | None) -> str:
 
 def _call_cost(call: ToolCall) -> float:
     """Public-rate cost of a single tool call's API turn, in dollars."""
-    return calculate_turn_cost(
-        {
-            "input_tokens": call.tokens_input,
-            "output_tokens": call.tokens_output,
-            "cache_creation_input_tokens": call.cache_create_tokens,
-            "cache_read_input_tokens": call.cache_read_tokens,
-        },
-        call.model or "",
-    )
+    usage: dict[str, object] = {
+        "input_tokens": call.tokens_input,
+        "output_tokens": call.tokens_output,
+        "cache_creation_input_tokens": call.cache_create_tokens,
+        "cache_read_input_tokens": call.cache_read_tokens,
+    }
+    # Forward the TTL split so 1h cache writes bill at 2x (5m stays 1.25x).
+    # Without it cost.py's flat fallback prices everything at the 5m rate.
+    if call.cache_create_1h_tokens:
+        usage["cache_creation"] = {
+            "ephemeral_5m_input_tokens": max(call.cache_create_tokens - call.cache_create_1h_tokens, 0),
+            "ephemeral_1h_input_tokens": call.cache_create_1h_tokens,
+        }
+    return calculate_turn_cost(usage, call.model or "")
 
 
 def _active_minutes(t: SessionTelemetry) -> int:

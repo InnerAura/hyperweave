@@ -10,6 +10,7 @@ render/ or compose/.
 from __future__ import annotations
 
 import ast
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -403,6 +404,74 @@ class TestCostCalculator:
         expected = 0.1 * 5.0  # Opus 4.6: $5/M input * 0.1x cache read
         assert abs(cost - expected) < 1e-9
 
+    def test_fable_5_rates(self) -> None:
+        """Fable 5 carries its own published rate ($10/$50), not the Opus line."""
+        usage: dict[str, int] = {
+            "input_tokens": 1_000_000,
+            "output_tokens": 1_000_000,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+        }
+        cost = calculate_turn_cost(usage, "claude-fable-5")
+        assert abs(cost - 60.0) < 1e-9  # $10/M input + $50/M output
+
+    def test_sonnet_5_rates(self) -> None:
+        """Sonnet 5 must not fall through to the $5/$25 default."""
+        usage: dict[str, int] = {
+            "input_tokens": 1_000_000,
+            "output_tokens": 1_000_000,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+        }
+        cost = calculate_turn_cost(usage, "claude-sonnet-5")
+        assert abs(cost - 18.0) < 1e-9  # $3/M input + $15/M output
+
+    def test_1h_cache_write_bills_2x(self) -> None:
+        """The usage.cache_creation TTL split prices 1h writes at 2x, not 1.25x."""
+        usage: dict[str, Any] = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_creation_input_tokens": 1_000_000,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 1_000_000,
+            },
+        }
+        cost = calculate_turn_cost(usage, "claude-opus-4-6")
+        assert abs(cost - 2.0 * 5.0) < 1e-9
+
+    def test_mixed_ttl_cache_write(self) -> None:
+        """Each TTL bucket bills at its own multiplier."""
+        usage: dict[str, Any] = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_creation_input_tokens": 1_000_000,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+                "ephemeral_5m_input_tokens": 500_000,
+                "ephemeral_1h_input_tokens": 500_000,
+            },
+        }
+        cost = calculate_turn_cost(usage, "claude-opus-4-6")
+        # 500K * 1.25x * $5/M + 500K * 2x * $5/M
+        assert abs(cost - 8.125) < 1e-9
+
+    def test_empty_ttl_split_falls_back_to_flat(self) -> None:
+        """A zeroed split defers to the flat field at the 5m rate (legacy shape)."""
+        usage: dict[str, Any] = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_creation_input_tokens": 1_000_000,
+            "cache_read_input_tokens": 0,
+            "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 0,
+            },
+        }
+        cost = calculate_turn_cost(usage, "claude-opus-4-6")
+        assert abs(cost - 1.25 * 5.0) < 1e-9
+
     def test_unknown_model_uses_default_rates(self) -> None:
         usage: dict[str, int] = {
             "input_tokens": 1_000_000,
@@ -664,3 +733,154 @@ class TestSessionNameExtraction:
         """Existing session.jsonl fixture has no custom-title records."""
         tel = parse_transcript(SESSION_FIXTURE)
         assert tel.session_name == "", f"expected empty session_name, got {tel.session_name!r}"
+
+    def test_session_name_falls_back_to_ai_title(self, tmp_path: Path) -> None:
+        """A session never renamed carries only `ai-title` records."""
+        path = _write_transcript(
+            tmp_path,
+            [{"type": "ai-title", "aiTitle": "auto generated title", "sessionId": "s1"}],
+        )
+        tel = parse_transcript(path)
+        assert tel.session_name == "auto generated title"
+
+    def test_custom_title_outranks_ai_title(self, tmp_path: Path) -> None:
+        """An explicit rename wins over the auto-title regardless of order."""
+        path = _write_transcript(
+            tmp_path,
+            [
+                {"type": "custom-title", "customTitle": "my-rename", "sessionId": "s1"},
+                {"type": "ai-title", "aiTitle": "auto generated title", "sessionId": "s1"},
+            ],
+        )
+        tel = parse_transcript(path)
+        assert tel.session_name == "my-rename"
+
+
+# =========================================================================
+# Agent Span Detection + cache-TTL split (current Claude Code shapes)
+# =========================================================================
+
+
+def _write_transcript(tmp_path: Path, lines: list[dict[str, Any]]) -> Path:
+    path = tmp_path / "session.jsonl"
+    path.write_text("\n".join(json.dumps(ln) for ln in lines), encoding="utf-8")
+    return path
+
+
+def _assistant_line(
+    content: list[dict[str, Any]],
+    usage: dict[str, Any] | None = None,
+    model: str = "claude-fable-5",
+) -> dict[str, Any]:
+    return {
+        "type": "assistant",
+        "timestamp": "2026-07-15T00:00:00Z",
+        "sessionId": "s1",
+        "message": {"model": model, "content": content, "usage": usage or {}},
+    }
+
+
+class TestAgentSpanDetection:
+    """Subagent dispatch is named `Agent` on current harnesses, `Task` on older ones."""
+
+    def test_agent_tool_opens_span_with_declared_type(self, tmp_path: Path) -> None:
+        path = _write_transcript(
+            tmp_path,
+            [
+                _assistant_line(
+                    [
+                        {
+                            "type": "tool_use",
+                            "id": "toolu_agent001",
+                            "name": "Agent",
+                            "input": {"subagent_type": "code-reviewer", "prompt": "review it"},
+                        }
+                    ]
+                )
+            ],
+        )
+        tel = parse_transcript(path)
+        assert len(tel.agents) == 1
+        assert tel.agents[0].agent_type == "code-reviewer"
+
+    def test_legacy_task_tool_still_opens_span(self, tmp_path: Path) -> None:
+        path = _write_transcript(
+            tmp_path,
+            [
+                _assistant_line(
+                    [
+                        {
+                            "type": "tool_use",
+                            "id": "toolu_task0001",
+                            "name": "Task",
+                            "input": {"prompt": "do it"},
+                        }
+                    ]
+                )
+            ],
+        )
+        tel = parse_transcript(path)
+        assert len(tel.agents) == 1
+        assert tel.agents[0].agent_type == "general-purpose"
+
+    def test_task_tracking_tools_never_open_spans(self, tmp_path: Path) -> None:
+        """TaskCreate/TaskUpdate are task tracking, not subagent dispatch."""
+        path = _write_transcript(
+            tmp_path,
+            [
+                _assistant_line(
+                    [
+                        {"type": "tool_use", "id": "toolu_tc000001", "name": "TaskCreate", "input": {}},
+                        {"type": "tool_use", "id": "toolu_tu000001", "name": "TaskUpdate", "input": {}},
+                    ]
+                )
+            ],
+        )
+        tel = parse_transcript(path)
+        assert tel.agents == []
+
+
+class TestCacheTTLSplit:
+    """The usage.cache_creation 5m/1h split rides onto ToolCall for cost attribution."""
+
+    def test_1h_subset_divided_per_call(self, tmp_path: Path) -> None:
+        usage = {
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "cache_read_input_tokens": 2000,
+            "cache_creation_input_tokens": 1000,
+            "cache_creation": {
+                "ephemeral_5m_input_tokens": 0,
+                "ephemeral_1h_input_tokens": 1000,
+            },
+        }
+        path = _write_transcript(
+            tmp_path,
+            [
+                _assistant_line(
+                    [
+                        {"type": "tool_use", "id": "t1", "name": "Read", "input": {}},
+                        {"type": "tool_use", "id": "t2", "name": "Read", "input": {}},
+                    ],
+                    usage=usage,
+                )
+            ],
+        )
+        tel = parse_transcript(path)
+        assert [tc.cache_create_tokens for tc in tel.tool_calls] == [500, 500]
+        assert [tc.cache_create_1h_tokens for tc in tel.tool_calls] == [500, 500]
+
+    def test_legacy_transcript_without_split_defaults_to_zero(self, tmp_path: Path) -> None:
+        usage = {
+            "input_tokens": 100,
+            "output_tokens": 50,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 1000,
+        }
+        path = _write_transcript(
+            tmp_path,
+            [_assistant_line([{"type": "tool_use", "id": "t1", "name": "Read", "input": {}}], usage=usage)],
+        )
+        tel = parse_transcript(path)
+        assert tel.tool_calls[0].cache_create_tokens == 1000
+        assert tel.tool_calls[0].cache_create_1h_tokens == 0

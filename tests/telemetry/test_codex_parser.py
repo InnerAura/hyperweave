@@ -16,9 +16,15 @@ carries OpenAI's proprietary system prompt) and reasoning
 
 from __future__ import annotations
 
+import json
+from typing import TYPE_CHECKING
+
 from hyperweave.telemetry.codex_parser import parse_transcript
-from hyperweave.telemetry.models import ToolClass, ToolOutcome
+from hyperweave.telemetry.models import CommandResetKind, ToolClass, ToolOutcome
 from tests.conftest import FIXTURES_DIR
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 PRIMARY_FIXTURE = str(FIXTURES_DIR / "codex_session.jsonl")
 PATCHES_FIXTURE = str(FIXTURES_DIR / "codex_session_patches.jsonl")
@@ -179,3 +185,129 @@ def test_session_name_from_thread_name_updated() -> None:
     assert t.session_name == "hw_review_20260503", (
         f"expected 'hw_review_20260503' from thread_name_updated event, got {t.session_name!r}"
     )
+
+
+# --------------------------------------------------------------------------- #
+# Explicit compaction markers + apply_patch verdicts (current Codex shapes)   #
+# --------------------------------------------------------------------------- #
+
+
+def _event_msg(ts: str, payload: dict[str, object]) -> dict[str, object]:
+    return {"timestamp": ts, "type": "event_msg", "payload": payload}
+
+
+def _token_count(ts: str, occupancy: int, window: int = 1_000_000) -> dict[str, object]:
+    return _event_msg(
+        ts,
+        {
+            "type": "token_count",
+            "info": {
+                "model_context_window": window,
+                "last_token_usage": {"input_tokens": occupancy},
+                "total_token_usage": {
+                    "input_tokens": occupancy,
+                    "cached_input_tokens": 0,
+                    "output_tokens": 10,
+                },
+            },
+        },
+    )
+
+
+def _write_codex(tmp_path: Path, lines: list[dict[str, object]]) -> Path:
+    path = tmp_path / "codex.jsonl"
+    path.write_text("\n".join(json.dumps(ln) for ln in lines), encoding="utf-8")
+    return path
+
+
+def test_context_compacted_marker_records_reset(tmp_path: Path) -> None:
+    """event_msg/context_compacted is the authoritative reset marker — recorded
+    even when the occupancy series never neared the behavioral ceiling."""
+    path = _write_codex(
+        tmp_path,
+        [
+            _token_count("2026-07-01T00:00:00Z", 300_000),
+            _event_msg("2026-07-01T00:05:00Z", {"type": "context_compacted"}),
+            _token_count("2026-07-01T00:06:00Z", 90_000),
+        ],
+    )
+    t = parse_transcript(path)
+    assert len(t.command_events) == 1
+    ev = t.command_events[0]
+    assert ev.kind is CommandResetKind.AUTO
+    assert ev.occupancy_before == 300_000
+    assert ev.occupancy_after == 90_000
+
+
+def test_marker_suppresses_behavioral_double_count(tmp_path: Path) -> None:
+    """A near-ceiling collapse WITH a marker between the turns is one reset, not two."""
+    path = _write_codex(
+        tmp_path,
+        [
+            _token_count("2026-07-01T00:00:00Z", 900_000),
+            _event_msg("2026-07-01T00:05:00Z", {"type": "context_compacted"}),
+            _token_count("2026-07-01T00:06:00Z", 100_000),
+        ],
+    )
+    t = parse_transcript(path)
+    assert len(t.command_events) == 1
+
+
+def test_behavioral_fallback_without_marker(tmp_path: Path) -> None:
+    """Transcripts predating the marker still detect the collapse behaviorally."""
+    path = _write_codex(
+        tmp_path,
+        [
+            _token_count("2026-07-01T00:00:00Z", 900_000),
+            _token_count("2026-07-01T00:06:00Z", 100_000),
+        ],
+    )
+    t = parse_transcript(path)
+    assert len(t.command_events) == 1
+    assert t.command_events[0].kind is CommandResetKind.AUTO
+
+
+def _apply_patch_call(ts: str, call_id: str) -> dict[str, object]:
+    return {
+        "timestamp": ts,
+        "type": "response_item",
+        "payload": {
+            "type": "custom_tool_call",
+            "name": "apply_patch",
+            "call_id": call_id,
+            "input": "*** Update File: src/x.py\n@@\n-a\n+b",
+            "status": "completed",
+        },
+    }
+
+
+def test_patch_apply_end_success_confirms_outcome(tmp_path: Path) -> None:
+    path = _write_codex(
+        tmp_path,
+        [
+            _apply_patch_call("2026-07-01T00:00:00Z", "call_1"),
+            _event_msg(
+                "2026-07-01T00:00:01Z",
+                {"type": "patch_apply_end", "call_id": "call_1", "success": True, "stdout": "", "stderr": ""},
+            ),
+        ],
+    )
+    t = parse_transcript(path)
+    assert t.tool_calls[0].outcome is ToolOutcome.SUCCESS
+
+
+def test_patch_apply_end_failure_overrides_completed_status(tmp_path: Path) -> None:
+    """custom_tool_call.status reads 'completed' even for rejected patches — the
+    patch_apply_end success bool is the authoritative verdict."""
+    path = _write_codex(
+        tmp_path,
+        [
+            _apply_patch_call("2026-07-01T00:00:00Z", "call_1"),
+            _event_msg(
+                "2026-07-01T00:00:01Z",
+                {"type": "patch_apply_end", "call_id": "call_1", "success": False, "stdout": "", "stderr": "rejected"},
+            ),
+        ],
+    )
+    t = parse_transcript(path)
+    assert t.tool_calls[0].outcome is ToolOutcome.ERROR

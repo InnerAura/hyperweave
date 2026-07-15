@@ -121,6 +121,13 @@ def _extract_tool_calls_from_assistant(obj: _JsonObj) -> list[ToolCall]:
     output_tokens = usage.get("output_tokens", 0) or 0
     cache_read = usage.get("cache_read_input_tokens", 0) or 0
     cache_create = usage.get("cache_creation_input_tokens", 0) or 0
+    # TTL split: usage.cache_creation breaks the flat total into 5m/1h buckets
+    # (current Claude Code writes 1h exclusively). The 1h subset rides along so
+    # cost attribution can bill it at 2x; absent on older transcripts → 0.
+    cache_detail = usage.get("cache_creation")
+    cache_create_1h = 0
+    if isinstance(cache_detail, dict):
+        cache_create_1h = int(cache_detail.get("ephemeral_1h_input_tokens", 0) or 0)
 
     # Count tool_use blocks for per-call token division
     tool_use_count = sum(1 for b in content if isinstance(b, dict) and b.get("type") == "tool_use")
@@ -153,6 +160,7 @@ def _extract_tool_calls_from_assistant(obj: _JsonObj) -> list[ToolCall]:
             tokens_output=output_tokens // divisor,
             cache_read_tokens=cache_read // divisor,
             cache_create_tokens=cache_create // divisor,
+            cache_create_1h_tokens=cache_create_1h // divisor,
             outcome=ToolOutcome.SUCCESS,
             parent_uuid=parent_uuid,
             model=model,
@@ -254,16 +262,47 @@ def _extract_user_text(obj: _JsonObj) -> str | None:
 # --------------------------------------------------------------------------- #
 
 
-def _detect_agent_spans(tool_calls: list[ToolCall], raw_lines: list[_JsonObj]) -> list[AgentSpan]:
-    """Detect sub-agent spans from Task tool calls and progress messages."""
-    agents: dict[str, AgentSpan] = {}
+# Subagent-dispatch tool names across Claude Code versions: current harnesses
+# emit "Agent"; older transcripts emit "Task". (TaskCreate/TaskUpdate/etc. are
+# the task-tracking tools, not dispatch — they never open a span.)
+_DISPATCH_TOOLS = frozenset({"Agent", "Task"})
 
+
+def _detect_agent_spans(tool_calls: list[ToolCall], raw_lines: list[_JsonObj]) -> list[AgentSpan]:
+    """Detect sub-agent spans from Agent/Task dispatch calls and progress messages.
+
+    The declared ``subagent_type`` is read from the raw tool_use block (the
+    ToolCall record keeps input keys only, not values). Progress-message
+    counting survives for older transcripts; current Claude Code no longer
+    emits ``progress`` lines, so ``span.tool_calls`` stays 0 here and the
+    sidechain reconstruction in ``contract.py`` supplies the real counts.
+    """
+    # tool_use id → declared subagent_type, from the raw assistant blocks.
+    declared_types: dict[str, str] = {}
+    for line in raw_lines:
+        if line.get("type") != "assistant":
+            continue
+        msg = line.get("message", {})
+        content = msg.get("content", []) if isinstance(msg, dict) else []
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                continue
+            if block.get("name") not in _DISPATCH_TOOLS:
+                continue
+            block_input = block.get("input", {})
+            subagent_type = block_input.get("subagent_type") if isinstance(block_input, dict) else None
+            if isinstance(subagent_type, str) and subagent_type:
+                declared_types[str(block.get("id", ""))] = subagent_type
+
+    agents: dict[str, AgentSpan] = {}
     for tc in tool_calls:
-        if tc.tool_name == "Task":
+        if tc.tool_name in _DISPATCH_TOOLS:
             agent_id = tc.tool_id[:12]
             agents[agent_id] = AgentSpan(
                 agent_id=agent_id,
-                agent_type="general-purpose",
+                agent_type=declared_types.get(tc.tool_id, "general-purpose"),
                 start_time=tc.timestamp,
             )
 
@@ -519,15 +558,23 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         if session_id and project_path and git_branch is not None:
             break
 
-    # `custom-title` records carry the user-facing session name (driven by /rename
-    # and Claude Code's auto-titling, which slugifies the first prompt). One record
-    # is emitted per assistant turn after the most-recent rename, so latest-wins.
+    # `custom-title` records carry the user-facing session name (driven by
+    # /rename). Current Claude Code also emits `ai-title` records with the
+    # auto-generated title — a session never renamed may carry ONLY an
+    # ai-title. Both are latest-wins; an explicit rename outranks the
+    # auto-title regardless of order.
     session_name = ""
+    ai_title = ""
     for line in raw_lines:
         if line.get("type") == "custom-title":
             title = line.get("customTitle")
             if isinstance(title, str) and title:
                 session_name = title
+        elif line.get("type") == "ai-title":
+            title = line.get("aiTitle")
+            if isinstance(title, str) and title:
+                ai_title = title
+    session_name = session_name or ai_title
 
     # -- Pass 1: Extract all tool calls from assistant messages --
     all_tool_calls: list[ToolCall] = []

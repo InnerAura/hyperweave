@@ -279,19 +279,33 @@ def _model_context_events(
     series is a real occupancy trace (it rises, e.g. 18K→245K, and can drop on a
     reset).
 
-    Codex has no explicit ``/compact`` marker in-band and ``/clear`` forks a
-    new session file, so resets are detected behaviorally: a sharp collapse
-    (>45%) from a near-ceiling peak (>80% of window) reads as auto-compaction.
+    Resets come from two signals, marker-first:
+
+    * ``event_msg/context_compacted`` — the explicit in-band compaction
+      marker current Codex emits (a bare ``{type}`` payload; the timestamp
+      is the envelope's). Authoritative when present.
+    * A sharp occupancy collapse (>45%) from a near-ceiling peak (>80% of
+      window) — the behavioral fallback for transcripts that predate the
+      marker. A collapse with a marker between the two turns is the SAME
+      physical reset and is not double-counted.
+
+    ``/clear`` forks a new session file, so it never appears in-band.
     Returns ``(window, peak, events)``; window is 0 when no token_count event
     carried a window (the caller falls back to the default).
     """
     series: list[tuple[datetime, int]] = []
+    compaction_markers: list[datetime] = []
     window = 0
     for line in raw_lines:
         if line.get("type") != "event_msg":
             continue
         payload = line.get("payload") or {}
-        if not isinstance(payload, dict) or payload.get("type") != "token_count":
+        if not isinstance(payload, dict):
+            continue
+        if payload.get("type") == "context_compacted":
+            compaction_markers.append(_parse_timestamp(line.get("timestamp")))
+            continue
+        if payload.get("type") != "token_count":
             continue
         info = payload.get("info")
         if not isinstance(info, dict):
@@ -310,11 +324,36 @@ def _model_context_events(
 
     peak = max((occ for _ts, occ in series), default=0)
     events: list[CommandEvent] = []
+
+    # Signal 1: explicit markers. Occupancy before/after reads the series
+    # around the marker timestamp (0 when the marker sits at either edge).
+    for marker_ts in compaction_markers:
+        before = 0
+        after = 0
+        for ts, occ in series:
+            if ts <= marker_ts:
+                before = occ
+            elif after == 0:
+                after = occ
+                break
+        events.append(
+            CommandEvent(
+                kind=CommandResetKind.AUTO,
+                timestamp=marker_ts,
+                occupancy_before=before,
+                occupancy_after=after,
+            )
+        )
+
+    # Signal 2: behavioral collapse — only where no marker already covers
+    # the drop (older transcripts, or a shed the CLI didn't announce).
     ceiling = 0.80 * window if window > 0 else float("inf")
     for i in range(1, len(series)):
-        _prev_ts, prev_occ = series[i - 1]
+        prev_ts, prev_occ = series[i - 1]
         cur_ts, cur_occ = series[i]
         if prev_occ >= ceiling and cur_occ < 0.55 * prev_occ:
+            if any(prev_ts <= m <= cur_ts for m in compaction_markers):
+                continue
             events.append(
                 CommandEvent(
                     kind=CommandResetKind.AUTO,
@@ -323,6 +362,7 @@ def _model_context_events(
                     occupancy_after=cur_occ,
                 )
             )
+    events.sort(key=lambda e: e.timestamp)
     return window, peak, events
 
 
@@ -443,6 +483,20 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
         tc = by_id.get(call_id)
         if tc is not None:
             tc.outcome = ToolOutcome.NO_VERDICT
+
+    # apply_patch outcomes: the custom_tool_call ``status`` field reads
+    # "completed" even for rejected patches; the authoritative verdict is the
+    # ``event_msg/patch_apply_end`` event's ``success`` bool, joined by call_id.
+    for line in raw_lines:
+        if line.get("type") != "event_msg":
+            continue
+        payload = line.get("payload") or {}
+        if not isinstance(payload, dict) or payload.get("type") != "patch_apply_end":
+            continue
+        call_id = str(payload.get("call_id", ""))
+        tc = by_id.get(call_id)
+        if tc is not None:
+            tc.outcome = ToolOutcome.SUCCESS if payload.get("success") else ToolOutcome.ERROR
 
     # ── Pass 4: token totals from event_msg/token_count (last non-null wins) ──
     last_total_usage: _JsonObj | None = None

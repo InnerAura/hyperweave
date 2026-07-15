@@ -126,7 +126,16 @@ class ToolCall(BaseModel):
     tokens_input: int = Field(default=0, description="Input tokens for this API turn")
     tokens_output: int = Field(default=0, description="Output tokens for this API turn")
     cache_read_tokens: int = Field(default=0, description="Cache read tokens")
-    cache_create_tokens: int = Field(default=0, description="Cache creation tokens")
+    cache_create_tokens: int = Field(default=0, description="Cache creation tokens (all TTLs)")
+    cache_create_1h_tokens: int = Field(
+        default=0,
+        description=(
+            "1-hour-TTL subset of cache_create_tokens, from the "
+            "usage.cache_creation split. 1h writes bill at 2x vs 1.25x for "
+            "5m, so cost attribution needs the split; 0 on transcripts that "
+            "predate it and on Codex (no cache-write concept)."
+        ),
+    )
     outcome: ToolOutcome = Field(
         default=ToolOutcome.SUCCESS,
         description="Whether the tool call succeeded, was blocked, or errored",
