@@ -5,15 +5,40 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0-alpha.6] - Unreleased
+## [0.4.0-alpha.6] - 2026-07-14
 
-### Fixed
+Rebuilds diagrams as one visual system, adds light/dark adaptive output, and exports any artifact as PNG, WebP, static SVG, or terminal text.
 
-- **Receipt location** — session receipts and `doctor` resolve the repository root, not the shell's working directory at hook time.
+### Added
+
+- **New diagram layouts** — hub-and-spoke, swim lanes, and rings join pipelines, fan-outs, trees, dependency graphs, sequences, and state machines; a diagram with cycles renders as a state machine instead of erroring; a node can contain a smaller diagram.
+- **Node and edge options** — four node shapes, built-in icons (router, shield, search, and more) alongside brand logos, notes and legends, and optional arrowheads; an edge declares its meaning (`assert`, `drift`, `flow`, `bypass`) and can animate as `dash`, `particle`, or `beam`.
+- **Light/dark surfaces** — `--surface plate|inlay|twin`: an opaque card, a transparent embed, or one file that adapts to the reader's theme; primer adapts by default.
+- **Output formats** — `--format svg|svg-static|png|webp|ansi`, with matching URL suffixes like `/v1/a/{id}.png`; PNG and WebP need `hyperweave[raster]`; `ansi` prints a diagram straight into the terminal.
+- **Verbs in the CLI** — `extract`, `verify`, `transform`, `diff`, and `query` join the command line, matching HTTP and MCP; `/v1/card/...` is the primary name for the profile frame; `/llms-full.txt` serves the full agent contract.
+- **40 diagram presets** — render any of them by name from the CLI or a URL.
+
+### Changed
+
+- **One look for all diagrams** — the same wires, arrowheads, cards, and single accent color on every layout; cards grow to fit their text, and names never truncate.
+- **Edge labels** — no longer limited to sequence and state-machine diagrams: every layout renders them, riding their own edge and staying clear of crossing lines.
+- **Diagram titles** — `title` no longer paints as a bar across the top; it lives in the file's metadata, while `subtitle` draws as one caption line beneath the diagram (omit it with `chrome: plain`).
+- **Verb requests** — every interface takes `source` (and `diff` takes `a`/`b`); session receipts save to the repository root, not whatever folder the shell was in.
+
+### Removed
+
+- **--target, --preset, --chrome** — output is chosen with `--format`, bundled spec names pass to `--spec-file`, and the background (opaque card vs transparent embed) is chosen with `--surface`.
+- **docs/** — the old documentation tree is removed ahead of a rebuilt site.
+
+### Notes
+
+- Breaking: verb request fields renamed to `source`/`a`/`b`; `/skill` removed, use `/llms.txt` → `/llms-full.txt`; `--face` commits the file to one theme.
+- Adaptive artifacts don't flatten: requesting adaptive output as `svg-static`, `png`, or `webp` is an error; those formats bake the opaque face.
+- Limits: 20 nodes per diagram, 5 DAG ranks, 8 states, 8 ring stages.
 
 ## [0.4.0-alpha.5] - 2026-06-28
 
-Turns every artifact into a re-ingestible object and adds a read/write verb algebra, a composition layer, and content-addressed transport.
+Every artifact now carries its full data, five verbs read and edit artifacts over HTTP and MCP, and compose returns a link to a cached file instead of inline SVG.
 
 ### Added
 
@@ -22,7 +47,8 @@ Turns every artifact into a re-ingestible object and adds a read/write verb alge
 - **DocumentSpec composition** — assemble prose, headings, captions, and embedded artifacts into one SVG or Markdown document.
 - **Content-addressed transport** — `compose` and MCP return a link to the cached pixels (`/v1/a/{id}`), not inline SVG; an opt-in disk tier serves them across restarts.
 - **Discoverability** — `GET /llms.txt`, an agent-instructions doc at `GET /skill`, and the `hw_discover` MCP tool expose the contract to agents.
-- **Validate + font modes** — `hyperweave validate` and `POST /v1/validate`; `--font-mode embed|cdn|system`.
+- **Font modes** — `--font-mode embed|cdn|system` selects self-contained subset fonts (default), a Google Fonts `@import`, or bare fallback stacks.
+- **Validate** — `hyperweave validate` and `POST /v1/validate` check a spec against the schema before composing.
 
 ### Changed
 
