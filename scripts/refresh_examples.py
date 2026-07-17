@@ -48,10 +48,13 @@ from generate_proofset import (  # noqa: E402
     _real_transcripts,
 )
 
+from hyperweave.compose.diagram.input import resolve_diagram_preset  # noqa: E402
 from hyperweave.compose.engine import compose  # noqa: E402
 from hyperweave.core.models import ComposeSpec  # noqa: E402
+from hyperweave.verbs.transform import transform  # noqa: E402
 
 _OUT = _ROOT / "assets" / "examples" / "telemetry"
+_DIAGRAMS_OUT = _ROOT / "assets" / "diagrams"
 
 # A fixed instant so the embedded <hw:created> stamp is stable across runs —
 # the recipe is idempotent (re-run with no code change ⇒ byte-identical files).
@@ -143,6 +146,86 @@ def refresh(mock: bool = False) -> list[Path]:
     return written
 
 
+# The README's one-transform story, verbatim: compose the parent preset, then
+# grow it through the artifact itself. Minting BOTH in one pass is the point —
+# the shipped child once went stale against a re-rendered parent (its lineage
+# parent_id no longer resolved), so parent and child now leave this function
+# together or not at all.
+_SERVICE_PATCH: list[dict[str, Any]] = [
+    {
+        "op": "add",
+        "path": "/nodes/-",
+        "value": {"id": "billing", "label": "Billing", "desc": "invoices", "glyph": "stripe"},
+    },
+    {"op": "add", "path": "/edges/-", "value": {"source": "gateway", "target": "billing", "relation": "assert"}},
+    {
+        "op": "add",
+        "path": "/edges/-",
+        "value": {
+            "source": "billing",
+            "target": "postgres",
+            "label": "writes",
+            "label_style": "chip",
+            "relation": "assert",
+            "exit": "bottom",
+            "entry": "right",
+        },
+    },
+]
+
+
+# Preset-named README diagram assets minted by plain compose, with the
+# README's own documented flags: (preset, filename, variant). All inlay
+# (bare · adaptive) — the README embeds them on both GitHub themes.
+_DIAGRAM_SINGLES: tuple[tuple[str, str, str], ...] = (("frontier-serving", "frontier-serving.svg", "noir"),)
+
+
+def refresh_diagrams() -> list[Path]:
+    """Re-mint the README's preset-named diagram assets: the transform pair
+    (parent via compose with the README's own flags, child via the real
+    ``transform`` verb against the parent just minted) plus the compose-only
+    singles, pinned clock for idempotence."""
+    _DIAGRAMS_OUT.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    with patch("hyperweave.compose.context.datetime", _FrozenDatetime):
+        parent = compose(
+            ComposeSpec(
+                type="diagram",
+                genome_id="primer",
+                variant="porcelain",
+                ground="bare",
+                palette="adaptive",
+                diagram=resolve_diagram_preset("service-dependencies"),
+            )
+        ).svg
+        child = transform(parent, _SERVICE_PATCH, ts=_PINNED_CLOCK.isoformat())
+        if child.lineage[-1]["parent_id"] != child.parent_id:
+            raise RuntimeError("transform lineage does not chain to the parent just minted")
+        minted = [("service-dependencies.svg", parent), ("service-dependencies-billing.svg", child.svg)]
+        for preset, filename, variant in _DIAGRAM_SINGLES:
+            svg = compose(
+                ComposeSpec(
+                    type="diagram",
+                    genome_id="primer",
+                    variant=variant,
+                    ground="bare",
+                    palette="adaptive",
+                    diagram=resolve_diagram_preset(preset),
+                )
+            ).svg
+            minted.append((filename, svg))
+        for filename, svg in minted:
+            dest = _DIAGRAMS_OUT / filename
+            rel = dest.relative_to(_ROOT)
+            if dest.exists() and _structural(dest.read_text()) == _structural(svg):
+                print(f"  unchanged {rel}")
+                continue
+            dest.write_text(svg)
+            written.append(dest)
+            print(f"  wrote {rel} ({len(svg):,} bytes)")
+    return written
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Re-render the committed telemetry example receipts.")
     parser.add_argument(
@@ -152,6 +235,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     refresh(mock=args.mock)
+    refresh_diagrams()
     return 0
 
 

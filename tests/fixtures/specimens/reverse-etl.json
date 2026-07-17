@@ -1,56 +1,56 @@
 {
- "aspect": 1.632,
- "caption_text": "Fan-out (bilateral) \u00b7 pull from sources on the left, sync, push to destinations on the right",
- "cards": {
-  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
-  "hero_area_ratio": 1.925,
-  "hero_h": 104.0,
-  "hero_w": 236.3,
-  "std_h_med": 76.0,
-  "std_w_med": 168.0
- },
- "census": {
-  "animated": true,
-  "arrow_terminals": 6,
-  "card_rx": 13.0,
-  "cards": 7,
-  "chips": 0,
-  "coins": 0,
-  "desc_lines": 7,
-  "drift_edges": 0,
-  "gather_knots": 0,
-  "glyph_marks": 7,
-  "hero_cards": 1,
-  "hero_rx": 16.0,
-  "micro_labels": 0,
-  "muted_cards": 0,
-  "particles": 3,
-  "shell_marks": 0,
-  "solid_edges": 6,
-  "terminal_dots": 0,
-  "zone_headers": 2
- },
- "chip_stub_min": null,
- "height": 453.0,
- "hero_stack": {
-  "name_rows": 1,
-  "sub_rows": 2
- },
- "occupancy": 0.419,
- "plate": {
-  "caption_pad": 40.0,
-  "caption_y": 720.0,
-  "content_bottom": 578.0,
-  "content_top": 182.0,
-  "zone_y": 64.0
- },
- "port_tolerance": 0.6,
- "source": "v04/alpha/v04a6/diagrams-v3/pp-integration.svg",
- "viewbox": [
-  0.0,
-  0.0,
-  1240.0,
-  760.0
- ],
- "width": 740.0
+  "aspect": 1.632,
+  "caption_text": "Fan-out (bilateral) \u00b7 pull from sources on the left, sync, push to destinations on the right",
+  "cards": {
+    "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+    "hero_area_ratio": 1.925,
+    "hero_h": 104.0,
+    "hero_w": 236.3,
+    "std_h_med": 76.0,
+    "std_w_med": 168.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 6,
+    "card_rx": 13.0,
+    "cards": 7,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 7,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 7,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 3,
+    "shell_marks": 0,
+    "solid_edges": 6,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "chip_stub_min": null,
+  "height": 453.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 2
+  },
+  "occupancy": 0.419,
+  "plate": {
+    "caption_pad": 40.0,
+    "caption_y": 720.0,
+    "content_bottom": 578.0,
+    "content_top": 182.0,
+    "zone_y": 64.0
+  },
+  "port_tolerance": 0.6,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-integration.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    760.0
+  ],
+  "width": 740.0
 }

@@ -315,9 +315,12 @@ def test_default_under_route_is_orthogonal_both_orientations() -> None:
 
 def test_gateway_tiers_rank_rhythm_matches_citation() -> None:
     """model-gateway-tiers reproduces its hand file's rhythm: every card 62
-    tall, tier column at pitch 92, and EVERY converging S-curve crossing the
-    same rise — the even-join law that makes the east-side fan read as one
-    family."""
+    tall, tier column at pitch 92, and the converging fan reading as ONE
+    family — the even-join law. Amended with the corrected topology
+    (pp-gateway-balanced.svg: every tier converges on the shared cache, the
+    funnel apex on the middle tier's row): the family read is now the
+    BILATERAL one — the flush center rides its lane straight while every
+    bent convergent crosses the same rise, mirrored about the apex."""
     lay = _preset_layout("model-gateway-tiers")
     cards = [p for p in lay.nodes if p.shape == "rect"]
     assert {round(p.box.h) for p in cards} == {62}
@@ -325,7 +328,9 @@ def test_gateway_tiers_rank_rhythm_matches_citation() -> None:
     assert [round(b - a) for a, b in itertools.pairwise(tiers)] == [92, 92]
     tier_right = max(p.box.x + p.box.w for p in cards if p.node_id in ("fast", "deep", "vision"))
     curve_rises = [round(abs(ty - sy), 1) for sy, ty in _curve_endpoints_y(lay, min_sx=tier_right - 1)]
-    assert curve_rises and len(set(curve_rises)) == 1, f"converging rises diverge: {curve_rises}"
+    bent = [r for r in curve_rises if r]
+    assert bent and len(set(bent)) == 1, f"converging rises diverge: {curve_rises}"
+    assert len(bent) % 2 == 0, f"bent convergents must mirror about the apex: {curve_rises}"
 
 
 def _curve_endpoints_y(lay: Any, *, min_sx: float) -> list[tuple[float, float]]:

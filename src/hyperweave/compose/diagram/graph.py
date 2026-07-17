@@ -23,9 +23,11 @@ from hyperweave.compose.diagram.layered import (
     barycenter_orders,
     check_rank_contradiction,
     longest_path_ranks,
+    pinned_orders,
     split_self_loops,
 )
 from hyperweave.compose.diagram.paths import bisect_clearance_depth, fmt, line_d, line_len, s_curve_h, s_curve_h_len
+from hyperweave.compose.diagram.pinning import resolve_layout_pins
 from hyperweave.compose.diagram.records import DiagramText, LaneBand
 from hyperweave.compose.diagram.route import self_loop
 from hyperweave.compose.diagram.sizing import (
@@ -42,6 +44,8 @@ from hyperweave.compose.spatial_records import LineSpec, RectSpec
 from hyperweave.core.diagram import DiagramCapacityError, DiagramInputError, DiagramNode, NodeRole, NodeStyle
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
     from hyperweave.compose.diagram.records import DiagramLayout, NodePlacement
     from hyperweave.core.diagram import ResolvedEdge
     from hyperweave.core.paradigm import DiagramNodeChassis
@@ -439,6 +443,82 @@ def _seat_depart_chip(
     geos[chip_slot] = replace(geos[chip_slot], label_pos=((mx + kx) / 2, my), label_anchor="middle")
 
 
+def _lane_rows(
+    grid_members: list[int],
+    provisional: Mapping[int, float],
+    pitch: float,
+    edges: Sequence[ResolvedEdge],
+    rank: list[int],
+    placed: Mapping[int, NodePlacement],
+    spec_nodes: Sequence[DiagramNode],
+) -> dict[int, float]:
+    """Row-aligned cy per grid member — lanes over independent centering.
+
+    The centering formula seats every rank around the shared canvas mid, so
+    adjacent ranks row-align only when their counts happen to match; one
+    insertion knocks every cross-rank edge into an S (the service-dependencies
+    billing transform: 4 services vs 3 stores put the store rank a half-pitch
+    off the grid and zero edges ran straight). The lane law instead reads the
+    rows already placed one rank left:
+
+    - a single-source node snaps to its source's row (the reads/emits/cache
+      lanes);
+    - a multi-source node centers on the MIDPOINT of its sources' rows,
+      unless one inbound is chip-labeled — then it snaps to the labeled
+      source's row, first label by declaration order when several carry
+      chips (Postgres rides Auth's row for the reads lane even after writes
+      arrives);
+    - a gather node always takes the midpoint — its trunk chip is furniture
+      on the knot, not a lane vote (gateway-balanced's cache centers on the
+      tier fan, dead on the middle tier's row);
+    - a source designated by MORE than one member of the rank snaps nobody —
+      a fan distributes around its mouth (the four services keep the grid;
+      snapping them all to the gateway's row would stack the fan);
+    - skip edges (rank diff >= 2) ride channels, not lanes, so they never
+      vote.
+
+    Snapped rows then pass a monotone min-pitch chain in rank order, so an
+    authored order never inverts and boxes never overlap; a conflict loser
+    shifts down one pitch instead of stealing the row. Balanced 1:1 ranks
+    reproduce their provisional rows exactly — the pass is a no-op on every
+    already-aligned figure."""
+    targets: dict[int, float] = {}
+    designated: dict[int, int] = {}
+    for m in grid_members:
+        inbound = [
+            e for e in edges if e.target == m and e.source != m and rank[m] - rank[e.source] == 1 and e.source in placed
+        ]
+        if not inbound:
+            continue
+        src_cy = {e.source: placed[e.source].box.y + placed[e.source].box.h / 2 for e in inbound}
+        if spec_nodes[m].gather:
+            targets[m] = (min(src_cy.values()) + max(src_cy.values())) / 2
+            continue
+        if len(src_cy) == 1:
+            designated[m] = inbound[0].source
+            continue
+        chips = [e for e in inbound if e.label and e.label_style == "chip"]
+        if chips:
+            designated[m] = chips[0].source
+        else:
+            targets[m] = (min(src_cy.values()) + max(src_cy.values())) / 2
+    claims: dict[int, int] = {}
+    for source in designated.values():
+        claims[source] = claims.get(source, 0) + 1
+    for m, source in designated.items():
+        if claims[source] == 1:
+            targets[m] = placed[source].box.y + placed[source].box.h / 2
+    rows: dict[int, float] = {}
+    running = -math.inf
+    for m in grid_members:
+        cy = targets.get(m, provisional[m])
+        if running > -math.inf and pitch > 0:
+            cy = max(cy, running + pitch)
+        rows[m] = cy
+        running = cy
+    return rows
+
+
 def solve_dag(ctx: SolverContext) -> DiagramLayout:
     ch = ctx.ch
     spec = ctx.spec
@@ -468,7 +548,11 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     n_ranks = max(rank) + 1
     if n_ranks > int(caps.get("dag_max_ranks", 4)):
         raise DiagramCapacityError(f"dag caps at {caps.get('dag_max_ranks', 4)} ranks (got {n_ranks}); split the graph")
-    orders = barycenter_orders(n, flow_edges, rank)
+    # Authored row-order pins (a transform child's inherited figure) outrank
+    # the barycenter's fresh crossing minimum — order continuity IS the law;
+    # a fresh compose without pins keeps the sweep byte-identical.
+    pins = resolve_layout_pins(spec)
+    orders = pinned_orders(n, rank, pins) if pins is not None else barycenter_orders(n, flow_edges, rank)
     for r, members in orders.items():
         if len(members) > int(caps.get("dag_max_per_rank", 4)):
             raise DiagramCapacityError(
@@ -559,7 +643,11 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             if not any(e.label for e in incoming):
                 trunk = float(ch.join_trunk_bare or 0)
             else:
-                trunk = max(base_trunk, chip_run_min(incoming, ctx.cfg, stub=_join_chip_stub(ctx)))
+                # Reserve what the join will draw: a grounded (<4 spoke)
+                # join floors its stub at the on-line law — mirror of the
+                # knot_collapse sizing below, or the knot crowds the gap.
+                reserve_stub = _join_chip_stub(ctx) if len(incoming) >= 4 else max(_join_chip_stub(ctx), CHIP_STUB_MIN)
+                trunk = max(base_trunk, chip_run_min(incoming, ctx.cfg, stub=reserve_stub))
             if trunk:
                 gather_trunk[rank[t]] = max(gather_trunk.get(rank[t], 0.0), trunk)
     # Mirror for DEPART sources (frontier-serving's hub): a gather node that FANS
@@ -637,6 +725,7 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     if n_ranks == 1:
         x_cursor += slack / 2
     lane_cx: dict[int, float] = {}
+    clearance = float(ctx.engine.get("min_clearance", 18))
     for idx, r in enumerate(sorted(orders)):
         # The gap INTO this rank; a gather-join rank takes its trunk ADDITIVELY
         # over the shared eff_gap so the convergence fan mirrors the departure.
@@ -647,17 +736,32 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         k = len(grid_members)
         col_w = rank_w[r]
         pitch = _rank_pitch(grid_members) if k > 1 else 0.0
-        for i, node_index in enumerate(grid_members):
+        provisional = {m: mid + (i - (k - 1) / 2) * pitch for i, m in enumerate(grid_members)}
+        rows = _lane_rows(
+            grid_members,
+            provisional,
+            _rank_pitch(grid_members) if grid_members else 0.0,
+            edges,
+            rank,
+            placed,
+            spec.nodes,
+        )
+        for node_index in grid_members:
             w, h = boxes[node_index]
-            cy = mid + (i - (k - 1) / 2) * pitch
             placed[node_index] = _place_dag_node(
-                ctx, node_index, spec.nodes[node_index], x_cursor + col_w / 2, cy, w, h
+                ctx, node_index, spec.nodes[node_index], x_cursor + col_w / 2, rows[node_index], w, h
             )
         for node_index in members:
             if node_index in lane_members:
                 # Seated after the channel solves — remember the column only.
                 lane_cx[node_index] = x_cursor + col_w / 2
         x_cursor += col_w
+    # A monotone snap chain can push a conflict loser past the pre-solve rank
+    # extent; grow the canvas exactly as the lane-member seat does rather than
+    # letting a row ride the footer.
+    if placed:
+        deepest_grid = max(p.box.y + p.box.h for p in placed.values())
+        height = max(height, int(deepest_grid + clearance + ch.footer_h))
     in_degree: dict[int, int] = {}
     for e in edges:
         in_degree[e.target] = in_degree.get(e.target, 0) + 1
@@ -674,7 +778,6 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     # rise — keep clearance true; channels stack DOWNWARD and the canvas
     # grows to hold them.
     deepest_box = max((p.box.y + p.box.h for p in placed.values()), default=0.0)
-    clearance = float(ctx.engine.get("min_clearance", 18))
     # A band's OUTLINE is a chip-seat obstacle too (annotate.py's
     # band_chip_clearance) — the under-channel a chip rides must clear the
     # band by the same specimen-cited margin PLUS the chip's own half-height
@@ -718,6 +821,7 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     # exclude them from the arrival spread so a plain fan-in keeps its true pitch.
     skip_idx = frozenset(j for j, e in enumerate(edges) if rank[e.target] - rank[e.source] >= 2)
     _, fan_entry_y = _fan_spread(edges, placed, skip_edges=skip_idx)  # exits collapse to the center mouth
+    plateau_min_dy = float((ctx.engine.get("connector") or {}).get("plateau_min_dy", 40))
     geos: list[EdgeGeo] = []
     plain_by_target: dict[int, list[int]] = {}
     plain_by_source: dict[int, list[int]] = {}
@@ -955,6 +1059,126 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             continue
         plain_by_target.setdefault(e.target, []).append(len(geos))
         plain_by_source.setdefault(e.source, []).append(len(geos))
+        if e.exit == "bottom" and e.entry == "right":
+            # Authored under-elbow — the direct-read's mirror: exit the
+            # source's south face, ride the bottom band east PAST the target
+            # column, climb the east gutter, land through the target's east
+            # face. Zero lane crossings by construction (the band runs under
+            # the content, the climb outside the column); a chip seats on the
+            # flat bottom run like every channel chip. Same orthogonal detour
+            # family and fixed fillets as the skip routes. Authored data
+            # only — no solver policy picks this route for an edge.
+            sx_b, sy_b = pa.box.x + pa.box.w / 2, pa.box.y + pa.box.h
+            channel = channel_base + skip_seen * ch.skip_stack
+            deepest_channel = max(deepest_channel, channel)
+            skip_seen += 1
+            arc_r = ch.over_arc_r
+            tx_e, tcy_e = side_anchor(pb, side="right", at=b.y + b.h / 2)
+            # Span-aware corridor (ruling 2026-07-16): the climb clears every
+            # box it passes — the rightmost obstacle in its own span plus
+            # clearance, never just the target's face — so a later rank east
+            # of the entry face wraps the route instead of being cut. Region
+            # bands count as obstacles (their outline is furniture a wire
+            # must clear like a card).
+            corridor_pad = clearance + arc_r
+            climb_top = min(tcy_e, channel)
+            rise_x = pb.box.x + pb.box.w + corridor_pad
+            corridor_blockers = [p.box for p in placed.values()] + [band.box for band in bands]
+            moved = True
+            while moved:
+                moved = False
+                for blocker in corridor_blockers:
+                    in_span = blocker.y < channel and blocker.y + blocker.h > climb_top
+                    if in_span and blocker.x - clearance < rise_x < blocker.x + blocker.w + corridor_pad:
+                        rise_x = blocker.x + blocker.w + corridor_pad
+                        moved = True
+            r1 = min(arc_r, (channel - sy_b) / 2)
+            r2 = min(arc_r, (channel - tcy_e) / 2, (rise_x - tx_e) / 2)
+            d = (
+                f"M {fmt(sx_b)},{fmt(sy_b)} "
+                f"L {fmt(sx_b)},{fmt(channel - r1)} "
+                f"Q {fmt(sx_b)},{fmt(channel)} {fmt(sx_b + r1)},{fmt(channel)} "
+                f"L {fmt(rise_x - r2)},{fmt(channel)} "
+                f"Q {fmt(rise_x)},{fmt(channel)} {fmt(rise_x)},{fmt(channel - r2)} "
+                f"L {fmt(rise_x)},{fmt(tcy_e + r2)} "
+                f"Q {fmt(rise_x)},{fmt(tcy_e)} {fmt(rise_x - r2)},{fmt(tcy_e)} "
+                f"L {fmt(tx_e)},{fmt(tcy_e)}"
+            )
+            geos.append(
+                EdgeGeo(
+                    index=j,
+                    d=d,
+                    sx=sx_b,
+                    sy=sy_b,
+                    tx=tx_e,
+                    ty=tcy_e,
+                    length=(channel - sy_b) + (rise_x - sx_b) + (channel - tcy_e) + (rise_x - tx_e),
+                    label_pos=(round((sx_b + r1 + rise_x - r2) / 2, 2), round(channel, 2)),
+                    label_bare=True,
+                    polyline=((sx_b, sy_b), (sx_b, channel), (rise_x, channel), (rise_x, tcy_e), (tx_e, tcy_e)),
+                    end_tangent=(-1.0, 0.0),
+                )
+            )
+            continue
+        is_chip = bool(e.label) and e.label_style == "chip"
+        gathered = ctx.spec.nodes[e.target].gather or ctx.spec.nodes[e.source].gather
+        # +3: the pill's PAINTED edge sits ~1.4px outside its ink box each
+        # side, and the plateau is the one run built at exactly chip_run_min
+        # — without the reserve the measured stub reads 17.0 against the
+        # 18.4/face citation (same family as marker_reserved_stub: painted
+        # extent eats a bare stub's visible thread).
+        flat_min = chip_run_min([e], ctx.cfg, stub=CHIP_STUB_MIN) + 3.0 if is_chip else 0.0
+        if is_chip and not gathered and abs(tcy - scy) > plateau_min_dy and (tx - sx) - flat_min >= 36.0:
+            # A chip on a plain S-curve seats at the arc-length midpoint —
+            # the steepest point of the S once the rows diverge, where the
+            # stroke parts the pill diagonally. Chip edges that must bend
+            # therefore ride a PLATEAU: bow in, flat run at the chip's own
+            # run minimum (the ≥18px visible-wire stub law each side — the
+            # parity board holds every on-line chip to it), bow out — the
+            # remaining room splits
+            # between dive and rise in proportion to their climbs, so a tall
+            # rise reads as a swoop instead of a wall. Still the relational
+            # bow family (two cubics), never the detour's L+Q corners. The
+            # rail seats in the gap band adjacent to the SOURCE row toward
+            # the target — the billing transform's writes chip rides below
+            # the cache row — collapsing to the natural S mid for a
+            # single-row bend. The rise still finishes min_clearance before
+            # the target column face and lands through a flat approach (the
+            # first construction grazed the cards stacked above the port).
+            # Gather ends keep their trunk seats.
+            src_grid = _grid(orders[rank[e.source]])
+            half_gap = (_rank_pitch(src_grid) if src_grid else ch.rank_pitch_max) / 2
+            rail = scy + math.copysign(min(half_gap, abs(tcy - scy) / 2), tcy - scy)
+            approach = min(clearance + 2.0, (tx - sx - flat_min) / 4)
+            rem = (tx - sx) - flat_min - approach
+            dy_dive, dy_rise = abs(rail - scy), abs(tcy - rail)
+            dive_dx = max(12.0, rem * dy_dive / max(dy_dive + dy_rise, 1.0))
+            px0 = sx + dive_dx
+            px1 = px0 + flat_min
+            px2 = tx - approach
+            mx1, mx2 = (sx + px0) / 2, (px1 + px2) / 2
+            d = (
+                f"M {fmt(sx)},{fmt(scy)} "
+                f"C {fmt(mx1)},{fmt(scy)} {fmt(mx1)},{fmt(rail)} {fmt(px0)},{fmt(rail)} "
+                f"L {fmt(px1)},{fmt(rail)} "
+                f"C {fmt(mx2)},{fmt(rail)} {fmt(mx2)},{fmt(tcy)} {fmt(px2)},{fmt(tcy)} "
+                f"L {fmt(tx)},{fmt(tcy)}"
+            )
+            geos.append(
+                EdgeGeo(
+                    index=j,
+                    d=d,
+                    sx=sx,
+                    sy=scy,
+                    tx=tx,
+                    ty=tcy,
+                    length=s_curve_h_len(sx, scy, px0, rail) + flat_min + s_curve_h_len(px1, rail, px2, tcy) + approach,
+                    label_pos=(round((px0 + px1) / 2, 2), round(rail, 2)),
+                    label_bare=True,
+                    end_tangent=(1.0, 0.0),
+                )
+            )
+            continue
         geos.append(
             EdgeGeo(
                 index=j,
@@ -987,14 +1211,19 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             if not any(ctx.edges[geos[s].index].label for s in slots):
                 knot_collapse(geos, slots, trunk_len=float(ch.join_trunk_bare or 0))
                 continue
-            chip_run = chip_run_min([ctx.edges[geos[s].index] for s in slots], ctx.cfg, stub=_join_chip_stub(ctx))
-            knot_collapse(geos, slots, trunk_len=max(base_trunk, chip_run))
             # The mouth-lift exists because ARRIVALS CROWD the knot (its own
             # citation): dag-scatter's 4-spoke join lifts its chip 22 above
-            # the trunk; frontier-serving's 2-spoke cache join seats within
-            # its wire band (6.27), and convergence grounds at 0. A quiet
-            # knot grounds the chip.
-            _seat_gather_chip(ctx, geos, slots, geos[-1], lift=None if len(slots) >= 3 else 0.0)
+            # the trunk. Every smaller join grounds — a trunk chip seats ON
+            # its wire like every other channel chip (ruling 2026-07-16:
+            # frontier-serving's cache chip grounded when its join grew to
+            # three spokes; the wire parts the pill, no float). A GROUNDED
+            # pill answers the on-line stub law (18.4/face), so its trunk
+            # floors there; the lifted scatter keeps its own cited sizing.
+            lifted = len(slots) >= 4
+            join_stub = _join_chip_stub(ctx) if lifted else max(_join_chip_stub(ctx), CHIP_STUB_MIN)
+            chip_run = chip_run_min([ctx.edges[geos[s].index] for s in slots], ctx.cfg, stub=join_stub)
+            knot_collapse(geos, slots, trunk_len=max(base_trunk, chip_run))
+            _seat_gather_chip(ctx, geos, slots, geos[-1], lift=None if lifted else 0.0)
     # The depart mirror (frontier-serving): a HUB that authors ``gather:
     # true`` leaves on one solid arrowless stub to a knot at its center
     # mouth, then fans — the spread exits collapse to that mouth. The stub

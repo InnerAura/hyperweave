@@ -1,73 +1,73 @@
 {
- "aspect": 2.0,
- "back_edge_routes": {
-  "failed->queued": {
-   "arrival_angle": 90.0,
-   "belly_x": 0.415,
-   "chord_dev": 148.5,
-   "clearance": 140.6,
-   "exit_side": "corner"
-  }
- },
- "caption_text": "CI run lifecycle \u00b7 the retry loop is why it is a state machine, not a pipeline",
- "cards": {
-  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
-  "hero_area_ratio": 1.573,
-  "hero_h": 78.0,
-  "hero_w": 175.0,
-  "std_h_med": 62.0,
-  "std_w_med": 140.0
- },
- "census": {
-  "animated": true,
-  "arrow_terminals": 5,
-  "card_rx": 13.0,
-  "cards": 5,
-  "chips": 0,
-  "coins": 0,
-  "desc_lines": 5,
-  "drift_edges": 1,
-  "gather_knots": 0,
-  "glyph_marks": 5,
-  "hero_cards": 1,
-  "hero_rx": 16.0,
-  "micro_labels": 5,
-  "muted_cards": 1,
-  "particles": 0,
-  "shell_marks": 0,
-  "solid_edges": 4,
-  "terminal_dots": 0,
-  "zone_headers": 0
- },
- "chip_stub_min": null,
- "edge_dress": {
-  "failed->queued": {
-   "dashed": true,
-   "role": "neutral"
-  }
- },
- "edge_label_seats": {
-  "retry": 25.3
- },
- "height": 370.0,
- "hero_stack": {
-  "name_rows": 1,
-  "sub_rows": 1
- },
- "occupancy": 0.324,
- "plate": {
-  "caption_pad": 30.0,
-  "caption_y": 590.0,
-  "content_bottom": 482.0,
-  "content_top": 111.0
- },
- "port_tolerance": 0.8,
- "source": "v04/alpha/v04a6/diagrams-v3/pp-state-machine.svg",
- "viewbox": [
-  0.0,
-  0.0,
-  1240.0,
-  620.0
- ],
- "width": 740.0
+  "aspect": 2.0,
+  "back_edge_routes": {
+    "failed->queued": {
+      "arrival_angle": 90.0,
+      "belly_x": 0.415,
+      "chord_dev": 148.5,
+      "clearance": 140.6,
+      "exit_side": "corner"
+    }
+  },
+  "caption_text": "CI run lifecycle \u00b7 the retry loop is why it is a state machine, not a pipeline",
+  "cards": {
+    "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+    "hero_area_ratio": 1.573,
+    "hero_h": 78.0,
+    "hero_w": 175.0,
+    "std_h_med": 62.0,
+    "std_w_med": 140.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 5,
+    "card_rx": 13.0,
+    "cards": 5,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 5,
+    "drift_edges": 1,
+    "gather_knots": 0,
+    "glyph_marks": 5,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 5,
+    "muted_cards": 1,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 4,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "chip_stub_min": null,
+  "edge_dress": {
+    "failed->queued": {
+      "dashed": true,
+      "role": "neutral"
+    }
+  },
+  "edge_label_seats": {
+    "retry": 25.3
+  },
+  "height": 370.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.324,
+  "plate": {
+    "caption_pad": 30.0,
+    "caption_y": 590.0,
+    "content_bottom": 482.0,
+    "content_top": 111.0
+  },
+  "port_tolerance": 0.8,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-state-machine.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    620.0
+  ],
+  "width": 740.0
 }

@@ -1,7 +1,7 @@
 <div id="top">
 
 <p align="center">
-  <img src="./assets/banners/hw-mercury.svg" alt="HyperWeave" width="75%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-mercury.svg" alt="HyperWeave" width="75%"/>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 -->
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/primer.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave&variant=petrol" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/primer.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave&variant=noir" alt="strip"/>
 </p>
 
 <!--
@@ -796,17 +796,17 @@ hyperweave compose diagram --spec-file service-dependencies -g primer --variant 
 **Transform** it through the artifact itself. `transform` verifies the hash, applies the patch to the embedded spec, re-validates, and mints a new artifact with a lineage entry recording exactly what changed:
 
 ```bash
-hyperweave transform services.svg --patch-json '[
+hyperweave transform services.svg -o services-billing.svg --patch-json '[
   {"op": "add", "path": "/nodes/-", "value": {"id": "billing", "label": "Billing", "desc": "invoices", "glyph": "stripe"}},
   {"op": "add", "path": "/edges/-", "value": {"source": "gateway", "target": "billing", "relation": "assert"}},
-  {"op": "add", "path": "/edges/-", "value": {"source": "billing", "target": "postgres", "label": "writes", "label_style": "chip", "relation": "assert"}}
+  {"op": "add", "path": "/edges/-", "value": {"source": "billing", "target": "postgres", "label": "writes", "label_style": "chip", "relation": "assert", "exit": "bottom", "entry": "right"}}
 ]'
 ```
 
-**The result** is a new artifact: new id, one more service in the fan, and the response carries the new envelope, the lineage, and a `/v1/a/{id}` link to the new pixels:
+**The result** is a new artifact: new id, one more service in the fan, the envelope and lineage on stdout — and `-o` writes the new pixels to `services-billing.svg`:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/service-dependencies-billing.svg" alt="The same diagram after one transform: a Billing service joins the fan and writes to Postgres" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/service-dependencies-billing.svg" alt="The same diagram after one transform: a Billing service joins the fan and its writes edge rides the bottom band into Postgres" width="100%"/>
 </p>
 
 And because the look is a pointer, the same spec re-renders under any variant: swap `porcelain` for `noir` in the URL and the whole diagram returns in the dark scheme, structure untouched.

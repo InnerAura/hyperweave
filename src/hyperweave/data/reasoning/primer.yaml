@@ -278,6 +278,14 @@ primer:
         comparison cards drop their accent dot entirely, trading slot
         symmetry for the inert-versus-live read the topology exists to
         assert.
+    transform_note: |-
+      Transformed artifact: {delta}; insertion seat {seat}. Survivor rows ride
+      the parent's pinned rank order (layout.rank_orders, inside the hashed
+      payload) and single-source sinks snap to their source's row, so the
+      lanes the parent composed stay straight; a chip edge that must bend
+      rides a plateau — bow in, chip-length flat run, bow out. The fresh
+      crossing minimum is spent for figure continuity: the reader's held map
+      outranks the sweep.
   receipt:
     dark:
       intent: |-

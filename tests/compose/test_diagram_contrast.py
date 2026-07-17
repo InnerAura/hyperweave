@@ -165,7 +165,12 @@ class TestLadder:
         cfg = load_diagram_config()["glyph_contrast"]
         assert float(cfg["threshold"]) == 3.0
         assert float(cfg["chroma_floor"]) == 120
-        assert float(cfg["chroma_lum_floor"]) == 1.2
+        # 1.1 admits the OpenRouter rebrand lime (1.11 on the palest card,
+        # owner-ruled brand fidelity) and still excludes pure yellow on
+        # white (1.07) — the wash-out the floor exists to catch.
+        assert float(cfg["chroma_lum_floor"]) == 1.1
+        assert contrast_ratio("#C8FF00", "#FDF6F8") >= 1.1
+        assert contrast_ratio("#FFFF00", "#FFFFFF") < 1.1
 
     def test_no_marks_means_empty_outcomes(self) -> None:
         svg = compose_inline(_MARKLESS, "porcelain")

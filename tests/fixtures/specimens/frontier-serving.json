@@ -1,61 +1,67 @@
 {
- "aspect": 1.722,
- "caption_text": "DAG \u00b7 one key routes to three frontier labs, two share the cache, telemetry skips the ranks to metrics",
- "cards": {
-  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
-  "hero_area_ratio": 1.746,
-  "hero_h": 104.0,
-  "hero_w": 195.0,
-  "std_h_med": 66.0,
-  "std_w_med": 176.0
- },
- "census": {
-  "animated": true,
-  "arrow_terminals": 7,
-  "card_rx": 13.0,
-  "cards": 7,
-  "chips": 3,
-  "coins": 0,
-  "desc_lines": 7,
-  "drift_edges": 8,
-  "gather_knots": 1,
-  "glyph_marks": 7,
-  "hero_cards": 1,
-  "hero_rx": 16.0,
-  "micro_labels": 0,
-  "muted_cards": 0,
-  "particles": 5,
-  "shell_marks": 0,
-  "solid_edges": 2,
-  "terminal_dots": 0,
-  "zone_headers": 2
- },
- "chip_homes": {
-  "in_card": 0,
-  "on_wire": 3,
-  "wire_offset_max": 6.27
- },
- "chip_stub_min": 6.0,
- "height": 430.0,
- "hero_stack": {
-  "name_rows": 1,
-  "sub_rows": 1
- },
- "occupancy": 0.494,
- "plate": {
-  "caption_pad": 26.0,
-  "caption_y": 694.0,
-  "content_bottom": 661.0,
-  "content_top": 159.0,
-  "zone_y": 70.0
- },
- "port_tolerance": 9.0,
- "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-dag-serving-v2.svg",
- "viewbox": [
-  0.0,
-  0.0,
-  1240.0,
-  720.0
- ],
- "width": 740.0
+  "aspect": 1.722,
+  "caption_text": "DAG \u00b7 one key routes to three frontier labs, two share the cache, telemetry skips the ranks to metrics",
+  "caption_text_amended": "DAG \u00b7 one key routes to three frontier labs, every lab shares the cache, telemetry skips the ranks to metrics",
+  "cards": {
+    "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+    "hero_area_ratio": 1.746,
+    "hero_h": 104.0,
+    "hero_w": 195.0,
+    "std_h_med": 66.0,
+    "std_w_med": 176.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 7,
+    "card_rx": 13.0,
+    "cards": 7,
+    "chips": 3,
+    "coins": 0,
+    "desc_lines": 7,
+    "drift_edges": 8,
+    "gather_knots": 1,
+    "glyph_marks": 7,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 5,
+    "shell_marks": 0,
+    "solid_edges": 2,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "census_amendments": {
+    "arrow_terminals": 6,
+    "note": "corrected serving topology (pp-gateway-balanced.svg: providers feed the shared cache; observability rides the telemetry line alone) \u2014 gemini's metrics arrow becomes a third cache convergent: one fewer arrow terminal, one more particle rider",
+    "particles": 6
+  },
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 3,
+    "wire_offset_max": 6.27
+  },
+  "chip_stub_min": 6.0,
+  "height": 430.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.494,
+  "plate": {
+    "caption_pad": 26.0,
+    "caption_y": 694.0,
+    "content_bottom": 661.0,
+    "content_top": 159.0,
+    "zone_y": 70.0
+  },
+  "port_tolerance": 9.0,
+  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-dag-serving-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    720.0
+  ],
+  "width": 740.0
 }

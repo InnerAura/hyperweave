@@ -1398,6 +1398,11 @@ DAG: list[Story] = [
         "the dependency mesh — four arrivals seat clean on one store",
         _preset("service-dependencies"),
     ),
+    (
+        "service-dependencies-billing",
+        "the grown figure — billing joins the fan, lanes hold, the writes chip rides its plateau",
+        _preset("service-dependencies-billing"),
+    ),
     ("kernel-bottleneck", "the kernel bottleneck — a shared dependency is NOT a gather", _preset("kernel-bottleneck")),
     (
         "proofset-build",

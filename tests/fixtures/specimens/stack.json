@@ -1,64 +1,64 @@
 {
- "aspect": 1.047,
- "caption_text": "Composition \u00b7 geometry \u00d7 structure \u00d7 chromatic \u00d7 motion resolve to one artifact",
- "cards": {
-  "hero_area_ratio": 1.924,
-  "hero_h": 104.0,
-  "hero_w": 193.0,
-  "std_h_med": 64.0,
-  "std_w_med": 163.0
- },
- "census": {
-  "animated": true,
-  "arrow_terminals": 1,
-  "card_rx": 13.0,
-  "cards": 5,
-  "chips": 1,
-  "coins": 0,
-  "desc_lines": 5,
-  "drift_edges": 0,
-  "gather_knots": 0,
-  "glyph_marks": 2,
-  "hero_cards": 1,
-  "hero_rx": 16.0,
-  "micro_labels": 0,
-  "muted_cards": 0,
-  "particles": 1,
-  "shell_marks": 0,
-  "solid_edges": 4,
-  "terminal_dots": 0,
-  "zone_headers": 2
- },
- "census_amendments": {
-  "glyph_marks": 5,
-  "note": "glyph_marks 2->5: the motion/structure/geometry marks (sine wave, crosshatch, triangle) are real identity marks the hand file drew as bare paths (uncounted); the render counts their waves/hash/triangle kinds."
- },
- "chip_homes": {
-  "in_card": 0,
-  "on_wire": 1,
-  "wire_offset_max": 0.0
- },
- "chip_stub_min": 31.0,
- "height": 707.0,
- "hero_stack": {
-  "name_rows": 1,
-  "sub_rows": 2
- },
- "occupancy": 0.169,
- "plate": {
-  "caption_pad": 38.0,
-  "caption_y": 822.0,
-  "content_bottom": 758.0,
-  "content_top": 80.0,
-  "zone_y": 66.0
- },
- "port_tolerance": 4.5,
- "source": "v04/alpha/v04a6/diagrams-v3/pp-stack-v2.svg",
- "viewbox": [
-  0.0,
-  0.0,
-  900.0,
-  860.0
- ],
- "width": 740.0
+  "aspect": 1.047,
+  "caption_text": "Composition \u00b7 geometry \u00d7 structure \u00d7 chromatic \u00d7 motion resolve to one artifact",
+  "cards": {
+    "hero_area_ratio": 1.924,
+    "hero_h": 104.0,
+    "hero_w": 193.0,
+    "std_h_med": 64.0,
+    "std_w_med": 163.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 1,
+    "card_rx": 13.0,
+    "cards": 5,
+    "chips": 1,
+    "coins": 0,
+    "desc_lines": 5,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 2,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 1,
+    "shell_marks": 0,
+    "solid_edges": 4,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "census_amendments": {
+    "glyph_marks": 5,
+    "note": "glyph_marks 2->5: the motion/structure/geometry marks (sine wave, crosshatch, triangle) are real identity marks the hand file drew as bare paths (uncounted); the render counts their waves/hash/triangle kinds."
+  },
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 1,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 31.0,
+  "height": 707.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 2
+  },
+  "occupancy": 0.169,
+  "plate": {
+    "caption_pad": 38.0,
+    "caption_y": 822.0,
+    "content_bottom": 758.0,
+    "content_top": 80.0,
+    "zone_y": 66.0
+  },
+  "port_tolerance": 4.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-stack-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    900.0,
+    860.0
+  ],
+  "width": 740.0
 }

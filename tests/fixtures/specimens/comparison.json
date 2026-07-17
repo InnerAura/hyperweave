@@ -1,61 +1,61 @@
 {
- "aspect": 1.967,
- "caption_text": "Comparison \u00b7 one self-contained artifact replaces per-surface code",
- "cards": {
-  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
-  "hero_area_ratio": 1.0,
-  "hero_h": 160.0,
-  "hero_w": 380.0,
-  "std_h_med": 160.0,
-  "std_w_med": 380.0
- },
- "census": {
-  "animated": false,
-  "arrow_terminals": 1,
-  "card_rx": 16.0,
-  "cards": 2,
-  "chips": 7,
-  "coins": 0,
-  "desc_lines": 2,
-  "drift_edges": 0,
-  "gather_knots": 0,
-  "glyph_marks": 2,
-  "hero_cards": 1,
-  "hero_rx": 16.0,
-  "micro_labels": 0,
-  "muted_cards": 1,
-  "particles": 0,
-  "shell_marks": 0,
-  "solid_edges": 1,
-  "terminal_dots": 0,
-  "zone_headers": 2
- },
- "chip_homes": {
-  "in_card": 6,
-  "on_wire": 1,
-  "wire_offset_max": 0.0
- },
- "chip_stub_min": 68.0,
- "height": 376.0,
- "hero_stack": {
-  "name_rows": 1,
-  "sub_rows": 4
- },
- "occupancy": 0.221,
- "plate": {
-  "caption_pad": 40.0,
-  "caption_y": 560.0,
-  "content_bottom": 380.0,
-  "content_top": 220.0,
-  "zone_y": 72.0
- },
- "port_tolerance": 10.5,
- "source": "v04/alpha/v04a6/diagrams-v3/pp-comparison-v2.svg",
- "viewbox": [
-  0.0,
-  0.0,
-  1180.0,
-  600.0
- ],
- "width": 740.0
+  "aspect": 1.967,
+  "caption_text": "Comparison \u00b7 one self-contained artifact replaces per-surface code",
+  "cards": {
+    "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+    "hero_area_ratio": 1.0,
+    "hero_h": 160.0,
+    "hero_w": 380.0,
+    "std_h_med": 160.0,
+    "std_w_med": 380.0
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 1,
+    "card_rx": 16.0,
+    "cards": 2,
+    "chips": 7,
+    "coins": 0,
+    "desc_lines": 2,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 2,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 1,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 1,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "chip_homes": {
+    "in_card": 6,
+    "on_wire": 1,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 68.0,
+  "height": 376.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 4
+  },
+  "occupancy": 0.221,
+  "plate": {
+    "caption_pad": 40.0,
+    "caption_y": 560.0,
+    "content_bottom": 380.0,
+    "content_top": 220.0,
+    "zone_y": 72.0
+  },
+  "port_tolerance": 10.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-comparison-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1180.0,
+    600.0
+  ],
+  "width": 740.0
 }

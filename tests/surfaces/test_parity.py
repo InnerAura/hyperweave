@@ -18,16 +18,20 @@ Three guarantees:
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 from typer.testing import CliRunner
 
 from hyperweave.cli import app as cli_app
+from hyperweave.core.envelope import extract_envelope
 from hyperweave.mcp import server as mcp_server
 from hyperweave.serve.app import app as http_app
 from hyperweave.surfaces.registry import CallContext, all_capabilities, dispatch
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # The curated MCP tool set. Adding a tool requires updating this list — a
 # deliberate curation decision, not an accident. hw_compress is the kept
@@ -117,6 +121,28 @@ async def sample_svg() -> str:
 
 
 @pytest.fixture()
+async def sample_diagram_svg() -> str:
+    """A composed diagram SVG — one of the two schemas the transform verb accepts."""
+    ctx = CallContext(surface="test")
+    result = await dispatch(
+        "compose",
+        {
+            "type": "diagram",
+            "genome": "primer",
+            "spec": {
+                "topology": "pipeline",
+                "title": "Flow",
+                "nodes": [{"id": "a", "label": "Source"}, {"id": "b", "label": "Mid"}, {"id": "c", "label": "Sink"}],
+                "edges": [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}],
+            },
+            "emit": ["svg"],
+        },
+        ctx,
+    )
+    return str(result["svg"])
+
+
+@pytest.fixture()
 async def http_client() -> Any:
     async with AsyncClient(transport=ASGITransport(app=http_app), base_url="http://test") as ac:
         yield ac
@@ -170,6 +196,37 @@ async def test_diff_parity_across_surfaces(sample_svg: str, http_client: AsyncCl
 
     assert direct == http == mcp == cli
     assert direct["same"] is True
+
+
+def test_cli_transform_out_file_matches_stdout_envelope(sample_diagram_svg: str, tmp_path: Path) -> None:
+    """``--out`` writes the new artifact to disk; the envelope JSON still prints to stdout."""
+    out_path = tmp_path / "out.svg"
+    patch = json.dumps([{"op": "replace", "path": "/title", "value": "Renamed"}])
+    result = runner.invoke(cli_app, ["transform", sample_diagram_svg, "--patch-json", patch, "-o", str(out_path)])
+
+    assert result.exit_code == 0, result.output
+    assert out_path.exists()
+    written = out_path.read_text()
+    assert "<svg" in written
+
+    envelope = json.loads(result.stdout)
+    written_envelope = extract_envelope(written)
+    assert written_envelope is not None
+    assert written_envelope["id"] == envelope["new_id"]
+
+
+def test_cli_transform_without_out_names_the_exits(sample_diagram_svg: str) -> None:
+    """Without ``--out`` the printed url is a dead handle on the CLI (the
+    store dies with the process) — the resolve hint rides stderr while the
+    stdout envelope JSON stays clean for pipeline consumers."""
+    patch = json.dumps([{"op": "replace", "path": "/title", "value": "Renamed"}])
+    result = runner.invoke(cli_app, ["transform", sample_diagram_svg, "--patch-json", patch])
+
+    assert result.exit_code == 0, result.output
+    envelope = json.loads(result.stdout)
+    assert envelope["new_id"]
+    assert "hyperweave serve" in result.stderr
+    assert "-o" in result.stderr
 
 
 def _cli_json(args: list[str]) -> dict[str, Any]:

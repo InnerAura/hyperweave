@@ -5,18 +5,23 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0-alpha.7] - Unreleased
+## [0.4.0-alpha.7] - 2026-07-16
 
-Dark diagrams now look the same on every surface and interface, card faces render smooth, and Claude Code and Codex telemetry configs now reflect the latest release of models and pricing.
+Dark diagrams now look the same on every surface, transforming a diagram keeps its layout, and Claude Code and Codex telemetry configs reflect the latest July models and pricing.
 
 ### Added
 
 - **Force a color scheme** — the HTTP API and MCP accept `face=light|dark` to render one fixed scheme, matching the CLI's `--face` flag.
 - **Diagram discovery** — the discovery listing now includes the diagram URL pattern and its query options.
 - **New model pricing** — Claude Fable 5, Mythos 5, and Sonnet 5, plus the GPT-5.6 tiers (Sol, Terra, Luna) from the Codex rate card; Sonnet 5 resolves to its 1M context window.
+- **`transform -o`** — the CLI transform writes the new SVG to a file, matching `compose -o`; the envelope JSON still prints.
+- **Authored elbow entry** — an edge may declare `exit: bottom, entry: right` to ride the bottom band and enter its target's east face; the climb wraps any cards in its path.
 
 ### Fixed
 
+- **Transforms keep the figure** — editing a diagram no longer reshuffles it: surviving nodes keep their rows, an added node joins at the edge of its column, and the order travels inside the artifact so follow-up edits hold it too.
+- **Rows align across columns** — a node fed by one upstream node sits on that node's row so their edge runs straight; a node fed by several centers between them, with a labeled edge picking the row.
+- **Edge labels on bends** — a labeled edge that must change rows carries its label pill on a flat stretch of wire instead of the curve's steepest point.
 - **Dark diagrams on every surface** — dark diagrams render identically on plate, inlay, twin, and adaptive surfaces, from CLI, HTTP, or MCP; previously the full dark styling applied only to explicitly baked dark renders.
 - **Fable 5 rates** — receipts price Fable 5 sessions at the published $10/$50 per MTok instead of the Opus line.
 - **1-hour cache writes** — cache writes bill at 2× for 1-hour entries and 1.25× for 5-minute entries, reading the per-turn split; flat totals previously all billed at 1.25×.
@@ -28,11 +33,13 @@ Dark diagrams now look the same on every surface and interface, card faces rende
 
 ### Changed
 
-- **README diagrams** — regenerated: the fan-out example rides accent-blue wires with single-line node subtitles, and the frontier-serving hub wears the OpenRouter brand glyph.
+- **Serving presets** — every provider tier converges on the shared cache, metrics hangs off the telemetry line, and the cache card reads `cache`.
 
 ### Notes
 
 - Receipt costs use sticker per-token rates; Sonnet 5's introductory rate (through August 2026) is not modeled.
+- Row-keeping across transforms applies to `dag` diagrams; other layouts re-solve as before.
+- A diagram minted by an earlier release may shift rows once when transformed under this one; lineage records the version.
 
 ## [0.4.0-alpha.6] - 2026-07-14
 

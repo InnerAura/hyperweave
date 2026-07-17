@@ -108,6 +108,142 @@ def test_unsupported_frame_rejected() -> None:
     assert exc.value.code.value == "SPEC_INVALID"
 
 
+_DAG = {
+    "topology": "dag",
+    "title": "Grown figure",
+    "subtitle": "A gateway fans to services, each grounding on its store",
+    "nodes": [
+        {"id": "web", "label": "web"},
+        {"id": "gw", "label": "gateway", "role": "hero"},
+        {"id": "auth", "label": "Auth"},
+        {"id": "orders", "label": "Orders"},
+        {"id": "pg", "label": "Postgres"},
+        {"id": "kafka", "label": "Kafka"},
+    ],
+    "edges": [
+        {"source": "web", "target": "gw"},
+        {"source": "gw", "target": "auth"},
+        {"source": "gw", "target": "orders"},
+        {"source": "auth", "target": "pg", "label": "reads", "label_style": "chip"},
+        {"source": "orders", "target": "kafka", "label": "emits", "label_style": "chip"},
+    ],
+}
+
+_GROW = [
+    {"op": "add", "path": "/nodes/-", "value": {"id": "billing", "label": "Billing"}},
+    {"op": "add", "path": "/edges/-", "value": {"source": "gw", "target": "billing"}},
+    {
+        "op": "add",
+        "path": "/edges/-",
+        "value": {"source": "billing", "target": "pg", "label": "writes", "label_style": "chip"},
+    },
+]
+
+
+def _dag_svg() -> str:
+    return compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=_DAG)).svg
+
+
+def _label_rows(svg: str, names: list[str]) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for name in names:
+        m = re.search(rf'<text x="[0-9.]+" y="([0-9.]+)"[^>]*>{re.escape(name)}</text>', svg)
+        assert m is not None, f"label {name!r} missing from render"
+        out[name] = float(m.group(1))
+    return out
+
+
+def test_diagram_transform_preserves_caption() -> None:
+    """The child renders the same caption band the parent composed — the
+    subtitle is spec content and the footer region is kit chrome; neither is
+    transform's to drop."""
+    svg0 = _dag_svg()
+    assert 'data-hw-region="footer"' in svg0
+    res = transform(svg0, _GROW, ts=_FIXED_TS)
+    assert 'data-hw-region="footer"' in res.svg
+    assert "A gateway fans to services, each grounding on its store" in res.svg
+
+
+def test_diagram_transform_pins_survivor_rows() -> None:
+    """The figure survives the edit: every survivor keeps its row, the
+    insertion seats at its rank's extent, and the pins ride the hashed
+    payload for the next hop."""
+    svg0 = _dag_svg()
+    names = ["Auth", "Orders", "Postgres", "Kafka"]
+    before = _label_rows(svg0, names)
+    res = transform(svg0, _GROW, ts=_FIXED_TS)
+    after = _label_rows(res.svg, [*names, "Billing"])
+    for name in names:
+        assert abs(after[name] - before[name]) < 0.5, f"{name} moved: {before[name]} -> {after[name]}"
+    assert after["Billing"] > after["Orders"], "insertion interleaved into the authored run"
+    emb = extract_embedded(res.svg)
+    assert emb.payload["spec"]["layout"]["rank_orders"] == [
+        ["web"],
+        ["gw"],
+        ["auth", "orders", "billing"],
+        ["pg", "kafka"],
+    ]
+    # the first labeled vote holds the store even after the second arrives
+    assert abs(after["Postgres"] - after["Auth"]) < 0.5
+
+
+def test_diagram_transform_chain_keeps_the_figure() -> None:
+    """Transform of a transform: the grandchild reads the child's persisted
+    pins (never a cold re-solve of the patched spec), so survivor rows hold
+    across hops and lineage chains hop to hop."""
+    svg0 = _dag_svg()
+    r1 = transform(svg0, _GROW, ts=_FIXED_TS)
+    rows1 = _label_rows(r1.svg, ["Auth", "Orders", "Billing", "Postgres", "Kafka"])
+    r2 = transform(
+        r1.svg,
+        [
+            {"op": "add", "path": "/nodes/-", "value": {"id": "audit", "label": "Audit"}},
+            {"op": "add", "path": "/edges/-", "value": {"source": "gw", "target": "audit"}},
+        ],
+        ts=_FIXED_TS,
+    )
+    rows2 = _label_rows(r2.svg, ["Auth", "Orders", "Billing", "Audit", "Postgres", "Kafka"])
+    for name in ("Auth", "Orders", "Billing", "Postgres", "Kafka"):
+        assert abs(rows2[name] - rows1[name]) < 0.5, f"{name} moved on the second hop"
+    assert rows2["Audit"] > rows2["Billing"], "second insertion left the extent"
+    assert len(r2.lineage) == 2
+    assert r2.lineage[1]["parent_id"] == r1.new_id
+
+
+def test_diagram_insert_then_remove_returns_the_figure() -> None:
+    """Adding a node and then removing it (edges first, then the node)
+    returns every original row — pins drop the vanished id and the figure
+    closes back over the edit."""
+    svg0 = _dag_svg()
+    names = ["Auth", "Orders", "Postgres", "Kafka"]
+    before = _label_rows(svg0, names)
+    r1 = transform(svg0, _GROW, ts=_FIXED_TS)
+    r2 = transform(
+        r1.svg,
+        [
+            {"op": "remove", "path": "/edges/6"},
+            {"op": "remove", "path": "/edges/5"},
+            {"op": "remove", "path": "/nodes/6"},
+        ],
+        ts=_FIXED_TS,
+    )
+    after = _label_rows(r2.svg, names)
+    for name in names:
+        assert abs(after[name] - before[name]) < 0.5, f"{name} did not return: {before[name]} -> {after[name]}"
+
+
+def test_diagram_transform_reasoning_carries_the_delta() -> None:
+    """Parent and child stop being byte-identical in hw:reasoning: the child
+    appends the transform note with its insertion seat filled in."""
+    svg0 = _dag_svg()
+    res = transform(svg0, _GROW, ts=_FIXED_TS)
+    parent_tr = re.search(r"<hw:tradeoffs>(.*?)</hw:tradeoffs>", svg0, re.DOTALL)
+    child_tr = re.search(r"<hw:tradeoffs>(.*?)</hw:tradeoffs>", res.svg, re.DOTALL)
+    assert parent_tr and child_tr
+    assert child_tr.group(1) != parent_tr.group(1)
+    assert "billing at rank 2, row 3/3" in child_tr.group(1)
+
+
 def test_transform_preserves_surface() -> None:
     """A bare adaptive inlay source must not re-render as the plate default —
     transform changes content, never presentation."""

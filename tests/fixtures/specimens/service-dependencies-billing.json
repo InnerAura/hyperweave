@@ -1,0 +1,73 @@
+{
+  "aspect": 1.778,
+  "caption_text": "Service dependencies \u00b7 a gateway fans to domain services, each grounding on its store",
+  "cards": {
+    "hero_area_ratio": 1.203,
+    "hero_h": 62.0,
+    "hero_w": 178.0,
+    "std_h_med": 66.0,
+    "std_w_med": 139.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 11,
+    "card_rx": 13.0,
+    "cards": 9,
+    "chips": 5,
+    "coins": 0,
+    "desc_lines": 8,
+    "drift_edges": 1,
+    "gather_knots": 0,
+    "glyph_marks": 9,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 10,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 5,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 47.2,
+  "edge_set": {
+    "auth->postgres": "reads",
+    "billing->postgres": "writes",
+    "gateway->auth": "",
+    "gateway->billing": "",
+    "gateway->orders": "",
+    "gateway->postgres": "direct read",
+    "gateway->search": "",
+    "orders->kafka": "emits",
+    "orders->postgres": "",
+    "search->redis": "cache",
+    "web->gateway": ""
+  },
+  "height": 416.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 0
+  },
+  "occupancy": 0.592,
+  "plate": {
+    "caption_pad": 47.0,
+    "caption_y": 597.0,
+    "content_bottom": 559.0,
+    "content_top": 73.0,
+    "zone_y": 38.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-service-deps-billing.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1145.0,
+    644.0
+  ],
+  "width": 740.0
+}

@@ -389,6 +389,7 @@ connector:
   loop_label_max_w: 96 # wrap width for a self-loop's outboard label
   leader_gap: 10
   label_lift: 16 # language specimen: micro-labels sit 16px off their wire (verb-algebra edit/read)
+  plateau_min_dy: 40 # chip edges bending past this ride a plateau (bow-flat-bow, chip on the flat run); under it the S's waist stays shallow enough to part the pill level (service-dependencies-billing writes chip — rail in the gap band under the cache row)
   sm_label_lift: 8 # state-machine specimens: solver-anchored micro-labels clear their wire by 8px (pp-state-machine(-alt2).svg chain/back-edge/over-arc guards)
   # One shared drift clock (diagrams-v3 kit): every marching wire rides the
   # same 7s phase — staggered delays made overlapping fan origins shimmer.
@@ -610,7 +611,13 @@ glyph_contrast:
   # clears 3:1 (HF yellow on dusk). Plateless/pass when RGB distance >= the
   # floor AND the WCAG ratio >= the small luminance floor.
   chroma_floor: 120
-  chroma_lum_floor: 1.2
+  # 1.1 (ruling 2026-07-16, OpenRouter's rebrand lime on the light cards):
+  # brand lime #C8FF00 measures 1.11 on the palest card (blush) and 13-15.6
+  # on every dark card; pure yellow on white (1.07), the wash-out this floor
+  # exists to exclude, stays out. The legibility test reads THIS block — one
+  # law, two enforcers (the slate-400 red shipped through the old gap where
+  # the engine gate and the test disagreed).
+  chroma_lum_floor: 1.1
 
 truncation:
   ellipsis: "…"

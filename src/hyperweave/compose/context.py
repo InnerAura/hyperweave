@@ -24,8 +24,9 @@ if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec, ResolvedArtifact
 
 from hyperweave.compose.assembler import fonts_for_frame, frame_needs_fonts
+from hyperweave.compose.diagram.pinning import transform_note_facts
 from hyperweave.compose.payload import build_simple_payload
-from hyperweave.compose.reasoning import load_reasoning
+from hyperweave.compose.reasoning import load_reasoning, load_transform_note
 from hyperweave.config.loader import frame_public_name
 from hyperweave.core.color import hex_to_rgb_triplet
 from hyperweave.render.fonts import font_import_css, load_font_face_css
@@ -80,6 +81,15 @@ def _resolve_reasoning_context(spec: ComposeSpec, resolved: ResolvedArtifact) ->
     intent = spec.intent or (yaml_reasoning.intent if yaml_reasoning else "")
     approach = spec.approach or (yaml_reasoning.approach if yaml_reasoning else "")
     tradeoffs = spec.tradeoffs or (yaml_reasoning.tradeoffs if yaml_reasoning else "")
+    # A transform child appends its lineage delta to the tradeoffs — parent
+    # and child must not carry byte-identical deliberation; the note's slot
+    # values come from the hashed lineage/pin record, never from re-solving.
+    if spec.type == "diagram" and spec.diagram is not None:
+        facts = transform_note_facts(spec.diagram)
+        note = load_transform_note(spec.genome_id, spec.type) if facts else ""
+        if facts and note:
+            rendered = note.format(**facts)
+            tradeoffs = f"{tradeoffs}\n{rendered}" if tradeoffs else rendered
     return {
         "reasoning_intent": intent,
         "reasoning_approach": approach,

@@ -74,6 +74,7 @@ GEOMETRY_SPECIMENS: dict[str, Path] = {
     "kernel-bottleneck": PROTOTYPES / "dag-seq-tree" / "pp-dep-mesh-v2.svg",
     "model-gateway-tiers": PROTOTYPES / "dag-seq-tree" / "pp-gateway-refined.svg",
     "service-dependencies": PROTOTYPES / "dag-seq-tree" / "pp-service-deps.svg",
+    "service-dependencies-billing": PROTOTYPES / "dag-seq-tree" / "pp-service-deps-billing.svg",
     "agent-runtime": PROTOTYPES / "dag-seq-tree" / "pp-agent-runtime.svg",
     "auth-sequence": PROTOTYPES / "dag-seq-tree" / "pp-sequence.svg",
     "tree": PROTOTYPES / "dag-seq-tree" / "pp-tree.svg",
@@ -257,6 +258,28 @@ def extract_geometry(name: str, path: Path) -> dict[str, object]:
             result["census_amendments"] = existing["census_amendments"]
         if "plate_amendment" in existing:
             result["plate_amendment"] = existing["plate_amendment"]
+        # caption/chip-band supersessions (the corrected serving topology):
+        # same owner-triaged survival rule as census_amendments.
+        if "caption_text_amended" in existing:
+            result["caption_text_amended"] = existing["caption_text_amended"]
+        prior_homes = existing.get("chip_homes") or {}
+        if "wire_offset_max_amended" in prior_homes and isinstance(result.get("chip_homes"), dict):
+            result["chip_homes"]["wire_offset_max_amended"] = prior_homes["wire_offset_max_amended"]  # type: ignore[index]
+        # convergence-angle and back-route bow amendments: nested owner
+        # records a re-extraction silently clobbered once (order-lifecycle's
+        # chord_dev_amended) — every *_amended/*_note key survives now.
+        for key in ("convergence_outer_angle_amended", "convergence_outer_angle_note"):
+            if key in existing:
+                result[key] = existing[key]
+        prior_routes = existing.get("back_edge_routes") or {}
+        new_routes = result.get("back_edge_routes")
+        if isinstance(new_routes, dict):
+            for edge_key, prior in prior_routes.items():
+                target = new_routes.get(edge_key)
+                if isinstance(target, dict) and isinstance(prior, dict):
+                    for key in ("chord_dev_amended", "chord_dev_note", "arrival_angle_amended", "arrival_angle_note"):
+                        if key in prior:
+                            target[key] = prior[key]
         # hub_seats_superseded: same survival rule, for a satellite seat
         # angle/dist that no longer reproduces without un-verticalizing a
         # connector no specimen draws off-spine (see axial.py's solve_axial).

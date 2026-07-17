@@ -1,49 +1,49 @@
 {
- "aspect": 2.619,
- "caption_text": "Agent runtime \u00b7 plan, act, observe \u2014 then re-plan or finish; the accent edge is the one transition that leaves the loop",
- "cards": {
-  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
-  "std_h_med": 62.0,
-  "std_w_med": 165.0
- },
- "census": {
-  "animated": true,
-  "arrow_terminals": 8,
-  "card_rx": 13.0,
-  "cards": 9,
-  "chips": 0,
-  "coins": 0,
-  "desc_lines": 9,
-  "drift_edges": 1,
-  "gather_knots": 0,
-  "glyph_marks": 8,
-  "hero_cards": 0,
-  "hero_rx": 0.0,
-  "micro_labels": 3,
-  "muted_cards": 0,
-  "particles": 0,
-  "shell_marks": 0,
-  "solid_edges": 7,
-  "terminal_dots": 0,
-  "zone_headers": 1
- },
- "chip_stub_min": null,
- "height": null,
- "occupancy": 0.481,
- "plate": {
-  "caption_pad": 24.0,
-  "caption_y": 496.0,
-  "content_bottom": 431.0,
-  "content_top": 154.0,
-  "zone_y": 56.0
- },
- "port_tolerance": 1.5,
- "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-agent-runtime.svg",
- "viewbox": [
-  0.0,
-  0.0,
-  1362.0,
-  520.0
- ],
- "width": null
+  "aspect": 2.619,
+  "caption_text": "Agent runtime \u00b7 plan, act, observe \u2014 then re-plan or finish; the accent edge is the one transition that leaves the loop",
+  "cards": {
+    "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+    "std_h_med": 62.0,
+    "std_w_med": 165.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 8,
+    "card_rx": 13.0,
+    "cards": 9,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 9,
+    "drift_edges": 1,
+    "gather_knots": 0,
+    "glyph_marks": 8,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 3,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 7,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": null,
+  "occupancy": 0.481,
+  "plate": {
+    "caption_pad": 24.0,
+    "caption_y": 496.0,
+    "content_bottom": 431.0,
+    "content_top": 154.0,
+    "zone_y": 56.0
+  },
+  "port_tolerance": 1.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-agent-runtime.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1362.0,
+    520.0
+  ],
+  "width": null
 }

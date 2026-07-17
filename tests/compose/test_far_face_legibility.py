@@ -38,6 +38,23 @@ from hyperweave.core.models import ComposeSpec
 _VARIANTS = ["porcelain", "cream", "dusk", "petrol", "noir", "carbon", "space", "anvil"]
 
 _TEXT_FLOOR = 3.0
+
+
+def _reads_through_hue(fg: str, bg: str, ratio: float) -> bool:
+    """The engine gate's chromatic-relief clause, read from the SAME config
+    block (`glyph_contrast` in diagram-frame.yaml) so the gate and this sweep
+    can never disagree again — the slate-400 mark shipped red through exactly
+    that gap. Identity MARKS may read through saturation (a lime blob on
+    paper); text floors stay hard at 3.0."""
+    from hyperweave.compose.diagram.contrast import _rgb_distance
+    from hyperweave.config.loader import load_diagram_config
+
+    cfg = load_diagram_config().get("glyph_contrast") or {}
+    return _rgb_distance(fg, bg) >= float(cfg.get("chroma_floor", 120)) and ratio >= float(
+        cfg.get("chroma_lum_floor", 1.1)
+    )
+
+
 _FURNITURE_FLOOR = 1.5
 
 _UID_RE = re.compile(r"#(hw-[0-9a-f]+)\s*\{\s*color-scheme: light dark;")
@@ -519,8 +536,8 @@ def test_glyph_paint_vs_backing(preset: str, variant: str, face: str) -> None:
                 pytest.fail(f"{preset}/{variant} glyph [{face}]: backing unresolved (shape={shape})")
             checked += 1
             ratio = contrast_ratio(fg, backing)
-            assert ratio >= _TEXT_FLOOR, (
+            assert ratio >= _TEXT_FLOOR or _reads_through_hue(fg, backing, ratio), (
                 f"{preset}/{variant} glyph {channel} [{face}]: {fg} vs {backing} = "
-                f"{ratio:.2f} < {_TEXT_FLOOR} (raw={raw!r}, shape={shape})"
+                f"{ratio:.2f} < {_TEXT_FLOOR} and not chromatically distinct (raw={raw!r}, shape={shape})"
             )
     assert checked > 0, f"{preset}/{variant} [{face}]: no glyph paint checked — sweep is vacuous"

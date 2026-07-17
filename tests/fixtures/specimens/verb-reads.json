@@ -1,99 +1,99 @@
 {
- "aspect": 1.378,
- "caption_text": "Six verbs, one object \u00b7 write mints, read observes",
- "cards": {
-  "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
-  "hero_area_ratio": 2.221,
-  "hero_h": 92.0,
-  "hero_w": 280.0,
-  "std_h_med": 58.0,
-  "std_w_med": 200.0
- },
- "census": {
-  "animated": true,
-  "arrow_terminals": 0,
-  "card_rx": 13.0,
-  "cards": 7,
-  "chips": 0,
-  "coins": 0,
-  "desc_lines": 7,
-  "drift_edges": 6,
-  "gather_knots": 1,
-  "glyph_marks": 5,
-  "hero_cards": 1,
-  "hero_rx": 16.0,
-  "micro_labels": 3,
-  "muted_cards": 0,
-  "particles": 6,
-  "shell_marks": 0,
-  "solid_edges": 0,
-  "terminal_dots": 6,
-  "zone_headers": 0
- },
- "census_amendments": {
-  "glyph_marks": 7,
-  "note": "glyph_marks 5->7: verify's bare checkmark (uncounted hand path) counts as its check mark, and the crown carries the verb-algebra family diamond the sheet nucleus draws."
- },
- "chip_stub_min": null,
- "height": 537.0,
- "hero_stack": {
-  "name_rows": 1,
-  "sub_rows": 1
- },
- "hub_seats": [
-  {
-   "angle": -179.3,
-   "dist": 525.0,
-   "label": "compose"
+  "aspect": 1.378,
+  "caption_text": "Six verbs, one object \u00b7 write mints, read observes",
+  "cards": {
+    "dims_superseded": "snug-width ruling 2026-07-14: hand-file width citations are ceilings \u2014 cards solve to their own ink + anchor pads; the hand file's wider cards are dress history",
+    "hero_area_ratio": 2.221,
+    "hero_h": 92.0,
+    "hero_w": 280.0,
+    "std_h_med": 58.0,
+    "std_w_med": 200.0
   },
-  {
-   "angle": -0.8,
-   "dist": 415.0,
-   "label": "transform"
+  "census": {
+    "animated": true,
+    "arrow_terminals": 0,
+    "card_rx": 13.0,
+    "cards": 7,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 7,
+    "drift_edges": 6,
+    "gather_knots": 1,
+    "glyph_marks": 5,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 3,
+    "muted_cards": 0,
+    "particles": 6,
+    "shell_marks": 0,
+    "solid_edges": 0,
+    "terminal_dots": 6,
+    "zone_headers": 0
   },
-  {
-   "angle": 140.1,
-   "dist": 489.1,
-   "label": "extract"
+  "census_amendments": {
+    "glyph_marks": 7,
+    "note": "glyph_marks 5->7: verify's bare checkmark (uncounted hand path) counts as its check mark, and the crown carries the verb-algebra family diamond the sheet nucleus draws."
   },
-  {
-   "angle": 117.3,
-   "dist": 353.3,
-   "label": "verify"
+  "chip_stub_min": null,
+  "height": 537.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
   },
-  {
-   "angle": 80.6,
-   "dist": 318.3,
-   "label": "diff"
+  "hub_seats": [
+    {
+      "angle": -179.3,
+      "dist": 525.0,
+      "label": "compose"
+    },
+    {
+      "angle": -0.8,
+      "dist": 415.0,
+      "label": "transform"
+    },
+    {
+      "angle": 140.1,
+      "dist": 489.1,
+      "label": "extract"
+    },
+    {
+      "angle": 117.3,
+      "dist": 353.3,
+      "label": "verify"
+    },
+    {
+      "angle": 80.6,
+      "dist": 318.3,
+      "label": "diff"
+    },
+    {
+      "angle": 49.8,
+      "dist": 410.9,
+      "label": "query"
+    }
+  ],
+  "hub_seats_superseded": {
+    "compose": "snug-width ruling 2026-07-14: the satellite solves to its own ink, moving the name-run seat ~8-9% inside the hand file's wide-card throw",
+    "diff": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures",
+    "extract": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures",
+    "query": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures",
+    "transform": "snug-width ruling 2026-07-14: the satellite solves to its own ink, moving the name-run seat ~8-9% inside the hand file's wide-card throw",
+    "verify": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures"
   },
-  {
-   "angle": 49.8,
-   "dist": 410.9,
-   "label": "query"
-  }
- ],
- "hub_seats_superseded": {
-  "compose": "snug-width ruling 2026-07-14: the satellite solves to its own ink, moving the name-run seat ~8-9% inside the hand file's wide-card throw",
-  "diff": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures",
-  "extract": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures",
-  "query": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures",
-  "transform": "snug-width ruling 2026-07-14: the satellite solves to its own ink, moving the name-run seat ~8-9% inside the hand file's wide-card throw",
-  "verify": "edge-run law 2026-07-14 (polar): S seats re-derive from the hand file's spread-to-drop family (0.87 x the 245 gap) \u2014 card CENTERS match the hand \u00b10.5px, but the snug cards + snug crown move the NAME-anchor polar read this law measures"
- },
- "occupancy": 0.403,
- "plate": {
-  "caption_pad": 36.0,
-  "caption_y": 864.0,
-  "content_bottom": 729.0,
-  "content_top": 334.0
- },
- "port_tolerance": 0.5,
- "source": "v04/alpha/v04a6/diagrams-v3/pp-radial.svg",
- "viewbox": [
-  0.0,
-  0.0,
-  1240.0,
-  900.0
- ],
- "width": 740.0
+  "occupancy": 0.403,
+  "plate": {
+    "caption_pad": 36.0,
+    "caption_y": 864.0,
+    "content_bottom": 729.0,
+    "content_top": 334.0
+  },
+  "port_tolerance": 0.5,
+  "source": "v04/alpha/v04a6/diagrams-v3/pp-radial.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1240.0,
+    900.0
+  ],
+  "width": 740.0
 }

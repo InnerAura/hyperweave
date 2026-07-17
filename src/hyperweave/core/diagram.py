@@ -368,6 +368,28 @@ class DiagramRegion(FrozenModel):
     )
 
 
+class DiagramLayoutPins(FrozenModel):
+    """Authored row-order pins — figure continuity across edits.
+
+    A reader keeps a mental map of a diagram between renders; a fresh
+    crossing-minimum solve does not. ``transform`` writes the parent's
+    rendered order here so survivors keep their rows and insertions seat at
+    their rank's extent, never interleaved into the authored run. The dag
+    solver consumes it in place of the barycenter sweep; every other
+    topology ignores it (their placement has no rank grid to pin)."""
+
+    rank_orders: tuple[tuple[str, ...], ...] = Field(
+        default=(),
+        description=(
+            "Per-rank node ids in vertical order, leftmost rank first. Pins "
+            "carry ORDER only — a patched graph may shift a node's column, so "
+            "ranks re-derive at solve time and pinned ids keep their relative "
+            "order within whatever rank they land in. Ids must name spec "
+            "nodes; a node absent here appends after the pinned run."
+        ),
+    )
+
+
 class DiagramSpec(FrozenModel):
     """The universal diagram IR — request input, ``hw:payload`` body,
     markdown shadow source, and envelope source, all at once."""
@@ -454,6 +476,15 @@ class DiagramSpec(FrozenModel):
             "{parent_id, op, patch, ts}. Empty by default and excluded from the "
             "payload dump, so untransformed artifacts stay byte-identical; once "
             "populated it rides inside the hashed payload (tamper-evident)."
+        ),
+    )
+    layout: DiagramLayoutPins | None = Field(
+        default=None,
+        description=(
+            "Row-order pins written by `transform` (see DiagramLayoutPins). "
+            "None — the default, dropped from the payload dump — leaves "
+            "ordering to the solver, so fresh artifacts stay byte-identical; "
+            "once populated it rides inside the hashed payload like lineage."
         ),
     )
     operator: str = Field(

@@ -900,7 +900,7 @@ presets:
     zones: ["frontier serving", "providers · sinks"] # specimen -zone runs, verbatim
     chassis: { hero_min_w: 195, card_min_w: 176, hero: { h: 104 } , zone_content_gap: 89, caption_gap: 4, caption_pad: 23} # frontier-serving: uniform 176-wide rank cards; hero h 104 (unpinned default 112 over-grew the crown; width already floors correctly at hero_min_w)
     title: Frontier serving DAG
-    subtitle: DAG · one key routes to three frontier labs, two share the cache, telemetry skips the ranks to metrics
+    subtitle: DAG · one key routes to three frontier labs, every lab shares the cache, telemetry skips the ranks to metrics
     notes: frontier serving dag
     glyph_tint: full
     node_style: card+glyph
@@ -910,8 +910,8 @@ presets:
       - { id: anthropic, label: Anthropic, desc: claude, glyph: anthropic }
       - { id: openai, label: OpenAI, desc: gpt-4o, glyph: openai }
       - { id: gemini, label: Gemini, desc: flash, glyph: gemini }
-      - { id: cache, label: kv-cache, desc: redis, glyph: redis, gather: true }
-      - { id: metrics, label: metrics, desc: grafana, glyph: grafana }
+      - { id: cache, label: cache, desc: redis, glyph: redis, gather: true } # a shared response cache across different models — KV tensors don't cross models, so the label says cache
+      - { id: metrics, label: metrics, desc: grafana, glyph: grafana, rank: 3 } # telemetry sink shares the cache column (pp-gateway-balanced.svg's rank-pin mechanic)
     edges:
       - { source: requests, target: hub, edge_motion: particle, relation: drift, marker: arrow }
       - { source: hub, target: anthropic, label: route, label_style: chip, edge_motion: particle, relation: drift, marker: arrow }
@@ -919,8 +919,8 @@ presets:
       - { source: hub, target: gemini, edge_motion: particle, relation: drift, marker: arrow }
       - { source: anthropic, target: cache, label: cache, label_style: chip, relation: drift, marker: none }
       - { source: openai, target: cache, edge_motion: particle, relation: drift, marker: none }
-      - { source: gemini, target: metrics, relation: drift, marker: arrow }
-      - { source: hub, target: metrics, relation: drift, label: telemetry, label_style: chip, marker: arrow, exit: bottom }
+      - { source: gemini, target: cache, edge_motion: particle, relation: drift, marker: none } # providers don't write to metrics — Gemini joins the cache funnel; observability rides the telemetry line alone
+      - { source: hub, target: metrics, relation: drift, label: telemetry, label_style: chip, marker: arrow, exit: bottom, entry: left }
 
   scatter-gather:
     topology: dag
@@ -1000,8 +1000,8 @@ presets:
       - { id: fast, label: Fast tier, desc: Haiku, kind: zap } # the specimen's own lightning, now a counted mark (census amended 6→7)
       - { id: deep, label: Deep tier, desc: Opus, kind: cpu }
       - { id: vision, label: Vision tier, desc: multimodal, kind: eye }
-      - { id: cache, label: kv-cache, desc: redis, glyph: redis, gather: true } # fast+deep converge here; gather:true collapses them to one coincident arrival (pp-gateway-refined.svg's own mechanic)
-      - { id: metrics, label: metrics, desc: grafana, kind: layout-grid } # model-gateway-tiers: 2x2 dashboard grid
+      - { id: cache, label: cache, desc: redis, glyph: redis, gather: true } # every tier converges here; gather:true collapses them to one coincident arrival (pp-gateway-refined.svg's own mechanic); a shared response cache — KV tensors don't cross models
+      - { id: metrics, label: metrics, desc: grafana, kind: layout-grid, rank: 3 } # model-gateway-tiers: 2x2 dashboard grid; telemetry sink shares the cache column (pp-gateway-balanced.svg's rank-pin mechanic)
     edges:
       # Ruling 2026-07-14: call/telemetry ride CHIP pills (the gateway-balanced
       # dress), superseding pp-gateway-refined.svg's own bare micro-labels.
@@ -1011,8 +1011,8 @@ presets:
       - { source: gateway, target: vision, relation: assert }
       - { source: fast, target: cache, relation: assert }
       - { source: deep, target: cache, relation: assert }
-      - { source: vision, target: metrics, relation: assert }
-      - { source: gateway, target: metrics, relation: drift, label: telemetry, label_style: chip, marker: arrow, exit: bottom }
+      - { source: vision, target: cache, relation: assert } # tiers don't write to metrics — Vision joins the cache funnel (pp-gateway-balanced.svg's corrected topology); observability rides the telemetry line alone
+      - { source: gateway, target: metrics, relation: drift, label: telemetry, label_style: chip, marker: arrow, exit: bottom, entry: left }
 
   service-dependencies:
     topology: dag
@@ -1045,6 +1045,54 @@ presets:
       - { source: search, target: redis, label: cache, label_style: chip, relation: assert }
       - { source: gateway, target: postgres, label: "direct read", label_style: chip, relation: drift, marker: arrow, exit: top }
 
+  # service-dependencies-billing: the transform-grown sibling of
+  # service-dependencies — billing joins the fan at its rank's extent and
+  # writes to the shared relational store. The layout pins ARE the
+  # composition: the parent's rendered order holds (figure continuity) and
+  # the stores stay snapped to their service lanes. The writes edge AUTHORS
+  # the under-elbow (exit bottom, entry right — the direct-read's mirror):
+  # bottom band, east climb, chip on the flat run, zero lane crossings.
+  # Byte-equal geometry to the real `transform` output; only
+  # lineage/reasoning differ (a preset is a fresh composition, not an edit
+  # record).
+  service-dependencies-billing:
+    topology: dag
+    zones: ["subsystems"]
+    chassis: { card_min_w: 146, hero: { h: 62 }, hero_min_w: 204 }
+    title: Service dependencies
+    subtitle: Service dependencies · a gateway fans to domain services, each grounding on its store
+    notes: dependency dag
+    glyph_tint: full
+    node_style: card+glyph
+    layout:
+      rank_orders:
+        - [web]
+        - [gateway]
+        - [auth, orders, search, billing]
+        - [postgres, kafka, redis]
+    nodes:
+      - { id: web, label: web, desc: "React SPA", glyph: react }
+      - { id: gateway, label: API gateway, role: hero, kind: router }
+      - { id: auth, label: Auth, desc: tokens, kind: shield }
+      - { id: orders, label: Orders, desc: "Python svc", glyph: python }
+      - { id: search, label: Search, desc: "query svc", kind: search }
+      - { id: postgres, label: Postgres, desc: primary, glyph: postgresql }
+      - { id: kafka, label: Kafka, desc: events, glyph: kafka }
+      - { id: redis, label: Redis, desc: cache, glyph: redis }
+      - { id: billing, label: Billing, desc: invoices, glyph: stripe }
+    edges:
+      - { source: web, target: gateway, relation: assert }
+      - { source: gateway, target: auth, relation: assert }
+      - { source: gateway, target: orders, relation: assert }
+      - { source: gateway, target: search, relation: assert }
+      - { source: auth, target: postgres, label: reads, label_style: chip, relation: assert }
+      - { source: orders, target: postgres, relation: assert }
+      - { source: orders, target: kafka, label: emits, label_style: chip, relation: assert }
+      - { source: search, target: redis, label: cache, label_style: chip, relation: assert }
+      - { source: gateway, target: postgres, label: "direct read", label_style: chip, relation: drift, marker: arrow, exit: top }
+      - { source: gateway, target: billing, relation: assert }
+      - { source: billing, target: postgres, label: writes, label_style: chip, relation: assert, exit: bottom, entry: right }
+
   # gateway-balanced: the bilaterally symmetric gateway diamond. One entry
   # fans to a three-tier MODEL POOL (a filled band, no over-arc → snug header
   # strip, concentric with the middle tier so it censuses as a shell), every
@@ -1068,7 +1116,7 @@ presets:
       - { id: fast, label: Fast tier, desc: Haiku, kind: zap } # the specimen's own lightning, now a counted mark (census amended 6→7: the hand file drew it as a bare path the extractor never counted)
       - { id: deep, label: Deep tier, desc: Opus, kind: cpu }
       - { id: vision, label: Vision tier, desc: multimodal, kind: eye }
-      - { id: cache, label: kv-cache, desc: redis, glyph: redis, gather: true } # fast+deep+vision all converge here; gather:true collapses them to one coincident arrival (pp-gateway-balanced.svg's own mechanic)
+      - { id: cache, label: cache, desc: redis, glyph: redis, gather: true } # fast+deep+vision all converge here; gather:true collapses them to one coincident arrival (pp-gateway-balanced.svg's own mechanic); a shared response cache — KV tensors don't cross models
       - { id: metrics, label: metrics, desc: grafana, kind: layout-grid, rank: 3 } # 2x2 dashboard grid; telemetry sink shares the cache column, below the request path
     edges:
       - { source: requests, target: gateway, label: call, label_style: chip, relation: assert }

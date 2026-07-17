@@ -158,12 +158,18 @@ def transform_cmd(
         str,
         typer.Option("--patch-json", help="Inline RFC-6902 patch JSON (a list of ops)."),
     ] = "",
+    out: Annotated[
+        Path | None,
+        typer.Option("--output", "--out", "-o", help="Also write the transformed SVG to this file path."),
+    ] = None,
 ) -> None:
     """Mutate an artifact via an RFC-6902 JSON patch → a new artifact.
 
     Supply the patch inline (``--patch-json '[...]'``), from a file
     (``--patch file.json``), or from stdin (``--patch -``). When the patch comes
-    from stdin, the artifact source cannot also be ``-``.
+    from stdin, the artifact source cannot also be ``-``. ``-o/--out`` writes the
+    new artifact's SVG to disk in addition to (never instead of) the envelope
+    JSON on stdout.
     """
     if patch_json:
         raw = patch_json
@@ -187,7 +193,25 @@ def transform_cmd(
         typer.echo("patch must be a JSON list of RFC-6902 ops", err=True)
         raise typer.Exit(code=2)
 
-    _emit(_run("transform", {"source": _read_source(source), "mutations": ops}))
+    result = _run("transform", {"source": _read_source(source), "mutations": ops})
+    _emit(result)
+
+    if out is None:
+        # Errors-as-documentation: the emitted url is a relative handle backed
+        # by the per-process store — from a bare CLI process it resolves
+        # nowhere once this call exits. Name the exits on stderr; the stdout
+        # envelope JSON stays byte-identical for pipeline consumers.
+        typer.echo("url resolves under `hyperweave serve`; pass -o/--out to write the SVG to a file", err=True)
+    else:
+        from hyperweave.compose.artifact_store import get_artifact
+
+        new_id = str(result.get("new_id", ""))
+        svg = get_artifact(new_id) if new_id else None
+        if svg is None:
+            typer.echo("transform produced no resolvable artifact to write", err=True)
+            raise typer.Exit(code=1)
+        out.write_text(svg)
+        typer.echo(f"Wrote {out}", err=True)
 
 
 def register_capability_commands(app: typer.Typer) -> None:

@@ -75,3 +75,19 @@ def load_reasoning(
                 tradeoffs=block["tradeoffs"].strip(),
             )
     return None
+
+
+def load_transform_note(genome_id: str, frame_type: str) -> str:
+    """The per-genome transform-delta template (empty when unauthored).
+
+    Substrate-agnostic by design — the note describes an EDIT (what the patch
+    changed and where the insertion seated), which is the same fact on every
+    paper. It rides beside the substrate blocks under the frame entry; the
+    caller fills the ``{delta}``/``{seat}`` slots from the lineage record."""
+    if not genome_id or not frame_type:
+        return ""
+    frames = _load_yaml_for_genome(genome_id).get(genome_id) or {}
+    frame_entry = frames.get(frame_type)
+    if not isinstance(frame_entry, dict):
+        return ""
+    return str(frame_entry.get("transform_note") or "").strip()

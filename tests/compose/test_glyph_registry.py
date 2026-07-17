@@ -72,8 +72,11 @@ class TestRegistryShape:
         assert all(GLYPHS[k]["mono"] is True for k in monos)
         full = {k for k, v in GLYPHS.items() if "color_paths" in v or "gradient" in v}
         assert not monos & full, monos & full
-        assert len(monos) == 125  # elasticsearch promoted from wave-3 debt: single-color mark, no gradient/color_paths
-        assert len(full) == 38
+        # 124/39: openrouter left the mono set for color_paths with its
+        # rebrand lime (owner ruling — brand color on the cards like every
+        # full-color mark).
+        assert len(monos) == 124
+        assert len(full) == 39
         assert len(set(GLYPHS) - monos - full) == 29  # the named wave-3 debt
 
     def test_color_paths_shape(self) -> None:

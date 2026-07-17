@@ -15,6 +15,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from hyperweave.compose.artifact_store import store_artifact
+from hyperweave.compose.diagram.pinning import child_rank_orders
 from hyperweave.compose.engine import compose
 from hyperweave.compose.surface import build_artifact_url
 from hyperweave.core.envelope import envelope_id, extract_envelope
@@ -96,6 +97,16 @@ def transform(
                 f"patched {emb.schema} fails validation: {exc}",
                 detail={"schema": emb.schema},
             ) from exc
+
+    # Row-order pins: the child inherits the parent's rendered order, so the
+    # figure survives the edit — survivors keep their rows, insertions seat at
+    # their rank's extent. Inherited from the parent's own pins when it was
+    # itself a transform child, else from its deterministic re-solve; written
+    # INTO the hashed payload beside lineage so chains read rendered truth.
+    # Dag-only: no other topology has a rank grid to pin, and a cyclic patch
+    # that promotes to state-machine ignores pins at the solver.
+    if is_diagram and str(patched.get("topology", "")) == "dag":
+        patched["layout"] = {"rank_orders": child_rank_orders(spec_dict, patched)}
 
     # append lineage INTO the hashed payload, so the new id covers the chain
     entry = build_lineage_entry(parent_id, relation, mutation, ts or datetime.now(UTC).isoformat(), intent)

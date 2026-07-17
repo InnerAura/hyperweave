@@ -833,19 +833,29 @@ def law_edge_set(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
     ]
 
 
-def law_caption_voice(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
+def law_caption_voice(facts: Facts, fixture: dict[str, Any], *, mode: str = "render") -> list[LawResult]:
     """Caption parity: the rendered caption sentence IS the specimen's,
     verbatim — 25 of 40 presets drifted (rewrites, dropped 'The loop ·'
     prefixes) while every geometry law stayed green, because no law read the
-    text. A captionless specimen (obi) pins the ABSENCE."""
+    text. A captionless specimen (obi) pins the ABSENCE. Documented
+    amendment (replace-mode): a ruling that lawfully rewrites the sentence
+    (the corrected serving topology reworded the cache clause) records
+    ``caption_text_amended``; the SELF law still grades the hand file at its
+    own words."""
     if "caption_text" not in fixture:
         return []
     want = fixture.get("caption_text")
+    amended = fixture.get("caption_text_amended") if mode == "render" else None
+    if amended is not None:
+        want = amended
     got = caption_text(facts)
     if want is None:
         return [LawResult("chrome.caption-text", got is None, f"specimen has no caption; render says {got!r}")]
     ok = got == want
-    return [LawResult("chrome.caption-text", ok, f"render {got!r} vs specimen {want!r}" if not ok else "verbatim")]
+    note = " (amended)" if amended is not None else ""
+    return [
+        LawResult("chrome.caption-text", ok, f"render {got!r} vs specimen {want!r}" if not ok else f"verbatim{note}")
+    ]
 
 
 def law_hero_dims(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
@@ -925,11 +935,15 @@ def law_plate(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
     return out
 
 
-def law_chip_homes(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
+def law_chip_homes(facts: Facts, fixture: dict[str, Any], *, mode: str = "render") -> list[LawResult]:
     """Chip placement census (opt-in via fixture ``chip_homes``): chips live
     in exactly two homes — the in-card row or threaded on a wire — and the
     on-wire seat offset is held to the specimen's own worst float band. The
-    count-only census graded a bottom-edge-riding chip green."""
+    count-only census graded a bottom-edge-riding chip green. Documented
+    amendment (replace-mode): a ruling that lawfully re-seats a chip (a
+    join growing to three spokes takes the dag-scatter mouth-lift, 22 above
+    its trunk) records ``wire_offset_max_amended``; the SELF law still
+    grades the hand file at its own band."""
     want = fixture.get("chip_homes")
     if not isinstance(want, dict):
         return []
@@ -946,6 +960,9 @@ def law_chip_homes(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
         )
     ]
     band = want.get("wire_offset_max")
+    amended_band = want.get("wire_offset_max_amended") if mode == "render" else None
+    if amended_band is not None:
+        band = amended_band
     got_off = got.get("wire_offset_max")
     if band is not None and got_off is not None:
         limit = max(float(band) + 1.0, 2.0)
@@ -1100,7 +1117,12 @@ def law_back_route(facts: Facts, fixture: dict[str, Any], *, mode: str = "render
         if w_clear is not None:
             ok_clear = g_clear is not None and float(g_clear) >= float(w_clear) * 0.85
         ok_angle = True
-        w_angle = want_route.get("arrival_angle")
+        # Same replace-mode amendment as chord_dev: the arrival angle follows
+        # the bow's construction, so the snug-width ruling that shallows the
+        # dev shallows the arrival with it — the SELF law still grades the
+        # hand file at its own measured angle.
+        amended_angle = want_route.get("arrival_angle_amended") if mode == "render" else None
+        w_angle = amended_angle if amended_angle is not None else want_route.get("arrival_angle")
         g_angle = g.get("arrival_angle")
         if w_angle is not None:
             ok_angle = g_angle is not None and abs(float(g_angle) - float(w_angle)) <= 3.0
@@ -1213,10 +1235,10 @@ def geometry_laws(
         + law_chip_text_neutral(facts)
         + law_topology(facts, fixture)
         + law_edge_set(facts, fixture)
-        + law_caption_voice(facts, fixture)
+        + law_caption_voice(facts, fixture, mode=mode)
         + law_hero_dims(facts, fixture)
         + law_plate(facts, fixture)
-        + law_chip_homes(facts, fixture)
+        + law_chip_homes(facts, fixture, mode=mode)
         + law_hub_seats(facts, fixture)
         + law_ring_arcs(facts, fixture)
         + law_hero_stack(facts, fixture)

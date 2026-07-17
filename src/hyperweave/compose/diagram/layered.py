@@ -13,15 +13,26 @@ render as their own arc via ``route.self_loop``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from hyperweave.core.diagram import ResolvedEdge
+    from collections.abc import Mapping, Sequence
 
 
-def split_self_loops(edges: list[ResolvedEdge]) -> tuple[list[int], list[int]]:
+class EdgeEnds(Protocol):
+    """The only structure this layer reads: endpoint indices.
+
+    Both the solver's ResolvedEdge and the pinning seam's bare pairs
+    satisfy it — indices in, structure out, zero geometry."""
+
+    @property
+    def source(self) -> int: ...
+
+    @property
+    def target(self) -> int: ...
+
+
+def split_self_loops(edges: Sequence[EdgeEnds]) -> tuple[list[int], list[int]]:
     """Partition edge positions into (self-loop indices, non-self indices).
 
     A self-loop (``source == target``) is a node revisiting itself; it carries
@@ -35,7 +46,7 @@ def split_self_loops(edges: list[ResolvedEdge]) -> tuple[list[int], list[int]]:
     return self_loops, non_self
 
 
-def longest_path_ranks(n: int, edges: list[ResolvedEdge], fixed: Mapping[int, int] | None = None) -> list[int]:
+def longest_path_ranks(n: int, edges: Sequence[EdgeEnds], fixed: Mapping[int, int] | None = None) -> list[int]:
     """Ordinal rank per node: the longest edge-count path from any source,
     seeded by caller pins and compressed to consecutive integers.
 
@@ -67,7 +78,7 @@ def longest_path_ranks(n: int, edges: list[ResolvedEdge], fixed: Mapping[int, in
     return [remap[r] for r in rank]
 
 
-def check_rank_contradiction(edges: list[ResolvedEdge], rank: list[int], fixed: Mapping[int, int]) -> None:
+def check_rank_contradiction(edges: Sequence[EdgeEnds], rank: list[int], fixed: Mapping[int, int]) -> None:
     """A pinned edge must still point forward: if the caller authored ranks
     such that an edge ``a -> b`` ends with ``rank[a] >= rank[b]``, the pins
     contradict the flow — raise naming the edge (no silent reorder). Only
@@ -84,7 +95,7 @@ def check_rank_contradiction(edges: list[ResolvedEdge], rank: list[int], fixed: 
             )
 
 
-def barycenter_orders(n: int, edges: list[ResolvedEdge], rank: list[int], sweeps: int = 4) -> dict[int, list[int]]:
+def barycenter_orders(n: int, edges: Sequence[EdgeEnds], rank: list[int], sweeps: int = 4) -> dict[int, list[int]]:
     """Per-rank vertical orders after fixed barycenter sweeps.
 
     Initial order is spec order; each down pass orders a rank by the mean
@@ -119,7 +130,32 @@ def barycenter_orders(n: int, edges: list[ResolvedEdge], rank: list[int], sweeps
     return orders
 
 
-def back_edges(n: int, edges: list[ResolvedEdge]) -> set[int]:
+def pinned_orders(n: int, rank: list[int], pinned: Sequence[Sequence[int]]) -> dict[int, list[int]]:
+    """Per-rank vertical orders from an authored pin sequence — no sweeps.
+
+    The barycenter re-optimizes crossings globally, which re-shuffles rows a
+    reader already holds; pins preserve the authored figure instead. ``pinned``
+    lists node indices in their authored vertical order, one run per rank as
+    the parent rendered them. Pins carry ORDER only: ranks re-derive from
+    ``rank`` (a patched graph may shift a node's column), each rank keeps its
+    pinned survivors in pin order, and unpinned members (insertions) append
+    after the run in index order — attachments land at the extent, never
+    interleaved into an authored figure."""
+    pos: dict[int, int] = {}
+    for run in pinned:
+        for i in run:
+            if i not in pos:
+                pos[i] = len(pos)
+    ranks = sorted(set(rank))
+    orders: dict[int, list[int]] = {}
+    for r in ranks:
+        members = [i for i in range(n) if rank[i] == r]
+        kept = sorted((i for i in members if i in pos), key=lambda i: pos[i])
+        orders[r] = kept + [i for i in members if i not in pos]
+    return orders
+
+
+def back_edges(n: int, edges: Sequence[EdgeEnds]) -> set[int]:
     """Edge positions that close a cycle — DFS in edge order (deterministic).
 
     Positions index the passed ``edges`` list. Self-loops must be excluded
