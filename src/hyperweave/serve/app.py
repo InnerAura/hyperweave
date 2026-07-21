@@ -24,6 +24,12 @@ from hyperweave.compose.surface import SpecEnvelope, validate_surface
 from hyperweave.config.loader import get_loader
 from hyperweave.config.settings import get_settings
 from hyperweave.connectors.base import close_client, get_client
+from hyperweave.connectors.data_tokens import (
+    format_for_badge,
+    format_for_value,
+    parse_data_tokens,
+    resolve_data_tokens,
+)
 from hyperweave.connectors.github import fetch_stargazer_history, fetch_user_stats
 from hyperweave.core.enums import FrameType
 from hyperweave.core.errors import HwError, HwErrorCode
@@ -31,12 +37,6 @@ from hyperweave.core.models import ComposeSpec
 from hyperweave.render.fonts import load_font_face_css
 from hyperweave.render.templates import render_template
 from hyperweave.serve.capability_routes import register_capability_routes
-from hyperweave.serve.data_tokens import (
-    format_for_badge,
-    format_for_value,
-    parse_data_tokens,
-    resolve_data_tokens,
-)
 
 # Shared by lifespan warmup and /health endpoint. Single source of truth so
 # both paths exercise an identical compose pipeline. Construction is safe at
@@ -365,7 +365,7 @@ async def compose_badge_data_url(
     Requires ``?data=``. Returns 400 (as a SMPTE error SVG, HTTP 200 to
     survive Camo) when ``?data=`` is missing or malformed. The token
     grammar is shared across HTTP / CLI / MCP — see
-    :mod:`hyperweave.serve.data_tokens`.
+    :mod:`hyperweave.connectors.data_tokens`.
     """
     genome, motion = _parse_genome_motion(genome_motion)
 
@@ -973,10 +973,15 @@ async def serve_artifact(
     except HwError as exc:
         return JSONResponse(exc.envelope(), status_code=exc.http_status)
     store_derived(hexd, derived_key, projection.data)
+    headers = {"Cache-Control": _ARTIFACT_CACHE_HEADER}
+    # Projection honesty: declare what the flattening dropped. Diagnostic-only,
+    # legitimately absent on the get_derived cache-hit short-circuit above.
+    for key, value in projection.diagnostics.items():
+        headers[f"X-HW-Static-{key.replace('_', '-').title()}"] = str(value)
     return Response(
         content=projection.data,
         media_type=projection.media_type,
-        headers={"Cache-Control": _ARTIFACT_CACHE_HEADER},
+        headers=headers,
     )
 
 
@@ -1362,8 +1367,13 @@ async def compose_chart_stars(
     connector_data: dict[str, Any] | None = None
     try:
         connector_data = await fetch_stargazer_history(owner, repo)
-    except Exception:
-        connector_data = None
+    except Exception as exc:
+        # Truthful degradation deserves a truthful cause: thread WHY the data
+        # is missing (rate limit vs auth vs 404) to the chart's overlay
+        # instead of collapsing every failure into the same mystery.
+        from hyperweave.connectors.github import failure_cause_payload
+
+        connector_data = failure_cause_payload(exc)
 
     spec = ComposeSpec(
         type="chart",
@@ -1533,6 +1543,19 @@ _FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
     },
     "receipt": {"pattern": "POST /v1/compose", "query_params": []},
 }
+
+
+@app.get("/v1/discover")
+async def discover_capability(what: str = "all") -> dict[str, Any]:
+    """Registry `discover` face — the same dispatch the CLI and MCP adapters use.
+
+    A bespoke GET rather than the verb factory's POST shape: discover takes a
+    selector, not a source artifact (compose/validate set the precedent for
+    bespoke routes that diverge from the uniform POST-JSON verb shape).
+    """
+    from hyperweave.surfaces.registry import CallContext, dispatch
+
+    return await dispatch("discover", {"what": what}, CallContext(surface="http"))
 
 
 @app.get("/v1/frames")

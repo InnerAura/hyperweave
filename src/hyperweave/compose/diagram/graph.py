@@ -822,6 +822,19 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     skip_idx = frozenset(j for j, e in enumerate(edges) if rank[e.target] - rank[e.source] >= 2)
     _, fan_entry_y = _fan_spread(edges, placed, skip_edges=skip_idx)  # exits collapse to the center mouth
     plateau_min_dy = float((ctx.engine.get("connector") or {}).get("plateau_min_dy", 40))
+    # Shared-east-face port stagger: a node that HOSTS an authored elbow entry
+    # while also SOURCING a plain east exit would fuse both wires at center-y
+    # (~18px shared cable + stacked arrowheads). Part them: exit half a stagger
+    # above center, elbow landing half below. Scoped to exactly this collision —
+    # the fan attachment law (exits collapse to the center mouth) is untouched
+    # for every node not in the set, and an empty set is byte-identical output.
+    _elbow_entry_targets = {e.target for e in edges if e.exit == "bottom" and e.entry == "right"}
+    _plain_exit_sources = {
+        e.source
+        for j, e in enumerate(edges)
+        if e.source != e.target and j not in skip_idx and not (e.exit == "bottom" and e.entry == "right")
+    }
+    stagger_faces = _elbow_entry_targets & _plain_exit_sources
     geos: list[EdgeGeo] = []
     plain_by_target: dict[int, list[int]] = {}
     plain_by_source: dict[int, list[int]] = {}
@@ -850,7 +863,8 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         # exits criss-crossed model-gateway's tier curves). Shared non-gather
         # TARGETS keep the dep-mesh arrival spread (that specimen seats 4
         # arrivals over 34px so arrowheads never stack).
-        sx, scy = side_anchor(pa, side="right", at=a.y + a.h / 2)
+        exit_at = a.y + a.h / 2 - (ch.port_stagger / 2 if e.source in stagger_faces else 0.0)
+        sx, scy = side_anchor(pa, side="right", at=exit_at)
         entry_at = b.y + b.h / 2 if ctx.spec.nodes[e.target].gather else fan_entry_y.get(j, b.y + b.h / 2)
         tx, tcy = side_anchor(pb, side="left", at=entry_at)
         if rank[e.target] - rank[e.source] >= 2:
@@ -1073,7 +1087,8 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             deepest_channel = max(deepest_channel, channel)
             skip_seen += 1
             arc_r = ch.over_arc_r
-            tx_e, tcy_e = side_anchor(pb, side="right", at=b.y + b.h / 2)
+            elbow_at = b.y + b.h / 2 + (ch.port_stagger / 2 if e.target in stagger_faces else 0.0)
+            tx_e, tcy_e = side_anchor(pb, side="right", at=elbow_at)
             # Span-aware corridor (ruling 2026-07-16): the climb clears every
             # box it passes — the rightmost obstacle in its own span plus
             # clearance, never just the target's face — so a later rank east

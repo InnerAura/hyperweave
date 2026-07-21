@@ -3075,7 +3075,7 @@ def _resolve_horizontal(
     are set):
 
     1. **Data-token mode** (``spec.data_tokens`` non-empty): each
-       :class:`hyperweave.serve.data_tokens.ResolvedToken` becomes a
+       :class:`hyperweave.connectors.data_tokens.ResolvedToken` becomes a
        scroll item. ``text`` tokens render single-tspan; ``kv`` / ``live``
        tokens render label+value tspans sharing one absolute x.
     2. **Raw text mode** (``spec.title`` only): ``title`` is split on
@@ -3194,7 +3194,7 @@ def _resolve_horizontal(
 
     # Item ingestion: data-tokens preferred, title fallback.
     if spec.data_tokens:
-        from hyperweave.serve.data_tokens import format_for_marquee
+        from hyperweave.connectors.data_tokens import format_for_marquee
 
         formatted = format_for_marquee(spec.data_tokens)
         structured = [

@@ -1429,6 +1429,12 @@ class DiagramTopologyChassis(FrozenModel):
     rank_pitch_max: float = 120.0
     skip_drop: float = 6.0
     """DAG skip-edge channel clearance below the content band."""
+    port_stagger: float = 12.0
+    """Shared-east-face in/out separation: when an authored under-elbow ENTERS a
+    node's east face while a plain edge EXITS that same face, the exit sits
+    half this above center and the elbow lands half below — two distinct wires,
+    never one fused ~18px cable (calibrated on the shared-face stagger probe in
+    tests/compose/test_diagram_port_stagger.py; step matches _fan_offsets' 12px)."""
     skip_stack: float = 12.0
     over_arc_clear: float = 18.0
     """DAG over-top skip: the channel run's clearance ABOVE the shallowest card

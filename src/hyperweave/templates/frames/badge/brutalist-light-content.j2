@@ -37,7 +37,7 @@
       font-family="var(--dna-font-mono, 'SF Mono', monospace)"
       font-size="11" font-weight="700"
       fill="var(--dna-brand-text)"
-      letter-spacing="0.06em"{% if label_text_length and label_text_length > 0 %} textLength="{{ label_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ label_display | default(label | upper) }}</text>
+      letter-spacing="0.06em"{% if label_text_length and label_text_length > 0 %} textLength="{{ label_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ label_display | default(label | upper) | xml_escape }}</text>
 
 {# Value — ACCENT on the ground panel. #}
 <text data-hw-zone="value"
@@ -46,7 +46,7 @@
       font-family="var(--dna-font-mono, 'SF Mono', monospace)"
       font-size="11" font-weight="700"
       fill="var(--dna-signal)"
-      letter-spacing="0.04em"{% if value_text_length and value_text_length > 0 %} textLength="{{ value_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ value }}</text>
+      letter-spacing="0.04em"{% if value_text_length and value_text_length > 0 %} textLength="{{ value_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ value | xml_escape }}</text>
 
 {# Status indicator — concentric ACCENT ring + dot on the ground panel. #}
 {% if show_indicator %}

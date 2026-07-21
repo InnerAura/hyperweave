@@ -1949,3 +1949,133 @@ class TestDispatcherCursorPointerPins:
         result = await fetch_metric("dora", "o/r", "deploy_frequency")
         assert result["provider"] == "dora"
         assert result["value"] == 0.0
+
+
+# =========================================================================
+# Bounded retry + truthful failure causes
+# =========================================================================
+
+
+def _resp(status: int, headers: dict[str, str] | None = None) -> httpx.Response:
+    return httpx.Response(
+        status,
+        headers=headers or {},
+        json={},
+        request=httpx.Request("GET", "https://api.github.com/repos/t/t"),
+    )
+
+
+class TestBoundedRetry:
+    """One logical fetch = bounded retries, exactly one breaker record."""
+
+    @pytest.fixture(autouse=True)
+    def _reset(self) -> None:
+        reset_breakers()
+
+    @pytest.mark.asyncio
+    async def test_retryable_status_retries_then_succeeds(self, recorded_retry_waits: list[float]) -> None:
+        instance = AsyncMock()
+        instance.get = AsyncMock(side_effect=[_resp(503), _resp(200)])
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
+            response = await fetch("https://api.github.com/repos/t/t", provider="retry-ok")
+        assert response.status_code == 200
+        assert instance.get.await_count == 2
+        assert len(recorded_retry_waits) == 1
+        assert get_breaker("retry-ok")._failure_count == 0
+
+    @pytest.mark.asyncio
+    async def test_bare_403_does_not_retry(self, recorded_retry_waits: list[float]) -> None:
+        """A 403 with no rate-limit evidence is a credential problem — one
+        request, no retry noise, one breaker failure."""
+        instance = AsyncMock()
+        instance.get = AsyncMock(side_effect=[_resp(403)])
+        with (
+            patch("hyperweave.connectors.base.get_client", return_value=instance),
+            pytest.raises(ConnectorError),
+        ):
+            await fetch("https://api.github.com/repos/t/t", provider="bare-403")
+        assert instance.get.await_count == 1
+        assert recorded_retry_waits == []
+        assert get_breaker("bare-403")._failure_count == 1
+
+    @pytest.mark.asyncio
+    async def test_rate_limit_shaped_403_retries_with_retry_after(self, recorded_retry_waits: list[float]) -> None:
+        instance = AsyncMock()
+        instance.get = AsyncMock(side_effect=[_resp(403, {"Retry-After": "2"})] * 3)
+        with (
+            patch("hyperweave.connectors.base.get_client", return_value=instance),
+            pytest.raises(ConnectorError),
+        ):
+            await fetch("https://api.github.com/repos/t/t", provider="rl-403")
+        assert instance.get.await_count == 3
+        assert recorded_retry_waits == [2.0, 2.0]
+        assert get_breaker("rl-403")._failure_count == 1  # ONE record for the logical call
+
+    @pytest.mark.asyncio
+    async def test_retry_after_clamped_to_max_wait(self, recorded_retry_waits: list[float]) -> None:
+        instance = AsyncMock()
+        instance.get = AsyncMock(side_effect=[_resp(503, {"Retry-After": "600"}), _resp(200)])
+        with patch("hyperweave.connectors.base.get_client", return_value=instance):
+            await fetch("https://api.github.com/repos/t/t", provider="clamp")
+        assert recorded_retry_waits == [10.0]
+
+    @pytest.mark.asyncio
+    async def test_retry_budget_stops_retries_when_spent(self, recorded_retry_waits: list[float]) -> None:
+        from hyperweave.connectors.base import retry_budget
+
+        instance = AsyncMock()
+        instance.get = AsyncMock(side_effect=[_resp(503, {"Retry-After": "2"})] * 3)
+        with (
+            patch("hyperweave.connectors.base.get_client", return_value=instance),
+            retry_budget(2.0),
+            pytest.raises(ConnectorError),
+        ):
+            await fetch("https://api.github.com/repos/t/t", provider="budgeted")
+        # First wait drains the pool; the second retry is refused, so only two
+        # requests happen and total waited time never exceeds the budget.
+        assert instance.get.await_count == 2
+        assert recorded_retry_waits == [2.0]
+        assert sum(recorded_retry_waits) <= 2.0
+
+
+class TestFailureCauses:
+    """Header evidence, not bare status, discriminates the public cause."""
+
+    def _chained(self, response: httpx.Response) -> ConnectorError:
+        """A ConnectorError chained from the response's HTTPStatusError, the
+        exact shape the retry layer raises."""
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            wrapped = ConnectorError(f"Fetch failed: {exc}")
+            wrapped.__cause__ = exc
+            return wrapped
+        raise AssertionError("response did not raise")
+
+    def test_bare_403_reads_auth_error_not_rate_limited(self) -> None:
+        from hyperweave.connectors.github import failure_cause
+        from hyperweave.core.enums import ConnectorFailureCause
+
+        assert failure_cause(self._chained(_resp(403))) is ConnectorFailureCause.AUTH_ERROR
+
+    def test_rate_limit_shaped_403_reads_rate_limited(self) -> None:
+        from hyperweave.connectors.github import failure_cause
+        from hyperweave.core.enums import ConnectorFailureCause
+
+        exc = self._chained(_resp(403, {"Retry-After": "900"}))
+        assert failure_cause(exc) is ConnectorFailureCause.RATE_LIMITED
+
+    def test_404_reads_not_found_and_5xx_reads_upstream(self) -> None:
+        from hyperweave.connectors.github import failure_cause
+        from hyperweave.core.enums import ConnectorFailureCause
+
+        assert failure_cause(self._chained(_resp(404))) is ConnectorFailureCause.NOT_FOUND
+        assert failure_cause(self._chained(_resp(502))) is ConnectorFailureCause.UPSTREAM_ERROR
+
+    def test_failure_cause_payload_carries_truthful_retry_hint(self) -> None:
+        from hyperweave.connectors.github import failure_cause_payload
+
+        with_hint = failure_cause_payload(self._chained(_resp(403, {"Retry-After": "900"})))
+        assert with_hint == {"cause": "rate_limited", "retry_seconds": 900}
+        without = failure_cause_payload(self._chained(_resp(502)))
+        assert without == {"cause": "upstream_error"}

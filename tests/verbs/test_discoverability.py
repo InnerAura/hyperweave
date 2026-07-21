@@ -113,3 +113,109 @@ async def test_http_verb_routes() -> None:
         assert "url" in t.json() and t.json()["url"]
         q = await c.post("/v1/query", json={"source": svg, "question": "how many rows?"})
         assert q.json()["answer"] == "1"
+
+
+def test_diagram_glyph_diagnostic_points_at_a_reachable_discover_call() -> None:
+    """The unresolved-glyph suggestion names a ``discover`` call — that
+    capability must be reachable on every surface that prints the diagnostic
+    (no diagnostic may suggest a call the reader cannot run)."""
+    result = compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            diagram={
+                "topology": "pipeline",
+                "title": "Probe",
+                "nodes": [{"id": "a", "label": "A", "kind": "search"}, {"label": "B"}, {"label": "C"}],
+            },
+        )
+    )
+    notes = [d for d in result.diagnostics if d["rule"] == "unresolved-glyph"]
+    assert notes, "expected the unresolved-glyph diagnostic to fire for kind-on-card"
+    assert "discover" in notes[0]["suggestion"]
+
+    from hyperweave.surfaces.discover import discover
+    from hyperweave.surfaces.registry import all_capabilities
+
+    cap = next(c for c in all_capabilities() if c.name == "discover")
+    assert cap.cli_command and cap.http_path and cap.mcp_tool, "discover must be reachable on all three surfaces"
+    assert discover("glyphs")["glyphs"], "the suggested selector must answer"
+
+
+def test_diagram_discover_payload_lists_structural_edge_rules_per_topology() -> None:
+    """The per-topology edge legality is knowable BEFORE compose: discover's
+    diagram payload carries the structural rules the validators enforce."""
+    from hyperweave.surfaces.discover import discover
+
+    rules = discover("diagram")["diagram"]["edge_rules"]
+    assert "incident" in rules["hub"] or "touches the hub" in rules["hub"]
+    assert "dag" in rules["hub"]  # the exit is named, not just the rule
+    assert "parent" in rules["tree"]
+    assert "any" in rules  # the global laws every topology shares
+
+
+def test_discover_schema_selector_returns_frame_json_schemas() -> None:
+    """schema:<id> publishes the frame model's JSON Schema — structural,
+    JSON-round-trippable, no new modeling."""
+    import json
+
+    from hyperweave.surfaces.discover import discover
+
+    def _root(js: dict) -> dict:
+        # A recursive model (diagram nests diagrams) roots at a $ref into $defs.
+        if "$ref" in js:
+            return js["$defs"][js["$ref"].split("/")[-1]]  # type: ignore[no-any-return]
+        return js
+
+    diagram = discover("schema:diagram/1")["schema"]
+    assert diagram["id"] == "diagram/1"
+    js = diagram["json_schema"]
+    assert "topology" in _root(js)["properties"]
+    assert json.loads(json.dumps(js)) == js
+
+    matrix = _root(discover("schema:matrix/1")["schema"]["json_schema"])
+    assert "columns" in matrix["properties"] and "rows" in matrix["properties"]
+
+
+def test_discover_schema_selector_rejects_unknown_id_with_menu() -> None:
+    import pytest
+
+    from hyperweave.core.errors import HwError
+    from hyperweave.surfaces.discover import discover
+
+    with pytest.raises(HwError) as exc_info:
+        discover("schema:nope/9")
+    assert "matrix/1" in (exc_info.value.fix or "")
+
+
+def test_discover_lists_schema_ids_in_bare_output() -> None:
+    from hyperweave.surfaces.discover import discover
+
+    assert discover("schemas")["schemas"] == ["diagram/1", "matrix/1"]
+
+
+def test_every_listed_preset_resolves_through_the_example_selector() -> None:
+    """Every preset name discover lists is fetchable as full content through
+    the example selector — self-maintaining over new presets."""
+    from hyperweave.compose.bundled_specs import resolve_bundled_spec
+    from hyperweave.surfaces.discover import discover
+
+    for frame_type in ("diagram", "matrix"):
+        names = discover(frame_type)[frame_type]["presets"]
+        assert names, f"no presets listed for {frame_type}"
+        for name in names:
+            example = discover(f"example:{frame_type}/{name}")["example"]
+            bundled = resolve_bundled_spec(frame_type, name)
+            assert example["field"] == bundled.field
+            assert example["value"] == bundled.value
+
+
+def test_example_selector_rejects_unknown_name_with_preset_menu() -> None:
+    import pytest
+
+    from hyperweave.core.errors import HwError
+    from hyperweave.surfaces.discover import discover
+
+    with pytest.raises(HwError) as exc_info:
+        discover("example:diagram/no-such-preset")
+    assert (exc_info.value.fix or "") != ""

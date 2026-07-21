@@ -757,7 +757,8 @@ class DiagramSpec(FrozenModel):
             if hub_id not in (e.source, e.target):
                 raise ValueError(
                     f"hub edge {e.source!r}->{e.target!r} is not incident to the hub node {hub_id!r} "
-                    "(every hub edge touches focal slot 0)"
+                    "(every hub edge touches focal slot 0) — a satellite-to-satellite relation needs "
+                    "a free-graph topology: recompose with topology dag or lanes"
                 )
             if e.zone and e.angle is not None:
                 raise ValueError(

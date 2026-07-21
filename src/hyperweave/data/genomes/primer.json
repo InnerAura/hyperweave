@@ -1034,5 +1034,11 @@
     ]
   },
   "strip_status_dot": "#1AA35A",
-  "accent_deep": "#1E40A0"
+  "accent_deep": "#1E40A0",
+  "roles": {
+    "accent": ["accent", "accent_complement", "accent_deep", "accent_error", "accent_signal", "accent_warning"],
+    "surface": ["bg", "bg_alt", "border_tint", "diagram_conn_muted", "diagram_shadow_color", "frame_fill", "seam_gap", "shadow_color", "stroke", "surface_0", "surface_1", "surface_2"],
+    "ink": ["badge_value_text", "brand_text", "glyph_inner", "ink", "ink_bright", "ink_on_accent", "ink_secondary", "ink_sub", "label_text", "metric_text"],
+    "status": ["badge_pass_core", "badge_pass_sep", "badge_status_critical", "badge_status_critical_knockout", "badge_status_critical_rim", "badge_status_offline", "badge_status_passing", "badge_status_warning", "badge_status_warning_knockout", "badge_status_warning_rim", "badge_warn_color", "diagram_status_critical", "diagram_status_critical_dark", "diagram_status_warning", "diagram_status_warning_dark", "state_building_bright", "state_building_core", "state_critical_bright", "state_critical_core", "state_offline_bright", "state_offline_core", "state_passing_bright", "state_passing_core", "state_warning_bright", "state_warning_core", "status_knockout", "strip_status_dot"]
+  }
 }

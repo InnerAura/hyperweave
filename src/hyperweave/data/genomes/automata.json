@@ -480,5 +480,11 @@
   "motion_config": {
     "timing_base": "2.618s",
     "energy_range": [0.4, 0.9]
+  },
+  "roles": {
+    "accent": ["accent", "accent_complement", "accent_error", "accent_signal", "accent_warning"],
+    "surface": ["bg", "bg_alt", "border_tint", "frame_fill", "seam_gap", "shadow_color", "stroke", "surface_0", "surface_1", "surface_2"],
+    "ink": ["badge_value_text", "brand_text", "glyph_inner", "ink", "ink_bright", "ink_on_accent", "ink_secondary", "ink_sub", "label_text", "metric_text"],
+    "status": ["badge_pass_core", "badge_pass_sep", "badge_warn_color", "state_building_bright", "state_building_core", "state_critical_bright", "state_critical_core", "state_offline_bright", "state_offline_core", "state_passing_bright", "state_passing_core", "state_warning_bright", "state_warning_core"]
   }
 }

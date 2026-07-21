@@ -45,6 +45,23 @@ def test_verify_detects_match_and_mismatch() -> None:
     assert verify(tampered).hash_valid is False
 
 
+def test_verify_reports_well_formed_container() -> None:
+    assert verify(_matrix()).well_formed is True
+
+
+def test_verify_flags_non_well_formed_xml_independent_of_hash_match() -> None:
+    """A bare ``&`` in root character data breaks the container, never the seed.
+
+    The corruption sits outside the metadata CDATA, so the hash proof stays
+    intact — the two checks must report independently.
+    """
+    svg = _matrix()
+    corrupted = svg.replace("</svg>", "&</svg>", 1)
+    result = verify(corrupted)
+    assert result.well_formed is False
+    assert result.hash_valid is True
+
+
 def test_query_envelope_fields() -> None:
     svg = _matrix()
     assert query(svg, "how many rows?").answer == "2"

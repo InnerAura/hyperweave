@@ -405,6 +405,21 @@ def _apply_adaptive_css(ctx: dict[str, Any], spec: ComposeSpec, resolved: Resolv
 # ── Base context (shared by all frames) ──────────────────────────────
 
 
+def _theme_category(resolved: ResolvedArtifact) -> str:
+    """The rendered surface's theme vocabulary for ``data-hw-mode``/``hw:spec``.
+
+    Face-committed → the face; adaptive (twin/inlay) → "adaptive"; plate →
+    the variant-aware genome substrate. The invariant: the attribute describes
+    the artifact as rendered, so ``--variant porcelain --face dark`` reads
+    "dark" — never porcelain's native "light".
+    """
+    if resolved.surface_face:
+        return str(resolved.surface_face)
+    if resolved.surface_adapt:
+        return "adaptive"
+    return str(resolved.genome.get("substrate_kind") or resolved.genome.get("category", "dark"))
+
+
 def _base_context(
     spec: ComposeSpec,
     resolved: ResolvedArtifact,
@@ -617,11 +632,13 @@ def _base_context(
         # Empty string for genomes that haven't declared one yet (chrome,
         # automata) — metadata block omits the field via `{% if stratum %}` gate.
         "stratum": resolved.genome.get("stratum", ""),
-        # Theme category — variant-aware: a brutalist artifact rendered with
-        # the `pulse` variant emits "light" because the variant overrides
-        # substrate_kind; a `celadon` variant emits "dark"; a chrome artifact
-        # falls back to the base genome's `category` field.
-        "theme_category": resolved.genome.get("substrate_kind") or resolved.genome.get("category", "dark"),
+        # Theme category — describes the RENDERED artifact, never the near-face
+        # genome declaration: a face-committed render reports its baked face, an
+        # adaptive render (twin/inlay) reports "adaptive" (the data-hw-adapt
+        # vocabulary), and only a plate falls back to the variant-aware genome
+        # substrate (a brutalist `pulse` render emits "light" because the
+        # variant overrides substrate_kind).
+        "theme_category": _theme_category(resolved),
         # Palette identifier — variant-aware. Empty string when no variant is
         # active (bare URL), else the variant slug. Lets a training corpus
         # distinguish chrome.abyssal from chrome.horizon in `hw:aesthetic`.

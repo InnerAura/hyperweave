@@ -213,7 +213,7 @@ async def hw_compose(
     final_value = value
     data_tokens_resolved: list[Any] | None = None
     if data:
-        from hyperweave.serve.data_tokens import (
+        from hyperweave.connectors.data_tokens import (
             format_for_value,
             parse_data_tokens,
             resolve_data_tokens,
@@ -405,21 +405,27 @@ async def hw_verify(source: str) -> dict[str, Any]:
     """Recompute the hash; prove the artifact verifiably IS its data (id == sha256(payload)).
 
     ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
+    ``valid`` is the seed's hash proof; ``well_formed`` reports whether the SVG
+    container parses as XML — independent checks, report-only.
     """
     return await _dispatch("verify", {"source": source})
 
 
 @mcp.tool()
-async def hw_transform(source: str, mutations: list[dict[str, Any]]) -> dict[str, Any]:
+async def hw_transform(source: str, mutations: list[dict[str, Any]], respond: str = "envelope") -> dict[str, Any] | str:
     """Mutate an artifact via structural JSON patch → a new artifact.
 
     ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
-    Returns a handle {envelope, url, lineage, parent_id, new_id} on EVERY surface
-    by design — the SVG is cached, never inlined; fetch the ``url`` to render it.
+    Returns a handle {envelope, url, lineage, parent_id, new_id} by default —
+    the SVG is cached, never inlined; fetch the ``url`` to render it. Pass
+    ``respond="svg"`` for the raw markup inline (hw_compose parity).
     ``mutations`` is a list of RFC-6902 ops (add/remove/replace/move/copy/test); a
     patch that breaks the frame schema fails cleanly as SPEC_INVALID.
     """
-    return await _dispatch("transform", {"source": source, "mutations": mutations})
+    result = await _dispatch("transform", {"source": source, "mutations": mutations, "respond": respond})
+    if respond == "svg":
+        return str(result.get("svg", ""))
+    return result
 
 
 @mcp.tool()
@@ -447,7 +453,10 @@ async def hw_discover(
     """Discover available HyperWeave components.
 
     what: all | genomes | motions | glyphs | frames | verbs | capabilities |
-          matrix | diagram | url_grammar
+          matrix | diagram | url_grammar | schemas — plus the deep selectors
+          schema:<id> (published JSON Schema, e.g. schema:diagram/1),
+          example:<frame_type>/<name> (a full bundled spec, compose-ready), and
+          genome:<id> (role-structured token deep-dive).
     Returns structured data about available options for hw_compose. The
     ``capabilities`` view is the living registry roster (name, summary,
     per-surface reachability) — what HyperWeave can do and where.
@@ -455,10 +464,9 @@ async def hw_discover(
     # One implementation of the discovery body lives in surfaces.discover so
     # the MCP / HTTP / CLI faces cannot drift (they served hand-copied dicts
     # that fell out of sync — the diagram mechanism prose and the card rename
-    # landed on one face only). Delegating keeps this tool a thin adapter.
-    from hyperweave.surfaces.discover import discover
-
-    return discover(what)
+    # landed on one face only). Routed through the registry like every other
+    # adapter, so reachability claims and dispatch stay registry-truthful.
+    return await _dispatch("discover", {"what": what})
 
 
 # ── Resources ────────────────────────────────────────────────────────
@@ -468,7 +476,8 @@ async def hw_discover(
 async def schema_resource() -> str:
     """ComposeSpec parameter reference for hw_compose.
 
-    Lists all valid parameter values and their constraints.
+    Lists all valid parameter values and their constraints. For a frame BODY's
+    structural JSON Schema (matrix/diagram IR), use hw_discover(what="schema:diagram/1").
     """
     from hyperweave.core.enums import (
         ArtifactStatus,

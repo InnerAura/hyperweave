@@ -263,3 +263,60 @@ def test_transform_preserves_surface() -> None:
     assert 'data-hw-ground="bare"' in res.svg
     surface = extract_embedded(res.svg).payload["spec"].get("surface") or {}
     assert surface == {"ground": "bare", "palette": "adaptive"}
+
+
+def test_transform_preserves_explicit_plate_on_twin_default_genome() -> None:
+    """The regression: primer defaults to twin, so an explicit plate parent's
+    child must not spring back to adaptive after a transform (the payload is
+    surface-silent for plate — presentation is read from the artifact)."""
+    svg0 = compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant="porcelain",
+            ground="opaque",
+            palette="fixed",
+            diagram=_DIAGRAM,
+        )
+    ).svg
+    assert 'data-hw-adapt="adaptive"' not in svg0
+    res = transform(svg0, [{"op": "replace", "path": "/title", "value": "Flow 2"}], ts=_FIXED_TS)
+    assert 'data-hw-adapt="adaptive"' not in res.svg
+
+    # The original symptom: projecting the child to a flattening format failed
+    # with "adaptive-palette artifact cannot be flattened".
+    from hyperweave.formats import project
+
+    project(res.svg, "svg-static")
+
+    # Plate stays payload-silent — child ids byte-stable with fresh plates.
+    surface = extract_embedded(res.svg).payload["spec"].get("surface")
+    assert surface is None
+
+
+def test_transform_preserves_genome_default_twin() -> None:
+    """A genome-defaulted twin parent (no explicit surface at all) stays twin
+    through transform — explicit derivation, not the accidental correctness of
+    the genome default re-firing."""
+    svg0 = compose(ComposeSpec(type="diagram", genome_id="primer", diagram=_DIAGRAM)).svg
+    assert 'data-hw-adapt="adaptive"' in svg0
+    res = transform(svg0, [{"op": "replace", "path": "/title", "value": "Flow 2"}], ts=_FIXED_TS)
+    assert 'data-hw-adapt="adaptive"' in res.svg
+
+
+def test_transform_preserves_committed_face() -> None:
+    """A face-committed parent's child re-renders the same baked face."""
+    svg0 = compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant="porcelain",
+            ground="opaque",
+            palette="fixed",
+            surface_face="dark",
+            diagram=_DIAGRAM,
+        )
+    ).svg
+    assert 'data-hw-face="dark"' in svg0
+    res = transform(svg0, [{"op": "replace", "path": "/title", "value": "Flow 2"}], ts=_FIXED_TS)
+    assert 'data-hw-face="dark"' in res.svg

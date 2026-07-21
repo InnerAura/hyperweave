@@ -54,8 +54,12 @@ _CURATED_MCP_TOOLS = frozenset(
 runner = CliRunner()
 
 
-def _http_post_paths() -> set[str]:
-    return {r.path for r in http_app.routes if "POST" in getattr(r, "methods", set())}
+def _http_routes_by_path() -> dict[str, set[str]]:
+    routes: dict[str, set[str]] = {}
+    for r in http_app.routes:
+        methods = getattr(r, "methods", set()) or set()
+        routes.setdefault(getattr(r, "path", ""), set()).update(methods)
+    return routes
 
 
 def _cli_command_names() -> set[str]:
@@ -72,11 +76,17 @@ async def _mcp_tool_names() -> set[str]:
 
 
 def test_every_capability_http_path_is_mounted() -> None:
-    posts = _http_post_paths()
+    routes = _http_routes_by_path()
     for cap in all_capabilities():
         if cap.http_path is None:
             continue
-        assert cap.http_path in posts, f"{cap.name}: {cap.http_path} not a mounted POST route"
+        methods = routes.get(cap.http_path, set())
+        assert methods, f"{cap.name}: {cap.http_path} not a mounted route"
+        if cap.name == "discover":
+            # Discover's bespoke face is a selector GET, not a source-POST.
+            assert "GET" in methods, f"discover: {cap.http_path} must be a GET route"
+        else:
+            assert "POST" in methods, f"{cap.name}: {cap.http_path} must be a POST route"
 
 
 def test_every_capability_cli_command_is_registered() -> None:
@@ -114,7 +124,7 @@ async def sample_svg() -> str:
     ctx = CallContext(surface="test")
     result = await dispatch(
         "compose",
-        {"type": "badge", "genome": "brutalist", "title": "STARS", "value": "42", "emit": ["svg"]},
+        {"type": "badge", "genome": "brutalist", "spec": {"title": "STARS", "value": "42"}, "emit": ["svg"]},
         ctx,
     )
     return str(result["svg"])
@@ -198,6 +208,50 @@ async def test_diff_parity_across_surfaces(sample_svg: str, http_client: AsyncCl
     assert direct["same"] is True
 
 
+async def test_compose_envelope_parity_on_common_fields(http_client: AsyncClient) -> None:
+    """Compose's machine-readable shape agrees across surfaces on the common
+    field subset (envelope id, url tail, width/height, genome/variant). Full
+    dict equality is not asserted: MCP's hw_compose predates the registry and
+    the url base differs per surface — a known, accepted gap."""
+    ctx = CallContext(surface="test")
+
+    # Registry nests content under `spec`; the bespoke HTTP route takes
+    # top-level title/value (ComposeRequest) — same content, two shapes.
+    direct = await dispatch(
+        "compose",
+        {"type": "badge", "genome": "brutalist", "spec": {"title": "STARS", "value": "42"}},
+        ctx,
+    )
+    http = (
+        await http_client.post(
+            "/v1/compose",
+            json={"type": "badge", "genome": "brutalist", "title": "STARS", "value": "42", "respond": "envelope"},
+        )
+    ).json()
+    mcp = await mcp_server.hw_compose(type="badge", genome="brutalist", title="STARS", value="42")
+    cli = _cli_json(["compose", "badge", "STARS", "42", "-g", "brutalist", "--respond", "envelope"])
+
+    results = {"direct": direct, "http": http, "mcp": mcp, "cli": cli}
+    ids = {name: r["envelope"]["id"] for name, r in results.items()}
+    assert len(set(ids.values())) == 1, f"envelope ids diverge: {ids}"
+    tails = {name: r["url"].rsplit("/v1/a/", 1)[-1].split(".")[0] for name, r in results.items()}
+    assert len(set(tails.values())) == 1, f"artifact url tails diverge: {tails}"
+    for field in ("width", "height", "genome", "variant"):
+        values = {name: r.get(field) for name, r in results.items() if field in r}
+        assert len(set(values.values())) <= 1, f"{field} diverges: {values}"
+
+
+async def test_discover_parity_across_surfaces(http_client: AsyncClient) -> None:
+    ctx = CallContext(surface="test")
+    direct = await dispatch("discover", {"what": "glyphs"}, ctx)
+    http = (await http_client.get("/v1/discover", params={"what": "glyphs"})).json()
+    mcp = await mcp_server.hw_discover(what="glyphs")
+    cli = _cli_json(["discover", "glyphs"])
+
+    assert direct == http == mcp == cli
+    assert direct["glyphs"]
+
+
 def test_cli_transform_out_file_matches_stdout_envelope(sample_diagram_svg: str, tmp_path: Path) -> None:
     """``--out`` writes the new artifact to disk; the envelope JSON still prints to stdout."""
     out_path = tmp_path / "out.svg"
@@ -245,3 +299,27 @@ async def test_mcp_tool_set_is_frozen() -> None:
         "MCP tool set drifted — adding/removing a tool is a curation decision. "
         f"unexpected={sorted(tools - _CURATED_MCP_TOOLS)} missing={sorted(set(_CURATED_MCP_TOOLS) - tools)}"
     )
+
+
+async def test_transform_respond_svg_returns_markup_on_every_surface(
+    sample_diagram_svg: str, http_client: AsyncClient
+) -> None:
+    """The write-verb escape hatch is registry-level: every surface can ask for
+    the new markup inline instead of chasing the handle."""
+    ops = [{"op": "replace", "path": "/title", "value": "Inline"}]
+    ctx = CallContext(surface="test")
+
+    direct = await dispatch("transform", {"source": sample_diagram_svg, "mutations": ops, "respond": "svg"}, ctx)
+    assert "<svg" in direct["svg"]
+
+    http = (
+        await http_client.post("/v1/transform", json={"source": sample_diagram_svg, "mutations": ops, "respond": "svg"})
+    ).json()
+    assert "<svg" in http["svg"]
+
+    mcp = await mcp_server.hw_transform(source=sample_diagram_svg, mutations=ops, respond="svg")
+    assert isinstance(mcp, str) and mcp.startswith("<svg")  # hw_compose's bare-markup parity
+
+    patch_arg = json.dumps(ops)
+    cli = _cli_json(["transform", sample_diagram_svg, "--patch-json", patch_arg, "--respond", "svg"])
+    assert "<svg" in cli["svg"]

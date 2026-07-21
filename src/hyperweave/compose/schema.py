@@ -98,6 +98,12 @@ class ChartInput(FrameInput):
 
     series_points: list[SeriesPoint] = Field(default_factory=list)
     series_label: str = ""
+    cause: str = ""
+    """Connector failure cause (rate_limited | not_found | auth_error |
+    upstream_error) — empty when data arrived. Rides beside the 3-state
+    ``status`` contract, never replaces it."""
+    retry_seconds: int = 0
+    """Upstream Retry-After when the cause is a rate limit; 0 = no hint."""
 
 
 class StripInput(FrameInput):
@@ -214,6 +220,8 @@ def coerce_chart_input(connector_data: Mapping[str, object] | None, spec: Compos
         status=status,
         series_points=series_points,
         series_label=_string(_first(raw, "series_label"), hero.label),
+        cause=_string(_first(raw, "cause"), ""),
+        retry_seconds=int(_number(_first(raw, "retry_seconds")) or 0),
     )
 
 

@@ -39,20 +39,20 @@
   </svg>
 </g>
 {% endif %}
-<text data-hw-zone="label" class="{{ uid }}-label" x="{{ chart_layout.texts.chrome_label.x }}" y="{{ chart_layout.texts.chrome_label.y }}">{{ chart_header_label }}</text>
+<text data-hw-zone="label" class="{{ uid }}-label" x="{{ chart_layout.texts.chrome_label.x }}" y="{{ chart_layout.texts.chrome_label.y }}">{{ chart_header_label | xml_escape }}</text>
 <text data-hw-zone="identity" class="{{ uid }}-identity" x="{{ chart_layout.texts.chrome_identity.x }}" y="{{ chart_layout.texts.chrome_identity.y }}" text-anchor="{{ chart_layout.texts.chrome_identity.anchor }}"
-  {%- if chart_header_identity_text_length %} textLength="{{ chart_header_identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ chart_repo }}</text>
+  {%- if chart_header_identity_text_length %} textLength="{{ chart_header_identity_text_length }}" lengthAdjust="spacingAndGlyphs"{%- endif %}>{{ chart_repo | xml_escape }}</text>
 
 <line x1="{{ chart_layout.chrome_header_rule.x1 }}" y1="{{ chart_layout.chrome_header_rule.y1 }}"
       x2="{{ chart_layout.chrome_header_rule.x2 }}" y2="{{ chart_layout.chrome_header_rule.y2 }}"
       stroke="url(#{{ uid }}-sep)" stroke-width="0.8"/>
 
 {# ZONE 2: TITLE + HERO #}
-<text data-hw-zone="title" class="{{ uid }}-title" x="{{ chart_layout.texts.chrome_title.x }}" y="{{ chart_layout.texts.chrome_title.y }}">{{ chart_series_title | default('STAR HISTORY') }}</text>
-<text data-hw-zone="hero-value" class="{{ uid }}-hero" x="{{ chart_layout.texts.chrome_hero_value.x }}" y="{{ chart_layout.texts.chrome_hero_value.y }}" text-anchor="{{ chart_layout.texts.chrome_hero_value.anchor }}">{{ chart_current_stars }}</text>
+<text data-hw-zone="title" class="{{ uid }}-title" x="{{ chart_layout.texts.chrome_title.x }}" y="{{ chart_layout.texts.chrome_title.y }}">{{ chart_series_title | default('STAR HISTORY') | xml_escape }}</text>
+<text data-hw-zone="hero-value" class="{{ uid }}-hero" x="{{ chart_layout.texts.chrome_hero_value.x }}" y="{{ chart_layout.texts.chrome_hero_value.y }}" text-anchor="{{ chart_layout.texts.chrome_hero_value.anchor }}">{{ chart_current_stars | xml_escape }}</text>
 
-<text data-hw-zone="subtitle" class="{{ uid }}-subtitle" x="{{ chart_layout.texts.chrome_subtitle.x }}" y="{{ chart_layout.texts.chrome_subtitle.y }}">{{ chart_subtitle_label | default('LIFETIME GROWTH') }}</text>
-<text data-hw-zone="hero-label" class="{{ uid }}-hero-label" x="{{ chart_layout.texts.chrome_hero_label.x }}" y="{{ chart_layout.texts.chrome_hero_label.y }}" text-anchor="{{ chart_layout.texts.chrome_hero_label.anchor }}">{{ chart_hero_label | default('TOTAL STARS') }}{{ chart_hero_suffix | default('') }}</text>
+<text data-hw-zone="subtitle" class="{{ uid }}-subtitle" x="{{ chart_layout.texts.chrome_subtitle.x }}" y="{{ chart_layout.texts.chrome_subtitle.y }}">{{ chart_subtitle_label | default('LIFETIME GROWTH') | xml_escape }}</text>
+<text data-hw-zone="hero-label" class="{{ uid }}-hero-label" x="{{ chart_layout.texts.chrome_hero_label.x }}" y="{{ chart_layout.texts.chrome_hero_label.y }}" text-anchor="{{ chart_layout.texts.chrome_hero_label.anchor }}">{{ chart_hero_label | default('TOTAL STARS') | xml_escape }}{{ chart_hero_suffix | default('') | xml_escape }}</text>
 
 <line x1="{{ chart_layout.chrome_title_rule.x1 }}" y1="{{ chart_layout.chrome_title_rule.y1 }}"
       x2="{{ chart_layout.chrome_title_rule.x2 }}" y2="{{ chart_layout.chrome_title_rule.y2 }}"
@@ -80,7 +80,7 @@
   {# Y-axis labels — derived from data via chart_engine _nice_y_ticks.
      The +3 y-offset matches the chrome baseline convention. #}
   {% for label in chart_y_labels %}
-  <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+  <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
   {% endfor %}
 
   {# Horizon glow — 2px highlight band at x-axis baseline. Genome specular_light
@@ -131,7 +131,7 @@
 {# ZONE 4: X-AXIS LABELS — year numbers derived from data (star-history.com style). #}
 <g data-hw-zone="x-axis">
   {% for label in chart_x_labels %}
-  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
   {% endfor %}
 </g>
 
@@ -147,5 +147,5 @@
         transform="rotate(45)" fill="var(--hw-core, var(--dna-signal))"/>
 </g>
 
-<text data-hw-zone="subject-url" class="{{ uid }}-foot" x="{{ chart_layout.texts.chrome_footer_url.x }}" y="{{ chart_layout.texts.chrome_footer_url.y }}">{{ chart_subject_url | default(chart_repo) }}</text>
-<text data-hw-zone="brand" class="{{ uid }}-brand" x="{{ chart_layout.texts.chrome_footer_brand.x }}" y="{{ chart_layout.texts.chrome_footer_brand.y }}" text-anchor="{{ chart_layout.texts.chrome_footer_brand.anchor }}">{{ chart_brand_label | default('HYPERWEAVE · STAR HISTORY') }}</text>
+<text data-hw-zone="subject-url" class="{{ uid }}-foot" x="{{ chart_layout.texts.chrome_footer_url.x }}" y="{{ chart_layout.texts.chrome_footer_url.y }}">{{ chart_subject_url | default(chart_repo) | xml_escape }}</text>
+<text data-hw-zone="brand" class="{{ uid }}-brand" x="{{ chart_layout.texts.chrome_footer_brand.x }}" y="{{ chart_layout.texts.chrome_footer_brand.y }}" text-anchor="{{ chart_layout.texts.chrome_footer_brand.anchor }}">{{ chart_brand_label | default('HYPERWEAVE · STAR HISTORY') | xml_escape }}</text>

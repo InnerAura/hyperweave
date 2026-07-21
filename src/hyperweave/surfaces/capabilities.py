@@ -67,6 +67,10 @@ class TransformInput(BaseModel):
 
     source: str = Field(description="Artifact SVG string, a /v1/a/{digest} url, or a digest/id.")
     mutations: list[dict[str, Any]] = Field(description="RFC-6902 op list (add/remove/replace/move/copy/test).")
+    respond: str = Field(
+        default="envelope",
+        description="envelope (default — the handle; fetch `url` for pixels) | svg (include the new markup inline).",
+    )
 
 
 class DiffInput(BaseModel):
@@ -88,7 +92,10 @@ class DiscoverInput(BaseModel):
 
     what: str = Field(
         default="all",
-        description="all | genomes | motions | glyphs | frames | verbs | matrix | diagram | url_grammar | capabilities",
+        description="all | genomes | motions | glyphs | frames | verbs | matrix | diagram | url_grammar "
+        "| capabilities | schemas — plus the deep selectors schema:<id> (published JSON Schema, e.g. "
+        "schema:diagram/1), example:<frame_type>/<name> (a full bundled spec, compose-ready), and "
+        "genome:<id> (role-structured token deep-dive).",
     )
 
 
@@ -101,7 +108,7 @@ class DiscoverInput(BaseModel):
 async def _compose(model: BaseModel, ctx: CallContext) -> dict[str, Any]:
     assert isinstance(model, ComposeInput)
     from hyperweave.compose.surface import SpecEnvelope, compose_surface
-    from hyperweave.serve.data_tokens import (
+    from hyperweave.connectors.data_tokens import (
         format_for_value,
         parse_data_tokens,
         resolve_data_tokens,
@@ -163,7 +170,13 @@ async def _transform(model: BaseModel, ctx: CallContext) -> dict[str, Any]:
     assert isinstance(model, TransformInput)
     from hyperweave.verbs import transform
 
-    return transform(model.source, model.mutations, base_url=ctx.base_url).to_dict()
+    result = transform(model.source, model.mutations, base_url=ctx.base_url)
+    out = result.to_dict()
+    if model.respond == "svg":
+        # The write-verb escape hatch hw_compose already has: inline markup on
+        # request. Registry-level, so every surface gains it identically.
+        out["svg"] = result.svg
+    return out
 
 
 async def _diff(model: BaseModel, _ctx: CallContext) -> dict[str, Any]:
@@ -234,7 +247,7 @@ register(
         summary="Recompute the hash; prove id == sha256(payload).",
         input_model=VerifyInput,
         handler=_verify,
-        output_note="{valid: bool, id, expected_id, schema}",
+        output_note="{valid: bool, well_formed: bool, id, expected_id, schema}",
         http_path="/v1/verify",
         cli_command="verify",
         mcp_tool="hw_verify",
@@ -287,12 +300,12 @@ register(
         input_model=DiscoverInput,
         handler=_discover,
         output_note="Structured lists keyed by the `what` selector.",
-        http_path=None,
-        cli_command=None,
+        http_path="/v1/discover",
+        cli_command="discover",
         mcp_tool="hw_discover",
         mcp_note=(
-            "HTTP face: /llms.txt + /llms-full.txt + the static "
-            "/v1/{frames,genomes,motions,glyphs} listings. CLI face: `genomes`."
+            "HTTP face is a bespoke GET (`?what=`), beside the informal "
+            "/llms.txt + /llms-full.txt and static /v1/{frames,genomes,motions,glyphs} listings."
         ),
     )
 )

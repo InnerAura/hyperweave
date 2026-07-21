@@ -44,7 +44,7 @@
       {%- include "components/chart-axes.svg.j2" %}
     {%- endfor %}
     {% for label in chart_y_labels %}
-    <text class="{{ uid }}-axis-y{% if chart_axis_accent and label.y == chart_accent_y %} {{ uid }}-axis-accent{% endif %}" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    <text class="{{ uid }}-axis-y{% if chart_axis_accent and label.y == chart_accent_y %} {{ uid }}-axis-accent{% endif %}" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
     {% endfor %}
     {%- if chart_area %}
       {%- include "components/chart-area.svg.j2" %}
@@ -67,7 +67,7 @@
 
   <g data-hw-zone="x-axis">
     {% for label in chart_x_labels %}
-    <text class="{{ uid }}-axis-x{% if chart_axis_accent and label.x == chart_accent_x %} {{ uid }}-axis-accent{% endif %}" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    <text class="{{ uid }}-axis-x{% if chart_axis_accent and label.x == chart_accent_x %} {{ uid }}-axis-accent{% endif %}" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
     {% endfor %}
   </g>
   {# Floating glass growth callout — a TRANSLUCENT WHITE frost over the substrate

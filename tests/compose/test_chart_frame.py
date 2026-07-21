@@ -463,3 +463,23 @@ async def test_fetch_stargazer_history_requires_valid_identifier() -> None:
         await fetch_stargazer_history("", "repo")
     with pytest.raises(ValueError):
         await fetch_stargazer_history("owner", "")
+
+
+def test_chart_overlay_states_the_failure_cause() -> None:
+    """Cause-aware degradation: the stale overlay names WHY when the connector
+    told us — rate limit (with the upstream's own retry hint), missing repo,
+    or an auth/scope problem — and stays the generic text when cause is absent."""
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    def _svg(connector_data: dict | None) -> str:
+        return compose(
+            ComposeSpec(type="chart", chart_owner="acme", chart_repo="widgets", connector_data=connector_data)
+        ).svg
+
+    assert "RATE LIMITED · RETRY ~15M" in _svg({"cause": "rate_limited", "retry_seconds": 900})
+    assert "RATE LIMITED" in _svg({"cause": "rate_limited"})  # no fabricated hint
+    assert "RETRY ~" not in _svg({"cause": "rate_limited"})
+    assert "REPO NOT FOUND" in _svg({"cause": "not_found"})
+    assert "AUTH · CHECK TOKEN SCOPES" in _svg({"cause": "auth_error"})
+    assert "DATA UNAVAILABLE" in _svg(None)  # the no-cause path is unchanged

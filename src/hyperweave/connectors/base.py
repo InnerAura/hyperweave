@@ -2,16 +2,129 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
+import contextvars
 import os
 import time
+from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import httpx
 
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
 from hyperweave import __version__
+
+# Test seam: retry waits go through this alias so tests assert requested waits
+# without wall-clock sleeps.
+_sleep = asyncio.sleep
+
+# ── Bounded retry ────────────────────────────────────────────────────────────
+# One logical fetch = up to _MAX_ATTEMPTS requests, but exactly ONE breaker
+# record either way (retries must not accelerate breaker trips). Retryable:
+# transient transport errors, 429/5xx, and a 403 ONLY when it carries
+# rate-limit evidence — a bare 403 is a credential/scope problem and retrying
+# it is noise.
+
+_MAX_ATTEMPTS = 3
+_RETRYABLE_STATUSES = frozenset({429, 500, 502, 503, 504})
+_MAX_RETRY_WAIT = 10.0
+
+
+@dataclass
+class RetryBudget:
+    """A shared wait budget for one logical render's fan-out.
+
+    Concurrent page fetches draw from the same pool; once spent, further
+    retries stop and the render degrades to its truthful overlay instead of
+    hanging (worst-case fan-out x Retry-After would otherwise stack minutes).
+    """
+
+    limit: float = 15.0
+    spent: float = field(default=0.0, init=False)
+
+    def take(self, wait: float) -> float | None:
+        """Claim up to ``wait`` seconds; ``None`` when the budget is exhausted."""
+        remaining = self.limit - self.spent
+        if remaining <= 0:
+            return None
+        granted = min(wait, remaining)
+        self.spent += granted
+        return granted
+
+
+_retry_budget: contextvars.ContextVar[RetryBudget | None] = contextvars.ContextVar("hw_retry_budget", default=None)
+
+
+@contextlib.contextmanager
+def retry_budget(limit: float) -> Any:
+    """Scope a shared :class:`RetryBudget` over a logical multi-fetch render."""
+    token = _retry_budget.set(RetryBudget(limit=limit))
+    try:
+        yield
+    finally:
+        _retry_budget.reset(token)
+
+
+def _rate_limit_shaped(response: httpx.Response) -> bool:
+    if "Retry-After" in response.headers:
+        return True
+    return bool(response.headers.get("X-RateLimit-Remaining") == "0")
+
+
+def _should_retry(exc: Exception) -> tuple[bool, httpx.Response | None]:
+    if isinstance(exc, httpx.HTTPStatusError):
+        status = exc.response.status_code
+        if status in _RETRYABLE_STATUSES:
+            return True, exc.response
+        if status == 403 and _rate_limit_shaped(exc.response):
+            return True, exc.response
+        return False, exc.response
+    if isinstance(exc, httpx.RequestError):
+        return True, None
+    return False, None
+
+
+def _retry_wait(response: httpx.Response | None, attempt: int) -> float:
+    if response is not None:
+        retry_after = response.headers.get("Retry-After", "").strip()
+        if retry_after.isdigit():
+            return min(float(retry_after), _MAX_RETRY_WAIT)
+    return min(float(2**attempt), _MAX_RETRY_WAIT)
+
+
+async def _request_with_retry(
+    send: Callable[[], Awaitable[httpx.Response]], *, breaker: CircuitBreaker, provider: str
+) -> httpx.Response:
+    """Run ``send`` with bounded retry; exactly one breaker record per call."""
+    last_exc: Exception | None = None
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        try:
+            response = await send()
+            response.raise_for_status()
+            breaker.record_success()
+            return response
+        except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+            last_exc = exc
+            retryable, failed_response = _should_retry(exc)
+            if not retryable or attempt == _MAX_ATTEMPTS:
+                break
+            wait = _retry_wait(failed_response, attempt)
+            budget = _retry_budget.get()
+            if budget is not None:
+                granted = budget.take(wait)
+                if granted is None:
+                    break
+                wait = granted
+            if wait > 0:
+                await _sleep(wait)
+    breaker.record_failure()
+    raise ConnectorError(f"Fetch failed for {provider!r}: {last_exc}") from last_exc
+
 
 # SSRF Protection
 
@@ -304,15 +417,10 @@ async def fetch(
         if token:
             merged_headers["Authorization"] = f"Bearer {token}"
 
-    try:
-        client = get_client()
-        response = await client.get(url, headers=merged_headers)
-        response.raise_for_status()
-        breaker.record_success()
-        return response
-    except (httpx.HTTPStatusError, httpx.RequestError) as exc:
-        breaker.record_failure()
-        raise ConnectorError(f"Fetch failed for {provider!r}: {exc}") from exc
+    async def _send() -> httpx.Response:
+        return await get_client().get(url, headers=merged_headers)
+
+    return await _request_with_retry(_send, breaker=breaker, provider=provider)
 
 
 async def fetch_json(
@@ -391,13 +499,9 @@ async def fetch_graphql(
 
     body: dict[str, Any] = {"query": query, "variables": variables or {}}
 
-    try:
-        client = get_client()
-        response = await client.post(url, headers=merged_headers, json=body)
-        response.raise_for_status()
-        breaker.record_success()
-        data: dict[str, Any] = response.json()
-        return data
-    except (httpx.HTTPStatusError, httpx.RequestError) as exc:
-        breaker.record_failure()
-        raise ConnectorError(f"GraphQL fetch failed for {provider!r}: {exc}") from exc
+    async def _send() -> httpx.Response:
+        return await get_client().post(url, headers=merged_headers, json=body)
+
+    response = await _request_with_retry(_send, breaker=breaker, provider=provider)
+    data: dict[str, Any] = response.json()
+    return data

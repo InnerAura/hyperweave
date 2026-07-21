@@ -102,10 +102,10 @@
     {# Two-line stack: identity top, subtitle bottom, centered vertically.
        The subtitle gate also checks subtitle_text non-empty so suppressed
        duplicate subtitles do not emit empty text elements. #}
-    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_stack_y | default(0) }}" class="{{ uid }}-identity"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper }}</text>
-    <text data-hw-zone="subtitle" x="{{ identity_x }}" y="{{ subtitle_y | default(0) }}" font-family="'{{ subtitle_font_family }}',monospace" font-size="{{ subtitle_font_size }}" fill="{{ ink_sub | default('var(--dna-ink-sub)') }}" letter-spacing="{{ subtitle_letter_spacing_em }}em">{{ subtitle_text }}</text>
+    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_stack_y | default(0) }}" class="{{ uid }}-identity"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper | xml_escape }}</text>
+    <text data-hw-zone="subtitle" x="{{ identity_x }}" y="{{ subtitle_y | default(0) }}" font-family="'{{ subtitle_font_family }}',monospace" font-size="{{ subtitle_font_size }}" fill="{{ ink_sub | default('var(--dna-ink-sub)') }}" letter-spacing="{{ subtitle_letter_spacing_em }}em">{{ subtitle_text | xml_escape }}</text>
   {% else %}
-    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_single_y | default(0) }}" class="{{ uid }}-identity"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper }}</text>
+    <text data-hw-zone="identity" x="{{ identity_x }}" y="{{ identity_single_y | default(0) }}" class="{{ uid }}-identity"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper | xml_escape }}</text>
   {% endif %}
 </g>
 
@@ -186,7 +186,7 @@
 {% endif %}
 <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ _cell_x }},{{ strip_metric_local_origin_y }})">
   <text x="{{ _lx }}" y="{{ strip_metric_label_y | default(18) }}" text-anchor="{{ _mta }}"
-        class="{{ uid }}-metric-label"{% if _layout.label_w and _layout.label_w > 0 %} textLength="{{ _layout.label_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.label | upper }}</text>
+        class="{{ uid }}-metric-label"{% if _layout.label_w and _layout.label_w > 0 %} textLength="{{ _layout.label_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.label | upper | xml_escape }}</text>
   {# Metric value — skew applied only when strip_metric_value_skew != 0
      (was hardcoded to paradigm=chrome; now chrome.yaml sets skew=0 for badge
      parity, removing the Impact-italic treatment that diverged from badge's
@@ -195,15 +195,15 @@
   {% if _skew != 0 %}
   <g transform="translate({{ _vx }},{{ strip_metric_value_y | default(36) }}) skewX({{ _skew }})">
     <text x="{{ strip_metric_local_origin_x }}" y="{{ strip_metric_local_origin_y }}" text-anchor="{{ _mta }}" dominant-baseline="central"
-          class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value }}</text>
+          class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value | xml_escape }}</text>
   </g>
   {% else %}
   <text x="{{ _vx }}" y="{{ strip_metric_value_y | default(36) }}" text-anchor="{{ _mta }}"
-        class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value }}</text>
+        class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value | xml_escape }}</text>
   {% endif %}
 {% if metric.delta %}
   <text x="{{ _vx }}" y="{{ strip_metric_delta_y }}" text-anchor="{{ _mta }}"
-        class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta }}</text>
+        class="hw-delta hw-delta--{{ metric.delta_dir | default('neutral') }}">{{ metric.delta | xml_escape }}</text>
 {% endif %}
 </g>
 {% endfor %}

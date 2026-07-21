@@ -77,10 +77,10 @@
    crisp. The HUD filter is retained ONLY on the axis / milestone / footer labels
    below, which sit directly on the cell substrate with no band. #}
 <g data-hw-zone="header-text">
-  <text x="{{ chart_layout.texts.cellular_repo.x }}" y="{{ chart_layout.texts.cellular_repo.y }}" class="{{ uid }}-hdr-user">{{ chart_repo | default('repo') | upper }}</text>
-  <text x="{{ chart_layout.texts.cellular_title.x }}" y="{{ chart_layout.texts.cellular_title.y }}" class="{{ uid }}-title-main">{{ chart_series_title | default('STAR HISTORY') }}</text>
-  <text x="{{ chart_layout.texts.cellular_hero_value.x }}" y="{{ chart_layout.texts.cellular_hero_value.y }}" class="{{ uid }}-hero-value" text-anchor="{{ chart_layout.texts.cellular_hero_value.anchor }}">{{ chart_current_stars | default('--') }}</text>
-  <text x="{{ chart_layout.texts.cellular_hero_label.x }}" y="{{ chart_layout.texts.cellular_hero_label.y }}" class="{{ uid }}-hero-label" text-anchor="{{ chart_layout.texts.cellular_hero_label.anchor }}">{{ chart_hero_label | default('CURRENT STARS') }}</text>
+  <text x="{{ chart_layout.texts.cellular_repo.x }}" y="{{ chart_layout.texts.cellular_repo.y }}" class="{{ uid }}-hdr-user">{{ chart_repo | default('repo') | upper | xml_escape }}</text>
+  <text x="{{ chart_layout.texts.cellular_title.x }}" y="{{ chart_layout.texts.cellular_title.y }}" class="{{ uid }}-title-main">{{ chart_series_title | default('STAR HISTORY') | xml_escape }}</text>
+  <text x="{{ chart_layout.texts.cellular_hero_value.x }}" y="{{ chart_layout.texts.cellular_hero_value.y }}" class="{{ uid }}-hero-value" text-anchor="{{ chart_layout.texts.cellular_hero_value.anchor }}">{{ chart_current_stars | default('--') | xml_escape }}</text>
+  <text x="{{ chart_layout.texts.cellular_hero_label.x }}" y="{{ chart_layout.texts.cellular_hero_label.y }}" class="{{ uid }}-hero-label" text-anchor="{{ chart_layout.texts.cellular_hero_label.anchor }}">{{ chart_hero_label | default('CURRENT STARS') | xml_escape }}</text>
 </g>
 
 {# CHART zone — layered render order: dormant (full viewport, no anim) →
@@ -173,14 +173,14 @@
    left edge of the chart. #}
 <g data-hw-zone="y-axis" filter="url(#{{ uid }}-hud)">
   {% for label in chart_y_labels %}
-  <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+  <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
   {% endfor %}
 </g>
 
 {# X-axis — year labels below the chart. #}
 <g data-hw-zone="x-axis" filter="url(#{{ uid }}-hud)">
   {% for label in chart_x_labels %}
-  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+  <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
   {% endfor %}
 </g>
 
@@ -192,7 +192,7 @@
       x2="{{ chart_layout.lines.cellular_footer_rule.x2 }}" y2="{{ chart_layout.lines.cellular_footer_rule.y2 }}"
       stroke="{{ _accent }}" stroke-opacity="0.06" stroke-width="0.5"/>
 <g data-hw-zone="footer" filter="url(#{{ uid }}-hud)">
-  <text x="{{ chart_layout.texts.cellular_footer_url.x }}" y="{{ chart_layout.texts.cellular_footer_url.y }}" class="{{ uid }}-foot">{{ chart_subject_url | default(chart_repo | default('')) }}</text>
+  <text x="{{ chart_layout.texts.cellular_footer_url.x }}" y="{{ chart_layout.texts.cellular_footer_url.y }}" class="{{ uid }}-foot">{{ chart_subject_url | default(chart_repo | default('')) | xml_escape }}</text>
   <text x="{{ chart_layout.texts.cellular_footer_brand.x }}" y="{{ chart_layout.texts.cellular_footer_brand.y }}" class="{{ uid }}-foot-brand" text-anchor="{{ chart_layout.texts.cellular_footer_brand.anchor }}">HYPERWEAVE</text>
 </g>
 

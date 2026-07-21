@@ -60,7 +60,8 @@ def transform(
     base_url: str = "",
 ) -> TransformResult:
     """Extract → verify → patch → re-validate → lineage → recompose."""
-    emb = extract_embedded(load_artifact(source))
+    parent_svg = load_artifact(source)
+    emb = extract_embedded(parent_svg)
 
     # verify-hash-first — never mutate a corrupt seed
     declared = str(emb.envelope.get("id", ""))
@@ -113,7 +114,7 @@ def transform(
     new_lineage = [*list(patched.get("lineage", [])), entry]
     patched["lineage"] = new_lineage
 
-    spec = payload_to_compose_spec(emb.schema, patched, emb.envelope.get("prov", {}))
+    spec = payload_to_compose_spec(emb.schema, patched, emb.envelope.get("prov", {}), parent_svg=parent_svg)
     result = compose(spec)
     new_env = extract_envelope(result.svg) or {}
     new_id = str(new_env.get("id", ""))

@@ -24,7 +24,7 @@
 {% endif %}{% if stratum %}    <hw:stratum>{{ stratum }}</hw:stratum>
 {% endif %}    <hw:slots>
 {% for slot in slots | default([]) %}
-      <hw:slot zone="{{ slot.zone }}" {% if slot.value %}value="{{ slot.value }}"{% endif %}{% if slot.data %} data="{{ slot.data | e }}"{% endif %}/>
+      <hw:slot zone="{{ slot.zone }}" {% if slot.value %}value="{{ slot.value | xml_escape }}"{% endif %}{% if slot.data %} data="{{ slot.data | xml_escape }}"{% endif %}/>
 {% endfor %}
     </hw:slots>
     <hw:environment platform="{{ platform }}" motion="{{ data_hw_motion }}" status="{{ status }}"/>

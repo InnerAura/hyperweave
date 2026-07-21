@@ -65,7 +65,18 @@ def resolve_chart(
         empty_message: str | None = "NEW REPO · NO STARS YET"
     elif status == "stale":
         raw_points = []
-        empty_message = "DATA UNAVAILABLE" if input_data.hero.raw_value is None else "HISTORY UNAVAILABLE"
+        # Cause-aware degradation: state WHY when the connector told us —
+        # the retry hint appears only when the upstream sent Retry-After
+        # (truthful, never fabricated).
+        if input_data.cause == "rate_limited":
+            minutes = max(1, round(input_data.retry_seconds / 60)) if input_data.retry_seconds else 0
+            empty_message = f"RATE LIMITED · RETRY ~{minutes}M" if minutes else "RATE LIMITED"
+        elif input_data.cause == "not_found":
+            empty_message = "REPO NOT FOUND"
+        elif input_data.cause == "auth_error":
+            empty_message = "AUTH · CHECK TOKEN SCOPES"
+        else:
+            empty_message = "DATA UNAVAILABLE" if input_data.hero.raw_value is None else "HISTORY UNAVAILABLE"
     else:
         empty_message = None
 

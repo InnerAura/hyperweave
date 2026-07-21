@@ -12,8 +12,8 @@ from hyperweave.compose.schema import (
     coerce_stats_input,
     coerce_strip_input,
 )
+from hyperweave.connectors.data_tokens import ResolvedToken
 from hyperweave.core.models import ComposeSpec
-from hyperweave.serve.data_tokens import ResolvedToken
 
 
 def test_coerce_stats_input_handles_github_full_payload() -> None:

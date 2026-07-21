@@ -203,7 +203,7 @@ def test_chrome_marquee_uses_chrome_text_gradient() -> None:
 def test_marquee_data_token_mode_uses_paradigm_dimensions() -> None:
     """Data-token input path goes through the same _resolve_horizontal as raw
     text mode, so paradigm dims still apply."""
-    from hyperweave.serve.data_tokens import ResolvedToken
+    from hyperweave.connectors.data_tokens import ResolvedToken
 
     tokens = [
         ResolvedToken(kind="text", label="", value="HYPERWEAVE", ttl=0),

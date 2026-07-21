@@ -483,8 +483,8 @@ def generate_static() -> int:
     # the httpx singleton binds to its first loop. Failure path: empty list
     # → variant marquees fall back to the per-genome marquee_text strings.
     from hyperweave.connectors.base import close_client as _close_marquee_client
-    from hyperweave.serve.data_tokens import parse_data_tokens as _parse_marquee_tokens
-    from hyperweave.serve.data_tokens import resolve_data_tokens as _resolve_marquee_tokens
+    from hyperweave.connectors.data_tokens import parse_data_tokens as _parse_marquee_tokens
+    from hyperweave.connectors.data_tokens import resolve_data_tokens as _resolve_marquee_tokens
 
     _MARQUEE_PREFETCH_TOKENS = (
         "github:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads"
@@ -1206,8 +1206,8 @@ def _generate_data_cards() -> int:
 
     async def _fetch_multisource_cards(fixtures: dict[str, Any]) -> dict[str, Any]:
         from hyperweave.connectors.base import close_client as _close_client
+        from hyperweave.connectors.data_tokens import parse_data_tokens, resolve_data_tokens
         from hyperweave.connectors.snapshots import fetch_arxiv_snapshot, fetch_hf_snapshot, fetch_pypi_snapshot
-        from hyperweave.serve.data_tokens import parse_data_tokens, resolve_data_tokens
 
         results: dict[str, Any] = {}
         try:
@@ -1500,7 +1500,7 @@ async def _generate_multi_provider_marquee(proofset_root: Path) -> int:
     only the genome (and its paradigm-specific styling) differs. This
     isolates the genome-vs-data axis: same data, three skins.
     """
-    from hyperweave.serve.data_tokens import parse_data_tokens, resolve_data_tokens
+    from hyperweave.connectors.data_tokens import parse_data_tokens, resolve_data_tokens
 
     # Docker Hub's connector exposes `pull_count` (matching the upstream JSON
     # field exactly), not `pulls`. The five tokens cross three providers:
@@ -2369,8 +2369,8 @@ def _emit_primer_stress_section() -> list[str]:
     import asyncio
 
     from hyperweave.connectors.base import close_client
+    from hyperweave.connectors.data_tokens import parse_data_tokens, resolve_data_tokens
     from hyperweave.connectors.snapshots import fetch_pypi_snapshot
-    from hyperweave.serve.data_tokens import parse_data_tokens, resolve_data_tokens
 
     # Six real cross-connector tokens — a single ecosystem footprint card whose
     # metrics span GitHub + PyPI + npm + crates. Sliced [:n] to vary the count.
@@ -4058,7 +4058,7 @@ def _emit_chrome_readme() -> None:
 DATA_PROJECTS: dict[str, list[tuple[str, ...]]] = {
     # Provider keys match ``hyperweave.connectors._CONNECTORS`` canonical
     # names (github / pypi / npm / docker / huggingface / arxiv). The
-    # user-facing ``gh:`` / ``hf:`` aliases live in serve/data_tokens.py
+    # user-facing ``gh:`` / ``hf:`` aliases live in connectors/data_tokens.py
     # and don't apply at the fetch_metric layer the harness uses.
     #
     # corpus refresh: 16 GitHub agentic repos relevant to
@@ -4660,7 +4660,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
 
     # ── v0.3.12 connectors across frames ────────────────────────────────
     # Connectors are frame-agnostic — the same tokens drive any frame.
-    from hyperweave.serve.data_tokens import ResolvedToken as _RT
+    from hyperweave.connectors.data_tokens import ResolvedToken as _RT
 
     # all-crates card (item 6): the full crates.io output in one strip, rendered
     # in the rust-appropriate brutalist UMBER variant (fired clay). License is a
@@ -4724,7 +4724,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
     # rides in as a volume cell so the band also surfaces connector health.
     # kv tokens are deterministic → parity-safe across all three paths.
     def _fullband_marquee(spec_id: str, genome: str, variant: str, gm: str, dl_token: str) -> ParitySpec:
-        from hyperweave.serve.data_tokens import _download_window
+        from hyperweave.connectors.data_tokens import _download_window
 
         # The download-window subtitle is derived from the dl_token's
         # (provider, metric) — pypi/crates downloads are ALL-TIME, npm is 7D — so

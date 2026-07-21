@@ -424,6 +424,15 @@ def compose(
             help="Output byte format: svg (live, default) | svg-static (flattened, static) | png | webp | ansi",
         ),
     ] = "svg",
+    respond: Annotated[
+        str,
+        typer.Option(
+            "--respond",
+            help="Machine-readable stdout instead of SVG bytes: envelope ({envelope, url} — the "
+            "actionable read, no pixels inline; same shape HTTP/MCP return) | json ({svg, markdown, "
+            "width, height}).",
+        ),
+    ] = "",
     target: Annotated[
         str,
         typer.Option(
@@ -487,18 +496,18 @@ def compose(
     Examples:
 
     \b
-      hyperweave compose card <username>                           [fetches GitHub data; 'stats' is an alias]
-      hyperweave compose chart stars <owner/repo>                  [fetches star history]
+      hyperweave compose card <username>                           \[fetches GitHub data; 'stats' is an alias]
+      hyperweave compose chart stars <owner/repo>                  \[fetches star history]
       hyperweave compose badge STARS --data gh:anthropics/claude-code.stars
       hyperweave compose marquee --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
       hyperweave compose matrix --spec-file table.json -g primer --variant porcelain
       hyperweave compose matrix --spec-file connectors -g primer --markdown-out table.md
       hyperweave compose diagram --spec-file pipeline -g primer --variant porcelain
       hyperweave compose diagram --spec-file flow.json -g primer --markdown-out flow.md
-      hyperweave compose badge STARS 1234 --format png -o badge.png  [rasterize; needs hyperweave[raster]]
-      hyperweave compose <any-frame> --genome-file ./x.json        [custom genome]
-      hyperweave compose receipt session.jsonl                     [render a session receipt]
-      hyperweave compose -  < hook.json                            [Claude Code SessionEnd hook]
+      hyperweave compose badge STARS 1234 --format png -o badge.png  \[rasterize; needs hyperweave\[raster]]
+      hyperweave compose <any-frame> --genome-file ./x.json        \[custom genome]
+      hyperweave compose receipt session.jsonl                     \[render a session receipt]
+      hyperweave compose -  < hook.json                            \[Claude Code SessionEnd hook]
     """
     # ── Retired-flag migration (one release) ─────────────────────────
     if target:
@@ -545,7 +554,6 @@ def compose(
     import json
 
     from hyperweave.compose.engine import compose as do_compose
-    from hyperweave.core.models import ComposeSpec
 
     # ── Optional custom genome loaded from file ──────────────────────
     genome_override: dict[str, object] | None = None
@@ -635,11 +643,18 @@ def compose(
     # other frames receive the formatted "K1:V1,K2:V2" string via spec.value.
     data_tokens_resolved: list[Any] | None = None
     if data:
-        from hyperweave.serve.data_tokens import (
-            format_for_value,
-            parse_data_tokens,
-            resolve_data_tokens,
-        )
+        try:
+            from hyperweave.connectors.data_tokens import (
+                format_for_value,
+                parse_data_tokens,
+                resolve_data_tokens,
+            )
+        except ModuleNotFoundError as exc:  # pragma: no cover - broken install
+            typer.echo(
+                f"Error: --data needs the '{exc.name}' package. Reinstall with:\n  pip install hyperweave",
+                err=True,
+            )
+            raise typer.Exit(1) from exc
 
         try:
             tokens = parse_data_tokens(data)
@@ -672,37 +687,47 @@ def compose(
         surface_ground = resolved_surface.ground.value
         surface_palette = resolved_surface.palette.value
 
-    spec = ComposeSpec(
-        type=frame_type,
-        genome_id=genome,
-        genome_override=genome_override,
-        title=title,
-        value=final_value,
-        state=state,
-        motion=motion,
-        glyph=glyph,
-        glyph_mode=glyph_mode,
-        font_mode=font_mode,
-        regime=regime,
-        size=size,
-        shape=shape,
-        variant=variant,
-        pair=pair,
-        state_glyph_shape=state_glyph_shape,
-        divider_variant=divider_variant,
-        marquee_direction=direction,
-        stats_username=stats_username,
-        chart_owner=chart_owner,
-        chart_repo=chart_repo,
-        connector_data=connector_data,
-        data_tokens=data_tokens_resolved,
-        matrix=matrix_spec,
-        diagram=diagram_spec,
-        glyph_tint=glyph_tint,
-        performance=performance,
-        ground=surface_ground,
-        palette=surface_palette,
-    )
+    # One exception-mapping seam with HTTP/MCP: a malformed spec prints the
+    # same rule text everywhere (never a traceback), exit 2 = input problem.
+    from hyperweave.compose.surface import build_compose_spec
+    from hyperweave.core.errors import HwError
+
+    spec_kwargs: dict[str, Any] = {
+        "type": frame_type,
+        "genome_id": genome,
+        "genome_override": genome_override,
+        "title": title,
+        "value": final_value,
+        "state": state,
+        "motion": motion,
+        "glyph": glyph,
+        "glyph_mode": glyph_mode,
+        "font_mode": font_mode,
+        "regime": regime,
+        "size": size,
+        "shape": shape,
+        "variant": variant,
+        "pair": pair,
+        "state_glyph_shape": state_glyph_shape,
+        "divider_variant": divider_variant,
+        "marquee_direction": direction,
+        "stats_username": stats_username,
+        "chart_owner": chart_owner,
+        "chart_repo": chart_repo,
+        "connector_data": connector_data,
+        "data_tokens": data_tokens_resolved,
+        "matrix": matrix_spec,
+        "diagram": diagram_spec,
+        "glyph_tint": glyph_tint,
+        "performance": performance,
+        "ground": surface_ground,
+        "palette": surface_palette,
+    }
+    try:
+        spec = build_compose_spec(spec_kwargs, frame_type)
+    except HwError as exc:
+        typer.echo(exc.cli_text(), err=True)
+        raise typer.Exit(2) from exc
 
     # ── --face: bake ONE scheme (the single twin face / the bare inlay face) ──
     # An explicit face commits the palette: palette=fixed + surface_face. On a
@@ -763,11 +788,74 @@ def compose(
             err=True,
         )
 
+    # Verb advertisement (stderr, unconditional): the artifact's id + the verbs
+    # that operate on it, in SELF_INSTRUCT's own vocabulary so the terminal
+    # hint and the embedded self-instruction cannot drift.
+    from hyperweave.core.envelope import extract_envelope
+
+    advert_envelope = extract_envelope(result.svg) or {}
+    advert_id = str(advert_envelope.get("id", "")).removeprefix("sha256:")[:12]
+    if advert_id:
+        typer.echo(
+            f"artifact {advert_id} — verbs over the seed: extract · verify · transform · "
+            "diff · query (hyperweave discover verbs)",
+            err=True,
+        )
+
+    # ── --respond: machine-readable stdout (the HTTP/MCP response shapes) ──
+    # envelope = the actionable read + content handle, no pixels inline; json =
+    # svg + markdown shadow inline. Either way stdout is one JSON document; the
+    # -o file write still happens additionally (transform's -o convention).
+    if respond:
+        if respond not in ("envelope", "json"):
+            typer.echo(f"Error: --respond must be 'envelope' or 'json' (got {respond!r})", err=True)
+            raise typer.Exit(2)
+        if output_format != "svg":
+            typer.echo("Error: --respond emits the live artifact; it composes with --format svg only", err=True)
+            raise typer.Exit(2)
+        import json as _json
+
+        if respond == "json":
+            respond_doc: dict[str, Any] = {
+                "svg": result.svg,
+                "markdown": result.markdown,
+                "width": result.width,
+                "height": result.height,
+            }
+        else:
+            from hyperweave.compose.artifact_store import store_artifact
+            from hyperweave.compose.surface import build_artifact_url
+            from hyperweave.core.envelope import extract_envelope
+
+            envelope = extract_envelope(result.svg) or {}
+            digest = str(envelope.get("id", ""))
+            if digest:
+                store_artifact(digest, result.svg)
+            respond_doc = {
+                "width": result.width,
+                "height": result.height,
+                "genome": spec.genome_id,
+                "variant": spec.variant,
+                "url": build_artifact_url(digest) if digest else "",
+                "envelope": envelope,
+            }
+            if output is None:
+                # Errors-as-documentation: the url is a relative handle backed by
+                # the per-process store — name the exits (transform's pattern).
+                typer.echo(
+                    "url resolves under `hyperweave serve`; pass -o/--output to write the SVG to a file",
+                    err=True,
+                )
+        if output is not None:
+            output.write_text(result.svg)
+            typer.echo(f"Wrote {output} ({result.width}x{result.height})", err=True)
+        typer.echo(_json.dumps(respond_doc, indent=2))
+        return
+
     # Project the live SVG into the requested --format (svg passes through;
     # svg-static flattens vars + strips motion; png/webp rasterize the static
     # projection). project() enforces the adaptive x flatten guard and raster
     # availability, surfacing a structured error to stderr.
-    from hyperweave.core.errors import HwError
     from hyperweave.formats import is_flattening, project
 
     # A genome-DEFAULTED adaptive surface (primer twins by default) commits to
@@ -782,6 +870,12 @@ def compose(
     except HwError as exc:
         typer.echo(f"Error: {exc.cli_text()}", err=True)
         raise typer.Exit(2) from exc
+
+    # Projection honesty (stderr, mirrors the warnings pattern): declare what
+    # the flattening dropped instead of stripping blind.
+    if projection.diagnostics:
+        dropped = ", ".join(f"{key.replace('_', ' ')}: {value}" for key, value in projection.diagnostics.items())
+        typer.echo(f"static projection — {dropped}", err=True)
 
     _deliver_projection(
         projection.data, is_text=projection.is_text, output=output, width=result.width, height=result.height
@@ -843,17 +937,35 @@ def session(
 def genomes_cmd(
     show: Annotated[str | None, typer.Argument(help="Genome ID to show details")] = None,
     ids_only: Annotated[bool, typer.Option("--ids-only")] = False,
+    explain: Annotated[
+        bool,
+        typer.Option("--explain", help="Role → token → value breakdown instead of the raw JSON dump."),
+    ] = False,
 ) -> None:
     """List or inspect genomes."""
     from hyperweave.config.loader import get_loader
 
     loader = get_loader()
 
+    if explain and not show:
+        typer.echo("--explain needs a genome id: hyperweave genomes <id> --explain", err=True)
+        raise typer.Exit(2)
+
     if show:
         genome = loader.genomes.get(show)
         if not genome:
             typer.echo(f"Genome '{show}' not found.", err=True)
             raise typer.Exit(1)
+        if explain:
+            # Recoloring as intent: the role tells you WHAT a token does; the
+            # raw dump only tells you what hex it happens to be.
+            roles = genome.get("roles") or {}
+            typer.echo(f"{show} — {genome.get('name', show)} ({genome.get('category', 'dark')})")
+            for role, tokens in roles.items():
+                typer.echo(f"  {role}:")
+                for token in tokens:
+                    typer.echo(f"    {token:<36} {genome.get(token, '')}")
+            return
         import json
 
         typer.echo(json.dumps(genome, indent=2))

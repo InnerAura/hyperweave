@@ -78,12 +78,46 @@ def resolve_vars_to_hex(svg: str) -> str:
     return svg
 
 
+# An element resting at opacity="0" whose body carries an <animate*> child has
+# animation as its ONLY lift — stripping the child would leave permanently
+# invisible dead DOM (diagram motion particles, divider takeoff boosters).
+# The opacity attribute + animate-in-body conjunction IS the two-part gate:
+# intentionally-static opacity-0 content has no animate child and never matches.
+_ANIMATION_ONLY_ELEMENT = re.compile(
+    r'<(circle|ellipse|rect|path)\b[^>]*\bopacity="0"[^>]*>(?:(?!</\1>).)*?<animate(?:(?!</\1>).)*?</\1>\s*',
+    re.DOTALL,
+)
+
+
 def strip_animation(svg: str) -> str:
-    """Remove SMIL ``<animate*>`` elements, ``@keyframes``, and ``animation:`` decls."""
+    """Remove SMIL ``<animate*>`` elements, ``@keyframes``, and ``animation:`` decls.
+
+    Normalizes as it strips: an element whose only opacity source was its
+    now-stripped animation is removed outright, never shipped invisible.
+    """
+    svg, _counts = strip_animation_counted(svg)
+    return svg
+
+
+def strip_animation_counted(svg: str) -> tuple[str, dict[str, int]]:
+    """:func:`strip_animation` plus the projection's honesty counts.
+
+    ``animated_elements_stripped`` = SMIL nodes removed (including those inside
+    dropped elements); ``motion_only_elements_removed`` = elements deleted
+    because animation was their only visibility.
+    """
+    animated = sum(1 for _ in _ANIM_PAIR.finditer(svg)) + sum(1 for _ in _ANIM_SELF.finditer(svg))
+    svg, dead = _ANIMATION_ONLY_ELEMENT.subn("", svg)
     svg = _ANIM_PAIR.sub("", svg)
     svg = _ANIM_SELF.sub("", svg)
     svg = _KEYFRAMES.sub("", svg)
-    return _ANIM_DECL.sub("", svg)
+    svg = _ANIM_DECL.sub("", svg)
+    counts: dict[str, int] = {}
+    if animated:
+        counts["animated_elements_stripped"] = animated
+    if dead:
+        counts["motion_only_elements_removed"] = dead
+    return svg, counts
 
 
 def clamp_width(svg: str, max_w: int = 800) -> str:
@@ -102,6 +136,19 @@ _PASSES: dict[str, Callable[[str], str]] = {
     "noanim": strip_animation,
     "clamp": clamp_width,
 }
+
+
+def run_passes_counted(svg: str, passes: list[str]) -> tuple[str, dict[str, int]]:
+    """:func:`run_passes` plus accumulated projection counts (noanim declares)."""
+    counts: dict[str, int] = {}
+    for name in passes:
+        if name == "noanim":
+            svg, pass_counts = strip_animation_counted(svg)
+            for key, value in pass_counts.items():
+                counts[key] = counts.get(key, 0) + value
+        else:
+            svg = _PASSES[name](svg)
+    return svg, counts
 
 
 def run_passes(svg: str, passes: list[str]) -> str:

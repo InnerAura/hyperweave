@@ -29,7 +29,7 @@
 {% if cap_scope %}
 {# Identity TEXT = ink (the stats-card treatment), consistent across frames; the
    glyph above carries the accent. Literal for renderer independence. #}
-<text data-hw-zone="cap-scope" x="{{ liveness.cap_scope_x }}" y="{{ liveness.cap_scope_y }}" font-family="var(--dna-font-mono, 'JetBrains Mono', monospace)" font-size="8" font-weight="700" letter-spacing="0.06em" fill="{{ _genome_raw.ink }}">{{ cap_scope }}</text>
+<text data-hw-zone="cap-scope" x="{{ liveness.cap_scope_x }}" y="{{ liveness.cap_scope_y }}" font-family="var(--dna-font-mono, 'JetBrains Mono', monospace)" font-size="8" font-weight="700" letter-spacing="0.06em" fill="{{ _genome_raw.ink }}">{{ cap_scope | xml_escape }}</text>
 {% endif %}
 <text data-hw-zone="cap-live" x="{{ liveness.cap_live_x }}" y="{{ liveness.cap_live_y }}" font-family="var(--dna-font-mono, 'JetBrains Mono', monospace)" font-size="6" font-weight="700" letter-spacing="0.18em" fill="{{ _genome_raw.ink_secondary }}">LIVE</text>
 <circle cx="{{ liveness.cap_pulse_cx }}" cy="{{ liveness.cap_pulse_cy }}" r="{{ liveness.cap_pulse_housing_r }}" fill="{{ _genome_raw.surface_1 }}"/>

@@ -601,3 +601,74 @@ def test_faces_pair_composes_with_embed_snippets() -> None:
     assert snip["markdown"].startswith("<picture>")
     assert resp.faces["dark"] in snip["markdown"]  # dark is the <img> default
     assert "prefers-color-scheme: light" in snip["markdown"]
+
+
+# ── data-hw-mode describes the RENDERED artifact, never the near-face genome ──
+
+
+def _mode_of(svg: str) -> str:
+    match = re.search(r'data-hw-mode="([^"]*)"', svg)
+    assert match, "artifact carries no data-hw-mode"
+    return match.group(1)
+
+
+@pytest.mark.parametrize("variant", ["porcelain", "noir"])
+@pytest.mark.parametrize("face", ["light", "dark"])
+def test_face_committed_render_reports_the_face_as_mode(variant: str, face: str) -> None:
+    """The interesting cells are the two where face != native substrate —
+    porcelain (light-native) baked dark, noir (dark-native) baked light."""
+    svg = compose(
+        ComposeSpec(
+            type="matrix",
+            genome_id="primer",
+            variant=variant,
+            ground="opaque",
+            palette="fixed",
+            surface_face=face,
+            matrix=_matrix_ir(),
+        )
+    ).svg
+    assert _mode_of(svg) == face
+    assert f'data-hw-face="{face}"' in svg
+
+
+def test_adaptive_render_reports_adaptive_mode() -> None:
+    explicit_twin = compose(
+        ComposeSpec(type="matrix", genome_id="primer", ground="opaque", palette="adaptive", matrix=_matrix_ir())
+    ).svg
+    assert _mode_of(explicit_twin) == "adaptive"
+
+    genome_default_twin = compose(ComposeSpec(type="matrix", genome_id="primer", matrix=_matrix_ir())).svg
+    assert 'data-hw-adapt="adaptive"' in genome_default_twin
+    assert _mode_of(genome_default_twin) == "adaptive"
+
+    inlay = compose(
+        ComposeSpec(type="matrix", genome_id="primer", ground="bare", palette="adaptive", matrix=_matrix_ir())
+    ).svg
+    assert _mode_of(inlay) == "adaptive"
+
+
+def test_plate_render_keeps_the_substrate_fallback_mode() -> None:
+    plate_light = compose(
+        ComposeSpec(
+            type="matrix",
+            genome_id="primer",
+            variant="porcelain",
+            ground="opaque",
+            palette="fixed",
+            matrix=_matrix_ir(),
+        )
+    ).svg
+    assert _mode_of(plate_light) == "light"
+
+    plate_dark = compose(
+        ComposeSpec(
+            type="matrix",
+            genome_id="primer",
+            variant="noir",
+            ground="opaque",
+            palette="fixed",
+            matrix=_matrix_ir(),
+        )
+    ).svg
+    assert _mode_of(plate_dark) == "dark"

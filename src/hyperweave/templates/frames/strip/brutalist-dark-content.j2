@@ -77,7 +77,7 @@
      identities. Attribute lives on <text>, NOT <tspan> (Camo inconsistency). #}
   <text data-hw-zone="identity"
         x="{{ identity_text_x }}" y="{{ identity_text_y }}"
-        class="{{ uid }}-brand-text"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper }}</text>
+        class="{{ uid }}-brand-text"{% if identity_text_length and identity_text_length > 0 %} textLength="{{ identity_text_length }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ identity | upper | xml_escape }}</text>
 
   {# (8) Metric cells with inter-cell dividers. Skips the first seam (already
      painted as the ACCENT-VOID-ACCENT triple at triple_divider_x). cell_layouts[i]
@@ -91,10 +91,10 @@
     <g data-hw-zone="metric-{{ loop.index0 }}" transform="translate({{ _layout.cell_x }},0)">
       <text x="{{ _layout.label_x }}" y="{{ metric_label_y }}"
             text-anchor="{{ _layout.text_anchor }}"
-            class="{{ uid }}-metric-label"{% if _layout.label_w and _layout.label_w > 0 %} textLength="{{ _layout.label_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.label | upper }}</text>
+            class="{{ uid }}-metric-label"{% if _layout.label_w and _layout.label_w > 0 %} textLength="{{ _layout.label_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.label | upper | xml_escape }}</text>
       <text x="{{ _layout.value_x }}" y="{{ metric_value_y }}"
             text-anchor="{{ _layout.text_anchor }}"
-            class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value }}</text>
+            class="{{ uid }}-metric-value"{% if _layout.value_w and _layout.value_w > 0 %} textLength="{{ _layout.value_w | round(1) }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ metric.value | xml_escape }}</text>
     </g>
   {% endfor %}
 

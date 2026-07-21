@@ -101,7 +101,7 @@
        (was redundant with the bottom-left footer URL and pushed the status
        dot into an awkward position above the corner). #}
     {# Title with spaces around slash matching prototype cadence. #}
-    <text class="{{ uid }}-hdr-user" x="{{ chart_layout.texts.brutalist_header_user.x }}" y="{{ chart_layout.texts.brutalist_header_user.y }}">{{ chart_title | replace('/', ' / ') }}</text>
+    <text class="{{ uid }}-hdr-user" x="{{ chart_layout.texts.brutalist_header_user.x }}" y="{{ chart_layout.texts.brutalist_header_user.y }}">{{ chart_title | replace('/', ' / ') | xml_escape }}</text>
     {# Status dot y=17 centers the 8x8 dot at y=21 — aligns with header text
        visual cap-center (12px font baseline y=28 - 0.7*12/2 ≈ 24, dot center
        at y=21 puts it within 3px of text cap-center). Pre-fix used y=11
@@ -120,17 +120,17 @@
        STAR HISTORY hero text baseline y=92 (visual center ~y=78); subtitle and
        TOTAL STARS label baseline y=110. Pulls text visually toward the centre
        of the y=44→122 title zone (78px tall, centre at y=83). #}
-    <text class="{{ uid }}-title-main" x="{{ chart_layout.texts.brutalist_light_title.x }}" y="{{ chart_layout.texts.brutalist_light_title.y }}">{{ chart_series_title | default('STAR HISTORY') }}</text>
-    <text class="{{ uid }}-title-sub" x="{{ chart_layout.texts.brutalist_light_subtitle.x }}" y="{{ chart_layout.texts.brutalist_light_subtitle.y }}">{{ chart_subtitle_label | default('LIFETIME GROWTH') }}{% if chart_date_range %} · {{ chart_date_range | upper | replace('—', '→') }}{% endif %}</text>
+    <text class="{{ uid }}-title-main" x="{{ chart_layout.texts.brutalist_light_title.x }}" y="{{ chart_layout.texts.brutalist_light_title.y }}">{{ chart_series_title | default('STAR HISTORY') | xml_escape }}</text>
+    <text class="{{ uid }}-title-sub" x="{{ chart_layout.texts.brutalist_light_subtitle.x }}" y="{{ chart_layout.texts.brutalist_light_subtitle.y }}">{{ chart_subtitle_label | default('LIFETIME GROWTH') | xml_escape }}{% if chart_date_range %} · {{ chart_date_range | upper | replace('—', '→') | xml_escape }}{% endif %}</text>
 
-    <text class="{{ uid }}-hero-value" x="{{ chart_layout.texts.brutalist_light_hero_value.x }}" y="{{ chart_layout.texts.brutalist_light_hero_value.y }}" text-anchor="{{ chart_layout.texts.brutalist_light_hero_value.anchor }}">{{ chart_current_stars }}</text>
-    <text class="{{ uid }}-hero-label" x="{{ chart_layout.texts.brutalist_light_hero_label.x }}" y="{{ chart_layout.texts.brutalist_light_hero_label.y }}" text-anchor="{{ chart_layout.texts.brutalist_light_hero_label.anchor }}">{{ chart_hero_label | default('TOTAL STARS') }}</text>
+    <text class="{{ uid }}-hero-value" x="{{ chart_layout.texts.brutalist_light_hero_value.x }}" y="{{ chart_layout.texts.brutalist_light_hero_value.y }}" text-anchor="{{ chart_layout.texts.brutalist_light_hero_value.anchor }}">{{ chart_current_stars | xml_escape }}</text>
+    <text class="{{ uid }}-hero-label" x="{{ chart_layout.texts.brutalist_light_hero_label.x }}" y="{{ chart_layout.texts.brutalist_light_hero_label.y }}" text-anchor="{{ chart_layout.texts.brutalist_light_hero_label.anchor }}">{{ chart_hero_label | default('TOTAL STARS') | xml_escape }}</text>
   </g>
 
   {# ZONE 3: CHART #}
   <g data-hw-zone="chart">
     {% for label in chart_y_labels %}
-    <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
     {% endfor %}
 
     {%- for gl in chart_gridlines %}
@@ -166,7 +166,7 @@
   {# X-AXIS LABELS #}
   <g data-hw-zone="x-axis">
     {% for label in chart_x_labels %}
-    <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
     {% endfor %}
   </g>
 
@@ -185,8 +185,8 @@
        The status marker rect+dot were hallucinated additions — no chart
        prototype carries a footer status indicator. Removed per user feedback;
        footer is text-only matching the v0.3.2 brutalist light chart prototype:155. #}
-    <text class="{{ uid }}-foot" x="{{ chart_layout.texts.brutalist_footer_url.x }}" y="{{ chart_layout.texts.brutalist_footer_url.y }}">{{ chart_subject_url | default(chart_repo) }}</text>
-    <text class="{{ uid }}-foot-brand" x="{{ chart_layout.texts.brutalist_footer_brand.x }}" y="{{ chart_layout.texts.brutalist_footer_brand.y }}" text-anchor="{{ chart_layout.texts.brutalist_footer_brand.anchor }}">{{ chart_brand_label | default('HYPERWEAVE · STAR HISTORY') }}</text>
+    <text class="{{ uid }}-foot" x="{{ chart_layout.texts.brutalist_footer_url.x }}" y="{{ chart_layout.texts.brutalist_footer_url.y }}">{{ chart_subject_url | default(chart_repo) | xml_escape }}</text>
+    <text class="{{ uid }}-foot-brand" x="{{ chart_layout.texts.brutalist_footer_brand.x }}" y="{{ chart_layout.texts.brutalist_footer_brand.y }}" text-anchor="{{ chart_layout.texts.brutalist_footer_brand.anchor }}">{{ chart_brand_label | default('HYPERWEAVE · STAR HISTORY') | xml_escape }}</text>
   </g>
 
 </g>

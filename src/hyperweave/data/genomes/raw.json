@@ -68,5 +68,11 @@
     "sheen_bright": "#fffffa",
     "sheen_shadow": "#4c4636",
     "cockle_light": "#fffefb"
+  },
+  "roles": {
+    "accent": ["accent", "accent_complement", "accent_error", "accent_signal", "accent_warning"],
+    "surface": ["bg", "bg_alt", "border_tint", "frame_fill", "shadow_color", "stroke", "surface_0", "surface_1", "surface_2"],
+    "ink": ["brand_text", "glyph_inner", "ink", "ink_bright", "ink_on_accent", "ink_secondary", "ink_sub", "label_text", "metric_text"],
+    "status": []
   }
 }

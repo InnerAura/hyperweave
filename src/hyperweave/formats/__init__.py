@@ -19,7 +19,7 @@ has no time-sampled animation capture, and the browserless engines that do
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 from hyperweave.core.errors import HwError, HwErrorCode
@@ -73,11 +73,16 @@ _EXT: dict[FormatId, str] = {
 
 @dataclass(frozen=True)
 class Projection:
-    """A rendered format: the bytes, its media type, and its filename extension."""
+    """A rendered format: the bytes, its media type, and its filename extension.
+
+    ``diagnostics`` declares what a flattening projection dropped (animated
+    elements stripped, motion-only elements removed) — report-only counts,
+    never part of the artifact bytes."""
 
     data: bytes
     media_type: str
     ext: str
+    diagnostics: dict[str, int] = field(default_factory=dict)
 
     @property
     def is_text(self) -> bool:
@@ -171,8 +176,8 @@ def project(svg: str, fmt: FormatId | str, *, max_width: int | None = None, is_f
         return Projection(svg.encode("utf-8"), _MEDIA_TYPE[fid], _EXT[fid])
 
     if fid is FormatId.SVG_STATIC:
-        static = _static_svg(svg)
-        return Projection(static.encode("utf-8"), _MEDIA_TYPE[fid], _EXT[fid])
+        static, counts = _static_svg_counted(svg)
+        return Projection(static.encode("utf-8"), _MEDIA_TYPE[fid], _EXT[fid], diagnostics=counts)
 
     # png / webp — rasterize the static projection (resvg cannot resolve var()).
     from hyperweave.formats import raster
@@ -183,18 +188,18 @@ def project(svg: str, fmt: FormatId | str, *, max_width: int | None = None, is_f
             f"{fid.value} output requires the raster extra",
             fix="install hyperweave[raster]",
         )
-    static = _static_svg(svg)
+    static, counts = _static_svg_counted(svg)
     data = raster.rasterize(static, fid.value, max_width=max_width)
-    return Projection(data, _MEDIA_TYPE[fid], _EXT[fid])
+    return Projection(data, _MEDIA_TYPE[fid], _EXT[fid], diagnostics=counts)
 
 
-def _static_svg(svg: str) -> str:
-    """Apply the ``svg-static`` pass pipeline (vars→hex, strip motion)."""
+def _static_svg_counted(svg: str) -> tuple[str, dict[str, int]]:
+    """Apply the ``svg-static`` pass pipeline (vars→hex, strip motion) + counts."""
     from hyperweave.config.loader import load_output_format_pipelines
-    from hyperweave.formats.static import run_passes
+    from hyperweave.formats.static import run_passes_counted
 
     passes = load_output_format_pipelines().get(FormatId.SVG_STATIC.value, ["vars", "noanim"])
-    return run_passes(svg, passes)
+    return run_passes_counted(svg, passes)
 
 
 def format_ext(fmt: FormatId) -> str:

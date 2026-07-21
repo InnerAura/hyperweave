@@ -108,6 +108,14 @@ class GenomeSpec(BaseModel):
     name: str = Field(description="Human-readable name")
     category: str = Field(description="'dark' or 'light'")
     profile: str = Field(description="Profile ID reference (e.g. 'brutalist')")
+    roles: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description=(
+            "Semantic token grouping (accent / surface / ink / status -> token-name "
+            "lists) — recoloring by intent instead of hex archaeology; pure data, "
+            "zero rendering logic."
+        ),
+    )
     glyph_tint: dict[str, str] = Field(
         default_factory=dict,
         description=(

@@ -723,3 +723,23 @@ def validate_genome_surface_contract(genome: GenomeSpec, surface_frames: frozens
             f"Genome '{genome.id}' opts into a surface-capable frame but breaks the Surface Modes "
             f"supply contract:\n" + "\n".join(violations)
         )
+
+
+def validate_genome_roles(genome: GenomeSpec) -> None:
+    """Assert the genome's role grouping is present and resolvable.
+
+    Every genome ships a ``roles`` dict (accent / surface / ink / status →
+    token lists) and every listed token must exist as a truthy field on this
+    genome — a role naming a phantom token would turn recolor-by-intent into a
+    silent no-op. Empty lists are legal (raw carries no status marks); a
+    missing or empty dict is not.
+    """
+    violations: list[str] = []
+    if not genome.roles:
+        violations.append("  genome declares no 'roles' grouping (accent / surface / ink / status)")
+    for role, tokens in genome.roles.items():
+        for token in tokens:
+            if not (getattr(genome, token, None) or ""):
+                violations.append(f"  role '{role}' names token '{token}', not a field on this genome")
+    if violations:
+        raise ValueError(f"Genome '{genome.id}' role grouping is broken:\n" + "\n".join(violations))

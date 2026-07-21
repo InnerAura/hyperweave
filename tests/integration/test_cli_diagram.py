@@ -169,3 +169,35 @@ def test_edge_motion_invalid_exits_2() -> None:
     )
     assert result.exit_code == 2
     assert "must be one of" in result.output
+
+
+def test_hub_incidence_error_names_the_recompose_path() -> None:
+    """A hub spec with a satellite-to-satellite edge fails with the exit named:
+    the printed message carries the actual rule text (not an error count) and
+    points at the free-graph recompose."""
+    import json
+
+    spec = json.dumps(
+        {
+            "type": "diagram",
+            "genome": "primer",
+            "spec": {
+                "topology": "hub",
+                "title": "Probe",
+                "nodes": [
+                    {"id": "gw", "label": "Gateway"},
+                    {"id": "billing", "label": "Billing"},
+                    {"id": "pg", "label": "Postgres"},
+                ],
+                "edges": [
+                    {"source": "gw", "target": "billing"},
+                    {"source": "billing", "target": "pg"},
+                ],
+            },
+        }
+    )
+    result = runner.invoke(app, ["validate", "--spec", spec])
+    assert result.exit_code == 1
+    combined = result.output + result.stderr
+    assert "not incident to the hub node" in combined
+    assert "recompose with topology dag or lanes" in combined

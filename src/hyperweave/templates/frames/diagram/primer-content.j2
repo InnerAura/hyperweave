@@ -18,8 +18,8 @@
 {# §2 region anatomy: the masthead is a PUBLIC region (agents address it by
    name); the wrapped title emits every line (wrap-before-truncate). #}
 {% if lay.header.title_lines or lay.header.subtitle %}<g data-hw-region="masthead">
-{% for tl in lay.header.title_lines %}  <text x="{{ tl.x }}" y="{{ tl.y }}"{% if tl.anchor != 'start' %} text-anchor="{{ tl.anchor }}"{% endif %} class="{{ uid }}-title">{{ tl.text }}</text>
-{% endfor %}{% if lay.header.subtitle %}  <text x="{{ lay.header.subtitle.x }}" y="{{ lay.header.subtitle.y }}"{% if lay.header.subtitle.anchor != 'start' %} text-anchor="{{ lay.header.subtitle.anchor }}"{% endif %} class="{{ uid }}-sub">{{ lay.header.subtitle.text }}</text>
+{% for tl in lay.header.title_lines %}  <text x="{{ tl.x }}" y="{{ tl.y }}"{% if tl.anchor != 'start' %} text-anchor="{{ tl.anchor }}"{% endif %} class="{{ uid }}-title">{{ tl.text | xml_escape }}</text>
+{% endfor %}{% if lay.header.subtitle %}  <text x="{{ lay.header.subtitle.x }}" y="{{ lay.header.subtitle.y }}"{% if lay.header.subtitle.anchor != 'start' %} text-anchor="{{ lay.header.subtitle.anchor }}"{% endif %} class="{{ uid }}-sub">{{ lay.header.subtitle.text | xml_escape }}</text>
 {% endif %}</g>
 {% endif %}
 {# Sequence call/return mini-legend (masthead furniture, top-right): a wire
@@ -30,7 +30,7 @@
 {% set wlfill = (uid ~ '-flps') if w.accent else ((uid ~ '-connmutedf') if conn_muted else (uid ~ '-flps')) %}
   <path d="{{ w.stub_d }}" class="{{ uid }}-branch {{ wlstroke }}{% if w.drift %} {{ uid }}-retdrift{% endif %}"/>
   <path d="{{ w.marker_d }}" class="{{ uid }}-mk {{ wlfill }}"/>
-  <text x="{{ w.label.x }}" y="{{ w.label.y }}" class="{{ uid }}-{{ w.label.cls }}">{{ w.label.text }}</text>
+  <text x="{{ w.label.x }}" y="{{ w.label.y }}" class="{{ uid }}-{{ w.label.cls }}">{{ w.label.text | xml_escape }}</text>
 {% endfor %}
 {% for l in lay.lifelines %}  <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" class="{{ uid }}-life{{ 'h' if loop.index0 == lay.hero_lifeline_index else '' }}"/>
 {% endfor %}
@@ -38,7 +38,7 @@
 {% endfor %}
 {% if lay.time_axis %}  <path d="{{ lay.time_axis.stub_d }}" class="{{ uid }}-taxis"/>
   <path d="{{ lay.time_axis.marker_d }}" class="{{ uid }}-taxism"/>
-  <text x="{{ lay.time_axis.label.x }}" y="{{ lay.time_axis.label.y }}" class="{{ uid }}-{{ lay.time_axis.label.cls }}">{{ lay.time_axis.label.text }}</text>
+  <text x="{{ lay.time_axis.label.x }}" y="{{ lay.time_axis.label.y }}" class="{{ uid }}-{{ lay.time_axis.label.cls }}">{{ lay.time_axis.label.text | xml_escape }}</text>
 {% endif %}
 {# Lanes category bands (the lanes solver fills lay.lane_bands; empty for every
    other topology). Bands paint beneath connectors so wires cross them. The
@@ -47,8 +47,8 @@
 {% for band in lay.lane_bands %}{% if band.ground == 'panel' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-laneband"/>
 {% endif %}{% if band.ground == 'enclosure' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-encl"/>
 {% endif %}{% if band.rule %}  <line x1="{{ band.rule.x1 }}" y1="{{ band.rule.y1 }}" x2="{{ band.rule.x2 }}" y2="{{ band.rule.y2 }}" class="{{ uid }}-lanerule"/>
-{% endif %}  <text x="{{ band.header.x }}" y="{{ band.header.y }}"{% if band.header.anchor != 'start' %} text-anchor="{{ band.header.anchor }}"{% endif %} class="{{ uid }}-{{ band.header.cls }}">{{ band.header.text }}</text>
-{% if band.count %}  <text x="{{ band.count.x }}" y="{{ band.count.y }}"{% if band.count.anchor != 'start' %} text-anchor="{{ band.count.anchor }}"{% endif %} class="{{ uid }}-{{ band.count.cls }}">{{ band.count.text }}</text>
+{% endif %}  <text x="{{ band.header.x }}" y="{{ band.header.y }}"{% if band.header.anchor != 'start' %} text-anchor="{{ band.header.anchor }}"{% endif %} class="{{ uid }}-{{ band.header.cls }}">{{ band.header.text | xml_escape }}</text>
+{% if band.count %}  <text x="{{ band.count.x }}" y="{{ band.count.y }}"{% if band.count.anchor != 'start' %} text-anchor="{{ band.count.anchor }}"{% endif %} class="{{ uid }}-{{ band.count.cls }}">{{ band.count.text | xml_escape }}</text>
 {% endif %}{% endfor %}
 {% for c in lay.connectors %}
 {% set hue_cls = (uid ~ '-fl' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-fls') %}
@@ -127,8 +127,8 @@
 {% for gp in n.glyph.paths %}    <path d="{{ gp.d }}"{% if gp.fill %} fill="{{ gp.fill }}"{% endif %}/>
 {% endfor %}  </g>
 {% endif %}
-  <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ n.label.text }}</text>
-{% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}">{{ line.text }}</text>
+  <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ n.label.text | xml_escape }}</text>
+{% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}">{{ line.text | xml_escape }}</text>
 {% endfor %}
 {% for cb in n.chip_boxes %}  <rect x="{{ cb.x }}" y="{{ cb.y }}" width="{{ cb.w }}" height="{{ cb.h }}" rx="{{ cb.rx }}" class="{{ uid }}-chipbg"/>
 {% endfor %}
@@ -136,11 +136,11 @@
    document riding a scaled child <svg> — its own uid-scoped styles travel
    with it; width/height vs viewBox does the scaling, no transform math. #}
 {% if n.embed_box %}  <svg x="{{ n.embed_box.x }}" y="{{ n.embed_box.y }}" width="{{ n.embed_box.w }}" height="{{ n.embed_box.h }}" viewBox="0 0 {{ embed_markup[n.index].vw }} {{ embed_markup[n.index].vh }}" data-hw-embed="1"{% if embed_markup[n.index].id %} data-hw-embed-id="{{ embed_markup[n.index].id }}"{% endif %}>{{ embed_markup[n.index].body }}</svg>
-{% endif %}{% for ct in n.chip_texts %}  <text x="{{ ct.x }}" y="{{ ct.y }}" text-anchor="middle" class="{{ uid }}-{{ ct.cls }}">{{ ct.text }}</text>
+{% endif %}{% for ct in n.chip_texts %}  <text x="{{ ct.x }}" y="{{ ct.y }}" text-anchor="middle" class="{{ uid }}-{{ ct.cls }}">{{ ct.text | xml_escape }}</text>
 {% endfor %}
-{% if n.short %}  <text x="{{ n.short.x }}" y="{{ n.short.y }}" text-anchor="middle" class="{{ uid }}-{{ n.short.cls }}">{{ n.short.text }}</text>
+{% if n.short %}  <text x="{{ n.short.x }}" y="{{ n.short.y }}" text-anchor="middle" class="{{ uid }}-{{ n.short.cls }}">{{ n.short.text | xml_escape }}</text>
 {% endif %}
-{% if n.tag %}  <text x="{{ n.tag.x }}" y="{{ n.tag.y }}" text-anchor="middle" class="{{ uid }}-tag">{{ n.tag.text }}</text>
+{% if n.tag %}  <text x="{{ n.tag.x }}" y="{{ n.tag.y }}" text-anchor="middle" class="{{ uid }}-tag">{{ n.tag.text | xml_escape }}</text>
 {% endif %}
 {% endfor %}
 {# Annotation chrome (edge labels subsumed here + caller callouts/asides/
@@ -164,7 +164,7 @@
 {% elif e.swatch_shape == 'disc-muted' %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-mkx"/>
 {% else %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ (uid ~ '-flp' ~ e.accent_index) if e.accent_index >= 0 else (uid ~ '-flps') }}"/>
 {% endif %}
-{% endif %}  <text x="{{ e.text.x }}" y="{{ e.text.y }}"{% if e.text.anchor != 'start' %} text-anchor="{{ e.text.anchor }}"{% endif %} class="{{ uid }}-{{ e.text.cls }}">{{ e.text.text }}</text>
+{% endif %}  <text x="{{ e.text.x }}" y="{{ e.text.y }}"{% if e.text.anchor != 'start' %} text-anchor="{{ e.text.anchor }}"{% endif %} class="{{ uid }}-{{ e.text.cls }}">{{ e.text.text | xml_escape }}</text>
 {% endfor %}
 {# Accent-paint annotation TEXT for callout/aside kinds only. Chip kinds
    (edge-chip, and the node -tag pill) are the NEUTRAL family — their text
@@ -174,7 +174,7 @@
    specimen's request/response text bound to its own lane's hue — a bare
    label sitting on the paper, never inside a chip's colored fill, so the
    P5 illegibility risk that keeps chips neutral doesn't apply). #}
-{% for line in a.lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if acc_cls and (a.lane_dress or a.kind not in ('label', 'edge-chip')) %} {{ acc_cls }}{% endif %}">{{ line.text }}</text>
+{% for line in a.lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if acc_cls and (a.lane_dress or a.kind not in ('label', 'edge-chip')) %} {{ acc_cls }}{% endif %}">{{ line.text | xml_escape }}</text>
 {% endfor %}
 {% endfor %}
 {# Stack inter-layer compose operator (the stack specimen): a quiet ring + cross,
@@ -183,9 +183,9 @@
 {% for op in lay.operators %}  <circle cx="{{ op.cx }}" cy="{{ op.cy }}" r="{{ op.r }}" class="{{ uid }}-cardbg"/><path d="{{ op.cross_d }}" class="{{ (uid ~ '-connmuted') if conn_muted else (uid ~ '-fls') }}"/>
 
 {% endfor %}
-{% if lay.legend %}  <text x="{{ lay.legend.x }}" y="{{ lay.legend.y }}" class="{{ uid }}-key">{{ lay.legend.text }}</text>
+{% if lay.legend %}  <text x="{{ lay.legend.x }}" y="{{ lay.legend.y }}" class="{{ uid }}-key">{{ lay.legend.text | xml_escape }}</text>
 {% endif %}
-{% if lay.footer %}<g data-hw-region="footer">  <text x="{{ lay.footer.x }}" y="{{ lay.footer.y }}" class="{{ uid }}-{{ lay.footer.cls }}">{{ lay.footer.text }}</text>
+{% if lay.footer %}<g data-hw-region="footer">  <text x="{{ lay.footer.x }}" y="{{ lay.footer.y }}" class="{{ uid }}-{{ lay.footer.cls }}">{{ lay.footer.text | xml_escape }}</text>
 </g>
 {% endif %}
 </g>

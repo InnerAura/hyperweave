@@ -8,10 +8,14 @@ those are the document agent's mutation targets. Frames whose payload is a diges
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from hyperweave.core.errors import HwError, HwErrorCode
 from hyperweave.core.models import ComposeSpec
+
+_FACE_RE = re.compile(r'data-hw-face="([^"]*)"')
+_GROUND_RE = re.compile(r'data-hw-ground="([^"]*)"')
 
 
 def _genome_variant(prov: dict[str, Any]) -> tuple[str, str]:
@@ -39,10 +43,41 @@ def _surface_kwargs(spec_dict: dict[str, Any]) -> dict[str, str]:
     return out
 
 
-def payload_to_compose_spec(schema: str, spec_dict: dict[str, Any], prov: dict[str, Any]) -> ComposeSpec:
-    """Map a patched payload back to a ComposeSpec for recomposition."""
+def _surface_kwargs_from_parent(svg: str) -> dict[str, str]:
+    """Read the parent's rendered presentation when the payload is silent.
+
+    The payload's ``surface`` block is absent for plate by serialization
+    contract — but absent is ambiguous between "explicit plate" and "genome
+    default", so a twin-default genome (primer) would re-render an explicit
+    plate parent's child adaptive. The artifact itself disambiguates: a face
+    render stamps ``data-hw-face``, an adaptive render stamps ``data-hw-adapt``;
+    NEITHER marker means the parent rendered plate — pin it explicitly. The pin
+    is a no-op for plate-default genomes (``stamp_surface`` still recognizes
+    plate, so child payloads stay surface-key-absent and ids byte-stable).
+    Regex over the root attributes, matching the verb layer's extraction idiom.
+    """
+    face = _FACE_RE.search(svg)
+    if face and face.group(1):
+        return {"palette": "fixed", "surface_face": face.group(1)}
+    if 'data-hw-adapt="adaptive"' in svg:
+        ground = _GROUND_RE.search(svg)
+        return {
+            "ground": ground.group(1) if ground and ground.group(1) else "opaque",
+            "palette": "adaptive",
+        }
+    return {"ground": "opaque", "palette": "fixed"}
+
+
+def payload_to_compose_spec(
+    schema: str, spec_dict: dict[str, Any], prov: dict[str, Any], *, parent_svg: str = ""
+) -> ComposeSpec:
+    """Map a patched payload back to a ComposeSpec for recomposition.
+
+    The payload's ``surface`` block wins when present; when silent and the
+    caller holds the parent SVG, presentation is read from the artifact itself.
+    """
     genome, variant = _genome_variant(prov)
-    surface = _surface_kwargs(spec_dict)
+    surface = _surface_kwargs(spec_dict) or (_surface_kwargs_from_parent(parent_svg) if parent_svg else {})
     if schema == "matrix/1":
         return ComposeSpec(type="matrix", matrix=spec_dict, genome_id=genome, variant=variant, **surface)
     if schema == "diagram/1":

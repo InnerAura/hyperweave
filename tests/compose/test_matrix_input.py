@@ -66,7 +66,7 @@ class TestCoercion:
             coerce_matrix_input(None, ComposeSpec(type="matrix"))
 
     def test_tokens_matrix(self) -> None:
-        from hyperweave.serve.data_tokens import ResolvedToken
+        from hyperweave.connectors.data_tokens import ResolvedToken
 
         tokens = [
             ResolvedToken(kind="live", label="STARS", value="1.2k", provider="github", raw_value=1234),

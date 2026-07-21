@@ -165,6 +165,21 @@ _TOPOLOGY_GUIDE: dict[str, str] = {
     "lanes": "category bands sharing a datum rule",
 }
 
+# Structural edge legality per topology — mirrors the DiagramSpec validators in
+# core/diagram.py so the constraint is knowable BEFORE compose (the validator
+# stays the enforcement). Only topologies carrying a structural edge rule
+# appear; `any` states the global laws every topology shares.
+_TOPOLOGY_EDGE_RULES: dict[str, str] = {
+    "any": "edges reference declared node ids; at most one directed edge per node pair per direction",
+    "hub": "every edge touches the hub node (focal slot 0); a satellite-to-satellite relation needs "
+    "a free-graph topology — recompose with dag or lanes",
+    "tree": "every non-root node has exactly one parent edge; the root has none; cross-links need dag",
+    "dag": "free graph — any node-to-node edge; a cycle renders as a state machine instead of erroring",
+    "state-machine": "free graph including self-loops and back-edges; a self-loop cannot be bidirectional",
+    "sequence": "messages connect lifelines in declaration order; edge kind (call/return) is sequence-only semantics",
+    "lanes": "every node declares a category (its lane); edges may cross lanes freely",
+}
+
 
 def _render_diagram_frame() -> str:
     """The diagram-frame authoring reference for /llms-full.txt — topology
@@ -242,17 +257,90 @@ def render_llms_full_txt() -> str:
     return "\n\n".join(sections) + "\n"
 
 
+def _discover_schema(selector: str) -> dict[str, Any]:
+    """``schema:<id>`` → the frame's published JSON Schema (matrix/1, diagram/1)."""
+    from hyperweave.core.errors import HwError, HwErrorCode
+    from hyperweave.verbs.schemas import frame_schema_for, known_schema_ids
+
+    model = frame_schema_for(selector)
+    if model is None:
+        raise HwError(
+            HwErrorCode.TYPE_UNKNOWN,
+            f"unknown schema id {selector!r}",
+            fix=f"known schemas: {', '.join(known_schema_ids())} (discover what='schemas')",
+        )
+    return {"id": selector, "json_schema": model.model_json_schema()}
+
+
+def _discover_genome(genome_id: str) -> dict[str, Any]:
+    """``genome:<id>`` → the role-structured deep-dive (tokens grouped by intent)."""
+    from hyperweave.config.loader import get_loader
+    from hyperweave.core.errors import HwError, HwErrorCode
+
+    loader = get_loader()
+    genome = loader.genomes.get(genome_id)
+    if genome is None:
+        raise HwError(
+            HwErrorCode.GENOME_UNKNOWN,
+            f"unknown genome {genome_id!r}",
+            fix=f"known genomes: {', '.join(sorted(loader.genomes))} (discover what='genomes')",
+        )
+    roles = genome.get("roles") or {}
+    variant_names = sorted(
+        set(genome.get("variants") or [])
+        | set((genome.get("variant_overrides") or {}).keys())
+        | set((genome.get("variant_tones") or {}).keys())
+    )
+    return {
+        "id": genome_id,
+        "name": genome.get("name", genome_id),
+        "category": genome.get("category", "dark"),
+        "default_surface": genome.get("default_surface", ""),
+        "roles": {role: {t: genome.get(t, "") for t in tokens} for role, tokens in roles.items()},
+        "variants": variant_names,
+        "paradigms": sorted(k for k, v in (genome.get("paradigms") or {}).items() if v),
+    }
+
+
+def _discover_example(frame_type: str, name: str) -> dict[str, Any]:
+    """``example:<frame_type>/<name>`` → the full bundled spec content.
+
+    Frame-type-scoped addressing matches ``--spec-file`` and the URL grammar;
+    ``resolve_bundled_spec`` already raises the well-shaped unknown-name errors
+    (its ``fix`` names the known preset menu).
+    """
+    from hyperweave.compose.bundled_specs import resolve_bundled_spec
+
+    bundled = resolve_bundled_spec(frame_type, name)
+    return {"frame_type": frame_type, "name": name, "field": bundled.field, "value": bundled.value}
+
+
 def discover(what: str = "all") -> dict[str, Any]:
     """Return discovery data for the ``what`` selector.
 
     Mirrors the ``hw_discover`` sections (genomes/motions/glyphs/frames/verbs/
-    matrix/diagram/url_grammar) and adds ``capabilities`` from the registry.
+    matrix/diagram/url_grammar) and adds ``capabilities`` from the registry,
+    plus the deep selectors: ``schema:<id>`` (a frame's published JSON Schema)
+    and ``example:<frame_type>/<name>`` (a full bundled spec, compose-ready).
     """
     from hyperweave.config.loader import get_loader
     from hyperweave.core.enums import FrameType
 
+    if what.startswith("schema:"):
+        return {"schema": _discover_schema(what.removeprefix("schema:"))}
+    if what.startswith("example:"):
+        frame_type, _, name = what.removeprefix("example:").partition("/")
+        return {"example": _discover_example(frame_type, name)}
+    if what.startswith("genome:"):
+        return {"genome": _discover_genome(what.removeprefix("genome:"))}
+
     loader = get_loader()
     result: dict[str, Any] = {}
+
+    if what in ("all", "schemas"):
+        from hyperweave.verbs.schemas import known_schema_ids
+
+        result["schemas"] = list(known_schema_ids())
 
     if what in ("all", "genomes"):
         result["genomes"] = [
@@ -340,6 +428,7 @@ def discover(what: str = "all") -> dict[str, Any]:
         result["diagram"] = {
             "topologies": [t.value for t in Topology],
             "layout_slugs": registered_slugs(),
+            "edge_rules": dict(_TOPOLOGY_EDGE_RULES),
             "orientations": "fanout: horizontal | bilateral | upward | radial; tree: horizontal | radial "
             "(radial requires depth >= 2 — the mindmap); everything else horizontal",
             "edge_motion": "dash | particle — the closed kit pair, compositor-only by construction "

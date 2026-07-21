@@ -7,7 +7,7 @@ import logging
 import math
 import re
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlencode
 
 from hyperweave.connectors.base import (
@@ -18,7 +18,12 @@ from hyperweave.connectors.base import (
     fetch_json,
     fetch_text,
     pin_github_token,
+    retry_budget,
 )
+from hyperweave.core.enums import ConnectorFailureCause
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 from hyperweave.connectors.cache import get_cache
 
 _LOGGER = logging.getLogger(__name__)
@@ -321,7 +326,11 @@ async def fetch_stargazer_history(
     if cached is not None:
         return cached  # type: ignore[no-any-return]
 
-    result = await _fetch_stargazer_history_rest(owner, repo, sample_pages)
+    # Hard per-render retry budget: the ~12-page fan-out shares one wait pool,
+    # so a rate-limited sweep degrades to the truthful overlay in bounded time
+    # instead of stacking per-page Retry-After waits into minutes.
+    with retry_budget(15.0):
+        result = await _fetch_stargazer_history_rest(owner, repo, sample_pages)
     cache.set(cache_key, result, STARGAZER_HISTORY_TTL)
     return result
 
@@ -616,6 +625,8 @@ def _classify_failure(status_code: int | None) -> str:
         return "rate_limit"
     if status_code == 401:
         return "auth"
+    if status_code == 404:
+        return "not_found"
     if status_code == 422:
         return "validation"
     if status_code is None:
@@ -633,6 +644,62 @@ def _extract_status_code(exc: BaseException) -> int | None:
             return status
         current = current.__cause__
     return None
+
+
+def _extract_response_headers(exc: BaseException) -> Mapping[str, str] | None:
+    """Walk the exception chain to the failed response's headers, if any."""
+    current: BaseException | None = exc
+    while current is not None:
+        response = getattr(current, "response", None)
+        headers = getattr(response, "headers", None)
+        if headers is not None:
+            return headers  # type: ignore[no-any-return]
+        current = current.__cause__
+    return None
+
+
+def _extract_retry_after(exc: BaseException) -> int:
+    """Retry-After seconds from the failed response, or 0 when absent."""
+    headers = _extract_response_headers(exc) or {}
+    value = str(headers.get("Retry-After", "")).strip()
+    return int(value) if value.isdigit() else 0
+
+
+def failure_cause(exc: BaseException) -> ConnectorFailureCause:
+    """Map a connector failure to its public 4-way cause.
+
+    Header evidence (not the bare status) discriminates rate-limit from auth:
+    a 403 with Retry-After / an exhausted X-RateLimit-Remaining is a rate
+    limit; a bare 403 is a credential/scope problem (a token that dropped
+    ``public_repo`` renders blank charts — that must NOT read "rate limited").
+    """
+    status = _extract_status_code(exc)
+    if status == 404:
+        return ConnectorFailureCause.NOT_FOUND
+    if status == 429:
+        return ConnectorFailureCause.RATE_LIMITED
+    if status == 403:
+        headers = _extract_response_headers(exc) or {}
+        limited = "Retry-After" in headers or str(headers.get("X-RateLimit-Remaining", "")) == "0"
+        return ConnectorFailureCause.RATE_LIMITED if limited else ConnectorFailureCause.AUTH_ERROR
+    if status == 401:
+        return ConnectorFailureCause.AUTH_ERROR
+    return ConnectorFailureCause.UPSTREAM_ERROR
+
+
+def failure_cause_payload(exc: BaseException) -> dict[str, Any]:
+    """The connector_data a chart render receives on total failure.
+
+    Carries only the cause (+ a truthful retry hint when the upstream sent
+    one) — no data keys, so ``coerce_chart_input`` lands on the same
+    ``stale`` status a bare ``None`` produced; the overlay just stops being
+    a mystery.
+    """
+    payload: dict[str, Any] = {"cause": failure_cause(exc).value}
+    retry_after = _extract_retry_after(exc)
+    if retry_after:
+        payload["retry_seconds"] = retry_after
+    return payload
 
 
 def parse_contribution_html(html: str) -> dict[str, Any]:

@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from hyperweave.serve.data_tokens import (
+from hyperweave.connectors.data_tokens import (
     DataToken,
     ResolvedToken,
     format_for_badge,

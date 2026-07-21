@@ -26,3 +26,8 @@ _MODELS: dict[str, type[BaseModel]] = {
 def frame_schema_for(schema: str) -> type[BaseModel] | None:
     """Return the Pydantic model for a payload schema id, or ``None``."""
     return _MODELS.get(schema)
+
+
+def known_schema_ids() -> tuple[str, ...]:
+    """The payload schema ids with a structural frame model."""
+    return tuple(sorted(_MODELS))

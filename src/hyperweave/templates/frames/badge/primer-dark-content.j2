@@ -26,7 +26,7 @@
         font-family="var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace)"
         font-size="{{ badge_label_font_size }}" font-weight="{{ badge_label_font_weight }}"
         fill="{{ _genome_raw.ink_secondary }}"
-        letter-spacing="{{ badge_label_letter_spacing_em }}em">{{ label_display | default(label | upper) }}</text>
+        letter-spacing="{{ badge_label_letter_spacing_em }}em">{{ label_display | default(label | upper) | xml_escape }}</text>
 
   {# Per-state animated status mark — include-dispatched by indicator_shape
      (primer: status-glyph), sub-dispatched by status_glyph_state. Leads the
@@ -42,7 +42,7 @@
         text-anchor="middle"
         font-family="var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace)"
         font-size="{{ badge_value_font_size }}" font-weight="{{ badge_value_font_weight }}"
-        fill="{{ badge_value_color }}">{{ value }}</text>
+        fill="{{ badge_value_color }}">{{ value | xml_escape }}</text>
 </g>
 {# Inner white highlight + 1px border (double-stroke rim). #}
 <rect x="{{ badge_inner_highlight.x }}" y="{{ badge_inner_highlight.y }}" width="{{ badge_inner_highlight.w }}" height="{{ badge_inner_highlight.h }}" rx="{{ badge_inner_highlight.rx }}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="{{ badge_inner_highlight.stroke_w }}"/>

@@ -121,6 +121,11 @@ def verify_cmd(
     """Recompute the hash; prove id == sha256(payload). Exits 1 when invalid."""
     result = _run("verify", {"source": _read_source(source)})
     _emit(result)
+    if not result.get("well_formed", True):
+        typer.echo(
+            "note: artifact is not well-formed XML (unescaped text in a data field?)",
+            err=True,
+        )
     if not result.get("valid"):
         raise typer.Exit(code=1)
 
@@ -162,6 +167,10 @@ def transform_cmd(
         Path | None,
         typer.Option("--output", "--out", "-o", help="Also write the transformed SVG to this file path."),
     ] = None,
+    respond: Annotated[
+        str,
+        typer.Option("--respond", help="envelope (default — the handle) | svg (include the new markup inline)."),
+    ] = "envelope",
 ) -> None:
     """Mutate an artifact via an RFC-6902 JSON patch → a new artifact.
 
@@ -193,7 +202,7 @@ def transform_cmd(
         typer.echo("patch must be a JSON list of RFC-6902 ops", err=True)
         raise typer.Exit(code=2)
 
-    result = _run("transform", {"source": _read_source(source), "mutations": ops})
+    result = _run("transform", {"source": _read_source(source), "mutations": ops, "respond": respond})
     _emit(result)
 
     if out is None:
@@ -214,16 +223,32 @@ def transform_cmd(
         typer.echo(f"Wrote {out}", err=True)
 
 
-def register_capability_commands(app: typer.Typer) -> None:
-    """Attach the verb-capability CLI commands to ``app``.
+def discover_cmd(
+    what: Annotated[
+        str,
+        typer.Argument(
+            help="all | genomes | motions | glyphs | frames | verbs | matrix | diagram | url_grammar | "
+            "capabilities | schemas — plus schema:<id> (published JSON Schema), "
+            "example:<frame_type>/<name> (a full bundled spec, compose-ready), and "
+            "genome:<id> (role-structured token deep-dive)"
+        ),
+    ] = "all",
+) -> None:
+    """Discover available genomes, motions, glyphs, frames, verbs, and capabilities."""
+    _emit(_run("discover", {"what": what}))
 
-    Called once from ``cli.py``; adding a verb capability adds a command here,
-    never in ``cli.py``. Command names are the verbs (``extract``/``verify``/
-    ``diff``/``query``/``transform``); function names carry a ``_cmd`` suffix to
-    avoid shadowing the module-level verb imports.
+
+def register_capability_commands(app: typer.Typer) -> None:
+    """Attach the capability CLI commands to ``app``.
+
+    Called once from ``cli.py``; adding a capability adds a command here,
+    never in ``cli.py``. Command names are the capability names (``extract``/
+    ``verify``/``diff``/``query``/``transform``/``discover``); function names
+    carry a ``_cmd`` suffix to avoid shadowing the module-level verb imports.
     """
     app.command("extract")(extract_cmd)
     app.command("verify")(verify_cmd)
     app.command("diff")(diff_cmd)
     app.command("query")(query_cmd)
     app.command("transform")(transform_cmd)
+    app.command("discover")(discover_cmd)

@@ -93,3 +93,68 @@ def test_static_rasterizes_in_resvg_and_differs_from_live() -> None:
     png = project(live_svg, FormatId.PNG).data
     assert len(png) > 1000  # rendered real content, not an empty/error image
     assert png[:8] == b"\x89PNG\r\n\x1a\n"  # valid PNG signature
+
+
+class TestMotionOnlyNormalization:
+    """A flattened projection never ships invisible dead DOM, and declares
+    what it dropped."""
+
+    def _diagram_with_particles(self) -> str:
+        from hyperweave.compose.engine import compose
+        from hyperweave.core.models import ComposeSpec
+
+        return compose(
+            ComposeSpec(
+                type="diagram",
+                genome_id="primer",
+                ground="opaque",
+                palette="fixed",
+                diagram={
+                    "topology": "pipeline",
+                    "title": "Flow",
+                    "edge_motion": "particle",
+                    "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+                    "edges": [
+                        {"source": "a", "target": "b"},
+                        {"source": "b", "target": "c"},
+                    ],
+                },
+            )
+        ).svg
+
+    def test_particle_diagram_static_removes_motion_only_elements(self) -> None:
+        import re
+
+        from hyperweave.formats import project
+
+        svg = self._diagram_with_particles()
+        assert "<animateMotion" in svg
+        projection = project(svg, "svg-static")
+        static = projection.data.decode("utf-8")
+        assert "<animate" not in static
+        # No childless opacity-0 remnant survives the strip.
+        assert not re.search(r'<circle[^>]*opacity="0"[^>]*>\s*</circle>', static)
+        assert projection.diagnostics.get("motion_only_elements_removed", 0) >= 1
+        assert projection.diagnostics.get("animated_elements_stripped", 0) >= 1
+
+    def test_takeoff_divider_static_removes_both_boosters(self) -> None:
+        from hyperweave.compose.engine import compose
+        from hyperweave.core.models import ComposeSpec
+        from hyperweave.formats import project
+
+        svg = compose(ComposeSpec(type="divider", divider_variant="takeoff")).svg
+        projection = project(svg, "svg-static")
+        static = projection.data.decode("utf-8")
+        assert 'opacity="0"' not in static or "<animate" not in static
+        assert projection.diagnostics.get("motion_only_elements_removed", 0) == 2
+
+    def test_plain_badge_static_has_empty_diagnostics(self) -> None:
+        """Negative control: a frame with no motion-only elements projects with
+        no removal counts — the gate never over-triggers."""
+        from hyperweave.compose.engine import compose
+        from hyperweave.core.models import ComposeSpec
+        from hyperweave.formats import project
+
+        svg = compose(ComposeSpec(type="badge", title="BUILD", value="passing")).svg
+        projection = project(svg, "svg-static")
+        assert projection.diagnostics.get("motion_only_elements_removed", 0) == 0

@@ -84,7 +84,7 @@
        prototype line 427's "ELI64S / README-AI" cadence. chart_title is
        upper-cased repo slug "OWNER/REPO" from resolver; we re-split to
        insert visual breathing room around the separator. #}
-    <text class="{{ uid }}-hdr-user" x="{{ chart_layout.texts.brutalist_header_user.x }}" y="{{ chart_layout.texts.brutalist_header_user.y }}">{{ chart_title | replace('/', ' / ') }}</text>
+    <text class="{{ uid }}-hdr-user" x="{{ chart_layout.texts.brutalist_header_user.x }}" y="{{ chart_layout.texts.brutalist_header_user.y }}">{{ chart_title | replace('/', ' / ') | xml_escape }}</text>
     {# Status dot y=17 centers at y=21, aligned with header text cap-center
        (text y=28 baseline minus 0.7*12/2 ≈ y=24). Pre-fix y=11 placed dot
        9px above text visual center. #}
@@ -100,20 +100,20 @@
      Title subtitle text includes "LIFETIME GROWTH · {date range}" — date
      range derived from chart_window_label when populated. #}
   <g data-hw-zone="title">
-    <text class="{{ uid }}-title-main" x="{{ chart_layout.texts.brutalist_dark_title.x }}" y="{{ chart_layout.texts.brutalist_dark_title.y }}">{{ chart_series_title | default('STAR HISTORY') }}</text>
+    <text class="{{ uid }}-title-main" x="{{ chart_layout.texts.brutalist_dark_title.x }}" y="{{ chart_layout.texts.brutalist_dark_title.y }}">{{ chart_series_title | default('STAR HISTORY') | xml_escape }}</text>
     {# chart_date_range from resolver: "Jan 2024 — May 2026" with em-dash.
        Prototype line 36 shows "→" right-arrow. Replace em-dash with arrow
        for the v0.3.2 brutalist cadence. #}
-    <text class="{{ uid }}-title-sub" x="{{ chart_layout.texts.brutalist_dark_subtitle.x }}" y="{{ chart_layout.texts.brutalist_dark_subtitle.y }}">{{ chart_subtitle_label | default('LIFETIME GROWTH') }}{% if chart_date_range %} · {{ chart_date_range | upper | replace('—', '→') }}{% endif %}</text>
+    <text class="{{ uid }}-title-sub" x="{{ chart_layout.texts.brutalist_dark_subtitle.x }}" y="{{ chart_layout.texts.brutalist_dark_subtitle.y }}">{{ chart_subtitle_label | default('LIFETIME GROWTH') | xml_escape }}{% if chart_date_range %} · {{ chart_date_range | upper | replace('—', '→') | xml_escape }}{% endif %}</text>
 
-    <text class="{{ uid }}-hero-value" x="{{ chart_layout.texts.brutalist_dark_hero_value.x }}" y="{{ chart_layout.texts.brutalist_dark_hero_value.y }}" text-anchor="{{ chart_layout.texts.brutalist_dark_hero_value.anchor }}">{{ chart_current_stars }}</text>
-    <text class="{{ uid }}-hero-label" x="{{ chart_layout.texts.brutalist_dark_hero_label.x }}" y="{{ chart_layout.texts.brutalist_dark_hero_label.y }}" text-anchor="{{ chart_layout.texts.brutalist_dark_hero_label.anchor }}">{{ chart_hero_label | default('TOTAL STARS') }}</text>
+    <text class="{{ uid }}-hero-value" x="{{ chart_layout.texts.brutalist_dark_hero_value.x }}" y="{{ chart_layout.texts.brutalist_dark_hero_value.y }}" text-anchor="{{ chart_layout.texts.brutalist_dark_hero_value.anchor }}">{{ chart_current_stars | xml_escape }}</text>
+    <text class="{{ uid }}-hero-label" x="{{ chart_layout.texts.brutalist_dark_hero_label.x }}" y="{{ chart_layout.texts.brutalist_dark_hero_label.y }}" text-anchor="{{ chart_layout.texts.brutalist_dark_hero_label.anchor }}">{{ chart_hero_label | default('TOTAL STARS') | xml_escape }}</text>
   </g>
 
   {# ZONE 3: CHART #}
   <g data-hw-zone="chart">
     {% for label in chart_y_labels %}
-    <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    <text class="{{ uid }}-axis-y" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
     {% endfor %}
 
     {%- for gl in chart_gridlines %}
@@ -149,7 +149,7 @@
   {# X-AXIS LABELS #}
   <g data-hw-zone="x-axis">
     {% for label in chart_x_labels %}
-    <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text }}</text>
+    <text class="{{ uid }}-axis-x" x="{{ label.x }}" y="{{ label.y }}" text-anchor="{{ label.anchor }}">{{ label.text | xml_escape }}</text>
     {% endfor %}
   </g>
 
@@ -162,8 +162,8 @@
        baseline-to-visual-center offset ~2.8px, baseline at y=472 puts visual
        center at y=469.2 — vertically centered in the footer zone. Pre-fix
        was at y=462, 10px above zone center. #}
-    <text class="{{ uid }}-foot" x="{{ chart_layout.texts.brutalist_footer_url.x }}" y="{{ chart_layout.texts.brutalist_footer_url.y }}">{{ chart_subject_url | default(chart_repo) }}</text>
-    <text class="{{ uid }}-foot-brand" x="{{ chart_layout.texts.brutalist_footer_brand.x }}" y="{{ chart_layout.texts.brutalist_footer_brand.y }}" text-anchor="{{ chart_layout.texts.brutalist_footer_brand.anchor }}">{{ chart_brand_label | default('HYPERWEAVE · STAR HISTORY') }}</text>
+    <text class="{{ uid }}-foot" x="{{ chart_layout.texts.brutalist_footer_url.x }}" y="{{ chart_layout.texts.brutalist_footer_url.y }}">{{ chart_subject_url | default(chart_repo) | xml_escape }}</text>
+    <text class="{{ uid }}-foot-brand" x="{{ chart_layout.texts.brutalist_footer_brand.x }}" y="{{ chart_layout.texts.brutalist_footer_brand.y }}" text-anchor="{{ chart_layout.texts.brutalist_footer_brand.anchor }}">{{ chart_brand_label | default('HYPERWEAVE · STAR HISTORY') | xml_escape }}</text>
   </g>
 
 </g>

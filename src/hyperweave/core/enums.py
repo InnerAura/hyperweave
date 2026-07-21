@@ -147,3 +147,17 @@ class PolicyLane(StrEnum):
     VERIFIED = "verified"
     AIRLOCK = "airlock"
     MANUAL = "manual"
+
+
+class ConnectorFailureCause(StrEnum):
+    """Why a connector fetch failed — threaded to truthful degradation overlays.
+
+    A bare 403 without rate-limit evidence is a credential/scope problem, not a
+    rate limit — conflating them turns a fixable auth misconfig into a
+    wait-it-out mystery.
+    """
+
+    RATE_LIMITED = "rate_limited"
+    NOT_FOUND = "not_found"
+    AUTH_ERROR = "auth_error"
+    UPSTREAM_ERROR = "upstream_error"

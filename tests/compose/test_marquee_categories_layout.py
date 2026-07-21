@@ -12,8 +12,8 @@ from __future__ import annotations
 import re
 
 from hyperweave.compose.engine import compose
+from hyperweave.connectors.data_tokens import ResolvedToken
 from hyperweave.core.models import ComposeSpec
-from hyperweave.serve.data_tokens import ResolvedToken
 
 
 def _live(label: str, value: str, metric: str) -> ResolvedToken:
@@ -191,7 +191,7 @@ def test_download_window_derived_from_provider_metric() -> None:
     """The period qualifier is a fixed property of (provider, metric): pypi /
     crates downloads are all-time, crates recent is 90-day, npm is last-week.
     Non-download metrics carry no window."""
-    from hyperweave.serve.data_tokens import _download_window
+    from hyperweave.connectors.data_tokens import _download_window
 
     assert _download_window("pypi", "downloads") == "ALL-TIME"
     assert _download_window("crates", "downloads") == "ALL-TIME"
@@ -203,7 +203,7 @@ def test_download_window_derived_from_provider_metric() -> None:
 def test_kv_window_suffix_parses() -> None:
     """``kv:DOWNLOADS=847K~ALL-TIME`` splits the value from a trailing ~WINDOW so
     the proofset can bake a deterministic window across all three transports."""
-    from hyperweave.serve.data_tokens import parse_data_tokens
+    from hyperweave.connectors.data_tokens import parse_data_tokens
 
     tok = parse_data_tokens("kv:DOWNLOADS=847K~ALL-TIME")[0]
     assert tok.literal_value == "847K"

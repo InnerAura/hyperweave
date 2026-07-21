@@ -190,14 +190,31 @@ def _to_compose_spec(env: SpecEnvelope, *, data_tokens: list[Any] | None = None)
         kwargs.update(content)
     if data_tokens is not None:
         kwargs["data_tokens"] = data_tokens
+    return build_compose_spec(kwargs, env.type)
+
+
+def build_compose_spec(kwargs: dict[str, Any], frame_type: str) -> ComposeSpec:
+    """Construct a ComposeSpec, mapping validation failures to clean HwError.
+
+    The one exception-mapping seam every surface shares: the registry/HTTP/MCP
+    path arrives via ``_to_compose_spec``; the CLI builds its kwargs from flags
+    and calls this directly — so a malformed spec prints the same rule text
+    everywhere instead of a raw traceback on one surface.
+    """
     try:
         return ComposeSpec(**kwargs)
     except ValidationError as exc:
-        code = HwErrorCode.TYPE_UNKNOWN if env.type not in _FRAME_TYPES else HwErrorCode.SPEC_INVALID
+        code = HwErrorCode.TYPE_UNKNOWN if frame_type not in _FRAME_TYPES else HwErrorCode.SPEC_INVALID
+        errors = exc.errors(include_url=False)
+        # Surface the first violation's own text — cli_text() prints only
+        # message + fix, so a count-only message buries the actual rule.
+        first = str(errors[0].get("msg", "")).removeprefix("Value error, ") if errors else ""
+        more = f" (+{len(errors) - 1} more)" if len(errors) > 1 else ""
+        summary = f"{first}{more}" if first else f"{exc.error_count()} error(s)"
         raise HwError(
             code,
-            f"invalid {env.type} spec: {exc.error_count()} error(s)",
-            detail={"errors": exc.errors(include_url=False)},
+            f"invalid {frame_type} spec: {summary}",
+            detail={"errors": errors},
         ) from exc
     except (TypeError, ValueError) as exc:
         raise HwError(HwErrorCode.SPEC_INVALID, str(exc)) from exc
