@@ -5,6 +5,10 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-22
+
+Promotes alpha.8 to stable. The 0.4 series adds the matrix and diagram frames, embedded data on every artifact with five verbs to read and edit it, light and dark adaptive surfaces, and PNG, WebP, static SVG, and terminal output.
+
 ## [0.4.0-alpha.8] - 2026-07-22
 
 Artifacts are always well-formed XML, `discover` works on the CLI, HTTP, and MCP, and error messages say how to fix the problem.

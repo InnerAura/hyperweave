@@ -491,7 +491,7 @@ def compose(
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write the artifact to this file path")] = None,
     metrics: Annotated[str, typer.Option("--metrics", help="Strip metrics: 'STARS:2.9k,FORKS:278'")] = "",
 ) -> None:
-    """Compose a single HyperWeave artifact.
+    r"""Compose a single HyperWeave artifact.
 
     Examples:
 

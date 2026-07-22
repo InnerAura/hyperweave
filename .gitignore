@@ -29,6 +29,7 @@ archive/
 # CLAUDE.md
 outputs/
 
+tier2/
 tier2/_experiments/
 tier2/_notes/
 

@@ -8,11 +8,18 @@ the first test to ever read the rendered help.
 
 from __future__ import annotations
 
+import re
+
 from typer.testing import CliRunner
 
 from hyperweave.cli import app
 
 runner = CliRunner()
+
+# CI runners force color, so the captured help carries ANSI styling that can
+# split an annotation mid-string (styling is not content — Rich's SWALLOWING
+# removes content, which the assertions still catch after stripping).
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 _ANNOTATIONS = (
     "[fetches GitHub data; 'stats' is an alias]",
@@ -27,9 +34,9 @@ _ANNOTATIONS = (
 def _normalized_help() -> str:
     result = runner.invoke(app, ["compose", "--help"])
     assert result.exit_code == 0, result.output
-    # Terminal-width wrapping may split an annotation mid-string; collapse
-    # whitespace before the substring check.
-    return " ".join(result.output.split())
+    # Strip ANSI styling, then collapse whitespace — terminal width and color
+    # mode both vary per environment; the annotation TEXT must survive both.
+    return " ".join(_ANSI.sub("", result.output).split())
 
 
 def test_compose_help_preserves_bracketed_annotations() -> None:
