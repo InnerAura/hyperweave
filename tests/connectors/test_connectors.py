@@ -2079,3 +2079,30 @@ class TestFailureCauses:
         assert with_hint == {"cause": "rate_limited", "retry_seconds": 900}
         without = failure_cause_payload(self._chained(_resp(502)))
         assert without == {"cause": "upstream_error"}
+
+
+class TestMidRetryBreaker:
+    @pytest.fixture(autouse=True)
+    def _reset(self) -> None:
+        reset_breakers()
+
+    @pytest.mark.asyncio
+    async def test_breaker_opened_mid_retry_stops_further_attempts(self, recorded_retry_waits: list[float]) -> None:
+        """A concurrent call opening the breaker mid-retry ends the loop —
+        no attempts burn against a provider already declared down."""
+        breaker = get_breaker("mid-trip")
+
+        def _fail_and_trip(*args: object, **kwargs: object) -> httpx.Response:
+            for _ in range(breaker.failure_threshold):
+                breaker.record_failure()  # simulates concurrent calls tripping it
+            return _resp(503)
+
+        instance = AsyncMock()
+        instance.get = AsyncMock(side_effect=_fail_and_trip)
+        with (
+            patch("hyperweave.connectors.base.get_client", return_value=instance),
+            pytest.raises(ConnectorError),
+        ):
+            await fetch("https://api.github.com/repos/t/t", provider="mid-trip")
+        assert instance.get.await_count == 1
+        assert recorded_retry_waits == []

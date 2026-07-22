@@ -117,7 +117,16 @@ def _hostile_spec(frame_key: str, genome_id: str, variant: str) -> ComposeSpec:
     if variant:
         kwargs["variant"] = variant
     if frame_key == "badge":
-        return ComposeSpec(type="badge", title=_HOSTILE, value=_HOSTILE, **kwargs)
+        # slots + numeric_value ride the badge case: ComposeSpec is the
+        # declared boundary, so library-only fields enroll in the sweep too.
+        return ComposeSpec(
+            type="badge",
+            title=_HOSTILE,
+            value=_HOSTILE,
+            numeric_value=_HOSTILE,
+            slots=[{"zone": _HOSTILE, "value": _HOSTILE, "data": {"k": _HOSTILE}}],
+            **kwargs,
+        )
     if frame_key == "strip":
         return ComposeSpec(type="strip", title=_HOSTILE, value=f"{_HOSTILE}:{_HOSTILE}", **kwargs)
     if frame_key == "marquee":

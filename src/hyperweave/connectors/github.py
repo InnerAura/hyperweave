@@ -6,6 +6,7 @@ import asyncio
 import logging
 import math
 import re
+import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlencode
@@ -45,6 +46,11 @@ CACHE_TTL = 300
 
 # Longer TTL for stargazer history + user stats — append-only data that changes slowly.
 STARGAZER_HISTORY_TTL = 3600
+
+# Hard wall-clock deadline for one star-history render. The retry-sleep pool
+# bounds backoff; this bounds everything, hangs included — see the
+# fetch_stargazer_history call site.
+_RENDER_DEADLINE_S = 10.0
 USER_STATS_TTL = 3600
 
 # Short TTL for results that contain failure evidence (any sub-fetch
@@ -326,11 +332,19 @@ async def fetch_stargazer_history(
     if cached is not None:
         return cached  # type: ignore[no-any-return]
 
-    # Hard per-render retry budget: the ~12-page fan-out shares one wait pool,
-    # so a rate-limited sweep degrades to the truthful overlay in bounded time
-    # instead of stacking per-page Retry-After waits into minutes.
-    with retry_budget(15.0):
-        result = await _fetch_stargazer_history_rest(owner, repo, sample_pages)
+    # Two bounds, different failure modes: the retry-sleep pool caps how long
+    # rate-limit BACKOFF may accumulate across the fan-out; the wall-clock
+    # deadline caps EVERYTHING — a hanging upstream is cancelled in-flight
+    # (asyncio.timeout cancels the gather's children) and the render degrades
+    # to its truthful overlay instead of holding the request open.
+    try:
+        async with asyncio.timeout(_RENDER_DEADLINE_S):
+            with retry_budget(15.0):
+                result = await _fetch_stargazer_history_rest(owner, repo, sample_pages)
+    except TimeoutError as exc:
+        raise ConnectorError(
+            f"star history for {identifier} exceeded the {_RENDER_DEADLINE_S:.0f}s render deadline"
+        ) from exc
     cache.set(cache_key, result, STARGAZER_HISTORY_TTL)
     return result
 
@@ -659,10 +673,20 @@ def _extract_response_headers(exc: BaseException) -> Mapping[str, str] | None:
 
 
 def _extract_retry_after(exc: BaseException) -> int:
-    """Retry-After seconds from the failed response, or 0 when absent."""
+    """Retry hint in seconds from the failed response, or 0 when absent.
+
+    ``Retry-After`` when present; otherwise ``X-RateLimit-Reset`` (an epoch
+    timestamp) — GitHub's primary hourly-limit channel and the most likely
+    real trigger, so the overlay's hint isn't absent exactly when it matters.
+    """
     headers = _extract_response_headers(exc) or {}
     value = str(headers.get("Retry-After", "")).strip()
-    return int(value) if value.isdigit() else 0
+    if value.isdigit():
+        return int(value)
+    reset = str(headers.get("X-RateLimit-Reset", "")).strip()
+    if reset.isdigit():
+        return max(0, int(reset) - int(time.time()))
+    return 0
 
 
 def failure_cause(exc: BaseException) -> ConnectorFailureCause:

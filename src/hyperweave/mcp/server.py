@@ -340,6 +340,13 @@ async def hw_compose(
     }
     if response.faces is not None:
         result["faces"] = response.faces
+    # Warnings + diagnostics are "identical on CLI stderr, HTTP JSON, and MCP"
+    # by the ResponseEnvelope contract — the hand-built dict must not drop them
+    # (static-projection drop-counts ride diagnostics).
+    if response.warnings:
+        result["warnings"] = list(response.warnings)
+    if response.diagnostics:
+        result["diagnostics"] = list(response.diagnostics)
     return result
 
 
@@ -406,7 +413,9 @@ async def hw_verify(source: str) -> dict[str, Any]:
 
     ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
     ``valid`` is the seed's hash proof; ``well_formed`` reports whether the SVG
-    container parses as XML — independent checks, report-only.
+    container parses as XML. Gate on BOTH before trusting or embedding an
+    artifact — a true ``valid`` with a false ``well_formed`` means the data is
+    intact but the file will not render.
     """
     return await _dispatch("verify", {"source": source})
 

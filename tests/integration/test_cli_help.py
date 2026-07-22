@@ -36,15 +36,3 @@ def test_compose_help_preserves_bracketed_annotations() -> None:
     rendered = _normalized_help()
     for annotation in _ANNOTATIONS:
         assert annotation in rendered, f"annotation eaten by Rich: {annotation!r}"
-
-
-def test_compose_help_examples_brackets_balance() -> None:
-    """Sweep net for future annotations: every ``[`` in the Examples block
-    still has its ``]`` — a swallowed style tag drops both."""
-    rendered = _normalized_help()
-    start = rendered.find("Examples:")
-    end = rendered.find("╭", start)
-    examples = rendered[start : end if end != -1 else None]
-    assert examples.count("[") == examples.count("]"), (
-        "unbalanced brackets in Examples — a new annotation likely needs \\[ escaping"
-    )

@@ -118,16 +118,22 @@ def extract_cmd(
 def verify_cmd(
     source: Annotated[str, typer.Argument(help="Artifact SVG, a /v1/a/{digest} url/handle, a file path, or '-'.")],
 ) -> None:
-    """Recompute the hash; prove id == sha256(payload). Exits 1 when invalid."""
+    """Recompute the hash; prove id == sha256(payload) and the container parses.
+
+    Exit codes discriminate the failure for scripts: **1** = seed hash
+    mismatch (tampered/corrupt data), **3** = hash intact but the SVG
+    container is not well-formed XML, **2** = input problem.
+    """
     result = _run("verify", {"source": _read_source(source)})
     _emit(result)
-    if not result.get("well_formed", True):
-        typer.echo(
-            "note: artifact is not well-formed XML (unescaped text in a data field?)",
-            err=True,
-        )
     if not result.get("valid"):
         raise typer.Exit(code=1)
+    if not result.get("well_formed", True):
+        typer.echo(
+            "artifact is not well-formed XML (unescaped text in a data field?) — exit 3",
+            err=True,
+        )
+        raise typer.Exit(code=3)
 
 
 def diff_cmd(

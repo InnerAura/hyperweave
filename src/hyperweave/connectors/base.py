@@ -113,6 +113,10 @@ async def _request_with_retry(
             retryable, failed_response = _should_retry(exc)
             if not retryable or attempt == _MAX_ATTEMPTS:
                 break
+            if not breaker.allow_request():
+                # A concurrent call opened the breaker mid-retry — stop
+                # burning attempts against a provider already declared down.
+                break
             wait = _retry_wait(failed_response, attempt)
             budget = _retry_budget.get()
             if budget is not None:

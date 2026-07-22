@@ -5,30 +5,31 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0-alpha.8] - 2026-07-21
+## [0.4.0-alpha.8] - 2026-07-22
 
-Every artifact is well-formed XML no matter the text it carries, `discover` answers on every surface with schema, example, and genome deep-dives, and the CLI's compose speaks the same machine-readable envelope as HTTP and MCP.
+Artifacts are always well-formed XML, `discover` works on the CLI, HTTP, and MCP, and error messages say how to fix the problem.
 
 ### Added
 
-- **Discover on every surface** — `hyperweave discover` and `GET /v1/discover` join the MCP tool; one listing, three surfaces.
+- **Discover on every surface** — `hyperweave discover` and `GET /v1/discover` join the MCP tool; hints run as printed, a pasted `what=` still answers, and an unknown selector errors with the menu.
 - **Deep selectors** — `discover schema:diagram/1` returns a frame's JSON Schema, `example:<frame>/<name>` a compose-ready preset, `genome:<id>` a role-grouped token breakdown.
 - **Genome roles** — every genome groups its colors by role (accent · surface · ink · status); `genomes <id> --explain` prints the breakdown.
 - **Machine-readable compose** — `compose --respond envelope|json` prints the envelope HTTP and MCP return; every compose names its artifact id and verbs on stderr.
 - **Inline transform markup** — `transform` takes `respond="svg"` on CLI, HTTP, and MCP.
-- **Container check on verify** — `verify` reports `well_formed` beside the hash proof.
+- **Verify checks both proofs** — `verify` reports `well_formed` beside the hash check; exit 1 means the content was altered, exit 3 means the file won't parse as XML.
 
 ### Fixed
 
 - **Raw text can't break the file** — `&`, `<`, and quotes in labels, values, and titles render escaped on every frame; artifacts always parse as XML.
 - **`--data` on a lean install** — data tokens moved out of the serving layer; `--data` works without the serve extra.
-- **Spec errors name the rule** — a malformed spec prints the violated rule, and a hub diagram's edge error names the topology to recompose with.
-- **Transforms keep the surface** — an opaque fixed-palette parent's child no longer re-renders adaptive.
+- **Errors name the problem** — a malformed spec prints the violated rule, a hub edge names the topology to recompose with, and an unknown top-level compose field lists the legal set instead of silently composing a default.
+- **Transforms keep the look** — transforming an artifact keeps its background and color mode instead of resetting them.
 - **`data-hw-mode` tells the truth** — the attribute reports the rendered scheme; adaptive files say `adaptive`.
 - **Static exports drop invisible leftovers** — animation-only elements are removed, with counts on stderr and response headers.
-- **Charts say why data is missing** — rate limited (with the upstream's retry hint), repo not found, or a token scope problem; GitHub fetches retry briefly first.
-- **Shared-face wires part** — an edge entering and an edge leaving the same card face no longer overlap at its center.
+- **Charts say why data is missing** — rate limited (with the upstream's retry hint, including GitHub's hourly reset), repo not found, or a token scope problem; fetches retry briefly and a hanging upstream is cut off at ten seconds.
+- **Overlapping arrows part** — an arrow entering and an arrow leaving the same side of a node no longer sit on top of each other.
 - **Help keeps its annotations** — bracketed notes render in `compose --help`.
+- **Takeoff divider flames render everywhere** — they animate by scale and opacity, never geometry morphing.
 
 ### Notes
 

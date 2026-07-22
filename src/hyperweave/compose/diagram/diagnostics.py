@@ -267,7 +267,7 @@ def _unresolved_glyph(spec: DiagramSpec, layout: DiagramLayout) -> Diagnostic | 
         rule="unresolved-glyph",
         measured=f"{len(misses)} declared identity, no mark: {', '.join(misses[:4])}",
         band="every declared glyph/kind renders a mark, or none is declared",
-        suggestion="set node_style/style to card+glyph, and check the slug (discover what='glyphs' lists glyph_kinds)",
+        suggestion="set node_style/style to card+glyph, and check the slug (discover glyphs lists glyph_kinds)",
     )
 
 

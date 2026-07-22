@@ -26,7 +26,7 @@
 {% endif %}
 {% if has_glyph | default(false) %}     data-hw-glyph="{{ glyph_id }}"
 {% endif %}
-{% if data_hw_value %}     data-hw-value="{{ data_hw_value }}"
+{% if data_hw_value %}     data-hw-value="{{ data_hw_value | xml_escape }}"
 {% endif %}
 {% if data_hw_statemode and data_hw_statemode != 'off' %}     data-hw-statemode="{{ data_hw_statemode }}"
 {% endif %}

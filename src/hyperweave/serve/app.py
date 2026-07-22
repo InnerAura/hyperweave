@@ -1551,11 +1551,16 @@ async def discover_capability(what: str = "all") -> dict[str, Any]:
 
     A bespoke GET rather than the verb factory's POST shape: discover takes a
     selector, not a source artifact (compose/validate set the precedent for
-    bespoke routes that diverge from the uniform POST-JSON verb shape).
+    bespoke routes that diverge from the uniform POST-JSON verb shape). An
+    unknown selector answers with the structured error envelope + menu, never
+    a bare 500.
     """
     from hyperweave.surfaces.registry import CallContext, dispatch
 
-    return await dispatch("discover", {"what": what}, CallContext(surface="http"))
+    try:
+        return await dispatch("discover", {"what": what}, CallContext(surface="http"))
+    except HwError as exc:
+        return JSONResponse(exc.envelope(), status_code=exc.http_status)  # type: ignore[return-value]
 
 
 @app.get("/v1/frames")

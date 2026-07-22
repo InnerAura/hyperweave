@@ -158,3 +158,51 @@ class TestMotionOnlyNormalization:
         svg = compose(ComposeSpec(type="badge", title="BUILD", value="passing")).svg
         projection = project(svg, "svg-static")
         assert projection.diagnostics.get("motion_only_elements_removed", 0) == 0
+
+
+class TestMotionOnlyDetectorPrecision:
+    """Unit semantics of the dead-DOM gate: paint-channel opacity never
+    false-positives; groups join the scope; nesting stays conservative."""
+
+    def test_fill_opacity_zero_is_not_element_visibility(self) -> None:
+        from hyperweave.formats.static import strip_animation_counted
+
+        svg = '<svg><circle fill-opacity="0" r="4"><animate attributeName="fill-opacity" values="0;1"/></circle></svg>'
+        stripped, counts = strip_animation_counted(svg)
+        assert "<circle" in stripped, "paint-channel opacity wrongly deleted the element"
+        assert counts.get("motion_only_elements_removed", 0) == 0
+
+    def test_opacity_zero_group_with_animate_is_removed(self) -> None:
+        from hyperweave.formats.static import strip_animation_counted
+
+        svg = (
+            '<svg><g opacity="0"><animate attributeName="opacity" values="0;1"/><rect width="4" height="4"/></g></svg>'
+        )
+        stripped, counts = strip_animation_counted(svg)
+        assert "<g" not in stripped
+        assert counts["motion_only_elements_removed"] == 1
+
+    def test_nested_group_is_conservatively_kept(self) -> None:
+        from hyperweave.formats.static import strip_animation_counted
+
+        svg = '<svg><g opacity="0"><g><rect/></g><animate attributeName="opacity" values="0;1"/></g></svg>'
+        stripped, counts = strip_animation_counted(svg)
+        assert "<rect" in stripped, "nested group mis-truncated"
+        assert counts.get("motion_only_elements_removed", 0) == 0
+
+
+def test_takeoff_divider_carries_no_geometry_animation() -> None:
+    """CIM: transform, opacity, filter — never `d`. The thruster flames
+    lengthen by scale about their body-seam anchor; statics rest at scale 1
+    as fully visible flames."""
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+    from hyperweave.formats import project
+
+    svg = compose(ComposeSpec(type="divider", divider_variant="takeoff")).svg
+    assert 'attributeName="d"' not in svg
+    assert "animateTransform" in svg
+
+    static = project(svg, "svg-static").data.decode("utf-8")
+    assert "<animate" not in static
+    assert static.count("-escape)") >= 3, "the three flames must rest visible in statics"

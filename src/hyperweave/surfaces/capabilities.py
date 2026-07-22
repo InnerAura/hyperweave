@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from hyperweave.surfaces.registry import CallContext, Capability, register
 
@@ -23,7 +23,15 @@ from hyperweave.surfaces.registry import CallContext, Capability, register
 
 
 class ComposeInput(BaseModel):
-    """Compose a HyperWeave artifact from a spec envelope."""
+    """Compose a HyperWeave artifact from a spec envelope.
+
+    ``extra="forbid"``: an unknown top-level key (e.g. ``title`` where
+    ``spec={"title": ...}`` was meant) errors with the field named — a silent
+    drop here composed a DEFAULT artifact while the caller believed their
+    content was in it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     type: str = Field(
         description="Frame type: badge | strip | icon | divider | marquee | receipt | card | chart | matrix | diagram"

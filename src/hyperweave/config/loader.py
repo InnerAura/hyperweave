@@ -466,6 +466,7 @@ class ConfigLoader:
         from hyperweave.compose.validate_paradigms import (
             validate_font_embedding,
             validate_genome_against_paradigms,
+            validate_genome_chromatic_coverage,
             validate_genome_roles,
             validate_genome_surface_contract,
             validate_genome_variants,
@@ -482,6 +483,7 @@ class ConfigLoader:
             validate_genome_variants(genome_spec)
             validate_genome_surface_contract(genome_spec, surface_frames)
             validate_genome_roles(genome_spec)
+            validate_genome_chromatic_coverage(genome_spec)
 
         # Cross-validate the font embedding gate against the loaded genomes
         # and the on-disk font files. Catches typos, missing .b64 files,

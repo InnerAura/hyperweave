@@ -219,3 +219,117 @@ def test_example_selector_rejects_unknown_name_with_preset_menu() -> None:
     with pytest.raises(HwError) as exc_info:
         discover("example:diagram/no-such-preset")
     assert (exc_info.value.fix or "") != ""
+
+
+def test_every_printed_discover_hint_executes_verbatim() -> None:
+    """Guard law: the literal printed sentences run through the real CLI
+    parser. Every `discover <selector>` fragment any surface prints must
+    answer with non-empty JSON at exit 0 — the capability working while the
+    printed sentence is broken is exactly the failure this pins."""
+    import json as json_mod
+    import re as re_mod
+
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app as cli_app
+    from hyperweave.core.errors import HwError
+    from hyperweave.surfaces.discover import discover
+
+    printed: list[str] = []
+
+    # The compose-time diagnostic (kind-on-card fires unresolved-glyph).
+    result = compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            diagram={
+                "topology": "pipeline",
+                "title": "Probe",
+                "nodes": [{"id": "a", "label": "A", "kind": "search"}, {"label": "B"}, {"label": "C"}],
+            },
+        )
+    )
+    printed += [d["suggestion"] for d in result.diagnostics]
+
+    # The two unknown-selector menus (fix text is printed on every surface).
+    for bad in ("schema:nope/9", "example:diagram/no-such-preset"):
+        try:
+            discover(bad)
+        except HwError as exc:
+            printed.append(exc.fix or "")
+
+    # Discover's own diagram prose (kinds ladder text rides the payload).
+    printed.append(str(discover("diagram")["diagram"]))
+
+    # The compose-time verb advertisement line (stderr).
+    runner = CliRunner()
+    advert = runner.invoke(cli_app, ["compose", "badge", "BUILD", "passing"])
+    printed.append(advert.stderr)
+
+    fragments = sorted(
+        {match.group(1) for text in printed for match in re_mod.finditer(r"discover ([\w:'=/\"-]+)", text)}
+    )
+    assert len(fragments) >= 3, f"expected several printed discover hints, found {fragments}"
+    for selector in fragments:
+        run = runner.invoke(cli_app, ["discover", selector])
+        assert run.exit_code == 0, f"printed hint 'discover {selector}' fails: {run.output}"
+        assert json_mod.loads(run.stdout), f"printed hint 'discover {selector}' answers empty"
+
+
+def test_discover_accepts_the_what_equals_alias() -> None:
+    """The MCP-style spelling pasted into a shell still answers."""
+    import json as json_mod
+
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app as cli_app
+
+    run = CliRunner().invoke(cli_app, ["discover", "what='glyphs'"])
+    assert run.exit_code == 0, run.output
+    assert json_mod.loads(run.stdout)["glyphs"]
+
+
+def test_unknown_discover_selector_errors_with_the_menu() -> None:
+    """Never a silent empty dict: unknown selectors exit nonzero and print
+    the valid-selector menu."""
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app as cli_app
+
+    run = CliRunner().invoke(cli_app, ["discover", "no-such-selector"])
+    assert run.exit_code != 0
+    combined = run.output + (run.stderr or "")
+    assert "glyphs" in combined and "capabilities" in combined
+
+
+def test_every_listed_section_selector_answers() -> None:
+    """The selector menu and the section conditions stay in lockstep: every
+    advertised selector answers non-empty (a drifted menu entry would 404 the
+    moment a hint prints it)."""
+    from hyperweave.surfaces.discover import _SECTION_SELECTORS, discover
+
+    for selector in _SECTION_SELECTORS:
+        assert discover(selector), f"advertised selector {selector!r} answers empty"
+
+
+@pytest.mark.asyncio
+async def test_static_projection_counts_reach_the_mcp_envelope() -> None:
+    """Drop-counts thread through compose_surface: an MCP caller rendering a
+    flattening format sees the same honesty the CLI prints on stderr."""
+    result = await hw_compose(
+        type="diagram",
+        genome="primer",
+        ground="opaque",
+        palette="fixed",
+        format="svg-static",
+        diagram={
+            "topology": "pipeline",
+            "title": "Flow",
+            "edge_motion": "particle",
+            "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+            "edges": [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}],
+        },
+    )
+    records = [d for d in result.get("diagnostics", []) if d["rule"] == "static-projection"]
+    assert records, "projection drop-counts never reached the envelope"
+    assert "motion only elements removed" in records[0]["measured"]

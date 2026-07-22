@@ -69,7 +69,9 @@ def resolve_chart(
         # the retry hint appears only when the upstream sent Retry-After
         # (truthful, never fabricated).
         if input_data.cause == "rate_limited":
-            minutes = max(1, round(input_data.retry_seconds / 60)) if input_data.retry_seconds else 0
+            # Clamp the display to GitHub's hourly window — a malformed header
+            # must never render an absurd figure.
+            minutes = min(60, max(1, round(input_data.retry_seconds / 60))) if input_data.retry_seconds else 0
             empty_message = f"RATE LIMITED · RETRY ~{minutes}M" if minutes else "RATE LIMITED"
         elif input_data.cause == "not_found":
             empty_message = "REPO NOT FOUND"

@@ -83,8 +83,18 @@ def resolve_vars_to_hex(svg: str) -> str:
 # invisible dead DOM (diagram motion particles, divider takeoff boosters).
 # The opacity attribute + animate-in-body conjunction IS the two-part gate:
 # intentionally-static opacity-0 content has no animate child and never matches.
+# The lookbehind keeps fill-opacity="0"/stroke-opacity="0" (paint channels, not
+# element visibility) from false-positive whole-element deletion.
 _ANIMATION_ONLY_ELEMENT = re.compile(
-    r'<(circle|ellipse|rect|path)\b[^>]*\bopacity="0"[^>]*>(?:(?!</\1>).)*?<animate(?:(?!</\1>).)*?</\1>\s*',
+    r'<(circle|ellipse|rect|path)\b[^>]*(?<![\w-])opacity="0"[^>]*>(?:(?!</\1>).)*?<animate(?:(?!</\1>).)*?</\1>\s*',
+    re.DOTALL,
+)
+# The <g opacity="0"> fade-in group is the same dead-DOM class. Scoped to
+# groups with NO nested <g> in the body (the guard tokens forbid any inner g
+# open/close) — a regex cannot match balanced nesting, so nested groups are
+# conservatively left alone rather than mis-truncated.
+_ANIMATION_ONLY_GROUP = re.compile(
+    r'<g\b[^>]*(?<![\w-])opacity="0"[^>]*>(?:(?!</?g[\s>]).)*?<animate(?:(?!</?g[\s>]).)*?</g>\s*',
     re.DOTALL,
 )
 
@@ -108,6 +118,8 @@ def strip_animation_counted(svg: str) -> tuple[str, dict[str, int]]:
     """
     animated = sum(1 for _ in _ANIM_PAIR.finditer(svg)) + sum(1 for _ in _ANIM_SELF.finditer(svg))
     svg, dead = _ANIMATION_ONLY_ELEMENT.subn("", svg)
+    svg, dead_groups = _ANIMATION_ONLY_GROUP.subn("", svg)
+    dead += dead_groups
     svg = _ANIM_PAIR.sub("", svg)
     svg = _ANIM_SELF.sub("", svg)
     svg = _KEYFRAMES.sub("", svg)

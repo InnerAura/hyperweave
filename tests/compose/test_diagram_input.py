@@ -131,7 +131,7 @@ class TestStructuralValidators:
     def test_muted_forbidden_on_focal_slot(self, topology: str, n: int, slot: int) -> None:
         assert focal_slot(Topology(topology), n) == slot
         labels = [f"N{i}" for i in range(n)]
-        with pytest.raises(ValueError, match="focal slot"):
+        with pytest.raises(ValueError, match="cannot be muted"):
             DiagramSpec(topology=topology, nodes=nodes(*labels, at={slot: {"role": "muted"}}))
 
     @pytest.mark.parametrize("topology", ["pipeline", "flywheel", "sequence", "dag", "state-machine"])

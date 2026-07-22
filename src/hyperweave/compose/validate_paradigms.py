@@ -25,6 +25,7 @@ was removed in the grammar refactor.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from hyperweave.core.schema import INDICATOR_SHAPES
@@ -743,3 +744,22 @@ def validate_genome_roles(genome: GenomeSpec) -> None:
                 violations.append(f"  role '{role}' names token '{token}', not a field on this genome")
     if violations:
         raise ValueError(f"Genome '{genome.id}' role grouping is broken:\n" + "\n".join(violations))
+
+
+_CHROMATIC_VALUE = re.compile(r"^#|^rgba?\(|^linear-gradient|^radial-gradient")
+
+
+def validate_genome_chromatic_coverage(genome: GenomeSpec) -> None:
+    """The reverse of :func:`validate_genome_roles`: every chromatic token is
+    claimed by SOME role. An unassigned token is invisible to intent-driven
+    tools (recolor-by-role would silently skip it) — fail loud at config load,
+    matching the chromatic-coverage doctrine.
+    """
+    assigned = {token for tokens in genome.roles.values() for token in tokens}
+    violations = [
+        f"  chromatic token '{key}' is claimed by no role"
+        for key, value in genome.model_dump().items()
+        if key != "roles" and isinstance(value, str) and _CHROMATIC_VALUE.match(value) and key not in assigned
+    ]
+    if violations:
+        raise ValueError(f"Genome '{genome.id}' chromatic coverage is broken:\n" + "\n".join(violations))

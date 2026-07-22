@@ -188,29 +188,36 @@
   {# Body #}
   <rect x="{{ takeoff_body_x }}" y="{{ takeoff_body_y }}" width="{{ takeoff_body_w }}" height="{{ takeoff_body_h }}" fill="{{ takeoff_body_color }}"/>
 
-  {# Thruster flames — 3 paths with animated geometry + glow.
-     KNOWN DEBT: animating `d` violates the CIM (transform/opacity/filter only);
-     this legacy hand-authored divider is boarded for its own cleanup pass —
-     distinct from the static-projection dead-DOM normalization, do not fold. #}
+  {# Thruster flames — CIM-compliant: each flame is a fixed resting shape in a
+     group anchored at its rocket-body seam (y=15); the lengthening that used
+     to morph `d` is a non-uniform scale about that anchor (transform-class),
+     with the opacity flicker riding beside it. Statics rest at scale 1 — the
+     designed resting frame, fully visible. #}
   <g filter="url(#{{ uid }}-thruster-glow)">
-    {# Left flame #}
-    <path d="M-7,15 L-12,30 L-2,20 Z" fill="url(#{{ uid }}-escape)">
-      <animate attributeName="d" values="M-7,15 L-12,30 L-2,20 Z; M-7,15 L-15,45 L-2,20 Z; M-7,15 L-12,30 L-2,20 Z"
-               dur="0.3s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="1;0.7;1" dur="0.3s" repeatCount="indefinite"/>
-    </path>
-    {# Right flame #}
-    <path d="M7,15 L12,30 L2,20 Z" fill="url(#{{ uid }}-escape)">
-      <animate attributeName="d" values="M7,15 L12,30 L2,20 Z; M7,15 L15,45 L2,20 Z; M7,15 L12,30 L2,20 Z"
-               dur="0.2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="1;0.7;1" dur="0.2s" repeatCount="indefinite"/>
-    </path>
-    {# Center flame #}
-    <path d="M-3,15 L0,35 L3,15 Z" fill="url(#{{ uid }}-escape)">
-      <animate attributeName="d" values="M-3,15 L0,35 L3,15 Z; M-3,15 L0,50 L3,15 Z; M-3,15 L0,35 L3,15 Z"
-               dur="0.25s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="1;0.6;1" dur="0.25s" repeatCount="indefinite"/>
-    </path>
+    {# Left flame — anchor (0,15); tip stretch = scale(1.25 2) #}
+    <g transform="translate(0,15)">
+      <path d="M-7,0 L-12,15 L-2,5 Z" fill="url(#{{ uid }}-escape)">
+        <animateTransform attributeName="transform" type="scale" values="1 1;1.25 2;1 1"
+                          dur="0.3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.7;1" dur="0.3s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    {# Right flame — mirror stretch, its own tempo #}
+    <g transform="translate(0,15)">
+      <path d="M7,0 L12,15 L2,5 Z" fill="url(#{{ uid }}-escape)">
+        <animateTransform attributeName="transform" type="scale" values="1 1;1.25 2;1 1"
+                          dur="0.2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.7;1" dur="0.2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    {# Center flame — pure lengthwise stretch #}
+    <g transform="translate(0,15)">
+      <path d="M-3,0 L0,20 L3,0 Z" fill="url(#{{ uid }}-escape)">
+        <animateTransform attributeName="transform" type="scale" values="1 1;1 1.75;1 1"
+                          dur="0.25s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.6;1" dur="0.25s" repeatCount="indefinite"/>
+      </path>
+    </g>
   </g>
 
   {# Emergency boosters — alternating blink #}

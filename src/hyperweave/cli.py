@@ -761,6 +761,11 @@ def compose(
     # next to -o (<out>-light.svg / <out>-dark.svg) — the <picture> pair. Requires
     # -o (two files can't stream to stdout) and a twin surface.
     if faces:
+        if respond:
+            typer.echo(
+                "Error: --faces (two files beside -o) and --respond (one stdout document) are exclusive", err=True
+            )
+            raise typer.Exit(2)
         if output is None:
             typer.echo("Error: --faces needs -o/--output (writes <out>-light.svg and <out>-dark.svg)", err=True)
             raise typer.Exit(2)
@@ -958,13 +963,16 @@ def genomes_cmd(
             raise typer.Exit(1)
         if explain:
             # Recoloring as intent: the role tells you WHAT a token does; the
-            # raw dump only tells you what hex it happens to be.
-            roles = genome.get("roles") or {}
-            typer.echo(f"{show} — {genome.get('name', show)} ({genome.get('category', 'dark')})")
-            for role, tokens in roles.items():
+            # raw dump only tells you what hex it happens to be. One extraction
+            # shared with `discover genome:<id>` so the two faces cannot drift.
+            from hyperweave.surfaces.discover import genome_deep_dive
+
+            info = genome_deep_dive(show)
+            typer.echo(f"{show} — {info['name']} ({info['category']})")
+            for role, tokens in info["roles"].items():
                 typer.echo(f"  {role}:")
-                for token in tokens:
-                    typer.echo(f"    {token:<36} {genome.get(token, '')}")
+                for token, token_value in tokens.items():
+                    typer.echo(f"    {token:<36} {token_value}")
             return
         import json
 

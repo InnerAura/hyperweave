@@ -188,3 +188,26 @@ def test_compose_prints_verb_pointer_on_stderr_without_polluting_stdout() -> Non
     envelope = extract_envelope(result.stdout)
     assert envelope is not None
     assert envelope["id"].removeprefix("sha256:")[:12] in result.stderr
+
+
+def test_cli_compose_faces_and_respond_are_exclusive(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "compose",
+            "diagram",
+            "-g",
+            "primer",
+            "--spec-file",
+            "rag-pipeline",
+            "--surface",
+            "twin",
+            "--faces",
+            "-o",
+            str(tmp_path / "d.svg"),
+            "--respond",
+            "envelope",
+        ],
+    )
+    assert result.exit_code == 2
+    assert "exclusive" in (result.stderr or result.output)

@@ -323,3 +323,21 @@ async def test_transform_respond_svg_returns_markup_on_every_surface(
     patch_arg = json.dumps(ops)
     cli = _cli_json(["transform", sample_diagram_svg, "--patch-json", patch_arg, "--respond", "svg"])
     assert "<svg" in cli["svg"]
+
+
+async def test_compose_rejects_unknown_top_level_fields_by_name() -> None:
+    """A stray top-level key errors with the field NAMED and the legal set
+    listed — never a silently-composed default artifact (the pre-fix parity
+    fixture shipped exactly that)."""
+    from hyperweave.core.errors import HwError
+
+    ctx = CallContext(surface="test")
+    with pytest.raises(HwError) as exc_info:
+        await dispatch(
+            "compose",
+            {"type": "badge", "genome": "brutalist", "title": "STARS", "value": "42"},
+            ctx,
+        )
+    message = str(exc_info.value)
+    assert "title" in message and "value" in message
+    assert "spec" in (exc_info.value.fix or "")

@@ -614,7 +614,10 @@ class DiagramSpec(FrozenModel):
         focal = focal_slot(self.topology, len(self.nodes))
         for i, n in enumerate(self.nodes):
             if n.role is NodeRole.MUTED and focal is not None and i == focal:
-                raise ValueError(f"node {i} ({n.label!r}) is the {self.topology.value} focal slot and cannot be muted")
+                raise ValueError(
+                    f"node {i} ({n.label!r}) is the {self.topology.value}'s focus "
+                    "(the first node declared) and cannot be muted"
+                )
         if self.edges:
             self._validate_edges(declared)
         elif self.topology in _EDGES_REQUIRED:
@@ -757,7 +760,7 @@ class DiagramSpec(FrozenModel):
             if hub_id not in (e.source, e.target):
                 raise ValueError(
                     f"hub edge {e.source!r}->{e.target!r} is not incident to the hub node {hub_id!r} "
-                    "(every hub edge touches focal slot 0) — a satellite-to-satellite relation needs "
+                    "(the hub is the first node declared) — a satellite-to-satellite relation needs "
                     "a free-graph topology: recompose with topology dag or lanes"
                 )
             if e.zone and e.angle is not None:

@@ -171,8 +171,8 @@ _TOPOLOGY_GUIDE: dict[str, str] = {
 # appear; `any` states the global laws every topology shares.
 _TOPOLOGY_EDGE_RULES: dict[str, str] = {
     "any": "edges reference declared node ids; at most one directed edge per node pair per direction",
-    "hub": "every edge touches the hub node (focal slot 0); a satellite-to-satellite relation needs "
-    "a free-graph topology — recompose with dag or lanes",
+    "hub": "every edge touches the hub — the first node declared; a satellite-to-satellite relation "
+    "needs a free-graph topology — recompose with dag or lanes",
     "tree": "every non-root node has exactly one parent edge; the root has none; cross-links need dag",
     "dag": "free graph — any node-to-node edge; a cycle renders as a state machine instead of erroring",
     "state-machine": "free graph including self-loops and back-edges; a self-loop cannot be bidirectional",
@@ -212,7 +212,7 @@ def _render_diagram_frame() -> str:
     lines.append("")
     lines.append(
         "Node identity: `glyph` = explicit brand slug (never inferred from the label); `kind` = generic "
-        "systems mark (database, server, ... — discover what='glyphs' lists glyph_kinds); ladder is "
+        "systems mark (database, server, ... — discover glyphs lists glyph_kinds); ladder is "
         "glyph -> kind -> nothing, and an unresolved kind warns. `role` (default | hero | muted) is "
         "caller rhetoric on any topology; hub edge roles (in | out | read | edit) drive the axial cross."
     )
@@ -267,13 +267,17 @@ def _discover_schema(selector: str) -> dict[str, Any]:
         raise HwError(
             HwErrorCode.TYPE_UNKNOWN,
             f"unknown schema id {selector!r}",
-            fix=f"known schemas: {', '.join(known_schema_ids())} (discover what='schemas')",
+            fix=f"known schemas: {', '.join(known_schema_ids())} (discover schemas)",
         )
     return {"id": selector, "json_schema": model.model_json_schema()}
 
 
-def _discover_genome(genome_id: str) -> dict[str, Any]:
-    """``genome:<id>`` → the role-structured deep-dive (tokens grouped by intent)."""
+def genome_deep_dive(genome_id: str) -> dict[str, Any]:
+    """``genome:<id>`` → the role-structured deep-dive (tokens grouped by intent).
+
+    The ONE extraction behind both faces: ``discover genome:<id>`` and the CLI's
+    ``genomes <id> --explain`` — shared so the two can never drift.
+    """
     from hyperweave.config.loader import get_loader
     from hyperweave.core.errors import HwError, HwErrorCode
 
@@ -283,7 +287,7 @@ def _discover_genome(genome_id: str) -> dict[str, Any]:
         raise HwError(
             HwErrorCode.GENOME_UNKNOWN,
             f"unknown genome {genome_id!r}",
-            fix=f"known genomes: {', '.join(sorted(loader.genomes))} (discover what='genomes')",
+            fix=f"known genomes: {', '.join(sorted(loader.genomes))} (discover genomes)",
         )
     roles = genome.get("roles") or {}
     variant_names = sorted(
@@ -315,6 +319,38 @@ def _discover_example(frame_type: str, name: str) -> dict[str, Any]:
     return {"frame_type": frame_type, "name": name, "field": bundled.field, "value": bundled.value}
 
 
+# Every `what in ("all", <section>)` condition in discover() — kept in lockstep
+# by the every-listed-selector-answers guard; a section missing here would 404
+# the moment anything selects it.
+_SECTION_SELECTORS = (
+    "all",
+    "schemas",
+    "genomes",
+    "motions",
+    "glyphs",
+    "idioms",
+    "frames",
+    "verbs",
+    "capabilities",
+    "matrix",
+    "diagram",
+    "url_grammar",
+)
+
+
+def _normalize_selector(what: str) -> str:
+    """Accept the ``what=`` spelling as an alias for the positional selector.
+
+    ``discover what='glyphs'`` pasted into a shell hands the CLI the literal
+    string ``what='glyphs'`` — strip the key and quotes so the pasted form of
+    an MCP-style hint answers instead of silently missing every section.
+    """
+    what = what.strip()
+    if what.startswith("what="):
+        what = what.removeprefix("what=").strip().strip("'\"")
+    return what
+
+
 def discover(what: str = "all") -> dict[str, Any]:
     """Return discovery data for the ``what`` selector.
 
@@ -322,9 +358,13 @@ def discover(what: str = "all") -> dict[str, Any]:
     matrix/diagram/url_grammar) and adds ``capabilities`` from the registry,
     plus the deep selectors: ``schema:<id>`` (a frame's published JSON Schema)
     and ``example:<frame_type>/<name>`` (a full bundled spec, compose-ready).
+    An unknown selector raises with the menu — never a silent empty dict.
     """
     from hyperweave.config.loader import get_loader
     from hyperweave.core.enums import FrameType
+    from hyperweave.core.errors import HwError, HwErrorCode
+
+    what = _normalize_selector(what)
 
     if what.startswith("schema:"):
         return {"schema": _discover_schema(what.removeprefix("schema:"))}
@@ -332,7 +372,16 @@ def discover(what: str = "all") -> dict[str, Any]:
         frame_type, _, name = what.removeprefix("example:").partition("/")
         return {"example": _discover_example(frame_type, name)}
     if what.startswith("genome:"):
-        return {"genome": _discover_genome(what.removeprefix("genome:"))}
+        return {"genome": genome_deep_dive(what.removeprefix("genome:"))}
+
+    if what not in _SECTION_SELECTORS:
+        raise HwError(
+            HwErrorCode.TYPE_UNKNOWN,
+            f"unknown discover selector {what!r}",
+            fix="valid selectors: "
+            + " | ".join(_SECTION_SELECTORS)
+            + " — plus schema:<id>, example:<frame_type>/<name>, genome:<id>",
+        )
 
     loader = get_loader()
     result: dict[str, Any] = {}
@@ -449,7 +498,7 @@ def discover(what: str = "all") -> dict[str, Any]:
             "chips": "node.chips = in-card pill row (any card topology); edge.label_style='chip' "
             "renders the edge label as a pill riding the wire midpoint.",
             "kinds": "node.kind resolves a CORE glyph (database, server, queue-ish marks — "
-            "discover what='glyphs' lists glyph_kinds); ladder: node.glyph (brand) -> node.kind -> nothing.",
+            "discover glyphs lists glyph_kinds); ladder: node.glyph (brand) -> node.kind -> nothing.",
             "lanes": "every node declares a category; categories become bands (first-appearance order). "
             "edge.route: '' (auto by lane distance) | bus (adjacent bands only) | around (perimeter channel "
             "for long hauls). Same category shares a palette slot.",

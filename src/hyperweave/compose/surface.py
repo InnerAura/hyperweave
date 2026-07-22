@@ -28,7 +28,7 @@ from hyperweave.core.envelope import extract_envelope, extract_payload
 from hyperweave.core.errors import HwError, HwErrorCode
 from hyperweave.core.matrix import MatrixSpec
 from hyperweave.core.models import ComposeSpec
-from hyperweave.formats import FormatId, parse_format, project
+from hyperweave.formats import FormatId, Projection, parse_format, project
 
 # Frame content that maps to a dedicated ComposeSpec field rather than a kwarg.
 _IR_FIELD: dict[str, str] = {"matrix": "matrix", "diagram": "diagram"}
@@ -332,7 +332,23 @@ def compose_surface(
         url=url,
         faces=faces,
         warnings=tuple(result.warnings),
-        diagnostics=tuple(result.diagnostics),
+        diagnostics=tuple(result.diagnostics) + _projection_diagnostics(projection),
+    )
+
+
+def _projection_diagnostics(projection: Projection) -> tuple[dict[str, str], ...]:
+    """Projection drop-counts as a diagnostics record — the same honesty the
+    CLI prints on stderr, threaded to MCP/HTTP envelope consumers."""
+    if not projection.diagnostics:
+        return ()
+    measured = " · ".join(f"{key.replace('_', ' ')}: {value}" for key, value in projection.diagnostics.items())
+    return (
+        {
+            "rule": "static-projection",
+            "measured": measured,
+            "band": "a flattening format declares what it drops",
+            "suggestion": "render format=svg for the live artifact",
+        },
     )
 
 

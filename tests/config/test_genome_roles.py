@@ -77,3 +77,28 @@ def test_discover_genome_selector_rejects_unknown_id() -> None:
     with pytest.raises(HwError) as exc_info:
         discover("genome:vellum-nope")
     assert "primer" in (exc_info.value.fix or "")
+
+
+def test_unclaimed_chromatic_token_fails_at_config_load() -> None:
+    """The reverse direction is loader-enforced, not test-only: a chromatic
+    token no role claims fails loud the moment config loads."""
+    from hyperweave.compose.validate_paradigms import validate_genome_chromatic_coverage
+
+    spec = get_loader().genome_specs["primer"]
+    validate_genome_chromatic_coverage(spec)  # intact genome passes
+
+    thinned = {role: [t for t in tokens if t != "accent"] for role, tokens in spec.roles.items()}
+    broken = spec.model_copy(update={"roles": thinned})
+    with pytest.raises(ValueError, match="'accent' is claimed by no role"):
+        validate_genome_chromatic_coverage(broken)
+
+
+def test_explain_and_discover_genome_share_one_extraction() -> None:
+    """The CLI breakdown and the discover deep-dive render the same values —
+    pinned so a future edit to one face cannot silently drift the other."""
+    from hyperweave.surfaces.discover import discover, genome_deep_dive
+
+    deep = discover("genome:primer")["genome"]
+    assert deep == genome_deep_dive("primer")
+    out = runner.invoke(app, ["genomes", "primer", "--explain"]).stdout
+    assert deep["roles"]["accent"]["accent"] in out

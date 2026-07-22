@@ -107,9 +107,20 @@ async def dispatch(name: str, payload: dict[str, Any], ctx: CallContext) -> dict
     try:
         model = cap.input_model.model_validate(payload)
     except PydanticValidationError as exc:
+        errors = exc.errors(include_url=False)
+        unknown = sorted(str(e["loc"][0]) for e in errors if e.get("type") == "extra_forbidden")
+        if unknown:
+            # Never a silent drop: name the stray keys AND the legal ones.
+            message = f"unknown field(s) for {name}: {', '.join(unknown)}"
+            fix = f"known fields: {', '.join(cap.input_model.model_fields)}"
+        else:
+            first = str(errors[0].get("msg", "")).removeprefix("Value error, ") if errors else ""
+            message = f"invalid {name} input: {first or f'{exc.error_count()} error(s)'}"
+            fix = ""
         raise HwError(
             HwErrorCode.SPEC_INVALID,
-            f"invalid {name} input: {exc.error_count()} error(s)",
-            detail={"errors": exc.errors(include_url=False)},
+            message,
+            fix=fix,
+            detail={"errors": errors},
         ) from exc
     return await cap.handler(model, ctx)
