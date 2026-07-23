@@ -160,12 +160,79 @@ def _hostile_spec(frame_key: str, genome_id: str, variant: str) -> ComposeSpec:
             },
             **kwargs,
         )
+    if frame_key == "receipt":
+        # Every user-space string in the telemetry contract: session/model ids,
+        # model names + roles, tool names, and context-event commands all come
+        # straight from harness transcripts the user does not control.
+        return ComposeSpec(
+            type="receipt",
+            telemetry_data={
+                "session": _HOSTILE,
+                "model": _HOSTILE,
+                "cost_usd": 100.05,
+                "dominant": _HOSTILE,
+                "cost_basis": _HOSTILE,
+                "estimate": True,
+                "models": [
+                    {"name": _HOSTILE, "role": _HOSTILE, "cost_usd": 100.00, "cost_pct": 99},
+                    {"name": f"{_HOSTILE}2", "role": _HOSTILE, "cost_usd": 0.05, "cost_pct": 1},
+                ],
+                "tokens": {
+                    "total": 1000000,
+                    "in": 1000,
+                    "out": 2000,
+                    "cache_read": 500000,
+                    "cache_write": 10000,
+                    "working": 3000,
+                },
+                "calls": 10,
+                "stages": 3,
+                "turns": 2,
+                "errors": 1,
+                "active_min": 30,
+                "context": {
+                    "window": 200000,
+                    "peak_ctx": 100000,
+                    "events": [{"min": 5, "cmd": _HOSTILE, "to": 30000}],
+                    "note": _HOSTILE,
+                },
+                "tools": [
+                    {"name": _HOSTILE, "tok": 5000, "calls": 4, "err": 1, "class": "mutate"},
+                    {"name": f"{_HOSTILE}2", "calls": 3},
+                ],
+            },
+            **kwargs,
+        )
+    if frame_key == "stats":
+        # Username, bio, top language, and language names all arrive from the
+        # connector response — third-party text, not ours.
+        return ComposeSpec(
+            type="stats",
+            connector_data={
+                "username": _HOSTILE,
+                "bio": _HOSTILE,
+                "stars_total": 12847,
+                "commits_total": 1203,
+                "prs_total": 89,
+                "issues_total": 47,
+                "contrib_total": 234,
+                "streak_days": 47,
+                "top_language": _HOSTILE,
+                "repo_count": 63,
+                "language_breakdown": [
+                    {"name": _HOSTILE, "pct": 68.5, "count": 43},
+                    {"name": f"{_HOSTILE}2", "pct": 18.1, "count": 11},
+                ],
+                "heatmap_grid": [{"date": f"2025-01-{(i % 28) + 1:02d}", "count": (i % 12) + 1} for i in range(364)],
+            },
+            **kwargs,
+        )
     raise AssertionError(f"no hostile spec registered for {frame_key!r}")
 
 
 def _hostile_cases() -> list[tuple[str, str, str]]:
     cases: list[tuple[str, str, str]] = []
-    for frame_key in ("badge", "strip", "marquee", "chart", "matrix", "diagram"):
+    for frame_key in ("badge", "strip", "marquee", "chart", "matrix", "diagram", "receipt", "stats"):
         for gid, variant in _genome_cases(frame_key):
             cases.append((frame_key, gid, variant))
     return cases
@@ -175,4 +242,26 @@ def _hostile_cases() -> list[tuple[str, str, str]]:
 def test_frames_emit_well_formed_xml_with_hostile_labels(frame_key: str, genome_id: str, variant: str) -> None:
     """Invariant 14: raw ``& < > \" '`` in user text never breaks the XML container."""
     svg = compose(_hostile_spec(frame_key, genome_id, variant)).svg
+    ET.fromstring(svg)
+
+
+# Engine-generated text can smuggle markup too: a model cost share that rounds
+# to zero renders as "<1%", whose bare "<" is a StartTag to any XML parser.
+_SUB_PERCENT_TELEMETRY: dict[str, Any] = {
+    "session": "abc12345",
+    "model": "opus-4.7",
+    "cost_usd": 100.05,
+    "models": [
+        {"name": "opus-4.7", "role": "main thread", "cost_usd": 100.00, "cost_pct": 99},
+        {"name": "haiku-4.5", "role": "subagent", "cost_usd": 0.05, "cost_pct": 0},
+    ],
+    "tokens": {"total": 1000000, "in": 1000, "out": 2000},
+    "calls": 10,
+}
+
+
+def test_receipt_sub_percent_model_share_stays_well_formed() -> None:
+    """The "<1%" cost share reaches the artifact as an entity, never a raw ``<``."""
+    svg = compose(ComposeSpec(type="receipt", genome_id="primer", telemetry_data=_SUB_PERCENT_TELEMETRY)).svg
+    assert "&lt;1%" in svg
     ET.fromstring(svg)

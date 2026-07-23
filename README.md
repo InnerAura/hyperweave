@@ -103,14 +103,14 @@ hyperweave install-hook
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_cream.svg" alt="A HyperWeave session receipt for a Claude Code run: &#36;116.66 across 151.1M tokens and 574 calls, opus-4.8 dominant, with a tool-spend breakdown, a cost-by-model bar, and a context-load curve." width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_cream.svg" alt="A HyperWeave session receipt for a Claude Code run: &#36;1,787.28 across 1686.0M tokens and 3795 calls, opus-4.8 dominant, with a tool-spend breakdown, a cost-by-model bar, and a context-load curve." width="800"/>
 </p>
-<p align="center"><sub>Claude Code &middot; &#36;116.66 &middot; 151.1M tokens &middot; 574 calls &middot; opus-4.8</sub></p>
+<p align="center"><sub>Claude Code &middot; &#36;1,787.28 &middot; 1686.0M tokens &middot; 3795 calls &middot; opus-4.8</sub></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_porcelain.svg" alt="A HyperWeave session receipt for a Codex run: &#36;49.76 across 62.2M tokens and 718 calls, gpt-5.5." width="800"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_porcelain.svg" alt="A HyperWeave session receipt for a Codex run: &#36;10.72 across 32.4M tokens and 346 calls, gpt-5.3." width="800"/>
 </p>
-<p align="center"><sub>Codex &middot; &#36;49.76 &middot; 62.2M tokens &middot; 718 calls &middot; gpt-5.5</sub></p>
+<p align="center"><sub>Codex &middot; &#36;10.72 &middot; 32.4M tokens &middot; 346 calls &middot; gpt-5.3</sub></p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_raw.svg" alt="The same Claude Code session printed as a thermal register tape: tools as line items priced in tokens, models as payment tender, failed calls as voids." width="300"/>

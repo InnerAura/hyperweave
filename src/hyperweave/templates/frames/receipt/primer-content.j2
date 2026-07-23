@@ -88,7 +88,7 @@
 {% for row in cbm.rows %}<rect x="{{ row.marker_x }}" y="{{ row.marker_y }}" width="{{ rg.cbm_marker_w }}" height="{{ rg.cbm_marker_w }}" rx="{{ rg.cbm_marker_rx }}" fill="{{ row.marker_fill }}"/>
 <text x="{{ row.text_x }}" y="{{ row.text_y }}" font-size="11" fill="{{ pal.ink }}" font-weight="700">{{ row.name | xml_escape }}<tspan fill="{{ pal.eyebrow }}" font-weight="400"> · {{ row.role | xml_escape }}</tspan></text>
 <text x="{{ cbm.cost_x }}" y="{{ row.text_y }}" font-size="11" fill="{{ pal.ink }}" font-weight="700" text-anchor="end">{{ row.cost }}</text>
-<text x="{{ cbm.pct_x }}" y="{{ row.text_y }}" font-size="11" fill="{{ pal.ink }}" font-weight="700" text-anchor="end">{{ row.pct }}</text>
+<text x="{{ cbm.pct_x }}" y="{{ row.text_y }}" font-size="11" fill="{{ pal.ink }}" font-weight="700" text-anchor="end">{{ row.pct | xml_escape }}</text>
 {% endfor %}</g>
 {% if cbm.rich %}<line x1="{{ left_rail }}" y1="{{ cbm.separator_y }}" x2="{{ right_rail }}" y2="{{ cbm.separator_y }}" stroke="{{ pal.ink }}" stroke-width="{{ rg.rule_sw }}" opacity="{{ rg.rule_opacity }}"/>{% endif %}{% endif %}
 
