@@ -80,6 +80,49 @@ def test_validate_shares_composes_gate_on_ir_frames() -> None:
     assert validate_surface(preset)["valid"] is True
 
 
+def test_validate_surface_refuses_an_unknown_genome() -> None:
+    bad = validate_surface(SpecEnvelope(type="badge", genome="not-a-genome", spec={"title": "X"}))
+    assert bad["valid"] is False
+    assert bad["error"]["code"] == HwErrorCode.GENOME_UNKNOWN.value
+
+
+def test_validate_surface_refuses_a_frame_the_genome_does_not_support() -> None:
+    """brutalist has no `paradigms.diagram` entry — compose would crash with
+    "diagram frame is not supported by genome 'brutalist'"; validate must
+    refuse the same envelope rather than say True."""
+    good_diagram = {
+        "topology": "pipeline",
+        "title": "T",
+        "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+    }
+    bad = validate_surface(SpecEnvelope(type="diagram", genome="brutalist", spec=good_diagram))
+    assert bad["valid"] is False
+    assert bad["error"]["code"] == HwErrorCode.SPEC_INVALID.value
+    assert "primer" in bad["error"]["fix"]
+
+    good = validate_surface(SpecEnvelope(type="diagram", genome="primer", spec=good_diagram))
+    assert good["valid"] is True
+
+
+def test_validate_surface_refuses_an_unknown_variant() -> None:
+    bad = validate_surface(SpecEnvelope(type="badge", genome="primer", variant="not-a-variant", spec={"title": "X"}))
+    assert bad["valid"] is False
+    assert bad["error"]["code"] == HwErrorCode.VARIANT_UNKNOWN.value
+    assert "noir" in bad["error"]["fix"]
+
+    good = validate_surface(SpecEnvelope(type="badge", genome="primer", variant="noir", spec={"title": "X"}))
+    assert good["valid"] is True
+
+
+def test_validate_surface_accepts_a_well_formed_matrix_on_a_matrix_capable_genome() -> None:
+    matrix_spec = {
+        "title": "T",
+        "columns": [{"id": "v", "label": "V"}],
+        "rows": [{"label": "row1", "cells": [{"value": "1"}]}],
+    }
+    assert validate_surface(SpecEnvelope(type="matrix", genome="primer", spec=matrix_spec))["valid"] is True
+
+
 def test_unknown_emit_target_raises_structured_error() -> None:
     with pytest.raises(HwError) as exc:
         compose_surface(SpecEnvelope(type="badge", spec={"title": "X"}, emit=("svg", "gif")))

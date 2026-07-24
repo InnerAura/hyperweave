@@ -80,8 +80,13 @@ def resolve_variant(spec: ComposeSpec, genome: dict[str, Any], paradigm_spec: An
 
     allowed = list(genome.get("variants") or [])
     if allowed and resolved and resolved not in allowed:
-        msg = f"variant '{resolved}' not in genome.variants {allowed}"
-        raise ValueError(msg)
+        from hyperweave.core.errors import HwError, HwErrorCode
+
+        raise HwError(
+            HwErrorCode.VARIANT_UNKNOWN,
+            f"variant '{resolved}' not in genome.variants {allowed}",
+            fix=f"known variants: {', '.join(allowed)}",
+        )
     return resolved
 
 

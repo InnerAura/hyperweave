@@ -36,6 +36,7 @@ from hyperweave.compose.matrix.project import (
 from hyperweave.compose.surface_modes import stamp_surface, surface_from_props
 from hyperweave.config.loader import load_glyphs, load_matrix_config, load_surface_modes
 from hyperweave.core.color import relative_luminance
+from hyperweave.core.errors import HwError, HwErrorCode
 from hyperweave.core.matrix import CellKind, GlyphTint
 from hyperweave.core.paradigm import ParadigmMatrixConfig
 
@@ -55,8 +56,10 @@ def resolve_matrix(
     """Resolve a matrix artifact into template + frame context."""
     paradigms_map = genome.get("paradigms") or {}
     if "matrix" not in paradigms_map:
-        raise ValueError(
-            f"matrix frame is not supported by genome '{genome.get('id', spec.genome_id)}' (no paradigms.matrix entry)"
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"matrix frame is not supported by genome '{genome.get('id', spec.genome_id)}' (no paradigms.matrix entry)",
+            fix="compose with -g primer (the matrix-capable genome)",
         )
 
     cfg: ParadigmMatrixConfig = (

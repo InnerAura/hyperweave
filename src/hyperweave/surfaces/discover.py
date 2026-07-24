@@ -272,6 +272,34 @@ def _discover_schema(selector: str) -> dict[str, Any]:
     return {"id": selector, "json_schema": model.model_json_schema()}
 
 
+def _diagram_worked_example() -> dict[str, str]:
+    """The diagram-frame worked example for ``verbs.worked_example`` — the
+    onboarding loop the diagram IR needs (a bundled preset -> compose ->
+    extract -> mutate -> recompose), matching the matrix example's weight.
+    ``gateway`` is a real bundled preset (pinned by
+    ``test_diagram_worked_example_preset_is_bundled``); the mutation appends
+    a node and an edge, the shape a cold agent needs for the diagram IR's
+    array fields (matrix's example only replaces a scalar)."""
+    return {
+        "0_discover_preset": (
+            "hw_discover(what='example:diagram/gateway') → {field: 'diagram', value: <DiagramSpec>} — "
+            "a bundled preset, ready to compose or mutate"
+        ),
+        "1_compose": "hw_compose(type='diagram', genome='primer', diagram=value) → {envelope, url}",
+        "2_extract": (
+            "hw_extract(source=svg, respond='payload') → {spec, rendered} — "
+            "the full DiagramSpec seed under payload.spec"
+        ),
+        "3_transform": (
+            "hw_transform(source=svg, mutations=[{'op':'add','path':'/nodes/-','value':"
+            "{'id':'logger','label':'Audit log','kind':'database'}}, "
+            "{'op':'add','path':'/edges/-','value':"
+            "{'source':'server','target':'logger','label':'writes'}}]) → new {envelope, url, lineage}"
+        ),
+        "4_verify": "hw_verify(source=new_svg) → {valid: true}",
+    }
+
+
 def genome_deep_dive(genome_id: str) -> dict[str, Any]:
     """``genome:<id>`` → the role-structured deep-dive (tokens grouped by intent).
 
@@ -450,7 +478,12 @@ def discover(what: str = "all") -> dict[str, Any]:
     if what in ("all", "verbs"):
         from hyperweave.core.contract import discover_verbs
 
-        result["verbs"] = discover_verbs()
+        verbs = discover_verbs()
+        # discover_verbs() ships one worked example (matrix-flavored) — split
+        # it into a per-frame mapping so a cold agent learning the diagram IR
+        # gets an equal-weight loop instead of the matrix-only onboarding.
+        verbs["worked_example"] = {"matrix": verbs["worked_example"], "diagram": _diagram_worked_example()}
+        result["verbs"] = verbs
 
     if what in ("all", "capabilities"):
         result["capabilities"] = capability_index()

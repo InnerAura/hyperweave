@@ -53,7 +53,11 @@ class NormalizedInput:
 
     ``warnings`` are human-readable strings the caller surfaces (CLI stderr)
     — empty for the common case, so a clean input emits no
-    ``rendered.warnings`` key and its payload stays byte-stable."""
+    ``rendered.warnings`` key and its payload stays byte-stable. On
+    promotion the payload also gets a structured ``rendered.topology``
+    key (``spec.topology`` vs ``payload_spec.topology``) — a payload
+    reader should never have to parse ``warnings`` prose to learn what
+    actually rendered."""
 
     spec: DiagramSpec
     payload_spec: DiagramSpec
@@ -158,7 +162,10 @@ def coerce_diagram_input(connector_data: dict[str, Any] | None, spec: ComposeSpe
     preset_name = str((connector_data or {}).get("diagram_preset") or "")
     if preset_name:
         return _finalize(DiagramSpec.model_validate(resolve_diagram_preset(preset_name)))
-    raise DiagramInputError("diagram frame requires a topology: pass spec.diagram (a DiagramSpec) or a server preset")
+    raise DiagramInputError(
+        "diagram frame requires a topology: pass a DiagramSpec (--spec-file JSON, or spec.diagram "
+        "over HTTP/MCP), or a bundled preset name (--spec-file <name>, or diagram_preset)"
+    )
 
 
 def _finalize(raw: DiagramSpec) -> NormalizedInput:

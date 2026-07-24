@@ -171,12 +171,17 @@ def test_chrome_variants_pass_whitelist(variant: str) -> None:
 
 
 @pytest.mark.parametrize("variant", ["nightfall", "AURORA", "horizon ", " moth", "violet-teal"])
-def test_chrome_unknown_variants_raise_value_error(variant: str) -> None:
-    """Unknown variants raise ValueError from resolve_variant's whitelist."""
+def test_chrome_unknown_variants_are_refused(variant: str) -> None:
+    """Unknown variants raise VARIANT_UNKNOWN from resolve_variant's whitelist,
+    carrying the known-variant list as the fix."""
+    from hyperweave.core.errors import HwError, HwErrorCode
+
     spec = ComposeSpec(type="badge", genome_id="chrome", variant=variant)
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(HwError) as exc_info:
         resolve(spec)
-    assert "variant" in str(exc_info.value).lower()
+    assert exc_info.value.code is HwErrorCode.VARIANT_UNKNOWN
+    assert "variant" in exc_info.value.message.lower()
+    assert "known variants:" in exc_info.value.fix
 
 
 # ── End-to-end: ResolvedArtifact carries inline_style ────────────────

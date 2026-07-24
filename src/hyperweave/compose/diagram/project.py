@@ -3,11 +3,12 @@
 The diagram is a polyglot container: the SVG is one projection of the
 ``DiagramSpec`` IR, never its source. The payload pairs the spec with the
 RENDERED record (per-edge motion post-ladder, per-edge track, per-node
-glyph tint, the performance tier) so requested vs rendered never silently
-diverges — and, P4, the envelope id is therefore ARTIFACT identity: the
-same spec under a different edge_motion hashes differently, exactly as a
-different genome or variant already does. No test may assert cross-motion
-id stability.
+glyph tint, the performance tier, and — only when promotion diverged the
+rendered topology from the declared one — the rendered topology slug) so
+requested vs rendered never silently diverges — and, P4, the envelope id
+is therefore ARTIFACT identity: the same spec under a different
+edge_motion hashes differently, exactly as a different genome or variant
+already does. No test may assert cross-motion id stability.
 
 The envelope digest is pattern + n + semantic content only: orientation,
 node_style, glyph, edge_motion, entrance, and track are presentational and
@@ -19,7 +20,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.core.diagram import DiagramSpec, EdgeKind, NodeRole, layout_slug, resolved_edges
+from hyperweave.core.diagram import DiagramSpec, EdgeKind, NodeRole, Topology, layout_slug, resolved_edges
 from hyperweave.core.envelope import cdata_safe_json
 
 if TYPE_CHECKING:
@@ -31,13 +32,23 @@ ENVELOPE_NODE_CAP = 12
 ENVELOPE_EDGE_CAP = 16
 
 
-def diagram_payload_json(spec: DiagramSpec, rendered: RenderedMotion) -> str:
+def diagram_payload_json(
+    spec: DiagramSpec, rendered: RenderedMotion, *, rendered_topology: Topology | None = None
+) -> str:
     """Canonical, lossless, CDATA-safe payload text.
 
     ``{"spec": ..., "rendered": ...}`` — the spec keeps the caller's
     requested motions intact (round-trip source: re-render ``spec`` under
     the same constraint and you reproduce the artifact); ``rendered``
-    records what actually drew."""
+    records what actually drew.
+
+    ``rendered_topology`` is the topology the solver actually rendered
+    (``normalized.spec.topology``); ``spec`` here is the payload spec,
+    carrying the caller's declared topology. Pass it whenever the two
+    sources are available — the two differ only on promotion (a cyclic
+    ``dag`` rendered as ``state-machine``), at which point it lands as
+    ``rendered.topology`` so a payload reader gets the rendered shape as
+    data, not prose parsed out of ``rendered.warnings``."""
     rendered_block: dict[str, Any] = {
         "edge_motion": list(rendered.edge_motion),
         "track": list(rendered.track),
@@ -51,6 +62,10 @@ def diagram_payload_json(spec: DiagramSpec, rendered: RenderedMotion) -> str:
     # schema (diagram/1 stays additive).
     if rendered.warnings:
         rendered_block["warnings"] = list(rendered.warnings)
+    # Same additive rule for topology: absent means rendered-as-declared: a
+    # non-promoted diagram's payload is untouched by this parameter at all.
+    if rendered_topology is not None and rendered_topology != spec.topology:
+        rendered_block["topology"] = rendered_topology.value
     body: dict[str, Any] = {
         "spec": spec.model_dump(mode="json", exclude_defaults=True),
         "rendered": rendered_block,

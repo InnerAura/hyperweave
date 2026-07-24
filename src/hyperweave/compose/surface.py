@@ -25,13 +25,27 @@ from hyperweave.core.base import FrozenModel
 from hyperweave.core.diagram import DiagramSpec
 from hyperweave.core.enums import FrameType
 from hyperweave.core.envelope import extract_envelope, extract_payload
-from hyperweave.core.errors import HwError, HwErrorCode
+from hyperweave.core.errors import HwError, HwErrorCode, format_error_line
 from hyperweave.core.matrix import MatrixSpec
 from hyperweave.core.models import ComposeSpec
 from hyperweave.formats import FormatId, Projection, parse_format, project
 
 # Frame content that maps to a dedicated ComposeSpec field rather than a kwarg.
 _IR_FIELD: dict[str, str] = {"matrix": "matrix", "diagram": "diagram"}
+
+# Frames whose only capable genome (and flagship look) is primer; every other
+# frame keeps the brutalist default.
+_PRIMER_DEFAULT_FRAMES: frozenset[str] = frozenset({"diagram", "matrix", "receipt"})
+
+
+def default_genome(frame_type: str) -> str:
+    """The genome an unset ``genome`` resolves to for ``frame_type``.
+
+    ONE definition — the CLI, HTTP, and MCP adapters all resolve an empty
+    genome through here (Invariant 9: the wires are thin adapters; a default
+    living in an adapter is how the surfaces drift apart)."""
+    return "primer" if frame_type in _PRIMER_DEFAULT_FRAMES else "brutalist"
+
 
 # ComposeSpec top-level field names that a caller may pack into `spec` ALONGSIDE
 # an IR frame's schema (e.g. matrix + connector_data, diagram + chrome/
@@ -168,7 +182,7 @@ def _to_compose_spec(env: SpecEnvelope, *, data_tokens: list[Any] | None = None)
     # `extra="forbid"` would reject it) or resurrect external control of a
     # retired axis.
     content.pop("chrome", None)
-    kwargs: dict[str, Any] = {"type": env.type, "genome_id": env.genome}
+    kwargs: dict[str, Any] = {"type": env.type, "genome_id": env.genome or default_genome(env.type)}
     if env.variant:
         kwargs["variant"] = env.variant
     ir_field = _IR_FIELD.get(env.type)
@@ -206,9 +220,23 @@ def build_compose_spec(kwargs: dict[str, Any], frame_type: str) -> ComposeSpec:
     except ValidationError as exc:
         code = HwErrorCode.TYPE_UNKNOWN if frame_type not in _FRAME_TYPES else HwErrorCode.SPEC_INVALID
         errors = exc.errors(include_url=False)
-        # Surface the first violation's own text — cli_text() prints only
-        # message + fix, so a count-only message buries the actual rule.
-        first = str(errors[0].get("msg", "")).removeprefix("Value error, ") if errors else ""
+        # ComposeSpec nests an IR frame's schema under its own field name
+        # (`diagram`/`matrix`), so pydantic prepends that name to every
+        # nested loc — noise relative to the dict the caller actually
+        # supplied as `spec`. Strip it so a field path reads `edges[0].source`
+        # rather than `diagram.edges[0].source`.
+        ir_field = _IR_FIELD.get(frame_type)
+        if ir_field:
+            errors = [
+                {**err, "loc": tuple(err.get("loc") or ())[1:]}
+                if tuple(err.get("loc") or ())[:1] == (ir_field,)
+                else err
+                for err in errors
+            ]
+        # Surface the first violation's own field path + text — cli_text()
+        # used to print only message + fix, so a count-only message buried
+        # the actual rule and gave a repairing agent nowhere to look.
+        first = format_error_line(errors[0]) if errors else ""
         more = f" (+{len(errors) - 1} more)" if len(errors) > 1 else ""
         summary = f"{first}{more}" if first else f"{exc.error_count()} error(s)"
         raise HwError(
@@ -364,28 +392,67 @@ def validate_surface(env: SpecEnvelope) -> dict[str, Any]:
     structure."""
     try:
         cspec = _to_compose_spec(env)
+        _validate_genome_and_frame(cspec)
         _validate_ir_structure(cspec)
     except HwError as exc:
         return {"valid": False, **exc.envelope()}
-    return {"valid": True, "type": env.type, "genome": env.genome}
+    return {"valid": True, "type": env.type, "genome": cspec.genome_id}
+
+
+def _validate_genome_and_frame(cspec: ComposeSpec) -> None:
+    """Refuse a genome that doesn't exist, doesn't support the requested frame,
+    or is asked for a variant outside its whitelist — the same three gates
+    the resolver enforces at render time (``resolve_diagram``/``resolve_matrix``'s
+    ``paradigms.<frame>`` membership check; ``resolver.resolve_variant``'s
+    ``genome.variants`` whitelist), run here so ``validate`` can't say True to
+    a spec compose would refuse. ``get_loader()`` is the same config seam the
+    resolvers read genomes through, kept as a lazy import so this module
+    doesn't pull config-loading machinery into every ``compose_surface`` call."""
+    from hyperweave.config.loader import get_loader
+
+    genomes = get_loader().genomes
+    genome = genomes.get(cspec.genome_id)
+    if genome is None:
+        raise HwError(
+            HwErrorCode.GENOME_UNKNOWN,
+            f"unknown genome {cspec.genome_id!r}",
+            fix=f"known genomes: {', '.join(sorted(genomes))}",
+        )
+
+    frame_type = str(cspec.type)
+    paradigms_map = genome.get("paradigms") or {}
+    if frame_type not in paradigms_map:
+        supporting = sorted(gid for gid, g in genomes.items() if frame_type in (g.get("paradigms") or {}))
+        fix = f"use a genome that supports {frame_type}: {', '.join(supporting)}" if supporting else ""
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"{frame_type} frame is not supported by genome {cspec.genome_id!r}",
+            fix=fix,
+        )
+
+    allowed = list(genome.get("variants") or [])
+    if allowed and cspec.variant and cspec.variant not in allowed:
+        raise HwError(
+            HwErrorCode.VARIANT_UNKNOWN,
+            f"unknown variant {cspec.variant!r} for genome {cspec.genome_id!r}",
+            fix=f"known variants: {', '.join(allowed)}",
+        )
 
 
 def _validate_ir_structure(cspec: ComposeSpec) -> None:
-    """Run an IR frame's input coercion (no render) so validate refuses
-    anything compose would. Coercion errors are ValueError-family
-    (DiagramInputError / MatrixInputError / pydantic ValidationError); map
-    them to SPEC_INVALID. Non-IR frames have no separate structural pass."""
+    """Run the real compose pipeline (bytes discarded) so validate refuses
+    exactly what compose refuses — the invariant is "a file that validates
+    always composes". Structural refusals live at every depth of the solve
+    (input coercion, topology node bands, hub sector slots, dag rank caps,
+    annotation anchors), so a curated pre-check list can never stay
+    complete; the pipeline itself is the only honest oracle. Refusals are
+    ValueError-family (DiagramInputError / MatrixInputError / pydantic
+    ValidationError) and map to SPEC_INVALID carrying the solver's own
+    message. Non-IR frames have no separate structural pass."""
     if cspec.type not in _IR_FIELD:
         return
     try:
-        if cspec.type == "diagram":
-            from hyperweave.compose.diagram.input import coerce_diagram_input
-
-            coerce_diagram_input(cspec.connector_data, cspec)
-        elif cspec.type == "matrix":
-            from hyperweave.compose.matrix.input import coerce_matrix_input
-
-            coerce_matrix_input(cspec.connector_data, cspec)
+        compose(cspec)
     except HwError:
         raise
     except (ValueError, TypeError) as exc:

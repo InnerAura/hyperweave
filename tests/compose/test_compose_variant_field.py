@@ -74,11 +74,15 @@ def test_variant_accepts_automata_allowed_values(value: str) -> None:
 )
 def test_variant_rejects_unknown_values_at_resolve_time(value: str) -> None:
     """Path B: validation is resolve-time against genome.variants, not Pydantic."""
+    from hyperweave.core.errors import HwError, HwErrorCode
+
     spec = ComposeSpec(type="badge", genome_id="automata", variant=value)
-    # Construction succeeds (lenient field). Resolve-time raises.
-    with pytest.raises(ValueError) as exc_info:
+    # Construction succeeds (lenient field). Resolve-time raises the
+    # structured VARIANT_UNKNOWN refusal carrying the whitelist as the fix.
+    with pytest.raises(HwError) as exc_info:
         resolve(spec)
-    assert "variant" in str(exc_info.value)
+    assert exc_info.value.code is HwErrorCode.VARIANT_UNKNOWN
+    assert "variant" in exc_info.value.message
 
 
 def test_variant_accepts_anything_when_genome_has_no_variants_axis() -> None:

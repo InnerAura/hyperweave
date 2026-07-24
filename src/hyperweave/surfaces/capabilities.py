@@ -36,7 +36,13 @@ class ComposeInput(BaseModel):
     type: str = Field(
         description="Frame type: badge | strip | icon | divider | marquee | receipt | card | chart | matrix | diagram"
     )
-    genome: str = Field(default="primer", description="Genome id (primer | brutalist | chrome | automata).")
+    genome: str = Field(
+        default="",
+        description=(
+            "Genome id (primer | brutalist | chrome | automata). "
+            "Unset resolves frame-aware: primer for diagram/matrix/receipt, brutalist otherwise."
+        ),
+    )
     variant: str = Field(default="", description="Chromatic variant slug (genome-specific).")
     spec: dict[str, Any] = Field(default_factory=dict, description="Frame IR / content fields.")
     data: str = Field(default="", description="Data-token grammar string (live values resolved inline).")
@@ -50,7 +56,10 @@ class ValidateInput(BaseModel):
     """Validate a spec envelope without rendering."""
 
     type: str = Field(description="Frame type.")
-    genome: str = Field(default="primer", description="Genome id.")
+    genome: str = Field(
+        default="",
+        description="Genome id. Unset resolves frame-aware: primer for diagram/matrix/receipt, brutalist otherwise.",
+    )
     variant: str = Field(default="", description="Chromatic variant slug.")
     spec: dict[str, Any] = Field(default_factory=dict, description="Frame IR / content fields.")
 

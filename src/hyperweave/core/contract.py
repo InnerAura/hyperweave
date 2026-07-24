@@ -72,11 +72,11 @@ def discover_verbs() -> dict[str, object]:
         "query": "query(artifact, question) → {answer, field}. Deterministic field lookup over the envelope.",
         "worked_example": {
             "1_compose": "hw_compose(type='matrix', genome='primer', matrix={...}) → {envelope, url}",
-            "2_extract": "hw_extract(svg, respond='payload') → the full MatrixSpec seed",
+            "2_extract": "hw_extract(source=svg, respond='payload') → the full MatrixSpec seed",
             "3_transform": (
-                "hw_transform(svg, [{'op':'replace','path':'/rows/0/cells/1/value','value':'9.99'}]) "
-                "→ new {envelope, url, lineage}"
+                "hw_transform(source=svg, mutations=[{'op':'replace','path':'/rows/0/cells/1/value',"
+                "'value':'9.99'}]) → new {envelope, url, lineage}"
             ),
-            "4_verify": "hw_verify(new_svg) → {valid: true}",
+            "4_verify": "hw_verify(source=new_svg) → {valid: true}",
         },
     }

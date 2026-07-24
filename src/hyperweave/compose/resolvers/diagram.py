@@ -29,6 +29,7 @@ from hyperweave.compose.diagram.project import (
 )
 from hyperweave.compose.surface_modes import flip_token, stamp_surface, surface_from_props
 from hyperweave.config.loader import load_diagram_config, load_glyphs, load_surface_modes
+from hyperweave.core.errors import HwError, HwErrorCode
 from hyperweave.core.matrix import GlyphTint
 from hyperweave.core.paradigm import MatrixVoice, ParadigmDiagramConfig
 
@@ -117,9 +118,11 @@ def resolve_diagram(
     """Resolve a diagram artifact into template + frame context."""
     paradigms_map = genome.get("paradigms") or {}
     if "diagram" not in paradigms_map:
-        raise ValueError(
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
             f"diagram frame is not supported by genome '{genome.get('id', spec.genome_id)}' "
-            "(no paradigms.diagram entry)"
+            "(no paradigms.diagram entry)",
+            fix="compose with -g primer (the diagram-capable genome)",
         )
     cfg: ParadigmDiagramConfig = (
         paradigm_spec.diagram
@@ -264,7 +267,7 @@ def resolve_diagram(
         "diagram",
         load_surface_modes(),
     )
-    payload_json = diagram_payload_json(payload_spec, layout.rendered)
+    payload_json = diagram_payload_json(payload_spec, layout.rendered, rendered_topology=dspec.topology)
     # §2/§10.1a AMENDED: the region map is PUBLIC anatomy but CHROME-VARIANT
     # (masthead/footer bboxes exist only under card chrome), and the payload
     # must stay chrome-invariant — the envelope digest is artifact identity

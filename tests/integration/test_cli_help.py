@@ -43,3 +43,24 @@ def test_compose_help_preserves_bracketed_annotations() -> None:
     rendered = _normalized_help()
     for annotation in _ANNOTATIONS:
         assert annotation in rendered, f"annotation eaten by Rich: {annotation!r}"
+
+
+def test_compose_help_cites_only_real_bundled_spec_names() -> None:
+    """Every bare ``--spec-file <name>`` the help prints must resolve in a
+    bundled store — a printed example that errors is a broken instruction
+    (the dead 'pipeline' citation this pins)."""
+    from hyperweave.compose.bundled_specs import resolve_bundled_spec
+    from hyperweave.core.errors import HwError
+
+    rendered = _normalized_help()
+    names = {m.group(1) for m in re.finditer(r"--spec-file ([a-z][a-z0-9-]*)(?![.\w/])", rendered)}
+    assert names, "help no longer shows any bundled-name --spec-file examples"
+    for name in sorted(names):
+        for frame in ("diagram", "matrix"):
+            try:
+                resolve_bundled_spec(frame, name)
+                break
+            except HwError:
+                continue
+        else:
+            raise AssertionError(f"--spec-file example cites unknown bundled spec {name!r}")

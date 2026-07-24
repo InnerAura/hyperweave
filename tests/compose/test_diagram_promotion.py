@@ -12,6 +12,8 @@ promotion (byte-stability); the hub/lanes structural validators; and dag
 from __future__ import annotations
 
 import json
+import re
+from typing import Any
 
 import pytest
 
@@ -22,8 +24,10 @@ from hyperweave.compose.diagram.input import (
 )
 from hyperweave.compose.diagram.project import diagram_payload_json
 from hyperweave.compose.diagram.records import RenderedMotion
+from hyperweave.compose.engine import compose
 from hyperweave.core.diagram import (
     DiagramEdge,
+    DiagramInputError,
     DiagramNode,
     DiagramSpec,
     Topology,
@@ -86,6 +90,19 @@ class TestPromotion:
         assert norm.warnings == ()
 
 
+class TestNoInputErrorMessage:
+    def test_names_every_real_path(self) -> None:
+        # Every reachable input path must be named — the message shouldn't
+        # teach a shape that fails on the surface that shows it (the CLI
+        # error was naming only ``spec.diagram``, which no CLI flag sets).
+        with pytest.raises(DiagramInputError) as exc_info:
+            coerce_diagram_input(None, ComposeSpec(type="diagram"))
+        message = str(exc_info.value)
+        assert "--spec-file" in message
+        assert "spec.diagram" in message
+        assert "diagram_preset" in message
+
+
 class TestPayloadWarnings:
     def test_promoted_payload_keeps_declared_dag_topology(self) -> None:
         norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "c"), ("c", "a")]))
@@ -102,6 +119,63 @@ class TestPayloadWarnings:
         # key, so its payload matches the pre-promotion schema exactly.
         payload = json.loads(diagram_payload_json(_dag([("a", "b"), ("b", "c")]), _rendered()))
         assert "warnings" not in payload["rendered"]
+
+
+_CYCLIC_DAG = {
+    "topology": "dag",
+    "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+    "edges": [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}, {"source": "c", "target": "a"}],
+}
+_ACYCLIC_DAG = {
+    "topology": "dag",
+    "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+    "edges": [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}],
+}
+
+
+def _payload_from_svg(svg: str) -> dict[str, Any]:
+    m = re.search(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", svg, re.DOTALL)
+    assert m, "hw:payload missing"
+    return json.loads(m.group(1))  # type: ignore[no-any-return]
+
+
+class TestPayloadRenderedTopology:
+    """rendered.topology bridges a promoted render back to structured data —
+    a payload reader should never have to parse ``rendered.warnings`` prose
+    to learn what actually rendered (spec.topology stays the caller's dag)."""
+
+    def test_promoted_payload_gets_rendered_topology_key(self) -> None:
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "c"), ("c", "a")]))
+        payload = json.loads(
+            diagram_payload_json(norm.payload_spec, _rendered(norm.warnings), rendered_topology=norm.spec.topology)
+        )
+        assert payload["spec"]["topology"] == "dag"
+        assert payload["rendered"]["topology"] == "state-machine"
+
+    def test_unpromoted_rendered_topology_omits_the_key(self) -> None:
+        spec = _dag([("a", "b"), ("b", "c")])
+        payload = json.loads(diagram_payload_json(spec, _rendered(), rendered_topology=spec.topology))
+        assert "topology" not in payload["rendered"]
+
+    def test_topology_key_absent_when_argument_not_passed(self) -> None:
+        # Byte-stability: the pre-existing call shape (no rendered_topology
+        # kwarg) reproduces the pre-existing payload exactly.
+        payload = json.loads(diagram_payload_json(_dag([("a", "b"), ("b", "c")]), _rendered()))
+        assert "topology" not in payload["rendered"]
+
+    def test_cyclic_dag_through_the_real_engine(self) -> None:
+        # Guard Law: compose through the real engine and parse the real SVG,
+        # not just the projection helper in isolation.
+        svg = compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=_CYCLIC_DAG)).svg
+        assert 'data-hw-topology="state-machine"' in svg
+        payload = _payload_from_svg(svg)
+        assert payload["spec"]["topology"] == "dag"
+        assert payload["rendered"]["topology"] == "state-machine"
+
+    def test_acyclic_dag_through_the_real_engine_has_no_topology_key(self) -> None:
+        svg = compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=_ACYCLIC_DAG)).svg
+        payload = _payload_from_svg(svg)
+        assert "topology" not in payload["rendered"]
 
 
 class TestByteDeterminism:

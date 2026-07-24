@@ -87,7 +87,9 @@ def coerce_matrix_input(connector_data: Mapping[str, object] | None, spec: Compo
         return build_tokens_matrix(spec.data_tokens)
 
     raise MatrixInputError(
-        "matrix frame requires a table: pass spec.matrix (a MatrixSpec), a matrix preset, or data tokens"
+        "matrix frame requires a table: pass a MatrixSpec (--spec-file JSON, or spec.matrix over "
+        "HTTP/MCP), a bundled preset name (--spec-file <name>, or connector_data.matrix_adapter), "
+        "or data tokens (--data / ?data=)"
     )
 
 

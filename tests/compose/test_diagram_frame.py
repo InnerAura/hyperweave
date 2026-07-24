@@ -243,9 +243,13 @@ class TestChromatic:
         assert not offenders, offenders
 
     def test_unsupported_genome_raises(self) -> None:
+        from hyperweave.core.errors import HwError, HwErrorCode
+
         spec = ComposeSpec(type="diagram", genome_id="brutalist", diagram=load_fixture("pipeline"))
-        with pytest.raises(ValueError, match="diagram frame is not supported"):
+        with pytest.raises(HwError, match="diagram frame is not supported") as exc:
             compose(spec)
+        assert exc.value.code is HwErrorCode.SPEC_INVALID
+        assert "primer" in exc.value.fix
 
 
 class TestDrawOrderAndFurniture:

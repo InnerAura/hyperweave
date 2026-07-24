@@ -32,7 +32,7 @@ async def hw_compose(
     type: str = "badge",
     title: str = "",
     value: str = "",
-    genome: str = "brutalist",
+    genome: str = "",
     state: str = "active",
     motion: str = "static",
     glyph: str = "",
@@ -89,6 +89,8 @@ async def hw_compose(
               — pair any two via ?pair=...)
             — or pass ``genome_override`` as an inline genome dict to bypass
               the built-in registry (equivalent to CLI ``--genome-file``).
+            Unset resolves frame-aware, identical to the CLI: primer for
+            diagram/matrix/receipt, brutalist otherwise.
 
     Content by frame type:
       badge:    title="STARS" value="12345" (two-panel badge)

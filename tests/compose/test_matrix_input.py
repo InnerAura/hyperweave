@@ -65,6 +65,18 @@ class TestCoercion:
         with pytest.raises(MatrixInputError, match="requires a table"):
             coerce_matrix_input(None, ComposeSpec(type="matrix"))
 
+    def test_no_input_error_names_every_real_path(self) -> None:
+        # Every reachable input path must be named — matrix parity with the
+        # diagram frame's equivalent fix (Invariant 9): the message shouldn't
+        # teach a shape that fails on the surface that shows it.
+        with pytest.raises(MatrixInputError) as exc_info:
+            coerce_matrix_input(None, ComposeSpec(type="matrix"))
+        message = str(exc_info.value)
+        assert "--spec-file" in message
+        assert "spec.matrix" in message
+        assert "connector_data.matrix_adapter" in message
+        assert "--data" in message
+
     def test_tokens_matrix(self) -> None:
         from hyperweave.connectors.data_tokens import ResolvedToken
 

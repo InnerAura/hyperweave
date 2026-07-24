@@ -5,6 +5,9 @@ The gate: a cold agent given only an SVG finds the contract and round-trips it.
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -68,6 +71,27 @@ async def test_hw_discover_verbs_has_signatures_and_example() -> None:
 
 
 @pytest.mark.asyncio
+async def test_worked_example_teaches_both_matrix_and_diagram() -> None:
+    """The onboarding loop must not be matrix-only: an agent learning the
+    diagram IR needs an equal-weight worked example, not just matrix's."""
+    from hyperweave.compose.diagram.input import diagram_preset_names
+
+    examples = (await hw_discover("verbs"))["verbs"]["worked_example"]
+    assert set(examples) == {"matrix", "diagram"}
+
+    for frame, steps in examples.items():
+        ordered = sorted(steps, key=lambda k: int(k.split("_", 1)[0]))
+        assert ordered == list(steps), f"{frame} worked example steps are out of order: {list(steps)}"
+        assert len(steps) >= 4, f"{frame} worked example is thinner than expected: {list(steps)}"
+
+    diagram_steps = examples["diagram"]
+    preset_step = diagram_steps["0_discover_preset"]
+    assert "example:diagram/" in preset_step
+    preset_name = preset_step.split("example:diagram/", 1)[1].split("'", 1)[0]
+    assert preset_name in diagram_preset_names(), f"{preset_name!r} is not a real bundled diagram preset"
+
+
+@pytest.mark.asyncio
 async def test_url_grammar_advertises_diagram_and_surface_axes() -> None:
     """The discovery grammar must advertise what the routes accept — the
     diagram entry went missing entirely once, and the surface axes
@@ -97,6 +121,64 @@ async def test_mcp_verb_round_trip() -> None:
     new_svg = get_artifact(tr["url"].rsplit("/", 1)[-1])
     assert new_svg is not None
     assert (await hw_verify(new_svg))["valid"] is True
+
+
+@pytest.mark.asyncio
+async def test_worked_examples_execute_verbatim_over_the_mcp_wire() -> None:
+    """Guard law: the printed worked-example calls must run AS PRINTED on the
+    actual MCP wire — keyword arguments against the real tool schemas. Wire
+    calls have no positionals, so a printed positional arg is a broken
+    instruction; a positional-call guard is exactly how one shipped. Each
+    step's call text is evaluated literally through an in-memory MCP client;
+    the only substitutions are the loop's own carried state (``value`` /
+    ``svg`` / ``new_svg``) and matrix's explicit ``{...}`` fill-in-your-spec
+    placeholder."""
+    from fastmcp import Client
+
+    from hyperweave.mcp.server import mcp as mcp_server
+    from hyperweave.surfaces.discover import discover
+
+    examples = discover("verbs")["verbs"]["worked_example"]
+    matrix_fill = {
+        "title": "Cost",
+        "columns": [{"id": "m", "label": "MODEL"}, {"id": "c", "label": "COST", "kind": "numeric"}],
+        "rows": [{"label": "Qwen", "cells": [{"value": "Qwen"}, {"value": "9.10"}]}],
+    }
+
+    async with Client(mcp_server) as client:
+
+        def make_tool(name: str):  # type: ignore[no-untyped-def]
+            async def call(**kwargs: object) -> Any:  # keyword-only: the wire shape
+                res = await client.call_tool(name, dict(kwargs))
+                sc = res.structured_content
+                if isinstance(sc, dict):
+                    return sc.get("result", sc)
+                return json.loads(res.content[0].text)
+
+            return call
+
+        for frame in ("matrix", "diagram"):
+            steps = examples[frame]
+            ns: dict[str, Any] = {
+                f"hw_{verb}": make_tool(f"hw_{verb}")
+                for verb in ("discover", "compose", "extract", "transform", "verify")
+            }
+            ns["MATRIX_SPEC"] = matrix_fill
+            results: dict[str, Any] = {}
+            for key in sorted(steps, key=lambda k: int(k.split("_", 1)[0])):
+                call_text = steps[key].split("→", 1)[0].strip().replace("{...}", "MATRIX_SPEC")
+                results[key] = await eval(call_text, {"__builtins__": {}}, ns)
+                # Loop glue — the example's implicit dataflow between steps
+                # (fetch the composed bytes from the returned url handle).
+                if key.endswith("_discover_preset"):
+                    ns["value"] = results[key]["example"]["value"]
+                elif key.endswith("_compose"):
+                    ns["svg"] = get_artifact(results[key]["url"].rsplit("/", 1)[-1])
+                elif key.endswith("_transform"):
+                    assert results[key]["lineage"], f"{frame} transform lost lineage"
+                    ns["new_svg"] = get_artifact(results[key]["url"].rsplit("/", 1)[-1])
+            verify_key = next(k for k in steps if k.endswith("_verify"))
+            assert results[verify_key]["valid"] is True, f"{frame} loop did not verify: {results[verify_key]}"
 
 
 @pytest.mark.asyncio

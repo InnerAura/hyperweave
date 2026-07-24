@@ -223,8 +223,12 @@ class TestChromaticCoverage:
         assert 'fill-rule="evenodd"' in svg
 
     def test_unsupported_genome_raises_clear_error(self) -> None:
-        with pytest.raises(ValueError, match="matrix frame is not supported by genome 'brutalist'"):
+        from hyperweave.core.errors import HwError, HwErrorCode
+
+        with pytest.raises(HwError, match="matrix frame is not supported by genome 'brutalist'") as exc:
             compose(ComposeSpec(type="matrix", genome_id="brutalist", matrix=load_fixture("check")))
+        assert exc.value.code is HwErrorCode.SPEC_INVALID
+        assert "primer" in exc.value.fix
 
 
 class TestReasoningMetadata:

@@ -275,8 +275,8 @@ class DiagramEdge(FrozenModel):
     overlay on the derived structure; for sequence/dag/state-machine it IS
     the content (ordered for sequence)."""
 
-    source: str = Field(description="Source node id")
-    target: str = Field(description="Target node id")
+    source: str = Field(description="Source node id (also accepts 'from' as an input alias)")
+    target: str = Field(description="Target node id (also accepts 'to' as an input alias)")
     label: str = Field(
         default="",
         description=(
@@ -349,6 +349,30 @@ class DiagramEdge(FrozenModel):
         "payload vocabulary — echoed into hw:payload so an agent reads the "
         "declared grammar; dress derives from relation/kind, not from this",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _canonicalize_endpoint_aliases(cls, data: object) -> object:
+        """``from``/``to`` are accepted input aliases for ``source``/``target``
+        — every LLM's Mermaid-shaped prior writes edges this way. Canonicalize
+        here so the canonical names stay ``source``/``target`` everywhere
+        downstream (payloads, docs, Field descriptions); a caller declaring
+        both an alias and the canonical name with conflicting values is a
+        caller error, not a silent pick."""
+        if not isinstance(data, dict):
+            return data
+        data = dict(data)
+        if "from" in data:
+            frm = data.pop("from")
+            if "source" in data and data["source"] != frm:
+                raise ValueError(f"edge sets both 'from'={frm!r} and 'source'={data['source']!r} with different values")
+            data["source"] = frm
+        if "to" in data:
+            to = data.pop("to")
+            if "target" in data and data["target"] != to:
+                raise ValueError(f"edge sets both 'to'={to!r} and 'target'={data['target']!r} with different values")
+            data["target"] = to
+        return data
 
 
 class DiagramRegion(FrozenModel):
@@ -601,6 +625,39 @@ class DiagramSpec(FrozenModel):
             "gives plate/inlay/twin (and each twin face) distinct content addresses."
         ),
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _autofill_node_ids(cls, data: object) -> object:
+        """Empty/missing node ids fill ``n{i}`` (index-positional) before the
+        after-validator runs, so a spec with id-less nodes and edges
+        referencing ``n0``/``n1`` (the promised auto-id contract on
+        ``DiagramNode.id``) validates instead of failing with an
+        unknown-node-reference error. Matches ``resolve_auto_roles``' exact
+        scheme (compose/diagram/input.py) — that normalization pass becomes a
+        harmless no-op once ids are already filled here. Declared ids pass
+        through untouched; a declared id that collides with an autofill
+        target is caught downstream by ``_validate_shape``'s duplicate-id
+        check, same as two declared ids colliding with each other."""
+        if not isinstance(data, dict):
+            return data
+        nodes = data.get("nodes")
+        if not isinstance(nodes, list) or not nodes:
+            return data
+        new_nodes: list[Any] = []
+        changed = False
+        for i, node in enumerate(nodes):
+            if isinstance(node, dict):
+                if not node.get("id"):
+                    node = {**node, "id": f"n{i}"}
+                    changed = True
+            elif isinstance(node, DiagramNode) and not node.id:
+                node = node.model_copy(update={"id": f"n{i}"})
+                changed = True
+            new_nodes.append(node)
+        if not changed:
+            return data
+        return {**data, "nodes": new_nodes}
 
     @model_validator(mode="after")
     def _validate_shape(self) -> DiagramSpec:

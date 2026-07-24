@@ -5,6 +5,35 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-07-23
+
+Diagram and matrix compose on the first try from a cold start: defaults work, both spec shapes parse everywhere, and errors name every field.
+
+### Added
+
+- **`--spec` on compose, `--spec-file` on validate** — both commands take a spec inline, from a file, or as a bundled preset name.
+- **Diagram worked example** — `discover verbs` teaches the compose → extract → mutate → recompose loop for diagram beside matrix; every printed call runs as-is over MCP.
+
+### Fixed
+
+- **Frame-aware genome default on every surface** — an unset genome resolves to primer for diagram, matrix, and receipt on CLI, HTTP, and MCP alike; every other frame keeps brutalist.
+- **No tracebacks on caller errors** — unknown genomes, unknown variants, missing input, and capacity limits all exit with the fix named.
+- **One spec shape everywhere** — `validate` and `compose --spec-file` both accept a bare spec or a `{type, spec}` envelope; a file that validates always composes.
+- **Errors list every field** — a rejected spec prints each violated path (`edges[0].source: Field required`), and unknown fields are called out.
+- **`from`/`to` edge aliases** — diagram edges accept `from`/`to` for `source`/`target`; payloads still dump the canonical names.
+- **Auto node ids validate** — edges may reference the promised `n0`, `n1`, … ids of unnamed nodes.
+- **No-input errors cite working commands** — the diagram and matrix "requires a …" messages name `--spec-file`, the HTTP/MCP field, and presets.
+- **Promoted topology in the payload** — a cyclic `dag` rendered as `state-machine` records `rendered.topology` beside the declared spec.
+- **Validate is a true preflight** — unknown genomes, genome-frame mismatches, unknown variants, and topology capacity limits are refused with the message compose gives.
+- **Preset names and missing files in `validate`** — a bundled preset name validates; a missing path errors cleanly.
+- **Help examples execute** — `--spec-file` examples cite a real bundled preset name.
+
+### Notes
+
+- `worked_example` in `discover verbs` is now keyed by frame (`matrix`, `diagram`).
+- Error detail prints up to 8 field lines, then a remainder count.
+- Unknown-variant compose failures classify as 404 in `x-hw-error-code` (previously 422).
+
 ## [0.4.0] - 2026-07-22
 
 Promotes alpha.8 to stable. The 0.4 series adds the matrix and diagram frames, embedded data on every artifact with five verbs to read and edit it, light and dark adaptive surfaces, and PNG, WebP, static SVG, and terminal output.

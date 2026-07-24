@@ -329,3 +329,105 @@ class TestTreeDepth:
             ],
         )
         assert tree_depth(s) == 2
+
+
+class TestEdgeEndpointAliases:
+    """``from``/``to`` are the Mermaid-shaped prior every LLM writes edges
+    with; DiagramEdge accepts them as input aliases for source/target."""
+
+    def test_from_to_alias_validates_and_dumps_as_source_target(self) -> None:
+        s = DiagramSpec(topology="pipeline", nodes=ided("A", "B"), edges=[{"from": "a", "to": "b"}])
+        assert s.edges[0].source == "a"
+        assert s.edges[0].target == "b"
+        dumped = s.model_dump()["edges"][0]
+        assert dumped["source"] == "a"
+        assert dumped["target"] == "b"
+        assert "from" not in dumped
+        assert "to" not in dumped
+
+    def test_from_source_conflict_rejected(self) -> None:
+        with pytest.raises(ValueError, match="both 'from'"):
+            DiagramSpec(topology="pipeline", nodes=ided("A", "B"), edges=[{"from": "a", "source": "b", "to": "b"}])
+
+    def test_to_target_conflict_rejected(self) -> None:
+        with pytest.raises(ValueError, match="both 'to'"):
+            DiagramSpec(topology="pipeline", nodes=ided("A", "B"), edges=[{"from": "a", "to": "b", "target": "a"}])
+
+    def test_from_source_agreeing_values_pass(self) -> None:
+        s = DiagramSpec(
+            topology="pipeline",
+            nodes=ided("A", "B"),
+            edges=[{"from": "a", "source": "a", "to": "b", "target": "b"}],
+        )
+        assert s.edges[0].source == "a"
+        assert s.edges[0].target == "b"
+
+
+class TestAutoNodeIds:
+    """The DiagramNode.id docstring promises empty auto-fills 'n{i}' — pinned
+    at the model layer so DiagramSpec.model_validate honors the contract
+    directly, without relying on compose/diagram/input.py normalization."""
+
+    def test_id_less_nodes_with_n_index_edge_refs_validate(self) -> None:
+        s = DiagramSpec.model_validate(
+            {
+                "topology": "dag",
+                "nodes": [{"label": "Plan"}, {"label": "Act"}],
+                "edges": [{"source": "n0", "target": "n1"}],
+            }
+        )
+        assert [n.id for n in s.nodes] == ["n0", "n1"]
+        assert s.edges[0].source == "n0"
+        assert s.edges[0].target == "n1"
+
+    def test_mixed_ids_are_index_positional_not_slot_counted(self) -> None:
+        # Position 0 declares an explicit id; position 1 is empty and must
+        # still fill "n1" (its OWN index) — a slot-counting scheme would
+        # wrongly reuse "n0" for the first empty slot it sees.
+        s = DiagramSpec.model_validate(
+            {"topology": "pipeline", "nodes": [{"id": "plan", "label": "Plan"}, {"label": "Act"}]}
+        )
+        assert [n.id for n in s.nodes] == ["plan", "n1"]
+
+    def test_autofill_collision_with_declared_id_rejected(self) -> None:
+        # Position 0 is empty (autofills "n0"); position 1 explicitly
+        # declares "n0" — the existing duplicate-id check now catches this
+        # instead of the two nodes silently sharing an id.
+        with pytest.raises(ValueError, match="unique"):
+            DiagramSpec.model_validate(
+                {"topology": "pipeline", "nodes": [{"label": "Plan"}, {"id": "n0", "label": "Act"}]}
+            )
+
+    def test_fully_declared_ids_produce_identical_dump(self) -> None:
+        spec_dict = {
+            "topology": "pipeline",
+            "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}],
+            "edges": [{"source": "a", "target": "b"}],
+        }
+        s = DiagramSpec.model_validate(spec_dict)
+        assert s.model_dump(exclude_defaults=True) == {
+            "topology": "pipeline",
+            "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}],
+            "edges": [{"source": "a", "target": "b"}],
+        }
+
+    def test_embedded_container_nodes_also_autofill(self) -> None:
+        s = DiagramSpec.model_validate(
+            {
+                "topology": "pipeline",
+                "nodes": [
+                    {
+                        "id": "outer0",
+                        "label": "Container",
+                        "embed": {
+                            "topology": "pipeline",
+                            "nodes": [{"label": "Inner A"}, {"label": "Inner B"}],
+                        },
+                    },
+                    {"id": "outer1", "label": "Sibling"},
+                ],
+            }
+        )
+        inner = s.nodes[0].embed
+        assert inner is not None
+        assert [n.id for n in inner.nodes] == ["n0", "n1"]
