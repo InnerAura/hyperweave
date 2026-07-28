@@ -38,7 +38,7 @@ _RECEIPT_DEFAULT_GENOME = "primer"
 _RECEIPT_PARADIGMS = frozenset({"primer", "raw"})
 
 
-def _genome_supports_receipts(genome_id: str, override: dict[str, Any] | None = None) -> bool:
+def genome_supports_receipts(genome_id: str, override: dict[str, Any] | None = None) -> bool:
     """Return True when the genome declares a *real* receipt paradigm.
 
     ``ComposeSpec.genome_id`` is never empty (it defaults to brutalist), so this
@@ -252,7 +252,7 @@ def resolve(spec: ComposeSpec) -> ResolvedArtifact:
     # Workstream F); otherwise the receipt falls back to primer. The pre-genome
     # telemetry-* skins are retired from this path.
     if spec.type == FrameType.RECEIPT:
-        if _genome_supports_receipts(spec.genome_id, spec.genome_override):
+        if genome_supports_receipts(spec.genome_id, spec.genome_override):
             genome = _load_genome(spec.genome_id, override=spec.genome_override)
         else:
             genome = _load_genome(_RECEIPT_DEFAULT_GENOME)

@@ -7,6 +7,7 @@ from typing import Any
 from pydantic import Field, field_validator, model_validator
 
 from hyperweave.core.base import FrozenModel as FrozenModel
+from hyperweave.core.defaults import default_genome
 from hyperweave.core.diagram import DiagramSpec  # noqa: TC001 (Pydantic needs at runtime)
 from hyperweave.core.enums import (
     DividerVariant,
@@ -65,7 +66,7 @@ class ComposeSpec(FrozenModel):
     # --genome-file can load arbitrary genome slugs not in the built-in registry.
     # GenomeId enum remains valid for internal defaults and type-hinting.
     genome_id: str = Field(
-        default=GenomeId.BRUTALIST.value,
+        default_factory=default_genome,
         description="Genome slug (built-in or custom from --genome-file)",
     )
     profile_id: str = Field(default="", description="Profile ID (resolved from genome if empty)")
@@ -96,7 +97,7 @@ class ComposeSpec(FrozenModel):
             if isinstance(override, dict) and override.get("profile"):
                 data["profile_id"] = str(override["profile"])
                 return data
-            genome_raw = str(data.get("genome_id", GenomeId.BRUTALIST.value))
+            genome_raw = str(data.get("genome_id") or default_genome())
             data["profile_id"] = _GENOME_PROFILE_MAP.get(genome_raw, ProfileId.FLAT)
         return data
 

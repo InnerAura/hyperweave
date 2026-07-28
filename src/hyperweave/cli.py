@@ -67,6 +67,84 @@ def _looks_like_path(value: str) -> bool:
     return "/" in value or "\\" in value or value.endswith(".json")
 
 
+def _classify_spec_shape(data: dict[str, Any]) -> str:
+    """ONE shape decision for compose AND validate: ``envelope`` |
+    ``envelope-missing-spec`` | ``diagram`` | ``matrix`` | ``unknown``.
+
+    Both verbs consume this result — the two sniffers previously made the
+    call independently and gave contradictory diagnoses for an envelope
+    missing its ``spec`` object. A ``type`` key always means envelope-family
+    (bare IR never has one — DiagramSpec/MatrixSpec forbid extras)."""
+    if "type" in data:
+        return "envelope" if isinstance(data.get("spec"), dict) else "envelope-missing-spec"
+    if "topology" in data:
+        return "diagram"
+    if {"columns", "rows"} & data.keys():
+        return "matrix"
+    return "unknown"
+
+
+def _echo_envelope_missing_spec(data: dict[str, Any]) -> None:
+    """The shared (compose ≡ validate) diagnosis for a spec-less envelope."""
+    typer.echo(
+        f"Error: the envelope declares type {str(data.get('type', ''))!r} but has no 'spec' object; "
+        "put the frame IR under spec: {...} (or drop 'type' and pass bare IR)",
+        err=True,
+    )
+
+
+def _is_bundled_name(name: str) -> bool:
+    from hyperweave.compose.bundled_specs import bundled_spec_names
+
+    return any(name in bundled_spec_names(frame) for frame in ("diagram", "matrix"))
+
+
+def _read_spec_source(spec_file: Path) -> tuple[str, Any]:
+    """Resolve a spec-file argument to ``('data', parsed_dict)`` or ``('preset', name)``.
+
+    The one file-vs-preset decision for compose AND validate:
+
+    * a real FILE parses as JSON — with a loud stderr note when its bare name
+      also matches a bundled spec (the local file wins);
+    * a DIRECTORY is never spec input — a bare name falls through to the
+      bundled store (with a note; preset names like ``stack``/``tree`` double
+      as common directory names), a path-looking one errors cleanly;
+    * a MISSING path-looking value errors cleanly (``not found``);
+    * anything else is a bundled-spec name.
+
+    Exits 2 on invalid JSON, non-object JSON, or a directory path.
+    """
+    name = str(spec_file)
+    if spec_file.is_file():
+        import json
+
+        try:
+            data = json.loads(spec_file.read_text())
+        except json.JSONDecodeError as exc:
+            typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
+            raise typer.Exit(2) from exc
+        if not isinstance(data, dict):
+            typer.echo(f"Error: {spec_file} must contain a JSON object", err=True)
+            raise typer.Exit(2)
+        if not _looks_like_path(name) and _is_bundled_name(name):
+            typer.echo(
+                f"note: reading local file '{name}', which shadows the bundled spec of the same name "
+                f"(pass ./{name} to silence this, or rename the file to use the bundled spec)",
+                err=True,
+            )
+        return "data", data
+    if spec_file.is_dir():
+        if _looks_like_path(name):
+            typer.echo(f"Error: {spec_file} is a directory, not a spec file", err=True)
+            raise typer.Exit(2)
+        typer.echo(f"note: '{name}' is a directory here; resolving it as a bundled spec name", err=True)
+        return "preset", name
+    if _looks_like_path(name):
+        typer.echo(f"Error: {spec_file} not found", err=True)
+        raise typer.Exit(2)
+    return "preset", name
+
+
 def _compose_refusals() -> tuple[type[Exception], ...]:
     """The caller-error family the compose engine raises.
 
@@ -125,8 +203,8 @@ def _sniff_spec_shape(
     from hyperweave.compose.bundled_specs import BundledSpec
 
     ir_field = "diagram" if frame_type == "diagram" else "matrix"
-    spec_val = data.get("spec")
-    if "type" in data and isinstance(spec_val, dict):
+    shape = _classify_spec_shape(data)
+    if shape == "envelope":
         env_type = str(data.get("type", ""))
         if env_type != frame_type:
             typer.echo(
@@ -137,7 +215,12 @@ def _sniff_spec_shape(
             raise typer.Exit(2)
         resolved_genome = genome if genome_explicit else (str(data.get("genome", "")) or genome)
         resolved_variant = variant if variant_explicit else (str(data.get("variant", "")) or variant)
-        return BundledSpec(field=ir_field, value=dict(spec_val)), resolved_genome, resolved_variant
+        return BundledSpec(field=ir_field, value=dict(data["spec"])), resolved_genome, resolved_variant
+    if shape == "envelope-missing-spec":
+        _echo_envelope_missing_spec(data)
+        raise typer.Exit(2)
+    # Bare IR (or an unknown shape): compose knows the frame from argv, so the
+    # dict parses as that frame's IR and pydantic names every missing field.
     return BundledSpec(field=ir_field, value=data), genome, variant
 
 
@@ -164,30 +247,21 @@ def _resolve_spec_file(
 
     if spec_file is None:
         return None, genome, variant
-    if spec_file.exists():
-        import json
-
-        try:
-            data = json.loads(spec_file.read_text())
-        except json.JSONDecodeError as exc:
-            typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
-            raise typer.Exit(2) from exc
-        if not isinstance(data, dict):
-            typer.echo(f"Error: {spec_file} must contain a JSON object", err=True)
-            raise typer.Exit(2)
+    kind, payload = _read_spec_source(spec_file)
+    if kind == "data":
         return _sniff_spec_shape(
             frame_type,
-            data,
+            payload,
             genome=genome,
             variant=variant,
             genome_explicit=genome_explicit,
             variant_explicit=variant_explicit,
         )
-    # Not a path — treat the bare name as a bundled-spec name.
+    # kind == "preset": resolve the bare name against the bundled store.
     from hyperweave.core.errors import HwError
 
     try:
-        return resolve_bundled_spec(frame_type, str(spec_file)), genome, variant
+        return resolve_bundled_spec(frame_type, payload), genome, variant
     except HwError as exc:
         typer.echo(f"Error: {exc.cli_text()}", err=True)
         raise typer.Exit(2) from exc
@@ -259,27 +333,6 @@ def _deliver_projection(data: bytes, *, is_text: bool, output: Path | None, widt
             raise typer.Exit(2)
     else:
         sys.stdout.buffer.write(data)
-
-
-def _split_dotted_genome(genome: str, variant: str) -> tuple[str, str]:
-    """Split a dotted ``--genome g.variant`` into ``(genome, variant)``.
-
-    ``--genome primer.porcelain`` is sugar for ``--genome primer --variant
-    porcelain``: split on the FIRST ``.`` (so a genome slug can't itself carry a
-    dot without meaning "variant"). An explicit ``--variant`` alongside a dotted
-    form is fine only when they agree; a contradiction is a caller error naming
-    both. A genome with no dot passes through untouched (with whatever ``--variant``
-    was given). Raises ``ValueError`` on the contradiction.
-    """
-    if "." not in genome:
-        return genome, variant
-    base, _, dotted_variant = genome.partition(".")
-    if variant and dotted_variant and variant != dotted_variant:
-        raise ValueError(
-            f"--genome {genome!r} sets variant {dotted_variant!r}, but --variant {variant!r} was also given; "
-            f"drop one (use --genome {base}.{variant} or --genome {base} --variant {variant})"
-        )
-    return base, (variant or dotted_variant)
 
 
 def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
@@ -421,18 +474,21 @@ def _sniff_validate_shape(data: dict[str, Any]) -> Any:
     """
     from hyperweave.compose.surface import SpecEnvelope
 
-    spec_val = data.get("spec")
-    if "type" in data and isinstance(spec_val, dict):
+    shape = _classify_spec_shape(data)
+    if shape == "envelope":
         return SpecEnvelope(
             type=str(data.get("type", "")),
-            genome=str(data.get("genome", "primer")),
+            genome=str(data.get("genome", "")),
             variant=str(data.get("variant", "")),
-            spec=dict(spec_val),
+            spec=dict(data["spec"]),
         )
-    if "topology" in data:
-        return SpecEnvelope(type="diagram", genome="primer", spec=data)
-    if {"columns", "rows"} & data.keys():
-        return SpecEnvelope(type="matrix", genome="primer", spec=data)
+    if shape == "envelope-missing-spec":
+        _echo_envelope_missing_spec(data)
+        raise typer.Exit(code=2)
+    if shape == "diagram":
+        return SpecEnvelope(type="diagram", spec=data)
+    if shape == "matrix":
+        return SpecEnvelope(type="matrix", spec=data)
     typer.echo(
         "invalid spec: expected a {type, spec} envelope, bare diagram IR (a 'topology' key), "
         "or bare matrix IR ('columns'/'rows' keys)",
@@ -460,7 +516,7 @@ def _resolve_validate_preset(name: str) -> Any:
         except HwError:
             continue
         spec_body = dict(bundled.value) if bundled.field == "diagram" else {bundled.field: bundled.value}
-        return SpecEnvelope(type=frame_type, genome="primer", spec=spec_body)
+        return SpecEnvelope(type=frame_type, spec=spec_body)
     return None
 
 
@@ -493,29 +549,29 @@ def validate(
     spec_file = spec_file if spec_file is not None else spec_file_opt
 
     env: Any = None
+    raw = ""
     if spec:
         raw = spec
     elif spec_file is not None and str(spec_file) == "-":
         raw = sys.stdin.read()
-    elif spec_file is not None and spec_file.exists():
-        raw = spec_file.read_text()
     elif spec_file is not None:
-        name = str(spec_file)
-        if _looks_like_path(name):
-            typer.echo(f"Error: {spec_file} not found", err=True)
-            raise typer.Exit(code=2)
-        env = _resolve_validate_preset(name)
-        if env is None:
-            from hyperweave.compose.bundled_specs import bundled_spec_names
+        # The SAME file-vs-preset decision compose makes (is_file/is_dir/
+        # missing/shadow all handled there — never an IsADirectoryError).
+        kind, payload = _read_spec_source(spec_file)
+        if kind == "data":
+            env = _sniff_validate_shape(payload)
+        else:
+            env = _resolve_validate_preset(payload)
+            if env is None:
+                from hyperweave.compose.bundled_specs import bundled_spec_names
 
-            typer.echo(
-                f"Error: {name!r} is not a spec file, and matches no bundled diagram or matrix preset.\n"
-                f"  known diagram specs: {', '.join(bundled_spec_names('diagram')) or '(none configured)'}\n"
-                f"  known matrix specs: {', '.join(bundled_spec_names('matrix')) or '(none configured)'}",
-                err=True,
-            )
-            raise typer.Exit(code=2)
-        raw = ""
+                typer.echo(
+                    f"Error: {payload!r} is not a spec file, and matches no bundled diagram or matrix preset.\n"
+                    f"  known diagram specs: {', '.join(bundled_spec_names('diagram')) or '(none configured)'}\n"
+                    f"  known matrix specs: {', '.join(bundled_spec_names('matrix')) or '(none configured)'}",
+                    err=True,
+                )
+                raise typer.Exit(code=2)
     else:
         typer.echo("provide a spec file, --spec '{...}', or - for stdin", err=True)
         raise typer.Exit(code=2)
@@ -555,10 +611,7 @@ def compose(
         typer.Option(
             "--genome",
             "-g",
-            help=(
-                "Genome id, or dotted 'genome.variant' (e.g. primer.porcelain). "
-                "Default: primer for diagram/matrix/receipt, brutalist otherwise."
-            ),
+            help="Genome id, or dotted 'genome.variant' (e.g. primer.porcelain). Default: primer.",
         ),
     ] = "",
     genome_file: Annotated[
@@ -766,36 +819,31 @@ def compose(
         )
         raise typer.Exit(2)
     # ── Dotted --genome sugar (before both the receipt and compose paths) ──
-    # `--genome primer.porcelain` == `--genome primer --variant porcelain`. Split
-    # here so the receipt dispatch below and the ComposeSpec build both see the
-    # resolved (genome, variant); a dotted/explicit contradiction errors cleanly.
+    # `--genome primer.porcelain` == `--genome primer --variant porcelain`.
+    # Pre-split via the SHARED grammar so a dotted-supplied variant counts as
+    # explicit for envelope precedence below; resolve_presentation re-splits
+    # idempotently for the other surfaces. An unset genome stays "" here —
+    # the seam applies the primer default just before the spec builds.
+    from hyperweave.compose.surface import split_dotted_genome
+    from hyperweave.core.errors import HwError as _HwError
+
     try:
-        genome, variant = _split_dotted_genome(genome, variant)
-    except ValueError as exc:
-        typer.echo(f"Error: {exc}", err=True)
+        genome, variant = split_dotted_genome(genome, variant)
+    except _HwError as exc:
+        typer.echo(exc.cli_text(), err=True)
         raise typer.Exit(2) from exc
-    # Captured BEFORE the frame-aware default below overwrites `genome` — an
+    # Captured AFTER the dotted split, BEFORE any envelope fill — an
     # envelope-carried genome (--spec-file/--spec) only applies when the caller
     # left the CLI flag unset; this bit is how that precedence is decided.
     genome_explicit = bool(genome)
     variant_explicit = bool(variant)
-    # ── Frame-aware --genome default ─────────────────────────────────
-    # An unset --genome (the "" sentinel) resolves per frame through the ONE
-    # shared seam (primer for diagram/matrix/receipt, brutalist otherwise) —
-    # the same seam the HTTP and MCP adapters resolve through, so a genome-less
-    # compose behaves identically on all three surfaces. An explicit --genome
-    # always wins.
-    if not genome:
-        from hyperweave.compose.surface import default_genome
-
-        genome = default_genome(frame_type)
     # ── Receipt-from-transcript dispatch ─────────────────────────────
     # The receipt frame reads an agent's existing .jsonl transcript, never flags:
     #   compose -                  → hook mode: read hook JSON (transcript_path) on stdin
     #   compose <x>.jsonl          → infer the receipt from the transcript path
     #   compose receipt <x>.jsonl  → receipt from the named transcript path
-    # Receipts speak primer only, so the brutalist compose default (or any non-primer
-    # slug) falls back to primer/porcelain; a real primer variant still selects chroma.
+    # Receipts speak primer only; a non-receipt-capable genome slug falls back
+    # to primer/porcelain, and a real primer variant still selects chroma.
     receipt_src: Path | None = None
     hook_mode = frame_type == "-"
     if frame_type.endswith(".jsonl"):
@@ -990,8 +1038,17 @@ def compose(
 
     # One exception-mapping seam with HTTP/MCP: a malformed spec prints the
     # same rule text everywhere (never a traceback), exit 2 = input problem.
-    from hyperweave.compose.surface import build_compose_spec
+    from hyperweave.compose.surface import build_compose_spec, resolve_presentation
     from hyperweave.core.errors import HwError
+
+    # The ONE presentation-resolution step (shared with validate on every
+    # surface): primer default, dotted split, genome existence, frame support
+    # (receipt's primer fallback included), variant whitelist.
+    try:
+        genome, variant = resolve_presentation(frame_type, genome, variant, genome_override=genome_override)
+    except HwError as exc:
+        typer.echo(exc.cli_text(), err=True)
+        raise typer.Exit(2) from exc
 
     spec_kwargs: dict[str, Any] = {
         "type": frame_type,
@@ -1601,7 +1658,7 @@ def install_hook(
     hooks for each. Pass ``--runtime <name>`` to scope to a single runtime,
     or ``--runtime all`` to force both regardless of detection.
     """
-    from hyperweave.compose.resolver import _RECEIPT_DEFAULT_GENOME, _genome_supports_receipts
+    from hyperweave.compose.resolver import _RECEIPT_DEFAULT_GENOME, genome_supports_receipts
 
     # Resolve targets:
     #   ""     (default) → auto-detect installed runtimes (config dir OR binary)
@@ -1639,7 +1696,7 @@ def install_hook(
     if genome:
         resolved_genome, _resolved_variant = _resolve_receipt_genome(genome)
         check_genome = resolved_genome or _RECEIPT_DEFAULT_GENOME
-        if not _genome_supports_receipts(check_genome):
+        if not genome_supports_receipts(check_genome):
             typer.echo(
                 f"Error: genome '{genome}' (resolved to '{check_genome}') does not support receipts. "
                 "Use a primer variant (noir, carbon, space, anvil, porcelain, cream, dusk, petrol) "

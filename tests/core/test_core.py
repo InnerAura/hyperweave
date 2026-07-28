@@ -50,9 +50,12 @@ def test_slot_content_frozen() -> None:
 
 
 def test_compose_spec_defaults() -> None:
+    from hyperweave.core.defaults import default_genome
+
     spec = ComposeSpec(type="badge")
     assert spec.type == "badge"
-    assert spec.genome_id == "brutalist"
+    # The model default IS the one seam — pin the identity, not a literal.
+    assert spec.genome_id == default_genome("badge") == "primer"
     assert spec.state == "active"
     assert spec.motion == "static"
     assert spec.metadata_tier == 3

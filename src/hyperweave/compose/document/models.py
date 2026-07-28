@@ -11,6 +11,7 @@ from typing import Annotated, Any, Literal
 from pydantic import Field
 
 from hyperweave.core.base import FrozenModel
+from hyperweave.core.defaults import default_genome
 from hyperweave.core.models import ComposeSpec  # noqa: TC001  (Pydantic resolves this at runtime)
 
 
@@ -70,7 +71,7 @@ class DocumentSpec(FrozenModel):
 
     title: str
     blocks: list[Block] = Field(min_length=1)
-    genome: str = "primer"
+    genome: str = Field(default_factory=default_genome)
     variant: str = ""
     mode: Literal["standalone", "embedded"] = "standalone"
     intent: str = ""

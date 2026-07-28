@@ -12,33 +12,36 @@ import re
 
 import pytest
 
-from hyperweave.cli import _resolve_receipt_genome, _split_dotted_genome
+from hyperweave.cli import _resolve_receipt_genome
+from hyperweave.compose.surface import split_dotted_genome
 
-# ── compose-path split (_split_dotted_genome) ──────────────────────────────
+# ── shared split (compose.surface.split_dotted_genome, all surfaces) ──────────────────────────────
 
 
 def test_dotted_splits_into_genome_and_variant() -> None:
-    assert _split_dotted_genome("primer.porcelain", "") == ("primer", "porcelain")
+    assert split_dotted_genome("primer.porcelain", "") == ("primer", "porcelain")
 
 
 def test_dotted_splits_on_first_dot_only() -> None:
     # a second dot stays in the variant portion (genome slug is the head)
-    assert _split_dotted_genome("primer.a.b", "") == ("primer", "a.b")
+    assert split_dotted_genome("primer.a.b", "") == ("primer", "a.b")
 
 
 def test_dotted_with_agreeing_explicit_variant_ok() -> None:
-    assert _split_dotted_genome("primer.cream", "cream") == ("primer", "cream")
+    assert split_dotted_genome("primer.cream", "cream") == ("primer", "cream")
 
 
 def test_bare_genome_passes_through() -> None:
-    assert _split_dotted_genome("brutalist", "") == ("brutalist", "")
-    assert _split_dotted_genome("automata", "teal") == ("automata", "teal")
+    assert split_dotted_genome("brutalist", "") == ("brutalist", "")
+    assert split_dotted_genome("automata", "teal") == ("automata", "teal")
 
 
 def test_dotted_conflicting_variant_raises_naming_both() -> None:
-    with pytest.raises(ValueError) as exc:
-        _split_dotted_genome("primer.porcelain", "cream")
-    msg = str(exc.value)
+    from hyperweave.core.errors import HwError
+
+    with pytest.raises(HwError) as exc:
+        split_dotted_genome("primer.porcelain", "cream")
+    msg = exc.value.message
     assert "porcelain" in msg and "cream" in msg  # names both
 
 

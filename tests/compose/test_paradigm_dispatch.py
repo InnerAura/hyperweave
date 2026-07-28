@@ -193,7 +193,7 @@ def test_compose_with_override_produces_svg(
 
 def test_resolve_injects_paradigm_context() -> None:
     """Every frame_context now carries `paradigm` and `structural` keys (Phase 2)."""
-    spec = ComposeSpec(type="badge", title="BUILD", value="passing")
+    spec = ComposeSpec(type="badge", genome_id="brutalist", title="BUILD", value="passing")
     resolved = resolve(spec)
     assert "paradigm" in resolved.frame_context
     assert "structural" in resolved.frame_context

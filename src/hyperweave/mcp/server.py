@@ -89,8 +89,8 @@ async def hw_compose(
               — pair any two via ?pair=...)
             — or pass ``genome_override`` as an inline genome dict to bypass
               the built-in registry (equivalent to CLI ``--genome-file``).
-            Unset resolves frame-aware, identical to the CLI: primer for
-            diagram/matrix/receipt, brutalist otherwise.
+            Unset defaults to primer (any frame), identical to the CLI;
+            dotted ``genome.variant`` is accepted.
 
     Content by frame type:
       badge:    title="STARS" value="12345" (two-panel badge)
@@ -359,19 +359,11 @@ async def hw_validate(spec: dict[str, Any]) -> dict[str, Any]:
     spec: the canonical spec envelope, e.g.
         {"type": "matrix", "genome": "primer", "variant": "porcelain",
          "spec": {...frame IR...}}
-    On failure the report carries the structured error envelope
-    (``{"valid": false, "error": {code, message, fix, detail}}``).
+    ``genome`` may be omitted (defaults to primer, same as compose) or dotted
+    (``primer.porcelain``). On failure the report carries the structured error
+    envelope (``{"valid": false, "error": {code, message, fix, detail}}``).
     """
-    from hyperweave.compose.surface import SpecEnvelope, validate_surface
-
-    return validate_surface(
-        SpecEnvelope(
-            type=str(spec.get("type", "")),
-            genome=str(spec.get("genome", "primer")),
-            variant=str(spec.get("variant", "")),
-            spec=dict(spec.get("spec") or {}),
-        )
-    )
+    return await _dispatch("validate", dict(spec))
 
 
 async def _dispatch(name: str, payload: dict[str, Any]) -> dict[str, Any]:

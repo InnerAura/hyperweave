@@ -22,6 +22,7 @@ from pydantic import Field, ValidationError
 from hyperweave.compose.artifact_store import store_artifact
 from hyperweave.compose.engine import compose
 from hyperweave.core.base import FrozenModel
+from hyperweave.core.defaults import default_genome
 from hyperweave.core.diagram import DiagramSpec
 from hyperweave.core.enums import FrameType
 from hyperweave.core.envelope import extract_envelope, extract_payload
@@ -33,18 +34,98 @@ from hyperweave.formats import FormatId, Projection, parse_format, project
 # Frame content that maps to a dedicated ComposeSpec field rather than a kwarg.
 _IR_FIELD: dict[str, str] = {"matrix": "matrix", "diagram": "diagram"}
 
-# Frames whose only capable genome (and flagship look) is primer; every other
-# frame keeps the brutalist default.
-_PRIMER_DEFAULT_FRAMES: frozenset[str] = frozenset({"diagram", "matrix", "receipt"})
+
+def split_dotted_genome(genome: str, variant: str) -> tuple[str, str]:
+    """Split a dotted ``genome.variant`` into ``(genome, variant)``.
+
+    A separate ``variant`` alongside a dotted genome is a caller error when
+    they disagree (a silent pick would hide the conflict); agreeing values
+    pass. Input without a dot passes through untouched, so the call is
+    idempotent — the CLI pre-splits for flag-precedence bookkeeping and
+    :func:`resolve_presentation` splits again for the other surfaces.
+    """
+    if "." not in genome:
+        return genome, variant
+    base, _, dotted_variant = genome.partition(".")
+    if variant and dotted_variant and variant != dotted_variant:
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"genome {genome!r} sets variant {dotted_variant!r}, but variant {variant!r} was also given",
+            fix="pass the dotted genome OR a separate variant — or make them agree",
+        )
+    return base, (variant or dotted_variant)
 
 
-def default_genome(frame_type: str) -> str:
-    """The genome an unset ``genome`` resolves to for ``frame_type``.
+def resolve_presentation(
+    frame_type: str, genome: str, variant: str, *, genome_override: dict[str, Any] | None = None
+) -> tuple[str, str]:
+    """The ONE presentation-resolution step both verbs on all three surfaces run.
 
-    ONE definition — the CLI, HTTP, and MCP adapters all resolve an empty
-    genome through here (Invariant 9: the wires are thin adapters; a default
-    living in an adapter is how the surfaces drift apart)."""
-    return "primer" if frame_type in _PRIMER_DEFAULT_FRAMES else "brutalist"
+    Raw caller input to canonical ``(genome_id, variant)``, or a structured
+    refusal — validate and compose cannot disagree on anything resolved here:
+
+    1. empty genome → :func:`default_genome` (primer, every frame);
+    2. dotted ``genome.variant`` splits (conflicting separate variant refused);
+    3. unknown genome → ``GENOME_UNKNOWN`` naming the registry;
+    4. frame support: the genome must declare ``paradigms.<frame>`` — except a
+       receipt on a non-receipt-capable genome, which canonicalizes to primer
+       (the resolver's designed fallback), never refuses;
+    5. a non-empty variant outside the genome's whitelist → ``VARIANT_UNKNOWN``.
+
+    ``variant`` may return ``""`` — the flagship/paradigm default resolves at
+    render time (``resolver.resolve_variant``'s Path-B chain, unchanged). A
+    ``genome_override`` dict (``--genome-file`` / ``genome_override``) IS the
+    genome: registry existence is skipped, frame support and the variant
+    whitelist read the override itself.
+    """
+    from hyperweave.config.loader import get_loader
+
+    genome = genome or default_genome(frame_type)
+    genome, variant = split_dotted_genome(genome, variant)
+    frame = "stats" if frame_type == "card" else frame_type
+
+    if genome_override is not None:
+        g: dict[str, Any] = genome_override
+    else:
+        genomes = get_loader().genomes
+        maybe = genomes.get(genome)
+        if maybe is None:
+            raise HwError(
+                HwErrorCode.GENOME_UNKNOWN,
+                f"unknown genome {genome!r}",
+                fix=f"known genomes: {', '.join(sorted(genomes))}",
+            )
+        g = maybe
+
+    if frame == "receipt":
+        from hyperweave.compose.resolver import genome_supports_receipts
+
+        if not genome_supports_receipts(genome, genome_override):
+            genome, g = default_genome(frame), get_loader().genomes[default_genome(frame)]
+    elif frame in _FRAME_TYPES and frame not in (g.get("paradigms") or {}):
+        # Unknown frame TYPES fall through untouched — ComposeSpec's own
+        # validation names them TYPE_UNKNOWN; a frame-support message for a
+        # frame that doesn't exist would be a misdiagnosis.
+        if genome_override is not None:
+            raise HwError(
+                HwErrorCode.SPEC_INVALID,
+                f"{frame} frame is not supported by genome {genome!r} (no paradigms.{frame} entry)",
+            )
+        supporting = sorted(gid for gid, gg in get_loader().genomes.items() if frame in (gg.get("paradigms") or {}))
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"{frame} frame is not supported by genome {genome!r}",
+            fix=f"use a genome that supports {frame}: {', '.join(supporting)}" if supporting else "",
+        )
+
+    allowed = list(g.get("variants") or [])
+    if allowed and variant and variant not in allowed:
+        raise HwError(
+            HwErrorCode.VARIANT_UNKNOWN,
+            f"unknown variant {variant!r} for genome {genome!r}",
+            fix=f"known variants: {', '.join(allowed)}",
+        )
+    return genome, variant
 
 
 # ComposeSpec top-level field names that a caller may pack into `spec` ALONGSIDE
@@ -86,7 +167,8 @@ class SpecEnvelope(FrozenModel):
     """The canonical compose input, identical across every transport."""
 
     type: str
-    genome: str = "primer"
+    genome: str = ""
+    """Empty resolves through :func:`resolve_presentation` (primer, any frame)."""
     variant: str = ""
     spec: dict[str, Any] = Field(default_factory=dict)
     data: str = ""
@@ -182,9 +264,16 @@ def _to_compose_spec(env: SpecEnvelope, *, data_tokens: list[Any] | None = None)
     # `extra="forbid"` would reject it) or resurrect external control of a
     # retired axis.
     content.pop("chrome", None)
-    kwargs: dict[str, Any] = {"type": env.type, "genome_id": env.genome or default_genome(env.type)}
-    if env.variant:
-        kwargs["variant"] = env.variant
+    override = content.get("genome_override")
+    genome_id, variant = resolve_presentation(
+        env.type,
+        env.genome,
+        env.variant,
+        genome_override=override if isinstance(override, dict) else None,
+    )
+    kwargs: dict[str, Any] = {"type": env.type, "genome_id": genome_id}
+    if variant:
+        kwargs["variant"] = variant
     ir_field = _IR_FIELD.get(env.type)
     if ir_field:
         # An IR frame's `spec` carries the nested schema PLUS any ComposeSpec-level
@@ -392,51 +481,10 @@ def validate_surface(env: SpecEnvelope) -> dict[str, Any]:
     structure."""
     try:
         cspec = _to_compose_spec(env)
-        _validate_genome_and_frame(cspec)
         _validate_ir_structure(cspec)
     except HwError as exc:
         return {"valid": False, **exc.envelope()}
     return {"valid": True, "type": env.type, "genome": cspec.genome_id}
-
-
-def _validate_genome_and_frame(cspec: ComposeSpec) -> None:
-    """Refuse a genome that doesn't exist, doesn't support the requested frame,
-    or is asked for a variant outside its whitelist — the same three gates
-    the resolver enforces at render time (``resolve_diagram``/``resolve_matrix``'s
-    ``paradigms.<frame>`` membership check; ``resolver.resolve_variant``'s
-    ``genome.variants`` whitelist), run here so ``validate`` can't say True to
-    a spec compose would refuse. ``get_loader()`` is the same config seam the
-    resolvers read genomes through, kept as a lazy import so this module
-    doesn't pull config-loading machinery into every ``compose_surface`` call."""
-    from hyperweave.config.loader import get_loader
-
-    genomes = get_loader().genomes
-    genome = genomes.get(cspec.genome_id)
-    if genome is None:
-        raise HwError(
-            HwErrorCode.GENOME_UNKNOWN,
-            f"unknown genome {cspec.genome_id!r}",
-            fix=f"known genomes: {', '.join(sorted(genomes))}",
-        )
-
-    frame_type = str(cspec.type)
-    paradigms_map = genome.get("paradigms") or {}
-    if frame_type not in paradigms_map:
-        supporting = sorted(gid for gid, g in genomes.items() if frame_type in (g.get("paradigms") or {}))
-        fix = f"use a genome that supports {frame_type}: {', '.join(supporting)}" if supporting else ""
-        raise HwError(
-            HwErrorCode.SPEC_INVALID,
-            f"{frame_type} frame is not supported by genome {cspec.genome_id!r}",
-            fix=fix,
-        )
-
-    allowed = list(genome.get("variants") or [])
-    if allowed and cspec.variant and cspec.variant not in allowed:
-        raise HwError(
-            HwErrorCode.VARIANT_UNKNOWN,
-            f"unknown variant {cspec.variant!r} for genome {cspec.genome_id!r}",
-            fix=f"known variants: {', '.join(allowed)}",
-        )
 
 
 def _validate_ir_structure(cspec: ComposeSpec) -> None:

@@ -20,7 +20,7 @@ from hyperweave import __version__
 from hyperweave.compose.artifact_store import get_artifact
 from hyperweave.compose.engine import compose
 from hyperweave.compose.resolver import GenomeNotFoundError
-from hyperweave.compose.surface import SpecEnvelope, default_genome, validate_surface
+from hyperweave.compose.surface import SpecEnvelope, resolve_presentation, validate_surface
 from hyperweave.config.loader import get_loader
 from hyperweave.config.settings import get_settings
 from hyperweave.connectors.base import close_client, get_client
@@ -191,9 +191,9 @@ class ComposeRequest(BaseModel):
 
     type: str = "badge"
     genome: str = ""
-    """Genome id. Empty resolves frame-aware through the one shared seam
-    (``compose.surface.default_genome``): primer for diagram/matrix/receipt,
-    brutalist otherwise — identical to the CLI's unset ``--genome``."""
+    """Genome id, or dotted ``genome.variant``. Empty resolves through the one
+    shared seam (``compose.surface.resolve_presentation``) to primer —
+    identical to the CLI's unset ``--genome``."""
     title: str = ""
     value: str = ""
     state: str = "active"
@@ -763,9 +763,14 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
     if req.face:
         surface_palette = "fixed"
 
+    # Shared presentation resolution (primer default, dotted split, genome/
+    # frame/variant gates) — an HwError propagates to the compose exception
+    # handler and renders the classified error artifact, same as render-time
+    # failures always have.
+    genome_id, variant = resolve_presentation(req.type, req.genome, req.variant)
     spec = ComposeSpec(
         type=req.type,
-        genome_id=req.genome or default_genome(req.type),
+        genome_id=genome_id,
         title=req.title,
         value=req.value,
         state=req.state,
@@ -775,7 +780,7 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         regime=req.regime,
         size=req.size,
         shape=req.shape,
-        variant=req.variant,
+        variant=variant,
         metadata_tier=req.metadata_tier,
         divider_variant=req.divider_variant,
         marquee_direction=req.direction,
@@ -870,7 +875,7 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
         spec["surface_face"] = req.face
     return {
         "type": req.type,
-        "genome": req.genome or default_genome(req.type),
+        "genome": req.genome,
         "variant": req.variant,
         "spec": spec,
         "data": str(raw.get("data", "")),

@@ -46,13 +46,13 @@ def _cli_svg(args: list[str]) -> str:
 
 def test_cli_compose_badge_stdout_matches_direct_engine_compose() -> None:
     cli_svg = _cli_svg(["compose", "badge", "BUILD", "passing"])
-    direct = compose(ComposeSpec(type="badge", genome_id="brutalist", title="BUILD", value="passing")).svg
+    direct = compose(ComposeSpec(type="badge", title="BUILD", value="passing")).svg
     assert _normalize(cli_svg) == _normalize(direct)
 
 
 def test_cli_compose_strip_stdout_matches_direct_engine_compose() -> None:
     cli_svg = _cli_svg(["compose", "strip", "REPO", "STARS:42"])
-    direct = compose(ComposeSpec(type="strip", genome_id="brutalist", title="REPO", value="STARS:42")).svg
+    direct = compose(ComposeSpec(type="strip", title="REPO", value="STARS:42")).svg
     assert _normalize(cli_svg) == _normalize(direct)
 
 
@@ -75,7 +75,7 @@ def test_cli_compose_png_writes_the_projected_bytes(tmp_path: Path) -> None:
     data = out.read_bytes()
     assert data[:8] == b"\x89PNG\r\n\x1a\n"
 
-    direct = compose(ComposeSpec(type="badge", genome_id="brutalist", title="BUILD", value="passing")).svg
+    direct = compose(ComposeSpec(type="badge", title="BUILD", value="passing")).svg
     assert data == project(direct, "png").data  # png rasterizes the static projection (created stamp excluded)
 
 

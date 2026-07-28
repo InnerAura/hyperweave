@@ -39,8 +39,8 @@ class ComposeInput(BaseModel):
     genome: str = Field(
         default="",
         description=(
-            "Genome id (primer | brutalist | chrome | automata). "
-            "Unset resolves frame-aware: primer for diagram/matrix/receipt, brutalist otherwise."
+            "Genome id (primer | brutalist | chrome | automata), or dotted 'genome.variant'. "
+            "Unset defaults to primer (any frame)."
         ),
     )
     variant: str = Field(default="", description="Chromatic variant slug (genome-specific).")
@@ -58,7 +58,7 @@ class ValidateInput(BaseModel):
     type: str = Field(description="Frame type.")
     genome: str = Field(
         default="",
-        description="Genome id. Unset resolves frame-aware: primer for diagram/matrix/receipt, brutalist otherwise.",
+        description="Genome id, or dotted 'genome.variant'. Unset defaults to primer (any frame).",
     )
     variant: str = Field(default="", description="Chromatic variant slug.")
     spec: dict[str, Any] = Field(default_factory=dict, description="Frame IR / content fields.")
