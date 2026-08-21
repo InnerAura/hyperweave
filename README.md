@@ -142,7 +142,7 @@ Want a different agent harness? [Open an issue](https://github.com/InnerAura/hyp
 
 ## Diagrams
 
-HyperWeave draws systems: pipelines, fan-outs, fan-ins, hubs, cycles, dependency graphs, swim lanes, state machines, sequences, trees, and comparisons, each rendered as a portable SVG. Nodes carry logos, labels, and small tags; edges carry labels and motion (a moving dash, a particle, or a pulse of light), and motion shows direction. Every diagram also embeds its full spec and a hash-verified digest (see [Inside every artifact](#inside-every-artifact)), so an agent reads the structure, not the pixels.
+Diagrams encode topology, not pixels. One spec vocabulary covers `pipeline`, `fanout`, `convergence`, `hub`, `cycle`, `dependency-graph`, `lanes`, `state-machine`, `sequence`, `tree`, and `comparison`. Nodes carry logos, labels, and tags; edges carry labels and motion to show direction. Every diagram renders as portable SVG with its full spec and hash-verified digest embedded for agents to read directly.
 
 <p align="center">
   <picture>
@@ -191,7 +191,7 @@ JSON
 <p align="center">
   <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/broadcast-split-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/broadcast-split-dark.svg" alt="Two feeds in, three surfaces out: a spec and live connector data arrive on the left of one HyperWeave artifact, which fans out to a GitHub README, a Slack unfurl, and an agent reading the payload" width="100%"
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/broadcast-split-dark.svg" alt="Two feeds in, three surfaces out: a spec and live connector data arrive on the left of one HyperWeave artifact, which fans out to a GitHub README, a Slack unfurl, and an agent reading the payload" width="90%"
     >
   </picture>
 </p>
@@ -209,7 +209,7 @@ hyperweave compose diagram --spec-file broadcast-split.json -g primer --variant 
 <p align="center">
   <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/compose-gate-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/compose-gate-dark.svg" alt="Every request in, every artifact out: Claude Code, Codex, and MCP call the compose engine from the left; GitHub, Slack, and Obsidian receive the artifacts on the right" width="100%"
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/compose-gate-dark.svg" alt="Every request in, every artifact out: Claude Code, Codex, and MCP call the compose engine from the left; GitHub, Slack, and Obsidian receive the artifacts on the right" width="90%"
     >
   </picture>
 </p>
@@ -224,6 +224,7 @@ hyperweave compose diagram --spec-file compose-gate.json -g primer --variant por
 
 </details>
 
+<!--
 <p align="center">
   <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/mcp-gateway-light.svg" media="(prefers-color-scheme: light)">
@@ -242,6 +243,7 @@ hyperweave compose diagram --spec-file pipeline-row -g primer --variant space --
 `pipeline-row` is a bundled preset; the URL API renders it by name at `/v1/diagram/pipeline-row/primer.static`.
 
 </details>
+-->
 
 <p align="center">
   <picture>
@@ -258,25 +260,6 @@ hyperweave compose diagram --spec-file pipeline-row -g primer --variant space --
 hyperweave extract verbs-mouth-light.svg --respond payload > verbs-mouth.json
 hyperweave compose diagram --spec-file verbs-mouth.json -g primer --variant porcelain --surface inlay --face light -o verbs-mouth-light.svg
 ```
-
-</details>
-
-<p align="center">
-  <picture>
-    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/cycle-flow-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/cycle-flow-dark.svg" alt="The data flywheel: Generate, Distribute, Capture, and Improve seated on a dashed ring around a hero that compounds each turn" width="100%"
-    >
-  </picture>
-</p>
-
-<details>
-<summary>Compose this inline</summary>
-
-```bash
-hyperweave compose diagram --spec-file cycle-flow -g primer --variant porcelain --surface inlay --face light -o cycle-flow-light.svg
-```
-
-`cycle-flow` is a bundled preset; the URL API renders it by name at `/v1/diagram/cycle-flow/primer.static`.
 
 </details>
 
@@ -301,8 +284,27 @@ hyperweave compose diagram --spec-file dag-providers -g primer --variant noir --
 
 <p align="center">
   <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/cycle-flow-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/cycle-flow-dark.svg" alt="The data flywheel: Generate, Distribute, Capture, and Improve seated on a dashed ring around a hero that compounds each turn" width="100%"
+    >
+  </picture>
+</p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file cycle-flow -g primer --variant porcelain --surface inlay --face light -o cycle-flow-light.svg
+```
+
+`cycle-flow` is a bundled preset; the URL API renders it by name at `/v1/diagram/cycle-flow/primer.static`.
+
+</details>
+
+<p align="center">
+  <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-dark.svg" alt="Dependency audit tree: my-app roots direct dependencies react, lodash, and axios, transitive children hang on dashed edges, and health dots flag what is outdated or vulnerable" width="100%"
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-dark.svg" alt="Dependency audit tree: my-app roots direct dependencies react, lodash, and axios, transitive children hang on dashed edges, and health dots flag what is outdated or vulnerable" width="65%"
     >
   </picture>
 </p>
@@ -1480,6 +1482,7 @@ Requires Python 3.12+. The base install is CLI + rendering; the HTTP and MCP ser
 
 Four interfaces, one pipeline. Every path produces the same artifact through the same compositor.
 
+<!--
 <p align="center">
   <a href="https://hyperweave.app/docs/api">
     <img src="assets/cards/material/api-card.svg" alt="HTTP API" width="48%">
@@ -1494,8 +1497,8 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
     <img src="assets/cards/material/skills-card.svg" alt="Python SDK" width="48%">
   </a>
 </p>
+-->
 
-<!--
 <p align="center">
   <a href="https://hyperweave.app/docs/mcp">
     <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-butterfly.svg" alt="MCP" width="48%">
@@ -1511,7 +1514,6 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
     <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-python.svg" alt="Python SDK" width="48%">
   </a>
 </p>
--->
 
 ### MCP
 
