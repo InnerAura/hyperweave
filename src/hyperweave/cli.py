@@ -675,7 +675,7 @@ def compose(
             "--spec-file",
             help=(
                 "MatrixSpec/DiagramSpec JSON file, a bundled-spec name (matrix: connectors; diagram: "
-                "rag-pipeline, ..), or a {type, spec} envelope matching the frame. Mutually exclusive with --spec."
+                "pipeline-head, ..), or a {type, spec} envelope matching the frame. Mutually exclusive with --spec."
             ),
         ),
     ] = None,
@@ -796,7 +796,7 @@ def compose(
       hyperweave compose marquee --data text:NEW,gh:owner/repo.stars,text:DOWNLOAD
       hyperweave compose matrix --spec-file table.json -g primer --variant porcelain
       hyperweave compose matrix --spec-file connectors -g primer --markdown-out table.md
-      hyperweave compose diagram --spec-file rag-pipeline -g primer --variant porcelain
+      hyperweave compose diagram --spec-file pipeline-head -g primer --variant porcelain
       hyperweave compose diagram --spec-file flow.json -g primer --markdown-out flow.md
       hyperweave compose diagram --spec '\{"topology": "pipeline", "nodes": [...], "edges": [...]}'
       hyperweave compose badge STARS 1234 --format png -o badge.png  \[rasterize; needs hyperweave\[raster]]
@@ -814,7 +814,7 @@ def compose(
         raise typer.Exit(2)
     if preset:
         typer.echo(
-            "Error: --preset was removed. Pass the bundled-spec name to --spec-file (e.g. --spec-file rag-pipeline).",
+            "Error: --preset was removed. Pass the bundled-spec name to --spec-file (e.g. --spec-file pipeline-head).",
             err=True,
         )
         raise typer.Exit(2)

@@ -16,6 +16,18 @@ from typing import TYPE_CHECKING, Any
 from hyperweave.compose.diagram.records import DiagramHeader, DiagramText, GlyphArt, NodePlacement
 from hyperweave.compose.diagram.sizing import (
     BULLET_DESC_RIGHT_GAP,
+    CARD_LABEL_HERO_LABEL_DY,
+    CARD_LABEL_HERO_MARK,
+    CARD_LABEL_HERO_MARK_GAP,
+    CARD_LABEL_HERO_PITCH,
+    CARD_LABEL_HERO_VALUE_DY,
+    CARD_LABEL_LABEL_DY,
+    CARD_LABEL_MARK,
+    CARD_LABEL_MARK_GAP,
+    CARD_LABEL_MARK_INSET_Y,
+    CARD_LABEL_PAD_X,
+    CARD_LABEL_VALUE_DY,
+    CARD_LABEL_VALUE_PITCH,
     CHIP_GAP,
     CHIP_H,
     CHIP_RX,
@@ -27,14 +39,20 @@ from hyperweave.compose.diagram.sizing import (
     VOICE_CLASSES,
     anchor_pads,
     card_ink_w,
+    card_label_mark_inset_r,
+    card_label_text,
+    card_label_voices,
+    crown_within_band,
     head_pad_x,
     label_cls_for,
     label_desc_gap_for,
     mark_lead,
     mark_w_for,
     node_anatomy_of,
+    node_glyph_id,
     role_of,
     solve_card_box,
+    solve_card_label_box,
     solve_card_w,
     solve_chip_box,
     solve_node_box,
@@ -214,24 +232,6 @@ def resolve_node_glyph(
         glyph_id=glyph_id,
         accent_index=mark.glyph_accent_index,
     )
-
-
-def node_glyph_id(node: DiagramNode, registry: Mapping[str, Any] | None) -> str:
-    """The identity-slot resolution ladder: brand ``glyph`` -> semantic
-    ``kind`` (core set) -> nothing. First id that RESOLVES in the merged
-    registry wins; neither resolving means no mark at all (icon-or-nothing
-    — an unknown slug never renders an empty group). A ``kind`` prefers its
-    namespaced ``kind:<slug>`` entry so generic words a brand shadows
-    (shield, star, braces) still reach the generic mark."""
-    if registry is None:
-        return ""
-    if node.glyph and node.glyph in registry:
-        return node.glyph
-    if node.kind:
-        for gid in (f"kind:{node.kind}", node.kind):
-            if gid in registry:
-                return gid
-    return ""
 
 
 def glyph_slot_builder(
@@ -778,6 +778,119 @@ def place_text_block(
     )
 
 
+def place_card_label(
+    *,
+    index: int,
+    node: DiagramNode,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    lines: tuple[str, ...],
+    nch: DiagramNodeChassis,
+    cfg: ParadigmDiagramConfig,
+    accent_index: int,
+    hero: bool = False,
+    muted_dash: str = "",
+    glyph_builder: Callable[[float, float], GlyphArt | None] | None = None,
+    health_dot: bool = False,
+) -> NodePlacement:
+    """The card+label anatomy: a small tracked mono label over a stack of
+    display values — the inverse of ``place_card``'s display name over mono
+    desc. Every baseline is the specimen's fixed rhythm off the card TOP
+    (never metric-centred like ``place_card``): the label kicker anchors the
+    card, so the stack must hang from it identically whether a card carries
+    two values or four.
+
+    STANDARD register: label and values share one left column at
+    ``CARD_LABEL_PAD_X``; a resolved mark rides the top-RIGHT corner as an
+    annotation — it never shifts that column (a left identity column is what
+    makes an anatomy card+glyph).
+
+    HERO register (the crown): the same two slots restacked — an identity ROW
+    (mark + mono id, centred as one group) over a centred display block."""
+    box = RectSpec(x=x, y=y, w=w, h=h, rx=nch.rx)
+    label_voice, _ = card_label_voices(cfg, hero=hero)
+    text = card_label_text(node, hero=hero)
+    pad_x = CARD_LABEL_PAD_X
+    glyph_art: GlyphArt | None = None
+    if hero:
+        # The identity row is one centred GROUP: mark, gap, then the id run.
+        mark_run = (CARD_LABEL_HERO_MARK + CARD_LABEL_HERO_MARK_GAP) if glyph_builder is not None else 0.0
+        group_w = mark_run + measure_voice(text, label_voice)
+        group_left = x + w / 2 - group_w / 2
+        if glyph_builder is not None:
+            glyph_art = glyph_builder(group_left + CARD_LABEL_HERO_MARK / 2, y + CARD_LABEL_HERO_LABEL_DY - 4.0)
+        if glyph_art is not None and glyph_art.tint == GlyphTint.INK.value:
+            # The id-row mark rides the SIGNAL tone on the crown (the
+            # specimen's accent identity row) — the same promotion the hub
+            # nucleus glyph gets; brand/full tints keep their color.
+            glyph_art = replace(glyph_art, signal=True)
+        label = DiagramText(
+            x=group_left + mark_run, y=y + CARD_LABEL_HERO_LABEL_DY, text=text, cls="hlbl", anchor="start"
+        )
+        value_rows = tuple(
+            DiagramText(
+                x=x + w / 2,
+                y=y + CARD_LABEL_HERO_VALUE_DY + i * CARD_LABEL_HERO_PITCH,
+                text=line,
+                cls="hval",
+                anchor="middle",
+            )
+            for i, line in enumerate(lines)
+        )
+    else:
+        mark_inset_r = card_label_mark_inset_r(health_dot=health_dot)
+        if glyph_builder is not None:
+            # Top-right corner: the mark's LEFT edge sits ``mark_inset_r`` off
+            # the card's right edge (the specimen's 36, or shifted left to 44
+            # when the health dot holds the corner — the anatomy-owned mark
+            # yields to the generic health channel, never the reverse), its
+            # top CARD_LABEL_MARK_INSET_Y down — so its centre is half a mark
+            # inside each of those.
+            glyph_art = glyph_builder(
+                x + w - mark_inset_r + CARD_LABEL_MARK / 2,
+                y + CARD_LABEL_MARK_INSET_Y + CARD_LABEL_MARK / 2,
+            )
+        # The label never runs under the mark: the box was solved with that
+        # clearance, so truncation here is the last resort a hostile label hits.
+        label_budget = (w - mark_inset_r - CARD_LABEL_MARK_GAP - pad_x) if glyph_art else (w - 2 * pad_x)
+        label = DiagramText(
+            x=x + pad_x,
+            y=y + CARD_LABEL_LABEL_DY,
+            text=truncate_to_width(text, label_budget, label_voice),
+            cls="nlbl",
+            anchor="start",
+        )
+        value_rows = tuple(
+            DiagramText(
+                x=x + pad_x,
+                y=y + CARD_LABEL_VALUE_DY + i * CARD_LABEL_VALUE_PITCH,
+                text=line,
+                cls="nval",
+                anchor="start",
+            )
+            for i, line in enumerate(lines)
+        )
+    role = role_of(node)
+    return NodePlacement(
+        index=index,
+        node_id=node.id,
+        shape="rect",
+        box=box,
+        role=role,
+        stroke_width=1.5,
+        # A muted card+label recedes exactly as a muted card does — the dashed
+        # border is the MUTED family's own signal, not a card-anatomy detail,
+        # so dropping it here would render a "muted" node that reads active.
+        stroke_dasharray=muted_dash if role == "muted" else "",
+        accent_index=accent_index,
+        label=label,
+        desc_lines=value_rows,
+        glyph=glyph_art,
+    )
+
+
 def place_circle(
     *,
     index: int,
@@ -930,8 +1043,17 @@ def place_circle(
             cls="name",
             anchor=anchor,
         )
+        # A hero medallion's desc reads in the accent sub register (the card
+        # hero's own hdesc; the twin bilateral hand files set "the engine"
+        # accent under an ink name) — satellite descs stay muted.
         desc_lines = tuple(
-            DiagramText(x=lx, y=ly + name_gap + q * pitch, text=line, cls="ndesc", anchor=anchor)
+            DiagramText(
+                x=lx,
+                y=ly + name_gap + q * pitch,
+                text=line,
+                cls="hdesc" if role == "hero" else "ndesc",
+                anchor=anchor,
+            )
             for q, line in enumerate(wrapped)
         )
         return NodePlacement(
@@ -965,7 +1087,7 @@ def place_circle(
                 x=lx + desc_dxy[0],
                 y=ly + desc_dxy[1],
                 text=truncate_to_width(node.desc, 3.6 * r, cfg.desc_voice),
-                cls="ndesc",
+                cls="hdesc" if role == "hero" else "ndesc",
                 anchor=anchor,
             ),
         )
@@ -1009,7 +1131,10 @@ def _seam_glyph_builder(
     the sequence head (never a caller-selected ``node_style``) and the
     axial nucleus (always a card, so a glyph-circle request still rides it
     as a mark rather than losing it)."""
-    if not unconditional and style_of(node, ctx.spec, ctx.ch) != NodeStyle.CARD_GLYPH.value:
+    if not unconditional and style_of(node, ctx.spec, ctx.ch) not in (
+        NodeStyle.CARD_GLYPH.value,
+        NodeStyle.CARD_LABEL.value,
+    ):
         return None
     gid = node_glyph_id(node, ctx.glyph_registry)
     if not gid:
@@ -1125,13 +1250,61 @@ def place_node(
         anatomy = "head"
         auto_head = True
         glyph_size = HEAD_GLYPH_SIZE
-    if nch.glyph_w and glyph_size == GLYPH_MARK_W:
+    # ``force_card`` constrains the outer silhouette, not which rectangular
+    # card anatomy renders inside it.  Lanes, axial nuclei and convergence
+    # crowns therefore retain an authored card+label request instead of being
+    # silently downgraded to the legacy name/desc card.
+    card_label = style == NodeStyle.CARD_LABEL.value
+    # The CROWN register is a seat fact (``ch.crown_register`` — hub nuclei,
+    # fan sources, convergence mouths) bounded by the dominance band
+    # (``crown_within_band`` — the system-wide balance law), never a bare
+    # role fact: a ranked hero (tree root, dag rank) and an out-of-band
+    # center hero both keep the standard register with hero dress. The band
+    # function is shared with ``solve_node_box`` so sizing and placement can
+    # never disagree about which register renders.
+    card_label_crown = card_label and is_hero and ch.crown_register and crown_within_band(ctx, node, index)
+    if card_label and glyph_size == GLYPH_MARK_W:
+        # The corner annotation (and the crown's id-row mark) carry their own
+        # sizes — the card+glyph 24 would overhang the specimen's 16px gutter.
+        glyph_size = CARD_LABEL_HERO_MARK if card_label_crown else CARD_LABEL_MARK
+    elif nch.glyph_w and glyph_size == GLYPH_MARK_W:
         # Chassis mark override (the axial nucleus' 32); explicit caller
         # sizes still win.
         glyph_size = nch.glyph_w
     builder = _seam_glyph_builder(ctx, index, node, unconditional=glyph_unconditional, size=glyph_size)
     left = cx - w / 2 if x is None else x
     top = cy - h / 2 if y is None else y
+    if card_label:
+        # Take the value lines from the SIZING seam rather than re-wrapping
+        # here: same inputs, same call, so the stack that renders is the stack
+        # the box was solved for — the two can never drift apart.
+        health_dot = node.health is not NodeHealth.OK
+        _, _, value_lines = solve_card_label_box(
+            node,
+            nch,
+            ch,
+            ctx.cfg,
+            hero=card_label_crown,
+            min_w=w,
+            has_mark=builder is not None,
+            health_dot=health_dot,
+        )
+        return place_card_label(
+            index=index,
+            node=node,
+            x=left,
+            y=top,
+            w=w,
+            h=h,
+            lines=value_lines,
+            nch=nch,
+            cfg=ctx.cfg,
+            accent_index=ctx.node_accents[index],
+            hero=card_label_crown,
+            muted_dash=_muted_dash(ctx),
+            glyph_builder=builder,
+            health_dot=health_dot,
+        )
     if anatomy == "head":
         return place_head(
             index=index,

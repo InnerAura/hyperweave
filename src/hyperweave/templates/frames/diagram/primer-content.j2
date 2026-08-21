@@ -51,12 +51,14 @@
 {% if band.count %}  <text x="{{ band.count.x }}" y="{{ band.count.y }}"{% if band.count.anchor != 'start' %} text-anchor="{{ band.count.anchor }}"{% endif %} class="{{ uid }}-{{ band.count.cls }}">{{ band.count.text | xml_escape }}</text>
 {% endif %}{% endfor %}
 {% for c in lay.connectors %}
-{% set hue_cls = (uid ~ '-fl' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-fls') %}
+{# Partition-pair chromatics: an ink-group wire strokes ink, its accent-group
+   twin takes the flow hue — one decision per GROUP, resolved in compose. #}
+{% set hue_cls = (uid ~ '-flink') if c.ink_wire else ((uid ~ '-fl' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-fls')) %}
 {# Muted-connector knob: NEUTRAL static/dash wires quiet to the muted gray;
    the SPINE (accent-indexed) edge keeps its hue — the kit's one privileged
    relationship reads in accent while everything else recedes. Particles +
    markers keep hue_cls. Geometry-neutral — only the stroke class changes. #}
-{% set wire_cls = (uid ~ '-connmuted') if (conn_muted and not c.accent_wire and c.accent_index < 0) else hue_cls %}
+{% set wire_cls = (uid ~ '-connmuted') if (conn_muted and not c.accent_wire and not c.ink_wire and c.accent_index < 0) else hue_cls %}
 {% if c.beam %}{# Beam edge (reference recipe): the generic wire yields entirely to the 5-stroke
    stack on ONE path — glass conduit (casing + rail, survives reduced motion
    and static faces) under blurred glow, gradient core, and the comet front.
@@ -66,11 +68,13 @@
   <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ c.beam[0].id_suffix }})" stroke-width="{{ diagram_style.beam_glow_w }}" opacity="{{ diagram_style.beam_glow_op }}" filter="url(#{{ uid }}-beam-blur)"/>
   <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ c.beam[0].id_suffix }})" stroke-width="{{ diagram_style.beam_core_w }}"/>
   <path d="{{ c.path_d }}" class="{{ uid }}-light" stroke="url(#{{ uid }}-{{ c.beam[1].id_suffix }})" stroke-width="{{ diagram_style.beam_front_w }}"/>
+{% elif c.track == 'ring-drift' %}{# The collapsed flow ring: the perimeter carries the momentum, so it
+   yields the muted wire entirely for its own accent register. #}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ uid }}-ringflow"/>
 {% elif c.track == 'dash-march' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }} {{ uid }}-m{{ loop.index0 }}"/>
 {% elif c.track == 'dash-drift' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }} {{ uid }}-retdrift"/>
 {% else %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
 {% endif %}
-{% if c.marker_d %}{% set mk_fill = (uid ~ '-connmutedf') if (conn_muted and not c.accent_wire and c.accent_index < 0) else ((uid ~ '-flp' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-flps')) %}  <path d="{{ c.marker_d }}" class="{{ uid }}-mk {{ mk_fill }}"/>
+{% if c.marker_d %}{% set mk_fill = (uid ~ '-flinkf') if c.ink_wire else ((uid ~ '-connmutedf') if (conn_muted and not c.accent_wire and c.accent_index < 0) else ((uid ~ '-flp' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-flps'))) %}  <path d="{{ c.marker_d }}" class="{{ uid }}-mk {{ mk_fill }}"/>
 {% endif %}
 {% endfor %}
 {# Gather-fan ornaments: above the wires they bundle, below the cards. A
@@ -121,14 +125,14 @@
    independently on the same card. #}
 {% if n.health %}  <circle cx="{{ n.health_dot[0] }}" cy="{{ n.health_dot[1] }}" r="{{ diagram_style.health_dot_r }}" class="{{ uid }}-{{ 'crit' if n.health == 'vulnerable' else 'warn' }}{% if n.health == 'vulnerable' %} {{ uid }}-critp{% endif %}"/>
 {% endif %}
-{% if n.glyph %}{% set glyph_hue_cls = (uid ~ '-fl' ~ n.glyph.accent_index) if n.glyph.tint == 'hue' else '' %}{% if n.glyph.stroke_w %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls %} class="{{ glyph_hue_cls }}"{% endif %} fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ n.glyph.gradient ~ ')') if n.glyph.gradient else n.glyph.fill }}" stroke-width="{{ n.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ n.glyph.opacity }}">
-{% else %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls %} class="{{ uid }}-flp{{ n.glyph.accent_index }}"{% endif %}{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
+{% if n.glyph %}{% set glyph_hue_cls = (uid ~ '-fl' ~ n.glyph.accent_index) if n.glyph.tint == 'hue' else '' %}{% if n.glyph.stroke_w %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal %} class="{{ glyph_hue_cls if glyph_hue_cls else (uid ~ '-fls') }}"{% endif %} fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ n.glyph.gradient ~ ')') if n.glyph.gradient else n.glyph.fill }}" stroke-width="{{ n.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ n.glyph.opacity }}">
+{% else %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal %} class="{{ (uid ~ '-flp' ~ n.glyph.accent_index) if glyph_hue_cls else (uid ~ '-flps') }}"{% endif %}{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
 {% endif %}
 {% for gp in n.glyph.paths %}    <path d="{{ gp.d }}"{% if gp.fill %} fill="{{ gp.fill }}"{% endif %}/>
 {% endfor %}  </g>
 {% endif %}
-  <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ n.label.text | xml_escape }}</text>
-{% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}">{{ line.text | xml_escape }}</text>
+  <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}{% if n.role == 'muted' and n.label.cls in ('nlbl', 'hlbl') %} {{ uid }}-nmuted{% endif %}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ n.label.text | xml_escape }}</text>
+{% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if n.role == 'muted' and line.cls in ('nval', 'hval') %} {{ uid }}-nmuted{% endif %}">{{ line.text | xml_escape }}</text>
 {% endfor %}
 {% for cb in n.chip_boxes %}  <rect x="{{ cb.x }}" y="{{ cb.y }}" width="{{ cb.w }}" height="{{ cb.h }}" rx="{{ cb.rx }}" class="{{ uid }}-chipbg"/>
 {% endfor %}

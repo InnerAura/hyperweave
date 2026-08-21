@@ -304,12 +304,12 @@ class TestOrnamentFreeDefaults:
             "dag",
             "state-machine",
             "lanes",
-            "flywheel",
+            "cycle-orbit",
             "tree",
-            "ring",
+            "cycle-ring",
         }  # the confirmed wire-defaults set
         arrow_slugs = {slug for slug, cfg in wire_defaults.items() if cfg.get("terminal")}
-        assert arrow_slugs == {"sequence", "dag", "state-machine", "lanes", "flywheel", "ring", "hub"}
+        assert arrow_slugs == {"sequence", "dag", "state-machine", "lanes", "cycle-orbit", "cycle-ring", "hub"}
         offenders: list[tuple[str, str, int]] = []
         for name in sorted(diagram_preset_names()):
             # The production input seam (cyclic presets promote before solve).

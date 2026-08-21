@@ -78,7 +78,7 @@ class TestBugBMarkerOnTerminus:
 
 
 class TestBugCMarginsNSEW:
-    @pytest.mark.parametrize("name", ["rag-pipeline", "cicd-gate", "hub", "obi-engine"])
+    @pytest.mark.parametrize("name", ["pipeline-head", "dag-gate", "hub-zones", "lanes"])
     def test_region_stack_breathes_on_all_four_sides(self, name: str) -> None:
         lay = _preset_layout(name)
         m = 24.0  # margin_x on the primer diagram chassis (uniform NSEW, §2)
@@ -101,7 +101,7 @@ class TestBugDEWireTruth:
     def test_channels_never_cross_chrome_bands(self) -> None:
         # A dag whose bypass channel dips BELOW the ranks (service-dependencies'
         # web->postgres direct read): the footer must stack BELOW the channel.
-        lay = _preset_layout("service-dependencies")
+        lay = _preset_layout("dag-mesh")
         footer = next(r for r in lay.regions if r.id == "footer")
         max_wire_y = max(py for c in lay.connectors for _, py in sample_path(c.path_d))
         assert footer.y >= max_wire_y - 0.5
@@ -157,7 +157,7 @@ class TestBugHWrapBeforeTruncate:
         # The subject moved off obi-engine when its hand sheet's captionless
         # chrome was ratified (chrome: plain) — the ellipsis contract now
         # exercises the longest restored caption sentence instead.
-        svg = self._compose("observability-converge", font_mode)
+        svg = self._compose("dag-join", font_mode)
         # Caption chrome never renders a masthead group — the title still
         # ships whole via the SVG accessibility <title>, never truncated.
         assert 'data-hw-region="masthead"' not in svg
@@ -176,7 +176,7 @@ class TestBugHWrapBeforeTruncate:
         # obi-engine's hand sheet is captionless; chrome: plain keeps the
         # full plate and drops only the caption line — the subtitle still
         # ships in the accessibility metadata, never as chrome ink.
-        svg = self._compose("obi-engine", font_mode)
+        svg = self._compose("lanes", font_mode)
         title_body = svg.split("<title", 1)[-1].split("</title>", 1)[0]
         assert "one engine under every surface" in title_body
         assert not re.search(r'class="[^"]*-cap"', svg)

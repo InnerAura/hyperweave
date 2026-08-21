@@ -31,6 +31,7 @@ from hyperweave.compose.diagram.records import (
     ParticlePlacement,
 )
 from hyperweave.compose.diagram.route import marker_path, resolve_marker
+from hyperweave.core.diagram import partition_groups
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -187,7 +188,12 @@ def knot_collapse(
         knot = (kx, my)
     else:
         mx, my = geos[slots[0]].tx, geos[slots[0]].ty
-        kx = mx - trunk_len
+        # The knot floats TOWARD its spokes: -x for a west-face mouth
+        # (fanin, the dag joins — the only shape before the bilateral hub
+        # gathered), +x when the members arrive from the right (the
+        # bilateral's east face).
+        side = -1.0 if sum(geos[g].sx for g in slots) / len(slots) <= mx else 1.0
+        kx = mx + side * trunk_len
         flush = not trunk_len
         for gi in slots:
             old_g = geos[gi]
@@ -361,8 +367,18 @@ def wire_motion(
     # <marker>. No shipped genome declares an arrowhead device, so the common
     # path leaves marker_d empty and the output is byte-identical.
     conn_cfg = engine["connector"]
-    marker_size = float(conn_cfg.get("marker_size", 11))
-    marker_half = float(conn_cfg.get("marker_half", 0.45))
+    # A topology chassis may CITE its own arrowhead geometry (the bilateral
+    # wings specimen's 13x10 heads against the kit's 8) — the engine value is
+    # the default every unciting layout keeps, never a global retune.
+    marker_size = float(ctx.ch.marker_size or conn_cfg.get("marker_size", 11))
+    marker_half = float(ctx.ch.marker_half or conn_cfg.get("marker_half", 0.45))
+    # Partition-pair chromatics: the FIRST zone's spokes stroke ink, their
+    # accent-group twins take the flow hue. Derived once from the spec's own
+    # group membership, so wires, labels and marks cannot disagree.
+    groups = partition_groups(ctx.spec)
+    ink_edges = frozenset(
+        j for j, e in enumerate(ctx.edges) if ctx.spec.partition_chroma and max(groups[e.source], groups[e.target]) == 0
+    )
     # Reciprocal-lane march dasharray (gateway v4 specimen: a longer dash
     # than the shared ants texture) — read once, applied per-connector below
     # wherever mo.lane_dress_applies gates the same edge into its lane hue.
@@ -425,14 +441,17 @@ def wire_motion(
     # stages by declaration index (frontier-handoff).
     beam_pos = [gi for gi, g in enumerate(geos) if effective[g.index][0] == "beam" and not ctx.edges[g.index].inert]
     beam_stage: dict[int, tuple[float, float]] = {}
+    beam_family = ""
     if beam_pos:
         bcfg = engine.get("beam") or {}
         trunk_set = {gi for gi in beam_pos if geos[gi].synthetic_trunk}
         if trunk_set:
+            beam_family = "branch"
             wins = mo.beam_windows(2, bcfg, family="branch")
             for gi in beam_pos:
                 beam_stage[gi] = wins[0] if gi in trunk_set else wins[1]
         elif ctx.slug == "fanout-bilateral":
+            beam_family = "bilateral"
             wins = mo.beam_windows(2, bcfg, family="bilateral")
             for gi in beam_pos:
                 beam_stage[gi] = wins[geos[gi].flow_side]
@@ -463,7 +482,7 @@ def wire_motion(
         # specimen): the rim's own arcs never carry motion texture — an explicit
         # 'particle' request routes entirely to the rim-orbit ornament above,
         # so the rail itself stays the same static solid rail regardless.
-        wire_exempt = not explicit_motion or ctx.slug == "flywheel"
+        wire_exempt = not explicit_motion or ctx.slug == "cycle-orbit"
         if wire == "solid" and track == "dash-march" and not geo.semantic_dash and wire_exempt:
             track = "static"
         inert = edge.inert
@@ -549,6 +568,13 @@ def wire_motion(
             # already forced to dash by the pre-pass.
             track = "static"
             static_dash = ""
+        # The collapsed flow ring (the one full-turn arc a cyclic solver
+        # emits when every rim edge dresses markerless drift) rides its own
+        # register: the specimen's perimeter IS the momentum carrier —
+        # accent, wider, and a faster seamless drift than the shared edge
+        # march, whose clock reads as sub-pixel shimmer at ring length.
+        if track == "dash-march" and geo.arc is not None and abs(geo.arc[4] - geo.arc[3]) >= 360.0:
+            track = "ring-drift"
         # Edge labels are no longer wired here: the annotate chrome pass
         # (compose/diagram/annotate.py) subsumes every edge's label into a
         # ``kind="label"`` AnnotationPlacement AFTER wiring, so labels render on
@@ -601,7 +627,7 @@ def wire_motion(
                     )
                 )
                 particle_seen += 1
-            elif ctx.slug == "flywheel":
+            elif ctx.slug == "cycle-orbit":
                 # flywheel-orbit: particle motion on flywheel routes ENTIRELY
                 # to the rim-orbit ornament (radial.py's solve_flywheel ->
                 # finish_layout's extra_particles) — a fixed accent-particle
@@ -644,7 +670,7 @@ def wire_motion(
                 geo.tx,
                 geo.ty,
                 stage=beam_stage.get(gi, (0.02, 0.92)),
-                cfg=engine.get("beam") or {},
+                cfg=mo.beam_family_cfg(engine.get("beam") or {}, beam_family),
             )
         lane_dressed = (
             not inert and track == "dash-march" and mo.lane_dress_applies(ctx.spec.topology, ctx.lanes[geo.index])
@@ -667,6 +693,7 @@ def wire_motion(
                 lane=ctx.lanes[geo.index],
                 inert=inert,
                 accent_wire=geo.accent_wire,
+                ink_wire=geo.index in ink_edges,
                 relation=rel,
                 beam=beam_paint,
             )

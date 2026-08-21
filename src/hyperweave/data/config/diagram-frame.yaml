@@ -28,10 +28,10 @@ caps:
     fanout-upward: { min: 3, max: 7 } # source + 2..6 (two rows of 3)
     fanout-downward: { min: 3, max: 8 } # source + 2..7 (one bottom row; router-descent)
     fanout-radial: { min: 4, max: 9 } # hub + 3..8
-    convergence: { min: 3, max: 7 } # 2..6 inputs + target
-    flywheel: { min: 3, max: 7 } # 3..6 phases + optional axis
-    ring: { min: 3, max: 8 } # equal stages, empty centre (agent-loop runs 6)
-    stack: { min: 3, max: 7 } # result + 2..6 layers
+    fanin: { min: 3, max: 7 } # 2..6 inputs + target
+    cycle-orbit: { min: 3, max: 7 } # 3..6 phases + optional axis
+    cycle-ring: { min: 3, max: 8 } # equal stages, empty centre (cycle-ring runs 6)
+    pipeline-vertical: { min: 3, max: 7 } # result + 2..6 layers
     tree: { min: 3, max: 16 } # root + 2..15 nodes across depth 1..tree_horizontal_max_depth
     tree-radial: { min: 4, max: 16 } # root + ring-1 + ring-2 (depth 2..3)
     comparison: { min: 2, max: 2 }
@@ -66,11 +66,13 @@ caps:
 orientation_legality:
   fanout: [horizontal, bilateral, upward, downward, radial]
   tree: [horizontal, radial]
-  # convergence was silently horizontal-only (the fallback default below);
-  # this widens it to the fan family's own set. Additive only — no solver
-  # yet reads a non-horizontal convergence orientation, so this unlocks
-  # future specs to ASK for one without changing any existing render.
-  convergence: [horizontal, bilateral, upward, downward, radial]
+  # The family x expression consolidation (2026-08-20): pipeline's
+  # vertical cell is the operator stack; cycle REQUIRES its expression
+  # (orbit | ring — the default-horizontal fallback refuses, teaching
+  # both); fanin is honest about the one form its solver draws.
+  pipeline: [horizontal, vertical]
+  cycle: [orbit, ring]
+  fanin: [horizontal]
 
 # Honest orientation phrase per layout_slug — the MEASURED clause of
 # hw:spatial-notes (never rhetoric; the reasoning quality bar lives on
@@ -85,10 +87,10 @@ orientation_phrases:
   fanout-upward: upward fan-out
   fanout-downward: downward fan-out
   fanout-radial: radial fan-out
-  convergence: converging left-to-right
-  flywheel: radial orbit
-  ring: radial loop
-  stack: bottom-to-top stack
+  fanin: converging left-to-right
+  cycle-orbit: radial orbit
+  cycle-ring: radial loop
+  pipeline-vertical: bottom-to-top stack
   tree: top-down tree
   tree-radial: radial tree
   comparison: side-by-side
@@ -120,10 +122,10 @@ wire_defaults:
   # ring (the agent-loop-ring specimen): the medallion loop is built for
   # stills — direction must survive as geometry, so solid arcs + drawn
   # arrowheads are the topology's own grammar, not preset ornament.
-  ring: { wire: solid, terminal: arrow }
+  cycle-ring: { wire: solid, terminal: arrow }
   # flywheel-orbit: the ring reads as solid gray arcs + drawn arrowheads;
   # motion (particle/beam/flow) is opt-in per preset and stays unaffected.
-  flywheel: { wire: solid, terminal: arrow }
+  cycle-orbit: { wire: solid, terminal: arrow }
   # tree/dep-audit: the hierarchy is fully static (a pulsing tree would be
   # gratuitous) — NO terminal, direction reads from vertical position, never
   # an arrowhead (wiring.py's tree_exempt suppresses one regardless).
@@ -227,7 +229,7 @@ diagnostics:
   mass_bands:
     axial: [0.10, 0.30]
     sequence: [0.03, 0.42]
-    flywheel: [0.03, 0.42]
+    cycle-orbit: [0.03, 0.42]
     fanout-bilateral: [0.04, 0.42]
     default: [0.05, 0.45]
   crossing_bands:
@@ -360,6 +362,12 @@ region_band:
 # topology): a chassis without its own display_w scales its canvas to this
 # instead of rendering 1:1.
 display_w_default: 740
+# House display scale ceiling: 740 / 920 — the page target over the house
+# frame, the projection both upward hand prototypes record (920x440 →
+# 740x355). A canvas narrower than the target never renders above this
+# scale, so type and card size stay uniform across the board; the narrow
+# artifact takes only the page width its ink earns.
+display_scale_max: 0.8043
 
 connector:
   stroke_width: 1.5
@@ -415,6 +423,17 @@ track:
   return_drift_dash: "5 4"
   return_drift_dur: "3s"
   return_drift_offset: -108
+  # The collapsed FLOW ring (a cycle whose edges all dress markerless drift
+  # collapses to ONE closed circle) rides its own register, cited from the
+  # flow specimen's ring class: the perimeter alone carries the momentum,
+  # so it strokes ACCENT at 2.5 and drifts a full pixel per frame — dash
+  # 4 12 at 2.618s to offset -160 (10 dash periods, seamless loop). On the
+  # shared 2 7 @ 7s edge march the ring advanced a quarter-pixel per frame
+  # and read as shimmer, muted and thin, not a turning rim.
+  ring_dash: "4 12"
+  ring_dur: "2.618s"
+  ring_offset_to: -160
+  ring_stroke_width: 2.5
   # dep-audit's legend key (pp-tree-v2.svg/pp-tree-radial-v2.svg .*-dash):
   # the transitive-dep stub is a QUIET static reference, never the marching
   # texture its actual edges animate with (a legend distracting with motion
@@ -500,9 +519,9 @@ particle:
   # untouched; slot-locked clocks (beam relay, sequence replay) exempt.
   stagger:
     default: 0.5
-    convergence: 0.4
+    fanin: 0.4
     tree: 0.55
-    stack: 0.6
+    pipeline-vertical: 0.6
     state-machine: 0.6
     dag: 0.7
   # One ramp for every topology (diagrams-v3 kit): fade in over the first
@@ -512,7 +531,7 @@ particle:
 
 # Beam — the gradient-window comet (declares performance="paint-ok").
 # Specimen recipe (the frontier-handoff and parity-beam reference files
-# under v04/alpha/v04a6/diagrams-v4/): per beam edge, FIVE stacked strokes on one
+# under v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v4/): per beam edge, FIVE stacked strokes on one
 # path d — casing + rail (the solid glass conduit that survives reduced
 # motion; the frontier-handoff specimen's hw:tradeoffs retires the dashed track: "dashes belong to
 # plain edges — a beam moves through glass") beneath glow, core, and the
@@ -558,15 +577,20 @@ beam:
     branch_gap: 0.02
     branch_span: 0.30
   # Bilateral fan-out family (west converges as one wave, a beat at the hub,
-  # east emerges as the next): two EQUAL stages, no trunk to lead with. No
-  # bilateral beam specimen exists yet to cite its own span, so this shares
-  # ``relay``'s own lead/gap/rest law — a dedicated family only so it always
-  # yields exactly two stages (relay's generic by-count path degenerates to
-  # the n=1 near-full sweep whenever one side alone holds every beam edge).
+  # east emerges as the next): two EQUAL stages, no trunk to lead with,
+  # cited from the twin bilateral prototypes' own choreography — west
+  # .02-.38, east .42-.78 on a 4.236s clock. The explicit span is a
+  # citation like relay_branch's (it bypasses the derive-and-cap path);
+  # its wall-clock window .36 x 4.236 = 1.53s sits inside the ~1.5s band
+  # relay_span_cap protects, so the cap's velocity law holds in time.
+  # ``dur`` is this family's own clock (the reference specimens' 5.236
+  # stays the default for every other family); every edge in one artifact
+  # still rides one shared clock.
   relay_bilateral:
     lead: 0.02
-    gap: 0.06
-    rest: 0.08
+    span: 0.36
+    gap: 0.04
+    dur: 4.236
   # Sequence owns its own replay grammar (one traversing particle IS the
   # clock) — a requested beam there falls back through the ladder with
   # honest requested/rendered bookkeeping.

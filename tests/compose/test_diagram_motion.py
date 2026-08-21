@@ -237,3 +237,46 @@ def test_sequence_beam_falls_back_honestly() -> None:
     rendered = _json2.loads(m.group(1))["rendered"]
     assert "beam" not in rendered["edge_motion"]
     assert rendered.get("fallback_applied") is True
+
+
+def test_flow_ring_rides_its_own_register() -> None:
+    """The collapsed flow ring (a cycle whose edges all dress markerless
+    drift) yields the muted edge march for the flow specimen's own ring
+    recipe: accent stroke at 2.5, dash 4 12 drifting to -160 over 2.618s —
+    a full pixel per frame where the shared march crawls at a quarter. The
+    offset must stay an exact multiple of the dash period on BOTH registers
+    so every loop closes seamlessly."""
+    import re
+
+    from hyperweave.compose.bundled_specs import resolve_bundled_spec
+    from hyperweave.compose.engine import compose
+    from hyperweave.core.models import ComposeSpec
+
+    track = CFG["track"]
+    for dash_key, offset_key in (("ring_dash", "ring_offset_to"), ("march_dash", "march_offset_to")):
+        period = sum(float(p) for p in str(track[dash_key]).split())
+        offset = abs(float(track[offset_key]))
+        assert offset % period == 0, f"{dash_key}: offset {offset} is not a whole number of {period}px periods"
+
+    bs = resolve_bundled_spec("diagram", "cycle-flow")
+    svg = compose(
+        ComposeSpec(
+            type="diagram", genome_id="primer", variant="porcelain", ground="opaque", palette="fixed", diagram=bs.value
+        )
+    ).svg
+    ring = re.search(r'<path id="(hw-[0-9a-f]+)-c0"[^>]*class="([^"]*)"', svg)
+    assert ring is not None
+    uid, classes = ring.group(1), ring.group(2)
+    assert f"{uid}-ringflow" in classes, classes
+    assert "connmuted" not in classes and "-m0" not in classes, classes
+    rule = re.search(rf"\.{uid}-ringflow {{ ([^}}]*)}}", svg)
+    assert rule is not None
+    css = rule.group(1)
+    assert "stroke: var(--dna-signal)" in css
+    assert f"stroke-width: {track['ring_stroke_width']}" in css
+    assert f"stroke-dasharray: {track['ring_dash']}" in css
+    assert f"{track['ring_dur']} linear infinite" in css
+    assert re.search(rf"@keyframes {uid}-ringf {{ to {{ stroke-dashoffset: {track['ring_offset_to']}; }} }}", svg)
+    # The ring keeps the -branch base class, so the standing
+    # prefers-reduced-motion guard (animation: none on -branch) stills it.
+    assert f"{uid}-branch" in classes

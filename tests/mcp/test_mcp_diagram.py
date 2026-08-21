@@ -34,6 +34,23 @@ async def test_hw_compose_diagram_svg() -> None:
 
 
 @pytest.mark.asyncio
+async def test_hw_compose_card_label_explicit_payload() -> None:
+    """MCP has an explicit diagram payload, not a separate preset argument;
+    the anatomy must compose through that public seam."""
+    diagram = dict(
+        TINY,
+        node_style="card+label",
+        nodes=[
+            {"label": "fetch", "desc": "1.2M docs\n14 sources"},
+            {"label": "index", "desc": "1536 dims\n8k batch", "role": "hero"},
+            {"label": "serve", "desc": "p50 42ms\np99 210ms"},
+        ],
+    )
+    svg = _cached_svg(await hw_compose(type="diagram", genome="primer", diagram=diagram))
+    assert "-nlbl" in svg and "-nval" in svg and "-hlbl" in svg and "-hval" in svg
+
+
+@pytest.mark.asyncio
 async def test_composite_only_is_the_only_tier() -> None:
     # The kit grammar is compositor-only by construction (dash | particle) —
     # performance is always composite-only and nothing ladders down.
@@ -74,7 +91,7 @@ async def test_hw_discover_diagram_section() -> None:
     section = result["diagram"]
     assert "sequence" in section["topologies"]
     assert "state-machine" in section["topologies"]
-    assert "rag-pipeline" in section["presets"]
+    assert "pipeline-head" in section["presets"]
     assert "dash" in section["edge_motion"] and "particle" in section["edge_motion"]
     assert "beam" not in section["edge_motion"] and "flow" not in section["edge_motion"]
 

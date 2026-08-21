@@ -44,6 +44,29 @@ _GLYPH_DECOR_HINTS = ("-light", "-gi", "-gia", "-gf", "-gm", "-mgi", "-hgi", "-h
 # (a vocabulary difference, never a piece difference).
 _MICRO_LABEL_HINTS = ("-ml", "-elbl", "-reqt", "-respt")
 _ARROW_PATH_HINTS = ("-mk",)  # engine draws terminals as filled paths
+
+_TERMINAL_MAX_SPAN = 20.0
+"""A drawn terminal is a SMALL closed polygon. The kit's chevron is 8 long and
+the heaviest hand specimen draws 13 — 20 clears both while staying far below
+any real wire, so a closed relation path can never be mistaken for a head."""
+
+
+def _is_drawn_terminal(p: PathEl) -> bool:
+    """Is this path a drawn arrowhead, by GEOMETRY rather than by name?
+
+    The engine classes its heads ``-mk``, but a hand specimen names them
+    whatever its own vocabulary uses, and a census that only knows the engine's
+    spelling reads a specimen's four arrows as zero — then the parity board
+    grades a real difference as agreement. A head is a small CLOSED polygon
+    (``Z``) of straight segments only; the caller additionally requires it to
+    sit at a qualifying edge's terminus, which is what separates a head from
+    any other small triangle in the document."""
+    d = p.d.strip().upper()
+    if not d.endswith("Z") or any(cmd in d for cmd in ("C", "Q", "A", "S", "T")):
+        return False
+    return _span(p) <= _TERMINAL_MAX_SPAN
+
+
 # Chrome furniture drawn with edge vocabulary: the sequence time-axis is an
 # arrowed stub on both sides (specimen ``seq-taxis`` marker-end, engine
 # ``-taxis``/``-taxism`` drawn chevron) — never a relation.
@@ -147,6 +170,18 @@ def shell_rects(facts: Facts) -> list[Rect]:
         if len(inside) == 1 and outer.rx >= 17.0:
             shells.append(outer)
     return shells
+
+
+def is_hero_cls(cls: str) -> bool:
+    """Is this figure the composition's CROWN, in either vocabulary? The
+    engine's background classes are literally ``…-herobg`` /
+    ``…-herocirclebg``; hand files name the same figure ``hero`` or ``hub``
+    (the bilateral wings specimen's ``psw-hub``, the integration canon's
+    medallion). One predicate for every consumer — ``hero_figures`` already
+    read both spellings while the census counted only ``hero``, so a
+    hub-named crown extracted its DIMS correctly and censused as zero cards."""
+    low = cls.lower()
+    return "hero" in low or "hub" in low
 
 
 def card_rects(facts: Facts) -> list[Rect]:
@@ -298,14 +333,15 @@ def lane_mark_kinds(facts: Facts) -> list[str]:
 
 
 def _is_card_desc_cls(cls: str) -> bool:
-    """A node-desc sub-line voice, both vocabularies: engine -ndesc/-mdesc/
-    -hdesc, specimen -*desc/-*sub/-ns lane cards. The caller CARD-SCOPES this,
-    which excludes the masthead subtitle and footer caption — they share the
-    -sub/-cap voice but sit outside every card (document chrome, not a card
-    desc)."""
+    """A card's non-name text run, both vocabularies: engine -ndesc/-mdesc/
+    -hdesc and the card+label stack -nval/-hval; specimen -*desc/-*sub/-ns
+    lane cards and the card+label specimen's own -val / -display runs. The
+    caller CARD-SCOPES this, which excludes the masthead subtitle and footer
+    caption — they share the -sub/-cap voice but sit outside every card
+    (document chrome, not a card desc)."""
     for tok in cls.split():
         suf = tok.rsplit("-", 1)[-1]
-        if suf.endswith(("desc", "sub")) or suf == "ns":
+        if suf.endswith(("desc", "sub", "val")) or suf in ("ns", "display"):
             return True
     return False
 
@@ -319,7 +355,11 @@ def census(facts: Facts) -> Census:
     # granularity (flywheel-orbit-*: the cycle is the piece, not its segments).
     # The edge-dress census does not track either family, on either side.
     topo = str(facts.root_attrs.get("data-hw-topology", ""))
-    furniture_family = topo.startswith("tree") or topo == "flywheel"
+    sub = str(facts.root_attrs.get("data-hw-subvariant", ""))
+    # The engine now speaks the consolidated family words (topology "cycle",
+    # subvariant "cycle-orbit"); the hand files keep their historical
+    # "flywheel" — the grader reads both spellings of the same fact.
+    furniture_family = topo.startswith("tree") or topo == "flywheel" or sub == "cycle-orbit"
     knots = gather_knots(facts)
     knot_members = {id(k[0]) for k in knots} | {id(k[1]) for k in knots}
     edges = edge_paths(facts)
@@ -331,7 +371,7 @@ def census(facts: Facts) -> Census:
 
     for r in card_rects(facts):  # double-rects coalesced to their bodies
         c.cards += 1
-        if "hero" in r.cls:
+        if is_hero_cls(r.cls):
             c.hero_cards += 1
         if r.dashed:
             c.muted_cards += 1
@@ -345,7 +385,10 @@ def census(facts: Facts) -> Census:
         []
         if furniture_family
         else [
-            p for p in facts.paths if any(h in p.own_cls for h in _ARROW_PATH_HINTS) and _terminates_edge(p, edge_ends)
+            p
+            for p in facts.paths
+            if (any(h in p.own_cls for h in _ARROW_PATH_HINTS) or _is_drawn_terminal(p))
+            and _terminates_edge(p, edge_ends)
         ]
     )
     drawn_arrows = sum(1 for p in drawn_terminals if "L" in p.d.upper())
@@ -396,7 +439,7 @@ def census(facts: Facts) -> Census:
     if bodies:
         rxs = sorted(r.rx for r in bodies)
         c.card_rx = rxs[len(rxs) // 2]
-        hero_rxs = sorted(r.rx for r in bodies if "hero" in r.cls)
+        hero_rxs = sorted(r.rx for r in bodies if is_hero_cls(r.cls))
         if hero_rxs:
             c.hero_rx = hero_rxs[len(hero_rxs) // 2]
     c.glyph_marks = sum(1 for g in facts.glyph_groups if "-in" not in g.own_cls)
@@ -720,15 +763,11 @@ def hero_figures(facts: Facts) -> list[HeroFigure]:
     specimen carries a plain ``*-hero`` class. ``coin_circles`` already
     holds every circle r>=16 (siblings and hero alike), so no separate
     hero-radius floor is needed."""
-    out = [
-        HeroFigure(x=r.x, y=r.y, w=r.w, h=r.h, is_circle=False)
-        for r in card_rects(facts)
-        if "hero" in r.cls.lower() or "hub" in r.cls.lower()
-    ]
+    out = [HeroFigure(x=r.x, y=r.y, w=r.w, h=r.h, is_circle=False) for r in card_rects(facts) if is_hero_cls(r.cls)]
     out += [
         HeroFigure(x=c.cx - c.r, y=c.cy - c.r, w=2 * c.r, h=2 * c.r, is_circle=True)
         for c in coin_circles(facts)
-        if "hero" in c.cls.lower() or "hub" in c.cls.lower()
+        if is_hero_cls(c.cls)
     ]
     return out
 
@@ -745,7 +784,11 @@ def _is_hero_name_cls(cls: str) -> bool:
     search to THIS hero's own box, so any name-voice row found there is
     unambiguously its own — the suffix only needs to rule OUT a sub/desc
     line, not identify the owner."""
-    return any(tok.rsplit("-", 1)[-1].endswith("name") for tok in cls.split())
+    # card+label calls the same semantic row ``hlbl``; the hand prototype
+    # predates that vocabulary and calls it ``idm``.  Both are the crown's
+    # identity row, not a sub/value row, so parity must fail when either is
+    # removed even though neither suffix ends in ``name``.
+    return any((tail := tok.rsplit("-", 1)[-1]).endswith("name") or tail in {"hlbl", "idm"} for tok in cls.split())
 
 
 # Empirically calibrated against every corpus specimen carrying >=3 payload

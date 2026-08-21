@@ -6,6 +6,17 @@
     "hero_h": 116.0,
     "hero_w": 156.8,
     "std_h_med": 76.0,
+    "std_h_values": [
+      76.0,
+      76.0,
+      76.0,
+      76.0,
+      76.0,
+      76.0,
+      104.0,
+      104.0,
+      104.0
+    ],
     "std_w_med": 94.0
   },
   "census": {
@@ -43,7 +54,7 @@
     "content_top": 52.0
   },
   "port_tolerance": 0.5,
-  "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-tree.svg",
+  "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/dag-seq-tree/pp-tree.svg",
   "viewbox": [
     0.0,
     0.0,

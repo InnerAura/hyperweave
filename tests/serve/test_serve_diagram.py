@@ -37,17 +37,22 @@ def client() -> TestClient:
 
 class TestGetPreset:
     def test_pipeline_preset(self, client: TestClient) -> None:
-        response = client.get("/v1/diagram/rag-pipeline/primer.static?variant=porcelain")
+        response = client.get("/v1/diagram/pipeline-head/primer.static?variant=porcelain")
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("image/svg+xml")
         assert 'data-hw-subvariant="pipeline"' in response.text
         assert "ETag" in response.headers
 
+    def test_card_label_preset(self, client: TestClient) -> None:
+        """The public preset grammar reaches the new anatomy and copy."""
+        response = client.get("/v1/diagram/hub-bilateral/primer.static?variant=porcelain")
+        assert response.status_code == 200
+        assert "-hlbl" in response.text and "-nlbl" in response.text and "-nval" in response.text
+        assert "cites everything" in response.text
+
     def test_etag_304(self, client: TestClient) -> None:
-        first = client.get("/v1/diagram/flywheel-orbit/primer.static")
-        revisit = client.get(
-            "/v1/diagram/flywheel-orbit/primer.static", headers={"if-none-match": first.headers["ETag"]}
-        )
+        first = client.get("/v1/diagram/cycle-orbit/primer.static")
+        revisit = client.get("/v1/diagram/cycle-orbit/primer.static", headers={"if-none-match": first.headers["ETag"]})
         assert revisit.status_code == 304
 
     def test_unknown_preset_smpte(self, client: TestClient) -> None:

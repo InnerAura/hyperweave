@@ -193,7 +193,7 @@ def _diagram_ir(variant: str) -> dict[str, Any]:
             ],
         },
         "convergence": {
-            "topology": "convergence",
+            "topology": "fanin",
             "nodes": [
                 {"id": "a", "label": "CLI", "desc": "typer"},
                 {"id": "b", "label": "HTTP", "desc": "fastapi"},

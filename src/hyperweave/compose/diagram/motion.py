@@ -244,13 +244,15 @@ def beam_windows(n: int, cfg: Mapping[str, Any], *, family: str) -> list[tuple[f
     argument. ``family='bilateral'``: the fan-out mirror of ``branch`` for a
     topology with no trunk to lead — two EQUAL simultaneous stages (west
     converges as one wave, a beat at the hub, east emerges as the next),
-    keyed by ``EdgeGeo.flow_side`` rather than stage order. No bilateral
-    beam specimen exists to cite its own span, so it's derived from
-    ``relay``'s own n=2 shape (same lead/gap/rest law, dedicated so it never
-    degenerates to the n=1 near-full sweep when one side happens to hold
-    every beam-lit edge — relay's generic by-count path would collapse to
-    ``len(order)==1`` there, which is tuned for a genuinely solo relay leg,
-    not a two-sided wave).
+    keyed by ``EdgeGeo.flow_side`` rather than stage order. The twin
+    bilateral prototypes cite the family's own windows (.02-.38 / .42-.78
+    on the family's 4.236s clock) as an explicit ``span`` — a citation
+    like ``relay_branch``'s, bypassing the derive-and-cap path; a config
+    without ``span`` still derives from lead/gap/rest (dedicated so it
+    never degenerates to the n=1 near-full sweep when one side happens to
+    hold every beam-lit edge — relay's generic by-count path would collapse
+    to ``len(order)==1`` there, which is tuned for a genuinely solo relay
+    leg, not a two-sided wave).
 
     ``relay``/``bilateral`` divide the WHOLE clock across n stages
     (``span = (1 - lead - (n-1)*gap - rest) / n``), which only reproduces
@@ -277,8 +279,13 @@ def beam_windows(n: int, cfg: Mapping[str, Any], *, family: str) -> list[tuple[f
         r = cfg.get("relay_bilateral") or {}
         lead = float(r.get("lead", 0.02))
         gap = float(r.get("gap", 0.06))
-        rest = float(r.get("rest", 0.08))
-        span = max(min((1.0 - lead - gap - rest) / 2, cap), gap)
+        if "span" in r:
+            # Cited windows (the twin bilateral prototypes) — verbatim,
+            # like relay_branch's explicit spans.
+            span = float(r["span"])
+        else:
+            rest = float(r.get("rest", 0.08))
+            span = max(min((1.0 - lead - gap - rest) / 2, cap), gap)
         west = (round(lead, 4), round(lead + span, 4))
         east = (round(lead + span + gap, 4), round(lead + span + gap + span, 4))
         return [west, east]
@@ -293,6 +300,20 @@ def beam_windows(n: int, cfg: Mapping[str, Any], *, family: str) -> list[tuple[f
         s = lead + i * (span + gap)
         out.append((round(s, 4), round(s + span, 4)))
     return out
+
+
+def beam_family_cfg(cfg: Mapping[str, Any], family: str) -> Mapping[str, Any]:
+    """The beam config as one relay FAMILY sees it: a family block declaring
+    its own ``dur`` (the twin bilateral prototypes' 4.236s clock) overlays
+    the shared default clock; every other key passes through untouched, so a
+    family without a clock citation is byte-identical to before."""
+    key = {"bilateral": "relay_bilateral", "branch": "relay_branch"}.get(family)
+    fam = (cfg.get(key) or {}) if key else {}
+    if fam.get("dur"):
+        merged = dict(cfg)
+        merged["dur"] = fam["dur"]
+        return merged
+    return cfg
 
 
 def beam_gradient(

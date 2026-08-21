@@ -12,7 +12,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from hyperweave.compose.diagram.chrome import apply_health_dot, place_node, style_of
+from hyperweave.compose.diagram.chrome import place_node, style_of
 from hyperweave.compose.diagram.motion import lane_endpoints
 from hyperweave.compose.diagram.paths import (
     bisect_clearance_depth,
@@ -584,20 +584,16 @@ def solve_tree(ctx: SolverContext) -> DiagramLayout:
             # ``y=row_top[depth]`` exact (the original's literal row top,
             # never center-derived) — ``x`` needs no escape: ``mid - w/2`` is
             # the SAME expression the original used to compute its own ``x``.
-            placed[i] = apply_health_dot(
+            placed[i] = place_node(
                 ctx,
                 spec.nodes[i],
-                place_node(
-                    ctx,
-                    spec.nodes[i],
-                    i,
-                    mid,
-                    row_top[depth] + h / 2,
-                    w=w,
-                    h=h,
-                    chassis_class=_row_chassis_class(depth),
-                    y=row_top[depth],
-                ),
+                i,
+                mid,
+                row_top[depth] + h / 2,
+                w=w,
+                h=h,
+                chassis_class=_row_chassis_class(depth),
+                y=row_top[depth],
             )
         kids = children[i]
         if not kids:
@@ -610,18 +606,24 @@ def solve_tree(ctx: SolverContext) -> DiagramLayout:
             x += kid_span
 
     place_subtree(0, 0, margin, width - 2 * margin)
-    # No w_override in the original — the root's WIDTH is always the
-    # chassis width (root_nch.w), never the content-solved ``_root_w``
-    # (discarded above); only the HEIGHT is content-solved. Preserved
-    # verbatim: ``place_node`` gets ``w=root_nch.w`` directly, not the
-    # solve's own return value.
-    # ``y=root_y`` exact (literal top); ``x`` needs no escape (``width/2 -
-    # root_nch.w/2`` is the same expression the original used).
-    placed[0] = apply_health_dot(
-        ctx,
-        spec.nodes[0],
-        place_node(ctx, spec.nodes[0], 0, width / 2, root_y + root_h / 2, w=root_nch.w, h=root_h, y=root_y),
-    )
+    # Root width, anatomy-blind: the chassis crown is a FLOOR, never a clamp
+    # — the seam's content-solved width wins whenever the root's own ink runs
+    # wider (measure/render convergence; a clamped crown let long values
+    # escape both gutters). One law for every anatomy keeps the root a lego:
+    # a legacy crown whose content fits its chassis is byte-identical under
+    # max(), and one that doesn't was already overflowing its render.
+    root_w = max(root_nch.w, _root_w)
+    # Root x: centered over its DIRECT children's span — the bus its own
+    # trunk drops to — never the bare canvas. Leaf-proportional allocation
+    # seats an uneven family off the canvas axis (one child's 2-leaf span
+    # pushes the row's midpoint right), and a canvas-centered root then sits
+    # visibly off the axis its trunk draws. A symmetric tree's span midpoint
+    # IS width/2, so the hand specimens hold byte-identical.
+    kid_centers = [p.box.x + p.box.w / 2 for i, p in enumerate(placed) if p is not None and i in set(children[0])]
+    root_cx = (min(kid_centers) + max(kid_centers)) / 2 if kid_centers else width / 2
+    # ``y=root_y`` exact (literal top). Health dots apply centrally in
+    # ``finish_layout`` (the generic-chrome seam), never per solver.
+    placed[0] = place_node(ctx, spec.nodes[0], 0, root_cx, root_y + root_h / 2, w=root_w, h=root_h, y=root_y)
     nodes: list[NodePlacement] = [p for p in placed if p is not None]
     assert len(nodes) == n, "every tree node must be placed exactly once"
 
@@ -653,7 +655,7 @@ def solve_tree(ctx: SolverContext) -> DiagramLayout:
 register_solvers(
     {
         "pipeline": solve_pipeline,
-        "stack": solve_stack,
+        "pipeline-vertical": solve_stack,
         "comparison": solve_comparison,
         "tree": solve_tree,
     }

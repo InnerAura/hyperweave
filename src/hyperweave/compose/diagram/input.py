@@ -69,7 +69,10 @@ def diagram_preset_names() -> tuple[str, ...]:
 
 
 def resolve_diagram_preset(name: str) -> dict[str, Any]:
-    """A preset's DiagramSpec dict, or a DiagramInputError naming the menu."""
+    """A preset's DiagramSpec dict, or a DiagramInputError listing the menu —
+    the descriptive preset ids ARE the teaching (owner ruling 2026-08-20:
+    no old→new preset table; only retired topology WORDS teach, because
+    they live in shipped payloads)."""
     presets = load_diagram_presets()
     found = presets.get(name)
     if found is None:
@@ -89,7 +92,7 @@ def resolve_auto_roles(spec: DiagramSpec) -> DiagramSpec:
     everything else resolves AUTO to DEFAULT — hero is caller rhetoric.
     Returns a new frozen spec; declared rhetoric passes through untouched.
     """
-    focal = focal_slot(spec.topology, len(spec.nodes))
+    focal = focal_slot(spec.topology, len(spec.nodes), spec.orientation)
     index_of = {node.id: i for i, node in enumerate(spec.nodes) if node.id}
     sm_muted: set[int] = set()
     if spec.topology is Topology.STATE_MACHINE:

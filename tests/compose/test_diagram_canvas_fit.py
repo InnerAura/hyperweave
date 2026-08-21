@@ -52,16 +52,19 @@ def test_narrow_pipeline_hugs_margin() -> None:
     assert lay.width < 1000, f"canvas still floored: width={lay.width}"
 
 
-def test_display_scale_constant_under_reference() -> None:
-    """Two regimes: content UNDER the chassis reference renders at the
-    CONSTANT scale display_w/chassis width (one physical card size at any
-    node count — the 3-node pipeline drew ~40% larger cards under
-    normalize-to-740); content PAST the reference keeps the old fit-to-pin
+def test_display_scale_house_cap_under_target() -> None:
+    """Two regimes (fill-the-house-frame ruling, 2026-08-20): content
+    NARROWER than the page target renders at the HOUSE scale (740/920 —
+    one physical card size at any node count; natural-size display drew
+    a 3-node pipeline's cards 25% larger than the board, the retired
+    constant-scale law divided by the CHASSIS width and shrank every
+    content-fit canvas); content PAST the target keeps the fit-to-pin
     (README columns clamp anything wider anyway)."""
+    scale_max = float(load_diagram_config().get("display_scale_max", 1.0))
     lay = _layout(_pipeline(3))
-    assert lay.width < 1000, f"3-node content unexpectedly at/over the reference: {lay.width}"
-    assert lay.display_w == round(lay.width * 740 / 1000), (
-        f"display {lay.display_w} != constant-scale {round(lay.width * 740 / 1000)} at viewBox {lay.width}"
+    assert lay.width < 740, f"3-node content unexpectedly at/over the page target: {lay.width}"
+    assert lay.display_w == round(lay.width * scale_max), (
+        f"display {lay.display_w} != house-scale {round(lay.width * scale_max)} at viewBox {lay.width}"
     )
     wide = _layout(_pipeline(6))
     assert wide.width > 1000, "6-node content unexpectedly under the reference"
@@ -73,7 +76,8 @@ def test_stack_keeps_its_floor() -> None:
     must not shrink-wrap into the portrait strip its specimen rejects."""
     spec = {
         "title": "layers",
-        "topology": "stack",
+        "topology": "pipeline",
+        "orientation": "vertical",
         "nodes": [
             {"id": "app", "label": "app", "desc": "the crown", "role": "hero"},
             {"id": "api", "label": "api", "desc": "layer"},
@@ -116,7 +120,7 @@ def test_hub_axial_content_fit() -> None:
     crown's own SNUG solve (snug-width ruling 2026-07-14: width citations
     are ceilings — the crowns and W/E satellites all solve to their ink,
     pulling both canvases in)."""
-    for preset, want in (("hub", 1032), ("axial", 1072)):
+    for preset, want in (("hub-zones", 1032), ("hub-axial", 1072)):
         spec = dict(resolve_bundled_spec("diagram", preset).value)
         lay = _layout(spec)
         assert lay.width == want, f"{preset}: canvas left the cited seat reach (width={lay.width}, want {want})"

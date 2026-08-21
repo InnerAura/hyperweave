@@ -13,11 +13,11 @@
 # coin (every prototype census declares coins: 0).
 #
 # A second combinatorial tier (owner-review candidates) lives OUT of the
-# bundled library, in v04/alpha/v04a6/preset-candidates.yaml.
+# bundled library, in v04/specimens/artifacts/diagrams/diagrams-v04a6/preset-candidates.yaml.
 
 presets:
   # ── Pipeline ────────────────────────────────────────────────────────────
-  rag-pipeline:
+  pipeline-head:
     topology: pipeline
     zones: ["retrieval-augmented generation"] # specimen -zone runs, verbatim
     title: A RAG pipeline, stage by stage
@@ -39,7 +39,7 @@ presets:
       - { source: index, target: rerank, label: augment, label_style: chip, relation: assert }
       - { source: rerank, target: answer, label: ground, label_style: chip, relation: assert }
 
-  artifact-roundtrip:
+  pipeline-roundtrip:
     topology: pipeline
     title: The round trip
     subtitle: The round trip · pixels for humans, hw:payload for agents
@@ -65,14 +65,14 @@ presets:
       - { source: surface, target: agent, label: re-read, relation: drift }
       - { source: agent, target: artifact, label: "transform → artifact′", relation: bypass }
 
-  gateway:
+  pipeline-row:
     topology: pipeline
     title: MCP gateway
     subtitle: host → gateway → server · request and response as two lanes
     notes: mcp gateway
     node_style: card+glyph
     node_anatomy: row # gateway: landscape request/response cards
-    chassis: { card_min_w: 142, node: { w: 142, h: 54, rx: 12 }, hero: { w: 167, h: 54, rx: 12 } , caption_gap: 4, caption_pad: 11.4}
+    chassis: { card_min_w: 142, node: { w: 142, h: 54, rx: 12 }, hero: { w: 167, h: 54, rx: 12 } , caption_gap: 18.8, caption_pad: 11.4} # caption_gap re-cited to the sheet's 31px caption air: the old 4 sat under the footer's own margin and never governed
     nodes:
       - { id: client, label: Claude Code, desc: MCP host, glyph: anthropic }
       - { id: hw, label: MCP gateway, role: hero, glyph: hyperweave }
@@ -88,7 +88,7 @@ presets:
   # silhouettes (node:run 1:3.6), three sequential beam windows on the
   # shared 5.236s clock. The comet is the payload; direction is motion —
   # no arrowheads.
-  frontier-handoff:
+  pipeline-circles:
     topology: pipeline
     zones: ["frontier handoff"] # specimen zone header, accent voice
     title: Frontier Handoff
@@ -109,11 +109,13 @@ presets:
       - { source: gemini, target: ollama }
 
   # ── Fanout ──────────────────────────────────────────────────────────────
-  reverse-etl:
+  fanout-bilateral:
     topology: fanout
     zones: ["sources", "destinations"] # specimen -zone runs, verbatim
     orientation: bilateral
-    chassis: { card_min_w: 168, hero: { w: 236.3, h: 104 } , zone_content_gap: 118, caption_gap: 128, caption_pad: 37} # specimen doors are 168x76 verbatim (pp-integration); hero 236.3x104 verbatim (pp-integration sync engine)
+    # hub_clearance 213: pp-integration's OWN air citation (212.8/212.9 both
+    # sides) — the cell default is the bilateral-broadcast specimen's 114.
+    chassis: { card_min_w: 168, hero: { w: 236.3, h: 104 }, hub_clearance: 213, zone_content_gap: 118, caption_gap: 128, caption_pad: 37 } # specimen doors are 168x76 verbatim (pp-integration); hero 236.3x104 verbatim (pp-integration sync engine)
     title: Sync sources to destinations
     subtitle: Fan-out (bilateral) · pull from sources on the left, sync, push to destinations on the right
     notes: reverse etl sync
@@ -135,7 +137,62 @@ presets:
       - { source: sync, target: notion, relation: assert }
       - { source: sync, target: drive, relation: assert }
 
-  model-router:
+  fanout-bilateral-pair:
+    topology: fanout
+    orientation: bilateral
+    zones: ["intake", "delivery"] # specimen zone runs, verbatim
+    # The twin symmetric medallion bilaterals: one shared 740-wide family
+    # frame at two and at three members; the medallion-canon air derives the
+    # rest (satellites r30 at the margins, throw 300 = the canon ratio 10).
+    chassis: { width: 740 }
+    title: "Symmetric Bilateral Fan-Out: 2 Intake, 2 Delivery"
+    subtitle: two intake surfaces west, two delivery surfaces east — one engine between
+    notes: symmetric medallion pair
+    edge_motion: beam
+    node_style: glyph-circle
+    glyph_tint: full
+    nodes:
+      - { id: engine, label: compose, desc: the engine, role: hero, kind: cpu }
+      - { id: spec, label: spec, glyph: github }
+      - { id: context, label: context, glyph: figma }
+      - { id: svg, label: svg, glyph: vercel }
+      - { id: payload, label: payload, glyph: npm }
+    edges:
+      - { source: spec, target: engine, relation: assert, marker: none }
+      - { source: context, target: engine, relation: assert, marker: none }
+      - { source: engine, target: svg, relation: flow }
+      - { source: engine, target: payload, relation: flow }
+
+  fanout-bilateral-trio:
+    topology: fanout
+    orientation: bilateral
+    zones: ["intake", "delivery"] # specimen zone runs, verbatim
+    # The pair's three-member twin — same family frame, rows at the family
+    # pitch; together they witness the constant-frame law.
+    chassis: { width: 740 }
+    title: Every request in, every artifact out
+    subtitle: three intake surfaces west, three delivery surfaces east — one engine between
+    notes: symmetric medallion trio
+    edge_motion: beam
+    node_style: glyph-circle
+    glyph_tint: full
+    nodes:
+      - { id: engine, label: compose, desc: the engine, role: hero, kind: cpu }
+      - { id: spec, label: spec, glyph: github }
+      - { id: genome, label: genome, glyph: figma }
+      - { id: preset, label: preset, glyph: slack }
+      - { id: svg, label: svg, glyph: vercel }
+      - { id: payload, label: payload, glyph: npm }
+      - { id: cache, label: cache, glyph: redis }
+    edges:
+      - { source: spec, target: engine, relation: assert, marker: none }
+      - { source: genome, target: engine, relation: assert, marker: none }
+      - { source: preset, target: engine, relation: assert, marker: none }
+      - { source: engine, target: svg, relation: flow }
+      - { source: engine, target: payload, relation: flow }
+      - { source: engine, target: cache, relation: flow }
+
+  fanout-horizontal:
     topology: fanout
     zones: ["router", "providers"] # specimen -zone runs, verbatim
     orientation: horizontal # model-router DRAWS a horizontal fan (hero→knot→column), not radial
@@ -171,7 +228,7 @@ presets:
   # router-descent: the same router, drawn as a DOWNWARD fan — hero top-center,
   # a depart trunk dropping to a knot, then six provider cards fanning down into a
   # bottom row (solid arrowed spokes, route chip on the trunk, single ROUTER zone).
-  router-descent:
+  fanout-downward:
     topology: fanout
     orientation: downward
     chassis: { width_floor: true , zone_content_gap: 14, caption_gap: 42} # the hand file's fixed frame — a preset fact, not topology law
@@ -206,7 +263,7 @@ presets:
   # simultaneity IS the byte-identical claim (trunk window .02-.30, lanes
   # .32-.62 on the shared 5.236s clock). Compose chip rides the trunk at
   # even thread; the beam sweeps beneath it — paint order is the law.
-  parity-beam:
+  fanout-beam:
     topology: fanout
     orientation: horizontal
     zones: ["one spec", "three doors"]
@@ -238,8 +295,8 @@ presets:
       - { source: spec, target: mcp, relation: drift, marker: none }
 
   # ── Convergence ─────────────────────────────────────────────────────────
-  convergence:
-    topology: convergence
+  fanin:
+    topology: fanin
     zones: ["inputs"] # specimen -zone runs, verbatim
     title: Four inputs, one artifact
     subtitle: The composition formula · four inputs meet at a single mouth
@@ -264,8 +321,8 @@ presets:
       - { source: data, target: artifact, edge_motion: particle }
       - { source: paradigm, target: artifact }
 
-  convergence-arrivals:
-    topology: convergence
+  fanin-knot:
+    topology: fanin
     zones: ["sources", "artifact"] # specimen -zone runs, verbatim
     # Distinct title from the plain convergence preset: the two are different
     # hand compositions (meet-at-a-mouth vs gather-into-a-knot with arrival
@@ -297,8 +354,9 @@ presets:
   # (trim = node half-width + 4°), the r56 accent axis medallion at centre;
   # names + subs leave the ring outward by seat. Static — direction survives
   # as geometry.
-  flywheel-circles:
-    topology: flywheel
+  cycle-circles:
+    topology: cycle
+    orientation: orbit
     zones: ["data flywheel"]
     title: The data flywheel — circle face
     subtitle: Flywheel · each artifact ships, is captured as corpus, trains the model, and returns as better generation
@@ -312,8 +370,9 @@ presets:
       - { id: improve, label: Improve, desc: model learns, kind: cpu }
       - { id: axis, label: the flywheel, desc: compounds each turn, role: hero, kind: refresh-cw }
 
-  flywheel-orbit:
-    topology: flywheel
+  cycle-orbit:
+    topology: cycle
+    orientation: orbit
     chassis: { zone_content_gap: 90, caption_gap: 100, caption_pad: 31 }
     zones: ["data flywheel"] # specimen -zone runs, verbatim
     title: The data flywheel
@@ -329,8 +388,9 @@ presets:
       - { label: Improve, desc: model learns, kind: refresh-cw }
       - { label: the flywheel, desc: compounds each turn, role: hero, kind: repeat }
 
-  flywheel-flow:
-    topology: flywheel
+  cycle-flow:
+    topology: cycle
+    orientation: orbit
     chassis: { zone_content_gap: 90, caption_gap: 100, caption_pad: 31 }
     zones: ["data flywheel"] # specimen -zone runs, verbatim
     title: The data flywheel
@@ -359,9 +419,14 @@ presets:
   # arrows carry the circulation; every annotation stacks below its node
   # (upper text falls inside the ring) and the side arcs start beneath the
   # upper text so the arrowhead emerges under the ink.
-  agent-loop-ring:
-    topology: ring
-    chassis: { zone_content_gap: 188, caption_gap: 50, caption_pad: 41 }
+  cycle-ring:
+    topology: cycle
+    orientation: ring
+    # zone_content_gap dropped (was 188, the specimen's fixed-1080-frame
+    # masthead air): under the content-fit ruling that page-scale citation
+    # rendered as dead void above the ring — the kit's standard zone rhythm
+    # applies; the hand file still validates its own 188 via SELF.
+    chassis: { caption_gap: 50, caption_pad: 41 }
     zones: ["agent delivery loop"]
     title: The agent delivery loop
     subtitle: The loop · pair, understand, identify, build, validate, ship — then pair again
@@ -377,7 +442,8 @@ presets:
 
   # ── Stack ───────────────────────────────────────────────────────────────
   stack:
-    topology: stack
+    topology: pipeline
+    orientation: vertical
     zones: ["layers", "composite"] # the stack band pair, preset words (Invariant 5)
     title: The artifact composes up
     subtitle: Composition · geometry × structure × chromatic × motion resolve to one artifact
@@ -418,7 +484,7 @@ presets:
       - { source: react, target: artifact, label: replaces, label_style: chip, relation: assert }
 
   # ── Sequence ────────────────────────────────────────────────────────────
-  auth-sequence:
+  sequence:
     topology: sequence
     chassis: { zone_content_gap: 11, caption_gap: 46, caption_pad: 23 }
     zones: ["auth sequence"] # specimen -zone runs, verbatim
@@ -439,7 +505,7 @@ presets:
       - { source: api, target: client, label: "200 + session", kind: return }
 
   # ── State machine ───────────────────────────────────────────────────────
-  cicd-machine:
+  sm-retry:
     topology: state-machine
     node_style: card+glyph # cicd-machine: glyph cards, never pills
     chassis: { card_min_w: 140 , caption_gap: 94, caption_pad: 27} # cicd-machine: 140-wide state cards
@@ -459,7 +525,7 @@ presets:
       - { source: test, target: failed, label: "checks ✗" }
       - { source: failed, target: queued, label: retry, relation: drift, marker: arrow }
 
-  order-lifecycle:
+  sm-terminal:
     topology: state-machine
     zones: ["job lifecycle"] # specimen -zone runs, verbatim
     chassis: { card_min_w: 171, chain_gap: 199, node: { h: 80 }, hero: { w: 171, h: 80 }, stub_len: 26 , zone_content_gap: 176, caption_gap: 114, caption_pad: 29} # specimen verbatim: 171x80 cards, 199px chip-bearing runs, 26.5px initial stub
@@ -487,7 +553,7 @@ presets:
       # re-enters RUNNING; targeting the queue was authored wrong from day 1).
       - { source: failed, target: running, label: retry, label_style: chip, relation: drift, marker: arrow }
 
-  agent-task-lifecycle:
+  sm-recursive:
     topology: state-machine
     node_style: card+glyph # agent-task-lifecycle: glyph cards, never pills
     # hero (done) ≈ std (specimen ratio 0.93). pad_y 13.42/label_desc_gap
@@ -531,7 +597,7 @@ presets:
   # face-perpendicular; radial layouts demand uniform mass. All text leaves
   # the ring outward by seat; the hub annotates beneath itself; the
   # invariant chip rides the north spoke at even thread.
-  config-radial-circles:
+  fanout-radial:
     topology: fanout
     orientation: radial
     zones: ["data, one door", "config is data"]
@@ -560,18 +626,88 @@ presets:
       - { source: reasoning, target: loader, marker: arrow }
       - { source: policies, target: loader, marker: arrow }
 
-  # hub-panel-orchestrator: the typographic delegation reference specimen.
+  # hub-bilateral: the card+label reference specimen (hub-bilateral.svg).
+  # A COMPASS hub, not a fan — measured from the hand file: its four cards sit
+  # at a near-constant radius (318-328) on ±30°/±150° seats, and each wire
+  # leaves its OWN corner of the crown rather than a shared side mouth. A fan
+  # seats fixed COLUMNS, so its radius varies with vertical position; that it
+  # cannot reproduce a ring is what settles the family. (The prototype's own
+  # payload says "bilateral-fanout" — a label its geometry contradicts.)
+  #
+  # The work lives in the LABELS, so the satellites invert the usual card: a
+  # tracked mono kicker over a stack of display values, with the kind glyph
+  # demoted to a corner annotation. The two wings are a declared binary
+  # partition, so hue COMPILES from membership instead of being per-node.
+  hub-bilateral:
+    topology: hub
+    hub_policy: compass
+    zones: ["build", "ship"] # the partition the wings draw; hue compiles from it
+    partition_chroma: zone
+    node_style: card+label # crown included — it renders the hero register
+    title: One plan, four hands
+    subtitle: the hub stays small; the work lives in the labels
+    notes: orchestrator delegation · bilateral wings
+    # hero 220x184 verbatim (specimen crown, rect x=330 y=220); the crown is a
+    # PLATE — its width states rank, so the chassis pin is a floor here.
+    # ring_r_hub 322: the specimen's own mean seat radius (318/318/322/328).
+    # wire_w/marker_size/marker_half: the specimen draws a heavier fan than the
+    # kit default (2.5 vs 1.5) ending in 13x10 heads (vs 8 at half .45) —
+    # half = 5/13. Cited on the PRESET, not the topology chassis: every other
+    # hub keeps the kit weight its own specimen measures.
+    # zone_content_gap/caption_gap/caption_pad: the specimen's own plate bands
+    # (zone baseline 64 → content top 86 = 22; content bottom 520 → caption
+    # 586 = 66; caption 586 → canvas 620 = 34).
+    chassis:
+      {
+        hub_clearance: 96,
+        ring_r_hub: 322,
+        hero: { w: 220, h: 184, rx: 16 },
+        wire_w: 2.5,
+        marker_size: 13,
+        marker_half: 0.385,
+        zone_content_gap: 22,
+        caption_gap: 52, # solves to the specimen's 66px content-to-caption air
+        caption_pad: 34,
+      }
+    hero_ring: quiet # the specimen's hub is a neutral card, not an accent ring
+    wire: solid
+    marker: arrow
+    spine: [orchestrator]
+    # Declaration ORDER is the partition and the SEATS must agree with it: the
+    # first half seats west (build), the second east (ship). The validator
+    # checks that agreement rather than trusting it.
+    nodes:
+      - { id: orchestrator, label: orchestrator, desc: "plan\ndispatch\nmerge", role: hero, kind: workflow }
+      - { id: researcher, label: researcher, desc: "gathers sources\nextracts claims\ncites everything", kind: search }
+      - { id: coder, label: coder, desc: "implements the plan\ntests in a sandbox", kind: code }
+      - { id: reviewer, label: reviewer, desc: "checks against intent\nflags regressions", kind: circle-check }
+      - { id: writer, label: writer, desc: "assembles the deliverable\nkeeps one voice", kind: file-text }
+    # ±30°/±150° — the specimen's measured seats, the compass "wide throw" that
+    # makes the arrivals read corner to corner.
+    edges:
+      - { source: orchestrator, target: researcher, marker: arrow, routing: curved, angle: -150 }
+      - { source: orchestrator, target: coder, marker: arrow, routing: curved, angle: 150 }
+      - { source: orchestrator, target: reviewer, marker: arrow, routing: curved, angle: -30 }
+      - { source: orchestrator, target: writer, marker: arrow, routing: curved, angle: 30 }
+
+  # delegation-panel-compass: the typographic delegation reference specimen.
   # Containers earn their existence — the four
   # satellites carry enough text to be their own shapes, so the boxes are
   # gone: a modest hub card, four quadrant text blocks, neutral arrows
   # reaching out. Accent spends on the hub ring + glyph only; the eye lands
-  # centre first and reads outward.
-  hub-panel-orchestrator:
+  # centre first and reads outward. The delegation STORY (One plan, four
+  # hands) now belongs to hub-bilateral; this preset keeps the compass
+  # seating and the containerless-text anatomy it is the only witness for.
+  hub-text:
     topology: hub
     hub_policy: compass
     zones: ["multi-agent · delegation"]
-    title: One plan, four hands
-    subtitle: the hub stays small; the work lives in the labels
+    title: orchestrator delegation · compass
+    # Re-cut from the caption hub-bilateral inherited ("the hub stays small;
+    # the work lives in the labels" — now that preset's own): this panel's
+    # sentence speaks its containerless-text doctrine instead. Fixture grades
+    # via caption_text_amended; the hand file still validates its own words.
+    subtitle: four hands, no cards — containers earn their existence
     notes: orchestrator delegation panel
     node_style: text
     # Stacked crown (hand file: glyph centred on x=600, name and chips
@@ -618,7 +754,7 @@ presets:
   # (hub_clearance) — the kissing law. Uniform portrait tiles (head
   # anatomy: glyph top-centre over centred name/sub) — ink-derived widths
   # are a linear-flow doctrine; radial layouts demand uniform mass.
-  frame-engine-hub:
+  hub-tiles:
     topology: hub
     hub_policy: compass
     zones: ["diagram frames"]
@@ -656,7 +792,7 @@ presets:
       - { source: engine, target: comparison, marker: arrow }
       - { source: engine, target: evalmatrix, marker: arrow }
 
-  hub:
+  hub-zones:
     topology: hub
     # Crown cited from THIS preset's own hand file (pp-verb-ontology: 280x120
     # rx16, ~26 diamond at +18.8, text column +56 — the same species as the
@@ -672,7 +808,7 @@ presets:
     node_style: card+glyph
     spine: [artifact, documents, surfaces]
     nodes:
-      - { id: artifact, label: the artifact, desc: "payload + envelope\nre-renderable seed", role: hero, glyph: hyperweave }
+      - { id: artifact, label: the artifact, desc: "payload + envelope\nre-renderable seed", role: hero, glyph: hyperweave, gather: true } # the sheet's E pair leaves ONE boundary point (760,410) — authored mouth, per the system-wide gather vocabulary
       - { id: spec, label: the spec, desc: the recipe, kind: file-text }
       - { id: transform, label: transform, desc: new id + lineage, kind: repeat }
       - { id: read, label: "read, never mutates", kind: eye, chips: [extract, verify, diff, query] }
@@ -692,7 +828,7 @@ presets:
   # axial: the verb algebra cross, sibling to hub/hub — glyphless
   # cards, all five spokes dotted-drift + particle + terminal dot, a lower-
   # prominence nucleus and wider satellites (per-spec axial override).
-  axial:
+  hub-axial:
     topology: hub
     # Crown cited from THIS preset's own hand file (pp-axial: 264x100 rx16,
     # diamond at +24, text column +45 — kit dress in production) and pinned
@@ -710,7 +846,7 @@ presets:
     # (tuned against the superseded axial draft specimen) is retired.
     spine: [artifact] # nucleus only — every spoke drifts (no solid accent rail; census: 0 solid edges)
     nodes:
-      - { id: artifact, label: the artifact, desc: "hw:payload · hwz/1 · sha", role: hero, glyph: hyperweave } # the verb-algebra crown's own diamond (the sheet nucleus carries it; census amended 5→6)
+      - { id: artifact, label: the artifact, desc: "hw:payload · hwz/1 · sha", role: hero, glyph: hyperweave, gather: true } # the verb-algebra crown's own diamond (the sheet nucleus carries it; census amended 5→6); its E pair leaves ONE boundary point (564,390) — authored mouth
       - { id: spec, label: the spec, desc: the recipe, kind: file-text }
       - { id: transform, label: transform, desc: new id + lineage, kind: repeat }
       - { id: read, label: "read, never mutates", kind: eye, chips: [extract, verify, diff, query] }
@@ -728,7 +864,7 @@ presets:
   # diff/query gathering up from the S row. Glyphless, every spoke a dotted-drift
   # rail + particle rider + terminal dot. Per-spec axial override widens the S
   # rank to four and sets the specimen's nucleus prominence.
-  verb-reads:
+  hub-verbs:
     topology: hub
     hub_policy: axial
     title: Six verbs, one object
@@ -786,7 +922,7 @@ presets:
       - { source: query, target: artifact, role: read, edge_motion: particle, marker: dot, relation: drift }
 
   # ── Lanes ───────────────────────────────────────────────────────────────
-  obi-engine:
+  lanes:
     topology: lanes
     title: Obi — one engine under every surface
     subtitle: one registry of tools, one model router under all of them — no second engine, ever
@@ -833,7 +969,7 @@ presets:
       - { source: pins, target: utilities, label: pinned priors, route: around, edge_motion: particle, relation: drift, marker: arrow }
 
   # ── DAG ─────────────────────────────────────────────────────────────────
-  cicd-gate:
+  dag-gate:
     topology: dag
     # hero.h 112: pp-dag-cicd-v4.svg's own crown (deploy), verbatim — the
     # dag hero-floor migration (JOB2) content-solves an uncited crown pure
@@ -864,7 +1000,7 @@ presets:
       - { source: lint, target: deploy, relation: drift, marker: none }
       - { source: scan, target: deploy, label: release, label_style: chip, relation: drift, marker: none }
 
-  observability-converge:
+  dag-join:
     topology: dag
     zones: ["telemetry", "dashboards"] # specimen -zone runs, verbatim
     # hero.h 112: pp-dag-observability-v4.svg's own crown, verbatim — the
@@ -895,10 +1031,10 @@ presets:
       - { source: logs, target: grafana, relation: drift, marker: none }
       - { source: traces, target: grafana, label: unify, label_style: chip, relation: drift, marker: none }
 
-  frontier-serving:
+  dag-providers:
     topology: dag
     zones: ["frontier serving", "providers · sinks"] # specimen -zone runs, verbatim
-    chassis: { hero_min_w: 195, card_min_w: 176, hero: { h: 104 } , zone_content_gap: 89, caption_gap: 4, caption_pad: 23} # frontier-serving: uniform 176-wide rank cards; hero h 104 (unpinned default 112 over-grew the crown; width already floors correctly at hero_min_w)
+    chassis: { hero_min_w: 195, card_min_w: 176, hero: { h: 104 } , zone_content_gap: 89, caption_gap: 19, caption_pad: 23} # frontier-serving: uniform 176-wide rank cards; hero h 104 (unpinned default 112 over-grew the crown; width already floors correctly at hero_min_w)
     title: Frontier serving DAG
     subtitle: DAG · one key routes to three frontier labs, every lab shares the cache, telemetry skips the ranks to metrics
     notes: frontier serving dag
@@ -956,7 +1092,7 @@ presets:
       - { source: inventory, target: aggregator, relation: drift, marker: none }
       - { source: payments, target: aggregator, relation: drift, marker: none }
 
-  kernel-bottleneck:
+  dag-bottleneck:
     topology: dag
     zones: ["service dependencies"] # specimen -zone runs, verbatim
     chassis: { card_min_w: 145, node: { w: 145, h: 60 }, hero: { w: 145, h: 60, rx: 13 } , zone_content_gap: 209, caption_gap: 65, caption_pad: 21} # kernel-bottleneck: compact uniform glyph cards, hero == std
@@ -984,7 +1120,7 @@ presets:
       - { source: postgres, target: search, relation: assert }
       - { source: cache, target: search, relation: assert }
 
-  model-gateway-tiers:
+  dag-tiers:
     topology: dag
     zones: ["subsystems"] # specimen -zone runs, verbatim
     chassis: { card_min_w: 210, node: { h: 62 }, hero: { h: 62 }, hero_min_w: 210, rank_pitch_max: 92, row_gap: 30, rank_gap: 142, depart_trunk: 0, join_trunk: 0 } # model-gateway-tiers: wide uniform tiers; the hub gathers knot-only (no stub); hero_min_w decouples the height floor from the dag default node.h so the 62 pin holds; join_trunk 0 — the gateway hand file's kv-cache join has no knot either, just fast/deep's own arrows coinciding at one point. Rank rhythm cited whole from that file: EVERY card 62 tall, tiers ride cy step 92 (row_gap 30), rank run 142 (tier east 914 -> next rank 1056) — the even-rise law: every converging curve crosses the same 46px rise, so the fan joins read as one family
@@ -1014,7 +1150,7 @@ presets:
       - { source: vision, target: cache, relation: assert } # tiers don't write to metrics — Vision joins the cache funnel (pp-gateway-balanced.svg's corrected topology); observability rides the telemetry line alone
       - { source: gateway, target: metrics, relation: drift, label: telemetry, label_style: chip, marker: arrow, exit: bottom, entry: left }
 
-  service-dependencies:
+  dag-mesh:
     topology: dag
     zones: ["subsystems"] # specimen -zone runs, verbatim
     chassis: { card_min_w: 146, hero: { h: 62 }, hero_min_w: 204 } # service-dependencies: uniform 146-wide cards, hero == std height; hero_min_w 204 specimen crown (content alone solved 164 — the API gateway label doesn't reach the specimen's width)
@@ -1055,7 +1191,7 @@ presets:
   # Byte-equal geometry to the real `transform` output; only
   # lineage/reasoning differ (a preset is a fresh composition, not an edit
   # record).
-  service-dependencies-billing:
+  dag-mesh-billing:
     topology: dag
     zones: ["subsystems"]
     chassis: { card_min_w: 146, hero: { h: 62 }, hero_min_w: 204 }
@@ -1099,7 +1235,7 @@ presets:
   # tier converges on ONE shared cache (no gather knot — three arrowed
   # convergents), and telemetry drifts out-of-band to a rank-pinned metrics
   # sink below the request path. 7 solid arrows + the dotted telemetry drift.
-  gateway-balanced:
+  dag-balanced:
     topology: dag
     zones: ["subsystems"] # specimen -zone run, verbatim
     chassis: { card_min_w: 158, node: { h: 62 }, hero: { w: 230, h: 62 }, hero_min_w: 230, rank_pitch_max: 84, row_gap: 22, rank_gap: 92, join_trunk: 0 } # gateway-balanced: uniform 158-wide tiers, 62-tall cards, 230-wide hero (specimen ratio 1.456); hero_min_w 230: the dag hero floors at the family's std column (158), not the hero.w pin, so the pin alone never took effect; join_trunk 0 — pp-gateway-balanced.svg's kv-cache join has no knot, three arrows coincide at one point. Rank rhythm cited whole from the hand file: tiers ride cy step 84 (h62 + 22 gap), every rank run 92 (hero east 542→634, tier east 798→890); metrics is the LANE member (all-under-channel sink), seated on the telemetry run itself
@@ -1134,7 +1270,7 @@ presets:
   # and an AGENT RUNTIME band region (filled control-loop frame) enclosing the
   # over-arc. Three tools drop below Act (per-spec cap 3). 7 solid arrows + the
   # dotted re-plan return.
-  agent-runtime:
+  sm-loop:
     topology: state-machine
     title: Agent runtime
     subtitle: Agent runtime · plan, act, observe — then re-plan or finish; the accent edge is the one transition that leaves the loop
@@ -1195,7 +1331,7 @@ presets:
       - { source: instrument, target: chart }
       - { source: instrument, target: gauge }
 
-  dep-audit:
+  tree-health:
     topology: tree
     zones: ["dependency audit"] # specimen -zone runs, verbatim
     # hero head_pad_y 26/label_desc_gap 4.12: this preset's OWN hero
@@ -1228,7 +1364,7 @@ presets:
       - { text: direct dep, kind: legend, shape: line, region: header }
       - { text: transitive, kind: legend, shape: line-dashed, region: header }
 
-  mindmap:
+  tree-radial:
     topology: tree
     zones: ["artifact taxonomy · radial"] # specimen -zone runs, verbatim
     orientation: radial
@@ -1266,7 +1402,7 @@ presets:
       - { source: brand, target: logo }
       - { source: brand, target: icon }
 
-  dep-audit-radial:
+  tree-radial-health:
     topology: tree
     zones: ["dependency audit · radial"] # specimen -zone runs, verbatim
     orientation: radial

@@ -18,11 +18,11 @@ import math
 from typing import TYPE_CHECKING
 
 from hyperweave.compose.matrix.cells import measure_voice, wrap_text_lines
-from hyperweave.core.diagram import DiagramNode, DiagramSpec, NodeRole, NodeStyle
+from hyperweave.core.diagram import DiagramNode, DiagramSpec, NodeHealth, NodeRole, NodeStyle
 from hyperweave.core.paradigm import DiagramNodeChassis, DiagramTopologyChassis, MatrixVoice, ParadigmDiagramConfig
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
     from typing import Any
 
     from hyperweave.compose.diagram.wiring import SolverContext
@@ -43,6 +43,30 @@ def style_of(
     if spec.node_style is not None:
         return spec.node_style.value
     return ch.node_style or default
+
+
+def node_glyph_id(node: DiagramNode, registry: Mapping[str, Any] | None) -> str:
+    """The identity-slot resolution ladder: brand ``glyph`` -> semantic
+    ``kind`` (core set) -> nothing. First id that RESOLVES in the merged
+    registry wins; neither resolving means no mark at all (icon-or-nothing
+    — an unknown slug never renders an empty group). A ``kind`` prefers its
+    namespaced ``kind:<slug>`` entry so generic words a brand shadows
+    (shield, star, braces) still reach the generic mark.
+
+    Lives in the MEASUREMENT layer because both consumers need the same
+    answer: ``chrome`` builds the mark from it, and the card+label solve sizes
+    the label row's clearance from it — an unresolved slug must reserve
+    nothing, so sizing has to run the same ladder placement does rather than
+    trust the declaration. ``chrome`` re-exports it for its own callers."""
+    if registry is None:
+        return ""
+    if node.glyph and node.glyph in registry:
+        return node.glyph
+    if node.kind:
+        for gid in (f"kind:{node.kind}", node.kind):
+            if gid in registry:
+                return gid
+    return ""
 
 
 def node_anatomy_of(spec: DiagramSpec, ch: DiagramTopologyChassis) -> str:
@@ -69,6 +93,10 @@ VOICE_CLASSES: tuple[tuple[str, str], ...] = (
     ("ndesc", "desc_voice"),
     ("hname", "hero_name_voice"),
     ("hdesc", "hero_desc_voice"),
+    ("nlbl", "card_label_voice"),
+    ("nval", "card_value_voice"),
+    ("hlbl", "hero_label_voice"),
+    ("hval", "hero_value_voice"),
     ("mname", "muted_name_voice"),
     ("mdesc", "desc_voice"),
     ("op", "op_voice"),
@@ -605,7 +633,35 @@ def solve_card_box(
     h = max(nch.h if h_floor is None else h_floor, want_h)
     if ch.h_max and not node.chips and not node.embed_dims:
         h = min(h, ch.h_max)
-    return w, h, tuple(lines)
+
+    def at_width(width: float) -> tuple[float, tuple[str, ...]]:
+        """Re-wrap the desc at a candidate width and re-solve the height. Only
+        the desc block moves — the chip/embed rows below are width-independent
+        additions, already folded into ``block`` above."""
+        budget = (
+            (width - nch.pad_x - BULLET_DESC_RIGHT_GAP)
+            if bullet_lead
+            else (width - nch.glyph_inset_x - lead - BULLET_DESC_RIGHT_GAP)
+        )
+        runs = wrap_text_lines(node.desc, budget, desc_voice, max_lines=nch.max_desc_lines)
+        blk = label_voice.size * (ar + dr)
+        if runs:
+            blk += ldg + desc_voice.size * (ar + dr) + (len(runs) - 1) * nch.desc_line_pitch
+        if node.chips:
+            blk += ldg + CHIP_H
+        if node.embed_dims:
+            blk += ldg + node.embed_dims[1]
+        got = max(nch.h if h_floor is None else h_floor, blk + 2 * pad_y)
+        if ch.h_max and not node.chips and not node.embed_dims:
+            got = min(got, ch.h_max)
+        return got, tuple(runs)
+
+    # The no-sliver ruling belongs to every label-row CARD.  Portrait/head
+    # anatomy never reaches this function, so deliberately tall tiles remain
+    # exempt by construction.  Existing stack/pipeline movement is an explicit
+    # consequence of the ruling and is reported/rebaselined by the parity pass;
+    # it must not be hidden by keeping the guard anatomy-specific.
+    return apply_sliver_guard((w, h, tuple(lines)), ceiling=w_ceiling, resolve=at_width)
 
 
 def hero_height_floor(ch: DiagramTopologyChassis) -> float:
@@ -617,6 +673,15 @@ def hero_height_floor(ch: DiagramTopologyChassis) -> float:
     justifying it yet (width dominance does — a short-content hero must
     still read as the family's crown; height doesn't carry that reading)."""
     return ch.hero.h if "h" in ch.hero_declared else 0.0
+
+
+def hero_plate_w(ch: DiagramTopologyChassis) -> float:
+    """The crown's WIDTH floor for a plate anatomy (card+label's hero
+    register): an explicit ``hero.w`` citation holds, undeclared solves pure.
+    The width twin of ``hero_height_floor``, reading the same
+    ``hero_declared`` explicitness carrier — a preset that measured its
+    specimen's crown gets that plate; a crown nobody measured stays snug."""
+    return ch.hero.w if "w" in ch.hero_declared else 0.0
 
 
 def solve_head_box(
@@ -673,6 +738,248 @@ def solve_head_box(
     head_pad_y = cfg.min_pad_y if nch.head_pad_y is None else nch.head_pad_y
     h = max(nch.h, block + 2 * head_pad_y)
     return w, h, tuple(lines)
+
+
+# ── card+label anatomy ───────────────────────────────────────────────────────
+# Slot rhythm measured from the bilateral-wings specimen (hub-bilateral.svg):
+# its 3-line card (188x114) and its three 2-line cards (188/188/196 x 92) agree
+# on every constant below, so the rhythm is the anatomy's, not one card's.
+#   label baseline  card.y + 26        first value  card.y + 50
+#   value pitch     22                 bottom air   20
+# => h = 50 + (n-1)*22 + 20 — 3 lines gives 114, 2 lines gives 92, both exact.
+CARD_LABEL_PAD_X = 20.0
+CARD_LABEL_LABEL_DY = 26.0
+CARD_LABEL_VALUE_DY = 50.0
+CARD_LABEL_VALUE_PITCH = 22.0
+CARD_LABEL_PAD_BOTTOM = 20.0
+
+CARD_LABEL_MARK = 20.0
+"""Corner-annotation mark size (the specimen's 24-unit kind glyphs at 0.85)."""
+CARD_LABEL_MARK_INSET_R = 36.0
+"""Mark LEFT edge from the card's right edge (specimen hw:spatial-notes:
+'translate(card right edge - 36, card top + 12)') — so the mark's own right
+gutter is 36 - 20 = 16."""
+CARD_LABEL_MARK_INSET_Y = 12.0
+CARD_LABEL_MARK_GAP = 12.0
+"""Minimum air between the label run and the corner mark. The mark never opens
+a content column — it only forbids the LABEL row from running underneath it."""
+
+HEALTH_DOT_ENVELOPE = 18.0
+"""How far the health channel's corner dot reaches in from the card's right
+edge: ``dot_inset_x`` 13 + ``dot_r`` 5 (diagram-frame.yaml ``health:``, the
+values ``apply_health_dot`` places with)."""
+CARD_LABEL_MARK_HEALTH_GAP = 6.0
+"""Air between the corner mark and the health dot when BOTH resolve on one
+card. The two channels share the top-right corner (dot centre ``w-13``, mark
+envelope reaching ``w-16``) and overlap by 2x6px unless the anatomy-owned mark
+yields — the generic health channel never moves."""
+
+
+CROWN_DOMINANCE_MAX = 2.8
+"""System-wide balance law: the crown register holds only while the crown's
+area stays within this multiple of its STANDARD siblings' median box — the
+band the anatomy's own specimen draws (hand file 2.34, the shipped preset's
+documented copy amendment 2.65). Past it, a center-seat hero falls back to
+the standard register with hero dress: a 28px display stack beside light
+satellites dwarfs them (the review board measured 3.2-4.0 on the compass
+and axial hubs). A spec-PINNED crown (explicit ``chassis.hero.w``) is the
+author's own citation and keeps its register — the render battery reports
+its ratio instead of the engine silently overriding a declared plate."""
+
+
+def crown_within_band(ctx: SolverContext, node: DiagramNode, index: int) -> bool:
+    """Whether a card+label hero may take the CROWN register here: True when
+    the spec pins the crown (author's ruling), when there are no standard
+    siblings to dwarf, or when the solved crown stays inside
+    ``CROWN_DOMINANCE_MAX`` of the siblings' median box. One function read
+    by BOTH the sizing seam and the placement seam, so the two can never
+    disagree about which register renders. Siblings are measured
+    ``hero=False`` (their standard boxes are the comparison mass — and a
+    second hero can then never recurse back through its own band check)."""
+    if bool(((ctx.spec.chassis or {}).get("hero") or {}).get("w")):
+        return True
+    ch = ctx.ch
+    crown_w, crown_h, _ = solve_card_label_box(
+        node,
+        ch.hero,
+        ch,
+        ctx.cfg,
+        hero=True,
+        has_mark=bool(node_glyph_id(node, ctx.glyph_registry)),
+        health_dot=node.health is not NodeHealth.OK,
+    )
+    sibs = [
+        solve_node_box(ctx, sib, i, hero=False)[:2]
+        for i, sib in enumerate(ctx.spec.nodes)
+        if i != index and sib.role is not NodeRole.HERO
+    ]
+    if not sibs:
+        return True
+    med_w = sorted(w for w, _ in sibs)[len(sibs) // 2]
+    med_h = sorted(h for _, h in sibs)[len(sibs) // 2]
+    if med_w <= 0 or med_h <= 0:
+        return True
+    return (crown_w * crown_h) / (med_w * med_h) <= CROWN_DOMINANCE_MAX
+
+
+def card_label_mark_inset_r(*, health_dot: bool) -> float:
+    """The mark's LEFT-edge inset from the card's right edge. The specimen's 36
+    — unless the health dot occupies the corner, in which case the mark shifts
+    left exactly far enough that its envelope clears the dot envelope plus the
+    optical gap (20 + 18 + 6 = 44). One resolver so the box solve's label-row
+    clearance and the placement's mark seat can never disagree."""
+    if not health_dot:
+        return CARD_LABEL_MARK_INSET_R
+    return CARD_LABEL_MARK + HEALTH_DOT_ENVELOPE + CARD_LABEL_MARK_HEALTH_GAP
+
+
+# Hero register (the crown, 220x184): identity ROW over a centered display
+# stack. h = 86 + (n-1)*33 + 32 — 3 display lines gives 184, exact.
+CARD_LABEL_HERO_LABEL_DY = 40.0
+CARD_LABEL_HERO_VALUE_DY = 86.0
+CARD_LABEL_HERO_PITCH = 33.0
+CARD_LABEL_HERO_PAD_BOTTOM = 32.0
+CARD_LABEL_HERO_MARK = 14.0
+"""The crown's identity mark (specimen: an r7 ring with an r2.2 core)."""
+CARD_LABEL_HERO_MARK_GAP = 6.0
+
+
+def card_label_voices(cfg: ParadigmDiagramConfig, *, hero: bool) -> tuple[MatrixVoice, MatrixVoice]:
+    """(label, value) voices for the card+label anatomy's two registers. One
+    resolver so the box solve, the placement, and the emitted CSS class can
+    never disagree about which voice a run is measured in."""
+    if hero:
+        return cfg.hero_label_voice, cfg.hero_value_voice
+    return cfg.card_label_voice, cfg.card_value_voice
+
+
+def card_label_text(node: DiagramNode, *, hero: bool = False) -> str:
+    """The label run as rendered. Case is a REGISTER fact, not a style: the
+    standard label is a tracked kicker and uppercases (the specimen's ``CPU``
+    at .14em — wide tracking is the small-caps convention); the crown's
+    identity row is a signature line and keeps its authored case (the same
+    specimen's ``apple silicon`` at .06em). Two voices, two conventions.
+
+    Uppercasing happens in PYTHON, never via CSS ``text-transform`` — no
+    rasterizer is obliged to honour it, and the measured string must be the
+    stamped string or the box solve is measuring different text than renders."""
+    return node.label if hero else node.label.upper()
+
+
+def solve_card_label_box(
+    node: DiagramNode,
+    nch: DiagramNodeChassis,
+    ch: DiagramTopologyChassis,
+    cfg: ParadigmDiagramConfig,
+    *,
+    hero: bool = False,
+    min_w: float = 0.0,
+    has_mark: bool = False,
+    health_dot: bool = False,
+) -> tuple[float, float, tuple[str, ...]]:
+    """Content-solved box for the card+label anatomy. Returns ``(w, h,
+    value_lines)``.
+
+    Width is the widest VALUE run plus the anatomy's symmetric pad, floored by
+    the label row's own need — and, when a corner mark is present, by the
+    clearance that keeps the label from running under it. The mark never
+    contributes a content column: values start at the same x whether or not one
+    resolves (a reserved left column is what makes an anatomy card+glyph).
+
+    Height is pure rhythm: the value count times the specimen's pitch. Values
+    never truncate AND never re-wrap: a value is a datum, so the width solve
+    covers the widest authored line's full ink and only authored ``\\n``
+    breaks the stack (pinned by the never-rewrap test). The wrap call below
+    is the honesty backstop that keeps returned lines ≡ rendered lines, and
+    the sliver guard's re-solve rides it."""
+    label_voice, value_voice = card_label_voices(cfg, hero=hero)
+    pad_x = CARD_LABEL_PAD_X
+    label_w = measure_voice(card_label_text(node, hero=hero), label_voice)
+    if hero:
+        # The crown's identity row is a CENTERED group (mark + gap + text), so
+        # both its halves ride inside the same symmetric envelope.
+        mark_run = (CARD_LABEL_HERO_MARK + CARD_LABEL_HERO_MARK_GAP) if has_mark else 0.0
+        row_need = 2 * pad_x + mark_run + label_w
+    elif has_mark:
+        # Label left-anchored at pad_x; the mark's left edge sits at
+        # ``w - card_label_mark_inset_r(...)`` (the specimen's 36, or the
+        # health-cleared 44), so the row needs the label to end one gap
+        # before it.
+        row_need = pad_x + label_w + CARD_LABEL_MARK_GAP + card_label_mark_inset_r(health_dot=health_dot)
+    else:
+        row_need = 2 * pad_x + label_w
+    # Citations bound growth, never inflate (snug-width ruling — the same law
+    # ``solve_card_box`` follows); ``min_w`` is the one true floor, carrying a
+    # solver's content-derived aligned share.
+    w_ceiling = max(nch.w, ch.w_max, ch.card_min_w)
+    if hero:
+        w_ceiling = max(w_ceiling, ch.node.w, ch.hero_min_w)
+    want_w = max(row_need, 2 * pad_x + _desc_ink_w(node.desc, value_voice))
+    # Never-truncate: clear the widest unbreakable word before wrapping.
+    want_w = max(want_w, desc_word_w(node.desc, value_voice) + 2 * pad_x)
+    w_ceiling = max(w_ceiling, math.ceil(max(row_need, want_w) / 2) * 2)
+    # The CROWN is a plate: its width states RANK, not content extent, so an
+    # EXPLICITLY CITED hero width is a floor here — the specimen's own crown
+    # holds 220 around a 180 display stack, 40px of deliberate slack. The
+    # citation must be the preset's, never the paradigm's default (the
+    # ``hero_declared`` law ``hero_height_floor`` reads): an uncited crown that
+    # inflated to the family archetype would eat the bilateral cell's width
+    # budget and crowd its own wings. Satellites stay snug always.
+    floor = max(min_w, hero_plate_w(ch) if hero else 0.0)
+    w = max(floor, min(w_ceiling, math.ceil(want_w / 2) * 2))
+
+    first_dy = CARD_LABEL_HERO_VALUE_DY if hero else CARD_LABEL_VALUE_DY
+    pitch = CARD_LABEL_HERO_PITCH if hero else CARD_LABEL_VALUE_PITCH
+    pad_bottom = CARD_LABEL_HERO_PAD_BOTTOM if hero else CARD_LABEL_PAD_BOTTOM
+    label_dy = CARD_LABEL_HERO_LABEL_DY if hero else CARD_LABEL_LABEL_DY
+
+    def at_width(width: float) -> tuple[float, tuple[str, ...]]:
+        runs = tuple(wrap_text_lines(node.desc, width - 2 * pad_x, value_voice, max_lines=max(1, nch.max_desc_lines)))
+        # A valueless card is just its label line — the same bottom air,
+        # measured from the label baseline instead of the value stack.
+        block = first_dy + (len(runs) - 1) * pitch + pad_bottom if runs else label_dy + pad_bottom
+        # Height is the anatomy's OWN rhythm, snug: a paradigm archetype h
+        # is the LEGACY card's citation and never floors this register (the
+        # comparison cell's 380x160 panel archetype squared a 92-rhythm card
+        # into 68px of dead bottom via the sliver guard). Only a
+        # spec-DECLARED hero height pins — the author's own citation
+        # (``hero_declared``, the same law every other crown floor reads).
+        floor_h = hero_height_floor(ch) if hero else 0.0
+        return max(block, floor_h), runs
+
+    h, lines = at_width(w)
+    return apply_sliver_guard((w, h, lines), ceiling=w_ceiling, resolve=at_width)
+
+
+SLIVER_GUARD_PASSES = 4
+"""Iteration cap for the wrap guard. Widening lets wrapped lines rejoin, which
+shortens the stack, so width and height converge — but a card whose ceiling is
+too tight can oscillate, and an unbounded loop in a layout solver is never
+worth the last pixel."""
+
+
+def apply_sliver_guard(
+    box: tuple[float, float, tuple[str, ...]],
+    *,
+    ceiling: float,
+    resolve: Callable[[float], tuple[float, tuple[str, ...]]],
+) -> tuple[float, float, tuple[str, ...]]:
+    """A card may never become a SLIVER: if its text wraps into something
+    taller than it is wide, the box widens instead of stacking (owner ruling —
+    the wrap guard). ``resolve`` re-solves height and lines at a candidate
+    width; the box is returned untouched when it already reads landscape, so a
+    card that never tripped the guard stays byte-identical.
+
+    The portrait HEAD anatomy is exempt BY CONSTRUCTION — it is deliberately
+    taller than wide (frame-engine-hub's 124x124 tiles, tree rows) — so this
+    guard is only ever reached from the label-row and card+label families."""
+    w, h, lines = box
+    for _ in range(SLIVER_GUARD_PASSES):
+        if h <= w or w >= ceiling:
+            break
+        w = min(ceiling, math.ceil(h / 2) * 2)
+        h, lines = resolve(w)
+    return w, h, lines
 
 
 def solve_node_box(
@@ -746,6 +1053,30 @@ def solve_node_box(
     # a CEILING inside ``solve_card_box``, never inflating a card past its
     # own ink.
     resolved_min_w = 0.0 if is_hero else (min_w or 0.0)
+    if style == NodeStyle.CARD_LABEL.value:
+        # card+label owns its own rhythm end to end (label kicker over a value
+        # stack), so it never consults ``node_anatomy``. ``force_card`` is a
+        # rectangular-SILHOUETTE constraint used by lanes/axial/convergence;
+        # card+label already is a rectangular card, so suppressing its internal
+        # anatomy here silently changed the caller's explicit style and could
+        # make placement overflow a box measured as the legacy card.
+        # The CROWN register is a seat fact bounded by a balance law, never a
+        # bare role fact: only a center seat (``ch.crown_register``) restacks
+        # the hero as an identity row over a display block, and only while
+        # the crown stays inside the specimen's dominance band of its
+        # standard siblings (``crown_within_band``) — past it, the hero
+        # keeps the standard register with its hero chassis floors (rx, min
+        # height) as the dress.
+        return solve_card_label_box(
+            node,
+            nch,
+            ch,
+            ctx.cfg,
+            hero=is_hero and ch.crown_register and crown_within_band(ctx, node, index),
+            min_w=resolved_min_w,
+            has_mark=bool(node_glyph_id(node, ctx.glyph_registry)),
+            health_dot=node.health is not NodeHealth.OK,
+        )
     effective_anatomy = node_anatomy_of(ctx.spec, ch)
     if (
         not force_card

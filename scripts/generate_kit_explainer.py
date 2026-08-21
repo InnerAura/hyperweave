@@ -396,21 +396,21 @@ def _pipe(n: int) -> dict:
 
 
 TOPOLOGY_EXHIBITS: list[tuple[str, str, str]] = [
-    ("pipeline", "rag-pipeline", "stages on one rail; chips ride the runs"),
-    ("fanout", "model-router", "one source, many doors — trunk, knot, locked column"),
-    ("fanout · beam", "parity-beam", "the relay recipe: trunk first, doors together"),
-    ("hub · compass", "frame-engine-hub", "uniform tiles at compass seats, kissing spokes"),
-    ("hub · panel", "hub-panel-orchestrator", "corner-exit quadratics to containerless type"),
-    ("ring", "agent-loop-ring", "equal stages, empty centre"),
-    ("flywheel · circles", "flywheel-circles", "medallions ON the ring, axis crown"),
-    ("convergence", "convergence-arrivals", "many inputs, one mouth"),
+    ("pipeline", "pipeline-head", "stages on one rail; chips ride the runs"),
+    ("fanout", "fanout-horizontal", "one source, many doors — trunk, knot, locked column"),
+    ("fanout · beam", "fanout-beam", "the relay recipe: trunk first, doors together"),
+    ("hub · compass", "hub-tiles", "uniform tiles at compass seats, kissing spokes"),
+    ("hub · panel", "hub-text", "corner-exit quadratics to containerless type"),
+    ("ring", "cycle-ring", "equal stages, empty centre"),
+    ("flywheel · circles", "cycle-circles", "medallions ON the ring, axis crown"),
+    ("convergence", "fanin-knot", "many inputs, one mouth"),
     ("stack", "stack", "layers composed upward"),
     ("comparison", "comparison", "muted BEFORE, hero AFTER"),
-    ("dag", "frontier-serving", "ranked flow with skips"),
+    ("dag", "dag-providers", "ranked flow with skips"),
     ("tree", "tree", "hierarchy on a bus"),
-    ("state-machine", "agent-task-lifecycle", "the glyph-card chain; returns ride the drift"),
-    ("sequence", "auth-sequence", "lifelines, activations, the call/return key"),
-    ("lanes", "obi-engine", "category bands, morphology marks, the bus rail"),
+    ("state-machine", "sm-recursive", "the glyph-card chain; returns ride the drift"),
+    ("sequence", "sequence", "lifelines, activations, the call/return key"),
+    ("lanes", "lanes", "category bands, morphology marks, the bus rail"),
 ]
 
 
@@ -606,7 +606,7 @@ def build() -> None:
     for i, (label, preset, blurb) in enumerate(TOPOLOGY_EXHIBITS, start=5):
         p.append(f"<h2>{i:02d} · {html.escape(label)}</h2>")
         p.append(f"<p class='cap'>{html.escape(blurb)} · preset <code>{preset}</code></p>")
-        if preset == "parity-beam":
+        if preset == "fanout-beam":
             p.append("<div class='grid2'>")
             p.append(f"<div class='exhibit'>{_render(preset, variant='noir', face='dark', motion='animated')}</div>")
             p.append(f"<div class='exhibit'>{_render(preset)}</div>")

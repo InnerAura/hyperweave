@@ -49,7 +49,7 @@ _TEMPLATES = Path(__file__).resolve().parents[2] / "src" / "hyperweave" / "templ
 _DIAGRAM_DEFS = _TEMPLATES / "frames" / "diagram" / "primer-defs.j2"
 
 _VARIANT = "porcelain"  # flagship, light-native default — the PLATE/porcelain compose
-_ADAPTIVE_PRESET = "frontier-serving"  # fixed glyph-rich preset (also used by test_far_face_legibility)
+_ADAPTIVE_PRESET = "dag-providers"  # fixed glyph-rich preset (also used by test_far_face_legibility)
 
 
 def _with_retry[T](build: Callable[[], T], *, attempts: int = 8, delay: float = 0.25) -> T:
@@ -139,6 +139,7 @@ def _allowed_dash_literals() -> frozenset[str]:
         str(track["march_dash"]),
         str(track["return_dash"]),
         str(track["muted_dash"]),
+        str(track["ring_dash"]),
     }
     if "return_drift_dash" in track:
         values.add(str(track["return_drift_dash"]))

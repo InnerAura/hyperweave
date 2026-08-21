@@ -293,6 +293,15 @@ diagram:
   hero_name_voice: { family: Inter, size: 17, weight: 700 }
   hero_desc_voice: { family: JetBrains Mono, size: 11, weight: 500, tracking_em: 0.01 }
   muted_name_voice: { family: Inter, size: 15, weight: 600 }
+  # card+label anatomy (hub-bilateral.svg .psw-eyi / .psw-val / .psw-idm /
+  # .psw-display) — the INVERSE of the pairing above: the name recedes to a
+  # tracked mono kicker and the values carry the card in display face. The
+  # hero register restacks the same two slots as the crown's identity row over
+  # a 28px display block.
+  card_label_voice: { family: JetBrains Mono, size: 9.5, weight: 500, tracking_em: 0.14 }
+  card_value_voice: { family: Inter, size: 12.5, weight: 600, tracking_em: -0.01 }
+  hero_label_voice: { family: JetBrains Mono, size: 11, weight: 500, tracking_em: 0.06 }
+  hero_value_voice: { family: Inter, size: 28, weight: 700, tracking_em: -0.02 }
   op_voice: { family: Inter, size: 13, weight: 600 }
   # Rendered edge labels (the kit micro-label) carry -> and check marks:
   # the slot is mono structurally, never a mono_triggers special case.
@@ -360,6 +369,7 @@ diagram:
       node: { w: 144, h: 60, rx: 13, label_dy: 25, desc_dy: 44, desc_line_pitch: 19, pad_y: 13.5, max_desc_lines: 2, label_gap: 22 }
       hero: { w: 176, h: 72, rx: 16, max_desc_lines: 2, pad_y: 16, desc_line_pitch: 19 }
     fanout-horizontal: # source left, dest column right, midpoint S-curves
+      crown_register: true # center seat: card+label heroes render the crown register here
       width_floor: true # content-fit audit: fan solvers proportionally split WITHIN the fixed frame
       width_policy: aligned # dest column shares one solved width (group-uniform)
       depart_trunk: 133 # model-router: mouth 317 -> knot 450, one drift wire then the spread; route chip (60) + 2*36.5 stubs
@@ -392,13 +402,44 @@ diagram:
       # canon.html, "Integration Hub v2": glyph circles r=30, hub r=44) —
       # hoisted to the paradigm root (this file's own node:/hero: block
       # above `topologies:`), inherited here without restating the pair.
+    # NOT the hub-bilateral PRESET: this is the fanout family's bilateral
+    # ORIENTATION cell (occupied by reverse-etl); the near-homophone preset
+    # is a compass hub (v04/decisions/hub-bilateral-family.md) — the mixup
+    # once shipped a fan captioned as the hub, so the gallery now integrity-
+    # checks it.
     fanout-bilateral: # source centered, dests split left/right
-      width_floor: true # content-fit audit: fan solvers proportionally split WITHIN the fixed frame
+      crown_register: true # center seat: card+label heroes render the crown register here
+      # The clearance law's fan citation: the bilateral-broadcast specimen
+      # (diagram-frames-prototype.html, hw-fan-bilateral-v1) holds 114px of
+      # air on BOTH sides — outer branches rise at 44-46deg, the fan reads
+      # as a fan (owner ruling 2026-08-20: its balance outranks the flatter
+      # 213 first cited from pp-integration, which now rides as that
+      # preset's own chassis pin). Air is a citation, never the frame's
+      # leftover.
+      hub_clearance: 114
+      # No width_floor (owner ruling 2026-08-20): the air law derives the
+      # frame; a wider floor padded 165px of dead void INSIDE each side of
+      # the artifact. The canvas hugs the columns + cited air.
       width_policy: aligned # both dest columns share one solved width
       width: 960
       display_w: 740
       margin_x: 40
       pitch: 120
+      # Twin bilateral prototypes (the symmetric medallion pair/trio hand
+      # files, one shared 740x471 frame): a two-member flank spreads at 140
+      # so the pair fills its share of the constant frame; labels ride the
+      # connector label-lift 16 under their medallions (r30 + 16 = the twin
+      # files' +46); headers seat 42 above the padded frame top (their
+      # y=44 under the 30 vertical margin); caption band 20 off the padded
+      # content, 28 off the frame bottom — landing their 440 baseline on
+      # their exact 471 frame, with desc-carrying stories clearing the
+      # caption-collision floor.
+      pitch_pair: 140
+      circle_label_dy: 16
+      zone_content_gap: 42
+      margin_y: 30
+      caption_gap: 20
+      caption_pad: 28
       h_max: 120
       # Generous source-to-sink cards (reverse-etl 168x76): floor the width
       # and height so the dest columns read as full plates, not shrink-wrapped.
@@ -411,29 +452,42 @@ diagram:
       # x=110/710 y=105/225/345: center-to-center / satellite_r = 10.0,
       # boundary-gap / satellite_r = 7.53) — hoisted to the paradigm root,
       # inherited here without restating the pair.
-    fanout-upward: # headerless inverted pyramid, source at the bottom (display_w bumped below)
-      width_floor: true # content-fit audit: fan solvers proportionally split WITHIN the fixed frame
+    fanout-upward: # headerless balanced echelon, source at the bottom (the balanced reference)
+      crown_register: true # center seat: card+label heroes render the crown register here
+      # Fill-the-house-frame (owner ruling 2026-08-20, superseding the
+      # content-fit pack): the fullest row spreads evenly until its outer
+      # card edges land on the 40 margins — the reference's own row runs
+      # margin-to-margin on the 920 frame (4x190 cards, ~27 air, margins
+      # 40), and its outer throws (460 -> 135) already witness the spread
+      # rise geometry. Air never drops below the reference's packed gap.
+      width_floor: true
       width_policy: aligned # dest row shares one solved width
       width: 920
-      display_w: 740 # inverted pyramid fills the page width like the other banners
+      display_w: 740
       header_mode: none
       header_h: 0
       footer_h: 0
-      margin_x: 20
+      margin_x: 40 # the reference's own side margin (cards at x=40 / x=880)
       margin_top: 40
       bottom_m: 20
-      row_cap: 3
       row_gap: 62
-      src_gap: 48
+      # The balanced reference (owner-supplied 2026-08-20, committed at
+      # diagram-prototypes/fanout-expressions/fanout-upward-balanced.svg):
+      # 144px of rise between the dest row's bottom and the crown's top —
+      # the room the fan's vertical S-curves need (48 was the row-cap
+      # pyramid's stacking gap and read as a flat sweep).
+      src_gap: 140
       node: { w: 150, h: 56, dot_dy: 24, label_dy: 28, desc_dy: 44 }
       # sibling parity: fanout-downward/convergence/tree/hub heroes all
       # declare max_desc_lines: 2 — this hero had none, defaulting to the
       # class floor of 1 (the latent trap: a 2-paragraph authored hero desc
       # silently lost its second paragraph before wrap_text_lines's
       # paragraph-floor guard existed).
-      # pad_y/label_desc_gap: no fanout-upward hand specimen exists in
-      # GEOMETRY_SPECIMENS to cite directly, so this inherits state-
-      # machine's own hero citation (pad_y 21 / label_desc_gap 9.1) — the
+      # pad_y/label_desc_gap: the upward cell's balanced reference
+      # (diagram-prototypes/fanout-expressions/fanout-upward-balanced.svg)
+      # cites SEATING — echelon, rise, launch pitch — not hero text rhythm,
+      # so these inherit state-machine's own hero citation (pad_y 21 /
+      # label_desc_gap 9.1) — the
       # nearest sibling by both role (single/double-line hero crown) and
       # absolute scale (176x78 vs this hero's 220x80). Same failure mode as
       # dag/state-machine's uncited heroes: fan.py also gates its height
@@ -447,7 +501,10 @@ diagram:
       # "Integration Hub v2") — hoisted to the paradigm root, inherited
       # here without restating the pair.
     fanout-downward: # source top-center, dest ROW at the bottom, S-curves fan DOWN (router-descent)
-      width_floor: true # content-fit audit: fixed banner (hero top, provider row bottom, generous fan reach)
+      crown_register: true # center seat: card+label heroes render the crown register here
+      # No width_floor (owner ruling 2026-08-20): the packed provider row in
+      # the fixed 1240 banner left 268px of dead void per side — the canvas
+      # hugs the row; the vertical banner (height/dest_top) is unchanged.
       width_policy: aligned # the provider row shares one solved width
       depart_trunk: 66 # hero bottom -> knot, one wire carrying the route chip then the spread; CHIP_H (26) + 2*20 stubs
       # Chipless trunk departs FLUSH (depart_trunk_bare unset, 0 = mouth) —
@@ -470,6 +527,7 @@ diagram:
       # — hoisted to the paradigm root, inherited here without restating
       # the pair.
     fanout-radial: # square hub: dests on a ring, rays masked by the hub
+      crown_register: true # center seat: card+label heroes render the crown register here
       width_floor: true # content-fit audit: square ring frame — the ring solves within it
       aspect: square
       width_policy: aligned # ring card dests share one solved width
@@ -478,7 +536,12 @@ diagram:
       margin_x: 24
       header_h: 0
       footer_h: 0
-      ring_r: 250
+      # Fill sentinel (owner ruling 2026-08-20): the ring solves from the
+      # frame so E/W dests land on the margins — the cited 250 floated a
+      # ~624px ring with 148px of page air per side and the artifact
+      # embedded centered instead of left-aligned. The specimen preset
+      # pins its own 252 (with its 1240 square) via spec chassis.
+      ring_r: 0
       ring_gap: 80
       # Ring cards seat at a uniform 165 (model-router), floored so short
       # provider labels don't shrink the ring dest below its siblings.
@@ -492,7 +555,8 @@ diagram:
       # tall; 4 matches the horizontal twin, so this stays an explicit
       # per-family override. hero_circle_r inherits the root canon (44).
       hero: { w: 206, h: 104, rx: 16, max_desc_lines: 4 }
-    convergence: # inputs left column, hero right, one meet point
+    fanin: # inputs left column, hero right, one meet point (the fan family, direction in)
+      crown_register: true # center seat: card+label heroes render the crown register here
       # Edge-run law (2026-07-14): the citation is the members'-faces →
       # hero-face RUN (the gathered-seed hand file: members' right edge 282
       # → hero 806 = 524); positions and the canvas derive from cards +
@@ -516,7 +580,8 @@ diagram:
       # router-hero family's column, never the nucleus' 32/82. The borrowed
       # glyph_w: 32 dragged the anchored text column to +68.
       hero: { w: 232, h: 112, rx: 16, pad_x: 32, pad_y: 27, label_gap: 22, desc_line_pitch: 19, label_desc_gap: 12, max_desc_lines: 2 }
-    flywheel: # square ring (flywheel-orbit): near-square phase CARDS at the
+    cycle-orbit: # square ring (cycle orbit cell): near-square phase CARDS at the
+      crown_register: true # center seat: card+label heroes render the crown register here
       width_floor: true # content-fit audit: square ring frame, fixed by the specimen
       arc_clear_deg: 12.9 # flywheel-orbit: arc ends float ~52px off the cards (measured)
       # cardinal points (the chassis default anatomy — glyph-circle stays
@@ -532,22 +597,31 @@ diagram:
       node_anatomy: head # stacked portrait phases (glyph above, name + sub below)
       node: { w: 124, h: 124, rx: 13, dot_dy: 24, label_dy: 28, desc_dy: 44, max_desc_lines: 1 }
       hero: { w: 164, h: 120, rx: 16, max_desc_lines: 1 }
-    ring: # the equal-stage loop (the agent-loop-ring specimen): medallions at
-      # even pitch on R=270, empty centre, congruent arc arrows; annotations
-      # stack BELOW every node (name +18, desc pitch 16) and the arcs trim
-      # past the text blocks.
-      width_floor: true # square ring frame, fixed by the specimen (1080x1044)
-      aspect: square
-      width: 1080
+    cycle-ring: # the equal-stage loop (the cycle-ring specimen): medallions at
+      # even pitch, empty centre, congruent arc arrows; annotations stack
+      # BELOW every node (name +18, desc pitch 16) and the arcs trim past
+      # the text blocks.
+      # Cycle-family radius canon (owner ruling 2026-08-20, superseding the
+      # same-day fill derivation): both cycle orientations ride ONE circle —
+      # ring_r 250 is cycle-orbit's cited rim, so the siblings display the
+      # same radius (201px at the house scale; the fill-derived 376 read
+      # +50% against orbit and towered an 882px render). The two hand files
+      # already agree on one displayed radius (270x0.685 = 250x0.74 = 185);
+      # the engine keeps that parity at its own uniform element scale, and
+      # displayed medallion air lands within 4% of the hand ring's density
+      # (130 vs 125). Medallion geometry stays the specimen's (r=44);
+      # arc_r rides the ring. Height still hugs ring + stacked annotations.
+      width_floor: true
+      width: 920
       display_w: 740
       header_mode: center
-      ring_r: 270
-      arc_r: 270
+      ring_r: 250
+      arc_r: 250
       arc_clear_deg: 13 # specimen: arcs trimmed 13° per side, congruent
       circle_r: 44
       circle_label_dy: 24 # name baseline cy+68 = r44 + 24
       node: { max_desc_lines: 3 } # wrapped stage descs (2-3 lines in the specimen)
-    stack: # landscape (stack): hero crown top-center, layer column
+    pipeline-vertical: # landscape operator stack: hero crown top-center, layer column
       # below it, gray ring+cross operators between consecutive layers.
       width_floor: true # content-fit audit: fixed landscape banner — the specimen explicitly rejects shrink-wrap
       width_policy: aligned
@@ -796,6 +870,7 @@ diagram:
       # citation (unlike dag's single-row-only hero specimen).
       hero: { w: 176, h: 78, rx: 16, pad_y: 21, label_desc_gap: 9.1, desc_line_pitch: 19 }
     hub: # content-fit canvas: center node + compass-sector spokes on a ring
+      crown_register: true # center seat: card+label heroes render the crown register here
       aspect: square
       width_policy: aligned # spokes share one solved box (a regular ring)
       width: 1000

@@ -34,17 +34,17 @@ from scripts.generate_diagram_galleries import SECTIONS
 # topology stories (the dag fan-in family lives here, not in the readme).
 _BUNDLED = (
     "scatter-gather",
-    "service-dependencies",
-    "dep-audit",
-    "kernel-bottleneck",
-    "model-gateway-tiers",
-    "gateway-balanced",
-    "convergence",
-    "convergence-arrivals",
-    "reverse-etl",
-    "rag-pipeline",
-    "artifact-roundtrip",
-    "order-lifecycle",
+    "dag-mesh",
+    "tree-health",
+    "dag-bottleneck",
+    "dag-tiers",
+    "dag-balanced",
+    "fanin",
+    "fanin-knot",
+    "fanout-bilateral",
+    "pipeline-head",
+    "pipeline-roundtrip",
+    "sm-terminal",
 )
 
 
@@ -243,7 +243,7 @@ _MOUTH_COINCIDENT = 3.0
 _MOUTH_CENTER_TOL = 4.0
 """No two arrowhead tips within this of each other on one card edge (≈ arrowhead
 width + margin) — dep-mesh seats 4 arrivals over 34px, ~11px apart."""
-_FURNITURE = ("tree", "tree-radial", "flywheel", "mindmap", "radial", "hub")
+_FURNITURE = ("tree", "tree-radial", "cycle-orbit", "tree-radial", "radial", "hub")
 
 
 def _card_side(px: float, py: float, r, tol: float = 6.0) -> str | None:

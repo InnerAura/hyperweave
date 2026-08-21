@@ -42,15 +42,15 @@ def test_spec_file_with_markdown_sidecar(tmp_path: Path) -> None:
     assert out_md.read_text().startswith("**One Compositor")
 
 
-def test_bundled_spec_name_flywheel(tmp_path: Path) -> None:
+def test_bundled_spec_name_cycle_orbit(tmp_path: Path) -> None:
     """A bare --spec-file name resolves against the bundled-spec store."""
-    out_svg = tmp_path / "flywheel.svg"
+    out_svg = tmp_path / "cycle-orbit.svg"
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--spec-file", "flywheel-orbit", "-g", "primer", "-o", str(out_svg)],
+        ["compose", "diagram", "--spec-file", "cycle-orbit", "-g", "primer", "-o", str(out_svg)],
     )
     assert result.exit_code == 0, result.output
-    assert 'data-hw-subvariant="flywheel"' in out_svg.read_text()
+    assert 'data-hw-subvariant="cycle-orbit"' in out_svg.read_text()
 
 
 def test_unknown_bundled_spec_exits_2(tmp_path: Path) -> None:
@@ -60,6 +60,35 @@ def test_unknown_bundled_spec_exits_2(tmp_path: Path) -> None:
     )
     assert result.exit_code == 2
     assert "unknown diagram spec" in result.output
+
+
+def test_unknown_preset_refusal_lists_the_menu(tmp_path: Path) -> None:
+    """Guard Law: assert the sentence a caller actually READS, through the real
+    parser. An old preset id stops resolving (hard break, no alias, no old→new
+    table — owner ruling 2026-08-20: ids never enter payloads, so the menu of
+    descriptive names IS the teaching); the refusal lists the known presets."""
+    result = runner.invoke(
+        app,
+        ["compose", "diagram", "--spec-file", "hub-panel-orchestrator", "-g", "primer", "-o", str(tmp_path / "x.svg")],
+    )
+    assert result.exit_code == 2
+    assert "unknown diagram spec" in result.output or "known diagram specs" in result.output
+    assert "hub-text" in result.output  # the menu carries the replacement's descriptive name
+
+
+def test_card_label_preset_composes_through_the_cli(tmp_path: Path) -> None:
+    """The card+label anatomy through the surface a caller touches, not just
+    the solver beneath it."""
+    out = tmp_path / "wings.svg"
+    result = runner.invoke(app, ["compose", "diagram", "--spec-file", "hub-bilateral", "-g", "primer", "-o", str(out)])
+    assert result.exit_code == 0, result.output
+    svg = out.read_text()
+    assert "-nlbl" in svg and "-nval" in svg and "-hval" in svg
+    # Case is a REGISTER fact, applied in Python (never CSS text-transform):
+    # a satellite label is a tracked kicker and uppercases; the crown's
+    # identity row is a signature line and keeps its authored case.
+    assert "RESEARCHER" in svg
+    assert "orchestrator" in svg and "ORCHESTRATOR" not in svg
 
 
 def test_retired_preset_flag_exits_2(tmp_path: Path) -> None:
@@ -93,7 +122,7 @@ def test_performance_composite_only_same_grammar(tmp_path: Path) -> None:
             "compose",
             "diagram",
             "--spec-file",
-            "rag-pipeline",
+            "pipeline-head",
             "-g",
             "primer",
             "--performance",
@@ -117,7 +146,7 @@ def test_diagram_renders_caption_not_masthead(tmp_path: Path) -> None:
     out = tmp_path / "caption.svg"
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--spec-file", "rag-pipeline", "-g", "primer", "-o", str(out)],
+        ["compose", "diagram", "--spec-file", "pipeline-head", "-g", "primer", "-o", str(out)],
     )
     assert result.exit_code == 0, result.output
     svg = out.read_text()
@@ -129,7 +158,7 @@ def test_chrome_flag_removed(tmp_path: Path) -> None:
     out = tmp_path / "rejected.svg"
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--spec-file", "rag-pipeline", "-g", "primer", "--chrome", "bare", "-o", str(out)],
+        ["compose", "diagram", "--spec-file", "pipeline-head", "-g", "primer", "--chrome", "bare", "-o", str(out)],
     )
     assert result.exit_code != 0
     assert "--chrome" in result.output or "no such option" in result.output.lower()
@@ -147,7 +176,7 @@ def test_edge_motion_override(tmp_path: Path) -> None:
             "compose",
             "diagram",
             "--spec-file",
-            "rag-pipeline",
+            "pipeline-head",
             "-g",
             "primer",
             "--edge-motion",
@@ -165,7 +194,7 @@ def test_edge_motion_override(tmp_path: Path) -> None:
 def test_edge_motion_invalid_exits_2() -> None:
     result = runner.invoke(
         app,
-        ["compose", "diagram", "--spec-file", "rag-pipeline", "-g", "primer", "--edge-motion", "zoom"],
+        ["compose", "diagram", "--spec-file", "pipeline-head", "-g", "primer", "--edge-motion", "zoom"],
     )
     assert result.exit_code == 2
     assert "must be one of" in result.output

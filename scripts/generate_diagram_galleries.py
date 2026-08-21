@@ -36,7 +36,7 @@ from tests.compose.test_specimen_parity import PARITY_NAMES, TWIN_VARIANTS  # no
 from hyperweave.compose.bundled_specs import resolve_bundled_spec  # noqa: E402
 from hyperweave.compose.diagram.graph import _GATHER_STANDOFF  # noqa: E402
 from hyperweave.compose.diagram.paths import end_tangent_of, sample_path  # noqa: E402
-from hyperweave.compose.diagram.sizing import voice_for  # noqa: E402
+from hyperweave.compose.diagram.sizing import CROWN_DOMINANCE_MAX, voice_for  # noqa: E402
 from hyperweave.compose.engine import compose  # noqa: E402
 from hyperweave.compose.matrix.cells import measure_voice  # noqa: E402
 from hyperweave.config.loader import load_diagram_config, load_glyphs, load_paradigms  # noqa: E402
@@ -44,10 +44,23 @@ from hyperweave.core.models import ComposeSpec  # noqa: E402
 from hyperweave.core.paradigm import MatrixVoice  # noqa: E402
 
 _TEXT_CFG = load_paradigms()["primer"].diagram
-_CARD_TEXT_CLASSES = frozenset({"name", "ndesc", "hname", "hdesc", "hsub", "sub", "mname", "mdesc"})
+# A CLOSED set is a trap for a new anatomy: an unlisted class is not graded
+# leniently, it is not graded AT ALL — the card+label runs swept clean while a
+# malformed spec visibly overflowed its card, because nlbl/nval/hlbl/hval were
+# absent here. Any new card text class must join this set in the same change
+# that introduces it.
+_CARD_TEXT_CLASSES = frozenset(
+    {"name", "ndesc", "hname", "hdesc", "hsub", "sub", "mname", "mdesc", "nlbl", "nval", "hlbl", "hval"}
+)
+_CARD_NAME_CLASSES = ("name", "hname", "mname", "dname", "nlbl", "hlbl")
+"""Name-family runs keep the wider 8px breathing gutter; value/desc runs keep
+the 3px floor. A card+label LABEL is a name (the card's identity), its values
+are content — so each takes its family's gutter."""
 _MARKER_SIZE = float((load_diagram_config().get("connector") or {}).get("marker_size", 11))
-_BEAM_RELAY_SPAN_CAP = float((load_diagram_config().get("beam") or {}).get("relay_span_cap", 0.30))
-# Convergence gather-run law: pp-convergence-flow.svg (v04/alpha/v04a6/
+# The per-stage beam window law in wall-clock seconds (span x clock): every
+# citing hand file sits in the ~1.4-1.6s band — see check 11 below.
+_BEAM_STAGE_SECONDS_CAP = 1.6
+# Convergence gather-run law: pp-convergence-flow.svg (v04/specimens/artifacts/diagrams/diagrams-v04a6/
 # diagrams-v3/pp-convergence-flow.svg) is the only hand file that draws a
 # join trunk at all — 100px against its own 210px member card, 0.48x.
 # pp-convergence.svg draws none (0x), confirming an absent trunk is equally
@@ -1018,17 +1031,17 @@ def _preset(name: str) -> dict[str, Any]:
 
 # ═══ CONVERGENCE — many real inputs, one real mouth ══════════════════════════
 CONVERGENCE: list[Story] = [
-    ("convergence", "compose() — four inputs meet at a single mouth", _preset("convergence")),
+    ("convergence", "compose() — four inputs meet at a single mouth", _preset("fanin")),
     (
-        "convergence-arrivals",
+        "fanin-knot",
         "the seed drain — gather trunk, knot, edge-chip at the mouth, chips in the card",
-        _preset("convergence-arrivals"),
+        _preset("fanin-knot"),
     ),
     (
         "context-merge",
         "compose/context.py — every context source merges into ONE dict the template stamps",
         {
-            "topology": "convergence",
+            "topology": "fanin",
             "title": "One context dict",
             "subtitle": "genome, spec, layout and reasoning merge before any template runs",
             "node_style": "card+glyph",
@@ -1056,7 +1069,7 @@ CONVERGENCE: list[Story] = [
         "gate-verdicts",
         "justfile qa — four independent verdicts converge on one shippable bit",
         {
-            "topology": "convergence",
+            "topology": "fanin",
             "title": "Four gates, one verdict",
             "subtitle": "pytest, ruff, format and mypy all assert into the release bit",
             "node_style": "card+glyph",
@@ -1085,7 +1098,7 @@ CONVERGENCE: list[Story] = [
         "glyph-merge",
         "glyph registries — brand + core sets merge into the one lookup the ladder reads",
         {
-            "topology": "convergence",
+            "topology": "fanin",
             "title": "One glyph lookup",
             "subtitle": "brands and kinds merge; the identity ladder reads a single registry",
             "node_style": "card+glyph",
@@ -1112,9 +1125,9 @@ CONVERGENCE: list[Story] = [
 
 # ═══ STATE-MACHINE — real lifecycles with named states ═══════════════════════
 STATE_MACHINE: list[Story] = [
-    ("cicd-machine", "the CI run lifecycle — queued through deployed, revise loops back", _preset("cicd-machine")),
-    ("order-lifecycle", "order states — the pseudo-state entry and a terminal ring", _preset("order-lifecycle")),
-    ("agent-task-lifecycle", "agent task states — RECOVERY region, nested returns", _preset("agent-task-lifecycle")),
+    ("sm-retry", "the CI run lifecycle — queued through deployed, revise loops back", _preset("sm-retry")),
+    ("sm-terminal", "order states — the pseudo-state entry and a terminal ring", _preset("sm-terminal")),
+    ("sm-recursive", "agent task states — RECOVERY region, nested returns", _preset("sm-recursive")),
     (
         "breaker-states",
         "connectors/base — the circuit breaker's three states; trips isolate, probes recover",
@@ -1267,6 +1280,147 @@ FANOUT.append(
 
 FANOUT.append(
     (
+        "broadcast-split",
+        "pieces: bilateral 2-in/3-out — seating is declaration order, direction is per-edge "
+        "(the bilateral-broadcast specimen's own asymmetric split, direction-mixed)",
+        {
+            "topology": "fanout",
+            "orientation": "bilateral",
+            "node_style": "card+label",
+            "hero_ring": "quiet",
+            "marker": "arrow",
+            "title": "Two feeds in, three surfaces out",
+            "subtitle": "the sources arrive on the left; the surfaces receive on the right",
+            "zones": ["feeds", "surfaces"],
+            "nodes": [
+                {"id": "hw", "label": "hyperweave", "desc": "one artifact", "role": "hero", "kind": "circle-dot"},
+                {"id": "spec", "label": "spec", "desc": "declared intent", "kind": "code"},
+                {"id": "data", "label": "data", "desc": "live connectors", "kind": "database"},
+                {"id": "readme", "label": "readme", "desc": "github render", "kind": "book"},
+                {"id": "slack", "label": "slack", "desc": "unfurl", "kind": "send"},
+                {"id": "pdf", "label": "pdf", "desc": "print export", "kind": "file-text"},
+            ],
+            "edges": [
+                {"source": "spec", "target": "hw", "marker": "arrow"},
+                {"source": "data", "target": "hw", "marker": "arrow"},
+                {"source": "hw", "target": "readme", "marker": "arrow"},
+                {"source": "hw", "target": "slack", "marker": "arrow"},
+                {"source": "hw", "target": "pdf", "marker": "arrow"},
+            ],
+        },
+    )
+)
+
+FANOUT.append(
+    (
+        "arrival-knot",
+        "pieces: bilateral 2-in/3-out + hub gather — both feeds run flush to ONE mouth, "
+        "arrowheads suppressed, the convergence bezel seated on the hub's face (the "
+        "pp-gateway AND-join mark); the surfaces keep their spread",
+        {
+            "topology": "fanout",
+            "orientation": "bilateral",
+            "node_style": "card+label",
+            "hero_ring": "quiet",
+            "marker": "arrow",
+            "title": "Two feeds, one mouth",
+            "subtitle": "the sources converge on the left; the surfaces receive on the right",
+            "zones": ["feeds", "surfaces"],
+            "nodes": [
+                {
+                    "id": "hw",
+                    "label": "hyperweave",
+                    "desc": "one artifact",
+                    "role": "hero",
+                    "kind": "circle-dot",
+                    "gather": True,
+                },
+                {"id": "spec", "label": "spec", "desc": "declared intent", "kind": "code"},
+                {"id": "data", "label": "data", "desc": "live connectors", "kind": "database"},
+                {"id": "readme", "label": "readme", "desc": "github render", "kind": "book"},
+                {"id": "slack", "label": "slack", "desc": "unfurl", "kind": "send"},
+                {"id": "pdf", "label": "pdf", "desc": "print export", "kind": "file-text"},
+            ],
+            "edges": [
+                {"source": "spec", "target": "hw", "marker": "arrow"},
+                {"source": "data", "target": "hw", "marker": "arrow"},
+                {"source": "hw", "target": "readme", "marker": "arrow"},
+                {"source": "hw", "target": "slack", "marker": "arrow"},
+                {"source": "hw", "target": "pdf", "marker": "arrow"},
+            ],
+        },
+    )
+)
+
+FANOUT.append(
+    (
+        "launch-knot",
+        "pieces: upward fan + gather — every wire leaves ONE mouth on the crown "
+        "(the knot prototype's single focal pin; the default keeps a pitched port per wire)",
+        {
+            "topology": "fanout",
+            "orientation": "upward",
+            "node_style": "card+label",
+            "hero_ring": "quiet",
+            "marker": "arrow",
+            "title": "One mouth, four subsystems",
+            "subtitle": "orientation: upward · gather: true",
+            "nodes": [
+                {
+                    "id": "soc",
+                    "label": "apple silicon",
+                    "desc": "M4 Pro",
+                    "role": "hero",
+                    "kind": "circle-dot",
+                    "gather": True,
+                },
+                {"id": "cpu", "label": "CPU", "desc": "14-core CPU", "kind": "cpu"},
+                {"id": "npu", "label": "NEURAL", "desc": "16-core NPU", "kind": "sparkle"},
+                {"id": "gpu", "label": "GRAPHICS", "desc": "20-core GPU", "kind": "layers"},
+                {"id": "mem", "label": "MEMORY", "desc": "64GB unified", "kind": "memory-stick"},
+            ],
+            "edges": [
+                {"source": "soc", "target": "cpu", "marker": "arrow"},
+                {"source": "soc", "target": "npu", "marker": "arrow"},
+                {"source": "soc", "target": "gpu", "marker": "arrow"},
+                {"source": "soc", "target": "mem", "marker": "arrow"},
+            ],
+        },
+    )
+)
+
+FANOUT.append(
+    (
+        "launch-ports",
+        "pieces: upward fan, default launch grammar — one pitched port per wire, rendered BARE "
+        "(pp-radial's own port grammar: the bezel marks convergence only; the knot twin above gathers)",
+        {
+            "topology": "fanout",
+            "orientation": "upward",
+            "node_style": "card+label",
+            "hero_ring": "quiet",
+            "marker": "arrow",
+            "title": "Four ports, four subsystems",
+            "subtitle": "orientation: upward · distinct ports",
+            "nodes": [
+                {"id": "soc", "label": "apple silicon", "desc": "M4 Pro", "role": "hero", "kind": "circle-dot"},
+                {"id": "cpu", "label": "CPU", "desc": "14-core CPU", "kind": "cpu"},
+                {"id": "npu", "label": "NEURAL", "desc": "16-core NPU", "kind": "sparkle"},
+                {"id": "gpu", "label": "GRAPHICS", "desc": "20-core GPU", "kind": "layers"},
+                {"id": "mem", "label": "MEMORY", "desc": "64GB unified", "kind": "memory-stick"},
+            ],
+            "edges": [
+                {"source": "soc", "target": "cpu", "marker": "arrow"},
+                {"source": "soc", "target": "npu", "marker": "arrow"},
+                {"source": "soc", "target": "gpu", "marker": "arrow"},
+                {"source": "soc", "target": "mem", "marker": "arrow"},
+            ],
+        },
+    )
+)
+
+FANOUT.append(
+    (
         "compose-gate",
         "pieces: bilateral 3x3 — glyph-circle medallion, six S-curves through the centre "
         "(the alpha3 integration-hub composition proof, current kit skin)",
@@ -1330,7 +1484,7 @@ FANOUT.append(
 
 # ═══ SEQUENCE — real conversations over time ═════════════════════════════════
 SEQUENCE: list[Story] = [
-    ("auth-sequence", "the auth handshake — participants, activations, the key legend", _preset("auth-sequence")),
+    ("sequence", "the auth handshake — participants, activations, the key legend", _preset("sequence")),
     (
         "mcp-handshake",
         "mcp/server.py — a host discovers capabilities then composes over stdio",
@@ -1380,30 +1534,30 @@ SEQUENCE: list[Story] = [
 
 # ═══ DAG — real ranked flows with joins and skips ════════════════════════════
 DAG: list[Story] = [
-    ("cicd-gate", "the release gate DAG — parallel checks gather into one release edge", _preset("cicd-gate")),
+    ("dag-gate", "the release gate DAG — parallel checks gather into one release edge", _preset("dag-gate")),
     ("scatter-gather", "scatter-gather — the resolve chip mouth-hugs its sink", _preset("scatter-gather")),
     (
-        "observability-converge",
+        "dag-join",
         "one collector fans metrics, logs, and traces into one dashboard",
-        _preset("observability-converge"),
+        _preset("dag-join"),
     ),
-    ("frontier-serving", "frontier serving — request fan, KV hit bypass, one response", _preset("frontier-serving")),
+    ("dag-providers", "frontier serving — request fan, KV hit bypass, one response", _preset("dag-providers")),
     (
-        "model-gateway-tiers",
+        "dag-tiers",
         "the gateway pools every tier; telemetry drifts out-of-band",
-        _preset("model-gateway-tiers"),
+        _preset("dag-tiers"),
     ),
     (
-        "service-dependencies",
+        "dag-mesh",
         "the dependency mesh — four arrivals seat clean on one store",
-        _preset("service-dependencies"),
+        _preset("dag-mesh"),
     ),
     (
-        "service-dependencies-billing",
+        "dag-mesh-billing",
         "the grown figure — billing joins the fan, lanes hold, the writes chip rides its plateau",
-        _preset("service-dependencies-billing"),
+        _preset("dag-mesh-billing"),
     ),
-    ("kernel-bottleneck", "the kernel bottleneck — a shared dependency is NOT a gather", _preset("kernel-bottleneck")),
+    ("dag-bottleneck", "the kernel bottleneck — a shared dependency is NOT a gather", _preset("dag-bottleneck")),
     (
         "proofset-build",
         "generate_proofset.py — presets fan to renders, renders gather into the README",
@@ -1438,9 +1592,9 @@ DAG: list[Story] = [
 # ═══ TREE — real containment hierarchies ═════════════════════════════════════
 TREE: list[Story] = [
     ("tree", "the taxonomy tree — root, branch rows, leaf gaps from the specimen", _preset("tree")),
-    ("dep-audit", "the dependency audit — depth tiers, the node2 chassis class", _preset("dep-audit")),
-    ("mindmap", "the mindmap — radial tree, ring-2 grandchildren", _preset("mindmap")),
-    ("dep-audit-radial", "the audit, radial — same data, polar containment", _preset("dep-audit-radial")),
+    ("tree-health", "the dependency audit — depth tiers, the node2 chassis class", _preset("tree-health")),
+    ("tree-radial", "the mindmap — radial tree, ring-2 grandchildren", _preset("tree-radial")),
+    ("tree-radial-health", "the audit, radial — same data, polar containment", _preset("tree-radial-health")),
     (
         "data-taxonomy",
         "src/hyperweave/data/ — ALL configuration is a tree; zero mappings in Python",
@@ -1471,7 +1625,7 @@ TREE: list[Story] = [
 
 # ═══ LANES — real category bands with a bus ══════════════════════════════════
 LANES: list[Story] = [
-    ("obi-engine", "Obi — one engine under every surface; morphology marks, hub accents", _preset("obi-engine")),
+    ("lanes", "Obi — one engine under every surface; morphology marks, hub accents", _preset("lanes")),
     (
         "surface-lanes",
         "CLI, HTTP and MCP verbs land in the same engine lane — one compose path",
@@ -1529,13 +1683,14 @@ LANES: list[Story] = [
 
 # ═══ FLYWHEEL — real cycles that feed themselves ═════════════════════════════
 FLYWHEEL: list[Story] = [
-    ("flywheel-orbit", "the data flywheel — four phases, orbit riders on the arcs", _preset("flywheel-orbit")),
-    ("flywheel-flow", "the flow form — one continuous rim when the ring is uniform drift", _preset("flywheel-flow")),
+    ("cycle-orbit", "the data flywheel — four phases, orbit riders on the arcs", _preset("cycle-orbit")),
+    ("cycle-flow", "the flow form — one continuous rim when the ring is uniform drift", _preset("cycle-flow")),
     (
         "adoption-loop",
         "the adoption flywheel — published artifacts teach agents to publish more",
         {
-            "topology": "flywheel",
+            "topology": "cycle",
+            "orientation": "orbit",
             "title": "The adoption loop",
             "subtitle": "a published artifact is a spec any agent can recover and re-ship",
             "node_style": "card+glyph",
@@ -2008,7 +2163,7 @@ FIELD_STORIES: list[Story] = [
         "flag-evaluation",
         "pieces: convergence gather · badge on the decision",
         {
-            "topology": "convergence",
+            "topology": "fanin",
             "title": "One decision, four inputs",
             "subtitle": "config, cohort, kill-switch, and rollout meet at a single evaluated flag",
             "zones": ["inputs", "decision"],
@@ -2039,7 +2194,8 @@ FIELD_STORIES: list[Story] = [
         "training-flywheel",
         "pieces: the medallion face on a field story (circle nodes, axis hero)",
         {
-            "topology": "flywheel",
+            "topology": "cycle",
+            "orientation": "orbit",
             "title": "The training flywheel",
             "subtitle": "ship, observe, label, train — each turn compounds the model",
             "zones": ["ml loop"],
@@ -2072,7 +2228,8 @@ FIELD_STORIES: list[Story] = [
         "image-layer-stack",
         "pieces: stack topology (first field use) · role:ground base",
         {
-            "topology": "stack",
+            "topology": "pipeline",
+            "orientation": "vertical",
             "title": "Every image is a stack",
             "subtitle": "layers rise from the base image to the artifact you actually ship",
             "zones": ["image"],
@@ -2155,7 +2312,7 @@ FIELD_STORIES: list[Story] = [
         "integration-roster",
         "pieces: convergence · brand glyph identity row",
         {
-            "topology": "convergence",
+            "topology": "fanin",
             "title": "Every integration, one inbox",
             "subtitle": "Slack, Notion, Salesforce, Stripe and Drive all land on the same webhook endpoint",
             "node_style": "card+glyph",
@@ -2210,7 +2367,8 @@ FIELD_STORIES: list[Story] = [
         "oncall-rotation-ring",
         "pieces: the ring face on a field story (equal stages, empty centre)",
         {
-            "topology": "ring",
+            "topology": "cycle",
+            "orientation": "ring",
             "title": "The on-call rotation",
             "subtitle": "page, triage, hand off, rest — the loop holds no hero",
             "zones": ["on call"],
@@ -2278,7 +2436,7 @@ FIELD_STORIES: list[Story] = [
         },
     ),
     (
-        "frontier-handoff",
+        "pipeline-circles",
         "pieces: the beam relay reference, relocated from the proofset — animated, noir",
         {
             "topology": "pipeline",
@@ -2313,7 +2471,7 @@ _FIELD_STORY_OVERRIDES: dict[str, dict[str, Any]] = {
     # preview showed washed-out ghosts).
     "incident-relay": {"motion": "animated", "variant": "noir", "surface_face": "dark", "ground": "opaque"},
     "settlement-relay": {"motion": "animated", "variant": "noir", "surface_face": "dark", "ground": "opaque"},
-    "frontier-handoff": {"motion": "animated", "variant": "noir", "surface_face": "dark", "ground": "opaque"},
+    "pipeline-circles": {"motion": "animated", "variant": "noir", "surface_face": "dark", "ground": "opaque"},
     "artifact-fanout-beam": {"motion": "animated", "variant": "noir", "surface_face": "dark", "ground": "opaque"},
     "rollout-beam-split": {"motion": "animated", "variant": "noir", "surface_face": "dark", "ground": "opaque"},
 }
@@ -2327,11 +2485,9 @@ def _sectioned() -> list[tuple[str, list[Story]]]:
     buckets: dict[str, list[Story]] = {
         "pipeline": list(PIPELINE),
         "fanout": list(FANOUT),
+        "fanin": list(CONVERGENCE),
         "hub": list(HUB),
-        "ring": [],
-        "flywheel": list(FLYWHEEL),
-        "convergence": list(CONVERGENCE),
-        "stack": [],
+        "cycle": list(FLYWHEEL),
         "comparison": list(COMPARISON),
         "dag": list(DAG),
         "tree": list(TREE),
@@ -2350,6 +2506,185 @@ def _sectioned() -> list[tuple[str, list[Story]]]:
     return [(k, v) for k, v in buckets.items() if v]
 
 
+# The gather-vocabulary twins (owner review 2026-08-20): each family's
+# per-edge default already renders as its preset in the porcelain board;
+# these stories flip the ONE authored flag so the board shows both mouths
+# of the same vocabulary — the dag AND-join, the bilateral intake, the
+# axial hub bundle.
+DAG.append(
+    (
+        "dependency-knot",
+        "pieces: the service-dependency mesh + sink gather — four converging edges "
+        "collapse at the knot, per-edge arrowheads suppressed; the CHIPLESS spread "
+        "departs FLUSH off the east face (the cargo rule, both mouths)",
+        {
+            "topology": "dag",
+            "title": "Service dependencies, one mouth",
+            "subtitle": "core aggregates its four dependents — the AND-join reading of the same mesh",
+            "zones": ["services"],
+            "nodes": [
+                {"id": "web", "label": "web", "desc": "nextjs", "glyph": "nextjs"},
+                {"id": "api", "label": "api", "desc": "go", "glyph": "go"},
+                {"id": "worker", "label": "worker", "desc": "python", "glyph": "python"},
+                {"id": "mobile", "label": "mobile", "desc": "react", "glyph": "react"},
+                {
+                    "id": "core",
+                    "label": "core",
+                    "desc": "kernel · ×4 in-degree",  # noqa: RUF001 — the preset's own multiplication sign
+                    "role": "hero",
+                    "kind": "cpu",
+                    "gather": True,
+                },
+                {"id": "postgres", "label": "postgres", "desc": "store", "glyph": "postgresql"},
+                {"id": "cache", "label": "cache", "desc": "redis", "glyph": "redis"},
+                {"id": "search", "label": "search", "desc": "elastic", "glyph": "elasticsearch"},
+            ],
+            "edges": [
+                {"source": "web", "target": "core", "relation": "assert"},
+                {"source": "api", "target": "core", "relation": "assert"},
+                {"source": "worker", "target": "core", "relation": "assert"},
+                {"source": "mobile", "target": "core", "relation": "assert"},
+                {"source": "core", "target": "postgres", "relation": "assert"},
+                {"source": "core", "target": "cache", "relation": "assert"},
+                {"source": "postgres", "target": "search", "relation": "assert"},
+                {"source": "cache", "target": "search", "relation": "assert"},
+            ],
+        },
+    )
+)
+FANOUT.append(
+    (
+        "sync-knot",
+        "pieces: the reverse-etl bilateral + hub gather — three source arrivals run "
+        "flush to ONE intake mouth with the convergence bezel on the face; the "
+        "destination spread keeps its fan",
+        {
+            "topology": "fanout",
+            "orientation": "bilateral",
+            "title": "Three sources, one intake",
+            "subtitle": "pull converges on one mouth; sync pushes to every destination",
+            "zones": ["sources", "destinations"],
+            "glyph_tint": "full",
+            "node_style": "card+glyph",
+            "nodes": [
+                {
+                    "id": "sync",
+                    "label": "sync engine",
+                    "desc": "pull → transform → push",
+                    "role": "hero",
+                    "kind": "refresh-cw",
+                    "gather": True,
+                },
+                {"id": "postgres", "label": "Postgres", "desc": "app database", "glyph": "postgresql"},
+                {"id": "stripe", "label": "Stripe", "desc": "payments", "glyph": "stripe"},
+                {"id": "salesforce", "label": "Salesforce", "desc": "CRM records", "glyph": "salesforce"},
+                {"id": "slack", "label": "Slack", "desc": "alerts", "glyph": "slack"},
+                {"id": "notion", "label": "Notion", "desc": "team docs", "glyph": "notion"},
+                {"id": "drive", "label": "Drive", "desc": "exports", "glyph": "googledrive"},
+            ],
+            "edges": [
+                {"source": "postgres", "target": "sync", "relation": "assert"},
+                {"source": "stripe", "target": "sync", "relation": "assert"},
+                {"source": "salesforce", "target": "sync", "relation": "assert"},
+                {"source": "sync", "target": "slack", "relation": "assert"},
+                {"source": "sync", "target": "notion", "relation": "assert"},
+                {"source": "sync", "target": "drive", "relation": "assert"},
+            ],
+        },
+    )
+)
+HUB.append(
+    (
+        "verbs-mouth",
+        "pieces: the verb cross + hero gather — the read rank bundles to one face "
+        "mouth (the authored alternative to the sheet's own pitched port row)",
+        {
+            "topology": "hub",
+            "hub_policy": "axial",
+            "axial": {"satellite_min_h": 58, "max_per_axis": 4, "s_rank_axis_gap": 245, "s_rank_spread_ratio": 0.87},
+            "chassis": {
+                "node": {"h": 58},
+                "hero": {"w": 280, "h": 92, "max_desc_lines": 2},
+                "caption_gap": 121,
+                "caption_pad": 33.5,
+            },
+            "spine": ["artifact"],
+            "title": "Six verbs, one mouth",
+            "subtitle": "the same cross, reads bundled — gather as an authored statement",
+            "node_style": "card+glyph",
+            "nodes": [
+                {
+                    "id": "artifact",
+                    "label": "the artifact",
+                    "desc": "hw:payload · hwz/1",
+                    "role": "hero",
+                    "glyph": "hyperweave",
+                    "gather": True,
+                },
+                {"id": "compose", "label": "compose", "desc": "spec → artifact", "kind": "workflow"},
+                {"id": "transform", "label": "transform", "desc": "artifact → artifact'", "kind": "repeat"},
+                {"id": "extract", "label": "extract", "desc": "payload out", "kind": "download"},
+                {"id": "verify", "label": "verify", "desc": "hash check", "kind": "check"},
+                {"id": "diff", "label": "diff", "desc": "a vs b", "kind": "layers"},
+                {"id": "query", "label": "query", "desc": "field read", "kind": "search"},
+            ],
+            "edges": [
+                {
+                    "source": "compose",
+                    "target": "artifact",
+                    "role": "in",
+                    "label": "write · mints",
+                    "edge_motion": "particle",
+                    "marker": "dot",
+                    "relation": "drift",
+                },
+                {
+                    "source": "artifact",
+                    "target": "transform",
+                    "role": "out",
+                    "label": "write · mints",
+                    "edge_motion": "particle",
+                    "marker": "dot",
+                    "relation": "drift",
+                },
+                {
+                    "source": "extract",
+                    "target": "artifact",
+                    "role": "read",
+                    "label": "read · observes",
+                    "edge_motion": "particle",
+                    "marker": "dot",
+                    "relation": "drift",
+                },
+                {
+                    "source": "verify",
+                    "target": "artifact",
+                    "role": "read",
+                    "edge_motion": "particle",
+                    "marker": "dot",
+                    "relation": "drift",
+                },
+                {
+                    "source": "diff",
+                    "target": "artifact",
+                    "role": "read",
+                    "edge_motion": "particle",
+                    "marker": "dot",
+                    "relation": "drift",
+                },
+                {
+                    "source": "query",
+                    "target": "artifact",
+                    "role": "read",
+                    "edge_motion": "particle",
+                    "marker": "dot",
+                    "relation": "drift",
+                },
+            ],
+        },
+    )
+)
+
 SECTIONS: list[tuple[str, list[Story]]] = _sectioned()
 
 # One-breath section intros: the topology's law + the pieces it spends.
@@ -2357,10 +2692,8 @@ SECTION_INTROS: dict[str, str] = {
     "pipeline": "Stages in one direction — cards or medallions on a single rail; chips ride the runs.",
     "fanout": "One source, many doors — the trunk departs through a knot; door columns lock to their widest content.",
     "hub": "A nucleus and its ring — compass or axial policy; spokes kiss silhouettes at constant clearance.",
-    "ring": "Equal stages on one loop — empty centre, no hero; circulation is congruent arc arrows.",
-    "flywheel": "The compounding loop — a rim of stages around an axis; circle face seats medallions ON the ring.",
-    "convergence": "Many inputs, one mouth — arrivals gather through a knot into the crown.",
-    "stack": "Layers composed upward — the operator ladder multiplies layers into the crown.",
+    "cycle": "The loop family — orbit rims stages around an axis; ring seats equal stages on an empty centre.",
+    "fanin": "Many inputs, one mouth — arrivals gather through a knot into the crown.",
     "comparison": "Two states, one verdict — the muted BEFORE recedes; the hero AFTER carries the accent.",
     "dag": "Ranked flow with skips — per-rank columns share widths; skip channels carry their chips.",
     "tree": "Hierarchy on a bus — parents drop one trunk; radial trees ray from the root.",
@@ -2412,7 +2745,26 @@ def _variety_ledger(stories: list[Story]) -> list[str]:
         anns = tuple(sorted({str(a.get("kind", "callout")) for a in spec.get("annotations", [])})) or ("none",)
         rels = tuple(sorted({str(e.get("relation", "")) for e in spec.get("edges", [])}))
         chip_labels = any(e.get("label_style") == "chip" for e in spec.get("edges", []))
-        key = (tint, *anns, *rels, str(chip_labels), str(bool(spec.get("regions"))), str(spec.get("edge_motion", "")))
+        # gather is spendable vocabulary (the system-wide mouth-vs-ports
+        # flag), so a gathered story is a distinct composition from its
+        # per-edge twin — the whole point of the twin pairs. Orientation is
+        # the family's own expression axis (upward launch vs bilateral vs
+        # horizontal router), spendable the same way — without it every
+        # launch/arrival twin pair read as one composition.
+        gathered = any(n.get("gather") for n in spec.get("nodes", []))
+        key = (
+            tint,
+            *anns,
+            *rels,
+            str(chip_labels),
+            str(bool(spec.get("regions"))),
+            str(spec.get("edge_motion", "")),
+            str(gathered),
+            str(spec.get("orientation", "")),
+            # Anatomy is spendable vocabulary too (the card+label landing):
+            # a card+label story and a card+glyph story spend different parts.
+            str(spec.get("node_style", "")),
+        )
         if key in seen:
             collisions.append(f"{seen[key]} <> {slug}: {key}")
         seen[key] = slug
@@ -2563,10 +2915,896 @@ def build_porcelain() -> None:
     print(f"README_PORCELAIN.md + {len(entries)} porcelain renders (board {board}/{board})")
 
 
+# ═══ card+label — the anatomy's range and its edges ══════════════════════════
+#
+# The porcelain board proves ONE composition against its specimen. This gallery
+# proves the anatomy is a LEGO: legal on every topology, honest at its edges
+# (no values, four values, an unbreakable token, an unresolved mark), and
+# byte-stable across faces. Each entry names the claim it is evidence for, so a
+# reader can tell a demonstration from a decoration.
+_CL_RENDERS = OUT / "card-label"
+
+_CL_SATELLITES = [
+    {
+        "id": "researcher",
+        "label": "researcher",
+        "desc": "gathers sources\nextracts claims\ncites everything",
+        "kind": "search",
+    },
+    {"id": "coder", "label": "coder", "desc": "implements the plan\ntests in a sandbox", "kind": "code"},
+    {
+        "id": "reviewer",
+        "label": "reviewer",
+        "desc": "checks against intent\nflags regressions",
+        "kind": "circle-check",
+    },
+    {"id": "writer", "label": "writer", "desc": "assembles the deliverable\nkeeps one voice", "kind": "file-text"},
+]
+
+
+def _cl_wings(**extra: Any) -> dict[str, Any]:
+    """A bilateral FAN carrying card+label — the vehicle for edge cases that
+    vary one thing at a time. Deliberately NOT the shipped preset (which is a
+    compass hub): these entries demonstrate the ANATOMY, and the fan keeps the
+    variable under test isolated from the hub's seat/ring machinery. Never
+    caption one of these as the shipped composition. The crown is NOT pinned:
+    these demos content-solve under the dominance band like any caller spec —
+    the 220x184 citation belongs to the shipped preset alone (a pinned crown
+    beside a demo's light satellites was the review board's 3.2-3.3 imbalance)."""
+    spec: dict[str, Any] = {
+        "topology": "fanout",
+        "orientation": "bilateral",
+        "node_style": "card+label",
+        "hero_ring": "quiet",
+        "wire": "solid",
+        "marker": "arrow",
+        "chassis": {"wire_w": 2.5, "marker_size": 13, "marker_half": 0.385},
+        "nodes": [
+            {
+                "id": "orchestrator",
+                "label": "orchestrator",
+                "desc": "plan\ndispatch\nmerge",
+                "role": "hero",
+                "kind": "workflow",
+            },
+            *_CL_SATELLITES,
+        ],
+        "edges": [{"source": "orchestrator", "target": n["id"], "marker": "arrow"} for n in _CL_SATELLITES],
+    }
+    spec.update(extra)
+    return spec
+
+
+_CL_PRESET = "hub-bilateral"
+
+# (slug, claim, spec) — the claim is the caption, so every render states what
+# it is evidence FOR rather than what it looks like.
+#
+# The shipped entry resolves the PRESET STORE. It used to hand-rebuild the spec
+# through _cl_wings, which still emits topology: fanout — so once the preset
+# became a compass hub the gallery showed a fanout under the caption
+# "hub-bilateral", and the same page carried two different geometries under one
+# name. A gallery that reconstructs what it documents can always drift from it;
+# resolving the real preset is the only construction that cannot.
+_CL_SHIPPED: list[tuple[str, str, dict[str, Any]]] = [
+    (
+        "wings",
+        f"`{_CL_PRESET}` as it ships — kicker over values, corner marks, wing-compiled hue",
+        dict(resolve_bundled_spec("diagram", _CL_PRESET).value),
+    ),
+]
+
+# The generalization claim: anatomy is orthogonal to topology. Same two slots,
+# eight different solvers placing them.
+_CL_TOPOLOGIES: list[tuple[str, str, dict[str, Any]]] = [
+    (
+        "topo-pipeline",
+        "pipeline — the stack rides a left-to-right chain",
+        {
+            "topology": "pipeline",
+            "node_style": "card+label",
+            "title": "Ingest to answer",
+            "subtitle": "four stages, each carrying its own numbers",
+            "nodes": [
+                {"id": "fetch", "label": "fetch", "desc": "1.2M docs/day\n14 sources", "kind": "download"},
+                {"id": "chunk", "label": "chunk", "desc": "512 tokens\n64 overlap", "kind": "columns-2"},
+                {"id": "embed", "label": "embed", "desc": "1536 dims\n8k batch", "kind": "dna"},
+                {"id": "serve", "label": "serve", "desc": "p50 42ms\np99 210ms", "kind": "server"},
+            ],
+        },
+    ),
+    # Convergence's focal is the LAST slot (focal_slot), unlike fanout's first —
+    # the sink is declared last and takes the crown structurally, no role needed.
+    (
+        "topo-convergence",
+        "convergence — three arrivals into one mouth",
+        {
+            "topology": "fanin",
+            "node_style": "card+label",
+            "title": "Three signals, one verdict",
+            "subtitle": "every input carries its own reading",
+            "nodes": [
+                {"id": "tests", "label": "tests", "desc": "4467 passed\n0 failed", "kind": "check"},
+                {"id": "types", "label": "types", "desc": "166 files\nstrict", "kind": "braces"},
+                {"id": "lint", "label": "lint", "desc": "0 findings\n366 formatted", "kind": "search"},
+                {"id": "verdict", "label": "verdict", "desc": "green", "kind": "circle-check"},
+            ],
+        },
+    ),
+    (
+        "topo-hub",
+        "hub — the compass seats it without a single solver edit",
+        {
+            "topology": "hub",
+            "node_style": "card+label",
+            "title": "One runtime, four surfaces",
+            "subtitle": "the anatomy travels to the compass",
+            "nodes": [
+                {"id": "engine", "label": "engine", "desc": "one spec\nfive forms", "role": "hero", "kind": "workflow"},
+                {"id": "cli", "label": "cli", "desc": "39 commands", "kind": "terminal", "anchor": "W"},
+                {"id": "http", "label": "http", "desc": "12 routes", "kind": "server", "anchor": "N"},
+                {"id": "mcp", "label": "mcp", "desc": "9 tools", "kind": "plug", "anchor": "E"},
+            ],
+            "edges": [
+                {"source": "engine", "target": "cli", "marker": "arrow"},
+                {"source": "engine", "target": "http", "marker": "arrow"},
+                {"source": "engine", "target": "mcp", "marker": "arrow"},
+            ],
+        },
+    ),
+    (
+        "topo-dag",
+        "dag — ranked, with the stack intact at every rank",
+        {
+            "topology": "dag",
+            "node_style": "card+label",
+            "title": "Build to release",
+            "subtitle": "ranks solve independently of anatomy",
+            "nodes": [
+                {"id": "src", "label": "source", "desc": "182 modules", "kind": "code"},
+                {"id": "unit", "label": "unit", "desc": "4467 tests\n171s", "kind": "check"},
+                {"id": "typ", "label": "types", "desc": "strict\n166 files", "kind": "braces"},
+                {"id": "rel", "label": "release", "desc": "1 tag\nsigned", "kind": "package"},
+            ],
+            "edges": [
+                {"source": "src", "target": "unit", "relation": "assert"},
+                {"source": "src", "target": "typ", "relation": "assert"},
+                {"source": "unit", "target": "rel", "relation": "assert"},
+                {"source": "typ", "target": "rel", "relation": "assert"},
+            ],
+        },
+    ),
+    (
+        "topo-fanout-horizontal",
+        "fanout (horizontal) — the same cell without the partition",
+        {
+            "topology": "fanout",
+            "orientation": "horizontal",
+            "node_style": "card+label",
+            "title": "One router, three providers",
+            "subtitle": "no zones declared, so no partition hue",
+            "nodes": [
+                {"id": "router", "label": "router", "desc": "12k rpm", "role": "hero", "kind": "workflow"},
+                {"id": "a", "label": "frontier", "desc": "p50 820ms\n$3.00/Mtok", "kind": "rocket"},
+                {"id": "b", "label": "mid", "desc": "p50 240ms\n$0.25/Mtok", "kind": "zap"},
+                {"id": "c", "label": "local", "desc": "p50 90ms\n$0", "kind": "cpu"},
+            ],
+        },
+    ),
+    (
+        "topo-lanes",
+        "lanes — morphology marks and the value stack share the plate cleanly",
+        {
+            "topology": "lanes",
+            "lanes": ["ingest", "serve"],
+            "node_style": "card+label",
+            "title": "Queue to response",
+            "subtitle": "lane morphology stays separate from the card's corner identity mark",
+            "nodes": [
+                {
+                    "id": "queue",
+                    "label": "queue",
+                    "desc": "18 waiting\np95 2.4s",
+                    "category": "ingest",
+                    "morphology": "store",
+                    "kind": "database",
+                },
+                {
+                    "id": "parser",
+                    "label": "parser",
+                    "desc": "8 workers\n62% busy",
+                    "category": "ingest",
+                    "morphology": "engine",
+                    "kind": "code",
+                },
+                {
+                    "id": "api",
+                    "label": "api",
+                    "desc": "4 replicas\np95 84ms",
+                    "category": "serve",
+                    "morphology": "surface",
+                    "kind": "server",
+                },
+                {
+                    "id": "cache",
+                    "label": "cache",
+                    "desc": "91% hits\n38 GB",
+                    "category": "serve",
+                    "morphology": "store",
+                    "kind": "database",
+                },
+            ],
+            "edges": [
+                {"source": "queue", "target": "parser"},
+                {"source": "parser", "target": "api"},
+                {"source": "api", "target": "cache"},
+            ],
+        },
+    ),
+    (
+        "topo-hub-axial",
+        "axial hub — a forced nucleus plate keeps the authored identity/value register",
+        {
+            "topology": "hub",
+            "hub_policy": "axial",
+            "node_style": "card+label",
+            "title": "Control plane",
+            "subtitle": "semantic roles choose axes; card anatomy remains caller-owned",
+            "nodes": [
+                {
+                    "id": "core",
+                    "label": "control plane",
+                    "desc": "plan\ndispatch\nmerge",
+                    "role": "hero",
+                    "kind": "workflow",
+                },
+                {"id": "author", "label": "author", "desc": "12 changes\n3 reviewers", "kind": "code"},
+                {"id": "input", "label": "input", "desc": "48 sources\n92 claims", "kind": "download"},
+                {"id": "output", "label": "output", "desc": "1 artifact\nall gates", "kind": "package"},
+                {"id": "audit", "label": "audit", "desc": "0 findings\ntrace complete", "kind": "search"},
+            ],
+            "edges": [
+                {"source": "author", "target": "core", "role": "edit"},
+                {"source": "input", "target": "core", "role": "in"},
+                {"source": "core", "target": "output", "role": "out"},
+                {"source": "core", "target": "audit", "role": "read"},
+            ],
+        },
+    ),
+    (
+        "topo-tree",
+        "tree — hierarchy changes the seats, not the card's two text registers",
+        {
+            "topology": "tree",
+            "node_style": "card+label",
+            "title": "Monthly infrastructure cost",
+            "subtitle": "the value stack survives at every depth",
+            "nodes": [
+                {
+                    "id": "total",
+                    "label": "total",
+                    "desc": "$42.8k\n-7.4% MoM",
+                    "role": "hero",
+                    "kind": "layout-grid",
+                },
+                {"id": "compute", "label": "compute", "desc": "$21.4k\n50%", "kind": "cpu"},
+                {"id": "data", "label": "data", "desc": "$12.2k\n29%", "kind": "database"},
+                {"id": "network", "label": "network", "desc": "$9.2k\n21%", "kind": "globe"},
+                {"id": "gpu", "label": "gpu", "desc": "$13.8k", "kind": "layers"},
+                {"id": "workers", "label": "workers", "desc": "$7.6k", "kind": "server"},
+            ],
+            "edges": [
+                {"source": "total", "target": "compute"},
+                {"source": "total", "target": "data"},
+                {"source": "total", "target": "network"},
+                {"source": "compute", "target": "gpu"},
+                {"source": "compute", "target": "workers"},
+            ],
+        },
+    ),
+    (
+        "topo-comparison",
+        "comparison — muted and active panels retain the same measured rhythm",
+        {
+            "topology": "comparison",
+            "node_style": "card+label",
+            "title": "Release candidate",
+            "subtitle": "the proposed build improves latency without hiding cost",
+            "nodes": [
+                {"id": "current", "label": "current", "desc": "p95 284ms\n$4.18 / 1k", "role": "muted"},
+                {"id": "candidate", "label": "candidate", "desc": "p95 171ms\n$3.92 / 1k"},
+            ],
+            "edges": [{"source": "current", "target": "candidate", "marker": "arrow"}],
+        },
+    ),
+]
+
+_CL_EDGES: list[tuple[str, str, dict[str, Any]]] = [
+    (
+        "stack-counts",
+        "one to four values — one rhythm, the box grows by pitch",
+        _cl_wings(
+            subtitle="value counts 1-4: label +26, first value +50, pitch 22, bottom air 20",
+            nodes=[
+                {"id": "hub", "label": "capacity", "desc": "live\ntelemetry", "role": "hero", "kind": "workflow"},
+                {"id": "one", "label": "queue", "desc": "18 waiting"},
+                {"id": "two", "label": "workers", "desc": "8 replicas\n62% busy"},
+                {"id": "three", "label": "database", "desc": "2.1k qps\np95 34ms\n412 GB"},
+                {"id": "four", "label": "release", "desc": "4472 passed\n0 failed\nstrict types\nsigned tag"},
+            ],
+            edges=[{"source": "hub", "target": t, "marker": "arrow"} for t in ("one", "two", "three", "four")],
+        ),
+    ),
+    (
+        "marks",
+        "mark / no mark / unresolved slug — the column never moves",
+        _cl_wings(
+            subtitle="icon-or-nothing is total: an unresolved slug reserves nothing",
+            nodes=[
+                {"id": "hub", "label": "hub", "desc": "values start\nat the same x", "role": "hero"},
+                {"id": "resolved", "label": "resolved kind", "desc": "carries a mark", "kind": "database"},
+                {"id": "brand", "label": "brand glyph", "desc": "carries a mark", "glyph": "postgresql"},
+                {"id": "none", "label": "no mark", "desc": "declares nothing"},
+                {"id": "unknown", "label": "unknown slug", "desc": "declares a miss", "kind": "not-a-real-kind"},
+            ],
+            edges=[{"source": "hub", "target": t, "marker": "arrow"} for t in ("resolved", "brand", "none", "unknown")],
+        ),
+    ),
+    # Content sized to the CELL's width budget (hero + two columns + margins
+    # <= the 960 canvas). Past it the bilateral solver overlaps its hub rather
+    # than refusing or growing — a pre-existing limit every anatomy shares
+    # (card, card+glyph and card+label collide identically at the same token
+    # length), so a gallery entry that crossed it would be documenting the
+    # solver's capacity gap, not this anatomy's growth law.
+    # No wrapped-sentence entry here: width_policy 'aligned' shares the widest
+    # solved width across the whole column, so a sentence that would wrap in a
+    # narrower cell renders on one line — claiming a wrap the render does not
+    # show would make the gallery lie. Wrapping is pinned in the unit suite
+    # (test_diagram_card_label), where the width can be held.
+    (
+        "growth",
+        "hostile content — values grow the box, they never ellipsize",
+        _cl_wings(
+            subtitle="an unbreakable token, a label clearing its mark, and a card with no values at all",
+            nodes=[
+                {"id": "hub", "label": "hub", "desc": "growth\nnot ellipsis", "role": "hero"},
+                {"id": "token", "label": "unbreakable", "desc": "throughput_per_second"},
+                {"id": "long", "label": "a long subsystem label", "desc": "clears its mark", "kind": "database"},
+                {"id": "prose", "label": "prose value", "desc": "a sentence long enough to widen its card"},
+                {"id": "empty", "label": "no values", "desc": ""},
+            ],
+            edges=[{"source": "hub", "target": t, "marker": "arrow"} for t in ("token", "long", "prose", "empty")],
+        ),
+    ),
+    (
+        "mixed",
+        "three anatomies in one diagram — card, card+glyph, card+label",
+        {
+            "topology": "fanout",
+            "orientation": "bilateral",
+            "title": "Anatomy is per node",
+            "subtitle": "card, card+glyph and card+label composing side by side",
+            "hero_ring": "quiet",
+            "nodes": [
+                {
+                    "id": "hub",
+                    "label": "hub",
+                    "desc": "mixed family",
+                    "role": "hero",
+                    "style": "card+glyph",
+                    "kind": "workflow",
+                },
+                {"id": "plain", "label": "plain card", "desc": "name over mono desc", "style": "card"},
+                {
+                    "id": "marked",
+                    "label": "card+glyph",
+                    "desc": "mark opens a column",
+                    "style": "card+glyph",
+                    "kind": "database",
+                },
+                {"id": "valued", "label": "card+label", "desc": "kicker over values", "style": "card+label"},
+                {
+                    "id": "valued2",
+                    "label": "card+label",
+                    "desc": "corner mark\nno column",
+                    "style": "card+label",
+                    "kind": "server",
+                },
+            ],
+            "edges": [
+                {"source": "hub", "target": t, "marker": "arrow"} for t in ("plain", "marked", "valued", "valued2")
+            ],
+        },
+    ),
+]
+
+_CL_STATES: list[tuple[str, str, dict[str, Any]]] = [
+    (
+        "roles-and-health",
+        "hero, active and muted roles — health remains an independent corner channel",
+        {
+            "topology": "hub",
+            "hub_policy": "compass",
+            "node_style": "card+label",
+            "title": "Regional migration",
+            "subtitle": "role controls emphasis; health reports operational state",
+            "nodes": [
+                {
+                    "id": "router",
+                    "label": "global router",
+                    "desc": "12k rpm\n3 regions",
+                    "role": "hero",
+                    "kind": "workflow",
+                },
+                {
+                    "id": "legacy",
+                    "label": "us-east legacy",
+                    "desc": "0 traffic\ndraining",
+                    "role": "muted",
+                    "health": "outdated",
+                    "kind": "server",
+                    "anchor": "W",
+                },
+                {
+                    "id": "primary",
+                    "label": "us-central",
+                    "desc": "71% traffic\np95 82ms",
+                    "kind": "server",
+                    "anchor": "E",
+                },
+                {
+                    "id": "secondary",
+                    "label": "eu-west",
+                    "desc": "29% traffic\np95 94ms",
+                    "health": "vulnerable",
+                    "kind": "server",
+                    "anchor": "S",
+                },
+            ],
+            "edges": [
+                {"source": "router", "target": "legacy"},
+                {"source": "router", "target": "primary"},
+                {"source": "router", "target": "secondary"},
+            ],
+        },
+    ),
+    (
+        "partition-muted",
+        "muted members retain their wing hue while their text recedes",
+        _cl_wings(
+            subtitle="muted is a role modifier; partition membership still owns hue",
+            zones=["build", "ship"],
+            partition_chroma="zone",
+            nodes=[
+                {"id": "hub", "label": "release", "desc": "plan\ndispatch\nmerge", "role": "hero", "kind": "workflow"},
+                {"id": "compile", "label": "compile", "desc": "166 modules\n12.4s", "kind": "code"},
+                {
+                    "id": "old-tests",
+                    "label": "legacy tests",
+                    "desc": "retired\n0 required",
+                    "role": "muted",
+                    "kind": "check",
+                },
+                {"id": "deploy", "label": "deploy", "desc": "6 regions\n14m rollout", "kind": "package"},
+                {
+                    "id": "old-channel",
+                    "label": "legacy channel",
+                    "desc": "draining\n0 traffic",
+                    "role": "muted",
+                    "kind": "server",
+                },
+            ],
+            edges=[
+                {"source": "hub", "target": t, "marker": "arrow"}
+                for t in ("compile", "old-tests", "deploy", "old-channel")
+            ],
+        ),
+    ),
+]
+
+_CL_SPECIMEN_SRC = "v04/v040/v042/diagram-prototypes/hub-expressions/hub-bilateral.svg"
+
+# The hand specimen's OWN content, composed by the engine — the recreation the
+# porcelain board cannot show, because that board's entry carries the shipped
+# delegation story instead (owner ruling: one preset, content amended, geometry
+# graded live).
+#
+# A COMPASS HUB, not a fan. Measured from the hand file: the four cards sit at
+# a near-constant radius (318/318/322/328) on ±30°/±150° seats, and each wire
+# leaves its own corner of the crown. A fan seats fixed COLUMNS, so its radius
+# varies with vertical position — it cannot draw a ring. Declaration order is
+# the partition and the seats must agree: compute west, graphics·memory east.
+_CL_SPECIMEN: dict[str, Any] = {
+    "topology": "hub",
+    "hub_policy": "compass",
+    "node_style": "card+label",
+    "zones": ["compute", "graphics · memory"],
+    "partition_chroma": "zone",
+    "hero_ring": "quiet",
+    "wire": "solid",
+    "marker": "arrow",
+    "subtitle": "M4 Pro · four subsystems fan out from one die — the wings carry the partition",
+    "chassis": {
+        "hub_clearance": 96,
+        "ring_r_hub": 322,
+        "hero": {"w": 220, "h": 184, "rx": 16},
+        "wire_w": 2.5,
+        "marker_size": 13,
+        "marker_half": 0.385,
+        "zone_content_gap": 22,
+        "caption_gap": 52,
+        "caption_pad": 34,
+    },
+    "nodes": [
+        {
+            "id": "soc",
+            "label": "apple silicon",
+            "desc": "M4 Pro\nSystem on\na Chip",
+            "role": "hero",
+            "kind": "circle-dot",
+        },
+        {"id": "cpu", "label": "cpu", "desc": "14-core CPU\n10 performance cores\n4 efficiency cores", "kind": "cpu"},
+        {"id": "npu", "label": "neural", "desc": "16-core NPU\n38 TOPS AI throughput", "kind": "sparkle"},
+        {"id": "gpu", "label": "graphics", "desc": "20-core GPU\nHardware ray tracing", "kind": "layers"},
+        {"id": "mem", "label": "memory", "desc": "64GB unified memory\n273GB/s bandwidth", "kind": "memory-stick"},
+    ],
+    # The specimen's measured seats: CPU up-left, NEURAL down-left (compute),
+    # GRAPHICS up-right, MEMORY down-right (graphics · memory).
+    "edges": [
+        {"source": "soc", "target": "cpu", "marker": "arrow", "routing": "curved", "angle": -150},
+        {"source": "soc", "target": "npu", "marker": "arrow", "routing": "curved", "angle": 150},
+        {"source": "soc", "target": "gpu", "marker": "arrow", "routing": "curved", "angle": -30},
+        {"source": "soc", "target": "mem", "marker": "arrow", "routing": "curved", "angle": 30},
+    ],
+}
+
+# Real BRAND marks in the corner slot. glyph_tint 'full' lets a registered
+# brand palette through, so the corner reads in each vendor's own colour —
+# the slot is the same annotation slot a kind glyph rides, no reserved column.
+_CL_BRANDS: list[tuple[str, str, dict[str, Any]]] = [
+    (
+        "brand-marks",
+        "registered brand marks at full tint — vendor colour in the corner slot",
+        {
+            "topology": "fanout",
+            "orientation": "bilateral",
+            "node_style": "card+label",
+            "glyph_tint": "full",
+            "zones": ["store", "compute"],
+            "partition_chroma": "zone",
+            "hero_ring": "quiet",
+            "wire": "solid",
+            "marker": "arrow",
+            "subtitle": "brand marks ride the corner exactly as kind glyphs do",
+            "chassis": {"wire_w": 2.5, "marker_size": 13, "marker_half": 0.385},
+            "nodes": [
+                {
+                    "id": "hub",
+                    "label": "the stack",
+                    "desc": "6 services\n1 plane",
+                    "role": "hero",
+                    "glyph": "hyperweave",
+                },
+                {"id": "pg", "label": "postgres", "desc": "412 GB\n2.1k qps", "glyph": "postgresql"},
+                {"id": "redis", "label": "redis", "desc": "38 GB resident\n180k ops/s", "glyph": "redis"},
+                {"id": "k8s", "label": "kubernetes", "desc": "94 pods\n6 nodes", "glyph": "kubernetes"},
+                {"id": "docker", "label": "docker", "desc": "212 images\n41 GB", "glyph": "docker"},
+            ],
+            "edges": [{"source": "hub", "target": t, "marker": "arrow"} for t in ("pg", "redis", "k8s", "docker")],
+        },
+    ),
+    (
+        "brand-marks-ink",
+        "the same marks at ink tint — one knob, no geometry change",
+        {
+            "topology": "fanout",
+            "orientation": "bilateral",
+            "node_style": "card+label",
+            "glyph_tint": "ink",
+            "zones": ["store", "compute"],
+            "partition_chroma": "zone",
+            "hero_ring": "quiet",
+            "wire": "solid",
+            "marker": "arrow",
+            "subtitle": "glyph_tint is chrome — the boxes solve identically either way",
+            "chassis": {"wire_w": 2.5, "marker_size": 13, "marker_half": 0.385},
+            "nodes": [
+                {
+                    "id": "hub",
+                    "label": "the stack",
+                    "desc": "6 services\n1 plane",
+                    "role": "hero",
+                    "glyph": "hyperweave",
+                },
+                {"id": "pg", "label": "postgres", "desc": "412 GB\n2.1k qps", "glyph": "postgresql"},
+                {"id": "redis", "label": "redis", "desc": "38 GB resident\n180k ops/s", "glyph": "redis"},
+                {"id": "k8s", "label": "kubernetes", "desc": "94 pods\n6 nodes", "glyph": "kubernetes"},
+                {"id": "docker", "label": "docker", "desc": "212 images\n41 GB", "glyph": "docker"},
+            ],
+            "edges": [{"source": "hub", "target": t, "marker": "arrow"} for t in ("pg", "redis", "k8s", "docker")],
+        },
+    ),
+]
+
+
+def _cl_expression(orientation: str) -> dict[str, Any]:
+    """The SAME content on a different orientation — the fanout family's own
+    expression axis (`orientation_legality`: horizontal · bilateral · upward ·
+    downward · radial). Anatomy is orthogonal to expression: the cards are
+    identical, only the seating changes."""
+    spec: dict[str, Any] = {
+        "topology": "fanout",
+        "orientation": orientation,
+        "node_style": "card+label",
+        "hero_ring": "quiet",
+        "wire": "solid",
+        "marker": "arrow",
+        "subtitle": f"orientation: {orientation}",
+        "nodes": [
+            {"id": "soc", "label": "apple silicon", "desc": "M4 Pro", "role": "hero", "kind": "circle-dot"},
+            {"id": "cpu", "label": "cpu", "desc": "14-core CPU", "kind": "cpu"},
+            {"id": "npu", "label": "neural", "desc": "16-core NPU", "kind": "sparkle"},
+            {"id": "gpu", "label": "graphics", "desc": "20-core GPU", "kind": "layers"},
+            {"id": "mem", "label": "memory", "desc": "64GB unified", "kind": "memory-stick"},
+        ],
+        "edges": [{"source": "soc", "target": t, "marker": "arrow"} for t in ("cpu", "npu", "gpu", "mem")],
+    }
+    # Only the bilateral cell seats its members in two structural groups, so
+    # only it may compile a partition hue (core/diagram.py _PARTITIONED_LAYOUTS).
+    if orientation == "bilateral":
+        spec["zones"] = ["compute", "graphics · memory"]
+        spec["partition_chroma"] = "zone"
+    if orientation == "downward":
+        # A trunk/knot is authored semantics, not the downward solver's
+        # unconditional default.  This example explicitly asks for the idiom
+        # it demonstrates; bare-spoke downward fans remain legal elsewhere.
+        spec["nodes"][0]["gather"] = True
+    return spec
+
+
+_CL_EXPRESSIONS: list[tuple[str, str, dict[str, Any]]] = [
+    (f"expr-{o}", f"fanout · {o} — same five cards, a different seating", _cl_expression(o))
+    for o in ("horizontal", "bilateral", "upward", "downward", "radial")
+]
+
+_CL_CHROMA: list[tuple[str, str, dict[str, Any]]] = [
+    (
+        "partition-off",
+        "no partition declared — one accent on the spine, the rest ink",
+        _cl_wings(
+            subtitle="without partition_chroma the wings read identically",
+            zones=["build", "ship"],
+            spine=["orchestrator"],
+        ),
+    ),
+    (
+        "partition-on",
+        "partition declared — every member takes its group's tone",
+        _cl_wings(
+            subtitle="with partition_chroma the wings carry the split",
+            zones=["build", "ship"],
+            partition_chroma="zone",
+            spine=["orchestrator"],
+        ),
+    ),
+    (
+        "partition-reordered",
+        "the same nodes, re-declared — hue follows membership",
+        _cl_wings(
+            subtitle="moving a node across the midpoint moves its hue with it",
+            zones=["build", "ship"],
+            partition_chroma="zone",
+            spine=["orchestrator"],
+            nodes=[
+                {
+                    "id": "orchestrator",
+                    "label": "orchestrator",
+                    "desc": "plan\ndispatch\nmerge",
+                    "role": "hero",
+                    "kind": "workflow",
+                },
+                _CL_SATELLITES[2],
+                _CL_SATELLITES[3],
+                _CL_SATELLITES[0],
+                _CL_SATELLITES[1],
+            ],
+        ),
+    ),
+]
+
+_CL_FACES = ("porcelain", "noir", "carbon", "cream")
+
+
+def build_card_label() -> None:
+    """The card+label gallery: range, edges, and the generalization claim."""
+    _CL_RENDERS.mkdir(parents=True, exist_ok=True)
+    for old in _CL_RENDERS.glob("*.svg"):
+        old.unlink()
+
+    glyphs = load_glyphs()
+
+    def _assert_marks_resolve(slug: str, spec: dict[str, Any]) -> None:
+        """A declared mark that does not resolve renders NOTHING — silently, by
+        design (icon-or-nothing). That is correct for a caller and wrong for a
+        gallery: an entry whose point is the corner slot would quietly ship
+        without one. Fail the build instead; the deliberate miss opts out."""
+        for node in spec.get("nodes") or []:
+            declared = node.get("glyph") or node.get("kind")
+            if not declared or str(node.get("id", "")).startswith("unknown"):
+                continue
+            if not any(gid in glyphs for gid in (node.get("glyph") or "", f"kind:{declared}", declared)):
+                raise SystemExit(
+                    f"{slug}: node {node.get('id')!r} declares mark {declared!r}, which resolves to nothing"
+                )
+
+    def render(slug: str, spec: dict[str, Any], *, variant: str = "porcelain", face: str = "") -> None:
+        """Renders ADAPTIVE by default (bare ground + adaptive palette — the
+        `inlay` surface): the gallery is read on GitHub, where the reader's own
+        theme decides the ground. A baked light face is theme-BLIND, so its ink
+        wires and zone headers — the elements that ride the host ground rather
+        than a card — disappear on a dark README. Passing ``face`` bakes one
+        face deliberately, for the surface-invariance section below."""
+        _assert_marks_resolve(slug, spec)
+        surface: dict[str, Any] = {"palette": "fixed", "surface_face": face} if face else {"palette": "adaptive"}
+        svg = compose(
+            ComposeSpec(type="diagram", genome_id="primer", variant=variant, ground="bare", diagram=spec, **surface)
+        ).svg
+        (_CL_RENDERS / f"{slug}.svg").write_text(svg)
+
+    n = 0
+    sections: list[tuple[str, str, list[tuple[str, str, dict[str, Any]]]]] = [
+        (
+            "The shipped composition",
+            "`hub-bilateral` — the preset the anatomy's specimen is authored for: a "
+            "COMPASS hub, the family the hand file's own geometry measures as.",
+            _CL_SHIPPED,
+        ),
+        (
+            "Across topology families",
+            "`card+label` is a LEGO, not a fanout feature. The same two slots move "
+            f"through {len(_CL_TOPOLOGIES)} representative solver families, including "
+            "the forced-plate lanes, axial and convergence seams that previously "
+            "downgraded it to the legacy card.",
+            _CL_TOPOLOGIES,
+        ),
+        (
+            "Expression axis",
+            "Anatomy is orthogonal to EXPRESSION too. The five renders below carry "
+            "identical cards through every orientation the fanout family declares "
+            "legal (`orientation_legality`) — only the seating changes. The "
+            "partition hue appears on `bilateral` alone, because that is the only "
+            "cell whose solver seats members in two structural groups; asking for "
+            "it elsewhere is a refusal, not a silent no-op.",
+            _CL_EXPRESSIONS,
+        ),
+        (
+            "Brand marks in the corner slot",
+            "The corner annotation takes a registered BRAND glyph exactly as it "
+            "takes a semantic kind — same slot, same clearance rule, no reserved "
+            "column. `glyph_tint` decides whether the vendor palette comes "
+            "through; the boxes solve identically either way.",
+            _CL_BRANDS,
+        ),
+        (
+            "Edges",
+            "What the anatomy does when content fights it.",
+            _CL_EDGES,
+        ),
+        (
+            "Semantic roles and state",
+            "Role, partition membership and health are independent channels: muted "
+            "text recedes without changing the card's metrics, group hue or status mark.",
+            _CL_STATES,
+        ),
+        (
+            "Partition-pair chromatics",
+            "Hue compiled from declared group membership — one tone per group, "
+            "never per node. The three renders below differ ONLY in the "
+            "`partition_chroma` declaration and the node ORDER.",
+            _CL_CHROMA,
+        ),
+    ]
+    lines = [
+        "# card+label — the anatomy's range",
+        "",
+        "Engine renders of the `card+label` node anatomy and the partition-pair",
+        "chromatics that ship with it. Every entry states the claim it is evidence",
+        "for; nothing here is decoration. Generated by",
+        "`scripts/generate_diagram_galleries.py card-label` and swept by the same",
+        "specimen laws (text-in-card, canvas containment, no-ellipsis) as every",
+        "other gallery — a render that broke a law would fail the build, not appear",
+        "below with a caveat.",
+        "",
+        "Anatomy in one line: a small tracked mono **label** over a stack of display",
+        "**values**, with any `glyph`/`kind` demoted to a corner annotation that",
+        "reserves no column. The hero register restacks the same two slots as an",
+        "identity row over a centred display block.",
+        "",
+        "Every render here is **adaptive** (`inlay`: bare ground + adaptive palette),",
+        "so it follows your system theme. That matters for this anatomy specifically:",
+        "the partition's neutral half strokes `--dna-ink-primary`, and the wires ride",
+        "the HOST ground rather than a card — a theme-blind bake would put near-black",
+        "wires on a dark README. The surface-invariance section at the bottom bakes",
+        "each face on purpose, so you can see both.",
+        "",
+        "## The specimen, recreated",
+        "",
+        "The hand prototype's OWN content composed by the engine, beside the hand",
+        "file. The porcelain board cannot show this pair: its `hub-bilateral` entry",
+        "carries the shipped delegation story instead (one preset, content recorded as",
+        "a documented amendment, every geometry law still graded live), so the",
+        "recreation of the prototype itself belongs here.",
+        "",
+        "| engine | hand specimen |",
+        "| --- | --- |",
+        f"| ![engine](card-label/specimen-recreation.svg) | ![specimen](../../{_CL_SPECIMEN_SRC}) |",
+        "",
+    ]
+    # Integrity: the "shipped composition" entry must BE the preset, not a
+    # look-alike. This is the check whose absence let the caption say
+    # hub-bilateral over a hand-built fanout render.
+    shipped = _CL_SHIPPED[0][2]
+    live = resolve_bundled_spec("diagram", _CL_PRESET).value
+    if shipped.get("topology") != live.get("topology") or shipped.get("nodes") != live.get("nodes"):
+        raise SystemExit(
+            f"card-label gallery: the shipped entry is not {_CL_PRESET} "
+            f"(entry topology={shipped.get('topology')!r} vs preset {live.get('topology')!r})"
+        )
+
+    # The specimen recreation renders on the specimen's OWN porcelain light —
+    # it is a comparison against a fixed-light hand file, so an adaptive twin
+    # would be comparing two different grounds.
+    render("specimen-recreation", _CL_SPECIMEN, face="light")
+    n += 1
+
+    for heading, intro, entries in sections:
+        lines += [f"## {heading}", "", intro, ""]
+        for slug, claim, spec in entries:
+            render(slug, spec)
+            n += 1
+            lines += [f"#### {claim}", "", f"![{slug}](card-label/{slug}.svg)", ""]
+
+    lines += [
+        "## Surface invariance",
+        "",
+        "The same composition on four faces. Geometry is solved before chroma, so a",
+        "face swap repaints and never moves a coordinate — including the partition's",
+        "INK tone, which re-inks from `--dna-ink-primary` with everything else",
+        "(`#1E293B` on porcelain, `#D4D4D4` on noir). Pinned by",
+        "`test_geometry_is_face_invariant`.",
+        "",
+    ]
+    for variant in _CL_FACES:
+        face = "dark" if variant in ("noir", "carbon") else "light"
+        slug = f"face-{variant}"
+        render(slug, _CL_SHIPPED[0][2], variant=variant, face=face)
+        n += 1
+        lines += [f"#### {variant} · {face} face", "", f"![{slug}](card-label/{slug}.svg)", ""]
+
+    readme = "\n".join(lines) + "\n"
+    readme_path = OUT / "README_CARD_LABEL.md"
+    readme_path.write_text(readme)
+
+    # Generated-output integrity: this directory is cleared at the start, so
+    # actual files are the new census.  Every one must be referenced by the
+    # README and every README-local image must exist.  This prevents a stale
+    # cell or an incorrect "five renders" claim from surviving a partial edit.
+    actual = {p.name for p in _CL_RENDERS.glob("*.svg")}
+    linked = set(re.findall(r"card-label/([a-z0-9-]+\.svg)", readme))
+    missing = linked - actual
+    orphaned = actual - linked
+    if len(actual) != n or missing or orphaned:
+        raise SystemExit(
+            "card-label output census failed: "
+            f"rendered={len(actual)} expected={n} missing={sorted(missing)} orphaned={sorted(orphaned)}"
+        )
+    print(f"README_CARD_LABEL.md + {n} card+label renders")
+
+
 VARIANTS = ("noir", "carbon", "space", "anvil", "porcelain", "cream", "dusk", "petrol")
 DIAGRAMS = (
-    ("hub", "The verb algebra — axial cross"),
-    ("model-router", "Route one call to the best model — fanout"),
+    ("hub-zones", "The verb algebra — axial cross"),
+    ("fanout-horizontal", "Route one call to the best model — fanout"),
 )
 SURFACES = (
     ("inlay", dict(ground="bare", palette="fixed", surface_face="light")),
@@ -2620,6 +3858,10 @@ DIRS = [
     _REPO / "outputs" / "diagrams" / "topologies",
     _REPO / "outputs" / "diagrams" / "porcelain",
     _REPO / "outputs" / "diagrams" / "primer-language",
+    # The card+label gallery sweeps under the SAME specimen laws as every other
+    # render dir: an edge case that broke text-in-card or no-ellipsis must fail
+    # the build, not ship as a documented curiosity.
+    _REPO / "outputs" / "diagrams" / "card-label",
 ]
 
 
@@ -2676,6 +3918,20 @@ def _rendered_voices(svg: str) -> dict[str, MatrixVoice]:
     return out
 
 
+def _text_ink(raw: str) -> str:
+    """Serialized SVG text with its XML entities decoded — the sweep measures
+    the GLYPHS the artifact paints, not the escape sequences it serializes
+    ("artifact → artifact&apos;" is 20 glyphs, not 25; the entity added five
+    phantom advances and a 23px phantom card-gutter bleed)."""
+    return (
+        raw.replace("&apos;", "'")
+        .replace("&quot;", '"')
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&amp;", "&")
+    )
+
+
 def sweep(path: pathlib.Path) -> list[str]:
     svg = path.read_text()
     body = svg[svg.rfind("</style>") :]
@@ -2709,6 +3965,27 @@ def sweep(path: pathlib.Path) -> list[str]:
     for m in re.finditer(r'<circle cx="([\d.-]+)" cy="([\d.-]+)" r="([\d.]+)"[^>]*-(circlebg|herocirclebg)"', body):
         ccx_, ccy_, cr_ = (float(v) for v in m.groups()[:3])
         node_figs.append(("circle", ccx_, ccy_, cr_, cr_, m.group(4) == "herocirclebg"))
+
+    # 1b. crown dominance (card+label compositions only): the hero's box
+    # stays inside the specimen's proportion band of the standard cards'
+    # median — the system-wide balance law the review board demanded
+    # (measured 3.2-4.0 on the compass/axial hubs before the register
+    # bounded itself). Legacy-card presets grade against their own hand
+    # specimens instead (convergence-arrivals' cited 2.85 is its file's own).
+    if "card+label" in svg:
+        hero_rects = [(fw, fh) for kind, _fx, _fy, fw, fh, hero in node_figs if hero and kind == "rect"]
+        std_rects = [(fw, fh) for kind, _fx, _fy, fw, fh, hero in node_figs if not hero and kind == "rect"]
+        if hero_rects and len(std_rects) >= 2:
+            hw_, hh_ = max(hero_rects, key=lambda b: b[0] * b[1])
+            ws_ = sorted(w for w, _ in std_rects)
+            hs_ = sorted(h for _, h in std_rects)
+            med_ = ws_[len(ws_) // 2] * hs_[len(hs_) // 2]
+            ratio_ = (hw_ * hh_) / med_ if med_ else 0.0
+            if ratio_ > CROWN_DOMINANCE_MAX:
+                fails.append(
+                    f"crown-dominance: hero {hw_:g}x{hh_:g} is {ratio_:.2f}x the standard median box"
+                    f" (band <= {CROWN_DOMINANCE_MAX:g})"
+                )
 
     def _fig_contains(fig: tuple[str, float, float, float, float, bool], px: float, py: float) -> bool:
         kind, fx, fy, fw, fh, _hero = fig
@@ -2750,7 +4027,7 @@ def sweep(path: pathlib.Path) -> list[str]:
             fails.append(f"chip-on-wire: edge chip at ({cx:.0f},{cy:.0f}) is {d:.0f}px from any wire")
     # 2/3/4. text runs
     for m in re.finditer(r'<text x="([\d.-]+)" y="([\d.-]+)"([^>]*)>([^<]+)</text>', body):
-        x, y, attrs, txt = float(m.group(1)), float(m.group(2)), m.group(3), m.group(4)
+        x, y, attrs, txt = float(m.group(1)), float(m.group(2)), m.group(3), _text_ink(m.group(4))
         if "…" in txt:
             fails.append(f"no-ellipsis: {txt!r}")
         cls_pre = re.search(r'-([a-z]+)"', attrs)
@@ -2781,7 +4058,7 @@ def sweep(path: pathlib.Path) -> list[str]:
                 # sits beneath it, still far above LUT noise). A circle
                 # figure's budget is its chord width at the text's own y,
                 # not the full diameter.
-                gutter = 8.0 if cls in ("name", "hname", "mname", "dname") else 3.0
+                gutter = 8.0 if cls in _CARD_NAME_CLASSES else 3.0
                 right = _fig_right_edge_at_y(fig, y)
                 if right is not None and tleft + tw > right - gutter + 1.0:
                     fails.append(
@@ -3026,7 +4303,7 @@ def sweep(path: pathlib.Path) -> list[str]:
     # 8. hero-fill: a hero card's box should read as ink, not dead air (the
     # own-ink sizing law — a hero floors at an explicit chassis citation or
     # measured dominance, never an uncited paradigm archetype). Measured
-    # band across the FULL v04/alpha/v04a6/diagrams-v3/**/*.svg (recursive —
+    # band across the FULL v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/**/*.svg (recursive —
     # dag-seq-tree/, primer-diagrams-v2/, primer-diagrams-v3/, primer-twins/)
     # + diagrams-v4/*.svg population (59 hand rect heroes, ink-only, no pad
     # allowance, same method both sides): fill_w 27.0%-82.0%, fill_h
@@ -3091,7 +4368,7 @@ def sweep(path: pathlib.Path) -> list[str]:
         tops: list[float] = []
         bottoms: list[float] = []
         for m in re.finditer(r'<text x="([\d.-]+)" y="([\d.-]+)"([^>]*)>([^<]+)</text>', body):
-            tx, ty, attrs, txt = float(m.group(1)), float(m.group(2)), m.group(3), m.group(4)
+            tx, ty, attrs, txt = float(m.group(1)), float(m.group(2)), m.group(3), _text_ink(m.group(4))
             if not (fx - 2 <= tx <= fx + fw + 2 and fy - 2 <= ty <= fy + fh + 2):
                 continue
             cls_m = re.search(r'-([a-z]+)"', attrs)
@@ -3217,7 +4494,7 @@ def sweep(path: pathlib.Path) -> list[str]:
     _CHROME_CLASSES = {"zoneh", "zoneha", "cap", "key"}
     chrome_boxes: list[tuple[str, float, float, float, float]] = []  # (cls, left, top, right, bottom)
     for m in re.finditer(r'<text x="([\d.-]+)" y="([\d.-]+)"([^>]*)>([^<]+)</text>', body):
-        x, y, attrs, txt = float(m.group(1)), float(m.group(2)), m.group(3), m.group(4)
+        x, y, attrs, txt = float(m.group(1)), float(m.group(2)), m.group(3), _text_ink(m.group(4))
         cls_m = re.search(r'-([a-z]+)"', attrs)
         cls = cls_m.group(1) if cls_m else ""
         if cls not in _CHROME_CLASSES:
@@ -3239,17 +4516,20 @@ def sweep(path: pathlib.Path) -> list[str]:
         for cbox in cap_boxes:
             if zbox[2] > cbox[2]:
                 fails.append(f"chrome-order: zone header top {zbox[2]:.0f} sits below the caption top {cbox[2]:.0f}")
-    # 11. beam-tempo: no staged beam window may exceed _BEAM_RELAY_SPAN_CAP
-    # of the shared clock. Both hand specimens (parity-beam's branch family,
-    # frontier-handoff's relay-n=3) converge on a ~.26-.30 per-stage window
-    # regardless of stage count — velocity varies with edge length, never
-    # with window duration. `beam_windows`' by-count division only
-    # reproduces that band at n=3 (its citation); the cap is what stops a
-    # smaller grouping (a flush single-group fan, a bilateral or 2-rank-DAG
-    # split) from dividing the WHOLE clock into one crawling window instead
-    # — this is the sweep-wide net law_beam's fixture-gated check can't
-    # cast, since compose-gate/rollout-beam-split/settlement-relay/
-    # artifact-fanout-beam carry no hand-authored citation to diff against.
+    # 11. beam-tempo in its OWN domain — wall-clock seconds. Every citing
+    # hand file converges on a ~1.5s stage regardless of stage count or
+    # clock: parity-beam's branch .30 and frontier-handoff's n=3 .26 on the
+    # 5.236s clock (1.57s / 1.36s), the twin bilateral prototypes' .36 on
+    # their family's 4.236s clock (1.53s). The earlier fraction form judged
+    # every family by the reference clock and rejected the bilateral
+    # citation itself; span x clock keeps the identical intent — velocity
+    # varies with edge length, never with window duration — and still stops
+    # a smaller grouping (a flush single-group fan, a bilateral or
+    # 2-rank-DAG split) from dividing the WHOLE clock into one crawling
+    # window (a whole-clock n=2 division at 5.236s is a 2.2s stage). This is
+    # the sweep-wide net law_beam's fixture-gated check can't cast, since
+    # compose-gate/rollout-beam-split/settlement-relay/artifact-fanout-beam
+    # carry no hand-authored citation to diff against.
     for m in re.finditer(r"<animateTransform\b[^>]*/?>", svg):
         tag = m.group(0)
         if 'attributeName="gradientTransform"' not in tag:
@@ -3263,10 +4543,10 @@ def sweep(path: pathlib.Path) -> list[str]:
             continue
         t0, t1, dur_s = float(parts[1]), float(parts[2]), float(dur_m.group(1))
         span = round(t1 - t0, 4)
-        if span > _BEAM_RELAY_SPAN_CAP + 1e-6:
+        if span * dur_s > _BEAM_STAGE_SECONDS_CAP + 1e-6:
             fails.append(
                 f"beam-tempo: window {t0:g}-{t1:g} spans {span:g} of the {dur_s:g}s clock "
-                f"(law <= {_BEAM_RELAY_SPAN_CAP:g} — a {round(span * dur_s, 2):g}s window crawls)"
+                f"(law: span x clock <= {_BEAM_STAGE_SECONDS_CAP:g}s — this window runs {round(span * dur_s, 2):g}s)"
             )
     # 12. gather-run law: a convergence join trunk (the arrow-tipped
     # ``-branch`` straight segment ``knot_collapse`` floats off the member
@@ -3276,7 +4556,7 @@ def sweep(path: pathlib.Path) -> list[str]:
     # to card width, not to the run fan.py's own formula already reasons in,
     # so a future regression in THAT formula (or in the margin/width
     # defaults feeding its run) still fails this independent check.
-    if 'data-hw-topology="convergence"' in svg:
+    if 'data-hw-topology="fanin"' in svg:
         member_w = max((f[3] for f in node_figs if f[0] == "rect" and not f[5]), default=0.0)
         if member_w > 0:
             for m in re.finditer(r'<path[^>]* d="M ([\d.]+),([\d.]+) L ([\d.]+),([\d.]+)"[^>]*-branch[^>]*>', body):
@@ -3442,6 +4722,8 @@ def main() -> None:
         build_porcelain()
     if which in ("all", "primer-language"):
         build_primer_language()
+    if which in ("all", "card-label"):
+        build_card_label()
     violations = run_sweep()
     violations += len(_degradation_lint(DIRS))
     sys.exit(1 if violations else 0)

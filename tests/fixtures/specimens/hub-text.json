@@ -1,0 +1,82 @@
+{
+  "aspect": 1.429,
+  "caption_text": "the hub stays small; the work lives in the labels",
+  "caption_text_amended": "four hands, no cards \u2014 containers earn their existence",
+  "caption_text_amended_note": "The original caption moved WITH the delegation marquee to hub-bilateral (v042 rename ledger #9: title + gallery slot travel; this preset keeps the compass seating and the containerless-text anatomy). Two shipped presets sharing one sentence verbatim was the residue; this panel's re-cut line speaks its own doctrine \u2014 containers earn their existence. The hand file still validates its own words via the SELF law.",
+  "cards": {
+    "dims_superseded": "typographic satellites carry no card rects (containers earn their existence) \u2014 the engine's only rect is the hub hero; std dims are n/a",
+    "hero_h": 136.0,
+    "hero_w": 232.0
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 4,
+    "card_rx": 16.0,
+    "cards": 1,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 1,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 0,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 4,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "census_amendments": {
+    "glyph_marks": 1,
+    "note": "kit vocabulary: the engine adds a zone header and a workflow identity mark the hand panel predates (hp2-* classes carry neither) \u2014 the two counts that remain amended. (hero_cards/hero_rx amendments retired 2026-08-20: the census learned to count hub-named crowns, so the raw census now reads the hand file's own 232x136 rx16 crown directly.)",
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 504.0,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "hub_seats": [
+    {
+      "angle": -152.9,
+      "dist": 505.4,
+      "label": "researcher"
+    },
+    {
+      "angle": -42.6,
+      "dist": 339.7,
+      "label": "coder"
+    },
+    {
+      "angle": 38.4,
+      "dist": 318.9,
+      "label": "reviewer"
+    },
+    {
+      "angle": 156.3,
+      "dist": 491.6,
+      "label": "writer"
+    }
+  ],
+  "occupancy": 0.031,
+  "plate": {
+    "caption_pad": 58.0,
+    "caption_y": 782.0,
+    "content_bottom": 664.0,
+    "content_top": 178.0,
+    "zone_y": 84.0
+  },
+  "port_tolerance": 24.2,
+  "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v4/hub-panel-02-orchestrator.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1200.0,
+    840.0
+  ],
+  "width": 720.0
+}

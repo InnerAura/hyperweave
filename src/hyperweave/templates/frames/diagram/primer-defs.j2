@@ -99,7 +99,7 @@
   <feGaussianBlur stdDeviation="{{ diagram_style.beam_glow_blur }}"/>
 </filter>
 {% endif %}
-{% for gp in diagram_layout.gathers %}{% if gp.clip_shape %}{# Gather-ring occlusion (refined-fanout: v04/alpha/v04a6/primer-diagrams/
+{% for gp in diagram_layout.gathers %}{% if gp.clip_shape %}{# Gather-ring occlusion (refined-fanout: v04/specimens/artifacts/diagrams/diagrams-v04a6/primer-diagrams/
    primer-fanout-refined.html — bezel at the mouth, the node occludes the
    inward half): clip the ring+core to the OUTSIDE of the seat's own node
    boundary. SVG clipPath UNIONS sibling child shapes — it never subtracts —
@@ -116,6 +116,20 @@
 /* Chassis paints by role — the genome expresses through --dna-*; the flow
    palette below is the communication layer (per-variant genome data). */
 .{{ uid }}-title, .{{ uid }}-name, .{{ uid }}-hname, .{{ uid }}-op, .{{ uid }}-short, .{{ uid }}-hubshort { fill: var(--dna-ink-primary); }
+{# card+label anatomy. Label AND values share the ink tone (specimen .psw-eyi /
+   .psw-val are both var(--hw-ink)): the hierarchy is scale and tracking, not
+   tone — a muted kicker would break the specimen's flat, even ink. The LABEL is
+   the hue-carrying slot: on the accent side of a declared partition it takes
+   the flow hue through the -flp class the placement adds (.psw-eya), exactly
+   as the right-hand zone header does. Values stay ink on BOTH sides. #}
+.{{ uid }}-nlbl, .{{ uid }}-nval, .{{ uid }}-hval { fill: var(--dna-ink-primary); }
+.{{ uid }}-hlbl { fill: var(--dna-signal-text, var(--dna-signal)); }
+{# Role treatment is a modifier, not another voice: card+label keeps its
+   measured nlbl/nval metrics while muted ink recedes.  A partition-accented
+   label still takes its structural flow hue from the later -flp rule; opacity
+   remains, so group identity and MUTED semantics compose instead of one
+   silently erasing the other. #}
+.{{ uid }}-nmuted { fill: var(--dna-ink-muted); opacity: .78; }
 .{{ uid }}-sub, .{{ uid }}-ndesc, .{{ uid }}-mdesc, .{{ uid }}-mname, .{{ uid }}-clbl, .{{ uid }}-elbl, .{{ uid }}-msg, .{{ uid }}-key, .{{ uid }}-tag, .{{ uid }}-cap { fill: var(--dna-ink-muted); }
 /* LAW 2: annotation chrome text rides the SAME ink roles as frame content —
    a voice class with no fill rule inherits SVG black (invisible on dark
@@ -232,6 +246,13 @@
 .{{ uid }}-flp{{ i }} { fill: {{ diagram_flow[i] }}; }
 {% endfor %}.{{ uid }}-fls { stroke: var(--dna-signal); }
 .{{ uid }}-flps { fill: var(--dna-signal); }
+{# Partition-pair chromatics: the NEUTRAL half of a declared binary partition
+   strokes ink where the accent half takes the flow hue — the same ink/signal
+   pair the two zone headers compile, extended from the headers to the members'
+   own wires. Rides var(--dna-ink-primary), so the adaptive dark face re-inks it
+   with everything else (no far-face fork needed). #}
+.{{ uid }}-flink { stroke: var(--dna-ink-primary); }
+.{{ uid }}-flinkf { fill: var(--dna-ink-primary); }
 {# Adaptive far face: diagram_flow is a per-index communication palette DERIVED
    from the accent (compose/diagram/palette.py) — an element carrying an
    explicit accent index (a chip/annotation/node-label riding the spine hue)
@@ -271,10 +292,16 @@
 .{{ uid }}-connmutedf { fill: var(--dna-diagram-conn-muted); }
 #{{ uid }} { --dna-diagram-conn-muted:{{ conn_base }}; }
 @media (prefers-color-scheme: dark) { #{{ uid }} { --dna-diagram-conn-muted:{{ conn_dark }}; } }
-{% endif %}{% endif %}{% set ns = namespace(march=false, retdrift=false) %}
+{% endif %}{% endif %}{% set ns = namespace(march=false, retdrift=false, ringflow=false) %}
 {% for c in diagram_layout.connectors %}{% if c.track == 'dash-march' and not c.inert %}{% set ns.march = true %}.{{ uid }}-m{{ loop.index0 }} { stroke-dasharray: {{ c.march_dash or diagram_style.dash }};{% if diagram_style.march_opacity != 1.0 %} opacity: {{ diagram_style.march_opacity }};{% endif %} will-change: stroke-dashoffset; animation: {{ uid }}-f {{ diagram_style.ants_dur_bypass if c.relation == 'bypass' else diagram_style.ants_dur }} linear infinite;{% if c.ant_delay %} animation-delay: {{ c.ant_delay }};{% endif %} }
-{% endif %}{% if c.track == 'dash-drift' %}{% set ns.retdrift = true %}{% endif %}{% endfor %}
+{% endif %}{% if c.track == 'dash-drift' %}{% set ns.retdrift = true %}{% endif %}{% if c.track == 'ring-drift' and not c.inert %}{% set ns.ringflow = true %}{% endif %}{% endfor %}
 {% if ns.march %}@keyframes {{ uid }}-f { to { stroke-dashoffset: {{ diagram_style.ants_offset_to }}; } }
+{% endif %}
+{# The collapsed flow ring's own register (flow-specimen ring recipe): the
+   accent perimeter drifts a full pixel per frame on a seamless 10-period
+   loop. Rides -branch, so the reduced-motion guard below stills it. #}
+{% if ns.ringflow %}.{{ uid }}-ringflow { stroke: var(--dna-signal); stroke-width: {{ diagram_style.ring_stroke_width }}; stroke-dasharray: {{ diagram_style.ring_dash }}; will-change: stroke-dashoffset; animation: {{ uid }}-ringf {{ diagram_style.ring_dur }} linear infinite; }
+@keyframes {{ uid }}-ringf { to { stroke-dashoffset: {{ diagram_style.ring_offset_to }}; } }
 {% endif %}
 {# Sequence RETURN messages (auth-sequence): a P3 override — the return dash
    DRIFTS home on one shared clock (every return in a trace is in phase; no
@@ -331,7 +358,10 @@
 {% if surface_ground != 'bare' %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { filter: url(#{{ uid }}-seat); }
 {% else %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { filter: url(#{{ uid }}-liftg); }
 {% endif %}
-.{{ uid }}-hname { fill: {{ diagram_dark.ink_hero }}; }
+{# The crown's display stack rides the hero-name ink on both faces: it IS the
+   crown's name in the card+label register, and the specimen differentiates it
+   the same way (.psw-display on --hw-ink-hero over .psw-val on --hw-ink). #}
+.{{ uid }}-hname, .{{ uid }}-hval { fill: {{ diagram_dark.ink_hero }}; }
 .{{ uid }}-chipbg { fill: {{ diagram_dark.chip }}; stroke: {{ diagram_dark.edge_faint }}; }
 {% if conn_muted %}.{{ uid }}-connmuted { stroke: {{ diagram_dark.conn }}; }
 .{{ uid }}-connmutedf { fill: {{ diagram_dark.conn }}; }

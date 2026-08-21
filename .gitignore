@@ -24,24 +24,21 @@ node_modules/
 htmlcov/
 
 # inneraura/hyperweave
-archive/
+.archive/
+.agents/
 .claude/
 # CLAUDE.md
-outputs/
 
-tier2/
-tier2/_experiments/
-tier2/_notes/
-
-assets/banners/hyperweave-banner-chirp-caps.svg
-assets/banners/hyperweave-banner-clean.svg
-assets/cards/butterfly-mcp.svg
-assets/cards/card-moon.svg
-assets/cards/cards-2x2-v2.svg
-assets/cards/cards-2x2-v3.svg
-assets/cards/cards-2x2.svg
-assets/cards/halftone-card-triangle.svg
+assets/banners/banners-animated/
+assets/cards/halftone/
 assets/demos/
+assets/marquees/
+assets/rapid-match-cuts/
+
+apps/
+docs/
+examples/
+outputs/
 
 scripts/analyze_audio.py
 scripts/generate_demo_charts.py

@@ -13,6 +13,11 @@ from hyperweave.compose.diagram import (  # noqa: F401  (solver registration)
     radial,
     sequence,
 )
-from hyperweave.compose.diagram.solver import compute_diagram_layout, effective_render_cfg, registered_slugs
+from hyperweave.compose.diagram.solver import (
+    compute_diagram_layout,
+    effective_render_cfg,
+    registered_slugs,
+    render_chassis,
+)
 
-__all__ = ["compute_diagram_layout", "effective_render_cfg", "registered_slugs"]
+__all__ = ["compute_diagram_layout", "effective_render_cfg", "registered_slugs", "render_chassis"]

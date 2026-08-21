@@ -151,12 +151,11 @@ def _render_idiom_tier() -> str:
 
 
 _TOPOLOGY_GUIDE: dict[str, str] = {
-    "pipeline": "a linear chain of stages, left to right",
-    "fanout": "one source to many peers (horizontal | bilateral | upward | radial)",
-    "convergence": "many inputs merging into one target",
-    "flywheel": "a self-reinforcing cycle of phases",
-    "stack": "layers beneath one result (deps, tiers)",
-    "tree": "a root branching to leaves (radial at depth >= 2 = mindmap)",
+    "pipeline": "a linear chain of stages (horizontal rows | vertical = the operator stack)",
+    "fanout": "one source to many peers (horizontal | bilateral | upward | downward | radial)",
+    "fanin": "many inputs fanning into one mouth (the fan family, direction reversed)",
+    "cycle": "the loop family (orbit = phases around a hero axis | ring = equal stages, empty centre)",
+    "tree": "a root branching to leaves (radial at depth >= 2 = the mindmap form)",
     "comparison": "exactly two cards, before/after",
     "sequence": "lifelines exchanging ordered messages",
     "dag": "ranked causal/temporal strata with fan-out AND fan-in",
@@ -282,7 +281,7 @@ def _diagram_worked_example() -> dict[str, str]:
     array fields (matrix's example only replaces a scalar)."""
     return {
         "0_discover_preset": (
-            "hw_discover(what='example:diagram/gateway') → {field: 'diagram', value: <DiagramSpec>} — "
+            "hw_discover(what='example:diagram/pipeline-row') → {field: 'diagram', value: <DiagramSpec>} — "
             "a bundled preset, ready to compose or mutate"
         ),
         "1_compose": "hw_compose(type='diagram', genome='primer', diagram=value) → {envelope, url}",
@@ -515,7 +514,10 @@ def discover(what: str = "all") -> dict[str, Any]:
             "(radial requires depth >= 2 — the mindmap); everything else horizontal",
             "edge_motion": "dash | particle — the closed kit pair, compositor-only by construction "
             "(genome allowlist enforced)",
-            "node_styles": "card | glyph-circle | card+glyph — caller-chosen, never inferred",
+            "node_styles": "card | card+glyph | card+label | glyph-circle | text — caller-chosen, never "
+            "inferred. card+label inverts the default card: a small tracked label over a stack of display "
+            "values, any glyph/kind demoted to a corner mark that reserves no column; text drops the box "
+            "entirely (the type IS the node)",
             "roles": "default | hero | muted — hero gets the signal ring; muted is the comparison-left grammar",
             "hub": "focal node = slot 0. hub_policy: '' | compass | axial — explicit wins; compass when any "
             "member speaks compass vocabulary (zone/angle/anchor/distribution); AXIAL is the default for "

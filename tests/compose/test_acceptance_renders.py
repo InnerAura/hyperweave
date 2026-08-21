@@ -5,7 +5,7 @@ obi, and agent-lifecycle specimens (zone roles, perimeter long-haul, cyclic-dag
 promotion + self-loop — NOT their chrome). This suite composes each through the
 FULL engine (the path a caller hits: bundled spec → ComposeSpec → compose) and
 pins that the mechanism survives to the rendered artifact. The reviewable SVGs
-live in ``v04/alpha/v04a6/acceptance/`` (regenerate with ``ACCEPTANCE_WRITE=1``).
+live in ``v04/specimens/artifacts/diagrams/diagrams-v04a6/acceptance/`` (regenerate with ``ACCEPTANCE_WRITE=1``).
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ from hyperweave.compose.bundled_specs import resolve_bundled_spec
 from hyperweave.compose.engine import compose
 from hyperweave.core.models import ComposeSpec
 
-_ACCEPTANCE_DIR = Path(__file__).resolve().parents[2] / "v04" / "alpha" / "v04a6" / "acceptance"
-_SPECS = ("hub", "obi-engine", "agent-task-lifecycle")
+_ACCEPTANCE_DIR = Path(__file__).resolve().parents[2] / "v04" / "archive" / "v04a" / "v04a6" / "acceptance"
+_SPECS = ("hub-zones", "lanes", "sm-recursive")
 
 
 def _compose(name: str) -> object:
@@ -43,7 +43,7 @@ def test_hub_carries_the_focal_and_spokes() -> None:
     # nucleus + transform (edit/N) + the collapsed read chip-card + the
     # destination fan all render (layout structure pinned in
     # test_diagram_hub_lanes; here it's the rendered SVG).
-    svg = _compose("hub").svg  # type: ignore[attr-defined]
+    svg = _compose("hub-zones").svg  # type: ignore[attr-defined]
     assert "the artifact" in svg
     # transform north, the read family as chips, destinations east.
     for member in ("transform", "documents", "surfaces", "extract", "verify", "diff", "query"):
@@ -52,7 +52,7 @@ def test_hub_carries_the_focal_and_spokes() -> None:
 
 def test_lanes_bands_render() -> None:
     # The obi lanes: the five category band headers render (uppercased).
-    svg = _compose("obi-engine").svg  # type: ignore[attr-defined]
+    svg = _compose("lanes").svg  # type: ignore[attr-defined]
     for band in ("CALLERS", "REGISTRY", "TOOLS", "MODEL ROUTING", "PROVIDERS"):
         assert band in svg, band
 

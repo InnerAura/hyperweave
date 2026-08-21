@@ -20,7 +20,7 @@
 # contrast(near_token, near_ground), clamped up to per-role floors. Re-ground
 # is a calibrated lightness target with the hue held and chroma boosted toward
 # a cap. Constants below were solved against the two on-disk prototypes
-# (v04/alpha/v04a6/surface-modes/{cream,porcelain}-twin.svg).
+# (v04/specimens/artifacts/diagrams/diagrams-v04a6/surface-modes/{cream,porcelain}-twin.svg).
 
 # ── Classifier ───────────────────────────────────────────────────────────
 # A variant is accent-carrying (keeps its identity through a ground flip) when

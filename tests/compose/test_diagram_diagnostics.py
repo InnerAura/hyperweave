@@ -198,7 +198,7 @@ class TestRulesFire:
 
 
 class TestAdvisoryContract:
-    @pytest.mark.parametrize("name", ["cicd-gate", "convergence", "comparison", "obi-engine"])
+    @pytest.mark.parametrize("name", ["dag-gate", "fanin", "comparison", "lanes"])
     def test_clean_presets_report_nothing(self, name: str) -> None:
         from hyperweave.compose.diagram.input import resolve_diagram_preset
 

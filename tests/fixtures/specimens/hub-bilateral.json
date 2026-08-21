@@ -1,0 +1,69 @@
+{
+  "aspect": 1.419,
+  "caption_text": "M4 Pro \u00b7 four subsystems fan out from one die \u2014 the wings carry the partition",
+  "caption_text_amended": "the hub stays small; the work lives in the labels",
+  "caption_text_amended_note": "The specimen and the preset tell different stories over the same structure: the hand file is an M4 Pro system map, the shipped preset is the orchestrator-delegation panel this anatomy was built for. The specimen still validates itself at its own words via the SELF law.",
+  "cards": {
+    "hero_area_ratio": 2.34,
+    "hero_h": 184.0,
+    "hero_w": 220.0,
+    "std_h_med": 92.0,
+    "std_h_values": [
+      92.0,
+      92.0,
+      92.0,
+      114.0
+    ],
+    "std_w_med": 188.0,
+    "std_w_med_amended": 166.0,
+    "std_w_med_amended_note": "Snug per-card widths (owner ruling 2026-08-19): satellite width is content-carried, so the preset's delegation copy \u2014 itself the documented story amendment above \u2014 measures 138/162/170/198 (median 166) where the hand file's own copy measures 188/188/188/196. The hand file still grades its 188 via the SELF law; a render regressing to the superseded uniform ring width fails this amended target."
+  },
+  "census": {
+    "animated": false,
+    "arrow_terminals": 4,
+    "card_rx": 13.0,
+    "cards": 5,
+    "chips": 0,
+    "coins": 0,
+    "desc_lines": 5,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 4,
+    "hero_cards": 1,
+    "hero_rx": 16.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 4,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "census_amendments": {
+    "glyph_marks": 5
+  },
+  "census_amendments_note": "The specimen marks its four satellites only; the engine composition also gives its crown a kind glyph in the card+label hero register's identity row, so the render carries five marks. Anatomy difference, not a regression \u2014 every other census key matches the hand file exactly.",
+  "chip_stub_min": null,
+  "height": null,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 3
+  },
+  "occupancy": 0.589,
+  "plate": {
+    "caption_pad": 34.0,
+    "caption_y": 586.0,
+    "content_bottom": 520.0,
+    "content_top": 86.0,
+    "zone_y": 64.0
+  },
+  "port_tolerance": 11.5,
+  "source": "v04/v040/v042/diagram-prototypes/hub-expressions/hub-bilateral.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    880.0,
+    620.0
+  ],
+  "width": null
+}

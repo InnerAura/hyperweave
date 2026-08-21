@@ -163,39 +163,39 @@ def test_axial_nucleus_stays_card_regardless_of_style() -> None:
 # only non-rect anatomy is the state-machine pill (cicd-machine /
 # agent-task-lifecycle chassis default) and the kernel-bottleneck pill mesh.
 _EXPECTED_PRESET_SHAPES: dict[str, tuple[str, ...]] = {
-    "agent-task-lifecycle": ("rect",) * 6,  # glyph cards (agent-task-lifecycle), never pills
-    "artifact-roundtrip": ("rect",) * 4,
-    "auth-sequence": ("rect",) * 4,
-    "cicd-gate": ("rect",) * 6,
-    "cicd-machine": ("rect",) * 5,  # glyph cards (cicd-machine)
+    "sm-recursive": ("rect",) * 6,  # glyph cards (agent-task-lifecycle), never pills
+    "pipeline-roundtrip": ("rect",) * 4,
+    "sequence": ("rect",) * 4,
+    "dag-gate": ("rect",) * 6,
+    "sm-retry": ("rect",) * 5,  # glyph cards (cicd-machine)
     "comparison": ("rect",) * 2,
-    "convergence": ("rect",) * 5,
-    "convergence-arrivals": ("rect",) * 5,
-    "dep-audit": ("rect",) * 6,
-    "dep-audit-radial": ("rect",) * 10,
-    "flywheel-flow": ("rect",) * 5,
-    "flywheel-orbit": ("rect",) * 5,
-    "frontier-serving": ("rect",) * 7,
-    "gateway": ("rect",) * 3,
-    "hub": ("rect",) * 6,
-    "kernel-bottleneck": ("rect",) * 8,  # glyph cards (kernel-bottleneck)
-    "mindmap": ("rect",) * 13,
-    "model-gateway-tiers": ("rect",) * 7,
-    "model-router": ("rect",) * 7,
-    "obi-engine": ("rect",) * 13,
-    "observability-converge": ("rect",) * 6,
+    "fanin": ("rect",) * 5,
+    "fanin-knot": ("rect",) * 5,
+    "tree-health": ("rect",) * 6,
+    "tree-radial-health": ("rect",) * 10,
+    "cycle-flow": ("rect",) * 5,
+    "cycle-orbit": ("rect",) * 5,
+    "dag-providers": ("rect",) * 7,
+    "pipeline-row": ("rect",) * 3,
+    "hub-zones": ("rect",) * 6,
+    "dag-bottleneck": ("rect",) * 8,  # glyph cards (kernel-bottleneck)
+    "tree-radial": ("rect",) * 13,
+    "dag-tiers": ("rect",) * 7,
+    "fanout-horizontal": ("rect",) * 7,
+    "lanes": ("rect",) * 13,
+    "dag-join": ("rect",) * 6,
     # order-lifecycle overrides node_style: card+glyph (the specimen renders
     # cards with kind-glyphs + a chip row), so it is rect, not the pill chassis
     # default the other two state machines keep.
-    "order-lifecycle": ("rect",) * 4,  # entry is the initial pseudo-state, not a card
-    "agent-runtime": ("rect",) * 8,  # state-machine loop cards (the band region is chrome, not a node)
-    "gateway-balanced": ("rect",) * 7,  # gateway diamond cards (the MODEL POOL band is chrome, not a node)
-    "router-descent": ("rect",) * 7,
-    "verb-reads": ("rect",) * 7,
-    "rag-pipeline": ("rect",) * 5,
-    "reverse-etl": ("rect",) * 7,
+    "sm-terminal": ("rect",) * 4,  # entry is the initial pseudo-state, not a card
+    "sm-loop": ("rect",) * 8,  # state-machine loop cards (the band region is chrome, not a node)
+    "dag-balanced": ("rect",) * 7,  # gateway diamond cards (the MODEL POOL band is chrome, not a node)
+    "fanout-downward": ("rect",) * 7,
+    "hub-verbs": ("rect",) * 7,
+    "pipeline-head": ("rect",) * 5,
+    "fanout-bilateral": ("rect",) * 7,
     "scatter-gather": ("rect",) * 7,
-    "service-dependencies": ("rect",) * 8,
+    "dag-mesh": ("rect",) * 8,
     "stack": ("rect",) * 5,
     "tree": ("rect",) * 10,
 }

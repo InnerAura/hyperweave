@@ -3648,7 +3648,7 @@
   }
  },
  "slot_geometry": {
-  "source": "v04/alpha/v04a6/diagrams-v3/primer_diagram_language.html",
+  "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/primer_diagram_language.html",
   "fanout-hero": {
    "glyph_inset": [
     22.0,
@@ -3704,7 +3704,7 @@
    "text_lead": 57.0,
    "name_baseline": 26.9,
    "name_desc_gap": 19.0,
-   "source": "v04/alpha/v04a6/diagrams-v3/dag-seq-tree/pp-gateway-balanced.svg",
+   "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/dag-seq-tree/pp-gateway-balanced.svg",
    "box": [
     150.0,
     62.0
@@ -3719,7 +3719,7 @@
    "text_lead": 46.0,
    "name_baseline": 27.0,
    "name_desc_gap": 18.0,
-   "source": "v04/alpha/v04a6/diagrams-v3/pp-state-machine-alt2.svg",
+   "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/pp-state-machine-alt2.svg",
    "box": [
     120.0,
     62.0

@@ -44,22 +44,23 @@ class TestDerivedEdges:
         assert derive_edges(s) == ((0, 1), (0, 2), (0, 3))
 
     def test_convergence_meets_at_last(self) -> None:
-        s = DiagramSpec(topology="convergence", nodes=nodes("a", "b", "c", "out"))
+        s = DiagramSpec(topology="fanin", nodes=nodes("a", "b", "c", "out"))
         assert derive_edges(s) == ((0, 3), (1, 3), (2, 3))
 
     def test_flywheel_cycles_the_ring(self) -> None:
-        s = DiagramSpec(topology="flywheel", nodes=nodes("p1", "p2", "p3", "p4"))
+        s = DiagramSpec(topology="cycle", orientation="orbit", nodes=nodes("p1", "p2", "p3", "p4"))
         assert derive_edges(s) == ((0, 1), (1, 2), (2, 3), (3, 0))
 
     def test_flywheel_hero_is_axis_not_ring(self) -> None:
         s = DiagramSpec(
-            topology="flywheel",
+            topology="cycle",
+            orientation="orbit",
             nodes=nodes("p1", "p2", "axis", "p3", at={2: {"role": "hero"}}),
         )
         assert derive_edges(s) == ((0, 1), (1, 3), (3, 0))
 
     def test_stack_rises_bottom_to_top(self) -> None:
-        s = DiagramSpec(topology="stack", nodes=nodes("result", "frame", "genome"))
+        s = DiagramSpec(topology="pipeline", orientation="vertical", nodes=nodes("result", "frame", "genome"))
         assert derive_edges(s) == ((1, 0), (2, 1))
 
     def test_tree_stars_depth_one(self) -> None:
@@ -126,7 +127,7 @@ class TestStructuralValidators:
 
     @pytest.mark.parametrize(
         ("topology", "n", "slot"),
-        [("fanout", 4, 0), ("convergence", 4, 3), ("tree", 3, 0), ("stack", 3, 0), ("comparison", 2, 1)],
+        [("fanout", 4, 0), ("fanin", 4, 3), ("tree", 3, 0), ("comparison", 2, 1)],
     )
     def test_muted_forbidden_on_focal_slot(self, topology: str, n: int, slot: int) -> None:
         assert focal_slot(Topology(topology), n) == slot
@@ -134,7 +135,7 @@ class TestStructuralValidators:
         with pytest.raises(ValueError, match="cannot be muted"):
             DiagramSpec(topology=topology, nodes=nodes(*labels, at={slot: {"role": "muted"}}))
 
-    @pytest.mark.parametrize("topology", ["pipeline", "flywheel", "sequence", "dag", "state-machine"])
+    @pytest.mark.parametrize("topology", ["pipeline", "cycle", "sequence", "dag", "state-machine"])
     def test_no_structural_focal_slot(self, topology: str) -> None:
         assert focal_slot(Topology(topology), 4) is None
 

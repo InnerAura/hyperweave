@@ -52,7 +52,7 @@ def test_frontier_serving_cache_chip_clears_the_chevron() -> None:
     """frontier-serving's 'cache' chip (anthropic+openai -> kv-cache join)
     shows >=8px of visible wire on EACH side, and the chevron drawn at the
     trunk's arrowed mouth end never overlaps the pill."""
-    lay = _preset_layout("frontier-serving")
+    lay = _preset_layout("dag-providers")
     chip = next(a for a in lay.annotations if a.kind == "edge-chip" and any(t.text == "cache" for t in a.lines))
     sink = next(n for n in lay.nodes if n.node_id == "cache")
     mouth_x = sink.box.x
@@ -151,7 +151,7 @@ def test_agent_runtime_over_arc_still_clears_act() -> None:
     """The one production over-arc consumer (agent-runtime's re-plan) keeps
     clearing its intervening 'Act' card — the bisection fix only RAISES the
     peak when the fixed offset falls short, never lowers it."""
-    lay = _preset_layout("agent-runtime")
+    lay = _preset_layout("sm-loop")
     over = next(
         c
         for c in lay.connectors

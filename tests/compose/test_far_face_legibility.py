@@ -271,7 +271,7 @@ _CACHE: dict[str, _Rendered] = {}
 
 def _render(variant: str) -> _Rendered:
     if variant not in _CACHE:
-        bs = resolve_bundled_spec("diagram", "cicd-gate")
+        bs = resolve_bundled_spec("diagram", "dag-gate")
         spec = ComposeSpec(
             type="diagram", genome_id="primer", variant=variant, ground="opaque", palette="adaptive", diagram=bs.value
         )
@@ -459,7 +459,7 @@ def test_sweep_exercises_chip_tags_and_they_are_neutral() -> None:
 # document order. A gradient/multi-path full-color mark resolves to no concrete
 # hex (by design — team directive: true brand colors never remap) and is skipped.
 
-_GLYPH_PRESETS = ["frontier-serving", "flywheel-orbit"]
+_GLYPH_PRESETS = ["dag-providers", "cycle-orbit"]
 
 _GLYPH_GROUP_RE = re.compile(r'<g transform="translate\([^)]*\) scale\([^)]*\)"([^>]*)>')
 _GLYPH_ATTR_RE = re.compile(r'\b(fill|stroke)="([^"]*)"')

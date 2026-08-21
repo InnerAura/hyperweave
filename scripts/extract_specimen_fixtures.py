@@ -36,63 +36,75 @@ from tests.compose.parity.pieces import (  # noqa: E402
     plate_anchors,
     ring_arc_spans,
 )
-from tests.compose.parity.svgfacts import css_tokens, parse_svg  # noqa: E402
+from tests.compose.parity.svgfacts import Rect, css_tokens, parse_svg  # noqa: E402
 
 # The two authored source sets: the kit PROTOTYPES (one per topology
 # story) and the later REFERENCES (beam motion + the conformance faces).
-PROTOTYPES = REPO / "v04" / "alpha" / "v04a6" / "diagrams-v3"
-REFERENCES = REPO / "v04" / "alpha" / "v04a6" / "diagrams-v4"
+PROTOTYPES = REPO / "v04" / "specimens" / "artifacts" / "diagrams" / "diagrams-v04a6" / "diagrams-v3"
+REFERENCES = REPO / "v04" / "specimens" / "artifacts" / "diagrams" / "diagrams-v04a6" / "diagrams-v4"
+# The card+label generation: hand specimens authored for v0.4.2's anatomy work.
+ANATOMY = REPO / "v04" / "v040" / "v042" / "diagram-prototypes"
 OUT = REPO / "tests" / "fixtures" / "specimens"
 
 # Ground-truth set: one specimen per topology narrative, keyed by its clean
 # topology-story name. The value still points at the authored specimen file
 # under v04/ (which never ships) — that path is the honest provenance pointer.
 GEOMETRY_SPECIMENS: dict[str, Path] = {
-    "rag-pipeline": PROTOTYPES / "pp-pipeline.svg",
-    "hub": PROTOTYPES / "pp-verb-ontology.svg",
-    "axial": PROTOTYPES / "pp-axial.svg",
-    "artifact-roundtrip": PROTOTYPES / "pp-roundtrip.svg",
-    "reverse-etl": PROTOTYPES / "pp-integration.svg",
-    "convergence": PROTOTYPES / "pp-convergence.svg",
-    "convergence-arrivals": PROTOTYPES / "pp-convergence-flow.svg",
-    "flywheel-orbit": PROTOTYPES / "pp-flywheel-v2.svg",
-    "flywheel-flow": PROTOTYPES / "pp-flywheel-flow.svg",
+    "pipeline-head": PROTOTYPES / "pp-pipeline.svg",
+    "hub-zones": PROTOTYPES / "pp-verb-ontology.svg",
+    "hub-axial": PROTOTYPES / "pp-axial.svg",
+    "pipeline-roundtrip": PROTOTYPES / "pp-roundtrip.svg",
+    "fanout-bilateral": PROTOTYPES / "pp-integration.svg",
+    "fanin": PROTOTYPES / "pp-convergence.svg",
+    "fanin-knot": PROTOTYPES / "pp-convergence-flow.svg",
+    "cycle-orbit": PROTOTYPES / "pp-flywheel-v2.svg",
+    "cycle-flow": PROTOTYPES / "pp-flywheel-flow.svg",
     "stack": PROTOTYPES / "pp-stack-v2.svg",
     "comparison": PROTOTYPES / "pp-comparison-v2.svg",
-    "cicd-machine": PROTOTYPES / "pp-state-machine.svg",
-    "order-lifecycle": PROTOTYPES / "pp-state-machine-alt1.svg",
-    "agent-task-lifecycle": PROTOTYPES / "pp-state-machine-alt2.svg",
-    "obi-engine": PROTOTYPES / "pp-swimlanes.svg",
-    "model-router": PROTOTYPES / "pp-router-flow-v2.svg",
-    "router-descent": PROTOTYPES / "pp-router-down-v2.svg",
-    "gateway": PROTOTYPES / "pp-mcp-gateway-v4.svg",
-    "verb-reads": PROTOTYPES / "pp-radial.svg",
-    "cicd-gate": PROTOTYPES / "dag-seq-tree" / "pp-dag-cicd-v4.svg",
-    "observability-converge": PROTOTYPES / "dag-seq-tree" / "pp-dag-observability-v4.svg",
-    "frontier-serving": PROTOTYPES / "dag-seq-tree" / "pp-dag-serving-v2.svg",
+    "sm-retry": PROTOTYPES / "pp-state-machine.svg",
+    "sm-terminal": PROTOTYPES / "pp-state-machine-alt1.svg",
+    "sm-recursive": PROTOTYPES / "pp-state-machine-alt2.svg",
+    "lanes": PROTOTYPES / "pp-swimlanes.svg",
+    "fanout-horizontal": PROTOTYPES / "pp-router-flow-v2.svg",
+    "fanout-downward": PROTOTYPES / "pp-router-down-v2.svg",
+    "pipeline-row": PROTOTYPES / "pp-mcp-gateway-v4.svg",
+    "hub-verbs": PROTOTYPES / "pp-radial.svg",
+    "dag-gate": PROTOTYPES / "dag-seq-tree" / "pp-dag-cicd-v4.svg",
+    "dag-join": PROTOTYPES / "dag-seq-tree" / "pp-dag-observability-v4.svg",
+    "dag-providers": PROTOTYPES / "dag-seq-tree" / "pp-dag-serving-v2.svg",
     "scatter-gather": PROTOTYPES / "dag-seq-tree" / "pp-dag-scatter-v4.svg",
-    "kernel-bottleneck": PROTOTYPES / "dag-seq-tree" / "pp-dep-mesh-v2.svg",
-    "model-gateway-tiers": PROTOTYPES / "dag-seq-tree" / "pp-gateway-refined.svg",
-    "service-dependencies": PROTOTYPES / "dag-seq-tree" / "pp-service-deps.svg",
-    "service-dependencies-billing": PROTOTYPES / "dag-seq-tree" / "pp-service-deps-billing.svg",
-    "agent-runtime": PROTOTYPES / "dag-seq-tree" / "pp-agent-runtime.svg",
-    "auth-sequence": PROTOTYPES / "dag-seq-tree" / "pp-sequence.svg",
+    "dag-bottleneck": PROTOTYPES / "dag-seq-tree" / "pp-dep-mesh-v2.svg",
+    "dag-tiers": PROTOTYPES / "dag-seq-tree" / "pp-gateway-refined.svg",
+    "dag-mesh": PROTOTYPES / "dag-seq-tree" / "pp-service-deps.svg",
+    "dag-mesh-billing": PROTOTYPES / "dag-seq-tree" / "pp-service-deps-billing.svg",
+    "sm-loop": PROTOTYPES / "dag-seq-tree" / "pp-agent-runtime.svg",
+    "sequence": PROTOTYPES / "dag-seq-tree" / "pp-sequence.svg",
     "tree": PROTOTYPES / "dag-seq-tree" / "pp-tree.svg",
-    "dep-audit": PROTOTYPES / "dag-seq-tree" / "pp-tree-v2.svg",
-    "mindmap": PROTOTYPES / "dag-seq-tree" / "pp-tree-radial.svg",
-    "dep-audit-radial": PROTOTYPES / "dag-seq-tree" / "pp-tree-radial-v2.svg",
-    "gateway-balanced": PROTOTYPES / "dag-seq-tree" / "pp-gateway-balanced.svg",
+    "tree-health": PROTOTYPES / "dag-seq-tree" / "pp-tree-v2.svg",
+    "tree-radial": PROTOTYPES / "dag-seq-tree" / "pp-tree-radial.svg",
+    "tree-radial-health": PROTOTYPES / "dag-seq-tree" / "pp-tree-radial-v2.svg",
+    "dag-balanced": PROTOTYPES / "dag-seq-tree" / "pp-gateway-balanced.svg",
     # The reference set (one generation past the kit prototypes): beam
     # motion plus the conformance faces (circles, ring, hub relook,
     # typographic panel). Same fixture-name ≡ preset-name law; specimen
     # filename abbreviations live only in these source paths.
-    "frontier-handoff": REFERENCES / "diagram-frontier-handoff-pp-v2.svg",
-    "parity-beam": REFERENCES / "diagram-parity-beam-pp.svg",
-    "flywheel-circles": REFERENCES / "diagram-flywheel-circles-pp.svg",
-    "agent-loop-ring": REFERENCES / "diagram-agent-loop-ring-pp.svg",
-    "config-radial-circles": REFERENCES / "diagram-data-hub-circles-pp.svg",
-    "frame-engine-hub": REFERENCES / "diagram-frame-engine-hub-pp-v2.svg",
-    "hub-panel-orchestrator": REFERENCES / "hub-panel-02-orchestrator.svg",
+    "pipeline-circles": REFERENCES / "diagram-frontier-handoff-pp-v2.svg",
+    "fanout-beam": REFERENCES / "diagram-parity-beam-pp.svg",
+    "cycle-circles": REFERENCES / "diagram-flywheel-circles-pp.svg",
+    "cycle-ring": REFERENCES / "diagram-agent-loop-ring-pp.svg",
+    "fanout-radial": REFERENCES / "diagram-data-hub-circles-pp.svg",
+    "hub-tiles": REFERENCES / "diagram-frame-engine-hub-pp-v2.svg",
+    "hub-text": REFERENCES / "hub-panel-02-orchestrator.svg",
+    # The card+label anatomy's own witness — file, fixture and preset all
+    # carry the structural name (fixture ≡ preset law; the hand file's
+    # rename+reclassification is recorded in its own hw:lineage, per
+    # v04/decisions/hub-bilateral-family.md).
+    "hub-bilateral": ANATOMY / "hub-expressions" / "hub-bilateral.svg",
+    # The twin symmetric medallion bilaterals (owner-directed hand files):
+    # the constant-family-frame, pair-pitch, pair-port and bilateral beam
+    # citations all extract from this pair. Fixture ≡ preset, board 1:1.
+    "fanout-bilateral-pair": ANATOMY / "fanout-expressions" / "bilateral-symmetric-2x2.svg",
+    "fanout-bilateral-trio": ANATOMY / "fanout-expressions" / "bilateral-symmetric-3x3.svg",
 }
 
 TWIN_DIR = PROTOTYPES / "primer-diagrams-v3"
@@ -128,20 +140,38 @@ def extract_geometry(name: str, path: Path) -> dict[str, object]:
     _spec = (facts.payload or {}).get("spec") or {}
     _back = _spec.get("back_edge")
     cards = card_rects(facts)
-    heroes_rect = [r for r in cards if "hero" in r.cls]
-    std = [r for r in cards if "hero" not in r.cls]
+    hero_figs = hero_figures(facts)
+
+    def is_hero_rect(r: Rect) -> bool:
+        return any(
+            not h.is_circle
+            and abs(r.x - h.x) <= 0.1
+            and abs(r.y - h.y) <= 0.1
+            and abs(r.w - h.w) <= 0.1
+            and abs(r.h - h.h) <= 0.1
+            for h in hero_figs
+        )
+
+    heroes_rect = [r for r in cards if is_hero_rect(r)]
+    std = [r for r in cards if not is_hero_rect(r)]
     stats: dict[str, object] = {}
     if _back:
         stats["back_edge"] = _back
     if std:
         stats["std_w_med"] = round(_median([r.w for r in std]), 2)
         stats["std_h_med"] = round(_median([r.h for r in std]), 2)
+        heights = sorted(round(r.h, 2) for r in std)
+        # A median cannot distinguish one deliberately taller card from four
+        # uniform cards.  Record the distribution only when the hand file
+        # actually carries more than one height, keeping uniform fixtures
+        # compact while grading mixed card rhythm exactly.
+        if len(set(heights)) > 1:
+            stats["std_h_values"] = heights
     # hero_w/hero_h read every anatomy (hero_figures): a circle hero's box
     # is its bounding square, so its diameter lands in these same two keys.
     # hero_area_ratio stays rect-vs-rect only — a circle hero has no "std
     # card" to ratio against (its siblings are std CIRCLES, a different
     # census), so the ratio law is legitimately n/a there, not populated.
-    hero_figs = hero_figures(facts)
     if hero_figs:
         stats["hero_w"] = round(hero_figs[0].w, 2)
         stats["hero_h"] = round(hero_figs[0].h, 2)
@@ -254,14 +284,24 @@ def extract_geometry(name: str, path: Path) -> dict[str, object]:
     existing_path = OUT / f"{name}.json"
     if existing_path.exists():
         existing = json.loads(existing_path.read_text())
-        if "census_amendments" in existing:
-            result["census_amendments"] = existing["census_amendments"]
+        # The NOTE survives with its value: an amendment whose reasoning was
+        # dropped on the next regeneration is an unexplained exception, which
+        # is how a documented supersession decays into a silent one.
+        for key in ("census_amendments", "census_amendments_note"):
+            if key in existing:
+                result[key] = existing[key]
         if "plate_amendment" in existing:
             result["plate_amendment"] = existing["plate_amendment"]
         # caption/chip-band supersessions (the corrected serving topology):
         # same owner-triaged survival rule as census_amendments.
-        if "caption_text_amended" in existing:
-            result["caption_text_amended"] = existing["caption_text_amended"]
+        for key in (
+            "caption_text_amended",
+            "caption_text_amended_note",
+            "ring_arcs_amended",
+            "ring_arcs_amended_note",
+        ):
+            if key in existing:
+                result[key] = existing[key]
         prior_homes = existing.get("chip_homes") or {}
         if "wire_offset_max_amended" in prior_homes and isinstance(result.get("chip_homes"), dict):
             result["chip_homes"]["wire_offset_max_amended"] = prior_homes["wire_offset_max_amended"]  # type: ignore[index]
@@ -292,8 +332,20 @@ def extract_geometry(name: str, path: Path) -> dict[str, object]:
             if key in existing:
                 result[key] = existing[key]
         prior_cards = existing.get("cards") or {}
-        if "dims_superseded" in prior_cards and isinstance(result.get("cards"), dict):
-            result["cards"]["dims_superseded"] = prior_cards["dims_superseded"]  # type: ignore[index]
+        if isinstance(result.get("cards"), dict):
+            # dims_superseded plus the replace-mode dim amendments (the snug
+            # per-card width ruling): same owner-triaged survival rule.
+            for key in (
+                "dims_superseded",
+                "std_w_med_amended",
+                "std_w_med_amended_note",
+                "std_h_med_amended",
+                "std_h_med_amended_note",
+                "std_h_values_amended",
+                "std_h_values_amended_note",
+            ):
+                if key in prior_cards:
+                    result["cards"][key] = prior_cards[key]  # type: ignore[index]
     return result
 
 
@@ -318,7 +370,7 @@ def extract_twin(variant: str, path: Path) -> dict[str, object]:
 # fixture tests/compose/test_primer_diagram_language.py validates emitted CSS against
 # (v04/ never ships, so tests read the fixture, not the html).
 
-_LANGUAGE_HTML = Path("v04/alpha/v04a6/diagrams-v3/primer_diagram_language.html")
+_LANGUAGE_HTML = Path("v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/primer_diagram_language.html")
 
 
 def _classes(svg: str) -> dict[str, dict[str, str]]:
@@ -620,13 +672,25 @@ def extract_diagram_language() -> dict[str, object]:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     written = []
+    absent = []
     for name, path in sorted(GEOMETRY_SPECIMENS.items()):
+        if not path.exists():
+            # Hand specimens are not all present in every checkout (the
+            # authored trees live outside the package). Skip rather than
+            # abort, matching test_specimen_parity's own SELF-law skip — one
+            # missing specimen must never block re-extracting the others, and
+            # the committed fixture stays authoritative meanwhile.
+            absent.append(name)
+            continue
         fixture = extract_geometry(name, path)
         out = OUT / f"{name}.json"
         out.write_text(json.dumps(fixture, indent=2, sort_keys=True) + "\n")
         written.append(out.name)
     for variant in TWIN_VARIANTS:
         path = TWIN_DIR / f"verb-algebra-primer-{variant}.svg"
+        if not path.exists():
+            absent.append(f"twin-{variant}")
+            continue
         fixture = extract_twin(variant, path)
         out = OUT / f"twin-{variant}.json"
         # faces_superseded is an owner-triaged supersession record (standing
@@ -641,9 +705,18 @@ def main() -> None:
         out.write_text(json.dumps(fixture, indent=2, sort_keys=True) + "\n")
         written.append(out.name)
     print(f"wrote {len(written)} fixtures to {OUT.relative_to(REPO)}")
+    if absent:
+        # Never silent: a skipped specimen means its committed fixture did NOT
+        # refresh, which is exactly the thing a reader would otherwise assume.
+        print(f"skipped {len(absent)} (specimen absent from this checkout): {', '.join(absent)}")
 
 
 def _write_language_fixture() -> None:
+    if not _LANGUAGE_HTML.exists():
+        # Same law as the specimen skip above: absent sheet, committed fixture
+        # stands, and the run says so rather than implying a refresh.
+        print(f"skipped the language law ({_LANGUAGE_HTML} absent from this checkout)")
+        return
     out = Path("tests/fixtures/primer_diagram_language.json")
     out.write_text(json.dumps(extract_diagram_language(), indent=1) + "\n")
     print(f"{out}: diagram language law re-extracted")

@@ -30,9 +30,7 @@ ENGINE = load_diagram_config()
 # ``sizing.hero_width_floor``/``hero_height_floor``. Every other topology's
 # hero still floors through its own solver (graph.py, state-machine, hub),
 # which legitimately keeps the paradigm chassis width as a floor.
-_FAN_FAMILY_SLUGS = frozenset(
-    {"fanout-horizontal", "fanout-bilateral", "fanout-upward", "fanout-downward", "convergence"}
-)
+_FAN_FAMILY_SLUGS = frozenset({"fanout-horizontal", "fanout-bilateral", "fanout-upward", "fanout-downward", "fanin"})
 
 
 def solve(palette_len: int = 5, **kw: Any) -> DiagramLayout:
@@ -77,9 +75,13 @@ CASES: dict[str, dict[str, Any]] = {
     ),
     "fanout-upward": dict(topology="fanout", orientation="upward", nodes=labeled("hub", "a", "b", "c", "d", "e")),
     "fanout-radial": dict(topology="fanout", orientation="radial", nodes=labeled("hub", "a", "b", "c", "d", "e")),
-    "convergence": dict(topology="convergence", title="T", nodes=labeled("a", "b", "c", "d", "out")),
-    "flywheel": dict(topology="flywheel", title="T", nodes=labeled("p1", "p2", "p3", "p4", "axis", hero=4)),
-    "stack": dict(topology="stack", title="T", nodes=labeled("result", "f", "g", "d", "p")),
+    "fanin": dict(topology="fanin", title="T", nodes=labeled("a", "b", "c", "d", "out")),
+    "cycle-orbit": dict(
+        topology="cycle", orientation="orbit", title="T", nodes=labeled("p1", "p2", "p3", "p4", "axis", hero=4)
+    ),
+    "pipeline-vertical": dict(
+        topology="pipeline", orientation="vertical", title="T", nodes=labeled("result", "f", "g", "d", "p")
+    ),
     "tree": dict(topology="tree", title="T", nodes=labeled("root", "a", "b", "c")),
     "comparison": dict(topology="comparison", title="T", nodes=labeled("before", "after")),
     "sequence": dict(
@@ -178,21 +180,21 @@ class TestPipeline:
     def test_specimen_exact_x_positions(self) -> None:
         lay = solve(**CASES["pipeline"])
         # Bare pipeline stays label-row (rag-pipeline opts into portrait head): ink-derived unit, gap 120.
-        # Re-pinned (snug-width ruling 2026-07-14): stages solve to their
-        # own ink, so the row packs tighter.
-        assert [round(n.box.x, 4) for n in lay.nodes] == [40.0, 206.0, 380.05, 546.05]
+        # Re-pinned by the card sliver guard: the first wrapped stage widens,
+        # and the remaining stages advance from its corrected footprint.
+        assert [round(n.box.x, 4) for n in lay.nodes] == [40.0, 220.0, 410.5, 590.5]
         # height 169 (was 181): the pipeline hero-floor migration (JOB2) content-
         # solves an UNCITED hero pure — this CASE's bare desc-less "B" hero no
         # longer floats the shared row height at the paradigm's topology-default
         # hero.h (72); the plain siblings' own 60px chassis height now sets the
         # row's shared max instead, 12px shorter.
-        assert (lay.width, lay.height) == (632, 169)  # caption_bottom_pad 44; width re-pinned for the snug row
+        assert (lay.width, lay.height) == (690, 169)  # caption_bottom_pad 44; sliver-corrected row
         # Row centerline y 54 (was 60): rides the shared row height's
         # midpoint, which shifted up 6px (half of the 12px height re-pin above).
         assert [c.path_d for c in lay.connectors] == [
-            "M 86,54 L 206,54",
-            "M 260.1,54 L 380.1,54",
-            "M 426.1,54 L 546,54",
+            "M 100,54 L 220,54",
+            "M 290.5,54 L 410.5,54",
+            "M 470.5,54 L 590.5,54",
         ]
 
     def test_equal_gaps(self) -> None:
@@ -285,6 +287,204 @@ class TestFans:
         for centers in rows.values():
             assert abs(sum(centers) / len(centers) - lay.width / 2) < 0.5
 
+    def test_bilateral_air_is_the_cited_clearance(self) -> None:
+        """The hub-to-column air is a citation, never the frame's leftover:
+        the cell defaults to the bilateral-broadcast specimen's 114 (44-46deg
+        outer branches), and a preset citing its OWN specimen pins its own
+        (fanout-bilateral rides pp-integration's 213). Both sides equal —
+        the double-mirror law."""
+        lay = solve(**CASES["fanout-bilateral"])
+        hero = next(n for n in lay.nodes if n.role == "hero")
+        left = [n for n in lay.nodes if n.role != "hero" and n.box.x + n.box.w <= hero.box.x]
+        right = [n for n in lay.nodes if n.role != "hero" and n.box.x >= hero.box.x + hero.box.w]
+        la = hero.box.x - max(n.box.x + n.box.w for n in left)
+        ra = min(n.box.x for n in right) - (hero.box.x + hero.box.w)
+        assert la == pytest.approx(114.0, abs=0.5), f"left air {la}"
+        assert ra == pytest.approx(114.0, abs=0.5), f"right air {ra}"
+
+    def test_bilateral_medallions_hold_the_canon_center_ratio(self) -> None:
+        """A MEDALLION bilateral reads the alpha3 canon, not the card
+        citation: hub-to-satellite center distance = 10.0 x satellite_r
+        (Integration Hub v2 — coins need long wires). The card air (114)
+        squeezed the coins 112px inward and dumped the frame floor's
+        leftovers into outer voids."""
+        lay = solve(
+            topology="fanout",
+            orientation="bilateral",
+            node_style="glyph-circle",
+            nodes=[
+                {"id": "h", "label": "deploy", "role": "hero", "kind": "send"},
+                {"id": "a", "label": "us-east", "kind": "globe"},
+                {"id": "b", "label": "eu-west", "kind": "globe"},
+                {"id": "c", "label": "canary", "kind": "eye"},
+                {"id": "d", "label": "shadow", "kind": "layers"},
+            ],
+            edges=[{"source": "h", "target": t} for t in ("a", "b", "c", "d")],
+        )
+        hero = next(n for n in lay.nodes if n.node_id == "h")
+        hx = hero.box.x + hero.box.w / 2
+        sat_r = next(n for n in lay.nodes if n.node_id == "a").box.w / 2
+        for n in lay.nodes:
+            if n.node_id == "h":
+                continue
+            dist = abs(n.box.x + n.box.w / 2 - hx)
+            assert dist == pytest.approx(10.0 * sat_r, abs=1.0), f"{n.node_id} center distance {dist}"
+
+    def test_bilateral_mixed_direction_two_in_three_out(self) -> None:
+        """The broadcast specimen's 2/3 split, direction-mixed: the first two
+        declared satellites seat LEFT with their edges pointing INTO the hub,
+        the next three seat RIGHT pointing out — seating is declaration
+        order, direction is per-edge, and neither constrains the other."""
+        lay = solve(
+            topology="fanout",
+            orientation="bilateral",
+            nodes=[
+                {"id": "h", "label": "artifact", "desc": "one", "role": "hero"},
+                {"id": "in1", "label": "spec", "desc": "intent"},
+                {"id": "in2", "label": "data", "desc": "live"},
+                {"id": "out1", "label": "readme", "desc": "render"},
+                {"id": "out2", "label": "slack", "desc": "unfurl"},
+                {"id": "out3", "label": "pdf", "desc": "print"},
+            ],
+            edges=[
+                {"source": "in1", "target": "h", "marker": "arrow"},
+                {"source": "in2", "target": "h", "marker": "arrow"},
+                {"source": "h", "target": "out1", "marker": "arrow"},
+                {"source": "h", "target": "out2", "marker": "arrow"},
+                {"source": "h", "target": "out3", "marker": "arrow"},
+            ],
+        )
+        hero = next(n for n in lay.nodes if n.role == "hero")
+        hub_cx = hero.box.x + hero.box.w / 2
+        seat = {n.node_id: ("L" if n.box.x + n.box.w / 2 < hub_cx else "R") for n in lay.nodes if n.role != "hero"}
+        assert seat == {"in1": "L", "in2": "L", "out1": "R", "out2": "R", "out3": "R"}
+        # Direction is honest per edge: an in-edge's DRAWN path terminates at
+        # the hub (its last point nearer the hub center than its first); an
+        # out-edge's leaves it.
+        for c in lay.connectors:
+            nums = [float(v) for v in re.findall(r"-?\d+\.?\d*", c.path_d)]
+            launch_d = abs(nums[0] - hub_cx)
+            arrive_d = abs(nums[-2] - hub_cx)
+            if c.target_index == 0:
+                assert arrive_d < launch_d, f"in-edge {c.index} does not arrive at the hub"
+            else:
+                assert launch_d < arrive_d, f"out-edge {c.index} does not leave the hub"
+
+    def test_bilateral_hub_gather_converges_arrivals(self) -> None:
+        """``gather: true`` on the bilateral hub reuses the fan family's
+        join piece (``_gather_join`` → ``knot_collapse``), and a CHIPLESS
+        join renders FLUSH (the kit's own cargo rule): both inbound wires
+        run to ONE mouth on the hub's facing edge with their arrowheads
+        SUPPRESSED, and the single convergence bezel seats ON the face,
+        half-occluded by the card — the pp-gateway AND-join mark. No bare
+        arrowed trunk dangles (a trunk exists to carry its chip). The
+        outbound side keeps its spread fan offsets. Coincident endpoints
+        WITHOUT the collapse were the shipped defect — two tangent-rotated
+        arrowheads smearing at the mouth."""
+        case: dict[str, object] = dict(
+            topology="fanout",
+            orientation="bilateral",
+            nodes=[
+                {"id": "h", "label": "artifact", "desc": "one", "role": "hero", "gather": True},
+                {"id": "in1", "label": "spec", "desc": "intent"},
+                {"id": "in2", "label": "data", "desc": "live"},
+                {"id": "out1", "label": "readme", "desc": "render"},
+                {"id": "out2", "label": "slack", "desc": "unfurl"},
+                {"id": "out3", "label": "pdf", "desc": "print"},
+            ],
+            edges=[
+                {"source": "in1", "target": "h", "marker": "arrow"},
+                {"source": "in2", "target": "h", "marker": "arrow"},
+                {"source": "h", "target": "out1", "marker": "arrow"},
+                {"source": "h", "target": "out2", "marker": "arrow"},
+                {"source": "h", "target": "out3", "marker": "arrow"},
+            ],
+        )
+        lay = solve(**case)
+
+        def _end(c: object) -> tuple[float, float]:
+            nums = [float(v) for v in re.findall(r"-?\d+\.?\d*", c.path_d)]  # type: ignore[attr-defined]
+            return (round(nums[-2], 1), round(nums[-1], 1))
+
+        inbound = [c for c in lay.connectors if c.target_index == 0]
+        assert len(inbound) == 2, f"a flush join appends no trunk; found {len(inbound)} hub-bound connectors"
+        assert not any(c.marker_d for c in inbound), (
+            "flush-join arrivals suppress their arrowheads (ring marks the join)"
+        )
+        mouths = {_end(c) for c in inbound}
+        assert len(mouths) == 1, f"gathered arrivals must share one mouth: {sorted(mouths)}"
+        mouth = next(iter(mouths))
+        hero = lay.nodes[0]
+        assert abs(mouth[0] - hero.box.x) < 0.5, (
+            f"the mouth sits ON the hub's west face: mouth {mouth}, face x={hero.box.x}"
+        )
+        assert len(lay.gathers) == 1, f"one convergence bezel at the mouth, found {len(lay.gathers)}"
+        assert (round(lay.gathers[0].x, 1), round(lay.gathers[0].y, 1)) == mouth
+        departures = {
+            (
+                round(float(re.findall(r"-?\d+\.?\d*", c.path_d)[0]), 1),
+                round(float(re.findall(r"-?\d+\.?\d*", c.path_d)[1]), 1),
+            )
+            for c in lay.connectors
+            if c.target_index != 0
+        }
+        assert len(departures) == 3, f"outbound wires must keep their spread: {sorted(departures)}"
+
+    def test_upward_seats_one_echelon_when_it_fits(self) -> None:
+        """The balanced-reference law (fanout-upward-balanced.svg): dests
+        share ONE bottom-aligned row whenever the solved cards fit the frame
+        — the retired fixed row-cap wrapped four dests into a centered 1+3
+        pyramid whose top card sat in the hero's own column, and its wire
+        rose straight through the card beneath it."""
+        lay = solve(**CASES["fanout-upward"])
+        bottoms = {round(n.box.y + n.box.h, 1) for n in lay.nodes if n.index != 0}
+        assert len(bottoms) == 1, f"dest rows fragmented: bottoms {sorted(bottoms)}"
+
+    def test_upward_launch_ports_are_distinct_and_ordered(self) -> None:
+        """One pitched launch port per wire on the source's top rim, ordered
+        by dest x (the reference's 23.5px hub-point row). Coincident
+        dest-aligned roots were the phantom-gather defect: two wires sharing
+        a clamped root drew a knot ornament at the crown's mouth."""
+        lay = solve(**CASES["fanout-upward"])
+        hero = lay.nodes[0]
+        launches: list[tuple[float, float]] = []
+        for c in lay.connectors:
+            nums = [float(v) for v in re.findall(r"-?\d+\.?\d*", c.path_d)]
+            sx, tx = nums[0], nums[-2]
+            launches.append((sx, tx))
+        xs = [sx for sx, _ in launches]
+        assert len(set(round(x, 1) for x in xs)) == len(xs), f"coincident launch roots: {sorted(xs)}"
+        assert all(hero.box.x < x < hero.box.x + hero.box.w for x in xs)
+        by_launch = sorted(launches)
+        assert [t for _, t in by_launch] == sorted(t for _, t in by_launch), (
+            "launch order does not follow dest order — wires cross inside the fan"
+        )
+        # Ports render BARE (owner ruling 2026-08-20, pp-radial.svg's own
+        # grammar: the bezel is the convergence mark, never a port dress —
+        # plain wire roots carry no ornament). A bezel here would either be
+        # the retired phantom knot (coincident clamped roots) or a
+        # singleton point wrongly claiming convergence.
+        assert not lay.gathers, f"bare ports must carry no bezels; found {len(lay.gathers)}"
+
+    def test_upward_gather_converges_wires_to_one_knot(self) -> None:
+        """``gather: true`` on the source is the AUTHORED alternative to the
+        port bundle (fanout-upward-knot.svg): every wire leaves ONE mouth at
+        the crown's center and the shared point earns a single knot bezel —
+        the same ornament the prototype draws as its focal hub pin (r5 +
+        r2.5 core). Without the flag the port bundle stands (the test
+        above); the launch grammar is a per-spec choice, never hardcoded."""
+        case = CASES["fanout-upward"]
+        nodes = [dict(case["nodes"][0], gather=True), *case["nodes"][1:]]
+        lay = solve(**{**case, "nodes": nodes})
+        hero = lay.nodes[0]
+        cx = hero.box.x + hero.box.w / 2
+        for c in lay.connectors:
+            nums = [float(v) for v in re.findall(r"-?\d+\.?\d*", c.path_d)]
+            assert abs(nums[0] - cx) < 0.5, f"wire root off the shared mouth: {c.path_d}"
+        assert len(lay.connectors) == len(case["nodes"]) - 1
+        assert len(lay.gathers) == 1, f"expected one knot, found {len(lay.gathers)}"
+        assert abs(lay.gathers[0].x - cx) < 0.5
+
     def test_radial_uniform_center_radius(self) -> None:
         # R5: radial topologies place by ONE declared policy — uniform
         # CENTER-radius (perceived radius is to card centers, not edges).
@@ -319,7 +519,7 @@ class TestFans:
         assert deltas == {72.0}
 
     def test_convergence_single_meet_point(self) -> None:
-        lay = solve(**CASES["convergence"])
+        lay = solve(**CASES["fanin"])
         ends = {c.path_d.rsplit(" ", 1)[1] for c in lay.connectors}
         assert len(ends) == 1
 
@@ -382,8 +582,8 @@ class TestFans:
 
 class TestRing:
     def test_flywheel_arc_radius_and_boundary_trim(self) -> None:
-        lay = solve(**CASES["flywheel"])
-        arc_r = load_paradigms()["primer"].diagram.topologies["flywheel"].arc_r
+        lay = solve(**CASES["cycle-orbit"])
+        arc_r = load_paradigms()["primer"].diagram.topologies["cycle-orbit"].arc_r
         for c in lay.connectors:
             m = re.search(r"A ([\d.]+),", c.path_d)
             assert m and float(m.group(1)) == arc_r  # flywheel-orbit rim
@@ -395,7 +595,7 @@ class TestRing:
         assert len(set(spans)) == 1  # cardinal symmetry holds
 
     def test_flywheel_hero_is_axis(self) -> None:
-        lay = solve(**CASES["flywheel"])
+        lay = solve(**CASES["cycle-orbit"])
         axis = next(n for n in lay.nodes if n.role == "hero")
         # LAW 1: the CONTENT centers on the canvas; the hero centers the ring
         # horizontally exactly, and vertically up to the ring's asymmetric
@@ -409,9 +609,9 @@ class TestStackTreeComparison:
         # The operator SLOT is chassis geometry (ring + cross, stack);
         # its PRESENCE is preset data (G9): no mark, no rail; a declared
         # token rails every riser gap with a drawn ring+cross, never text.
-        lay = solve(**CASES["stack"])
+        lay = solve(**CASES["pipeline-vertical"])
         assert lay.operators == ()
-        lay = solve(**{**CASES["stack"], "operator": "\u00d7"})
+        lay = solve(**{**CASES["pipeline-vertical"], "operator": "\u00d7"})
         assert len(lay.operators) == 3  # L-1 between the 4 layers
         assert all(op.r > 0 and op.cross_d for op in lay.operators)
         assert {op.cx for op in lay.operators} == {450.0}  # riding the vertical spine
@@ -450,9 +650,9 @@ class TestStackTreeComparison:
 
     def test_comparison_fixed_canvas_and_single_connector(self) -> None:
         lay = solve(**CASES["comparison"])
-        # Edge-run law re-pin: the canvas derives from panels + the cited
-        # 220 run; the retired 1180 fixed frame is the scale reference only.
-        assert (lay.width, lay.height) == (588, 269)
+        # The no-sliver law widens the label-row panels; the cited run stays
+        # fixed and the canvas derives from the corrected footprints.
+        assert (lay.width, lay.height) == (740, 269)
         assert len(lay.connectors) == 1
         assert lay.connectors[0].accent_index == -1
         assert lay.nodes[0].role == "muted"
@@ -501,9 +701,7 @@ class TestStateMachineBackEdges:
 
     def test_returns_distinct_entries_and_no_cross(self) -> None:
         cfg = load_paradigms()["primer"].diagram
-        lay = compute_diagram_layout(
-            _normalized_preset("agent-task-lifecycle"), paradigm=cfg, engine=ENGINE, palette_len=5
-        )
+        lay = compute_diagram_layout(_normalized_preset("sm-recursive"), paradigm=cfg, engine=ENGINE, palette_len=5)
         boxes = [n.box for n in lay.nodes]
         by_target: dict[int, list[tuple[list[tuple[float, float]], float]]] = {}
         for c in lay.connectors:
@@ -532,7 +730,7 @@ class TestStateMachineBackEdges:
         stays STRICTLY above the loop row (the underside is the tool pool) and
         clears every card it crosses by G7."""
         cfg = load_paradigms()["primer"].diagram
-        lay = compute_diagram_layout(_normalized_preset("agent-runtime"), paradigm=cfg, engine=ENGINE, palette_len=5)
+        lay = compute_diagram_layout(_normalized_preset("sm-loop"), paradigm=cfg, engine=ENGINE, palette_len=5)
         boxes = [n.box for n in lay.nodes]
         # the over-arc = the cubic whose apex rises well above both endpoints
         over = None
@@ -732,7 +930,7 @@ class TestRegionBands:
         """gateway-balanced's MODEL POOL (no over-arc): a FILLED panel with a
         snug ~26px top strip, concentric (within 8px) with the middle tier so
         the census coalesces it as that tier's shell, not a separate card."""
-        band, boxes = self._band_and_boxes("gateway-balanced")
+        band, boxes = self._band_and_boxes("dag-balanced")
         assert band.ground == "panel", "pool band is a filled panel"
         top_pad = min(boxes[m].y for m in ("fast", "deep", "vision")) - band.box.y
         assert 20.0 <= top_pad <= 34.0, f"pool band top strip should be snug (~26px), got {top_pad:.1f}"
@@ -743,7 +941,7 @@ class TestRegionBands:
         """agent-runtime's AGENT RUNTIME (exit:top re-plan): reserves >=55px
         above the row for the over-bow, which lifts the panel off the row centre
         so it is NOT concentric with its middle member (censuses as its own card)."""
-        band, boxes = self._band_and_boxes("agent-runtime")
+        band, boxes = self._band_and_boxes("sm-loop")
         members = [boxes[m] for m in ("plan", "act", "observe")]
         top_pad = min(b.y for b in members) - band.box.y
         assert top_pad >= 55.0, f"control-loop band must reserve over-arc clearance, got {top_pad:.1f}"
@@ -872,7 +1070,7 @@ class TestTreeRadial:
 
         cfg = load_paradigms()["primer"].diagram
         registry = load_glyphs()
-        for preset in ("mindmap", "dep-audit-radial"):
+        for preset in ("tree-radial", "tree-radial-health"):
             spec = _normalized_preset(preset)
             lay = compute_diagram_layout(
                 spec,
@@ -997,8 +1195,8 @@ class TestAnchors:
         # BETWEEN phases, never plumbing into them).
         from hyperweave.compose.diagram.anchors import boundary_distance
 
-        lay = solve(**CASES["flywheel"])
-        ch = load_paradigms()["primer"].diagram.topologies["flywheel"]
+        lay = solve(**CASES["cycle-orbit"])
+        ch = load_paradigms()["primer"].diagram.topologies["cycle-orbit"]
         clear_px = math.radians(ch.arc_clear_deg) * ch.arc_r
         nodes_by_index = {n.index: n for n in lay.nodes}
         for c in lay.connectors:
@@ -1076,7 +1274,8 @@ class TestTextMetrics:
             spec = resolve_auto_roles(
                 DiagramSpec.model_validate(
                     {
-                        "topology": "flywheel",
+                        "topology": "cycle",
+                        "orientation": "orbit",
                         "node_style": "glyph-circle",
                         "nodes": [
                             {"id": "gen", "label": "Generate", "glyph": "github"},
@@ -1167,7 +1366,7 @@ class TestTextMetrics:
         its sibling/satellite cards); the paradigm archetype width is not a
         legal cap for it, since it never cited that archetype. An EXPLICIT
         citation is a hard pin — legal up to its declared value."""
-        from hyperweave.compose.diagram.chrome import DOT_MARK_W, voice_for
+        from hyperweave.compose.diagram.chrome import CARD_LABEL_PAD_X, DOT_MARK_W, voice_for
         from hyperweave.compose.diagram.input import diagram_preset_names
         from hyperweave.compose.diagram.solver import apply_spec_chassis
         from hyperweave.compose.matrix.cells import measure_voice
@@ -1281,6 +1480,23 @@ class TestTextMetrics:
                     # desc ink at the RAW paradigm voice; lanes overrides the
                     # desc voice via the chassis, so its extents are not
                     # comparable here anyway.)
+                    checked_aligned += 1
+                elif n.label.cls in ("nlbl", "hlbl"):
+                    # card+label anatomy: same content-anchor LAW (ink left,
+                    # slack right), its own measured anchor. The chassis
+                    # ``glyph_inset_x`` names a GLYPH COLUMN's inset, and this
+                    # anatomy has no glyph column — its mark is a corner
+                    # annotation — so the column seats at the specimen's own
+                    # CARD_LABEL_PAD_X (hub-bilateral.svg: card x=72, text
+                    # x=92). Asserted, never skipped: a card+label card that
+                    # drifted off its anchor must still fail here.
+                    if n.role != "hero":  # the crown centres its stack instead
+                        assert abs(left_pad - CARD_LABEL_PAD_X) <= 0.51, (
+                            preset,
+                            n.index,
+                            left_pad,
+                            CARD_LABEL_PAD_X,
+                        )
                     checked_aligned += 1
                 else:
                     # Content-anchor law: a plain aligned card seats its ink
@@ -1693,7 +1909,7 @@ class TestGroupUniformWidths:
 
     def test_convergence_arrivals_uniform(self) -> None:
         nodes = [*({"label": lb} for lb in self._VARIED), {"label": "SINK", "role": "hero"}]
-        widths = _member_widths(solve(topology="convergence", nodes=nodes))
+        widths = _member_widths(solve(topology="fanin", nodes=nodes))
         assert len(widths) == 1, sorted(widths)
 
     def test_shared_width_is_the_group_max(self) -> None:
@@ -1885,7 +2101,7 @@ def test_plain_edge_chips_ride_on_their_wire() -> None:
 
     cfg = load_paradigms()["primer"].diagram
     registry = load_glyphs()
-    for preset in ("service-dependencies", "gateway-balanced"):
+    for preset in ("dag-mesh", "dag-balanced"):
         spec = _normalized_preset(preset)
         lay = compute_diagram_layout(
             spec,
@@ -1908,3 +2124,25 @@ def test_plain_edge_chips_ride_on_their_wire() -> None:
                 continue
             cy = chip.box.y + chip.box.h / 2
             assert abs(cy - mid[1]) < 2.0, f"{preset}: chip {e.label!r} sits {cy - mid[1]:+.0f}px off its wire midpoint"
+
+
+def test_cycle_family_shares_one_ring_radius() -> None:
+    """Cycle-family radius canon: both cycle orientations ride ONE circle
+    (the ring cell pins cycle-orbit's cited rim), so the siblings display
+    the same radius on the page — the pair's whole size relationship. The
+    two hand sheets already agree on one displayed radius (270x0.685 ==
+    250x0.74 == 185); the engine keeps that parity at its uniform element
+    scale."""
+    paradigm = load_paradigms()["primer"].diagram
+    radii: dict[str, float] = {}
+    for preset in ("cycle-orbit", "cycle-ring"):
+        spec = _normalized_preset(preset)
+        lay = compute_diagram_layout(spec, paradigm=paradigm, engine=ENGINE, palette_len=len(spec.nodes))
+        rim = [n for n in lay.nodes if n.role != "hero"]
+        assert rim
+        centers = [(n.box.x + n.box.w / 2, n.box.y + n.box.h / 2) for n in rim]
+        cx = sum(x for x, _ in centers) / len(centers)
+        cy = sum(y for _, y in centers) / len(centers)
+        radii[preset] = sum(math.hypot(x - cx, y - cy) for x, y in centers) / len(centers)
+    assert radii["cycle-orbit"] == pytest.approx(250.0, abs=0.5), radii
+    assert radii["cycle-ring"] == pytest.approx(radii["cycle-orbit"], abs=0.5), radii

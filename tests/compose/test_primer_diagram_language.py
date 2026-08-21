@@ -61,7 +61,7 @@ _HERO_RING_AMENDMENT = {("hero", "stroke")}
 
 @pytest.fixture(scope="module")
 def emitted() -> tuple[dict[str, dict[str, str]], dict[str, str], str]:
-    spec = resolve_bundled_spec("diagram", "hub").value
+    spec = resolve_bundled_spec("diagram", "hub-zones").value
     svg = compose(
         ComposeSpec(
             type="diagram",
@@ -175,7 +175,7 @@ def test_march_timing_matches_law(emitted: tuple[dict, dict, str]) -> None:
 
 @pytest.fixture(scope="module")
 def emitted_dark() -> str:
-    spec = resolve_bundled_spec("diagram", "hub").value
+    spec = resolve_bundled_spec("diagram", "hub-zones").value
     return compose(
         ComposeSpec(
             type="diagram",
@@ -279,7 +279,9 @@ def test_dark_ink_family_matches_law(emitted_dark: str) -> None:
     v = _DARK["vars"]
     assert f"--dna-ink-primary: {v['--hw-ink'].strip()}" in emitted_dark
     assert f"--dna-signal: {v['--hw-accent'].strip()}" in emitted_dark
-    hname = re.findall(r"\.hw-[0-9a-f]+-hname \{ fill: ([^;}]+)", emitted_dark)
+    # The law is the FILL the hero name receives, not that it sits alone in its
+    # selector — card+label's crown stack (hval) re-declares with the same ink.
+    hname = re.findall(r"\.hw-[0-9a-f]+-hname[^{]*\{ fill: ([^;}]+)", emitted_dark)
     assert v["--hw-ink-hero"].strip() in [h.strip() for h in hname], hname
 
 
@@ -294,7 +296,7 @@ def test_dark_ink_family_matches_law(emitted_dark: str) -> None:
 # surface preset and substrate in that law, so a render path that silently
 # drops the material — the flat-README regression — fails here.
 
-_HUB_SPEC = resolve_bundled_spec("diagram", "hub").value
+_HUB_SPEC = resolve_bundled_spec("diagram", "hub-zones").value
 _UID_NORM = re.compile(r"hw-[0-9a-f]{8}")
 _DARK_WRAPPER = "@media (prefers-color-scheme: dark) {"
 

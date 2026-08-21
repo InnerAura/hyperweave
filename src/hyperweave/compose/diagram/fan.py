@@ -6,12 +6,14 @@ with the dest/input count; widths are the banner contract.
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Literal
 
-from hyperweave.compose.diagram.anchors import side_anchor
+from hyperweave.compose.diagram.anchors import port_row, side_anchor
 from hyperweave.compose.diagram.chrome import place_node, style_of
 from hyperweave.compose.diagram.motion import lane_endpoints
-from hyperweave.compose.diagram.paths import s_curve_h, s_curve_h_len, s_curve_v, s_curve_v_len
+from hyperweave.compose.diagram.paths import s_curve_h, s_curve_h_len
+from hyperweave.compose.diagram.route import square_arrival_path
 from hyperweave.compose.diagram.sizing import (
     CHIP_STUB_MIN,
     chip_run_min,
@@ -26,6 +28,23 @@ from hyperweave.core.diagram import NodeRole, NodeStyle
 if TYPE_CHECKING:
     from hyperweave.compose.diagram.records import DiagramLayout, NodePlacement
     from hyperweave.core.diagram import DiagramNode
+
+
+_MEDALLION_CENTER_RATIO = 10.0
+"""Bilateral MEDALLION canon (hw-diagram-alpha3-canon.html, "Integration Hub
+v2"): hub-to-satellite center distance = 10.0 x satellite_r (300 at the
+canon's r=30 satellites, r=44 hub). Coins need long wires — the card
+specimens' shorter air reads cramped between medallions."""
+
+MIN_EDGE_RATIO = 0.40
+"""A spoke must stay long enough to read as a CONNECTION, expressed against
+the card it connects to — an absolute floor would collapse again the moment a
+card grew. Cited from the hand specimen's own proportion (hub-bilateral: 188px
+cards, 86px wires, 0.46); 0.40 sits just under it, so the floor only ever
+rescues a collapsed span and never contests a composition the corpus already
+draws. Deliberately NOT a target ratio: the corpus spans 0.17 to 4.89 and most
+of that range is legitimate — a compass hub reads card-dominant, a horizontal
+fan reads edge-dominant because the span IS its subject."""
 
 
 def _member_widths(ctx: SolverContext, nodes: list[DiagramNode]) -> list[float]:
@@ -167,7 +186,11 @@ def _edge_anchor(p: NodePlacement, *, toward_right: bool, fan_dy: float = 0.0) -
 
 
 def _fan_offsets(k: int, step: float = 12.0) -> list[float]:
-    return [(i - (k - 1) / 2) * step for i in range(k)]
+    # The shared row mechanism (anchors.port_row) at this family's own
+    # citations: a PAIR of ports pitches ±8 (the twin bilateral prototypes'
+    # dual-port hub roots — a 16 pitch), three and up keep the 12 step,
+    # whose ±12/0 the same hand files reproduce exactly.
+    return port_row(k, pitch=16.0 if k == 2 else step)
 
 
 def _depart_trunk_len(ctx: SolverContext, slots: list[int], geos: list[EdgeGeo], *, vertical: bool = False) -> float:
@@ -416,39 +439,58 @@ def _solve_fan_linear(ctx: SolverContext, *, direction: Literal["out", "in"]) ->
                 knot_collapse(
                     geos, slots, trunk_len=_depart_trunk_len(ctx, slots, geos), depart=True, relation=rel, marker="none"
                 )
-        elif direction == "in" and float(ch.join_trunk or 0):
-            slots = [g for g, geo in enumerate(geos) if ctx.edges[geo.index].target == focal_i]
-            if len(slots) >= 2:
-                # ``ch.join_trunk`` is a per-preset CITATION (convergence-
-                # arrivals' own compose chip) — the floor for that hand
-                # specimen's chip, not a guarantee for every convergence
-                # story's label. A join trunk always draws its terminal
-                # arrow at the mouth (``knot_collapse``'s default marker),
-                # so the chip-run law reserves the chevron's own draw
-                # length beyond the bare stub — the DAG join's law
-                # (``_join_chip_stub``), generalized here for the fan
-                # family's own join. The citation still wins outright
-                # whenever it already covers the chip (byte-identical).
-                cargo = [ctx.edges[geos[g].index] for g in slots if ctx.edges[geos[g].index].label]
-                trunk_len = _join_trunk_len(ctx, slots, geos)
-                if cargo:
-                    trunk_len = max(
-                        trunk_len,
-                        chip_run_min(cargo, ctx.cfg, stub=marker_reserved_stub(ctx.engine, CHIP_STUB_MIN)),
-                    )
-                knot_collapse(geos, slots, trunk_len=trunk_len)
-                # A gather line carries its verb chip before the hero card
-                # (convergence-arrivals' compose trunk), alongside any in-card
-                # chips the hero declares. Convergence grounds the chip ON the
-                # wire (lift=0) — the specimen seats it dead-center on the
-                # trunk, unlike the DAG join's mouth-lift (there, crowded
-                # arrivals push it clear). A FLUSH (chipless) join appended no
-                # trunk geo — nothing to seat a chip on.
-                if trunk_len:
-                    from hyperweave.compose.diagram.graph import _seat_gather_chip
-
-                    _seat_gather_chip(ctx, geos, slots, geos[-1], lift=0.0)
+        elif direction == "in":
+            _gather_join(ctx, geos, focal_i)
     return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+
+
+def _gather_join(ctx: SolverContext, geos: list[EdgeGeo], focal_i: int) -> None:
+    """The join trunk, ONE piece for every solver whose focal AUTHORS
+    ``gather: true`` over its arrivals (the fan-linear in direction, the
+    bilateral hub): >=2 arrivals sharing a mouth collapse at a knot via
+    ``knot_collapse`` — spokes re-end at the knot with terminals
+    suppressed, one assert-dressed trunk carries the single arrowhead in
+    (convergence-arrivals). Arrivals group by their shared mouth first: a
+    direction-mixed bilateral can gather BOTH faces, each earning its own
+    knot. Hand-rolling coincident arrival endpoints instead of reusing
+    this collapse is the documented failure mode — N tangent-rotated
+    arrowheads smear at the mouth.
+
+    ``ch.join_trunk`` is a per-preset CITATION (convergence-arrivals' own
+    compose chip) — the floor for that hand specimen's chip, not a
+    guarantee for every convergence story's label. A join trunk always
+    draws its terminal arrow at the mouth (``knot_collapse``'s default
+    marker), so the chip-run law reserves the chevron's own draw length
+    beyond the bare stub — the DAG join's law (``_join_chip_stub``),
+    generalized for the fan family's join."""
+    if not float(ctx.ch.join_trunk or 0):
+        return
+    by_mouth: dict[tuple[float, float], list[int]] = {}
+    for g, geo in enumerate(geos):
+        if ctx.edges[geo.index].target == focal_i:
+            by_mouth.setdefault((round(geo.tx, 1), round(geo.ty, 1)), []).append(g)
+    for slots in by_mouth.values():
+        if len(slots) < 2:
+            continue
+        cargo = [ctx.edges[geos[g].index] for g in slots if ctx.edges[geos[g].index].label]
+        trunk_len = _join_trunk_len(ctx, slots, geos)
+        if cargo:
+            trunk_len = max(
+                trunk_len,
+                chip_run_min(cargo, ctx.cfg, stub=marker_reserved_stub(ctx.engine, CHIP_STUB_MIN)),
+            )
+        knot_collapse(geos, slots, trunk_len=trunk_len)
+        # A gather line carries its verb chip before the hero card
+        # (convergence-arrivals' compose trunk), alongside any in-card
+        # chips the hero declares. Convergence grounds the chip ON the
+        # wire (lift=0) — the specimen seats it dead-center on the
+        # trunk, unlike the DAG join's mouth-lift (there, crowded
+        # arrivals push it clear). A FLUSH (chipless) join appended no
+        # trunk geo — nothing to seat a chip on.
+        if trunk_len:
+            from hyperweave.compose.diagram.graph import _seat_gather_chip
+
+            _seat_gather_chip(ctx, geos, slots, geos[-1], lift=0.0)
 
 
 def solve_fanout_horizontal(ctx: SolverContext) -> DiagramLayout:
@@ -461,7 +503,11 @@ def solve_fanout_horizontal(ctx: SolverContext) -> DiagramLayout:
 def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
     """Source centered, dests split left/right (|L - R| <= 1, spec order
     fills left first). Both sides distribute over one shared vertical band
-    so the composition stays symmetric about the source."""
+    so the composition stays symmetric about the source.
+
+    Not the ``hub-bilateral`` preset: that near-homophone is a compass hub
+    (four corner exits — v04/decisions/hub-bilateral-family.md); this cell's
+    fan leaves one shared mouth per side and is occupied by ``reverse-etl``."""
     ch = ctx.ch
     spec = ctx.spec
     width = ch.width
@@ -469,6 +515,12 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
     left_n = k // 2
     right_n = k - left_n
     p = _pitch(ctx)
+    # A two-member flank spreads wider than the family rhythm (the twin
+    # bilateral prototypes: pair pitch 140 vs the three-row 120) so the pair
+    # fills its share of the constant family frame instead of huddling at
+    # the tighter pitch inside it.
+    if max(left_n, right_n) == 2 and ch.pitch_pair:
+        p = ch.pitch_pair
     dest_ws, dest_hs = _member_boxes(ctx, list(spec.nodes[1:]))
     dest_h = max(dest_hs)  # both sides distribute over one shared card height
     # Grow the band pitch by the height a wrapped desc adds (byte-identical
@@ -478,8 +530,37 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
     src_cy = ch.header_h + (band + dest_h) / 2
     height = int(2 * src_cy)
     left_ws = [w for w, i in zip(dest_ws, range(1, len(spec.nodes)), strict=True) if (i - 1) < left_n]
-    facing_left = ch.margin_x + (max(left_ws) if left_ws else 0.0)
-    facing_right = width - ch.margin_x - max(dest_ws)
+    # The hub-to-column AIR is a CITATION, never a residue (the clearance
+    # law the compass hub already speaks, same ``hub_clearance`` field).
+    # Pinning the columns to the frame instead made the air absorb every
+    # card-width variance — two structurally identical compositions
+    # rendered their wires at 19 vs 26 degrees because one's cards ran 32px
+    # wider. TWO anatomy citations, each from its own hand file: a CARD
+    # bilateral reads the chassis ``hub_clearance`` (the broadcast
+    # specimen's 114); a MEDALLION bilateral (every satellite glyph-circle)
+    # reads the alpha3 canon instead — "Integration Hub v2" holds
+    # center-to-center / satellite_r = 10.0, so air derives from the ratio
+    # (300 - hub_half - r = 226 at the canon radii, which reproduces the
+    # canon's own 740 frame exactly). The MIN_EDGE_RATIO backstop stays for
+    # hostile card widths.
+    hero_pre = _hero_content_box(ctx, 0, spec.nodes[0])
+    hero_pre_w = hero_pre[0] if hero_pre is not None else 2 * ch.hero_circle_r
+    all_medallions = all(style_of(n, spec, ch) == NodeStyle.GLYPH_CIRCLE.value for n in spec.nodes[1:])
+    if all_medallions:
+        cited = _MEDALLION_CENTER_RATIO * ch.circle_r - hero_pre_w / 2 - ch.circle_r
+    else:
+        cited = float(ch.hub_clearance)
+    air = max(cited, MIN_EDGE_RATIO * max(dest_ws))
+    left_col = max(left_ws) if left_ws else 0.0
+    right_col = max(dest_ws)
+    derived = 2 * ch.margin_x + left_col + air + hero_pre_w + air + right_col
+    # ``width_floor`` still means "canvas = max(chassis width, content)":
+    # a floor wider than the derived construction pads the OUTER margins
+    # equally — the cited air never stretches.
+    width = max(width if ch.width_floor else 0, math.ceil(derived))
+    extra = (width - derived) / 2
+    facing_left = ch.margin_x + extra + left_col
+    facing_right = facing_left + air + hero_pre_w + air
     # The bilateral canon (alpha3 integration hub) is a DOUBLE mirror: the
     # medallion sits at the exact midpoint of the two column faces (110 and
     # 710 about the 410 hub — equal 300 throws) and its CIRCLE center rides
@@ -524,7 +605,7 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
         idx = (i - 1) if on_left else (i - 1 - left_n)
         cy = side_cy(idx, left_n if on_left else right_n)
         w = dest_ws[i - 1]
-        x = facing_left - w if on_left else width - ch.margin_x - max(dest_ws)
+        x = facing_left - w if on_left else facing_right
         nodes.append(
             _place(
                 ctx,
@@ -542,11 +623,22 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
     left_fans = _fan_offsets(left_n)
     right_fans = _fan_offsets(right_n)
     left_seen = right_seen = 0
+    # ``gather: true`` on the hub converges INBOUND wires to one mouth at
+    # the facing edge's center and hands them to ``_gather_join`` — the
+    # same knot-collapse piece the fan-linear family's join speaks (spokes
+    # re-end at a knot, terminals suppressed, ONE arrowed trunk enters the
+    # face). Coincident endpoints WITHOUT the collapse were the shipped
+    # defect: N tangent-rotated arrowheads smearing at the mouth. Outbound
+    # wires keep their fan offsets; gathered arrivals never consume a fan
+    # slot, so a direction-mixed side still spreads its departures.
+    gather_hub = bool(spec.nodes[0].gather)
     geos: list[EdgeGeo] = []
     for j, edge in enumerate(ctx.edges):
         other_idx = edge.target if edge.source == 0 else edge.source
         on_left = sides[other_idx - 1] == 0
-        if on_left:
+        if gather_hub and edge.source != 0:
+            fan = 0.0
+        elif on_left:
             fan = left_fans[left_seen]
             left_seen += 1
         else:
@@ -572,46 +664,110 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
                 flow_side=0 if on_left else 1,
             )
         )
-    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+    if gather_hub:
+        _gather_join(ctx, geos, 0)
+    # Constant family frame (the twin bilateral prototypes share ONE 740x471
+    # frame at two and at three members, hero dead-center in both): a flank
+    # band shorter than the family's three-row reference pads out to it
+    # symmetrically, so member count changes density, never the frame. Only
+    # the medallion family carries the citation; the reference band uses the
+    # family pitch, not the pair spread.
+    ref_band = 2 * _pitch(ctx) if all_medallions else 0.0
+    band_pad = max(0.0, (ref_band - band) / 2)
+    return finish_layout(
+        ctx,
+        width=width,
+        height=height,
+        nodes_paint=nodes,
+        geos=geos,
+        content_pad_y=band_pad,
+        zone_center_inset=ch.circle_r if all_medallions else 0.0,
+    )
+
+
+_LAUNCH_PITCH = 24.0
+"""Upward-fan launch-bundle pitch on the source's top rim. The balanced
+reference (fanout-expressions/fanout-upward-balanced.svg, owner-supplied
+2026-08-20) seats four DISTINCT launch points 23.5px apart clustered at
+the crown's top-center — a port row, never rim-to-rim dest-chasing
+(clamped dest-aligned roots collapse coincident whenever two dests share
+a column, and the shared point then reads as a phantom gather knot at the
+crown's mouth)."""
+_LAUNCH_RIM_INSET = 24.0
+"""Minimum air between the outermost launch port and the crown's corner —
+the bundle compresses its pitch before it ever reaches the rim."""
+_ROW_AIR_MIN = 30.0
+"""Horizontal air between echelon cards — the row PACKS at this gap,
+centered (the reference row holds 30/20/30 between its 190px cards), and
+wraps when the packed row would overflow the frame. A margin-to-margin
+stretch is retired: sparse small cards flattened every wire into a long
+horizontal glide the reference never draws."""
+_RISE_C1_T = 0.55
+_RISE_C2_T = 0.37
+"""The rise curve's control seats, as fractions of the run from the launch
+(the reference's own cubics: C 425,185 135,210 on a 260→124 run — the
+first control 55% up at the launch x, the second 37% up at the arrival x).
+A low traverse with a LONG vertical climb into the card, not the symmetric
+midpoint S."""
 
 
 def solve_fanout_upward(ctx: SolverContext) -> DiagramLayout:
-    """Headerless inverted pyramid: dest rows fill top-down (row_cap per
-    row, remainder last), every row centered; the source sits beneath and
-    particles rise. The compact embed of the family."""
+    """One balanced echelon above the source (the owner's balanced reference
+    composition, 2026-08-20): dests share a bottom-aligned row spread
+    margin-to-margin, wires leave a pitched launch bundle on the source's
+    top rim and arrive square at each dest's bottom-center on vertical
+    S-curves. The row wraps only on WIDTH overflow — the retired fixed
+    row-cap wrapped four dests into a centered 1+3 pyramid whose top card
+    sat in the hero's own column, so its wire rose straight through the
+    card beneath it. A wrapped remainder row still rides on top (G7:
+    curves to the far row rise through the near row's gaps)."""
     ch = ctx.ch
     spec = ctx.spec
     width = ch.width
     k = len(spec.nodes) - 1
+    dest_ws, dest_hs = _member_boxes(ctx, list(spec.nodes[1:]))
+    slot = max(dest_ws)
+    avail = width - 2 * ch.margin_x
+    fit = max(1, int((avail + _ROW_AIR_MIN) // (slot + _ROW_AIR_MIN)))
     rows: list[int] = []
     remaining = k
     while remaining > 0:
-        take = min(ch.row_cap, remaining)
+        take = min(fit, remaining)
         rows.append(take)
         remaining -= take
-    # The REMAINDER row rides on top (G7): with the full row nearest the
-    # source, curves to the far row rise through the full row's wide gaps
-    # instead of crossing a centered box's corridor.
     rows.reverse()
-    k_max = max(rows)
-    dest_ws = _member_widths(ctx, list(spec.nodes[1:]))
-    pitch_x = (width - 2 * ch.margin_x - max(dest_ws)) / (k_max - 1) if k_max > 1 else 0.0
+    # The echelon SPREADS across the house frame (fill-the-house-frame
+    # ruling, 2026-08-20 — the reference's own row runs 40-margin to
+    # 40-margin: 4x190 cards at ~27 air on the 920 frame): the fullest
+    # row's air grows evenly until its outer card edges land on the
+    # margins, floored at the reference's packed gap. Remainder rows ride
+    # the same pitch, centered, so their wires still rise through the
+    # near row's gaps.
+    full = max(rows)
+    air = max(_ROW_AIR_MIN, (avail - full * slot) / (full - 1)) if full > 1 else _ROW_AIR_MIN
+    pitch_x = slot + air
     nodes: list[NodePlacement] = []
     positions: list[tuple[float, float]] = []  # dest centers (cx, bottom_y)
     y = ch.margin_top
+    di = 0
     for row_count in rows:
+        # Rows are BOTTOM-aligned on their deepest member (the wires arrive
+        # at bottom rims, so the arrival band is flat per row) and advance
+        # by the row's own solved height — the chassis archetype height
+        # under-measured card+label stacks and quietly ate row air.
+        row_h = max(dest_hs[di : di + row_count])
         for i in range(row_count):
             cx = width / 2 + (i - (row_count - 1) / 2) * pitch_x
-            positions.append((cx, y + ch.node.h))
-        y += ch.node.h + ch.row_gap
+            positions.append((cx, y + row_h))
+        y += row_h + ch.row_gap
+        di += row_count
     src_top = y - ch.row_gap + ch.src_gap
-    # The canvas reserves the chassis archetype height regardless of the
-    # hero's actual content height (G3 dominance never shrinks the RESERVED
-    # band, only the rendered box within it) — a shorter undeclared hero
-    # reads as slightly more bottom air, never a clipped or shifted canvas.
-    height = int(src_top + ch.hero.h + ch.bottom_m)
     hero_box = _hero_content_box(ctx, 0, spec.nodes[0])
     hero_w, hero_h = hero_box if hero_box is not None else (ch.hero.w, ch.hero.h)
+    # The canvas reserves at least the chassis archetype height (G3
+    # dominance never shrinks the RESERVED band); a solved hero TALLER than
+    # the archetype grows the band instead of overrunning the bottom margin.
+    height = int(src_top + max(ch.hero.h, hero_h) + ch.bottom_m)
     nodes.append(
         _place(
             ctx, 0, spec.nodes[0], x=width / 2 - hero_w / 2, y=src_top, hero=True, w_override=hero_w, h_override=hero_h
@@ -619,22 +775,33 @@ def solve_fanout_upward(ctx: SolverContext) -> DiagramLayout:
     )
     for i, node in enumerate(spec.nodes[1:], start=1):
         cx, bottom = positions[i - 1]
-        w = dest_ws[i - 1]
-        nodes.append(_place(ctx, i, node, x=cx - w / 2, y=bottom - ch.node.h, w_override=w))
-    # Root each curve directly under its dest, clamped to the source's top
-    # edge (G7): a centered start hugs the inner row boxes; a dest-aligned
-    # root rises through the row gaps and bends only over the last span.
-    half = hero_w / 2 - 14.0
+        w, h = dest_ws[i - 1], dest_hs[i - 1]
+        nodes.append(_place(ctx, i, node, x=cx - w / 2, y=bottom - h, w_override=w, h_override=h))
+    # Launch grammar is AUTHORED (the two hand prototypes): the default is
+    # one pitched port per wire on the source's top rim, ordered by dest x
+    # so wires never cross (the balanced reference's 85/108/132/155 port
+    # row on a 240 crown) — the ports render BARE (owner ruling
+    # 2026-08-20, pp-radial.svg's own grammar: plain wire roots carry no
+    # ornament; the r5+r2.5 bezel is the CONVERGENCE mark, drawn only
+    # where wires actually meet). ``gather: true`` on the source
+    # converges every wire to ONE mouth at the rim's center instead
+    # (fanout-upward-knot.svg: four cubics from a single origin, one
+    # focal hub pin) — that shared point earns the knot bezel the gather
+    # ornament already draws.
+    gather = bool(spec.nodes[0].gather)
+    order = sorted(range(1, k + 1), key=lambda m: positions[m - 1][0])
+    offs = [0.0] * k if gather else port_row(k, pitch=_LAUNCH_PITCH, face_len=hero_w, inset=_LAUNCH_RIM_INSET)
+    launch_x = {m: width / 2 + offs[rank] for rank, m in enumerate(order)}
     src = nodes[0]
     geos: list[EdgeGeo] = []
     for j, edge in enumerate(ctx.edges):
         other = edge.target if edge.target != 0 else edge.source
         dest = nodes[other]
         dcx = dest.box.x + dest.box.w / 2
-        root_x = min(max(dcx, width / 2 - half), width / 2 + half)
         # Shape-true attachments: the root lands on the source's top rim at
-        # root_x, the far end on the dest's bottom rim at its center x.
-        rx_a, root_y = side_anchor(src, side="top", at=root_x)
+        # its bundle port, the far end on the dest's bottom rim at its
+        # center x.
+        rx_a, root_y = side_anchor(src, side="top", at=launch_x[other])
         dcx_a, dbottom = side_anchor(dest, side="bottom", at=dcx)
         upward = edge.target != 0
         if upward:
@@ -642,21 +809,27 @@ def solve_fanout_upward(ctx: SolverContext) -> DiagramLayout:
         else:
             sx, sy, tx, ty = dcx_a, dbottom, rx_a, root_y
         x1, y1, x2, y2 = lane_endpoints(sx, sy, tx, ty, ctx.lanes[j], ctx.lane_offsets[j])
+        marker_size = float(ctx.ch.marker_size or ctx.engine["connector"].get("marker_size", 11))
+        d, length, polyline, tangent = square_arrival_path(
+            x1, y1, x2, y2, axis="v", terminal_lead=marker_size, c1_t=_RISE_C1_T, c2_t=_RISE_C2_T
+        )
         geos.append(
             EdgeGeo(
                 index=j,
-                d=s_curve_v(x1, y1, x2, y2),
+                d=d,
                 sx=x1,
                 sy=y1,
                 tx=x2,
                 ty=y2,
-                length=s_curve_v_len(x1, y1, x2, y2),
+                length=length,
+                polyline=polyline,
+                end_tangent=tangent,
             )
         )
     return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
 
 
-def solve_convergence(ctx: SolverContext) -> DiagramLayout:
+def solve_fanin(ctx: SolverContext) -> DiagramLayout:
     """Inputs in a left column, the hero on the right, every curve meeting
     one point on the hero's facing edge — ingestion has a single mouth. The
     fan-linear family's direction=in (the hero is every edge's mouth)."""
@@ -725,15 +898,19 @@ def solve_fanout_downward(ctx: SolverContext) -> DiagramLayout:
         down = edge.target != 0
         sx, sy, tx, ty = (rx_a, root_y, dcx_a, dtop) if down else (dcx_a, dtop, rx_a, root_y)
         x1, y1, x2, y2 = lane_endpoints(sx, sy, tx, ty, ctx.lanes[j], ctx.lane_offsets[j])
+        marker_size = float(ctx.ch.marker_size or ctx.engine["connector"].get("marker_size", 11))
+        d, length, polyline, tangent = square_arrival_path(x1, y1, x2, y2, axis="v", terminal_lead=marker_size)
         geos.append(
             EdgeGeo(
                 index=j,
-                d=s_curve_v(x1, y1, x2, y2),
+                d=d,
                 sx=x1,
                 sy=y1,
                 tx=x2,
                 ty=y2,
-                length=s_curve_v_len(x1, y1, x2, y2),
+                length=length,
+                polyline=polyline,
+                end_tangent=tangent,
             )
         )
     # The depart trunk (router-descent): the fan leaves the source on ONE wire
@@ -766,6 +943,6 @@ register_solvers(
         "fanout-bilateral": solve_fanout_bilateral,
         "fanout-upward": solve_fanout_upward,
         "fanout-downward": solve_fanout_downward,
-        "convergence": solve_convergence,
+        "fanin": solve_fanin,
     }
 )

@@ -35,6 +35,7 @@ This module is a leaf: it imports only ``core.base`` and ``core.matrix``
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Literal
@@ -51,22 +52,33 @@ from hyperweave.core.surface_spec import SurfaceSpec  # noqa: TC001 (Pydantic ne
 
 
 class Topology(StrEnum):
-    """Named layout pattern — the semantic unit of a diagram.
+    """Named layout FAMILY — the semantic unit of a diagram (the family x
+    expression consolidation, owner ruling 2026-08-20: fourteen flat words
+    folded into families whose expressions ride the ``orientation`` axis).
 
     A topology's meaning is its pattern: the hwz/1 envelope compacts a
     diagram to ``{"pattern": <topology>, "n": <nodes>}`` plus content.
+
+    The fan family carries its direction in the word itself (``fanout`` /
+    ``fanin`` — one solver, one chassis family, opposite mouths). The
+    retired flat words teach their new spelling at the input seam
+    (``RETIRED_TOPOLOGIES``): ``convergence`` → ``fanin``; ``stack`` →
+    ``pipeline`` + ``orientation: vertical``; ``flywheel`` → ``cycle`` +
+    ``orientation: orbit``; ``ring`` → ``cycle`` + ``orientation: ring``.
     """
 
     PIPELINE = "pipeline"
+    """Linear family: horizontal chain (rows or portrait heads), or the
+    vertical operator stack via ``orientation: vertical``."""
     FANOUT = "fanout"
-    CONVERGENCE = "convergence"
-    FLYWHEEL = "flywheel"
-    RING = "ring"
-    """The equal-stage loop (the agent-loop-ring specimen): N medallions at
-    even pitch on one ring, EMPTY centre — no hero, every stage equal;
-    circulation carried by congruent arc arrows. Flywheel's sibling with
-    the axis removed and the annotation stacked below every node."""
-    STACK = "stack"
+    CYCLE = "cycle"
+    """The loop family: ``orientation: orbit`` — phases around a hero axis
+    (the accumulator loop) — or ``orientation: ring`` — the equal-stage
+    loop, N medallions at even pitch on one ring, EMPTY centre, no hero,
+    circulation carried by congruent arc arrows."""
+    FANIN = "fanin"
+    """The fan family's inward direction: inputs fan into one mouth — the
+    same fan-linear solver as ``fanout``, direction reversed."""
     TREE = "tree"
     COMPARISON = "comparison"
     SEQUENCE = "sequence"
@@ -76,15 +88,35 @@ class Topology(StrEnum):
     LANES = "lanes"
 
 
+RETIRED_TOPOLOGIES: dict[str, str] = {
+    "convergence": "topology: fanin — the fan family's inward direction (same solver, opposite mouth)",
+    "stack": "topology: pipeline with orientation: vertical — the linear family's operator stack",
+    "flywheel": "topology: cycle with orientation: orbit — the loop family's hero-axis accumulator",
+    "ring": "topology: cycle with orientation: ring — the loop family's equal-stage empty-centre loop",
+}
+"""Hard-retired flat topology words → the family x expression spelling that
+replaced each (the 2026-08-20 consolidation). Read by the input seam so the
+refusal TEACHES the new spelling — an error-text record, never live
+compatibility state (the rename-ledger preservation law)."""
+
+
 class Orientation(StrEnum):
-    """Second presentational axis. Legality per topology is config data
-    (``data/config/diagram-frame.yaml: orientation_legality``), enforced at the input seam."""
+    """The EXPRESSION axis: which cell of its family a spec asks for.
+    Legality per topology is config data (``data/config/diagram-frame.yaml:
+    orientation_legality``), enforced at the input seam."""
 
     HORIZONTAL = "horizontal"
     BILATERAL = "bilateral"
     UPWARD = "upward"
     DOWNWARD = "downward"
     RADIAL = "radial"
+    VERTICAL = "vertical"
+    """Pipeline: the operator stack (bottom-to-top layers, the retired
+    ``stack`` word's cell)."""
+    ORBIT = "orbit"
+    """Cycle: phases around a hero axis (the retired ``flywheel`` word)."""
+    RING = "ring"
+    """Cycle: the equal-stage empty-centre loop (the retired ``ring`` word)."""
 
 
 class NodeRole(StrEnum):
@@ -114,13 +146,24 @@ class NodeHealth(StrEnum):
 
 
 class NodeStyle(StrEnum):
-    """Node identity anatomy — caller-chosen, never inferred, and orthogonal
-    to topology: any topology may render any anatomy. Frame default comes
-    from the paradigm chassis (per topology); per-node overrides win."""
+    """Node identity anatomy — caller-chosen, never inferred. Rectangular
+    card anatomies are topology-orthogonal; a topology whose connector math
+    requires a plate may constrain non-card silhouettes. Frame defaults come
+    from the paradigm chassis and per-node overrides win."""
 
     CARD = "card"
     GLYPH_CIRCLE = "glyph-circle"
     CARD_GLYPH = "card+glyph"
+    CARD_LABEL = "card+label"
+    """A card whose identity is TYPOGRAPHIC, not a mark: a small tracked mono
+    label over a stack of display values (the bilateral-wings specimen's
+    ``CPU / 14-core CPU / 10 performance cores``) — the inverse of the default
+    card's display name over mono desc. A ``glyph``/``kind`` still resolves,
+    but as a CORNER ANNOTATION in the card's top-right: it never opens a left
+    identity column and never indents a value line (that would make it
+    card+glyph again), and an unresolved mark costs nothing (icon-or-nothing
+    stays total). The hero register stacks the same two slots as an identity
+    ROW (mark + mono id) over a centered display block — the crown."""
     TEXT = "text"
     """A containerless typographic block (hub-panel-02-orchestrator):
     containers earn their existence — a satellite carrying enough text to be
@@ -230,10 +273,11 @@ class DiagramNode(FrozenModel):
     gather: bool = Field(
         default=False,
         description=(
-            "This node AGGREGATES its inbound edges: >=2 plain converging edges collapse at a "
-            "gather knot and one solid trunk carries them in (the AND-join). Authored meaning — "
-            "a plain fan-in (bottleneck, shared dependency) lands per-edge; geometry cannot "
-            "tell the two apart. Dag-only"
+            "This node AGGREGATES its fan: >=2 converging or departing edges collapse to ONE "
+            "mouth — the knot + trunk on dag (the AND-join), the launch mouth on the upward "
+            "fan, the arrival mouth on the bilateral hub, the boundary point on the axial "
+            "hub. Authored meaning, one vocabulary system-wide — a plain fan (bottleneck, "
+            "shared dependency, port row) lands per-edge; geometry cannot tell the two apart."
         ),
     )
     anchor: str = Field(
@@ -445,6 +489,18 @@ class DiagramSpec(FrozenModel):
             "never inferred."
         ),
     )
+    partition_chroma: Literal["", "zone"] = Field(
+        default="",
+        description=(
+            "Partition-pair chromatics: 'zone' compiles the accent PAIR from the declared "
+            "binary zone partition — every member of zone 0 takes the ink tone, every member "
+            "of zone 1 takes the signal tone, across its label, its corner mark and its wire. "
+            "ONE hue per group, never per node (the group-membership law gaining a two-group "
+            "clause); spends one figure against figure_budget. Requires exactly two zones — "
+            "declaring it with fewer raises rather than silently no-opping. Empty (default) "
+            "leaves hue to the spine binding alone."
+        ),
+    )
     chassis: dict[str, Any] = Field(
         default_factory=dict,
         description="shallow chassis overrides for THIS spec (design dims, "
@@ -628,6 +684,18 @@ class DiagramSpec(FrozenModel):
 
     @model_validator(mode="before")
     @classmethod
+    def _refuse_retired_topologies(cls, data: object) -> object:
+        """A retired flat topology word refuses TEACHING its family x
+        expression spelling (``RETIRED_TOPOLOGIES``) — the consolidation's
+        hard break, never an alias that silently lifts."""
+        if isinstance(data, dict):
+            raw = data.get("topology")
+            if isinstance(raw, str) and raw in RETIRED_TOPOLOGIES:
+                raise ValueError(f"topology {raw!r} was consolidated into its family — use {RETIRED_TOPOLOGIES[raw]}")
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
     def _autofill_node_ids(cls, data: object) -> object:
         """Empty/missing node ids fill ``n{i}`` (index-positional) before the
         after-validator runs, so a spec with id-less nodes and edges
@@ -668,7 +736,7 @@ class DiagramSpec(FrozenModel):
         heroes = [i for i, n in enumerate(self.nodes) if n.role is NodeRole.HERO]
         if len(heroes) > 1:
             raise ValueError(f"at most one hero node (got nodes {heroes})")
-        focal = focal_slot(self.topology, len(self.nodes))
+        focal = focal_slot(self.topology, len(self.nodes), self.orientation)
         for i, n in enumerate(self.nodes):
             if n.role is NodeRole.MUTED and focal is not None and i == focal:
                 raise ValueError(
@@ -679,12 +747,74 @@ class DiagramSpec(FrozenModel):
             self._validate_edges(declared)
         elif self.topology in _EDGES_REQUIRED:
             raise ValueError(f"{self.topology.value} is a data topology: edges are the content and are required")
+        for n in self.nodes:
+            style = n.style.value if n.style is not None else (self.node_style.value if self.node_style else "")
+            if style != NodeStyle.CARD_LABEL.value:
+                continue
+            # card+label's slots are the label kicker and the value stack —
+            # it hosts no chip row and no nested artifact. Silently dropping
+            # authored content is the unsafe outcome; say so instead.
+            if n.chips:
+                raise ValueError(
+                    f"node {n.id or n.label!r} declares chips on a card+label, which has no chip row "
+                    "(its slots are the label and the value stack) — put the chip text in the value "
+                    "stack, or use style: card"
+                )
+            if n.embed is not None:
+                raise ValueError(
+                    f"node {n.id or n.label!r} embeds an artifact in a card+label, which reserves no "
+                    "embed box — use style: card for a container node"
+                )
+        if self.partition_chroma:
+            if len(self.zones) != 2:
+                raise ValueError(
+                    f"partition_chroma: {self.partition_chroma!r} compiles hue from a BINARY zone "
+                    f"partition, but this spec declares {len(self.zones)} zone(s) — declare both "
+                    "zone headers (the two groups the hue names) or drop partition_chroma"
+                )
+            if layout_slug(self) not in _PARTITIONED_LAYOUTS:
+                raise ValueError(
+                    f"partition_chroma is legal on {sorted(_PARTITIONED_LAYOUTS)} — the layouts that "
+                    f"SEAT their members in two structural groups; {layout_slug(self)!r} has no such "
+                    "split, so a hue compiled from it would name nothing the reader can see"
+                )
+            self._validate_partition_seats()
         self._validate_rank_field()
         self._validate_embeds()
         self._validate_hub_structure(declared)
         self._validate_lanes_structure()
         self._validate_annotations(declared)
         return self
+
+    def _validate_partition_seats(self) -> None:
+        """A hub compiles a partition hue only when its SEATS actually split
+        east/west. The bilateral fan's split is structural — its solver seats
+        two columns — but a compass hub seats wherever the author points it: a
+        N/E/S/W cross has no two sides, and painting half of it would assert a
+        grouping the geometry never draws. So the seat declarations must agree
+        with the declaration-order halves the hue compiles from."""
+        if self.topology is not Topology.HUB:
+            return
+        groups = partition_groups(self)
+        sides: dict[int, set[str]] = {0: set(), 1: set()}
+        for i, node in enumerate(self.nodes):
+            if groups[i] < 0:
+                continue
+            side = _seat_side(self, i, node)
+            if side == "":
+                raise ValueError(
+                    f"partition_chroma on a hub needs every member's SEAT declared so the two groups "
+                    f"can be checked against the geometry — node {node.id or node.label!r} declares "
+                    "none (give it an edge angle/zone or a node anchor)"
+                )
+            sides[groups[i]].add(side)
+        if sides[0] & sides[1] or any(len(s) != 1 for s in sides.values()):
+            raise ValueError(
+                f"partition_chroma compiles hue from the two declaration-order halves, but this hub's "
+                f"seats do not split that way (first half seats {sorted(sides[0])}, second "
+                f"{sorted(sides[1])}) — reorder the nodes so each group sits on one side, or drop "
+                "partition_chroma"
+            )
 
     def _validate_embeds(self) -> None:
         """§12.1 depth policy: an artifact may hold containers (depth 1)
@@ -908,36 +1038,78 @@ _CLOSED_TOPOLOGIES = frozenset(
     {
         Topology.PIPELINE,
         Topology.FANOUT,
-        Topology.CONVERGENCE,
-        Topology.FLYWHEEL,
-        Topology.STACK,
+        Topology.FANIN,
+        # Both cycle expressions derive the loop; declared edges must cover
+        # the derived structure the same way (the gap once let a ring spec
+        # declare a partial cycle unvalidated).
+        Topology.CYCLE,
         Topology.TREE,
         Topology.COMPARISON,
-        # RING derives the same cycle FLYWHEEL does; declared edges must
-        # cover the derived structure the same way (the gap let a ring spec
-        # declare a partial cycle unvalidated).
-        Topology.RING,
     }
 )
 
 _EDGES_REQUIRED = frozenset({Topology.SEQUENCE, Topology.DAG, Topology.STATE_MACHINE, Topology.HUB, Topology.LANES})
 
+_PARTITIONED_LAYOUTS = frozenset({"fanout-bilateral", "hub"})
+"""Layouts that CAN seat members in two structural groups, so a hue compiled
+from the partition names something the reader can already see. The bilateral
+fan splits its destinations left/right about the source unconditionally; a hub
+splits only when its seats say so, which ``_validate_partition_seats`` checks
+per spec (a N/E/S/W compass cross has no two sides). Every other layout seats
+one undivided family, and painting half of it would assert a grouping the
+geometry does not draw. Widening this set is a per-layout ruling with its own
+specimen, never a default."""
 
-def focal_slot(topology: Topology, n: int) -> int | None:
+_EAST_SEATS = frozenset({"E", "NE", "SE"})
+_WEST_SEATS = frozenset({"W", "NW", "SW"})
+
+
+def _seat_side(spec: DiagramSpec, index: int, node: DiagramNode) -> str:
+    """Which SIDE a hub member is seated on — 'east', 'west', or '' when the
+    declaration does not commit to one (a bare N/S cardinal, or no seat at
+    all). Reads the same precedence the compass solver does: an explicit edge
+    angle wins, then a node anchor, then an edge zone token."""
+    incident = [e for e in spec.edges if node.id in (e.source, e.target)]
+    # Precedence is the compass solver's, in ITS order: an explicit angle
+    # wins outright, then the node anchor, then an edge zone. An angle that
+    # commits to NEITHER side (a due-N/S seat, cos == 0) is a decided answer
+    # of "no side" — it must NOT fall through to an anchor, or a spec seated
+    # north/south passes as an east/west partition on a stale anchor.
+    for edge in incident:
+        if edge.angle is not None:
+            cos = math.cos(math.radians(edge.angle))
+            return "east" if cos > 1e-6 else "west" if cos < -1e-6 else ""
+    if node.anchor in _EAST_SEATS:
+        return "east"
+    if node.anchor in _WEST_SEATS:
+        return "west"
+    if node.anchor:
+        return ""  # a declared N/S anchor is likewise a decided "no side"
+    for edge in incident:
+        if edge.zone in _EAST_SEATS:
+            return "east"
+        if edge.zone in _WEST_SEATS:
+            return "west"
+    return ""
+
+
+def focal_slot(topology: Topology, n: int, orientation: Orientation = Orientation.HORIZONTAL) -> int | None:
     """The structural focal index AUTO resolves to HERO, or None.
 
-    Pipeline, flywheel, sequence, dag, state-machine, and lanes have no
-    structural focal slot — their hero is caller rhetoric. Hub has one: the
-    center node (slot 0).
+    A horizontal pipeline, the cycle family, sequence, dag, state-machine,
+    and lanes have no structural focal slot — their hero is caller
+    rhetoric. Hub has one: the center node (slot 0); the vertical pipeline
+    (the operator stack) crowns its top result (slot 0); fanin's mouth is
+    the last node.
     """
     if (
         topology is Topology.FANOUT
         or topology is Topology.TREE
-        or topology is Topology.STACK
         or topology is Topology.HUB
+        or (topology is Topology.PIPELINE and orientation is Orientation.VERTICAL)
     ):
         return 0
-    if topology is Topology.CONVERGENCE:
+    if topology is Topology.FANIN:
         return n - 1
     if topology is Topology.COMPARISON:
         return 1
@@ -947,42 +1119,66 @@ def focal_slot(topology: Topology, n: int) -> int | None:
 def layout_slug(spec: DiagramSpec) -> str:
     """The concrete layout algorithm slug — also ``data-hw-subvariant``.
 
-    17 values: the closed seven (fanout expanded by orientation — including
-    downward, tree by radial), plus sequence, dag, state-machine, hub, and lanes.
+    Family word alone where the family has one cell; ``family-expression``
+    where the ``orientation`` axis selects one (fanout's five, pipeline's
+    vertical stack, cycle's orbit/ring, tree's radial).
     """
     if spec.topology is Topology.FANOUT:
         return f"fanout-{spec.orientation.value}"
+    if spec.topology is Topology.CYCLE:
+        return f"cycle-{spec.orientation.value}"
+    if spec.topology is Topology.PIPELINE and spec.orientation is Orientation.VERTICAL:
+        return "pipeline-vertical"
     if spec.topology is Topology.TREE and spec.orientation is Orientation.RADIAL:
         return "tree-radial"
     return spec.topology.value
 
 
+def partition_groups(spec: DiagramSpec) -> tuple[int, ...]:
+    """Binary-partition membership per node index: ``0`` for the first zone's
+    group, ``1`` for the second's, ``-1`` for a node in neither (the focal
+    source — it is what the partition divides, never a member of it). All
+    ``-1`` when the spec declares no ``partition_chroma``.
+
+    Membership is DECLARATION ORDER, which is the identical fact the bilateral
+    fan solver seats on (``fan.py``: ``left_n = k // 2``, spec order fills left
+    first), so hue and geometry can never disagree about which side a node is
+    on. One derivation, read by the node binder, the edge binder, and the
+    label pass alike — a group decides once and three channels follow."""
+    if not spec.partition_chroma:
+        return tuple(-1 for _ in spec.nodes)
+    members = len(spec.nodes) - 1
+    first = members // 2
+    return tuple(-1 if i == 0 else (0 if (i - 1) < first else 1) for i in range(len(spec.nodes)))
+
+
 def derive_edges(spec: DiagramSpec) -> tuple[tuple[int, int], ...]:
     """Canonical derived structure for the closed topologies (index pairs).
 
-    pipeline: reading-order chain. fanout: nodes[0] -> each. convergence:
-    each -> nodes[-1]. flywheel: ring cycle over non-hero nodes (a hero is
-    the center axis, lifted out of the ring). stack: rising (nodes[0] is the
-    top result; particles climb bottom -> top). tree: nodes[0] -> each
-    (depth-1 star; multi-level trees declare explicit edges). comparison:
-    the single before -> after pair.
+    pipeline: reading-order chain — or RISING when vertical (the operator
+    stack: nodes[0] is the top result; particles climb bottom -> top).
+    fanout: nodes[0] -> each. fanin: each -> nodes[-1]. cycle: the loop —
+    orbit cycles the non-hero ring (a hero is the center axis, lifted out
+    of the ring); ring cycles every node. tree: nodes[0] -> each (depth-1
+    star; multi-level trees declare explicit edges). comparison: the single
+    before -> after pair.
     """
     n = len(spec.nodes)
     t = spec.topology
     if t is Topology.PIPELINE:
+        if spec.orientation is Orientation.VERTICAL:
+            return tuple((i + 1, i) for i in range(n - 1))
         return tuple((i, i + 1) for i in range(n - 1))
     if t is Topology.FANOUT:
         return tuple((0, j) for j in range(1, n))
-    if t is Topology.CONVERGENCE:
+    if t is Topology.FANIN:
         return tuple((j, n - 1) for j in range(n - 1))
-    if t is Topology.FLYWHEEL:
+    if t is Topology.CYCLE:
+        if spec.orientation is Orientation.RING:
+            return tuple((i, (i + 1) % n) for i in range(n))
         ring = [i for i, node in enumerate(spec.nodes) if node.role is not NodeRole.HERO]
         k = len(ring)
         return tuple((ring[i], ring[(i + 1) % k]) for i in range(k))
-    if t is Topology.RING:
-        return tuple((i, (i + 1) % n) for i in range(n))
-    if t is Topology.STACK:
-        return tuple((i + 1, i) for i in range(n - 1))
     if t is Topology.TREE:
         return tuple((0, j) for j in range(1, n))
     if t is Topology.COMPARISON:

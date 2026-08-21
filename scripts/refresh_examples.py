@@ -177,7 +177,7 @@ _SERVICE_PATCH: list[dict[str, Any]] = [
 # Preset-named README diagram assets minted by plain compose, with the
 # README's own documented flags: (preset, filename, variant). All inlay
 # (bare · adaptive) — the README embeds them on both GitHub themes.
-_DIAGRAM_SINGLES: tuple[tuple[str, str, str], ...] = (("frontier-serving", "frontier-serving.svg", "noir"),)
+_DIAGRAM_SINGLES: tuple[tuple[str, str, str], ...] = (("dag-providers", "frontier-serving.svg", "noir"),)
 
 
 def refresh_diagrams() -> list[Path]:
@@ -195,7 +195,7 @@ def refresh_diagrams() -> list[Path]:
                 variant="porcelain",
                 ground="bare",
                 palette="adaptive",
-                diagram=resolve_diagram_preset("service-dependencies"),
+                diagram=resolve_diagram_preset("dag-mesh"),
             )
         ).svg
         child = transform(parent, _SERVICE_PATCH, ts=_PINNED_CLOCK.isoformat())

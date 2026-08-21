@@ -59,6 +59,11 @@ class GlyphArt:
     accent_index: int = -1
     """This node's flow-palette slot when ``tint == "hue"`` (-1 otherwise) —
     the index the template's ``-fl{i}``/``-flp{i}`` class binds to."""
+    signal: bool = False
+    """The crown identity mark rides the SIGNAL tone (``-fls``/``-flps``)
+    instead of its resolved ink — decided at placement (the card+label hero
+    register's id-row mark, the same accent promotion the hub nucleus glyph
+    gets), so the template stamps it and never re-derives the rule."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,7 +177,7 @@ class ConnectorPlacement:
     target_index: int
     accent_index: int  # -1 -> chassis accent
     motion: str  # concrete post-ladder: dash | particle | beam | flow
-    track: str  # static | dash-march | none (none = motion IS the stroke)
+    track: str  # static | dash-march | ring-drift | none (none = motion IS the stroke)
     ant_delay: str = ""
     semantic_dash: str = ""
     """Meaning-bearing dasharray (sequence return, muted) — overrides the
@@ -197,6 +202,13 @@ class ConnectorPlacement:
     accent_wire: bool = False
     """Role-bound accent stroke (§11.4b): keeps the hue class even under the
     muted-connector default — the axial destination fan's dress."""
+    ink_wire: bool = False
+    """Partition-pair chromatics: this wire belongs to the NEUTRAL group of a
+    declared binary partition, so it strokes ``--dna-ink-primary`` instead of
+    the signal ``-fls`` default — the same ink/signal pair the two zone
+    headers already compile (``zoneh``/``zoneha``). The accent group needs no
+    flag: its members carry an ``accent_index`` and take the flow hue, which
+    resolves to the signal."""
     relation: str = ""
     """The §3 line idiom this wire renders ('' | assert | drift | flow |
     bypass) — resolved from the edge or the solver's axis default. A

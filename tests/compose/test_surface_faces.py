@@ -426,7 +426,7 @@ def test_http_get_diagram_face_dark_bakes_face() -> None:
     from hyperweave.serve.app import app
 
     client = TestClient(app)
-    r = client.get("/v1/diagram/rag-pipeline/primer.static", params={"face": "dark"})
+    r = client.get("/v1/diagram/pipeline-head/primer.static", params={"face": "dark"})
     assert r.status_code == 200
     assert 'data-hw-face="dark"' in r.text
 
@@ -448,7 +448,7 @@ def test_http_get_diagram_face_invalid_value_422() -> None:
     from hyperweave.serve.app import app
 
     client = TestClient(app)
-    r = client.get("/v1/diagram/rag-pipeline/primer.static", params={"face": "chartreuse"})
+    r = client.get("/v1/diagram/pipeline-head/primer.static", params={"face": "chartreuse"})
     assert r.status_code == 422
 
 
@@ -469,7 +469,7 @@ def test_http_get_diagram_face_rejects_auto() -> None:
     from hyperweave.serve.app import app
 
     client = TestClient(app)
-    r = client.get("/v1/diagram/rag-pipeline/primer.static", params={"face": "auto"})
+    r = client.get("/v1/diagram/pipeline-head/primer.static", params={"face": "auto"})
     assert r.status_code == 422
 
 

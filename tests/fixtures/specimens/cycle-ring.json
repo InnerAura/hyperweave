@@ -1,0 +1,63 @@
+{
+  "aspect": 1.034,
+  "caption_text": "The loop \u00b7 pair, understand, identify, build, validate, ship \u2014 then pair again",
+  "cards": {},
+  "census": {
+    "animated": false,
+    "arrow_terminals": 6,
+    "card_rx": 0.0,
+    "cards": 0,
+    "chips": 0,
+    "coins": 6,
+    "desc_lines": 0,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 6,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 6,
+    "terminal_dots": 0,
+    "zone_headers": 1
+  },
+  "chip_stub_min": null,
+  "height": 715.0,
+  "occupancy": 0.31,
+  "plate": {
+    "caption_pad": 44.0,
+    "caption_y": 1000.0,
+    "content_bottom": 936.0,
+    "content_top": 246.0,
+    "zone_y": 58.0
+  },
+  "plate_amendment": "Content-fit ruling (2026-08-20): the hand sheet's fixed 1080 square budgeted 188px of masthead air (zone_y 58 -> content_top 246) that read as dead void on the board once the canvas hugged the ring; the render grades at the kit's standard zone rhythm instead. The specimen still validates its own plate via SELF.",
+  "port_tolerance": 17.7,
+  "ring_arcs": [
+    20.8,
+    20.8,
+    34.0,
+    34.0,
+    34.0,
+    34.0
+  ],
+  "ring_arcs_amended": [
+    16.0,
+    19.0,
+    34.0,
+    34.0,
+    34.0,
+    34.0
+  ],
+  "ring_arcs_amended_note": "Cycle-family radius canon (2026-08-20, superseding the same-day fill derivation): the ring rides cycle-orbit's cited R=250 so the siblings display one radius, and the two text-walked arcs re-trim tighter on the smaller circle \u2014 the four silhouette-trimmed spans hold at 34. The specimen still validates its own spans via SELF.",
+  "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v4/diagram-agent-loop-ring-pp.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1080.0,
+    1044.0
+  ],
+  "width": 740.0
+}

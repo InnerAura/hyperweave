@@ -14,7 +14,7 @@ from __future__ import annotations
 import re as _re
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.diagram import compute_diagram_layout, effective_render_cfg
+from hyperweave.compose.diagram import compute_diagram_layout, effective_render_cfg, render_chassis
 from hyperweave.compose.diagram.chrome import VOICE_CLASSES, resolve_node_glyph
 from hyperweave.compose.diagram.contrast import apply_glyph_contrast
 from hyperweave.compose.diagram.input import coerce_diagram_input
@@ -31,7 +31,7 @@ from hyperweave.compose.surface_modes import flip_token, stamp_surface, surface_
 from hyperweave.config.loader import load_diagram_config, load_glyphs, load_surface_modes
 from hyperweave.core.errors import HwError, HwErrorCode
 from hyperweave.core.matrix import GlyphTint
-from hyperweave.core.paradigm import MatrixVoice, ParadigmDiagramConfig
+from hyperweave.core.paradigm import DiagramTopologyChassis, MatrixVoice, ParadigmDiagramConfig
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -333,7 +333,7 @@ def resolve_diagram(
         "diagram_dark_adaptive": bool(diagram_dark) and dark_branch,
         "diagram_conn_muted": str(genome.get("diagram_conn_muted", "")),
         "diagram_conn_muted_far": diagram_conn_muted_far,
-        "diagram_style": _style_params(engine),
+        "diagram_style": _style_params(engine, render_chassis(dspec, cfg)),
         # Voice CSS emits from the SAME topology-adjusted config the solver
         # measured with (chassis voice overrides, e.g. lanes' 10px descs) —
         # emitted font sizes can never drift from measured geometry.
@@ -427,14 +427,17 @@ def _mix_hex(a: str, b: str, t: float) -> str:
     return f"#{mr:02X}{mg:02X}{mb:02X}"
 
 
-def _style_params(engine: dict[str, Any]) -> dict[str, Any]:
+def _style_params(engine: dict[str, Any], ch: DiagramTopologyChassis) -> dict[str, Any]:
     """The scalar style constants the defs CSS stamps (engine-config
-    sourced; the chassis paints arrive as --dna-* roles instead)."""
+    sourced; the chassis paints arrive as --dna-* roles instead). A topology
+    chassis may CITE a heavier wire than the kit default (the bilateral wings
+    specimen's 2.5) — read through the same resolved chassis the solver used,
+    so the stroke the CSS stamps is the stroke the geometry was drawn for."""
     conn = engine["connector"]
     track = engine["track"]
     entrance = engine["entrance"]
     return {
-        "stroke_width": conn["stroke_width"],
+        "stroke_width": ch.wire_w or conn["stroke_width"],
         "dash": conn["dash"],
         "linecap": conn["linecap"],
         "ants_dur": conn["ants_dur"],
@@ -457,6 +460,10 @@ def _style_params(engine: dict[str, Any]) -> dict[str, Any]:
         "return_drift_dash": track["return_drift_dash"],
         "return_drift_dur": track["return_drift_dur"],
         "return_drift_offset": track["return_drift_offset"],
+        "ring_dash": track["ring_dash"],
+        "ring_dur": track["ring_dur"],
+        "ring_offset_to": track["ring_offset_to"],
+        "ring_stroke_width": track["ring_stroke_width"],
         "legend_dash": track.get("legend_dash", "5 5"),
         "fade_dur": entrance["fade_dur"],
         "fade_ease": entrance["fade_ease"],
@@ -541,6 +548,8 @@ def _layout_animates(layout: DiagramLayout) -> bool:
     for c in layout.connectors:
         if c.track == "dash-march" and not c.inert:
             return True
+        if c.track == "ring-drift" and not c.inert:
+            return True
         if c.track == "dash-drift":
             return True
     return False
@@ -574,6 +583,8 @@ def _motion_vocabulary(layout: DiagramLayout) -> str:
             names.append(word)
         if c.track == "dash-march" and "dash-march" not in names:
             names.append("dash-march")
+        if c.track == "ring-drift" and "continuous-dash-drift-ring" not in names:
+            names.append("continuous-dash-drift-ring")
     return " ".join(names) if names else "static"
 
 

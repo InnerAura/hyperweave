@@ -1,0 +1,29 @@
+{
+  "topology": "fanin",
+  "title": "Four Inputs, One Artifact",
+  "subtitle": "the composition formula meets at a single mouth",
+  "notes": "four inputs",
+  "nodes": [
+    {
+      "label": "FRAME",
+      "desc": "matrix \u00b7 diagram \u00b7 card"
+    },
+    {
+      "label": "GENOME",
+      "desc": "primer \u00b7 brutalist \u00b7 chrome"
+    },
+    {
+      "label": "DATA",
+      "desc": "live connectors"
+    },
+    {
+      "label": "PARADIGM",
+      "desc": "template variant"
+    },
+    {
+      "label": "ARTIFACT",
+      "desc": "one self-contained SVG",
+      "role": "hero"
+    }
+  ]
+}

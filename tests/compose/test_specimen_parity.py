@@ -1,6 +1,6 @@
 """Specimen-parity harness: the engine must recreate the diagrams-v3 prototypes.
 
-Ground truth: fixtures extracted from ``v04/alpha/v04a6/diagrams-v3/**`` by
+Ground truth: fixtures extracted from ``v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/**`` by
 ``scripts/extract_specimen_fixtures.py``. Laws live in ``parity/laws.py`` as
 engine-agnostic (law, tolerance, evidence) records.
 
@@ -45,7 +45,7 @@ PARITY_NAMES: tuple[str, ...] = tuple(
 )
 
 TWIN_VARIANTS = ("porcelain", "carbon", "dusk", "cream", "noir", "space", "anvil", "petrol")
-_TWIN_PRESET = "frontier-serving"  # glyph-rich; same choice as the kit harness
+_TWIN_PRESET = "dag-providers"  # glyph-rich; same choice as the kit harness
 
 
 def _fixture(name: str) -> dict[str, object]:
@@ -89,10 +89,12 @@ def test_specimen_satisfies_own_laws(name: str) -> None:
 
 
 def _expected_render_w(preset: str, vb_w: float) -> int | None:
-    """The constant-scale law's expected render width (content-fit amendment),
-    derived from the preset's own resolved chassis — the independent source
-    the render must agree with: round(vb_w * display_w / max(chassis width,
-    vb_w)); a chassis pinning both display dims is a fixed banner."""
+    """The uniform-page-presence law's expected render width, derived from
+    the preset's own resolved chassis — the independent source the render
+    must agree with: min(display target, canvas x house scale) (owner
+    rulings 2026-08-20 — every diagram renders at the same size and feel;
+    element scale never exceeds the 740/920 house projection). A chassis
+    pinning both display dims is a fixed banner."""
     bs = resolve_bundled_spec("diagram", preset)
     cs = ComposeSpec(
         type="diagram", genome_id="primer", variant="porcelain", ground="opaque", palette="fixed", diagram=bs.value
@@ -107,9 +109,10 @@ def _expected_render_w(preset: str, vb_w: float) -> int | None:
     ch = apply_spec_chassis(ch, normalized.spec.chassis)
     if ch.display_w and ch.display_h:
         return int(ch.display_w)
-    target = float(ch.display_w or load_diagram_config().get("display_w_default", 740))
-    reference = float(ch.width) if ch.width else vb_w
-    return round(vb_w * (target / max(reference, vb_w)))
+    engine = load_diagram_config()
+    target = float(ch.display_w or engine.get("display_w_default", 740))
+    scale_max = float(engine.get("display_scale_max", 1.0))
+    return round(vb_w * min(scale_max, target / vb_w))
 
 
 @pytest.mark.parametrize("name", PARITY_NAMES)
@@ -158,9 +161,10 @@ def _geometry_signature(facts: Facts) -> tuple[tuple[object, ...], ...]:
 @pytest.mark.parametrize(
     "preset",
     [
-        pytest.param("model-router", id="card"),
-        pytest.param("config-radial-circles", id="circle-hero"),
-        pytest.param("hub-panel-orchestrator", id="containerless-text"),
+        pytest.param("fanout-horizontal", id="card"),
+        pytest.param("fanout-radial", id="circle-hero"),
+        pytest.param("hub-text", id="containerless-text"),
+        pytest.param("hub-bilateral", id="card+label"),
     ],
 )
 def test_geometry_is_face_invariant(preset: str) -> None:
@@ -168,12 +172,15 @@ def test_geometry_is_face_invariant(preset: str) -> None:
     rects, circles, and paths — geometry is solved before chroma (the
     kit's own architectural order), so a light/dark substrate swap may
     repaint fill/stroke/class but must never move a coordinate. Spans
-    three anatomies so a substrate fork hiding in any one of them would
-    surface: model-router (card), config-radial-circles (circle hero — the
-    hub topology's own default anatomy), hub-panel-orchestrator
+    four anatomies so a substrate fork hiding in any one of them would
+    surface: model-router (card), config-radial-circles (circle hero on a
+    radial fanout — glyph-circle geometry), delegation-panel-compass
     (containerless text, the anatomy with no rect at all besides its
-    hero). ``noir`` is the porcelain genome's dark variant
-    (substrate_kind: dark in primer.json's variant_overrides)."""
+    hero), and hub-bilateral (card+label, whose partition compiles an
+    INK tone — the one anatomy whose own dress reads a face-swapped token,
+    so a coordinate leaking out of that derivation would land here).
+    ``noir`` is the porcelain genome's dark variant (substrate_kind: dark
+    in primer.json's variant_overrides)."""
     light = parse_svg(_render(preset, variant="porcelain"))
     dark = parse_svg(_render(preset, variant="noir"))
     assert _geometry_signature(light) == _geometry_signature(dark), (
@@ -213,7 +220,7 @@ def test_axial_sole_satellite_spokes_stay_straight() -> None:
     300,560 556,506.0 556,426.0``, etc.). Both laws must hold at once: a
     routing fix that straightens the sole spoke by disabling curvature
     outright would silently bow the rank the other way."""
-    hub_spokes = _spine_wires(parse_svg(_render("hub")))
+    hub_spokes = _spine_wires(parse_svg(_render("hub-zones")))
     assert len(hub_spokes) == 2, f"expected the sole N and S spokes (edit, read); found {len(hub_spokes)}"
     for p in hub_spokes:
         assert "C" not in p.d, f"sole N/S satellite spoke curved instead of straight: {p.d}"
@@ -222,8 +229,26 @@ def test_axial_sole_satellite_spokes_stay_straight() -> None:
         (x0, _y0), (x1, _y1) = ep
         assert abs(x0 - x1) < 0.5, f"sole N/S satellite spoke slanted off the spine (Δx={x0 - x1:.1f}): {p.d}"
 
-    s_rank = _spine_wires(parse_svg(_render("verb-reads")))
+    # The multi-member S rank roots on the hero's BOTTOM FACE, one pitched
+    # port per spoke (the system-wide gather vocabulary; pp-radial's own
+    # 42.7 row) — spine-exactness only ever held for sole members, so the
+    # rank detector reads the face, not the spine.
+    verb_facts = parse_svg(_render("hub-verbs"))
+    verb_hero = next(r for r in verb_facts.rects if "hero" in r.cls)
+    s_rank = []
+    for p in verb_facts.paths:
+        if "branch" not in p.cls:
+            continue
+        ep = p.endpoints()
+        if ep is None:
+            continue
+        for x, y in ep:
+            if abs(y - (verb_hero.y + verb_hero.h)) < 1.0 and verb_hero.x <= x <= verb_hero.x + verb_hero.w:
+                s_rank.append((p, x))
+                break
     assert len(s_rank) == 4, f"expected verb-reads' 4-wide S rank; found {len(s_rank)}"
-    assert all("C" in p.d for p in s_rank), (
+    assert all("C" in p.d for p, _ in s_rank), (
         "verb-reads' multi-member S rank must stay curved (pp-radial.svg's own read row curves)"
     )
+    roots = sorted(x for _, x in s_rank)
+    assert len(set(roots)) == 4, f"S-rank roots collapsed coincident (the retired forced mouth): {roots}"

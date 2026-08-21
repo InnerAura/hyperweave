@@ -1346,7 +1346,9 @@ class DiagramTopologyChassis(FrozenModel):
     """Chipless depart-trunk length: when NO fan edge carries a chip, the trunk
     shrinks to this shorter departure gesture so a bare wire doesn't dangle
     (Eli: "when the edge chip isnt there, the long line still remains and looks
-    awkward"). 0 = fall back to ``depart_trunk`` (no cargo rule)."""
+    awkward"). Default 0 = FLUSH at the mouth — the spread leaves the face
+    directly and the knot seats ON it (fan and dag departs alike);
+    ``depart_trunk`` stays the cargo case's citation floor."""
     hero_min_w: float = 0.0
     """Hero WIDTH floor (0 = content-carried). The specimens split: some
     crowns enlarge beyond their content (convergence's 280 nucleus),
@@ -1373,6 +1375,17 @@ class DiagramTopologyChassis(FrozenModel):
     The obi-engine specimen declares no desc letter-spacing where the kit tracks
     0.01em — on a 37-char desc that is the 3.7px between fitting the
     specimen's envelope and wrapping."""
+    wire_w: float = 0.0
+    """Per-topology connector STROKE width override (0 = the engine
+    ``connector.stroke_width``, 1.5). The bilateral-wings specimen draws its
+    fan at 2.5 — a heavier weight is that composition's own dress, never a
+    global retune (forty presets ride the engine default). Same seam law as
+    ``desc_voice_size``: one resolver, so measurement and CSS agree."""
+    marker_size: float = 0.0
+    marker_half: float = 0.0
+    """Per-topology arrowhead geometry override (0 = the engine
+    ``connector.marker_size`` 8 / ``marker_half`` 0.45). The bilateral-wings
+    specimen's heads measure 13 long by 10 wide — 13 with half 5/13."""
     width_policy: str = "free"
     channel_run_min: float = 0.0
     """Wire-major compositions (K3): when EVERY edge is a reciprocal pair,
@@ -1393,6 +1406,15 @@ class DiagramTopologyChassis(FrozenModel):
     """Pipeline connector gap / tree leaf gap / stack layer gap."""
     pitch: float = 64.0
     """Fan/convergence column pitch; bilateral side pitch."""
+    pitch_pair: float = 0.0
+    """Bilateral pitch when a flank holds exactly TWO members (the twin
+    bilateral prototypes spread a pair wider than the three-row rhythm so
+    the flank fills its share of the constant family frame). 0 = no
+    override; the family pitch applies at every count."""
+    margin_y: float = 0.0
+    """Chassis vertical margin (the region stack's top/bottom rhythm).
+    0 falls back to the engine rhythm min(margin_x, 24) — the finish
+    seam already reads this field per-chassis."""
     hero_ratio: float = 1.175
     """Pipeline hero width as a multiple of the solved unit width."""
     card_min_w: float = 120.0
@@ -1407,9 +1429,18 @@ class DiagramTopologyChassis(FrozenModel):
     ring_gap: float = 80.0
     """Radial perimeter spacing driving R growth past the base radius."""
     src_gap: float = 40.0
-    """Upward fan: gap between the last dest row and the source card."""
-    row_cap: int = 3
+    """Upward fan: air between the dest row's bottom and the source's top —
+    the vertical room the fan's S-curves rise through."""
     row_gap: float = 54.0
+    crown_register: bool = False
+    """card+label's HERO register (the crown: identity row over a centred
+    display stack) belongs to CENTER seats — a hub nucleus, a fan source, a
+    convergence mouth, the flywheel axis — where one plate anchors the whole
+    composition and its satellites are built to carry the 28px display
+    stack. A RANKED hero (tree root, dag rank, pipeline stage) keeps the
+    STANDARD register with hero dress (ring, hero chassis floors): the
+    display stack beside ordinary sibling rows dwarfs them — the
+    disproportionate-tree defect."""
     op_r: float = 11.0
     """Stack inter-layer operator ring radius (stack)."""
     op_cross: float = 4.0
@@ -1535,6 +1566,7 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
             footer_h=44.0,
         ),
         "fanout-horizontal": DiagramTopologyChassis(
+            crown_register=True,
             width_policy="aligned",  # dest column shares one solved width (group-uniform)
             width=760,
             display_w=740,
@@ -1546,6 +1578,8 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
             hero=n(w=210.0, h=96.0, rx=16.0),
         ),
         "fanout-bilateral": DiagramTopologyChassis(
+            crown_register=True,
+            hub_clearance=114.0,
             width_policy="aligned",  # both dest columns share one solved width
             width=820,
             display_w=760,
@@ -1556,6 +1590,7 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
             hero=n(w=200.0, h=96.0, rx=16.0),
         ),
         "fanout-upward": DiagramTopologyChassis(
+            crown_register=True,
             width_policy="aligned",  # dest row shares one solved width
             width=560,
             display_w=545,
@@ -1565,13 +1600,18 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
             margin_x=20.0,
             footer_h=0.0,
             bottom_m=20.0,
-            row_cap=3,
             row_gap=54.0,
-            src_gap=40.0,
+            # The balanced reference composition (owner-supplied,
+            # 2026-08-20) holds 144px of rise between its dest row and the
+            # crown — the room the vertical S-curves need to read as a fan
+            # rather than a flat sweep (the retired 40 was tuned for the
+            # row-cap pyramid's stacked rows).
+            src_gap=140.0,
             node=n(w=150.0, h=56.0, dot_dy=24.0, label_dy=28.0, desc_dy=44.0),
             hero=n(w=220.0, h=80.0, rx=16.0),
         ),
         "fanout-radial": DiagramTopologyChassis(
+            crown_register=True,
             aspect="square",
             width_policy="aligned",  # ring card dests share one solved width
             width=600,
@@ -1586,7 +1626,8 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
             hero=n(w=184.0, h=80.0, rx=16.0),
             hero_circle_r=44.0,
         ),
-        "convergence": DiagramTopologyChassis(
+        "fanin": DiagramTopologyChassis(
+            crown_register=True,
             width_policy="aligned",  # the arrivals column shares one solved width
             width=820,
             display_w=760,
@@ -1597,7 +1638,8 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
             node=n(w=190.0, h=64.0),
             hero=n(w=190.0, h=100.0, rx=16.0),
         ),
-        "flywheel": DiagramTopologyChassis(
+        "cycle-orbit": DiagramTopologyChassis(
+            crown_register=True,
             aspect="square",
             width=600,
             height=600,
@@ -1609,7 +1651,7 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
             hero=n(w=132.0, h=46.0, rx=16.0),
             circle_r=26.0,
         ),
-        "stack": DiagramTopologyChassis(
+        "pipeline-vertical": DiagramTopologyChassis(
             width_policy="aligned",
             aspect="portrait",
             width=480,
@@ -1707,6 +1749,7 @@ def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
         # a later slice; the chassis is here so the union-chassis contract and
         # the "no solver registered" guard have their geometry.
         "hub": DiagramTopologyChassis(
+            crown_register=True,
             aspect="square",
             width=640,
             display_w=512,
@@ -1813,6 +1856,24 @@ class ParadigmDiagramConfig(FrozenModel):
     hero_name_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=15, weight=700))
     hero_desc_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=10, weight=500))
     muted_name_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=14, weight=400))
+    card_label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=500, tracking_em=0.14))
+    """card+label identity line — small tracked mono, uppercased, sitting ABOVE
+    its value stack. The inverse weighting of ``label_voice``: the name recedes
+    to a kicker so the values carry the card."""
+    card_value_voice: MatrixVoice = Field(
+        default_factory=lambda: MatrixVoice(family="Inter", size=12.5, weight=600, tracking_em=-0.01)
+    )
+    """card+label value line — the display-face payload the anatomy exists to
+    front. Heavier and larger than ``desc_voice``, which it replaces on this
+    anatomy."""
+    hero_label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=11.0, weight=500, tracking_em=0.06))
+    """The crown's identity ROW (card+label hero register): mono id text beside
+    the identity mark, accent-toned."""
+    hero_value_voice: MatrixVoice = Field(
+        default_factory=lambda: MatrixVoice(family="Inter", size=28.0, weight=700, tracking_em=-0.02)
+    )
+    """The crown's display stack (card+label hero register) — the one voice in
+    the kit large enough to read as a title inside a card."""
     op_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(family="Inter", size=13, weight=600))
     edge_label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.5, weight=400))
     """Rendered edge labels (sequence, state-machine) are user content that

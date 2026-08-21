@@ -1,0 +1,71 @@
+{
+  "aspect": 1.571,
+  "beam": {
+    "clock": "4.236s",
+    "windows": [
+      [
+        0.02,
+        0.38
+      ],
+      [
+        0.42,
+        0.78
+      ]
+    ]
+  },
+  "caption_text": "two intake surfaces west, two delivery surfaces east \u2014 one engine between",
+  "cards": {
+    "hero_h": 88.0,
+    "hero_w": 88.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 0,
+    "card_rx": 0.0,
+    "cards": 0,
+    "chips": 0,
+    "coins": 5,
+    "desc_lines": 0,
+    "drift_edges": 0,
+    "gather_knots": 0,
+    "glyph_marks": 5,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "shell_marks": 0,
+    "solid_edges": 8,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "chip_stub_min": null,
+  "edge_set": {
+    "context->engine": "",
+    "engine->payload": "",
+    "engine->svg": "",
+    "spec->engine": ""
+  },
+  "height": null,
+  "hero_stack": {
+    "name_rows": 1,
+    "sub_rows": 1
+  },
+  "occupancy": 0.379,
+  "plate": {
+    "caption_pad": 31.0,
+    "caption_y": 440.0,
+    "content_bottom": 356.0,
+    "content_top": 136.0,
+    "zone_y": 44.0
+  },
+  "port_tolerance": 1.5,
+  "source": "v04/v040/v042/diagram-prototypes/fanout-expressions/bilateral-symmetric-2x2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    740.0,
+    471.0
+  ],
+  "width": null
+}

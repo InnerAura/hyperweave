@@ -17,7 +17,7 @@ def test_matrix_spec_resolves_to_connector_data() -> None:
 
 def test_diagram_spec_resolves_to_diagram_ir() -> None:
     """A diagram bundled spec fills the diagram IR field."""
-    resolved = resolve_bundled_spec("diagram", "rag-pipeline")
+    resolved = resolve_bundled_spec("diagram", "pipeline-head")
     assert resolved.field == "diagram"
     assert "topology" in resolved.value
 

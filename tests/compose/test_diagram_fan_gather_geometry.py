@@ -4,7 +4,7 @@ convergence join-trunk run law.
 Pins four related fixes to the fan solvers (fanout-horizontal, bilateral,
 plus the shared ``_place``/``knot_collapse`` machinery every fan direction
 rides): an unlabeled gather departs FLUSH off the source's face
-(``v04/alpha/v04a6/primer-diagrams/primer-fanout-refined.html``) instead of a
+(``v04/specimens/artifacts/diagrams/diagrams-v04a6/primer-diagrams/primer-fanout-refined.html``) instead of a
 floating 26px knot; a flush fan's beam runs its doors as one shared window
 instead of N sequential stages; a bilateral fan's beams stage as two side
 waves (west converges, a beat at the hub, east emerges) instead of firing
@@ -175,19 +175,22 @@ def test_bilateral_beams_stage_as_two_side_waves() -> None:
     assert len(windows) == 2, windows
 
 
-def test_bilateral_beam_windows_match_the_derived_relay_shape() -> None:
-    """The bilateral family's two windows are ``relay``'s own n=2 shape
-    (lead/gap/rest, no bilateral specimen exists to cite a different span),
-    capped at ``relay_span_cap`` (.30 — the wider of the two beam specimens'
-    own citations) so a 2-stage wave gets the same ~1.5s duration a trunk/
-    branch stage gets — west 0.02-0.32, east 0.38-0.68 on the 5.236s clock —
-    rather than the raw by-count division (.42, ~2.2s) ballooning past what
-    either specimen ever licensed."""
+def test_bilateral_beam_windows_match_the_twin_prototype_citation() -> None:
+    """The bilateral family's two windows are the twin bilateral prototypes'
+    own choreography — west 0.02-0.38, east 0.42-0.78 on the family's
+    4.236s clock (the explicit span citation, like relay_branch's). The
+    wall-clock window .36 x 4.236 = 1.53s sits inside the ~1.5s band
+    ``relay_span_cap`` protects, so the velocity law holds in time even
+    though the citation bypasses the derive-and-cap path."""
     bcfg = ENGINE.get("beam") or {}
-    from hyperweave.compose.diagram.motion import beam_windows
+    from hyperweave.compose.diagram.motion import beam_family_cfg, beam_windows
 
     windows = beam_windows(2, bcfg, family="bilateral")
-    assert windows == [(0.02, 0.32), (0.38, 0.68)]
+    assert windows == [(0.02, 0.38), (0.42, 0.78)]
+    fam = beam_family_cfg(bcfg, "bilateral")
+    assert float(fam["dur"]) == 4.236
+    span = windows[0][1] - windows[0][0]
+    assert span * float(fam["dur"]) == pytest.approx(1.525, abs=0.05)
 
 
 # ── Defect 4: fan hero vertical slack ────────────────────────────────────────
@@ -311,7 +314,7 @@ def test_markless_hero_stays_centered_on_the_member_column() -> None:
 def _convergence_layout(
     *, nodes: list[dict[str, Any]], edges: list[dict[str, Any]], chassis: dict[str, Any] | None = None
 ) -> Any:
-    kw: dict[str, Any] = dict(topology="convergence", title="T", node_style="card+glyph", nodes=nodes, edges=edges)
+    kw: dict[str, Any] = dict(topology="fanin", title="T", node_style="card+glyph", nodes=nodes, edges=edges)
     if chassis:
         kw["chassis"] = chassis
     return _layout(**kw)

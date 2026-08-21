@@ -55,7 +55,7 @@ class TestByteDeterminism:
 
         a1, a2 = uid(compose_fixture("pipeline")), uid(compose_fixture("pipeline"))
         b = uid(compose_fixture("pipeline", variant="noir"))
-        c = uid(compose_fixture("convergence"))
+        c = uid(compose_fixture("fanin"))
         assert a1 == a2
         assert len({a1, b, c}) == 3
 
@@ -131,7 +131,7 @@ class TestMotionAnatomy:
         assert m, "marching keyframes missing or unprefixed"
 
     def test_every_mpath_target_exists(self) -> None:
-        svg = compose_fixture("convergence")
+        svg = compose_fixture("fanin")
         for ref in re.findall(r'<mpath href="#([^"]+)"', svg):
             assert f'id="{ref}"' in svg, ref
 
@@ -156,7 +156,20 @@ class TestMotionAnatomy:
         # across faces by a late class override.
         svg = compose_fixture("pipeline")
         uid = re.search(r'id="(hw-[0-9a-f]{8})-lift"', svg).group(1)  # type: ignore[union-attr]
-        material = ("cardbg", "herobg", "mcardbg", "hname", "chipbg", "connmuted", "connmutedf", "warn", "crit")
+        # hval is hname's twin: the crown's display stack in the card+label
+        # register IS its name, so it re-declares with the same hero ink.
+        material = (
+            "cardbg",
+            "herobg",
+            "mcardbg",
+            "hname",
+            "hval",
+            "chipbg",
+            "connmuted",
+            "connmutedf",
+            "warn",
+            "crit",
+        )
         allowed = {f"{uid}-{cls}" for cls in material}
         for m in re.finditer(r"@media[^{]*prefers-color-scheme[^{]*\{", svg):
             depth, i = 1, m.end()
@@ -222,7 +235,7 @@ class TestChromatic:
         from hyperweave.config.loader import load_genomes
 
         genome = load_genomes()["primer"]
-        d = resolve_diagram_preset("obi-engine")
+        d = resolve_diagram_preset("lanes")
         porc_accent = genome.variant_overrides["porcelain"]["accent"]  # cobalt #1D4ED8
         cream_accent = genome.variant_overrides["cream"]["accent"]  # warm brown #2C2014
         light = compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=d)).svg
@@ -265,7 +278,7 @@ class TestDrawOrderAndFurniture:
     def test_stack_operators_render(self) -> None:
         # The operator is drawn geometry (a quiet ring + cross, stack),
         # never a floating multiply-sign character — three marks between the 4 layers.
-        svg = compose_fixture("stack")
+        svg = compose_fixture("pipeline-vertical")
         assert svg.count('r="11.0"') == 3
         assert svg.count('-cardbg"/><path d="M ') == 3
 
@@ -297,7 +310,7 @@ class TestDrawOrderAndFurniture:
                 type="diagram",
                 genome_id="primer",
                 variant="porcelain",
-                diagram=resolve_diagram_preset("gateway"),
+                diagram=resolve_diagram_preset("pipeline-row"),
             )
         ).svg
         # Two reciprocal lanes per pair: four connector paths.

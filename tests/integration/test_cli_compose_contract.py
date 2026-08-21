@@ -57,8 +57,8 @@ def test_cli_compose_strip_stdout_matches_direct_engine_compose() -> None:
 
 
 def test_cli_compose_diagram_preset_matches_direct_engine_compose() -> None:
-    bundled = resolve_bundled_spec("diagram", "rag-pipeline")
-    cli_svg = _cli_svg(["compose", "diagram", "-g", "primer", "--spec-file", "rag-pipeline"])
+    bundled = resolve_bundled_spec("diagram", "pipeline-head")
+    cli_svg = _cli_svg(["compose", "diagram", "-g", "primer", "--spec-file", "pipeline-head"])
     direct = compose(ComposeSpec(type="diagram", genome_id="primer", diagram=bundled.value)).svg
     assert _normalize(cli_svg) == _normalize(direct)
 
@@ -82,7 +82,7 @@ def test_cli_compose_png_writes_the_projected_bytes(tmp_path: Path) -> None:
 def test_cli_compose_faces_pair_matches_direct_face_bakes(tmp_path: Path) -> None:
     from hyperweave.core.surface_spec import expand_surface_preset
 
-    bundled = resolve_bundled_spec("diagram", "rag-pipeline")
+    bundled = resolve_bundled_spec("diagram", "pipeline-head")
     twin = expand_surface_preset("twin", "", "")
     out = tmp_path / "d.svg"
     result = runner.invoke(
@@ -93,7 +93,7 @@ def test_cli_compose_faces_pair_matches_direct_face_bakes(tmp_path: Path) -> Non
             "-g",
             "primer",
             "--spec-file",
-            "rag-pipeline",
+            "pipeline-head",
             "--surface",
             "twin",
             "--faces",
@@ -199,7 +199,7 @@ def test_cli_compose_faces_and_respond_are_exclusive(tmp_path: Path) -> None:
             "-g",
             "primer",
             "--spec-file",
-            "rag-pipeline",
+            "pipeline-head",
             "--surface",
             "twin",
             "--faces",

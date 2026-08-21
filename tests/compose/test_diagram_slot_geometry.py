@@ -110,7 +110,7 @@ def _assert_close(label: str, got: dict[str, float], want: dict[str, Any], keys:
 def test_fanout_hero_matches_the_sheet() -> None:
     """model-router's hero carries the sheet's OWN content verbatim
     (name + 2 authored desc lines) — the router hero family, 206x104 rx16."""
-    svg = _render("model-router")
+    svg = _render("fanout-horizontal")
     got = _card_geometry(svg, rx=16, name_cls="hname", desc_cls="hdesc")
     want = _FIXTURE["fanout-hero"]
     _assert_close(
@@ -128,7 +128,7 @@ def test_fanout_hero_matches_the_sheet() -> None:
 def test_fanout_satellite_matches_the_sheet() -> None:
     """model-router's first provider door (Claude): name + 1 desc line, the
     uniform 165x76 rx13 satellite family."""
-    svg = _render("model-router")
+    svg = _render("fanout-horizontal")
     # The satellite rect shares rx=13 with nothing else in this preset.
     got = _card_geometry(svg, rx=13, name_cls="name", desc_cls="ndesc")
     want = _FIXTURE["fanout-satellite"]
@@ -156,7 +156,7 @@ def test_axial_nucleus_matches_its_hand_crown() -> None:
     the 24 slot), and the one-line desc renders WHOLE — no wrap, no
     ellipsis (its sweep-caught overflow was the hero desc budget missing
     the text-column lead)."""
-    svg = _render("axial")
+    svg = _render("hub-axial")
     got = _card_geometry(svg, rx=16, name_cls="hname", desc_cls="hdesc")
     # Snug-width ruling 2026-07-14: the 264 hand crown is a CEILING; the
     # crown solves to its own one-line payload ink (234) at the cited 100 h.
@@ -176,7 +176,7 @@ def test_dag_card_matches_the_sheet() -> None:
     width, cited at the preset level) floors every card at least 8px wider
     than this one specific 150-wide tile — an intentional per-preset choice
     unrelated to the vertical citation this test grades."""
-    svg = _render("gateway-balanced")
+    svg = _render("dag-balanced")
     got = _card_geometry(svg, rx=13, name_cls="name", desc_cls="ndesc")
     want = _FIXTURE["dag-card"]
     _assert_close("dag-card (vertical)", got, want, ["name_baseline", "name_desc_gap", "glyph_inset_y"], VERTICAL_TOL)
@@ -190,7 +190,7 @@ def test_state_machine_card_matches_the_sheet() -> None:
     baseline 27, name->desc gap 18) against pp-state-machine.svg's own
     'QUEUED' card, so either hand file grades the same citation. Width is
     not graded, same rationale as the dag-card test above."""
-    svg = _render("agent-task-lifecycle")
+    svg = _render("sm-recursive")
     got = _card_geometry(svg, rx=13, name_cls="name", desc_cls="ndesc")
     want = _FIXTURE["state-machine-card"]
     _assert_close(

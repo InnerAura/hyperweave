@@ -249,7 +249,7 @@ def test_gateway_balanced_placements_reproduce() -> None:
     law by hand — the funnel apex dead on the middle tier's row, the
     telemetry sink riding its rail below the grid — so the pass reproduces
     it as a no-op."""
-    bs = resolve_bundled_spec("diagram", "gateway-balanced")
+    bs = resolve_bundled_spec("diagram", "dag-balanced")
     rows = _rows(_layout(dict(bs.value)))
     assert abs(rows["cache"] - rows["deep"]) < 0.5, "funnel apex off the middle tier"
     midpoint = (rows["fast"] + rows["vision"]) / 2

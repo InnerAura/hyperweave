@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import itertools
 import math
+import re
 
 import pytest
 
@@ -655,6 +656,47 @@ class TestLanesAutoLegend:
         assert len(legends) == 1  # only the caller's, auto suppressed
         assert [e.text.text for e in legends[0].entries] == ["MY LEGEND"]
 
+    def test_masthead_legend_row_earns_its_band(self) -> None:
+        """A masthead-row legend with NO zone row to share reserves a real
+        chrome band: its top holds at least the vertical-margin rhythm of
+        air, never the (mv - h)/2 ≈ 4px the margin-squatting fallback gave
+        it (the crammed-key defect)."""
+        lay = _obi_lanes()
+        legends = [a for a in lay.annotations if a.kind == "legend"]  # type: ignore[attr-defined]
+        assert len(legends) == 1
+        box = legends[0].box
+        assert box is not None
+        assert box.y >= 20.0, f"legend rides the top margin (y={box.y:g})"
+
+    def test_legend_swatch_marks_share_their_row_center(self) -> None:
+        """Every legend swatch — circle field OR precomputed drawn path
+        (diamond/square) — centers on the same row as its text. A displaced
+        row used to move the circles and text while the drawn paths stayed
+        at the old seat (the misaligned-key defect: the store diamond 8px
+        below its own label)."""
+        lay = solve(
+            topology="lanes",
+            lanes=["ingest", "serve"],
+            nodes=[
+                {"id": "q", "label": "queue", "category": "ingest", "morphology": "store"},
+                {"id": "p", "label": "parser", "category": "ingest", "morphology": "engine"},
+                {"id": "a2", "label": "api", "category": "serve", "morphology": "surface"},
+                {"id": "c2", "label": "cache", "category": "serve", "morphology": "store"},
+            ],
+            edges=[{"source": "q", "target": "p"}, {"source": "p", "target": "a2"}],
+        )
+        legends = [a for a in lay.annotations if a.kind == "legend"]  # type: ignore[attr-defined]
+        assert len(legends) == 1
+        rows = set()
+        for e in legends[0].entries:
+            rows.add(round(e.swatch_y, 1))
+            if e.swatch_path:
+                ys = [float(v) for v in re.findall(r",(-?\d+\.?\d*)", e.swatch_path)]
+                assert abs((min(ys) + max(ys)) / 2 - e.swatch_y) < 0.51, (
+                    f"drawn swatch path centred at {(min(ys) + max(ys)) / 2:g}, field says {e.swatch_y:g}"
+                )
+        assert len(rows) == 1, f"swatches ride different rows: {sorted(rows)}"
+
     def test_category_shares_accent_via_assign_accents(self) -> None:
         # The consolidated solver.py:assign_accents category-groups: two nodes
         # in the same category share a slot (b and d are both Transform).
@@ -722,7 +764,7 @@ class TestLanesAccentConsolidation:
         from hyperweave.compose.bundled_specs import resolve_bundled_spec
         from hyperweave.compose.diagram.solver import assign_accents
 
-        spec = resolve_auto_roles(DiagramSpec.model_validate(resolve_bundled_spec("diagram", "obi-engine").value))
+        spec = resolve_auto_roles(DiagramSpec.model_validate(resolve_bundled_spec("diagram", "lanes").value))
         order: list[str] = []
         for n in spec.nodes:
             if n.category not in order:
@@ -737,7 +779,7 @@ class TestLanesAccentConsolidation:
         # timestamps, so this is exact (unlike full-SVG bytes).
         from hyperweave.compose.bundled_specs import resolve_bundled_spec
 
-        kw = resolve_bundled_spec("diagram", "obi-engine").value
+        kw = resolve_bundled_spec("diagram", "lanes").value
         assert solve(**kw) == solve(**kw)
 
     def test_node_accent_override_survives_consolidation(self) -> None:
@@ -795,7 +837,7 @@ class TestAlignedGroupContentEdge:
         # slack: near-identical cards aligned differently.
         cfg = load_paradigms()["primer"].diagram
         lay = solve(
-            topology="convergence",
+            topology="fanin",
             title="T",
             nodes=[
                 {"id": "a", "label": "alpha", "desc": "one very wide descriptive line of text"},
@@ -947,7 +989,7 @@ class TestAxialHeroProminence:
         # hwz/1', the family diamond) solves the SAME width in every
         # topology — verb-reads' and hub's crowns are the byte-same box
         # width by construction now.
-        lay = self._preset_layout("verb-reads")
+        lay = self._preset_layout("hub-verbs")
         hero = next(n for n in lay.nodes if n.role == "hero")  # type: ignore[attr-defined]
         assert hero.box.w == 194.0, hero.box.w
         assert hero.box.h >= 92.0, hero.box.h  # cited crown height floor holds
@@ -968,7 +1010,7 @@ class TestAxialHeroProminence:
         from hyperweave.core.paradigm import DiagramTopologyChassis as _DTC
 
         paradigm = load_paradigms()["primer"].diagram
-        for preset in ("verb-reads", "axial", "hub"):
+        for preset in ("hub-verbs", "hub-axial", "hub-zones"):
             spec_d = dict(resolve_bundled_spec("diagram", preset).value)
             cs = _CS(type="diagram", genome_id="primer", variant="porcelain", ground="bare", diagram=spec_d)
             nspec = _cdi(cs.connector_data, cs).spec
@@ -1017,7 +1059,7 @@ class TestAxialHeroProminence:
         # Regression guard for the audited-correct behavior: stacked same-axis
         # satellites share one x and one width (the golden documents/surfaces
         # pair), while different axes keep their own solved widths.
-        lay = self._preset_layout("axial")
+        lay = self._preset_layout("hub-axial")
         docs = next(n for n in lay.nodes if n.node_id == "documents")  # type: ignore[attr-defined]
         surf = next(n for n in lay.nodes if n.node_id == "surfaces")  # type: ignore[attr-defined]
         assert math.isclose(docs.box.x, surf.box.x, abs_tol=0.01)
@@ -1039,7 +1081,7 @@ class TestLanesDescContainment:
         from hyperweave.compose.diagram.solver import effective_render_cfg
         from hyperweave.core.diagram import DiagramSpec as _DS
 
-        spec_d = dict(resolve_bundled_spec("diagram", "obi-engine").value)
+        spec_d = dict(resolve_bundled_spec("diagram", "lanes").value)
         lay = solve(**spec_d)
         cfg = effective_render_cfg(_rar(_DS.model_validate(spec_d)), load_paradigms()["primer"].diagram)
         checked = 0
@@ -1120,3 +1162,63 @@ def test_hub_hero_text_stays_inside_the_padded_interior() -> None:
         ink = measure_voice(run.text, voice_for(cfg, run.cls))
         assert run.x >= hero.box.x + pad - 0.5, (run.text, run.x)
         assert run.x + ink <= hero.box.x + hero.box.w - pad + 0.5, (run.text, run.x + ink, hero.box.w)
+
+
+class TestAxialGatherVocabulary:
+    """Mouth-vs-ports is the system-wide AUTHORED gather vocabulary — the
+    axial hub speaks it like the dag join and the fanout launch/arrival.
+    The hero's ``gather: true`` bundles a multi-member fan to one face
+    point (both verb-algebra sheets' E pairs leave a single boundary
+    point); the DEFAULT pitches one port per spoke along the shared face
+    (pp-radial's own row: 42.7 pitch, centered, ordered by member seat).
+    The drift this pins against: the mouth was baked as solver structure
+    and hub-verbs' four read spokes rendered coincident while its own
+    sheet pitches four distinct roots."""
+
+    @staticmethod
+    def _spec(preset: str) -> dict[str, object]:
+        import copy
+
+        from hyperweave.compose.bundled_specs import resolve_bundled_spec
+
+        return copy.deepcopy(resolve_bundled_spec("diagram", preset).value)
+
+    @staticmethod
+    def _hub_roots(lay: object) -> list[tuple[float, float]]:
+        """Each connector's hub-side endpoint (the end nearer the hero)."""
+        hero = next(n for n in lay.nodes if n.role == "hero")  # type: ignore[attr-defined]
+        hx, hy = hero.box.x + hero.box.w / 2, hero.box.y + hero.box.h / 2
+        roots = []
+        for c in lay.connectors:  # type: ignore[attr-defined]
+            nums = re.findall(r"[-\d.]+", c.path_d)
+            a = (float(nums[0]), float(nums[1]))
+            b = (float(nums[-2]), float(nums[-1]))
+            roots.append(min(a, b, key=lambda p: math.hypot(p[0] - hx, p[1] - hy)))
+        return roots
+
+    def test_default_pitches_one_port_per_spoke(self) -> None:
+        lay = solve(**self._spec("hub-verbs"))
+        hero = next(n for n in lay.nodes if n.role == "hero")  # type: ignore[attr-defined]
+        face_y = hero.box.y + hero.box.h
+        south = sorted(x for x, y in self._hub_roots(lay) if abs(y - face_y) < 1.0)
+        assert len(south) == len(set(south)) == 4, south
+        pitches = [round(b - a, 2) for a, b in itertools.pairwise(south)]
+        assert all(abs(p - 128.0 / 3.0) < 0.1 for p in pitches), pitches
+        mid = (south[0] + south[-1]) / 2
+        assert abs(mid - (hero.box.x + hero.box.w / 2)) < 0.5, (mid, hero.box)
+
+    def test_authored_mouth_bundles_the_fan(self) -> None:
+        lay = solve(**self._spec("hub-axial"))
+        roots = self._hub_roots(lay)
+        east = [(x, y) for x, y in roots if x == max(r[0] for r in roots)]
+        assert len(east) == 2 and len({(round(x), round(y)) for x, y in east}) == 1, east
+
+    def test_the_flag_flips_the_construction_both_ways(self) -> None:
+        verbs = self._spec("hub-verbs")
+        verbs["nodes"][0]["gather"] = True  # type: ignore[index]
+        gathered = self._hub_roots(solve(**verbs))
+        assert len(set((round(x), round(y)) for x, y in gathered)) < len(gathered)
+        axial = self._spec("hub-axial")
+        axial["nodes"][0].pop("gather")  # type: ignore[union-attr]
+        ports = self._hub_roots(solve(**axial))
+        assert len({(round(x, 1), round(y, 1)) for x, y in ports}) == len(ports), ports

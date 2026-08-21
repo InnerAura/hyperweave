@@ -203,7 +203,7 @@ def test_gather_note_clears_grounded_chip() -> None:
     into blank space (the convergence-arrivals 'one seed' float)."""
     spec = {
         "title": "gather note clearance",
-        "topology": "convergence",
+        "topology": "fanin",
         "nodes": [
             {"id": "a", "label": "alpha", "desc": "input"},
             {"id": "b", "label": "beta", "desc": "input"},

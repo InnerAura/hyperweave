@@ -179,10 +179,10 @@ class TestLadder:
 
     def test_outcome_vocabulary(self) -> None:
         for preset, variant in (
-            ("model-router", "dusk"),
-            ("reverse-etl", "noir"),
-            ("rag-pipeline", "space"),
-            ("service-dependencies", "cream"),
+            ("fanout-horizontal", "dusk"),
+            ("fanout-bilateral", "noir"),
+            ("pipeline-head", "space"),
+            ("dag-mesh", "cream"),
         ):
             rendered = rendered_of(compose_preset(preset, variant))
             for outcome in rendered["glyph_backing"]:
@@ -210,7 +210,7 @@ class TestLaw2FillCoverage:
         from hyperweave.compose.engine import compose
         from hyperweave.core.models import ComposeSpec
 
-        for preset in ("hub", "obi-engine", "auth-sequence", "dep-audit"):
+        for preset in ("hub-zones", "lanes", "sequence", "tree-health"):
             svg = compose(
                 ComposeSpec(
                     type="diagram", genome_id="primer", variant="carbon", diagram=resolve_diagram_preset(preset)
@@ -241,7 +241,7 @@ class TestLaw3PaletteDerivation:
         from hyperweave.core.models import ComposeSpec
 
         genome = json.loads(pathlib.Path("src/hyperweave/data/genomes/primer.json").read_text())
-        for preset in ("rag-pipeline", "reverse-etl", "tree", "convergence"):
+        for preset in ("pipeline-head", "fanout-bilateral", "tree", "fanin"):
             spec_d = resolve_diagram_preset(preset)
             svg = compose(ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=spec_d)).svg
             # Every flow class the artifact declares binds the accent hex —
@@ -261,7 +261,7 @@ class TestLaw3PaletteDerivation:
 
         svg = compose(
             ComposeSpec(
-                type="diagram", genome_id="primer", variant="porcelain", diagram=resolve_diagram_preset("obi-engine")
+                type="diagram", genome_id="primer", variant="porcelain", diagram=resolve_diagram_preset("lanes")
             )
         ).svg
         flow_classes = set(re.findall(r"-fl(\d+) \{", svg))

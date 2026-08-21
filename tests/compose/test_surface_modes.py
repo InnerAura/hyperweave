@@ -1,7 +1,7 @@
 """Surface Modes projection — calibration, classifier, invariants, addressing.
 
 Locks the WC-1 foundation against the two authored prototypes on disk
-(v04/alpha/v04a6/surface-modes/{cream,porcelain}-twin.svg). The math model is
+(v04/specimens/artifacts/diagrams/diagrams-v04a6/surface-modes/{cream,porcelain}-twin.svg). The math model is
 CONTRAST PARITY (not a naive L-mirror); these tests pin that the shipped code
 reproduces the prototype palettes within tolerance, splits the eight primer
 variants into the spec §3 classifier table exactly, holds AA in both flip

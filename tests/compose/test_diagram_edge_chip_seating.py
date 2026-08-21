@@ -79,7 +79,7 @@ def _preset(name: str) -> dict[str, Any]:
 def test_service_dependencies_skip_chip_centers_on_channel() -> None:
     """The 'direct read' chip (exit:top skip, risers 137 vs 11) seats at the
     flat channel's own midpoint — not the whole-path arc midpoint 63px left."""
-    lay = _layout(_preset("service-dependencies"))
+    lay = _layout(_preset("dag-mesh"))
     chip = _chip(lay, "direct read")
     cx, cy = _chip_center(chip)
     poly = _connector_through(lay, cx, cy)
@@ -95,7 +95,7 @@ def test_service_dependencies_skip_chip_centers_on_channel() -> None:
 def test_exit_bottom_skip_chip_centers_on_channel() -> None:
     """The frontier-serving 'telemetry' chip rides an exit:bottom skip — the
     same channel law from the mirrored exit."""
-    lay = _layout(_preset("frontier-serving"))
+    lay = _layout(_preset("dag-providers"))
     chip = _chip(lay, "telemetry")
     cx, cy = _chip_center(chip)
     poly = _connector_through(lay, cx, cy)

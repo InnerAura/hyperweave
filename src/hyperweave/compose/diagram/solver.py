@@ -19,7 +19,7 @@ from hyperweave.compose.diagram import motion as mo
 from hyperweave.compose.diagram.anchors import boundary_distance
 from hyperweave.compose.diagram.annotate import Region as AnnRegion
 from hyperweave.compose.diagram.annotate import build_annotations
-from hyperweave.compose.diagram.chrome import measure_caption, voice_for
+from hyperweave.compose.diagram.chrome import apply_health_dot, measure_caption, voice_for
 from hyperweave.compose.diagram.layered import back_edges, split_self_loops
 from hyperweave.compose.diagram.recenter import content_extents, shift_content, translate_path
 from hyperweave.compose.diagram.records import (
@@ -49,6 +49,7 @@ from hyperweave.core.diagram import (
     ResolvedEdge,
     Topology,
     layout_slug,
+    partition_groups,
     resolved_edges,
     tree_depth,
 )
@@ -251,6 +252,8 @@ def assign_accents(spec: DiagramSpec, palette_len: int) -> tuple[int, ...]:
     palette). Lanes keep their category axis (membership by band)."""
     if spec.topology is Topology.LANES:
         return _lanes_accents(spec, palette_len)
+    if spec.partition_chroma:
+        return _partition_accents(spec, palette_len)
     accent_nodes, _ = spine_members(spec)
     if spec.topology is not Topology.HUB:
         # Kit binding: sink TITLES carry the accent only in the hub/axial
@@ -270,6 +273,58 @@ def assign_accents(spec: DiagramSpec, palette_len: int) -> tuple[int, ...]:
             continue
         out.append(0 if (i in accent_nodes and palette_len) else -1)
     return tuple(out)
+
+
+def _partition_accents(spec: DiagramSpec, palette_len: int) -> tuple[int, ...]:
+    """Partition-pair chromatics: hue compiles from GROUP MEMBERSHIP, not from
+    the spine. The second zone's members take the one accent slot; the first
+    zone's members and the focal node stay neutral and read ink — the ink /
+    signal pair the two zone headers already compile (``zoneh``/``zoneha``),
+    extended from the headers to the members they name.
+
+    One hue per group, never per node: no member may opt out or opt into a
+    different slot, which is what keeps a partition a partition. An explicit
+    ``node.accent`` still overrides — a caller who hand-assigns a hue has left
+    the compiled grammar knowingly."""
+    groups = partition_groups(spec)
+    out: list[int] = []
+    for node, group in zip(spec.nodes, groups, strict=True):
+        if node.accent is not None:
+            # "One hue per group, never per node" is the whole law: a member
+            # that opted out would carry a label hue disagreeing with its own
+            # group-derived wire, and the partition would stop naming a group.
+            # Refuse rather than silently letting the two channels diverge.
+            raise DiagramInputError(
+                f"node {node.id or node.label!r} sets an explicit accent under partition_chroma, "
+                "which compiles ONE hue per group — drop the per-node accent, or drop "
+                "partition_chroma and bind hue per node yourself"
+            )
+        out.append(0 if (group == 1 and palette_len) else -1)
+    return tuple(out)
+
+
+def _partition_glyph_tints(
+    spec: DiagramSpec, node_accents: tuple[int, ...], selections: tuple[GlyphTint, ...]
+) -> tuple[GlyphTint, ...]:
+    """Under a declared partition, a member's MARK carries its group's hue —
+    the specimen states it outright ("glyph hue COMPILED from the wing
+    partition ... compute glyphs ride ink, graphics/memory glyphs ride
+    accent"). Without this the mark collapses to ink whatever the group says,
+    because ``resolve_glyph_mode`` short-circuits on a GlyphTint.INK
+    selection before it ever reaches the ``hue`` rung.
+
+    Lifting the selection (never the resolved MODE) keeps the whole degrade
+    ladder intact: a generic kind entry has no color_paths/gradient/
+    brand_color, so it lands on ``hue`` and takes the node's own flow slot; a
+    registered BRAND mark still resolves gradient/brand and keeps its vendor
+    palette. Group membership decides whether a mark may be hued; the
+    registry decides what hue it actually gets."""
+    if not spec.partition_chroma:
+        return selections
+    return tuple(
+        GlyphTint.FULL if (accent >= 0 and sel is GlyphTint.INK) else sel
+        for sel, accent in zip(selections, node_accents, strict=True)
+    )
 
 
 def _lanes_accents(spec: DiagramSpec, palette_len: int) -> tuple[int, ...]:
@@ -328,6 +383,12 @@ def connector_accents(
         # generic spine inference, which has no notion of "every return in
         # this trace" as a single relation.
         return tuple(0 if e.kind is EdgeKind.RETURN else -1 for e in edges)
+    if spec.partition_chroma:
+        # A spoke inherits the hue of the member it reaches — the partition
+        # names groups, and a wire belongs to the group it serves. The focal
+        # end is in neither group, so the far endpoint decides.
+        groups = partition_groups(spec)
+        return tuple(0 if max(groups[e.source], groups[e.target]) == 1 else -1 for e in edges)
     fwd = int((lane_hues or {}).get("forward", 0))
     rev = int((lane_hues or {}).get("reverse", -1))
     _, spine_edges = spine_members(spec)
@@ -372,7 +433,7 @@ def shift_text(t: DiagramText | None, dx: float, dy: float) -> DiagramText | Non
 
 
 def _reanchor_zone_headers(
-    lane_bands: tuple[LaneBand, ...], count: int, *, margin_x: float, canvas_w: float
+    lane_bands: tuple[LaneBand, ...], count: int, *, margin_x: float, canvas_w: float, center_inset: float = 0.0
 ) -> tuple[LaneBand, ...]:
     """Pin the zone-header band(s) — the LAST ``count`` entries the zone-header
     law appended to ``lane_bands`` — to the chassis margin, independent of the
@@ -396,13 +457,18 @@ def _reanchor_zone_headers(
     fixed = list(lane_bands)
     head_i = len(fixed) - count
     ink = fixed[head_i]
-    fixed[head_i] = _dc_replace(ink, box=_dc_replace(ink.box, x=margin_x), header=_dc_replace(ink.header, x=margin_x))
+    # A nonzero ``center_inset`` centers each header OVER its flank column
+    # (the twin bilateral prototypes seat INTAKE/DELIVERY middle-anchored on
+    # the satellite column axis, margin + circle_r) instead of flushing it
+    # to the chrome margin.
+    ink_x = margin_x + center_inset
+    ink_header = _dc_replace(ink.header, x=ink_x, anchor="middle" if center_inset else ink.header.anchor)
+    fixed[head_i] = _dc_replace(ink, box=_dc_replace(ink.box, x=ink_x), header=ink_header)
     if count > 1:
-        target = canvas_w - margin_x
+        target = canvas_w - margin_x - center_inset
         accent = fixed[head_i + 1]
-        fixed[head_i + 1] = _dc_replace(
-            accent, box=_dc_replace(accent.box, x=target), header=_dc_replace(accent.header, x=target)
-        )
+        accent_header = _dc_replace(accent.header, x=target, anchor="middle" if center_inset else accent.header.anchor)
+        fixed[head_i + 1] = _dc_replace(accent, box=_dc_replace(accent.box, x=target), header=accent_header)
     return tuple(fixed)
 
 
@@ -476,6 +542,8 @@ def finish_layout(
     extra_regions: Mapping[str, Any] | None = None,
     auto_annotations: tuple[Any, ...] = (),
     extra_particles: tuple[ParticlePlacement, ...] = (),
+    content_pad_y: float = 0.0,
+    zone_center_inset: float = 0.0,
 ) -> DiagramLayout:
     """Shared assembly: chrome + motion wiring + annotation pass + the record.
 
@@ -489,6 +557,18 @@ def finish_layout(
     other solver, so this path is byte-identical for them. ``extra_particles``
     is the flywheel rim-orbit seam: riders outside the uniform edge->particle
     wiring (not tied 1:1 to a connector) — empty for every other solver."""
+    # The health channel is GENERIC chrome (dep-audit contract: card-corner
+    # status dot, orthogonal to identity accent) applied at the one seam
+    # every solver exits through — a declared health is never a silently
+    # dropped fact. Two solvers used to wrap their own placements while the
+    # rest rendered a payload that said "vulnerable" above a card that
+    # showed nothing. ``apply_health_dot`` no-ops on OK, so health-less
+    # layouts are byte-identical; synthesized placements without a spec seat
+    # (index out of range) pass through untouched.
+    nodes_paint = [
+        apply_health_dot(ctx, ctx.spec.nodes[p.index], p) if 0 <= p.index < len(ctx.spec.nodes) else p
+        for p in nodes_paint
+    ]
     # Enrich once: derive polyline + arrival tangent for the S-curve/line/arc
     # families so marker resolution and the annotate/collide pass read one
     # obstacle + direction contract, whatever built each geo.
@@ -516,6 +596,12 @@ def finish_layout(
     # spills past the canvas and clips (Law 1). Measure every node label and
     # union its extent so the canvas grows to hold the text.
     ext = _expand_for_labels(ext, nodes_paint, ctx.cfg)
+    # Solver-declared symmetric vertical padding (the bilateral constant-
+    # frame mirror: a flank band shorter than the family reference pads out
+    # to it). Applied BEFORE the zone-header seat so chrome anchors to the
+    # padded frame, exactly as the twin hand files anchor theirs.
+    if content_pad_y and ext is not None:
+        ext = (ext[0], ext[1] - content_pad_y, ext[2], ext[3] + content_pad_y)
     # THE zone-header law (single implementation — axial's corner pair and
     # stack's band pair fold in here; their texts are preset data now, per
     # Invariant 5): the first zone reads ink at the content's left edge, the
@@ -638,16 +724,23 @@ def finish_layout(
     head_legends = [a for a in chrome_legends if a.region == "header"]
     foot_legends = [a for a in chrome_legends if a.region == "footer"]
     stacked_footer = foot_text is not None and bool(foot_legends)
-    # head_legends deliberately DO NOT inflate mast_h/mast_w: the "masthead"
-    # stack_regions band sits ABOVE content, so reserving stacking height for
-    # it pushes content — and the zone header riding inside it — down by the
-    # legend's own height (measured: an 82px 4-row column pushed dep-audit's
-    # kicker from y38 to y144, out of the top-left corner every other
-    # topology holds). A header-region legend instead rides the masthead
-    # CORNER key idiom (the specimen's tr2-leg): it shares the zone header's
-    # own row rather than reserving a row of its own — positioned below,
-    # once content lands, from the zone header's own final y (see the
-    # zone_header_y anchor after the region stack resolves).
+    # head_legends deliberately DO NOT inflate mast_h/mast_w when a zone row
+    # exists: the "masthead" stack_regions band sits ABOVE content, so
+    # reserving stacking height for it pushes content — and the zone header
+    # riding inside it — down by the legend's own height (measured: an 82px
+    # 4-row column pushed dep-audit's kicker from y38 to y144, out of the
+    # top-left corner every other topology holds). A header-region legend
+    # instead rides the masthead CORNER key idiom (the specimen's tr2-leg):
+    # it shares the zone header's own row rather than reserving a row of its
+    # own — positioned below, once content lands, from the zone header's own
+    # final y (see the zone_header_y anchor after the region stack resolves).
+    if head_legends and not n_zone_bands:
+        # With NO zone row to share (the lanes auto legend on a zoneless
+        # sheet), the row is a real chrome band, not a squatter in the top
+        # margin: reserve its height so the stack gives it the same mv air
+        # every other band gets. Centering it inside the margin seated the
+        # key 4px from the canvas edge — the crammed-key defect.
+        mast_h = max(mast_h, legend_row_h)
     if foot_legends:
         # A footer carrying BOTH the caption sentence AND a legend row is a
         # STACK, not a shared band: max()-ing the two heights let both texts
@@ -703,9 +796,13 @@ def finish_layout(
                 h=foot_h,
                 # Caption air below: chassis-declared per family (the v3
                 # prototype sheets pad 24-36; the v4 reference sheets 44),
-                # falling back to the engine constant.
+                # falling back to the engine constant. The TOP margin rides
+                # content_bot_mv, not mv — region margins meet as max(), so
+                # a chassis caption_gap BELOW the vertical rhythm (the twin
+                # bilateral sheets' 16) could never govern while the footer
+                # held its own mv; every gap >= mv is byte-identical.
                 margin=(
-                    mv,
+                    content_bot_mv,
                     m,
                     float(ctx.ch.caption_pad)
                     if ctx.ch.caption_pad
@@ -745,7 +842,9 @@ def finish_layout(
         # inside the (possibly wider) canvas. The zone header rode along with
         # it (drifting off the chrome margin whenever content is narrower
         # than the canvas); pin it back now that the canvas width is final.
-        lane_bands = _reanchor_zone_headers(lane_bands, n_zone_bands, margin_x=m, canvas_w=float(width))
+        lane_bands = _reanchor_zone_headers(
+            lane_bands, n_zone_bands, margin_x=m, canvas_w=float(width), center_inset=zone_center_inset
+        )
         # Final canvas y of the ink zone band — the masthead corner key's
         # only anchor (below): a header-region legend shares this row rather
         # than reserving one of its own.
@@ -772,10 +871,13 @@ def finish_layout(
                 _replace_pp(pp, path_override=rim) if pp.path_override else pp for pp in extra_particles
             )
     particles = particles + extra_particles
-    # Accent titles are the hub/axial accent-zone binding ONLY (verb-
-    # algebra's DESTINATIONS): flag them here so lanes' category slots and
-    # any other accent-indexed node keep ink titles.
-    if ctx.spec.topology is Topology.HUB:
+    # Accent titles are the hub/axial accent-zone binding (verb-algebra's
+    # DESTINATIONS) plus any DECLARED partition: flag them here so lanes'
+    # category slots and any other accent-indexed node keep ink titles.
+    # A partition's hue rides the LABEL slot — the name is what the group
+    # membership names (the specimen's accent-side .psw-eya), while the
+    # values stay ink on both sides.
+    if ctx.spec.topology is Topology.HUB or ctx.spec.partition_chroma:
         nodes_paint = [
             _dc_replace(n, label_accent=True) if (n.accent_index >= 0 and n.role == "default") else n
             for n in nodes_paint
@@ -788,7 +890,7 @@ def finish_layout(
     # elsewhere (a dag rank fanning) stay unmarked, matching the kit's
     # restraint.
     gathers: tuple[GatherPoint, ...] = ()
-    if ctx.spec.topology in (Topology.FANOUT, Topology.HUB, Topology.CONVERGENCE, Topology.DAG):
+    if ctx.spec.topology in (Topology.FANOUT, Topology.HUB, Topology.FANIN, Topology.DAG):
         # The gather families: fan trunks, convergence mouths, the dag
         # AND-join. Orthogonal-bus topologies (tree) share stub points by
         # construction and never knot them (tree draws bare elbows).
@@ -822,6 +924,10 @@ def finish_layout(
         points: list[GatherPoint] = []
         for (x, y), contribs in sorted(shared.items()):
             owners = [o for o, _ in contribs]
+            # The bezel is the CONVERGENCE mark, never a port dress (owner
+            # ruling 2026-08-20, pp-radial.svg's own grammar: its one true
+            # gather wears the r5+r2.5 ring while every plain wire endpoint
+            # renders bare) — a singleton point never earns one.
             if len(owners) < 2:
                 continue
             if dag_hinted and not any(ctx.spec.nodes[o].gather for o in owners):
@@ -842,7 +948,7 @@ def finish_layout(
                 continue
             owner = owners[0]
             # Occlusion is geometric law, not paint order (refined-fanout:
-            # v04/alpha/v04a6/primer-diagrams/primer-fanout-refined.html —
+            # v04/specimens/artifacts/diagrams/diagrams-v04a6/primer-diagrams/primer-fanout-refined.html —
             # bezel at the mouth, the node occludes the inward half). A seat
             # ON a node's boundary (within one ring radius of it) clips to
             # the boundary's outside via the node's OWN figure — an opaque
@@ -930,7 +1036,10 @@ def finish_layout(
             # magnitude of the offset differ by which side of the kicker the
             # key sits on.
             if zone_header_y is None:
-                target_y = max(0.0, (mv - a.box.h) / 2.0)
+                # No zone row to share: the row seats centered in its own
+                # reserved masthead band (mast_h above), whose stack offset
+                # already carries the mv air — never inside the margin.
+                target_y = hdy + max(0.0, (mast_h - a.box.h) / 2.0)
             elif a.anchor == "left":
                 target_y = zone_header_y + 28.0
             else:
@@ -983,11 +1092,20 @@ def finish_layout(
     # dims is a fixed banner: honour it. A chassis without its own display_w
     # takes the engine default rather than rendering 1:1.
     display_target = float(ch.display_w or ctx.engine.get("display_w_default", 740))
-    reference_w = float(ch.width) if ch.width else float(width)
     if ch.display_w and ch.display_h:
         disp_w, disp_h = int(ch.display_w), int(ch.display_h)
     elif width > 0:
-        scale = display_target / max(reference_w, float(width))
+        # Uniform page presence (owner ruling 2026-08-20: every diagram
+        # renders at the same size and feel): the display normalizes to the
+        # page target regardless of the canvas frame, capped at the HOUSE
+        # scale — 740 on the 920 house frame (the upward hand prototypes'
+        # own 920 → 740 projection). The earlier natural-size cap (1.0) let
+        # every sub-target canvas render 1:1, so its type and cards drew
+        # 25% larger than the board (the ring-vs-orbit mismatch); the house
+        # cap keeps element size uniform while narrow canvases take only
+        # the page width their ink earns.
+        scale_max = float(ctx.engine.get("display_scale_max", 1.0))
+        scale = min(scale_max, display_target / float(width))
         disp_w, disp_h = round(width * scale), round(height * scale)
     else:
         disp_w, disp_h = int(width), int(height)
@@ -1058,15 +1176,21 @@ def apply_spec_chassis(ch: DiagramTopologyChassis, overrides: Mapping[str, Any])
     return ch.model_copy(update=update)
 
 
+def render_chassis(spec: DiagramSpec, paradigm: ParadigmDiagramConfig) -> DiagramTopologyChassis:
+    """The resolved topology chassis for RENDER-side consumers — the same
+    slug → chassis → spec-override derivation ``compute_diagram_layout``
+    runs, so a chassis-cited dress constant (wire weight, marker geometry)
+    reaches the emitted CSS as the same value the solver drew with."""
+    ch = paradigm.topologies.get(layout_slug(spec)) or DiagramTopologyChassis()
+    return apply_spec_chassis(ch, spec.chassis)
+
+
 def effective_render_cfg(spec: DiagramSpec, paradigm: ParadigmDiagramConfig) -> ParadigmDiagramConfig:
     """The voice config the solver measured with, for RENDER-side consumers
     (the resolver's CSS emission): same slug → chassis → voice-override
     derivation as ``compute_diagram_layout``, so emitted font sizes can
     never drift from the measured geometry."""
-    slug = layout_slug(spec)
-    ch = paradigm.topologies.get(slug) or DiagramTopologyChassis()
-    ch = apply_spec_chassis(ch, spec.chassis)
-    return effective_diagram_cfg(paradigm, ch)
+    return effective_diagram_cfg(paradigm, render_chassis(spec, paradigm))
 
 
 SolverFn = Callable[[SolverContext], DiagramLayout]
@@ -1146,7 +1270,9 @@ def compute_diagram_layout(
         chrome=chrome,
         mono_triggers=[str(t) for t in engine.get("mono_triggers") or []],
         glyph_registry=glyph_registry,
-        glyph_selections=glyph_selections or tuple(GlyphTint.INK for _ in spec.nodes),
+        glyph_selections=_partition_glyph_tints(
+            spec, node_accents, glyph_selections or tuple(GlyphTint.INK for _ in spec.nodes)
+        ),
         warnings=warnings,
     )
     solver = _SOLVERS.get(slug)

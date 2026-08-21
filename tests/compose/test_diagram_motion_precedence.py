@@ -32,7 +32,8 @@ from tests.compose.test_diagram_layout import _normalized_preset, solve
 # rides a synthetic undressed flywheel instead of a preset.
 _WIRE_SOLID_SPECS = {
     "flywheel-plain": {
-        "topology": "flywheel",
+        "topology": "cycle",
+        "orientation": "orbit",
         "title": "plain wheel",
         "nodes": [
             {"id": "a", "label": "A"},
@@ -48,7 +49,7 @@ _WIRE_SOLID_SPECS = {
 # relation's dress motion, and the accent-wire stillness). Sequence
 # (auth-sequence) is excluded: its solver pins track_override static on the
 # message strokes, so an explicit dash request can never march there.
-_EXPLICIT_DASH_MARCH_PRESETS = ["service-dependencies", "hub", "cicd-machine", "obi-engine"]
+_EXPLICIT_DASH_MARCH_PRESETS = ["dag-mesh", "hub-zones", "sm-retry", "lanes"]
 
 
 def _preset_layout(name: str, **overrides: object):
@@ -68,7 +69,7 @@ class TestExplicitMotionPrecedence:
         lay = solve(**_WIRE_SOLID_SPECS[name])
         assert all(c.track != "dash-march" for c in lay.connectors), name
 
-    @pytest.mark.parametrize("name", ["service-dependencies"])
+    @pytest.mark.parametrize("name", ["dag-mesh"])
     def test_dag_marches_by_default(self, name: str) -> None:
         # Kit posture: dag (service-dependencies) is not in the wire-solid set
         # (only its terminal arrow is defaulted), so its rails march WITHOUT
@@ -147,7 +148,8 @@ class TestGlyphCircleIdentityLadder:
         spec = resolve_auto_roles(
             DiagramSpec.model_validate(
                 {
-                    "topology": "flywheel",
+                    "topology": "cycle",
+                    "orientation": "orbit",
                     "node_style": "glyph-circle",
                     "nodes": [
                         {"id": "gen", "label": "Generate", "kind": "zap"},

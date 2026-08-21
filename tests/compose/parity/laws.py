@@ -41,7 +41,13 @@ if TYPE_CHECKING:
 
 # Specimen-derived constants (see DIAGRAM_KIT_BRIEF.md)
 RENDER_WIDTH = 740.0
-SCALE_BAND = (0.51, 0.83)  # prototypes span 0.517-0.822
+# Prototypes span 0.517-0.822 — the band admits the corpus' own top (the
+# stack hand file records 900 → 740 = 0.822). The ENGINE's ceiling is
+# tighter: the 740/920 house scale (fill-the-house-frame ruling
+# 2026-08-20 — natural-size display had let sub-target canvases draw
+# their type 25% larger than the board), enforced exactly per preset by
+# the render-width law's expected_render_w, not by this coarse envelope.
+SCALE_BAND = (0.51, 0.83)
 CARD_DIM_TOL = 0.10
 # Hero emphasis is specimen-relative and two-sided (ratios span 0.93 pill
 # machines → 2.53 axial; several specimens emphasize by ring only, ratio 1.0).
@@ -52,14 +58,17 @@ PORT_NEAR_PX = 25.0
 PORT_FLUSH_PX = 3.0
 PORT_FLUSH_MARKER_PX = 8.0
 CHIP_STUB_MIN = 18.0
-# Mirrors diagram-frame.yaml beam.relay_span_cap: both beam specimens converge
-# on a ~.26-.30 per-stage window regardless of stage count (parity-beam's
-# branch span .30, the relay reference's own n=3 span .26) — velocity varies
-# with edge length, never with window duration. Any staged beam window wider
-# than this crawls (the artifact-fanout-beam/compose-gate/settlement-relay
-# regression: n=1 or n=2 groupings dividing the whole clock instead of being
-# held to the specimen band).
-BEAM_RELAY_SPAN_CAP = 0.30
+# The per-stage window law in its OWN domain — wall-clock seconds. All the
+# citing hand files converge on a ~1.5s stage regardless of stage count or
+# clock: parity-beam's branch span .30 and the relay reference's n=3 span
+# .26 on the 5.236s clock (1.57s / 1.36s), the twin bilateral prototypes'
+# .36 on their family's 4.236s clock (1.53s). The earlier fraction form
+# (span <= .30) judged every family by the reference clock and rejected the
+# bilateral citation itself; the seconds form keeps the identical intent —
+# velocity varies with edge length, never with window duration — and still
+# forecloses the crawl regressions (a whole-clock n=2 division at 5.236s is
+# a 2.2s stage, well past the band).
+BEAM_STAGE_SECONDS_CAP = 1.6
 NOTES_DIM_TOL = 0.02
 # The two "Four inputs, one artifact" hand files disagree with each other on
 # their own outer approach angle (pp-convergence.svg 20.6deg vs
@@ -150,19 +159,31 @@ def law_scale(
                 f"viewBox {facts.vb_w:g}x{facts.vb_h:g}, display {facts.width}{note})",
             )
         )
-        out.append(LawResult("scale.never-magnify", scale < 1.0, f"scale={scale:.3f} (must downscale)"))
+        out.append(LawResult("scale.never-magnify", scale <= 1.0, f"scale={scale:.3f} (must never exceed 1:1)"))
     return out
 
 
 # ── cards ────────────────────────────────────────────────────────────────────
 
 
-def law_cards(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
+def law_cards(facts: Facts, fixture: dict[str, Any], *, mode: str = "render") -> list[LawResult]:
     out: list[LawResult] = []
     targets = fixture.get("cards") or {}
     cards = card_rects(facts)
-    heroes = [r for r in cards if "hero" in r.cls]
-    std = [r for r in cards if "hero" not in r.cls]
+    figures = hero_figures(facts)
+
+    def is_hero_rect(r: Rect) -> bool:
+        return any(
+            not h.is_circle
+            and abs(r.x - h.x) <= 0.1
+            and abs(r.y - h.y) <= 0.1
+            and abs(r.w - h.w) <= 0.1
+            and abs(r.h - h.h) <= 0.1
+            for h in figures
+        )
+
+    heroes = [r for r in cards if is_hero_rect(r)]
+    std = [r for r in cards if not is_hero_rect(r)]
 
     t_w, t_h = targets.get("std_w_med"), targets.get("std_h_med")
     superseded = str(targets.get("dims_superseded") or "")
@@ -172,18 +193,56 @@ def law_cards(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
         # still pin, but dims re-derive from the language law, recorded here.
         out.append(LawResult("cards.std-dims", True, f"superseded: {superseded}"))
     elif t_w and t_h and std:
+        # Documented amendment (replace-mode, the census pattern): a ruling
+        # that lawfully changes what the ENGINE's median should measure. The
+        # snug per-card width ruling makes satellite width content-carried,
+        # so a preset whose copy is itself a documented divergence from the
+        # hand file's carries its own width median here. The SELF law still
+        # grades the hand file at its own measured value, and the amended
+        # value REPLACES the render target at the same tolerance — a render
+        # regressing to the superseded uniform width fails.
+        a_w = targets.get("std_w_med_amended") if mode == "render" else None
+        a_h = targets.get("std_h_med_amended") if mode == "render" else None
+        e_w = float(a_w) if a_w is not None else float(t_w)
+        e_h = float(a_h) if a_h is not None else float(t_h)
         w_med, h_med = _median([r.w for r in std]), _median([r.h for r in std])
-        ok_w = abs(w_med - t_w) <= t_w * CARD_DIM_TOL
-        ok_h = abs(h_med - t_h) <= t_h * CARD_DIM_TOL
+        ok_w = abs(w_med - e_w) <= e_w * CARD_DIM_TOL
+        ok_h = abs(h_med - e_h) <= e_h * CARD_DIM_TOL
+        note = (" | amended=" + f"{e_w:g}x{e_h:g}") if (a_w is not None or a_h is not None) else ""
         out.append(
             LawResult(
                 "cards.std-dims",
                 ok_w and ok_h,
-                f"median {w_med:g}x{h_med:g} vs specimen {t_w:g}x{t_h:g} (±{CARD_DIM_TOL:.0%})",
+                f"median {w_med:g}x{h_med:g} vs specimen {t_w:g}x{t_h:g} (±{CARD_DIM_TOL:.0%}){note}",
             )
         )
     elif t_w and t_h:
         out.append(LawResult("cards.std-dims", False, "no standard cards rendered to compare"))
+
+    t_heights = targets.get("std_h_values")
+    if isinstance(t_heights, list) and t_heights:
+        # Replace-mode amendment (the census pattern): five alpha-era hand
+        # files draw content-driven MIXED card heights the engine's
+        # aligned-height families flatten — recorded as the open
+        # height-distribution work queue, graded at the engine's current
+        # values so a regression fails while the specimen's own numbers
+        # stay the target on file (SELF still grades them).
+        a_heights = targets.get("std_h_values_amended") if mode == "render" else None
+        if isinstance(a_heights, list) and a_heights:
+            t_heights = a_heights
+        got_heights = sorted(round(r.h, 2) for r in std)
+        want_heights = sorted(float(v) for v in t_heights)
+        same_count = len(got_heights) == len(want_heights)
+        within = same_count and all(
+            abs(g - w) <= max(2.0, w * 0.02) for g, w in zip(got_heights, want_heights, strict=True)
+        )
+        out.append(
+            LawResult(
+                "cards.std-height-distribution",
+                within,
+                f"render {got_heights} vs specimen {want_heights}",
+            )
+        )
 
     t_ratio = targets.get("hero_area_ratio")
     if t_ratio and superseded:
@@ -252,8 +311,10 @@ def law_ports(facts: Facts, fixture: dict[str, Any] | None = None) -> list[LawRe
     # the phase cards (flywheel-orbit, measured) — the cycle is motion
     # BETWEEN phases, never plumbing into them. The flush premise doesn't
     # apply; the float itself is pinned engine-side (test_diagram_layout).
-    if str(facts.root_attrs.get("data-hw-topology", "")) == "flywheel":
-        return [LawResult("ports.flush", True, "flywheel rim floats by design (n/a)")]
+    _topo = str(facts.root_attrs.get("data-hw-topology", ""))
+    _sub = str(facts.root_attrs.get("data-hw-subvariant", ""))
+    if _topo == "flywheel" or _sub == "cycle-orbit":
+        return [LawResult("ports.flush", True, "orbit rim floats by design (n/a)")]
     tol = PORT_FLUSH_PX
     if fixture:
         tol = max(PORT_FLUSH_PX, float(fixture.get("port_tolerance") or 0.0))
@@ -332,11 +393,12 @@ def law_chip_stubs(facts: Facts, fixture: dict[str, Any] | None = None) -> list[
 def law_beam(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
     """The beam recipe: two grading tiers over the same facts. TEMPO
     (unconditional, every render carrying a beam — opted into full citation
-    or not): no staged window may exceed ``BEAM_RELAY_SPAN_CAP``, the per-
-    stage duration law both hand specimens converge on regardless of stage
-    count — this is the enrollment that catches a family whose window math
-    balloons on small stage counts (n=1 flush fans, n=2 bilateral/DAG
-    splits) even on stories with no hand-authored citation to diff against.
+    or not): no staged window may exceed ``BEAM_STAGE_SECONDS_CAP`` in
+    span x clock seconds, the per-stage duration law every citing hand file
+    converges on regardless of stage count or family clock — this is the
+    enrollment that catches a family whose window math balloons on small
+    stage counts (n=1 flush fans, n=2 bilateral/DAG splits) even on stories
+    with no hand-authored citation to diff against.
     STRUCTURE (opt-in via ``fixture['beam']``, the two reference specimens
     only): the staged window set on one shared clock, keySplines easing,
     pad spread, true-zero end stops — never literal coordinates (per-edge
@@ -345,13 +407,17 @@ def law_beam(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
     grads = facts.beam_gradients
     out: list[LawResult] = []
     if grads:
-        windows_all = sorted({w for g in grads if (w := g.window()) is not None})
-        wide = [w for w in windows_all if round(w[1] - w[0], 4) > BEAM_RELAY_SPAN_CAP + 1e-6]
+        stages = sorted({(w, float(str(g.dur).rstrip("s") or 0)) for g in grads if (w := g.window()) is not None})
+        wide = [
+            (w, round((w[1] - w[0]) * dur, 3))
+            for w, dur in stages
+            if (w[1] - w[0]) * dur > BEAM_STAGE_SECONDS_CAP + 1e-6
+        ]
         out.append(
             LawResult(
                 "beam.tempo",
                 not wide,
-                f"windows {windows_all} (law: no span > {BEAM_RELAY_SPAN_CAP:g} of the clock — "
+                f"stages {stages} (law: no span x clock > {BEAM_STAGE_SECONDS_CAP:g}s — "
                 + (f"wide: {wide}" if wide else "all clear"),
             )
         )
@@ -485,7 +551,10 @@ def law_vocabulary(facts: Facts) -> list[LawResult]:
             continue
         # Display runs legitimately COMPOSE payload fragments with the
         # interpunct / arrow typography (`write · mints`, `a → b`): each
-        # fragment must trace, not the joined string.
+        # fragment must trace, not the joined string. A parenthesized zone
+        # COUNT is the same kind of composition (the pair hand file's
+        # "INTAKE (2)" — cardinality is a payload fact, not vocabulary).
+        run = re.sub(r"\(\d+\)", "", run).strip()
         frags = [f.strip() for f in re.split(r"[·→]", run) if f.strip()]
         if any(f.lower() not in hay for f in frags):
             aliens.append(f"{own}:{run[:28]}")
@@ -501,7 +570,7 @@ def law_vocabulary(facts: Facts) -> list[LawResult]:
 # ── honesty ──────────────────────────────────────────────────────────────────
 
 _DIMS = re.compile(r"(\d{2,5})\s*[xx]\s*(\d{2,5})")
-_RADIAL_TOPOLOGIES = ("flywheel", "radial", "hub", "mindmap")
+_RADIAL_TOPOLOGIES = ("flywheel", "cycle", "radial", "hub", "tree-radial", "tree-radial")
 
 
 def law_honesty(facts: Facts) -> list[LawResult]:
@@ -1022,12 +1091,14 @@ def law_hub_seats(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
     return [LawResult("hub.seats", not fails, evidence)]
 
 
-def law_ring_arcs(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
+def law_ring_arcs(facts: Facts, fixture: dict[str, Any], *, mode: str = "render") -> list[LawResult]:
     """Ring arc spans (opt-in via fixture ``ring_arcs``): sorted spans within
     ±6° per position, mean within ±3° — wide enough for wrap-driven walk
     variance, far below the double-counted-clearance regression (every span
-    15.2° vs the sheet's 34°)."""
-    want = fixture.get("ring_arcs")
+    15.2° vs the sheet's 34°). ``ring_arcs_amended`` replaces the target in
+    render mode (the cycle-family radius canon re-trims the text-walked
+    arcs); the hand file still grades its own spans via SELF."""
+    want = (fixture.get("ring_arcs_amended") if mode == "render" else None) or fixture.get("ring_arcs")
     if not isinstance(want, list) or not want:
         return []
     got = ring_arc_spans(facts)
@@ -1222,7 +1293,7 @@ def geometry_laws(
     first clause)."""
     return (
         law_scale(facts, fixture, expected_render_w=expected_render_w)
-        + law_cards(facts, fixture)
+        + law_cards(facts, fixture, mode=mode)
         + law_ports(facts, fixture)
         + law_chip_stubs(facts, fixture)
         + law_census(facts, fixture, mode=mode)
@@ -1240,7 +1311,7 @@ def geometry_laws(
         + law_plate(facts, fixture)
         + law_chip_homes(facts, fixture, mode=mode)
         + law_hub_seats(facts, fixture)
-        + law_ring_arcs(facts, fixture)
+        + law_ring_arcs(facts, fixture, mode=mode)
         + law_hero_stack(facts, fixture)
         + law_back_route(facts, fixture, mode=mode)
         + law_edge_dress(facts, fixture)

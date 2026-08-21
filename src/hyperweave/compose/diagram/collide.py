@@ -26,6 +26,8 @@ import itertools
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.diagram.recenter import translate_path
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
@@ -155,6 +157,12 @@ def _shift_placement(p: AnnotationPlacement, dx: float, dy: float) -> Annotation
             e,
             swatch_x=e.swatch_x + dx,
             swatch_y=e.swatch_y + dy,
+            # A drawn swatch (diamond/square/line stub) is a precomputed d
+            # string — it must ride the same translation as the circle
+            # swatches' cx/cy fields, or a displaced legend renders its
+            # marks at the OLD seat while its text moves (the misaligned-key
+            # defect: ring at the new row, diamond 8px below it).
+            swatch_path=translate_path(e.swatch_path, dx, dy) if e.swatch_path else "",
             text=replace(e.text, x=e.text.x + dx, y=e.text.y + dy),
         )
         for e in p.entries

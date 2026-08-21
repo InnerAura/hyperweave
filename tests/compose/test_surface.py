@@ -76,7 +76,7 @@ def test_validate_shares_composes_gate_on_ir_frames() -> None:
     }
     assert validate_surface(SpecEnvelope(type="diagram", spec=good))["valid"] is True
     # A preset carried via connector_data (empty schema) is legal.
-    preset = SpecEnvelope(type="diagram", spec={"connector_data": {"diagram_preset": "rag-pipeline"}})
+    preset = SpecEnvelope(type="diagram", spec={"connector_data": {"diagram_preset": "pipeline-head"}})
     assert validate_surface(preset)["valid"] is True
 
 

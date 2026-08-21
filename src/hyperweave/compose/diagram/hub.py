@@ -223,9 +223,26 @@ def solve_hub(ctx: SolverContext) -> DiagramLayout:
                 f"hub caps at {caps.get('hub_max_per_zone', 3)} spokes per zone ({zone} has {len(occupants)})"
             )
 
-    # Content-solved member box: ONE box across all spokes keeps the ring
+    # Content-solved member box: the shared max box keeps a classic ring
     # regular (the aligned precedent; reuses the #3 card-box solver).
+    # card+label owns its WHOLE box per member, however (owner ruling
+    # 2026-08-19, superseding the shared-width clause): the hand file
+    # measures snug per-card widths (188/188/188/196 — MEM earns its extra
+    # 8px from its own ink) and a per-count stack cadence (114/92), so
+    # equalizing either axis to the widest/deepest sibling erases the
+    # specimen's rhythm. Its centers still ride one ring and its text still
+    # seats one left column per card; only the box is the anatomy's own.
     card_w, card_h = _member_box(ctx)
+    member_box = {
+        m: (
+            solve_node_box(ctx, spec.nodes[m], m)[:2]
+            if style_of(spec.nodes[m], spec, ch) == NodeStyle.CARD_LABEL.value
+            else (card_w, card_h)
+        )
+        for m in members
+    }
+    member_w = {m: b[0] for m, b in member_box.items()}
+    member_h = {m: b[1] for m, b in member_box.items()}
     hub_w, hub_h, hub_node = _hub_box(ctx, member_w=card_w)
     # Member ANGLES are radius-independent (canonical slots), so quantize them
     # first; each member's radius then solves the CLEARANCE law per spoke.
@@ -247,40 +264,46 @@ def solve_hub(ctx: SolverContext) -> DiagramLayout:
     base_r = {
         m: max(
             float(ch.ring_r_hub),
-            _support(hub_w, hub_h, th) + float(ch.hub_clearance) + _support(card_w, card_h, th),
+            _support(hub_w, hub_h, th) + float(ch.hub_clearance) + _support(member_w[m], member_h[m], th),
         )
         for m, th in member_angle.items()
     }
     radius = dict(base_r)
 
-    def _pair_gap(ra: float, th_a: float, rb: float, th_b: float) -> float:
+    def _pair_gap(a: int, ra: float, b: int, rb: float) -> float:
         # Exact axis-aligned silhouette air between two ring boxes at their
-        # polar seats: the larger per-axis clearance (every ring member
-        # shares ONE box, so the half-width sums are just card_w/card_h).
-        # The old rect-diagonal chord bound (hypot(w,h)+24+clearance of
-        # CHORD, everywhere) demanded separation the specimens never spend —
-        # frame-engine's E/W spokes rode 9.6px past the hand file's kissing
-        # radius while its own E-SE pair holds 82.8px of true y-air.
-        ax_ = ra * math.cos(math.radians(th_a))
-        ay_ = ra * math.sin(math.radians(th_a))
-        bx_ = rb * math.cos(math.radians(th_b))
-        by_ = rb * math.sin(math.radians(th_b))
-        return max(abs(ax_ - bx_) - card_w, abs(ay_ - by_) - card_h)
+        # polar seats: the larger per-axis clearance, measured against each
+        # member's OWN half-box sums (a uniform ring reduces to the old
+        # shared-box card_w/card_h math exactly; card+label members carry
+        # their snug widths and stack heights). The old rect-diagonal chord
+        # bound (hypot(w,h)+24+clearance of CHORD, everywhere) demanded
+        # separation the specimens never spend — frame-engine's E/W spokes
+        # rode 9.6px past the hand file's kissing radius while its own E-SE
+        # pair holds 82.8px of true y-air.
+        ax_ = ra * math.cos(math.radians(member_angle[a]))
+        ay_ = ra * math.sin(math.radians(member_angle[a]))
+        bx_ = rb * math.cos(math.radians(member_angle[b]))
+        by_ = rb * math.sin(math.radians(member_angle[b]))
+        return max(
+            abs(ax_ - bx_) - (member_w[a] + member_w[b]) / 2.0,
+            abs(ay_ - by_) - (member_h[a] + member_h[b]) / 2.0,
+        )
 
-    def _clear_radius(th_a: float, rj: float, th_j: float) -> float:
-        # Minimal radius along ray th_a holding ``clearance`` of axis air
-        # against the fixed neighbor at (rj, th_j): the cheaper of the two
-        # per-axis outward escapes (an axis the ray barely moves along
-        # cannot provide the escape).
-        jx = rj * math.cos(math.radians(th_j))
-        jy = rj * math.sin(math.radians(th_j))
+    def _clear_radius(m: int, rj: float, j: int) -> float:
+        # Minimal radius along m's ray holding ``clearance`` of axis air
+        # against the fixed neighbor j at (rj, j's seat): the cheaper of the
+        # two per-axis outward escapes (an axis the ray barely moves along
+        # cannot provide the escape). Half-box sums per pair, as above.
+        th_a = member_angle[m]
+        jx = rj * math.cos(math.radians(member_angle[j]))
+        jy = rj * math.sin(math.radians(member_angle[j]))
         ca = math.cos(math.radians(th_a))
         sa = math.sin(math.radians(th_a))
         cands = []
         if abs(ca) > 1e-9:
-            cands.append((jx + math.copysign(card_w + clearance, ca)) / ca)
+            cands.append((jx + math.copysign((member_w[m] + member_w[j]) / 2.0 + clearance, ca)) / ca)
         if abs(sa) > 1e-9:
-            cands.append((jy + math.copysign(card_h + clearance, sa)) / sa)
+            cands.append((jy + math.copysign((member_h[m] + member_h[j]) / 2.0 + clearance, sa)) / sa)
         good = [t for t in cands if t >= 0.0]
         return min(good) if good else 0.0
 
@@ -290,10 +313,10 @@ def solve_hub(ctx: SolverContext) -> DiagramLayout:
             raised = False
             for a, b in itertools.pairwise([*ordered, ordered[0]]):
                 ra, rb = radius[a], radius[b]
-                if _pair_gap(ra, member_angle[a], rb, member_angle[b]) >= clearance - 1e-6:
+                if _pair_gap(a, ra, b, rb) >= clearance - 1e-6:
                     continue
                 lo, hi = (a, b) if ra <= rb else (b, a)
-                t = _clear_radius(member_angle[lo], radius[hi], member_angle[hi])
+                t = _clear_radius(lo, radius[hi], hi)
                 if t > radius[lo] + 1e-6:
                     radius[lo] = t
                     raised = True
@@ -312,9 +335,9 @@ def solve_hub(ctx: SolverContext) -> DiagramLayout:
                 for j in ordered:
                     if j == m:
                         continue
-                    if _pair_gap(req, member_angle[m], radius[j], member_angle[j]) >= clearance - 1e-6:
+                    if _pair_gap(m, req, j, radius[j]) >= clearance - 1e-6:
                         continue
-                    req = max(req, _clear_radius(member_angle[m], radius[j], member_angle[j]))
+                    req = max(req, _clear_radius(m, radius[j], j))
                 if abs(req - radius[m]) > 1e-6:
                     radius[m] = req
                     changed = True
@@ -330,8 +353,8 @@ def solve_hub(ctx: SolverContext) -> DiagramLayout:
     ext_y: list[float] = [-hub_h / 2.0, hub_h / 2.0 + 26.0]  # the hub's under-label line
     for m, theta in member_angle.items():
         mx, my = point_on(0.0, 0.0, radius[m], theta)
-        ext_x += [mx - card_w / 2.0, mx + card_w / 2.0]
-        ext_y += [my - card_h / 2.0, my + card_h / 2.0]
+        ext_x += [mx - member_w[m] / 2.0, mx + member_w[m] / 2.0]
+        ext_y += [my - member_h[m] / 2.0, my + member_h[m] / 2.0]
     min_x, max_x = min(ext_x), max(ext_x)
     min_y, max_y = min(ext_y), max(ext_y)
     cx = ch.margin_x - min_x
@@ -343,7 +366,7 @@ def solve_hub(ctx: SolverContext) -> DiagramLayout:
     placed: dict[int, NodePlacement] = {}
     for m, theta in member_angle.items():
         px, py = point_on(cx, cy, radius[m], theta)
-        placed[m] = _place_member(ctx, m, spec.nodes[m], px, py, card_w, card_h)
+        placed[m] = _place_member(ctx, m, spec.nodes[m], px, py, member_w[m], member_h[m])
 
     hub = _place_hub(ctx, hub_node, cx, cy, hub_w, hub_h)
     standoff = float(ctx.engine["connector"].get("standoff", 0))
@@ -529,6 +552,14 @@ def _place_hub(ctx: SolverContext, node: DiagramNode, cx: float, cy: float, w: f
     return place_node(ctx, node, 0, cx, cy, w=w, h=h, hub=True, default_style=NodeStyle.GLYPH_CIRCLE.value)
 
 
+_CORNER_INSET_X = 5.0
+_CORNER_INSET_Y = 7.0
+"""How far INSIDE its corner a square-arrival spoke launches. The hand file
+(hub-bilateral) starts every one of its four wires 5px in from the crown's
+side and 7px down from its cap — never on the vertex, which would read as a
+snagged thread rather than a wire leaving a plate."""
+
+
 def _hub_spokes(
     ctx: SolverContext, hub: NodePlacement, placed: Mapping[int, NodePlacement], cx: float, cy: float, standoff: float
 ) -> list[EdgeGeo]:
@@ -541,12 +572,60 @@ def _hub_spokes(
         other = placed[member]
         mx, my = boundary_anchor(other, cx, cy, standoff)
         member_style = style_of(ctx.spec.nodes[member], ctx.spec, ctx.ch)
-        if (
-            member_style == NodeStyle.TEXT.value
-            and hub.shape == "rect"
-            and edge.routing == "curved"
-            and edge.source == 0
-        ):
+        corner_exit = hub.shape == "rect" and edge.routing == "curved" and edge.source == 0
+        if corner_exit and member_style == NodeStyle.CARD_LABEL.value:
+            # Corner exit, SQUARE arrival (hub-bilateral): the same launch as
+            # the text construction below — just inside the crown corner facing
+            # the member's quadrant — but the arrival lands HORIZONTALLY on the
+            # member's inner vertical edge instead of diagonally at its corner.
+            #
+            # The two constructions differ because the ANATOMIES do: a
+            # containerless block has no edge to arrive square to, so its wire
+            # aims at the block and reads fine landing diagonally; a card has a
+            # real vertical face, and the hand file lands dead flat on it
+            # (arrival tangent exactly 0deg/180deg on all four spokes). Control
+            # point at the x-midpoint of launch and arrival, on the arrival's
+            # own y — that forces the flat arrival and reproduces the hand
+            # file's control x within ~3px on every spoke (300 vs 303 solved,
+            # 580 vs 577).
+            hb = hub.box
+            mb = other.box
+            east = mx > cx
+            qx0 = hb.x + hb.w if east else hb.x
+            qy0 = hb.y + hb.h if my > cy else hb.y
+            # Launch just INSIDE the corner (the hand file starts 5px in from
+            # the side and 7px down from the cap, never on the vertex itself).
+            sx = qx0 - _CORNER_INSET_X if east else qx0 + _CORNER_INSET_X
+            sy = qy0 - _CORNER_INSET_Y if my > cy else qy0 + _CORNER_INSET_Y
+            mx = mb.x + mb.w + standoff if east is False else mb.x - standoff
+            my = mb.y + mb.h / 2
+            # ONE quadratic off the corner, then a straight marker-length run.
+            # The launch must stay DIAGONAL — the hand file leaves its corners
+            # at +-60/+-120deg, and a generic S-curve helper (which departs
+            # along the card face at 0/180) reverts the spoke to the shape this
+            # construction exists to replace. The straight tail is the only
+            # thing borrowed from the square-arrival idea: it puts the head on
+            # a flat approach without touching the launch.
+            marker_size = float(ctx.ch.marker_size or ctx.engine["connector"].get("marker_size", 11))
+            lead = min(marker_size, abs(mx - sx) / 2)
+            qend = mx + lead if not east else mx - lead
+            qcx = (sx + qend) / 2
+            d = f"M {fmt(sx)},{fmt(sy)} Q {fmt(qcx)},{fmt(my)} {fmt(qend)},{fmt(my)} L {fmt(mx)},{fmt(my)}"
+            geos.append(
+                EdgeGeo(
+                    index=j,
+                    d=d,
+                    sx=sx,
+                    sy=sy,
+                    tx=mx,
+                    ty=my,
+                    length=math.hypot(mx - sx, my - sy) * 1.05,
+                    polyline=sample_path(d),
+                    end_tangent=(-1.0 if not east else 1.0, 0.0),
+                )
+            )
+            continue
+        if corner_exit and member_style == NodeStyle.TEXT.value:
             # Corner-exit quadrants (hub-panel-02-orchestrator): the spoke
             # leaves the hub CARD CORNER facing the block's quadrant and
             # sweeps one shallow quadratic to the block's near boundary. The

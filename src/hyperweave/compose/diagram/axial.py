@@ -11,9 +11,12 @@ PACK follows the confirmed riders:
 
 * Tangent beziers — control points derive from the spatial-notes rule
   (|dx| or |dy| ~= 0.5 of the leg at the tangent point); no free fitting.
-* Gather-fan (§11.4c) — destinations bundle to an explicit gather point on
-  the nucleus east boundary (hub measured: gather AT the boundary; the
-  ``gather_dx`` knob floats it for genomes that want a visible stub).
+* Gather-fan (§11.4c) is AUTHORED, never structure — the hero's
+  ``gather: true`` bundles a fan to one boundary point (both verb-algebra
+  sheets' E pairs; the ``gather_dx`` knob floats it for genomes that want
+  a visible stub); the default pitches one port per spoke along the face
+  (pp-radial's own 42.7-pitch row), the same system-wide vocabulary the
+  dag join and the fanout launch/arrival speak.
 * Nucleus prominence (§11.4a) — the hero's box grows to the class factor
   measured from the specimen (264x100 hero vs 220x64 satellites ~= 1.9);
   a ledger number in the ``axial:`` engine block, never a guess.
@@ -35,6 +38,7 @@ import itertools
 import math
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.diagram.anchors import port_row
 from hyperweave.compose.diagram.annotate import Region
 from hyperweave.compose.diagram.chrome import place_node, style_of
 from hyperweave.compose.diagram.motion import lane_endpoints
@@ -64,6 +68,17 @@ _AXIS_OF: dict[str, str] = {
 # wiring via EdgeGeo.relation_default. The E fan additionally binds the
 # accent to the stroke itself (§11.4b role-bound accent).
 _RELATION_OF_AXIS: dict[str, str] = {"N": "assert", "E": "assert", "W": "assert", "S": "drift"}
+
+_PORT_PITCH = 128.0 / 3.0
+"""Per-spoke port pitch along a shared hub face (the ungathered default).
+pp-radial's own row: four roots at 556/598/642/684 on the 280 face — a
+centered 42.7-pitch port row, ordered by member seat, never dest-chasing
+rim-to-rim (the launch-bundle lesson: clamped dest-aligned roots collapse
+coincident and read as a phantom gather knot)."""
+_PORT_RIM_INSET = 24.0
+"""Minimum air between the outermost port and the face corner — the row
+compresses its pitch before it ever reaches the rim (the launch bundle's
+own inset, reused: pp-radial's wide face never engages it)."""
 
 
 def spoke_role(ctx: SolverContext, member: int) -> str:
@@ -348,7 +363,19 @@ def solve_axial(ctx: SolverContext) -> DiagramLayout:
     }
     hero = _place(ctx, 0, spec.nodes[0], cx, cy, hero_w, hero_h, force_card=True)
 
-    geos = _axial_edges(ctx, axis_of_member, by_axis, centers, cx, cy, hero_w, hero_h, box_of, gather_dx)
+    geos = _axial_edges(
+        ctx,
+        axis_of_member,
+        by_axis,
+        centers,
+        cx,
+        cy,
+        hero_w,
+        hero_h,
+        box_of,
+        gather_dx,
+        bool(spec.nodes[0].gather),
+    )
 
     # Regions: one frame per occupied half-plane (zone:N|E|S|W) — caller
     # annotations keep the compass vocabulary.
@@ -398,6 +425,7 @@ def _axial_edges(
     hero_h: float,
     box_of: Mapping[int, tuple[float, float]],
     gather_dx: float,
+    gather: bool,
 ) -> list[EdgeGeo]:
     """One geo per edge, dressed by axis. N/S/W run straight on their axis;
     a MULTI-member off-spine N/S rank or W column curves tangent into the
@@ -407,13 +435,33 @@ def _axial_edges(
     transform/read spokes run dead straight (``M 620,350 L 620,184``,
     ``M 620,470 L 620,634``, zero x-delta); the specimen's measured
     NAME-TEXT lean (``hub_seats()``'s reference point) comes from the card's
-    own icon+text layout, never from shifting the card off the spine. The E
-    fan leaves the gather point on tangent beziers. Every geo carries its
-    axis relation default and the fan binds the accent to the stroke. Each
-    satellite edge touches its OWN box (per-axis sizing)."""
+    own icon+text layout, never from shifting the card off the spine.
+
+    Mouth-vs-ports is the system-wide AUTHORED gather vocabulary, never
+    solver structure: the hero's ``gather: true`` bundles every multi-member
+    fan to one face point (both verb-algebra sheets leave their E pairs from
+    a single boundary point; ``gather_dx`` floats that mouth); the DEFAULT
+    pitches one port per spoke along the shared face, ordered by member seat
+    so wires never cross (pp-radial's own row: four roots at 556/598/642/684
+    on the 280 face — a centered 42.7-pitch port row). Singletons root at
+    the face center under either flag. Every geo carries its axis relation
+    default and the fan binds the accent to the stroke. Each satellite edge
+    touches its OWN box (per-axis sizing)."""
     geos: list[EdgeGeo] = []
     gx, gy = cx + hero_w / 2 + gather_dx, cy
     ns_rank = {axis: len(by_axis.get(axis, ())) > 1 for axis in ("N", "S")}
+    port_of: dict[int, float] = {}
+    if not gather:
+        for axis, members in by_axis.items():
+            k = len(members)
+            if k < 2:
+                continue
+            face_len = hero_w if axis in ("N", "S") else hero_h
+            offs = port_row(k, pitch=_PORT_PITCH, face_len=face_len, inset=_PORT_RIM_INSET)
+            coord = 0 if axis in ("N", "S") else 1
+            order = sorted(members, key=lambda m: centers[m][coord])
+            for rank, m in enumerate(order):
+                port_of[m] = offs[rank]
     for j, edge in enumerate(ctx.edges):
         member = edge.target if edge.source == 0 else edge.source
         axis = axis_of_member.get(member, "E")
@@ -422,12 +470,16 @@ def _axial_edges(
         mw, mh = box_of[member]
         relation = _RELATION_OF_AXIS[axis]
         if axis == "E":
-            # hero east boundary -> gather -> tangent bezier into the
-            # destination's west edge. Terminal arrives axis-tangent (P8).
+            # hero east boundary -> (authored mouth | this spoke's port) ->
+            # tangent bezier into the destination's west edge. Terminal
+            # arrives axis-tangent (P8).
             tx, ty = mx - mw / 2, my
-            bez_d, bez_len, poly = tangent_bezier(gx, gy, tx, ty, horizontal_exit=True)
-            hx, hy = cx + hero_w / 2, cy
-            if gather_dx > 0:
+            root_y = gy if gather else cy + port_of.get(member, 0.0)
+            bez_d, bez_len, poly = tangent_bezier(
+                gx if gather else cx + hero_w / 2, root_y, tx, ty, horizontal_exit=True
+            )
+            hx, hy = cx + hero_w / 2, root_y
+            if gather and gather_dx > 0:
                 d = f"M {fmt(hx)},{fmt(hy)} L{bez_d[1:]}"
                 length = gather_dx + bez_len
                 poly = ((hx, hy), *poly)
@@ -454,13 +506,13 @@ def _axial_edges(
             )
             continue
         if axis == "N":
-            hx, hy = cx, cy - hero_h / 2
+            hx, hy = cx + port_of.get(member, 0.0), cy - hero_h / 2
             ex, ey = mx, my + mh / 2
         elif axis == "S":
-            hx, hy = cx, cy + hero_h / 2
+            hx, hy = cx + port_of.get(member, 0.0), cy + hero_h / 2
             ex, ey = mx, my - mh / 2
         else:  # W
-            hx, hy = cx - hero_w / 2, cy
+            hx, hy = cx - hero_w / 2, cy + port_of.get(member, 0.0)
             ex, ey = mx + mw / 2, my
         if edge.source == 0:
             sx, sy, tx, ty = hx, hy, ex, ey

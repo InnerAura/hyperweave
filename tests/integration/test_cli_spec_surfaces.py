@@ -267,9 +267,9 @@ def test_spec_file_beside_directory_of_same_name_resolves_the_bundled_spec(
 
 
 def test_local_file_shadowing_a_bundled_name_is_loud(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    (tmp_path / "gateway").write_text(json.dumps(MINIMAL_DIAGRAM_SPEC))
+    (tmp_path / "pipeline-row").write_text(json.dumps(MINIMAL_DIAGRAM_SPEC))
     monkeypatch.chdir(tmp_path)
-    c = runner.invoke(app, ["compose", "diagram", "--spec-file", "gateway", "-o", str(tmp_path / "g.svg")])
+    c = runner.invoke(app, ["compose", "diagram", "--spec-file", "pipeline-row", "-o", str(tmp_path / "g.svg")])
     assert c.exit_code == 0, c.output
     assert "shadows the bundled spec" in c.output
 

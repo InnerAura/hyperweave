@@ -61,7 +61,7 @@ def _resolved_chassis(spec: DiagramSpec) -> DiagramTopologyChassis:
 
 # ── Content-anchor law ──────────────────────────────────────────────────────
 
-_ANCHOR_PRESETS = ("model-router", "convergence", "convergence-arrivals", "model-gateway-tiers", "frontier-serving")
+_ANCHOR_PRESETS = ("fanout-horizontal", "fanin", "fanin-knot", "dag-tiers", "dag-providers")
 
 
 def test_card_glyph_content_anchors_at_chassis_inset() -> None:
@@ -170,7 +170,7 @@ def test_edge_run_citations_hold_independent_of_card_widths() -> None:
     neighbors pull in to preserve the cited gap and the canvas derives.
     Comparison's hand pair runs 220 between faces; the convergence family's
     gathered-seed envelope runs 524 members→hero."""
-    for preset, want in (("comparison", 220.0), ("convergence", 524.0), ("convergence-arrivals", 524.0)):
+    for preset, want in (("comparison", 220.0), ("fanin", 524.0), ("fanin-knot", 524.0)):
         lay = _preset_layout(preset)
         hero = next(p for p in lay.nodes if p.role == "hero")
         members = [p for p in lay.nodes if p.role != "hero" and p.shape == "rect"]
@@ -186,7 +186,7 @@ def test_s_rank_fan_follows_the_angle_family() -> None:
     (the disconnected-spoke floor)."""
     import math
 
-    lay = _preset_layout("verb-reads")
+    lay = _preset_layout("hub-verbs")
     hero = next(p for p in lay.nodes if p.role == "hero")
     port = (hero.box.x + hero.box.w / 2, hero.box.y + hero.box.h)
     rank = sorted((p for p in lay.nodes if p.node_id in ("extract", "verify", "diff", "query")), key=lambda p: p.box.x)
@@ -205,7 +205,7 @@ def test_legend_seats_at_its_declared_corner() -> None:
     default right-anchored column; ``placement: left`` the cited per-preset
     flip) and never overlaps content ink; any collision displacement is
     logged, never silent."""
-    for preset, corner in (("dep-audit", "right"), ("dep-audit-radial", "left")):
+    for preset, corner in (("tree-health", "right"), ("tree-radial-health", "left")):
         lay = _preset_layout(preset)
         legends = [a for a in lay.annotations if a.kind == "legend"]
         assert legends, f"{preset}: no legend rendered"
@@ -271,7 +271,7 @@ def _skip_connectors(lay: Any) -> list[Any]:
 def test_under_route_detours_are_orthogonal_with_fixed_fillet() -> None:
     """Bottom-face under-routes (the gateway/serving telemetry class) run
     straight legs with the chassis fillet."""
-    for preset in ("model-gateway-tiers", "frontier-serving"):
+    for preset in ("dag-tiers", "dag-providers"):
         spec = _preset_spec(preset)
         ch = _resolved_chassis(spec)
         lay = compute_diagram_layout(spec, paradigm=PARADIGM, engine=ENGINE, palette_len=6, glyph_registry=GLYPHS)
@@ -321,7 +321,7 @@ def test_gateway_tiers_rank_rhythm_matches_citation() -> None:
     funnel apex on the middle tier's row): the family read is now the
     BILATERAL one — the flush center rides its lane straight while every
     bent convergent crosses the same rise, mirrored about the apex."""
-    lay = _preset_layout("model-gateway-tiers")
+    lay = _preset_layout("dag-tiers")
     cards = [p for p in lay.nodes if p.shape == "rect"]
     assert {round(p.box.h) for p in cards} == {62}
     tiers = sorted(p.box.y for p in cards if p.node_id in ("fast", "deep", "vision"))

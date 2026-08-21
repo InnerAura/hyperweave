@@ -5,6 +5,28 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - Unreleased
+
+Diagram types simplify to eight clear names, every diagram renders at a consistent size, and a new `gather` option merges converging arrows into one point.
+
+### Changed
+
+- **Fewer, clearer diagram types** — `convergence` becomes `fanin`, `stack` becomes `pipeline` with `orientation: vertical`, `flywheel` and `ring` become `cycle` with `orbit` or `ring`; using an old name returns an error that shows the new spelling.
+- **Presets renamed to say what they draw** — all 37 diagram presets get descriptive names (`pipeline-head`, `dag-tiers`, `cycle-orbit`, …); an old name errors with the full menu.
+- **Consistent sizing** — every diagram renders its text and cards at the same size on the page; a small diagram no longer looks zoomed-in next to a large one.
+- **The two cycle layouts match** — `cycle-ring` and `cycle-orbit` draw circles of the same size, and the flow ring animates in the accent color.
+
+### Added
+
+- **`gather` on any node** — set `gather: true` and the arrows converging on (or leaving) that node merge into a single marked point instead of drawing one arrowhead each; works on dag, fanout, and hub diagrams, and individual arrows stay the default.
+- **`card+label` node style** — a small caps label over large values, with `hub-bilateral` as its ready-made preset.
+- **Two new fan-out presets** — `fanout-bilateral-pair` and `fanout-bilateral-trio`: icon nodes flowing into and out of a central hub, with animated beams.
+
+### Notes
+
+- Old diagram type names and preset ids stop working; a type name errors with its new spelling, a preset id errors with the menu.
+- A `cycle` diagram requires `orientation` (`orbit` or `ring`); there is no default.
+
 ## [0.4.1] - 2026-07-28
 
 Cold-start fixes: specs compose on the first try, validate always agrees with compose, and primer is the default genome everywhere.

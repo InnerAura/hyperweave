@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 
 from hyperweave.compose.diagram.anchors import boundary_anchor, rect_distance, trim_arc_angle
 from hyperweave.compose.diagram.chrome import (
-    apply_health_dot,
     place_node,
     style_of,
     voice_for,
@@ -81,8 +80,9 @@ def _place_at_center(
     # A spoke node centers on its solved box (width AND height), so a wrapped
     # desc grows the card symmetrically about the ring anchor. Byte-identical
     # when the desc fits (solved height == chassis h).
-    placed = place_node(ctx, node, i, cx, cy, w=w, h=h, hero=hero, chassis=nch)
-    return apply_health_dot(ctx, node, placed)
+    # Health dots apply centrally in ``finish_layout`` (the generic-chrome
+    # seam), never per solver.
+    return place_node(ctx, node, i, cx, cy, w=w, h=h, hero=hero, chassis=nch)
 
 
 def _facing_anchor(ctx: SolverContext, p: NodePlacement, hub_cx: float, hub_cy: float) -> tuple[float, float]:
@@ -225,8 +225,14 @@ def solve_fanout_radial(ctx: SolverContext) -> DiagramLayout:
     # uniform (0 = free policy / all circles → each keeps its solved width).
     dest_w = _ring_group_width(ctx, list(spec.nodes[1:]))
     card_unit = max(ch.node.w, dest_w)  # the packing width the ring must clear
-    radius = max(ch.ring_r, k * (card_unit + ch.ring_gap) / (2 * math.pi))
-    size = math.ceil(2 * (radius + card_unit / 2) + 16) if radius > ch.ring_r else ch.width
+    # Fill sentinel (cell ``ring_r: 0``): the ring solves from the frame so
+    # the E/W dests' outer edges land ON the side margins (fill-the-house-
+    # frame ruling, 2026-08-20 — the cited 250 floated a ~624px ring with
+    # 148px of page air per side). A positive ring_r stays a citation: the
+    # specimen preset pins its own 252 via spec chassis.
+    base_r = ch.ring_r or (ch.width - 2 * ch.margin_x - card_unit) / 2
+    radius = max(base_r, k * (card_unit + ch.ring_gap) / (2 * math.pi))
+    size = math.ceil(2 * (radius + card_unit / 2) + 16) if radius > base_r else ch.width
     c = size / 2
     dests: list[NodePlacement] = []
     spoke_angles: list[float] = []
@@ -300,8 +306,17 @@ def _solve_cyclic(ctx: SolverContext) -> DiagramLayout:
     whichever slug reaches here."""
     ch = ctx.ch
     spec = ctx.spec
-    if ctx.slug == "ring" and any(node.role is NodeRole.HERO for node in spec.nodes):
+    if ctx.slug == "cycle-ring" and any(node.role is NodeRole.HERO for node in spec.nodes):
         raise DiagramInputError("ring holds every stage equal — no hero; a centred axis belongs to flywheel")
+    if not ch.ring_r:
+        # Fill sentinel (cell ``ring_r: 0``): the radius solves from the
+        # frame so the side medallions' outer edges land ON the side
+        # margins (fill-the-house-frame ruling, 2026-08-20 — a cited R
+        # floats the ring in page air; a spec-chassis pin still outranks
+        # this by carrying its own positive citation). arc_r rides the
+        # derived ring unless separately cited.
+        fill_r = (ch.width - 2 * ch.margin_x) / 2 - ch.circle_r
+        ch = ch.model_copy(update={"ring_r": fill_r, "arc_r": ch.arc_r or fill_r})
     size = ch.width
     c = size / 2
     ring = [i for i, node in enumerate(spec.nodes) if node.role is not NodeRole.HERO]
@@ -796,8 +811,8 @@ def solve_ring(ctx: SolverContext) -> DiagramLayout:
 register_solvers(
     {
         "fanout-radial": solve_fanout_radial,
-        "flywheel": solve_flywheel,
-        "ring": solve_ring,
+        "cycle-orbit": solve_flywheel,
+        "cycle-ring": solve_ring,
         "tree-radial": solve_tree_radial,
     }
 )

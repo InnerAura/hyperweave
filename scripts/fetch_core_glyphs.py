@@ -89,6 +89,7 @@ NAMES = [
     "blend",
     "check",
     "circle-check",
+    "circle-dot",
     "columns-2",
     "dna",
     "files",
@@ -140,6 +141,7 @@ NAMES = [
     "tag",
     "flag",
     "bookmark",
+    "sparkle",
     "star",
     "sun",
     "moon",
@@ -238,11 +240,32 @@ Brand glyph registry (src/hyperweave/data/registries/glyphs.json)
 """
 
 
+# Specimen-cited geometry that REPLACES the fetched path (the one narrow
+# exception to "no visual modifications", named in NOTICE terms as a local
+# derivation): the bilateral-wings hand specimen draws its NEURAL sparkle
+# with r=2 corner arcs (hub-bilateral.svg, 24-unit path at 0.85), and the
+# committed registry must stay byte-stable with what a preset recreation
+# renders — a pin bump must not silently reshape a mark a specimen cites.
+_SPECIMEN_OVERRIDES: dict[str, dict[str, object]] = {
+    "sparkle": {
+        "viewBox": "0 0 24 24",
+        "stroke": 2,
+        "paths": [
+            "M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3"
+            "L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"
+        ],
+    },
+}
+
+
 def main() -> int:
     print(f"fetch-core-glyphs: lucide-static@{_PIN}, {len(NAMES)} marks")
     entries: dict[str, dict[str, object]] = {}
     misses: list[str] = []
     for name in NAMES:
+        if name in _SPECIMEN_OVERRIDES:
+            entries[name] = _SPECIMEN_OVERRIDES[name]
+            continue
         try:
             entries[name] = fetch(name)
         except Exception as exc:

@@ -16,7 +16,7 @@ import math
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from hyperweave.compose.diagram.anchors import boundary_anchor, side_anchor
+from hyperweave.compose.diagram.anchors import boundary_anchor, port_row, side_anchor
 from hyperweave.compose.diagram.chrome import place_node, style_of
 from hyperweave.compose.diagram.layered import (
     back_edges,
@@ -108,10 +108,11 @@ def _fan_spread(
             if any(abs(_center(other_of[j]) - cy) <= _PORT_FLUSH for j in members):
                 continue
             members.sort(key=lambda j: _center(other_of[j]))
-            span = max(0.0, box.h - 20.0)
-            pitch = min(pitch_max, span / (len(members) - 1)) if len(members) > 1 else 0.0
+            # The shared row mechanism (anchors.port_row): dag seats keep a
+            # 10px face inset each side; the pitch cap is this family's own.
+            offs = port_row(len(members), pitch=pitch_max, face_len=box.h, inset=10.0)
             for r, j in enumerate(members):
-                out[j] = cy + (r - (len(members) - 1) / 2.0) * pitch
+                out[j] = cy + offs[r]
 
     src_of = {j: e.source for j, e in enumerate(edges)}
     tgt_of = {j: e.target for j, e in enumerate(edges)}
@@ -665,7 +666,13 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         outgoing = [e for e in edges if e.source == sidx and e.target != sidx and rank[e.target] - rank[sidx] == 1]
         if len(outgoing) < 2:
             continue
-        trunk = max(depart_base, chip_run_min(outgoing, ctx.cfg, stub=_GATHER_STANDOFF))
+        # Cargo rule, same as the join loop above: a chipless depart draws
+        # NO stub (flush at the mouth), so it reserves no additive room —
+        # only a trunk that will actually carry a chip earns rank space.
+        if not any(e.label for e in outgoing):
+            trunk = float(ch.depart_trunk_bare or 0)
+        else:
+            trunk = max(depart_base, chip_run_min(outgoing, ctx.cfg, stub=_GATHER_STANDOFF))
         if trunk:
             gather_trunk[rank[sidx] + 1] = max(gather_trunk.get(rank[sidx] + 1, 0.0), trunk)
     span = sum(rank_w.values()) + (n_ranks - 1) * rank_gap + sum(gather_trunk.values())
@@ -1249,10 +1256,18 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             continue
         pb = placed[source]
         mouth = side_anchor(pb, side="right", at=pb.box.y + pb.box.h / 2)
+        out_edges = [ctx.edges[geos[s].index] for s in slots]
+        if not any(e.label for e in out_edges):
+            # Cargo rule (the join's own law, mirrored — a trunk exists to
+            # carry its chip): a CHIPLESS depart collapses FLUSH at the
+            # mouth — the knot seats ON the face and the spread leaves it
+            # directly, no bare stub dangling before the fan.
+            bare_len = float(ch.depart_trunk_bare or 0)
+            knot_collapse(geos, slots, trunk_len=bare_len, depart=True, marker="none", mouth=mouth)
+            continue
         # Grow the depart stub to seat the fan's verb chip (frontier-serving
-        # 'route') — the mouth-side mirror of the join's chip_run_min. A chipless
-        # depart keeps the base stub (0 on the dag chassis: knot-only, no stub).
-        chip_run = chip_run_min([ctx.edges[geos[s].index] for s in slots], ctx.cfg, stub=_GATHER_STANDOFF)
+        # 'route') — the mouth-side mirror of the join's chip_run_min.
+        chip_run = chip_run_min(out_edges, ctx.cfg, stub=_GATHER_STANDOFF)
         trunk_len = max(depart_len, chip_run)
         knot_collapse(geos, slots, trunk_len=trunk_len, depart=True, marker="none", mouth=mouth)
         _seat_depart_chip(ctx, geos, slots, mouth, (mouth[0] + trunk_len, mouth[1]))

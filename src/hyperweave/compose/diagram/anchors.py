@@ -166,3 +166,24 @@ def trim_arc_angle(
         else:
             hi = mid
     return node_angle_deg + direction * (lo + hi) / 2
+
+
+def port_row(k: int, *, pitch: float, face_len: float = 0.0, inset: float = 0.0) -> list[float]:
+    """Centered offsets for ``k`` ports pitched along one shared face — THE
+    row mechanism every family's fan speaks (dag entries and exits, the
+    bilateral hub's fan roots, the upward launch bundle, the axial hub's
+    spoke ports). Each family supplies its OWN cited pitch and face inset;
+    the mechanism never varies: evenly pitched, centered on the face,
+    compressed so the outermost ports keep ``inset`` air off the corners
+    (``face_len`` 0 skips compression), never negative. ``k <= 1`` seats
+    the lone port at the center — a singleton is the same row at length
+    one, which is how a sole spoke and a gathered mouth stay coincident
+    constructions."""
+    if k <= 0:
+        return []
+    if k == 1:
+        return [0.0]
+    eff = pitch
+    if face_len > 0:
+        eff = min(pitch, max(0.0, face_len - 2 * inset) / (k - 1))
+    return [(i - (k - 1) / 2) * eff for i in range(k)]

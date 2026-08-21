@@ -70,11 +70,25 @@ def test_beam_stays_dressing(filename: str) -> None:
 
 def test_node_style_text_read_only_in_hub() -> None:
     """``NodeStyle.TEXT`` (the containerless typographic block) is
-    hub-panel-orchestrator's own anatomy choice; no other solver branches
+    delegation-panel-compass's own anatomy choice; no other solver branches
     on it — chrome.py's shared placement dispatch is exempt (it isn't a
     per-topology solver)."""
     hits = {f for f in _SOLVER_FILES if "NodeStyle.TEXT" in (_DIAGRAM_DIR / f).read_text()}
     assert hits == {"hub.py"}, f"NodeStyle.TEXT read in {sorted(hits - {'hub.py'})}, expected only hub.py among solvers"
+
+
+def test_node_style_card_label_read_only_in_hub() -> None:
+    """``NodeStyle.CARD_LABEL`` branches in exactly one solver: hub.py, whose
+    compass ring gives the anatomy its per-member box and corner-exit wire
+    (the hub-bilateral family ruling's disclosed consequence). Everywhere
+    else the anatomy rides the shared seams (sizing.py's box dispatch,
+    chrome.py's placement dispatch — neither is a per-topology solver); a
+    new solver branch is anatomy leakage, the proliferation this gate
+    exists to refuse."""
+    hits = {f for f in _SOLVER_FILES if "NodeStyle.CARD_LABEL" in (_DIAGRAM_DIR / f).read_text()}
+    assert hits == {"hub.py"}, (
+        f"NodeStyle.CARD_LABEL read in {sorted(hits - {'hub.py'})}, expected only hub.py among solvers"
+    )
 
 
 def test_registry_completeness() -> None:

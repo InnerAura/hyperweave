@@ -33,6 +33,7 @@ from hyperweave.compose.diagram.paths import (
     s_curve_h_len,
     s_curve_v,
     s_curve_v_len,
+    sample_path,
 )
 
 if TYPE_CHECKING:
@@ -120,6 +121,57 @@ def _sample_cubic(
         by = mt**3 * y1 + 3 * mt**2 * t * cy1 + 3 * mt * t**2 * cy2 + t**3 * y2
         pts.append((bx, by))
     return tuple(pts)
+
+
+def square_arrival_path(
+    sx: float,
+    sy: float,
+    tx: float,
+    ty: float,
+    *,
+    axis: str,
+    terminal_lead: float,
+    c1_t: float = 0.5,
+    c2_t: float = 0.5,
+) -> tuple[str, float, tuple[Vec, ...], Vec]:
+    """A curved route with a visibly straight terminal approach.
+
+    An analytic endpoint derivative is not enough for a drawn arrow: when a
+    curve is still turning underneath a 13px head, the head looks detached
+    even though its mathematical tangent is exact.  This construction ends a
+    normal S-curve one marker-length early, tangent to the requested
+    card-face normal, then draws the final collinear segment.  The helper is
+    anatomy-blind and can be reused by any topology that needs a square card
+    arrival.
+
+    ``c1_t``/``c2_t`` seat the two control points as fractions of the run
+    from the LAUNCH toward the curve's end along the arrival axis (both 0.5
+    = the symmetric midpoint S, byte-identical to the original form). The
+    upward fan cites an asymmetric pair from its balanced reference — a low
+    traverse with a long vertical climb into the card."""
+    if axis not in ("h", "v"):
+        raise ValueError(f"unknown square-arrival axis {axis!r} (h | v)")
+    span = abs((tx - sx) if axis == "h" else (ty - sy))
+    lead = min(max(0.0, terminal_lead), span / 2)
+    if lead <= 1e-6:
+        return route_path(sx, sy, tx, ty, style="curved", axis=axis)
+    if axis == "h":
+        direction = 1.0 if tx >= sx else -1.0
+        ex, ey = tx - direction * lead, ty
+        c1 = sx + (ex - sx) * c1_t
+        c2 = sx + (ex - sx) * c2_t
+        d = f"M {fmt(sx)},{fmt(sy)} C {fmt(c1)},{fmt(sy)} {fmt(c2)},{fmt(ty)} {fmt(ex)},{fmt(ey)} L {fmt(tx)},{fmt(ty)}"
+        length = cubic_len(sx, sy, c1, sy, c2, ty, ex, ey) + lead
+        tangent = (direction, 0.0)
+    else:
+        direction = 1.0 if ty >= sy else -1.0
+        ex, ey = tx, ty - direction * lead
+        c1 = sy + (ey - sy) * c1_t
+        c2 = sy + (ey - sy) * c2_t
+        d = f"M {fmt(sx)},{fmt(sy)} C {fmt(sx)},{fmt(c1)} {fmt(tx)},{fmt(c2)} {fmt(ex)},{fmt(ey)} L {fmt(tx)},{fmt(ty)}"
+        length = cubic_len(sx, sy, sx, c1, tx, c2, ex, ey) + lead
+        tangent = (0.0, direction)
+    return d, length, sample_path(d), tangent
 
 
 def route_path(

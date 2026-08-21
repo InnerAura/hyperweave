@@ -133,7 +133,7 @@ def test_bare_face_png_preserves_alpha() -> None:
             ground="bare",
             palette="fixed",
             surface_face="dark",
-            diagram=resolve_diagram_preset("hub"),
+            diagram=resolve_diagram_preset("hub-zones"),
         )
     ).svg
     assert "data-hw-adapt" not in svg  # a face is FIXED, never adaptive
@@ -161,7 +161,7 @@ def test_adaptive_flatten_guard_hints_the_face_route() -> None:
             variant="porcelain",
             ground="bare",
             palette="adaptive",
-            diagram=resolve_diagram_preset("hub"),
+            diagram=resolve_diagram_preset("hub-zones"),
         )
     ).svg
     with pytest.raises(HwError) as exc:
