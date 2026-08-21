@@ -95,6 +95,39 @@ class HeatmapCell:
 
 
 @dataclass(frozen=True, slots=True)
+class HeatmapBloomPhase:
+    """One phase of the radial-bloom wavefront — a CSS class and its offset.
+
+    The delay is negative so every phase starts mid-cycle at render time: the
+    field is already blooming when the artifact first paints, with no
+    cold-start ramp where the whole lattice fades up in unison.
+    """
+
+    css_class: str
+    delay: str
+
+
+@dataclass(frozen=True, slots=True)
+class HeatmapBloomMotion:
+    """Resolved radial-bloom motion record for the contribution heatmap.
+
+    Durations and opacities arrive pre-formatted as CSS tokens so the defs
+    template stamps them verbatim — a float peak of ``1.0`` would otherwise
+    render as ``opacity:1.0`` where the specimen writes ``opacity:1``.
+    """
+
+    duration: str
+    easing: str
+    opacity_floor: str
+    opacity_peak: str
+    rest_opacity: str
+    phases: list[HeatmapBloomPhase]
+    vocabulary: str
+    physics: str
+    stagger_regime: str
+
+
+@dataclass(frozen=True, slots=True)
 class LegendCell:
     """Resolved heatmap legend cell."""
 
@@ -140,6 +173,7 @@ class StatsLayout:
     inline_language_entries: list[InlineLanguageEntry]
     heatmap_cells: list[HeatmapCell]
     heatmap_legend_cells: list[LegendCell]
+    heatmap_bloom: HeatmapBloomMotion | None
     commits_text_length: float
     prs_text_length: float
     issues_text_length: float
@@ -1279,6 +1313,44 @@ def _build_inline_languages(
     return out
 
 
+def _bloom_class(phase: int) -> str:
+    """CSS class name carrying wavefront phase ``phase``."""
+    return f"hb{phase}"
+
+
+def _bloom_phase(col: int, row: int, stats: ParadigmStatsConfig) -> int:
+    """Wavefront phase of cell ``(col, row)``, ``0`` .. ``phases - 1``.
+
+    Manhattan distance to the seed, folded into the phase count and inverted
+    so phase DECREASES with distance — a cell one ring further out fires one
+    step later, which reads as an outward-traveling wave rather than an
+    inward-collapsing one.
+    """
+    distance = abs(col - stats.heatmap_bloom_seed_col) + abs(row - stats.heatmap_bloom_seed_row)
+    return (stats.heatmap_bloom_phases - distance % stats.heatmap_bloom_phases) % stats.heatmap_bloom_phases
+
+
+def _build_heatmap_bloom(stats: ParadigmStatsConfig) -> HeatmapBloomMotion | None:
+    """Resolve the radial-bloom CSS record, or ``None`` when motion is off."""
+    if stats.heatmap_bloom_phases <= 0 or stats.heatmap_bloom_duration_s <= 0:
+        return None
+    step = stats.heatmap_bloom_duration_s / stats.heatmap_bloom_phases
+    return HeatmapBloomMotion(
+        duration=f"{stats.heatmap_bloom_duration_s:g}s",
+        easing=stats.heatmap_bloom_easing,
+        opacity_floor=f"{stats.heatmap_bloom_opacity_floor:g}",
+        opacity_peak=f"{stats.heatmap_bloom_opacity_peak:g}",
+        rest_opacity=f"{stats.heatmap_bloom_rest_opacity:g}",
+        phases=[
+            HeatmapBloomPhase(css_class=_bloom_class(phase), delay=f"-{phase * step:.3f}s")
+            for phase in range(stats.heatmap_bloom_phases)
+        ],
+        vocabulary=stats.heatmap_bloom_vocabulary,
+        physics=stats.heatmap_bloom_physics,
+        stagger_regime=stats.heatmap_bloom_stagger_regime,
+    )
+
+
 def _build_heatmap_cells(
     heatmap_grid: Sequence[Mapping[str, object]],
     *,
@@ -1297,7 +1369,7 @@ def _build_heatmap_cells(
     grid_len = len(heatmap_grid)
     window_cells = stats.heatmap_cols * stats.heatmap_rows
     offset = grid_len - window_cells if grid_len > window_cells else 0
-    anim_classes = ("b1", "b2", "b3", "b4")
+    animates = stats.heatmap_bloom_phases > 0 and stats.heatmap_bloom_duration_s > 0
     stride = stats.heatmap_cell_size + stats.heatmap_cell_gap
     out: list[HeatmapCell] = []
     for col in range(stats.heatmap_cols):
@@ -1306,7 +1378,10 @@ def _build_heatmap_cells(
             level = _int_value(heatmap_grid[idx].get("level"), 0) if 0 <= idx < grid_len else 0
             level = max(0, min(4, level))
             fill = area_tiers[4 - level] if len(area_tiers) > 4 - level else area_tiers[-1]
-            css_class = anim_classes[(col + row) % len(anim_classes)] if level >= 1 else ""
+            # Empty cells hold the darkest tier and stay still — the rings are
+            # a phase illusion riding real contribution data, so animating the
+            # zero tier would advertise activity that never happened.
+            css_class = _bloom_class(_bloom_phase(col, row, stats)) if animates and level >= 1 else ""
             out.append(
                 HeatmapCell(
                     x=round(stats.heatmap_x0 + col * stride, 3),
@@ -1735,6 +1810,7 @@ def compute_stats_layout(
             area_tiers,
             y_offset=heatmap_zone.y - 101.0 if stats.metric_layout_mode == "cellular_inline" else 0.0,
         ),
+        heatmap_bloom=_build_heatmap_bloom(stats),
         commits_text_length=text_lengths.get("commits_text_length", 0.0),
         prs_text_length=text_lengths.get("prs_text_length", 0.0),
         issues_text_length=text_lengths.get("issues_text_length", 0.0),

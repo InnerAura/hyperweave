@@ -253,6 +253,39 @@ class ParadigmStatsConfig(FrozenModel):
     heatmap_legend_y: float = 101.0
     heatmap_legend_size: float = 7.0
     heatmap_legend_rx: float = 1.5
+    # Radial-bloom heatmap motion. A cell's animation phase is the Manhattan
+    # distance to the seed cell, taken mod ``heatmap_bloom_phases`` and
+    # inverted, so equidistant cells fire together and concentric diamond
+    # wavefronts travel outward from the seed. Only cells above the empty tier
+    # animate; the darkest tier stays still so the rings read as a phase
+    # illusion over live contribution data, not a full-field flicker.
+    heatmap_bloom_phases: int = 0
+    """Number of distinct animation phases; the wavefront period in cells.
+    Zero disables heatmap motion entirely. Cellular: 7 (one ring per row of
+    the 7-row lattice, giving ~3 visible rings across the 40-column axis)."""
+    heatmap_bloom_seed_col: int = 0
+    """Column index the wavefronts originate from. Cellular: 16."""
+    heatmap_bloom_seed_row: int = 0
+    """Row index the wavefronts originate from. Cellular: 3 (center row)."""
+    heatmap_bloom_duration_s: float = 0.0
+    """Full bloom cycle in seconds; also the delay budget divided across
+    ``heatmap_bloom_phases``. Cellular: 2.618 (phi)."""
+    heatmap_bloom_easing: str = "ease-in-out"
+    heatmap_bloom_opacity_floor: float = 0.32
+    """Trough opacity of an animating cell. Cellular: 0.32."""
+    heatmap_bloom_opacity_peak: float = 1.0
+    """Crest opacity of an animating cell, reached at the 50% keyframe."""
+    heatmap_bloom_rest_opacity: float = 0.78
+    """Static opacity every heatmap cell takes under
+    ``prefers-reduced-motion: reduce``. Cellular: 0.78."""
+    heatmap_bloom_vocabulary: str = ""
+    """Motion name published as ``data-hw-motion`` and ``hw:motion
+    vocabulary`` when the heatmap animates. Cellular: 'radial-bloom'."""
+    heatmap_bloom_physics: str = ""
+    """``hw:motion physics`` for the animated heatmap. Cellular: 'diffusion'."""
+    heatmap_bloom_stagger_regime: str = ""
+    """``hw:motion stagger-regime`` for the animated heatmap.
+    Cellular: 'radial-phase'."""
 
 
 class ParadigmStripConfig(FrozenModel):

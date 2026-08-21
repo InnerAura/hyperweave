@@ -1043,6 +1043,10 @@ def _ctx_stats(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, str
     ctx["streak_display"] = "—"
     ctx["languages"] = []
     ctx["heatmap_grid"] = []
+    ctx["heatmap_cells"] = []
+    # Radial-bloom motion record; None whenever the paradigm declares no
+    # heatmap motion, which reads falsey in the defs template's guard.
+    ctx["heatmap_bloom"] = None
     ctx["activity_bars"] = []
     ctx["activity_peak"] = 0
     ctx["data_hw_status"] = "fresh"

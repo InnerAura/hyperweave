@@ -14,7 +14,7 @@
 
    The card outline (rounded rect at info_accent @ 10% alpha) frames the
    composition. Heatmap level 0..4 maps to area_tiers[4..0] (darkest →
-   brightest); active levels carry b1/b2/b3/b4 phase-staggered breathe. #}
+   brightest); active levels carry the radial-bloom phase class hb{n}. #}
 
 {% set _surface = surface_0 | default('var(--dna-surface)') %}
 {% set area_tiers = cellular_palette.primary.area_tiers %}
@@ -79,8 +79,10 @@
 {# ZONE 3b: HEATMAP (y=114..198) — 7 rows × 42 cols of square 11.080px cells
    with 1.2px gap (stride 12.28). Cells start at x=20 and end at
    x=20 + 41*12.28 + 11.08 = 514.56. Height fills 84.76px (7×11.080 +
-   6×1.2). Active cells (level >= 1) carry b1/b2/b3/b4 phase-staggered
-   breathe; level-0 cells stay static at the darkest tier (area_tiers[4]). #}
+   6×1.2). Active cells (level >= 1) carry a radial-bloom phase class keyed
+   to Manhattan distance from the seed cell, so concentric diamond
+   wavefronts travel outward across the lattice; level-0 cells stay static
+   at the darkest tier (area_tiers[4]) and never join the wave. #}
 <g data-hw-zone="heatmap">
   {% for cell in heatmap_cells %}
     <rect x="{{ cell.x }}" y="{{ cell.y }}" width="{{ cell.w }}" height="{{ cell.h }}" rx="{{ cell.rx }}" fill="{{ cell.fill }}"{% if cell.css_class %} class="{{ cell.css_class }}"{% endif %}/>

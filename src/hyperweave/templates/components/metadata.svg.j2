@@ -44,9 +44,9 @@
   <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:chromatic system="{{ genome_id }}" space="oklch"
                   palette="{{ palette }}" contrast-ratio="{{ contrast_ratio | default('') }}"/>
-    <hw:motion vocabulary="{{ motion_vocabulary | default(motion_id) }}" physics="none"
+    <hw:motion vocabulary="{{ motion_vocabulary | default(motion_id) }}" physics="{{ motion_physics | default('none') }}"
                timing="phi" duration-base="{{ rhythm_base }}"
-               stagger-regime="contemplative" cim-compliant="{{ cim_compliant }}"/>
+               stagger-regime="{{ motion_stagger_regime | default('contemplative') }}" cim-compliant="{{ cim_compliant }}"/>
     <hw:geometry form-language="{{ form_language }}" corner-radius="{{ corner | default('5px') }}"
                  grid="auto" proportional-system="phi"
                  mathematical-basis="golden-ratio" symmetry="bilateral"/>

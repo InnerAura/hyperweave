@@ -7,12 +7,14 @@
    (Orbitron usernames, Chakra Petch metric numerals) MUST use a CSS class —
    class specificity 0.0.1.0 wins over `text{}`.
 
-   v0.3.0 refresh consolidates the metric strip to four hierarchy classes
-   (mvh/mvm/mvs/mvg) with a 4-phase breathe animation (b1-b4) namespaced as
-   ``breathe-stats`` so it can't collide with the chart's ``breathe-chart``
-   if both ever embed in the same document. The 5-class system (cc1-cc4 +
-   ccf fast variant) is gone — the v4b prototype's breathe is uniform across
-   all heatmap cells, so the fast variant added unnecessary visual complexity.
+   The metric strip carries four hierarchy classes (mvh/mvm/mvs/mvg). The
+   heatmap runs the radial-bloom wavefront: one ``hb{n}`` class per phase,
+   each a negative-delay offset into a single ``bloom-stats`` keyframe, so
+   equidistant cells fire together and concentric diamond rings travel
+   outward from the seed. Phase count, delays, and opacities are all resolved
+   in compose/stats/layout.py from cellular.yaml — the template stamps them.
+   The keyframe is namespaced ``bloom-stats`` so it can't collide with the
+   chart's ``breathe-chart`` if both ever embed in the same document.
 
    Genome-independent constants (streak_green, mid_gray, hero_white) flow
    from paradigm config as named template variables — never raw hex in the
@@ -29,11 +31,12 @@
 {{ chart_defs | default("") | safe }}
 <style>{{ font_faces | safe }}
 text{font-family:'JetBrains Mono',monospace}
-.b1{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite;will-change:opacity}
-.b2{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 1.5s;will-change:opacity}
-.b3{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 3s;will-change:opacity}
-.b4{animation:breathe-stats {{ cellular_pulse_base_duration | default('6s') }} ease-in-out infinite 4.5s;will-change:opacity}
-@keyframes breathe-stats{0%,100%{opacity:.5}40%{opacity:1}60%{opacity:.75}}
+{% if heatmap_bloom and heatmap_cells %}
+{% for phase in heatmap_bloom.phases %}
+.{{ phase.css_class }}{animation:bloom-stats {{ heatmap_bloom.duration }} {{ heatmap_bloom.easing }} infinite {{ phase.delay }};will-change:opacity}
+{% endfor %}
+@keyframes bloom-stats{0%,100%{opacity:{{ heatmap_bloom.opacity_floor }}}50%{opacity:{{ heatmap_bloom.opacity_peak }}}}
+{% endif %}
 .{{ uid }}-username{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.16em;fill:{{ stats_info_accent }}}
 .{{ uid }}-bio{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:0.03em;fill:{{ stats_mid_accent }};opacity:0.55}
 .{{ uid }}-brand{font-family:'JetBrains Mono',monospace;font-size:6.5px;letter-spacing:0.14em;fill:{{ stats_mid_accent }};opacity:0.32}
@@ -44,5 +47,8 @@ text{font-family:'JetBrains Mono',monospace}
 .{{ uid }}-mlb{font-family:'JetBrains Mono',monospace;font-size:6.5px;font-weight:500;letter-spacing:0.22em;fill:{{ stats_mid_accent }};opacity:0.50}
 .{{ uid }}-cyr{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:0.16em;fill:{{ stats_mid_accent }};opacity:0.32}
 .{{ uid }}-lt{font-family:'JetBrains Mono',monospace;font-size:7px;fill:{{ stats_mid_accent }};opacity:0.6}
-@media(prefers-reduced-motion:reduce){.b1,.b2,.b3,.b4{animation:none!important;opacity:.7!important}}
+{# A card with no contribution grid renders no heatmap zone at all, so both the
+   phase classes and this rule stay out of the stylesheet rather than shipping
+   selectors that can never match. #}
+{% if heatmap_bloom and heatmap_cells %}@media(prefers-reduced-motion:reduce){[data-hw-zone="heatmap"] rect{animation:none!important;opacity:{{ heatmap_bloom.rest_opacity }}!important}}{% endif %}
 </style>

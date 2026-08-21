@@ -262,6 +262,25 @@ stats:
   heatmap_cell_size: 11.080
   heatmap_cell_gap: 1.2
   heatmap_zone_height: 84.76
+  # Radial-bloom heatmap motion, read from the automata bloom specimen
+  # (.archive/v01_v02_v03/genomes/automata/automata_v2/
+  # hyperweave-stats-eli64s-bloom.svg, data-hw-motion="radial-bloom").
+  # Seed (16, 3) sits mid-lattice so the wavefronts have room to travel both
+  # ways along the 40-column axis. Manhattan distance is deliberate over
+  # Euclidean: diamond isophases land on discrete cells, where a circular
+  # metric fringes at sub-pixel radii on a 7-row grid. Period 7 = one phase
+  # per row, giving ~3 concurrent rings across the long axis.
+  heatmap_bloom_phases: 7
+  heatmap_bloom_seed_col: 16
+  heatmap_bloom_seed_row: 3
+  heatmap_bloom_duration_s: 2.618
+  heatmap_bloom_easing: ease-in-out
+  heatmap_bloom_opacity_floor: 0.32
+  heatmap_bloom_opacity_peak: 1.0
+  heatmap_bloom_rest_opacity: 0.78
+  heatmap_bloom_vocabulary: radial-bloom
+  heatmap_bloom_physics: diffusion
+  heatmap_bloom_stagger_regime: radial-phase
   # Username header layout. bio_x is the ADAPTIVE
   # CEILING (only fires when identity is so long it would push bio off the
   # card). Post-Bug-A the HYPERWEAVE branding moved from the header right

@@ -498,6 +498,7 @@ def resolve_stats(
                 "language_layout": stats_layout.inline_language_entries,
                 "heatmap_cells": stats_layout.heatmap_cells,
                 "heatmap_legend_cells": stats_layout.heatmap_legend_cells,
+                "heatmap_bloom": stats_layout.heatmap_bloom,
                 "activity_sparkline_polyline": _build_activity_sparkline(input_data.activity, stats_layout),
                 "stats_brand_x": card_width - 20,
                 "commits_text_length": stats_layout.commits_text_length,
@@ -512,6 +513,21 @@ def resolve_stats(
             stats=stats_cfg,
             full_text=bio_full,
         )
+        # honesty.motion-flag: the root data-hw-motion default is the badge/strip
+        # BORDER motion, which is "static" on a stats card even when the heatmap
+        # is animating. Publish the heatmap's own vocabulary whenever at least
+        # one cell actually carries a bloom class — an all-empty grid animates
+        # nothing and keeps the static claim true.
+        bloom = stats_layout.heatmap_bloom
+        if bloom is not None and any(cell.css_class for cell in stats_layout.heatmap_cells):
+            stats_context.update(
+                {
+                    "data_hw_motion": bloom.vocabulary,
+                    "motion_vocabulary": bloom.vocabulary,
+                    "motion_physics": bloom.physics,
+                    "motion_stagger_regime": bloom.stagger_regime,
+                }
+            )
 
     # Embedded compact chart — enablement flag + viewport sourced from
     # paradigm YAML. Chrome paradigm embeds; brutalist does not. Zero
