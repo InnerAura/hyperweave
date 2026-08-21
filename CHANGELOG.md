@@ -5,9 +5,9 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.2] - Unreleased
+## [0.4.2] - 2026-08-21
 
-Diagram types simplify to eight clear names, every diagram renders at a consistent size, and a new `gather` option merges converging arrows into one point.
+Standardize diagram family, fix inconsistencies across all diagram types, and a new `gather` option merges converging arrows into one point.
 
 ### Changed
 
