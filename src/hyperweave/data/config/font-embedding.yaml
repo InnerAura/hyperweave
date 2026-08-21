@@ -88,6 +88,27 @@ genomes:
     # No Inter: a till receipt is one typeface.
     receipt: [jetbrains-mono]
 
+# How each font mode describes itself, in the two places the artifact makes a
+# portability claim: the `data-hw-fonts` root attribute (`attribute`) and the
+# `hw:constraints-applied` list (`constraint`). Both answer one question for a
+# consumer — can this file render its own type offline? `embed` keeps the
+# historical `self-contained` wording; the other two modes now say what they
+# actually did instead of borrowing it.
+#
+# A frame that embeds no fonts at all (icon, divider — zero <text>) omits the
+# attribute and keeps the `self-contained` constraint: it needs nothing, so
+# there is no font question to answer.
+delivery_labels:
+  embed:
+    attribute: self-contained
+    constraint: self-contained
+  cdn:
+    attribute: cdn
+    constraint: cdn-fonts
+  system:
+    attribute: system
+    constraint: system-fonts
+
 # Documentation only in v0.3.7 — no runtime consumer. When CJK
 # rendering becomes in-scope, plumb a `locale` field through
 # ComposeSpec and short-circuit font embedding in

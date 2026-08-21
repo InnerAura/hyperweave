@@ -672,3 +672,48 @@ def test_plate_render_keeps_the_substrate_fallback_mode() -> None:
         )
     ).svg
     assert _mode_of(plate_dark) == "dark"
+
+
+# ── the baked dark face must not inherit a LIGHT variant's panel plate ──────
+
+
+@pytest.mark.parametrize("variant", ["porcelain", "cream", "dusk", "petrol"])
+def test_light_variant_dark_face_does_not_bake_a_light_plate(variant: str) -> None:
+    """A light variant baked to its DARK face paints a DARK plate.
+
+    ``panel_gradient_stops`` is a light-substrate construct carrying literal
+    hex, so unlike ``var(--dna-surface)`` it cannot follow the face. Every
+    primer light variant declares it, and the matrix plate gradient consumed
+    it on any non-adaptive render — so ``--face dark`` produced dark-face ink
+    over a cream/porcelain plate (washed-out ghosting, visible as a light
+    background under light text). The dark face must fall through to the
+    ``var(--dna-*)`` branch its defs.j2 already carries.
+    """
+    svg = compose(
+        ComposeSpec(
+            type="matrix",
+            genome_id="primer",
+            variant=variant,
+            ground="opaque",
+            palette="fixed",
+            surface_face="dark",
+            matrix=_matrix_ir(),
+        )
+    ).svg
+    grad = re.search(r'<linearGradient id="hw-[0-9a-f]+-card-bg".*?</linearGradient>', svg, re.S)
+    assert grad is not None, "matrix always defines the card-bg plate gradient"
+    stops = re.findall(r'stop-color="([^"]+)"', grad.group(0))
+    assert stops, "the plate gradient always carries stops"
+    assert not any(s.startswith("#") for s in stops), (
+        f"{variant} dark face baked literal light plate stops {stops} — the light panel gradient leaked past the face"
+    )
+
+    # ...and the resolved surface token it falls through to is genuinely dark.
+    root = re.search(r"svg,\s*:root\s*\{(.*?)\}", svg, re.S)
+    assert root is not None
+    surface = re.search(r"--dna-surface:\s*([^;]+);", root.group(1))
+    assert surface is not None
+    r, g, b = (int(surface.group(1).strip().lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
+    assert (0.2126 * r + 0.7152 * g + 0.0722 * b) < 64, (
+        f"{variant} dark face resolved a non-dark --dna-surface {surface.group(1)!r}"
+    )

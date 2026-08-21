@@ -28,6 +28,16 @@ from hyperweave.verbs.schemas import frame_schema_for
 
 _TRANSFORMABLE = ("matrix/1", "diagram/1")
 
+
+def transformable_frames() -> tuple[str, ...]:
+    """The frame types ``transform`` accepts, derived from the schema allowlist.
+
+    Callers that ADVERTISE the verb read this rather than keeping their own
+    copy — a suggestion to transform a badge is a suggestion that errors.
+    """
+    return tuple(schema.split("/", 1)[0] for schema in _TRANSFORMABLE)
+
+
 Mutation = list[dict[str, Any]] | dict[str, Any]
 
 

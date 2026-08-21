@@ -427,3 +427,120 @@ async def test_genome_default_parity_across_cli_http_mcp(tmp_path: Path) -> None
     assert isinstance(mcp_badge, dict) and mcp_badge["genome"] == "primer"
     mcp_pinned = await hw_compose(type="badge", genome="brutalist", title="T", value="V")
     assert isinstance(mcp_pinned, dict) and mcp_pinned["genome"] == "brutalist"
+
+
+# ── stdin as a spec source ────────────────────────────────────────────────
+# Heredoc-to-stdin is the canonical agent invocation. Every assertion here
+# goes through the real parser and reads the sentence a caller actually gets;
+# the pre-fix CLI stat'd the path before opening it, so a fifo answered
+# is_file() with False and `/dev/stdin` came back "not found" on turn one.
+
+_STDIN_SPEC = json.dumps(MINIMAL_DIAGRAM_SPEC)
+
+
+@pytest.mark.parametrize("handle", ["-", "/dev/stdin", "/dev/fd/0"])
+def test_compose_reads_the_spec_from_stdin(handle: str, tmp_path: Path) -> None:
+    out = tmp_path / f"{handle.strip('/-').replace('/', '_')}.svg"
+    result = runner.invoke(app, ["compose", "diagram", "--spec-file", handle, "-o", str(out)], input=_STDIN_SPEC)
+    assert result.exit_code == 0, result.output
+    assert _no_traceback(result.output)
+    assert 'data-hw-type="diagram"' in out.read_text()
+
+
+@pytest.mark.parametrize("handle", ["-", "/dev/stdin"])
+def test_validate_reads_the_spec_from_stdin(handle: str) -> None:
+    result = runner.invoke(app, ["validate", handle], input=_STDIN_SPEC)
+    assert result.exit_code == 0, result.output
+    assert "valid: diagram" in result.output
+
+
+def test_compose_reads_a_process_substitution_path(tmp_path: Path) -> None:
+    """`<(jq …)` expands to a /dev/fd/N fifo — readable, but is_file() is False.
+    The gate is readability, not regular-file-ness."""
+    import os
+    import threading
+
+    fifo = tmp_path / "spec.fifo"
+    os.mkfifo(fifo)
+
+    def _feed() -> None:
+        with fifo.open("w") as fh:
+            fh.write(_STDIN_SPEC)
+
+    writer = threading.Thread(target=_feed, daemon=True)
+    writer.start()
+    out = tmp_path / "fifo.svg"
+    result = runner.invoke(app, ["compose", "diagram", "--spec-file", str(fifo), "-o", str(out)])
+    writer.join(timeout=5)
+    assert result.exit_code == 0, result.output
+    assert 'data-hw-type="diagram"' in out.read_text()
+
+
+@pytest.mark.parametrize(
+    ("piped", "needle"),
+    [
+        ("", "no spec on stdin"),
+        ("   \n", "no spec on stdin"),
+        ("not json", "stdin is not valid JSON"),
+        ("[]", "stdin must contain a JSON object"),
+    ],
+)
+def test_stdin_refusals_print_a_clean_sentence(piped: str, needle: str) -> None:
+    result = runner.invoke(app, ["compose", "diagram", "--spec-file", "-"], input=piped)
+    assert result.exit_code == 2
+    assert _no_traceback(result.output)
+    assert needle in result.output
+
+
+def test_empty_stdin_refusal_names_the_fix() -> None:
+    result = runner.invoke(app, ["compose", "diagram", "--spec-file", "-"], input="")
+    assert "fix:" in result.output
+    assert "--spec-file -" in result.output
+
+
+def test_interactive_stdin_refuses_instead_of_hanging(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A terminal never sends EOF, so an interactive stdin must refuse at once
+    rather than parking the caller's turn on a read that never returns.
+
+    This is the one stdin case CliRunner cannot stage — its replacement stdin
+    always reports isatty() False — so the guard drives the helper directly and
+    still asserts the sentence a caller reads, plus the exit code.
+    """
+    import click
+
+    from hyperweave import cli
+
+    class _Tty:
+        @staticmethod
+        def isatty() -> bool:
+            return True
+
+        @staticmethod
+        def read() -> str:  # pragma: no cover - reached only if the guard fails
+            raise AssertionError("read() on an interactive stdin would block")
+
+    monkeypatch.setattr(cli.sys, "stdin", _Tty())
+    with pytest.raises(click.exceptions.Exit) as exc:
+        cli._read_stdin_spec()
+    assert exc.value.exit_code == 2
+    printed = capsys.readouterr().err
+    assert "no spec on stdin" in printed
+    assert "fix:" in printed
+
+
+def test_stdin_handling_leaves_preset_dispatch_alone() -> None:
+    """The stdin branch matches three literal names and returns before any
+    stat, so the bundled-spec menu and the missing-path error keep their text."""
+    unknown = runner.invoke(app, ["compose", "diagram", "--spec-file", "no-such"])
+    assert unknown.exit_code == 2
+    assert "unknown diagram spec 'no-such'" in unknown.output
+    assert "known diagram specs:" in unknown.output
+
+    missing = runner.invoke(app, ["compose", "diagram", "--spec-file", "./nope.json"])
+    assert missing.exit_code == 2
+    assert "not found" in missing.output
+
+    named = runner.invoke(app, ["validate", diagram_preset_names()[0]])
+    assert named.exit_code == 0, named.output

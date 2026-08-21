@@ -462,8 +462,15 @@ class DiagramSpec(FrozenModel):
     """The universal diagram IR — request input, ``hw:payload`` body,
     markdown shadow source, and envelope source, all at once."""
 
-    title: str = Field(default="", description="Header title; empty (with empty subtitle) collapses the header")
-    subtitle: str = Field(default="", description="Header descriptor line")
+    title: str = Field(
+        default="",
+        description=(
+            "The artifact's name, not a drawn heading: it fills <title>, <desc>, the payload, and "
+            "the markdown shadow's lead, so screen readers, tooltips, and README embeds all read it. "
+            "It draws as the caption only when subtitle is empty — the host page owns the heading."
+        ),
+    )
+    subtitle: str = Field(default="", description="The caption line drawn at the base of the artifact")
     topology: Topology = Field(description="Named layout pattern")
     orientation: Orientation = Field(
         default=Orientation.HORIZONTAL,

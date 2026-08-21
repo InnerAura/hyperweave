@@ -1,0 +1,7 @@
+{# hw:chromatic-surface — what a theme may repaint (protocol L8 zones).
+   Rows come from compose/chromatic.py:chromatic_zones; every attribute is
+   optional per zone, so a row carries only what it can honestly state.
+   xml_escape stays LAST in each chain (Invariant 14). #}
+  <hw:chromatic-surface xmlns:hw="https://hyperweave.app/hw/v1.0">
+{% for zone in chromatic_zones | default([]) %}    <hw:zone id="{{ zone.id | xml_escape }}" capability="{{ zone.capability | xml_escape }}"{% if zone.count is defined %} count="{{ zone.count }}"{% endif %}{% if zone.tokens is defined %} tokens="{{ zone.tokens | xml_escape }}"{% endif %}{% if zone.sinks is defined %} sinks="{{ zone.sinks | xml_escape }}"{% endif %}{% if zone.glyphs is defined %} glyphs="{{ zone.glyphs | xml_escape }}"{% endif %}{% if zone.reason is defined %} reason="{{ zone.reason | xml_escape }}"{% endif %}/>
+{% endfor %}  </hw:chromatic-surface>

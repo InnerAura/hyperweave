@@ -54,12 +54,16 @@
                    weight-range="500-900" metrics-method="lut"/>
     <hw:material surface="genome-native" depth="{{ material_depth }}" texture="none"/>
   </hw:aesthetic>
+{% include "components/chromatic-surface.svg.j2" %}
   <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
-    <hw:intent>{{ reasoning_intent | default('') }}</hw:intent>
-    <hw:approach>{{ reasoning_approach | default('') }}</hw:approach>
-    <hw:tradeoffs>{{ reasoning_tradeoffs | default('') }}</hw:tradeoffs>
-    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
-    <hw:spatial-notes>{{ spatial_notes }}</hw:spatial-notes>
+{# Invariant 14: reasoning is authored prose, so a stray &, <, or > in a
+   data/reasoning/*.yaml string would otherwise break the container. escape
+   LAST in the chain, after default(). #}
+    <hw:intent>{{ reasoning_intent | default('') | xml_escape }}</hw:intent>
+    <hw:approach>{{ reasoning_approach | default('') | xml_escape }}</hw:approach>
+    <hw:tradeoffs>{{ reasoning_tradeoffs | default('') | xml_escape }}</hw:tradeoffs>
+    <hw:constraints-applied>{{ font_constraint | xml_escape }}, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:spatial-notes>{{ spatial_notes | xml_escape }}</hw:spatial-notes>
   </hw:reasoning>
 {% endif %}
 {# hw:payload + hw:envelope — emitted at EVERY metadata tier when present:

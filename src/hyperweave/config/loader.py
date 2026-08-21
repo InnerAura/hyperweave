@@ -186,11 +186,14 @@ def load_marquee_classes() -> tuple[dict[str, str], str]:
 def load_font_embedding() -> dict[str, Any]:
     """Load font embedding gate from data/config/font-embedding.yaml.
 
-    Returns a dict with three top-level keys:
+    Returns a dict with four top-level keys:
 
     - ``defaults``: per-frame fallback font slug lists (frames absent from
       a genome's block).
     - ``genomes``: per-(genome_id, frame_type) override font slug lists.
+    - ``delivery_labels``: font mode -> ``{attribute, constraint}``, the two
+      wordings the artifact uses to describe its own font portability (the
+      ``data-hw-fonts`` value and the ``hw:constraints-applied`` entry).
     - ``non_embedded_locales``: documentation-only list of locales that
       should bypass font embedding when CJK rendering is added.
 
@@ -199,12 +202,35 @@ def load_font_embedding() -> dict[str, Any]:
     """
     path = _data_path("config/font-embedding.yaml")
     if not path.exists():
-        return {"defaults": {}, "genomes": {}, "non_embedded_locales": []}
+        return {"defaults": {}, "genomes": {}, "delivery_labels": {}, "non_embedded_locales": []}
     raw = _read_yaml(path) or {}
     return {
         "defaults": raw.get("defaults") or {},
         "genomes": raw.get("genomes") or {},
+        "delivery_labels": raw.get("delivery_labels") or {},
         "non_embedded_locales": raw.get("non_embedded_locales") or [],
+    }
+
+
+@lru_cache(maxsize=1)
+def load_chromatic_surface() -> dict[str, Any]:
+    """Load the theme-mutability vocabulary from data/config/chromatic-surface.yaml.
+
+    Returns ``sinks`` (the presentation attributes that carry frozen paint),
+    ``reasons`` (why each fixed zone is fixed), ``capabilities`` (the L8
+    ``hw:zone`` capability per zone), and ``frame_tokens`` (live tokens a
+    frame's own defs template declares outside the genome CSS layer). Cached —
+    every compose reads it once to build its ``hw:chromatic-surface`` block.
+    """
+    path = _data_path("config/chromatic-surface.yaml")
+    if not path.exists():
+        return {"sinks": [], "reasons": {}, "capabilities": {}, "frame_tokens": []}
+    raw = _read_yaml(path) or {}
+    return {
+        "sinks": [str(s) for s in (raw.get("sinks") or [])],
+        "reasons": raw.get("reasons") or {},
+        "capabilities": raw.get("capabilities") or {},
+        "frame_tokens": raw.get("frame_tokens") or [],
     }
 
 

@@ -196,6 +196,11 @@ def _render_diagram_frame() -> str:
         "Edges reference node IDS via `source`/`target`. `validate` accepts a bare spec or the "
         "{type, spec} envelope; compose is the same gate."
     )
+    lines.append(
+        "Text placement: `title` is the artifact's NAME — it fills <title>, <desc>, the payload, and the "
+        "markdown shadow's lead, and it draws as the caption only when `subtitle` is empty. `subtitle` is "
+        "the one caption line drawn at the base. There is no drawn heading; the host page owns that."
+    )
     lines.append("")
     lines.append("Topologies (pick by shape of the story; capacities are hard bands):")
     for slug, guide in _TOPOLOGY_GUIDE.items():

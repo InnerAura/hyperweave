@@ -21,6 +21,14 @@ Diagram types simplify to eight clear names, every diagram renders at a consiste
 - **`gather` on any node** — set `gather: true` and the arrows converging on (or leaving) that node merge into a single marked point instead of drawing one arrowhead each; works on dag, fanout, and hub diagrams, and individual arrows stay the default.
 - **`card+label` node style** — a small caps label over large values, with `hub-bilateral` as its ready-made preset.
 - **Two new fan-out presets** — `fanout-bilateral-pair` and `fanout-bilateral-trio`: icon nodes flowing into and out of a central hub, with animated beams.
+- **Artifacts say which colors a theme can change** — every file lists the color tokens you can override, the places its color is fixed and why, and any brand logo colors that stay put.
+- **Compose prints what to run next** — writing with `-o` also prints a JSON list of working commands for reading and editing the artifact, and what each piece of text you passed feeds.
+
+### Fixed
+
+- **Specs can arrive on standard input** — `--spec-file -`, `/dev/stdin`, and a piped file all work on `compose` and `validate`, so the heredoc form works on the first try.
+- **`data-hw-fonts` reports the real font mode** — `--font-mode cdn` and `system` no longer claim the artifact is self-contained when its type comes from the network or your machine.
+- **An artifact's explanation matches what you see** — a file that adapts to light and dark now describes both faces, and one rendered to a single face describes that face.
 
 ### Notes
 

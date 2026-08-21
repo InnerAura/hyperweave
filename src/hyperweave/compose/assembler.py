@@ -63,10 +63,34 @@ def fonts_for_frame(frame_type: str, genome_id: str = "") -> frozenset[str]:
 def frame_needs_fonts(frame_type: str, genome_id: str = "") -> bool:
     """Per-(frame_type, genome_id) font-loading gate. Returns True when
     any fonts should be embedded — used by context-builder to gate the
-    ``data-hw-fonts="self-contained"`` SVG-root attribute and the
-    ``hw:css-modules`` debug comment.
+    ``data-hw-fonts`` SVG-root attribute and the ``hw:css-modules`` debug
+    comment.
     """
     return bool(fonts_for_frame(frame_type, genome_id))
+
+
+def font_delivery_labels(font_mode: str, *, has_font_faces: bool) -> tuple[str, str]:
+    """``(data-hw-fonts value, hw:constraints-applied entry)`` for this render.
+
+    Both strings answer "can this file render its own type offline?", so both
+    must name the delivery the artifact actually used — embedded base64, the
+    Google ``@import``, or the bare fallback stacks. The wordings live in
+    ``font-embedding.yaml`` (Invariant 5); an unmapped mode reports nothing
+    rather than guessing.
+
+    ``system`` emits no ``@font-face`` at all, so it is recognised by mode
+    rather than by payload. An empty payload in any other mode (an empty
+    genome-vs-frame intersection) omits the attribute, as it always has, and
+    keeps the ``self-contained`` constraint: a frame with no type to load
+    genuinely needs nothing.
+    """
+    from hyperweave.config.loader import load_font_embedding
+
+    labels = load_font_embedding()["delivery_labels"]
+    row = labels.get(font_mode) or {}
+    if font_mode != "system" and not has_font_faces:
+        return "", str((labels.get("embed") or {}).get("constraint", ""))
+    return str(row.get("attribute", "")), str(row.get("constraint", ""))
 
 
 # Genome fields that signal a telemetry skin (presence-gates the tool-color CSS block)

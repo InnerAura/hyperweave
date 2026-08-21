@@ -228,10 +228,27 @@ primer:
         shadow color through genome DNA. Ink-derived hairlines render as
         ink-primary at 2-6% opacity so rules sit INTO the paper rather than
         on it.
+    adaptive:
+      intent: |-
+        One 900-wide matrix carrying BOTH faces: the light face in the base
+        scope, the dark face behind prefers-color-scheme, so a single file
+        reads correctly in a light README and a dark one without a second
+        asset or a picture-element pair.
+      approach: |-
+        The solved geometry is emitted once — column widths, the 140px label
+        floor, the 40px row pitch, the 33px masthead — and only the chromatic
+        layer forks: the genome block is rescoped from `svg, :root` to the
+        artifact's own #uid selector, and a sparse far-palette block restates
+        the same --dna-* roles inside the media query. Contrast parity, not a
+        lightness mirror, picks the far values, so the ink holds its 12.0
+        floor against either ground.
       tradeoffs: |-
-        Kept one stencil instead of a light split so measured column geometry
-        cannot drift between substrates; substrate nuance lives entirely in
-        material tokens, at the cost of any light-only structural flourish.
+        The #uid scope is what makes two faces fit in one file, and it costs
+        the global `svg, :root` block — a host page can no longer retheme the
+        artifact by setting --dna-* on an ancestor, only on the artifact
+        itself. Gradient stops and filter floods cannot read a custom property
+        at all, so those flip through paired CSS rules instead; the file is
+        larger than either baked face for exactly that duplication.
   diagram:
     dark:
       intent: |-
@@ -278,6 +295,30 @@ primer:
         comparison cards drop their accent dot entirely, trading slot
         symmetry for the inert-versus-live read the topology exists to
         assert.
+    adaptive:
+      intent: |-
+        One topology graph carrying BOTH faces: white cards on the light base
+        scope, the dark plate behind prefers-color-scheme. The same file drops
+        into a light README and a dark one and reads as drawn for each, rather
+        than as a light diagram someone dimmed.
+      approach: |-
+        Geometry is solved once and is substrate-blind — the 64px fan pitch,
+        the 92px convergence pitch, the 178px flywheel arcs, every card box
+        through the one sizing seam — so only paint forks. The genome layer
+        rescopes from `svg, :root` to the artifact's own #uid, and the dark
+        face restates the same roles inside the media query: card fill moves to
+        a 3-stop eased ramp (crown, chassis-offset mid, long tail to the floor)
+        with an edge-stroke gradient down its own ladder, and each flow slot
+        gets its own --dna-flow-{i} so both faces resolve independently.
+      tradeoffs: |-
+        Elevation cannot follow the palette, because var() does not resolve in
+        filter attributes: the light face's two-layer lift (0/1/2 at 5 percent
+        over 0/9/20 at 5.5) and the dark face's 0/6/12 seat are literal genome
+        values selected by paired CSS rules, so retuning either is a config
+        edit. The seat is also ground-keyed — it casts ink outside the card, so
+        it only draws on a plate the artifact owns; on a bare ground the lift
+        pair carries elevation instead, trading depth for not banding an
+        unknown host.
     transform_note: |-
       Transformed artifact: {delta}; insertion seat {seat}. Survivor rows ride
       the parent's pinned rank order (layout.rank_orders, inside the hashed

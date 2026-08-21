@@ -1,0 +1,111 @@
+# Chromatic surface — what a theme can and cannot repaint.
+#
+# Every artifact declares this as `hw:chromatic-surface` in its <metadata>, so
+# an agent handed one file knows which paint answers to a genome swap BEFORE it
+# starts overriding tokens and watching a third of the picture refuse to move.
+#
+# Three classes:
+#
+#   chassis — bound to --dna-* custom properties. Override the token, the paint
+#             follows. The artifact lists its own token names, measured from the
+#             stylesheet it actually shipped, so the list can never be stale.
+#   material — literal paint written into SVG presentation ATTRIBUTES. var()
+#             does not resolve in an attribute, so these values are decided at
+#             compose time. The artifact names the attributes rather than the
+#             hexes: one grep over `sinks` yields the exact list, and the list
+#             stays correct as templates change.
+#   brand   — logo marks painted from the glyph registry. Licensed colour that
+#             is deliberately genome-independent: a GitHub mark stays GitHub's
+#             on every substrate.
+#
+# NOTE the distinction `sinks` turns on: `stop-color="#15171A"` is an attribute
+# and is resolved at compose time, while `style="stop-color: var(--dna-surface)"`
+# is a CSS declaration and follows the token. Only the attribute form is listed.
+# A presentation attribute is also the lowest-priority cascade slot, so a
+# stylesheet rule that targets the same element still wins — the chassis token
+# list above it is what tells an agent whether such a rule exists.
+
+# The presentation attributes that carry a literal colour value. Verified by a
+# sweep across frames x genomes x variants x surface modes in
+# tests/compose/test_chromatic_manifest.py, which fails if a render puts colour
+# in an attribute absent from this list. (stop-opacity/flood-opacity carry
+# scalars, not colour, and are deliberately not listed.)
+sinks:
+  - fill
+  - stroke
+  - stop-color
+  - flood-color
+
+# The one-line explanation each fixed zone carries, so the file teaches instead
+# of merely labelling.
+reasons:
+  material: var() does not resolve in an SVG presentation attribute, so this paint is decided at compose time
+  brand: licensed brand colour, independent of the genome
+
+# The capability vocabulary (protocol L8 `hw:zone`): what an agent may do to
+# each zone. `chromatic-override` is the writable one; `fixed` is a refusal
+# with a reason attached.
+capabilities:
+  chassis: chromatic-override
+  material: fixed
+  brand: fixed
+
+# Live tokens a FRAME's own defs template declares, outside the genome CSS
+# layer the chassis zone measures directly. These are fully overridable — they
+# just aren't visible in the assembled stylesheet at the point the manifest is
+# built, so they are declared here instead.
+#
+# Rules are keyed on `frame` + `paradigm`, the same pair that picks the defs
+# template (`frames/{frame}/{paradigm}-defs.j2`), so the catalogue mirrors the
+# dispatch rather than guessing at it.
+#
+#   frame/paradigm  the render this rule applies to; omit either to match all
+#   tokens          literal custom-property names the defs block declares
+#   token           one name, with `{i}` expanded over `count_from`
+#   count_from      context field whose length sets how many are declared
+#   when            context field that must be truthy for the block to exist
+#                   (far-face derivations are empty on a plate render, and the
+#                   template emits nothing for them)
+#
+# The set-equality gate in tests/compose/test_chromatic_manifest.py sweeps
+# frames x genomes x variants x surfaces and fails in BOTH directions, so a
+# template that adds a declaration and a rule that names a phantom are equally
+# loud.
+frame_tokens:
+  # The dark plate block re-declares the chassis roles at the dark face's
+  # values (baked or behind @media, per diagram_dark_adaptive).
+  - frame: diagram
+    paradigm: primer
+    when: diagram_dark
+    tokens:
+      - --dna-signal
+      - --dna-signal-text
+      - --dna-ink-primary
+      - --dna-ink-muted
+      - --dna-border
+      - --dna-surface
+      - --dna-surface-alt
+      - --dna-frame-fill
+  # Per-slot flow hues, one token per palette slot, adaptive renders only.
+  - frame: diagram
+    paradigm: primer
+    token: "--dna-flow-{i}"
+    count_from: diagram_flow
+    when: diagram_flow_far
+  - frame: diagram
+    paradigm: primer
+    token: --dna-diagram-conn-muted
+    when: diagram_conn_muted_far
+  # The brutalist chart scopes its data-viz roles to its own .{uid}-chart block.
+  - frame: chart
+    paradigm: brutalist
+    tokens:
+      - --dna-chart-main
+      - --dna-chart-highlight
+      - --dna-chart-glyph
+      - --dna-chart-axis-text
+      - --dna-chart-title-bg
+      - --dna-chart-milestone-outer
+      - --dna-chart-milestone-mid
+      - --dna-chart-milestone-inner
+      - --dna-chart-milestone-text

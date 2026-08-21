@@ -49,6 +49,70 @@ transform/diff bind to the payload (lossless); query/verify use the envelope
 """
 
 
+# Where each caller-supplied string lands, per frame. A frame whose text all
+# draws where you'd expect has no entry — the map exists for the surprises.
+#
+# The diagram entry is the one that cost an agent a turn: `title` is accepted,
+# reaches <title>/<desc>/the payload/the markdown lead, and draws as the caption
+# ONLY when `subtitle` is empty, because the artifact has no masthead — the host
+# page owns the heading. Passing both looks like the title was dropped.
+_TEXT_ROLES: dict[str, dict[str, str]] = {
+    "diagram": {
+        "title": "the artifact's name — <title>, <desc>, the payload, and the markdown lead; "
+        "draws as the caption only when subtitle is empty",
+        "subtitle": "the caption line drawn at the base",
+    },
+}
+
+
+def text_roles(frame_type: str) -> dict[str, str]:
+    """Where this frame's caller-supplied strings land. Empty when unremarkable."""
+    return dict(_TEXT_ROLES.get(frame_type, {}))
+
+
+# A question the deterministic field map actually resolves for this frame, so
+# the printed `query` call returns a real field rather than falling through to
+# the intent string. "what is this" is the universal answer (envelope intent).
+_QUERY_EXAMPLES: dict[str, str] = {
+    "diagram": "how many nodes",
+    "matrix": "how many rows",
+}
+
+
+def next_commands(handle: str, frame_type: str = "") -> list[dict[str, str]]:
+    """The verbs that operate on a just-composed artifact, as runnable commands.
+
+    Built from the same verb names ``SELF_INSTRUCT`` embeds and
+    :func:`discover_verbs` documents, so the artifact's own text, the terminal
+    hint, and this list cannot drift apart. ``handle`` is whatever the caller
+    can pass back in — the file they just wrote, or a stored-artifact url.
+
+    Frame-aware, because a suggestion that errors is worse than no suggestion:
+    ``transform`` is offered only on the frames it accepts (its own allowlist is
+    the source), and the ``query`` example is one the field map resolves.
+    """
+    from hyperweave.verbs.transform import transformable_frames
+
+    question = _QUERY_EXAMPLES.get(frame_type, "what is this")
+    commands = [
+        {"verb": "extract", "command": f"hyperweave extract {handle} --respond payload"},
+        {"verb": "query", "command": f'hyperweave query {handle} "{question}"'},
+    ]
+    if frame_type in transformable_frames():
+        commands.append(
+            {
+                "verb": "transform",
+                "command": (
+                    f"hyperweave transform {handle} "
+                    '--patch-json \'[{"op":"replace","path":"/title","value":"New title"}]\' -o next.svg'
+                ),
+            }
+        )
+    commands.append({"verb": "verify", "command": f"hyperweave verify {handle}"})
+    commands.append({"verb": "discover", "command": "hyperweave discover verbs"})
+    return commands
+
+
 def discover_verbs() -> dict[str, object]:
     """The ``hw_discover(what='verbs')`` section: signatures + a worked example."""
     return {

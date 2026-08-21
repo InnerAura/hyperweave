@@ -6,10 +6,15 @@ substrate_kind) -> ReasoningFields. The ReasoningFields model at
 construction, so any reasoning entry that violates the quality bar fails
 loud at compose time rather than silently emitting empty hw:reasoning.
 
-Fallback chain when an exact match is missing:
-  1. reasoning[genome][frame_type][substrate_kind]
-  2. reasoning[genome][frame_type]["dark"]  (substrate-agnostic fallback)
-  3. None  (resolver-side; metadata template emits empty hw:reasoning)
+Keyed on the RENDERED face — ``light`` / ``dark`` for a committed scheme,
+``adaptive`` for a twin or inlay that carries both. Fallback chain when an
+exact match is missing:
+  1. reasoning[genome][frame_type][face]
+  2. reasoning[genome][frame_type]["light"]  (an adaptive artifact's base scope
+     is always the light face — surface_modes invariant 3 — so an unauthored
+     `adaptive` block degrades to describing the scope a reader sees first)
+  3. reasoning[genome][frame_type]["dark"]  (face-agnostic fallback)
+  4. None  (resolver-side; metadata template emits empty hw:reasoning)
 
 The loader is genome-agnostic — chrome.yaml and automata.yaml drop into
 ``data/reasoning/`` and slot in via the same code path with zero edits here.
@@ -44,9 +49,12 @@ def _load_yaml_for_genome(genome_id: str) -> dict[str, Any]:
 def load_reasoning(
     genome_id: str,
     frame_type: str,
-    substrate_kind: str = "dark",
+    face: str = "dark",
 ) -> ReasoningFields | None:
-    """Resolve (genome_id, frame_type, substrate_kind) -> ReasoningFields.
+    """Resolve (genome_id, frame_type, rendered face) -> ReasoningFields.
+
+    ``face`` is what the artifact renders as — ``light``/``dark`` for a
+    committed scheme, ``adaptive`` for a twin or inlay carrying both.
 
     Returns None when no entry exists at any level of the fallback chain so the
     metadata template emits empty hw:reasoning fields rather than erroring.
@@ -65,8 +73,8 @@ def load_reasoning(
     if not isinstance(frame_entry, dict):
         return None
 
-    # Fallback chain: exact substrate -> "dark" -> nothing
-    for key in (substrate_kind, "dark"):
+    # Fallback chain: exact face -> "light" (an adaptive base scope) -> "dark"
+    for key in (face, "light", "dark"):
         block = frame_entry.get(key)
         if isinstance(block, dict) and block.get("intent") and block.get("approach") and block.get("tradeoffs"):
             return ReasoningFields(

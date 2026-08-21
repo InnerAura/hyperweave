@@ -67,6 +67,40 @@ def _looks_like_path(value: str) -> bool:
     return "/" in value or "\\" in value or value.endswith(".json")
 
 
+# The names that mean "the spec arrives on standard input". `-` is the shell
+# convention; the two device paths are what a heredoc/pipe expands to when a
+# caller writes the redirect out longhand.
+_STDIN_NAMES = frozenset({"-", "/dev/stdin", "/dev/fd/0"})
+
+
+def _read_stdin_spec() -> Any:
+    """Parse the spec JSON waiting on stdin. Exits 2 with a fix on every refusal.
+
+    A terminal never sends EOF on its own, so an interactive stdin is refused
+    immediately rather than hanging the caller's turn.
+    """
+    import json
+
+    if sys.stdin.isatty():
+        typer.echo("Error: no spec on stdin (the terminal is interactive)", err=True)
+        typer.echo("  fix: pipe the spec in, e.g. hyperweave compose diagram --spec-file - < spec.json", err=True)
+        raise typer.Exit(2)
+    raw = sys.stdin.read()
+    if not raw.strip():
+        typer.echo("Error: no spec on stdin (piped input was empty)", err=True)
+        typer.echo("  fix: pipe the spec in, e.g. hyperweave compose diagram --spec-file - < spec.json", err=True)
+        raise typer.Exit(2)
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        typer.echo(f"Error: stdin is not valid JSON: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    if not isinstance(data, dict):
+        typer.echo("Error: stdin must contain a JSON object", err=True)
+        raise typer.Exit(2)
+    return data
+
+
 def _classify_spec_shape(data: dict[str, Any]) -> str:
     """ONE shape decision for compose AND validate: ``envelope`` |
     ``envelope-missing-spec`` | ``diagram`` | ``matrix`` | ``unknown``.
@@ -102,26 +136,37 @@ def _is_bundled_name(name: str) -> bool:
 def _read_spec_source(spec_file: Path) -> tuple[str, Any]:
     """Resolve a spec-file argument to ``('data', parsed_dict)`` or ``('preset', name)``.
 
-    The one file-vs-preset decision for compose AND validate:
+    The one stdin-vs-file-vs-preset decision for compose AND validate:
 
+    * ``-`` / ``/dev/stdin`` / ``/dev/fd/0`` read the spec from standard input
+      (the heredoc/pipe form) — checked FIRST, before any stat;
     * a real FILE parses as JSON — with a loud stderr note when its bare name
       also matches a bundled spec (the local file wins);
     * a DIRECTORY is never spec input — a bare name falls through to the
       bundled store (with a note; preset names like ``stack``/``tree`` double
       as common directory names), a path-looking one errors cleanly;
+    * any OTHER existing non-directory path is opened too. The gate is
+      readability, not regular-file-ness: a fifo, a character device, and a
+      ``<(…)`` process-substitution ``/dev/fd/N`` all read fine but answer
+      ``is_file()`` with False, which is what used to send them to ``not found``;
     * a MISSING path-looking value errors cleanly (``not found``);
     * anything else is a bundled-spec name.
 
     Exits 2 on invalid JSON, non-object JSON, or a directory path.
     """
     name = str(spec_file)
-    if spec_file.is_file():
+    if name in _STDIN_NAMES:
+        return "data", _read_stdin_spec()
+    if spec_file.is_file() or (spec_file.exists() and not spec_file.is_dir()):
         import json
 
         try:
             data = json.loads(spec_file.read_text())
         except json.JSONDecodeError as exc:
             typer.echo(f"Error: {spec_file} is not valid JSON: {exc}", err=True)
+            raise typer.Exit(2) from exc
+        except OSError as exc:
+            typer.echo(f"Error: {spec_file} could not be read: {exc}", err=True)
             raise typer.Exit(2) from exc
         if not isinstance(data, dict):
             typer.echo(f"Error: {spec_file} must contain a JSON object", err=True)
@@ -333,6 +378,41 @@ def _deliver_projection(data: bytes, *, is_text: bool, output: Path | None, widt
             raise typer.Exit(2)
     else:
         sys.stdout.buffer.write(data)
+
+
+def _artifact_short_id(svg: str) -> str:
+    """The artifact's envelope id, trimmed to the 12 chars the CLI prints."""
+    from hyperweave.core.envelope import extract_envelope
+
+    envelope = extract_envelope(svg) or {}
+    return str(envelope.get("id", "")).removeprefix("sha256:")[:12]
+
+
+def _next_document(*, artifact_id: str, wrote: list[Path], frame_type: str, handle: str) -> dict[str, Any]:
+    """The compose result as one machine-readable document for stdout.
+
+    The verb hint used to be prose on stderr — the stream an agent is trained
+    to treat as noise — so a cold agent did archaeology instead of running the
+    verbs. This is the same information as runnable commands, plus ``text``:
+    where each string the caller passed actually landed (diagram ``title``
+    reaching the accessible name rather than a drawn heading is the case that
+    cost a turn).
+
+    The governing rule for the caller: **stdout carries one machine-readable
+    document unless it is carrying the artifact.** A compose without ``-o``
+    streams SVG/raster bytes, so it gets no document and keeps the stderr hint.
+    """
+    from hyperweave.core.contract import next_commands, text_roles
+
+    doc: dict[str, Any] = {}
+    if artifact_id:
+        doc["artifact"] = artifact_id
+    doc["wrote"] = [str(path) for path in wrote]
+    roles = text_roles(frame_type)
+    if roles:
+        doc["text"] = roles
+    doc["next"] = next_commands(handle, frame_type)
+    return doc
 
 
 def _resolve_receipt_genome(slug: str) -> tuple[str, str]:
@@ -552,11 +632,10 @@ def validate(
     raw = ""
     if spec:
         raw = spec
-    elif spec_file is not None and str(spec_file) == "-":
-        raw = sys.stdin.read()
     elif spec_file is not None:
-        # The SAME file-vs-preset decision compose makes (is_file/is_dir/
-        # missing/shadow all handled there — never an IsADirectoryError).
+        # The SAME stdin/file/preset decision compose makes (stdin aliases,
+        # is_file/is_dir/missing/shadow all handled there — never an
+        # IsADirectoryError, and `-` means stdin on both verbs).
         kind, payload = _read_spec_source(spec_file)
         if kind == "data":
             env = _sniff_validate_shape(payload)
@@ -1130,6 +1209,10 @@ def compose(
         if not (surface_palette == "adaptive" and surface_ground != "bare"):
             typer.echo("Error: --faces requires a twin surface (--surface twin)", err=True)
             raise typer.Exit(2)
+        import json as _json
+
+        faces_wrote: list[Path] = []
+        faces_id = ""
         for face_name in ("light", "dark"):
             try:
                 face_result = do_compose(spec.model_copy(update={"palette": "fixed", "surface_face": face_name}))
@@ -1139,6 +1222,23 @@ def compose(
             dest = output.with_name(f"{output.stem}-{face_name}{output.suffix}")
             dest.write_text(face_result.svg)
             typer.echo(f"Wrote {dest} ({face_result.width}x{face_result.height})", err=True)
+            faces_wrote.append(dest)
+            if face_name == "light":
+                # Two files, two ids — the document names the LIGHT one, which is
+                # the base scope a renderer without prefers-color-scheme shows
+                # (surface_modes invariant 3), so the handle in `next` resolves.
+                faces_id = _artifact_short_id(face_result.svg)
+        typer.echo(
+            _json.dumps(
+                _next_document(
+                    artifact_id=faces_id,
+                    wrote=faces_wrote,
+                    frame_type=frame_type,
+                    handle=str(faces_wrote[0]),
+                ),
+                indent=2,
+            )
+        )
         return
 
     try:
@@ -1161,11 +1261,10 @@ def compose(
 
     # Verb advertisement (stderr, unconditional): the artifact's id + the verbs
     # that operate on it, in SELF_INSTRUCT's own vocabulary so the terminal
-    # hint and the embedded self-instruction cannot drift.
-    from hyperweave.core.envelope import extract_envelope
-
-    advert_envelope = extract_envelope(result.svg) or {}
-    advert_id = str(advert_envelope.get("id", "")).removeprefix("sha256:")[:12]
+    # hint and the embedded self-instruction cannot drift. This prose line is
+    # all a bytes-to-stdout compose can carry; every other path also gets the
+    # machine-readable document below.
+    advert_id = _artifact_short_id(result.svg)
     if advert_id:
         typer.echo(
             f"artifact {advert_id} — verbs over the seed: extract · verify · transform · "
@@ -1220,6 +1319,19 @@ def compose(
         if output is not None:
             output.write_text(result.svg)
             typer.echo(f"Wrote {output} ({result.width}x{result.height})", err=True)
+        # `next`/`text` join as TOP-LEVEL siblings of the wrapper's own keys.
+        # They must never land inside respond_doc["envelope"] — that object is
+        # the content-addressed seed extract/verify read back, so absorbing a
+        # CLI hint would change what the artifact hashes to.
+        handle = str(output) if output is not None else (str(respond_doc.get("url", "")) or "-")
+        respond_doc.update(
+            _next_document(
+                artifact_id=advert_id,
+                wrote=[output] if output is not None else [],
+                frame_type=frame_type,
+                handle=handle,
+            )
+        )
         typer.echo(_json.dumps(respond_doc, indent=2))
         return
 
@@ -1258,6 +1370,23 @@ def compose(
     if markdown_out is not None and result.markdown:
         markdown_out.write_text(result.markdown)
         typer.echo(f"Wrote {markdown_out} (markdown shadow)", err=True)
+
+    # The machine-readable document, LAST so `wrote` lists every file including
+    # the markdown sidecar. Only when the artifact went to a file: without -o
+    # stdout is carrying the bytes themselves and a JSON document would corrupt
+    # a pipe. (--respond returned above, so this cannot double-print there.)
+    if output is not None:
+        import json as _json
+
+        tail_wrote = [output]
+        if markdown_out is not None and result.markdown:
+            tail_wrote.append(markdown_out)
+        typer.echo(
+            _json.dumps(
+                _next_document(artifact_id=advert_id, wrote=tail_wrote, frame_type=frame_type, handle=str(output)),
+                indent=2,
+            )
+        )
 
 
 # Session telemetry — hidden back-compat alias for the agent-runtime hook.

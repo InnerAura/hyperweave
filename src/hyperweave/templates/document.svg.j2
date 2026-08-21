@@ -20,7 +20,7 @@
      data-hw-generation="1"
      data-hw-contract="{{ contract_id }}"
      data-hw-size="{{ size | default('default') }}"
-{% if font_faces | default('') %}     data-hw-fonts="self-contained"
+{% if data_hw_fonts | default('') %}     data-hw-fonts="{{ data_hw_fonts }}"
 {% endif %}
 {% if regime %}     data-hw-regime="{{ regime }}"
 {% endif %}

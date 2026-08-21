@@ -105,10 +105,10 @@ _BADGE_SPEC_KWARGS = {"title": "BUILD", "value": "passing", "state": "passing"}
 @pytest.mark.parametrize(
     ("genome_id", "variant", "raw_max", "gzip_max"),
     [
-        ("brutalist", "celadon", 40_000, 20_000),
-        ("brutalist", "pulse", 40_000, 20_000),
-        ("chrome", "horizon", 52_000, 28_500),
-        ("automata", "teal", 44_000, 22_000),
+        ("brutalist", "celadon", 42_000, 20_600),
+        ("brutalist", "pulse", 42_000, 20_600),
+        ("chrome", "horizon", 54_000, 29_100),
+        ("automata", "teal", 46_000, 22_600),
     ],
 )
 def test_badge_byte_ceiling(genome_id: str, variant: str, raw_max: int, gzip_max: int) -> None:
@@ -119,6 +119,14 @@ def test_badge_byte_ceiling(genome_id: str, variant: str, raw_max: int, gzip_max
     18-26KB gzip across the matrix. A regression that re-bloats fonts
     (e.g. accidentally embedding an unused family, or reverting the subset)
     fails here before the proofset regen.
+
+    Recalibrated once, in v0.4.2: the ``hw:chromatic-surface`` manifest spends
+    a measured 1.3-1.4KB raw / ~380B gzip per badge, most of it the chassis
+    token list, and the brutalist rows were already inside 400B of their gzip
+    ceiling. Every ceiling moved by that measured amount plus a little slack
+    (+2000 raw, +600 gzip) — deliberately NOT a fresh 10% headroom grant, so
+    the guard keeps its teeth: a re-bloated font family costs 20KB+, which
+    still fails here.
     """
     spec = ComposeSpec(type="badge", genome_id=genome_id, variant=variant, **_BADGE_SPEC_KWARGS)
     svg_bytes = compose(spec).svg.encode("utf-8")

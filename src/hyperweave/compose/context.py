@@ -23,7 +23,8 @@ from hyperweave.core.envelope import ENVELOPE_VERSION, build_envelope, cdata_saf
 if TYPE_CHECKING:
     from hyperweave.core.models import ComposeSpec, ResolvedArtifact
 
-from hyperweave.compose.assembler import fonts_for_frame, frame_needs_fonts
+from hyperweave.compose.assembler import font_delivery_labels, fonts_for_frame, frame_needs_fonts
+from hyperweave.compose.chromatic import chromatic_zones
 from hyperweave.compose.diagram.pinning import transform_note_facts
 from hyperweave.compose.payload import build_simple_payload
 from hyperweave.compose.reasoning import load_reasoning, load_transform_note
@@ -75,9 +76,14 @@ def _resolve_reasoning_context(spec: ComposeSpec, resolved: ResolvedArtifact) ->
     bespoke artifacts. Empty per-request fields fall through to the YAML loader.
     Returns context fragment with reasoning_* keys; missing reasoning emits
     empty strings so the metadata template's default-fallback fires cleanly.
+
+    Keyed on what the artifact RENDERS AS (``_theme_category``: the baked face,
+    ``adaptive`` for a twin/inlay, else the variant's own paper) — not on the
+    variant's native substrate. Those two disagree for every adaptive twin and
+    every ``--face`` bake, and the artifact then described white paper while
+    the reader looked at the dark face.
     """
-    substrate = resolved.genome.get("substrate_kind") or resolved.genome.get("category", "dark")
-    yaml_reasoning = load_reasoning(spec.genome_id, spec.type, substrate)
+    yaml_reasoning = load_reasoning(spec.genome_id, spec.type, _theme_category(resolved))
     intent = spec.intent or (yaml_reasoning.intent if yaml_reasoning else "")
     approach = spec.approach or (yaml_reasoning.approach if yaml_reasoning else "")
     tradeoffs = spec.tradeoffs or (yaml_reasoning.tradeoffs if yaml_reasoning else "")
@@ -308,6 +314,16 @@ def build_context(
     if frame_needs_fonts(spec.type, genome_id):
         char_set = _extract_char_set(ctx, spec.type)
         ctx["font_faces"] = _load_font_faces(resolved.genome, spec.type, char_set, spec.font_mode)
+        # Both portability claims report the delivery that actually happened;
+        # they used to hardcode "self-contained", which lied under --font-mode
+        # cdn (a Google @import is not self-contained).
+        ctx["data_hw_fonts"], ctx["font_constraint"] = font_delivery_labels(
+            spec.font_mode, has_font_faces=bool(ctx["font_faces"])
+        )
+    # The mutability contract, LAST: the chassis zone measures the artifact's
+    # own stylesheet, so it must run after every CSS layer is final (the
+    # adaptive swap and the motion injection both rewrite ctx["css"]).
+    ctx["chromatic_zones"] = chromatic_zones(ctx)
     return ctx
 
 
@@ -486,7 +502,19 @@ def _base_context(
         # declare these in genome.json variant_overrides → merged into genome by
         # resolver → plumbed here. Dark variants return None / "" (gradient
         # rendering gated by template `{% if panel_gradient_stops %}` guard).
-        "panel_gradient_stops": resolved.genome.get("panel_gradient_stops") or [],
+        #
+        # A LIGHT variant baked to its DARK face is a dark substrate too, so the
+        # light stops must not survive the bake. They are literal hex — unlike
+        # `var(--dna-surface)` they cannot follow the face — so a light variant's
+        # panel gradient painted a cream plate underneath dark-face ink, which
+        # reads as washed-out ghosting (primer.cream matrix at `--face dark`).
+        # Emptying the list here routes every frame into the `{% else %}` branch
+        # its defs.j2 already carries for dark substrates, so this needs no
+        # template edit and honors the same light-only rule
+        # `validate_paradigms` enforces against dark VARIANTS.
+        "panel_gradient_stops": (
+            [] if resolved.surface_face == "dark" else (resolved.genome.get("panel_gradient_stops") or [])
+        ),
         "seam_color": resolved.genome.get("seam_color", ""),
         # Ink as an "r,g,b" triplet so templates derive substrate-tinted alpha
         # layers (light badge label tint rgba({{ ink_rgb }},0.03), seam groove
@@ -686,6 +714,15 @@ def _base_context(
         # build_context (none exist today, but the default is defense
         # against future drift).
         "font_faces": "",
+        # The data-hw-fonts value, set alongside font_faces in build_context.
+        # Empty here (and for every frame that embeds nothing) omits the attr.
+        "data_hw_fonts": "",
+        # The font half of hw:constraints-applied. A frame that loads no type
+        # is self-contained by default; the gate above overrides per mode.
+        "font_constraint": "self-contained",
+        # The mutability contract; the real rows land in build_context, once
+        # every CSS layer the chassis zone measures is final.
+        "chromatic_zones": [],
     }
     return ctx, uid, artifact_id
 
