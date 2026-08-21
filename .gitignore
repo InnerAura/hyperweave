@@ -31,6 +31,7 @@ htmlcov/
 
 assets/banners/banners-animated/
 assets/cards/halftone/
+assets/cards/substrate/
 assets/demos/
 assets/marquees/
 assets/rapid-match-cuts/
@@ -38,6 +39,7 @@ assets/rapid-match-cuts/
 apps/
 docs/
 examples/
+!assets/examples/
 outputs/
 
 scripts/analyze_audio.py

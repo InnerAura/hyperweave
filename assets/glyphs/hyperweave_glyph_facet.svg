@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 64 64" width="160" height="160" role="img" aria-labelledby="gm4-t gm4-d" data-hw-type="icon" data-hw-variant="facet" data-hw-chromatic="cherenkov-ink" shape-rendering="geometricPrecision">
+  <title id="gm4-t">HyperWeave — facet</title>
+  <desc id="gm4-d">Flat faceting: the cushion split at its own diagonals into alternating light and deep ink — value assigned by form under one implied light, no gradients anywhere.</desc>
+  <metadata>
+    <hw:artifact id="01a02410-c990-7d04-8b31-000000000004" type="icon" series="glyph-candidates" version="0.5.0">
+      <hw:provenance>
+        <hw:generator>Claude Fable 5 (InnerAura Labs) [claude-fable-5]</hw:generator>
+        <hw:created>2026-08-20T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:lineage parent="01a023c0-b880-7c03-ad53-8f4cb2e638d5" operation="identity-candidate" donor="cherenkov-ink-family" geometry-donor="cushion-gem-window#0.1.0"/>
+      <hw:spec size="64x64" performance="composite-only" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:reasoning>
+      <hw:intent>Dimension the honest way: two flat tones whose boundary IS the geometry.</hw:intent>
+      <hw:approach>Base fill #2E7CFF with the right and left quadrants overlaid in #0A45D6 through a diagonal clip whose seams pass exactly through the tips and center — the value change happens only where a real facet edge would be, which is why it connects where the ramp did not.</hw:approach>
+      <hw:tradeoffs>Faceting quotes the retired octahedron's volume language in flat form — deliberate heritage. At 16px the two tones merge toward a single mid-ink, so this variant degrades INTO monolith rather than into mud.</hw:tradeoffs>
+      <hw:spatial-notes>64x64, bilateral about (32,32); cushion cardinals +/-29; core anchored at center. Static and filter-free by set doctrine: identity first, motion is a layer added after selection.</hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+  <defs>
+    <clipPath id="gm4-q"><path d="M32 32 L64 0 L64 64 Z M32 32 L0 64 L0 0 Z"/></clipPath>
+  </defs>
+  <path fill="#2E7CFF" fill-rule="evenodd" d="M32 3 L61 32 L32 61 L3 32 Z M26.56 10.25 15.69 21.12 C10.25 26.56 10.25 37.44 15.69 42.88 L26.56 53.75 37.44 53.75 48.31 42.88 C53.75 37.44 53.75 26.56 48.31 21.12 L37.44 10.25 Z"/>
+  <g clip-path="url(#gm4-q)">
+    <path fill="#0A45D6" fill-rule="evenodd" d="M32 3 L61 32 L32 61 L3 32 Z M26.56 10.25 15.69 21.12 C10.25 26.56 10.25 37.44 15.69 42.88 L26.56 53.75 37.44 53.75 48.31 42.88 C53.75 37.44 53.75 26.56 48.31 21.12 L37.44 10.25 Z"/>
+  </g>
+  <circle cx="32" cy="32" r="2.4" fill="#0A45D6"/>
+</svg>

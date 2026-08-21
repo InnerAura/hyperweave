@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 64 64" width="160" height="160" role="img" aria-labelledby="gm2-t gm2-d" data-hw-type="icon" data-hw-variant="sweep" data-hw-chromatic="cherenkov-ink" shape-rendering="geometricPrecision">
+  <title id="gm2-t">HyperWeave — sweep</title>
+  <desc id="gm2-d">One continuous diagonal sweep, ink to ion cyan, flowing across the whole form as a single event. Core lands on the sweep's terminal hue. The Gemini move.</desc>
+  <metadata>
+    <hw:artifact id="01a02410-c990-7d02-8b31-000000000002" type="icon" series="glyph-candidates" version="0.5.0">
+      <hw:provenance>
+        <hw:generator>Claude Fable 5 (InnerAura Labs) [claude-fable-5]</hw:generator>
+        <hw:created>2026-08-20T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:lineage parent="01a023c0-b880-7c03-ad53-8f4cb2e638d5" operation="identity-candidate" donor="cherenkov-ink-family" geometry-donor="cushion-gem-window#0.1.0"/>
+      <hw:spec size="64x64" performance="composite-only" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:reasoning>
+      <hw:intent>One gradient, one direction, one story: energy entering at the ink corner and leaving at the cyan corner.</hw:intent>
+      <hw:approach>Two stops only, 45-degree userSpace sweep spanning the full glyph so the color travels THROUGH the form instead of banding across it; the core takes the end-stop so it reads as where the sweep resolves.</hw:approach>
+      <hw:tradeoffs>A sweep is directional, so the mark now has a corner hierarchy the symmetric geometry didn't ask for — accepted, because that implied motion is the identity: flow through the weave.</hw:tradeoffs>
+      <hw:spatial-notes>64x64, bilateral about (32,32); cushion cardinals +/-29; core anchored at center. Static and filter-free by set doctrine: identity first, motion is a layer added after selection.</hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+  <defs>
+    <linearGradient id="gm2-sweep" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="56">
+      <stop offset="0%" stop-color="#2E7CFF"/>
+      <stop offset="100%" stop-color="#00D4FF"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#gm2-sweep)" fill-rule="evenodd" d="M32 3 L61 32 L32 61 L3 32 Z M26.56 10.25 15.69 21.12 C10.25 26.56 10.25 37.44 15.69 42.88 L26.56 53.75 37.44 53.75 48.31 42.88 C53.75 37.44 53.75 26.56 48.31 21.12 L37.44 10.25 Z"/>
+  <circle cx="32" cy="32" r="2.4" fill="#00D4FF"/>
+</svg>

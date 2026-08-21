@@ -1,0 +1,253 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:hw="https://hyperweave.app/protocol/v1"
+     role="img"
+     aria-labelledby="title desc"
+     viewBox="0 0 260 80"
+     width="260" height="80"
+     data-hw-status="active"
+     data-hw-regime="normal"
+     data-hw-chromatic="cherenkov-ink"
+     data-hw-variant="tidal-return">
+  <title id="title">Return — Tidal Return</title>
+  <desc id="desc">HyperWeave RETURN control, tidal-return motion specimen.</desc>
+
+  <metadata>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:dc="http://purl.org/dc/elements/1.1/"
+             xmlns:hw="https://hyperweave.app/protocol/v1">
+      <rdf:Description>
+        <dc:title>Return — Tidal Return</dc:title>
+        <dc:creator>HyperWeave Compiler v3.0</dc:creator>
+        <hw:artifact-class>identity-control</hw:artifact-class>
+        <hw:chromatic-system>cherenkov-ink</hw:chromatic-system>
+        <hw:reasoning>
+          <hw:intent>Emit a compact RETURN control that belongs to the HyperWeave identity system rather than generic application chrome.</hw:intent>
+          <hw:approach>Two low-frequency luminous tides enter from opposite sides, overlap briefly near the return glyph, then recede; the semantic 'out / back' motion is expressed as material pressure rather than orbiting dashes.</hw:approach>
+          <hw:tradeoffs>The strongest semantic specimen of the set, but intentionally less uniform than the canonical caustic drift; asymmetry is concentrated around the icon to reinforce RETURN.</hw:tradeoffs>
+        </hw:reasoning>
+      </rdf:Description>
+    </rdf:RDF>
+
+    <hw:artifact id="01a02620-8e73-7e62-9c42-7e3ba1d52805" type="button-return" series="hyperweave-identity" version="4.5.2-adaptive">
+      <hw:provenance>
+        <hw:generator>HyperWeave Compiler v3.0</hw:generator>
+        <hw:created>2026-08-20T10:27:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:lineage parent="01a02550-1d40-7b04-9c42-7e3ba1d527f1"
+                  operation="identity-control-emission"
+                  donor="cherenkov-ink-family"
+                  geometry-donor="return-liquid-surface#1.1.0"/>
+      <hw:spec size="260x80" performance="paint-ok" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+
+    <hw:aesthetic>
+      <hw:chromatic system="cherenkov-ink" space="srgb" contrast-ratio="&gt;8:1 per scheme"/>
+      <hw:motion vocabulary="fluid-caustic-drift, reciprocal-flow, wave-collapse, fade" physics="laminar-quantum-flow" timing="phi" cim-compliant="false"/>
+      <hw:geometry form-language="angular-soft" proportional-system="root2" mathematical-basis="golden-ratio" symmetry="bilateral"/>
+      <hw:material surface="whisper-caustics+surface-matched-control" depth="deep"/>
+    </hw:aesthetic>
+
+    <hw:reasoning>
+      <hw:intent>Compress the v4.5 identity material into an 260×80 action control without turning the button into a miniature loading indicator.</hw:intent>
+      <hw:approach>Two low-frequency luminous tides enter from opposite sides, overlap briefly near the return glyph, then recede; the semantic 'out / back' motion is expressed as material pressure rather than orbiting dashes.</hw:approach>
+      <hw:tradeoffs>The strongest semantic specimen of the set, but intentionally less uniform than the canonical caustic drift; asymmetry is concentrated around the icon to reinforce RETURN.</hw:tradeoffs>
+      <hw:spatial-notes>Left tide origin x-40, right tide origin x300; overlap target x178; 4.236s base cycle with 0.382 phase offset; highlight never crosses the text fill.</hw:spatial-notes>
+    </hw:reasoning>
+
+    <hw:stratum>
+      <hw:ring primary="002-TRIBE"/>
+      <hw:affinities><hw:resonance ring="005-COSMIC" strength="0.7"/></hw:affinities>
+    </hw:stratum>
+  </metadata>
+
+
+  <defs>
+    <linearGradient id="ink-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#173762"/>
+      <stop offset="18%" stop-color="#2E6AB8"/>
+      <stop offset="38%" stop-color="#69B4FF"/>
+      <stop offset="50%" stop-color="#D9F3FF"/>
+      <stop offset="62%" stop-color="#7AC7FF"/>
+      <stop offset="82%" stop-color="#356FD0"/>
+      <stop offset="100%" stop-color="#173762"/>
+    </linearGradient>
+
+    <linearGradient id="ink-light" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#102B58"/>
+      <stop offset="20%" stop-color="#1F58A8"/>
+      <stop offset="42%" stop-color="#357ED6"/>
+      <stop offset="50%" stop-color="#0B2B66"/>
+      <stop offset="58%" stop-color="#357ED6"/>
+      <stop offset="80%" stop-color="#1F58A8"/>
+      <stop offset="100%" stop-color="#102B58"/>
+    </linearGradient>
+
+    <radialGradient id="caustic-blue">
+      <stop offset="0%" stop-color="#E8FAFF" stop-opacity=".98"/>
+      <stop offset="18%" stop-color="#91D8FF" stop-opacity=".88"/>
+      <stop offset="48%" stop-color="#438EFF" stop-opacity=".40"/>
+      <stop offset="100%" stop-color="#173762" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="caustic-violet">
+      <stop offset="0%" stop-color="#DDE9FF" stop-opacity=".88"/>
+      <stop offset="24%" stop-color="#8DA6FF" stop-opacity=".60"/>
+      <stop offset="58%" stop-color="#5360D8" stop-opacity=".24"/>
+      <stop offset="100%" stop-color="#25336F" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="field-soft" x="-22%" y="-40%" width="144%" height="180%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="3.4"/>
+    </filter>
+
+    <filter id="field-deep" x="-28%" y="-55%" width="156%" height="210%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5.8" result="b"/>
+      <feColorMatrix in="b" type="saturate" values="1.35" result="s"/>
+      <feMerge>
+        <feMergeNode in="s"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="liquid-displace" x="-18%" y="-35%" width="136%" height="170%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".018 .055" numOctaves="1" seed="41" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5.5" xChannelSelector="R" yChannelSelector="B"/>
+    </filter>
+
+    <mask id="ring-mask" maskUnits="userSpaceOnUse" x="8" y="8" width="244" height="64">
+      <rect x="12" y="12" width="236" height="56" rx="16" fill="#fff"/>
+      <rect x="18" y="18" width="224" height="44" rx="10" fill="#000"/>
+    </mask>
+
+    <clipPath id="outer-clip">
+      <rect x="12" y="12" width="236" height="56" rx="16"/>
+    </clipPath>
+  </defs>
+
+
+  <defs>
+    <radialGradient id="tide-a">
+      <stop offset="0%" stop-color="#F2FCFF" stop-opacity=".98"/>
+      <stop offset="18%" stop-color="#8DD5FF" stop-opacity=".82"/>
+      <stop offset="48%" stop-color="#3E82E2" stop-opacity=".36"/>
+      <stop offset="100%" stop-color="#173762" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tide-b">
+      <stop offset="0%" stop-color="#E4EDFF" stop-opacity=".94"/>
+      <stop offset="22%" stop-color="#8DA7FF" stop-opacity=".70"/>
+      <stop offset="52%" stop-color="#4F5EC7" stop-opacity=".30"/>
+      <stop offset="100%" stop-color="#25336F" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <style>
+
+    svg { color-scheme: light dark; overflow: visible; }
+
+    .surface { fill: #000000; }
+    .hairline { fill: none; stroke: rgba(116,190,255,.28); stroke-width: .85; }
+    .frame { fill: none; stroke: rgba(88,152,255,.38); stroke-width: 1.15; }
+    .word { fill: #F7FBFF; }
+    .icon { fill: #8FD4FF; }
+    .quiet { opacity: .74; }
+
+    .word, .icon {
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .surface { fill: #FFFFFF; }
+      .hairline { stroke: rgba(19,52,105,.14); }
+      .frame { stroke: rgba(31,88,168,.28); }
+      .word { fill: #102B58; }
+      .icon { fill: #1F58A8; }
+      .dark-field { display: none; }
+      .light-field { display: inline; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .light-field { display: none; }
+      .dark-field { display: inline; }
+    }
+
+    @media (forced-colors: active) {
+      .surface { fill: Canvas; }
+      .word, .icon { fill: CanvasText; }
+      .hairline, .frame { stroke: CanvasText; }
+      .field, .glow, .specular { display: none !important; }
+    }
+
+
+    .tide-left, .tide-right {
+      will-change: transform, opacity;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: tide 4.236s cubic-bezier(.22,.72,.28,1) infinite;
+    }
+    .tide-right { animation-delay: -.382s; }
+
+    @keyframes tide {
+      0%, 100% { transform: translateX(var(--start)) scale(.82); opacity: .10; }
+      38.2% { transform: translateX(var(--mid)) scale(1.06); opacity: .82; }
+      61.8% { transform: translateX(var(--end)) scale(.96); opacity: .42; }
+      82% { transform: translateX(var(--start)) scale(.82); opacity: .10; }
+    }
+
+    .return-spark {
+      animation: spark 4.236s ease-in-out infinite;
+      transform-origin: 179px 40px;
+    }
+    @keyframes spark {
+      0%, 35%, 100% { opacity: 0; transform: scale(.72); }
+      61.8% { opacity: .92; transform: scale(1); }
+      74% { opacity: .16; transform: scale(1.18); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tide-left, .tide-right, .return-spark { animation: none !important; }
+      .tide-left, .tide-right { opacity: .20; transform: none; }
+      .return-spark { opacity: .26; transform: none; }
+    }
+
+  </style>
+
+  <g class="field" mask="url(#ring-mask)">
+    <rect class="dark-field" x="12" y="12" width="236" height="56" fill="#01050B"/>
+    <rect class="light-field" x="12" y="12" width="236" height="56" fill="#FFFFFF"/>
+
+    <g class="dark-field">
+      <ellipse class="tide-left" style="--start:-92px;--mid:44px;--end:70px"
+               cx="74" cy="40" rx="92" ry="46" fill="url(#tide-a)" opacity=".58" filter="url(#field-deep)"/>
+      <ellipse class="tide-right" style="--start:92px;--mid:-28px;--end:-52px"
+               cx="188" cy="40" rx="88" ry="44" fill="url(#tide-b)" opacity=".42" filter="url(#field-deep)"/>
+      <circle class="return-spark" cx="179" cy="40" r="24" fill="url(#caustic-blue)" filter="url(#field-soft)"/>
+    </g>
+
+    <g class="light-field">
+      <ellipse class="tide-left" style="--start:-92px;--mid:44px;--end:70px"
+               cx="74" cy="40" rx="92" ry="46" fill="url(#tide-a)" opacity=".26" filter="url(#field-soft)"/>
+      <ellipse class="tide-right" style="--start:92px;--mid:-28px;--end:-52px"
+               cx="188" cy="40" rx="88" ry="44" fill="url(#tide-b)" opacity=".16" filter="url(#field-soft)"/>
+      <circle class="return-spark" cx="179" cy="40" r="22" fill="url(#caustic-blue)" opacity=".28"/>
+    </g>
+  </g>
+  <rect class="frame" x="12" y="12" width="236" height="56" rx="16"/>
+
+
+  <rect class="surface" x="18" y="18" width="224" height="44" rx="10"/>
+  <rect class="hairline" x="21" y="21" width="218" height="38" rx="7"/>
+
+  <text class="word" x="108" y="46"
+        font-family="Inter, 'SF Pro Display', system-ui, sans-serif"
+        font-size="15" font-weight="700" letter-spacing="3.2"
+        text-anchor="middle">RETURN</text>
+
+  <text class="icon" x="179" y="47"
+        font-family="'SF Mono','JetBrains Mono',ui-monospace,monospace"
+        font-size="19" font-weight="500" text-anchor="middle">⤴︎</text>
+
+</svg>

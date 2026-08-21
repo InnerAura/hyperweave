@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 64 64" width="160" height="160" role="img" aria-labelledby="gm1-t gm1-d" data-hw-type="icon" data-hw-variant="monolith" data-hw-chromatic="cherenkov-ink" shape-rendering="geometricPrecision">
+  <title id="gm1-t">HyperWeave — monolith</title>
+  <desc id="gm1-d">One solid cherenkov ink. Thickened frame (window at 0.90), core in the same ink. The Vercel move: silhouette does all the work.</desc>
+  <metadata>
+    <hw:artifact id="01a02410-c990-7d01-8b31-000000000001" type="icon" series="glyph-candidates" version="0.5.0">
+      <hw:provenance>
+        <hw:generator>Claude Fable 5 (InnerAura Labs) [claude-fable-5]</hw:generator>
+        <hw:created>2026-08-20T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:lineage parent="01a023c0-b880-7c03-ad53-8f4cb2e638d5" operation="identity-candidate" donor="cherenkov-ink-family" geometry-donor="cushion-gem-window#0.1.0"/>
+      <hw:spec size="64x64" performance="composite-only" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:reasoning>
+      <hw:intent>Total chromatic commitment: the mark IS the hue.</hw:intent>
+      <hw:approach>Single fill #0A45D6 across frame and core; the gem window carries all contrast as negative space. Window scaled 0.90 so the frame holds weight at 16px.</hw:approach>
+      <hw:tradeoffs>No highlight, no depth, no second color — recognition rests entirely on the silhouette, which is exactly the bet Vercel and Framer won. Weakest variant for expressing the liquid brand world; strongest for never falling apart anywhere.</hw:tradeoffs>
+      <hw:spatial-notes>64x64, bilateral about (32,32); cushion cardinals +/-29; core anchored at center. Static and filter-free by set doctrine: identity first, motion is a layer added after selection.</hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+  <path fill="#0A45D6" fill-rule="evenodd" d="M32 3 L61 32 L32 61 L3 32 Z M27.10 12.43 17.32 22.21 C12.43 27.10 12.43 36.90 17.32 41.79 L27.10 51.58 36.90 51.58 46.68 41.79 C51.58 36.90 51.58 27.10 46.68 22.21 L36.90 12.43 Z"/>
+  <circle cx="32" cy="32" r="2.4" fill="#0A45D6"/>
+</svg>

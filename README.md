@@ -1,28 +1,26 @@
 <div id="top">
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-mercury.svg" alt="HyperWeave" width="75%"/>
-</p>
+<picture>
+  <source srcset="assets/banners/hw-hero-light.svg" media="(prefers-color-scheme: light)">
+  <img src="assets/banners/hw-hero-dark.svg" alt="HyperWeave" width="100%"
+  >
+</picture>
 
 <p align="center">
-  <strong>Portable visual output layer for agents.</strong><br/>
+  <strong>The artifact layer for agent-human representations.</strong><br/>
   One API call, one SVG. No JavaScript. Works everywhere.
 </p>
 
-<!-- One source. Many faces. -->
-
-<!--
-<p align="center">
-  <img src="https://hyperweave.app/v1/badge/STARS/chrome.static?data=gh:InnerAura/hyperweave.stars" alt="stars"/>
-  <img src="https://hyperweave.app/v1/badge/FORKS/chrome.static?data=gh:InnerAura/hyperweave.forks" alt="forks"/>
-  <img src="https://hyperweave.app/v1/badge/VERSION/chrome.static?data=pypi:hyperweave.version" alt="version"/>
-  <img src="https://hyperweave.app/v1/badge/LICENSE/chrome.static?data=gh:InnerAura/hyperweave.license" alt="license"/>
-  <img src="https://hyperweave.app/v1/badge/PYTHON/chrome.static?data=pypi:hyperweave.python_requires" alt="python"/>
-</p>
--->
+<!-- <p align="center">
+  <img src="https://hyperweave.app/v1/badge/STARS/primer.static?data=gh:InnerAura/hyperweave.stars&variant=noir" alt="stars"/>
+  <img src="https://hyperweave.app/v1/badge/FORKS/primer.static?data=gh:InnerAura/hyperweave.forks&variant=noir" alt="forks"/>
+  <img src="https://hyperweave.app/v1/badge/VERSION/primer.static?data=pypi:hyperweave.version&variant=noir" alt="version"/>
+  <img src="https://hyperweave.app/v1/badge/LICENSE/primer.static?data=gh:InnerAura/hyperweave.license&variant=noir&glyph=check" alt="license"/>
+  <img src="https://hyperweave.app/v1/badge/PYTHON/primer.static?data=pypi:hyperweave.python_requires&variant=noir" alt="python"/>
+</p> -->
 
 <p align="center">
-  <img src="https://hyperweave.app/v1/strip/hyperweave/primer.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave&variant=noir" alt="strip"/>
+  <img src="https://hyperweave.app/v1/strip/hyperweave/primer.static?data=gh:InnerAura/hyperweave.build,pypi:hyperweave.version,gh:InnerAura/hyperweave.license&glyph=hyperweave&variant=porcelain" alt="strip"/>
 </p>
 
 <!--
@@ -37,10 +35,6 @@ AI agents need to explain what they did, what they found, and what changed - Hyp
 ---
 
 HyperWeave lets agents compose portable visual artifacts that can live inside reports, detach into Slack/email/docs, and carry their source, state, and drilldown with them.
-
----
-
-A brand agent for repos. Generate a cohesive visual identity - README, profile, metrics, releases - from a single genome.
 
 ---
 
@@ -77,7 +71,7 @@ Agents need to show their work through plans, diagrams, dashboards, status cards
 HyperWeave turns structured specs into deterministic visual artifacts. Each artifact is a self-contained SVG with layout, branding, data binding, and machine-readable metadata baked in. No JavaScript, no runtime, no dependencies. Readable by humans, recoverable by agents, and portable anywhere an `<img>` tag renders.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-format-comparison-matrix-inlay.svg" alt="Visual output formats for AI agents: SVG vs Markdown vs HTML across cross-surface rendering, agent-readable metadata, visual fidelity, token efficiency, and zero dependencies" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/matrices/hw-format-comparison-matrix-inlay.svg" alt="Visual output formats for AI agents: SVG vs Markdown vs HTML across cross-surface rendering, agent-readable metadata, visual fidelity, token efficiency, and zero dependencies" width="100%"/>
 </p>
 
 <details>
@@ -91,7 +85,25 @@ HyperWeave turns structured specs into deterministic visual artifacts. Each arti
 
 </details>
 
+<!--
+## Self-Describing Artifacts
+
+```ascii
+           ONE OBJECT
+
+       ┌───────────────┐
+       │ semantic spec │  ← agent
+       ├───────────────┤
+       │ compact form  │  ← context window
+       ├───────────────┤
+       │ visual form   │  ← human
+       ├───────────────┤
+       │ text form     │  ← markdown/terminal
+       └───────────────┘
+```
+
 ---
+-->
 
 ## Agentic Artifacts
 
@@ -130,70 +142,45 @@ Want a different agent harness? [Open an issue](https://github.com/InnerAura/hyp
 
 ## Diagrams
 
-HyperWeave draws systems: pipelines, fan-outs, hubs, dependency graphs, swim lanes, state machines, sequences, rings, trees, and more, each rendered as a portable SVG. Nodes carry logos, labels, and small tags; edges carry labels and motion (a moving dash, a particle, or a pulse of light), and motion shows direction. Every diagram also embeds its full spec and a hash-verified digest (see [Inside every artifact](#inside-every-artifact)), so an agent reads the structure, not the pixels.
+HyperWeave draws systems: pipelines, fan-outs, fan-ins, hubs, cycles, dependency graphs, swim lanes, state machines, sequences, trees, and comparisons, each rendered as a portable SVG. Nodes carry logos, labels, and small tags; edges carry labels and motion (a moving dash, a particle, or a pulse of light), and motion shows direction. Every diagram also embeds its full spec and a hash-verified digest (see [Inside every artifact](#inside-every-artifact)), so an agent reads the structure, not the pixels.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/one-artifact-every-surface.svg" alt="One artifact, every surface: a self-contained HyperWeave SVG fans out to GitHub, Obsidian, Slack, email, and agent context" width="100%"/>
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/provider-router-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/provider-router-dark.svg" alt="One call, best model: a model router fans out to Claude, Gemini, OpenAI, DeepSeek, Kimi, and Qwen, each door labelled with the capability it is routed for" width="100%"
+    >
+  </picture>
 </p>
-
-<p align="center"><sub>One artifact, every surface &middot; the fan-out topology</sub></p>
 
 <details>
 <summary>Compose this inline</summary>
 
 ```bash
-hyperweave compose diagram --spec-file /dev/stdin -g primer --variant porcelain --surface inlay -o one-artifact.svg <<'JSON'
+hyperweave compose diagram --spec-file /dev/stdin -g primer --variant porcelain --surface inlay --face light -o provider-router-light.svg <<'JSON'
 {
   "topology": "fanout",
-  "title": "One Artifact, Every Surface",
-  "subtitle": "One artifact, every surface · a self-contained SVG renders wherever markdown does",
-  "notes": "every surface",
+  "orientation": "horizontal",
+  "title": "One call, best model",
+  "subtitle": "Fanout · horizontal",
+  "zones": ["router", "providers"],
+  "node_style": "card+glyph",
   "glyph_tint": "full",
-  "connector_palette": "colored",
   "nodes": [
-    {
-      "id": "artifact",
-      "label": "HyperWeave SVG",
-      "desc": "self-contained · portable",
-      "role": "hero",
-      "glyph": "hyperweave",
-      "style": "card+glyph"
-    },
-    {
-      "id": "github",
-      "label": "GitHub",
-      "desc": "README · PRs",
-      "glyph": "github",
-      "style": "card+glyph"
-    },
-    {
-      "id": "obsidian",
-      "label": "Obsidian",
-      "desc": "vault · notes",
-      "glyph": "obsidian",
-      "style": "card+glyph"
-    },
-    {
-      "id": "slack",
-      "label": "Slack",
-      "desc": "threads · unfurls",
-      "glyph": "slack",
-      "style": "card+glyph"
-    },
-    {
-      "id": "email",
-      "label": "Email",
-      "desc": "inline · PDF",
-      "glyph": "gmail",
-      "style": "card+glyph"
-    },
-    {
-      "id": "agent",
-      "label": "Agent Context",
-      "desc": "hw:reasoning",
-      "glyph": "anthropic",
-      "style": "card+glyph"
-    }
+    { "id": "router", "label": "model router", "desc": "1 call, best model\ncapability-routed", "role": "hero", "kind": "router", "gather": true },
+    { "id": "claude",   "label": "Claude",   "desc": "long-context", "glyph": "anthropic" },
+    { "id": "gemini",   "label": "Gemini",   "desc": "multimodal",   "glyph": "gemini" },
+    { "id": "openai",   "label": "OpenAI",   "desc": "tool-use",     "glyph": "openai" },
+    { "id": "deepseek", "label": "DeepSeek", "desc": "reasoning",    "glyph": "deepseek" },
+    { "id": "kimi",     "label": "Kimi",     "desc": "agentic",      "glyph": "kimi" },
+    { "id": "qwen",     "label": "Qwen",     "desc": "multilingual", "glyph": "qwen" }
+  ],
+  "edges": [
+    { "source": "router", "target": "claude",   "label": "route", "label_style": "chip", "relation": "drift", "marker": "arrow" },
+    { "source": "router", "target": "gemini",   "relation": "drift", "marker": "arrow" },
+    { "source": "router", "target": "openai",   "relation": "drift", "marker": "arrow" },
+    { "source": "router", "target": "deepseek", "relation": "drift", "marker": "arrow" },
+    { "source": "router", "target": "kimi",     "relation": "drift", "marker": "arrow" },
+    { "source": "router", "target": "qwen",     "relation": "drift", "marker": "arrow" }
   ]
 }
 JSON
@@ -202,53 +189,132 @@ JSON
 </details>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/frontier-serving.svg" alt="Frontier serving DAG: requests through a router to three frontier labs, a shared cache, and metrics on a telemetry skip edge" width="100%"/>
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/broadcast-split-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/broadcast-split-dark.svg" alt="Two feeds in, three surfaces out: a spec and live connector data arrive on the left of one HyperWeave artifact, which fans out to a GitHub README, a Slack unfurl, and an agent reading the payload" width="100%"
+    >
+  </picture>
 </p>
-
-<p align="center"><sub>Frontier serving &middot; layered DAG with a telemetry skip edge</sub></p>
 
 <details>
 <summary>Compose this inline</summary>
 
 ```bash
-hyperweave compose diagram --spec-file frontier-serving -g primer --variant noir --surface inlay -o frontier-serving.svg
+hyperweave extract broadcast-split-light.svg --respond payload > broadcast-split.json
+hyperweave compose diagram --spec-file broadcast-split.json -g primer --variant porcelain --surface inlay --face light -o broadcast-split-light.svg
 ```
-
-`frontier-serving` is a bundled preset; the URL API renders it by name at `/v1/diagram/frontier-serving/primer.static`.
 
 </details>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/mcp-gateway.svg" alt="MCP gateway: Claude Code host to hyperweave MCP server through an MCP gateway, request and response as two lanes" width="100%"/>
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/compose-gate-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/compose-gate-dark.svg" alt="Every request in, every artifact out: Claude Code, Codex, and MCP call the compose engine from the left; GitHub, Slack, and Obsidian receive the artifacts on the right" width="100%"
+    >
+  </picture>
 </p>
-
-<p align="center"><sub>MCP gateway &middot; host &rarr; gateway &rarr; server, request and response as two lanes</sub></p>
 
 <details>
 <summary>Compose this inline</summary>
 
 ```bash
-hyperweave compose diagram --spec-file gateway -g primer --variant space --surface inlay -o mcp-gateway.svg
+hyperweave extract compose-gate-light.svg --respond payload > compose-gate.json
+hyperweave compose diagram --spec-file compose-gate.json -g primer --variant porcelain --surface inlay --face light -o compose-gate-light.svg
 ```
-
-`gateway` is a bundled preset; the URL API renders it by name at `/v1/diagram/gateway/primer.static`.
 
 </details>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/frontier-handoff.svg" alt="Frontier handoff: one task relayed across GPT, Claude, Gemini, and Ollama as a beam comet" width="100%"/>
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/mcp-gateway-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/mcp-gateway-dark.svg" alt="MCP gateway: Claude Code as MCP host, through an MCP gateway, to the hyperweave MCP server, with request and response drawn as two lanes" width="100%"
+    >
+  </picture>
 </p>
-
-<p align="center"><sub>Frontier handoff &middot; beam relay across four labs</sub></p>
 
 <details>
 <summary>Compose this inline</summary>
 
 ```bash
-hyperweave compose diagram --spec-file frontier-handoff -g primer --variant noir --surface inlay -o frontier-handoff.svg
+hyperweave compose diagram --spec-file pipeline-row -g primer --variant space --surface inlay --face light -o mcp-gateway-light.svg
 ```
 
-`frontier-handoff` is a bundled preset; the URL API renders it by name at `/v1/diagram/frontier-handoff/primer.static`.
+`pipeline-row` is a bundled preset; the URL API renders it by name at `/v1/diagram/pipeline-row/primer.static`.
+
+</details>
+
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/verbs-mouth-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/verbs-mouth-dark.svg" alt="Six verbs, one mouth: compose writes into the artifact and transform writes out, while extract, verify, diff, and query bundle into a single read gathered at the artifact's face" width="100%"
+    >
+  </picture>
+</p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave extract verbs-mouth-light.svg --respond payload > verbs-mouth.json
+hyperweave compose diagram --spec-file verbs-mouth.json -g primer --variant porcelain --surface inlay --face light -o verbs-mouth-light.svg
+```
+
+</details>
+
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/cycle-flow-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/cycle-flow-dark.svg" alt="The data flywheel: Generate, Distribute, Capture, and Improve seated on a dashed ring around a hero that compounds each turn" width="100%"
+    >
+  </picture>
+</p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file cycle-flow -g primer --variant porcelain --surface inlay --face light -o cycle-flow-light.svg
+```
+
+`cycle-flow` is a bundled preset; the URL API renders it by name at `/v1/diagram/cycle-flow/primer.static`.
+
+</details>
+
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/frontier-serving-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/frontier-serving-dark.svg" alt="Frontier serving DAG: requests through one OpenRouter key to Anthropic, OpenAI, and Gemini, all sharing a Redis cache, with telemetry skipping the ranks to Grafana" width="100%"
+    >
+  </picture>
+</p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file dag-providers -g primer --variant noir --surface inlay --face light -o frontier-serving-light.svg
+```
+
+`dag-providers` is a bundled preset; the URL API renders it by name at `/v1/diagram/dag-providers/primer.static`.
+
+</details>
+
+<p align="center">
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-dark.svg" alt="Dependency audit tree: my-app roots direct dependencies react, lodash, and axios, transitive children hang on dashed edges, and health dots flag what is outdated or vulnerable" width="100%"
+    >
+  </picture>
+</p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file tree-health -g primer --variant porcelain --surface inlay --face light -o tree-health-light.svg
+```
+
+`tree-health` is a bundled preset; the URL API renders it by name at `/v1/diagram/tree-health/primer.static`.
 
 </details>
 
@@ -256,14 +322,14 @@ hyperweave compose diagram --spec-file frontier-handoff -g primer --variant noir
 
 | | | |
 |:---|:---|:---|
-| **Flows** | `pipeline` · `fanout` · `convergence` | stages in a line, one-to-many, many-to-one |
-| **Cycles** | `ring` · `flywheel` · `state-machine` | a loop, a driven loop, legal state transitions |
-| **Structure** | `dag` · `tree` · `stack` · `lanes` | dependencies, hierarchy, layers, ownership rows |
+| **Flows** | `pipeline` · `fanout` · `fanin` | stages in a line, one-to-many, many-to-one |
+| **Cycles** | `cycle` · `state-machine` | a loop, legal state transitions |
+| **Structure** | `dag` · `tree` · `lanes` | dependencies, hierarchy, ownership rows |
 | **Centered** | `hub` | one thing at the middle of its world |
 | **Time** | `sequence` | who calls whom, in order |
 | **Side by side** | `comparison` | two options on one sheet |
 
-Thirteen layouts, forty bundled presets, one spec vocabulary. Render any preset by name: `/v1/diagram/{preset}/primer.static`.
+Eleven layouts, forty-four bundled presets, one spec vocabulary. A family's variations ride the `orientation` axis rather than a word of their own: `pipeline` goes `vertical` for an operator stack, `cycle` goes `ring` for equal stages or `orbit` for a driven loop, `fanout` goes `bilateral` or `radial`, `tree` goes `radial`. Render any preset by name: `/v1/diagram/{preset}/primer.static`.
 
 ---
 
@@ -447,7 +513,11 @@ hyperweave compose matrix --spec-file table.json -g primer --variant porcelain -
 Another matrix configuration for visualizing benchmarks:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/frontier-benchmarks-cream.svg" alt="Frontier vs open-weights models compared on SWE-bench Verified coding score against input and output token price, June 2026" width="100%"/>
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/matrices/frontier-benchmarks-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/matrices/frontier-benchmarks-dark.svg" alt="Frontier vs open-weights models compared on SWE-bench Verified coding score against input and output token price, June 2026" width="100%"
+    >
+  </picture>
 </p>
 
 <details>
@@ -474,7 +544,7 @@ Another matrix configuration for visualizing benchmarks:
 <summary>Compose this inline</summary>
 
 ```bash
-hyperweave compose matrix --spec-file /dev/stdin -g primer --variant cream -o frontier-benchmarks.svg <<'JSON'
+hyperweave compose matrix --spec-file /dev/stdin -g primer --variant cream --surface twin --faces -o frontier-benchmarks.svg <<'JSON'
 {
   "title": "Frontier vs Open",
   "subtitle": "coding & price · SWE-bench Verified against price per million tokens · current flagships, jun 2026",
@@ -686,6 +756,30 @@ JSON
 
 ## Inside every artifact
 
+<!--
+Agents should communicate through representations optimized for human cognition, not default prose.
+
+structured input
+      ↓
+deterministic layout
+      ↓
+beautiful artifact
+
+                ┌─────────────┐
+human ─────────►│             │◄──────── agent
+                │  ARTIFACT   │
+human ◄─────────│             │────────► agent
+                └─────────────┘
+                       │
+            extract / query / diff
+              transform / verify
+
+representation should not disappear
+after it has been shown.
+           ↓
+make it an operable artifact.
+-->
+
 Every HyperWeave artifact is a re-ingestible object, not just an image. It carries its full spec (`hw:payload`) and a hash-verified digest (`hwz/1` envelope), so an agent can work with it directly, never parsing pixels. Two tiers, two jobs. Here they are inside a diagram artifact:
 
 **recreate & modify: the complete spec**
@@ -749,7 +843,7 @@ The envelope is the lossy digest; only the payload round-trips.
 Pixels for humans, compact JSON for agents. The verb algebra is the read/write grammar over the two tiers: every verb picks how much of the artifact to load, from the ≈200-token envelope to the full payload, and no verb ever parses pixels.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/verb_algebra_v04a5.svg" alt="The verb algebra: the artifact at the hub centre, composed from a spec, transformed with lineage, read without mutation (extract, verify, diff, query), shipping to documents and surfaces." width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/verb-algebra.svg" alt="The verb algebra: the artifact at the hub centre, composed from a spec, transformed with lineage, read without mutation (extract, verify, diff, query), shipping to documents and surfaces." width="100%"/>
 </p>
 
 The verbs, split two ways.
@@ -786,11 +880,15 @@ curl -X POST https://hyperweave.app/v1/extract \
 **Compose** a bundled preset (or your own spec). This is the diagram whose payload and envelope appear above:
 
 ```bash
-hyperweave compose diagram --spec-file service-dependencies -g primer --variant porcelain --surface inlay -o services.svg
+hyperweave compose diagram --spec-file dag-mesh -g primer --variant porcelain --surface inlay --face light -o services.svg
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/service-dependencies.svg" alt="Service dependencies DAG: a web SPA through an API gateway fanning to Auth, Orders, and Search, each grounding on its store" width="100%"/>
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/service-dependencies-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/service-dependencies-dark.svg" alt="Service dependencies DAG: a web SPA through an API gateway fanning to Auth, Orders, and Search, each grounding on its store" width="100%"
+    >
+  </picture>
 </p>
 
 **Transform** it through the artifact itself. `transform` verifies the hash, applies the patch to the embedded spec, re-validates, and mints a new artifact with a lineage entry recording exactly what changed:
@@ -806,7 +904,11 @@ hyperweave transform services.svg -o services-billing.svg --patch-json '[
 **The result** is a new artifact: new id, one more service in the fan, the envelope and lineage on stdout — and `-o` writes the new pixels to `services-billing.svg`:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/diagrams/service-dependencies-billing.svg" alt="The same diagram after one transform: a Billing service joins the fan and its writes edge rides the bottom band into Postgres" width="100%"/>
+  <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/service-dependencies-billing-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/service-dependencies-billing-dark.svg" alt="The same diagram after one transform: a Billing service joins the fan and its writes edge rides the bottom band into Postgres" width="100%"
+    >
+  </picture>
 </p>
 
 And because the look is a pointer, the same spec re-renders under any variant: swap `porcelain` for `noir` in the URL and the whole diagram returns in the dark scheme, structure untouched.
@@ -1356,7 +1458,7 @@ Every broken `<img>` URL renders the SMPTE RP 219 test pattern with `ERR_NNN` ma
 </ul>
 </p>
 
-**Surface modes.** A genome renders onto one of three surfaces: `plate` (opaque, its own background), `inlay` (bare, borrows the host page's light/dark), or `twin` (opaque and scheme-aware). Document and README embeds default to a scheme-adaptive surface so a single artifact reads correctly in both GitHub themes; standalone, slide, and raster destinations take `plate`. The CLI exposes `--surface`/`--ground`/`--palette`, and `--faces` writes the twin `<picture>` pair (`<out>-light.svg` / `<out>-dark.svg`).
+**Surface modes.** A genome renders onto one of three surfaces: `plate` (opaque, its own background), `inlay` (bare, borrows the host page's light/dark), or `twin` (opaque and scheme-aware). Standalone, slide, and raster destinations take `plate`. For a GitHub README, bake a pair instead of shipping one scheme-adaptive file: GitHub serves README images through Camo as a plain `<img>`, so a `prefers-color-scheme` rule *inside* the SVG answers to the reader's operating system, not the GitHub theme toggle. `--face light|dark` bakes one scheme per file and `<picture>` chooses between them. The CLI exposes `--surface`/`--ground`/`--palette`, and `--faces` writes both files in one call (`<out>-light.svg` / `<out>-dark.svg`).
 
 ---
 
@@ -1379,6 +1481,22 @@ Requires Python 3.12+. The base install is CLI + rendering; the HTTP and MCP ser
 Four interfaces, one pipeline. Every path produces the same artifact through the same compositor.
 
 <p align="center">
+  <a href="https://hyperweave.app/docs/api">
+    <img src="assets/cards/material/api-card.svg" alt="HTTP API" width="48%">
+  </a>
+  <a href="https://hyperweave.app/docs/cli">
+    <img src="assets/cards/material/cli-card.svg" alt="CLI" width="48%">
+  </a>
+  <br/>
+  <a href="https://hyperweave.app/docs/mcp">
+    <img src="assets/cards/material/mcp-card.svg" alt="MCP" width="48%">
+  </a>  <a href="https://hyperweave.app/docs/python">
+    <img src="assets/cards/material/skills-card.svg" alt="Python SDK" width="48%">
+  </a>
+</p>
+
+<!--
+<p align="center">
   <a href="https://hyperweave.app/docs/mcp">
     <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-butterfly.svg" alt="MCP" width="48%">
   </a>
@@ -1393,6 +1511,7 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
     <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/f36c8969d15d76da4400ebcfaa04ec1e2eacb170/assets/cards/card-python.svg" alt="Python SDK" width="48%">
   </a>
 </p>
+-->
 
 ### MCP
 
@@ -1500,7 +1619,7 @@ curl 'https://hyperweave.app/a/inneraura/dividers/zeropoint'
 # Structured frames: /v1/{matrix|diagram}/{preset}/{genome}.{motion}
 # (preset 'custom' takes a base64url ?spec=)
 curl 'https://hyperweave.app/v1/matrix/connectors/primer.static?variant=porcelain'
-curl 'https://hyperweave.app/v1/diagram/rag-pipeline/primer.static?variant=porcelain'
+curl 'https://hyperweave.app/v1/diagram/pipeline-head/primer.static?variant=porcelain'
 
 # POST compose
 curl -X POST https://hyperweave.app/v1/compose \
@@ -1574,7 +1693,7 @@ Stack: Pydantic, FastAPI, FastMCP v3, Jinja2, Typer.
 HyperWeave binds live data into any artifact through a unified token grammar (`?data=...`). Tokens are comma-separated; each token is either a literal (`text:`, `kv:`) or a live fetch (`<provider>:<identifier>.<metric>`).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/hw-data-connectors-matrix-inlay.svg" alt="Data connectors matrix: 9 live providers - GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions - plus text and kv literal tokens" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/matrices/hw-data-connectors-matrix-inlay.svg" alt="Data connectors matrix: 9 live providers - GitHub, PyPI, npm, crates.io, Hugging Face, Docker Hub, arXiv, OpenSSF Scorecard, GitHub Actions - plus text and kv literal tokens" width="100%"/>
 </p>
 
 <details>

@@ -54,7 +54,7 @@ from hyperweave.core.models import ComposeSpec  # noqa: E402
 from hyperweave.verbs.transform import transform  # noqa: E402
 
 _OUT = _ROOT / "assets" / "examples" / "telemetry"
-_DIAGRAMS_OUT = _ROOT / "assets" / "diagrams"
+_DIAGRAMS_OUT = _ROOT / "assets" / "examples" / "diagrams"
 
 # A fixed instant so the embedded <hw:created> stamp is stable across runs —
 # the recipe is idempotent (re-run with no code change ⇒ byte-identical files).
@@ -175,45 +175,63 @@ _SERVICE_PATCH: list[dict[str, Any]] = [
 
 
 # Preset-named README diagram assets minted by plain compose, with the
-# README's own documented flags: (preset, filename, variant). All inlay
-# (bare · adaptive) — the README embeds them on both GitHub themes.
-_DIAGRAM_SINGLES: tuple[tuple[str, str, str], ...] = (("dag-providers", "frontier-serving.svg", "noir"),)
+# README's own documented flags: (preset, file stem, variant).
+_DIAGRAM_SINGLES: tuple[tuple[str, str, str], ...] = (
+    ("dag-providers", "frontier-serving", "noir"),
+    ("pipeline-row", "mcp-gateway", "space"),
+)
+
+# Each asset ships as a light/dark PAIR (``<stem>-light.svg`` /
+# ``<stem>-dark.svg``) that the README embeds through <picture>, rather than
+# as one inlay carrying an internal @media query. GitHub serves README images
+# through Camo as a plain <img>, and a prefers-color-scheme query INSIDE an
+# SVG loaded that way follows the reader's OS, not the GitHub theme toggle —
+# so the builtin-adaptive artifact showed a light diagram to a dark-themed
+# reader on a light-mode machine. <picture> resolves against the same signal
+# GitHub's own theme uses. The artifacts stay bare (transparent): the dark
+# file is only ever served to a dark surface, so it has nothing to paint over.
+_FACES: tuple[str, ...] = ("light", "dark")
+
+
+def _face(preset_spec: dict[str, Any], variant: str, face: str) -> str:
+    """One BAKED face of a diagram — palette committed, ground still bare."""
+    return compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant=variant,
+            ground="bare",
+            palette="fixed",
+            surface_face=face,
+            diagram=preset_spec,
+        )
+    ).svg
 
 
 def refresh_diagrams() -> list[Path]:
     """Re-mint the README's preset-named diagram assets: the transform pair
     (parent via compose with the README's own flags, child via the real
     ``transform`` verb against the parent just minted) plus the compose-only
-    singles, pinned clock for idempotence."""
+    singles, pinned clock for idempotence. Every asset is minted once per
+    face; the transform child is derived from the parent OF ITS OWN FACE, so
+    each face's lineage chains to an artifact that actually exists."""
     _DIAGRAMS_OUT.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     with patch("hyperweave.compose.context.datetime", _FrozenDatetime):
-        parent = compose(
-            ComposeSpec(
-                type="diagram",
-                genome_id="primer",
-                variant="porcelain",
-                ground="bare",
-                palette="adaptive",
-                diagram=resolve_diagram_preset("dag-mesh"),
-            )
-        ).svg
-        child = transform(parent, _SERVICE_PATCH, ts=_PINNED_CLOCK.isoformat())
-        if child.lineage[-1]["parent_id"] != child.parent_id:
-            raise RuntimeError("transform lineage does not chain to the parent just minted")
-        minted = [("service-dependencies.svg", parent), ("service-dependencies-billing.svg", child.svg)]
-        for preset, filename, variant in _DIAGRAM_SINGLES:
-            svg = compose(
-                ComposeSpec(
-                    type="diagram",
-                    genome_id="primer",
-                    variant=variant,
-                    ground="bare",
-                    palette="adaptive",
-                    diagram=resolve_diagram_preset(preset),
-                )
-            ).svg
-            minted.append((filename, svg))
+        minted: list[tuple[str, str]] = []
+        mesh = resolve_diagram_preset("dag-mesh")
+        for face in _FACES:
+            parent = _face(mesh, "porcelain", face)
+            child = transform(parent, _SERVICE_PATCH, ts=_PINNED_CLOCK.isoformat())
+            if child.lineage[-1]["parent_id"] != child.parent_id:
+                raise RuntimeError(f"transform lineage does not chain to the {face} parent just minted")
+            minted += [
+                (f"service-dependencies-{face}.svg", parent),
+                (f"service-dependencies-billing-{face}.svg", child.svg),
+            ]
+        for preset, stem, variant in _DIAGRAM_SINGLES:
+            spec = resolve_diagram_preset(preset)
+            minted += [(f"{stem}-{face}.svg", _face(spec, variant, face)) for face in _FACES]
         for filename, svg in minted:
             dest = _DIAGRAMS_OUT / filename
             rel = dest.relative_to(_ROOT)

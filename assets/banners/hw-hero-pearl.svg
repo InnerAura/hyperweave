@@ -1,0 +1,269 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 1200 300" width="1200" height="300" role="img"
+     aria-labelledby="dpb-t dpb-d" data-hw-component="banner"
+     data-hw-chromatic="moirage-dark-pearl" data-hw-variant="liquid-frame"
+     data-hw-status="active" data-hw-regime="normal" data-protocol="hw-v1">
+    <title id="dpb-t">HyperWeave Banner — Dark Pearl, liquid frame</title>
+    <desc id="dpb-d">
+        HyperWeave GitHub banner in the moirage dark-pearl material: chrome wordmark
+        with a lifted
+        horizon band, sigil scaled to 1.95x cap height and locked to the cap-band axis,
+        subtitle
+        "The artifact layer for agent-human representations" flush to the H, liquid
+        interference frame.
+    </desc>
+    <metadata>
+        <hw:artifact id="01a02148-9f50-7d03-9c42-8f4ba2d63820" type="banner"
+                     series="moirage-mercury" version="2.2.0">
+            <hw:provenance>
+                <hw:generator>Claude Fable 5 (InnerAura Labs) [claude-fable-5]
+                </hw:generator>
+                <hw:created>2026-08-20T00:00:00Z</hw:created>
+                <hw:human-directed>true</hw:human-directed>
+            </hw:provenance>
+            <hw:lineage parent="01a02100-8e40-7d02-9c42-8f4ba2d63810"
+                        operation="lockup-rebalance+horizon-fix"
+                        donor="moirage_banner_dark_pearl#2.0.0"
+                        structure-donor="github-banner#1200x300" />
+            <hw:spec size="1200x300" performance="paint-ok" theme="dark"
+                     a11y="WCAG-AA" />
+        </hw:artifact>
+        <hw:aesthetic>
+            <hw:chromatic system="moirage-dark-pearl" space="srgb"
+                          contrast-ratio="metal-on-substrate &gt;7:1" />
+            <hw:motion vocabulary="specular-light-orbit, harmonic-dash-drift, breathe"
+                       physics="orbital" timing="phi" cim-compliant="false" />
+            <hw:geometry form-language="geometric" proportional-system="root2"
+                         mathematical-basis="golden-ratio" symmetry="bilateral" />
+            <hw:material surface="oil-slick-liquid-frame+whisper-field-interior"
+                         depth="deep" />
+        </hw:aesthetic>
+        <hw:reasoning>
+            <hw:intent>Rebalance the hero lockup so the sigil anchors the wordmark
+                instead of trailing it, and restore mid-glyph continuity in the chrome
+                type.</hw:intent>
+            <hw:approach>Diagnosis of the dark line: the metalType horizon stops sat at
+                #12111A across 48-52 percent — within 3 luminance points of the #0A0A12
+                substrate — so every glyph split into two disconnected halves wherever
+                the interior field ran dark. Fix: horizon lifted to #3A3848 with #66647A
+                shoulders and tightened to a 47-53 percent band, keeping the chrome
+                reflection while every band stays at least 4x substrate luminance. Sigil
+                rescaled 0.58 to 0.90 (span 93 to 144 px, 1.95x cap height) and its
+                center moved from y145 to y142 — the exact cap-band axis, fixing a
+                hidden 12px misalignment that made the old size read even smaller.
+                Wordmark up to 1.42 with the sigil-to-H gap set at 34px; subtitle flush
+                to the rendered H edge at x236.</hw:approach>
+            <hw:tradeoffs>Kept the horizon dark enough to still read as a reflection
+                line rather than flattening the chrome to a plain vertical ramp — full
+                removal was the safer legibility fix but it deletes the material's
+                signature. Sigil at 1.95x cap height claims real presence; going past
+                ~2.2x starts compressing the top and bottom air against the frame. Right
+                side keeps 194px of open field on purpose — the liquid is the second
+                subject.</hw:tradeoffs>
+            <hw:spatial-notes>1200x300, panel 16,16 1168x268 rx16. Sigil center
+                (130,142) scale 0.90, span x 58-202, y 70-214. Wordmark
+                translate(181.4,-619.1) scale 1.42: H flush edge x236.4, right edge
+                x990, cap band y 105.1-178.9 (center 142, shared with sigil), descender
+                202.5. Subtitle x236.4 baseline y231. Horizon band occupies y ~139-145
+                through the glyphs (47-53 percent of the 510-578 local
+                ramp).</hw:spatial-notes>
+        </hw:reasoning>
+        <hw:stratum>
+            <hw:ring primary="002-TRIBE" />
+            <hw:affinities>
+                <hw:resonance ring="005-COSMIC" strength="0.6" />
+                <hw:resonance ring="006-EMERGENT" strength="0.4" />
+            </hw:affinities>
+        </hw:stratum>
+    </metadata>
+    <defs>
+        <filter id="dpb-p0" x="-30%" y="-60%" width="160%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.003 0.007" numOctaves="5"
+                          seed="5" result="n" />
+            <feGaussianBlur in="n" stdDeviation="6" result="sm" />
+            <feSpecularLighting in="sm" surfaceScale="55" specularConstant="2.0"
+                                specularExponent="85" lighting-color="#FF9AD5"
+                                result="ch">
+                <fePointLight x="240" y="60" z="240">
+                    <animate attributeName="x" values="240;600;240" dur="18s"
+                             repeatCount="indefinite" />
+                    <animate attributeName="y" values="60;180;60" dur="26s"
+                             repeatCount="indefinite" />
+                </fePointLight>
+            </feSpecularLighting>
+            <feComposite in="ch" in2="SourceGraphic" operator="in" />
+        </filter>
+        <filter id="dpb-p1" x="-30%" y="-60%" width="160%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.003 0.007" numOctaves="5"
+                          seed="55" result="n" />
+            <feGaussianBlur in="n" stdDeviation="6" result="sm" />
+            <feSpecularLighting in="sm" surfaceScale="55" specularConstant="2.0"
+                                specularExponent="85" lighting-color="#8AF5E4"
+                                result="ch">
+                <fePointLight x="600" y="240" z="240">
+                    <animate attributeName="x" values="600;340;600" dur="22s"
+                             repeatCount="indefinite" />
+                    <animate attributeName="y" values="240;110;240" dur="18s"
+                             repeatCount="indefinite" />
+                </fePointLight>
+            </feSpecularLighting>
+            <feComposite in="ch" in2="SourceGraphic" operator="in" />
+        </filter>
+        <filter id="dpb-p2" x="-30%" y="-60%" width="160%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.003 0.007" numOctaves="5"
+                          seed="105" result="n" />
+            <feGaussianBlur in="n" stdDeviation="6" result="sm" />
+            <feSpecularLighting in="sm" surfaceScale="55" specularConstant="2.0"
+                                specularExponent="85" lighting-color="#FFE49A"
+                                result="ch">
+                <fePointLight x="960" y="75" z="240">
+                    <animate attributeName="x" values="960;680;960" dur="26s"
+                             repeatCount="indefinite" />
+                    <animate attributeName="y" values="75;210;75" dur="22s"
+                             repeatCount="indefinite" />
+                </fePointLight>
+            </feSpecularLighting>
+            <feComposite in="ch" in2="SourceGraphic" operator="in" />
+        </filter>
+        <linearGradient id="dpb-metalType" gradientUnits="userSpaceOnUse" x1="0"
+                        y1="510" x2="0" y2="578">
+            <stop offset="0%" stop-color="#FFFFFF" />
+            <stop offset="16%" stop-color="#ECEAF6" />
+            <stop offset="36%" stop-color="#A2A0B8" />
+            <stop offset="47%" stop-color="#66647A" />
+            <stop offset="49.5%" stop-color="#3A3848" />
+            <stop offset="50.5%" stop-color="#3A3848" />
+            <stop offset="53%" stop-color="#66647A" />
+            <stop offset="66%" stop-color="#9E9CB4" />
+            <stop offset="88%" stop-color="#E2DFEE" />
+            <stop offset="100%" stop-color="#FFFFFF" />
+        </linearGradient>
+        <linearGradient id="dpb-metalSig" gradientUnits="userSpaceOnUse" x1="0" y1="-80"
+                        x2="0" y2="80">
+            <stop offset="0%" stop-color="#FFFFFF" />
+            <stop offset="20%" stop-color="#ECEAF6" />
+            <stop offset="42%" stop-color="#8E8C9E" />
+            <stop offset="48%" stop-color="#403E4E" />
+            <stop offset="52%" stop-color="#403E4E" />
+            <stop offset="58%" stop-color="#8E8C9E" />
+            <stop offset="85%" stop-color="#DDD9EC" />
+            <stop offset="100%" stop-color="#FFFFFF" />
+        </linearGradient>
+        <linearGradient id="dpb-metalFrame" gradientUnits="userSpaceOnUse" x1="0"
+                        y1="16" x2="0" y2="284">
+            <stop offset="0%" stop-color="#EDEAF6" />
+            <stop offset="28%" stop-color="#B9B7CC" />
+            <stop offset="52%" stop-color="#4A4858" />
+            <stop offset="70%" stop-color="#A8A6BC" />
+            <stop offset="100%" stop-color="#E8E5F2" />
+        </linearGradient>
+        <linearGradient id="dpb-subGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#C48BB4" />
+            <stop offset="100%" stop-color="#7FCBBE" />
+        </linearGradient>
+        <clipPath id="dpb-panel">
+            <rect x="16" y="16" width="1168" height="268" rx="16" />
+        </clipPath>
+        <mask id="dpb-frame" maskUnits="userSpaceOnUse" x="0" y="0" width="1200"
+              height="300">
+            <rect width="1200" height="300" fill="#000" />
+            <rect x="19" y="19" width="1162" height="262" rx="13" fill="none"
+                  stroke="#FFF" stroke-width="6" />
+        </mask>
+    </defs>
+    <style>
+        svg {
+            color-scheme: light dark;
+            display: block;
+        }
+
+        .banner-sub {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Inter, Arial, sans-serif;
+            font-size: 15.5px;
+            font-weight: 500;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+            }
+        }
+    </style>
+    <g clip-path="url(#dpb-panel)">
+        <rect x="16" y="16" width="1168" height="268" fill="#0A0A12" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#FF9AD5"
+              filter="url(#dpb-p0)" opacity="0.18" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#8AF5E4"
+              filter="url(#dpb-p1)" opacity="0.20" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#FFE49A"
+              filter="url(#dpb-p2)" opacity="0.16" />
+    </g>
+    <g mask="url(#dpb-frame)" style="isolation:isolate">
+        <rect x="16" y="16" width="1168" height="268" rx="16"
+              fill="url(#dpb-metalFrame)" opacity="0.9" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#FF9AD5"
+              filter="url(#dpb-p0)" opacity="0.55" style="mix-blend-mode:screen" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#8AF5E4"
+              filter="url(#dpb-p1)" opacity="0.60" style="mix-blend-mode:screen" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#FFE49A"
+              filter="url(#dpb-p2)" opacity="0.50" style="mix-blend-mode:screen" />
+    </g>
+    <rect x="19" y="19" width="1162" height="262" rx="13" fill="none"
+          stroke="url(#dpb-subGrad)" stroke-width="1.6" stroke-dasharray="16 8"
+          opacity="0.24">
+        <animate attributeName="stroke-dashoffset" values="0;-24" dur="2.618s"
+                 repeatCount="indefinite" />
+    </rect>
+    <rect x="23" y="23" width="1154" height="254" rx="10" fill="none"
+          stroke="url(#dpb-subGrad)" stroke-width="0.8" stroke-dasharray="2.618 5.236"
+          opacity="0.16">
+        <animate attributeName="stroke-dashoffset" values="0;7.854" dur="4.236s"
+                 repeatCount="indefinite" />
+    </rect>
+    <g transform="translate(130,142) scale(0.90)">
+        <g stroke="url(#dpb-metalSig)" stroke-width="2.8" stroke-linecap="round"
+           fill="none">
+            <path d="M0,-80 C20,-60 60,-20 80,0" />
+            <path d="M0,-80 C-20,-60 -60,-20 -80,0" />
+            <path d="M0,80 C20,60 60,20 80,0" />
+            <path d="M0,80 C-20,60 -60,20 -80,0" />
+        </g>
+        <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"
+              fill="none" stroke="url(#dpb-metalSig)" stroke-width="7"
+              stroke-linejoin="round" stroke-linecap="round">
+            <animate attributeName="stroke-width" values="7;8.5;7" dur="2.618s"
+                     begin="1.2s" repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
+        </path>
+        <g fill="url(#dpb-metalSig)">
+            <circle cx="0" cy="0" r="5.5">
+                <animate attributeName="r" values="5.5;7;5.5" dur="3.236s" begin="1.2s"
+                         repeatCount="indefinite" calcMode="spline"
+                         keySplines="0.42 0 0.58 1;0.42 0 0.58 1" />
+            </circle>
+            <circle cx="0" cy="-80" r="4" />
+            <circle cx="80" cy="0" r="4" />
+            <circle cx="0" cy="80" r="4" />
+            <circle cx="-80" cy="0" r="4" />
+        </g>
+        <circle r="2.8" fill="url(#dpb-metalSig)">
+            <animateMotion path="M-80,0 A80,80 0 1,1 80,0 A80,80 0 1,1 -80,0"
+                           dur="8.472s" begin="1.2s" repeatCount="indefinite" />
+        </circle>
+        <circle r="2" fill="url(#dpb-metalSig)">
+            <animateMotion path="M0,-80 A80,80 0 1,1 0,80 A80,80 0 1,1 0,-80"
+                           dur="13.708s" begin="1.2s" repeatCount="indefinite" />
+        </circle>
+    </g>
+    <g transform="translate(181.4,-619.1) scale(1.42)">
+        <path fill="url(#dpb-metalType)"
+              d="M 38.72,562.00 L 38.72,510.00 L 47.38,510.00 L 47.38,531.60 L 83.21,531.60 L 83.21,510.00 L 91.87,510.00 L 91.87,562.00 L 83.21,562.00 L 83.21,540.40 L 47.38,540.40 L 47.38,562.00 L 38.72,562.00 Z M 106.24,577.74 L 106.24,577.74 L 106.24,569.08 L 131.75,569.08 Q 132.24,569.08 132.63,568.68 Q 133.04,568.28 133.04,567.78 L 133.04,562.00 L 108.76,562.00 Q 106.17,562.00 103.97,560.67 Q 101.77,559.33 100.43,557.16 Q 99.09,554.99 99.09,552.32 L 99.09,520.26 L 107.68,520.26 L 107.68,552.03 Q 107.68,552.61 108.08,553.01 Q 108.48,553.40 109.06,553.40 L 131.75,553.40 Q 132.24,553.40 132.63,553.01 Q 133.04,552.61 133.04,552.03 L 133.04,520.26 L 141.63,520.26 L 141.63,568.07 Q 141.63,570.81 140.36,572.98 Q 139.10,575.14 136.90,576.44 Q 134.70,577.74 132.03,577.74 L 106.24,577.74 Z M 149.44,578.61 L 149.44,578.61 L 149.44,520.11 L 182.37,520.11 Q 184.96,520.11 187.16,521.45 Q 189.37,522.78 190.67,524.95 Q 191.97,527.12 191.97,529.80 L 191.97,552.32 Q 191.97,554.99 190.67,557.16 Q 189.37,559.33 187.16,560.67 Q 184.96,562.00 182.37,562.00 L 158.03,562.00 L 158.03,578.61 L 149.44,578.61 Z M 159.40,553.40 L 182.07,553.40 Q 182.58,553.40 182.97,553.01 Q 183.38,552.61 183.38,552.03 L 183.38,530.08 Q 183.38,529.50 182.97,529.10 Q 182.58,528.71 182.07,528.71 L 159.40,528.71 Q 158.89,528.71 158.45,529.10 Q 158.03,529.50 158.03,530.08 L 158.03,552.03 Q 158.03,552.61 158.45,553.01 Q 158.89,553.40 159.40,553.40 Z M 206.85,562.00 Q 204.18,562.00 202.01,560.67 Q 199.84,559.33 198.50,557.16 Q 197.16,554.99 197.16,552.32 L 197.16,529.80 Q 197.16,527.12 198.50,524.95 Q 199.84,522.78 202.01,521.45 Q 204.18,520.11 206.85,520.11 L 230.03,520.11 Q 232.78,520.11 234.95,521.45 Q 237.12,522.78 238.41,524.95 Q 239.71,527.12 239.71,529.80 L 239.71,545.39 L 205.77,545.39 L 205.77,552.03 Q 205.77,552.61 206.16,553.01 Q 206.55,553.40 207.15,553.40 L 239.71,553.40 L 239.71,562.00 L 206.85,562.00 L 206.85,562.00 Z M 205.77,537.51 L 231.11,537.51 L 231.11,530.08 Q 231.11,529.50 230.72,529.10 Q 230.32,528.71 229.74,528.71 L 207.15,528.71 Q 206.55,528.71 206.16,529.10 Q 205.77,529.50 205.77,530.08 L 205.77,537.51 Z M 247.22,562.00 L 247.22,562.00 L 247.22,529.80 Q 247.22,527.12 248.56,524.95 Q 249.90,522.78 252.10,521.45 Q 254.30,520.11 256.89,520.11 L 280.24,520.11 L 280.24,528.71 L 257.19,528.71 Q 256.61,528.71 256.21,529.10 Q 255.81,529.50 255.81,530.08 L 255.81,562.00 L 247.22,562.00 Z M 302.40,562.00 L 302.40,562.00 L 283.48,510.00 L 292.72,510.00 L 305.87,546.05 L 319.01,510.00 L 327.83,510.00 L 341.04,546.05 L 354.19,510.00 L 363.43,510.00 L 344.51,562.00 L 337.50,562.00 L 323.42,523.36 L 309.33,562.00 L 302.40,562.00 Z M 379.46,562.00 Q 376.79,562.00 374.62,560.67 Q 372.46,559.33 371.11,557.16 Q 369.78,554.99 369.78,552.32 L 369.78,529.80 Q 369.78,527.12 371.11,524.95 Q 372.46,522.78 374.62,521.45 Q 376.79,520.11 379.46,520.11 L 402.64,520.11 Q 405.40,520.11 407.56,521.45 Q 409.73,522.78 411.02,524.95 Q 412.32,527.12 412.32,529.80 L 412.32,545.39 L 378.38,545.39 L 378.38,552.03 Q 378.38,552.61 378.78,553.01 Q 379.17,553.40 379.76,553.40 L 412.32,553.40 L 412.32,562.00 L 379.46,562.00 L 379.46,562.00 Z M 378.38,537.51 L 403.72,537.51 L 403.72,530.08 Q 403.72,529.50 403.33,529.10 Q 402.93,528.71 402.36,528.71 L 379.76,528.71 Q 379.17,528.71 378.78,529.10 Q 378.38,529.50 378.38,530.08 L 378.38,537.51 Z M 429.50,562.00 Q 426.85,562.00 424.63,560.67 Q 422.43,559.33 421.13,557.16 Q 419.83,554.99 419.83,552.32 L 419.83,536.72 L 453.78,536.72 L 453.78,530.08 Q 453.78,529.50 453.37,529.10 Q 452.98,528.71 452.41,528.71 L 419.83,528.71 L 419.83,520.11 L 452.69,520.11 Q 455.44,520.11 457.61,521.45 Q 459.77,522.78 461.07,524.95 Q 462.37,527.12 462.37,529.80 L 462.37,562.00 L 429.50,562.00 Z M 429.80,553.40 L 453.78,553.40 L 453.78,544.60 L 428.42,544.60 L 428.42,552.03 Q 428.42,552.61 428.82,553.01 Q 429.22,553.40 429.80,553.40 Z M 490.76,562.00 L 490.76,562.00 L 467.71,520.11 L 477.69,520.11 L 494.94,551.82 L 512.21,520.11 L 522.17,520.11 L 499.00,562.00 L 490.76,562.00 Z M 536.62,562.00 Q 533.94,562.00 531.78,560.67 Q 529.61,559.33 528.27,557.16 Q 526.93,554.99 526.93,552.32 L 526.93,529.80 Q 526.93,527.12 528.27,524.95 Q 529.61,522.78 531.78,521.45 Q 533.94,520.11 536.62,520.11 L 559.79,520.11 Q 562.55,520.11 564.72,521.45 Q 566.88,522.78 568.18,524.95 Q 569.48,527.12 569.48,529.80 L 569.48,545.39 L 535.53,545.39 L 535.53,552.03 Q 535.53,552.61 535.93,553.01 Q 536.32,553.40 536.91,553.40 L 569.48,553.40 L 569.48,562.00 L 536.62,562.00 L 536.62,562.00 Z M 535.53,537.51 L 560.88,537.51 L 560.88,530.08 Q 560.88,529.50 560.49,529.10 Q 560.09,528.71 559.51,528.71 L 536.91,528.71 Q 536.32,528.71 535.93,529.10 Q 535.53,529.50 535.53,530.08 L 535.53,537.51 Z" />
+    </g>
+    <text x="236.4" y="231" fill="url(#dpb-subGrad)" class="banner-sub"
+          opacity="0.95">The artifact layer for agent-human representations</text>
+</svg>

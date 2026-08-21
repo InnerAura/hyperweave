@@ -1,0 +1,294 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 1200 300" width="1200" height="300" role="img"
+     aria-labelledby="cpb-t cpb-d" data-hw-component="banner"
+     data-hw-chromatic="cherenkov-ionized-pearl" data-hw-variant="nuclear-caustic-frame"
+     data-hw-status="active" data-hw-regime="normal" data-protocol="hw-v1">
+    <title id="cpb-t">HyperWeave Banner — Cherenkov Protocol Smooth Mutation</title>
+    <desc id="cpb-d">
+        HyperWeave repository banner mutated with Cherenkov Protocol aesthetic DNA:
+        ultra-smooth liquid caustic flow without discrete noise stepping, refined
+        geometric sigil without orbital nodes, clean hero layout, and ionized
+        pearl-chrome typography.
+    </desc>
+    <metadata>
+        <hw:artifact id="01a02200-b120-7d02-9c42-b17ec5f96240" type="hero-banner"
+                     series="cherenkov-moirage-mutation" version="3.1.0">
+            <hw:provenance>
+                <hw:generator>
+                    InnerAura Labs HyperWeave Engine [fluid-dynamics-pipeline]
+                </hw:generator>
+                <hw:created>
+                    2026-08-20T00:00:00Z
+                </hw:created>
+                <hw:human-directed>
+                    true
+                </hw:human-directed>
+            </hw:provenance>
+            <hw:lineage parent="01a02180-a010-7d02-9c42-a06dc4f85130"
+                        operation="smooth-caustic-refinement+sigil-distillation"
+                        donor="cherenkov-protocol#1.0"
+                        structure-donor="github-banner#1200x300" />
+            <hw:spec size="1200x300" performance="paint-ok" theme="dark"
+                     a11y="WCAG-AA" />
+        </hw:artifact>
+        <hw:aesthetic>
+            <hw:chromatic system="cherenkov-ionized-pearl" space="srgb"
+                          contrast-ratio="metal-on-substrate &gt;8:1" />
+            <hw:motion vocabulary="fluid-caustic-drift, harmonic-dash-drift, organic-breathe"
+                       physics="laminar-quantum-flow" timing="phi"
+                       cim-compliant="false" />
+            <hw:geometry form-language="geometric" proportional-system="root2"
+                         mathematical-basis="golden-ratio" symmetry="bilateral" />
+            <hw:material surface="laminar-nuclear-caustics+liquid-radiation-frame"
+                         depth="deep" />
+        </hw:aesthetic>
+        <hw:reasoning>
+            <hw:intent>
+                Eliminate all stepped/jagged noise artifacts to create an ultra-smooth,
+                living fluid caustic drift; distill the geometric sigil by stripping
+                peripheral orbital satellites; remove secondary telemetry headers for an
+                uncluttered hero presentation.
+            </hw:intent>
+            <hw:approach>
+                1. Fluid Caustic Motion: Replaced frequency modulation (which caused
+                grid-tearing and jerky jumps) with stable Perlin noise surfaces filtered
+                through higher Gaussian diffusion (stdDeviation 14/11). Applied harmonic
+                sinusoidal key-spline orbits to three decorrelated point lights (34s,
+                42s, and 55s cycles) for continuous, non-reversing fluid caustic flow.
+                2. Sigil Purification: Stripped all floating orbital satellite circles
+                and outer coordinate markers, preserving purely the primary hexagonal
+                contour and breathing central lens core.
+                3. Compositional Clarity: Removed top-right telemetry badges and text to
+                establish absolute focus on the HyperWeave lockup and subtitle
+                hierarchy.
+            </hw:approach>
+            <hw:tradeoffs>
+                Fixed baseFrequency to a static seed calculation to prevent Perlin
+                recompilation shuddering while shifting all kinetic energy to smooth
+                specular lighting vectors.
+            </hw:tradeoffs>
+            <hw:spatial-notes>
+                1200x300 canvas, panel rect 16,16 1168x268 rx16. Distilled sigil center
+                (130,134) scale 0.82. Wordmark anchored at x176.6, y-552.5 scale 1.25
+                (glyph 'H' starts at x225). Subtitle flush left at x225, y214.
+            </hw:spatial-notes>
+        </hw:reasoning>
+        <hw:stratum>
+            <hw:ring primary="002-TRIBE" />
+            <hw:affinities>
+                <hw:resonance ring="005-COSMIC" strength="0.7" />
+                <hw:resonance ring="006-EMERGENT" strength="0.5" />
+            </hw:affinities>
+        </hw:stratum>
+    </metadata>
+    <defs>
+        <!-- Ultra-Smooth Deep Cherenkov Caustic Filter -->
+        <filter id="cpb-cherenkov-caustic" x="-30%" y="-30%" width="160%" height="160%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.0065"
+                          numOctaves="3" seed="418" result="chNoise" />
+            <feGaussianBlur in="chNoise" stdDeviation="14" result="chSmooth" />
+            <feSpecularLighting in="chSmooth" surfaceScale="28" specularConstant="2.4"
+                                specularExponent="36" lighting-color="#0084FF"
+                                result="chGlow">
+                <fePointLight x="600" y="150" z="240">
+                    <animate attributeName="x" values="240;960;240" dur="34s"
+                             repeatCount="indefinite" calcMode="spline"
+                             keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+                    <animate attributeName="y" values="80;220;80" dur="24s"
+                             repeatCount="indefinite" calcMode="spline"
+                             keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+                </fePointLight>
+            </feSpecularLighting>
+            <feColorMatrix in="chGlow" type="matrix" values="0.02 0    0   0 0
+                       0    0.40 0   0 0
+                       0    0    2.4 0 0.1
+                       0    0    0   1 0" result="blueBoosted" />
+            <feComposite in="blueBoosted" in2="SourceGraphic" operator="in" />
+        </filter>
+        <!-- Secondary Cyan Surface Caustic Filter -->
+        <filter id="cpb-cyan-caustic" x="-30%" y="-30%" width="160%" height="160%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0045 0.0085"
+                          numOctaves="3" seed="192" result="cyNoise" />
+            <feGaussianBlur in="cyNoise" stdDeviation="11" result="cySmooth" />
+            <feSpecularLighting in="cySmooth" surfaceScale="22" specularConstant="1.9"
+                                specularExponent="48" lighting-color="#00F0FF"
+                                result="cyGlow">
+                <fePointLight x="880" y="100" z="220">
+                    <animate attributeName="x" values="980;220;980" dur="42s"
+                             repeatCount="indefinite" calcMode="spline"
+                             keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+                    <animate attributeName="y" values="100;200;100" dur="28s"
+                             repeatCount="indefinite" calcMode="spline"
+                             keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+                </fePointLight>
+            </feSpecularLighting>
+            <feComposite in="cyGlow" in2="SourceGraphic" operator="in" />
+        </filter>
+        <!-- Deep Ambient Pool Glow Filter -->
+        <filter id="cpb-pool-bloom" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="60" result="glowBlur" />
+        </filter>
+        <!-- Continuous Ionized Pearl Chrome Gradient -->
+        <linearGradient id="cpb-ionizedMetalType" gradientUnits="userSpaceOnUse" x1="0"
+                        y1="510" x2="0" y2="578">
+            <stop offset="0%" stop-color="#FFFFFF" />
+            <stop offset="18%" stop-color="#D8F6FF" />
+            <stop offset="38%" stop-color="#7AC9F5" />
+            <stop offset="56%" stop-color="#184880" />
+            <stop offset="72%" stop-color="#4A98D6" />
+            <stop offset="88%" stop-color="#C2ECFF" />
+            <stop offset="100%" stop-color="#FFFFFF" />
+        </linearGradient>
+        <!-- Sigil Metal Gradient -->
+        <linearGradient id="cpb-ionizedMetalSig" gradientUnits="userSpaceOnUse" x1="0"
+                        y1="-80" x2="0" y2="80">
+            <stop offset="0%" stop-color="#FFFFFF" />
+            <stop offset="18%" stop-color="#D8F6FF" />
+            <stop offset="38%" stop-color="#7AC9F5" />
+            <stop offset="56%" stop-color="#184880" />
+            <stop offset="72%" stop-color="#4A98D6" />
+            <stop offset="88%" stop-color="#C2ECFF" />
+            <stop offset="100%" stop-color="#FFFFFF" />
+        </linearGradient>
+        <!-- Ionized Border Frame Gradient -->
+        <linearGradient id="cpb-metalFrame" gradientUnits="userSpaceOnUse" x1="0"
+                        y1="16" x2="0" y2="284">
+            <stop offset="0%" stop-color="#D4F4FF" />
+            <stop offset="28%" stop-color="#64B0E8" />
+            <stop offset="52%" stop-color="#123460" />
+            <stop offset="70%" stop-color="#52A4E0" />
+            <stop offset="100%" stop-color="#C8EEFF" />
+        </linearGradient>
+        <!-- Electric Cyan/Blue Subtitle Gradient -->
+        <linearGradient id="cpb-subGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#00F0FF" />
+            <stop offset="50%" stop-color="#70B8FF" />
+            <stop offset="100%" stop-color="#00D4FF" />
+        </linearGradient>
+        <clipPath id="cpb-panel">
+            <rect x="16" y="16" width="1168" height="268" rx="16" />
+        </clipPath>
+        <mask id="cpb-frame" maskUnits="userSpaceOnUse" x="0" y="0" width="1200"
+              height="300">
+            <rect width="1200" height="300" fill="#000" />
+            <rect x="19" y="19" width="1162" height="262" rx="13" fill="none"
+                  stroke="#FFF" stroke-width="6" />
+        </mask>
+    </defs>
+    <style>
+        svg {
+            color-scheme: light dark;
+            display: block;
+        }
+
+        .banner-sub {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "IBM Plex Mono", Inter, sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+            }
+        }
+    </style>
+    <!-- PANEL: Deep Nuclear Substrate + Fluid Caustic Atmosphere -->
+    <g clip-path="url(#cpb-panel)">
+        <!-- Substrate base -->
+        <rect x="16" y="16" width="1168" height="268" fill="#020610" />
+        <!-- Organic pool luminescence nodes -->
+        <circle cx="480" cy="150" r="160" fill="#0048CA" opacity="0.22"
+                filter="url(#cpb-pool-bloom)">
+            <animate attributeName="opacity" values="0.18;0.28;0.18" dur="9s"
+                     repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" />
+            <animate attributeName="cx" values="440;520;440" dur="18s"
+                     repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+        </circle>
+        <circle cx="860" cy="140" r="130" fill="#0094FF" opacity="0.14"
+                filter="url(#cpb-pool-bloom)">
+            <animate attributeName="opacity" values="0.10;0.20;0.10" dur="11s"
+                     repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" />
+            <animate attributeName="cx" values="900;820;900" dur="22s"
+                     repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+        </circle>
+        <!-- Primary fluid Cherenkov caustic pass -->
+        <rect x="16" y="16" width="1168" height="268" fill="#0077FF"
+              filter="url(#cpb-cherenkov-caustic)" opacity="0.50">
+            <animate attributeName="opacity" values="0.42;0.56;0.42" dur="14s"
+                     repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+        </rect>
+        <!-- Secondary ionized cyan shimmer -->
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#00F0FF"
+              filter="url(#cpb-cyan-caustic)" opacity="0.28"
+              style="mix-blend-mode:screen">
+            <animate attributeName="opacity" values="0.22;0.34;0.22" dur="12s"
+                     repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
+        </rect>
+    </g>
+    <!-- LIQUID FRAME: Masked radiation current on outer perimeter -->
+    <g mask="url(#cpb-frame)" style="isolation:isolate">
+        <rect x="16" y="16" width="1168" height="268" rx="16"
+              fill="url(#cpb-metalFrame)" opacity="0.9" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#0077FF"
+              filter="url(#cpb-cherenkov-caustic)" opacity="0.75"
+              style="mix-blend-mode:screen" />
+        <rect x="16" y="16" width="1168" height="268" rx="16" fill="#00F0FF"
+              filter="url(#cpb-cyan-caustic)" opacity="0.68"
+              style="mix-blend-mode:screen" />
+    </g>
+    <!-- HARMONIC DASHES (phi drift) -->
+    <rect x="19" y="19" width="1162" height="262" rx="13" fill="none"
+          stroke="url(#cpb-subGrad)" stroke-width="1.6" stroke-dasharray="16 8"
+          opacity="0.28">
+        <animate attributeName="stroke-dashoffset" values="0;-24" dur="2.618s"
+                 repeatCount="indefinite" />
+    </rect>
+    <rect x="23" y="23" width="1154" height="254" rx="10" fill="none"
+          stroke="url(#cpb-subGrad)" stroke-width="0.8" stroke-dasharray="2.618 5.236"
+          opacity="0.18">
+        <animate attributeName="stroke-dashoffset" values="0;7.854" dur="4.236s"
+                 repeatCount="indefinite" />
+    </rect>
+    <!-- GEOMETRY LOGO: Pure Distilled Sigil (No Floating Satellites) -->
+    <g transform="translate(130,134) scale(0.82)">
+        <g stroke="url(#cpb-ionizedMetalSig)" stroke-width="2.8" stroke-linecap="round"
+           fill="none">
+            <path d="M0,-80 C20,-60 60,-20 80,0" />
+            <path d="M0,-80 C-20,-60 -60,-20 -80,0" />
+            <path d="M0,80 C20,60 60,20 80,0" />
+            <path d="M0,80 C-20,60 -60,20 -80,0" />
+        </g>
+        <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"
+              fill="none" stroke="url(#cpb-ionizedMetalSig)" stroke-width="7"
+              stroke-linejoin="round" stroke-linecap="round">
+            <animate attributeName="stroke-width" values="7;8.5;7" dur="2.618s"
+                     begin="1.2s" repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
+        </path>
+        <!-- Central breathing core -->
+        <circle cx="0" cy="0" r="5.5" fill="url(#cpb-ionizedMetalSig)">
+            <animate attributeName="r" values="5.5;7;5.5" dur="3.236s" begin="1.2s"
+                     repeatCount="indefinite" calcMode="spline"
+                     keySplines="0.42 0 0.58 1; 0.42 0 0.58 1" />
+        </circle>
+    </g>
+    <!-- HYPERWEAVE WORDMARK: Ionized Pearl-Chrome -->
+    <g transform="translate(176.6,-552.5) scale(1.25)">
+        <path fill="url(#cpb-ionizedMetalType)"
+              d="M 38.72,562.00 L 38.72,510.00 L 47.38,510.00 L 47.38,531.60 L 83.21,531.60 L 83.21,510.00 L 91.87,510.00 L 91.87,562.00 L 83.21,562.00 L 83.21,540.40 L 47.38,540.40 L 47.38,562.00 L 38.72,562.00 Z M 106.24,577.74 L 106.24,577.74 L 106.24,569.08 L 131.75,569.08 Q 132.24,569.08 132.63,568.68 Q 133.04,568.28 133.04,567.78 L 133.04,562.00 L 108.76,562.00 Q 106.17,562.00 103.97,560.67 Q 101.77,559.33 100.43,557.16 Q 99.09,554.99 99.09,552.32 L 99.09,520.26 L 107.68,520.26 L 107.68,552.03 Q 107.68,552.61 108.08,553.01 Q 108.48,553.40 109.06,553.40 L 131.75,553.40 Q 132.24,553.40 132.63,553.01 Q 133.04,552.61 133.04,552.03 L 133.04,520.26 L 141.63,520.26 L 141.63,568.07 Q 141.63,570.81 140.36,572.98 Q 139.10,575.14 136.90,576.44 Q 134.70,577.74 132.03,577.74 L 106.24,577.74 Z M 149.44,578.61 L 149.44,578.61 L 149.44,520.11 L 182.37,520.11 Q 184.96,520.11 187.16,521.45 Q 189.37,522.78 190.67,524.95 Q 191.97,527.12 191.97,529.80 L 191.97,552.32 Q 191.97,554.99 190.67,557.16 Q 189.37,559.33 187.16,560.67 Q 184.96,562.00 182.37,562.00 L 158.03,562.00 L 158.03,578.61 L 149.44,578.61 Z M 159.40,553.40 L 182.07,553.40 Q 182.58,553.40 182.97,553.01 Q 183.38,552.61 183.38,552.03 L 183.38,530.08 Q 183.38,529.50 182.97,529.10 Q 182.58,528.71 182.07,528.71 L 159.40,528.71 Q 158.89,528.71 158.45,529.10 Q 158.03,529.50 158.03,530.08 L 158.03,552.03 Q 158.03,552.61 158.45,553.01 Q 158.89,553.40 159.40,553.40 Z M 206.85,562.00 Q 204.18,562.00 202.01,560.67 Q 199.84,559.33 198.50,557.16 Q 197.16,554.99 197.16,552.32 L 197.16,529.80 Q 197.16,527.12 198.50,524.95 Q 199.84,522.78 202.01,521.45 Q 204.18,520.11 206.85,520.11 L 230.03,520.11 Q 232.78,520.11 234.95,521.45 Q 237.12,522.78 238.41,524.95 Q 239.71,527.12 239.71,529.80 L 239.71,545.39 L 205.77,545.39 L 205.77,552.03 Q 205.77,552.61 206.16,553.01 Q 206.55,553.40 207.15,553.40 L 239.71,553.40 L 239.71,562.00 L 206.85,562.00 L 206.85,562.00 Z M 205.77,537.51 L 231.11,537.51 L 231.11,530.08 Q 231.11,529.50 230.72,529.10 Q 230.32,528.71 229.74,528.71 L 207.15,528.71 Q 206.55,528.71 206.16,529.10 Q 205.77,529.50 205.77,530.08 L 205.77,537.51 Z M 247.22,562.00 L 247.22,562.00 L 247.22,529.80 Q 247.22,527.12 248.56,524.95 Q 249.90,522.78 252.10,521.45 Q 254.30,520.11 256.89,520.11 L 280.24,520.11 L 280.24,528.71 L 257.19,528.71 Q 256.61,528.71 256.21,529.10 Q 255.81,529.50 255.81,530.08 L 255.81,562.00 L 247.22,562.00 Z M 302.40,562.00 L 302.40,562.00 L 283.48,510.00 L 292.72,510.00 L 305.87,546.05 L 319.01,510.00 L 327.83,510.00 L 341.04,546.05 L 354.19,510.00 L 363.43,510.00 L 344.51,562.00 L 337.50,562.00 L 323.42,523.36 L 309.33,562.00 L 302.40,562.00 Z M 379.46,562.00 Q 376.79,562.00 374.62,560.67 Q 372.46,559.33 371.11,557.16 Q 369.78,554.99 369.78,552.32 L 369.78,529.80 Q 369.78,527.12 371.11,524.95 Q 372.46,522.78 374.62,521.45 Q 376.79,520.11 379.46,520.11 L 402.64,520.11 Q 405.40,520.11 407.56,521.45 Q 409.73,522.78 411.02,524.95 Q 412.32,527.12 412.32,529.80 L 412.32,545.39 L 378.38,545.39 L 378.38,552.03 Q 378.38,552.61 378.78,553.01 Q 379.17,553.40 379.76,553.40 L 412.32,553.40 L 412.32,562.00 L 379.46,562.00 L 379.46,562.00 Z M 378.38,537.51 L 403.72,537.51 L 403.72,530.08 Q 403.72,529.50 403.33,529.10 Q 402.93,528.71 402.36,528.71 L 379.76,528.71 Q 379.17,528.71 378.78,529.10 Q 378.38,529.50 378.38,530.08 L 378.38,537.51 Z M 429.50,562.00 Q 426.85,562.00 424.63,560.67 Q 422.43,559.33 421.13,557.16 Q 419.83,554.99 419.83,552.32 L 419.83,536.72 L 453.78,536.72 L 453.78,530.08 Q 453.78,529.50 453.37,529.10 Q 452.98,528.71 452.41,528.71 L 419.83,528.71 L 419.83,520.11 L 452.69,520.11 Q 455.44,520.11 457.61,521.45 Q 459.77,522.78 461.07,524.95 Q 462.37,527.12 462.37,529.80 L 462.37,562.00 L 429.50,562.00 Z M 429.80,553.40 L 453.78,553.40 L 453.78,544.60 L 428.42,544.60 L 428.42,552.03 Q 428.42,552.61 428.82,553.01 Q 429.22,553.40 429.80,553.40 Z M 490.76,562.00 L 490.76,562.00 L 467.71,520.11 L 477.69,520.11 L 494.94,551.82 L 512.21,520.11 L 522.17,520.11 L 499.00,562.00 L 490.76,562.00 Z M 536.62,562.00 Q 533.94,562.00 531.78,560.67 Q 529.61,559.33 528.27,557.16 Q 526.93,554.99 526.93,552.32 L 526.93,529.80 Q 526.93,527.12 528.27,524.95 Q 529.61,522.78 531.78,521.45 Q 533.94,520.11 536.62,520.11 L 559.79,520.11 Q 562.55,520.11 564.72,521.45 Q 566.88,522.78 568.18,524.95 Q 569.48,527.12 569.48,529.80 L 569.48,545.39 L 535.53,545.39 L 535.53,552.03 Q 535.53,552.61 535.93,553.01 Q 536.32,553.40 536.91,553.40 L 569.48,553.40 L 569.48,562.00 L 536.62,562.00 L 536.62,562.00 Z M 535.53,537.51 L 560.88,537.51 L 560.88,530.08 Q 560.88,529.50 560.49,529.10 Q 560.09,528.71 559.51,528.71 L 536.91,528.71 Q 536.32,528.71 535.93,529.10 Q 535.53,529.50 535.53,530.08 L 535.53,537.51 Z" />
+    </g>
+    <!-- SUBTITLE: Flush left-aligned to 'HyperWeave' wordmark -->
+    <text x="225" y="214" fill="url(#cpb-subGrad)" class="banner-sub" opacity="0.96">The
+        artifact layer for agent-human representations</text>
+</svg>

@@ -1,0 +1,271 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     role="img" aria-labelledby="hw-title hw-desc" viewBox="0 0 260 80" width="260"
+     height="80">
+    <title id="hw-title">Return — Liquid Surface</title>
+    <desc id="hw-desc">Interactive return button featuring liquid azure glowing border
+        accents and crisp high-contrast typography.</desc>
+    <metadata>
+        <hw:artifact id="hw-btn-return-liquid" type="button" series="hyperweave-brand"
+                     version="2.0.0">
+            <hw:provenance>
+                <hw:generator>Gemini Motion Engine</hw:generator>
+                <hw:created>2026-08-20</hw:created>
+                <hw:human-directed>true</hw:human-directed>
+            </hw:provenance>
+            <hw:chromatic-system name="electric-void">
+                <hw:token name="void-dark" value="#000000" />
+                <hw:token name="void-light" value="#ffffff" />
+                <hw:token name="azure-primary" value="#4080ff" />
+                <hw:token name="cobalt-deep" value="#1838b0" />
+                <hw:token name="ice-highlight" value="#d0e8ff" />
+                <hw:token name="violet-accent" value="#5848d8" />
+            </hw:chromatic-system>
+            <hw:geometry-form-language style="concentric-fillet"
+                                       corner-radius="16px-to-7px" aspect="3.25:1"
+                                       grid="8px" />
+            <hw:reasoning>
+                <hw:intent>Deliver a 60fps hardware-composited button animation with
+                    zero layout thrashing and high-contrast tactile visibility across
+                    light/dark modes.</hw:intent>
+                <hw:approach>Eliminated all SMIL animations (gradientTransform and
+                    stroke-width) to adhere strictly to the Composite-Only / CIM motion
+                    doctrine. Replaced with pure CSS transform/opacity keyframes
+                    targeting isolated layers with transform-box containment. Maintained
+                    crisp accessibility and forced-colors compliance.</hw:approach>
+                <hw:tradeoffs>Replaced continuous rotational vector shifting with
+                    harmonic phase-shifted opacity/scale oscillation to preserve smooth
+                    GPU frame budgets on low-power mobile WebKit engines.</hw:tradeoffs>
+            </hw:reasoning>
+        </hw:artifact>
+    </metadata>
+    <defs>
+        <linearGradient id="ls-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1838b0" />
+            <stop offset="15%" stop-color="#4080ff" />
+            <stop offset="30%" stop-color="#80c0ff" />
+            <stop offset="45%" stop-color="#d0e8ff" />
+            <stop offset="60%" stop-color="#5848d8" />
+            <stop offset="75%" stop-color="#4080ff" />
+            <stop offset="90%" stop-color="#2050e0" />
+            <stop offset="100%" stop-color="#1838b0" />
+        </linearGradient>
+        <!-- Dark Mode Multi-Pass Glow Filter -->
+        <filter id="ls-megaglow" x="-30%" y="-50%" width="160%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feColorMatrix in="blur" type="matrix" values="0.20 0.00 0.50 0.00 0.05
+                0.10 0.15 0.40 0.00 0.03
+                0.30 0.10 1.30 0.00 0.15
+                0.00 0.00 0.00 0.75 0.00" result="tint" />
+            <feMerge>
+                <feMergeNode in="tint" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+        <!-- Light Mode Restrained Glow Filter -->
+        <filter id="ls-glow-lt" x="-25%" y="-45%" width="150%" height="190%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feColorMatrix in="blur" type="matrix" values="0.15 0.00 0.40 0.00 0.04
+                0.10 0.12 0.35 0.00 0.03
+                0.25 0.08 1.00 0.00 0.12
+                0.00 0.00 0.00 0.60 0.00" result="tint" />
+            <feMerge>
+                <feMergeNode in="tint" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+    </defs>
+    <style>
+        /* Color Scheme & Core Rendering */
+        svg {
+            color-scheme: light dark;
+            display: block;
+        }
+
+        /* Core Classes — Default Dark Mode */
+        .ls-body {
+            fill: #000000;
+        }
+
+        .ls-trace {
+            stroke: rgba(64, 128, 255, 0.2);
+        }
+
+        .ls-text {
+            fill: #ffffff !important;
+        }
+
+        .ls-icon {
+            fill: #80c0ff !important;
+        }
+
+        .ls-border {
+            filter: url(#ls-megaglow);
+        }
+
+        .ls-ambient-ring {
+            stroke: #4080ff;
+        }
+
+        /* CIM Doctrine Motion Layers */
+        .ls-bloom-ring,
+        .ls-border,
+        .ls-ambient-ring,
+        .ls-trace {
+            transform-box: fill-box;
+            transform-origin: center center;
+            will-change: transform, opacity;
+        }
+
+        .ls-bloom-ring {
+            animation: hw-glow-pulse 3.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .ls-border {
+            animation: hw-border-breathe 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .ls-ambient-ring {
+            animation: hw-ambient-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .ls-trace {
+            animation: hw-trace-shimmer 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite 0.6s;
+        }
+
+        /* CSS Composited Keyframes */
+        @keyframes hw-glow-pulse {
+
+            0%,
+            100% {
+                opacity: 0.35;
+                transform: scale(0.99);
+            }
+
+            50% {
+                opacity: 0.75;
+                transform: scale(1.01);
+            }
+        }
+
+        @keyframes hw-border-breathe {
+
+            0%,
+            100% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes hw-ambient-pulse {
+
+            0%,
+            100% {
+                opacity: 0.25;
+                transform: scale(0.995);
+            }
+
+            50% {
+                opacity: 0.55;
+                transform: scale(1.005);
+            }
+        }
+
+        @keyframes hw-trace-shimmer {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 0.95;
+            }
+        }
+
+        /* Light Mode Overrides */
+        @media (prefers-color-scheme: light) {
+            .ls-body {
+                fill: #ffffff;
+            }
+
+            .ls-trace {
+                stroke: rgba(30, 50, 160, 0.15);
+            }
+
+            .ls-text {
+                fill: #0c1860 !important;
+            }
+
+            .ls-icon {
+                fill: #2040c0 !important;
+            }
+
+            .ls-border {
+                filter: url(#ls-glow-lt);
+            }
+
+            .ls-ambient-ring {
+                stroke: #2050e0;
+            }
+        }
+
+        /* High Contrast Accessibility */
+        @media (forced-colors: active) {
+            .ls-body {
+                fill: ButtonFace !important;
+            }
+
+            .ls-border,
+            .ls-bloom-ring,
+            .ls-ambient-ring {
+                display: none !important;
+            }
+
+            .ls-trace {
+                stroke: ButtonBorder !important;
+            }
+
+            .ls-text,
+            .ls-icon {
+                fill: ButtonText !important;
+            }
+        }
+
+        /* Strict Reduced Motion Override */
+        @media (prefers-reduced-motion: reduce) {
+
+            .ls-bloom-ring,
+            .ls-border,
+            .ls-ambient-ring,
+            .ls-trace {
+                animation: none !important;
+                transform: none !important;
+            }
+        }
+    </style>
+    <!-- Ambient Outer Pulse -->
+    <rect class="ls-ambient-ring" x="12" y="12" width="236" height="56" rx="16"
+          fill="none" stroke-width="1.5" opacity="0.3" />
+    <!-- Bloom Diffusion Layer -->
+    <rect class="ls-bloom-ring" x="16" y="16" width="228" height="48" rx="12"
+          fill="none" stroke="url(#ls-grad)" stroke-width="5" opacity="0.45" />
+    <!-- Core Surface Border -->
+    <rect class="ls-border" x="16" y="16" width="228" height="48" rx="12" fill="none"
+          stroke="url(#ls-grad)" stroke-width="3" />
+    <!-- High-Contrast Body -->
+    <rect class="ls-body" x="18" y="18" width="224" height="44" rx="10" />
+    <!-- Tactile Inner Trace -->
+    <rect class="ls-trace" x="21" y="21" width="218" height="38" rx="7" fill="none"
+          stroke-width="1" />
+    <!-- Text & Glyph Hierarchy -->
+    <text class="ls-text" x="110" y="46"
+          font-family="'Inter','SF Pro Display',system-ui,-apple-system,sans-serif"
+          font-size="15" font-weight="700" letter-spacing="4" text-anchor="middle"
+          style="-webkit-font-smoothing: antialiased;">RETURN</text>
+    <text class="ls-icon" x="178" y="47"
+          font-family="'SF Mono','JetBrains Mono',ui-monospace,monospace" font-size="20"
+          font-weight="600" text-anchor="middle">⤴︎</text>
+</svg>

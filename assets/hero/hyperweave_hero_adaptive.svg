@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 1200 300" role="img" aria-labelledby="hA-t hA-d" style="width:100%;height:auto;display:block" data-hw-component="hero-banner" data-hw-chromatic="cherenkov-ink" data-hw-variant="unframed-pool-adaptive" data-hw-status="active" data-hw-regime="normal" data-protocol="hw-v1">
+  <title id="hA-t">HyperWeave — unframed hero, adaptive</title>
+  <desc id="hA-d">HyperWeave hero banner, adaptive (prefers-color-scheme): whisper laminar caustics with luminance-vignette edge fusion, cushion-gem geometry glyph and wordmark sharing one surface-matched DNA (top-lit ink on light, ionized pearl on dark), subtitle flush to the H.</desc>
+  <metadata>
+    <hw:artifact id="01a02550-1d40-7b03-8b31-6f2a90c416c3" type="hero-banner" series="hyperweave-identity" version="3.7.1-adaptive">
+      <hw:provenance>
+        <hw:generator>Claude Fable 5 (InnerAura Labs) [claude-fable-5]</hw:generator>
+        <hw:created>2026-08-20T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:lineage parent="01a024b0-eb20-7f01-8b31-6f2a90c416b1" operation="theme-set-emission" donor="cherenkov-ink-family" geometry-donor="cushion-gem-window#0.1.0"/>
+      <hw:spec size="1200x300 fluid-width" performance="paint-ok" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:aesthetic>
+      <hw:chromatic system="cherenkov-ink" space="srgb" contrast-ratio="&gt;8:1 per scheme"/>
+      <hw:motion vocabulary="fluid-caustic-drift, field-pan, liquid-displacement, organic-breathe" physics="laminar-quantum-flow" timing="phi" cim-compliant="false"/>
+      <hw:geometry form-language="angular" proportional-system="bilateral" mathematical-basis="octahedral-gem-network" symmetry="bilateral"/>
+      <hw:material surface="laminar-caustics+surface-matched-lockup" depth="deep"/>
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>One hero, three emissions: native light, native dark, and a single adaptive file for surfaces that flip.</hw:intent>
+      <hw:approach>Both approved hero treatments carried without change into a themed build system: the light scheme is the v3.6.1 set (whisper field 0.30/0.12, ink lockup, near-white vignette) and the dark scheme is the v3.5 set (full field 0.50/0.28, ionized lockup, void vignette). The adaptive emission renders two field groups gated by prefers-color-scheme classes while the lockup renders exactly once, its fills routed through CSS custom properties — the wordmark path is never duplicated. Glyph is the cushion-gem geometry in every emission, filled with its surface wordmark ramp so mark and type stay one metal per scheme.</hw:approach>
+      <hw:tradeoffs>Ionized ramp v2 fixes the dark waist streak: the 56 percent #184880 trough sat 8.2x below its bright neighbor — a perceptual hole cutting every glyph — now lifted to #2E6AB8 at 54 percent with a fast 62 percent recovery (3.7x jump), keeping the chrome horizon without the dead band. The adaptive file shares one filter pair across both schemes, so the right-biased light orbits (the blue-on-blue fix) also drive the dark field — a small divergence from the dark-native file, paid for halving the filter count; surfaces that never flip should embed the native emission. Adaptive carries both field groups (~1.6x weight of a native file).</hw:tradeoffs>
+      <hw:spatial-notes>Approved v3.5/v3.6 set: mark (128,146) scale 0.98, wordmark translate(178.4,-711.6) scale 1.6 (H flush x240.4, cap 104.4-187.6), subtitle x240.4 y246. Vignette sides 120, top/bottom 64, opaque at the boundary in each scheme substrate hue.</hw:spatial-notes>
+    </hw:reasoning>
+    <hw:stratum>
+      <hw:ring primary="002-TRIBE"/>
+      <hw:affinities><hw:resonance ring="005-COSMIC" strength="0.7"/></hw:affinities>
+    </hw:stratum>
+  </metadata>
+  <defs>
+    <filter id="hA-caustA" x="-20%" y="-40%" width="140%" height="180%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.0065" numOctaves="3" seed="418" result="n"/>
+      <feGaussianBlur in="n" stdDeviation="14" result="sm"/>
+      <feSpecularLighting in="sm" surfaceScale="28" specularConstant="2.4" specularExponent="36" lighting-color="#0084FF" result="g">
+        <fePointLight x="720" y="150" z="240">
+          <animate attributeName="x" values="420;1020;420" dur="34s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+          <animate attributeName="y" values="80;220;80" dur="24s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+        </fePointLight>
+      </feSpecularLighting>
+      <feColorMatrix in="g" type="matrix" values="0.02 0 0 0 0  0 0.40 0 0 0  0 0 2.4 0 0.1  0 0 0 1 0" result="boosted"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="77" result="warp"/>
+      <feDisplacementMap in="boosted" in2="warp" scale="10" xChannelSelector="R" yChannelSelector="G" result="liquid">
+        <animate attributeName="scale" values="5;15;5" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+      </feDisplacementMap>
+      <feComposite in="liquid" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="hA-caustB" x="-20%" y="-40%" width="140%" height="180%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0045 0.0085" numOctaves="3" seed="192" result="n"/>
+      <feGaussianBlur in="n" stdDeviation="11" result="sm"/>
+      <feSpecularLighting in="sm" surfaceScale="22" specularConstant="1.9" specularExponent="48" lighting-color="#00F0FF" result="g">
+        <fePointLight x="880" y="100" z="220">
+          <animate attributeName="x" values="980;520;980" dur="42s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+          <animate attributeName="y" values="100;200;100" dur="28s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+        </fePointLight>
+      </feSpecularLighting>
+      <feComposite in="g" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="hA-bloom" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="55"/></filter>
+    <linearGradient id="hA-inkType" gradientUnits="userSpaceOnUse" x1="0" y1="510" x2="0" y2="578">
+      <stop offset="0%" stop-color="#2E7CFF"/>
+      <stop offset="55%" stop-color="#1444B8"/>
+      <stop offset="100%" stop-color="#0A2C6E"/>
+    </linearGradient>
+    <linearGradient id="hA-inkSig" gradientUnits="userSpaceOnUse" x1="0" y1="-80" x2="0" y2="80">
+      <stop offset="0%" stop-color="#2E7CFF"/>
+      <stop offset="55%" stop-color="#1444B8"/>
+      <stop offset="100%" stop-color="#0A2C6E"/>
+    </linearGradient>
+    <linearGradient id="hA-ionType" gradientUnits="userSpaceOnUse" x1="0" y1="510" x2="0" y2="578">
+      <stop offset="0%" stop-color="#F4FBFF"/>
+      <stop offset="20%" stop-color="#CFF0FF"/>
+      <stop offset="42%" stop-color="#7CC4F2"/>
+      <stop offset="54%" stop-color="#2E6AB8"/>
+      <stop offset="62%" stop-color="#5AA2E0"/>
+      <stop offset="82%" stop-color="#BCE8FF"/>
+      <stop offset="100%" stop-color="#EEF9FF"/>
+    </linearGradient>
+    <linearGradient id="hA-ionSig" gradientUnits="userSpaceOnUse" x1="0" y1="-80" x2="0" y2="80">
+      <stop offset="0%" stop-color="#F4FBFF"/>
+      <stop offset="20%" stop-color="#CFF0FF"/>
+      <stop offset="42%" stop-color="#7CC4F2"/>
+      <stop offset="54%" stop-color="#2E6AB8"/>
+      <stop offset="62%" stop-color="#5AA2E0"/>
+      <stop offset="82%" stop-color="#BCE8FF"/>
+      <stop offset="100%" stop-color="#EEF9FF"/>
+    </linearGradient>
+    <linearGradient id="hA-subInk" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1450C8"/><stop offset="100%" stop-color="#0A2C6E"/>
+    </linearGradient>
+    <linearGradient id="hA-subIon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00F0FF"/><stop offset="100%" stop-color="#70B8FF"/>
+    </linearGradient>
+    <linearGradient id="hA-vigLtL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FBFDFF"/><stop offset="100%" stop-color="#FBFDFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hA-vigLtR" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0%" stop-color="#FBFDFF"/><stop offset="100%" stop-color="#FBFDFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hA-vigLtT" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBFDFF"/><stop offset="100%" stop-color="#FBFDFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hA-vigLtB" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#FBFDFF"/><stop offset="100%" stop-color="#FBFDFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hA-vigDkL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#020610"/><stop offset="100%" stop-color="#020610" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hA-vigDkR" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0%" stop-color="#020610"/><stop offset="100%" stop-color="#020610" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hA-vigDkT" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#020610"/><stop offset="100%" stop-color="#020610" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hA-vigDkB" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#020610"/><stop offset="100%" stop-color="#020610" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <style>
+    svg { color-scheme: light dark; --hw-wm: url(#hA-inkType); --hw-sig: url(#hA-inkSig); --hw-core: #1444B8; --hw-sub: url(#hA-subInk); }
+    .hw-dark { display: none; }
+    @media (prefers-color-scheme: dark) {
+      svg { --hw-wm: url(#hA-ionType); --hw-sig: url(#hA-ionSig); --hw-core: #C2ECFF; --hw-sub: url(#hA-subIon); }
+      .hw-light { display: none; } .hw-dark { display: inline; }
+    }
+    .hero-sub { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; font-size: 16px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <g class="hw-light">
+    <rect width="1200" height="300" fill="#EEF5FC"/>
+    <circle cx="560" cy="150" r="160" fill="#8CBCFF" opacity="0.28" filter="url(#hA-bloom)">
+      <animate attributeName="opacity" values="0.22;0.34;0.22" dur="9s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+      <animate attributeName="cx" values="520;620;520" dur="18s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+    </circle>
+    <circle cx="920" cy="140" r="130" fill="#B8E8FF" opacity="0.24" filter="url(#hA-bloom)">
+      <animate attributeName="opacity" values="0.18;0.30;0.18" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+      <animate attributeName="cx" values="960;870;960" dur="22s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+    </circle>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0; 55 -18; 0 0; -48 22; 0 0" dur="36s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"/>
+      <rect x="-200" y="-150" width="1600" height="600" fill="#0077FF" filter="url(#hA-caustA)" opacity="0.30">
+        <animate attributeName="opacity" values="0.24;0.36;0.24" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+      </rect>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0; -60 15; 0 0; 45 -20; 0 0" dur="47s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"/>
+      <rect x="-200" y="-150" width="1600" height="600" fill="#00F0FF" filter="url(#hA-caustB)" opacity="0.12" style="mix-blend-mode:screen">
+        <animate attributeName="opacity" values="0.08;0.16;0.08" dur="12s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+      </rect>
+    </g>
+    <rect x="0" y="0" width="120" height="300" fill="url(#hA-vigLtL)"/>
+    <rect x="1080" y="0" width="120" height="300" fill="url(#hA-vigLtR)"/>
+    <rect x="0" y="0" width="1200" height="64" fill="url(#hA-vigLtT)"/>
+    <rect x="0" y="236" width="1200" height="64" fill="url(#hA-vigLtB)"/>
+  </g>
+  <g class="hw-dark">
+    <rect width="1200" height="300" fill="#020610"/>
+    <circle cx="560" cy="150" r="160" fill="#0048CA" opacity="0.22" filter="url(#hA-bloom)">
+      <animate attributeName="opacity" values="0.18;0.28;0.18" dur="9s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+      <animate attributeName="cx" values="520;620;520" dur="18s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+    </circle>
+    <circle cx="920" cy="140" r="130" fill="#0094FF" opacity="0.14" filter="url(#hA-bloom)">
+      <animate attributeName="opacity" values="0.10;0.20;0.10" dur="11s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+      <animate attributeName="cx" values="960;870;960" dur="22s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+    </circle>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0; 55 -18; 0 0; -48 22; 0 0" dur="36s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"/>
+      <rect x="-200" y="-150" width="1600" height="600" fill="#0077FF" filter="url(#hA-caustA)" opacity="0.50">
+        <animate attributeName="opacity" values="0.42;0.56;0.42" dur="14s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+      </rect>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0; -60 15; 0 0; 45 -20; 0 0" dur="47s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1"/>
+      <rect x="-200" y="-150" width="1600" height="600" fill="#00F0FF" filter="url(#hA-caustB)" opacity="0.28" style="mix-blend-mode:screen">
+        <animate attributeName="opacity" values="0.22;0.34;0.22" dur="12s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
+      </rect>
+    </g>
+    <rect x="0" y="0" width="120" height="300" fill="url(#hA-vigDkL)"/>
+    <rect x="1080" y="0" width="120" height="300" fill="url(#hA-vigDkR)"/>
+    <rect x="0" y="0" width="1200" height="64" fill="url(#hA-vigDkT)"/>
+    <rect x="0" y="236" width="1200" height="64" fill="url(#hA-vigDkB)"/>
+  </g>
+  <g transform="translate(128,146) scale(0.98)">
+    <path fill="var(--hw-sig)" fill-rule="evenodd" d="M0,-80 L80,0 L0,80 L-80,0 Z M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"/>
+    <circle cx="0" cy="0" r="8.8" fill="var(--hw-core)" opacity="0.15"/>
+    <circle cx="0" cy="0" r="5.5" fill="var(--hw-core)">
+      <animate attributeName="r" values="5.5;7;5.5" dur="3.236s" begin="1.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
+    </circle>
+  </g>
+  <g transform="translate(178.4,-711.6) scale(1.6)">
+    <path fill="var(--hw-wm)" d="M 38.72,562.00 L 38.72,510.00 L 47.38,510.00 L 47.38,531.60 L 83.21,531.60 L 83.21,510.00 L 91.87,510.00 L 91.87,562.00 L 83.21,562.00 L 83.21,540.40 L 47.38,540.40 L 47.38,562.00 L 38.72,562.00 Z M 106.24,577.74 L 106.24,577.74 L 106.24,569.08 L 131.75,569.08 Q 132.24,569.08 132.63,568.68 Q 133.04,568.28 133.04,567.78 L 133.04,562.00 L 108.76,562.00 Q 106.17,562.00 103.97,560.67 Q 101.77,559.33 100.43,557.16 Q 99.09,554.99 99.09,552.32 L 99.09,520.26 L 107.68,520.26 L 107.68,552.03 Q 107.68,552.61 108.08,553.01 Q 108.48,553.40 109.06,553.40 L 131.75,553.40 Q 132.24,553.40 132.63,553.01 Q 133.04,552.61 133.04,552.03 L 133.04,520.26 L 141.63,520.26 L 141.63,568.07 Q 141.63,570.81 140.36,572.98 Q 139.10,575.14 136.90,576.44 Q 134.70,577.74 132.03,577.74 L 106.24,577.74 Z M 149.44,578.61 L 149.44,578.61 L 149.44,520.11 L 182.37,520.11 Q 184.96,520.11 187.16,521.45 Q 189.37,522.78 190.67,524.95 Q 191.97,527.12 191.97,529.80 L 191.97,552.32 Q 191.97,554.99 190.67,557.16 Q 189.37,559.33 187.16,560.67 Q 184.96,562.00 182.37,562.00 L 158.03,562.00 L 158.03,578.61 L 149.44,578.61 Z M 159.40,553.40 L 182.07,553.40 Q 182.58,553.40 182.97,553.01 Q 183.38,552.61 183.38,552.03 L 183.38,530.08 Q 183.38,529.50 182.97,529.10 Q 182.58,528.71 182.07,528.71 L 159.40,528.71 Q 158.89,528.71 158.45,529.10 Q 158.03,529.50 158.03,530.08 L 158.03,552.03 Q 158.03,552.61 158.45,553.01 Q 158.89,553.40 159.40,553.40 Z M 206.85,562.00 Q 204.18,562.00 202.01,560.67 Q 199.84,559.33 198.50,557.16 Q 197.16,554.99 197.16,552.32 L 197.16,529.80 Q 197.16,527.12 198.50,524.95 Q 199.84,522.78 202.01,521.45 Q 204.18,520.11 206.85,520.11 L 230.03,520.11 Q 232.78,520.11 234.95,521.45 Q 237.12,522.78 238.41,524.95 Q 239.71,527.12 239.71,529.80 L 239.71,545.39 L 205.77,545.39 L 205.77,552.03 Q 205.77,552.61 206.16,553.01 Q 206.55,553.40 207.15,553.40 L 239.71,553.40 L 239.71,562.00 L 206.85,562.00 L 206.85,562.00 Z M 205.77,537.51 L 231.11,537.51 L 231.11,530.08 Q 231.11,529.50 230.72,529.10 Q 230.32,528.71 229.74,528.71 L 207.15,528.71 Q 206.55,528.71 206.16,529.10 Q 205.77,529.50 205.77,530.08 L 205.77,537.51 Z M 247.22,562.00 L 247.22,562.00 L 247.22,529.80 Q 247.22,527.12 248.56,524.95 Q 249.90,522.78 252.10,521.45 Q 254.30,520.11 256.89,520.11 L 280.24,520.11 L 280.24,528.71 L 257.19,528.71 Q 256.61,528.71 256.21,529.10 Q 255.81,529.50 255.81,530.08 L 255.81,562.00 L 247.22,562.00 Z M 302.40,562.00 L 302.40,562.00 L 283.48,510.00 L 292.72,510.00 L 305.87,546.05 L 319.01,510.00 L 327.83,510.00 L 341.04,546.05 L 354.19,510.00 L 363.43,510.00 L 344.51,562.00 L 337.50,562.00 L 323.42,523.36 L 309.33,562.00 L 302.40,562.00 Z M 379.46,562.00 Q 376.79,562.00 374.62,560.67 Q 372.46,559.33 371.11,557.16 Q 369.78,554.99 369.78,552.32 L 369.78,529.80 Q 369.78,527.12 371.11,524.95 Q 372.46,522.78 374.62,521.45 Q 376.79,520.11 379.46,520.11 L 402.64,520.11 Q 405.40,520.11 407.56,521.45 Q 409.73,522.78 411.02,524.95 Q 412.32,527.12 412.32,529.80 L 412.32,545.39 L 378.38,545.39 L 378.38,552.03 Q 378.38,552.61 378.78,553.01 Q 379.17,553.40 379.76,553.40 L 412.32,553.40 L 412.32,562.00 L 379.46,562.00 L 379.46,562.00 Z M 378.38,537.51 L 403.72,537.51 L 403.72,530.08 Q 403.72,529.50 403.33,529.10 Q 402.93,528.71 402.36,528.71 L 379.76,528.71 Q 379.17,528.71 378.78,529.10 Q 378.38,529.50 378.38,530.08 L 378.38,537.51 Z M 429.50,562.00 Q 426.85,562.00 424.63,560.67 Q 422.43,559.33 421.13,557.16 Q 419.83,554.99 419.83,552.32 L 419.83,536.72 L 453.78,536.72 L 453.78,530.08 Q 453.78,529.50 453.37,529.10 Q 452.98,528.71 452.41,528.71 L 419.83,528.71 L 419.83,520.11 L 452.69,520.11 Q 455.44,520.11 457.61,521.45 Q 459.77,522.78 461.07,524.95 Q 462.37,527.12 462.37,529.80 L 462.37,562.00 L 429.50,562.00 Z M 429.80,553.40 L 453.78,553.40 L 453.78,544.60 L 428.42,544.60 L 428.42,552.03 Q 428.42,552.61 428.82,553.01 Q 429.22,553.40 429.80,553.40 Z M 490.76,562.00 L 490.76,562.00 L 467.71,520.11 L 477.69,520.11 L 494.94,551.82 L 512.21,520.11 L 522.17,520.11 L 499.00,562.00 L 490.76,562.00 Z M 536.62,562.00 Q 533.94,562.00 531.78,560.67 Q 529.61,559.33 528.27,557.16 Q 526.93,554.99 526.93,552.32 L 526.93,529.80 Q 526.93,527.12 528.27,524.95 Q 529.61,522.78 531.78,521.45 Q 533.94,520.11 536.62,520.11 L 559.79,520.11 Q 562.55,520.11 564.72,521.45 Q 566.88,522.78 568.18,524.95 Q 569.48,527.12 569.48,529.80 L 569.48,545.39 L 535.53,545.39 L 535.53,552.03 Q 535.53,552.61 535.93,553.01 Q 536.32,553.40 536.91,553.40 L 569.48,553.40 L 569.48,562.00 L 536.62,562.00 L 536.62,562.00 Z M 535.53,537.51 L 560.88,537.51 L 560.88,530.08 Q 560.88,529.50 560.49,529.10 Q 560.09,528.71 559.51,528.71 L 536.91,528.71 Q 536.32,528.71 535.93,529.10 Q 535.53,529.50 535.53,530.08 L 535.53,537.51 Z"/>
+  </g>
+  <text x="240.4" y="246" fill="var(--hw-sub)" class="hero-sub" opacity="0.96">The artifact layer for agent-human representations</text>
+</svg>
