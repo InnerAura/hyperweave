@@ -29,19 +29,16 @@ htmlcov/
 .claude/
 # CLAUDE.md
 
+apps/
 assets/banners/banners-animated/
 assets/cards/halftone/
 assets/cards/substrate/
-assets/demos/
 assets/marquees/
 assets/rapid-match-cuts/
-
-apps/
 docs/
 examples/
 !assets/examples/
+!scripts/examples/
 outputs/
-
-scripts/analyze_audio.py
-scripts/generate_demo_charts.py
-scripts/render_demo_video.py
+scripts/extract_svgs.py
+v04/.learn/

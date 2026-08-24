@@ -1,25 +1,70 @@
-.git
-.venv
-.mypy_cache
-.ruff_cache
-.pytest_cache
-.benchmarks
-.hyperweave
-.claude
-archive/
-specs/
-docs/
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+
+# environments
+.env
+.env.*
+!.env.example
+
+# testing
+.pytest_cache/
+.benchmarks/
+.coverage
+.coverage.*
+htmlcov/
 tests/
-outputs/
-tier2/
-v03/
-assets/
-scripts/
+
+# code quality
+.ruff_cache/
+.mypy_cache/
+.pyright/
+
+# javascript
+node_modules/
+
+# operating systems
+.DS_Store
+
+# generated artifacts
+*.svg.bak
+
+# version control
+.git/
+.github/
+
+# docker
+Dockerfile*
+.dockerignore
+
+# development and deployment
+.pre-commit-config.yaml
+CHANGELOG.md
+fly.toml
+justfile
+
+# inneraura/hyperweave
+src/hyperweave/_version.py
+.hyperweave/
+.agents/
+.archive/
+.claude/
+.claude-plugin/
 AGENTS.md
 CLAUDE.md
-.coverage*
-htmlcov/
-*.egg-info
-.DS_Store
-node_modules/
-__pycache__/
+
+apps/
+assets/
+docs/
+examples/
+hooks/
+outputs/
+scripts/
+skills/
+v04/
