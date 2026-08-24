@@ -913,7 +913,7 @@ hyperweave extract services-vertical.svg --respond payload \
 <p align="center">
   <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/service-dependencies-vertical-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/service-dependencies-vertical-dark.svg" alt="The same service graph turned vertical and rendered in the noir variant: the fan flows top to bottom, Billing keeps its place in it, and the writes edge takes the outside gutter into Postgres" width="62%"
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/service-dependencies-vertical-dark.svg" alt="The same service graph turned vertical and rendered in the noir variant: the fan flows top to bottom, Billing keeps its place in it, and the writes edge takes the outside gutter into Postgres" width="100%"
     >
   </picture>
 </p>
