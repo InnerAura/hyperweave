@@ -5,6 +5,39 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-08-24
+
+Improves `dag` diagrams, which now declare an `orientation` of `horizontal` or `vertical`, and fixes a broad set of bugs across the diagram system.
+
+### Added
+
+- **`dag` with `orientation: vertical`** — a layered graph that descends rank by rank, the top-to-bottom shape of a Mermaid `TD` flowchart.
+- **`--subtitle` on `compose`** — sets the strip's identity subtitle from the CLI; HTTP `?subtitle=` and MCP `connector_data` already carried it.
+- **Font delivery on every surface** — `font_mode` (`embed` · `cdn` · `system`) is now a query parameter on the image routes and a `hw_compose` argument, not a CLI-only flag.
+- **`hyperweave.surfaces.addressing`** — projects one spec to the URL, CLI argv, and MCP arguments that render it; route patterns now live in `data/config/url-grammar.yaml`.
+- **Automata contribution heatmap motion** — cells light up in rings spreading out from one point, instead of the whole grid breathing on a four-step stagger.
+
+### Changed
+
+- **Edge routing avoids what it passes** — a detour clears every card and band on its way in, and takes the direct run when its own row is clear instead of diving to the channel.
+- **Edge labels leave a bending wire** — a chip that cannot sit on straight wire becomes a micro-label beside it rather than bending the edge to carry it.
+- **Rank gaps size to the labels they draw** — a gap no longer reserves run for a chip that became a micro-label, so graphs carrying one render narrower.
+- **Regions size from their members alone** — a band and an enclosure around the same nodes now draw the same box; label treatment no longer changes it.
+- **No duplicate arrowheads** — when several edges land on the exact same point the chevron is drawn once, instead of stamped on top of itself.
+- **Verb refusals print one sentence** — `transform`, `verify`, `diff` and `query` report an illegal spec the way `compose` does, instead of a traceback.
+- **`compose --spec-file` accepts what `extract` prints** — an extracted payload composes directly, so the documented artifact round-trip runs as written.
+- **`discover diagram` reports the real orientations** — the list is read from the same config the solver refuses against, so it no longer omits `vertical` or `downward`.
+
+### Fixed
+
+- **Star-history retries fast** — a stargazer-page failure now logs its cause and clears the cache in 30 seconds instead of silently serving an empty chart for an hour.
+
+### Notes
+
+- `dag` and `dag-vertical` cap at 8 ranks; a diagram taller than 2000px rendered reports a `height-budget` advisory rather than refusing.
+- Authored `exit`/`entry` sides are read in the flow frame, so `exit: bottom` on a vertical dag means the far channel — the screen's right.
+- `hw_discover(what="url_grammar")` and `GET /v1/frames` read the route patterns from config, so their variant lists follow the genome files instead of a fixed roster.
+
 ## [0.4.2] - 2026-08-21
 
 Standardize diagram family, fix inconsistencies across all diagram types, and a new `gather` option merges converging arrows into one point.

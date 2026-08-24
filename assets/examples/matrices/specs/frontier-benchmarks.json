@@ -1,0 +1,197 @@
+{
+  "title": "Frontier vs Open",
+  "subtitle": "coding & price · SWE-bench Verified against price per million tokens · current flagships, jun 2026",
+  "columns": [
+    {
+      "id": "model",
+      "label": "MODEL",
+      "kind": "text",
+      "align": "left",
+      "role": "label"
+    },
+    {
+      "id": "mark",
+      "label": "",
+      "kind": "glyph",
+      "align": "center",
+      "glyph_tint": "full"
+    },
+    {
+      "id": "swe",
+      "label": "SWE-bench Verified",
+      "kind": "numeric",
+      "align": "center",
+      "polarity": "higher",
+      "unit": "%"
+    },
+    {
+      "id": "pin",
+      "label": "INPUT",
+      "sublabel": "per Mtok",
+      "kind": "numeric",
+      "align": "center",
+      "polarity": "lower",
+      "unit": "$"
+    },
+    {
+      "id": "pout",
+      "label": "OUTPUT",
+      "sublabel": "per Mtok",
+      "kind": "numeric",
+      "align": "center",
+      "polarity": "lower",
+      "unit": "$"
+    }
+  ],
+  "rows": [
+    {
+      "label": "Claude Fable 5",
+      "cells": [
+        {
+          "glyph": "anthropic"
+        },
+        {
+          "value": 95.0
+        },
+        {
+          "value": 10
+        },
+        {
+          "value": 50
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "Claude Opus 4.8",
+      "cells": [
+        {
+          "glyph": "anthropic"
+        },
+        {
+          "value": 88.6
+        },
+        {
+          "value": 5
+        },
+        {
+          "value": 25
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "GPT-5.5",
+      "cells": [
+        {
+          "glyph": "openai"
+        },
+        {
+          "value": 82.6
+        },
+        {
+          "value": 5
+        },
+        {
+          "value": 30
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "Gemini 3.1 Pro",
+      "cells": [
+        {
+          "glyph": "gemini"
+        },
+        {
+          "value": 80.6
+        },
+        {
+          "value": 2
+        },
+        {
+          "value": 12
+        }
+      ],
+      "section": "FRONTIER · CLOSED WEIGHTS"
+    },
+    {
+      "label": "DeepSeek V4-Pro",
+      "cells": [
+        {
+          "glyph": "deepseek"
+        },
+        {
+          "value": 80.6
+        },
+        {
+          "value": 0.44
+        },
+        {
+          "value": 0.87
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    },
+    {
+      "label": "Kimi K2.6",
+      "cells": [
+        {
+          "glyph": "kimi"
+        },
+        {
+          "value": 80.2
+        },
+        {
+          "value": 0.95
+        },
+        {
+          "value": 4.0
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    },
+    {
+      "label": "GLM-5",
+      "cells": [
+        {
+          "glyph": "zai"
+        },
+        {
+          "value": 77.8
+        },
+        {
+          "value": 1.0
+        },
+        {
+          "value": 3.2
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    },
+    {
+      "label": "Mistral Medium 3.5",
+      "cells": [
+        {
+          "glyph": "mistral"
+        },
+        {
+          "value": 77.6
+        },
+        {
+          "value": 1.5
+        },
+        {
+          "value": 7.5
+        }
+      ],
+      "section": "OPEN WEIGHTS"
+    }
+  ],
+  "sections": [
+    "FRONTIER · CLOSED WEIGHTS",
+    "OPEN WEIGHTS"
+  ],
+  "notes": "SWE-bench Verified % · USD per Mtok · current flagships, jun 2026 · sources: vals.ai · artificialanalysis.ai · model cards"
+}

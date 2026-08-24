@@ -1,0 +1,325 @@
+{
+  "title": "Data Connectors",
+  "subtitle": "?data= <provider>:<id>.<metric>",
+  "columns": [
+    {
+      "id": "provider",
+      "label": "PROVIDER",
+      "kind": "text",
+      "align": "left",
+      "role": "label"
+    },
+    {
+      "id": "source",
+      "label": "SOURCE",
+      "kind": "text",
+      "align": "left"
+    },
+    {
+      "id": "identifier",
+      "label": "IDENTIFIER",
+      "kind": "chip",
+      "align": "left"
+    },
+    {
+      "id": "metrics",
+      "label": "METRICS",
+      "kind": "chip",
+      "align": "left"
+    },
+    {
+      "id": "kind",
+      "label": "KIND",
+      "kind": "pill",
+      "align": "center"
+    }
+  ],
+  "rows": [
+    {
+      "label": "gh",
+      "sublabel": "github",
+      "glyph": "github",
+      "cells": [
+        {
+          "value": "GitHub"
+        },
+        {
+          "chips": [
+            "owner/repo"
+          ]
+        },
+        {
+          "chips": [
+            "stars",
+            "forks",
+            "watchers",
+            "issues",
+            "license",
+            "language",
+            "build"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "pypi",
+      "glyph": "pypi",
+      "cells": [
+        {
+          "value": "PyPI + pepy.tech"
+        },
+        {
+          "chips": [
+            "package"
+          ]
+        },
+        {
+          "chips": [
+            "version",
+            "license",
+            "python_requires",
+            "downloads"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "npm",
+      "glyph": "npm",
+      "cells": [
+        {
+          "value": "npm registry"
+        },
+        {
+          "chips": [
+            "package"
+          ]
+        },
+        {
+          "chips": [
+            "version",
+            "license",
+            "downloads"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "crates",
+      "sublabel": "cargo",
+      "glyph": "rust",
+      "cells": [
+        {
+          "value": "crates.io"
+        },
+        {
+          "chips": [
+            "crate"
+          ]
+        },
+        {
+          "chips": [
+            "version",
+            "downloads",
+            "recent_downloads",
+            "license"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "hf",
+      "sublabel": "huggingface",
+      "glyph": "huggingface",
+      "cells": [
+        {
+          "value": "HuggingFace Hub"
+        },
+        {
+          "chips": [
+            "org/model"
+          ]
+        },
+        {
+          "chips": [
+            "downloads",
+            "likes",
+            "tags",
+            "pipeline_tag",
+            "library_name",
+            "license",
+            "gated",
+            "last_modified"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "docker",
+      "glyph": "docker",
+      "cells": [
+        {
+          "value": "Docker Hub"
+        },
+        {
+          "chips": [
+            "namespace/repo"
+          ]
+        },
+        {
+          "chips": [
+            "pull_count",
+            "star_count",
+            "last_updated"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "arxiv",
+      "glyph": "arxiv",
+      "cells": [
+        {
+          "value": "arXiv API"
+        },
+        {
+          "chips": [
+            "id · 2310.06825"
+          ]
+        },
+        {
+          "chips": [
+            "title",
+            "authors",
+            "published",
+            "updated",
+            "categories",
+            "summary",
+            "journal_ref",
+            "doi"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "scorecard",
+      "glyph": "shieldcheck",
+      "cells": [
+        {
+          "value": "OpenSSF Scorecard"
+        },
+        {
+          "chips": [
+            "owner/repo"
+          ]
+        },
+        {
+          "chips": [
+            "score",
+            "code_review",
+            "maintained",
+            "vulnerabilities",
+            "token_permissions",
+            "binary_artifacts"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "dora",
+      "glyph": "githubactions",
+      "cells": [
+        {
+          "value": "GitHub Actions"
+        },
+        {
+          "chips": [
+            "owner/repo"
+          ]
+        },
+        {
+          "chips": [
+            "deploy_frequency",
+            "lead_time",
+            "change_failure_rate",
+            "mttr"
+          ]
+        },
+        {
+          "value": "LIVE"
+        }
+      ]
+    },
+    {
+      "label": "text",
+      "glyph": "textlines",
+      "cells": [
+        {
+          "value": "literal"
+        },
+        {
+          "chips": [
+            "—"
+          ]
+        },
+        {
+          "chips": [
+            "renders payload as displayed text"
+          ]
+        },
+        {
+          "value": "LITERAL"
+        }
+      ]
+    },
+    {
+      "label": "kv",
+      "glyph": "braces",
+      "cells": [
+        {
+          "value": "literal"
+        },
+        {
+          "chips": [
+            "KEY=VALUE"
+          ]
+        },
+        {
+          "chips": [
+            "static role-tagged value"
+          ]
+        },
+        {
+          "value": "LITERAL"
+        }
+      ]
+    }
+  ],
+  "row_height": "content",
+  "row_glyph_tint": "full",
+  "notes": "live tokens cache 5–10 min · failure → — sentinel · per-provider breaker"
+}

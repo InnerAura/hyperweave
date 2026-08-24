@@ -1,0 +1,121 @@
+{
+  "title": "Format Comparison",
+  "subtitle": "SVG vs Markdown vs HTML",
+  "columns": [
+    {
+      "id": "axis",
+      "label": "AXIS",
+      "kind": "text",
+      "align": "left",
+      "role": "label"
+    },
+    {
+      "id": "svg",
+      "label": "SVG",
+      "kind": "check",
+      "align": "center"
+    },
+    {
+      "id": "markdown",
+      "label": "MARKDOWN",
+      "kind": "check",
+      "align": "center"
+    },
+    {
+      "id": "html",
+      "label": "HTML",
+      "kind": "check",
+      "align": "center"
+    }
+  ],
+  "rows": [
+    {
+      "label": "Portability",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "partial"
+        },
+        {
+          "state": "none"
+        }
+      ]
+    },
+    {
+      "label": "Agent-Readable Metadata",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "partial"
+        },
+        {
+          "state": "full"
+        }
+      ]
+    },
+    {
+      "label": "Visual Fidelity",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        },
+        {
+          "state": "full"
+        }
+      ]
+    },
+    {
+      "label": "Token Efficiency",
+      "cells": [
+        {
+          "state": "partial"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "none"
+        }
+      ]
+    },
+    {
+      "label": "Zero Dependencies",
+      "cells": [
+        {
+          "state": "full"
+        },
+        {
+          "state": "full"
+        },
+        {
+          "state": "partial"
+        }
+      ]
+    }
+  ],
+  "hero_column": "svg",
+  "summary_row": [
+    {
+      "value": "4.5"
+    },
+    {
+      "value": "3.0"
+    },
+    {
+      "value": "2.5"
+    }
+  ],
+  "summary_label": "SCORE",
+  "headline": {
+    "value": "4.5",
+    "label": "SVG / 5"
+  },
+  "notes": "full · partial · none"
+}
