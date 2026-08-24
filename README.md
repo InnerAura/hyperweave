@@ -269,7 +269,7 @@ hyperweave compose diagram --spec-file cycle-flow -g primer --variant porcelain 
 <p align="center">
   <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-dark.svg" alt="Dependency audit tree: my-app roots direct dependencies react, lodash, and axios, transitive children hang on dashed edges, and health dots flag what is outdated or vulnerable" width="65%"
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-dark.svg" alt="Dependency audit tree: my-app roots direct dependencies react, lodash, and axios, transitive children hang on dashed edges, and health dots flag what is outdated or vulnerable" width="100%"
     >
   </picture>
 </p>
