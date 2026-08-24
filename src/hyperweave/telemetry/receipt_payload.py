@@ -90,7 +90,9 @@ def _call_cost(call: ToolCall) -> float:
             "ephemeral_5m_input_tokens": max(call.cache_create_tokens - call.cache_create_1h_tokens, 0),
             "ephemeral_1h_input_tokens": call.cache_create_1h_tokens,
         }
-    return calculate_turn_cost(usage, call.model or "")
+    # The call's own timestamp, so a rate that changed mid-corpus prices each
+    # session as it actually billed rather than as it would bill today.
+    return calculate_turn_cost(usage, call.model or "", call.timestamp)
 
 
 def _active_minutes(t: SessionTelemetry) -> int:

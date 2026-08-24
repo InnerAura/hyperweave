@@ -10,14 +10,25 @@ Codex emits THREE distinct tool-call shapes (vs Claude's one
 ``tool_use`` block):
 
 * ``response_item/function_call`` — has ``name`` field. Used for
-  ``exec_command``, ``shell_command``, ``write_stdin``, ``view_image``,
-  ``request_user_input``, ``update_plan``.
+  ``exec`` (the 0.149.0 shell; ``exec_command`` / ``shell_command`` in
+  earlier builds), ``write_stdin``, ``view_image``, ``request_user_input``,
+  ``update_plan``.
 * ``response_item/custom_tool_call`` — also has ``name`` field. Used
   for ``apply_patch`` (patch text in the ``input`` field).
 * ``response_item/web_search_call`` — NO ``name`` field. Has
   ``action.type ∈ {open_page, find_in_page, search}`` and an optional
   ``query`` / ``url`` / ``pattern``. The parser synthesizes the name
   ``"web_search"`` so the runtime registry resolves it to ``explore``.
+
+Human and assistant prose has moved channels across Codex versions, so
+the parser reads both and picks per role (see Pass 5):
+
+* ``event_msg/user_message`` + ``event_msg/agent_message`` — through
+  ~0.13x.
+* ``response_item/message`` with ``role ∈ {user, assistant, developer}``
+  and a ``content[]`` block list — 0.149.0, which emits no ``event_msg``
+  prose at all. ``developer`` rows are harness instructions, not turns,
+  and Codex also injects the repo's AGENTS.md under ``role: user``.
 
 Token attribution differs from Claude as well: Codex emits cumulative
 ``event_msg/token_count`` events at intervals (with nullable ``info``
@@ -74,6 +85,40 @@ def _parse_timestamp(ts: str | None) -> datetime:
         return datetime.fromisoformat(ts)
     except (ValueError, TypeError):
         return datetime.fromtimestamp(0)
+
+
+def _message_text(payload: _JsonObj) -> str:
+    """Join the text blocks of a ``response_item/message`` content list.
+
+    Content blocks are ``{"type": "input_text"|"output_text", "text": ...}``;
+    the block type tracks the role and carries no signal the caller needs, so
+    every block with string ``text`` contributes.
+    """
+    blocks = payload.get("content")
+    if not isinstance(blocks, list):
+        return ""
+    parts = [b["text"] for b in blocks if isinstance(b, dict) and isinstance(b.get("text"), str)]
+    return "".join(parts).strip()
+
+
+def _is_injected_context(text: str) -> bool:
+    """True for harness-injected prose arriving under ``role: user``.
+
+    Two machine-authored shapes reach the user channel. Envelope blocks
+    (``<environment_context>``, ``<user_instructions>``) open with ``<`` —
+    the same rejection ``parser.py:_extract_user_text`` applies on the Claude
+    side. The second is the AGENTS.md preamble Codex prepends: a markdown
+    heading followed by an ``<INSTRUCTIONS>`` wrapper, duplicating
+    ``world_state.agents_md.text`` and running to tens of thousands of
+    characters.
+
+    Counting either inflates the turn tally, and because the first user
+    message is also the receipt's filename slug source, letting the preamble
+    through names the artifact after the repo's instruction file.
+    """
+    if text.startswith("<"):
+        return True
+    return text.startswith("#") and "<INSTRUCTIONS>" in text[:400]
 
 
 def _classify(name: str) -> ToolClass:
@@ -541,23 +586,46 @@ def parse_transcript(transcript_path: str | Path) -> SessionTelemetry:
             tc.cache_read_tokens = per_cached
             tc.cache_create_tokens = 0
 
-    # ── Pass 5: user_message + agent_message events ──
-    user_texts: list[tuple[datetime, str]] = []
-    n_assistant_msgs = 0
+    # ── Pass 5: user + assistant prose ──
+    # Codex has carried prose on two different channels. Through ~0.13x it
+    # emitted `event_msg/user_message` + `event_msg/agent_message`; 0.149.0
+    # emits neither and puts prose in `response_item/message` behind a `role`.
+    # Transcripts from the transition carry BOTH shapes, so the channel is
+    # picked per role (legacy wins when present) — a union double-counts every
+    # turn. Reading only the retired channel is what zeroed `turns` on every
+    # current Codex receipt.
+    legacy_users: list[tuple[datetime, str]] = []
+    item_users: list[tuple[datetime, str]] = []
+    legacy_assistants = 0
+    item_assistants = 0
+
     for line in raw_lines:
-        if line.get("type") != "event_msg":
-            continue
         payload = line.get("payload") or {}
         if not isinstance(payload, dict):
             continue
-        ptype = payload.get("type")
+        ltype = line.get("type")
         ts = _parse_timestamp(line.get("timestamp"))
-        if ptype == "user_message":
-            text = payload.get("message") or payload.get("text") or ""
-            if isinstance(text, str) and text.strip():
-                user_texts.append((ts, text.strip()))
-        elif ptype == "agent_message":
-            n_assistant_msgs += 1
+        if ltype == "event_msg":
+            ptype = payload.get("type")
+            if ptype == "user_message":
+                text = payload.get("message") or payload.get("text") or ""
+                if isinstance(text, str) and text.strip():
+                    legacy_users.append((ts, text.strip()))
+            elif ptype == "agent_message":
+                legacy_assistants += 1
+        elif ltype == "response_item" and payload.get("type") == "message":
+            # `role` is one of user / assistant / developer. Developer rows are
+            # harness instructions, never a turn.
+            role = payload.get("role")
+            if role == "user":
+                text = _message_text(payload)
+                if text and not _is_injected_context(text):
+                    item_users.append((ts, text))
+            elif role == "assistant":
+                item_assistants += 1
+
+    user_texts = legacy_users or item_users
+    n_assistant_msgs = legacy_assistants or item_assistants
 
     # ── Compute timestamps + duration ──
     # Codex emits no per-turn duration events analogous to Claude Code's

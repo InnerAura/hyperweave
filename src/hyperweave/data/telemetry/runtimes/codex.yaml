@@ -39,13 +39,17 @@ detection:
 #    NO payload.name field; the parser synthesizes the registry key
 #    "web_search" so this row matches it) ──
 tools:
-  exec_command: execute       # primary shell (newer Codex; JSON args)
+  exec: execute               # primary shell (Codex 0.149.0 — 736 of 744 calls swept)
+  exec_command: execute       # prior shell key (both seen)
   shell_command: execute      # alternative shell variant (older Codex; both seen)
   write_stdin: execute        # interactive stdin write to a running process
+  wait: execute               # blocks on a running exec cell (cell_id + yield_time_ms)
   view_image: explore         # image content reader
   apply_patch: mutate         # custom_tool_call — patch text payload
   request_user_input: coordinate
   update_plan: coordinate     # Codex's TaskUpdate analog
+  get_goal: coordinate        # reads the session goal
+  update_goal: coordinate     # writes goal status
   web_search: explore         # web_search_call shape — synthesized key (no payload.name)
 
 # Codex docs don't specify MCP tool naming convention; this prefix is

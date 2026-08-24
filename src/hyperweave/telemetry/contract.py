@@ -190,6 +190,7 @@ def build_contract(transcript_path: str) -> dict[str, Any]:
                 "cache_read_input_tokens": c.cache_read_tokens,
             },
             c.model or "",
+            c.timestamp,
         )
         for c in t.tool_calls
     )

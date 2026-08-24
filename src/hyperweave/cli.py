@@ -474,7 +474,7 @@ def _render_receipt_from_transcript(
     from hyperweave.compose.engine import compose as do_compose
     from hyperweave.core.models import ComposeSpec
     from hyperweave.telemetry.contract import build_contract, build_receipt_contract
-    from hyperweave.telemetry.receipt_paths import receipt_filename, slugify_session_name
+    from hyperweave.telemetry.receipt_paths import resolve_receipt_path, slugify_session_name
 
     contract = build_contract(str(transcript_path))
 
@@ -491,7 +491,8 @@ def _render_receipt_from_transcript(
     sess = contract.get("session", {})
     user_events = contract.get("user_events", []) or []
     first_prompt = user_events[0].get("preview", "") if user_events else ""
-    display_name = sess.get("name", "") or slugify_session_name(first_prompt[:40])
+    session_title = sess.get("name", "")
+    display_name = session_title or slugify_session_name(first_prompt[:40])
 
     if not output:
         try:
@@ -500,7 +501,15 @@ def _render_receipt_from_transcript(
             ts = _dt.now()
         hw_dir = _hyperweave_root() / ".hyperweave" / "receipts"
         hw_dir.mkdir(parents=True, exist_ok=True)
-        output = hw_dir / receipt_filename(timestamp=ts, session_id=sess.get("id", "unknown"), prompt_text=first_prompt)
+        # Resolves rather than just names: a rename since the last regenerate
+        # moves the existing file instead of stranding it as a stale duplicate.
+        output = resolve_receipt_path(
+            hw_dir,
+            timestamp=ts,
+            session_id=sess.get("id", ""),
+            title=session_title,
+            prompt_text=first_prompt,
+        )
 
     receipt_payload = build_receipt_contract(str(transcript_path))
     spec = ComposeSpec(

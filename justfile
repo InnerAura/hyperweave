@@ -42,7 +42,7 @@ proof-set:
 # through direct compose, the CLI, HTTP and MCP and must agree byte-for-byte;
 # `just proofset direct` skips the three witnesses while iterating on content.
 proofset SURFACES="all":
-    uv run python python -m scripts.examples --surfaces {{SURFACES}}
+    uv run python -m scripts.examples --surfaces {{SURFACES}}
 
 # The diagram galleries: one exhibit directory per topology family, the
 # specimen board, the primer-language sweep, the card+label slots. Ends with the

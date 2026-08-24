@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import ast
 import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -425,6 +426,118 @@ class TestCostCalculator:
         }
         cost = calculate_turn_cost(usage, "claude-sonnet-5")
         assert abs(cost - 18.0) < 1e-9  # $3/M input + $15/M output
+
+    def test_introductory_rate_applies_before_its_end_date(self) -> None:
+        """A turn is priced by the rate in effect the day it ran."""
+        usage: dict[str, int] = {
+            "input_tokens": 1_000_000,
+            "output_tokens": 1_000_000,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+        }
+        during = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=UTC))
+        assert abs(during - 12.0) < 1e-9  # $2/M input + $10/M output
+
+    def test_introductory_end_date_is_inclusive(self) -> None:
+        """The last day of the promotion still bills at the promotional rate."""
+        usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
+        last_day = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 31, tzinfo=UTC))
+        first_after = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 9, 1, tzinfo=UTC))
+        assert abs(last_day - 2.0) < 1e-9
+        assert abs(first_after - 3.0) < 1e-9
+
+    def test_regenerating_an_old_receipt_keeps_its_original_price(self) -> None:
+        """The point of dated rates: history is not restated when a rate lapses.
+
+        Receipts regenerate on every resume, so a session that billed at the
+        introductory rate must keep reporting that cost forever.
+        """
+        usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
+        as_billed = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=UTC))
+        regenerated = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=UTC))
+        assert as_billed == regenerated == 2.0
+
+    def test_undated_call_uses_the_sticker_rate(self) -> None:
+        """No timestamp → the durable rate, never the cheaper promotional one."""
+        usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
+        assert abs(calculate_turn_cost(usage, "claude-sonnet-5") - 3.0) < 1e-9
+
+    def test_epoch_timestamp_does_not_qualify_for_a_promotion(self) -> None:
+        """An unreadable transcript timestamp must not buy the cheaper rate.
+
+        Both parsers fall back to the Unix epoch on a malformed timestamp, and
+        1970 precedes every `until` date that will ever be written.
+        """
+        usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
+        cost = calculate_turn_cost(usage, "claude-sonnet-5", datetime.fromtimestamp(0, tz=UTC))
+        assert abs(cost - 3.0) < 1e-9, "epoch fallback should price at the sticker"
+
+    def test_model_without_introductory_block_is_unaffected(self) -> None:
+        """Dating a rate must not change models that carry a single rate."""
+        usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
+        dated = calculate_turn_cost(usage, "claude-opus-5", datetime(2026, 8, 24, tzinfo=UTC))
+        undated = calculate_turn_cost(usage, "claude-opus-5")
+        assert dated == undated == 5.0
+
+    def test_opus_5_rates(self) -> None:
+        """Opus 5 must be priced by its own key, not by the default.
+
+        The default is $5/$25 too, so an absent key bills correctly by
+        coincidence — and would drift the moment either number moved. Pinning
+        it here means the key cannot quietly disappear again.
+        """
+        usage: dict[str, int] = {
+            "input_tokens": 1_000_000,
+            "output_tokens": 1_000_000,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+        }
+        cost = calculate_turn_cost(usage, "claude-opus-5")
+        assert abs(cost - 30.0) < 1e-9  # $5/M input + $25/M output
+
+    def test_gpt_56_sol_rates(self) -> None:
+        """GPT-5.6 does not inherit 5.5's credit rates — it is cheaper per tier."""
+        usage: dict[str, int] = {
+            "input_tokens": 1_000_000,
+            "output_tokens": 1_000_000,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+        }
+        cost = calculate_turn_cost(usage, "gpt-5.6-sol")
+        assert abs(cost - 24.0) < 1e-9  # 100 cr/$4 input + 500 cr/$20 output
+
+    def test_mini_tier_is_not_shadowed_by_its_family(self) -> None:
+        """A longer key wins the prefix match regardless of YAML ordering.
+
+        ``gpt-5.4-mini`` starts with ``gpt-5.4``; resolving by file order made
+        correctness depend on which line came first, which no reader of the
+        data file can see.
+        """
+        usage: dict[str, int] = {
+            "input_tokens": 1_000_000,
+            "output_tokens": 0,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+        }
+        assert abs(calculate_turn_cost(usage, "gpt-5.4-mini") - 0.75) < 1e-9
+        assert abs(calculate_turn_cost(usage, "gpt-5.4") - 2.50) < 1e-9
+
+    def test_unknown_model_warns_instead_of_defaulting_silently(self, caplog: pytest.LogCaptureFixture) -> None:
+        """An unpriced model must say so.
+
+        Pricing still falls back so a receipt renders, but silence is what let
+        a shipping flagship bill at a placeholder rate unnoticed.
+        """
+        usage: dict[str, int] = {
+            "input_tokens": 1_000_000,
+            "output_tokens": 0,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+        }
+        with caplog.at_level(logging.WARNING):
+            cost = calculate_turn_cost(usage, "claude-opus-99-unreleased")
+        assert abs(cost - 5.0) < 1e-9, "default rate still applies"
+        assert any("unknown_model" in r.message for r in caplog.records)
 
     def test_1h_cache_write_bills_2x(self) -> None:
         """The usage.cache_creation TTL split prices 1h writes at 2x, not 1.25x."""
