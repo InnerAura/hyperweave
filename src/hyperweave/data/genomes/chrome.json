@@ -35,6 +35,13 @@
   ],
   "variants": ["horizon", "abyssal", "lightning", "graphite", "moth"],
   "flagship_variant": "",
+  "variant_phenomenology": {
+    "horizon": "the frozen midnight envelope — slate held over copper sliver",
+    "abyssal": "deep-water teal — the cold-cyan envelope",
+    "lightning": "electric blue arrest — voltage held still",
+    "graphite": "warm gray cast — pencil lead under pressure",
+    "moth": "umber iridescence — wing-dust spectra"
+  },
   "variant_overrides": {
     "abyssal": {
       "surface_0": "#020E12",
