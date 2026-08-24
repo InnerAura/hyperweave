@@ -1,0 +1,255 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 260 80" width="260" height="80" role="img" aria-label="Return"
+     aria-labelledby="btn-t btn-d" data-hw-component="button"
+     data-hw-chromatic="topographic-dither-matrix" data-hw-state="idle"
+     data-hw-status="active" data-protocol="hw-v1">
+    <title id="btn-t">Return</title>
+    <desc id="btn-d">Return button: the pill body and its border are both windows onto
+        the same quantized terrain under a 4px ordered screen, the border showing the
+        submerged palette and the label cut from it in Orbitron outlines.</desc>
+    <metadata>
+        <hw:artifact id="01a02b7c-4e10-7602-8b21-9d40c5f18e33" type="button"
+                     series="inneraura-identity" version="1.0.0">
+            <hw:provenance>
+                <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]
+                </hw:generator>
+                <hw:created>2026-08-21T00:00:00Z</hw:created>
+                <hw:human-directed>true</hw:human-directed>
+            </hw:provenance>
+            <hw:lineage parent="01a02b16-3d20-7302-8845-1e7c02b9d63f"
+                        operation="dna-transplant"
+                        donor="topographic-dither-matrix#1.4.0"
+                        note="replaces the rotating-gradient liquid-surface button" />
+            <hw:spec size="260x80" performance="composite-only" theme="light"
+                     a11y="WCAG-AA" />
+        </hw:artifact>
+        <hw:aesthetic>
+            <hw:chromatic system="topographic-dither-matrix" space="srgb"
+                          contrast-ratio="&gt;7:1 label on body"
+                          theory="quantized-ordered-dither — hard-edge level sets, anti-gradient" />
+            <hw:motion vocabulary="screen-march, level-set-step" physics="none"
+                       timing="phi" cim-compliant="true" />
+            <hw:geometry form-language="orthogonal" proportional-system="4px-matrix"
+                         mathematical-basis="ordered-dither-lattice"
+                         symmetry="bilateral" />
+            <hw:material surface="quantized terrain under an ordered screen"
+                         depth="shallow" />
+        </hw:aesthetic>
+        <hw:reasoning>
+            <hw:intent>Carry the approved DNA onto the Return button, replacing the
+                rotating-gradient border the old one used.</hw:intent>
+            <hw:approach>The predecessor&apos;s glow depended on a rotating linear
+                gradient and three bloom filter chains, none of which survive an
+                anti-gradient doctrine. The border is rebuilt as geometry instead of
+                light: a 5px stroked pill is used as a mask, and the same terrain is
+                rendered through it under the submerged LUT, so the border is a window
+                onto the landscape rather than a lit edge. Body and border therefore
+                show one continuous terrain at two depths, with the 45-degree screen
+                inside the border and the 15-degree screen on the body so the two read
+                as separately printed plates. The label is Orbitron outlines cut as a
+                third window, keeping it the deepest mass on the artifact. Terrain
+                frequency is re-derived for a 260px canvas to 0.0102 by 0.0157 while the
+                4px screen stays fixed, the same rule the icons use.</hw:approach>
+            <hw:tradeoffs>The old button glowed and this one does not — an anti-gradient
+                DNA cannot produce bloom, so hover and focus states have to be signalled
+                by something other than intensity, most likely by shifting the level-set
+                intercept to raise the terrain rather than by lighting it. No state
+                variants are included here: this is the idle state only, and
+                data-hw-state is present but unused. Body terrain runs at 0.55 opacity
+                so the label stays readable, which flattens the landscape inside the
+                button relative to every other artifact in the family. The arrow is a
+                live text glyph rather than an outline, so it will shift between
+                platforms while the Orbitron label will not — a deliberate asymmetry to
+                avoid embedding a second font, but it does mean the two marks age
+                differently.</hw:tradeoffs>
+            <hw:spatial-notes>Canvas 260x80. Body rect 18,18 224x44 rx10; border stroke
+                pill 16,16 228x48 rx12 at stroke-width 5 used as mask. Label RETURN in
+                Orbitron wght 700 at 15px with 0.26em tracking, centred x116 baseline
+                y46, measured width 92.0. Arrow at x178.0 y47. Terrain overscan
+                -40,-40,340x160.</hw:spatial-notes>
+        </hw:reasoning>
+        <hw:stratum>
+            <hw:ring primary="002-TRIBE" />
+            <hw:affinities>
+                <hw:resonance ring="003-NATION" strength="0.4" />
+            </hw:affinities>
+        </hw:stratum>
+    </metadata>
+    <defs>
+        <filter id="btn-hi" x="-25%" y="-60%" width="150%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0102 0.0157"
+                          numOctaves="3" seed="907" result="t" />
+            <feColorMatrix in="t" type="matrix"
+                           values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1"
+                           result="h" />
+            <feComponentTransfer in="h" result="s">
+                <feFuncR type="linear" slope="2.2" intercept="-0.52" />
+                <feFuncG type="linear" slope="2.2" intercept="-0.52" />
+                <feFuncB type="linear" slope="2.2" intercept="-0.52" />
+            </feComponentTransfer>
+            <feComponentTransfer in="s" result="q">
+                <feFuncR type="discrete"
+                         tableValues="0.247 0.635 0.388 0.910 0.988 0.988" />
+                <feFuncG type="discrete"
+                         tableValues="0.424 0.859 0.949 0.698 0.941 0.941" />
+                <feFuncB type="discrete"
+                         tableValues="0.910 0.447 0.655 0.898 0.980 0.980" />
+            </feComponentTransfer>
+            <feComposite in="q" in2="SourceGraphic" operator="in" />
+        </filter>
+        <filter id="btn-hiA" x="-25%" y="-60%" width="150%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0102 0.0157"
+                          numOctaves="3" seed="907" result="t" />
+            <feColorMatrix in="t" type="matrix"
+                           values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1"
+                           result="h" />
+            <feComponentTransfer in="h" result="s">
+                <feFuncR type="linear" slope="2.2" intercept="-0.4644" />
+                <feFuncG type="linear" slope="2.2" intercept="-0.4644" />
+                <feFuncB type="linear" slope="2.2" intercept="-0.4644" />
+            </feComponentTransfer>
+            <feComponentTransfer in="s" result="q">
+                <feFuncR type="discrete"
+                         tableValues="0.247 0.635 0.388 0.910 0.988 0.988" />
+                <feFuncG type="discrete"
+                         tableValues="0.424 0.859 0.949 0.698 0.941 0.941" />
+                <feFuncB type="discrete"
+                         tableValues="0.910 0.447 0.655 0.898 0.980 0.980" />
+            </feComponentTransfer>
+            <feComposite in="q" in2="SourceGraphic" operator="in" />
+        </filter>
+        <filter id="btn-lo" x="-25%" y="-60%" width="150%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0102 0.0157"
+                          numOctaves="3" seed="907" result="t" />
+            <feColorMatrix in="t" type="matrix"
+                           values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1"
+                           result="h" />
+            <feComponentTransfer in="h" result="s">
+                <feFuncR type="linear" slope="2.2" intercept="-0.78" />
+                <feFuncG type="linear" slope="2.2" intercept="-0.78" />
+                <feFuncB type="linear" slope="2.2" intercept="-0.78" />
+            </feComponentTransfer>
+            <feComponentTransfer in="s" result="q">
+                <feFuncR type="discrete"
+                         tableValues="0.055 0.086 0.149 0.149 0.247 0.388" />
+                <feFuncG type="discrete"
+                         tableValues="0.110 0.161 0.278 0.278 0.424 0.949" />
+                <feFuncB type="discrete"
+                         tableValues="0.306 0.420 0.659 0.659 0.910 0.655" />
+            </feComponentTransfer>
+            <feComposite in="q" in2="SourceGraphic" operator="in" />
+        </filter>
+        <pattern id="btn-s15" width="4" height="4" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(15)">
+            <rect width="2" height="2" fill="#fff" />
+            <rect x="2" y="2" width="2" height="2" fill="#fff" />
+        </pattern>
+        <pattern id="btn-s45" width="4" height="4" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(45)">
+            <rect width="2" height="2" fill="#fff" />
+        </pattern>
+        <pattern id="btn-s0" width="4" height="4" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(0)">
+            <rect width="2" height="2" fill="#fff" />
+        </pattern>
+        <mask id="btn-m15" maskUnits="userSpaceOnUse" x="-40" y="-40" width="340"
+              height="160">
+            <g class="mar15">
+                <rect x="-40" y="-40" width="340" height="160" fill="url(#btn-s15)" />
+            </g>
+        </mask>
+        <mask id="btn-m45" maskUnits="userSpaceOnUse" x="-40" y="-40" width="340"
+              height="160">
+            <g class="mar45">
+                <rect x="-40" y="-40" width="340" height="160" fill="url(#btn-s45)" />
+            </g>
+        </mask>
+        <mask id="btn-ring" maskUnits="userSpaceOnUse" x="0" y="0" width="260"
+              height="80">
+            <rect x="16" y="16" width="228" height="48" rx="12" fill="none"
+                  stroke="#fff" stroke-width="5" />
+        </mask>
+        <clipPath id="btn-body">
+            <rect x="18" y="18" width="224" height="44" rx="10" />
+        </clipPath>
+        <clipPath id="btn-label">
+            <path
+                  d="M79.4375 46.0 76.18249999999999 42.115H78.7775L81.5975 45.445V46.0ZM70.8275 46.0V35.215H79.5275Q80.0975 35.215 80.5775 35.5Q81.0575 35.785 81.3425 36.2575Q81.6275 36.730000000000004 81.6275 37.3V40.21Q81.6275 40.78 81.3425 41.260000000000005Q81.0575 41.74 80.5775 42.0175Q80.0975 42.295 79.5275 42.295L72.80749999999999 42.31V46.0ZM72.9875 40.3H79.4375Q79.5125 40.3 79.57249999999999 40.254999999999995Q79.6325 40.21 79.6325 40.135V37.375Q79.6325 37.3 79.57249999999999 37.2475Q79.5125 37.195 79.4375 37.195H72.9875Q72.9125 37.195 72.85999999999999 37.2475Q72.80749999999999 37.3 72.80749999999999 37.375V40.135Q72.80749999999999 40.21 72.85999999999999 40.254999999999995Q72.9125 40.3 72.9875 40.3Z M87.1325 46.0V35.2H97.07749999999999V37.195H89.12749999999998V39.595H95.51749999999998V41.605000000000004H89.12749999999998V44.005H97.07749999999999V46.0Z M106.36249999999998 46.0V37.195H101.95249999999999V35.2H112.75249999999998V37.195H108.35749999999999V46.0Z M119.83249999999998 46.0Q119.26249999999999 46.0 118.78999999999999 45.715Q118.31749999999998 45.43 118.03249999999998 44.957499999999996Q117.74749999999999 44.485 117.74749999999999 43.915V35.2H119.72749999999999V43.825Q119.72749999999999 43.9 119.77999999999999 43.9525Q119.83249999999998 44.005 119.90749999999998 44.005H126.35749999999999Q126.43249999999999 44.005 126.49249999999998 43.9525Q126.55249999999998 43.9 126.55249999999998 43.825V35.2H128.54749999999999V43.915Q128.54749999999999 44.485 128.2625 44.957499999999996Q127.97749999999999 45.43 127.505 45.715Q127.03249999999998 46.0 126.46249999999999 46.0H119.83249999999998Z M142.70749999999998 46.0 139.4525 42.115H142.04749999999999L144.8675 45.445V46.0ZM134.0975 46.0V35.215H142.79749999999999Q143.3675 35.215 143.8475 35.5Q144.3275 35.785 144.61249999999998 36.2575Q144.89749999999998 36.730000000000004 144.89749999999998 37.3V40.21Q144.89749999999998 40.78 144.61249999999998 41.260000000000005Q144.3275 41.74 143.8475 42.0175Q143.3675 42.295 142.79749999999999 42.295L136.0775 42.31V46.0ZM136.2575 40.3H142.70749999999998Q142.7825 40.3 142.8425 40.254999999999995Q142.9025 40.21 142.9025 40.135V37.375Q142.9025 37.3 142.8425 37.2475Q142.7825 37.195 142.70749999999998 37.195H136.2575Q136.1825 37.195 136.13 37.2475Q136.0775 37.3 136.0775 37.375V40.135Q136.0775 40.21 136.13 40.254999999999995Q136.1825 40.3 136.2575 40.3Z M150.3725 46.0V35.2H152.54749999999999L159.1775 43.09V35.2H161.17249999999999V46.0H158.9975L152.3525 38.095V46.0Z" />
+        </clipPath>
+    </defs>
+    <style>
+        svg {
+            color-scheme: light;
+        }
+
+        .mar45 {
+            will-change: transform;
+            animation: mar45 11.09s steps(4) infinite;
+        }
+
+        .mar15 {
+            will-change: transform;
+            animation: mar15 6.854s steps(4) infinite;
+        }
+
+        .tide {
+            animation: tide 21.4s steps(6) infinite;
+        }
+
+        @keyframes mar45 {
+            to {
+                transform: translate(2.828px, 2.828px);
+            }
+        }
+
+        @keyframes mar15 {
+            to {
+                transform: translate(3.864px, 1.035px);
+            }
+        }
+
+        @keyframes tide {
+
+            0%,
+            100% {
+                opacity: 0.95;
+            }
+
+            50% {
+                opacity: 0.45;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+            }
+        }
+    </style>
+    <g clip-path="url(#btn-body)">
+        <rect width="260" height="80" fill="#FCF0FA" />
+        <rect x="-40" y="-40" width="340" height="160" filter="url(#btn-hi)"
+              opacity="0.55" />
+        <g mask="url(#btn-m15)" class="tide">
+            <rect x="-40" y="-40" width="340" height="160" filter="url(#btn-hiA)"
+                  opacity="0.55" />
+        </g>
+        <rect width="260" height="80" fill="url(#btn-s0)" opacity="0.16" />
+    </g>
+    <g mask="url(#btn-ring)" data-hw-part="border">
+        <rect x="-40" y="-40" width="340" height="160" filter="url(#btn-lo)" />
+        <g mask="url(#btn-m45)">
+            <rect x="-40" y="-40" width="340" height="160" filter="url(#btn-hiA)" />
+        </g>
+    </g>
+    <g clip-path="url(#btn-label)">
+        <rect width="260" height="80" fill="#16296B" />
+        <rect x="-40" y="-40" width="340" height="160" filter="url(#btn-lo)" />
+    </g>
+    <text x="178.0" y="47"
+          font-family="'SF Mono','JetBrains Mono','Fira Code',ui-monospace,monospace"
+          font-size="18" fill="#2647A8" text-anchor="middle">&#8624;</text>
+</svg>

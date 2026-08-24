@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 680 72" width="100%" role="img" aria-labelledby="cs3-t cs3-d"
+     data-hw-component="strip" data-hw-chromatic="topographic-dither-matrix"
+     data-hw-status="active" data-protocol="hw-v1">
+    <title id="cs3-t">Repository contributor statistics strip</title>
+    <desc id="cs3-d">Stats strip on a quantized topographic terrain: 36 stars, 7 forks
+        and 1 contributor in Orbitron outlines cut as windows onto the terrain, and the
+        Claude Code mark set directly on the field in its own brand orange with no
+        socket, ring or keyline.</desc>
+    <metadata>
+        <hw:artifact id="01a02bd0-8e30-7902-9a41-73c6b95e02da" type="strip"
+                     series="inneraura-identity" version="2.1.0">
+            <hw:provenance>
+                <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]
+                </hw:generator>
+                <hw:created>2026-08-21T00:00:00Z</hw:created>
+                <hw:human-directed>true</hw:human-directed>
+            </hw:provenance>
+            <hw:lineage parent="01a02bb4-2a00-7802-8f99-6e83a71c1d99"
+                        operation="glyph-embed"
+                        donor="topographic-dither-matrix#1.4.0" />
+            <hw:spec size="680x72" performance="composite-only" theme="light"
+                     a11y="WCAG-AA" />
+        </hw:artifact>
+        <hw:aesthetic>
+            <hw:chromatic system="topographic-dither-matrix" space="srgb"
+                          contrast-ratio="&gt;9:1 numerals; attribution mark exempt as a logotype"
+                          theory="quantized-ordered-dither with one out-of-genome attribution colour" />
+            <hw:motion vocabulary="screen-march, level-set-step" physics="none"
+                       timing="phi" cim-compliant="true" />
+            <hw:geometry form-language="orthogonal" proportional-system="4px-matrix"
+                         mathematical-basis="ordered-dither-lattice"
+                         symmetry="translational" />
+            <hw:material surface="quantized terrain under an ordered screen"
+                         depth="shallow" />
+        </hw:aesthetic>
+        <hw:reasoning>
+            <hw:intent>Set the Claude Code mark on the field as a mark, not as an avatar
+                — flat brand orange, no socket, no ring, no keyline.</hw:intent>
+            <hw:approach>The socket disc, its 15.5 ring and the knockout mask are all
+                deleted; the glyph is a single filled path at #D97757 sitting directly
+                on the terrain, sized up from 22 to 33.6px now that nothing frames it.
+                That makes it the only element in the entire family painted outside the
+                genome, which is the correct reading rather than an inconsistency —
+                every other mark here is a window onto InnerAura&apos;s own terrain, and
+                an attribution to somebody else&apos;s tool should not be dressed in
+                InnerAura&apos;s palette. It is a citation, and citations keep their own
+                typeface.</hw:approach>
+            <hw:tradeoffs>Flat orange on a full-range terrain is weak by measurement and
+                there is no version of this request that fixes it: #D97757 sits at 0.286
+                relative luminance, almost exactly mid-scale, so it loses contrast at
+                both ends of the terrain at once — 2.82:1 against mist at the top of the
+                range and 1.21:1 where the drift carries a cobalt basin under it, which
+                is the floor. Dropping the strip terrain from 0.62 to 0.30 opacity only
+                lifts that floor to 1.92:1, so it is not a fix either, and the mark
+                would still fade on the deepest bands. This ships as requested because
+                WCAG 1.4.11 exempts logotypes from non-text contrast, so it is
+                defensible, but it will visibly soften a few seconds out of every drift
+                cycle and that is a real cost of the no-border decision rather than an
+                oversight. Anything that would fix it — a keyline, a quiet zone, a
+                darker orange — is the border that was asked to be removed. Thirty-six
+                and seven remain hard-coded and will rot.</hw:tradeoffs>
+            <hw:spatial-notes>680x72, rx6. Columns at x85, x255, x425, dividers at 170,
+                340, 510. Labels 7px monospace at y22; numerals Orbitron wght 700 at
+                20px, baseline y50. Claude Code mark from a 24-unit viewBox at scale
+                1.4, origin (578.2,26.5), rendering 33.6 by 21 centred on (595,44) in
+                flat #D97757. Terrain frequency 0.0039 0.0060; 4px screen
+                unchanged.</hw:spatial-notes>
+        </hw:reasoning>
+        <hw:stratum>
+            <hw:ring primary="002-TRIBE" />
+            <hw:affinities>
+                <hw:resonance ring="003-NATION" strength="0.4" />
+            </hw:affinities>
+        </hw:stratum>
+    </metadata>
+    <defs>
+        <filter id="cs3-hi" x="-25%" y="-60%" width="150%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0039 0.0060"
+                          numOctaves="3" seed="907" result="t" />
+            <feColorMatrix in="t" type="matrix"
+                           values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1"
+                           result="h" />
+            <feComponentTransfer in="h" result="s">
+                <feFuncR type="linear" slope="2.2" intercept="-0.52" />
+                <feFuncG type="linear" slope="2.2" intercept="-0.52" />
+                <feFuncB type="linear" slope="2.2" intercept="-0.52" />
+            </feComponentTransfer>
+            <feComponentTransfer in="s" result="q">
+                <feFuncR type="discrete"
+                         tableValues="0.247 0.635 0.388 0.910 0.988 0.988" />
+                <feFuncG type="discrete"
+                         tableValues="0.424 0.859 0.949 0.698 0.941 0.941" />
+                <feFuncB type="discrete"
+                         tableValues="0.910 0.447 0.655 0.898 0.980 0.980" />
+            </feComponentTransfer>
+            <feComposite in="q" in2="SourceGraphic" operator="in" />
+        </filter>
+        <filter id="cs3-hiA" x="-25%" y="-60%" width="150%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0039 0.0060"
+                          numOctaves="3" seed="907" result="t" />
+            <feColorMatrix in="t" type="matrix"
+                           values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1"
+                           result="h" />
+            <feComponentTransfer in="h" result="s">
+                <feFuncR type="linear" slope="2.2" intercept="-0.4644" />
+                <feFuncG type="linear" slope="2.2" intercept="-0.4644" />
+                <feFuncB type="linear" slope="2.2" intercept="-0.4644" />
+            </feComponentTransfer>
+            <feComponentTransfer in="s" result="q">
+                <feFuncR type="discrete"
+                         tableValues="0.247 0.635 0.388 0.910 0.988 0.988" />
+                <feFuncG type="discrete"
+                         tableValues="0.424 0.859 0.949 0.698 0.941 0.941" />
+                <feFuncB type="discrete"
+                         tableValues="0.910 0.447 0.655 0.898 0.980 0.980" />
+            </feComponentTransfer>
+            <feComposite in="q" in2="SourceGraphic" operator="in" />
+        </filter>
+        <filter id="cs3-lo" x="-25%" y="-60%" width="150%" height="220%"
+                color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.0039 0.0060"
+                          numOctaves="3" seed="907" result="t" />
+            <feColorMatrix in="t" type="matrix"
+                           values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1"
+                           result="h" />
+            <feComponentTransfer in="h" result="s">
+                <feFuncR type="linear" slope="2.2" intercept="-0.78" />
+                <feFuncG type="linear" slope="2.2" intercept="-0.78" />
+                <feFuncB type="linear" slope="2.2" intercept="-0.78" />
+            </feComponentTransfer>
+            <feComponentTransfer in="s" result="q">
+                <feFuncR type="discrete"
+                         tableValues="0.055 0.086 0.149 0.149 0.247 0.388" />
+                <feFuncG type="discrete"
+                         tableValues="0.110 0.161 0.278 0.278 0.424 0.949" />
+                <feFuncB type="discrete"
+                         tableValues="0.306 0.420 0.659 0.659 0.910 0.655" />
+            </feComponentTransfer>
+            <feComposite in="q" in2="SourceGraphic" operator="in" />
+        </filter>
+        <pattern id="cs3-s15" width="4" height="4" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(15)">
+            <rect width="2" height="2" fill="#fff" />
+            <rect x="2" y="2" width="2" height="2" fill="#fff" />
+        </pattern>
+        <pattern id="cs3-s0" width="4" height="4" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(0)">
+            <rect width="2" height="2" fill="#fff" />
+        </pattern>
+        <mask id="cs3-m15" maskUnits="userSpaceOnUse" x="-40" y="-40" width="760"
+              height="152">
+            <g class="mar15">
+                <rect x="-40" y="-40" width="760" height="152" fill="url(#cs3-s15)" />
+            </g>
+        </mask>
+        <clipPath id="cs3-frame">
+            <rect x="0" y="0" width="680" height="72" rx="6" />
+        </clipPath>
+        <clipPath id="cs3-nums">
+            <path
+                  d="M71.98 50.0Q71.2 50.0 70.58 49.620000000000005Q69.96 49.24 69.58 48.620000000000005Q69.2 48.0 69.2 47.24V46.38H71.82000000000001V47.14Q71.82000000000001 47.24 71.89000000000001 47.31Q71.96000000000001 47.38 72.06 47.38H80.6Q80.7 47.38 80.78 47.31Q80.86 47.24 80.86 47.14V44.26Q80.86 44.16 80.78 44.089999999999996Q80.7 44.019999999999996 80.6 44.019999999999996H71.68V41.4H80.04Q80.14 41.4 80.21000000000001 41.33Q80.28 41.26 80.28 41.16V38.46Q80.28 38.36 80.21000000000001 38.29Q80.14 38.22 80.04 38.22H72.06Q71.96000000000001 38.22 71.89000000000001 38.29Q71.82000000000001 38.36 71.82000000000001 38.46V39.4H69.2V38.36Q69.2 37.58 69.58 36.96Q69.96 36.34 70.58 35.97Q71.2 35.6 71.98 35.6H80.14Q80.92 35.6 81.53999999999999 35.97Q82.16 36.34 82.53 36.96Q82.9 37.58 82.9 38.36V41.28Q82.9 41.519999999999996 82.86 41.769999999999996Q82.82 42.019999999999996 82.74 42.24Q83.1 42.62 83.28999999999999 43.129999999999995Q83.48 43.64 83.48 44.16V47.24Q83.48 48.0 83.1 48.620000000000005Q82.72 49.24 82.1 49.620000000000005Q81.48 50.0 80.72 50.0H71.98Z M89.36000000000001 50.0Q88.60000000000001 50.0 87.98000000000002 49.620000000000005Q87.36000000000001 49.24 86.98000000000002 48.620000000000005Q86.60000000000001 48.0 86.60000000000001 47.24V38.36Q86.60000000000001 37.58 86.98000000000002 36.96Q87.36000000000001 36.34 87.98000000000002 35.97Q88.60000000000001 35.6 89.36000000000001 35.6H98.58000000000001V38.22H89.46000000000001Q89.36000000000001 38.22 89.29000000000002 38.29Q89.22000000000001 38.36 89.22000000000001 38.46V41.08Q89.22000000000001 41.18 89.29000000000002 41.25Q89.36000000000001 41.32 89.46000000000001 41.32H98.10000000000001Q98.86000000000001 41.32 99.49000000000001 41.69Q100.12 42.06 100.49000000000001 42.69Q100.86000000000001 43.32 100.86000000000001 44.08V47.24Q100.86000000000001 48.0 100.48000000000002 48.620000000000005Q100.10000000000001 49.24 99.48000000000002 49.620000000000005Q98.86000000000001 50.0 98.10000000000001 50.0H89.36000000000001ZM89.46000000000001 47.38H98.00000000000001Q98.10000000000001 47.38 98.17000000000002 47.31Q98.24000000000001 47.24 98.24000000000001 47.14V44.2Q98.24000000000001 44.1 98.17000000000002 44.03Q98.10000000000001 43.96 98.00000000000001 43.96H89.22000000000001V47.14Q89.22000000000001 47.24 89.29000000000002 47.31Q89.36000000000001 47.38 89.46000000000001 47.38Z" />
+            <path
+                  d="M257.82 50.0V38.44Q257.82 38.34 257.75 38.27Q257.68 38.2 257.58 38.2H248.46V35.58H257.68Q258.44 35.58 259.07 35.95Q259.7 36.32 260.07 36.94Q260.44 37.56 260.44 38.34V50.0Z" />
+            <path
+                  d="M425.71 50.0V39.379999999999995L424.57 40.78H421.10999999999996L425.45 35.6H428.34999999999997V50.0Z" />
+        </clipPath>
+    </defs>
+    <style>
+        svg {
+            color-scheme: light;
+        }
+
+        .mar45 {
+            will-change: transform;
+            animation: mar45 11.09s steps(4) infinite;
+        }
+
+        .mar15 {
+            will-change: transform;
+            animation: mar15 6.854s steps(4) infinite;
+        }
+
+        .tide {
+            animation: tide 21.4s steps(6) infinite;
+        }
+
+        @keyframes mar45 {
+            to {
+                transform: translate(2.828px, 2.828px);
+            }
+        }
+
+        @keyframes mar15 {
+            to {
+                transform: translate(3.864px, 1.035px);
+            }
+        }
+
+        @keyframes tide {
+
+            0%,
+            100% {
+                opacity: 0.95;
+            }
+
+            50% {
+                opacity: 0.45;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+            }
+        }
+    </style>
+    <g clip-path="url(#cs3-frame)">
+        <rect width="680" height="72" fill="#FCF0FA" />
+        <rect x="-40" y="-40" width="760" height="152" filter="url(#cs3-hi)"
+              opacity="0.62" />
+        <g mask="url(#cs3-m15)" class="tide">
+            <rect x="-40" y="-40" width="760" height="152" filter="url(#cs3-hiA)"
+                  opacity="0.62" />
+        </g>
+        <rect width="680" height="72" fill="url(#cs3-s0)" opacity="0.16" />
+    </g>
+    <rect x="0.5" y="0.5" width="679" height="71" rx="6" fill="none" stroke="#2647A8"
+          stroke-width="1" opacity="0.45" />
+    <g stroke="#2647A8" stroke-width="0.75" opacity="0.35">
+        <line x1="170" y1="8" x2="170" y2="64" />
+        <line x1="340" y1="8" x2="340" y2="64" />
+        <line x1="510" y1="8" x2="510" y2="64" />
+    </g>
+    <text x="85" y="22" text-anchor="middle"
+          font-family="'SF Mono','JetBrains Mono','Fira Code',ui-monospace,monospace"
+          font-size="7" letter-spacing="0.08em" fill="#16296B">STARS</text><text x="255"
+          y="22" text-anchor="middle"
+          font-family="'SF Mono','JetBrains Mono','Fira Code',ui-monospace,monospace"
+          font-size="7" letter-spacing="0.08em" fill="#16296B">FORKS</text><text x="425"
+          y="22" text-anchor="middle"
+          font-family="'SF Mono','JetBrains Mono','Fira Code',ui-monospace,monospace"
+          font-size="7" letter-spacing="0.08em" fill="#16296B">CONTRIBUTORS</text>
+    <text x="595" y="22" text-anchor="middle"
+          font-family="'SF Mono','JetBrains Mono','Fira Code',ui-monospace,monospace"
+          font-size="7" letter-spacing="0.08em" fill="#16296B">TOP CONTRIBUTORS</text>
+    <g clip-path="url(#cs3-nums)">
+        <rect width="680" height="72" fill="#16296B" />
+        <rect x="-40" y="-40" width="760" height="152" filter="url(#cs3-lo)" />
+    </g>
+    <g transform="translate(578.20,26.50) scale(1.4)" data-hw-part="attribution-mark">
+        <path fill-rule="evenodd" fill="#D97757"
+              d="M20.998 10.949H24v3.102h-3v3.028h-1.487V20H18v-2.921h-1.487V20H15v-2.921H9V20H7.488v-2.921H6V20H4.487v-2.921H3V14.05H0V10.95h3V5h17.998v5.949zM6 10.949h1.488V8.102H6v2.847zm10.51 0H18V8.102h-1.49v2.847z" />
+    </g>
+</svg>

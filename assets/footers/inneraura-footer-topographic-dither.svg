@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 1200 220" role="img" aria-labelledby="tm-t tm-d" style="width:100%;height:auto;display:block" data-hw-component="footer" data-hw-chromatic="topographic-dither-matrix" data-hw-variant="quantized-terrain-light" data-hw-status="active" data-hw-regime="normal" data-protocol="hw-v1">
+  <title id="tm-t">InnerAura</title>
+  <desc id="tm-d">InnerAura footer, light: a quantized topographic terrain rendered as hard-edged contour bands in orchid, mint, chartreuse and cobalt, with an ordered 4px square-dot dither carrying every band transition, and INNERAURA in Orbitron outlines cut as a window onto the same terrain in a submerged palette.</desc>
+  <metadata>
+    <hw:artifact id="01a02b16-3d20-7302-8845-1e7c02b9d63f" type="footer" series="inneraura-identity" version="3.0.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]</hw:generator>
+        <hw:created>2026-08-21T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+      </hw:provenance>
+      <hw:lineage parent="01a02af2-8e10-7202-b174-6c39d80f4a25" operation="material-rederivation" donor="topographic-dither-matrix#1.4.0" note="replaces the cloned cherenkov caustic; new pattern, new motion, new chromatic theory"/>
+      <hw:spec size="1200x220 fluid-width" performance="composite-only" theme="light" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:aesthetic>
+      <hw:chromatic system="topographic-dither-matrix" space="srgb" contrast-ratio="&gt;7.4:1 letter mass on mist, &gt;5:1 on the darkest field token" theory="quantized-ordered-dither — hard-edge level sets, anti-gradient, five tokens on one height field"/>
+      <hw:motion vocabulary="stratum-parallax, level-set-tide, fixed-screen-dither" physics="none" timing="phi" cim-compliant="true"/>
+      <hw:geometry form-language="orthogonal" proportional-system="4px-matrix" mathematical-basis="ordered-dither-lattice" symmetry="none"/>
+      <hw:material surface="quantized terrain under a fixed halftone screen" depth="shallow"/>
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>Replace the cloned hero caustic with a genuinely different material: a different pattern, a different motion vocabulary and a different chromatic theory, built to the Topographic Dither Matrix DNA and set in Orbitron.</hw:intent>
+      <hw:approach>The pattern is a level-set map, not a light field. One fractal height field is stretched and then quantized through a six-entry discrete LUT built from feComponentTransfer — the per-channel tableValues are literally the five palette tokens, so colour is assigned by elevation and every edge is hard. That is the anti-gradient doctrine enforced structurally rather than by restraint: the file contains no linearGradient or radialGradient element at all. The dither is real ordered dithering, not a texture. Two further passes quantize the same height field with the threshold offset by a third and two thirds of a level, then mask through 4px square-dot patterns at 50 and 25 percent coverage. Where the shifted quantization agrees with the base the dots are invisible; where it disagrees, which is only near a contour, dots of the neighbouring band appear. The interfacial halo therefore emerges from the arithmetic instead of being drawn. Motion is rebuilt on a different principle: the screen is fixed to the substrate as a halftone screen physically is, and the terrain drifts beneath it, so colour flows through stationary dots rather than dots flowing across colour. Three near layers share one drift so their contours stay locked; a blurred, lower-contrast far terrain on a separate seed drifts at 97 seconds against the near set at 58, giving parallax depth. A slow opacity tide on the dither passes makes the halo advance and recede, which reads as the level set migrating. Every animation is CSS transform or opacity, so every filter in the file is static and rasterizes exactly once — unlike the hero, which re-renders its whole filter chain each frame — and prefers-reduced-motion genuinely stops the motion. Typography is real Orbitron: the variable font pinned to weight 700 and the nine glyphs converted to outlines, so the artifact stays self-contained with no webfont dependency and no full font embedded. The word is cut as a clip window onto the same terrain under a submerged LUT, so the topography is continuous across the letterform edge while the palette inside it drops below the waterline.</hw:approach>
+      <hw:tradeoffs>The palette is nearly all high-luminance, which the type has to survive: measured against the tokens, cobalt at 17.6 percent relative luminance clears 4.20:1 on mist but only 2.64:1 on orchid and 2.86:1 on chartreuse, under the 3:1 large-text floor. The letter LUT therefore does not use the cobalt token as its mass — it uses two derived darkenings, #16296B and #2647A8 at 12.1:1 and 7.5:1 on mist, with the cobalt token demoted to a highlight level and a single mint glint at the ridge top. Those two shades are derived, not tokens, and should be added to the DNA if this ships. Six filtered full-canvas layers is the highest count in the family; they are static so the cost is one-time rather than per-frame, but first paint is heavier than anything else here and the far parallax layer is the first to cut. The LUT intercepts that decide how much area each token gets were set analytically and not visually verified — area distribution is normal, not uniform, so token weights will not match the DNA&apos;s stated 0.32 / 0.28 / 0.15 / 0.14 / 0.11 without tuning the two intercept values, which is the single dial to turn. Ordered dither at a fixed 4px grid does not scale: rendered at half size the dots alias into moire, so this artifact has a minimum display width and should not be used as a responsive banner without regenerating the grid. Vignettes are gone entirely — the reference is edge to edge and a fade would reintroduce the gradient the doctrine forbids — so the terrain meets the frame as a hard cut. Orbitron outlines mean the word cannot be re-typed without rerunning the conversion.</hw:tradeoffs>
+      <hw:spatial-notes>Canvas 1200x220, substrate mist #FCF0FA. Wordmark INNERAURA in Orbitron wght 700 converted to outlines at 133px with 0.10em tracking, spanning exactly x95 to x1105, cap band y62.1 to baseline y157.9, cap height 95.8. Terrain rects overscan to -120,-120,1440x460 against a maximum drift of 46px so no edge is ever exposed. Dither lattice 4px, square dots, 50 percent checker and 25 percent single-cell. Near drift 58s ping-pong, far drift 97s, level-set tide 17.944s. Six LUT levels at intercepts -0.520 for the field and -0.780 for the submerged letter palette, offset by a third, two thirds and a half level for the dither passes.</hw:spatial-notes>
+    </hw:reasoning>
+    <hw:stratum>
+      <hw:ring primary="002-TRIBE"/>
+      <hw:affinities><hw:resonance ring="003-NATION" strength="0.5"/></hw:affinities>
+    </hw:stratum>
+  </metadata>
+  <defs>
+    <filter id="tm-hi" x="-25%" y="-60%" width="150%" height="220%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0034" numOctaves="4" seed="907" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1" result="h"/>
+      <feComponentTransfer in="h" result="s">
+        <feFuncR type="linear" slope="2.2" intercept="-0.52"/>
+        <feFuncG type="linear" slope="2.2" intercept="-0.52"/>
+        <feFuncB type="linear" slope="2.2" intercept="-0.52"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="s" result="q">
+        <feFuncR type="discrete" tableValues="0.247 0.635 0.388 0.910 0.988 0.988"/>
+        <feFuncG type="discrete" tableValues="0.424 0.859 0.949 0.698 0.941 0.941"/>
+        <feFuncB type="discrete" tableValues="0.910 0.447 0.655 0.898 0.980 0.980"/>
+      </feComponentTransfer>
+      <feComposite in="q" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="tm-hiA" x="-25%" y="-60%" width="150%" height="220%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0034" numOctaves="4" seed="907" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1" result="h"/>
+      <feComponentTransfer in="h" result="s">
+        <feFuncR type="linear" slope="2.2" intercept="-0.4644"/>
+        <feFuncG type="linear" slope="2.2" intercept="-0.4644"/>
+        <feFuncB type="linear" slope="2.2" intercept="-0.4644"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="s" result="q">
+        <feFuncR type="discrete" tableValues="0.247 0.635 0.388 0.910 0.988 0.988"/>
+        <feFuncG type="discrete" tableValues="0.424 0.859 0.949 0.698 0.941 0.941"/>
+        <feFuncB type="discrete" tableValues="0.910 0.447 0.655 0.898 0.980 0.980"/>
+      </feComponentTransfer>
+      <feComposite in="q" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="tm-hiB" x="-25%" y="-60%" width="150%" height="220%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0034" numOctaves="4" seed="907" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1" result="h"/>
+      <feComponentTransfer in="h" result="s">
+        <feFuncR type="linear" slope="2.2" intercept="-0.4089"/>
+        <feFuncG type="linear" slope="2.2" intercept="-0.4089"/>
+        <feFuncB type="linear" slope="2.2" intercept="-0.4089"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="s" result="q">
+        <feFuncR type="discrete" tableValues="0.247 0.635 0.388 0.910 0.988 0.988"/>
+        <feFuncG type="discrete" tableValues="0.424 0.859 0.949 0.698 0.941 0.941"/>
+        <feFuncB type="discrete" tableValues="0.910 0.447 0.655 0.898 0.980 0.980"/>
+      </feComponentTransfer>
+      <feComposite in="q" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="tm-far" x="-25%" y="-60%" width="150%" height="220%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0014 0.0022" numOctaves="3" seed="331" result="t"/>
+      <feGaussianBlur in="t" stdDeviation="4" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1" result="h"/>
+      <feComponentTransfer in="h" result="s">
+        <feFuncR type="linear" slope="1.6" intercept="-0.3"/>
+        <feFuncG type="linear" slope="1.6" intercept="-0.3"/>
+        <feFuncB type="linear" slope="1.6" intercept="-0.3"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="s" result="q">
+        <feFuncR type="discrete" tableValues="0.247 0.635 0.388 0.910 0.988 0.988"/>
+        <feFuncG type="discrete" tableValues="0.424 0.859 0.949 0.698 0.941 0.941"/>
+        <feFuncB type="discrete" tableValues="0.910 0.447 0.655 0.898 0.980 0.980"/>
+      </feComponentTransfer>
+      <feComposite in="q" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="tm-lo" x="-25%" y="-60%" width="150%" height="220%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0034" numOctaves="4" seed="907" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1" result="h"/>
+      <feComponentTransfer in="h" result="s">
+        <feFuncR type="linear" slope="2.2" intercept="-0.78"/>
+        <feFuncG type="linear" slope="2.2" intercept="-0.78"/>
+        <feFuncB type="linear" slope="2.2" intercept="-0.78"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="s" result="q">
+        <feFuncR type="discrete" tableValues="0.055 0.086 0.149 0.149 0.247 0.388"/>
+        <feFuncG type="discrete" tableValues="0.110 0.161 0.278 0.278 0.424 0.949"/>
+        <feFuncB type="discrete" tableValues="0.306 0.420 0.659 0.659 0.910 0.655"/>
+      </feComponentTransfer>
+      <feComposite in="q" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="tm-loA" x="-25%" y="-60%" width="150%" height="220%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0034" numOctaves="4" seed="907" result="t"/>
+      <feColorMatrix in="t" type="matrix" values="0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0.34 0.33 0.33 0 0  0 0 0 0 1" result="h"/>
+      <feComponentTransfer in="h" result="s">
+        <feFuncR type="linear" slope="2.2" intercept="-0.6967"/>
+        <feFuncG type="linear" slope="2.2" intercept="-0.6967"/>
+        <feFuncB type="linear" slope="2.2" intercept="-0.6967"/>
+      </feComponentTransfer>
+      <feComponentTransfer in="s" result="q">
+        <feFuncR type="discrete" tableValues="0.055 0.086 0.149 0.149 0.247 0.388"/>
+        <feFuncG type="discrete" tableValues="0.110 0.161 0.278 0.278 0.424 0.949"/>
+        <feFuncB type="discrete" tableValues="0.306 0.420 0.659 0.659 0.910 0.655"/>
+      </feComponentTransfer>
+      <feComposite in="q" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <pattern id="tm-d50" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="#fff"/><rect x="2" y="2" width="2" height="2" fill="#fff"/>
+    </pattern>
+    <pattern id="tm-d25" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="#fff"/>
+    </pattern>
+    <mask id="tm-m50" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="220">
+      <rect width="1200" height="220" fill="url(#tm-d50)"/>
+    </mask>
+    <mask id="tm-m25" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="220">
+      <rect width="1200" height="220" fill="url(#tm-d25)"/>
+    </mask>
+    <clipPath id="tm-word"><path d="M100.58598893863577 157.9V62.140189623386874H118.00895443771398V157.9Z M144.2099025546484 157.9V62.140189623386874H163.4948643666052L222.28074795891496 132.09805109296815V62.140189623386874H239.96971293126154V157.9H220.68475111930474L161.76586779036083 87.80913879378456V157.9Z M268.16565709770873 157.9V62.140189623386874H287.45061890966554L346.2365025019753 132.09805109296815V62.140189623386874H363.92546747432186V157.9H344.64050566236506L285.7216223334211 87.80913879378456V157.9Z M392.38741111403743 157.9V62.140189623386874H480.566236502502V79.82915459573347H410.076376086384V101.10911245720305H466.7342638925468V118.93107716618383H410.076376086384V140.21103502765342H480.566236502502V157.9Z M583.6410323939954 157.9 554.7800895443772 123.45306821174611H577.7890439820912L602.7929944693179 152.97900974453518V157.9ZM507.2991835659732 157.9V62.273189360021064H584.4390308138004Q589.4930208058995 62.273189360021064 593.7490123781934 64.80018435607057Q598.0050039504873 67.32717935212008 600.5319989465368 71.51667105609691Q603.0589939425863 75.70616276007374 603.0589939425863 80.76015275217276V106.56210165920463Q603.0589939425863 111.61609165130366 600.5319989465368 115.87208322359757Q598.0050039504873 120.1280747958915 593.7490123781934 122.58856992362391Q589.4930208058995 125.04906505135634 584.4390308138004 125.04906505135634L524.8551488016856 125.18206478799053V157.9ZM526.4511456412959 107.36010007900974H583.6410323939954Q584.3060310771663 107.36010007900974 584.8380300237029 106.96110086910718Q585.3700289702397 106.56210165920463 585.3700289702397 105.89710297603371V81.42515143534368Q585.3700289702397 80.76015275217276 584.8380300237029 80.29465367395312Q584.3060310771663 79.82915459573347 583.6410323939954 79.82915459573347H526.4511456412959Q525.7861469581248 79.82915459573347 525.3206478799052 80.29465367395312Q524.8551488016856 80.76015275217276 524.8551488016856 81.42515143534368V105.89710297603371Q524.8551488016856 106.56210165920463 525.3206478799052 106.96110086910718Q525.7861469581248 107.36010007900974 526.4511456412959 107.36010007900974Z M630.5899394258626 157.9V80.62715301553858Q630.5899394258626 75.57316302343955 633.1169344219121 71.38367131946272Q635.6439294179617 67.1941796154859 639.8334211219385 64.66718461943638Q644.0229128259152 62.140189623386874 649.0769028180143 62.140189623386874H707.7297866736899Q712.7837766657889 62.140189623386874 717.0397682380828 64.66718461943638Q721.2957598103767 67.1941796154859 723.8227548064262 71.38367131946272Q726.3497498024757 75.57316302343955 726.3497498024757 80.62715301553858V157.9H708.6607848301292V125.71406373452726H648.1459046615751V157.9H630.5899394258626ZM648.1459046615751 108.15809849881485H708.6607848301292V81.42515143534368Q708.6607848301292 80.76015275217276 708.1287858835924 80.29465367395312Q707.5967869370556 79.82915459573347 706.9317882538847 79.82915459573347H649.7419015011852Q649.0769028180143 79.82915459573347 648.6114037397947 80.29465367395312Q648.1459046615751 80.76015275217276 648.1459046615751 81.42515143534368V108.15809849881485Z M773.0326573610747 157.9Q767.9786673689757 157.9 763.7891756649989 155.37300500395048Q759.599683961022 152.846010007901 757.0726889649725 148.65651830392414Q754.545693968923 144.46702659994733 754.545693968923 139.4130366078483V62.140189623386874H772.1016592046354V138.6150381880432Q772.1016592046354 139.28003687121412 772.5671582828551 139.74553594943376Q773.0326573610747 140.21103502765342 773.6976560442456 140.21103502765342H830.8875427969451Q831.552541480116 140.21103502765342 832.0845404266528 139.74553594943376Q832.6165393731895 139.28003687121412 832.6165393731895 138.6150381880432V62.140189623386874H850.3055043455362V139.4130366078483Q850.3055043455362 144.46702659994733 847.7785093494866 148.65651830392414Q845.2515143534371 152.846010007901 841.0620226494602 155.37300500395048Q836.8725309454835 157.9 831.8185409533844 157.9H773.0326573610747Z M954.5772978667371 157.9 925.716355017119 123.45306821174611H948.725309454833L973.7292599420598 152.97900974453518V157.9ZM878.235449038715 157.9V62.273189360021064H955.3752962865423Q960.4292862786413 62.273189360021064 964.6852778509351 64.80018435607057Q968.9412694232291 67.32717935212008 971.4682644192785 71.51667105609691Q973.9952594153281 75.70616276007374 973.9952594153281 80.76015275217276V106.56210165920463Q973.9952594153281 111.61609165130366 971.4682644192785 115.87208322359757Q968.9412694232291 120.1280747958915 964.6852778509351 122.58856992362391Q960.4292862786413 125.04906505135634 955.3752962865423 125.04906505135634L895.7914142744274 125.18206478799053V157.9ZM897.3874111140376 107.36010007900974H954.5772978667371Q955.242296549908 107.36010007900974 955.7742954964448 106.96110086910718Q956.3062944429815 106.56210165920463 956.3062944429815 105.89710297603371V81.42515143534368Q956.3062944429815 80.76015275217276 955.7742954964448 80.29465367395312Q955.242296549908 79.82915459573347 954.5772978667371 79.82915459573347H897.3874111140376Q896.7224124308667 79.82915459573347 896.2569133526471 80.29465367395312Q895.7914142744274 80.76015275217276 895.7914142744274 81.42515143534368V105.89710297603371Q895.7914142744274 106.56210165920463 896.2569133526471 106.96110086910718Q896.7224124308667 107.36010007900974 897.3874111140376 107.36010007900974Z M1001.5262048986044 157.9V80.62715301553858Q1001.5262048986044 75.57316302343955 1004.053199894654 71.38367131946272Q1006.5801948907035 67.1941796154859 1010.7696865946803 64.66718461943638Q1014.9591782986571 62.140189623386874 1020.0131682907562 62.140189623386874H1078.6660521464316Q1083.7200421385307 62.140189623386874 1087.9760337108246 64.66718461943638Q1092.2320252831187 67.1941796154859 1094.759020279168 71.38367131946272Q1097.2860152752176 75.57316302343955 1097.2860152752176 80.62715301553858V157.9H1079.597050302871V125.71406373452726H1019.0821701343169V157.9H1001.5262048986044ZM1019.0821701343169 108.15809849881485H1079.597050302871V81.42515143534368Q1079.597050302871 80.76015275217276 1079.0650513563342 80.29465367395312Q1078.5330524097976 79.82915459573347 1077.8680537266266 79.82915459573347H1020.6781669739271Q1020.0131682907562 79.82915459573347 1019.5476692125366 80.29465367395312Q1019.0821701343169 80.76015275217276 1019.0821701343169 81.42515143534368V108.15809849881485Z"/></clipPath>
+  </defs>
+  <style>
+    svg { color-scheme: light; }
+    .tm-near { will-change: transform; animation: tm-driftA 58s cubic-bezier(0.45,0,0.55,1) infinite; }
+    .tm-far  { will-change: transform; animation: tm-driftB 97s cubic-bezier(0.45,0,0.55,1) infinite; }
+    .tm-tide { animation: tm-tide 17.944s ease-in-out infinite; }
+    .tm-tide2 { animation: tm-tide 28.9s ease-in-out infinite; }
+    @keyframes tm-driftA { 0%,100% { transform: translate(0,0); } 25% { transform: translate(46px,-16px); } 50% { transform: translate(0,0); } 75% { transform: translate(-38px,18px); } }
+    @keyframes tm-driftB { 0%,100% { transform: translate(0,0); } 33% { transform: translate(-30px,12px); } 66% { transform: translate(24px,-10px); } }
+    @keyframes tm-tide  { 0%,100% { opacity: 0.95; } 50% { opacity: 0.50; } }
+    @media (prefers-reduced-motion: reduce) { .tm-near, .tm-far, .tm-tide, .tm-tide2 { animation: none; } }
+  </style>
+  <g data-hw-part="terrain">
+    <rect width="1200" height="220" fill="#FCF0FA"/>
+    <g class="tm-far"><rect x="-120" y="-120" width="1440" height="460" filter="url(#tm-far)" opacity="0.42"/></g>
+      <g class="tm-near"><rect x="-120" y="-120" width="1440" height="460" filter="url(#tm-hi)"/></g>
+    <g mask="url(#tm-m50)" class="tm-tide">
+      <g class="tm-near"><rect x="-120" y="-120" width="1440" height="460" filter="url(#tm-hiA)"/></g>
+    </g>
+    <g mask="url(#tm-m25)" class="tm-tide2">
+      <g class="tm-near"><rect x="-120" y="-120" width="1440" height="460" filter="url(#tm-hiB)"/></g>
+    </g>
+    <rect width="1200" height="220" fill="url(#tm-d25)" opacity="0.20"/>
+  </g>
+  <g clip-path="url(#tm-word)" data-hw-part="wordmark-window">
+    <rect width="1200" height="220" fill="#16296B"/>
+      <g class="tm-near"><rect x="-120" y="-120" width="1440" height="460" filter="url(#tm-lo)"/></g>
+    <g mask="url(#tm-m50)" class="tm-tide">
+      <g class="tm-near"><rect x="-120" y="-120" width="1440" height="460" filter="url(#tm-loA)"/></g>
+    </g>
+  </g>
+</svg>
