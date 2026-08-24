@@ -24,7 +24,6 @@ from hyperweave.compose.diagram.layered import back_edges, split_self_loops
 from hyperweave.compose.diagram.recenter import content_extents, shift_content, translate_path
 from hyperweave.compose.diagram.records import (
     AnnotationPlacement,
-    DiagramHeader,
     DiagramLayout,
     DiagramText,
     GatherPoint,
@@ -74,6 +73,18 @@ def enforce_caps(spec: DiagramSpec, slug: str, caps: Mapping[str, Any]) -> bool:
             f"sequence caps at {caps.get('sequence_max_messages', 8)} messages (got {len(spec.edges)})"
         )
     return n > int(caps.get("soft_nodes", 12))
+
+
+def layout_cap(caps: Mapping[str, Any], slug: str, key: str, default: int) -> int:
+    """A per-slug graph cap from ``caps.layouts.<slug>``.
+
+    Node-count bands already live there; families whose cells differ in what a
+    cap COSTS carry their graph caps there too. The dag family is the case that
+    needs it — flowing right a rank costs width and a member costs height,
+    flowing down that transposes — so ``dag`` and ``dag-vertical`` hold their
+    own numbers instead of sharing one flat key."""
+    band = (caps.get("layouts") or {}).get(slug) or {}
+    return int(band.get(key, default))
 
 
 def check_routing_overridable(spec: DiagramSpec, slug: str, engine: Mapping[str, Any]) -> None:
@@ -712,7 +723,9 @@ def finish_layout(
     # mode — no masthead, ever); "bare" is internal-only, set solely by the
     # sec 12.1 recursive embed seam (compose/resolvers/diagram.py).
     bare = ctx.chrome == "bare"
-    header_rec, mast_w, mast_h = DiagramHeader(), 0.0, 0.0
+    # The masthead BAND survives (it carries header legends); the masthead's
+    # title/subtitle CONTENT does not — see the "no masthead, ever" note above.
+    mast_w, mast_h = 0.0, 0.0
     if ctx.chrome in ("bare", "plain"):
         # "plain" keeps the plate and drops only the caption line — the
         # lanes hand sheet is captionless while every other chrome stands.
@@ -1003,12 +1016,7 @@ def finish_layout(
     # row.
     placed_legends: list[AnnotationPlacement] = []
     if not bare:
-        hdx, hdy = stacked.offsets.get("masthead", (m, m))
-        header_rec = DiagramHeader(
-            title=shift_text(header_rec.title, hdx, hdy),
-            subtitle=shift_text(header_rec.subtitle, hdx, hdy),
-            title_lines=tuple(t2 for t2 in (shift_text(tl, hdx, hdy) for tl in header_rec.title_lines) if t2),
-        )
+        _hdx, hdy = stacked.offsets.get("masthead", (m, m))
         for a in head_legends:
             if a.box is None:
                 placed_legends.append(a)
@@ -1116,7 +1124,6 @@ def finish_layout(
         display_h=disp_h,
         layout_slug=ctx.slug,
         aspect=ch.aspect,
-        header=header_rec,
         nodes=tuple(nodes_paint),
         connectors=connectors,
         particles=particles,

@@ -282,7 +282,7 @@ class TestMarkerResolution:
 class TestOrnamentFreeDefaults:
     def test_preset_markers_follow_the_per_topology_defaults(self) -> None:
         # The wire-defaults grammar: topologies in the engine wire_defaults table
-        # (sequence, dag, state-machine, lanes, flywheel) draw terminal
+        # (sequence, both dag cells, state-machine, lanes, flywheel) draw terminal
         # arrows by default (obi-engine/flywheel-orbit both read solid
         # rails + drawn chevrons); every other topology stays markerless
         # unless an edge/spec opts in. Self-loops never take the default (a
@@ -302,6 +302,7 @@ class TestOrnamentFreeDefaults:
             "hub",
             "sequence",
             "dag",
+            "dag-vertical",
             "state-machine",
             "lanes",
             "cycle-orbit",
@@ -309,7 +310,16 @@ class TestOrnamentFreeDefaults:
             "cycle-ring",
         }  # the confirmed wire-defaults set
         arrow_slugs = {slug for slug, cfg in wire_defaults.items() if cfg.get("terminal")}
-        assert arrow_slugs == {"sequence", "dag", "state-machine", "lanes", "cycle-orbit", "cycle-ring", "hub"}
+        assert arrow_slugs == {
+            "sequence",
+            "dag",
+            "dag-vertical",
+            "state-machine",
+            "lanes",
+            "cycle-orbit",
+            "cycle-ring",
+            "hub",
+        }
         offenders: list[tuple[str, str, int]] = []
         for name in sorted(diagram_preset_names()):
             # The production input seam (cyclic presets promote before solve).

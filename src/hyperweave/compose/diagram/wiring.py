@@ -186,6 +186,29 @@ def knot_collapse(
         trunk_d = line_d(mx, my, kx, my)
         tsx, tsy, ttx, tty = mx, my, kx, my
         knot = (kx, my)
+    elif vertical:
+        # The DOWNWARD join (dag-vertical): the mirror of the horizontal join
+        # below, floated along Y. Without it a vertical gather knots sideways
+        # and its trunk runs across the sink's face instead of into it.
+        mx, my = geos[slots[0]].tx, geos[slots[0]].ty
+        side = -1.0 if sum(geos[g].sy for g in slots) / len(slots) <= my else 1.0
+        ky = my + side * trunk_len
+        flush = not trunk_len
+        for gi in slots:
+            old_g = geos[gi]
+            geos[gi] = _replace(
+                old_g,
+                d=s_curve_v(old_g.sx, old_g.sy, mx, ky),
+                tx=mx,
+                ty=ky,
+                length=s_curve_v_len(old_g.sx, old_g.sy, mx, ky),
+                marker_override="none",
+            )
+        if flush:
+            return (mx, my)
+        trunk_d = line_d(mx, ky, mx, my)
+        tsx, tsy, ttx, tty = mx, ky, mx, my
+        knot = (mx, ky)
     else:
         mx, my = geos[slots[0]].tx, geos[slots[0]].ty
         # The knot floats TOWARD its spokes: -x for a west-face mouth
@@ -699,4 +722,32 @@ def wire_motion(
             )
         )
     _ = track_cfg
-    return tuple(connectors), tuple(particles)
+    return tuple(_one_terminal_per_point(connectors)), tuple(particles)
+
+
+def _one_terminal_per_point(connectors: list[ConnectorPlacement]) -> list[ConnectorPlacement]:
+    """One point, one terminal.
+
+    A flush convergence collapses its arrivals onto a single seat — that is the
+    seating law (``_PORT_FLUSH``), and the specimen citation for the trunk-less
+    join says the coincident endpoints "read as one". They do; what does not is
+    stamping the chevron N times at that one coordinate. Identical geometry
+    drawn on top of itself is N marks with no distinguishable extent, and it
+    darkens under any non-opaque dress.
+
+    Scoped to true duplicates: the key carries the marker path AND every field
+    the template's fill class reads (``ink_wire``, ``accent_wire``,
+    ``accent_index``), so two arrivals that differ in dress each keep their own
+    mark. This decides the MARK only — no knot, no trunk, nothing about whether
+    a plain fan-in means one thing or several, which stays with the ``gather``
+    hint exactly as it does today."""
+    seen: set[tuple[str, bool, bool, int]] = set()
+    out: list[ConnectorPlacement] = []
+    for c in connectors:
+        key = (c.marker_d, c.ink_wire, c.accent_wire, c.accent_index)
+        if c.marker_d and key in seen:
+            c = replace(c, marker_d="")
+        elif c.marker_d:
+            seen.add(key)
+        out.append(c)
+    return out

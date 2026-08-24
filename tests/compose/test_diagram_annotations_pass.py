@@ -17,7 +17,6 @@ import re
 import pytest
 
 from hyperweave.compose.diagram import compute_diagram_layout
-from hyperweave.compose.diagram.annotate import base_regions
 from hyperweave.compose.diagram.input import coerce_diagram_input, resolve_auto_roles
 from hyperweave.compose.engine import compose
 from hyperweave.config.loader import load_diagram_config, load_glyphs, load_paradigms
@@ -481,20 +480,6 @@ def test_annotations_cap_raises() -> None:
             palette_len=6,
             glyph_registry=load_glyphs(),
         )
-
-
-# ── Regions ──────────────────────────────────────────────────────────────────
-
-
-def test_base_regions_partition_canvas() -> None:
-    """The three base regions tile the height: header + canvas + footer bands
-    are contiguous and non-overlapping."""
-    ch = load_paradigms()["primer"].diagram.topologies["pipeline"]
-    regions = base_regions(760.0, 216.0, ch)
-    header, canvas, footer = regions["header"], regions["canvas"], regions["footer"]
-    assert header.y == 0.0
-    assert abs((header.y + header.h) - canvas.y) < 1e-9
-    assert abs((canvas.y + canvas.h) - footer.y) < 1e-9
 
 
 def test_placeless_annotation_pass_is_noop_for_labelless_topology() -> None:

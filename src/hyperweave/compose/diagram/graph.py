@@ -17,6 +17,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from hyperweave.compose.diagram.anchors import boundary_anchor, port_row, side_anchor
+from hyperweave.compose.diagram.axis import RIGHT, AxisMap
 from hyperweave.compose.diagram.chrome import place_node, style_of
 from hyperweave.compose.diagram.layered import (
     back_edges,
@@ -26,20 +27,32 @@ from hyperweave.compose.diagram.layered import (
     pinned_orders,
     split_self_loops,
 )
-from hyperweave.compose.diagram.paths import bisect_clearance_depth, fmt, line_d, line_len, s_curve_h, s_curve_h_len
+from hyperweave.compose.diagram.paths import (
+    bisect_clearance_depth,
+    fmt,
+    line_d,
+    line_len,
+    s_curve_h,
+    s_curve_h_len,
+    s_curve_v,
+    s_curve_v_len,
+)
 from hyperweave.compose.diagram.pinning import resolve_layout_pins
 from hyperweave.compose.diagram.records import DiagramText, LaneBand
 from hyperweave.compose.diagram.route import self_loop
 from hyperweave.compose.diagram.sizing import (
     CHIP_H,
+    CHIP_PAD_X,
     CHIP_STUB_MIN,
     chip_run_min,
     hero_height_floor,
     marker_reserved_stub,
     solve_node_box,
+    voice_for,
 )
-from hyperweave.compose.diagram.solver import finish_layout, register_solvers
+from hyperweave.compose.diagram.solver import finish_layout, layout_cap, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext, knot_collapse
+from hyperweave.compose.matrix.cells import measure_voice
 from hyperweave.compose.spatial_records import LineSpec, RectSpec
 from hyperweave.core.diagram import DiagramCapacityError, DiagramInputError, DiagramNode, NodeRole, NodeStyle
 
@@ -61,12 +74,14 @@ def _rank_overrides(spec_nodes: list[DiagramNode]) -> dict[int, int]:
 def _fan_spread(
     edges: tuple[ResolvedEdge, ...] | list[ResolvedEdge],
     placed: dict[int, NodePlacement],
+    axis: AxisMap,
     *,
     pitch_max: float = 16.0,
     skip_edges: frozenset[int] = frozenset(),
 ) -> tuple[dict[int, float], dict[int, float]]:
-    """Spread the y where edges leave a shared source (fan-out) and land on a
-    shared target (fan-in), so a bundle reads as distinct wires, not one
+    """Spread the MINOR coordinate where edges leave a shared source (fan-out)
+    and land on a shared target (fan-in), so a bundle reads as distinct wires,
+    not one
     overlapping cable. Within each group the edges order by the OTHER
     endpoint's center y — the topmost destination gets the topmost exit — so
     the fan stays untangled. The spread band is clamped to the node's inner
@@ -86,8 +101,7 @@ def _fan_spread(
         in_groups[e.target].append(j)
 
     def _center(idx: int) -> float:
-        b = placed[idx].box
-        return b.y + b.h / 2
+        return _minor_center(axis, placed[idx])
 
     exit_y: dict[int, float] = {}
     entry_y: dict[int, float] = {}
@@ -99,7 +113,7 @@ def _fan_spread(
             if len(members) < 2:
                 continue
             box = placed[node_i].box
-            cy = box.y + box.h / 2
+            cy = _minor_center(axis, placed[node_i])
             # Flush convergence: if any member's OTHER endpoint already sits on
             # this node's center row, its natural chord is straight — spreading
             # the group would bend that straight arrival into an S-curve. Collapse
@@ -110,7 +124,7 @@ def _fan_spread(
             members.sort(key=lambda j: _center(other_of[j]))
             # The shared row mechanism (anchors.port_row): dag seats keep a
             # 10px face inset each side; the pitch cap is this family's own.
-            offs = port_row(len(members), pitch=pitch_max, face_len=box.h, inset=10.0)
+            offs = port_row(len(members), pitch=pitch_max, face_len=axis.box_minor(box.w, box.h), inset=10.0)
             for r, j in enumerate(members):
                 out[j] = cy + offs[r]
 
@@ -135,10 +149,17 @@ def _self_loop_geo(ctx: SolverContext, j: int, e: ResolvedEdge, p: NodePlacement
     side = e.exit or default_side
     conn = ctx.engine["connector"]
     standoff = float(conn.get("standoff", 0))
-    d, length, _apex, label_anchor, end_tangent = self_loop(
+    # A chipped loop must be WIDE enough to show its own chip: the arc runs
+    # flat through the apex, so the mouth is the run the pill seats on. At the
+    # bare 24px mouth a 55px pill swallows the whole arc and the loop reads as
+    # a detached tag. Same run law as a trunk chip (chip + a stub each side).
+    mouth = float(conn.get("loop_mouth", 24))
+    if e.label_style == "chip":
+        mouth = max(mouth, chip_run_min([e], ctx.cfg, stub=CHIP_STUB_MIN))
+    d, length, apex, label_anchor, end_tangent = self_loop(
         p,
         side,
-        mouth=float(conn.get("loop_mouth", 24)),
+        mouth=mouth,
         reach=float(conn.get("loop_reach", 46)),
         pinch=float(conn.get("loop_pinch", 18)),
         standoff=standoff,
@@ -149,6 +170,14 @@ def _self_loop_geo(ctx: SolverContext, j: int, e: ResolvedEdge, p: NodePlacement
     # ``label_pos`` (outboard of the apex) as before.
     mx0, my0 = (float(v) for v in d.split(" ", 2)[1].split(","))
     mx1, my1 = (float(v) for v in d.rsplit(" ", 1)[1].split(","))
+    # A CHIP rides its wire at the run midpoint — the same law every other
+    # channel chip obeys — so on a loop it seats at the APEX, centred. The
+    # outboard anchor exists for a bare micro-label, which must sit beside the
+    # stroke rather than cover it; an opaque pill parked outboard reads as a
+    # detached tag floating near the arc instead of a label on it.
+    is_chip = e.label_style == "chip"
+    seat = apex if is_chip else label_anchor
+    seat_anchor = "middle" if is_chip else "start"
     return EdgeGeo(
         index=j,
         # Returns ride the drift dash (specimen law: every state-machine
@@ -171,9 +200,9 @@ def _self_loop_geo(ctx: SolverContext, j: int, e: ResolvedEdge, p: NodePlacement
         ty=my1,
         length=length,
         end_tangent=end_tangent,
-        label_pos=label_anchor,
+        label_pos=seat,
         label_max_w=float(conn.get("loop_label_max_w", 96)),
-        label_anchor="start",
+        label_anchor=seat_anchor,
     )
 
 
@@ -279,7 +308,180 @@ def _place_dag_node(
     return place_node(ctx, node, i, cx, cy, w=w, h=h)
 
 
+def _sibling_chip_major(
+    ctx: SolverContext,
+    axis: AxisMap,
+    edges: list[ResolvedEdge],
+    skip_idx: frozenset[int],
+    source: int,
+    placed: dict[int, NodePlacement],
+    s_major: float,
+) -> float | None:
+    """Where a chipped sibling's pill sits ALONG the flow, or None.
+
+    A chip on a plain adjacent-rank edge seats at that edge's run midpoint. A
+    sibling skip leaving the same face should turn THERE — the pill then reads
+    as the junction rather than as something the skip clipped on its way past.
+    Only straight siblings qualify: on a bending run the pill is not on the
+    departure axis, so aligning to it would pull the turn off the wire."""
+    best: float | None = None
+    # A gather HUB relocates its verb chip onto the synthetic depart TRUNK, so
+    # the pill does not sit on any declared edge at all — looking only at
+    # sibling edges misses it and the skip turns above the chip instead of
+    # beside it. The trunk seat is deterministic (mouth + trunk_len/2 along the
+    # flow), so compute it here rather than waiting for the seating pass that
+    # runs after routing.
+    src_node = ctx.spec.nodes[source]
+    if src_node.gather and source in placed:
+        out_edges = [e for j, e in enumerate(edges) if e.source == source and e.target != source and j not in skip_idx]
+        if len(out_edges) >= 2 and any(e.label for e in out_edges):
+            ch = ctx.ch
+            trunk_len = max(
+                float(ch.depart_trunk or 0),
+                chip_run_min(out_edges, ctx.cfg, stub=_GATHER_STANDOFF),
+            )
+            mouth = side_anchor(placed[source], side=axis.exit_side, at=_minor_center(axis, placed[source]))
+            return axis.major_of(*mouth) + trunk_len / 2
+    for j, sib in enumerate(edges):
+        if j in skip_idx or sib.source != source or sib.source == sib.target:
+            continue
+        if not (sib.label and sib.label_style == "chip"):
+            continue
+        if sib.source not in placed or sib.target not in placed:
+            continue
+        a, b = placed[sib.source], placed[sib.target]
+        if abs(_minor_center(axis, a) - _minor_center(axis, b)) > _PORT_FLUSH:
+            continue  # a bending sibling's pill is off the departure axis
+        # The chip seats at the midpoint of the DRAWN run — face to face, not
+        # centre to centre. Averaging box centres is off by half the height
+        # difference whenever the two cards are not the same size.
+        exit_major = axis.major_of(a.box.x + a.box.w, a.box.y + a.box.h)
+        entry_major = axis.major_of(b.box.x, b.box.y)
+        mid = (exit_major + entry_major) / 2
+        if mid > s_major and (best is None or mid < best):
+            best = mid
+    return best
+
+
+_REGION_RX = 18.0
+"""Corner radius every region box draws at. A corner-seated label plate starts
+where the region's STRAIGHT edge starts — inside the radius, its own rounded
+corner sits on the region's and the pair reads as two overlapping ovals. The
+specimen agrees: its band is rx16 at x=60 and its chip starts at x=76."""
+
+
+def _label_plate(ctx: SolverContext, label: DiagramText, *, anchor: str) -> RectSpec:
+    """The opaque chip behind a region label that sits ON its own boundary.
+
+    Measured from the label's own run at the region voice, padded to the chip
+    chassis — the same pill vocabulary every on-wire chip uses, so a label
+    riding a hairline reads as furniture rather than as text struck through."""
+    # Measure in the voice the text ACTUALLY renders in. ``voice_for`` is the
+    # one class -> voice map (sizing.VOICE_CLASSES); reaching past it for a
+    # hardcoded voice is how a plate ends up sized for 10/400 text while the
+    # label draws at 12.5/700 and overflows its own pill by 16px.
+    voice = voice_for(ctx.cfg, label.cls)
+    w = measure_voice(label.text, voice) + 2 * CHIP_PAD_X
+    x = label.x - w / 2 if anchor == "middle" else label.x - CHIP_PAD_X
+    return RectSpec(x=x, y=label.y - CHIP_H / 2 - 4.0, w=w, h=CHIP_H, rx=6.0)
+
+
+def _seated_pad(base: float, seating: float) -> float:
+    """A container pad that holds a seated label, or the base pad if it holds
+    nothing.
+
+    The SYMMETRY LAW, read off all three dag hand specimens: a region's two
+    pads on an axis are equal, and the only asymmetry permitted is a label
+    seated INSIDE one of them — in which case that pad equals the label's own
+    measured seating, ``inset + label height + gap``. Nothing is chosen; the
+    seating is measured from the thing being seated.
+
+    A label that STRADDLES the border (the enclosure grammar) seats nothing, so
+    it passes ``seating=base`` and both pads stay equal. That is why the
+    enclosure specimen is 25/25 while the band specimen is 50/38: not two
+    tastes, one rule and two label treatments. The seating itself is always
+    CITED by the treatment that occupies it — a chip's is inset+CHIP_H+gap, a
+    header strip's is the strip's own measured height."""
+    return max(base, seating)
+
+
+def _reseat_region_labels(
+    ctx: SolverContext,
+    bands: tuple[LaneBand, ...],
+    geos: list[EdgeGeo],
+    placed: Mapping[int, NodePlacement],
+    axis: AxisMap,
+) -> tuple[LaneBand, ...]:
+    """Slide a region label along its own edge until it stops competing.
+
+    Region labels were the ONE annotation class placed by pure formula: a
+    corner offset computed before any wire existed, never checked against
+    anything. Every other label on the artifact goes through the collision
+    ladder. That asymmetry is the whole defect — the corner was chosen to dodge
+    the CENTRE thread, and the leftmost branch of a fan then ran straight
+    through the word.
+
+    No formula can be safe here, and the specimen shows why rather than
+    contradicting it: its pill ends 8px before the first card's arrival thread
+    because that file's side pad and its hand-set pill width happen to leave
+    the gap. The engine's pill is 22px wider for the same words, so the same
+    formula lands 42px inside the thread. What the specimen encodes is the
+    RELATION — label clear of the threads — not the offset that achieved it.
+
+    So: keep the cited seat as the preferred one, then slide ALONG the region's
+    leading edge (the family's grammar; the edge never changes) to the first
+    position clear of every wire and card. Sliding, not pushing — the label
+    belongs on that edge."""
+    if not bands:
+        return bands
+    # CARDS only. Wires are not an obstacle for this label: its plate is opaque
+    # and paints ABOVE the connectors — occlusion is the plate's whole purpose
+    # ("the hairline runs behind the plate rather than through the word"), and
+    # a wire is the same problem as a border. Cards paint above the plate in
+    # turn, so they ARE obstacles. Treating wires as obstacles here is what
+    # made the region widen to hold a label it never needed room for.
+    cards = [p.box for p in placed.values()]
+
+    def _hits(bx: RectSpec) -> bool:
+        return any(bx.x < c.x + c.w and bx.x + bx.w > c.x and bx.y < c.y + c.h and bx.y + bx.h > c.y for c in cards)
+
+    out: list[LaneBand] = []
+    for lb in bands:
+        hb = lb.header_box
+        if hb is None or not _hits(hb):
+            out.append(lb)
+            continue
+        # ANCHORED seats only. A region label names its region, so it has to
+        # read as attached to it — the near corner of the leading edge (the
+        # specimen's own seating), or failing that the FAR corner of the same
+        # edge. Both are anchors. An earlier cut slid in half-plate steps to
+        # the first clear position and produced a label floating mid-edge
+        # between two cards, which is clear of everything and means nothing:
+        # "avoid collisions" was the wrong objective. If neither corner is
+        # free the cited seat stays — a label in the right place slightly
+        # crowded beats a label nowhere.
+        near = hb.x if axis.flow == "down" else hb.y
+        far = (
+            lb.box.x + lb.box.w - hb.w - (near - lb.box.x)
+            if axis.flow == "down"
+            else lb.box.y + lb.box.h - hb.h - (near - lb.box.y)
+        )
+        best: RectSpec | None = None
+        for seat in (near, far):
+            cand = replace(hb, x=seat) if axis.flow == "down" else replace(hb, y=seat)
+            if not _hits(cand):
+                best = cand
+                break
+        if best is None:
+            out.append(lb)
+            continue
+        dx, dy = best.x - hb.x, best.y - hb.y
+        out.append(replace(lb, header_box=best, header=replace(lb.header, x=lb.header.x + dx, y=lb.header.y + dy)))
+    return tuple(out)
+
+
 def build_region_bands(ctx: SolverContext, placed: dict[int, NodePlacement]) -> tuple[LaneBand, ...]:
+    axis = AxisMap.for_slug(ctx.slug)
     """Authored compound regions → chrome bands, shared by dag and state-machine.
 
     Pads are DERIVED from what a region frames, not authored, and cited to
@@ -307,6 +509,8 @@ def build_region_bands(ctx: SolverContext, placed: dict[int, NodePlacement]) -> 
     spec = ctx.spec
     id_of = {n.id: k for k, n in enumerate(spec.nodes)}
     rb = ctx.engine.get("region_band") or {}
+    # Which label grammar this family cites — see region_label_on_edge.
+    on_edge = ctx.slug in {str(x) for x in (rb.get("region_label_on_edge") or [])}
     bands: list[LaneBand] = []
     for reg in spec.regions:
         member_boxes = [placed[id_of[m]].box for m in reg.members if m in id_of and id_of[m] in placed]
@@ -320,28 +524,127 @@ def build_region_bands(ctx: SolverContext, placed: dict[int, NodePlacement]) -> 
                 bot_pad = float(rb.get("band_over_arc_bottom_pad", 13))
             else:
                 side_pad = float(rb.get("band_side_pad", 18))
-                top_pad = float(rb.get("band_top_pad", 26))
-                bot_pad = float(rb.get("band_bottom_pad", 12))
+                bot_pad = float(
+                    rb.get("band_flow_pad_down", 38) if axis.flow == "down" else rb.get("band_bottom_pad", 12)
+                )
+                # SYMMETRY LAW (all three hand specimens, one rule): a region's
+                # two pads on an axis are EQUAL, and the only asymmetry allowed
+                # is a label seated inside one of them — which then equals that
+                # label's own measured seating.
+                #
+                #   gateway-balanced  h band   side 18/18  flow 26/12  seated strip
+                #   mapreduce band    v band   side 42/42  flow 50/38  seated pill
+                #   mapreduce enclos. v encl   side 65/65  flow 25/25  straddles
+                #
+                # The base pad is the TRAILING one (nothing is seated there);
+                # the leading pad is max(base, seating). Writing it this way is
+                # what stops a bottom-cramped band: the trailing pad had been
+                # left at the horizontal citation while the leading one grew to
+                # hold a chip, so the row sank toward the lower border.
+                seating = (
+                    float(rb.get("band_label_inset", 12)) + CHIP_H + float(rb.get("band_label_gap", 18))
+                    if axis.flow == "down"
+                    else float(rb.get("band_top_pad", 26))  # gateway-balanced's header strip
+                )
+                top_pad = _seated_pad(bot_pad, seating)
             x0 = min(mb.x for mb in member_boxes) - side_pad
             x1 = max(mb.x + mb.w for mb in member_boxes) + side_pad
             y0 = min(mb.y for mb in member_boxes) - top_pad
             y1 = max(mb.y + mb.h for mb in member_boxes) + bot_pad
-            if over_arc:
-                label = DiagramText(x=x0 + 14.0, y=y0 + 17.0, text=reg.label.upper(), cls="rcnt")
+            # Label seating is AXIS-DEPENDENT, and it is not cosmetic: flowing
+            # down, the rank's own centre wire descends through the band's top
+            # centre — exactly where a centred label would sit — so the label
+            # and the arrival chevron collide. The vertical specimen seats its
+            # chip in the top-LEFT corner instead (band 60,284 -> chip 76,296:
+            # 16 in, 12 down), which is the same corner grammar the over-arc
+            # band already uses. Flowing right the centre wire enters the
+            # band's left face, the top centre is clear, and the centred label
+            # is the specimen's own reading.
+            corner_label = over_arc or axis.flow == "down"
+            if corner_label:
+                inset = float(rb.get("band_label_inset", 12))
+                # The inset is the PLATE's, not the baseline's: `_label_plate`
+                # back-computes its box as `baseline - CHIP_H/2 - 4`, so
+                # insetting the BASELINE by 12 landed the plate flush ON the
+                # border at inset 0. The specimen seats its pill 12px inside
+                # (region 284, pill 296..316), so solve for the baseline that
+                # puts the PLATE where the law says.
+                label = DiagramText(
+                    x=x0 + _REGION_RX + CHIP_PAD_X, y=y0 + inset + CHIP_H / 2 + 4.0, text=reg.label.upper(), cls="rcnt"
+                )
+                header_box = _label_plate(ctx, label, anchor="start") if on_edge else None
             else:
                 label = DiagramText(x=(x0 + x1) / 2, y=y0 + 16.0, text=reg.label.upper(), cls="rcnt", anchor="middle")
+                header_box = None
             ground = "panel"
         else:
             side_pad = float(rb.get("enclosure_side_pad", 20))
-            top_pad = float(rb.get("enclosure_top_pad", 22))
-            bot_pad = float(rb.get("enclosure_bottom_pad", 28))
+            # Same symmetry law. The cited 28 trailing pad is the STRIP
+            # grammar's seating — pp-state-machine-alt2's RECOVERY box, whose
+            # label sits inside along the trailing edge ("28px bottom (the
+            # label strip)"). A family that seats nothing there stays at base.
+            top_pad = base_pad = float(rb.get("enclosure_top_pad", 22))
+            bot_pad = base_pad if on_edge else float(rb.get("enclosure_bottom_pad", 28))
+            if on_edge and axis.flow == "down":
+                # ONE BOX RULE. A region encloses its members the same way
+                # whichever way its label is drawn — two renders of one graph
+                # differing only in region KIND had regions 160 and 110 tall,
+                # which is the label treatment leaking into the geometry.
+                # Flowing down both kinds seat the label INSIDE the leading
+                # pad, so both take the band's pads and the boxes agree.
+                side_pad = float(rb.get("band_side_pad", 18))
+                bot_pad = float(rb.get("band_flow_pad_down", 38))
+                seating = float(rb.get("band_label_inset", 12)) + CHIP_H + float(rb.get("band_label_gap", 18))
+                top_pad = _seated_pad(bot_pad, seating)
+            # An enclosure label STRADDLES its leading border — its plate is
+            # centred ON the hairline, so it seats nothing inside and both pads
+            # stay the base. The vertical specimen is 25/25 for exactly that
+            # reason. (An earlier pass corner-seated it INSIDE and opened a pad
+            # to hold it, which is the band's treatment, not this one's.)
             x0 = min(mb.x for mb in member_boxes) - side_pad
             x1 = max(mb.x + mb.w for mb in member_boxes) + side_pad
             y0 = min(mb.y for mb in member_boxes) - top_pad
             y1 = max(mb.y + mb.h for mb in member_boxes) + bot_pad
-            label = DiagramText(x=(x0 + x1) / 2, y=y1 - 10.0, text=reg.label.upper(), cls="rlabel", anchor="middle")
+            if not on_edge:
+                # The STRIP grammar (agent-task-lifecycle's RECOVERY): the label
+                # sits inside the box along its trailing edge with no plate.
+                # state-machine cites this; dag cites the on-edge chip below.
+                # Two specimens, two families, both right about their own.
+                label = DiagramText(x=(x0 + x1) / 2, y=y1 - 10.0, text=reg.label.upper(), cls="rlabel", anchor="middle")
+                header_box = None
+            elif axis.flow == "down":
+                # INSIDE the leading pad, at the corner — identical to the
+                # band. Straddling is right flowing RIGHT, where edges arrive
+                # on the left face and the top edge is free; flowing DOWN the
+                # leading edge is exactly where every arrowhead lands, and a
+                # straddling plate sat 1px off the nearest one. Which edge is
+                # free is an axis fact, not a region-kind fact.
+                inset = float(rb.get("band_label_inset", 12))
+                label = DiagramText(
+                    x=x0 + _REGION_RX + CHIP_PAD_X,
+                    y=y0 + inset + CHIP_H / 2 + 4.0,
+                    text=reg.label.upper(),
+                    cls="rcnt",
+                )
+                header_box = _label_plate(ctx, label, anchor="start")
+            else:
+                # Straddle the LEADING edge, centred — the dag-mapreduce
+                # enclosure's own seating (a 144x20 chip whose centre sits on
+                # the region's top edge at y=66, so the hairline runs behind
+                # the plate rather than through the word). The plate is what
+                # makes an on-boundary label legible at all; without it the
+                # border strikes the text.
+                label = DiagramText(x=(x0 + x1) / 2, y=y0 + 4.0, text=reg.label.upper(), cls="rcnt", anchor="middle")
+                header_box = _label_plate(ctx, label, anchor="middle")
             ground = "enclosure"
-        bands.append(LaneBand(box=RectSpec(x=x0, y=y0, w=x1 - x0, h=y1 - y0, rx=18.0), header=label, ground=ground))
+        bands.append(
+            LaneBand(
+                box=RectSpec(x=x0, y=y0, w=x1 - x0, h=y1 - y0, rx=_REGION_RX),
+                header=label,
+                ground=ground,
+                header_box=header_box,
+            )
+        )
     return tuple(bands)
 
 
@@ -389,6 +692,7 @@ def _seat_gather_chip(
     join labels on the spokes (dag), the annotate label branch honors a
     ``label_pos`` verbatim, and the chip branch honors it once supplied."""
 
+    axis = AxisMap.for_slug(ctx.slug)
     mx, my = trunk.tx, trunk.ty  # the join trunk runs knot -> mouth
     chip_slot = next((s for s in slots if ctx.edges[geos[s].index].label_style == "chip"), None)
     if chip_slot is None:
@@ -399,13 +703,31 @@ def _seat_gather_chip(
     # coincide; anchoring mouth-minus-9 on a LONGER trunk drifted the chip to
     # frac 0.62-0.71 with a 34px stub one side and 9px the other — the
     # asymmetric seat that reads as a random placement.
-    chip_cx = (trunk.sx + mx) / 2
+    # The midpoint runs ALONG the trunk and the lift runs ACROSS it. Flowing
+    # right those are x and y; flowing down they swap, and taking them as x/y
+    # regardless seats a vertical join's chip on the sink's own face instead of
+    # mid-trunk (the trunk's x-midpoint is constant when the trunk is vertical).
+    trunk_s_major = axis.major_of(trunk.sx, trunk.sy)
+    mouth_major, mouth_minor = axis.major_of(mx, my), axis.minor_of(mx, my)
+    chip_major = (trunk_s_major + mouth_major) / 2
     # DAG joins float the chip a mouth-lift above the trunk (arrivals crowd the
     # knot, so the verb clears them); convergence grounds it ON the wire
     # (lift=0) — its own specimen (convergence-arrivals) seats the compose chip
     # dead-center on the trunk, nothing arriving to collide.
     dy = (CHIP_H / 2 + _GATHER_STANDOFF) if lift is None else lift
-    geos[chip_slot] = replace(geos[chip_slot], label_pos=(chip_cx, my - dy), label_anchor="middle")
+    if axis.flow == "down":
+        # The mouth-lift clears arrivals that crowd the knot by moving the chip
+        # PERPENDICULAR to the trunk. On a horizontal trunk that is upward, off
+        # a busy junction but still reading as "on the line". Transposed it
+        # becomes a sideways shove: the pill leaves a vertical trunk entirely
+        # and reads as a detached tag with the note stranded beside it. The
+        # deeper law wins — a chip rides its wire — and a vertical trunk does
+        # not need the lift anyway: its arrivals converge AT the knot, half a
+        # trunk-length from the chip's own centred seat.
+        dy = 0.0
+    geos[chip_slot] = replace(
+        geos[chip_slot], label_pos=axis.point(chip_major, mouth_minor - dy), label_anchor="middle"
+    )
     note_voice = ctx.cfg.edge_label_voice
     note_slots = [
         s
@@ -418,10 +740,25 @@ def _seat_gather_chip(
     # ladder flings it into blank space. Stacking below max(wire, chip bottom)
     # keeps the lifted DAG case byte-identical (its chip bottom sits above the
     # wire).
-    note_base = max(my, (my - dy) + CHIP_H / 2)
+    # Notes stack clear of the chip's own PLATE, and the plate's extent across
+    # the trunk is its height only when the trunk runs horizontally. On a
+    # vertical trunk the across-extent is the pill's WIDTH, so clearing by
+    # CHIP_H/2 leaves the first note sitting inside the pill.
+    chip_w = measure_voice(ctx.edges[geos[chip_slot].index].label, ctx.cfg.edge_label_voice) + 2 * CHIP_PAD_X
+    chip_across = axis.box_minor(chip_w, CHIP_H)
+    note_base = max(mouth_minor, (mouth_minor - dy) + chip_across / 2)
     for r, s in enumerate(note_slots):
         note_y = note_base + _GATHER_STANDOFF + note_voice.size + r * (note_voice.size + _GATHER_STANDOFF)
-        geos[s] = replace(geos[s], label_pos=(chip_cx, note_y), label_anchor="middle")
+        # A middle-anchored note straddles its clearance point. That is fine
+        # when the stack runs DOWN from a horizontal trunk (the offset is
+        # vertical, so width never re-enters), but on a vertical trunk the
+        # offset is horizontal and half the note swings back over the plate.
+        # Left-align it at the clearance point instead.
+        geos[s] = replace(
+            geos[s],
+            label_pos=axis.point(chip_major, note_y),
+            label_anchor="start" if axis.flow == "down" else "middle",
+        )
 
 
 def _seat_depart_chip(
@@ -439,9 +776,160 @@ def _seat_depart_chip(
     chip_slot = next((s for s in slots if ctx.edges[geos[s].index].label_style == "chip"), None)
     if chip_slot is None:
         return
+    axis = AxisMap.for_slug(ctx.slug)
+    # Same transposition as the join seat: the midpoint runs ALONG the trunk and
+    # the constant runs ACROSS it. Taking them as x/y regardless seats a
+    # vertical depart chip off in space beside the fan (the parity sweep caught
+    # it at 37px from any wire, with no stub at all).
     mx, my = mouth
-    kx, _ = knot
-    geos[chip_slot] = replace(geos[chip_slot], label_pos=((mx + kx) / 2, my), label_anchor="middle")
+    kx, ky = knot
+    mouth_major, mouth_minor = axis.major_of(mx, my), axis.minor_of(mx, my)
+    knot_major = axis.major_of(kx, ky)
+    geos[chip_slot] = replace(
+        geos[chip_slot],
+        label_pos=axis.point((mouth_major + knot_major) / 2, mouth_minor),
+        label_anchor="middle",
+    )
+
+
+def _curve_len(axis: AxisMap, maj1: float, min1: float, maj2: float, min2: float) -> float:
+    """Arc length of a plain S-curve given in MAJOR/MINOR terms."""
+    x1, y1 = axis.point(maj1, min1)
+    x2, y2 = axis.point(maj2, min2)
+    return (s_curve_h_len if axis.flow == "right" else s_curve_v_len)(x1, y1, x2, y2)
+
+
+def _minor_center(axis: AxisMap, p: NodePlacement) -> float:
+    """A placed box's center ACROSS the flow — the coordinate a lane aligns
+    on. Flowing right that is cy; flowing down it is cx."""
+    return axis.minor_of(p.box.x + p.box.w / 2, p.box.y + p.box.h / 2)
+
+
+def _major_center(axis: AxisMap, p: NodePlacement) -> float:
+    """A placed box's center ALONG the flow — cx flowing right, cy flowing down."""
+    return axis.major_of(p.box.x + p.box.w / 2, p.box.y + p.box.h / 2)
+
+
+def _minor_near(axis: AxisMap, p: NodePlacement) -> float:
+    """The box face on the NEAR side across the flow (where the over-channel
+    lives): its top edge flowing right, its left edge flowing down."""
+    return axis.minor_of(p.box.x, p.box.y)
+
+
+def _minor_far(axis: AxisMap, p: NodePlacement) -> float:
+    """The box face on the FAR side across the flow (where the under-channel
+    lives): its bottom edge flowing right, its right edge flowing down."""
+    return axis.minor_of(p.box.x + p.box.w, p.box.y + p.box.h)
+
+
+def _leg_blockers(
+    axis: AxisMap,
+    boxes: Sequence[RectSpec],
+    *,
+    major: float,
+    minor_lo: float,
+    minor_hi: float,
+    sgn: float = 1.0,
+    pad: float = 0.0,
+    clearance: float = 0.0,
+    skip: Sequence[RectSpec] = (),
+) -> list[RectSpec]:
+    """Boxes a MINOR-running leg at ``major`` would pass through on its way
+    between ``minor_lo`` and ``minor_hi``.
+
+    The span test is the shipped span-aware corridor's (ruling 2026-07-16): a
+    box counts when its own minor extent OVERLAPS the leg's, not merely when
+    it sits beyond the target's face.
+
+    Pads default to ZERO because DETECTION and DISPLACEMENT are different
+    questions. "Does this wire run through that card" is bare geometry, and it
+    is the same question the gallery's wire-crosses-card sweep asks — trigger
+    and guard have to agree, or a route detours around something it was never
+    going to touch. Only ``_corridor_major`` passes pads, and asymmetrically,
+    because it pushes one way: full ``pad`` on the side it moves to, bare
+    ``clearance`` on the side it leaves."""
+    lo_pad, hi_pad = (clearance, pad) if sgn > 0 else (pad, clearance)
+    out: list[RectSpec] = []
+    for b in boxes:
+        if any(b is s for s in skip):
+            continue
+        if not (axis.minor_of(b.x, b.y) < minor_hi and axis.minor_of(b.x + b.w, b.y + b.h) > minor_lo):
+            continue
+        if axis.major_of(b.x, b.y) - lo_pad < major < axis.major_of(b.x + b.w, b.y + b.h) + hi_pad:
+            out.append(b)
+    return out
+
+
+def _run_blocked(
+    axis: AxisMap,
+    boxes: Sequence[RectSpec],
+    *,
+    minor: float,
+    major_lo: float,
+    major_hi: float,
+    skip: Sequence[RectSpec] = (),
+) -> bool:
+    """Does a MAJOR-running leg at ``minor`` cross a box between ``major_lo``
+    and ``major_hi``? The transpose of ``_leg_blockers`` — same bare-geometry
+    question, along the flow instead of across it."""
+    return any(
+        axis.major_of(b.x, b.y) < major_hi
+        and axis.major_of(b.x + b.w, b.y + b.h) > major_lo
+        and axis.minor_of(b.x, b.y) < minor < axis.minor_of(b.x + b.w, b.y + b.h)
+        for b in boxes
+        if not any(b is s for s in skip)
+    )
+
+
+def _corridor_major(
+    axis: AxisMap,
+    boxes: Sequence[RectSpec],
+    *,
+    major: float,
+    minor_lo: float,
+    minor_hi: float,
+    sgn: float,
+    pad: float,
+    clearance: float,
+    skip: Sequence[RectSpec] = (),
+) -> float:
+    """Push a MINOR-running leg's major coordinate along ``sgn`` until it
+    clears every box in its own minor span — the span-aware corridor, lifted
+    out of the authored elbow so every detour branch runs the one law.
+
+    A detour's TRAVEL leg has always been cleared (``over_arc_clear`` above the
+    shallowest card, the channel below the deepest); its ENTRY leg never was,
+    so a route could ride a clear channel and then descend straight through a
+    same-rank sibling to reach the card behind it. Cards paint after edges, so
+    the wire vanishes into the box and the defect reads as clean."""
+    moved = True
+    while moved:
+        moved = False
+        for b in _leg_blockers(
+            axis,
+            boxes,
+            major=major,
+            minor_lo=minor_lo,
+            minor_hi=minor_hi,
+            sgn=sgn,
+            pad=pad,
+            clearance=clearance,
+            skip=skip,
+        ):
+            major = (axis.major_of(b.x + b.w, b.y + b.h) + pad) if sgn > 0 else (axis.major_of(b.x, b.y) - pad)
+            moved = True
+    return major
+
+
+def _pt(axis: AxisMap, major: float, minor: float) -> str:
+    """One path coordinate, written in major/minor and emitted in screen space.
+
+    Every skip-channel and over-arc route below is built this way so its
+    geometry transposes with the flow axis. RIGHT is the identity map and the
+    same ``fmt`` runs on both components, so the horizontal cell's path strings
+    are byte-for-byte what they were before the axis existed."""
+    x, y = axis.point(major, minor)
+    return f"{fmt(x)},{fmt(y)}"
 
 
 def _lane_rows(
@@ -450,10 +938,12 @@ def _lane_rows(
     pitch: float,
     edges: Sequence[ResolvedEdge],
     rank: list[int],
-    placed: Mapping[int, NodePlacement],
+    minor_of: Mapping[int, float],
     spec_nodes: Sequence[DiagramNode],
 ) -> dict[int, float]:
-    """Row-aligned cy per grid member — lanes over independent centering.
+    """Lane-aligned MINOR coordinate per grid member — lanes over independent
+    centering. "Row" is the across-flow position: cy flowing right, cx
+    flowing down.
 
     The centering formula seats every rank around the shared canvas mid, so
     adjacent ranks row-align only when their counts happen to match; one
@@ -482,16 +972,28 @@ def _lane_rows(
     authored order never inverts and boxes never overlap; a conflict loser
     shifts down one pitch instead of stealing the row. Balanced 1:1 ranks
     reproduce their provisional rows exactly — the pass is a no-op on every
-    already-aligned figure."""
+    already-aligned figure.
+
+    The cascade looks lopsided where a rank cannot seat its snaps — two
+    174-wide stores wanting rows 83px apart pin the first and shove the second
+    135px past its own midpoint — and distributing that conflict around the
+    rank's centre instead was measured as the alternative. It is not better:
+    on cache-aside-mesh the two seatings give the SAME total cross-axis bow
+    (378.6) and the same worst edge (152.6), and centring buys a 26px
+    reduction on one edge by breaking a lane that was dead straight. The
+    binding constraint is the pitch, not the seating, so the cascade stays and
+    keeps the straight lane it earns."""
     targets: dict[int, float] = {}
     designated: dict[int, int] = {}
     for m in grid_members:
         inbound = [
-            e for e in edges if e.target == m and e.source != m and rank[m] - rank[e.source] == 1 and e.source in placed
+            e
+            for e in edges
+            if e.target == m and e.source != m and rank[m] - rank[e.source] == 1 and e.source in minor_of
         ]
         if not inbound:
             continue
-        src_cy = {e.source: placed[e.source].box.y + placed[e.source].box.h / 2 for e in inbound}
+        src_cy = {e.source: minor_of[e.source] for e in inbound}
         if spec_nodes[m].gather:
             targets[m] = (min(src_cy.values()) + max(src_cy.values())) / 2
             continue
@@ -508,7 +1010,7 @@ def _lane_rows(
         claims[source] = claims.get(source, 0) + 1
     for m, source in designated.items():
         if claims[source] == 1:
-            targets[m] = placed[source].box.y + placed[source].box.h / 2
+            targets[m] = minor_of[source]
     rows: dict[int, float] = {}
     running = -math.inf
     for m in grid_members:
@@ -526,12 +1028,22 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     n = len(spec.nodes)
     edges = list(ctx.edges)
     caps = {**(ctx.engine.get("caps") or {}), **(ctx.spec.caps or {})}
+    axis = AxisMap.for_slug(ctx.slug)
+    vertical_flow = axis.flow == "down"  # knot/trunk geometry floats along the flow
+    # Authored routing words are FLOW-FRAME words (AxisMap.side): `exit: top`
+    # names the near channel and `entry: left` the flow-facing face, whichever
+    # way the graph runs. Transposed once, here, so every predicate below
+    # compares screen sides against screen sides. RIGHT is the identity, so the
+    # horizontal cell never sees this line.
+    if axis is not RIGHT:
+        edges = [replace(e, exit=axis.side(e.exit), entry=axis.side(e.entry)) for e in edges]
     # Self-loops carry no rank/crossing info (a v->v edge would push its own
     # rank up forever) — partition them out, rank + order on the remainder,
     # and route them as their own arc below.
     loop_idx, non_self = split_self_loops(edges)
-    if len(loop_idx) > int(caps.get("sm_max_self_loops", 2)):
-        raise DiagramCapacityError(f"dag caps at {caps.get('sm_max_self_loops', 2)} self-loops (got {len(loop_idx)})")
+    max_self_loops = layout_cap(caps, ctx.slug, "max_self_loops", 2)
+    if len(loop_idx) > max_self_loops:
+        raise DiagramCapacityError(f"{ctx.slug} caps at {max_self_loops} self-loops (got {len(loop_idx)})")
     flow_edges = [edges[j] for j in non_self]
     # Defensive re-check (the promotion seam's backstop): a cycle among
     # distinct nodes has no rank — production paths promote it to
@@ -547,23 +1059,24 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     rank = longest_path_ranks(n, flow_edges, fixed)
     check_rank_contradiction(flow_edges, rank, fixed)
     n_ranks = max(rank) + 1
-    if n_ranks > int(caps.get("dag_max_ranks", 4)):
-        raise DiagramCapacityError(f"dag caps at {caps.get('dag_max_ranks', 4)} ranks (got {n_ranks}); split the graph")
+    max_ranks = layout_cap(caps, ctx.slug, "max_ranks", 5)
+    if n_ranks > max_ranks:
+        raise DiagramCapacityError(f"{ctx.slug} caps at {max_ranks} ranks (got {n_ranks}); split the graph")
     # Authored row-order pins (a transform child's inherited figure) outrank
     # the barycenter's fresh crossing minimum — order continuity IS the law;
     # a fresh compose without pins keeps the sweep byte-identical.
     pins = resolve_layout_pins(spec)
     orders = pinned_orders(n, rank, pins) if pins is not None else barycenter_orders(n, flow_edges, rank)
+    max_per_rank = layout_cap(caps, ctx.slug, "max_per_rank", 4)
     for r, members in orders.items():
-        if len(members) > int(caps.get("dag_max_per_rank", 4)):
+        if len(members) > max_per_rank:
             raise DiagramCapacityError(
-                f"dag caps at {caps.get('dag_max_per_rank', 4)} nodes per rank (rank {r} has {len(members)})"
+                f"{ctx.slug} caps at {max_per_rank} nodes per rank (rank {r} has {len(members)})"
             )
     skips = [e for e in flow_edges if rank[e.target] - rank[e.source] >= 2]
-    if len(skips) > int(caps.get("dag_max_skip_edges", 3)):
-        raise DiagramCapacityError(
-            f"dag caps at {caps.get('dag_max_skip_edges', 3)} rank-skipping edges (got {len(skips)})"
-        )
+    max_skip_edges = layout_cap(caps, ctx.slug, "max_skip_edges", 3)
+    if len(skips) > max_skip_edges:
+        raise DiagramCapacityError(f"{ctx.slug} caps at {max_skip_edges} rank-skipping edges (got {len(skips)})")
     # Per-node boxes in per-rank columns (dag specimens): every card solves its
     # OWN box (a rank's crown enlarges through its content while its
     # siblings stay small — the uniform max-box sized every std card to the
@@ -615,15 +1128,15 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             continue
         w, h, _ = solve_node_box(ctx, node, i, h_floor=hero_height_floor(ch))
         boxes[i] = (w, h)
-    rank_w = {r: max(boxes[i][0] for i in members) for r, members in orders.items()}
-    # Rank channels must hold their edge-chips + stubs (the chip-run law).
-    # Rank channels must hold the chips that RIDE them — a rank-skipping
-    # edge's chip rides its own under/over channel run instead, so it never
-    # votes here (the gateway hand file's telemetry chip is 78 wide on a
-    # 455px channel run; letting it inflate the 92px rank runs stretched
-    # every rank gap ~30px past the citation).
-    rank_channel_edges = [e for e in edges if e.source != e.target and rank[e.target] - rank[e.source] < 2]
-    rank_gap = max(ch.rank_gap, chip_run_min(rank_channel_edges, ctx.cfg, stub=CHIP_STUB_MIN))
+    # From here the solve is in MAJOR/MINOR terms: ranks advance along the
+    # major axis, a rank's members spread along the minor. RIGHT is the
+    # identity map, so every expression below reduces to exactly what the
+    # horizontal cell computed before the axis existed — byte parity depends
+    # on that, which is why these are renames and accessor swaps only, never
+    # reassociated arithmetic.
+    rank_ext = {r: max(axis.box_major(*boxes[i]) for i in members) for r, members in orders.items()}
+    ranks_sorted = sorted(orders)
+
     # Gather-join trunks are ADDITIVE room (primer_diagram_language): a rank whose
     # gather node collects >=2 converging edges seats its knot+trunk in space BEYOND
     # the rank gap, so the convergence fan opens at the same span as the preceding
@@ -675,20 +1188,45 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             trunk = max(depart_base, chip_run_min(outgoing, ctx.cfg, stub=_GATHER_STANDOFF))
         if trunk:
             gather_trunk[rank[sidx] + 1] = max(gather_trunk.get(rank[sidx] + 1, 0.0), trunk)
-    span = sum(rank_w.values()) + (n_ranks - 1) * rank_gap + sum(gather_trunk.values())
-    # Content-fit law: the chassis width spreads rank gaps only where the chassis
-    # declares a fixed frame — otherwise a sparse dag hugs its own span
-    # (canvas + scale follow in finish_layout).
-    width = int(max(ch.width if ch.width_floor else 0, 2 * ch.margin_x + span))
 
     # Balance law (primer_diagram_language, router pitch 118 on h60):
     # rank pitch = card height + row_gap (gap ≈ card height), floored at the
     # chassis pitch — and the CANVAS grows to hold the tallest rank. The old
     # fixed-height clamp compressed a 4-member rank to ~10px gaps (the
     # squished-fan read).
+
+    # ONE pitch for the whole figure, not one per rank. The cross-axis extent
+    # a pitch is built from is the card's HEIGHT flowing right and its WIDTH
+    # flowing down — and those two behave completely differently. The card
+    # anatomy fixes height, so flowing right every rank computes the same
+    # pitch and the ranks land on a shared grid for free; width follows the
+    # label text, so flowing down every rank computes its OWN pitch and
+    # nothing lines up with anything. Measured: request-to-pod solves rank
+    # pitches 178 and 170, putting a probe 4px off the pod it feeds — enough
+    # to lose a straight run to the flush test; cache-aside-mesh solves 166
+    # and 218, so a sink's own feeders never sit on its column and the
+    # convergence that reads as one mouth flowing right reads as two spread
+    # arrivals flowing down.
+    #
+    # The grid is the point of a layered graph, so the pitch is a property of
+    # the FIGURE. Taking the max keeps every rank's own boxes clear.
+    def _grid_pitch() -> float:
+        """Only ranks that actually SPACE members set the grid. A one-member
+        rank never uses its pitch to position anything, so letting it into the
+        max lets a tall hero dictate the spread of a fan it does not belong
+        to — frontier-serving's crown pushed its three providers from 118 to
+        146 apart and grew the canvas 65px to hold air nobody asked for."""
+        return max(
+            (
+                max(ch.rank_pitch_max, max(axis.box_minor(*boxes[i]) for i in ms) + ch.row_gap)
+                for ms in (_grid(m) for m in orders.values())
+                if len(ms) > 1
+            ),
+            default=float(ch.rank_pitch_max),
+        )
+
     def _rank_pitch(members: list[int]) -> float:
-        max_h_r = max(boxes[i][1] for i in members)
-        return max(ch.rank_pitch_max, max_h_r + ch.row_gap)
+        return _grid_pitch()
 
     # Out-of-band LANE members (the gateway hand file's metrics): a sink
     # whose EVERY inbound edge is a bottom-exit, west-entry under-channel
@@ -701,74 +1239,215 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         inbound = [e for e in edges if e.target == t and e.source != t]
         if not inbound or any(e.source == t for e in edges):
             return False
-        return all(rank[t] - rank[e.source] >= 2 and e.exit == "bottom" and e.entry == "left" for e in inbound)
+        return all(
+            rank[t] - rank[e.source] >= 2 and e.exit == axis.channel_far and e.entry == axis.entry_side for e in inbound
+        )
 
     lane_members = frozenset(t for t in range(n) if _is_lane_member(t))
 
     def _grid(members: list[int]) -> list[int]:
         return [m for m in members if m not in lane_members]
 
-    needed_h = max(
+    # Flow-axis gap. Flowing right it is the flat chassis constant: the cards
+    # are WIDE along the flow, so a fixed gap reads proportionate. Flowing down
+    # the cards are SHORT along the flow, and a flat gap that suits a wide fan
+    # leaves a straight chain swimming in dead air — the same 166 that a 3-wide
+    # fan needs to bow through is 2.5x the card between two stacked boxes.
+    #
+    # So the vertical chassis derives it from the CROSS-AXIS SPREAD the edges
+    # into a rank must actually cover, which is what the travel was ever paying
+    # for. Both ends are cited: the ratio reproduces the bare specimen exactly
+    # (its outer worker sits 240 off the centre thread and its travel is 166 —
+    # 166/240 = 0.6917), and the floor is pipeline-vertical's own straight-stack
+    # gap (74), the repo's only cited vertical run with nothing to bow around.
+    spread_ratio = float(getattr(ch, "rank_gap_spread_ratio", 0.0) or 0.0)
+    gap_floor = float(getattr(ch, "rank_gap_min", 0.0) or 0.0)
+
+    def _rows_relative() -> dict[int, float]:
+        """Every rank's rows, solved about a zero mid.
+
+        Rows have to come BEFORE gaps, because a gap is sized for the bows
+        that cross it and a bow's cross travel is only known once the rows are
+        snapped. Nothing here reads a major coordinate — ``_lane_rows`` only
+        ever asks where the previous rank sat ACROSS the flow — so the two can
+        be separated. Solving about zero rather than ``minor_mid`` is safe for
+        the same reason it is useful: a gap is sized from DIFFERENCES, and a
+        shared origin cancels out of every one of them."""
+        rows: dict[int, float] = {}
+        for r in ranks_sorted:
+            gm = _grid(orders[r])
+            if not gm:
+                continue
+            k = len(gm)
+            p = _rank_pitch(gm) if k > 1 else 0.0
+            prov = {m: (i - (k - 1) / 2) * p for i, m in enumerate(gm)}
+            rows.update(_lane_rows(gm, prov, p, edges, rank, rows, spec.nodes))
+        return rows
+
+    def _cross_travel(rows: Mapping[int, float], prev_r: int, r: int) -> float:
+        """The widest bow that crosses this gap — MEASURED over the edges that
+        actually cross it, not inferred from the two ranks' half-spans.
+
+        The half-span sum assumes both ranks centre on the same axis, and a
+        lane snap is precisely the thing that breaks that: a one-member rank
+        pulled onto its source's column contributes a half-span of ZERO while
+        its own outbound edge still has to reach the far member of the next
+        rank. request-to-pod sized a gap for 89px of spread and then drew a bow
+        across 178 — the same quantity, measured two different ways, and the
+        gap was built on the wrong one.
+
+        Only edges that actually BOW count. An authored elbow crosses the same
+        two ranks but routes orthogonally — out the far face, along the outside
+        gutter, back in through the target's side — on tight fixed-radius
+        fillets that consume no rank gap whatever. Measuring its cross
+        DISPLACEMENT as if it were a bow is the same category error one level
+        up: dag-mesh-billing's `writes` runs 552px across, and sizing the gap
+        for it opened 720px of dead air between two rank rows that only ever
+        needed 184."""
+        return max(
+            (
+                abs(rows[e.target] - rows[e.source])
+                for e in edges
+                if e.source != e.target
+                and rank[e.source] == prev_r
+                and rank[e.target] == r
+                and e.source in rows
+                and e.target in rows
+                and not (e.exit == axis.channel_far and e.entry == axis.exit_side)
+            ),
+            default=0.0,
+        )
+
+    # Rank channels must hold their edge-chips + stubs (the chip-run law).
+    # Rank channels must hold the chips that RIDE them — a rank-skipping
+    # edge's chip rides its own under/over channel run instead, so it never
+    # votes here (the gateway hand file's telemetry chip is 78 wide on a
+    # 455px channel run; letting it inflate the 92px rank runs stretched
+    # every rank gap ~30px past the citation).
+    #
+    # ...and only the chips that will actually be DRAWN. A chip whose edge
+    # bends past `chip_bend_max_dy` hands its label off the wire and becomes a
+    # micro-label, so reserving a pill-width run for it books space nothing
+    # occupies: order-event-dlq held 219px gaps for a `dead letter` pill it no
+    # longer draws — 69px of dead width per gap, and a gap:card ratio of 1.37
+    # against the horizontal specimen's 0.90. Rows are already solved above
+    # (they never depended on gaps), so the same bend test the edge loop runs
+    # is available here.
+    _bend_max = float((ctx.engine.get("connector") or {}).get("chip_bend_max_dy", 40))
+    _rows_for_gap = _rows_relative()
+    rank_channel_edges = [
+        e
+        for e in edges
+        if e.source != e.target
+        and rank[e.target] - rank[e.source] < 2
+        and not (
+            e.label_style == "chip"
+            and e.source in _rows_for_gap
+            and e.target in _rows_for_gap
+            and not (ctx.spec.nodes[e.target].gather or ctx.spec.nodes[e.source].gather)
+            and not (e.exit == axis.channel_far and e.entry == axis.exit_side)
+            and abs(_rows_for_gap[e.target] - _rows_for_gap[e.source]) > _bend_max
+        )
+    ]
+    rank_chip_stub = float((ctx.engine.get("region_band") or {}).get("rank_chip_stub", CHIP_STUB_MIN))
+    rank_gap = max(ch.rank_gap, chip_run_min(rank_channel_edges, ctx.cfg, stub=rank_chip_stub))
+    gap_into: dict[int, float] = {}
+    _rows = _rows_for_gap if spread_ratio else {}
+    for idx, r in enumerate(ranks_sorted):
+        if idx == 0:
+            continue
+        if spread_ratio:
+            spread = _cross_travel(_rows, ranks_sorted[idx - 1], r)
+            gap_into[r] = max(gap_floor, spread_ratio * spread, rank_gap if gap_floor == 0 else 0.0)
+        else:
+            gap_into[r] = rank_gap
+    span = sum(rank_ext.values()) + sum(gap_into.values()) + sum(gather_trunk.values())
+
+    minor_needed = max(
         (
-            (len(_grid(members)) - 1) * _rank_pitch(_grid(members)) + max(boxes[i][1] for i in _grid(members))
+            (len(_grid(members)) - 1) * _rank_pitch(_grid(members))
+            + max(axis.box_minor(*boxes[i]) for i in _grid(members))
             for members in orders.values()
             if _grid(members)
         ),
-        default=ch.node.h,
+        default=axis.box_minor(ch.node.w, ch.node.h),
     )
     # An exit:top skip runs an over-the-content channel (the specimen routes a
     # long cross-rank skip OVER the cards, chip on the top run); reserve a top
     # band so the cards clear it, mirroring the below-canvas skip channel.
-    _has_top_skip = any(e.exit == "top" and rank[e.target] - rank[e.source] >= 2 for e in edges)
+    _has_top_skip = any(e.exit == axis.channel_near and rank[e.target] - rank[e.source] >= 2 for e in edges)
     top_reserve = max(ch.skip_drop, 60.0) if _has_top_skip else 0.0
-    height = max(ch.height or 360, int(ch.header_h + top_reserve + ch.footer_h + needed_h))
-    mid = (ch.header_h + top_reserve + height - ch.footer_h) / 2
+    # Chrome is the ONE thing that does not transpose: the masthead band and
+    # the caption sit at the top and bottom of the SCREEN whichever way the
+    # graph flows, so they always consume the VERTICAL axis. Flowing right
+    # that is the minor axis (the branch below is the horizontal cell's
+    # original arithmetic, preserved term for term); flowing down it is the
+    # major axis, so the rank run starts below the header while the members'
+    # spread takes the plain side margins instead.
+    #
+    # Content-fit law, either way: the chassis dimension floors the canvas
+    # only where the chassis declares a fixed frame — otherwise a sparse dag
+    # hugs its own span (canvas + scale follow in finish_layout).
+    chrome_reserve = ch.header_h + top_reserve + ch.footer_h
+    if axis.flow == "right":
+        major_total = int(max(ch.width if ch.width_floor else 0, 2 * ch.margin_x + span))
+        minor_total = max(ch.height or 360, int(chrome_reserve + minor_needed))
+        minor_mid = (ch.header_h + top_reserve + minor_total - ch.footer_h) / 2
+        major_origin = float(ch.margin_x)
+    else:
+        major_total = max(ch.height or 360, int(chrome_reserve + span))
+        minor_total = int(max(ch.width if ch.width_floor else 0, 2 * ch.margin_x + minor_needed))
+        minor_mid = minor_total / 2
+        major_origin = float(ch.header_h + top_reserve)
+    # What sits outside the content on the FAR minor side — the caption band
+    # flowing right, a plain side margin flowing down. The channels clear it.
+    minor_far_chrome = float(ch.footer_h if axis.flow == "right" else ch.margin_x)
+    width, height = (int(v) for v in axis.point(major_total, minor_total))
     placed: dict[int, NodePlacement] = {}
-    x_cursor = ch.margin_x
+    major_cursor = major_origin
     # The extra canvas past the natural span splits evenly into the gaps so
     # a chassis-floored banner still reads centered.
-    slack = max(0.0, width - 2 * ch.margin_x - span)
-    eff_gap = rank_gap + (slack / (n_ranks - 1) if n_ranks > 1 else 0.0)
+    slack = max(0.0, major_total - 2 * ch.margin_x - span)
+    slack_each = slack / (n_ranks - 1) if n_ranks > 1 else 0.0
     if n_ranks == 1:
-        x_cursor += slack / 2
+        major_cursor += slack / 2
     lane_cx: dict[int, float] = {}
     clearance = float(ctx.engine.get("min_clearance", 18))
     for idx, r in enumerate(sorted(orders)):
         # The gap INTO this rank; a gather-join rank takes its trunk ADDITIVELY
         # over the shared eff_gap so the convergence fan mirrors the departure.
         if idx > 0:
-            x_cursor += eff_gap + gather_trunk.get(r, 0.0)
+            major_cursor += gap_into.get(r, rank_gap) + slack_each + gather_trunk.get(r, 0.0)
         members = orders[r]
         grid_members = _grid(members)
         k = len(grid_members)
-        col_w = rank_w[r]
+        col_ext = rank_ext[r]
         pitch = _rank_pitch(grid_members) if k > 1 else 0.0
-        provisional = {m: mid + (i - (k - 1) / 2) * pitch for i, m in enumerate(grid_members)}
+        provisional = {m: minor_mid + (i - (k - 1) / 2) * pitch for i, m in enumerate(grid_members)}
         rows = _lane_rows(
             grid_members,
             provisional,
             _rank_pitch(grid_members) if grid_members else 0.0,
             edges,
             rank,
-            placed,
+            {i: _minor_center(axis, p) for i, p in placed.items()},
             spec.nodes,
         )
         for node_index in grid_members:
             w, h = boxes[node_index]
-            placed[node_index] = _place_dag_node(
-                ctx, node_index, spec.nodes[node_index], x_cursor + col_w / 2, rows[node_index], w, h
-            )
+            cx, cy = axis.point(major_cursor + col_ext / 2, rows[node_index])
+            placed[node_index] = _place_dag_node(ctx, node_index, spec.nodes[node_index], cx, cy, w, h)
         for node_index in members:
             if node_index in lane_members:
-                # Seated after the channel solves — remember the column only.
-                lane_cx[node_index] = x_cursor + col_w / 2
-        x_cursor += col_w
+                # Seated after the channel solves — remember the rank position only.
+                lane_cx[node_index] = major_cursor + col_ext / 2
+        major_cursor += col_ext
     # A monotone snap chain can push a conflict loser past the pre-solve rank
     # extent; grow the canvas exactly as the lane-member seat does rather than
     # letting a row ride the footer.
     if placed:
-        deepest_grid = max(p.box.y + p.box.h for p in placed.values())
-        height = max(height, int(deepest_grid + clearance + ch.footer_h))
+        deepest_grid = max(_minor_far(axis, p) for p in placed.values())
+        minor_total = max(minor_total, int(deepest_grid + clearance + minor_far_chrome))
     in_degree: dict[int, int] = {}
     for e in edges:
         in_degree[e.target] = in_degree.get(e.target, 0) + 1
@@ -784,18 +1463,54 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     # grazes rank boxes. Three segments — dive, flat run ON the channel,
     # rise — keep clearance true; channels stack DOWNWARD and the canvas
     # grows to hold them.
-    deepest_box = max((p.box.y + p.box.h for p in placed.values()), default=0.0)
+    deepest_box = max((_minor_far(axis, p) for p in placed.values()), default=0.0)
     # A band's OUTLINE is a chip-seat obstacle too (annotate.py's
     # band_chip_clearance) — the under-channel a chip rides must clear the
     # band by the same specimen-cited margin PLUS the chip's own half-height
     # (CHIP_H/2), so a chip centered on the channel (never pushed off its
     # wire — kit piece 7) inherits the full clearance, not just the wire.
     deepest_band = max(
-        (b.box.y + b.box.h for b in bands if b.ground in ("panel", "enclosure")),
+        (axis.minor_of(b.box.x + b.box.w, b.box.y + b.box.h) for b in bands if b.ground in ("panel", "enclosure")),
         default=0.0,
     )
     band_clearance = float((ctx.engine.get("region_band") or {}).get("band_chip_clearance", 20)) + CHIP_H / 2
-    channel_base = max(height - ch.footer_h - ch.skip_drop, deepest_box + clearance + 4, deepest_band + band_clearance)
+
+    # A chip riding the channel needs the channel itself clear by the chip's
+    # own half-extent ACROSS it — which is the pill's HEIGHT on a horizontal
+    # channel but its WIDTH on a vertical one. The bare +4 covers a 13px half
+    # height and nothing like a 42px half width, so a vertical channel chip
+    # clipped whatever card sat nearest the far side.
+    # ``near=None`` is every skip chip — the shipped far-channel set, kept
+    # whole. Scoping it to far-only would be tighter (a chip rides one channel,
+    # never both) but the far channel's depth is not this fix's business and
+    # narrowing it moves horizontal artifacts for an unrelated reason. The near
+    # channel, which had no reservation at all, asks for its own set.
+    def _chip_across(near: bool | None) -> float:
+        return max(
+            (
+                axis.box_minor(chip_run_min([e], ctx.cfg, stub=0.0), CHIP_H)
+                for e in edges
+                if e.source != e.target
+                and rank[e.target] - rank[e.source] >= 2
+                and e.label
+                and e.label_style == "chip"
+                and (near is None or (e.exit == axis.channel_near) is near)
+            ),
+            default=0.0,
+        )
+
+    skip_chip_across = _chip_across(near=None)
+    channel_base = max(
+        minor_total - minor_far_chrome - ch.skip_drop,
+        deepest_box + clearance + max(4.0, skip_chip_across / 2),
+        deepest_band + band_clearance,
+    )
+    # The NEAR channel needs the same reservation and never had one: a flat
+    # ``over_arc_clear`` clears a pill lying along the channel and nothing like
+    # one standing across it. Same terms as the far channel's — half the chip's
+    # across-extent plus its bare +4 floor — and inert flowing right, where the
+    # across-extent is CHIP_H (26): max(18, 13 + 4) is 18 exactly.
+    near_clear = max(ch.over_arc_clear, _chip_across(near=True) / 2 + 4.0)
     # Seat the lane members now the channel is solved: each takes the channel
     # its own inbound edge will run at (replicating the edge loop's
     # skip_seen ordering below — every non-top skip consumes one slot), so
@@ -805,41 +1520,202 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         lane_channel: dict[int, float] = {}
         seen = 0
         for e in edges:
-            if e.source == e.target or rank[e.target] - rank[e.source] < 2 or e.exit == "top":
+            if e.source == e.target or rank[e.target] - rank[e.source] < 2 or e.exit == axis.channel_near:
                 continue
             if e.target in lane_members and e.target not in lane_channel:
                 lane_channel[e.target] = channel_base + seen * ch.skip_stack
             seen += 1
         for node_index in lane_members:
             w, h = boxes[node_index]
-            cy = lane_channel.get(node_index, channel_base)
-            placed[node_index] = _place_dag_node(ctx, node_index, spec.nodes[node_index], lane_cx[node_index], cy, w, h)
-            height = max(height, int(cy + h / 2 + clearance + ch.footer_h))
+            seat_minor = lane_channel.get(node_index, channel_base)
+            cx, cy = axis.point(lane_cx[node_index], seat_minor)
+            placed[node_index] = _place_dag_node(ctx, node_index, spec.nodes[node_index], cx, cy, w, h)
+            minor_total = max(minor_total, int(seat_minor + axis.box_minor(w, h) / 2 + clearance + minor_far_chrome))
     # Top channel for exit:top skips: above the shallowest card by a clear margin
     # (chip half-height + clearance) so the on-wire pill clears the card row.
-    shallowest_box = min((p.box.y for p in placed.values()), default=mid)
+    shallowest_box = min((_minor_near(axis, p) for p in placed.values()), default=minor_mid)
     # Fan separation: edges sharing a source (fan-out) or a target (fan-in)
     # must not all leave/land on the SAME edge-center point — that reads as
     # a bundle of overlapping cables. Spread their exit/entry y across the
     # node's edge, ordered by the OTHER endpoint's y so the curves stay
     # untangled (top target = top exit). ``fan_exit_y`` / ``fan_entry_y``
     # return the spread coordinate for edge j.
+    # Every card and every band outline, hoisted once: a wire must clear a
+    # band's hairline exactly as it clears a card. Placement is final here —
+    # the lane members took their channel seats above — so one list serves
+    # every detour branch's corridor scan.
+    corridor_blockers = [p.box for p in placed.values()] + [band.box for band in bands]
+    corridor_pad = clearance + ch.over_arc_r
+    _chip_bend_max = float((ctx.engine.get("connector") or {}).get("chip_bend_max_dy", 40))
+    # A chip rides STRAIGHT wire — the kit's own law — and the way to honour
+    # that on a bending edge is NOT to bend the edge further. The retired
+    # construction was a PLATEAU: bow in, flat run for the pill, bow out. It
+    # manufactured straightness by adding two shoulders, so a chipped edge and
+    # its unchipped sibling left the same face on visibly different shapes —
+    # order-event-dlq's kafka fans to reserve and dlq at the same 59px offset
+    # and only the labelled one stepped. It fired on ONE edge in the whole
+    # corpus, and no hand specimen draws it: every specimen chip
+    # (pp-service-deps' `reads`, `direct read`) sits centred on wire that was
+    # already straight.
+    #
+    # So the LABEL steps off the wire instead, which is the shipped THREE
+    # HOMES rule — micro-label beside its wire, chip inside its card, caption
+    # band at the bottom. A chip that cannot sit on straight wire has no home
+    # on that wire. Decided here, on the placed rows, and written onto the ctx
+    # because the label style is read downstream by the annotation pass.
+    _bent = {
+        j
+        for j, e in enumerate(edges)
+        if e.label
+        and e.label_style == "chip"
+        and e.source != e.target
+        and e.source in placed
+        and e.target in placed
+        and rank[e.target] - rank[e.source] == 1
+        and not (ctx.spec.nodes[e.target].gather or ctx.spec.nodes[e.source].gather)
+        # An authored elbow does not bow between those rows — it goes AROUND,
+        # and its chip rides the flat gutter run. Reading its row offset as a
+        # bend is the same category error one axis over, and it stripped
+        # dag-mesh-billing's `writes` pill off a dead-straight leg.
+        and not (e.exit == axis.channel_far and e.entry == axis.exit_side)
+        and abs(_minor_center(axis, placed[e.target]) - _minor_center(axis, placed[e.source])) > _chip_bend_max
+    }
+    if _bent:
+        ctx = replace(
+            ctx, edges=tuple(replace(e, label_style="") if j in _bent else e for j, e in enumerate(ctx.edges))
+        )
+
+    def _own_furniture(*boxes: RectSpec) -> tuple[RectSpec, ...]:
+        """The boxes given, plus every enclosure CONTAINING any of them. A
+        region is an obstacle for a wire passing by and furniture for one whose
+        own endpoints live inside it — rag-index-and-query's query and retrieve
+        are both members of the `query time` enclosure, so the straight line
+        between them crosses nothing, and treating that enclosure as a wall
+        sent the wire down to the channel and back for no reason."""
+        out = list(boxes)
+        for b in corridor_blockers:
+            if any(b is x for x in boxes):
+                continue
+            if any(b.x <= t.x and b.y <= t.y and b.x + b.w >= t.x + t.w and b.y + b.h >= t.y + t.h for t in boxes):
+                out.append(b)
+        return tuple(out)
+
+    def _entry_skips(pb: NodePlacement) -> tuple[RectSpec, ...]:
+        """What an entry leg is allowed to touch on its way in: the target's
+        own box, plus any enclosure CONTAINING it. A band is an obstacle for a
+        wire passing by and furniture for one terminating inside it — a leg
+        that must enter a band to reach a card seated in it is not crossing
+        anything, and detouring it around its own enclosure is the failure a
+        flat containment test makes."""
+        tb = pb.box
+        return (
+            tb,
+            *(
+                b
+                for b in corridor_blockers
+                if b is not tb and b.x <= tb.x and b.y <= tb.y and b.x + b.w >= tb.x + tb.w and b.y + b.h >= tb.y + tb.h
+            ),
+        )
+
+    # A skip takes the channel because its DIRECT run would cross the ranks it
+    # skips over. Rank distance is a topological stand-in for that geometric
+    # question, and where the two disagree the stand-in loses: a probe sitting
+    # in the same row as the pod two ranks along, with an empty corridor
+    # between them, was sent out of its own face, down, across the floor and
+    # back up to re-enter from the side — a detour around nothing.
+    #
+    # So an aligned skip whose straight run is clear draws the straight run.
+    # Scoped tight: no authored routing (an author who names a face means it),
+    # rows flush within the cited ``_PORT_FLUSH``, and the run measured
+    # against every card and band rather than assumed.
+    straight_skips = frozenset(
+        j
+        for j, e in enumerate(edges)
+        if rank[e.target] - rank[e.source] >= 2
+        and e.source != e.target
+        and not (e.exit or e.entry)
+        and abs(_minor_center(axis, placed[e.source]) - _minor_center(axis, placed[e.target])) <= _PORT_FLUSH
+        and not _run_blocked(
+            axis,
+            corridor_blockers,
+            minor=_minor_center(axis, placed[e.source]),
+            major_lo=_major_center(axis, placed[e.source]),
+            major_hi=_major_center(axis, placed[e.target]),
+            skip=_own_furniture(placed[e.source].box, placed[e.target].box),
+        )
+    )
+
+    def _direct_elbow(j: int, e: ResolvedEdge) -> float | None:
+        """Major coordinate to turn at, if this skip can reach its target on
+        its OWN row instead of diving to the channel.
+
+        Same argument as ``straight_skips`` one step further out. The channel
+        exists to get UNDER the ranks a skip bypasses; where the source's own
+        row is already clear across the span there is nothing to get under, and
+        diving is a detour around nothing. rag-index-and-query's query->retrieve
+        left its face, dropped 94px to the deep channel, ran the full 706px
+        width down there and climbed 205px back — while the straight line at
+        its own row was empty the whole way.
+
+        Returns the target's major centre (the one turn), or None to dive. The
+        route stays ORTHOGONAL either way: a skip is a detour and reads as one.
+        """
+        pa, pb = placed[e.source], placed[e.target]
+        s_min = _minor_center(axis, pa)
+        t_maj = _major_center(axis, pb)
+        near, far = _minor_near(axis, pb), _minor_far(axis, pb)
+        face = far if s_min > _minor_center(axis, pb) else near
+        if _run_blocked(
+            axis,
+            corridor_blockers,
+            minor=s_min,
+            major_lo=_major_center(axis, pa),
+            major_hi=t_maj,
+            skip=_own_furniture(pa.box, pb.box),
+        ):
+            return None
+        lo, hi = (face, s_min) if face < s_min else (s_min, face)
+        if _leg_blockers(
+            axis, corridor_blockers, major=t_maj, minor_lo=lo, minor_hi=hi, skip=_own_furniture(pa.box, pb.box)
+        ):
+            return None
+        return t_maj
+
+    direct_elbows: dict[int, float] = {}
+    for j, e in enumerate(edges):
+        if (
+            j in straight_skips
+            or rank[e.target] - rank[e.source] < 2
+            or e.source == e.target
+            or (e.exit or e.entry)  # an author who names a face means it
+        ):
+            continue
+        turn = _direct_elbow(j, e)
+        if turn is not None:
+            direct_elbows[j] = turn
     # Skip edges (rank diff >= 2) run in the under-channel, not a shared port —
     # exclude them from the arrival spread so a plain fan-in keeps its true pitch.
-    skip_idx = frozenset(j for j, e in enumerate(edges) if rank[e.target] - rank[e.source] >= 2)
-    _, fan_entry_y = _fan_spread(edges, placed, skip_edges=skip_idx)  # exits collapse to the center mouth
-    plateau_min_dy = float((ctx.engine.get("connector") or {}).get("plateau_min_dy", 40))
+    skip_idx = frozenset(
+        j for j, e in enumerate(edges) if rank[e.target] - rank[e.source] >= 2 and j not in straight_skips
+    )
+    _, fan_entry_y = _fan_spread(edges, placed, axis, skip_edges=skip_idx)  # exits collapse to the center mouth
+
     # Shared-east-face port stagger: a node that HOSTS an authored elbow entry
     # while also SOURCING a plain east exit would fuse both wires at center-y
     # (~18px shared cable + stacked arrowheads). Part them: exit half a stagger
     # above center, elbow landing half below. Scoped to exactly this collision —
     # the fan attachment law (exits collapse to the center mouth) is untouched
     # for every node not in the set, and an empty set is byte-identical output.
-    _elbow_entry_targets = {e.target for e in edges if e.exit == "bottom" and e.entry == "right"}
+    def _is_authored_elbow(e: ResolvedEdge) -> bool:
+        # Leaves by the far channel and re-enters by the face an edge normally
+        # EXITS from — the elbow that would otherwise fuse with a plain exit.
+        return e.exit == axis.channel_far and e.entry == axis.exit_side
+
+    _elbow_entry_targets = {e.target for e in edges if _is_authored_elbow(e)}
     _plain_exit_sources = {
         e.source
         for j, e in enumerate(edges)
-        if e.source != e.target and j not in skip_idx and not (e.exit == "bottom" and e.entry == "right")
+        if e.source != e.target and j not in skip_idx and not _is_authored_elbow(e)
     }
     stagger_faces = _elbow_entry_targets & _plain_exit_sources
     geos: list[EdgeGeo] = []
@@ -855,7 +1731,6 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             geos.append(_self_loop_geo(ctx, j, e, placed[e.source], default_side="top"))
             continue
         pa, pb = placed[e.source], placed[e.target]
-        a, b = pa.box, pb.box
         # Fan-spread both ends into distinct ports so a bundle reads as separate
         # wires, not one overlapping cable. A GATHER target is the exception:
         # its arrivals COLLAPSE to one center mouth where the knot+trunk marks
@@ -870,38 +1745,141 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         # exits criss-crossed model-gateway's tier curves). Shared non-gather
         # TARGETS keep the dep-mesh arrival spread (that specimen seats 4
         # arrivals over 34px so arrowheads never stack).
-        exit_at = a.y + a.h / 2 - (ch.port_stagger / 2 if e.source in stagger_faces else 0.0)
-        sx, scy = side_anchor(pa, side="right", at=exit_at)
-        entry_at = b.y + b.h / 2 if ctx.spec.nodes[e.target].gather else fan_entry_y.get(j, b.y + b.h / 2)
-        tx, tcy = side_anchor(pb, side="left", at=entry_at)
-        if rank[e.target] - rank[e.source] >= 2:
-            if e.exit == "top":
-                # Over-the-top skip: leave the source's top, run an orthogonal
-                # channel above the content band, descend to the target's top —
-                # the specimen's cross-rank "direct read" route, its chip riding
-                # the top run. Crisp L+Q corners (service-dependencies), never a wide
-                # cubic sweep: a straight riser, a small over_arc_r quarter turn
-                # into the channel, the flat run, a turn down, the drop.
-                arc_r = ch.over_arc_r
-                top_channel = shallowest_box - ch.over_arc_clear - skip_top_seen * ch.skip_stack
-                skip_top_seen += 1
-                sx_t, sy_t = pa.box.x + pa.box.w / 2, pa.box.y
-                tx_t, ty_t = pb.box.x + pb.box.w / 2, pb.box.y
-                sgn = 1.0 if tx_t >= sx_t else -1.0
+        a_minor, b_minor = _minor_center(axis, pa), _minor_center(axis, pb)
+        exit_at = a_minor - (ch.port_stagger / 2 if e.source in stagger_faces else 0.0)
+        sx, scy = side_anchor(pa, side=axis.exit_side, at=exit_at)
+        entry_at = b_minor if ctx.spec.nodes[e.target].gather else fan_entry_y.get(j, b_minor)
+        tx, tcy = side_anchor(pb, side=axis.entry_side, at=entry_at)
+        if rank[e.target] - rank[e.source] >= 2 and j not in straight_skips:
+            if j in direct_elbows:
+                # The skip reaches its target on its own row: run the row to
+                # the target's column, one fillet, in through the face the
+                # wire arrives at. Orthogonal like every detour — the channel
+                # is the FALLBACK for a blocked row, not the default.
+                turn = direct_elbows[j]
+                s_major, s_minor = axis.major_of(sx, scy), axis.minor_of(sx, scy)
+                t_center = _minor_center(axis, pb)
+                face = _minor_far(axis, pb) if s_minor > t_center else _minor_near(axis, pb)
+                sgn = 1.0 if turn >= s_major else -1.0
+                dirn = 1.0 if face >= s_minor else -1.0
+                elbow_r = min(ch.over_arc_r, abs(turn - s_major) / 2, abs(face - s_minor) / 2)
                 d = (
-                    f"M {fmt(sx_t)},{fmt(sy_t)} "
-                    f"L {fmt(sx_t)},{fmt(top_channel + arc_r)} "
-                    f"Q {fmt(sx_t)},{fmt(top_channel)} {fmt(sx_t + sgn * arc_r)},{fmt(top_channel)} "
-                    f"L {fmt(tx_t - sgn * arc_r)},{fmt(top_channel)} "
-                    f"Q {fmt(tx_t)},{fmt(top_channel)} {fmt(tx_t)},{fmt(top_channel + arc_r)} "
-                    f"L {fmt(tx_t)},{fmt(ty_t)}"
+                    f"M {_pt(axis, s_major, s_minor)} "
+                    f"L {_pt(axis, turn - sgn * elbow_r, s_minor)} "
+                    f"Q {_pt(axis, turn, s_minor)} {_pt(axis, turn, s_minor + dirn * elbow_r)} "
+                    f"L {_pt(axis, turn, face)}"
                 )
-                length = (sy_t - top_channel) + abs(tx_t - sx_t) + (ty_t - top_channel)
+                sx_d, sy_d = axis.point(s_major, s_minor)
+                tx_d, ty_d = axis.point(turn, face)
+                geos.append(
+                    EdgeGeo(
+                        index=j,
+                        d=d,
+                        sx=sx_d,
+                        sy=sy_d,
+                        tx=tx_d,
+                        ty=ty_d,
+                        length=abs(turn - s_major) + abs(face - s_minor),
+                        label_pos=axis.point((s_major + turn - sgn * elbow_r) / 2, s_minor),
+                        label_bare=True,
+                        polyline=(axis.point(s_major, s_minor), axis.point(turn, s_minor), axis.point(turn, face)),
+                        end_tangent=axis.point(0.0, dirn),
+                    )
+                )
+                continue
+            if e.exit == axis.channel_near:
+                # Over-the-near-side skip: leave the source's near face, run an
+                # orthogonal channel outside the content band, and come back in
+                # at the target's near face — the specimen's cross-rank "direct
+                # read" route, its chip riding the channel leg. Crisp L+Q
+                # corners (service-dependencies), never a wide cubic sweep: a
+                # straight departure, a small over_arc_r quarter turn into the
+                # channel, the flat run, a turn back, the return.
+                arc_r = ch.over_arc_r
+                near_channel = shallowest_box - near_clear - skip_top_seen * ch.skip_stack
+                skip_top_seen += 1
+                s_major, s_minor = _major_center(axis, pa), _minor_near(axis, pa)
+                t_major, t_minor = _major_center(axis, pb), _minor_near(axis, pb)
+                sgn = 1.0 if t_major >= s_major else -1.0
+                # The return leg descends the target's OWN major column, so a
+                # same-rank sibling nearer the channel sits squarely in its
+                # path (service-dependencies' Redis over Postgres: both centre
+                # on one column, and 66px of wire ran inside the card, hidden
+                # only because cards paint after edges). Where that happens the
+                # route takes the elbow's corridor instead — carry on past the
+                # target, descend outside the column, and come back in through
+                # the major face on the side the corridor ran. Unblocked routes
+                # keep the straight return exactly.
+                if _leg_blockers(
+                    axis,
+                    corridor_blockers,
+                    major=t_major,
+                    minor_lo=near_channel,
+                    minor_hi=t_minor,
+                    skip=_entry_skips(pb),
+                ):
+                    t_center = _minor_center(axis, pb)
+                    face_major = t_major + sgn * axis.box_major(pb.box.w, pb.box.h) / 2
+                    turn = _corridor_major(
+                        axis,
+                        corridor_blockers,
+                        major=face_major + sgn * corridor_pad,
+                        minor_lo=near_channel,
+                        minor_hi=t_center,
+                        sgn=sgn,
+                        pad=corridor_pad,
+                        clearance=clearance,
+                    )
+                    r_in = min(arc_r, abs(turn - face_major) / 2, (t_center - near_channel) / 2)
+                    d = (
+                        f"M {_pt(axis, s_major, s_minor)} "
+                        f"L {_pt(axis, s_major, near_channel + arc_r)} "
+                        f"Q {_pt(axis, s_major, near_channel)} {_pt(axis, s_major + sgn * arc_r, near_channel)} "
+                        f"L {_pt(axis, turn - sgn * r_in, near_channel)} "
+                        f"Q {_pt(axis, turn, near_channel)} {_pt(axis, turn, near_channel + r_in)} "
+                        f"L {_pt(axis, turn, t_center - r_in)} "
+                        f"Q {_pt(axis, turn, t_center)} {_pt(axis, turn - sgn * r_in, t_center)} "
+                        f"L {_pt(axis, face_major, t_center)}"
+                    )
+                    length = (
+                        (s_minor - near_channel)
+                        + abs(turn - s_major)
+                        + (t_center - near_channel)
+                        + abs(turn - face_major)
+                    )
+                    sx_t, sy_t = axis.point(s_major, s_minor)
+                    tx_t, ty_t = axis.point(face_major, t_center)
+                    geos.append(
+                        EdgeGeo(
+                            index=j,
+                            d=d,
+                            sx=sx_t,
+                            sy=sy_t,
+                            tx=tx_t,
+                            ty=ty_t,
+                            length=length,
+                            end_tangent=axis.point(-sgn, 0.0),
+                        )
+                    )
+                    continue
+                d = (
+                    f"M {_pt(axis, s_major, s_minor)} "
+                    f"L {_pt(axis, s_major, near_channel + arc_r)} "
+                    f"Q {_pt(axis, s_major, near_channel)} {_pt(axis, s_major + sgn * arc_r, near_channel)} "
+                    f"L {_pt(axis, t_major - sgn * arc_r, near_channel)} "
+                    f"Q {_pt(axis, t_major, near_channel)} {_pt(axis, t_major, near_channel + arc_r)} "
+                    f"L {_pt(axis, t_major, t_minor)}"
+                )
+                length = (s_minor - near_channel) + abs(t_major - s_major) + (t_minor - near_channel)
+                sx_t, sy_t = axis.point(s_major, s_minor)
+                tx_t, ty_t = axis.point(t_major, t_minor)
                 geos.append(EdgeGeo(index=j, d=d, sx=sx_t, sy=sy_t, tx=tx_t, ty=ty_t, length=length))
                 continue
-            if e.exit == "bottom":
-                sx_b, sy_b = pa.box.x + pa.box.w / 2, pa.box.y + pa.box.h
-                if e.entry == "left":
+            if e.exit == axis.channel_far:
+                s_major, s_far = _major_center(axis, pa), _minor_far(axis, pa)
+                sx_b, sy_b = axis.point(s_major, s_far)
+                t_major, t_minor = axis.major_of(tx, tcy), axis.minor_of(tx, tcy)
+                if e.entry == axis.entry_side:
                     # Bottom-exit, WEST-entry (gateway-balanced telemetry):
                     # dive from the source's bottom, one L+Q corner from
                     # vertical to horizontal at the channel depth, then a
@@ -910,46 +1888,66 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
                     # 427,149 Q 427,156 434,156 L 889,156 (the channel sits
                     # AT the target's own entry height, so one corner
                     # suffices). Where the channel sits BELOW the target's
-                    # own entry height (channel > tcy — a shallower target
+                    # own entry height (channel > t_minor — a shallower target
                     # that doesn't reach the deep-content clearance line),
                     # the flat run at ``channel`` would pass under the face
                     # and never arrive: a second and third corner carry it
-                    # back UP to ``tcy`` before a final flat entry, the two
+                    # back UP to ``t_minor`` before a final flat entry, the two
                     # corners' own radius shrinking to fit whenever the rise
                     # itself is tighter than the standard ``arc_r``.
+                    #
+                    # The floor is ``t_minor``, NOT ``tcy``. A channel lives in
+                    # MINOR space; ``tcy`` is a screen y, which is the minor
+                    # coordinate flowing right and the MAJOR one flowing down.
+                    # Reading it raw is invisible horizontally (the two are the
+                    # same number) and flowing down it floors the channel
+                    # against a rank position — so the lane member parked ON
+                    # the channel and the edge solved a different one, and the
+                    # route turned back inward to reach a sink already waiting
+                    # for it.
                     arc_r = ch.over_arc_r
-                    channel = max(channel_base + skip_seen * ch.skip_stack, tcy)
+                    channel = max(channel_base + skip_seen * ch.skip_stack, t_minor)
                     deepest_channel = max(deepest_channel, channel)
                     skip_seen += 1
-                    sgn = 1.0 if tx >= sx_b else -1.0
-                    rise = channel - tcy
+                    sgn = 1.0 if t_major >= s_major else -1.0
+                    rise = channel - t_minor
                     if rise <= 0.05:
                         d = (
-                            f"M {fmt(sx_b)},{fmt(sy_b)} "
-                            f"L {fmt(sx_b)},{fmt(channel - arc_r)} "
-                            f"Q {fmt(sx_b)},{fmt(channel)} {fmt(sx_b + sgn * arc_r)},{fmt(channel)} "
-                            f"L {fmt(tx)},{fmt(channel)}"
+                            f"M {_pt(axis, s_major, s_far)} "
+                            f"L {_pt(axis, s_major, channel - arc_r)} "
+                            f"Q {_pt(axis, s_major, channel)} {_pt(axis, s_major + sgn * arc_r, channel)} "
+                            f"L {_pt(axis, t_major, channel)}"
                         )
-                        length = (channel - arc_r - sy_b) + abs(tx - sx_b)
-                        label_pos = ((sx_b + sgn * arc_r + tx) / 2, channel)
-                        polyline: tuple[tuple[float, float], ...] = ((sx_b, sy_b), (sx_b, channel), (tx, channel))
+                        length = (channel - arc_r - s_far) + abs(t_major - s_major)
+                        label_pos = axis.point((s_major + sgn * arc_r + t_major) / 2, channel)
+                        polyline: tuple[tuple[float, float], ...] = (
+                            axis.point(s_major, s_far),
+                            axis.point(s_major, channel),
+                            axis.point(t_major, channel),
+                        )
                     else:
                         rise_r = min(arc_r, rise / 2)
                         end_stub = max(rise_r, 12.0)
-                        rise_x = tx - sgn * (rise_r + end_stub)
+                        rise_x = t_major - sgn * (rise_r + end_stub)
                         d = (
-                            f"M {fmt(sx_b)},{fmt(sy_b)} "
-                            f"L {fmt(sx_b)},{fmt(channel - arc_r)} "
-                            f"Q {fmt(sx_b)},{fmt(channel)} {fmt(sx_b + sgn * arc_r)},{fmt(channel)} "
-                            f"L {fmt(rise_x - sgn * rise_r)},{fmt(channel)} "
-                            f"Q {fmt(rise_x)},{fmt(channel)} {fmt(rise_x)},{fmt(channel - rise_r)} "
-                            f"L {fmt(rise_x)},{fmt(tcy + rise_r)} "
-                            f"Q {fmt(rise_x)},{fmt(tcy)} {fmt(rise_x + sgn * rise_r)},{fmt(tcy)} "
-                            f"L {fmt(tx)},{fmt(tcy)}"
+                            f"M {_pt(axis, s_major, s_far)} "
+                            f"L {_pt(axis, s_major, channel - arc_r)} "
+                            f"Q {_pt(axis, s_major, channel)} {_pt(axis, s_major + sgn * arc_r, channel)} "
+                            f"L {_pt(axis, rise_x - sgn * rise_r, channel)} "
+                            f"Q {_pt(axis, rise_x, channel)} {_pt(axis, rise_x, channel - rise_r)} "
+                            f"L {_pt(axis, rise_x, t_minor + rise_r)} "
+                            f"Q {_pt(axis, rise_x, t_minor)} {_pt(axis, rise_x + sgn * rise_r, t_minor)} "
+                            f"L {_pt(axis, t_major, t_minor)}"
                         )
-                        length = (channel - arc_r - sy_b) + abs(tx - sx_b) + rise
-                        label_pos = ((sx_b + sgn * arc_r + rise_x - sgn * rise_r) / 2, channel)
-                        polyline = ((sx_b, sy_b), (sx_b, channel), (rise_x, channel), (rise_x, tcy), (tx, tcy))
+                        length = (channel - arc_r - s_far) + abs(t_major - s_major) + rise
+                        label_pos = axis.point((s_major + sgn * arc_r + rise_x - sgn * rise_r) / 2, channel)
+                        polyline = (
+                            axis.point(s_major, s_far),
+                            axis.point(s_major, channel),
+                            axis.point(rise_x, channel),
+                            axis.point(rise_x, t_minor),
+                            axis.point(t_major, t_minor),
+                        )
                     # The chip seats on the FLAT channel leg — without a
                     # solver seat the balance rule falls back to the
                     # straight chord, which the L-shaped route never touches.
@@ -986,24 +1984,89 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
                 channel = channel_base + skip_seen * ch.skip_stack
                 deepest_channel = max(deepest_channel, channel)
                 skip_seen += 1
-                tx_b, ty_b = pb.box.x + pb.box.w / 2, pb.box.y + pb.box.h
-                sgn = 1.0 if tx_b >= sx_b else -1.0
-                drop_r = min(ch.over_arc_r, (channel - sy_b) / 2, abs(tx_b - sx_b) / 2)
-                rise_r = min(ch.over_arc_r, (channel - ty_b) / 2, abs(tx_b - sx_b) / 2)
-                d = (
-                    f"M {fmt(sx_b)},{fmt(sy_b)} "
-                    f"L {fmt(sx_b)},{fmt(channel - drop_r)} "
-                    f"Q {fmt(sx_b)},{fmt(channel)} {fmt(sx_b + sgn * drop_r)},{fmt(channel)} "
-                    f"L {fmt(tx_b - sgn * rise_r)},{fmt(channel)} "
-                    f"Q {fmt(tx_b)},{fmt(channel)} {fmt(tx_b)},{fmt(channel - rise_r)} "
-                    f"L {fmt(tx_b)},{fmt(ty_b)}"
+                t_major_f, t_far = _major_center(axis, pb), _minor_far(axis, pb)
+                tx_b, ty_b = axis.point(t_major_f, t_far)
+                sgn = 1.0 if t_major_f >= s_major else -1.0
+                # BOTH legs off the channel run down a card's own major column,
+                # and each can be standing behind a same-rank sibling — the
+                # drop behind one deeper than the source, the rise behind one
+                # deeper than the target. They displace independently through
+                # the one corridor: a route can need neither, either, or both.
+                s_center = _minor_center(axis, pa)
+                drop_major, drop_from = s_major, s_far
+                if _leg_blockers(
+                    axis, corridor_blockers, major=s_major, minor_lo=s_far, minor_hi=channel, skip=_entry_skips(pa)
+                ):
+                    # Leave by the flow face and dive clear of the column —
+                    # the default under-route's own opening, which exists for
+                    # exactly this reason.
+                    drop_from = s_center
+                    drop_major = _corridor_major(
+                        axis,
+                        corridor_blockers,
+                        major=_major_center(axis, pa) + sgn * axis.box_major(pa.box.w, pa.box.h) / 2 + corridor_pad,
+                        minor_lo=s_center,
+                        minor_hi=channel,
+                        sgn=sgn,
+                        pad=corridor_pad,
+                        clearance=clearance,
+                    )
+                rise_major, land = t_major_f, t_far
+                if _leg_blockers(
+                    axis, corridor_blockers, major=t_major_f, minor_lo=t_far, minor_hi=channel, skip=_entry_skips(pb)
+                ):
+                    land = _minor_center(axis, pb)
+                    rise_major = _corridor_major(
+                        axis,
+                        corridor_blockers,
+                        major=t_major_f + sgn * axis.box_major(pb.box.w, pb.box.h) / 2 + sgn * corridor_pad,
+                        minor_lo=land,
+                        minor_hi=channel,
+                        sgn=sgn,
+                        pad=corridor_pad,
+                        clearance=clearance,
+                    )
+                run = abs(rise_major - drop_major)
+                drop_r = min(ch.over_arc_r, (channel - drop_from) / 2, run / 2)
+                rise_r = min(ch.over_arc_r, (channel - land) / 2, run / 2)
+                head = (
+                    ""
+                    if drop_from == s_far
+                    else f"L {_pt(axis, drop_major - sgn * drop_r, s_center)} "
+                    f"Q {_pt(axis, drop_major, s_center)} {_pt(axis, drop_major, s_center + drop_r)} "
                 )
-                length = (channel - sy_b) + abs(tx_b - sx_b) + (channel - ty_b)
+                # A displaced rise lands on the target's MAJOR face at its
+                # centre, so the wire turns in from the side it came around;
+                # an undisplaced one keeps the cited straight climb into the
+                # far face.
+                tail = (
+                    f"L {_pt(axis, rise_major, land)}"
+                    if land == t_far
+                    else f"L {_pt(axis, rise_major, land + rise_r)} "
+                    f"Q {_pt(axis, rise_major, land)} {_pt(axis, rise_major - sgn * rise_r, land)} "
+                    f"L {_pt(axis, t_major_f + sgn * axis.box_major(pb.box.w, pb.box.h) / 2, land)}"
+                )
+                d = (
+                    f"M {_pt(axis, drop_major if head else s_major, drop_from)} "
+                    f"{head}"
+                    f"L {_pt(axis, drop_major, channel - drop_r)} "
+                    f"Q {_pt(axis, drop_major, channel)} {_pt(axis, drop_major + sgn * drop_r, channel)} "
+                    f"L {_pt(axis, rise_major - sgn * rise_r, channel)} "
+                    f"Q {_pt(axis, rise_major, channel)} {_pt(axis, rise_major, channel - rise_r)} "
+                    f"{tail}"
+                )
+                if head:
+                    sx_b, sy_b = axis.point(
+                        _major_center(axis, pa) + sgn * axis.box_major(pa.box.w, pa.box.h) / 2, s_center
+                    )
+                if land != t_far:
+                    tx_b, ty_b = axis.point(t_major_f + sgn * axis.box_major(pb.box.w, pb.box.h) / 2, land)
+                length = (channel - drop_from) + run + (channel - land)
                 # The chip seats mid-run on the flat channel leg (the gateway
                 # hand file centers its telemetry chip on the run); without a
                 # solver seat the balance rule falls back to the straight
                 # chord, which an under-route never touches.
-                label_pos = ((sx_b + sgn * drop_r + tx_b - sgn * rise_r) / 2, channel)
+                label_pos = axis.point((drop_major + sgn * drop_r + rise_major - sgn * rise_r) / 2, channel)
                 geos.append(
                     EdgeGeo(
                         index=j,
@@ -1015,8 +2078,14 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
                         length=length,
                         label_pos=label_pos,
                         label_bare=True,
-                        polyline=((sx_b, sy_b), (sx_b, channel), (tx_b, channel), (tx_b, ty_b)),
-                        end_tangent=(0.0, -1.0),
+                        polyline=(
+                            axis.point(drop_major if head else s_major, drop_from),
+                            axis.point(drop_major, channel),
+                            axis.point(rise_major, channel),
+                            axis.point(rise_major, land),
+                            *(((tx_b, ty_b),) if land != t_far else ()),
+                        ),
+                        end_tangent=axis.point(0.0, -1.0) if land == t_far else axis.point(-sgn, 0.0),
                     )
                 )
                 continue
@@ -1032,29 +2101,59 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             channel = channel_base + skip_seen * ch.skip_stack
             deepest_channel = max(deepest_channel, channel)
             skip_seen += 1
-            land_y = tcy
+            s_major, s_minor = axis.major_of(sx, scy), axis.minor_of(sx, scy)
+            t_major, t_minor = axis.major_of(tx, tcy), axis.minor_of(tx, tcy)
+            land_y = t_minor
             arc_r = ch.over_arc_r
             stub = max(arc_r, 12.0) + arc_r
-            down_x = sx + stub
-            rise_x = tx - stub
+            # Chip-junction alignment: when a SIBLING edge off the same face
+            # carries a chip on a straight run, the skip's first turn lands a
+            # few px shy of that pill and reads as leaking out of its corner.
+            # Align the turn to the chip's own centre instead, so the pill
+            # becomes the junction the two paths part at — one continuing along
+            # the thread, one leaving its side. Falls back to the plain stub
+            # when there is no chip to align to, so unchipped routes are
+            # byte-identical.
+            align = _sibling_chip_major(ctx, axis, edges, skip_idx, e.source, placed, s_major)
+            down_x = align if align is not None else s_major + stub
+            # This branch already climbs OUTSIDE the target's column (one stub
+            # short of it) and lands through a major-running entry leg, so it
+            # only needs the corridor when something stands in that climb —
+            # a rank between the channel and the entry face. Pushed backwards
+            # (-sgn) so the climb stays on the approach side of the target.
+            rise_x = t_major - stub
+            if _leg_blockers(
+                axis, corridor_blockers, major=rise_x, minor_lo=land_y, minor_hi=channel, skip=_entry_skips(pb)
+            ):
+                rise_x = _corridor_major(
+                    axis,
+                    corridor_blockers,
+                    major=rise_x,
+                    minor_lo=land_y,
+                    minor_hi=channel,
+                    sgn=-1.0,
+                    pad=corridor_pad,
+                    clearance=clearance,
+                    skip=_entry_skips(pb),
+                )
             run_w = rise_x - down_x
-            r1 = min(arc_r, stub / 2, (channel - scy) / 2)
-            r2 = min(arc_r, (channel - scy) / 2, run_w / 2)
+            r1 = min(arc_r, stub / 2, (channel - s_minor) / 2)
+            r2 = min(arc_r, (channel - s_minor) / 2, run_w / 2)
             r3 = min(arc_r, run_w / 2, (channel - land_y) / 2)
             r4 = min(arc_r, (channel - land_y) / 2, stub / 2)
             d = (
-                f"M {fmt(sx)},{fmt(scy)} "
-                f"L {fmt(down_x - r1)},{fmt(scy)} "
-                f"Q {fmt(down_x)},{fmt(scy)} {fmt(down_x)},{fmt(scy + r1)} "
-                f"L {fmt(down_x)},{fmt(channel - r2)} "
-                f"Q {fmt(down_x)},{fmt(channel)} {fmt(down_x + r2)},{fmt(channel)} "
-                f"L {fmt(rise_x - r3)},{fmt(channel)} "
-                f"Q {fmt(rise_x)},{fmt(channel)} {fmt(rise_x)},{fmt(channel - r3)} "
-                f"L {fmt(rise_x)},{fmt(land_y + r4)} "
-                f"Q {fmt(rise_x)},{fmt(land_y)} {fmt(rise_x + r4)},{fmt(land_y)} "
-                f"L {fmt(tx)},{fmt(land_y)}"
+                f"M {_pt(axis, s_major, s_minor)} "
+                f"L {_pt(axis, down_x - r1, s_minor)} "
+                f"Q {_pt(axis, down_x, s_minor)} {_pt(axis, down_x, s_minor + r1)} "
+                f"L {_pt(axis, down_x, channel - r2)} "
+                f"Q {_pt(axis, down_x, channel)} {_pt(axis, down_x + r2, channel)} "
+                f"L {_pt(axis, rise_x - r3, channel)} "
+                f"Q {_pt(axis, rise_x, channel)} {_pt(axis, rise_x, channel - r3)} "
+                f"L {_pt(axis, rise_x, land_y + r4)} "
+                f"Q {_pt(axis, rise_x, land_y)} {_pt(axis, rise_x + r4, land_y)} "
+                f"L {_pt(axis, t_major, land_y)}"
             )
-            length = (tx - sx) + (channel - scy) + (channel - land_y)
+            length = (t_major - s_major) + (channel - s_minor) + (channel - land_y)
             geos.append(
                 EdgeGeo(
                     index=j,
@@ -1062,25 +2161,25 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
                     sx=sx,
                     sy=scy,
                     tx=tx,
-                    ty=land_y,
+                    ty=tcy,
                     length=length,
-                    label_pos=((down_x + r2 + rise_x - r3) / 2, channel),
+                    label_pos=axis.point((down_x + r2 + rise_x - r3) / 2, channel),
                     label_bare=True,
                     polyline=(
-                        (sx, scy),
-                        (down_x, scy),
-                        (down_x, channel),
-                        (rise_x, channel),
-                        (rise_x, land_y),
-                        (tx, land_y),
+                        axis.point(s_major, s_minor),
+                        axis.point(down_x, s_minor),
+                        axis.point(down_x, channel),
+                        axis.point(rise_x, channel),
+                        axis.point(rise_x, land_y),
+                        axis.point(t_major, land_y),
                     ),
-                    end_tangent=(1.0, 0.0),
+                    end_tangent=axis.point(1.0, 0.0),
                 )
             )
             continue
         plain_by_target.setdefault(e.target, []).append(len(geos))
         plain_by_source.setdefault(e.source, []).append(len(geos))
-        if e.exit == "bottom" and e.entry == "right":
+        if _is_authored_elbow(e):
             # Authored under-elbow — the direct-read's mirror: exit the
             # source's south face, ride the bottom band east PAST the target
             # column, climb the east gutter, land through the target's east
@@ -1089,42 +2188,44 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             # flat bottom run like every channel chip. Same orthogonal detour
             # family and fixed fillets as the skip routes. Authored data
             # only — no solver policy picks this route for an edge.
-            sx_b, sy_b = pa.box.x + pa.box.w / 2, pa.box.y + pa.box.h
+            s_major, s_far = _major_center(axis, pa), _minor_far(axis, pa)
+            sx_b, sy_b = axis.point(s_major, s_far)
             channel = channel_base + skip_seen * ch.skip_stack
             deepest_channel = max(deepest_channel, channel)
             skip_seen += 1
             arc_r = ch.over_arc_r
-            elbow_at = b.y + b.h / 2 + (ch.port_stagger / 2 if e.target in stagger_faces else 0.0)
-            tx_e, tcy_e = side_anchor(pb, side="right", at=elbow_at)
+            elbow_at = b_minor + (ch.port_stagger / 2 if e.target in stagger_faces else 0.0)
+            tx_e, tcy_e = side_anchor(pb, side=axis.exit_side, at=elbow_at)
             # Span-aware corridor (ruling 2026-07-16): the climb clears every
             # box it passes — the rightmost obstacle in its own span plus
             # clearance, never just the target's face — so a later rank east
             # of the entry face wraps the route instead of being cut. Region
             # bands count as obstacles (their outline is furniture a wire
-            # must clear like a card).
-            corridor_pad = clearance + arc_r
-            climb_top = min(tcy_e, channel)
-            rise_x = pb.box.x + pb.box.w + corridor_pad
-            corridor_blockers = [p.box for p in placed.values()] + [band.box for band in bands]
-            moved = True
-            while moved:
-                moved = False
-                for blocker in corridor_blockers:
-                    in_span = blocker.y < channel and blocker.y + blocker.h > climb_top
-                    if in_span and blocker.x - clearance < rise_x < blocker.x + blocker.w + corridor_pad:
-                        rise_x = blocker.x + blocker.w + corridor_pad
-                        moved = True
-            r1 = min(arc_r, (channel - sy_b) / 2)
-            r2 = min(arc_r, (channel - tcy_e) / 2, (rise_x - tx_e) / 2)
+            # must clear like a card). ``_corridor_major`` is this loop; every
+            # other detour branch now runs it on its own entry leg.
+            e_major, e_minor = axis.major_of(tx_e, tcy_e), axis.minor_of(tx_e, tcy_e)
+            climb_top = min(e_minor, channel)
+            rise_x = _corridor_major(
+                axis,
+                corridor_blockers,
+                major=_major_center(axis, pb) + axis.box_major(pb.box.w, pb.box.h) / 2 + corridor_pad,
+                minor_lo=climb_top,
+                minor_hi=channel,
+                sgn=1.0,
+                pad=corridor_pad,
+                clearance=clearance,
+            )
+            r1 = min(arc_r, (channel - s_far) / 2)
+            r2 = min(arc_r, (channel - e_minor) / 2, (rise_x - e_major) / 2)
             d = (
-                f"M {fmt(sx_b)},{fmt(sy_b)} "
-                f"L {fmt(sx_b)},{fmt(channel - r1)} "
-                f"Q {fmt(sx_b)},{fmt(channel)} {fmt(sx_b + r1)},{fmt(channel)} "
-                f"L {fmt(rise_x - r2)},{fmt(channel)} "
-                f"Q {fmt(rise_x)},{fmt(channel)} {fmt(rise_x)},{fmt(channel - r2)} "
-                f"L {fmt(rise_x)},{fmt(tcy_e + r2)} "
-                f"Q {fmt(rise_x)},{fmt(tcy_e)} {fmt(rise_x - r2)},{fmt(tcy_e)} "
-                f"L {fmt(tx_e)},{fmt(tcy_e)}"
+                f"M {_pt(axis, s_major, s_far)} "
+                f"L {_pt(axis, s_major, channel - r1)} "
+                f"Q {_pt(axis, s_major, channel)} {_pt(axis, s_major + r1, channel)} "
+                f"L {_pt(axis, rise_x - r2, channel)} "
+                f"Q {_pt(axis, rise_x, channel)} {_pt(axis, rise_x, channel - r2)} "
+                f"L {_pt(axis, rise_x, e_minor + r2)} "
+                f"Q {_pt(axis, rise_x, e_minor)} {_pt(axis, rise_x - r2, e_minor)} "
+                f"L {_pt(axis, e_major, e_minor)}"
             )
             geos.append(
                 EdgeGeo(
@@ -1134,82 +2235,56 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
                     sy=sy_b,
                     tx=tx_e,
                     ty=tcy_e,
-                    length=(channel - sy_b) + (rise_x - sx_b) + (channel - tcy_e) + (rise_x - tx_e),
-                    label_pos=(round((sx_b + r1 + rise_x - r2) / 2, 2), round(channel, 2)),
+                    length=(channel - s_far) + (rise_x - s_major) + (channel - e_minor) + (rise_x - e_major),
+                    label_pos=(
+                        round(axis.point((s_major + r1 + rise_x - r2) / 2, channel)[0], 2),
+                        round(axis.point((s_major + r1 + rise_x - r2) / 2, channel)[1], 2),
+                    ),
                     label_bare=True,
-                    polyline=((sx_b, sy_b), (sx_b, channel), (rise_x, channel), (rise_x, tcy_e), (tx_e, tcy_e)),
-                    end_tangent=(-1.0, 0.0),
+                    polyline=(
+                        axis.point(s_major, s_far),
+                        axis.point(s_major, channel),
+                        axis.point(rise_x, channel),
+                        axis.point(rise_x, e_minor),
+                        axis.point(e_major, e_minor),
+                    ),
+                    end_tangent=axis.point(-1.0, 0.0),
                 )
             )
             continue
-        is_chip = bool(e.label) and e.label_style == "chip"
-        gathered = ctx.spec.nodes[e.target].gather or ctx.spec.nodes[e.source].gather
-        # +3: the pill's PAINTED edge sits ~1.4px outside its ink box each
-        # side, and the plateau is the one run built at exactly chip_run_min
-        # — without the reserve the measured stub reads 17.0 against the
-        # 18.4/face citation (same family as marker_reserved_stub: painted
-        # extent eats a bare stub's visible thread).
-        flat_min = chip_run_min([e], ctx.cfg, stub=CHIP_STUB_MIN) + 3.0 if is_chip else 0.0
-        if is_chip and not gathered and abs(tcy - scy) > plateau_min_dy and (tx - sx) - flat_min >= 36.0:
-            # A chip on a plain S-curve seats at the arc-length midpoint —
-            # the steepest point of the S once the rows diverge, where the
-            # stroke parts the pill diagonally. Chip edges that must bend
-            # therefore ride a PLATEAU: bow in, flat run at the chip's own
-            # run minimum (the ≥18px visible-wire stub law each side — the
-            # parity board holds every on-line chip to it), bow out — the
-            # remaining room splits
-            # between dive and rise in proportion to their climbs, so a tall
-            # rise reads as a swoop instead of a wall. Still the relational
-            # bow family (two cubics), never the detour's L+Q corners. The
-            # rail seats in the gap band adjacent to the SOURCE row toward
-            # the target — the billing transform's writes chip rides below
-            # the cache row — collapsing to the natural S mid for a
-            # single-row bend. The rise still finishes min_clearance before
-            # the target column face and lands through a flat approach (the
-            # first construction grazed the cards stacked above the port).
-            # Gather ends keep their trunk seats.
-            src_grid = _grid(orders[rank[e.source]])
-            half_gap = (_rank_pitch(src_grid) if src_grid else ch.rank_pitch_max) / 2
-            rail = scy + math.copysign(min(half_gap, abs(tcy - scy) / 2), tcy - scy)
-            approach = min(clearance + 2.0, (tx - sx - flat_min) / 4)
-            rem = (tx - sx) - flat_min - approach
-            dy_dive, dy_rise = abs(rail - scy), abs(tcy - rail)
-            dive_dx = max(12.0, rem * dy_dive / max(dy_dive + dy_rise, 1.0))
-            px0 = sx + dive_dx
-            px1 = px0 + flat_min
-            px2 = tx - approach
-            mx1, mx2 = (sx + px0) / 2, (px1 + px2) / 2
-            d = (
-                f"M {fmt(sx)},{fmt(scy)} "
-                f"C {fmt(mx1)},{fmt(scy)} {fmt(mx1)},{fmt(rail)} {fmt(px0)},{fmt(rail)} "
-                f"L {fmt(px1)},{fmt(rail)} "
-                f"C {fmt(mx2)},{fmt(rail)} {fmt(mx2)},{fmt(tcy)} {fmt(px2)},{fmt(tcy)} "
-                f"L {fmt(tx)},{fmt(tcy)}"
-            )
-            geos.append(
-                EdgeGeo(
-                    index=j,
-                    d=d,
-                    sx=sx,
-                    sy=scy,
-                    tx=tx,
-                    ty=tcy,
-                    length=s_curve_h_len(sx, scy, px0, rail) + flat_min + s_curve_h_len(px1, rail, px2, tcy) + approach,
-                    label_pos=(round((px0 + px1) / 2, 2), round(rail, 2)),
-                    label_bare=True,
-                    end_tangent=(1.0, 0.0),
-                )
-            )
-            continue
+        # A chip rides STRAIGHT wire — the kit's own law — and the way to
+        # honour it on a bending edge is NOT to bend the edge further. The
+        # retired construction here was a PLATEAU: bow in, flat run for the
+        # pill, bow out. It manufactured straightness by adding two shoulders,
+        # so a chipped edge and its unchipped sibling left the same face on
+        # visibly different shapes — order-event-dlq's kafka fans to reserve
+        # and dlq at the same 59px offset, and only the labelled one stepped.
+        # It fired on ONE edge in the whole corpus and no hand specimen draws
+        # it: every specimen chip (pp-service-deps' `reads`, `direct read`)
+        # sits centred on wire that was already straight.
+        #
+        # So the label steps off the wire instead, which is the shipped THREE
+        # HOMES rule — micro-label beside its wire, chip inside its card,
+        # caption band at the bottom. A chip that cannot sit on straight wire
+        # has no home on that wire.
+
+        # The plain S-curve: both control points at the MAJOR midpoint, so the
+        # wire leaves its source and meets its target ALONG the flow — the
+        # attachment law. Flowing right that is s_curve_h (controls at the x
+        # midpoint, horizontal tangents); flowing down it is s_curve_v, which
+        # is the vertical specimens' own construction
+        # (``M 440,148 C 440,241 200,241 200,334``).
+        curve = s_curve_h if axis.flow == "right" else s_curve_v
+        curve_len = s_curve_h_len if axis.flow == "right" else s_curve_v_len
         geos.append(
             EdgeGeo(
                 index=j,
-                d=s_curve_h(sx, scy, tx, tcy),
+                d=curve(sx, scy, tx, tcy),
                 sx=sx,
                 sy=scy,
                 tx=tx,
                 ty=tcy,
-                length=s_curve_h_len(sx, scy, tx, tcy),
+                length=curve_len(sx, scy, tx, tcy),
             )
         )
     # The AND-join (dag specimens): >=2 plain edges converging on a node that
@@ -1231,7 +2306,7 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             # flush at the mouth, the gather ring on the sink's face) instead
             # of dangling a bare arrowed wire before the sink.
             if not any(ctx.edges[geos[s].index].label for s in slots):
-                knot_collapse(geos, slots, trunk_len=float(ch.join_trunk_bare or 0))
+                knot_collapse(geos, slots, trunk_len=float(ch.join_trunk_bare or 0), vertical=vertical_flow)
                 continue
             # The mouth-lift exists because ARRIVALS CROWD the knot (its own
             # citation): dag-scatter's 4-spoke join lifts its chip 22 above
@@ -1244,7 +2319,7 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             lifted = len(slots) >= 4
             join_stub = _join_chip_stub(ctx) if lifted else max(_join_chip_stub(ctx), CHIP_STUB_MIN)
             chip_run = chip_run_min([ctx.edges[geos[s].index] for s in slots], ctx.cfg, stub=join_stub)
-            knot_collapse(geos, slots, trunk_len=max(base_trunk, chip_run))
+            knot_collapse(geos, slots, trunk_len=max(base_trunk, chip_run), vertical=vertical_flow)
             _seat_gather_chip(ctx, geos, slots, geos[-1], lift=None if lifted else 0.0)
     # The depart mirror (frontier-serving): a HUB that authors ``gather:
     # true`` leaves on one solid arrowless stub to a knot at its center
@@ -1255,7 +2330,11 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         if len(slots) < 2 or not ctx.spec.nodes[source].gather:
             continue
         pb = placed[source]
-        mouth = side_anchor(pb, side="right", at=pb.box.y + pb.box.h / 2)
+        # The depart mouth is the face the fan LEAVES by, on the cross-axis
+        # centre — east/cy flowing right, south/cx flowing down. Hardcoding the
+        # east face put a vertical hub's knot (and the verb chip seated on its
+        # trunk) out the card's side, straddling its own corner.
+        mouth = side_anchor(pb, side=axis.exit_side, at=_minor_center(axis, pb))
         out_edges = [ctx.edges[geos[s].index] for s in slots]
         if not any(e.label for e in out_edges):
             # Cargo rule (the join's own law, mirrored — a trunk exists to
@@ -1263,22 +2342,33 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             # mouth — the knot seats ON the face and the spread leaves it
             # directly, no bare stub dangling before the fan.
             bare_len = float(ch.depart_trunk_bare or 0)
-            knot_collapse(geos, slots, trunk_len=bare_len, depart=True, marker="none", mouth=mouth)
+            knot_collapse(
+                geos, slots, trunk_len=bare_len, depart=True, marker="none", mouth=mouth, vertical=vertical_flow
+            )
             continue
         # Grow the depart stub to seat the fan's verb chip (frontier-serving
         # 'route') — the mouth-side mirror of the join's chip_run_min.
         chip_run = chip_run_min(out_edges, ctx.cfg, stub=_GATHER_STANDOFF)
         trunk_len = max(depart_len, chip_run)
-        knot_collapse(geos, slots, trunk_len=trunk_len, depart=True, marker="none", mouth=mouth)
-        _seat_depart_chip(ctx, geos, slots, mouth, (mouth[0] + trunk_len, mouth[1]))
+        knot_collapse(geos, slots, trunk_len=trunk_len, depart=True, marker="none", mouth=mouth, vertical=vertical_flow)
+        # The knot floats trunk_len ALONG THE FLOW from the mouth — +x flowing
+        # right, +y flowing down. Adding it to x regardless put the vertical
+        # knot beside the mouth instead of below it, which collapsed the chip
+        # onto the trunk's start with no stub before it.
+        knot_pt = axis.point(axis.major_of(*mouth) + trunk_len, axis.minor_of(*mouth))
+        _seat_depart_chip(ctx, geos, slots, mouth, knot_pt)
     if deepest_channel:
-        height = max(height, int(deepest_channel + clearance + ch.footer_h))
+        minor_total = max(minor_total, int(deepest_channel + clearance + minor_far_chrome))
+    # Re-derive the screen canvas: the channel and lane passes above grow the
+    # MINOR axis, which is the height flowing right and the width flowing down.
+    width, height = (int(v) for v in axis.point(major_total, minor_total))
     # Beam relay staging: a dag beam fires per RANK TRANSITION — the
     # N-stage generalization of the parity specimen's trunk-then-branches
     # (edges leaving one rank share a window). Stamp the source rank as the
     # stage key; wire_motion groups by it only when beams are present.
     geos = [replace(g, stage_key=rank[ctx.edges[g.index].source]) for g in geos]
     paint = [placed[i] for i in sorted(placed)]
+    bands = _reseat_region_labels(ctx, bands, geos, placed, axis)
     return finish_layout(ctx, width=width, height=height, nodes_paint=paint, geos=geos, lane_bands=bands)
 
 
@@ -1992,4 +3082,6 @@ def solve_state_machine(ctx: SolverContext) -> DiagramLayout:
     )
 
 
-register_solvers({"dag": solve_dag, "state-machine": solve_state_machine})
+# One solver, two cells: the flow axis is a parameter (AxisMap.for_slug),
+# not a second implementation.
+register_solvers({"dag": solve_dag, "dag-vertical": solve_dag, "state-machine": solve_state_machine})

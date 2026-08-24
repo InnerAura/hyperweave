@@ -10,6 +10,7 @@ consumes the same vocabulary every other topology already renders.
 from __future__ import annotations
 
 import copy
+import re
 from typing import Any
 
 import pytest
@@ -192,17 +193,25 @@ class TestEdgeChipSweep:
         lay = solve(**spec)
         chips = [a for a in lay.annotations if a.kind == "edge-chip"]
         if not chips:
-            # Balance rule (cicd-machine hw:approach): a run too short to
-            # show wire both sides of the pill floats its label as a
-            # micro-label instead — the chip demotes, it never crams.
+            # A chip demotes to a micro-label rather than cram or ride a bend.
+            # TWO reasons, both "the pill has no home on this wire":
+            #   - the run is too short to show wire both sides of the pill
+            #     (balance rule, cicd-machine hw:approach), or
+            #   - the wire BENDS past chip_bend_max_dy, where the S's waist is
+            #     too steep to part the pill level. The retired answer bent the
+            #     EDGE into a plateau to manufacture a flat run; the label
+            #     moves instead (three homes).
             floats = [a for a in lay.annotations if a.kind == "label" and a.lines and a.lines[0].text == "hwz/1"]
             assert floats, slug
             geo = next(c for c in lay.connectors if c.index == 0)
             from hyperweave.compose.diagram.sizing import solve_chip_box
-            from hyperweave.config.loader import load_paradigms
+            from hyperweave.config.loader import load_diagram_config, load_paradigms
 
             chip_w = solve_chip_box("hwz/1", load_paradigms()["primer"].diagram)[0]
-            assert geo.length < chip_w + 2 * 18, (slug, geo.length)
+            bend_max = float((load_diagram_config().get("connector") or {}).get("chip_bend_max_dy", 40))
+            pts = [(float(a), float(b)) for a, b in re.findall(r"(-?[\d.]+)[ ,](-?[\d.]+)", geo.path_d)]
+            bend = min(abs(pts[-1][0] - pts[0][0]), abs(pts[-1][1] - pts[0][1]))
+            assert geo.length < chip_w + 2 * 18 or bend > bend_max, (slug, geo.length, bend)
             return
         chip = chips[0]
         # Edge-chip is the SAME rounded-rect pill as a node chip (hub

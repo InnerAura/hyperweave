@@ -31,10 +31,11 @@
     "zone_headers": 1
   },
   "census_amendments": {
+    "arrow_terminals": 6,
     "chips": 2,
     "glyph_marks": 7,
     "micro_labels": 0,
-    "note": "primer_diagram_language: call and telemetry ground as on-wire edge-chips (the specimen's 18-tall pills read as micro-labels under the 26-tall chip threshold) \u2014 an amendment over the earlier free-label reading; the render carries 2 edge-chips and 0 micro-labels. glyph_marks 6->7: the fast tier's lightning is a real identity mark the hand file drew as a bare path (uncounted by the extractor); the render counts its zap."
+    "note": "primer_diagram_language: call and telemetry ground as on-wire edge-chips (the specimen's 18-tall pills read as micro-labels under the 26-tall chip threshold) \u2014 an amendment over the earlier free-label reading; the render carries 2 edge-chips and 0 micro-labels. glyph_marks 6->7: the fast tier's lightning is a real identity mark the hand file drew as a bare path (uncounted by the extractor); the render counts its zap. arrow_terminals 8->6: the hand file stamps a chevron per arrival at a flush convergence, so coincident arrivals carry 3 coincident chevrons \u2014 identical path, identical dress, one seat. The seating law's own citation reads those endpoints as one mark; the render now draws them once. One point, one terminal."
   },
   "chip_stub_min": null,
   "height": null,

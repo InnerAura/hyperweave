@@ -335,14 +335,14 @@ class TestSolverRegistryOrderIndependence:
         # A FRESH interpreter imports ONLY solver.py (never the package
         # __init__ that eagerly imports the solvers) and asks for the slugs.
         # This reproduces the flake condition; the accessor self-imports the
-        # solver modules, so the count is the full 18 regardless of order.
+        # solver modules, so the count is the full 19 regardless of order.
         import subprocess
         import sys
 
         code = (
             "from hyperweave.compose.diagram.solver import registered_slugs\n"
             "s = registered_slugs()\n"
-            "assert len(s) == 18, f'expected 18, got {len(s)}: {sorted(s)}'\n"
+            "assert len(s) == 19, f'expected 19, got {len(s)}: {sorted(s)}'\n"
             "assert {'hub', 'lanes'} <= set(s), sorted(s)\n"
             "print('ok')\n"
         )
@@ -358,7 +358,7 @@ class TestSolverRegistryOrderIndependence:
         from hyperweave.compose.diagram.solver import registered_slugs
 
         assert registered_slugs() == registered_slugs()
-        assert len(registered_slugs()) == 18
+        assert len(registered_slugs()) == 19
 
 
 class TestConnectorPalette:

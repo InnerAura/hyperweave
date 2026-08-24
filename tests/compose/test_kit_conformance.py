@@ -233,12 +233,12 @@ def _accent_wire_classes(svg: str, uid: str) -> set[str]:
 
 @pytest.mark.parametrize("name", _PRESET_NAMES)
 def test_no_masthead(name: str) -> None:
-    """The masthead-band mechanism (measure_masthead's title_lines, the
-    ``<g data-hw-region="masthead">`` template branch) is retired: solver.py
-    only ever measures it for a canvas-width reference, never populates the
-    rendered header. Both structural signatures must stay absent — the
-    region marker AND the ``-title`` voice class (masthead-exclusive; no
-    other chrome uses it)."""
+    """The masthead's title/subtitle CONTENT is gone (2026-08-21): the
+    measure function, the ``DiagramHeader`` record, and the
+    ``<g data-hw-region="masthead">`` template branch are deleted, not merely
+    unpopulated. The masthead BAND survives — it carries header legends.
+    Both structural signatures must stay absent: the region marker AND the
+    ``-title`` voice class (masthead-exclusive; no other chrome uses it)."""
     r = _render(name)
     assert 'data-hw-region="masthead"' not in r.svg, f"{name}: masthead region rendered"
     assert f'class="{r.uid}-title"' not in r.svg, f"{name}: -title voice class rendered (masthead-only class)"

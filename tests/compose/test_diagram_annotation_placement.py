@@ -1,7 +1,7 @@
 """Property tests: caller free-text annotations clear content and never truncate.
 
 Run across the GENERATED topology stories — the same specs
-``scripts/generate_diagram_galleries.py`` composes into the proofset — so the
+``python -m scripts.examples.diagrams`` composes into the proofset — so the
 placement policy is graded on real, composed diagrams, not toy inputs. For
 EVERY callout / aside / pin / badge in every story the engine must:
 
@@ -21,7 +21,6 @@ spec-boundary (callout straddling a hub spoke).
 
 from __future__ import annotations
 
-import importlib.util
 import math
 import pathlib
 import re
@@ -39,14 +38,14 @@ _REPO = pathlib.Path(__file__).resolve().parents[2]
 
 
 def _load_stories() -> list[tuple[str, str, dict[str, Any]]]:
-    """Import the PIPELINE/FANOUT/HUB story lists straight from the generator
-    file (imported by path — the script is not a package)."""
-    path = _REPO / "scripts" / "generate_diagram_galleries.py"
-    spec = importlib.util.spec_from_file_location("_gen_galleries", path)
-    assert spec is not None and spec.loader is not None
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return [*mod.PIPELINE, *mod.FANOUT, *mod.HUB]
+    """The PIPELINE/FANOUT/HUB story lists, from the generator module.
+
+    Loaded by file path until the generators became a package; a plain import
+    now, so a move cannot leave this pointing at a path that does not exist.
+    """
+    from scripts.examples import diagrams
+
+    return [*diagrams.PIPELINE, *diagrams.FANOUT, *diagrams.HUB]
 
 
 _STORIES = _load_stories()

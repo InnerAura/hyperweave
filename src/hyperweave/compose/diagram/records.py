@@ -331,6 +331,12 @@ class LaneBand:
     rule: LineSpec | None = None
     """D2: the hairline rule under the header, spanning exactly the card
     column (typographic ground only)."""
+    header_box: RectSpec | None = None
+    """Opaque plate behind the header — the region label drawn as a CHIP.
+    Required wherever the label sits ON the region's own boundary (the
+    dag-mapreduce enclosure seats a 144x20 chip centred on its top edge, so
+    the hairline runs behind the plate instead of through the word). None
+    leaves the label as plain text, byte-identical to before."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -406,18 +412,6 @@ class TimeAxis:
 
 
 @dataclass(frozen=True, slots=True)
-class DiagramHeader:
-    """Masthead texts with FINAL canvas coordinates (region-stacked — §2:
-    no fixed y anywhere in chrome). ``title_lines`` carries the wrapped
-    title (wrap-before-truncate); ``title`` mirrors the first line
-    for back-compat readers."""
-
-    title: DiagramText | None = None
-    subtitle: DiagramText | None = None
-    title_lines: tuple[DiagramText, ...] = ()
-
-
-@dataclass(frozen=True, slots=True)
 class RenderedMotion:
     """Requested vs rendered — recorded in the payload so a fallback or a
     track resolution never silently diverges from what the caller asked."""
@@ -448,7 +442,6 @@ class DiagramLayout:
     display_h: int
     layout_slug: str
     aspect: str
-    header: DiagramHeader
     nodes: tuple[NodePlacement, ...]
     connectors: tuple[ConnectorPlacement, ...]
     particles: tuple[ParticlePlacement, ...]

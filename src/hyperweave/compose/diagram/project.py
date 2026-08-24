@@ -75,7 +75,9 @@ def diagram_payload_json(
 
 
 def derive_subvariant(spec: DiagramSpec) -> str:
-    """``data-hw-subvariant`` = the concrete layout slug (14 values)."""
+    """``data-hw-subvariant`` = the concrete layout slug — the flattened
+    topology x orientation axis (compose.diagram.registered_slugs is the
+    live set; never a number typed into prose)."""
     return layout_slug(spec)
 
 

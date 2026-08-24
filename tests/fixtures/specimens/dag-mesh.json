@@ -31,9 +31,10 @@
     "zone_headers": 1
   },
   "census_amendments": {
+    "arrow_terminals": 8,
     "chips": 4,
     "micro_labels": 0,
-    "note": "primer_diagram_language: the four relations (reads, emits, cache, direct read) ground as on-wire edge-chips, not free micro-labels \u2014 an amendment over this specimen's earlier free-label reading; the render carries 4 edge-chips and 0 micro-labels."
+    "note": "primer_diagram_language: the four relations (reads, emits, cache, direct read) ground as on-wire edge-chips, not free micro-labels \u2014 an amendment over this specimen's earlier free-label reading; the render carries 4 edge-chips and 0 micro-labels. arrow_terminals 9->8: the hand file stamps a chevron per arrival at a flush convergence, so coincident arrivals carry 2 coincident chevrons \u2014 identical path, identical dress, one seat. The seating law's own citation reads those endpoints as one mark; the render now draws them once. One point, one terminal."
   },
   "chip_stub_min": null,
   "height": null,

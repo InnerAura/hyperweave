@@ -76,24 +76,6 @@ class Region:
         return RectSpec(x=self.x, y=self.y, w=self.w, h=self.h)
 
 
-def base_regions(width: float, height: float, ch: Any) -> dict[str, Region]:
-    """The three always-present regions in canvas coordinates.
-
-    ``canvas`` is the content band between the header and footer chrome;
-    ``header`` is the masthead band; ``footer`` is the band directly above
-    the footer baseline. Bare chrome collapses the chrome bands to pads,
-    which just shrinks the regions."""
-    header_h = float(getattr(ch, "header_h", 0.0) or 0.0)
-    footer_h = float(getattr(ch, "footer_h", 0.0) or 0.0)
-    content_top = header_h
-    content_bottom = max(content_top, height - footer_h)
-    return {
-        "canvas": Region(x=0.0, y=content_top, w=width, h=content_bottom - content_top),
-        "header": Region(x=0.0, y=0.0, w=width, h=header_h),
-        "footer": Region(x=0.0, y=content_bottom, w=width, h=footer_h),
-    }
-
-
 # ── Edge-label subsumption ───────────────────────────────────────────────────
 
 
@@ -555,7 +537,7 @@ def build_annotations(
     lane_bands: tuple[LaneBand, ...] = (),
     extra_regions: dict[str, Region] | None = None,
     auto_annotations: tuple[DiagramAnnotation, ...] = (),
-    frames: dict[str, Region] | None = None,
+    frames: dict[str, Region],
 ) -> tuple[tuple[AnnotationPlacement, ...], float, tuple[str, ...]]:
     """The chrome pass. Returns the placed annotations (labels first, then the
     caller kinds placed in clear zones, then legends) plus ``extra_h`` — the
@@ -571,12 +553,12 @@ def build_annotations(
 
     ``extra_regions`` is the solver-registered region seam (``zone:*`` for hub,
     ``lane:*`` for lanes). ``auto_annotations`` are solver-synthesized
-    annotations (lanes' category legend) appended after the caller's."""
+    annotations (lanes' category legend) appended after the caller's.
+    ``frames`` is required: sec 2's region engine is the ONLY supplier of
+    coordinate frames, and they are CONTENT-LOCAL."""
     engine = ctx.engine
     style = ck.ChromeStyle.from_engine(engine, ctx.cfg)
-    # sec 2: the region engine supplies CONTENT-LOCAL frames explicitly; the
-    # legacy chassis-band derivation remains for direct callers.
-    regions = dict(frames) if frames is not None else base_regions(width, height, ctx.ch)
+    regions = dict(frames)
     if extra_regions:
         regions.update(extra_regions)
     geo_of = _edge_geo_by_index(geos, trunk_wins=ctx.slug.startswith("fanout"), edges=ctx.edges)

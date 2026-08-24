@@ -138,5 +138,5 @@ async def test_discover_emits_layout_slugs() -> None:
     res = await hw_discover("diagram")
     data = json.loads(res) if isinstance(res, str) else res
     slugs = data["diagram"]["layout_slugs"]
-    assert len(slugs) == 18
+    assert len(slugs) == 19
     assert {"fanout-radial", "fanout-downward", "tree-radial", "dag", "state-machine", "hub", "lanes"} <= set(slugs)

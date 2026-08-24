@@ -60,11 +60,7 @@ class Topology(StrEnum):
     diagram to ``{"pattern": <topology>, "n": <nodes>}`` plus content.
 
     The fan family carries its direction in the word itself (``fanout`` /
-    ``fanin`` — one solver, one chassis family, opposite mouths). The
-    retired flat words teach their new spelling at the input seam
-    (``RETIRED_TOPOLOGIES``): ``convergence`` → ``fanin``; ``stack`` →
-    ``pipeline`` + ``orientation: vertical``; ``flywheel`` → ``cycle`` +
-    ``orientation: orbit``; ``ring`` → ``cycle`` + ``orientation: ring``.
+    ``fanin`` — one solver, one chassis family, opposite mouths).
     """
 
     PIPELINE = "pipeline"
@@ -86,18 +82,6 @@ class Topology(StrEnum):
     STATE_MACHINE = "state-machine"
     HUB = "hub"
     LANES = "lanes"
-
-
-RETIRED_TOPOLOGIES: dict[str, str] = {
-    "convergence": "topology: fanin — the fan family's inward direction (same solver, opposite mouth)",
-    "stack": "topology: pipeline with orientation: vertical — the linear family's operator stack",
-    "flywheel": "topology: cycle with orientation: orbit — the loop family's hero-axis accumulator",
-    "ring": "topology: cycle with orientation: ring — the loop family's equal-stage empty-centre loop",
-}
-"""Hard-retired flat topology words → the family x expression spelling that
-replaced each (the 2026-08-20 consolidation). Read by the input seam so the
-refusal TEACHES the new spelling — an error-text record, never live
-compatibility state (the rename-ledger preservation law)."""
 
 
 class Orientation(StrEnum):
@@ -354,7 +338,15 @@ class DiagramEdge(FrozenModel):
         description="Lanes routing: bus (gutter-adjacent) | around (perimeter long-haul). Lanes-only",
     )
     exit: Literal["", "top", "bottom", "left", "right"] = Field(
-        default="", description="Explicit connector exit side (routing_overridable topologies only)"
+        default="",
+        description=(
+            "Explicit connector exit side (routing_overridable topologies only). Side words are read in "
+            "the FLOW frame, not the screen frame: 'top'/'bottom' name the near and far channels and "
+            "'right'/'left' name the with-flow and against-flow faces. On a horizontal flow those "
+            "coincide with the screen. Under 'orientation: vertical' they transpose with everything "
+            "else, so 'exit: bottom' asks for the far channel — which is the screen's RIGHT — and the "
+            "same spec keeps its meaning on either flow."
+        ),
     )
     entry: Literal["", "top", "bottom", "left", "right"] = Field(
         default="",
@@ -362,7 +354,8 @@ class DiagramEdge(FrozenModel):
             "Explicit connector entry side on the TARGET (routing_overridable topologies only). "
             "Independent of exit — a skip edge may leave one face and land on a different one "
             "(model-gateway's telemetry exits south/enters south; gateway-balanced's exits "
-            "south/enters west)."
+            "south/enters west). Read in the FLOW frame, exactly as exit is: 'entry: left' asks "
+            "for the face the flow points at, which is the screen's TOP under a vertical flow."
         ),
     )
     routing: Literal["", "straight", "orthogonal", "curved"] = Field(
@@ -688,18 +681,6 @@ class DiagramSpec(FrozenModel):
             "gives plate/inlay/twin (and each twin face) distinct content addresses."
         ),
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def _refuse_retired_topologies(cls, data: object) -> object:
-        """A retired flat topology word refuses TEACHING its family x
-        expression spelling (``RETIRED_TOPOLOGIES``) — the consolidation's
-        hard break, never an alias that silently lifts."""
-        if isinstance(data, dict):
-            raw = data.get("topology")
-            if isinstance(raw, str) and raw in RETIRED_TOPOLOGIES:
-                raise ValueError(f"topology {raw!r} was consolidated into its family — use {RETIRED_TOPOLOGIES[raw]}")
-        return data
 
     @model_validator(mode="before")
     @classmethod
@@ -1128,7 +1109,7 @@ def layout_slug(spec: DiagramSpec) -> str:
 
     Family word alone where the family has one cell; ``family-expression``
     where the ``orientation`` axis selects one (fanout's five, pipeline's
-    vertical stack, cycle's orbit/ring, tree's radial).
+    vertical stack, cycle's orbit/ring, tree's radial, dag's flow axis).
     """
     if spec.topology is Topology.FANOUT:
         return f"fanout-{spec.orientation.value}"
@@ -1136,6 +1117,8 @@ def layout_slug(spec: DiagramSpec) -> str:
         return f"cycle-{spec.orientation.value}"
     if spec.topology is Topology.PIPELINE and spec.orientation is Orientation.VERTICAL:
         return "pipeline-vertical"
+    if spec.topology is Topology.DAG and spec.orientation is Orientation.VERTICAL:
+        return "dag-vertical"
     if spec.topology is Topology.TREE and spec.orientation is Orientation.RADIAL:
         return "tree-radial"
     return spec.topology.value

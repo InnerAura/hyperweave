@@ -36,19 +36,53 @@ caps:
     tree-radial: { min: 4, max: 16 } # root + ring-1 + ring-2 (depth 2..3)
     comparison: { min: 2, max: 2 }
     sequence: { min: 2, max: 4 } # lifelines; messages capped below
-    dag: { min: 3, max: 12 }
+    # The dag family carries its GRAPH caps here beside the node counts,
+    # because its two cells do not share a binding dimension: flowing right,
+    # ranks cost width and members cost height; flowing down, that transposes.
+    # Single-cell families (sequence, state-machine) have nothing to transpose,
+    # so their graph caps stay flat below.
+    # RANK CAP AND HEIGHT BUDGET ARE SEPARATE THINGS (owner ruling 2026-08-21,
+    # superseding "max_ranks 5 = the 1000px budget"). The old note claimed the
+    # cap was derived from the budget. It cannot be: rendered height is
+    # canvas_h x scale, scale is a function of WIDTH, and width is a function
+    # of content — so the rank count at which a graph reaches a given height
+    # depends entirely on how wide its ranks are. Measured, vertical, at the
+    # 1.15 bow aspect:
+    #
+    #   members/rank   reaches 1000px   reaches 2000px
+    #        1            9 ranks          ~17 ranks
+    #        2            8 ranks          ~15 ranks
+    #        3            5 ranks           10 ranks
+    #        4            4 ranks            8 ranks
+    #
+    # There is no single count that means "1000px". The old 5 came from paper
+    # arithmetic on one idealised shape, and nothing ever checked it —
+    # scatter-gather already rendered 1005px under it. So: the cap is a plain
+    # refusal contract on COUNT, and the budget is a separate, declared,
+    # measured-at-solve-time advisory (height_budget_px below).
+    dag: { min: 3, max: 12, max_ranks: 8, max_per_rank: 4, max_skip_edges: 3, max_self_loops: 2 }
+    dag-vertical: { min: 3, max: 12, max_ranks: 8, max_per_rank: 4, max_skip_edges: 3, max_self_loops: 2 }
     state-machine: { min: 3, max: 8 }
     hub: { min: 3, max: 13 } # center + 2..12 spokes (16-slot canonical grid; 3-per-zone cap binds first)
     lanes: { min: 4, max: 18 } # nodes distributed across category bands
+  # How tall a diagram may render before it stops being one glance and starts
+  # being a scroll — "how much of a README does one diagram eat". ADVISORY, not
+  # a refusal: it rides `warnings` to CLI stderr / HTTP JSON like the other
+  # solve-time diagnostics, because the honest ceiling is a judgement about
+  # reading, not a geometric impossibility.
+  #
+  # Set to 2000 (owner ruling 2026-08-21, doubled from the notional 1000) on
+  # the reasoning that the corpus has barely pushed this edge yet: better to
+  # watch what people and agents actually build and then constrain, than to
+  # constrain on arithmetic nobody has tested. The prior 1000 was never
+  # enforced and was already violated by scatter-gather.
+  height_budget_px: 2000
   # Honest graph caps — these keep the layered solver simple and
   # deterministic; past them the frame refuses rather than degrades.
   sequence_max_messages: 8
-  dag_max_ranks: 5 # the kit's reference pipeline is 5 stages (push -> build -> checks -> gate -> deploy)
-  dag_max_per_rank: 4
-  dag_max_skip_edges: 3
   sm_max_below_baseline: 2
   sm_max_back_edges: 2
-  sm_max_self_loops: 2 # self-loops on state-machine/dag (the revise-in-place arc)
+  sm_max_self_loops: 2 # self-loops on state-machine (the revise-in-place arc)
   tree_radial_max_depth: 3
   tree_radial_max_ring1: 7
   tree_horizontal_max_depth: 2 # tree/dep-audit ceiling; deeper hierarchies use orientation 'radial'
@@ -73,6 +107,22 @@ orientation_legality:
   pipeline: [horizontal, vertical]
   cycle: [orbit, ring]
   fanin: [horizontal]
+  # An orientation names the AXIS a family flows along; the FAMILY names the
+  # direction along it. So pipeline:vertical RISES (the operator stack —
+  # nodes[0] is the top result) while dag:vertical DESCENDS (rank 0 on top).
+  # Both are "vertical" and they are not contradictory: the honest direction
+  # is spelled out per slug in orientation_phrases below, which is where a
+  # reader should look rather than inferring it from the axis word.
+  #
+  # The same idea one level down: an edge's authored `exit`/`entry` side words
+  # are FLOW-frame words. `top`/`bottom` name the near and far channels,
+  # `right`/`left` the with-flow and against-flow faces. Flowing right those
+  # coincide with the screen; flowing down they transpose with everything else
+  # (compose/diagram/axis.py:AxisMap.side), so one spec keeps its meaning on
+  # either flow instead of needing a fork per orientation. The cost is that a
+  # vertical author writing `exit: bottom` gets the far channel — the screen's
+  # right — rather than the literal bottom face.
+  dag: [horizontal, vertical]
 
 # Honest orientation phrase per layout_slug — the MEASURED clause of
 # hw:spatial-notes (never rhetoric; the reasoning quality bar lives on
@@ -96,6 +146,9 @@ orientation_phrases:
   comparison: side-by-side
   sequence: top-down replay
   dag: layered left-to-right
+  # Authored exit/entry sides transpose with the flow (see orientation_legality
+  # above): the far channel is the screen's right here, the near channel its left.
+  dag-vertical: layered top-to-bottom
   state-machine: directed state graph
   hub: radial hub
   lanes: horizontal swimlanes
@@ -109,8 +162,11 @@ wire_defaults:
   sequence: { wire: solid, terminal: arrow }
   state-machine: { wire: solid, terminal: arrow }
   # dag reads the kit's dotted-drift rails WITH flush terminal arrows
-  # (dag specimens).
+  # (dag specimens). Both flow cells carry it — the vertical specimens draw
+  # the same chevron on their own arrival face (a down-pointing
+  # `M 353,642.5 L 356,647 L 359,642.5 Z` into the sink).
   dag: { terminal: arrow }
+  dag-vertical: { terminal: arrow }
   # obi-engine: ordinary edges are solid + arrowed; the one declared
   # bypass (relation: bypass) keeps its dashed drift regardless (dress
   # motion wins over this default, same rule as every other topology).
@@ -339,12 +395,31 @@ region_band:
   band_side_pad: 18
   band_top_pad: 26
   band_bottom_pad: 12
+  # PER-AXIS CITATION. The three pads above are gateway-balanced's, and that is
+  # a band whose members stack ALONG the flow; a vertical dag band's members
+  # spread ACROSS it, and its own specimen (dag-vertical-mapreduce-band.svg,
+  # region 284..456 around cards 334..418) reads 38 base / 50 leading / 42 side.
+  # Reusing the horizontal base left a vertical band with 56 above its row and
+  # 12 below — the row sank onto the lower border. The leading pad still
+  # DERIVES (inset + CHIP_H + gap); only the base is cited per axis.
+  band_flow_pad_down: 38
   # agent-runtime's AGENT RUNTIME control loop (pp-agent-runtime.svg .fd-act):
   # a 710.8x140 band around its 3-member row — 22px side, 65px top (clears the
   # re-plan over-arc bow above the row), 13px below.
   band_over_arc_side_pad: 22
   band_over_arc_top_pad: 65
   band_over_arc_bottom_pad: 13
+  # Label INSIDE the band (the vertical dag's PARALLEL MAP SPACE chip, enrolled
+  # from dag-vertical-mapreduce-band.svg). A seating, not a total: the chip sits
+  # NEARER the band edge than the cards, which is what makes the label read as
+  # the band's rather than the row's — so the two gaps are enrolled separately
+  # and the leading pad falls out of them.
+  #   leading_pad = band_label_inset (12) + CHIP_H (26) + band_label_gap (18) = 56
+  # Only CHIP_H is overridden: config wins on metrics, so the engine's 26 (see
+  # compose/diagram/sizing.py CHIP_H) replaces the specimen's hand-drawn 20 —
+  # which is the whole +6px delta a render-and-look against that file shows.
+  band_label_inset: 12
+  band_label_gap: 18
   # agent-task-lifecycle's RECOVERY enclosure (pp-state-machine-alt2.svg
   # .a2-region): a hairline 170x112 box around its single member — 20px
   # sides, 22px top, 28px bottom (the label strip).
@@ -357,6 +432,21 @@ region_band:
   # (pp-gateway-balanced.svg .gw-chip, y=357) sits 20px below the MODEL
   # POOL band's own bottom edge (.gw-act, y=69+268=337) — 357-337=20.
   band_chip_clearance: 20
+  # Stub each side of a chip riding a RANK channel (dag-mapreduce-enclosure):
+  # its channel runs hero-face 276 -> card-face 456 = 180, carrying a 60-wide
+  # chip — 60px of visible wire each side. The generic on-line floor
+  # (CHIP_STUB_MIN 18.4) is the minimum a chip may show anywhere; a rank
+  # channel is the family's most structural run and the specimen gives it more.
+  rank_chip_stub: 60
+  # WHERE a region's label sits is per-family, because two specimens disagree
+  # and both are right about their own family:
+  #   dag  — dag-mapreduce-enclosure seats a 144x20 chip CENTRED ON the
+  #          region's top edge (chip y 56..76, region top 66), the plate
+  #          hiding the hairline behind the word.
+  #   sm   — agent-task-lifecycle's RECOVERY puts its label in a bottom
+  #          STRIP inside the box, no plate.
+  # Slugs listed here take the on-edge chip; everything else keeps the strip.
+  region_label_on_edge: [dag, dag-vertical]
 
 # Universal display pin (the prototypes render at exactly this width, every
 # topology): a chassis without its own display_w scales its canvas to this
@@ -368,6 +458,26 @@ display_w_default: 740
 # scale, so type and card size stay uniform across the board; the narrow
 # artifact takes only the page width its ink earns.
 display_scale_max: 0.8043
+# The whole scale law, in one line, because the graph caps above are reasoned
+# against it (compose/diagram/solver.py):
+#
+#   scale = min(display_scale_max, display_w_default / canvas_width)
+#
+# WIDTH ONLY — canvas height never enters. Two consequences worth stating
+# where the numbers live: (1) a tall artifact costs a reader a scroll, not
+# legibility, which is why the vertical cell's rank cap is a height budget
+# rather than a scale floor; (2) scale is a property of CONTENT, not of a node
+# count, so no count cap can pin it — long labels widen cards and a 5-rank dag
+# that renders at 0.59 with short labels renders at 0.47 with long ones. The
+# legibility check is therefore an advisory diagnostic keyed on the solved
+# scale (see scale_floor_warn), never a refusal keyed on counts.
+#
+# Advisory floor: below this, the solve emits a warning naming the measured
+# scale and the widest labels. Set BELOW the worst scale the caps already
+# permit (0.468, at 5 ranks with specimen-sized cards) so it fires only on
+# content worse than anything the caps bless — a floor inside the legal range
+# fires on the middle of it and becomes noise people filter out.
+scale_floor_warn: 0.45
 
 connector:
   stroke_width: 1.5
@@ -397,7 +507,12 @@ connector:
   loop_label_max_w: 96 # wrap width for a self-loop's outboard label
   leader_gap: 10
   label_lift: 16 # language specimen: micro-labels sit 16px off their wire (verb-algebra edit/read)
-  plateau_min_dy: 40 # chip edges bending past this ride a plateau (bow-flat-bow, chip on the flat run); under it the S's waist stays shallow enough to part the pill level (service-dependencies-billing writes chip — rail in the gap band under the cache row)
+  chip_bend_max_dy: 40 # a chip rides STRAIGHT wire; past this cross-axis offset the S's waist is
+  # too steep to part the pill level, so the label steps off the wire and becomes a micro-label
+  # beside it (the three-homes rule). It used to bend the EDGE instead — a bow-flat-bow plateau
+  # that manufactured a straight run — which made a chipped edge and its unchipped sibling leave
+  # the same face on different shapes. Under this offset the waist stays shallow enough to carry
+  # the pill level (service-dependencies-billing's writes chip).
   sm_label_lift: 8 # state-machine specimens: solver-anchored micro-labels clear their wire by 8px (pp-state-machine(-alt2).svg chain/back-edge/over-arc guards)
   # One shared drift clock (diagrams-v3 kit): every marching wire rides the
   # same 7s phase — staggered delays made overlapping fan origins shimmer.

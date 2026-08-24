@@ -198,5 +198,5 @@ class TestFramesLayoutSlugs:
         frames = client.get("/v1/frames").json()
         dia = next(f for f in frames if f["type"] == "diagram")
         slugs = dia["layout_slugs"]
-        assert len(slugs) == 18
+        assert len(slugs) == 19
         assert {"fanout-radial", "fanout-downward", "tree-radial", "dag", "state-machine", "hub", "lanes"} <= set(slugs)

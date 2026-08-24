@@ -12,7 +12,7 @@ e  curved wires carry their TRUE trace (sampled polylines) — obstacle set
 f  per-class ink-mass bands are the mass-ratio diagnostic's calibration
    (§11.5a) — pinned in test_diagram_diagnostics.py with the §6 rules.
 g  gallery cells embed exactly one artifact (the ghost-stack sweep lives in
-   scripts/generate_surface_matrix.py; pinned here against fixtures).
+   scripts/examples/surface_matrix.py; pinned here against fixtures).
 h  the caption sentence (request-descent's subtitle) never ellipsizes —
    including under --font-mode system; the title survives in accessibility
    metadata even though caption chrome never renders a masthead.
@@ -120,7 +120,7 @@ class TestBugDEWireTruth:
 
 class TestBugGGallerySweep:
     def test_one_artifact_per_cell(self) -> None:
-        from generate_surface_matrix import _sweep_gallery_cells
+        from scripts.examples.surface_matrix import _sweep_gallery_cells
 
         one = (
             '<figure><div class="hosts">'

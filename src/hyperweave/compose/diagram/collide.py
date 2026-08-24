@@ -278,15 +278,38 @@ def _clear_own_incident(
         return p
     if _total_overlap(p.box, incident_obstacles) == 0.0:
         return p
+    # TWO passes, and the second one is the whole point. Every candidate here
+    # is a slide along the label's OWN wire, so on a diagonal run the wire
+    # crosses the text box at every position on the ladder — including the
+    # seat the label already occupies. Requiring ``not _wire_through_box`` in
+    # a single pass therefore rejects the entire ladder and silently returns
+    # the overlapping seat, which is how a label came to sit on the corner of
+    # its own source card: the guard fired, found five clean candidates, and
+    # threw all five away for a property its starting point also had.
+    #
+    # So: prefer a seat that clears the wire too, and if none exists, take one
+    # that merely clears the CARD. A wire crossing its own label is a dress
+    # problem; a label lying on a card is an unreadable one.
+    # A slide keeps the lift vector it started with, which on a DIAGONAL run
+    # points along the wire rather than off it — so every slid seat still has
+    # the wire through it. Offer each candidate's mirror as well: same seat,
+    # lift flipped to the other side of the thread. That is the tool that
+    # actually clears a diagonal, and sliding alone never reaches it.
+    fallback: AnnotationPlacement | None = None
     for cand in _slide_candidates(p, geo, slides):
-        if (
-            cand.box is not None
-            and _total_overlap(cand.box, incident_obstacles) == 0.0
-            and _total_overlap(cand.box, obstacles, text_margin=text_margin) == 0.0
-            and not _wire_through_box(cand.box, geo)
-        ):
-            return cand
-    return p
+        for trial in (cand, _mirror_label(cand, geo)):
+            if (
+                trial is None
+                or trial.box is None
+                or _total_overlap(trial.box, incident_obstacles) != 0.0
+                or _total_overlap(trial.box, obstacles, text_margin=text_margin) != 0.0
+            ):
+                continue
+            if not _wire_through_box(trial.box, geo):
+                return trial
+            if fallback is None:
+                fallback = trial
+    return fallback if fallback is not None else p
 
 
 def _resolve_one(
@@ -375,7 +398,19 @@ def resolve_labels(
     out: list[AnnotationPlacement] = []
     warns = list(warnings)
     labelled_indices = [j for j, e in enumerate(edges) if e.label and j in geo_of]
-    for k, p in enumerate(labels):
+    # PINNED BEFORE MOVABLE. A chip rides its own wire at the run midpoint —
+    # that seat is the law, so the ladder cannot move it. A bare micro-label
+    # can go anywhere clear. Walking them in edge order therefore lets a chip
+    # land on a micro-label that was already placed, and neither one yields.
+    # Placing every pinned chip first puts its plate in the obstacle set before
+    # a single free label is laddered, so the label steps around it instead.
+    order = sorted(
+        range(len(labels)),
+        key=lambda k: 0 if (k < len(labelled_indices) and edges[labelled_indices[k]].label_style == "chip") else 1,
+    )
+    placed_by_k: dict[int, AnnotationPlacement] = {}
+    for k in order:
+        p = labels[k]
         edge_index = labelled_indices[k] if k < len(labelled_indices) else -1
         geo = geo_of.get(edge_index) if edge_index >= 0 else None
         incident = _incident_refs(edge_index, edges)
@@ -405,7 +440,7 @@ def resolve_labels(
             text_margin=text_margin,
             incident_obstacles=incident_obs,
         )
-        out.append(placed)
+        placed_by_k[k] = placed
         if placed.box is not None:
             # kind="label" (not "furniture"): a LATER label's own text-text
             # margin check (_total_overlap) only inflates against this kind
@@ -416,6 +451,8 @@ def resolve_labels(
             working.append(Obstacle(box=placed.box, kind="label", ref=-1))
         if not ok:
             warns.append(_overlap_warning(p))
+    # Emit in the caller's original order — only the RESOLUTION order changed.
+    out = [placed_by_k[k] for k in range(len(labels))]
     return out, working, warns
 
 

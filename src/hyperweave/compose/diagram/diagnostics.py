@@ -7,7 +7,7 @@ Measurements are pure functions of (spec, layout, genome, engine); bands
 live in the ``diagnostics:`` engine block. A clean artifact reports
 NOTHING — silence is the passing grade.
 
-Rules: mass-ratio, canonical-slot, sector-balance, margin-band, contrast,
+Rules: mass-ratio, canonical-slot, sector-balance, height-budget, margin-band, contrast,
 palette, nucleus-underweight, accent-unbound, unbundled-fan,
 unresolved-glyph, relation-ambiguous, crossing-count, visual-channel-collision,
 nesting-depth (advisory at the cap; >2 refuses at the seam),
@@ -121,6 +121,37 @@ def _sector_balance(spec: DiagramSpec, layout: DiagramLayout, engine: Mapping[st
         measured=f"sector occupancy spread {spread} ({zones})",
         band=f"at most {cap}",
         suggestion="rebalance roles/zones across the rose, or switch hub_policy to axial",
+    )
+
+
+def _height_budget(layout: DiagramLayout, engine: Mapping[str, Any]) -> Diagnostic | None:
+    """How tall the artifact actually RENDERS, against the declared budget.
+
+    A rank cap cannot stand in for this and never could: rendered height is
+    ``canvas_h x scale``, scale is a function of WIDTH, and width is a function
+    of content, so the rank count at which a graph reaches a given height
+    depends on how wide its ranks are — measured, anywhere from 4 ranks to 17.
+    The old note claimed ``max_ranks`` was derived from a 1000px budget; it was
+    paper arithmetic on one idealised shape, nothing enforced it, and the
+    corpus already exceeded it.
+
+    So the budget is checked where it is actually knowable — on the solved
+    render — and it ADVISES rather than refuses, because "too tall to read in
+    one glance" is a judgement about reading, not a geometric impossibility."""
+    budget = float((engine.get("caps") or {}).get("height_budget_px", 0) or 0)
+    if not budget or not layout.height or not layout.width:
+        return None
+    rendered = float(layout.height) * min(
+        float(engine.get("display_scale_max", 0.8043)),
+        float(engine.get("display_w_default", 740)) / float(layout.width),
+    )
+    if rendered <= budget:
+        return None
+    return Diagnostic(
+        rule="height-budget",
+        measured=f"renders {rendered:.0f}px tall ({layout.width:.0f}x{layout.height:.0f} canvas)",
+        band=f"at most {budget:.0f}px",
+        suggestion="split the graph or widen its ranks — a taller artifact is scrolled past, not read",
     )
 
 
@@ -418,6 +449,7 @@ def run_diagnostics(
         _canonical_slot(spec, layout),
         _sector_balance(spec, layout, engine),
         _margin_band(layout, engine),
+        _height_budget(layout, engine),
         _contrast(genome),
         _palette(spec, palette_len),
         _nucleus_underweight(spec, layout, engine),

@@ -193,8 +193,9 @@ def place_legend(
             text = DiagramText(x=sx + ext + gap, y=cy + ascent / 2, text=ann.text, cls="key", anchor="start")
             # diamond/square/line(-dashed) precompute their drawn geometry;
             # disc/ring stay a plain circle (the template branches on shape,
-            # ring drawing an open stroke; '' keeps the legacy accent-colored
-            # circle, and a health swatch always draws a plain filled disc).
+            # ring drawing an open stroke; '' is the DEFAULT — the plain
+            # accent-colored circle — and a health swatch always draws a
+            # plain filled disc).
             swatch_path = _SWATCH_PATH_BUILDERS[ann.shape](sx, cy, ext) if ann.shape in _SWATCH_PATH_BUILDERS else ""
             entries.append(
                 LegendEntry(

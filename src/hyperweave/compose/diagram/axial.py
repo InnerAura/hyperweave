@@ -323,11 +323,11 @@ def solve_axial(ctx: SolverContext) -> DiagramLayout:
     # cites the fan's SPREAD-TO-DROP ratio, never absolute seats — pitch
     # derives from the cited face-to-face gap (``s_rank_spread_ratio`` x
     # ``s_rank_axis_gap``), so any card-width change re-derives the same
-    # even fan about the port. The retired absolute pitch/tilt pins were
-    # fitted to one render's card widths and left the fan lopsided the
-    # moment those widths changed (the snug-width wave's near-horizontal
-    # leftmost spoke). Legacy absolute pins still read for specs that
-    # declare them.
+    # even fan about the port. Absolute pitch/tilt pins remain the fallback
+    # when a caller zeroes the ratio via ``spec.axial`` (``_axial_cfg``
+    # merges it over the frame config): they fit one render's card widths,
+    # so the fan goes lopsided the moment those widths change — which is why
+    # the ratio is the default, not why the pins are unreachable.
     ratio = float(cfg.get("s_rank_spread_ratio", 0.0))
     s_rank_pitch = ratio * s_rank_gap if ratio else float(cfg.get("s_rank_pitch", w_s + 24.0))
     s_rank_tilt = float(cfg.get("s_rank_tilt_dx", 0.0)) if ks > 1 else 0.0

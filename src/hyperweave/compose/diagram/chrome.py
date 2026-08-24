@@ -13,7 +13,7 @@ import math
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.diagram.records import DiagramHeader, DiagramText, GlyphArt, NodePlacement
+from hyperweave.compose.diagram.records import DiagramText, GlyphArt, NodePlacement
 from hyperweave.compose.diagram.sizing import (
     BULLET_DESC_RIGHT_GAP,
     CARD_LABEL_HERO_LABEL_DY,
@@ -91,7 +91,6 @@ __all__ = [
     "mark_w_for",
     "measure_caption",
     "measure_footer",
-    "measure_masthead",
     "node_glyph_id",
     "place_card",
     "place_circle",
@@ -105,49 +104,6 @@ __all__ = [
     "style_of",
     "voice_for",
 ]
-
-
-def measure_masthead(
-    spec: DiagramSpec, ch: DiagramTopologyChassis, cfg: ParadigmDiagramConfig, wrap_budget: float
-) -> tuple[DiagramHeader, float, float]:
-    """The masthead region's content, measured in REGION-LOCAL coordinates
-    (sec 2: no fixed y — the region stack decides where the block lands).
-
-    Returns ``(header, w, h)`` with every text at local (0-anchored) coords.
-    The wrap law: the title wraps to TWO lines against the wrap budget
-    before any ellipsis — ellipsis only when a single wrapped line still
-    exceeds the budget (the region genuinely cannot hold the text). The
-    measured width may EXCEED the budget only through the subtitle's own
-    single-line minimum; the stack then widens the canvas rather than
-    truncating chrome while canvas sits empty.
-    """
-    if ch.header_mode == "none" or (not spec.title and not spec.subtitle):
-        return DiagramHeader(), 0.0, 0.0
-    title_v = cfg.title_voice
-    sub_v = cfg.subtitle_voice
-    title_pitch = title_v.size + 6.0
-    y = 0.0
-    w = 0.0
-    title_lines: list[DiagramText] = []
-    if spec.title:
-        lines = wrap_text_lines(spec.title, wrap_budget, title_v, max_lines=2)
-        for line in lines:
-            y += title_pitch
-            title_lines.append(DiagramText(x=0.0, y=y, text=line, cls="title"))
-            w = max(w, measure_voice(line, title_v))
-    subtitle = None
-    if spec.subtitle:
-        sub_lines = wrap_text_lines(spec.subtitle, wrap_budget, sub_v, max_lines=2)
-        first = sub_lines[0] if sub_lines else spec.subtitle
-        y += sub_v.size + (8.0 if title_lines else 4.0)
-        subtitle = DiagramText(x=0.0, y=y, text=first, cls="sub")
-        w = max(w, measure_voice(first, sub_v))
-    header = DiagramHeader(
-        title=title_lines[0] if title_lines else None,
-        subtitle=subtitle,
-        title_lines=tuple(title_lines),
-    )
-    return header, w, y + 6.0
 
 
 def measure_caption(spec: DiagramSpec, cfg: ParadigmDiagramConfig) -> tuple[DiagramText | None, float, float]:

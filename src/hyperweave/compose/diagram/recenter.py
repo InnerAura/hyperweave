@@ -167,6 +167,7 @@ def _t_band(band: LaneBand, dx: float, dy: float) -> LaneBand:
         band,
         box=_t_rect(band.box, dx, dy),
         header=_t_text(band.header, dx, dy),
+        header_box=_t_rect(band.header_box, dx, dy) if band.header_box is not None else None,
         count=_t_text_opt(band.count, dx, dy),
         rule=_t_line(band.rule, dx, dy) if band.rule is not None else None,
     )

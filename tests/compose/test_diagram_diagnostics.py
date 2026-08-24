@@ -52,6 +52,53 @@ class TestRulesFire:
         # is impossible (hub caps at 3) so pin the in-band silence instead.
         assert "sector-balance" not in _rules(spec)
 
+    def test_height_budget_fires_on_a_render_taller_than_its_budget(self) -> None:
+        # Unreachable through the normal pack, and deliberately so: the rank
+        # caps refuse long before the budget bites (a vertical dag at its
+        # 8-rank cap renders 929px against a 2000px budget). The rule guards
+        # the case the CAPS do not — a short graph whose content makes it tall
+        # — so pin its arithmetic at the unit level, the same way
+        # nucleus-underweight is pinned above.
+        #
+        # It also pins the thing the budget is FOR: rendered height, not canvas
+        # height. Rendered = canvas_h x scale, and scale is a function of
+        # WIDTH, which is why a rank count could never stand in for it.
+        from dataclasses import replace as _replace
+
+        from hyperweave.compose.diagram import compute_diagram_layout
+        from hyperweave.compose.diagram.diagnostics import run_diagnostics
+        from hyperweave.compose.diagram.input import resolve_auto_roles
+        from hyperweave.config.loader import load_diagram_config, load_paradigms
+        from hyperweave.core.diagram import DiagramSpec
+
+        spec = resolve_auto_roles(
+            DiagramSpec.model_validate(
+                {
+                    "topology": "dag",
+                    "orientation": "vertical",
+                    "title": "T",
+                    "nodes": [{"id": f"n{i}", "label": f"step {i}", "desc": "stage"} for i in range(3)],
+                    "edges": [{"source": "n0", "target": "n1"}, {"source": "n1", "target": "n2"}],
+                }
+            )
+        )
+        engine = load_diagram_config()
+        lay = compute_diagram_layout(spec, paradigm=load_paradigms()["primer"].diagram, engine=engine, palette_len=5)
+        budget = float((engine.get("caps") or {}).get("height_budget_px", 2000))
+        scale = min(
+            float(engine.get("display_scale_max", 0.8043)),
+            float(engine.get("display_w_default", 740)) / float(lay.width),
+        )
+        assert lay.height * scale <= budget, "the natural render already exceeds the budget; pick a smaller fixture"
+
+        tall = _replace(lay, height=(budget / scale) + 50.0)
+        rules = {d.rule for d in run_diagnostics(spec, tall, genome={}, engine=engine, palette_len=5)}
+        assert "height-budget" in rules
+
+        under = _replace(lay, height=(budget / scale) - 50.0)
+        quiet = {d.rule for d in run_diagnostics(spec, under, genome={}, engine=engine, palette_len=5)}
+        assert "height-budget" not in quiet, "the advisory fires below its own budget"
+
     def test_nucleus_underweight(self) -> None:
         # The solver's prominence growth makes this unreachable through the
         # normal pack (the rule GUARDS future paths — e.g. a glyph-circle

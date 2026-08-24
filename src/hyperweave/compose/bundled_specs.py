@@ -56,12 +56,11 @@ def resolve_bundled_spec(frame_type: str, name: str) -> BundledSpec:
 
     Raises ``PRESET_UNKNOWN`` with the full menu for an unknown name and
     ``TYPE_UNKNOWN`` for a frame type with no store — the same closed error
-    contract every surface renders. Pre-release preset renames carry no
-    old→new teaching table (owner ruling 2026-08-20, superseding the
-    rename-ledger refusals for preset ids: ids never enter payloads, and
-    the menu's descriptive names are the teaching) — only retired TOPOLOGY
-    words teach their new spelling (``core.diagram.RETIRED_TOPOLOGIES``,
-    the payload round-trip bridge).
+    contract every surface renders. Renames carry no old→new teaching table
+    (owner rulings 2026-08-20 for preset ids, 2026-08-21 for topology words):
+    ids never enter payloads, the menu's descriptive names are the teaching,
+    and a superseded topology word refuses through the enum, which names the
+    complete legal set.
     """
     from hyperweave.config.loader import load_diagram_presets, load_matrix_presets
 

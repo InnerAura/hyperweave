@@ -1,4 +1,4 @@
-"""Lane-alignment, row-order pinning, and plateau laws (the dag figure grammar).
+"""Lane-alignment, row-order pinning, and chip-seating laws (the dag figure grammar).
 
 Lane law: a rank does not center independently around the canvas mid — it
 reads the rows already placed one rank left. A single-source node snaps to
@@ -158,16 +158,23 @@ def test_pinned_orders_replace_the_barycenter() -> None:
     assert rows["db2"] < rows["db0"] < rows["db1"], "pinned store order violated"
 
 
+# The shape the retired plateau drew: bow, flat run at a rail, bow. Kept as a
+# NEGATIVE — nothing may draw it again.
 _PLATEAU_RUN = re.compile(r"C [-0-9. ,]+ ([-0-9.]+),([-0-9.]+) L ([-0-9.]+),\2 C")
 
 
-def test_plateau_carries_the_chip_on_a_flat_run() -> None:
-    """A chip edge that must bend EVEN AFTER alignment (its target's row is
-    claimed by an earlier labeled vote — the billing shape: reads wins the
-    store, writes reaches up from the fan's extent) rides bow, flat, bow: a
-    flat leg at the rail, the rail a half-pitch off the SOURCE row toward
-    the target (the below-the-cache-row seat), the chip box centered on the
-    run."""
+def test_a_bending_chip_steps_off_the_wire() -> None:
+    """A chip rides STRAIGHT wire. Where the edge bends past the threshold the
+    LABEL moves — it becomes a micro-label beside the wire (the three-homes
+    rule) — and the wire itself stays a pure single-cubic bow, identical in
+    family to its unchipped siblings.
+
+    The retired answer bent the edge FURTHER instead: a bow-flat-bow plateau
+    that manufactured a straight run for the pill. It made a chipped edge and
+    its unchipped sibling leave the same face on visibly different shapes, it
+    fired on exactly one edge in the whole corpus, and no hand specimen draws
+    it — every specimen chip sits centred on wire that was already straight.
+    """
     spec = _fan_spec(4, 1)
     spec["edges"][-1] = {"source": "svc0", "target": "db0", "label": "reads", "label_style": "chip"}
     spec["edges"].append({"source": "svc3", "target": "db0", "label": "writes", "label_style": "chip"})
@@ -175,28 +182,23 @@ def test_plateau_carries_the_chip_on_a_flat_run() -> None:
     rows = _rows(lay)
     assert abs(rows["db0"] - rows["svc0"]) < 0.5, "first labeled vote lost the store"
     assert abs(rows["db0"] - rows["svc3"]) > 60.0, "spec no longer bends the writes edge"
-    chips = [a for a in lay.annotations if a.kind == "edge-chip" and a.lines and a.lines[0].text == "writes"]
-    assert chips, "writes chip missing"
-    chip = chips[0]
-    ccx, ccy = chip.box.x + chip.box.w / 2, chip.box.y + chip.box.h / 2
-    flat = None
-    for c in lay.connectors:
-        m = _PLATEAU_RUN.search(c.path_d)
-        if m and abs(float(m.group(2)) - ccy) < 0.5:
-            flat = (float(m.group(1)), float(m.group(3)), float(m.group(2)))
-    assert flat is not None, "no flat run under the writes chip"
-    x0, x1, rail = flat
-    assert x0 <= ccx <= x1, "chip off its own flat run"
-    assert x1 - x0 >= chip.box.w, "flat run shorter than the chip"
-    toward = -1.0 if rows["db0"] < rows["svc3"] else 1.0
-    assert (rail - rows["svc3"]) * toward > 0, "rail not on the target side of the source row"
-    assert abs(rows["svc3"] - rail) <= 60.0, "rail left the source's own gap band"
+
+    # The label survives — it just stops being a pill on a bent wire.
+    labels = [a for a in lay.annotations if a.lines and a.lines[0].text == "writes"]
+    assert labels, "the bending label vanished instead of stepping off the wire"
+    assert not any(a.kind == "edge-chip" for a in labels), "a pill still rides the bent wire"
+
+    # `reads` runs flush (its store snapped to its row), so it KEEPS its chip.
+    reads = [a for a in lay.annotations if a.lines and a.lines[0].text == "reads"]
+    assert reads and reads[0].kind == "edge-chip", "a straight-run chip must stay a chip"
+
+    assert not any(_PLATEAU_RUN.search(c.path_d) for c in lay.connectors), "the plateau came back"
 
 
 def test_unlabeled_bends_keep_the_pure_bow() -> None:
-    """An unlabeled edge that bends (its multi-source target midpoints
-    between rows) stays a single S-cubic — the plateau is chip
-    infrastructure, never a general re-route (the reach is information)."""
+    """An unlabeled edge that bends (its multi-source target midpoints between
+    rows) stays a single S-cubic. Nothing re-routes a wire to carry a label —
+    the label moves instead."""
     spec = _fan_spec(2, 0)
     spec["nodes"].append({"id": "store", "label": "store"})
     spec["edges"] += [{"source": "svc0", "target": "store"}, {"source": "svc1", "target": "store"}]

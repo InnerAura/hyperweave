@@ -591,10 +591,6 @@ def _motion_vocabulary(layout: DiagramLayout) -> str:
 def _text_surface(layout: DiagramLayout) -> list[str]:
     """Every string the SVG renders — feeds the font subsetter."""
     strings: list[str] = []
-    if layout.header.title is not None:
-        strings.append(layout.header.title.text)
-    if layout.header.subtitle is not None:
-        strings.append(layout.header.subtitle.text)
     for n in layout.nodes:
         strings.append(n.label.text)
         strings.extend(line.text for line in n.desc_lines)

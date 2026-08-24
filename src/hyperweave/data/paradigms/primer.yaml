@@ -832,6 +832,77 @@ diagram:
       # already floors on its OWN preset citation, so this pair only feeds
       # PURE content-solve for a future hero that declares neither.
       hero: { w: 210, h: 112, rx: 16, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40, desc_line_pitch: 19, pad_y: 14.7, label_desc_gap: 7.6, max_desc_lines: 4 }
+    dag-vertical: # the same layered ranks flowing top-to-bottom (the flow axis)
+      # Constants reconstructed from dag-vertical-mapreduce-band.svg /
+      # -enclosure.svg by measuring their rects, not by reading their prose:
+      # the spatial-notes' "dy=186" is face-to-face CONDUIT TRAVEL, not rank
+      # pitch. Pitch derives as h_src/2 + travel + h_tgt/2, which is how the
+      # engine already models it (_rank_pitch = max extent + gap), and the two
+      # files agree on the rule while differing in travel:
+      #   band file    centres 114/376/638 -> pitch 262 = 34 + 186 + 42
+      #   enclosure    centres 120/364/608 -> pitch 244 = 35 + 166 + 43
+      # 166 is the citation (the banded 186 is the band's pads showing up in
+      # the gap); the band re-adds its own padding through region_band.
+      depart_trunk: 72
+      width_policy: aligned
+      width: 880 # the specimen canvas; inert without width_floor (content hugs)
+      height: 400
+      display_w: 740
+      margin_x: 60 # cross-axis canvas margin: canvas 880 vs band 760
+      header_h: 66
+      footer_h: 54
+      # Flow-axis travel DERIVES from the cross-axis spread the edges bow
+      # through (see graph.py): ratio x spread, floored. The ratio IS the bow
+      # aspect — flow travel per unit of cross travel — and it is the one
+      # number that decides whether a vertical dag reads as sweeps or as dives.
+      #
+      # OWNER RULING 2026-08-21: 1.15, a new tolerance, and deliberately
+      # neither hand file's. The two specimens of the SAME mapreduce graph
+      # disagree by 2.2x about their own family:
+      #   dag-mapreduce-enclosure.svg          horizontal  180/110 = 1.64
+      #   dag-vertical-mapreduce-enclosure.svg vertical    166/220 = 0.755
+      # Flowing down the cross spread DOUBLES (110 -> 220) because the card is
+      # landscape and never rotates; the vertical file's travel did not grow to
+      # match (180 -> 166), so every bow it draws is 2.2x steeper than its own
+      # horizontal twin. 0.6917 was extracted from that file and made law.
+      #
+      # 1.64 would make one family read one way on both flows. It was NOT
+      # rejected on the 1000px height budget: that budget is the derivation
+      # behind max_ranks 5, computed on a canonical 5-rank/3-member canvas, and
+      # nothing asserts it per render — scatter-gather already renders 1005px
+      # at 0.6917, so the corpus exceeds it today. What 1.64 costs is height:
+      # 7 of 19 vertical dags pass 1000px, tallest 1441px, against 3 and
+      # 1216px at 1.15 and 1 and 1005px at 0.6917.
+      #
+      # 1.15 is therefore a TOLERANCE, chosen on the renders: it is the point
+      # where the bows read as bows (corpus min rises 0.42 -> 1.15) without the
+      # figure growing a third taller than it needs to be. Recorded as taste
+      # bounded by measurement, not as a derivation.
+      #
+      #   floor  74, pipeline-vertical's own straight-stack gap, the repo's
+      #          one cited vertical run with nothing to bow around
+      # A flat gap suits the horizontal cell (wide cards) but leaves a vertical
+      # chain swimming: 166 is 2.5x a 66-tall card.
+      rank_gap: 166 # retained as the fan-case reference; the derivation governs
+      rank_gap_spread_ratio: 1.15
+      rank_gap_min: 74
+      # CROSS-axis member pitch is a collapse FLOOR, not a target — content
+      # drives it (max(floor, card extent + row_gap)). Pinning it at the
+      # specimen's own 240 looked right because that specimen's cards are 196
+      # wide and 196+44 = 240 exactly, so the floor never bound. On a NARROWER
+      # card it binds and adds dead spread the S-curves then have to bow
+      # across — a 146-wide rank of four spread 720 instead of 570. Set below
+      # any real card so the specimen still solves 240 from its own content.
+      rank_pitch_max: 120
+      row_gap: 44 # cross-axis face-to-face: 240 pitch - 196 card width
+      h_max: 140
+      # Card WIDTH is the specimen's own 196; card HEIGHT is deliberately NOT
+      # its 84 — that height carries a role eyebrow above the name, which is
+      # not a field this engine renders, so citing it would import a feature
+      # that does not exist. Height content-solves on the family's own rhythm.
+      node: { w: 196, h: 66, rx: 13, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40, desc_line_pitch: 19, pad_y: 14.7, label_desc_gap: 7.6, max_desc_lines: 4, label_gap: 22 }
+      # Hero maps cleanly — both specimens draw a 230x68 crown at each pole.
+      hero: { w: 230, h: 112, rx: 16, dot_inset_x: 18, dot_dy: 21, label_dy: 25, desc_dy: 40, desc_line_pitch: 19, pad_y: 14.7, label_desc_gap: 7.6, max_desc_lines: 4 }
     state-machine: # glyph-card chain + branch drop + revise back-loop (all three specimens are rx-13 cards)
       node_style: card+glyph # chassis default anatomy; an explicit node/spec style wins
       width: 1000
