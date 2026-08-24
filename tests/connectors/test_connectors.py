@@ -1408,6 +1408,38 @@ class TestStargazerRESTSampling:
         assert len(result["points"]) == 7
         assert [p["count"] for p in result["points"]] == [1, 2, 3, 4, 5, 6, 7]
 
+    @pytest.mark.asyncio
+    async def test_all_pages_failing_logs_and_short_caches(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Every sample-page fetch failing must be logged AND cached briefly.
+
+        Debug regression: a transient GitHub-side block (e.g. secondary rate
+        limiting) on the ``/stargazers`` fan-out previously vanished with zero
+        log evidence — ``asyncio.gather(..., return_exceptions=True)`` ate the
+        exceptions silently — while an unrelated GraphQL cross-check warning
+        was the only thing visible, misdirecting debugging. The failure-shaped
+        result was also cached for the full hour-long TTL, so the outage
+        outlived GitHub's own rate-limit window by ~60x.
+        """
+        from hyperweave.connectors.base import ConnectorError
+        from hyperweave.connectors.github import FAILURE_CACHE_TTL, _fetch_stargazer_history_rest
+
+        async def fake_fetch_json(url: str, **_kw: Any) -> Any:
+            if "/stargazers" in url:
+                raise ConnectorError("Fetch failed for 'github-core': 403 Forbidden")
+            return {"stargazers_count": 500}
+
+        monkeypatch.setattr("hyperweave.connectors.github.fetch_json", fake_fetch_json)
+
+        with caplog.at_level("WARNING", logger="hyperweave.connectors.github"):
+            result = await _fetch_stargazer_history_rest("owner", "repo")
+
+        assert result["points"] == []
+        assert result["current_stars"] == 500
+        assert result["ttl"] == FAILURE_CACHE_TTL
+        assert any("stargazer page fetch failed" in record.message for record in caplog.records)
+
 
 # =========================================================================
 # crates.io Provider (v0.3.12)

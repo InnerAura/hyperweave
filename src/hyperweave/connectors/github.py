@@ -345,7 +345,11 @@ async def fetch_stargazer_history(
         raise ConnectorError(
             f"star history for {identifier} exceeded the {_RENDER_DEADLINE_S:.0f}s render deadline"
         ) from exc
-    cache.set(cache_key, result, STARGAZER_HISTORY_TTL)
+    # Failure-shaped results (empty points from a page-fetch failure or a
+    # cross-check disagreement) set their own short ttl — see the return
+    # sites in _fetch_stargazer_history_rest. A transient GitHub-side block
+    # must self-heal in seconds, not sit cached for a full hour.
+    cache.set(cache_key, result, result.get("ttl", STARGAZER_HISTORY_TTL))
     return result
 
 
@@ -457,7 +461,7 @@ async def _fetch_stargazer_history_rest(
                 "current_stars": max(total_stars, cross_check_stars),
                 "repo": identifier,
                 "source_url": f"https://github.com/{identifier}",
-                "ttl": STARGAZER_HISTORY_TTL,
+                "ttl": FAILURE_CACHE_TTL,
             }
         # Sources agree within 2x — trust the GraphQL number (more reliable
         # for total counts) and proceed with REST sampling for history.
@@ -519,8 +523,28 @@ async def _fetch_stargazer_history_rest(
     results = await asyncio.gather(*[_fetch_page(p) for p in page_numbers], return_exceptions=True)
 
     points: list[dict[str, Any]] = []
-    for item in results:
+    for requested_page, item in zip(page_numbers, results, strict=True):
         if isinstance(item, BaseException):
+            # Sentinel-free path: gather's return_exceptions swallows these by
+            # default. Without this log, an all-pages-failed run (e.g. a
+            # transient abuse-rate block) produces an empty chart with zero
+            # evidence in the logs beyond the unrelated GraphQL cross-check
+            # warning — exactly the silent-failure shape v0.2.10 already
+            # burned us on once for user stats (_safe_fetch_json exists
+            # because of it; this fan-out had no equivalent).
+            status = _extract_status_code(item)
+            _LOGGER.warning(
+                "github stargazer page fetch failed",
+                extra={
+                    "identifier": identifier,
+                    "page": requested_page,
+                    "provider": _PROVIDER_CORE,
+                    "error_class": type(item).__name__,
+                    "status_code": status,
+                    "classification": _classify_failure(status),
+                    "error": str(item),
+                },
+            )
             continue
         page, payload = item
         if not payload:
@@ -543,13 +567,18 @@ async def _fetch_stargazer_history_rest(
         points.append({"date": datetime.now(UTC).isoformat(), "count": total_stars})
     points.sort(key=lambda p: p["date"])
 
+    # Every sampled page failing (points empty despite a known non-zero
+    # total_stars) is failure evidence, not a legitimate state — cache it
+    # short so a transient block self-heals in seconds instead of an hour.
+    ttl = FAILURE_CACHE_TTL if not points else STARGAZER_HISTORY_TTL
+
     return {
         "provider": "github",
         "points": points,
         "current_stars": total_stars,
         "repo": identifier,
         "source_url": f"https://github.com/{identifier}",
-        "ttl": STARGAZER_HISTORY_TTL,
+        "ttl": ttl,
     }
 
 
