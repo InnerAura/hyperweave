@@ -11,7 +11,7 @@
 
 LUT JSON files live at ``src/hyperweave/data/font-metrics/{slug}.json``
 and are loaded by :func:`hyperweave.config.loader.load_font_metrics`.
-Regenerate them by running ``uv run python scripts/extract_font_metrics.py``.
+Regenerate them by running ``uv run python scripts/glyphs/font_metrics.py``.
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ class FontMetrics(FrozenModel):
     Optional — predates the v0.3.9 ink-width measurement work. When empty,
     ``measure_text_ink_width`` falls back to advance-width behavior
     (equivalent to ``measure_text``). Populated by
-    ``scripts/extract_font_metrics.py`` via fonttools BoundsPen."""
+    ``scripts/glyphs/font_metrics.py`` via fonttools BoundsPen."""
     vertical_bounds: dict[str, list[int]] = Field(default_factory=dict)
     """Per-glyph ``[ymin, ymax]`` in tenths-of-pixels at ``baseline_size_px``.
     Values use font coordinates (positive y is above the baseline). The text
@@ -105,7 +105,7 @@ class FontRegistry:
             _WARNED_UNKNOWN.add(key)
             _logger.warning(
                 "Unknown font family '%s' — falling back to Inter metrics. "
-                "Extract a LUT via scripts/extract_font_metrics.py to remove this warning.",
+                "Extract a LUT via scripts/glyphs/font_metrics.py to remove this warning.",
                 key,
             )
         if self._fallback is None:

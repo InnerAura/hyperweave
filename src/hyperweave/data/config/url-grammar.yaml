@@ -1,0 +1,392 @@
+# The image-route URL grammar — one copy.
+#
+# Every GET image route is declared here once: its pattern, which ComposeSpec
+# field fills each path segment, and which query parameter carries each
+# remaining field. Three consumers read this file:
+#
+#   * surfaces/addressing.py  — builds a URL from a ComposeSpec (machine)
+#   * surfaces/discover.py    — the `hw_discover(what="urls")` reference block
+#   * serve/app.py            — the /v1/frames endpoint's per-frame grammar
+#
+# Before this file each of those carried its own hand-kept copy of the same
+# patterns, and the two doc copies additionally hardcoded the chrome/automata
+# variant rosters — which drift from data/genomes/*.json the moment a variant
+# ships. Variant vocabulary is NOT written here: the doc consumers source it
+# from load_genomes() so the reference can never disagree with the whitelist.
+#
+# The route decorators in serve/app.py remain the executable truth for
+# ROUTING; this file is the truth for ADDRESSING (given a spec, what URL
+# reaches it). tests/surfaces/test_addressing.py asserts the two agree by
+# building a URL for every frame and driving it through the real app.
+#
+# Schema per entry:
+#   pattern   — canonical template. {genome}.{motion} is implicit tail syntax.
+#   segments  — placeholder name -> how to fill it:
+#                 field         ComposeSpec field (dotted path allowed)
+#                 const         literal value (the segment is fixed)
+#                 escape_query  query param to use instead when the value
+#                               contains a slash (path segment gets a stand-in)
+#   query     — query param -> how to fill it:
+#                 field         ComposeSpec field (dotted path allowed)
+#                 default       value at which the param is omitted
+#                 encode        `base64url-json` for inline payload specs
+#                 doc           one-line reference description
+#   example   — a real, routable URL (asserted live by the addressing test)
+
+routes:
+  badge:
+    pattern: /v1/badge/{title}/{value}/{genome}.{motion}
+    doc_key: badge (static)
+    example: /v1/badge/build/passing/brutalist.static
+    segments:
+      title:
+        field: title
+        escape_query: t
+      value:
+        field: value
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      glyph:
+        field: glyph
+        doc: Glyph identifier (e.g. github, python)
+      glyph_mode:
+        field: glyph_mode
+        default: auto
+        doc: auto | fill | wire | none
+      state:
+        field: state
+        default: active
+        doc: active | passing | building | warning | critical | failing | offline
+      regime:
+        field: regime
+        default: normal
+        doc: normal | permissive | ungoverned
+      size:
+        field: size
+        default: default
+        doc: default | compact
+      state_glyph_shape:
+        field: state_glyph_shape
+        doc: "Badge state-indicator shape override: square | circle | diamond"
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        field: pair
+        doc: "{pairs}"
+      t:
+        field: title
+        doc: Title override (use when title contains slashes)
+
+  # The badge's second route shape: two path segments instead of three, the
+  # value supplied by live data tokens. `doc_only` because no ComposeSpec
+  # addresses it — a spec's tokens are already resolved by the time it exists,
+  # and re-fetching them through ?data= would compare a pinned value against a
+  # fresh one. Reference surfaces list it; the addresser never selects it.
+  badge_data:
+    doc_only: true
+    doc_key: badge (data-driven)
+    pattern: /v1/badge/{title}/{genome}.{motion}?data=...
+    example: /v1/badge/STARS/brutalist.static?data=gh:anthropics/claude-code.stars
+    query:
+      data:
+        doc: "{data}"
+      glyph:
+        doc: Glyph identifier (e.g. github, python)
+      glyph_mode:
+        doc: auto | fill | wire | none
+      state:
+        doc: active | passing | building | warning | critical | failing | offline
+      regime:
+        doc: normal | permissive | ungoverned
+      size:
+        doc: default | compact
+      variant:
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        doc: "{pairs}"
+
+  strip:
+    pattern: /v1/strip/{title}/{genome}.{motion}
+    example: /v1/strip/readme-ai/brutalist.static?value=STARS:2.9k
+    segments:
+      title:
+        field: title
+        escape_query: t
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      value:
+        field: value
+        doc: "Static metrics: STARS:2.9k,FORKS:278"
+      data:
+        doc: "{data}"
+      glyph:
+        field: glyph
+        doc: Glyph identifier
+      glyph_mode:
+        field: glyph_mode
+        default: auto
+        doc: auto | fill | wire | none
+      state:
+        field: state
+        default: active
+        doc: Semantic state
+      size:
+        field: size
+        default: default
+        doc: default | compact
+      regime:
+        field: regime
+        default: normal
+        doc: normal | permissive | ungoverned
+      subtitle:
+        field: connector_data.repo_slug
+        doc: Subtitle under identity (paradigms that opt in)
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        field: pair
+        doc: "{pairs}"
+      t:
+        field: title
+        doc: Title override (use when title contains slashes)
+
+  icon:
+    pattern: /v1/icon/{glyph}/{genome}.{motion}
+    example: /v1/icon/github/chrome.static?shape=circle
+    # The route has no title segment, so it names the artifact after its glyph.
+    # An icon spec composed directly with an empty title renders a different
+    # <title>/<dc:title> than the same icon fetched by URL — declared here so
+    # addressing can canonicalize rather than silently emit a diverging address.
+    derives:
+      title: glyph
+    segments:
+      glyph:
+        field: glyph
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      glyph_mode:
+        field: glyph_mode
+        default: auto
+        doc: auto | fill | wire | none
+      shape:
+        field: shape
+        doc: square | circle
+      size:
+        field: size
+        default: default
+        doc: default | compact
+      state:
+        field: state
+        default: active
+        doc: Semantic state
+      regime:
+        field: regime
+        default: normal
+        doc: normal | permissive | ungoverned
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        field: pair
+        doc: "{pairs}"
+
+  divider:
+    pattern: /v1/divider/{divider_variant}/{genome}.{motion}
+    example: /v1/divider/dissolve/automata.static?variant=teal&pair=violet
+    segments:
+      divider_variant:
+        field: divider_variant
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        field: pair
+        doc: "{pairs}"
+    note: >-
+      Only slugs in the genome's `dividers` whitelist route here. The five
+      editorial generics (block, current, takeoff, void, zeropoint) are
+      genome-agnostic and live at /a/inneraura/dividers/<slug>.
+
+  marquee:
+    pattern: /v1/marquee/{title}/{genome}.{motion}
+    example: /v1/marquee/HYPERWEAVE%7CLIVING%20ARTIFACTS/brutalist.static
+    segments:
+      title:
+        field: title
+        escape_query: t
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      data:
+        doc: "{data} When set, drives the scroll directly and ignores title."
+      speeds:
+        doc: Single float scroll-speed multiplier
+      direction:
+        field: marquee_direction
+        default: ltr
+        doc: Scroll direction — ltr | rtl
+      state:
+        field: state
+        default: active
+        doc: Semantic state
+      regime:
+        field: regime
+        default: normal
+        doc: normal | permissive | ungoverned
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        field: pair
+        doc: "{pairs}"
+      t:
+        field: title
+        doc: Title override (use when title contains slashes)
+
+  matrix:
+    pattern: /v1/matrix/{preset}/{genome}.{motion}
+    example: /v1/matrix/connectors/primer.static?variant=porcelain
+    segments:
+      preset:
+        const: custom
+        requires_query: spec
+        doc: A server-known preset slug, or `custom` with an inline ?spec=
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      spec:
+        field: matrix
+        encode: base64url-json
+        max_decoded_bytes: 8192
+        doc: base64url-encoded MatrixSpec JSON (preset must be `custom`); 8 KB decoded cap
+      glyph_tint:
+        field: glyph_tint
+        doc: "Glyph fill selection: ink | brand | full"
+      surface:
+        doc: "Surface preset: plate | inlay | twin (expands to ground/palette)"
+      ground:
+        field: ground
+        doc: "Surface ground axis: opaque | bare"
+      palette:
+        field: palette
+        doc: "Surface palette axis: fixed | adaptive"
+      face:
+        field: surface_face
+        doc: "Bake ONE scheme: light | dark (the face wins over an adaptive request)"
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+
+  diagram:
+    pattern: /v1/diagram/{preset}/{genome}.{motion}
+    example: /v1/diagram/dag-mesh/primer.static?variant=porcelain
+    segments:
+      preset:
+        const: custom
+        requires_query: spec
+        doc: A data/presets/diagram.yaml slug, or `custom` with an inline ?spec=
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      spec:
+        field: diagram
+        encode: base64url-json
+        max_decoded_bytes: 8192
+        doc: base64url-encoded DiagramSpec JSON (preset must be `custom`); 8 KB decoded cap
+      glyph_tint:
+        field: glyph_tint
+        doc: "Glyph fill selection: ink | brand | full"
+      edge_motion:
+        doc: "Edge-motion override: dash | particle (rides the diagram IR, not a spec field)"
+      performance:
+        field: performance
+        doc: Performance tier
+      surface:
+        doc: "Surface preset: plate | inlay | twin"
+      ground:
+        field: ground
+        doc: "Surface ground axis: opaque | bare"
+      palette:
+        field: palette
+        doc: "Surface palette axis: fixed | adaptive"
+      face:
+        field: surface_face
+        doc: "Bake ONE scheme: light | dark"
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+
+  chart:
+    pattern: /v1/chart/stars/{owner}/{repo}/{genome}.{motion}
+    doc_key: chart-stars
+    example: /v1/chart/stars/eli64s/readme-ai/brutalist.static
+    segments:
+      owner:
+        field: chart_owner
+      repo:
+        field: chart_repo
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        field: pair
+        doc: "{pairs}"
+
+  stats:
+    # Keyed by the internal frame id so serve/app.py's FrameType lookup
+    # resolves; `card` is the public name the reference block prints.
+    doc_key: card
+    pattern: /v1/card/{username}/{genome}.{motion}
+    alias: /v1/stats/{username}/{genome}.{motion}
+    example: /v1/card/eli64s/brutalist.static
+    segments:
+      username:
+        field: stats_username
+    query:
+      font_mode:
+        field: font_mode
+        default: embed
+        doc: "Font delivery: embed (self-contained) | cdn (Google Fonts link) | system"
+      data:
+        doc: Optional live data tokens appended as card metric slots
+      variant:
+        field: variant
+        doc: "Chromatic variant slug — {variants}"
+      pair:
+        field: pair
+        doc: "{pairs}"
+
+# Frames with no GET image route. Named here rather than omitted so the
+# addressability audit can print a reason instead of a silent gap — the same
+# discipline surfaces/registry.py:register() enforces with `mcp_note`.
+unrouted:
+  receipt: >-
+    Session receipts carry a whole transcript payload; too large for a path.
+    POST /v1/compose with telemetry_data, or `hyperweave compose receipt <file>`.

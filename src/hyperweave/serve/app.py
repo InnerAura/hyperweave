@@ -278,6 +278,10 @@ async def compose_badge_url(
     glyph_mode: Annotated[str, Query()] = "auto",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
     size: Annotated[str, Query()] = "default",
     variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
     pair: Annotated[
@@ -317,6 +321,7 @@ async def compose_badge_url(
         variant=variant,
         pair=pair,
         state_glyph_shape=state_glyph_shape,
+        font_mode=font_mode,
     )
     return _compose_and_respond(spec, request)
 
@@ -345,6 +350,10 @@ async def compose_badge_data_url(
     glyph_mode: Annotated[str, Query()] = "auto",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
     size: Annotated[str, Query()] = "default",
     variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
     pair: Annotated[
@@ -411,6 +420,7 @@ async def compose_badge_data_url(
         variant=variant,
         pair=pair,
         state_glyph_shape=state_glyph_shape,
+        font_mode=font_mode,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl)
 
@@ -440,6 +450,10 @@ async def compose_strip_url(
     state: Annotated[str, Query()] = "active",
     size: Annotated[str, Query()] = "default",
     regime: Annotated[str, Query()] = "normal",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
     variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
     pair: Annotated[
         str,
@@ -495,6 +509,7 @@ async def compose_strip_url(
         variant=variant,
         pair=pair,
         connector_data=connector_data,
+        font_mode=font_mode,
     )
 
     if data:
@@ -515,6 +530,10 @@ async def compose_icon_url(
     size: Annotated[str, Query()] = "default",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
     variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
     pair: Annotated[
         str,
@@ -544,6 +563,7 @@ async def compose_icon_url(
         regime=regime,
         variant=variant,
         pair=pair,
+        font_mode=font_mode,
     )
     return _compose_and_respond(spec, request)
 
@@ -575,6 +595,10 @@ async def compose_divider_url(
             ),
         ),
     ] = "",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
 ) -> Response:
     """Compose a genome-themed divider: /v1/divider/{divider_variant}/{genome}.{motion}.
 
@@ -604,6 +628,7 @@ async def compose_divider_url(
         divider_variant=divider_variant,
         variant=variant,
         pair=pair,
+        font_mode=font_mode,
     )
     return _compose_and_respond(spec, request)
 
@@ -633,6 +658,10 @@ async def compose_marquee_url(
     speeds: Annotated[str, Query(description="Scroll speed multiplier (single float)")] = "",
     state: Annotated[str, Query()] = "active",
     regime: Annotated[str, Query()] = "normal",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
     variant: Annotated[str, Query(description="Variant slug (whitelist in genome JSON)")] = "",
     pair: Annotated[
         str,
@@ -692,6 +721,7 @@ async def compose_marquee_url(
         variant=variant,
         pair=pair,
         data_tokens=data_tokens_resolved,
+        font_mode=font_mode,
     )
 
     if data:
@@ -1095,6 +1125,10 @@ async def compose_matrix_url(
             pattern="^(|light|dark)$",
         ),
     ] = "",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
 ) -> Response:
     """Compose a matrix: /v1/matrix/{preset}/{genome}.{motion}.
 
@@ -1171,6 +1205,7 @@ async def compose_matrix_url(
         ground=surface_ground,
         palette=surface_palette,
         surface_face=face,
+        font_mode=font_mode,
     )
     return _compose_and_respond(compose_spec, request)
 
@@ -1256,6 +1291,10 @@ async def compose_diagram_url(
             pattern="^(|light|dark)$",
         ),
     ] = "",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
 ) -> Response:
     """Compose a diagram: /v1/diagram/{preset}/{genome}.{motion}.
 
@@ -1335,6 +1374,7 @@ async def compose_diagram_url(
         ground=surface_ground,
         palette=surface_palette,
         surface_face=face,
+        font_mode=font_mode,
     )
     return _compose_and_respond(compose_spec, request)
 
@@ -1363,6 +1403,10 @@ async def compose_chart_stars(
             ),
         ),
     ] = "",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
 ) -> Response:
     """Compose a star history chart: /v1/chart/stars/{owner}/{repo}/{genome}.{motion}.
 
@@ -1392,6 +1436,7 @@ async def compose_chart_stars(
         connector_data=connector_data,
         variant=variant,
         pair=pair,
+        font_mode=font_mode,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl=3600)
 
@@ -1434,6 +1479,10 @@ async def compose_stats(
             ),
         ),
     ] = "",
+    font_mode: Annotated[
+        str,
+        Query(description="Font delivery: embed (self-contained) | cdn (Google Fonts link) | system."),
+    ] = "embed",
 ) -> Response:
     """Compose a GitHub card: /v1/card/{username}/{genome}.{motion} (/v1/stats alias).
 
@@ -1475,6 +1524,7 @@ async def compose_stats(
         data_tokens=data_tokens_resolved,
         variant=variant,
         pair=pair,
+        font_mode=font_mode,
     )
     return _compose_and_respond_with_ttl(spec, request, ttl=ttl)
 
@@ -1482,75 +1532,31 @@ async def compose_stats(
 # Discovery endpoints
 
 
-_FRAME_URL_GRAMMAR: dict[str, dict[str, Any]] = {
-    "badge (static)": {
-        "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
-        "query_params": ["glyph", "glyph_mode", "state", "regime", "size", "variant", "pair"],
-    },
-    "badge (data-driven)": {
-        "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
-        "query_params": ["data", "glyph", "glyph_mode", "state", "regime", "size", "variant", "pair"],
-    },
-    "strip": {
-        "pattern": "/v1/strip/{title}/{genome}.{motion}",
-        "query_params": [
-            "value",
-            "data",
-            "glyph",
-            "glyph_mode",
-            "state",
-            "size",
-            "regime",
-            "variant",
-            "pair",
-            "subtitle",
-        ],
-    },
-    "icon": {
-        "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
-        "query_params": ["glyph_mode", "shape", "state", "regime", "variant", "pair", "size"],
-    },
-    "divider": {
-        "pattern": "/v1/divider/{variant}/{genome}.{motion}",
-        "query_params": ["variant", "pair"],
-    },
-    "marquee": {
-        "pattern": "/v1/marquee/{title}/{genome}.{motion}",
-        "query_params": ["data", "direction", "speeds", "state", "regime", "variant", "pair"],
-    },
-    "chart-stars": {
-        "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
-        "query_params": ["variant", "pair"],
-    },
-    # Keyed by the internal frame id ("stats") so the FrameType-value lookup in
-    # list_frames() resolves; the pattern presents the public "card" primary
-    # with the stats alias noted.
-    "stats": {
-        "pattern": "/v1/card/{username}/{genome}.{motion}",
-        "alias": "/v1/stats/{username}/{genome}.{motion}",
-        "query_params": ["data", "variant", "pair"],
-    },
-    "diagram": {
-        "pattern": "/v1/diagram/{preset}/{genome}.{motion}",
-        "query_params": [
-            "variant",
-            "spec",
-            "glyph_tint",
-            "edge_motion",
-            "performance",
-            "surface",
-            "ground",
-            "palette",
-            "face",
-        ],
-        "presets": "data/presets/diagram.yaml slugs, or 'custom' + ?spec=",
-    },
-    "matrix": {
-        "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
-        "query_params": ["variant", "spec", "surface", "ground", "palette", "face"],
-    },
-    "receipt": {"pattern": "POST /v1/compose", "query_params": []},
-}
+def _frame_url_grammar() -> dict[str, dict[str, Any]]:
+    """Per-frame URL grammar for /v1/frames, keyed by internal frame id.
+
+    Reads data/config/url-grammar.yaml — the same file surfaces/addressing.py
+    builds URLs from and hw_discover renders as reference. This endpoint used
+    to carry its own transcription of every pattern and query-param list, which
+    is two places a new route had to be remembered.
+    """
+    from hyperweave.config.loader import load_url_grammar
+
+    grammar = load_url_grammar()
+    out: dict[str, dict[str, Any]] = {}
+    for frame, route in grammar["routes"].items():
+        if route.get("doc_only"):
+            continue  # a reference-only route shape; no frame type selects it
+        entry: dict[str, Any] = {
+            "pattern": route["pattern"],
+            "query_params": list((route.get("query") or {}).keys()),
+        }
+        if alias := route.get("alias"):
+            entry["alias"] = alias
+        out[frame] = entry
+    for frame, reason in grammar["unrouted"].items():
+        out[frame] = {"pattern": "POST /v1/compose", "query_params": [], "note": reason}
+    return out
 
 
 @app.get("/v1/discover")
@@ -1580,7 +1586,7 @@ async def list_frames() -> list[dict[str, Any]]:
     for ft in FrameType:
         entry: dict[str, Any] = {
             "type": ft.value,
-            **_FRAME_URL_GRAMMAR.get(ft.value, {"pattern": "POST /v1/compose", "query_params": []}),
+            **_frame_url_grammar().get(ft.value, {"pattern": "POST /v1/compose", "query_params": []}),
         }
         if ft.value == "diagram":
             # The flattened requestable layout set (topology x orientation), so a

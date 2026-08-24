@@ -9,7 +9,7 @@ genome-specific multipliers.
 
 Add a new font LUT by running::
 
-    uv run python scripts/extract_font_metrics.py <slug>
+    uv run python scripts/glyphs/font_metrics.py <slug>
 
 which writes ``src/hyperweave/data/font-metrics/<slug>.json``. The
 :class:`hyperweave.core.font_metrics.FontRegistry` picks it up on the
@@ -154,7 +154,7 @@ def measure_text_ink_width(
 
     Fallback: when a legacy font LUT lacks the optional ``bearings`` map,
     returns the same value as :func:`measure_text`. Fonts extracted via
-    ``scripts/extract_font_metrics.py`` carry bearings by default.
+    ``scripts/glyphs/font_metrics.py`` carry bearings by default.
 
     Whitespace-only strings return 0 (no visible ink).
     """

@@ -3,7 +3,7 @@
 The automata genome uses Chakra Petch 700 for hero value text in badges
 and strips. The brutalist paradigm uses Barlow Condensed 700/900 for
 stats and strip values. Source: Google Fonts (OFL-1.1). Extracted via
-``scripts/extract_font_metrics.py chakra-petch barlow-condensed-900``.
+``scripts/glyphs/font_metrics.py chakra-petch barlow-condensed-900``.
 """
 
 from __future__ import annotations

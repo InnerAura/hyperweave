@@ -5,7 +5,7 @@ The HyperWeave testing stack has three layers, each with one job:
 1. **Assertion tests** (``test_badge_layout.py``, ``test_badge_mode.py``)
    answer "is the output correct?" via geometric math and DOM structure
    checks. They catch *what changed and whether it's right*.
-2. **The proofset script** (``scripts/generate_proofset.py``) renders 129+
+2. **The proofset script** (``python -m scripts.examples``) renders 129+
    artifacts to ``outputs/`` for visual inspection. It catches *whether
    it looks right* via the human eye.
 3. **This file** answers ONE question: did we accidentally break an

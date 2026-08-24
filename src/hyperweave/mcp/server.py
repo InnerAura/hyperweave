@@ -63,6 +63,7 @@ async def hw_compose(
     palette: str = "",
     faces: bool = False,
     face: str = "",
+    font_mode: str = "embed",
     render_target: str = "svg",
     format: str = "svg",
     respond: str = "envelope",
@@ -146,6 +147,9 @@ async def hw_compose(
                                 entanglement | rimrun
     state: active | passing | building | warning | critical | failing | offline
     glyph_mode: auto | fill | wire | none
+    font_mode: embed (default; self-contained, fonts inlined as woff2) |
+               cdn (Google Fonts link — far smaller, needs network at view time) |
+               system (bare fallback stacks)
     size: default | compact
     shape: square | circle (icon frame shape, genome-dependent)
     variant: chrome → horizon | abyssal | lightning | graphite | moth
@@ -278,6 +282,8 @@ async def hw_compose(
             content["connector_data"] = connector_data
         if genome_override is not None:
             content["genome_override"] = genome_override
+        if font_mode != "embed":
+            content["font_mode"] = font_mode
     else:
         content = {
             "title": title,
@@ -296,6 +302,8 @@ async def hw_compose(
             "glyph_tint": glyph_tint,
             "performance": performance,
         }
+        if font_mode != "embed":
+            content["font_mode"] = font_mode
         if speeds is not None:
             content["marquee_speeds"] = speeds
         if telemetry_data is not None:

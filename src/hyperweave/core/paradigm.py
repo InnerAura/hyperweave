@@ -1489,7 +1489,18 @@ class DiagramTopologyChassis(FrozenModel):
     legend_dy: float = 24.0
     """Sequence key-legend baseline above the footer line."""
     rank_gap: float = 145.0
-    """DAG: horizontal gap between rank columns (card edge to card edge)."""
+    """DAG: flow-axis gap between rank bands (card edge to card edge). Flat by
+    default — the horizontal cell's cards are wide along the flow, so a fixed
+    gap reads proportionate."""
+    rank_gap_spread_ratio: float = 0.0
+    """DAG: when set, the flow-axis gap DERIVES as ``ratio x cross-axis spread``
+    instead of taking ``rank_gap`` flat. The vertical cell needs it: its cards
+    are short along the flow, so one constant cannot serve both a 3-wide fan
+    (which must bow through the spread) and a straight chain (which has nothing
+    to bow around). Zero keeps the flat behaviour."""
+    rank_gap_min: float = 0.0
+    """DAG: floor for the derived flow-axis gap — the straight-run case, where
+    the cross-axis spread is zero."""
     rank_pitch_max: float = 120.0
     skip_drop: float = 6.0
     """DAG skip-edge channel clearance below the content band."""

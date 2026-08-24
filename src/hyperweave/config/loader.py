@@ -291,6 +291,28 @@ def load_envelope_tiers() -> dict[str, str]:
 
 
 @lru_cache(maxsize=1)
+def load_url_grammar() -> dict[str, Any]:
+    """Load the image-route URL grammar from data/config/url-grammar.yaml.
+
+    Returns ``{"routes": {frame: {...}}, "unrouted": {frame: reason}}`` — the
+    per-frame pattern plus the segment/query field mapping that
+    ``surfaces/addressing.py`` builds URLs from and the two discovery surfaces
+    render as reference. One file replaced three hand-kept copies (the route
+    decorators, ``serve/app.py:_FRAME_URL_GRAMMAR``, and
+    ``surfaces/discover.py:_url_grammar``). Cached: addressing is called once
+    per artifact in the proofset's per-surface sweep.
+    """
+    path = _data_path("config/url-grammar.yaml")
+    if not path.exists():
+        return {"routes": {}, "unrouted": {}}
+    raw = _read_yaml(path) or {}
+    return {
+        "routes": dict(raw.get("routes") or {}),
+        "unrouted": {str(k): str(v) for k, v in (raw.get("unrouted") or {}).items()},
+    }
+
+
+@lru_cache(maxsize=1)
 def load_matrix_config() -> dict[str, Any]:
     """Load matrix engine config from data/config/matrix-frame.yaml.
 
