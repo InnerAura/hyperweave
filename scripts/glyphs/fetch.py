@@ -26,7 +26,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parent.parent
+_ROOT = Path(__file__).resolve().parents[2]
 _OUT = _ROOT / "src" / "hyperweave" / "data" / "registries" / "glyphs-core.json"
 _NOTICE = _ROOT / "NOTICE"
 

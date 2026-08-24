@@ -37,25 +37,42 @@ proof-set:
         done
     done
 
+# Build the visual acceptance surface under outputs/ — the genome and matrix
+# galleries plus the cross-genome documents. Every gallery artifact is rendered
+# through direct compose, the CLI, HTTP and MCP and must agree byte-for-byte;
+# `just proofset direct` skips the three witnesses while iterating on content.
+proofset SURFACES="all":
+    uv run python python -m scripts.examples --surfaces {{SURFACES}}
+
+# The diagram galleries: one exhibit directory per topology family, the
+# specimen board, the primer-language sweep, the card+label slots. Ends with the
+# law sweep over every render — exits non-zero on a violation.
+diagrams TARGET="all":
+    uv run python -m scripts.examples.diagrams {{TARGET}}
+
+# The Surface Modes cross-product (plate/inlay/twin x every primer variant).
+surface-matrix:
+    uv run python scripts/examples/surface_matrix.py
+
 serve:
     uv run hyperweave serve --port 8000 --reload
 
 extract-glyphs:
-    uv run python scripts/extract_glyphs.py
+    uv run python scripts/glyphs/extract.py
 
 fetch-core-glyphs:
-    uv run python scripts/fetch_core_glyphs.py
+    uv run python scripts/glyphs/fetch.py
 
 # Run after any glyph registry rebuild: renders every entry in headless
 # Chromium and asserts the geometry stays inside its viewBox (needs Playwright).
 glyph-audit:
-    uv run python scripts/glyph_audit.py
+    uv run python scripts/glyphs/audit.py
 
 # Re-render the committed telemetry example receipts (assets/examples/telemetry/).
 # Default renders from real local transcripts (skips loudly if none found);
 # `--mock` is dev-only synthetic data and must never be committed.
 refresh-examples *ARGS:
-    uv run python scripts/refresh_examples.py {{ARGS}}
+    uv run python scripts/examples/refresh.py {{ARGS}}
 
 build:
     uv build

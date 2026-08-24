@@ -9,7 +9,7 @@ be reviewed and regression-checked. For each surface-capable frame it emits:
   cells per frame; and
 * the two baked twin faces (light, dark) per variant — 16 face renders per frame.
 
-Outputs land under ``outputs/proofset/primer/surface/<frame>/`` as
+Outputs land under ``outputs/genomes/primer/surface/<frame>/`` as
 ``<variant>-<surface>[-<face>].svg``, plus a gallery HTML per frame that embeds
 every inlay and twin over BOTH a light and a dark host panel (the dual-host
 practice from the surface-modes prototypes) so the theme-borrowing reads at a
@@ -33,7 +33,7 @@ once its templates honor ``surface_ground`` / ``surface_adapt`` (WC-2b-ii). Addi
 it there generates its cells and gallery with zero other changes.
 
 Usage:
-    uv run python scripts/generate_surface_matrix.py
+    uv run python scripts/examples/surface_matrix.py
 """
 
 from __future__ import annotations
@@ -44,13 +44,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
-_ROOT = Path(__file__).resolve().parent.parent
+_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT / "src"))
 
 from hyperweave.compose.engine import compose  # noqa: E402
 from hyperweave.core.models import ComposeSpec  # noqa: E402
 
-_OUT = _ROOT / "outputs" / "proofset" / "primer" / "surface"
+_OUT = _ROOT / "outputs" / "genomes" / "primer" / "surface"
 
 # The eight primer variants, canonical order (matches the genome roster).
 _VARIANTS = ("noir", "carbon", "space", "anvil", "porcelain", "cream", "dusk", "petrol")
@@ -396,10 +396,9 @@ def _sweep_gallery_cells(doc: str) -> None:
 
 def main() -> int:
     generate()
-    print("\nGallery per frame at outputs/proofset/primer/surface/<frame>/gallery.html")
+    print("\nGallery per frame at outputs/genomes/primer/surface/<frame>/gallery.html")
     print(
-        "Browser pass: uv run python scripts/raster_verify.py --scheme both "
-        "outputs/proofset/primer/surface/matrix/*.svg"
+        "Browser pass: uv run python scripts/raster_verify.py --scheme both outputs/genomes/primer/surface/matrix/*.svg"
     )
     return 0
 

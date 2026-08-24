@@ -1,16 +1,17 @@
 [project]
 name = "hyperweave"
 dynamic = ["version"]
-description = "Portable visual output layer for agents. One API call, one SVG. Zero dependencies, renders in any markdown."
+description = "Artifact layer for agent-human representations. One API call, one SVG. Zero dependencies, renders in any markdown."
 requires-python = ">=3.12"
 license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]
 readme = "README.md"
 keywords = [
+    "agent-memory",
     "agent-observability",
+    "agent-visualization",
     "ai-agents",
     "artifacts",
-    "design-system",
     "developer-tools",
     "generative-ui",
     "markdown",
@@ -115,7 +116,10 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+# "." puts the repo root on the path so `scripts.examples` — the gallery
+# generators — is importable by the tests that guard them. testpaths keeps
+# collection inside tests/ regardless.
+pythonpath = ["src", "."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = ["--strict-markers", "--strict-config", "-ra"]

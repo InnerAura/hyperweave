@@ -42,7 +42,7 @@ from fontTools.pens.boundsPen import BoundsPen
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 FONTS_DIR = ROOT / "src" / "hyperweave" / "data" / "fonts"
 METRICS_DIR = ROOT / "src" / "hyperweave" / "data" / "font-metrics"
 

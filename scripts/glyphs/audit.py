@@ -16,7 +16,7 @@ import pathlib
 import sys
 import tempfile
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / "src" / "hyperweave" / "data" / "registries" / "glyphs.json"
 
 ESCAPE_TOLERANCE = 0.02  # fraction of the viewBox's long side

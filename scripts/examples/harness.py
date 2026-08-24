@@ -21,7 +21,6 @@ tokens — on network failure the cache provides reproducibility.
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 import sys
 import time
@@ -33,36 +32,19 @@ from typing import TYPE_CHECKING, Any
 import httpx
 from fastmcp import Client as MCPClient
 
+from hyperweave.surfaces.addressing import normalize_artifact
+
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Iterator
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = REPO_ROOT / "tests" / "fixtures" / "proofset_data.json"
 
-# Volatile-fragment regexes copied verbatim from tests/test_url_stability.py
-# so the normalization contract stays in sync. The same artifact rendered
-# twice via different entry points must compare equal after scrubbing.
-_HW_UID_RE = re.compile(r"hw-[0-9a-f]{6,}")
-_FULL_UUID_RE = re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b")
-_TS_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?")
-_VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:[a-zA-Z]+\d+)?(?:\.(?:dev|post|pre)\d*)?(?:[-+][0-9a-zA-Z.\-+]+)?")
-# Font subsetting is content-derived: every digit/letter that appears in
-# the rendered text (including volatile UIDs/timestamps) feeds into the
-# glyph set. Two renderings of the same artifact produce slightly
-# different font subsets because their UID/timestamp digit-sets differ.
-# Scrub the data:font;base64 payload so parity comparison checks the
-# structural SVG, not the content-derived font bytes.
-_FONT_DATA_RE = re.compile(r"data:font/woff2;base64,[A-Za-z0-9+/=]+")
-
-
-def normalize(svg: str) -> str:
-    """Scrub volatile fragments so cross-path renderings compare equal."""
-    svg = _HW_UID_RE.sub("hw-UID", svg)
-    svg = _FULL_UUID_RE.sub("UUID", svg)
-    svg = _TS_RE.sub("TIMESTAMP", svg)
-    svg = _VERSION_RE.sub("VERSION", svg)
-    svg = _FONT_DATA_RE.sub("data:font/woff2;base64,<<FONT>>", svg)
-    return svg
+# The volatile-fragment contract lives in the package, next to the addressing
+# it is the other half of: an address is correct when what it returns matches a
+# direct compose EXCEPT for these. It used to be a verbatim copy here, kept "in
+# sync" by hand with two other copies.
+normalize = normalize_artifact
 
 
 def unwrap_mcp_svg(call_result: Any) -> str:
@@ -129,7 +111,7 @@ def fastapi_server(port: int = 8765, ready_timeout: float = 15.0) -> Iterator[st
 
 
 @asynccontextmanager
-async def mcp_client() -> AsyncIterator[MCPClient]:
+async def mcp_client() -> AsyncIterator[MCPClient[Any]]:
     """In-process MCP client via ``fastmcp.Client(mcp_server)``.
 
     No subprocess — the Client runs FastMCP directly over a memory
@@ -203,15 +185,38 @@ class ParitySpec:
 
     spec_id: str
     compose_spec: Any  # ComposeSpec — typed Any to keep harness import-light
-    http_path: str  # e.g., "/v1/badge/build/passing/brutalist.static"
     mcp_tool: str = "hw_compose"
-    mcp_args: dict[str, Any] = field(default_factory=dict)
+
+    # The HTTP URL and the MCP kwargs DERIVE from compose_spec. Both stay
+    # overridable because a handful of entries legitimately need an address the
+    # spec cannot express — a table served under a server-known preset slug, for
+    # one, since a spec records the adapter it points at but not the slug.
+    #
+    # Passing them for any other reason is writing one intent down three times,
+    # which is what this matrix used to do for every entry. Left empty they are
+    # projected by `surfaces/addressing.py`, and a spec no surface can express
+    # raises Unaddressable with a reason rather than quietly rendering something
+    # else.
+    http_path_override: str = ""
+    mcp_args_override: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def http_path(self) -> str:
+        from hyperweave.surfaces.addressing import spec_to_url
+
+        return self.http_path_override or spec_to_url(self.compose_spec)
+
+    @property
+    def mcp_args(self) -> dict[str, Any]:
+        from hyperweave.surfaces.addressing import spec_to_mcp_args
+
+        return self.mcp_args_override or spec_to_mcp_args(self.compose_spec)
 
 
 async def render_three_paths(
     spec: ParitySpec,
     http_base_url: str,
-    mcp: MCPClient,
+    mcp: MCPClient[Any],
 ) -> tuple[str, str, str]:
     """Render via direct/http/mcp; return all three raw SVGs.
 
@@ -257,7 +262,7 @@ class ParityReport:
 async def render_and_save_three_paths(
     spec: ParitySpec,
     http_base_url: str,
-    mcp: MCPClient,
+    mcp: MCPClient[Any],
     out_dir: Path,
 ) -> ParityReport:
     """Render via all three paths, save each SVG, return ParityReport.

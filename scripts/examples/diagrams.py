@@ -7,12 +7,12 @@ exiting non-zero on any violation:
 
 - ``README_TOPOLOGIES.md``     — 12 sections (11 topology families + the field stories), real HyperWeave
   stories, porcelain light baked (``topologies`` subcommand)
-- ``README_PORCELAIN.md``      — every specimen-parity preset beside its
+- ``SPECIMENS.md``      — every specimen-parity preset beside its
   hand-authored specimen (``porcelain``)
-- ``README_PRIMER_LANGUAGE.md`` — the two language diagrams x 8 variants
+- ``PRESENTATION.md`` — the two language diagrams x 8 variants
   x inlay + plate (``primer-language``)
 
-Run: ``uv run python scripts/generate_diagram_galleries.py [subcommand]``
+Run: ``uv run python python -m scripts.examples.diagrams [subcommand]``
 (no subcommand = all three + sweep).
 """
 
@@ -24,9 +24,12 @@ import math
 import pathlib
 import re
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-_REPO = pathlib.Path(__file__).resolve().parents[1]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+_REPO = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO))
 
 from tests.compose.parity.pieces import _sampled_points, plate_anchors  # noqa: E402
@@ -74,12 +77,59 @@ _BEAM_STAGE_SECONDS_CAP = 1.6
 _CONVERGENCE_TRUNK_CARD_W_MAX = 1.0
 
 OUT = _REPO / "outputs" / "diagrams"
-RENDERS = OUT / "topologies"
+
+# Every raw render, under one roof. The gallery root holds DOCUMENTS only — a
+# reviewer opening outputs/diagrams/ should see what there is to read, not six
+# directories of SVG they will never open by hand.
+RENDERS = OUT / "renders"
+
+# The per-family documents, FLAT. `ls topologies/` is eleven files a reviewer
+# can open, not eleven directories to descend into for one README each. Figures
+# live under RENDERS/topologies/<family>/.
+TOPOLOGIES = OUT / "topologies"
+
+
+def family_doc(family: str) -> pathlib.Path:
+    """The document path for one topology family.
+
+    `README_<THING>.md` is the proofset's name for a review document; a bare
+    `README.md` is an index. Written once here so the slug, the filename and
+    every link to it derive from the same string.
+    """
+    return TOPOLOGIES / f"README_{family.upper().replace('-', '_')}.md"
+
+
+# Families with their own exhibit module — a deeper document than the shared
+# story skeleton can compose, built over a review wave. build_topologies() skips
+# them so it cannot overwrite the richer work with the thinner form. A family
+# leaves the skeleton by joining this set, which is the migration ledger.
+DEEP_FAMILIES: frozenset[str] = frozenset({"dag"})
+
+# The cross-gallery topology registry lives in `topologies.exhibit`, NOT here:
+# this module runs as `__main__` under `python -m`, so a module that imports it
+# by name gets a SECOND instance with its own empty state. The dag exhibit did
+# exactly that and rendered an empty section while the registry it could not see
+# held ten entries.
+from scripts.examples.topologies.exhibit import _elsewhere_section, register_elsewhere  # noqa: E402
+
+
+def _deep_exhibits() -> dict[str, Callable[[], int]]:
+    """family slug -> its builder. Imported lazily so this module stays
+    importable by the tests that only want a law or a story list.
+
+    Each exhibit module single-sources its own FAMILY slug, so the key here
+    comes FROM the module rather than being typed again beside it — the
+    directory, the subcommand and every message derive from one string.
+    """
+    from scripts.examples.topologies import dag
+
+    return {dag.FAMILY: dag.build_dag}
+
 
 _PORC_FIX = _REPO / "tests" / "fixtures" / "specimens"
-_PORC_RENDERS = OUT / "porcelain"
+_PORC_RENDERS = RENDERS / "porcelain"
 
-_PL_RENDERS = OUT / "primer-language"
+_PL_RENDERS = RENDERS / "primer-language"
 
 Story = tuple[str, str, dict[str, Any]]
 
@@ -2771,29 +2821,80 @@ def _variety_ledger(stories: list[Story]) -> list[str]:
     return collisions
 
 
-def build_topologies() -> None:
-    RENDERS.mkdir(parents=True, exist_ok=True)
-    for stale in RENDERS.glob("*.svg"):
-        stale.unlink()  # a renamed story must not leave its old render behind
+def build_index() -> None:
+    """The diagram gallery's index — the one document that says what is here.
+
+    Every other gallery under `outputs/` has a README naming its contents;
+    diagrams was the exception, so `ls outputs/diagrams/` was the only way to
+    find out what it held. Composed last, from what actually got built.
+    """
+    families = sorted(f.stem.removeprefix("README_").lower().replace("_", "-") for f in TOPOLOGIES.glob("README_*.md"))
     lines = [
-        "# Topologies — real stories, one topology at a time",
+        "# HyperWeave Diagrams",
         "",
-        "One topology per section, ~10 real HyperWeave subsystems each, composed",
-        "with intent: brand glyphs in their real colors where a real brand exists,",
-        "kind marks for internal concepts, and the annotation / relation / rider",
-        "each story actually needs. Porcelain light face, BAKED — no media query,",
-        "so the viewer's theme cannot flip it. Structural variety is the byproduct",
-        "of real meaning.",
+        "Every artifact here is a live engine render. `outputs/` is gitignored — the generators",
+        "under `scripts/examples/` are the committed deliverable.",
+        "",
+        "Documents live at this root; every raw figure lives under `renders/`, so what you see",
+        "here is what there is to read.",
+        "",
+        "## Topologies",
+        "",
+        f"One exhibit per family — {len(families)} of them. Each shows its real stories, then every",
+        "render of that topology owned by a gallery organised on a different axis, so a family",
+        "reads in one scroll instead of being scattered across documents.",
+        "",
+        *[f"- [{f}](topologies/README_{f.upper().replace('-', '_')}.md)" for f in families],
+        "",
+        "## Boards",
+        "",
+        "- [README_SPECIMENS.md](README_SPECIMENS.md) — every hand-authored prototype beside the engine's recreation",
+        "- [README_PRESENTATION.md](README_PRESENTATION.md) — one chassis across all eight variants x both surfaces",
+        "- [README_CARD_LABEL.md](README_CARD_LABEL.md) — the card+label slot layout, and its specimen recreation",
+        "- [README_DEGRADATION.md](README_DEGRADATION.md) — what each glyph falls back to when its tint is unavailable",
+        "",
+        "Every render above is swept by the diagram laws — chip-on-wire, text-in-card, canvas",
+        "containment, no-ellipsis, crown dominance, and the rest. A violation fails the build.",
+        "",
+        "## Cross-reference",
+        "",
+        "- [Proofset index](../README.md) — every gallery",
+        "- [matrices](../matrices/README.md) — the other structured-frame gallery",
         "",
     ]
+    (OUT / "README.md").write_text("\n".join(lines) + "\n")
+    print(f"README.md + {len(families)} family links")
+
+
+def build_topologies() -> int:
+    """One exhibit DIRECTORY per topology family, each composing its own README.
+
+    Replaces the single ``README_TOPOLOGIES.md`` that held eleven families in
+    one file. That document made "what can this family express" a scrolling
+    exercise, and left no family room to show its own axes, capability edges or
+    refusals — the things a reader actually needs to judge a topology.
+
+    ``dag`` is not built here: it has been through a review wave and carries a
+    seven-section exhibit of its own (:mod:`scripts.examples.topologies.dag`).
+    Every other family runs this skeleton over its real stories and deepens
+    toward that shape as its axes get pinned. The list below is the migration
+    ledger — a family leaves it by gaining its own module, not by being deleted.
+    """
+    from scripts.examples.topologies import exhibit as ex
+
     total = 0
+    built: list[tuple[str, int]] = []
     for topo, stories in SECTIONS:
-        # The variety ledger grades composition WITHIN one topology family;
-        # the field-stories section mixes thirteen topologies, so its
-        # variety is structural by construction and the signature tuple
-        # (which omits topology) would flag vacuous pairs.
-        # Anchor gate: asides/callouts anchor to a node or edge — a bare
-        # canvas fraction tracks nothing and reads centered-under-nothing.
+        if topo in DEEP_FAMILIES:
+            continue  # owns a richer exhibit module; not this skeleton's to overwrite
+        TOPOLOGIES.mkdir(parents=True, exist_ok=True)
+        out = RENDERS / "topologies" / topo
+        out.mkdir(parents=True, exist_ok=True)
+        for stale in out.rglob("*.svg"):
+            stale.unlink()  # a renamed story must not leave its old render behind
+
+        # Anchor gate: asides/callouts anchor to a node or edge — a bare canvas
+        # fraction tracks nothing and reads centered-under-nothing.
         for _sname, _, _sd in stories:
             if isinstance(_sd, dict):
                 for _a in _sd.get("annotations") or []:
@@ -2806,50 +2907,89 @@ def build_topologies() -> None:
         collisions = _variety_ledger(stories)
         for c in collisions:
             print(f"UNDER-COMPOSED [{topo}]: {c}")
-        lines += [f"## {topo}", "", SECTION_INTROS.get(topo, ""), ""]
+
+        lines = [
+            f"# {topo} — real stories from the tree",
+            "",
+            SECTION_INTROS.get(topo, ""),
+            "",
+            "Every story below is a real HyperWeave subsystem, composed with intent: brand glyphs in",
+            "their real colours where a real brand exists, kind marks for internal concepts, and the",
+            "annotation / relation / rider each story actually needs. Porcelain light face, BAKED — no",
+            "media query, so the viewer's theme cannot flip it. Structural variety is the byproduct of",
+            "real meaning, and the variety ledger grades it: no two authored stories may share glyph",
+            "mode AND annotation idiom AND relation set.",
+            "",
+            "---",
+            "",
+            "## Stories",
+            "",
+        ]
+        scales: list[tuple[str, str]] = []
         for slug, _source, spec in stories:
-            kwargs: dict[str, Any] = dict(
-                type="diagram",
-                genome_id="primer",
-                variant="porcelain",
-                ground="bare",
-                palette="fixed",
-                surface_face="light",
-                diagram=spec,
-            )
+            kwargs: dict[str, Any] = dict(type="diagram", diagram=spec, **ex.FACE)
             kwargs.update(_FIELD_STORY_OVERRIDES.get(slug, {}))
             svg = compose(ComposeSpec(**kwargs)).svg
-            (RENDERS / f"{slug}.svg").write_text(svg)
+            (out / "stories").mkdir(parents=True, exist_ok=True)
+            (out / "stories" / f"{slug}.svg").write_text(svg)
             total += 1
+            scales.append((slug, ex.scale_of(svg)))
             surface = "plate" if kwargs.get("ground") == "opaque" else "inlay"
             lines += [
                 f"#### {spec['title']}",
                 "",
                 _identity_line(str(kwargs["variant"]), surface, topo, spec["subtitle"]),
                 "",
-                f"![{spec['title']}](topologies/{slug}.svg)",
+                f"![{spec['title']}](../renders/topologies/{topo}/stories/{slug}.svg)",
                 "",
             ]
             if slug in _FIELD_STORY_OVERRIDES:
                 # A dark-face override story ALSO renders its porcelain-static
                 # twin — the beam identity reads best on noir, but the story
                 # must be judgeable on the flagship face too.
-                twin_kwargs = dict(kwargs)
-                twin_kwargs.update(variant="porcelain", surface_face="light", motion="static")
-                (RENDERS / f"{slug}-porcelain.svg").write_text(compose(ComposeSpec(**twin_kwargs)).svg)
+                twin = dict(kwargs)
+                twin.update(variant="porcelain", surface_face="light", motion="static")
+                (out / "stories" / f"{slug}-porcelain.svg").write_text(compose(ComposeSpec(**twin)).svg)
                 total += 1
                 lines += [
                     _identity_line("porcelain", "twin", topo, spec["subtitle"]),
                     "",
-                    f"![{spec['title']} — porcelain static](topologies/{slug}-porcelain.svg)",
+                    f"![{spec['title']} — porcelain static](../renders/topologies/{topo}/stories/{slug}-porcelain.svg)",
                     "",
                 ]
-    lines += ["", "## coverage", "", "| topology | stories |", "| --- | --- |"]
-    for topo, stories in SECTIONS:
-        lines.append(f"| {topo} | {len(stories)} |")
-    lines.append("")
-    (OUT / "README_TOPOLOGIES.md").write_text("\n".join(lines))
-    print(f"README_TOPOLOGIES.md + {total} renders (light face baked)")
+
+        lines += _elsewhere_section(topo)
+        lines += ["---", "", "## Coverage", ""]
+        if collisions:
+            lines += [
+                f"**{len(collisions)} under-composed pair(s)** — stories sharing glyph mode, annotation",
+                "idiom and relation set. Listed so the gap is on the page rather than only in a build log:",
+                "",
+                *[f"- {c}" for c in collisions],
+                "",
+            ]
+        else:
+            lines += ["Every authored story in this family is distinctly composed.", ""]
+        lines += [
+            f"{len(stories)} stories · {len(scales)} renders.",
+            "",
+            "| story | render scale |",
+            "| --- | --- |",
+            *[f"| `{slug}` | {scale} |" for slug, scale in scales],
+            "",
+            "## Cross-reference",
+            "",
+            "- [Diagram galleries](../README.md) — the index for every diagram document",
+            "- [Specimens](../README_SPECIMENS.md) — every specimen beside its engine render",
+            "- [dag](README_DAG.md) — the deep exhibit this skeleton grows toward",
+            "",
+        ]
+        family_doc(topo).write_text("\n".join(lines))
+        built.append((topo, len(stories)))
+
+    for topo, n in built:
+        print(f"topologies/{family_doc(topo).name} + {n} stories")
+    return total
 
 
 def _board_count() -> int:
@@ -2857,6 +2997,25 @@ def _board_count() -> int:
     so it never drifts. Each name is BOTH a self-law and an engine-parity entry
     (fixture ≡ preset), hence the doubling."""
     return len(PARITY_NAMES) * 2 + len(TWIN_VARIANTS)
+
+
+def _specimen_href(source: str) -> str:
+    """The specimen's CURRENT repo-relative path.
+
+    A fixture's `source` records where the specimen was when it was extracted.
+    The corpus reorganises — the v0.4.3 wave moved the anatomy prototypes out of
+    `v04/v040/v042/` entirely — and a recorded path then points at nothing while
+    the document still claims to show a side-by-side. Look the file up by name
+    and cite where it actually is; fall back to the recorded string so a genuine
+    disappearance still reads as a broken link rather than being papered over.
+    """
+    recorded = _REPO / source
+    if recorded.exists():
+        return source
+    found = next((_REPO / "v04").rglob(pathlib.Path(source).name), None)
+    if found is None:
+        print(f"SPECIMEN MISSING: {source} — cited but not found anywhere under v04/")
+    return str(found.relative_to(_REPO)) if found else source
 
 
 def build_porcelain() -> None:
@@ -2885,8 +3044,14 @@ def build_porcelain() -> None:
         ).svg
         (_PORC_RENDERS / f"{name}.svg").write_text(svg)
         source = json.loads((_PORC_FIX / f"{name}.json").read_text())["source"]
-        entries.append(
-            (str(spec.get("topology", "?")), str(spec.get("title") or name), name, str(source), str(spec["subtitle"]))
+        topo = str(spec.get("topology", "?"))
+        entries.append((topo, str(spec.get("title") or name), name, str(source), str(spec["subtitle"])))
+        register_elsewhere(
+            topo,
+            "porcelain",
+            f"{name}.svg",
+            str(spec.get("title") or name),
+            "specimen recreation — engine output graded against the hand-authored original",
         )
 
     lines = [
@@ -2908,11 +3073,11 @@ def build_porcelain() -> None:
                 "",
                 "| render | specimen |",
                 "| --- | --- |",
-                f"| ![render](porcelain/{preset}.svg) | ![specimen](../../{source}) |",
+                f"| ![render](renders/porcelain/{preset}.svg) | ![specimen](../../{_specimen_href(source)}) |",
                 "",
             ]
-    (OUT / "README_PORCELAIN.md").write_text("\n".join(lines))
-    print(f"README_PORCELAIN.md + {len(entries)} porcelain renders (board {board}/{board})")
+    (OUT / "README_SPECIMENS.md").write_text("\n".join(lines))
+    print(f"README_SPECIMENS.md + {len(entries)} porcelain renders (board {board}/{board})")
 
 
 # ═══ card+label — the anatomy's range and its edges ══════════════════════════
@@ -2922,7 +3087,7 @@ def build_porcelain() -> None:
 # (no values, four values, an unbreakable token, an unresolved mark), and
 # byte-stable across faces. Each entry names the claim it is evidence for, so a
 # reader can tell a demonstration from a decoration.
-_CL_RENDERS = OUT / "card-label"
+_CL_RENDERS = RENDERS / "card-label"
 
 _CL_SATELLITES = [
     {
@@ -3402,7 +3567,11 @@ _CL_STATES: list[tuple[str, str, dict[str, Any]]] = [
     ),
 ]
 
-_CL_SPECIMEN_SRC = "v04/v040/v042/diagram-prototypes/hub-expressions/hub-bilateral.svg"
+# The specimen this board recreates. A NAME, not a path: the corpus has
+# reorganised twice this wave (v042 → v043 → specimens/artifacts/) and each move
+# left this citation pointing at nothing while the document still claimed to
+# show a side-by-side. _specimen_href resolves it wherever it currently lives.
+_CL_SPECIMEN_SRC = "hub-bilateral.svg"
 
 # The hand specimen's OWN content, composed by the engine — the recreation the
 # porcelain board cannot show, because that board's entry carries the shipped
@@ -3650,6 +3819,13 @@ def build_card_label() -> None:
             ComposeSpec(type="diagram", genome_id="primer", variant=variant, ground="bare", diagram=spec, **surface)
         ).svg
         (_CL_RENDERS / f"{slug}.svg").write_text(svg)
+        register_elsewhere(
+            str(spec.get("topology", "")),
+            "card-label",
+            f"{slug}.svg",
+            str(spec.get("title") or slug),
+            "card+label slot layout, drawn on this chassis",
+        )
 
     n = 0
     sections: list[tuple[str, str, list[tuple[str, str, dict[str, Any]]]]] = [
@@ -3710,7 +3886,7 @@ def build_card_label() -> None:
         "Engine renders of the `card+label` node anatomy and the partition-pair",
         "chromatics that ship with it. Every entry states the claim it is evidence",
         "for; nothing here is decoration. Generated by",
-        "`scripts/generate_diagram_galleries.py card-label` and swept by the same",
+        "`python -m scripts.examples.diagrams card-label` and swept by the same",
         "specimen laws (text-in-card, canvas containment, no-ellipsis) as every",
         "other gallery — a render that broke a law would fail the build, not appear",
         "below with a caveat.",
@@ -3737,7 +3913,8 @@ def build_card_label() -> None:
         "",
         "| engine | hand specimen |",
         "| --- | --- |",
-        f"| ![engine](card-label/specimen-recreation.svg) | ![specimen](../../{_CL_SPECIMEN_SRC}) |",
+        f"| ![engine](renders/card-label/specimen-recreation.svg) "
+        f"| ![specimen](../../{_specimen_href(_CL_SPECIMEN_SRC)}) |",
         "",
     ]
     # Integrity: the "shipped composition" entry must BE the preset, not a
@@ -3762,7 +3939,7 @@ def build_card_label() -> None:
         for slug, claim, spec in entries:
             render(slug, spec)
             n += 1
-            lines += [f"#### {claim}", "", f"![{slug}](card-label/{slug}.svg)", ""]
+            lines += [f"#### {claim}", "", f"![{slug}](renders/card-label/{slug}.svg)", ""]
 
     lines += [
         "## Surface invariance",
@@ -3779,7 +3956,7 @@ def build_card_label() -> None:
         slug = f"face-{variant}"
         render(slug, _CL_SHIPPED[0][2], variant=variant, face=face)
         n += 1
-        lines += [f"#### {variant} · {face} face", "", f"![{slug}](card-label/{slug}.svg)", ""]
+        lines += [f"#### {variant} · {face} face", "", f"![{slug}](renders/card-label/{slug}.svg)", ""]
 
     readme = "\n".join(lines) + "\n"
     readme_path = OUT / "README_CARD_LABEL.md"
@@ -3838,7 +4015,18 @@ def build_primer_language() -> None:
                 ).svg
                 fname = f"{preset}-{variant}-{sname}.svg"
                 (_PL_RENDERS / fname).write_text(svg)
-                cells.append(f"![{title} · {variant} · {sname}](primer-language/{fname})")
+                if variant == "porcelain" and sname == "inlay":
+                    # The flagship face only: this gallery's axis is the palette
+                    # sweep, so all sixteen faces of one geometry would bury the
+                    # family view rather than inform it.
+                    register_elsewhere(
+                        str(spec.get("topology", "")),
+                        "primer-language",
+                        fname,
+                        title,
+                        "the primer diagram language, swept across all eight variants",
+                    )
+                cells.append(f"![{title} · {variant} · {sname}](renders/primer-language/{fname})")
                 n += 1
             lines += [
                 f"#### {title}",
@@ -3850,19 +4038,32 @@ def build_primer_language() -> None:
                 f"| {cells[0]} | {cells[1]} |",
                 "",
             ]
-    (OUT / "README_PRIMER_LANGUAGE.md").write_text("\n".join(lines))
-    print(f"README_PRIMER_LANGUAGE.md + {n} renders ({len(VARIANTS)} variants x 2 surfaces x {len(DIAGRAMS)} diagrams)")
+    (OUT / "README_PRESENTATION.md").write_text("\n".join(lines))
+    print(f"README_PRESENTATION.md + {n} renders ({len(VARIANTS)} variants x 2 surfaces x {len(DIAGRAMS)} diagrams)")
 
 
-DIRS = [
-    _REPO / "outputs" / "diagrams" / "topologies",
-    _REPO / "outputs" / "diagrams" / "porcelain",
-    _REPO / "outputs" / "diagrams" / "primer-language",
-    # The card+label gallery sweeps under the SAME specimen laws as every other
-    # render dir: an edge case that broke text-in-card or no-ellipsis must fail
-    # the build, not ship as a documented curiosity.
-    _REPO / "outputs" / "diagrams" / "card-label",
-]
+# Every render directory the laws sweep. The per-family exhibits are DISCOVERED
+# rather than listed: a family that migrates into its own directory joins the
+# gate automatically, where a hand-kept list would quietly leave it unswept.
+def swept_dirs() -> list[pathlib.Path]:
+    """Every render directory the laws sweep, resolved at sweep time.
+
+    The per-family exhibits are DISCOVERED, not listed: a family that migrates
+    into its own directory joins the gate automatically, where a hand-kept list
+    would quietly leave it unswept. Resolved when called rather than at import,
+    because on a clean checkout the directories do not exist until the build
+    that precedes the sweep has run.
+
+    The card+label gallery sweeps under the SAME laws as every other render dir:
+    an edge case that broke text-in-card or no-ellipsis must fail the build, not
+    ship as a documented curiosity.
+    """
+    return [
+        *sorted(d for d in (RENDERS / "topologies").glob("*") if d.is_dir()),
+        RENDERS / "porcelain",
+        RENDERS / "primer-language",
+        RENDERS / "card-label",
+    ]
 
 
 def _pts(d: str) -> list[tuple[float, float]]:
@@ -3932,6 +4133,50 @@ def _text_ink(raw: str) -> str:
     )
 
 
+def _segs(d: str) -> list[tuple[tuple[float, float], tuple[float, float]]]:
+    """A path as drawn SEGMENTS, subpath breaks respected.
+
+    ``_pts`` answers "is this point inside that box" and samples leg interiors
+    for it; this answers "how far is this point from the wire", which needs the
+    real legs — including their ends, and without a phantom segment joining one
+    subpath's end to the next one's start. Cubics flatten; a Q here is a 7px
+    fillet joining two legs already measured, so its endpoint just advances the
+    cursor."""
+    out: list[tuple[tuple[float, float], tuple[float, float]]] = []
+    cur: tuple[float, float] | None = None
+    for cmd, blob in re.findall(r"([MLQC])([-\d.,\s e]+)", d):
+        nums = [float(n) for n in re.findall(r"-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?", blob)]
+        pts = [(nums[i], nums[i + 1]) for i in range(0, len(nums) - 1, 2)]
+        if cmd == "M":
+            cur = pts[-1]
+        elif cmd == "L":
+            for q in pts:
+                if cur is not None:
+                    out.append((cur, q))
+                cur = q
+        elif cmd == "Q":
+            cur = pts[-1]
+        elif cmd == "C" and cur is not None:
+            for i in range(0, len(pts) - 2, 3):
+                p0, p1, p2, p3 = cur, pts[i], pts[i + 1], pts[i + 2]
+                flat = [
+                    (
+                        (1 - t) ** 3 * p0[0]
+                        + 3 * (1 - t) ** 2 * t * p1[0]
+                        + 3 * (1 - t) * t * t * p2[0]
+                        + t**3 * p3[0],
+                        (1 - t) ** 3 * p0[1]
+                        + 3 * (1 - t) ** 2 * t * p1[1]
+                        + 3 * (1 - t) * t * t * p2[1]
+                        + t**3 * p3[1],
+                    )
+                    for t in (i / 12 for i in range(13))
+                ]
+                out += list(itertools.pairwise(flat))
+                cur = p3
+    return out
+
+
 def sweep(path: pathlib.Path) -> list[str]:
     svg = path.read_text()
     body = svg[svg.rfind("</style>") :]
@@ -3941,13 +4186,58 @@ def sweep(path: pathlib.Path) -> list[str]:
     W, H = float(vb.group(1)), float(vb.group(2))
     voices = _rendered_voices(svg)
     fails: list[str] = []
-    wires: list[tuple[float, float]] = []
+    # Wires as SEGMENTS, not as a point cloud. ``_pts`` samples each leg at
+    # five fractions, which is fine for "is this point inside that box" and
+    # useless for "how far is this point from the wire": on a 700px channel run
+    # the samples sit 140px apart, so a chip seated dead centre on the leg
+    # measures ~30px from the nearest SAMPLE and reads as stranded. It cuts the
+    # other way too — a chip genuinely off the wire can sit near a sample and
+    # pass. Point-to-segment distance asks the question the law actually means.
+    wires: list[tuple[tuple[float, float], tuple[float, float]]] = []
     for m in re.finditer(r'<path[^>]* d="([^"]+)"', body):
-        wires += _pts(m.group(1))
+        wires += _segs(m.group(1))
     for m in re.finditer(r'<line x1="([\d.]+)" y1="([\d.]+)" x2="([\d.]+)" y2="([\d.]+)"', body):
         x1, y1, x2, y2 = map(float, m.groups())
-        for t in (0.0, 0.25, 0.5, 0.75, 1.0):
-            wires.append((x1 + t * (x2 - x1), y1 + t * (y2 - y1)))
+        wires.append(((x1, y1), (x2, y2)))
+
+    def _seg_dist(px: float, py: float, seg: tuple[tuple[float, float], tuple[float, float]]) -> float:
+        (ax, ay), (bx, by) = seg
+        dx, dy = bx - ax, by - ay
+        span = dx * dx + dy * dy
+        t = 0.0 if span == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / span))
+        return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+    # 0. A chip is either an IN-CARD row (fully inside its card) or an EDGE
+    # chip (fully outside every card). Straddling a card boundary is neither,
+    # and it is what a transposition bug looks like: a seat computed on the
+    # wrong axis lands the pill half on the box it was meant to sit clear of.
+    # The distinction matters — 100%-contained chips are the legitimate
+    # chip-row feature, so only PARTIAL overlap is a violation.
+    _chip_rects = [
+        (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
+        for m in re.finditer(r'<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[^>]*-chipbg"', body)
+    ]
+    _card_rects = [
+        (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
+        for m in re.finditer(
+            r'<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[^>]*-(?:cardbg|herobg)"', body
+        )
+    ]
+    for cx, cy, cw, chh in _chip_rects:
+        area = cw * chh
+        for nx, ny, nw, nh in _card_rects:
+            ow = min(cx + cw, nx + nw) - max(cx, nx)
+            oh = min(cy + chh, ny + nh) - max(cy, ny)
+            if ow <= 0 or oh <= 0:
+                continue
+            frac = (ow * oh) / area if area else 0.0
+            if 0.02 < frac < 0.98:
+                fails.append(
+                    f"chip-straddles-card: chip at ({cx + cw / 2:.0f},{cy + chh / 2:.0f}) "
+                    f"overlaps a card by {frac:.0%} — a chip sits fully inside a card or fully clear of it"
+                )
+                break
+
     # 1. edge-chips ride a wire (chipbg NOT inside a card = edge chip). One
     # shared node-figure collector — rects (card families) + circles
     # (bare-ring nodes), each tagged hero/non-hero — feeds this pin, the
@@ -3965,6 +4255,192 @@ def sweep(path: pathlib.Path) -> list[str]:
     for m in re.finditer(r'<circle cx="([\d.-]+)" cy="([\d.-]+)" r="([\d.]+)"[^>]*-(circlebg|herocirclebg)"', body):
         ccx_, ccy_, cr_ = (float(v) for v in m.groups()[:3])
         node_figs.append(("circle", ccx_, ccy_, cr_, cr_, m.group(4) == "herocirclebg"))
+
+    # 1a. wire-crosses-card: a wire terminates ON a card or runs clear of it —
+    # never THROUGH it. A detour's travel leg was always cleared (the channel
+    # rides below the deepest card, the over-channel above the shallowest);
+    # its ENTRY leg never was, so a route could ride a clear channel and then
+    # descend straight through a same-rank sibling to reach the card behind
+    # it. Cards paint after edges, so the wire disappears into the box and the
+    # defect reads as clean — which is why it survived a review board and nine
+    # rounds of looking at renders.
+    #
+    # Two scoping rules keep this honest. Cubics FLATTEN, because a curve
+    # bowing through a card is a crossing the straight-leg reading cannot see.
+    # And it grades CARDS, not bands: a band is an obstacle for a wire passing
+    # by and furniture for one terminating inside it, and every edge that
+    # enters a region band to reach a card seated in it would land this red on
+    # day one. A guard that goes red for a legitimate reason gets softened,
+    # and a softened guard is what let this through.
+    for m in re.finditer(r'<path\b[^>]*\bd="(M[^"]+)"[^>]*class="([^"]*)"', body):
+        wd, wcls = m.group(1), m.group(2)
+        if "-branch" not in wcls:
+            continue
+        wpts = _pts(wd)
+        if not wpts:
+            continue
+        w_ends = (wpts[0], wpts[-1])
+        for kind, fx, fy, fw, fh, _hero in node_figs:
+            if kind != "rect":
+                continue
+            bx0, by0, bx1, by1 = fx, fy, fx + fw, fy + fh
+            if any(bx0 - 2 <= ex <= bx1 + 2 and by0 - 2 <= ey <= by1 + 2 for ex, ey in w_ends):
+                continue  # an arrival, not a crossing
+            inside = [p for p in wpts if bx0 + 2 < p[0] < bx1 - 2 and by0 + 2 < p[1] < by1 - 2]
+            if len(inside) >= 3:
+                fails.append(
+                    f"wire-crosses-card: a wire passes through the card at "
+                    f"({bx0:.0f},{by0:.0f})-({bx1:.0f},{by1:.0f}) — a wire lands on a card or clears it"
+                )
+                break
+
+    # 1a-i-b. A REGION LABEL never lands on a card. Its plate either sits
+    # INSIDE the region (band grammar, inset from the border) or STRADDLES the
+    # border (enclosure grammar, centre on the hairline) — both leave the
+    # members untouched. The failure this catches is a seating computed from
+    # the wrong reference: the inset was applied to the text BASELINE while
+    # `_label_plate` derives its box from that baseline, so the plate landed
+    # flush on the border in one kind and 4px into the first card in the other.
+    for m in re.finditer(r'<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[^>]*-rchipbg"', body):
+        px, py, pw, ph = (float(v) for v in m.groups())
+        for kind_p, fx, fy, fw, fh, _hp in node_figs:
+            if kind_p != "rect":
+                continue
+            ox = min(px + pw, fx + fw) - max(px, fx)
+            oy = min(py + ph, fy + fh) - max(py, fy)
+            if ox > 0.5 and oy > 0.5:
+                fails.append(
+                    f"region-label-on-card: the region label plate at ({px:.0f},{py:.0f}) overlaps the card at "
+                    f"({fx:.0f},{fy:.0f}) by {ox:.0f}x{oy:.0f}px"
+                )
+                break
+
+    # 1a-ii. a detour exists to avoid something. A skip rides the channel
+    # because its DIRECT run would cross the ranks it skips — rank distance is
+    # a topological stand-in for that geometric question, and where the two
+    # disagree the stand-in loses. A probe in the same row as the pod two ranks
+    # along, nothing between them, was sent out of its face, down, across the
+    # floor and back up to re-enter from the side: a detour around an empty
+    # corridor. So an orthogonal route with FLUSH endpoints must have something
+    # standing between them.
+    for wd, wcls in (
+        (m.group(1), m.group(2)) for m in re.finditer(r'<path\b[^>]*\bd="(M[^"]+)"[^>]*class="([^"]*)"', body)
+    ):
+        if "-branch" not in wcls or "C " in wd or wd.count("Q ") < 2:
+            continue
+        # The literal first/last coordinates, not ``_pts`` — that helper skips
+        # Q entirely and samples leg INTERIORS, so its endpoints sit a fifth of
+        # a leg inside the route and would miss a flush test by more than the
+        # tolerance being measured.
+        wp = [(float(px), float(py)) for px, py in re.findall(r"(-?[\d.]+)[ ,](-?[\d.]+)", wd)]
+        if len(wp) < 2:
+            continue
+        a, b = wp[0], wp[-1]
+        horiz = abs(a[1] - b[1]) <= 3.0  # _PORT_FLUSH
+        if not horiz and abs(a[0] - b[0]) > 3.0:
+            continue
+        lo, hi = (min(a[0], b[0]), max(a[0], b[0])) if horiz else (min(a[1], b[1]), max(a[1], b[1]))
+        line = (a[1] + b[1]) / 2 if horiz else (a[0] + b[0]) / 2
+        if not any(
+            (fx < hi and fx + fw > lo and fy - 2 < line < fy + fh + 2)
+            if horiz
+            else (fy < hi and fy + fh > lo and fx - 2 < line < fx + fw + 2)
+            for kind, fx, fy, fw, fh, _h in node_figs
+            if kind == "rect"
+            and not (fx - 3 <= a[0] <= fx + fw + 3 and fy - 3 <= a[1] <= fy + fh + 3)
+            and not (fx - 3 <= b[0] <= fx + fw + 3 and fy - 3 <= b[1] <= fy + fh + 3)
+        ):
+            fails.append(
+                f"detour-around-nothing: an orthogonal route runs between flush endpoints "
+                f"({a[0]:.0f},{a[1]:.0f})-({b[0]:.0f},{b[1]:.0f}) with a clear corridor between them"
+            )
+
+    # 1a-iv. REGION PAD SYMMETRY. A container's two pads on an axis are equal,
+    # and the only asymmetry permitted is a label SEATED inside one of them —
+    # in which case that pad holds the label. Read off all three dag hand
+    # specimens, which agree:
+    #
+    #   gateway-balanced  h band   side 18/18  flow 26/12   seated header strip
+    #   mapreduce band    v band   side 42/42  flow 50/38   seated pill
+    #   mapreduce enclos. v encl   side 65/65  flow 25/25   straddles, seats nothing
+    #
+    # Two ways this went wrong before the rule was written down: a band kept a
+    # horizontal specimen's trailing pad while its leading pad grew to hold a
+    # chip (56 above the row, 12 below — the row sank onto the lower border),
+    # and a dag enclosure inherited the STATE-MACHINE's seated-strip pad for a
+    # label it does not seat. Both read as "the region does not fit its
+    # contents", and neither is visible in any single constant.
+    _regions = [
+        (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
+        for m in re.finditer(
+            r'<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[^>]*-(?:laneband|encl)[a-z]*"', body
+        )
+    ]
+    # What can occupy a pad: a label PLATE, or the bare label run itself (a
+    # header strip carries no plate — gateway-balanced's is plain text).
+    _plates = [
+        (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
+        for m in re.finditer(
+            r'<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[^>]*-(?:rlbl|lblbg|chipbg)"', body
+        )
+    ]
+    for m in re.finditer(r'<text[^>]*\bx="([\d.-]+)"[^>]*\by="([\d.-]+)"([^>]*)>([^<]+)</text>', body):
+        cls_r = re.search(r'-([a-z]+)"', m.group(3))
+        if not cls_r or cls_r.group(1) not in {"rcnt", "rlabel"}:
+            continue
+        tx_, ty_ = float(m.group(1)), float(m.group(2))
+        voice_r = voices.get(cls_r.group(1)) or voice_for(_TEXT_CFG, cls_r.group(1))
+        tw_ = measure_voice(_text_ink(m.group(4)), voice_r)
+        anchor_r = "middle" if "middle" in m.group(3) else "end" if "end" in m.group(3) else "start"
+        lx_ = tx_ - (tw_ / 2 if anchor_r == "middle" else tw_ if anchor_r == "end" else 0.0)
+        _plates.append((lx_, ty_ - voice_r.size, tw_, voice_r.size * 1.3))
+    for rx, ry, rw, rh in _regions:
+        # Membership is not in the SVG, so this reads the cards GEOMETRICALLY
+        # inside the region — which is only the same thing when no other region
+        # overlaps. rag-index-and-query's offline band sits bodily inside its
+        # online enclosure (query is rank 0 and generate rank 4, so the
+        # enclosure spans the full height), and the band's cards then read as
+        # the enclosure's, skewing pads that are in fact symmetric. Skip the
+        # ambiguous case rather than grade it on the wrong members; exact
+        # membership would need the engine to stamp it.
+        if any(
+            (ox, oy, ow, oh) != (rx, ry, rw, rh)
+            and min(rx + rw, ox + ow) - max(rx, ox) > 0
+            and min(ry + rh, oy + oh) - max(ry, oy) > 0
+            for ox, oy, ow, oh in _regions
+        ):
+            continue
+        seated: list[tuple[float, float, float, float]] = [
+            (fx, fy, fw, fh)
+            for kind, fx, fy, fw, fh, _h in node_figs
+            if kind == "rect" and fx >= rx - 1 and fy >= ry - 1 and fx + fw <= rx + rw + 1 and fy + fh <= ry + rh + 1
+        ]
+        if not seated:
+            continue
+        left = min(f[0] for f in seated) - rx
+        right = (rx + rw) - max(f[0] + f[2] for f in seated)
+        top = min(f[1] for f in seated) - ry
+        bot = (ry + rh) - max(f[1] + f[3] for f in seated)
+        if abs(left - right) > 1.5:
+            fails.append(
+                f"region-pad-symmetry: region at ({rx:.0f},{ry:.0f}) pads {left:.0f} left vs {right:.0f} right "
+                f"with nothing seated across"
+            )
+        if abs(top - bot) > 1.5:
+            # The wider pad must actually hold something.
+            wide_lo, wide_hi = (ry, ry + top) if top > bot else (ry + rh - bot, ry + rh)
+            # Its OWN name: `seated` above is the figure list. The original
+            # reused that name for this predicate, which is how a rename of the
+            # list silently pointed the check at the wrong value.
+            pad_holds = any(
+                py >= wide_lo - 2 and py + ph <= wide_hi + 2 and px >= rx - 2 and px + pw <= rx + rw + 2
+                for px, py, pw, ph in _plates
+            )
+            if not pad_holds:
+                fails.append(
+                    f"region-pad-symmetry: region at ({rx:.0f},{ry:.0f}) pads {top:.0f} top vs {bot:.0f} bottom "
+                    f"with nothing seated in the wider one"
+                )
 
     # 1b. crown dominance (card+label compositions only): the hero's box
     # stays inside the specimen's proportion band of the standard cards'
@@ -4020,7 +4496,7 @@ def sweep(path: pathlib.Path) -> list[str]:
         cy = float(m.group(2)) + 13
         if in_card(cx, cy):
             continue  # in-card chip row — a different slot
-        d = min((math.hypot(cx - px, cy - py) for px, py in wires), default=1e9)
+        d = min((_seg_dist(cx, cy, seg) for seg in wires), default=1e9)
         # a chip may legally sit lifted just above its wire (gather seat) —
         # allow the seat offset (CHIP_H/2 + 9) plus tolerance
         if d > 26.0:
@@ -4044,6 +4520,36 @@ def sweep(path: pathlib.Path) -> list[str]:
         # tolerance above.
         cls_m = re.search(r'-([a-z]+)"', attrs)
         cls = cls_m.group(1) if cls_m else ""
+        # An edge label lies BESIDE its wire or INSIDE a chip — never half on a
+        # card. An edge label excludes its OWN endpoints from collision (the
+        # authored seat beside its wire is never a false collision), and the
+        # residual guard meant to catch a seat that lands on one of them anyway
+        # could throw away every candidate on its ladder: each is a slide along
+        # the label's own wire, so a single-pass wire test rejects all of them
+        # for a property the starting seat also has. The label then came to rest
+        # on the corner of its own source card. Graded on PARTIAL overlap only,
+        # the same distinction the chip law draws — a fully-contained run is the
+        # legitimate in-card row, a straddle is the defect.
+        if cls == "elbl":
+            voice_l = voices.get(cls) or voice_for(_TEXT_CFG, cls)
+            lw_ = measure_voice(txt, voice_l)
+            lx_ = x - (lw_ / 2 if "middle" in attrs else lw_ if "end" in attrs else 0.0)
+            ly0 = y - voice_l.size * _TEXT_CFG.text_ascent_ratio
+            ly1 = y + voice_l.size * _TEXT_CFG.text_descent_ratio
+            for kind_l, fx_l, fy_l, fw_l, fh_l, _h_l in node_figs:
+                if kind_l != "rect":
+                    continue
+                ox = min(lx_ + lw_, fx_l + fw_l) - max(lx_, fx_l)
+                oy = min(ly1, fy_l + fh_l) - max(ly0, fy_l)
+                if ox <= 0 or oy <= 0:
+                    continue
+                frac = (ox * oy) / max(lw_ * (ly1 - ly0), 1e-6)
+                if frac < 0.98:
+                    fails.append(
+                        f"edge-label-on-card: {txt[:24]!r} overlaps the card at "
+                        f"({fx_l:.0f},{fy_l:.0f}) by {ox:.0f}x{oy:.0f}px"
+                    )
+                    break
         if cls in _CARD_TEXT_CLASSES:
             fig = next((f for f in node_figs if _fig_contains(f, x, y)), None)
             if fig is not None:
@@ -4059,8 +4565,8 @@ def sweep(path: pathlib.Path) -> list[str]:
                 # figure's budget is its chord width at the text's own y,
                 # not the full diameter.
                 gutter = 8.0 if cls in _CARD_NAME_CLASSES else 3.0
-                right = _fig_right_edge_at_y(fig, y)
-                if right is not None and tleft + tw > right - gutter + 1.0:
+                fig_right = _fig_right_edge_at_y(fig, y)
+                if fig_right is not None and tleft + tw > fig_right - gutter + 1.0:
                     fails.append(
                         f"text-in-card: {txt!r} runs {tleft + tw - (right - gutter):.0f}px into its card's right gutter"
                     )
@@ -4132,9 +4638,10 @@ def sweep(path: pathlib.Path) -> list[str]:
     # beyond that floor, same law as sizing.marker_reserved_stub.
     marker_tips: list[tuple[float, float]] = []
     for m in re.finditer(r'<path d="M ([\d.,\- L]+?) ?Z"[^>]*-mk[^>]*/?>', body):
-        verts = [tuple(map(float, v.split(","))) for v in re.split(r" ?L ", m.group(1)) if "," in v]
-        if len(verts) == 3:
-            marker_tips.append(verts[1])
+        raw = [v.split(",") for v in re.split(r" ?L ", m.group(1)) if "," in v]
+        tip_verts: list[tuple[float, float]] = [(float(v[0]), float(v[1])) for v in raw if len(v) == 2]
+        if len(tip_verts) == 3:
+            marker_tips.append(tip_verts[1])
 
     def _arc_len(pts: list[tuple[float, float]], a: int, b: int) -> float:
         return sum(math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]) for k in range(a, b))
@@ -4294,8 +4801,9 @@ def sweep(path: pathlib.Path) -> list[str]:
     try:
         _facts = parse_svg(svg)
         _pa = plate_anchors(_facts)
-        if _pa.get("caption_y") is not None and _pa.get("content_bottom") is not None:
-            _air = float(_pa["caption_y"]) - float(_pa["content_bottom"])
+        _cap, _bot = _pa.get("caption_y"), _pa.get("content_bottom")
+        if _cap is not None and _bot is not None:
+            _air = float(_cap) - float(_bot)
             if _air < 12.0:
                 fails.append(f"caption-collision: caption sits {_air:.0f}px off content ink (<12)")
     except Exception:
@@ -4574,8 +5082,11 @@ def sweep(path: pathlib.Path) -> list[str]:
 def run_sweep() -> int:
     total = 0
     files = 0
-    for d in DIRS:
-        for f in sorted(d.glob("*.svg")):
+    for d in swept_dirs():
+        # rglob, not glob: the per-family exhibit tree groups its renders into
+        # section subdirectories, and a non-recursive sweep would silently stop
+        # guarding them the moment a gallery organised itself.
+        for f in sorted(d.rglob("*.svg")):
             files += 1
             for fail in sweep(f):
                 total += 1
@@ -4593,7 +5104,7 @@ def _degradation_lint(dirs: list[pathlib.Path]) -> list[str]:
     ceiling, not a promise: the pp specimen sheets themselves render generic
     kinds as ink stroke icons under full, and mixed compositions like
     rag-pipeline declare full precisely so their BRAND glyphs tint while
-    their kind glyphs ride at ink). Emits outputs/degradation_report.md;
+    their kind glyphs ride at ink). Emits outputs/diagrams/README_DEGRADATION.md;
     returns the unexplained + total-degradation violations for the caller's
     exit-code accounting.
 
@@ -4700,7 +5211,7 @@ def _degradation_lint(dirs: list[pathlib.Path]) -> list[str]:
     if inert_notes:
         report += ["", "## Inert declarations (note only, not a violation)", ""]
         report += [f"- {t}" for t in inert_notes]
-    report_path = _REPO / "outputs" / "degradation_report.md"
+    report_path = _REPO / "outputs" / "diagrams" / "README_DEGRADATION.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text("\n".join(report) + "\n")
     for u in unexplained:
@@ -4716,16 +5227,25 @@ def _degradation_lint(dirs: list[pathlib.Path]) -> list[str]:
 
 def main() -> None:
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
-    if which in ("all", "topologies"):
-        build_topologies()
-    if which in ("all", "porcelain"):
+    # The axis galleries run FIRST. Each registers the renders it owns against
+    # the topology they draw, and the family exhibits — which compose last —
+    # embed those so a family reads in one scroll. Reverse the order and every
+    # "Also this topology" section is empty, because nothing has reported yet.
+    if which in ("all", "porcelain", "specimens"):
         build_porcelain()
     if which in ("all", "primer-language"):
         build_primer_language()
     if which in ("all", "card-label"):
         build_card_label()
+    if which in ("all", "dag", "topology-families"):
+        for family, build in _deep_exhibits().items():
+            print(f"topologies/{family_doc(family).name} + {build()} renders (baked porcelain light)")
+    if which in ("all", "topologies"):
+        print(f"topologies/: {build_topologies()} story renders across the remaining families")
+    if which == "all":
+        build_index()
     violations = run_sweep()
-    violations += len(_degradation_lint(DIRS))
+    violations += len(_degradation_lint(swept_dirs()))
     sys.exit(1 if violations else 0)
 
 

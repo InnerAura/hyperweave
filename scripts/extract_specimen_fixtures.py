@@ -43,7 +43,34 @@ from tests.compose.parity.svgfacts import Rect, css_tokens, parse_svg  # noqa: E
 PROTOTYPES = REPO / "v04" / "specimens" / "artifacts" / "diagrams" / "diagrams-v04a6" / "diagrams-v3"
 REFERENCES = REPO / "v04" / "specimens" / "artifacts" / "diagrams" / "diagrams-v04a6" / "diagrams-v4"
 # The card+label generation: hand specimens authored for v0.4.2's anatomy work.
-ANATOMY = REPO / "v04" / "v040" / "v042" / "diagram-prototypes"
+# The anatomy prototypes moved during the v0.4.3 wave: some to the v043
+# prototype tree, some into the shared specimen corpus. Both roots are searched
+# by name rather than one being pinned, so a specimen that moves again is found
+# instead of silently breaking the extract AND every document citing it.
+ANATOMY_ROOTS = (
+    REPO / "v04" / "v040" / "v043" / "diagram-prototypes",
+    REPO / "v04" / "specimens" / "artifacts" / "diagrams",
+)
+
+
+def anatomy(*parts: str) -> Path:
+    """A named anatomy specimen, wherever it currently lives.
+
+    Falls back to the first root so a missing file still produces a readable
+    path in the error rather than a None.
+    """
+    name = parts[-1]
+    for root in ANATOMY_ROOTS:
+        direct = root.joinpath(*parts)
+        if direct.exists():
+            return direct
+        found = next(root.rglob(name), None) if root.exists() else None
+        if found is not None:
+            return found
+    return ANATOMY_ROOTS[0].joinpath(*parts)
+
+
+ANATOMY = ANATOMY_ROOTS[0]
 OUT = REPO / "tests" / "fixtures" / "specimens"
 
 # Ground-truth set: one specimen per topology narrative, keyed by its clean
@@ -99,12 +126,12 @@ GEOMETRY_SPECIMENS: dict[str, Path] = {
     # carry the structural name (fixture ≡ preset law; the hand file's
     # rename+reclassification is recorded in its own hw:lineage, per
     # v04/decisions/hub-bilateral-family.md).
-    "hub-bilateral": ANATOMY / "hub-expressions" / "hub-bilateral.svg",
+    "hub-bilateral": anatomy("hub-expressions", "hub-bilateral.svg"),
     # The twin symmetric medallion bilaterals (owner-directed hand files):
     # the constant-family-frame, pair-pitch, pair-port and bilateral beam
     # citations all extract from this pair. Fixture ≡ preset, board 1:1.
-    "fanout-bilateral-pair": ANATOMY / "fanout-expressions" / "bilateral-symmetric-2x2.svg",
-    "fanout-bilateral-trio": ANATOMY / "fanout-expressions" / "bilateral-symmetric-3x3.svg",
+    "fanout-bilateral-pair": anatomy("fanout-expressions", "bilateral-symmetric-2x2.svg"),
+    "fanout-bilateral-trio": anatomy("fanout-expressions", "bilateral-symmetric-3x3.svg"),
 }
 
 TWIN_DIR = PROTOTYPES / "primer-diagrams-v3"

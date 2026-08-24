@@ -25,6 +25,7 @@ recipe would never be idempotent. Same input + same code → same bytes.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from datetime import UTC, datetime
@@ -32,29 +33,31 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-_ROOT = Path(__file__).resolve().parent.parent
-# src/ for the package; the scripts dir itself so ``generate_proofset`` (not a
-# package — there is no scripts/__init__.py) imports as a top-level module.
+_ROOT = Path(__file__).resolve().parents[2]
+# src/ for the package; the repo root so `scripts.*` imports as a package.
 sys.path.insert(0, str(_ROOT / "src"))
-sys.path.insert(0, str(_ROOT / "scripts"))
+sys.path.insert(0, str(_ROOT))
+
+from hyperweave.compose.diagram.input import resolve_diagram_preset  # noqa: E402
+from hyperweave.compose.engine import compose  # noqa: E402
+from hyperweave.core.models import ComposeSpec  # noqa: E402
+from hyperweave.surfaces.addressing import normalize_artifact  # noqa: E402
+from hyperweave.verbs.parse import extract_embedded  # noqa: E402
+from hyperweave.verbs.transform import transform  # noqa: E402
 
 # The receipt data contract + real-transcript discovery live in the proofset
 # generator; import them so the two surfaces can never drift on the shape of a
 # receipt payload or on how a "real" transcript is chosen.
-from generate_proofset import (  # noqa: E402
+from scripts.examples.proofset import (  # noqa: E402
     MOCK_RECEIPT_PAYLOAD,
     _load_real_telemetry,
     _real_codex_transcripts,
     _real_transcripts,
 )
 
-from hyperweave.compose.diagram.input import resolve_diagram_preset  # noqa: E402
-from hyperweave.compose.engine import compose  # noqa: E402
-from hyperweave.core.models import ComposeSpec  # noqa: E402
-from hyperweave.verbs.transform import transform  # noqa: E402
-
 _OUT = _ROOT / "assets" / "examples" / "telemetry"
 _DIAGRAMS_OUT = _ROOT / "assets" / "examples" / "diagrams"
+_MATRICES_OUT = _ROOT / "assets" / "examples" / "matrices"
 
 # A fixed instant so the embedded <hw:created> stamp is stable across runs —
 # the recipe is idempotent (re-run with no code change ⇒ byte-identical files).
@@ -76,16 +79,21 @@ class _FrozenDatetime(datetime):
         return _PINNED_CLOCK
 
 
-# Embedded woff2 base64 payloads carry a subsetter creation timestamp (and
-# fontTools compression is not bit-stable), so two renders of identical content
-# differ only inside the font blob. Strip it before comparing so the recipe
-# rewrites a specimen ONLY when its real content changed — keeping git status a
-# signal, not font-churn noise. (Same discipline the proofset uses when diffing.)
+# Two renders of identical CONTENT still differ in their per-render identity:
+# the embedded woff2 carries a subsetter timestamp (and fontTools compression is
+# not bit-stable), the element-id prefix is a fresh UID, and the version string
+# comes from git describe. Compare through the package's volatile-fragment
+# scrub so the recipe rewrites a specimen ONLY when something a reader could
+# notice changed — keeping `git status` after a refresh a signal rather than
+# noise. The same predicate the cross-surface parity sweep uses.
+#
+# _FONT_BLOB stays: it is broader than the package regex (any base64 data URI,
+# not just woff2), which the older hand-authored specimens still need.
 _FONT_BLOB = re.compile(r"data:[^;]*;base64,[A-Za-z0-9+/=]+")
 
 
 def _structural(svg: str) -> str:
-    return _FONT_BLOB.sub("FONT", svg)
+    return normalize_artifact(_FONT_BLOB.sub("FONT", svg))
 
 
 def _harness_payload(source: str) -> tuple[dict[str, Any], str] | None:
@@ -174,11 +182,29 @@ _SERVICE_PATCH: list[dict[str, Any]] = [
 ]
 
 
+# ...and then turn the same graph on its side. One field, one op: `orientation`
+# is an ordinary spec field, so rotation needs no verb of its own — it is a
+# structure-preserving edit, which is why the child keeps the parent's pinned
+# rank order and the reader's map survives the turn.
+_ROTATE_PATCH: list[dict[str, Any]] = [{"op": "add", "path": "/orientation", "value": "vertical"}]
+
+
 # Preset-named README diagram assets minted by plain compose, with the
 # README's own documented flags: (preset, file stem, variant).
-_DIAGRAM_SINGLES: tuple[tuple[str, str, str], ...] = (
-    ("dag-providers", "frontier-serving", "noir"),
-    ("pipeline-row", "mcp-gateway", "space"),
+# A fourth field names spec keys to DROP before minting. The verb-algebra
+# figure sits under its own README heading, so the artifact's own title and
+# subtitle would print the same words twice, 48px above a section that just
+# said them.
+_DIAGRAM_SINGLES: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
+    ("dag-providers", "frontier-serving", "noir", ()),
+    ("pipeline-row", "mcp-gateway", "space", ()),
+    ("hub-zones", "verb-algebra-hub", "porcelain", ("title", "subtitle")),
+    # tree-health had no entry here, so the README's dependency-audit pair was
+    # the one committed asset with no generator behind it — and it drifted: the
+    # shipped file was 532x722 PORTRAIT while the engine now solves the same
+    # preset at 1023x722 landscape. A README asset that nothing re-mints is a
+    # hand-maintained copy pretending to be output.
+    ("tree-health", "tree-health", "porcelain", ()),
 )
 
 # Each asset ships as a light/dark PAIR (``<stem>-light.svg`` /
@@ -209,12 +235,12 @@ def _face(preset_spec: dict[str, Any], variant: str, face: str) -> str:
 
 
 def refresh_diagrams() -> list[Path]:
-    """Re-mint the README's preset-named diagram assets: the transform pair
-    (parent via compose with the README's own flags, child via the real
-    ``transform`` verb against the parent just minted) plus the compose-only
-    singles, pinned clock for idempotence. Every asset is minted once per
-    face; the transform child is derived from the parent OF ITS OWN FACE, so
-    each face's lineage chains to an artifact that actually exists."""
+    """Re-mint the README's preset-named diagram assets: the transform chain
+    (parent via compose with the README's own flags, then two real ``transform``
+    calls: grow the graph, then turn it) plus the compose-only singles, pinned
+    clock for idempotence. Every asset is minted once per face, and each link
+    is derived from the artifact of ITS OWN FACE, so every lineage entry chains
+    to something that actually exists."""
     _DIAGRAMS_OUT.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     with patch("hyperweave.compose.context.datetime", _FrozenDatetime):
@@ -225,12 +251,23 @@ def refresh_diagrams() -> list[Path]:
             child = transform(parent, _SERVICE_PATCH, ts=_PINNED_CLOCK.isoformat())
             if child.lineage[-1]["parent_id"] != child.parent_id:
                 raise RuntimeError(f"transform lineage does not chain to the {face} parent just minted")
+            turned = transform(child.svg, _ROTATE_PATCH, ts=_PINNED_CLOCK.isoformat())
+            if turned.lineage[-1]["parent_id"] != turned.parent_id or turned.parent_id != child.new_id:
+                raise RuntimeError(f"rotate lineage does not chain to the {face} child just minted")
+            # The third figure ships in NOIR, on purpose: the README's third step
+            # changes two independent things, and a reader should be able to see
+            # both. The turn came from the patch above, through the artifact; the
+            # dress comes from re-rendering that same spec under another variant,
+            # which is the whole claim that structure and look are separate
+            # pointers. Same spec, same lineage, different look.
+            turned_spec = extract_embedded(turned.svg).payload["spec"]
             minted += [
                 (f"service-dependencies-{face}.svg", parent),
                 (f"service-dependencies-billing-{face}.svg", child.svg),
+                (f"service-dependencies-vertical-{face}.svg", _face(turned_spec, "noir", face)),
             ]
-        for preset, stem, variant in _DIAGRAM_SINGLES:
-            spec = resolve_diagram_preset(preset)
+        for preset, stem, variant, drop in _DIAGRAM_SINGLES:
+            spec = {k: v for k, v in resolve_diagram_preset(preset).items() if k not in drop}
             minted += [(f"{stem}-{face}.svg", _face(spec, variant, face)) for face in _FACES]
         for filename, svg in minted:
             dest = _DIAGRAMS_OUT / filename
@@ -244,8 +281,71 @@ def refresh_diagrams() -> list[Path]:
     return written
 
 
+# The committed matrix assets the README embeds, and the recipe that mints each:
+# (spec file stem, output stem, variant, surface axes). A `faces` entry ships a
+# light/dark PAIR through <picture>; a single face ships one adaptive inlay.
+#
+# Every spec here was recovered from its own artifact's `hw:payload` — these
+# tables had no source in the repo at all, only a rendered SVG and, for one of
+# them, a JSON file in gitignored `outputs/`. That is the same defect
+# refresh_diagrams() was written to fix: an asset nothing re-mints is a
+# hand-maintained copy pretending to be output, and it drifts silently.
+# Each variant below is READ OFF the committed artifact's own <hw:variant>, not
+# chosen here: the benchmark pair ships on `cream`, and a recipe that guessed
+# `porcelain` would have quietly repalettied a README image on the next refresh.
+_MATRIX_SPECIMENS: tuple[tuple[str, str, str, str, str, tuple[str, ...]], ...] = (
+    # (spec stem, output stem, variant, ground, palette, faces)
+    ("frontier-benchmarks", "frontier-benchmarks", "cream", "opaque", "fixed", ("light", "dark")),
+    ("format-comparison-inlay", "hw-format-comparison-matrix-inlay", "porcelain", "bare", "adaptive", ()),
+    ("data-connectors-inlay", "hw-data-connectors-matrix-inlay", "porcelain", "bare", "adaptive", ()),
+)
+
+
+def refresh_matrices() -> list[Path]:
+    """Re-mint the README's committed matrix assets from their specs.
+
+    Same discipline as the receipts and diagrams: pinned clock, structural
+    comparison so a run that changes nothing rewrites nothing, and a loud
+    failure rather than a silent skip if a spec goes missing.
+
+    `assets/examples/matrices/format-comparison.svg` is deliberately absent
+    from the recipe — it carries no `hw:payload`, so there is nothing to
+    re-mint it from. It needs a spec authored before it can join.
+    """
+    _MATRICES_OUT.mkdir(parents=True, exist_ok=True)
+    specs_dir = _MATRICES_OUT / "specs"
+    written: list[Path] = []
+    with patch("hyperweave.compose.context.datetime", _FrozenDatetime):
+        for spec_stem, out_stem, variant, ground, palette, faces in _MATRIX_SPECIMENS:
+            spec_path = specs_dir / f"{spec_stem}.json"
+            if not spec_path.exists():
+                raise FileNotFoundError(f"matrix spec {spec_path} is missing — the asset cannot be re-minted")
+            payload = json.loads(spec_path.read_text())
+            for face in faces or ("",):
+                svg = compose(
+                    ComposeSpec(
+                        type="matrix",
+                        genome_id="primer",
+                        variant=variant,
+                        matrix=payload,
+                        ground=ground,
+                        palette=palette,
+                        surface_face=face,
+                    )
+                ).svg
+                dest = _MATRICES_OUT / (f"{out_stem}-{face}.svg" if face else f"{out_stem}.svg")
+                rel = dest.relative_to(_ROOT)
+                if dest.exists() and _structural(dest.read_text()) == _structural(svg):
+                    print(f"  unchanged {rel}")
+                    continue
+                dest.write_text(svg)
+                written.append(dest)
+                print(f"  wrote {rel} ({len(svg):,} bytes)")
+    return written
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Re-render the committed telemetry example receipts.")
+    parser = argparse.ArgumentParser(description="Re-render the committed example artifacts from their specs.")
     parser.add_argument(
         "--mock",
         action="store_true",
@@ -254,6 +354,7 @@ def main() -> int:
     args = parser.parse_args()
     refresh(mock=args.mock)
     refresh_diagrams()
+    refresh_matrices()
     return 0
 
 

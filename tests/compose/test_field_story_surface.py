@@ -11,16 +11,9 @@ from hyperweave.core.models import ComposeSpec
 
 
 def _overrides() -> dict[str, dict]:
-    import importlib.util
-    import sys
-    from pathlib import Path
+    from scripts.examples import diagrams
 
-    path = Path(__file__).resolve().parents[2] / "scripts" / "generate_diagram_galleries.py"
-    spec = importlib.util.spec_from_file_location("gal", path)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules.setdefault("gal", mod)
-    spec.loader.exec_module(mod)
-    return mod._FIELD_STORY_OVERRIDES, mod.SECTIONS
+    return diagrams._FIELD_STORY_OVERRIDES, diagrams.SECTIONS
 
 
 def test_field_story_face_overrides_pin_opaque_ground() -> None:

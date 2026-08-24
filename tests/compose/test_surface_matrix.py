@@ -1,6 +1,6 @@
 """Surface-matrix per-cell invariants — the CI gate half of the proof matrix.
 
-The pure-Python companion to ``scripts/generate_surface_matrix.py``: it composes
+The pure-Python companion to ``scripts/examples/surface_matrix.py``: it composes
 the matrix-frame surface cross-product in memory and asserts the per-cell
 invariants that must hold without a browser — far-palette AA, status-invariance,
 digest distinctness, and twin-face/@media hex agreement. The browser pass

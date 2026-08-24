@@ -2,8 +2,8 @@
 """Generate the full HyperWeave proof set -- all genomes x frame/motion/state taxonomy.
 
 Usage:
-    uv run python scripts/generate_proofset.py          # static only
-    uv run python scripts/generate_proofset.py --live    # include network-dependent artifacts
+    uv run python python -m scripts.examples          # static only
+    uv run python python -m scripts.examples --live    # include network-dependent artifacts
 """
 
 from __future__ import annotations
@@ -13,61 +13,30 @@ import asyncio
 import sys
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-# Ensure src/ is importable when run directly
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+# Run directly (`python python -m scripts.examples`) and sys.path[0] is
+# scripts/, not the repo root — so add both the package source and the root
+# that makes `scripts.examples` importable.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from hyperweave.compose.engine import compose
-from hyperweave.config.loader import load_genomes, load_paradigms
+from hyperweave.config.loader import load_genomes
 from hyperweave.core.enums import (
-    ArtifactStatus,
-    BorderMotionId,
-    FrameType,
     GenomeId,
-    Regime,
 )
 from hyperweave.core.models import ComposeSpec
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-def _paradigm_supports_compact(genome_cfg: Any, paradigms: dict[str, Any]) -> bool:
-    """Whether the genome's badge paradigm declares compact-mode geometry.
+    from scripts.examples.manifest import Gallery
 
-    Compact rendering is paradigm geometry (frame_height_compact, glyph_size_compact,
-    glyph_offset_left_compact), not genome chromatics. Cellular declares it; chrome
-    doesn't. Without this gate the proofset would emit a chrome compact badge that
-    has no paradigm-specific tuning, producing a misshapen artifact.
-    """
-    paradigm_slug = genome_cfg.paradigms.get("badge", "default") if genome_cfg else "default"
-    paradigm = paradigms.get(paradigm_slug)
-    if paradigm is None:
-        return False
-    badge = paradigm.badge
-    # Compact is supported when the paradigm declares distinct compact geometry —
-    # an explicit compact glyph size, a compact glyph ratio (primer: 0.5), OR a
-    # compact frame height that differs from the default (primer: 20 vs 36).
-    return (
-        badge.glyph_size_compact > 0
-        or badge.glyph_size_compact_ratio > 0
-        or badge.frame_height_compact != badge.frame_height
-    )
-
-
-OUT = Path(__file__).resolve().parent.parent / "outputs"
-
-
-def _genome_motions(genome_id: str) -> list[str]:
-    """Return border motions compatible with a genome.
-
-    Intersects the genome's ``compatible_motions`` list from its JSON
-    config with the BorderMotionId enum set. Only motions that the
-    genome has been tested with are returned. Kinetic typography
-    motions were removed in v0.2.14 with the banner frame.
-    """
-    genomes = load_genomes()
-    genome_cfg = genomes.get(genome_id)
-    compatible: set[str] = set(genome_cfg.compatible_motions) if genome_cfg else {"static"}
-    return [m for m in BorderMotionId if m.value in compatible]
+OUT = Path(__file__).resolve().parents[2] / "outputs"
+# Genome galleries own their own artifacts now (scripts/examples/genomes.py);
+# the live data cards written here land beside the static suite they belong to.
+GENOMES = OUT / "genomes"
 
 
 # ── Mock telemetry data for receipt ──
@@ -278,56 +247,6 @@ def _real_codex_transcripts() -> list[tuple[str, Path]]:
     )
 
 
-MOCK_TELEMETRY: dict[str, Any] = {
-    "session": {"model": "claude-opus-4-6", "duration_s": 1932},
-    "cost": {"total": 0.42, "input": 0.28, "output": 0.14},
-    "tokens": {"input": 23765, "output": 2614},
-    "tools": [
-        {"name": "Read", "count": 38},
-        {"name": "Bash", "count": 22},
-        {"name": "Write", "count": 8},
-        {"name": "Edit", "count": 5},
-        {"name": "Task", "count": 12},
-        {"name": "Grep", "count": 14},
-    ],
-    "stages": [
-        {"name": "Read", "pct": 40},
-        {"name": "Bash", "pct": 25},
-        {"name": "Edit", "pct": 15},
-        {"name": "Write", "pct": 10},
-        {"name": "Task", "pct": 5},
-        {"name": "Grep", "pct": 5},
-    ],
-    "velocity": {"loc_added": 284, "loc_removed": 31},
-    "sessions": [
-        {"tokens": 0, "corrections": 0, "label": "idle"},
-        {"tokens": 36133, "corrections": 5, "label": "Feb 17"},
-        {"tokens": 43552, "corrections": 0, "label": "Feb 17"},
-        {"tokens": 8091, "corrections": 4, "label": "Feb 19"},
-        {"tokens": 2559, "corrections": 0, "label": "Feb 20"},
-        {"tokens": 4014, "corrections": 0, "label": "Feb 20"},
-        {"tokens": 4951, "corrections": 0, "label": "Feb 20"},
-        {"tokens": 56530, "corrections": 2, "label": "Feb 20"},
-        {"tokens": 87079, "corrections": 1, "label": "Feb 20"},
-        {"tokens": 26379, "corrections": 4, "label": "Feb 21"},
-    ],
-    "files": [
-        {"path": "compose/engine.py", "reads": 42, "writes": 8, "last": "today"},
-        {"path": "core/models.py", "reads": 38, "writes": 6, "last": "today"},
-        {"path": "render/templates.py", "reads": 31, "writes": 4, "last": "yest"},
-        {"path": "core/text.py", "reads": 24, "writes": 3, "last": "yest"},
-        {"path": "frames/badge.svg.j2", "reads": 22, "writes": 7, "last": "today"},
-        {"path": "frames/strip.svg.j2", "reads": 18, "writes": 5, "last": "today"},
-        {"path": "config/loader.py", "reads": 15, "writes": 2, "last": "yest"},
-        {"path": "genomes/brutalist.json", "reads": 14, "writes": 1, "last": "Feb 17"},
-    ],
-    "skills": [
-        {"name": "SVG template authoring", "lang": "Jinja2", "attempts": 24, "accepted": 21, "state": "learning"},
-        {"name": "Pydantic model design", "lang": "Python", "attempts": 12, "accepted": 11, "state": "mastered"},
-        {"name": "Test writing", "lang": "Python", "attempts": 8, "accepted": 5, "state": "learning"},
-    ],
-}
-
 # Mock ``receipt/1`` payload — the receipt frame's canonical data contract. Used for
 # the baseline (no-transcript) receipt render so the proofset has a deterministic
 # receipt on clean checkouts. Mirrors the specimen's economics + context shape.
@@ -395,19 +314,12 @@ LIVE_SPECS: list[dict[str, Any]] = [
 ]
 
 
-def _github_subtitle(token: str) -> dict[str, str]:
-    """Derive connector_data with repo_slug for GitHub-sourced specs.
-
-    Resolves ``gh:owner/repo`` (or raw ``owner/repo``) to a connector_data dict
-    containing ``repo_slug``. The resolver then emits subtitle = ``owner/repo``,
-    distinct from title (which is typically just the repo name). Returns an
-    empty dict for non-GitHub tokens so callers can spread it unconditionally.
-    """
-    if token.startswith("gh:"):
-        return {"repo_slug": token[len("gh:") :]}
-    if "/" in token and not token.startswith(("pypi:", "npm:", "docker:", "hf:", "arxiv:")):
-        return {"repo_slug": token}
-    return {}
+# Proofset artifacts ride CDN fonts. An embedded woff2 subset adds 15-35 KB to
+# every file — across the review surface that is tens of megabytes of base64
+# whose only job is offline self-containment, which a local gallery does not
+# need. The committed specimens under assets/examples/ keep `embed`: those load
+# in other people's READMEs and must carry their own type.
+_PROOFSET_FONT_MODE = "cdn"
 
 
 def _compose(
@@ -418,6 +330,7 @@ def _compose(
     state: str = "active",
     glyph: str = "",
     *,
+    font_mode: str = _PROOFSET_FONT_MODE,
     motion: str = "static",
     regime: str = "normal",
     glyph_mode: str = "auto",
@@ -462,426 +375,37 @@ def _compose(
         ground=ground,
         palette=palette,
         surface_face=surface_face,
+        font_mode=font_mode,
     )
     return compose(spec).svg
+
+
+# Every path this module writes, in write order. The live data cards are
+# rendered here (they need fetched connector payloads) but BELONG to a genome
+# gallery, and which of them exist is decided at runtime — a chart whose
+# REST/GraphQL cross-check disagreed is deliberately not written. So the writer
+# reports what it wrote and the gallery registers that, rather than the document
+# probing disk to find out. A README that guesses is how 88 stats and chart
+# artifacts per genome ended up on disk and cited nowhere.
+_WRITTEN: list[Path] = []
 
 
 def _write(path: Path, svg: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(svg)
+    _WRITTEN.append(path)
 
 
 def generate_static() -> int:
-    """Generate all static (non-network) artifacts. Returns count."""
+    """Generate the static artifacts that are NOT part of a genome gallery.
+
+    The per-genome suites (base frames, variant matrix, pairings, states,
+    policy lanes, border motions) moved to ``scripts/examples/genomes.py``,
+    where the render and the document that shows it come off one declaration.
+    What stays here is cross-genome: the receipt chromatic matrix, the
+    genome-agnostic editorial dividers, and the live data cards.
+    """
     total = 0
-
-    # ── Pre-fetch marquee data tokens (v0.3.2 brutalist genome expansion) ──
-    # Resolved once at the top of generate_static so per-variant marquees can
-    # carry live GitHub/PyPI data rather than hardcoded brand strings. The
-    # stats/chart fetch later in this function (line ~725) uses the SAME
-    # asyncio loop pattern; both share one asyncio.run() per process because
-    # the httpx singleton binds to its first loop. Failure path: empty list
-    # → variant marquees fall back to the per-genome marquee_text strings.
-    from hyperweave.connectors.base import close_client as _close_marquee_client
-    from hyperweave.connectors.data_tokens import parse_data_tokens as _parse_marquee_tokens
-    from hyperweave.connectors.data_tokens import resolve_data_tokens as _resolve_marquee_tokens
-
-    _MARQUEE_PREFETCH_TOKENS = (
-        "github:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,pypi:readmeai.version,pypi:readmeai.downloads"
-    )
-
-    async def _prefetch_marquee_tokens() -> list[Any]:
-        try:
-            parsed = _parse_marquee_tokens(_MARQUEE_PREFETCH_TOKENS)
-            resolved, _ttl = await _resolve_marquee_tokens(parsed)
-            await _close_marquee_client()
-            return list(resolved)
-        except Exception:
-            await _close_marquee_client()
-            return []
-
-    marquee_data_tokens: list[Any] = asyncio.run(_prefetch_marquee_tokens())
-    print(
-        f"  resolved {len(marquee_data_tokens)} marquee tokens"
-        if marquee_data_tokens
-        else "  marquee tokens fetch failed; using fallback text"
-    )
-
-    for genome in GenomeId:
-        gdir = OUT / "proofset" / genome
-
-        # ── 1. Base frames ──
-        base = gdir / "base"
-
-        svg = _compose("badge", genome, "BUILD", "passing", "passing", "github")
-        _write(base / "badge.svg", svg)
-        total += 1
-
-        # Strip subtitle — resolver reads connector_data.repo_slug to render
-        # the grayish "eli64s/readme-ai" under the identity line (cellular
-        # paradigm opts in via strip.show_subtitle=true). Proof-set calls
-        # that omit connector_data get an empty subtitle zone, which is
-        # correct for paradigms that don't opt in.
-        svg = _compose(
-            "strip",
-            genome,
-            "readme-ai",
-            "STARS:12.4k,FORKS:1.2k,VERSION:v0.6.9",
-            "active",
-            "github",
-            connector_data={"repo_slug": "eli64s/readme-ai"},
-        )
-        _write(base / "strip.svg", svg)
-        total += 1
-
-        # Icons: chrome/brutalist support both shapes (per v0.2.16 paradigms);
-        # render only the explicit-shape pair to avoid duplicating the
-        # paradigm default. Other genomes keep their single paradigm-default icon.
-        if genome in (GenomeId.CHROME, GenomeId.BRUTALIST):
-            svg = _compose("icon", genome, glyph="github", shape="circle")
-            _write(base / "icon_circle.svg", svg)
-            total += 1
-            svg = _compose("icon", genome, glyph="github", shape="square")
-            _write(base / "icon_square.svg", svg)
-            total += 1
-        else:
-            svg = _compose("icon", genome, glyph="github")
-            _write(base / "icon.svg", svg)
-            total += 1
-
-        # v0.2.19 divider proof set: only the genome's declared divider(s) render
-        # at /v1/divider/. Editorial generics (block/current/takeoff/void/zeropoint)
-        # are no longer per-genome — see the dedicated /a/inneraura/dividers/
-        # generation block at the bottom of generate_static().
-        from hyperweave.config.loader import load_genomes
-
-        genome_cfg = load_genomes().get(genome)
-        for slug in genome_cfg.dividers if genome_cfg else []:
-            svg = _compose("divider", genome, divider_variant=slug)
-            _write(base / f"divider_{slug}.svg", svg)
-            total += 1
-
-        # marquee — pipe-separated items split into discrete tokens.
-        # v0.2.16: paradigm-driven dimensions (chrome 1040x56, brutalist 720x32,
-        # cellular 800x40), text-fill mode (chrome=gradient, brutalist=cycle,
-        # cellular=bifamily palette), and separator kind (chrome=glyph,
-        # brutalist=rect, cellular=glyph). Marquee text per genome matches its
-        # paradigm voice.
-        marquee_text_by_genome: dict[str, str] = {
-            GenomeId.CHROME: "HYPERWEAVE|CHROME HORIZON|LIVING SVG ARTIFACTS|v0.2.16",
-            GenomeId.BRUTALIST: "LIVING ARTIFACTS|SELF-CONTAINED SVG|AGENT INTERFACES",
-            GenomeId.AUTOMATA: "HYPERWEAVE|CELLULAR-AUTOMATA|LIVING ARTIFACTS|AGENT-READABLE|COMPOSITIONAL",
-        }
-        marquee_text = marquee_text_by_genome.get(genome, "HYPERWEAVE|LIVING ARTIFACTS|v0.2.16")
-        svg = _compose("marquee", genome, marquee_text)
-        _write(base / "marquee.svg", svg)
-        total += 1
-
-        # ── 1b. v0.3.0 Variant matrix — every shipped variant rendered for the
-        #       relevant frame types. Visual palette verification across the full
-        #       chrome x automata variant surface so palette regressions surface
-        #       in the proofset before they hit production. Skips genomes with no
-        #       variant axis (brutalist). #}
-        if genome_cfg and genome_cfg.variants:
-            var_dir = gdir / "variants"
-            # Per-variant marquee text mirrors the base map at line 308 so the
-            # marquee voice stays consistent across base + variant artifacts.
-            variant_marquee_text = marquee_text_by_genome.get(genome, "HYPERWEAVE|LIVING ARTIFACTS|v0.3.0")
-            # Compact gate: cellular paradigm declares compact badge geometry;
-            # chrome paradigm does not. Render compact only when the badge
-            # paradigm supports it, so chrome variants emit just the default size
-            # and don't produce misshapen un-tuned compact artifacts.
-            paradigms = load_paradigms()
-            supports_compact = _paradigm_supports_compact(genome_cfg, paradigms)
-            # Each variant gets the full artifact suite: badge default (+ compact
-            # when paradigm supports), 5 badge states, icon, strip, marquee,
-            # divider. Skips border motions and policy lanes (not variant-sensitive).
-            # The dissolve divider works for all automata variants (solo gets a
-            # synthesized mirrored bridge from primary.cellular_cells via
-            # resolve_cellular_palette).
-            for variant in genome_cfg.variants:
-                # Badge default — exercises label, value, glyph, indicator
-                svg = _compose("badge", genome, "PYPI", "v0.3.0", "active", "python", variant=variant)
-                _write(var_dir / f"badge_pypi_{variant}_default.svg", svg)
-                total += 1
-                if supports_compact:
-                    svg = _compose(
-                        "badge", genome, "PYPI", "v0.3.0", "active", "python", variant=variant, size="compact"
-                    )
-                    _write(var_dir / f"badge_pypi_{variant}_compact.svg", svg)
-                    total += 1
-                # Badge states per variant — full state-machine palette coverage
-                for status in (
-                    ArtifactStatus.PASSING,
-                    ArtifactStatus.WARNING,
-                    ArtifactStatus.CRITICAL,
-                    ArtifactStatus.BUILDING,
-                    ArtifactStatus.OFFLINE,
-                ):
-                    svg = _compose("badge", genome, "BUILD", status.value, status, "github", variant=variant)
-                    _write(var_dir / f"badge_{status}_{variant}.svg", svg)
-                    total += 1
-                    # Compact badge across every state (when the paradigm supports
-                    # compact geometry) — the 20px form of each state badge.
-                    if supports_compact:
-                        svg = _compose(
-                            "badge", genome, "BUILD", status.value, status, "github", variant=variant, size="compact"
-                        )
-                        _write(var_dir / f"badge_{status}_{variant}_compact.svg", svg)
-                        total += 1
-                # Icon shapes — render every shape the genome's icon paradigm
-                # declares in ``icon.supported_shapes`` (chrome/brutalist/primer:
-                # [circle, square]; automata: [square] only). Data-driven so a
-                # paradigm that supports both never silently emits just one.
-                _icon_paradigm = paradigms.get(genome_cfg.paradigms.get("icon", "default")) if genome_cfg else None
-                _icon_shapes = list(_icon_paradigm.icon.supported_shapes) if _icon_paradigm else []
-                if len(_icon_shapes) > 1:
-                    for _shape in _icon_shapes:
-                        svg = _compose("icon", genome, glyph="github", shape=_shape, variant=variant)
-                        _write(var_dir / f"icon_github_{variant}_{_shape}.svg", svg)
-                        total += 1
-                else:
-                    svg = _compose("icon", genome, glyph="github", variant=variant)
-                    _write(var_dir / f"icon_github_{variant}.svg", svg)
-                    total += 1
-                # Strip: identity + 3 metrics. Paired automata variants render
-                # bifamily flanks; solo render content-only.
-                svg = _compose(
-                    "strip",
-                    genome,
-                    "readme-ai",
-                    "STARS:12.4k,VERSION:v0.6.9,BUILD:passing",
-                    "passing",
-                    "github",
-                    variant=variant,
-                    connector_data={"repo_slug": "eli64s/readme-ai"},
-                )
-                _write(var_dir / f"strip_{variant}.svg", svg)
-                total += 1
-                # Marquee per variant — text + chromatic palette swap.
-                # v0.3.2 brutalist genome expansion: when marquee_data_tokens
-                # resolved at function-top, pass them so the marquee renders
-                # real GitHub/PyPI values (stars, forks, version, downloads).
-                # Empty token list falls back to the hardcoded text path.
-                svg = _compose(
-                    "marquee",
-                    genome,
-                    variant_marquee_text,
-                    variant=variant,
-                    data_tokens=marquee_data_tokens or None,
-                )
-                _write(var_dir / f"marquee_{variant}.svg", svg)
-                total += 1
-                # Divider per variant — chrome.band (vibration sweep across env);
-                # automata.dissolve (bifamily bridge, solo synthesizes mirrored);
-                # brutalist: light scholars default to sigil (ink rules + solid
-                # center block), dark substrates keep seam (concrete joint).
-                if genome == GenomeId.BRUTALIST:
-                    # Both genome dividers per variant — seam (concrete joint) and
-                    # sigil (ink rules + solid center block) — so each README
-                    # variant section shows the full divider register. Light
-                    # variants default to sigil, dark to seam at request time.
-                    divider_slugs = ("seam", "sigil")
-                elif genome == GenomeId.CHROME:
-                    divider_slugs = ("band",)
-                elif genome == GenomeId.PRIMER:
-                    # Primer ships the luminous "aura" divider (lit filament + blurred aura).
-                    divider_slugs = ("aura",)
-                else:
-                    divider_slugs = ("dissolve",)
-                for divider_slug in divider_slugs:
-                    svg = _compose("divider", genome, divider_variant=divider_slug, variant=variant)
-                    _write(var_dir / f"divider_{divider_slug}_{variant}.svg", svg)
-                    total += 1
-
-        # ── 1c. v0.3.0 Freestyle pairings (automata only) ──
-        # The pairing grammar modifier ?variant=primary&pair=secondary composes
-        # any two solo tones at request time. Strip and divider are the
-        # bifamily frames that visibly consume the pair (other frames
-        # silently ignore it). Render ~10 representative pairings to disk
-        # so README_AUTOMATA.md can showcase the grammar's combinatorial
-        # surface without trying to enumerate the full 12x11=132 matrix.
-        if genome == GenomeId.AUTOMATA:
-            freestyle_dir = gdir / "pairings"
-            freestyle_pairs: list[tuple[str, str]] = [
-                ("teal", "violet"),  # legacy bifamily flagship
-                ("bone", "steel"),  # legacy neutral pairing
-                ("cobalt", "magenta"),  # warm/cool tension
-                ("jade", "crimson"),  # complementary wheel opposites
-                ("violet", "amber"),  # purple/gold royal pairing
-                ("solar", "abyssal"),  # thermal opposites
-                ("toxic", "jade"),  # adjacent greens
-                ("crimson", "steel"),  # warm signal on cool substrate
-                ("magenta", "bone"),  # saturated on neutral
-                ("amber", "cobalt"),  # warm/cool inverted from cobalt+magenta
-            ]
-            for primary, secondary in freestyle_pairs:
-                pair_slug = f"{primary}-{secondary}"
-                svg = _compose(
-                    "strip",
-                    genome,
-                    "readme-ai",
-                    "STARS:12.4k,VERSION:v0.6.9,BUILD:passing",
-                    "passing",
-                    "github",
-                    variant=primary,
-                    pair=secondary,
-                    connector_data={"repo_slug": "eli64s/readme-ai"},
-                )
-                _write(freestyle_dir / f"strip_{pair_slug}.svg", svg)
-                total += 1
-                svg = _compose(
-                    "divider",
-                    genome,
-                    divider_variant="dissolve",
-                    variant=primary,
-                    pair=secondary,
-                )
-                _write(freestyle_dir / f"divider_dissolve_{pair_slug}.svg", svg)
-                total += 1
-
-        # ── 2. State machine -- badges ──
-        states = gdir / "states"
-        for status in (
-            ArtifactStatus.PASSING,
-            ArtifactStatus.WARNING,
-            ArtifactStatus.CRITICAL,
-            ArtifactStatus.BUILDING,
-            ArtifactStatus.OFFLINE,
-        ):
-            svg = _compose("badge", genome, "BUILD", status.value, status, "github")
-            _write(states / f"badge_{status}.svg", svg)
-            total += 1
-
-        # ── 4. State machine -- strips ──
-        for status in (ArtifactStatus.ACTIVE, ArtifactStatus.WARNING, ArtifactStatus.CRITICAL):
-            svg = _compose(
-                "strip",
-                genome,
-                "readme-ai",
-                "STARS:12.4k,COVERAGE:94%",
-                status,
-                "github",
-                connector_data={"repo_slug": "eli64s/readme-ai"},
-            )
-            _write(states / f"strip_{status}.svg", svg)
-            total += 1
-
-        # ── 5. Policy lanes ──
-        lanes = gdir / "policy-lanes"
-        for reg in (Regime.NORMAL, Regime.UNGOVERNED):
-            svg = _compose("badge", genome, "BUILD", "passing", "passing", "github", regime=reg)
-            _write(lanes / f"badge_{reg}.svg", svg)
-            total += 1
-
-        # ── 6. Border motions (genome-compatible only) ──
-        # Border motions are non-CIM (SMIL stroke-dashoffset etc.) so we use
-        # permissive regime to allow them without downgrading to static.
-        compat_border = _genome_motions(genome)
-        border = gdir / "border-motions"
-        for mid in compat_border:
-            svg = _compose(
-                "badge",
-                genome,
-                "BUILD",
-                "passing",
-                "active",
-                "github",
-                motion=mid,
-                regime=Regime.PERMISSIVE,
-            )
-            _write(border / f"badge_{mid}.svg", svg)
-            total += 1
-
-            svg = _compose(
-                "strip",
-                genome,
-                "readme-ai",
-                "STARS:12.4k,FORKS:1.2k",
-                "active",
-                motion=mid,
-                regime=Regime.PERMISSIVE,
-                connector_data={"repo_slug": "eli64s/readme-ai"},
-            )
-            _write(border / f"strip_{mid}.svg", svg)
-            total += 1
-
-        # ── 7. Kinetic typography removed in v0.2.14 with the banner frame ──
-
-    # ── 8. Receipts — primer chromatic matrix ──
-    # The receipt frame speaks the primer genome (8 variants, porcelain flagship);
-    # the agent runtime selects only the identity glyph + wordmark, not a theme.
-    # Each transcript renders against representative variants spanning the
-    # chromatic axis: porcelain (flagship light), noir (flagship dark), and cream
-    # (the second light scholar). A baseline mock-data render keeps the proofset
-    # deterministic on clean checkouts; real transcripts (when present locally)
-    # render the same variants from live receipt/1 payloads.
-    telemetry_dir = OUT / "proofset" / "telemetry"
-
-    def _loaded(discovered: list[tuple[str, Path]]) -> list[tuple[str, dict[str, Any]]]:
-        out: list[tuple[str, dict[str, Any]]] = []
-        for lbl, p in discovered:
-            pay = _load_real_telemetry(p)
-            if pay is not None:
-                out.append((lbl, pay))
-        return out
-
-    claude_sessions = _loaded(_real_transcripts())
-    codex_sessions = _loaded(_real_codex_transcripts())
-
-    # Claude Code → one genome (cream), size progression small→xxlarge. Identity is
-    # runtime-only, so a single colour reads the size range without 3x repetition.
-    for label, payload in claude_sessions[:5]:
-        _write(
-            telemetry_dir / f"receipt_claude-{label}.svg",
-            _compose(FrameType.RECEIPT, "primer", variant="cream", telemetry_data=payload),
-        )
-        total += 1
-    # Codex → the other genome (porcelain). Labels already carry the "codex-" prefix.
-    for label, payload in codex_sessions[:5]:
-        _write(
-            telemetry_dir / f"receipt_{label}.svg",
-            _compose(FrameType.RECEIPT, "primer", variant="porcelain", telemetry_data=payload),
-        )
-        total += 1
-
-    # One representative session across all eight chromatic variants + raw — the
-    # chromatic + edge-case showcase. The enriched mock exercises all three reset
-    # kinds (compact/clear/auto) + tool overflow + 3 models in one payload — a
-    # coverage convenience, since one real session rarely carries all three (a
-    # `/clear` forks a fresh session). The size-range sections above stay real.
-    showcase = MOCK_RECEIPT_PAYLOAD
-    eight_variants = ("porcelain", "cream", "noir", "carbon", "space", "anvil", "dusk", "petrol")
-    for variant in eight_variants:
-        _write(
-            telemetry_dir / f"receipt_showcase-{variant}.svg",
-            _compose(FrameType.RECEIPT, "primer", variant=variant, telemetry_data=showcase),
-        )
-        total += 1
-    _write(telemetry_dir / "receipt_showcase-raw.svg", _compose(FrameType.RECEIPT, "raw", telemetry_data=showcase))
-    total += 1
-
-    # Mock baseline — deterministic on clean checkouts (the two genomes + raw).
-    for variant in ("cream", "porcelain"):
-        _write(
-            telemetry_dir / f"receipt_mock-{variant}.svg",
-            _compose(FrameType.RECEIPT, "primer", variant=variant, telemetry_data=MOCK_RECEIPT_PAYLOAD),
-        )
-        total += 1
-    _write(
-        telemetry_dir / "receipt_mock-raw.svg",
-        _compose(FrameType.RECEIPT, "raw", telemetry_data=MOCK_RECEIPT_PAYLOAD),
-    )
-    total += 1
-
-    # ── 9. Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once) ──
-    # Render via compose() with a default genome — the templates hardcode their
-    # own colors and ignore the genome dict by design.
-    inneraura_dir = OUT / "proofset" / "inneraura" / "dividers"
-    for slug in ("block", "current", "takeoff", "void", "zeropoint"):
-        svg = _compose("divider", GenomeId.BRUTALIST, divider_variant=slug)
-        _write(inneraura_dir / f"{slug}.svg", svg)
-        total += 1
 
     # ── 10. Stats / chart frames ──
     total += _generate_data_cards()
@@ -955,7 +479,7 @@ def _write_stats_family(
 ) -> int:
     """Write a stats proof artifact plus per-variant siblings when available."""
     total = 0
-    gdir = OUT / "proofset" / genome / "data-cards"
+    gdir = GENOMES / genome / "data-cards"
     svg = _compose_connector(
         "stats",
         genome,
@@ -968,7 +492,7 @@ def _write_stats_family(
 
     genome_cfg = load_genomes().get(str(genome))
     if genome_cfg and genome_cfg.variants:
-        var_dir = OUT / "proofset" / genome / "variants"
+        var_dir = GENOMES / genome / "variants"
         for variant in genome_cfg.variants:
             svg = _compose_connector(
                 "stats",
@@ -991,14 +515,14 @@ def _write_chart_family(
 ) -> int:
     """Write a chart proof artifact plus per-variant siblings when available."""
     total = 0
-    gdir = OUT / "proofset" / genome / "data-cards"
+    gdir = GENOMES / genome / "data-cards"
     svg = _compose_connector("chart", genome, connector_data=connector_data)
     _write(gdir / f"{stem}.svg", svg)
     total += 1
 
     genome_cfg = load_genomes().get(str(genome))
     if genome_cfg and genome_cfg.variants:
-        var_dir = OUT / "proofset" / genome / "variants"
+        var_dir = GENOMES / genome / "variants"
         for variant in genome_cfg.variants:
             svg = _compose_connector("chart", genome, connector_data=connector_data, variant=variant)
             _write(var_dir / f"{stem}_{variant}.svg", svg)
@@ -1018,7 +542,7 @@ async def _fetch_snapshot_or_cache(
     try:
         result = await fetcher()
         fixtures[cache_key] = {"value": result, "fetched_at": time.time()}
-        return result
+        return dict(result)
     except Exception as exc:
         cached = fixtures.get(cache_key)
         if isinstance(cached, dict) and isinstance(cached.get("value"), dict):
@@ -1143,7 +667,7 @@ def _generate_data_cards() -> int:
     total = 0
 
     for genome in GenomeId:
-        gdir = OUT / "proofset" / genome / "data-cards"
+        gdir = GENOMES / genome / "data-cards"
 
         # Stats card — paradigm comes from genome.paradigms.stats
         svg = _compose_connector(
@@ -1160,7 +684,7 @@ def _generate_data_cards() -> int:
         # under variants/, matching the badge/icon/strip naming convention).
         genome_cfg = load_genomes().get(str(genome))
         if genome_cfg and genome_cfg.variants:
-            var_dir = OUT / "proofset" / genome / "variants"
+            var_dir = GENOMES / genome / "variants"
             for variant in genome_cfg.variants:
                 svg = _compose_connector(
                     "stats",
@@ -1191,7 +715,7 @@ def _generate_data_cards() -> int:
         # Per-variant star charts — same chart data, variant-shifted palette.
         # Output to outputs/proofset/{genome}/variants/chart_stars_{variant}.svg.
         if genome_cfg and genome_cfg.variants:
-            var_dir = OUT / "proofset" / genome / "variants"
+            var_dir = GENOMES / genome / "variants"
             for variant in genome_cfg.variants:
                 svg = _compose_connector(
                     "chart",
@@ -1275,7 +799,7 @@ def _generate_data_cards() -> int:
         return results
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from proofset_harness import load_fixtures, save_fixtures
+    from scripts.examples.harness import load_fixtures, save_fixtures
 
     fixtures = load_fixtures()
     fixtures_before = dict(fixtures)
@@ -1363,7 +887,7 @@ def _generate_data_cards() -> int:
     # across providers AND variants. Every metric binds to a live connector; a
     # failed fetch skips the card so its README link breaks loudly rather than
     # ship fabricated numbers.
-    light_dir = OUT / "proofset" / str(GenomeId.BRUTALIST) / "data-cards"
+    light_dir = GENOMES / str(GenomeId.BRUTALIST) / "data-cards"
 
     def _light_card(
         *,
@@ -1655,153 +1179,92 @@ async def _generate_connector_strips(proofset_root: Path) -> int:
     return total
 
 
-def _connector_strip_filenames() -> list[str]:
-    """Return the per-provider strip filename stems for README inlining."""
-    return [spec["filename_stem"] for spec in _CONNECTOR_STRIP_PROVIDERS]
+# Data cards composed from more than one provider — they belong to no single
+# genome's chromatic story, so the index shows them rather than a gallery.
+# Filtered by existence at emit time: a card whose connector cross-check
+# disagreed is deliberately not rendered, and citing it would be a broken link.
+_MULTI_SOURCE_CARDS: list[tuple[str, str]] = [
+    ("genomes/chrome/data-cards/stats_glm51_hf.svg", "HuggingFace model stats — zai-org/GLM-5.1"),
+    ("genomes/automata/data-cards/stats_arxiv_2602.svg", "arXiv paper stats — 2602.15763"),
+    ("genomes/chrome/data-cards/stats_zai_hf_arxiv.svg", "Z.AI combined card — HuggingFace + arXiv"),
+    ("genomes/chrome/data-cards/stats_glm5_multiprovider.svg", "Z.AI multi-provider tokens — GitHub + HF + arXiv"),
+    ("genomes/chrome/data-cards/stats_n8n_distribution.svg", "n8n multi-provider tokens — GitHub + npm + Docker"),
+    ("genomes/brutalist/data-cards/stats_vllm_pypi.svg", "PyPI package stats — vllm sparkline activity"),
+    # v0.3.13 brutalist-LIGHT data cards — source-agnostic across providers + variants.
+    (
+        "genomes/brutalist/data-cards/stats_eli64s_brutalist_pulse.svg",
+        "GitHub stats — eli64s, 4-metric row + STREAK tint, brutalist pulse (light)",
+    ),
+    (
+        "genomes/brutalist/data-cards/stats_vllm_pypi_brutalist_archive.svg",
+        "PyPI package stats — vllm, 3 metrics + sparkline, brutalist archive (light)",
+    ),
+    (
+        "genomes/brutalist/data-cards/stats_zai_hf_arxiv_brutalist_depth.svg",
+        "Z.AI combined — HuggingFace + arXiv (cross-provider), brutalist depth (light)",
+    ),
+    (
+        "genomes/brutalist/data-cards/stats_readmeai_multi_brutalist_ozalid.svg",
+        "readme-ai multi-provider — GitHub + PyPI + Docker, brutalist ozalid (light)",
+    ),
+    ("genomes/brutalist/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm"),
+    ("genomes/chrome/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm chrome"),
+    ("genomes/automata/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm automata"),
+]
 
 
 def generate_readme(total: int, live_total: int) -> None:
-    """Generate outputs/README.md — slim cross-reference + parity summary.
+    """Generate outputs/README.md — the index over every gallery.
 
-    Per-variant artifact matrices live in the genome-specific READMEs
-    (README_BRUTALIST.md, README_CHROME.md, README_AUTOMATA.md). Telemetry
-    artifacts live in README_TELEMETRY.md. The main README keeps a quick
-    base-frames tour per genome, the editorial dividers, per-genome border
-    motions, per-genome policy lanes (preserved as reference for future
-    governance work), and the parity matrix summary.
+    Each gallery composes its own document beside its own renders, so this
+    file links rather than duplicates. It used to inline a base-frames tour,
+    the policy lanes and the border motions for every genome — the same
+    artifacts each genome gallery now shows in context, cited here through a
+    second set of hand-built paths.
     """
+    from hyperweave.config.loader import load_genomes
+
+    genomes = load_genomes()
     lines = [
         "# HyperWeave Proof Set",
         "",
-        "Quick-reference proofset for the three production genomes plus telemetry "
-        "and parity surfaces. Per-variant artifact matrices live in dedicated files:",
+        "Every artifact below is a live engine render. `outputs/` is gitignored — the generators",
+        "under `scripts/examples/` are the committed deliverable.",
         "",
-        "- [README_BRUTALIST.md](README_BRUTALIST.md) — 22 brutalist variants (8 dark monochromes + 14 light scholars)",
-        "- [README_PRIMER.md](README_PRIMER.md) — 8 primer substrates (4 dark + 4 light editorial)",
-        "- [README_CHROME.md](README_CHROME.md) — 5 chrome material identities "
-        "(horizon, abyssal, lightning, graphite, moth)",
-        "- [README_AUTOMATA.md](README_AUTOMATA.md) — 16 automata solo tones plus pairing-grammar showcase",
-        "- [README_TELEMETRY.md](README_TELEMETRY.md) — receipt across all 4 telemetry skins",
-        "",
-        "---",
+        "## Galleries",
         "",
     ]
+    for gid, cfg in sorted(genomes.items()):
+        if not cfg.variants:
+            continue
+        substrates = [str((cfg.variant_overrides.get(v) or {}).get("substrate_kind", "")) for v in cfg.variants]
+        kinds = sorted({s for s in substrates if s})
+        breakdown = " (" + " + ".join(f"{substrates.count(k)} {k}" for k in kinds) + ")" if kinds else ""
+        lines.append(f"- [{gid}](genomes/{gid}/README.md) — {len(cfg.variants)} variants{breakdown}")
+    lines.extend(
+        [
+            "- [matrices](matrices/README.md) — matrix specimens and the boundary suite",
+            # Built by its own entry point (`just diagrams`), so it is linked
+            # rather than counted here — but it is the largest gallery in the
+            # proofset, and an index that omitted it sent every reader looking
+            # for a topology to `ls`.
+            "- [diagrams](diagrams/README.md) — one exhibit per topology family, plus the specimen boards",
+            "- [states](states/README.md) — the badge state-indicator shape matrix",
+            "- [telemetry](telemetry/README.md) — the receipt tour across harnesses and skins",
+            "- [verbs](verbs/README.md) — the verb algebra as agentic workflow chains",
+            "- [artifacts](artifacts/README.md) — the `/a/` namespace: standalone, genome-agnostic",
+            "- [parity](parity/README.md) — the cross-surface verdict for every spec below",
+            "",
+            "Every gallery artifact is rendered through direct compose, the CLI, HTTP and MCP, and the",
+            "four must agree byte-for-byte (Invariant 9). A divergence fails the run.",
+            "",
+            "---",
+            "",
+        ]
+    )
 
-    for genome in GenomeId:
-        g = genome.value
-        lines.extend([f"## {g}", ""])
-
-        # Base
-        lines.extend(["### Base Frames", ""])
-        lines.append(f"![badge](proofset/{g}/base/badge.svg)")
-        lines.append("")
-        lines.append(f"![strip](proofset/{g}/base/strip.svg)")
-        lines.append("")
-        # Icons: chrome/brutalist render explicit shape pair only; other
-        # genomes render their single paradigm-default icon.
-        if genome in (GenomeId.CHROME, GenomeId.BRUTALIST):
-            lines.append(f"![icon circle](proofset/{g}/base/icon_circle.svg)")
-            lines.append("")
-            lines.append(f"![icon square](proofset/{g}/base/icon_square.svg)")
-            lines.append("")
-        else:
-            lines.append(f"![icon](proofset/{g}/base/icon.svg)")
-            lines.append("")
-        # Per-genome dividers: only the genome's declared dividers render
-        # at /v1/divider/{slug}/{genome}.{motion}. Genome-agnostic dividers
-        # (block/current/takeoff/void/zeropoint) live at /a/inneraura/dividers/
-        # and are listed in their own section at the bottom of this README.
-        from hyperweave.config.loader import load_genomes
-
-        _genome_cfg = load_genomes().get(genome)
-        for slug in _genome_cfg.dividers if _genome_cfg else []:
-            lines.append(f"![divider {slug}](proofset/{g}/base/divider_{slug}.svg)")
-            lines.append("")
-        lines.append(f"![marquee (custom text)](proofset/{g}/base/marquee.svg)")
-        lines.append("")
-        # Data-token marquee inline next to its custom-text sibling — same
-        # frame, same paradigm dispatch, different input mode (live `?data=`
-        # tokens vs raw pipe-split text). Only present when --live was run.
-        multi_path = OUT / "proofset" / g / "live-data" / "marquee_multi_provider.svg"
-        if multi_path.exists():
-            lines.append(f"![marquee (multi-provider data)](proofset/{g}/live-data/marquee_multi_provider.svg)")
-            lines.append("")
-            lines.append(
-                "<sub><code>?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks,"
-                "pypi:readmeai.version,pypi:readmeai.downloads,docker:zeroxeli/readme-ai.pull_count</code></sub>"
-            )
-            lines.append("")
-
-        # Connector-strip adaptivity (only present when --live was run; the
-        # files live alongside per-genome dirs so the section is genome-local).
-        connector_dir = OUT / "proofset" / g / "connectors"
-        if connector_dir.exists() and any(connector_dir.iterdir()):
-            lines.extend(["### Connector Adaptivity (live)", ""])
-            lines.append(
-                "Real-data strips for the same project across three providers — "
-                "exercising varied metric counts, value lengths, and label "
-                "vocabularies through a single strip resolver."
-            )
-            lines.append("")
-            for stem in _connector_strip_filenames():
-                lines.append(f"![{stem}](proofset/{g}/connectors/{stem}.svg)")
-                lines.append("")
-
-        # Per-variant matrices (badge/icon/strip/marquee/divider/stats/chart
-        # + 5 states) live in the genome-specific READMEs — see the
-        # cross-link block at the top of this file. State Machine + Profile
-        # Card + Star History Chart are mirrored there too. Policy lanes
-        # and border motions stay inline below as governance + motion
-        # reference scaffolding.
-
-        # Policy lanes (kept as reference for future governance work —
-        # data-hw-regime swaps surface scaffolding without rerendering).
-        lines.extend(["### Policy Lanes", ""])
-        for r in (Regime.NORMAL, Regime.UNGOVERNED):
-            lines.append(f"![badge {r}](proofset/{g}/policy-lanes/badge_{r}.svg)")
-        lines.append("")
-
-        # Border motions (genome-compatible only)
-        compat_border = _genome_motions(g)
-        lines.extend(["### Border Motions", ""])
-        for mid in compat_border:
-            lines.append(f"![badge {mid}](proofset/{g}/border-motions/badge_{mid}.svg) ")
-            lines.append(f"![strip {mid}](proofset/{g}/border-motions/strip_{mid}.svg)")
-            lines.append("")
-
-        # Kinetic typography removed in v0.2.14 with the banner frame.
-
-        lines.extend(["---", ""])
-
-    multi_source_cards = [
-        ("proofset/chrome/data-cards/stats_glm51_hf.svg", "HuggingFace model stats — zai-org/GLM-5.1"),
-        ("proofset/automata/data-cards/stats_arxiv_2602.svg", "arXiv paper stats — 2602.15763"),
-        ("proofset/chrome/data-cards/stats_zai_hf_arxiv.svg", "Z.AI combined card — HuggingFace + arXiv"),
-        ("proofset/chrome/data-cards/stats_glm5_multiprovider.svg", "Z.AI multi-provider tokens — GitHub + HF + arXiv"),
-        ("proofset/chrome/data-cards/stats_n8n_distribution.svg", "n8n multi-provider tokens — GitHub + npm + Docker"),
-        ("proofset/brutalist/data-cards/stats_vllm_pypi.svg", "PyPI package stats — vllm sparkline activity"),
-        # v0.3.13 brutalist-LIGHT data cards — source-agnostic across providers + variants.
-        (
-            "proofset/brutalist/data-cards/stats_eli64s_brutalist_pulse.svg",
-            "GitHub stats — eli64s, 4-metric row + STREAK tint, brutalist pulse (light)",
-        ),
-        (
-            "proofset/brutalist/data-cards/stats_vllm_pypi_brutalist_archive.svg",
-            "PyPI package stats — vllm, 3 metrics + sparkline, brutalist archive (light)",
-        ),
-        (
-            "proofset/brutalist/data-cards/stats_zai_hf_arxiv_brutalist_depth.svg",
-            "Z.AI combined — HuggingFace + arXiv (cross-provider), brutalist depth (light)",
-        ),
-        (
-            "proofset/brutalist/data-cards/stats_readmeai_multi_brutalist_ozalid.svg",
-            "readme-ai multi-provider — GitHub + PyPI + Docker, brutalist ozalid (light)",
-        ),
-        ("proofset/brutalist/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm"),
-        ("proofset/chrome/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm chrome"),
-        ("proofset/automata/data-cards/chart_vllm_downloads.svg", "PyPI download trend chart — vllm automata"),
-    ]
-    existing_multi_source_cards = [(path, label) for path, label in multi_source_cards if (OUT / path).exists()]
+    # Cross-genome sections: artifacts that belong to no single genome.
+    existing_multi_source_cards = [(path, label) for path, label in _MULTI_SOURCE_CARDS if (OUT / path).exists()]
     if existing_multi_source_cards:
         lines.extend(
             [
@@ -1818,542 +1281,20 @@ def generate_readme(total: int, live_total: int) -> None:
             lines.append(f"![{label}]({path})")
             lines.append("")
 
-    # Genome-agnostic dividers (live at /a/inneraura/dividers/, generated once)
-    lines.extend(["## `/a/inneraura/dividers/`", ""])
-    for slug in ("block", "current", "takeoff", "void", "zeropoint"):
-        lines.append(f"![divider {slug}](proofset/inneraura/dividers/{slug}.svg)")
-        lines.append("")
-
-    # Telemetry visual-fidelity matrix (v0.2.23): runtime-paired skins.
-    # Each transcript renders only under its matched-runtime skin + voltage
-    # Telemetry content lives in README_TELEMETRY.md — the main README only
-    # cross-links there to keep the surface tour scannable.
-    lines.extend(
-        [
-            "## Telemetry",
-            "",
-            "Receipt artifacts across all 4 telemetry skins "
-            "(voltage, claude-code, cream, codex) — including mock data and "
-            "real transcripts from Claude Code and Codex sessions — live in "
-            "[README_TELEMETRY.md](README_TELEMETRY.md).",
-            "",
-        ]
-    )
-
     if live_total > 0:
         lines.extend(["## Live Data (requires --live)", ""])
         lines.append(
-            "*Live artifacts render inline per-genome above: connector-strip adaptivity in each genome's "
-            "`### Connector Adaptivity (live)` subsection, and the multi-provider data-token marquee "
-            "(`?data=gh:...stars,gh:...forks,pypi:...version,pypi:...downloads,docker:...pull_count`) "
-            "next to the custom-text marquee in each `### Base Frames` block. Source files live under "
-            "`proofset/{genome}/live-data/`.*"
+            f"*{live_total} network-dependent artifacts rendered this run. Live data cards land in each "
+            "genome's `data-cards/` directory and are shown in that genome's gallery.*"
         )
         lines.append("")
 
-    (OUT / "README.md").write_text("\n".join(lines) + "\n")
-    _emit_automata_readme()
-    _emit_brutalist_readme()
-    _emit_primer_readme()
-    _emit_matrix_readme()
-    _emit_verb_readme()
-    _emit_chrome_readme()
-    _emit_telemetry_readme()
-    _emit_state_readme()
-
-
-def _emit_state_readme() -> None:
-    """Emit outputs/README_STATE.md — the badge state-indicator shape matrix.
-
-    3 genomes (spanning the badge paradigms) x 3 shapes (square / circle /
-    diamond, forced via the request-time ?state_glyph_shape= override). Each shape
-    renders a 3x3 grid: 3 variants (rows) x 3 states (passing / warning / critical,
-    columns) so both the shape dispatch AND the per-variant state-glyph colour are
-    comparable in one scroll. 81 badges into proofset/state-matrix/ — distinct from
-    the per-genome <genome>/states/ dirs. Cross-paradigm diamonds (e.g. brutalist
-    + diamond) show only the ring + bit because the housing routes through
-    chrome-specific --dna-diamond-* vars; that is honest, not broken.
-    """
-    state_dir = OUT / "proofset" / "state-matrix"
-    # Per genome: three variants spanning its colour range. Substrate noted because
-    # brutalist mixes dark and light variants (a light variant forced to `square`
-    # shows its state colour on a paper substrate).
-    # (genome, [(variant, substrate)], shapes). brutalist/chrome/automata share the
-    # configurable geometric shapes; primer's indicator is its own state-keyed
-    # ANIMATED mark (status-glyph: ping/throb/shake per state), which is its only
-    # shape — the geometric square/circle/diamond paths don't apply to it.
-    geometric = ("square", "circle", "diamond")
-    genomes = [
-        (
-            "brutalist",
-            [("celadon", "dark — emerald phosphor"), ("ember", "dark — fired clay"), ("archive", "light — paper")],
-            geometric,
-        ),
-        (
-            "chrome",
-            [("horizon", "frozen blue-silver"), ("moth", "umber iridescent"), ("abyssal", "teal-cyan")],
-            geometric,
-        ),
-        (
-            "automata",
-            [("teal", "cellular teal"), ("violet", "cellular violet"), ("amber", "cellular amber")],
-            geometric,
-        ),
-        (
-            "primer",
-            [("porcelain", "light flagship"), ("noir", "dark"), ("carbon", "dark — ember accent")],
-            ("status-glyph",),
-        ),
-    ]
-    states = (ArtifactStatus.PASSING, ArtifactStatus.WARNING, ArtifactStatus.CRITICAL)
-
-    lines: list[str] = [
-        "# HyperWeave Badge State-Indicator Shape Matrix",
-        "",
-        "The badge state indicator is a configurable shape — `square`, `circle`, "
-        "or `diamond` — selectable per genome/variant or per request via "
-        "`?state_glyph_shape=`. Each paradigm has a default (brutalist dark=square "
-        "/ light=circle, chrome=diamond, cellular=square); the override flips it. "
-        "Primer is the exception: its indicator is a state-KEYED animated mark "
-        "(`status-glyph` — ping / throb / shake per state), its own system rather "
-        "than a geometric, so it shows that one shape.",
-        "",
-        "Each shape shows a 3x3 grid — three variants (rows) across passing / "
-        "warning / critical (columns) — so the shape dispatch and the per-variant "
-        "state-glyph colour are both verifiable in one scroll.",
-        "",
-        "---",
-        "",
-    ]
-    for genome, variants, shapes in genomes:
-        lines.extend([f"## {genome}", ""])
-        for shape in shapes:
-            lines.extend([f"### shape = `{shape}`", ""])
-            for variant, substrate in variants:
-                lines.append(f"**{variant}** ({substrate})")
-                lines.append("")
-                row = []
-                for status in states:
-                    svg = _compose(
-                        "badge",
-                        genome,
-                        title="BUILD",
-                        description=status.value,
-                        state=status.value,
-                        glyph="github",
-                        variant=variant,
-                        state_glyph_shape=shape,
-                    )
-                    fname = f"badge_{genome}_{variant}_{shape}_{status.value}.svg"
-                    _write(state_dir / fname, svg)
-                    row.append(f"![{variant}-{shape}-{status.value}](proofset/state-matrix/{fname})")
-                lines.append(" ".join(row))  # one line → states render side-by-side
-                lines.append("")
-    lines.extend(
-        [
-            "## Cross-reference",
-            "",
-            "- [Main README](README.md) — proofset overview + genome cross-links",
-            "",
-        ]
-    )
-    (OUT / "README_STATE.md").write_text("\n".join(lines) + "\n")
-
-
-def _emit_telemetry_readme() -> None:
-    """Emit outputs/README_TELEMETRY.md with the receipt tour.
-
-    The receipt frame speaks the primer genome. Each session renders across
-    representative variants spanning the chromatic axis — porcelain (flagship
-    light), noir (flagship dark), cream (second light scholar) — plus the raw
-    register-tape chassis, all carrying the same receipt/1 payload. Real
-    transcripts (when present locally) render the same set from live payloads;
-    a mock baseline keeps the tour deterministic on clean checkouts.
-    """
-    tdir = OUT / "proofset" / "telemetry"
-    sizes = ("small", "medium", "large", "xlarge", "xxlarge")
-    eight = ("porcelain", "cream", "noir", "carbon", "space", "anvil", "dusk", "petrol")
-
-    def img(stem: str, alt: str) -> list[str]:
-        return [f"![{alt}](proofset/telemetry/{stem}.svg)", ""] if (tdir / f"{stem}.svg").exists() else []
-
-    lines: list[str] = [
-        "# HyperWeave Telemetry — Receipt Tour",
-        "",
-        "Receipts speak the **primer** genome; the chromatic variant is a free "
-        "choice (porcelain, cream, noir, carbon, space, anvil, dusk, petrol). The "
-        "agent runtime sets only the identity glyph + wordmark, never a theme — so "
-        "the size range stays in one genome per runtime (Claude Code in cream, "
-        "Codex in porcelain), and the chromatic range gets its own showcase at the "
-        "end.",
-        "",
-        "---",
-        "",
-        "## Claude Code — size range (cream)",
-        "",
-    ]
-
-    def sized_section(prefix: str, runtime: str, fallback_stem: str) -> list[str]:
-        out: list[str] = []
-        for s in sizes:
-            block = img(f"{prefix}-{s}", f"{runtime} {s}")
-            if block:
-                out += [f"### {s}", "", *block]
-        if not out:  # clean checkout — no local transcripts for this runtime
-            out += ["### baseline (mock)", "", *img(fallback_stem, f"{runtime} mock baseline")]
-        return out
-
-    lines += sized_section("receipt_claude", "claude code", "receipt_mock-cream")
-
-    lines += ["", "## Codex — size range (porcelain)", ""]
-    lines += sized_section("receipt_codex", "codex", "receipt_mock-porcelain")
-
-    lines += [
-        "",
-        "## Eight chromatic variants — one session",
-        "",
-        "A representative session exercising every reset kind (compact · clear · "
-        "auto-compact) and the +N tool overflow — across all eight primer variants, "
-        "then the raw tape. A single real session rarely carries all three reset "
-        "kinds in one transcript (a `/clear` forks a fresh session), so this payload "
-        "rounds out the reset vocabulary for the renderer. The size-range sections "
-        "above are real auto-compacted sessions.",
-        "",
-    ]
-    for v in eight:
-        block = img(f"receipt_showcase-{v}", f"primer {v}")
-        if block:
-            lines += [f"### {v}", "", *block]
-    lines += ["### raw", "", *img("receipt_showcase-raw", "raw register tape")]
-
-    lines.extend(
-        [
-            "## Cross-reference",
-            "",
-            "- [Main README](README.md) — proofset overview + genome cross-links",
-            "",
-        ]
-    )
-
-    (OUT / "README_TELEMETRY.md").write_text("\n".join(lines) + "\n")
-
-
-def _emit_automata_readme() -> None:
-    """Emit outputs/README_AUTOMATA.md with the full 16-tone variant matrix
-    plus a freestyle pairings showcase. Lifted out of the main README to
-    keep that file scannable; with 16 solo tones x 7 frame types + 5 badge
-    states each, the full matrix dominates whatever else lives there.
-
-    Image references point at LOCAL artifacts under outputs/proofset/automata/
-    — this is a local gallery, not deployed URLs.
-    """
-    g = "automata"
-    cfg = load_genomes().get(g)
-    if cfg is None or not cfg.variants:
-        return
-    variants = cfg.variants
-
-    lines: list[str] = [
-        "# HyperWeave Automata — 16-Tone Variant Matrix",
-        "",
-        "Automata is the cellular paradigm: 16 solo tones (`violet`, `teal`, `bone`, `steel`, "
-        "`amber`, `jade`, `magenta`, `cobalt`, `toxic`, `solar`, `abyssal`, `crimson`, "
-        "`sulfur`, `indigo`, `burgundy`, `copper`) plus a "
-        "request-time pairing grammar that composes any two tones into a bifamily strip or "
-        "divider. Use `?variant=primary&pair=secondary` to pair, `?variant=primary` alone for solo.",
-        "",
-        "Every solo tone below renders the full artifact suite (badge default + compact, icon, "
-        "strip, marquee, divider, stats card, star chart, 5 badge states). Pairing examples "
-        "live in the [Freestyle Pairings](#freestyle-pairings) section at the bottom.",
-        "",
-        "---",
-        "",
-    ]
-
-    for v in variants:
-        lines.append(f"## `?variant={v}`")
-        lines.append("")
-        # Row 1: badge default + compact + icon
-        row1 = f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg) "
-        compact_path = OUT / "proofset" / g / "variants" / f"badge_pypi_{v}_compact.svg"
-        if compact_path.exists():
-            row1 += f"![badge compact](proofset/{g}/variants/badge_pypi_{v}_compact.svg) "
-        row1 += f"![icon](proofset/{g}/variants/icon_github_{v}.svg)"
-        lines.append(row1)
-        lines.append("")
-        # Row 2: strip
-        lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
-        lines.append("")
-        # Row 3: marquee
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
-        lines.append("")
-        # Row 4: dissolve divider — solo synthesizes mirrored bridge
-        lines.append(f"![divider dissolve](proofset/{g}/variants/divider_dissolve_{v}.svg)")
-        lines.append("")
-        # Row 5: stats card
-        stats_path = OUT / "proofset" / g / "variants" / f"stats_{v}.svg"
-        if stats_path.exists():
-            lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
-            lines.append("")
-        # Row 6: star history chart
-        chart_path = OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg"
-        if chart_path.exists():
-            lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
-            lines.append("")
-        # Rows 7-11: badge states stacked
-        for s in (
-            ArtifactStatus.PASSING,
-            ArtifactStatus.WARNING,
-            ArtifactStatus.CRITICAL,
-            ArtifactStatus.BUILDING,
-            ArtifactStatus.OFFLINE,
-        ):
-            lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    # Freestyle pairings — the URL grammar modifier composes any two tones.
-    # Mirrors the freestyle_pairs list in generate_static so the README
-    # reflects what's actually on disk; if files are missing the link breaks
-    # loudly rather than ships a fake.
-    lines.extend(
-        [
-            "## Freestyle Pairings",
-            "",
-            "The pairing grammar (`?variant=primary&pair=secondary`) composes any two solo tones "
-            "into bifamily strips and dissolve dividers. Other frame types (badge, stats, chart, "
-            "marquee, icon) silently ignore the pair and render the primary tone solo. The 10 "
-            "combinations below sample the combinatorial surface; any of the 16x15=240 possible "
-            "pairings work the same way.",
-            "",
-        ]
-    )
-    freestyle_pairs: list[tuple[str, str]] = [
-        ("teal", "violet"),
-        ("bone", "steel"),
-        ("cobalt", "magenta"),
-        ("jade", "crimson"),
-        ("violet", "amber"),
-        ("solar", "abyssal"),
-        ("toxic", "jade"),
-        ("crimson", "steel"),
-        ("magenta", "bone"),
-        ("amber", "cobalt"),
-    ]
-    for primary, secondary in freestyle_pairs:
-        pair_slug = f"{primary}-{secondary}"
-        lines.append(f"### `?variant={primary}&pair={secondary}`")
-        lines.append("")
-        strip_path = OUT / "proofset" / g / "pairings" / f"strip_{pair_slug}.svg"
-        divider_path = OUT / "proofset" / g / "pairings" / f"divider_dissolve_{pair_slug}.svg"
-        if strip_path.exists():
-            lines.append(f"![strip](proofset/{g}/pairings/strip_{pair_slug}.svg)")
-            lines.append("")
-        if divider_path.exists():
-            lines.append(f"![divider dissolve](proofset/{g}/pairings/divider_dissolve_{pair_slug}.svg)")
-            lines.append("")
-
-    (OUT / "README_AUTOMATA.md").write_text("\n".join(lines) + "\n")
-
-
-# Brutalist variant phenomenology — one-line identity statements emitted in the
-# README header for each variant. Mirrors data/genomes/brutalist.json
-# variant_phenomenology so both surfaces stay in sync; if you add a brutalist
-# variant, append here too. Split into dark monochromes (substrate materials)
-# and light scholars (functional roles) for the README's two-section structure.
-_BRUTALIST_DARK_PHENOMENOLOGY: list[tuple[str, str]] = [
-    (
-        "celadon",
-        "the ceramic glaze that survived the kiln — substance held (flagship; "
-        "bare `brutalist.static` URL renders this for byte-equality with pre-v0.3.2)",
-    ),
-    ("carbon", "graphite under pressure — substrate compressed into mark"),
-    ("alloy", "cold-rolled fusion — disparate metals made one surface"),
-    ("temper", "heat-treated tin — toughness achieved through stress"),
-    ("pigment", "amethyst ground to powder — color as physical material"),
-    ("ember", "warm metal cooling — luminance held in mass"),
-    ("umber", "fired clay holding the kiln's last heat — raw sienna substrate"),
-    ("onyx", "polished obsidian — mass without hue; chroma only in the state register"),
-]
-_BRUTALIST_LIGHT_PHENOMENOLOGY: list[tuple[str, str]] = [
-    ("archive", "knowledge preserved — paper as memory substrate"),
-    ("signal", "transmission made visible — green terminal on cool white"),
-    ("pulse", "rhythm marked in ink — oxblood on parchment"),
-    ("depth", "measurement of below — royal blue plumbed"),
-    ("afterimage", "the optical echo persisting — perception's residue"),
-    ("primer", "the base coat applied — preparation as foundation"),
-    ("ferro", "iron meeting air — oxide bloom on raw metal"),
-    ("ozalid", "the diazo print developing — ammonia-fixed blueprint"),
-    ("sulfur", "mineral brimstone ground fine — acid yellow on bone"),
-    ("tyrian", "murex wrung from the shell — imperial dye on linen"),
-    ("indigo", "vat-dyed cloth oxidizing — indigo deepening in air"),
-    ("patina", "bronze weathered green — copper's slow age"),
-    ("graphite", "pencil lead burnished — graphite sheen on tooth"),
-    ("cyan", "cyanotype exposed — Prussian blue fixed by light"),
-]
-_CHROME_PHENOMENOLOGY: list[tuple[str, str]] = [
-    (
-        "horizon",
-        "the frozen midnight envelope — slate held over copper sliver "
-        "(flagship; bare `chrome.static` URL renders this for byte-equality)",
-    ),
-    ("abyssal", "deep-water teal — the cold-cyan envelope"),
-    ("lightning", "electric blue arrest — voltage held still"),
-    ("graphite", "warm gray cast — pencil lead under pressure"),
-    ("moth", "umber iridescence — wing-dust spectra"),
-]
-
-
-def _emit_brutalist_readme() -> None:
-    """Emit outputs/README_BRUTALIST.md with the full 22-variant matrix.
-
-    Mirrors README_AUTOMATA's structure: each variant renders its full
-    artifact suite (badge default, icon, strip, marquee, both dividers,
-    stats card, star chart, 5 badge states) as inline image embeds.
-
-    Brutalist differs from automata in two ways:
-    1. Two substrate polarities — 8 dark monochromes (substrate materials)
-       and 14 light scholars (functional roles) — split into two README
-       sections so the substrate distinction is structural, not buried in
-       prose.
-    2. No pairing grammar — brutalist is mono-substrate per variant; no
-       bifamily strips or freestyle pairings section.
-
-    Brutalist declares two dividers (`seam`, `sigil`); light variants default
-    to sigil, dark to seam, and every variant section shows both. Image
-    references point at LOCAL artifacts under outputs/proofset/brutalist/.
-    """
-    g = "brutalist"
-    cfg = load_genomes().get(g)
-    if cfg is None or not cfg.variants:
-        return
-
-    lines: list[str] = [
-        "# HyperWeave Brutalist — 22-Variant Substrate Matrix",
-        "",
-        "Brutalist is the only genome with two substrate polarities: **8 dark monochromes** "
-        "(substrate materials — `celadon`, `carbon`, `alloy`, `temper`, `pigment`, `ember`, "
-        "`umber`, `onyx`) and **14 light scholars** (functional roles — `archive`, `signal`, "
-        "`pulse`, `depth`, `afterimage`, `primer`, `ferro`, `ozalid`, `sulfur`, `tyrian`, "
-        "`indigo`, `patina`, `graphite`, `cyan`). Each variant declares `substrate_kind: "
-        '"dark" | "light"` driving template include dispatch — same paradigm, two material '
-        "identities.",
-        "",
-        "The dark monochromes follow brutalist material vocabulary: matte surfaces, sharp "
-        "zero-radius corners, JetBrains Mono typography, no glow. Each name captures a "
-        "substance you can hold. The light scholars invert substrate polarity: paper canvas "
-        "hosts dark ink with accent seam colors carrying chromatic identity. Each name "
-        "captures a function.",
-        "",
-        "Stratum: `002-TRIBE`. Flagship variant: `celadon` (byte-equal to pre-v0.3.2 "
-        "brutalist palette for backwards compat).",
-        "",
-        "Brutalist supports both `circle` and `square` icon shapes; each variant embeds "
-        "both. Every variant below renders the full artifact suite (default badge, "
-        "circle + square icons, strip, marquee, both dividers (seam + sigil), stats card, "
-        "star chart, 5 badge states).",
-        "",
-        "---",
-        "",
-        "## Dark Monochromes",
-        "",
-    ]
-
-    def _emit_variant_block(v: str, phenomenology: str) -> None:
-        lines.append(f"### `?variant={v}`")
-        lines.append("")
-        lines.append(f"_{phenomenology}_")
-        lines.append("")
-        # Row 1: badge default (alone, mirroring chrome's layout)
-        lines.append(f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg)")
-        lines.append("")
-        # Row 2: icons (circle + square side by side)
-        lines.append(
-            f"![icon circle](proofset/{g}/variants/icon_github_{v}_circle.svg) "
-            f"![icon square](proofset/{g}/variants/icon_github_{v}_square.svg)"
-        )
-        lines.append("")
-        # Row 3: strip
-        lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
-        lines.append("")
-        # Row 4: marquee
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
-        lines.append("")
-        # Row 5: both dividers — seam (concrete joint) + sigil (ink rules +
-        # solid center block). Light variants default to sigil, dark to seam,
-        # but every variant section shows both for the full chromatic register.
-        lines.append(
-            f"![divider seam](proofset/{g}/variants/divider_seam_{v}.svg) "
-            f"![divider sigil](proofset/{g}/variants/divider_sigil_{v}.svg)"
-        )
-        lines.append("")
-        # Row 5: stats card
-        stats_path = OUT / "proofset" / g / "variants" / f"stats_{v}.svg"
-        if stats_path.exists():
-            lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
-            lines.append("")
-        # Row 6: star history chart
-        chart_path = OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg"
-        if chart_path.exists():
-            lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
-            lines.append("")
-        # Rows 7-11: badge states stacked
-        for s in (
-            ArtifactStatus.PASSING,
-            ArtifactStatus.WARNING,
-            ArtifactStatus.CRITICAL,
-            ArtifactStatus.BUILDING,
-            ArtifactStatus.OFFLINE,
-        ):
-            lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    for v, phen in _BRUTALIST_DARK_PHENOMENOLOGY:
-        if v in cfg.variants:
-            _emit_variant_block(v, phen)
-
-    lines.append("## Light Scholars")
+    lines.append(f"<sub>{total} artifacts this run.</sub>")
     lines.append("")
 
-    for v, phen in _BRUTALIST_LIGHT_PHENOMENOLOGY:
-        if v in cfg.variants:
-            _emit_variant_block(v, phen)
-
-    # Architectural notes — what makes brutalist's variant grammar distinct.
-    lines.extend(
-        [
-            "## Substrate Architecture",
-            "",
-            "`substrate_kind` is the variant-declared axis driving template include dispatch "
-            "within the brutalist paradigm:",
-            "",
-            "```jinja2",
-            "{# templates/frames/badge/brutalist-content.j2 (dispatcher) #}",
-            '{% include "frames/badge/brutalist-" ~ (substrate_kind | default(\'dark\')) ~ "-content.j2" %}',
-            "```",
-            "",
-            "Dark variants route to `brutalist-dark-content.j2`; light variants route to "
-            "`brutalist-light-content.j2`. The dispatcher pattern applies to `badge`, `strip`, "
-            "`stats`, and `chart`. Icon, divider, and marquee stay CSS-vars-only because their "
-            "prototypes show color-only deltas.",
-            "",
-            "Validation at `compose/validate_paradigms.py:validate_genome_variants()` enforces "
-            "the substrate contract: every variant declares `substrate_kind`; light variants "
-            "additionally declare `panel_gradient_stops` (≥2 stops, for the dark academic "
-            "panel) and `seam_color`; dark variants must NOT declare `panel_gradient_stops`.",
-            "",
-            "## Cross-reference",
-            "",
-            "- [Main README](../README.md) — installation, compose grammar, all genomes",
-            "- [CHANGELOG](../CHANGELOG.md) — v0.3.2 release notes",
-            "",
-        ]
-    )
-
-    (OUT / "README_BRUTALIST.md").write_text("\n".join(lines) + "\n")
+    (OUT / "README.md").write_text("\n".join(lines) + "\n")
+    # Every gallery composes its own document beside its own renders
+    # (scripts/examples/); this file only writes the index above.
 
 
 def _emit_primer_stress_section() -> list[str]:
@@ -2364,7 +1305,8 @@ def _emit_primer_stress_section() -> list[str]:
     connector token (github / pypi / npm / crates) resolved live — NO fabricated
     kv: data. The metric count is varied by slicing a real cross-connector token
     list; the chart rides real GitHub star history. Writes artifacts under
-    outputs/proofset/primer/stress/ and returns the markdown.
+    outputs/genomes/primer/stress/ and returns the markdown, linked from the
+    primer gallery README that sits beside it.
     """
     import asyncio
 
@@ -2400,7 +1342,7 @@ def _emit_primer_stress_section() -> list[str]:
             # brutalist vllm card uses) so a pypistats 429 under burst regeneration
             # falls back to the last good fixture instead of silently dropping the
             # sparkline card — the only direct, uncached pypi call in the proofset.
-            from proofset_harness import load_fixtures
+            from scripts.examples.harness import load_fixtures
 
             snap = await _fetch_snapshot_or_cache(
                 load_fixtures(),
@@ -2428,18 +1370,18 @@ def _emit_primer_stress_section() -> list[str]:
     if not tokens:
         lines.append(
             "_Connector tokens did not resolve at generation time (offline / rate-limited); "
-            "re-run `scripts/generate_proofset.py` with network access to populate this section._"
+            "re-run `python -m scripts.examples` with network access to populate this section._"
         )
         lines.append("")
         return lines
-    sdir = OUT / "proofset" / "primer" / "stress"
+    sdir = GENOMES / "primer" / "stress"
     for n in range(1, len(tokens) + 1):
         svg = _compose("stats", "primer", title="vllm", data_tokens=tokens[:n], variant="porcelain")
         _write(sdir / f"stats_n{n}.svg", svg)
         plural = "metric" if n == 1 else "metrics"
         lines.append(f"**{n} {plural}** — card sizes to fit:")
         lines.append("")
-        lines.append(f"![primer stats {n} metrics](proofset/primer/stress/stats_n{n}.svg)")
+        lines.append(f"![primer stats {n} metrics](stress/stats_n{n}.svg)")
         lines.append("")
     lines.append(
         "The card never reflows to a fixed grid — the hero + secondary metric row flow from "
@@ -2462,7 +1404,7 @@ def _emit_primer_stress_section() -> list[str]:
             "is a brutalist/automata form):"
         )
         lines.append("")
-        lines.append("![primer stats sparkline](proofset/primer/stress/stats_sparkline.svg)")
+        lines.append("![primer stats sparkline](stress/stats_sparkline.svg)")
         lines.append("")
     if pypi_snap.get("series_points"):
         for var in ("porcelain", "carbon"):
@@ -2470,1591 +1412,13 @@ def _emit_primer_stress_section() -> list[str]:
             _write(sdir / f"chart_downloads_{var}.svg", chart)
             lines.append(f"**PyPI download trend — {var}** (non-star series, same chart pipeline):")
             lines.append("")
-            lines.append(f"![primer download chart {var}](proofset/primer/stress/chart_downloads_{var}.svg)")
+            lines.append(f"![primer download chart {var}](stress/chart_downloads_{var}.svg)")
             lines.append("")
     lines.append("---")
     lines.append("")
     return lines
 
 
-def _emit_primer_readme() -> None:
-    """Emit outputs/README_PRIMER.md with the full 8-variant substrate matrix.
-
-    Mirrors README_BRUTALIST's structure: each variant renders its full artifact
-    suite (badge default, icon, strip, marquee, aura divider, stats card, star
-    chart, 5 badge states) as inline image embeds. Primer is 4 dark + 4 light
-    substrates on the flat profile; substrate_kind (read from each variant
-    override) splits the two sections. Image refs point at LOCAL artifacts under
-    outputs/proofset/primer/.
-    """
-    g = "primer"
-    cfg = load_genomes().get(g)
-    if cfg is None or not cfg.variants:
-        return
-    phen = cfg.variant_phenomenology or {}
-    overrides = cfg.variant_overrides or {}
-
-    lines: list[str] = [
-        "# HyperWeave Primer — 8-Variant Substrate Matrix",
-        "",
-        "Primer is HyperWeave's minimal, editorial genome — the clean light-and-dark "
-        "on-ramp. Eight substrates split **4 dark** (`noir`, `carbon`, `space`, `anvil`) "
-        "and **4 light** (`porcelain`, `cream`, `dusk`, `petrol`), each declaring "
-        '`substrate_kind: "dark" | "light"` to drive template include dispatch.',
-        "",
-        "Inter display type with JetBrains Mono numerals, soft vertical-gradient grounds, "
-        "an accent seam fade, circle status dots, and a glassmorphic two-layer drop shadow "
-        "lifting the light cards off the page. Rides the `flat` structural profile.",
-        "",
-        "Stratum: `002-TRIBE`. Flagship variant: `porcelain` (light cobalt-on-white; the "
-        "bare `primer.static` URL renders this).",
-        "",
-        "Every variant below renders the full artifact suite (default badge, icon, strip, "
-        "marquee, aura divider, stats card, star chart, 5 badge states).",
-        "",
-        "---",
-        "",
-        "## Dark Substrates",
-        "",
-    ]
-
-    def _emit(v: str) -> None:
-        lines.append(f"### `?variant={v}`")
-        lines.append("")
-        if phen.get(v):
-            lines.append(f"_{phen[v]}_")
-            lines.append("")
-        lines.append(f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg)")
-        if (OUT / "proofset" / g / "variants" / f"badge_pypi_{v}_compact.svg").exists():
-            lines.append(f" ![badge compact](proofset/{g}/variants/badge_pypi_{v}_compact.svg)")
-        lines.append("")
-        lines.append(
-            f"![icon circle](proofset/{g}/variants/icon_github_{v}_circle.svg) "
-            f"![icon square](proofset/{g}/variants/icon_github_{v}_square.svg)"
-        )
-        lines.append("")
-        lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
-        lines.append("")
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
-        lines.append("")
-        lines.append(f"![divider aura](proofset/{g}/variants/divider_aura_{v}.svg)")
-        lines.append("")
-        if (OUT / "proofset" / g / "variants" / f"stats_{v}.svg").exists():
-            lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
-            lines.append("")
-        if (OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg").exists():
-            lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
-            lines.append("")
-        _states = (
-            ArtifactStatus.PASSING,
-            ArtifactStatus.WARNING,
-            ArtifactStatus.CRITICAL,
-            ArtifactStatus.BUILDING,
-            ArtifactStatus.OFFLINE,
-        )
-        for s in _states:
-            lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
-        lines.append("")
-        if (OUT / "proofset" / g / "variants" / f"badge_passing_{v}_compact.svg").exists():
-            lines.append("**Compact (20px) across states:**")
-            lines.append("")
-            for s in _states:
-                lines.append(f"![{s.value} compact](proofset/{g}/variants/badge_{s.value}_{v}_compact.svg)")
-            lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    dark = [v for v in cfg.variants if (overrides.get(v) or {}).get("substrate_kind") == "dark"]
-    light = [v for v in cfg.variants if (overrides.get(v) or {}).get("substrate_kind") == "light"]
-    for v in dark:
-        _emit(v)
-    lines.append("## Light Substrates")
-    lines.append("")
-    for v in light:
-        _emit(v)
-
-    lines.extend(_emit_primer_stress_section())
-
-    lines.extend(
-        [
-            "## Substrate Architecture",
-            "",
-            "`substrate_kind` is the variant-declared axis driving template include dispatch "
-            "within the primer paradigm:",
-            "",
-            "```jinja2",
-            "{# templates/frames/badge/primer-content.j2 (dispatcher) #}",
-            '{% include "frames/badge/primer-" ~ (substrate_kind | default(\'light\')) ~ "-content.j2" %}',
-            "```",
-            "",
-            "Dark variants route to `primer-dark-content.j2`; light variants to "
-            "`primer-light-content.j2` (badge, strip, icon, marquee). The aura divider is "
-            "substrate-invariant — one template, per-variant `--dna-*` overrides carry the hue. "
-            "The fallback is `light` (primer's flagship is porcelain), and a bare `?genome=primer` "
-            "resolves its substrate from `category: light`.",
-            "",
-            "Stats and chart now use first-class primer layout paths: Inter editorial "
-            "stats cards, smooth area charts, and circular chart endpoints all flow "
-            "through the same resolver/layout/template pipeline as the other frames.",
-            "",
-            "## Cross-reference",
-            "",
-            "- [Main README](../README.md) — installation, compose grammar, all genomes",
-            "- [CHANGELOG](../CHANGELOG.md) — release notes",
-            "",
-        ]
-    )
-
-    (OUT / "README_PRIMER.md").write_text("\n".join(lines) + "\n")
-
-
-def _matrix_fixture_specs() -> dict[str, dict[str, Any]]:
-    """The six canonical sub-variant specs: five JSON fixtures shared with the
-    test suite + the connectors matrix generated from the registry."""
-    import json as _json
-
-    from hyperweave.compose.matrix.input import build_connector_registry_matrix
-    from hyperweave.config.loader import load_connector_registry
-
-    fixtures_dir = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "matrix"
-    specs = {p.stem: _json.loads(p.read_text()) for p in sorted(fixtures_dir.glob("*.json"))}
-    specs["connectors"] = build_connector_registry_matrix(load_connector_registry()).model_dump(mode="json")
-    return specs
-
-
-def _matrix_edge_specs() -> dict[str, dict[str, Any]]:
-    """The boundary suite: the specimens prove "does it look right"; these
-    prove "does it break". Dimension, content, structural, and
-    type-isolation boundaries — every render is eyeballed in
-    README_MATRIX.md. Boundaries carry REAL-SHAPED data (actual metric
-    names, plausible values) so the geometry stays judgeable even when the
-    structure is deliberately degenerate.
-    """
-    edge: dict[str, dict[str, Any]] = {}
-    # ── Dimension boundaries (structural proof, not design targets) ──
-    edge["dim-single-row"] = {
-        "title": "Single row",
-        "subtitle": "one model across five gauged benchmarks — heat needs no neighbors",
-        "row_glyph_tint": "brand",
-        "columns": [
-            {"id": "model", "label": "MODEL", "role": "label"},
-            {"id": "mmlu", "label": "MMLU", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
-            {"id": "gsm", "label": "GSM8K", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
-            {"id": "human", "label": "HumanEval", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
-            {"id": "math", "label": "MATH", "sublabel": "↑ higher", "kind": "numeric", "polarity": "higher"},
-            {
-                "id": "price",
-                "label": "$/Mtok",
-                "sublabel": "↓ lower",
-                "kind": "numeric",
-                "polarity": "lower",
-                "unit": "$",
-            },
-        ],
-        "rows": [
-            {
-                "label": "Claude 3.5 Sonnet",
-                "glyph": "anthropic",
-                "cells": [{"value": 88.7}, {"value": 96.4}, {"value": 92.0}, {"value": 71.1}, {"value": 3.0}],
-            }
-        ],
-    }
-    edge["dim-single-col"] = {
-        "title": "Single column",
-        "subtitle": "one artifact, tri-state support per surface — dual-coded marks down a column",
-        "columns": [
-            {"id": "surface", "label": "SURFACE", "role": "label"},
-            {"id": "svg", "label": "SVG support", "kind": "check"},
-        ],
-        "rows": [
-            {"label": "GitHub README", "cells": [{"state": "full"}]},
-            {"label": "GitHub PR / issue body", "cells": [{"state": "full"}]},
-            {"label": "Notion embed", "cells": [{"state": "partial"}]},
-            {"label": "Slack link preview", "cells": [{"state": "partial"}]},
-            {"label": "Gmail body", "cells": [{"state": "none"}]},
-            {"label": "VS Code markdown preview", "cells": [{"state": "full"}]},
-        ],
-    }
-    edge["dim-1x1"] = {
-        "title": "True minimum",
-        "subtitle": "one cell still carries a semantic mark",
-        "columns": [{"id": "svg", "label": "Renders in README", "kind": "check"}],
-        "rows": [{"label": "hyperweave SVG", "cells": [{"state": "full"}]}],
-    }
-    _ENDPOINTS = [
-        "badge",
-        "strip",
-        "icon",
-        "divider",
-        "marquee",
-        "stats",
-        "chart",
-        "matrix",
-        "compose",
-        "frames",
-        "health",
-        "kit",
-        "live",
-        "discover",
-        "genomes",
-        "motions",
-    ]
-    edge["dim-soft-cap-16"] = {
-        "title": "Soft cap",
-        "subtitle": "16 rows of gauged latency — type and pitch tighten one step",
-        "unit": "ms",
-        "columns": [
-            {"id": "route", "label": "ROUTE", "role": "label"},
-            {"id": "p50", "label": "p50", "kind": "numeric", "polarity": "lower"},
-            {"id": "p95", "label": "p95", "kind": "numeric", "polarity": "lower"},
-        ],
-        "rows": [
-            {"label": f"GET /v1/{name}", "cells": [{"value": 8 + i * 3}, {"value": 21 + i * 7}]}
-            for i, name in enumerate(_ENDPOINTS)
-        ],
-    }
-    _SURFACES = [
-        ("GitHub README", "full", "full"),
-        ("GitHub PR / issue body", "full", "full"),
-        ("GitHub wiki", "full", "partial"),
-        ("GitHub gist", "full", "partial"),
-        ("GitHub Pages", "full", "full"),
-        ("GitLab README", "full", "partial"),
-        ("Bitbucket README", "partial", "none"),
-        ("npm package page", "full", "none"),
-        ("PyPI project page", "full", "none"),
-        ("crates.io readme", "partial", "none"),
-        ("Notion embed", "partial", "none"),
-        ("Obsidian vault", "full", "partial"),
-        ("Slack link preview", "partial", "none"),
-        ("Discord embed", "partial", "none"),
-        ("VS Code markdown preview", "full", "partial"),
-        ("JetBrains markdown", "full", "none"),
-        ("Linear issue", "partial", "none"),
-        ("Jira description", "none", "none"),
-        ("Confluence page", "partial", "none"),
-        ("Reddit post", "none", "none"),
-        ("X / Twitter card", "none", "none"),
-        ("Bluesky embed", "none", "none"),
-        ("Mastodon preview", "partial", "none"),
-        ("Apple Mail", "partial", "none"),
-        ("Gmail body", "none", "none"),
-        ("Outlook body", "none", "none"),
-        ("Docusaurus site", "full", "full"),
-        ("MkDocs site", "full", "full"),
-        ("Sphinx docs", "full", "partial"),
-        ("Hugo site", "full", "full"),
-    ]
-    edge["dim-hard-cap-30"] = {
-        "title": "Hard cap",
-        "subtitle": "a 30-surface support matrix — the ceiling still renders; 31 raises",
-        "columns": [
-            {"id": "surface", "label": "SURFACE", "role": "label"},
-            {"id": "renders", "label": "Renders", "kind": "check"},
-            {"id": "animates", "label": "Animates", "kind": "check"},
-        ],
-        "rows": [
-            {"label": name, "cells": [{"state": renders}, {"state": animates}]} for name, renders, animates in _SURFACES
-        ],
-    }
-    _EVALS = [
-        ("mmlu", "MMLU", "higher"),
-        ("gsm", "GSM8K", "higher"),
-        ("human", "HumanEval", "higher"),
-        ("math", "MATH", "higher"),
-        ("gpqa", "GPQA", "higher"),
-        ("mgsm", "MGSM", "higher"),
-        ("drop", "DROP", "higher"),
-        ("price", "$/Mtok", "lower"),
-    ]
-    _MODELS = [
-        ("Claude 3.5 Sonnet", "anthropic", [88.7, 96.4, 92.0, 71.1, 59.4, 91.6, 87.1, 3.0]),
-        ("GPT-4o", "openai", [88.7, 95.8, 90.2, 76.6, 53.6, 90.5, 83.4, 2.5]),
-        ("Gemini 1.5 Pro", "gemini", [85.9, 91.7, 84.1, 67.7, 46.2, 88.7, 78.9, 1.25]),
-        ("Qwen2.5-72B", "qwen", [86.1, 91.5, 86.6, 83.1, 49.0, 89.3, 76.7, 0.4]),
-    ]
-    edge["dim-max-cols-8"] = {
-        "title": "Max columns",
-        "subtitle": "a wall of gauged tiles — eight heat columns compress toward equal widths",
-        "row_glyph_tint": "brand",
-        "columns": [{"id": "model", "label": "MODEL", "role": "label"}]
-        + [
-            {
-                "id": cid,
-                "label": label,
-                "sublabel": "↑ higher" if pol == "higher" else "↓ lower",
-                "kind": "numeric",
-                "polarity": pol,
-            }
-            for cid, label, pol in _EVALS
-        ],
-        "rows": [
-            {"label": name, "glyph": glyph, "cells": [{"value": v} for v in values]} for name, glyph, values in _MODELS
-        ],
-    }
-    edge["dim-label-floor"] = {
-        "title": "Label column squeezed to its floor",
-        "columns": [{"id": "l", "label": "CAPABILITY", "role": "label"}]
-        + [{"id": f"c{j}", "label": f"TARGET {j + 1}", "kind": "check"} for j in range(6)],
-        "rows": [
-            {
-                "label": "An extremely long capability label that must truncate with a measured ellipsis",
-                "cells": [{"state": s} for s in ("full", "partial", "none", "full", "partial", "none")],
-            }
-            for _ in range(4)
-        ],
-    }
-    # ── Cell content boundaries ──
-    edge["content-chip-overflow-cap"] = {
-        "title": "Chip overflow past the four-row cap",
-        "subtitle": "chips always wrap; +N appears only when even four rows cannot hold them",
-        "columns": [
-            {"id": "pkg", "label": "PACKAGE", "role": "label"},
-            {"id": "deps", "label": "DEPENDENCIES", "kind": "chip"},
-            {"id": "lock", "label": "LOCKED", "kind": "pill"},
-        ],
-        "rows": [
-            {
-                "label": "hyperweave",
-                "sublabel": "pyproject",
-                "cells": [
-                    {
-                        "chips": [
-                            "fastapi",
-                            "pydantic",
-                            "jinja2",
-                            "typer",
-                            "uvicorn",
-                            "httpx",
-                            "pyyaml",
-                            "fastmcp",
-                            "rich",
-                            "anyio",
-                            "starlette",
-                            "click",
-                            "fonttools",
-                            "pillow",
-                            "certifi",
-                            "idna",
-                            "sniffio",
-                            "h11",
-                            "httpcore",
-                            "annotated-types",
-                            "typing-extensions",
-                            "markupsafe",
-                            "shellingham",
-                            "pygments",
-                            "mdurl",
-                            "markdown-it-py",
-                            "python-multipart",
-                            "websockets",
-                            "watchfiles",
-                            "httptools",
-                            "uvloop",
-                            "orjson",
-                            "ujson",
-                            "email-validator",
-                            "dnspython",
-                            "itsdangerous",
-                            "pyperclip",
-                            "docutils",
-                            "packaging",
-                            "six",
-                        ]
-                    },
-                    {"state": "on"},
-                ],
-            }
-        ],
-    }
-    edge["content-text-wrap-cap"] = {
-        "title": "Long values wrap",
-        "subtitle": "full commit subjects against narrow columns — wrap first, ellipsis last",
-        "columns": [
-            {"id": "sha", "label": "COMMIT", "role": "label"},
-            {"id": "subject", "label": "SUBJECT", "kind": "text", "width": 150},
-            {"id": "body", "label": "BODY", "kind": "text", "width": 150},
-        ],
-        "rows": [
-            {
-                "label": "1e15d4f",
-                "cells": [
-                    {"value": "docs: update README assets after the proofset regeneration pass"},
-                    {
-                        "value": "Regenerates every embedded artifact, refreshes the parity manifest, "
-                        "re-runs the raster verification harness across all eight primer variants, "
-                        "and pins the new solved widths in the acceptance README"
-                    },
-                ],
-            },
-            {
-                "label": "4867b34",
-                "cells": [
-                    {"value": "feat: primer genome across all seven existing frame types"},
-                    {"value": "Badge, strip, chart, stats, icon, marquee and divider all dispatch primer"},
-                ],
-            },
-            {
-                "label": "0059902",
-                "cells": [
-                    {"value": "fix: strip layout engine cell padding on chrome variants"},
-                    {"value": "Cell padding now solves from the paradigm config"},
-                ],
-            },
-        ],
-    }
-    edge["content-bar-identical"] = {
-        "title": "Bars with identical values",
-        "subtitle": "no differentiation to gauge — every bar fills alike",
-        "unit": "ms",
-        "columns": [
-            {"id": "region", "label": "REGION", "role": "label"},
-            {"id": "p50", "label": "p50 latency", "kind": "bar", "polarity": "lower"},
-        ],
-        "rows": [
-            {"label": region, "cells": [{"value": 250}]} for region in ("us-east", "eu-west", "ap-south", "sa-east")
-        ],
-    }
-    edge["content-bar-zero"] = {
-        "title": "Bar containing a zero",
-        "unit": "tok",
-        "columns": [
-            {"id": "path", "label": "CACHE PATH", "role": "label"},
-            {"id": "tok", "label": "Tokens fetched", "kind": "bar"},
-        ],
-        "rows": [
-            {"label": "warm cache hit", "cells": [{"value": 0}]},
-            {"label": "cold fetch", "cells": [{"value": 1800}]},
-        ],
-    }
-    edge["content-scattered-empty"] = {
-        "title": "Scattered empty cells",
-        "subtitle": "missing connector values stay blank, never fabricated",
-        "columns": [
-            {"id": "pkg", "label": "PACKAGE", "role": "label"},
-            {"id": "pypi", "label": "PyPI DLs"},
-            {"id": "npm", "label": "npm DLs"},
-            {"id": "crates", "label": "Crates DLs"},
-        ],
-        "rows": [
-            {"label": "hyperweave", "cells": [{"value": 4100}, {}, {}]},
-            {"label": "readme-ai", "cells": [{"value": 9100}, {"value": 1200}, {}]},
-            {"label": "svg-forge", "cells": [{}, {}, {"value": 880}]},
-        ],
-    }
-    edge["content-empty-row"] = {
-        "title": "One fully-empty row",
-        "subtitle": "a package no connector resolves",
-        "columns": [
-            {"id": "pkg", "label": "PACKAGE", "role": "label"},
-            {"id": "ver", "label": "Version"},
-            {"id": "dls", "label": "Downloads"},
-        ],
-        "rows": [
-            {"label": "hyperweave", "cells": [{"value": "0.4.0a2"}, {"value": 4100}]},
-            {"label": "ghost-package", "cells": [{}, {}]},
-            {"label": "readme-ai", "cells": [{"value": "3.2.1"}, {"value": 9100}]},
-        ],
-    }
-    # ── Structural boundaries (each rhetoric block independently omitted) ──
-    edge["struct-no-title"] = {
-        "title": "",
-        "columns": [
-            {"id": "fmt", "label": "FORMAT", "role": "label"},
-            {"id": "size", "label": "Size KB"},
-            {"id": "tokens", "label": "Tokens"},
-        ],
-        "rows": [
-            {"label": "raw SVG", "cells": [{"value": 44}, {"value": 3420}]},
-            {"label": "hw:payload", "cells": [{"value": 2}, {"value": 480}]},
-            {"label": "hwz/1 envelope", "cells": [{"value": 1}, {"value": 210}]},
-        ],
-    }
-    edge["struct-no-sections"] = {
-        "title": "Flat rows (no sections)",
-        "columns": [
-            {"id": "field", "label": "FIELD", "role": "label"},
-            {"id": "naked", "label": "Naked", "kind": "dot"},
-            {"id": "resonant", "label": "Resonant", "kind": "dot"},
-        ],
-        "rows": [
-            {"label": "title", "cells": [{"state": "on"}, {"state": "on"}]},
-            {"label": "created", "cells": [{"state": "on"}, {"state": "on"}]},
-            {"label": "aesthetic", "cells": [{"state": "on"}, {"state": "off"}]},
-            {"label": "reasoning", "cells": [{"state": "off"}, {"state": "on"}]},
-        ],
-    }
-    edge["struct-no-headline"] = {
-        "title": "Bar scale without a headline chip",
-        "unit": "tok",
-        "columns": [
-            {"id": "form", "label": "REPRESENTATION", "role": "label"},
-            {"id": "tok", "label": "Tokens", "kind": "bar", "polarity": "lower"},
-        ],
-        "rows": [
-            {"label": "raw SVG source", "cells": [{"value": 3420}]},
-            {"label": "hw:payload", "cells": [{"value": 480}]},
-            {"label": "hwz/1 envelope", "cells": [{"value": 210}]},
-        ],
-    }
-    edge["struct-no-summary"] = {
-        "title": "Checks without a score band",
-        "columns": [{"id": "cap", "label": "CAPABILITY", "role": "label"}]
-        + [{"id": c, "label": c.upper(), "kind": "check"} for c in ("svg", "png")],
-        "rows": [
-            {"label": "Animation", "cells": [{"state": "full"}, {"state": "none"}]},
-            {"label": "Crisp at any scale", "cells": [{"state": "full"}, {"state": "none"}]},
-        ],
-    }
-    edge["struct-no-hero"] = {
-        "title": "Pills without a recommended column",
-        "columns": [{"id": "f", "label": "FEATURE", "role": "label"}]
-        + [{"id": p, "label": p.title(), "kind": "pill"} for p in ("free", "pro")],
-        "rows": [
-            {"label": "API access", "cells": [{"value": False}, {"value": True}]},
-            {"label": "SSO / SAML", "cells": [{"value": False}, {"value": True}]},
-        ],
-    }
-    edge["struct-everything"] = {
-        "title": "Everything at once",
-        "subtitle": "headline + sections + hero + summary + axis + emphasis, composed",
-        "unit": "pts",
-        "hero_column": "b",
-        "headline": {"value": "3x", "label": "hero over baseline"},
-        "sections": ["First", "Second"],
-        "summary_label": "TOTAL",
-        "columns": [
-            {"id": "l", "label": "ITEM", "role": "label"},
-            {"id": "a", "label": "Baseline", "kind": "bar"},
-            {"id": "b", "label": "Hero", "kind": "bar"},
-        ],
-        "rows": [
-            {"label": "alpha", "section": "First", "cells": [{"value": 10}, {"value": 30}]},
-            {"label": "beta", "section": "First", "emphasis": True, "cells": [{"value": 12}, {"value": 36}]},
-            {"label": "gamma", "section": "Second", "cells": [{"value": 8}, {"value": 24}]},
-        ],
-        "summary_row": [{"value": "30"}, {"value": "90"}],
-    }
-    # ── Type isolation: one matrix per cell kind as the sole data column ──
-    iso_rows = [("alpha", 0), ("beta", 1), ("gamma", 2)]
-    edge["iso-text"] = {
-        "title": "Isolation: text",
-        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "NOTE", "kind": "text"}],
-        "rows": [{"label": n, "cells": [{"value": f"note {i}"}]} for n, i in iso_rows],
-    }
-    edge["iso-check"] = {
-        "title": "Isolation: check",
-        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "STATE", "kind": "check"}],
-        "rows": [
-            {"label": n, "cells": [{"state": s}]}
-            for (n, _), s in zip(iso_rows, ("full", "partial", "none"), strict=True)
-        ],
-    }
-    edge["iso-dot"] = {
-        "title": "Isolation: dot",
-        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "TIER", "kind": "dot"}],
-        "rows": [{"label": n, "cells": [{"state": "on" if i % 2 == 0 else "off"}]} for n, i in iso_rows],
-    }
-    edge["iso-bar"] = {
-        "title": "Isolation: bar",
-        "unit": "tok",
-        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "Tokens", "kind": "bar"}],
-        "rows": [{"label": n, "cells": [{"value": (i + 1) * 700}]} for n, i in iso_rows],
-    }
-    edge["iso-pill"] = {
-        "title": "Isolation: pill",
-        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "READY", "kind": "pill"}],
-        "rows": [{"label": n, "cells": [{"value": i % 2 == 0}]} for n, i in iso_rows],
-    }
-    edge["iso-numeric"] = {
-        "title": "Isolation: numeric heat",
-        "columns": [
-            {"id": "l", "label": "ROW", "role": "label"},
-            {"id": "v", "label": "Score", "kind": "numeric", "polarity": "higher"},
-        ],
-        "rows": [{"label": n, "cells": [{"value": 60 + i * 18}]} for n, i in iso_rows],
-    }
-    edge["iso-chip"] = {
-        "title": "Isolation: chip",
-        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "TAGS", "kind": "chip"}],
-        "rows": [{"label": n, "cells": [{"chips": [f"tag_{i}_{k}" for k in range(i + 2)]}]} for n, i in iso_rows],
-    }
-    edge["iso-glyph"] = {
-        "title": "Isolation: glyph",
-        "columns": [{"id": "l", "label": "ROW", "role": "label"}, {"id": "v", "label": "MARK", "kind": "glyph"}],
-        "rows": [
-            {"label": n, "cells": [{"glyph": g}]}
-            for (n, _), g in zip(iso_rows, ("github", "pypi", "huggingface"), strict=True)
-        ],
-    }
-    return edge
-
-
-_MATRIX_EDGE_NOTES: dict[str, str] = {
-    "dim-single-row": "Tests: one model row across five gauged heat columns — column normalization "
-    "with no neighbors. Correct: every tile reads the neutral mid hue (a range of one has no poles) "
-    "and the frame solves to its natural width.",
-    "dim-single-col": "Tests: one data column — the solver with nothing to balance against. Correct: "
-    "the check column floors, the legend stays inline beside the subtitle, marks stay centered.",
-    "dim-1x1": "Tests: the true minimum input (one row, one column). Correct: a complete card — "
-    "masthead, headers, one mark, footer — at the width floor.",
-    "dim-soft-cap-16": "Tests: 16 rows, the soft cap — the shrink step. Correct: the type drops one "
-    "step and the pitch tightens; nothing clips.",
-    "dim-hard-cap-30": "Tests: 30 rows, the hard cap — the engine's last legal input. Correct: every "
-    "row still renders at compact pitch; row 31 raises instead.",
-    "dim-max-cols-8": "Tests: 8 data columns, the column cap — maximum horizontal compression. "
-    "Correct: columns compress toward their floors with no negative widths and no header collisions.",
-    "dim-label-floor": "Tests: six data columns squeezing the label column to its floor. Correct: row "
-    "labels truncate with a measured ellipsis; the key takes its own row under the wide title.",
-    "content-text-wrap-cap": "Tests: prose against narrow text columns. Correct: values wrap up to "
-    "three lines (rows grow to fit), and the ellipsis appears only on the final line of content that "
-    "exceeds the cap — never as the first behavior.",
-    "content-chip-overflow-cap": "Tests: a 40-dependency chip list against the four-row cap. Correct: "
-    "chips pack and wrap; past the cap one `+N` chip absorbs the remainder (the full list stays in "
-    "hw:payload).",
-    "content-bar-identical": "Tests: every bar the same value — a range with no spread. Correct: all "
-    "bars fill alike to the axis max; no fake differentiation.",
-    "content-bar-zero": "Tests: a zero value on a bar scale. Correct: the zero keeps a minimum visible "
-    "ink sliver against its track, and the axis still spans 0 to max.",
-    "content-scattered-empty": "Tests: null/empty cells scattered through a populated table. Correct: "
-    "empty cells render honest em-dashes — no invented zeros, no collapsed columns.",
-    "content-empty-row": "Tests: one row with every cell empty. Correct: the row keeps its pitch and "
-    "label; the cells stay quiet dashes.",
-    "struct-no-title": "Tests: no title, subtitle, or headline at all. Correct: the masthead collapses "
-    "entirely — the table starts near the top with no rail, scan, or legend.",
-    "struct-no-sections": "Tests: flat rows with no section grouping, with NON-nested dot columns "
-    "(inclusion sets that are not subsets of each other — the tier-dot fallback). Correct: the per-cell "
-    "dot grid with extent bars and the included/omitted key, never spans; no bands, no indent, the "
-    "primary row-title voice.",
-    "struct-no-headline": "Tests: a bar matrix without the headline chip (top-right score badge). "
-    "Correct: the masthead carries title and rail only; the axis still closes the scale.",
-    "struct-no-hero": "Tests: a pill table without a recommended column. Correct: no hero lane, no cap "
-    "tab — all columns carry equal visual weight.",
-    "struct-no-summary": "Tests: omitting the summary row. Correct: the table closes at its last row; "
-    "no empty score band reserves space.",
-    "struct-everything": "Tests: every rhetoric block at once — headline chip, sections, hero lane, "
-    "summary row, row emphasis — composed in one artifact. Correct: each block keeps its own zone "
-    "(chip on the title line, bands behind rows, lane behind the hero column, score band before the "
-    "footer) with zero collisions.",
-    "iso-text": "Tests: text as the sole data column — the rendered CellPlacement leak test. Correct: "
-    "text runs only; zero mark/dot/bar/pill/tile/chip/glyph markup.",
-    "iso-check": "Tests: check marks as the sole kind. Correct: tri-valence vector marks and their "
-    "masthead key only; no other kind's markup anywhere.",
-    "iso-dot": "Tests: dots as the sole kind. Correct: filled/hollow dots and their key only; no other kind's markup.",
-    "iso-bar": "Tests: bars as the sole kind. Correct: tracks, fills, and the shared axis only; no "
-    "other kind's markup.",
-    "iso-pill": "Tests: pills as the sole kind. Correct: capsule geometry only (gradient Yes, neutral "
-    "values); no other kind's markup.",
-    "iso-numeric": "Tests: numeric heat as the sole kind. Correct: column washes, tinted values, and "
-    "gauged underlines only; no other kind's markup.",
-    "iso-chip": "Tests: chips as the sole kind. Correct: packed chip capsules only; no other kind's markup.",
-    "iso-glyph": "Tests: registry glyphs as the sole kind. Correct: brand marks only — and unknown "
-    "registry ids fail loud at compose time, never silently.",
-}
-
-
-_SURFACE_MODES: tuple[tuple[str, str, str, str], ...] = (
-    # (preset slug, ground, palette, one-line what-it-is)
-    ("plate", "opaque", "fixed", "opaque · fixed — carries its own ground, ignores the reader's theme."),
-    ("inlay", "bare", "adaptive", "bare · adaptive — no ground, borrows the host page, re-inks to the reader's theme."),
-    ("twin", "opaque", "adaptive", "opaque · adaptive — a light face and a dark face; contained, follows the theme."),
-)
-
-
-def _surface_render(
-    out_dir: Path,
-    rel: str,
-    frame: str,
-    name: str,
-    payload: dict[str, Any],
-    variant: str,
-    ground: str,
-    palette: str,
-) -> str:
-    """Compose a surface-mode artifact and write it; return the filename.
-
-    The frame kwarg routes the payload to the right ComposeSpec slot (diagram vs
-    matrix); the ground/palette axes carry the surface mode. Content-addressed by
-    construction — plate/inlay/twin of one artifact are distinct addresses."""
-    kw: dict[str, Any] = {"variant": variant, "ground": ground, "palette": palette}
-    kw["diagram" if frame == "diagram" else "matrix"] = payload
-    svg = _compose(frame, "primer", **kw)
-    fname = f"{name}_{variant}.svg"
-    _write(out_dir / fname, svg)
-    _ = rel
-    return fname
-
-
-def _emit_surface_mode_section(
-    *,
-    render_fn: Any,
-    frame_label: str,
-    rel: str,
-    payload: dict[str, Any],
-    base_name: str,
-    coverage_rows: list[tuple[str, str, str]],
-) -> list[str]:
-    """The Surface Modes section, shared by the diagram and matrix READMEs.
-
-    plate / inlay / twin on ONE real artifact, across an accent-carrying variant
-    (porcelain) and a monochrome one (cream) — so the reader sees the mode on a
-    browsable artifact in context, distinct from the dense surface-matrix
-    gallery. Each cell is content-addressed (the three modes are three artifacts;
-    a twin additionally splits into two faces), which is the point: the surface
-    rides the payload, so the address changes with it. ``rel`` is the image root
-    relative to the README's own directory."""
-    section: list[str] = [
-        "",
-        "## Surface Modes",
-        "",
-        "One artifact, three ways it can meet a host page. `plate` is the",
-        "self-contained default; `inlay` drops its ground and re-inks to the",
-        "reader's light/dark theme; `twin` carries both faces in a contained",
-        "card. The mode serializes into the payload, so plate/inlay/twin of the",
-        "same spec are distinct content addresses by construction.",
-        "",
-        f"Shown on an accent-carrying variant (porcelain) and a monochrome one (cream) — the {frame_label} frame.",
-        "",
-        "This is the one section in this document that stays adaptive on",
-        "purpose — `inlay` and `twin` below re-ink live via",
-        "`prefers-color-scheme`, so they follow whichever color scheme the",
-        "*viewer* resolves for this page, not necessarily the page's visible",
-        "background (a markdown preview pane can disagree with its editor's",
-        "own theme). Every other artifact in this document bakes one fixed",
-        "face so it reads the same everywhere.",
-    ]
-    for variant in ("porcelain", "cream"):
-        section += ["", f"### {variant}"]
-        for slug, ground, palette, what in _SURFACE_MODES:
-            name = f"surface-{base_name}-{slug}"
-            fname = render_fn(name, payload, variant, ground, palette)
-            section += [
-                "",
-                f"**{slug}** — {what}",
-                "",
-                f"![{base_name} {slug} on {variant}]({rel}/{fname})",
-            ]
-            coverage_rows.append((f"{name} ({variant})", fname, f"surface mode: {slug} · {variant}"))
-    return section
-
-
-def _verb_appendix() -> list[str]:
-    """The per-surface error model + name-divergence tables (the doc's appendix).
-
-    These survive from the first README_VERB cut as reference — the chains above
-    are the spine (operations paired with rendered artifacts); this closes the
-    file with the flat contract a scripter checks when moving across surfaces.
-    """
-    return [
-        "",
-        "## Appendix — surface contract",
-        "",
-        "The chains above run the verbs for real and embed what they produce. This"
-        " appendix is the flat reference: the error model and how each surface names"
-        " the same input.",
-        "",
-        "### Error model",
-        "",
-        "| Surface | Success | Bad request field | Business-logic reject |",
-        "| --- | --- | --- | --- |",
-        "| CLI | exit `0`, JSON on stdout | usage error, exit `2` | `HwError.cli_text()` on stderr, exit `1` |",
-        "| HTTP | `200` | `422` (Pydantic — missing/typed field) | `400` + `{error:{code,message,fix}}` |",
-        "| MCP | tool result dict | tool-arg error | `SPEC_INVALID` in the result envelope |",
-        "",
-        "The HTTP layering: a **`422`** means the body was malformed (a required field"
-        " like `source`/`mutations` absent); a **`400`** means it parsed but the"
-        " operation was invalid (mismatched frame types, a source with no payload, a"
-        " patch that breaks the schema). The `400` body always carries `code` +"
-        " `message` + `fix`.",
-        "",
-        "### Surface vocabulary",
-        "",
-        "One capability core, three thin adapters — results agree byte-for-byte. The"
-        " HTTP body and MCP params share ONE vocabulary (`source`, `a`/`b`,"
-        " `mutations`); the CLI differs only in surface idiom — positional arguments"
-        " and `--patch` as a file-path convenience.",
-        "",
-        "| Verb | CLI | HTTP body | MCP params |",
-        "| --- | --- | --- | --- |",
-        "| extract | `SOURCE`, `--respond` | `source`, `respond` | `source`, `respond` |",
-        "| verify | `SOURCE` | `source` | `source` |",
-        "| diff | `A` `B`, `--exit-code` | `a`, `b` | `a`, `b` |",
-        "| query | `SOURCE` `QUESTION` | `source`, `question` | `source`, `question` |",
-        "| transform | `SOURCE`, `--patch`/`--patch-json` | `source`, `mutations` | `source`, `mutations` |",
-        "",
-        "- **The only naming difference is the CLI idiom**: positional `SOURCE`/`A`/`B`"
-        " arguments, and `--patch`/`--patch-json` (a file-path/inline convenience) vs"
-        " the HTTP/MCP `mutations` field — the RFC-6902 op-list content is identical.",
-        "- **`source` accepts more than a file** on the CLI: `-` (stdin), a path, an"
-        " `http(s)` URL, a raw `<svg…>`, or a `/v1/a/{digest}` handle (resolved over"
-        " the render tier; format suffixes stripped first).",
-        "- **transform returns a handle on every surface** — `{envelope, url, lineage,"
-        " …}`, never raw bytes; the SVG is cached, so fetch the `url` to render it.",
-        "",
-    ]
-
-
-def _emit_verb_readme() -> None:
-    """Emit outputs/README_VERB.md — the verb algebra as agentic workflow chains.
-
-    Not a per-verb reference (that is the appendix): the spine is three chains of
-    REAL operations over VISIBLE artifacts, following the proofset convention that
-    every operation is paired with its rendered SVG so depth is verified by eye,
-    never asserted in prose. The verbs run for real here — Chain A/B via the
-    in-process Python API, Chain C additionally through the CLI (subprocess) and
-    HTTP (in-process ASGI) to PROVE byte-equal digests across surfaces. Renders
-    are written under ``outputs/proofset/verbs/`` with paths relative to this
-    README's directory.
-    """
-    import json as _json
-
-    from hyperweave.compose.artifact_store import store_artifact
-    from hyperweave.core.envelope import extract_envelope
-    from hyperweave.verbs import diff, extract, query, transform, verify
-
-    out_dir = OUT / "proofset" / "verbs"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    for stale in out_dir.glob("*.svg"):
-        stale.unlink()
-    rel = "proofset/verbs"
-
-    def _short_id(env: dict[str, Any]) -> str:
-        """The envelope id trimmed to a readable prefix (full ids are 64 hex)."""
-        raw = str(env.get("id", ""))
-        body = raw.split(":", 1)[1] if ":" in raw else raw
-        return f"sha256:{body[:12]}…" if body else "(none)"
-
-    lines: list[str] = [
-        "# HyperWeave Verbs — agentic workflow chains",
-        "",
-        "Every HyperWeave artifact carries its own spec: an embedded `hw:payload`"
-        " (lossless) and an `hwz/1` envelope (the ~200-token actionable digest). The"
-        " **verbs** — `extract`, `verify`, `diff`, `query`, `transform` (plus"
-        " `compose`/`validate`) — are the read/write algebra over that contract,"
-        " served identically across CLI / HTTP / MCP by one registry.",
-        "",
-        "This doc is a **proof, not a reference**: each chain below is a real agentic"
-        " workflow, every operation paired with the artifact it produced so you can"
-        " *see* that the depth is real — the transformed cell actually changed, the"
-        " added node actually appears, the two surfaces actually agree. The artifacts"
-        " and this file are emitted by `scripts/generate_proofset.py` (the verbs run"
-        " for real), never hand-authored. The flat per-surface contract is the"
-        " [appendix](#appendix--surface-contract).",
-        "",
-        "---",
-    ]
-
-    # ══ Chain A — artifact lifecycle over a real status matrix ═══════════════
-    tiers = _json.loads((Path("tests/fixtures/matrix/tiers.json")).read_text())
-    parent_svg = _compose("matrix", "primer", variant="porcelain", matrix=tiers)
-    parent_env = extract_envelope(parent_svg) or {}
-    parent_digest = str(parent_env.get("id", ""))
-    if parent_digest:
-        store_artifact(parent_digest, parent_svg)
-    _write(out_dir / "chainA-1-parent.svg", parent_svg)
-
-    # query — a real question answered from the envelope (deterministic, exact).
-    q_rows = query(parent_svg, "how many rows does this matrix have?")
-    q_title = query(parent_svg, "what is the title?")
-
-    # transform — flip a real cell: the "chromatic · motion" row's Naked column
-    # (off → on) via an RFC-6902 replace on the payload path. Row 3 (index 3),
-    # column 0 (Naked). This is a genuine content edit, not a title tweak.
-    patch = [{"op": "replace", "path": "/rows/3/cells/0/state", "value": "on"}]
-    t = transform(parent_svg, patch)
-    child_svg = t.svg
-    _write(out_dir / "chainA-2-child.svg", child_svg)
-
-    # diff — parent vs child: the structured delta (payload-bound, not pixels).
-    d = diff(parent_svg, child_svg)
-
-    # verify — both artifacts prove id == sha256(payload).
-    vp = verify(parent_svg)
-    vc = verify(child_svg)
-
-    lines += [
-        "",
-        "## Chain A — artifact lifecycle",
-        "",
-        "*compose → query → transform → diff → verify.* An agent mints a status"
-        " matrix, asks it a question, patches one cell, proves what changed, and"
-        " confirms both artifacts are internally consistent — the read/write loop an"
-        " agent actually runs.",
-        "",
-        "**1. compose** — a real metadata-tier matrix (9 rows, 4 columns, sectioned;"
-        " `tests/fixtures/matrix/tiers.json`):",
-        "",
-        f"![Chain A parent matrix]({rel}/chainA-1-parent.svg)",
-        "",
-        f"<sub>`{_short_id(parent_env)}` · schema `{vp.to_dict().get('schema', 'matrix/1')}`</sub>",
-        "",
-        "**2. query** — answered from the envelope digest, deterministic and exact:",
-        "",
-        "```",
-        '$ hyperweave query tiers.svg "how many rows does this matrix have?"',
-        f'→ {{"answer": "{q_rows.answer}", "field": "{q_rows.field}",'
-        f' "mechanism": "{q_rows.mechanism}", "confidence": "{q_rows.confidence}"}}',
-        '$ hyperweave query tiers.svg "what is the title?"',
-        f'→ {{"answer": "{q_title.answer}", "field": "{q_title.field}"}}',
-        "```",
-        "",
-        "**3. transform** — patch the `chromatic · motion` row's *Naked* cell"
-        " `off → on` (RFC-6902 on the payload), yielding a NEW artifact:",
-        "",
-        "```json",
-        _json.dumps(patch),
-        "```",
-        "",
-        f"![Chain A transformed matrix]({rel}/chainA-2-child.svg)",
-        "",
-        f"<sub>parent `{_short_id(parent_env)}` → child `{_short_id(t.envelope)}`"
-        f" · lineage depth {len(t.lineage)}</sub>",
-        "",
-        "The two renders side by side ARE the proof: the third row's first dot fills"
-        " in the child. The change is content-addressed — a different payload hashes"
-        " to a different id.",
-        "",
-        "**4. diff** — the structured delta (payload-bound, not pixel diffing):",
-        "",
-        "```json",
-        _json.dumps(d.to_dict(), indent=2)[:900],
-        "```",
-        "",
-        "**5. verify** — both artifacts prove `id == sha256(payload)`:",
-        "",
-        "```",
-        f'$ hyperweave verify parent.svg → {{"valid": {str(vp.to_dict()["valid"]).lower()},'
-        f' "schema": "{vp.to_dict().get("schema", "")}"}}',
-        f'$ hyperweave verify child.svg  → {{"valid": {str(vc.to_dict()["valid"]).lower()},'
-        f' "schema": "{vc.to_dict().get("schema", "")}"}}',
-        "```",
-        "",
-        "---",
-    ]
-
-    # ══ Chain B — diagram evolution ══════════════════════════════════════════
-    # A real DAG (explicit nodes + edges) so adding a node + wiring an edge is a
-    # genuine structural edit the layout solver must re-rank on recompose.
-    dag = _json.loads((Path("tests/fixtures/diagram/dag.json")).read_text())
-    dia_parent_svg = _compose("diagram", "primer", variant="porcelain", diagram=dag)
-    dia_parent_env = extract_envelope(dia_parent_svg) or {}
-    if dia_parent_env.get("id"):
-        store_artifact(str(dia_parent_env["id"]), dia_parent_svg)
-    _write(out_dir / "chainB-1-pipeline.svg", dia_parent_svg)
-
-    # transform — append a node and wire an edge into it. For diagram/1 the patch
-    # is relative to the spec, so nodes/edges grow directly; the solver re-runs.
-    last_id = dag["nodes"][-1].get("id") or f"n{len(dag['nodes']) - 1}"
-    dia_patch = [
-        {"op": "add", "path": "/nodes/-", "value": {"id": "audit", "label": "Audit"}},
-        {"op": "add", "path": "/edges/-", "value": {"source": last_id, "target": "audit"}},
-    ]
-    dt = transform(dia_parent_svg, dia_patch)
-    dia_child_svg = dt.svg
-    _write(out_dir / "chainB-2-evolved.svg", dia_child_svg)
-
-    # extract markdown shadow — the plain-text projection shown next to the render.
-    md_shadow = extract(dia_child_svg, respond="markdown").to_dict().get("markdown", "")
-    child_env_excerpt = _json.dumps(dt.envelope, indent=2)
-
-    lines += [
-        "",
-        "## Chain B — diagram evolution",
-        "",
-        "*compose → transform (add node + edge) → extract markdown shadow.* An agent"
-        " grows a topology by patching its structure, then reads back the text shadow"
-        " an LLM would consume instead of the pixels.",
-        "",
-        "**1. compose** — a real DAG (7 nodes, 7 edges; `tests/fixtures/diagram/dag.json`):",
-        "",
-        f"<sub>`primer.porcelain | plate | {dag['topology']} — {dag['subtitle']}`</sub>",
-        "",
-        f"![Chain B source DAG]({rel}/chainB-1-pipeline.svg)",
-        "",
-        "**2. transform** — append an `Audit` node and an edge into it:",
-        "",
-        "```json",
-        _json.dumps(dia_patch, indent=2),
-        "```",
-        "",
-        f"<sub>`primer.porcelain | plate | {dag['topology']} — the same graph, an Audit node"
-        f" and its edge appended` · parent `{_short_id(dia_parent_env)}` →"
-        f" child `{_short_id(dt.envelope)}`"
-        f" · the solver re-ran; the new terminal node and its edge appear</sub>",
-        "",
-        f"![Chain B evolved pipeline]({rel}/chainB-2-evolved.svg)",
-        "",
-        "**3. extract** — the evolved diagram's markdown shadow (what an agent reads"
-        " instead of the SVG), shown next to the render above:",
-        "",
-        "```",
-        md_shadow.strip()[:600],
-        "```",
-        "",
-        "The envelope excerpt — the ~200-token actionable digest the child carries:",
-        "",
-        "```json",
-        child_env_excerpt[:700],
-        "```",
-        "",
-        "---",
-    ]
-
-    # ══ Chain D — promotion under the verb algebra ═══════════════════════════
-    # The cyclic-dag promotion proven THROUGH the verbs: the payload
-    # keeps the caller's declared topology, the envelope carries the rendered
-    # pattern, and a transform that removes the cycle un-promotes the child —
-    # the seam is a pure function of the spec, reversible by patch.
-    from hyperweave.compose.engine import compose as _engine_compose
-    from hyperweave.core.models import ComposeSpec as _CS
-
-    # The preset library is the kit prototypes only, so the cyclic-dag
-    # promotion demo carries its own inline spec (a release train: a flake
-    # self-loop at index 1 and a requeue back-edge at index 4).
-    train = {
-        "topology": "dag",
-        "title": "Release train",
-        "subtitle": "a flake self-loop and a requeue cycle promote the declared dag",
-        "nodes": [
-            {"id": "build", "label": "build"},
-            {"id": "test", "label": "test"},
-            {"id": "stage", "label": "stage"},
-            {"id": "ship", "label": "ship", "role": "hero"},
-        ],
-        "edges": [
-            {"source": "build", "target": "test"},
-            {"source": "test", "target": "test", "label": "flake"},
-            {"source": "test", "target": "stage"},
-            {"source": "stage", "target": "ship"},
-            {"source": "ship", "target": "build", "label": "requeue"},
-        ],
-    }
-    train_result = _engine_compose(_CS(type="diagram", genome_id="primer", variant="porcelain", diagram=train))
-    train_svg = train_result.svg
-    train_env = extract_envelope(train_svg) or {}
-    if train_env.get("id"):
-        store_artifact(str(train_env["id"]), train_svg)
-    _write(out_dir / "chainD-1-promoted.svg", train_svg)
-    train_payload = extract(train_svg, respond="payload").to_dict().get("payload", {})
-    train_spec_topology = str(train_payload.get("spec", {}).get("topology", ""))
-    train_pattern = str((train_env.get("data") or {}).get("pattern", "?"))
-
-    # Remove the requeue back-edge (index 4) THEN the flake self-loop (index 1)
-    # — both cycles gone, the same declared dag now renders as a dag.
-    unpromote_patch = [{"op": "remove", "path": "/edges/4"}, {"op": "remove", "path": "/edges/1"}]
-    ut = transform(train_svg, unpromote_patch)
-    _write(out_dir / "chainD-2-unpromoted.svg", ut.svg)
-    child_env = ut.envelope
-    child_pattern = str((child_env.get("data") or {}).get("pattern", "?"))
-    ud = diff(train_svg, ut.svg)
-
-    lines += [
-        "",
-        "## Chain D — promotion, proven through the verbs",
-        "",
-        "*compose (cyclic dag) → extract → transform (remove the cycle) → diff.*"
-        " The release-train spec declares `topology: dag`, but its flake self-loop and"
-        " revert cycle have no rank — the input seam promotes it to state-machine"
-        " with a warning. The verbs make the whole mechanism legible:",
-        "",
-        "**1. compose** — the declared dag renders as a state machine:",
-        "",
-        f"<sub>`primer.porcelain | plate | {train_pattern} — a flake self-loop and requeue cycle"
-        f" promote the declared dag` · `{_short_id(train_env)}` ·"
-        f" warning: `{'; '.join(train_result.warnings) or '(none)'}`</sub>",
-        "",
-        f"![Chain D promoted release train]({rel}/chainD-1-promoted.svg)",
-        "",
-        "**2. extract** — the payload keeps the CALLER's declaration; the envelope"
-        " carries the RENDERED pattern (declared vs rendered never silently merge):",
-        "",
-        "```",
-        f"payload spec.topology  → {train_spec_topology!r}   (the caller's dag, preserved)",
-        f"envelope data.pattern  → {train_pattern!r}   (what actually rendered)",
-        "```",
-        "",
-        "**3. transform** — remove the two cycle-closing edges; the SAME declared"
-        " topology now renders as a plain dag (no promotion, no warning):",
-        "",
-        "```json",
-        _json.dumps(unpromote_patch),
-        "```",
-        "",
-        f"<sub>`primer.porcelain | plate | {child_pattern} — cycle edges removed, no promotion` ·"
-        f" parent `{_short_id(train_env)}` → child `{_short_id(child_env)}` ·"
-        f" child pattern `{child_pattern}` — promotion is a pure"
-        " function of the spec, reversible by patch</sub>",
-        "",
-        f"![Chain D un-promoted release train]({rel}/chainD-2-unpromoted.svg)",
-        "",
-        "**4. diff** — the structured delta names exactly the removed edges:",
-        "",
-        "```json",
-        _json.dumps(ud.to_dict(), indent=2)[:700],
-        "```",
-        "",
-        "---",
-    ]
-
-    # ══ Chain C — cross-surface byte-equality ════════════════════════════════
-    # The SAME spec composed through the CLI (subprocess) and HTTP (in-process
-    # ASGI); the embedded envelope ids must match byte-for-byte (Invariant 9).
-    c_lines = _emit_verb_chain_c(out_dir, rel)
-    lines += c_lines
-
-    lines += _verb_appendix()
-
-    _write(OUT / "README_VERB.md", "\n".join(lines) + "\n")
-    print(f"  verb proofset: {len(list(out_dir.glob('*.svg')))} artifacts + README_VERB.md")
-
-
-def _emit_verb_chain_c(out_dir: Path, rel: str) -> list[str]:
-    """Chain C — the same artifact through CLI then HTTP, digests proven equal.
-
-    Runs `hyperweave compose` as a real subprocess and the HTTP compose handler
-    in-process (ASGI), then extracts both envelope ids and asserts equality. The
-    byte-equality is COMPUTED at generation time — if the surfaces diverged, this
-    raises and the proofset build fails (the claim can't rot into stale prose).
-    """
-    import subprocess
-    import sys as _sys
-
-    from hyperweave.core.envelope import extract_envelope
-
-    badge_args = ["badge", "STARS", "1234", "-g", "primer", "--variant", "porcelain"]
-
-    # CLI surface — a real subprocess writing the SVG to stdout.
-    cli_proc = subprocess.run(
-        [_sys.executable, "-m", "hyperweave", "compose", *badge_args],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    cli_svg = cli_proc.stdout
-    _write(out_dir / "chainC-cli.svg", cli_svg)
-    cli_env = extract_envelope(cli_svg) or {}
-
-    # HTTP surface — the in-process ASGI app, respond=svg (the image path).
-    import asyncio
-
-    from httpx import ASGITransport, AsyncClient
-
-    from hyperweave.serve.app import app
-
-    async def _http_compose() -> str:
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://proofset") as client:
-            resp = await client.post(
-                "/v1/compose",
-                json={"type": "badge", "title": "STARS", "value": "1234", "genome": "primer", "variant": "porcelain"},
-            )
-            resp.raise_for_status()
-            return resp.text
-
-    http_svg = asyncio.run(_http_compose())
-    _write(out_dir / "chainC-http.svg", http_svg)
-    http_env = extract_envelope(http_svg) or {}
-
-    cli_id = str(cli_env.get("id", ""))
-    http_id = str(http_env.get("id", ""))
-    # Fail the build if the surfaces diverge — the parity claim is computed, not asserted in prose.
-    if not cli_id or cli_id != http_id:
-        raise AssertionError(f"cross-surface digest divergence: CLI {cli_id!r} != HTTP {http_id!r}")
-
-    short = f"sha256:{cli_id.split(':', 1)[-1][:12]}…"
-    return [
-        "",
-        "## Chain C — cross-surface identity",
-        "",
-        "*the same spec, composed through the CLI then HTTP.* The content-addressed"
-        " envelope id is computed at generation time on both surfaces and asserted"
-        " equal — if they diverged, this doc would fail to build. Parity is proven,"
-        " not claimed.",
-        "",
-        "```",
-        "# CLI (subprocess)",
-        f"$ hyperweave compose {' '.join(badge_args)} > cli.svg",
-        "",
-        "# HTTP (POST /v1/compose)",
-        '$ curl -s .../v1/compose -d \'{"type":"badge","title":"STARS",'
-        '"value":"1234","genome":"primer","variant":"porcelain"}\' > http.svg',
-        "```",
-        "",
-        "| surface | rendered | envelope id |",
-        "| --- | --- | --- |",
-        f"| CLI | ![CLI]({rel}/chainC-cli.svg) | `{short}` |",
-        f"| HTTP | ![HTTP]({rel}/chainC-http.svg) | `{short}` |",
-        "",
-        f"Both surfaces produced the identical id `{short}` — same input, same"
-        " content, same address. The pixels are the same artifact; the digest proves"
-        " it without a byte-by-byte compare.",
-        "",
-        "---",
-    ]
-
-
-def _emit_matrix_readme() -> None:
-    """Emit outputs/README_MATRIX.md + render the matrix proofset.
-
-    Two halves, both required: the six sub-variant fixtures across primer
-    variants prove "does it look right" against the porcelain-final
-    specimens; the boundary suite proves "does it break" at the edges of
-    the input space (dimension, content, structural, type isolation). The
-    over-hard-cap entry intentionally raises and embeds the SMPTE error
-    artifact a README embedder would actually see.
-    """
-    from hyperweave.compose.engine import compose as _do_compose
-    from hyperweave.core.matrix import MatrixCapacityError
-    from hyperweave.serve.app import _error_badge
-
-    out_dir = OUT / "proofset" / "primer" / "matrix"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    fixtures = _matrix_fixture_specs()
-    variants = ["noir", "carbon", "space", "anvil", "porcelain", "cream", "dusk", "petrol"]
-
-    def render(name: str, spec: dict[str, Any], variant: str = "porcelain") -> str:
-        svg = _compose("matrix", "primer", variant=variant, matrix=spec)
-        fname = f"{name}_{variant}.svg"
-        _write(out_dir / fname, svg)
-        return fname
-
-    lines: list[str] = [
-        "# HyperWeave Matrix — Sub-Variants + Boundary Suite",
-        "",
-        "One generative frame renders every structured table: columns declare a",
-        "cell kind (`text · check · dot · bar · pill · numeric · chip · glyph`),",
-        "a measured solver places every coordinate, and each artifact embeds its",
-        "lossless `hw:payload` (matrix/1), an `hwz/1` envelope, and a GFM markdown",
-        "shadow. The specimens prove *does it look right*; the boundary suite",
-        "proves *does it break*. Both are required — this file is the acceptance",
-        "surface.",
-        "",
-        "---",
-        "",
-        "## Sub-variants (porcelain)",
-        "",
-    ]
-    captions = {
-        "check": "Scored comparison — tri-valence marks, hero lane, score band, masthead legend.",
-        "connectors": "Registry — row glyphs, packed metric chips with `+N` overflow, status pills, "
-        "content-height rows. Generated from `data/connector_registry.yaml`.",
-        "tiers": "Progressive inclusion — chained sets auto-select the tier-span projection: "
-        "reach bars with terminal dots (3 spans for 27 marks), hero tier through the USE-FOR row, "
-        "a one-entry tier-reach key. Non-nested dot data keeps the tier-dot grid.",
-        "readcost": "Bar scale — shared axis with nice ticks, value column, load-bearing headline chip.",
-        "plans": "Pill tags — emerald Yes capsules, neutral value capsules, recommended-column hero lane.",
-        "benchmark": "Numeric heat — diverging teal-rose tiles, gauged underlines, brand-tinted row "
-        "glyphs (Gemini's gradient spark).",
-    }
-    for name in ("check", "connectors", "tiers", "readcost", "plans", "benchmark"):
-        fname = render(name, fixtures[name])
-        lines += [f"### {name}", "", captions[name], "", f"![{name}](proofset/primer/matrix/{fname})", ""]
-
-    lines += [
-        "---",
-        "",
-        "## Substrate derivation (check across the other seven variants)",
-        "",
-        "The chassis is entirely `--dna-*`; the semantic indicator hues are",
-        "genome-invariant (one hue per state, bright enough for both poles).",
-        "",
-    ]
-    for variant in variants:
-        if variant == "porcelain":
-            continue
-        fname = render("check", fixtures["check"], variant=variant)
-        lines += [f"**{variant}**", "", f"![check-{variant}](proofset/primer/matrix/{fname})", ""]
-
-    # Surface-conditional derivation: the numeric-heat path re-inks the VALUE
-    # text in OKLCH by substrate and flips ACHROMATIC row glyphs to the genome
-    # ink, while chromatic marks and the genome-invariant heat hues hold. The
-    # check grid above proves indicator-hue invariance; this grid proves the
-    # surface-conditional half — one spec, all eight surfaces.
-    heat_surface = {
-        "title": "Surface derivation — numeric heat",
-        "subtitle": "value ink + achromatic glyphs flip by substrate; chromatic marks and heat hues hold",
-        "columns": [
-            {"id": "m", "label": "MODEL", "role": "label"},
-            {"id": "mark", "label": "", "kind": "glyph", "glyph_tint": "full"},
-            {"id": "swe", "label": "SWE-bench", "kind": "numeric", "polarity": "higher", "unit": "%"},
-            {
-                "id": "price",
-                "label": "PRICE",
-                "sublabel": "per Mtok",
-                "kind": "numeric",
-                "polarity": "lower",
-                "unit": "$",
-            },
-        ],
-        "rows": [
-            {"label": "Claude Opus 4.8", "cells": [{"glyph": "anthropic"}, {"value": 88.6}, {"value": 5}]},
-            {"label": "GPT-5.5", "cells": [{"glyph": "openai"}, {"value": 82.6}, {"value": 5}]},
-            {"label": "Gemini 3.1 Pro", "cells": [{"glyph": "gemini"}, {"value": 80.6}, {"value": 2}]},
-            {"label": "DeepSeek V4-Pro", "cells": [{"glyph": "deepseek"}, {"value": 80.6}, {"value": 0.44}]},
-        ],
-        "notes": "achromatic marks → genome ink · chromatic marks → brand · heat hues genome-invariant",
-    }
-    lines += [
-        "",
-        "### Numeric-heat across all eight surfaces (same spec)",
-        "",
-        "The heat-tile **value ink** is surface-derived in OKLCH — darkened on light",
-        "paper, lifted toward the light ink on dark — and **achromatic row glyphs**",
-        "(Anthropic, OpenAI) resolve to `--dna-ink-primary` so they flip with the",
-        "substrate; the **chromatic** marks (Gemini's gradient, DeepSeek's blue) and",
-        "the genome-invariant heat hues hold. One spec, eight correct renders.",
-        "",
-    ]
-    for variant in variants:
-        fname = render("heat-surface", heat_surface, variant=variant)
-        lines += [f"**{variant}**", "", f"![heat-surface-{variant}](proofset/primer/matrix/{fname})", ""]
-
-    edge = _matrix_edge_specs()
-    groups = [
-        (
-            "Dimension boundaries",
-            "dim-",
-            "*Structural proof at the dimensional limits — filled with payloads that "
-            "exercise the cell kinds the matrix was built for (heat, checks, "
-            "gauges), so the boundary render still earns the frame.*",
-        ),
-        (
-            "Cell content boundaries",
-            "content-",
-            "*Packing, truncation, gauge degeneracy, and honest emptiness — the "
-            "cell builders at the edges of their input space.*",
-        ),
-        (
-            "Structural boundaries",
-            "struct-",
-            "*Each rhetoric block independently omitted (empty slots release "
-            "their space), then everything composed at once.*",
-        ),
-        (
-            "Type isolation (one kind per matrix — the visual CellPlacement leak test)",
-            "iso-",
-            "",
-        ),
-    ]
-    lines += ["---", "", "## Boundary suite", ""]
-    for heading, prefix, note in groups:
-        lines += [f"### {heading}", ""]
-        if note:
-            lines += [note, ""]
-        for name, spec in edge.items():
-            if not name.startswith(prefix):
-                continue
-            fname = render(name, spec)
-            lines += [
-                f"### {name}",
-                "",
-                _MATRIX_EDGE_NOTES[name],
-                "",
-                f"![{name}](proofset/primer/matrix/{fname})",
-                "",
-            ]
-        if prefix == "dim-":
-            # Over-hard-cap: compose() raises; the embedder-visible artifact is
-            # the SMPTE badge GET serves at HTTP 200 / X-HW-Error-Code: 422.
-            over = {
-                "title": "Over cap",
-                "columns": [{"id": "v", "label": "V"}],
-                "rows": [{"label": f"r{i}", "cells": [{"value": i}]} for i in range(31)],
-            }
-            try:
-                _compose("matrix", "primer", variant="porcelain", matrix=over)
-                raise AssertionError("31-row matrix must raise MatrixCapacityError")
-            except MatrixCapacityError as exc:
-                _write(out_dir / "dim-over-cap-31_porcelain.svg", _error_badge(str(exc), status_code=422))
-                lines += [
-                    "### dim-over-cap-31",
-                    "",
-                    "Tests: 31 rows, one past the hard cap. Correct: `compose()` raises",
-                    "`MatrixCapacityError`; image surfaces serve this SMPTE artifact at",
-                    "HTTP 200 / `X-HW-Error-Code: 422`:",
-                    "",
-                    f"> `{exc}`",
-                    "",
-                    "![dim-over-cap-31](proofset/primer/matrix/dim-over-cap-31_porcelain.svg)",
-                    "",
-                ]
-
-    # ── Surface Modes ───────────────────────────────────────────────────────
-    # plate / inlay / twin on a real support matrix — the same section shape the
-    # diagram README carries, so the surface story reads consistently across
-    # frames. Distinct from the surface-matrix gallery (that is the dense grid;
-    # this is the mode shown in context on a browsable table).
-    matrix_rel = "proofset/primer/matrix"
-    _surface_scratch: list[tuple[str, str, str]] = []
-    lines += _emit_surface_mode_section(
-        render_fn=lambda name, payload, variant, ground, palette: _surface_render(
-            out_dir, matrix_rel, "matrix", name, payload, variant, ground, palette
-        ),
-        frame_label="matrix",
-        rel=matrix_rel,
-        payload=fixtures["check"],
-        base_name="support",
-        coverage_rows=_surface_scratch,
-    )
-
-    check_result = _do_compose(
-        ComposeSpec(type="matrix", genome_id="primer", variant="porcelain", matrix=fixtures["check"])
-    )
-    lines += [
-        "---",
-        "",
-        "## The markdown shadow",
-        "",
-        "Every matrix also projects to a GFM table (`--markdown-out` on the CLI,",
-        '`respond: "json"` on POST /v1/compose, `render_target="markdown"` on MCP).',
-        "This is the check fixture's actual shadow:",
-        "",
-        "<details><summary>check.md</summary>",
-        "",
-        check_result.markdown.rstrip(),
-        "",
-        "</details>",
-        "",
-        "---",
-        "",
-        "Cross-references:",
-        "",
-        "- [README_PRIMER](README_PRIMER.md) — the 8-variant substrate matrix",
-        "- [Main README](../README.md) — installation, compose grammar, all genomes",
-        "",
-    ]
-    (OUT / "README_MATRIX.md").write_text("\n".join(lines) + "\n")
-
-
-def _emit_chrome_readme() -> None:
-    """Emit outputs/README_CHROME.md mirroring brutalist/automata structure.
-
-    Chrome ships 5 named variants (horizon/abyssal/lightning/graphite/moth);
-    each renders the full artifact suite. Chrome's divider variant is `band`
-    (per genome.dividers, distinct from brutalist `seam` and automata
-    `dissolve`). Chrome supports both circular AND square icon shapes, so
-    each variant block embeds both alongside the standard 12-artifact suite.
-
-    Source data: `eli64s/readme-ai` to match the other two genome READMEs.
-    Image refs point at LOCAL artifacts under outputs/proofset/chrome/.
-    """
-    g = "chrome"
-    cfg = load_genomes().get(g)
-    if cfg is None or not cfg.variants:
-        return
-
-    lines: list[str] = [
-        "# HyperWeave Chrome — 5-Variant Material Identity Matrix",
-        "",
-        "Chrome is the dark-envelope flagship: midnight gradient + slate seam + sparing "
-        "warm-metal accents. Each variant changes the **material identity** of the envelope "
-        "while keeping the same structural chrome (envelope + well + rim + rhythm).",
-        "",
-        "Five variants: **`horizon`** (frozen midnight + slate + copper sliver; flagship), "
-        "**`abyssal`** (deep-water teal), **`lightning`** (electric blue), "
-        "**`graphite`** (warm gray cast), **`moth`** (umber iridescence).",
-        "",
-        "The bare `chrome.static` URL renders `horizon` for byte-equality with pre-v0.3 "
-        "output. Named variants emit per-variant chromatic overrides via inline SVG-root "
-        "style — every chrome envelope is hex-baked into its `url(#-env)` gradient stops "
-        "and is therefore **scheme-stable** (light-mode CSS variables do not invert the "
-        "envelope; that bug was fixed in v0.3.9 by removing the inherited `light_mode` "
-        "block from the chrome genome).",
-        "",
-        "Chrome supports both `circle` and `square` icon shapes; each variant embeds both. "
-        "Every variant below renders the full artifact suite (default badge, circle + "
-        "square icons, strip, marquee, band divider, stats card, star chart, 5 badge states).",
-        "",
-        "---",
-        "",
-    ]
-
-    def _emit_variant_block(v: str, phenomenology: str) -> None:
-        lines.append(f"### `?variant={v}`")
-        lines.append("")
-        lines.append(f"_{phenomenology}_")
-        lines.append("")
-        # Row 1: default badge
-        lines.append(f"![badge default](proofset/{g}/variants/badge_pypi_{v}_default.svg)")
-        lines.append("")
-        # Row 2: icons (circle + square)
-        lines.append(
-            f"![icon circle](proofset/{g}/variants/icon_github_{v}_circle.svg) "
-            f"![icon square](proofset/{g}/variants/icon_github_{v}_square.svg)"
-        )
-        lines.append("")
-        # Row 3: strip
-        lines.append(f"![strip](proofset/{g}/variants/strip_{v}.svg)")
-        lines.append("")
-        # Row 4: marquee
-        lines.append(f"![marquee](proofset/{g}/variants/marquee_{v}.svg)")
-        lines.append("")
-        # Row 5: band divider (chrome's only declared divider)
-        lines.append(f"![divider band](proofset/{g}/variants/divider_band_{v}.svg)")
-        lines.append("")
-        # Row 6: stats card
-        stats_path = OUT / "proofset" / g / "variants" / f"stats_{v}.svg"
-        if stats_path.exists():
-            lines.append(f"![stats](proofset/{g}/variants/stats_{v}.svg)")
-            lines.append("")
-        # Row 7: star history chart
-        chart_path = OUT / "proofset" / g / "variants" / f"chart_stars_{v}.svg"
-        if chart_path.exists():
-            lines.append(f"![chart](proofset/{g}/variants/chart_stars_{v}.svg)")
-            lines.append("")
-        # Rows 8-12: badge states stacked
-        for s in (
-            ArtifactStatus.PASSING,
-            ArtifactStatus.WARNING,
-            ArtifactStatus.CRITICAL,
-            ArtifactStatus.BUILDING,
-            ArtifactStatus.OFFLINE,
-        ):
-            lines.append(f"![{s.value}](proofset/{g}/variants/badge_{s.value}_{v}.svg)")
-        lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    for v, phen in _CHROME_PHENOMENOLOGY:
-        if v in cfg.variants:
-            _emit_variant_block(v, phen)
-
-    lines.extend(
-        [
-            "## Material Architecture",
-            "",
-            "Chrome's identity lives in the hex-baked envelope gradient (a multi-stop "
-            "`<linearGradient>` at `templates/frames/{frame}/chrome-defs.j2`), the well "
-            "(content background), and the rim (specular highlight band). Per-variant "
-            "overrides in `data/genomes/chrome.json:variant_overrides` swap the stops "
-            "without touching the structural geometry.",
-            "",
-            "Light-mode behavior: chrome is **scheme-stable**. The genome no longer "
-            "declares a `light_mode` block (v0.3.9), so the assembler emits no "
-            "`@media (prefers-color-scheme: light)` swap CSS. Chrome strips/badges/"
-            "icons render identically on dark and light GitHub READMEs. See "
-            "`docs/decisions/chrome-lightmode-removal.md` for the diagnosis.",
-            "",
-            "## Cross-reference",
-            "",
-            "- [Main README](../README.md) — installation, compose grammar, all genomes",
-            "- [Brutalist README](README_BRUTALIST.md) — 22-variant substrate matrix",
-            "- [Automata README](README_AUTOMATA.md) — 16-tone cellular matrix",
-            "",
-        ]
-    )
-
-    (OUT / "README_CHROME.md").write_text("\n".join(lines) + "\n")
-
-
-# DATA_PROJECTS — the real-data corpus the parity matrix exercises against.
-# Tokens shape: ``(provider, identifier, metric)``. Resolved once via
-# ``fetch_or_cache`` (live fetch with fixture cache fallback) and shared
-# across all three entry points so byte-equality is testable.
-#
-# Project list per v0.3.9 plan Part 3c: 19 gh repos + 8 pypi + 4 npm +
-# 4 docker + 3 hf + 3 arxiv. Each provides at least one scalar metric the
-# harness pre-fetches at proofset start. Future spec entries can reference
-# any pre-fetched token via the resolved_data dict.
 DATA_PROJECTS: dict[str, list[tuple[str, ...]]] = {
     # Provider keys match ``hyperweave.connectors._CONNECTORS`` canonical
     # names (github / pypi / npm / docker / huggingface / arxiv). The
@@ -4250,7 +1614,7 @@ async def _resolve_data_projects(fixtures: dict[str, Any]) -> dict[str, Any]:
     import asyncio as _asyncio
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from proofset_harness import fetch_or_cache
+    from scripts.examples.harness import fetch_or_cache
 
     async def _one(provider: str, identifier: str, metric: str) -> tuple[str, Any]:
         token = f"{provider}:{identifier}.{metric}"
@@ -4296,7 +1660,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
     Matrix entries are constructed inline so future contributors see a
     template per archetype rather than parsing an opaque data structure.
     """
-    from proofset_harness import ParitySpec
+    from scripts.examples.harness import ParitySpec
 
     rd = resolved_data or {}
     specs: list[Any] = []
@@ -4306,8 +1670,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
         ParitySpec(
             spec_id="brutalist-badge-build-passing",
             compose_spec=ComposeSpec(type="badge", genome_id="brutalist", title="build", value="passing"),
-            http_path="/v1/badge/build/passing/brutalist.static",
-            mcp_args={"type": "badge", "title": "build", "value": "passing", "genome": "brutalist"},
+            http_path_override="/v1/badge/build/passing/brutalist.static",
+            mcp_args_override={"type": "badge", "title": "build", "value": "passing", "genome": "brutalist"},
         )
     )
     specs.append(
@@ -4320,8 +1684,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="version",
                 value="v0.3.9",
             ),
-            http_path="/v1/badge/version/v0.3.9/chrome.static?variant=horizon",
-            mcp_args={
+            http_path_override="/v1/badge/version/v0.3.9/chrome.static?variant=horizon",
+            mcp_args_override={
                 "type": "badge",
                 "title": "version",
                 "value": "v0.3.9",
@@ -4340,8 +1704,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="stars",
                 value="2.9k",
             ),
-            http_path="/v1/badge/stars/2.9k/automata.static?variant=teal",
-            mcp_args={
+            http_path_override="/v1/badge/stars/2.9k/automata.static?variant=teal",
+            mcp_args_override={
                 "type": "badge",
                 "title": "stars",
                 "value": "2.9k",
@@ -4368,8 +1732,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title="readme-ai",
                     value=metrics_csv,
                 ),
-                http_path=f"/v1/strip/readme-ai/brutalist.static?value={metrics_csv}",
-                mcp_args={
+                http_path_override=f"/v1/strip/readme-ai/brutalist.static?value={metrics_csv}",
+                mcp_args_override={
                     "type": "strip",
                     "title": "readme-ai",
                     "value": metrics_csv,
@@ -4394,8 +1758,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title="readme-ai",
                     value=metrics_csv,
                 ),
-                http_path=f"/v1/strip/readme-ai/chrome.static?value={metrics_csv}",
-                mcp_args={
+                http_path_override=f"/v1/strip/readme-ai/chrome.static?value={metrics_csv}",
+                mcp_args_override={
                     "type": "strip",
                     "title": "readme-ai",
                     "value": metrics_csv,
@@ -4414,8 +1778,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="readme-ai",
                 value="BUILD:passing,STARS:2.9k",
             ),
-            http_path="/v1/strip/readme-ai/brutalist.static?value=BUILD:passing,STARS:2.9k",
-            mcp_args={
+            http_path_override="/v1/strip/readme-ai/brutalist.static?value=BUILD:passing,STARS:2.9k",
+            mcp_args_override={
                 "type": "strip",
                 "title": "readme-ai",
                 "value": "BUILD:passing,STARS:2.9k",
@@ -4434,8 +1798,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="openclaw",
                 value="STARS:373k,FORKS:12k,ISSUES:234",
             ),
-            http_path="/v1/strip/openclaw/chrome.static?value=STARS:373k,FORKS:12k,ISSUES:234",
-            mcp_args={
+            http_path_override="/v1/strip/openclaw/chrome.static?value=STARS:373k,FORKS:12k,ISSUES:234",
+            mcp_args_override={
                 "type": "strip",
                 "title": "openclaw",
                 "value": "STARS:373k,FORKS:12k,ISSUES:234",
@@ -4458,8 +1822,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 glyph="github",
                 shape="circle",
             ),
-            http_path="/v1/icon/github/chrome.static?variant=horizon&shape=circle",
-            mcp_args={
+            http_path_override="/v1/icon/github/chrome.static?variant=horizon&shape=circle",
+            mcp_args_override={
                 "type": "icon",
                 "title": "github",
                 "glyph": "github",
@@ -4478,8 +1842,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="github",
                 glyph="github",
             ),
-            http_path="/v1/icon/github/brutalist.static",
-            mcp_args={
+            http_path_override="/v1/icon/github/brutalist.static",
+            mcp_args_override={
                 "type": "icon",
                 "title": "github",
                 "glyph": "github",
@@ -4497,8 +1861,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 genome_id="brutalist",
                 divider_variant="seam",
             ),
-            http_path="/v1/divider/seam/brutalist.static",
-            mcp_args={
+            http_path_override="/v1/divider/seam/brutalist.static",
+            mcp_args_override={
                 "type": "divider",
                 "genome": "brutalist",
                 "divider_variant": "seam",
@@ -4513,8 +1877,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 genome_id="chrome",
                 divider_variant="band",
             ),
-            http_path="/v1/divider/band/chrome.static",
-            mcp_args={
+            http_path_override="/v1/divider/band/chrome.static",
+            mcp_args_override={
                 "type": "divider",
                 "genome": "chrome",
                 "divider_variant": "band",
@@ -4532,8 +1896,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 variant="horizon",
                 title="ITEM1 | ITEM2 | ITEM3",
             ),
-            http_path="/v1/marquee/ITEM1%20%7C%20ITEM2%20%7C%20ITEM3/chrome.static?variant=horizon",
-            mcp_args={
+            http_path_override="/v1/marquee/ITEM1%20%7C%20ITEM2%20%7C%20ITEM3/chrome.static?variant=horizon",
+            mcp_args_override={
                 "type": "marquee",
                 "title": "ITEM1 | ITEM2 | ITEM3",
                 "genome": "chrome",
@@ -4647,8 +2011,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     value=value_str,
                 ),
-                http_path=f"/v1/badge/{title}/{url_value}/{http_gm}{variant_q}",
-                mcp_args={
+                http_path_override=f"/v1/badge/{title}/{url_value}/{http_gm}{variant_q}",
+                mcp_args_override={
                     "type": "badge",
                     "title": title,
                     "value": value_str,
@@ -4677,8 +2041,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             compose_spec=ComposeSpec(
                 type="strip", genome_id="brutalist", variant="umber", title="serde", value=crates_all
             ),
-            http_path=f"/v1/strip/serde/brutalist.static?value={_urlquote(crates_all, safe='')}&variant=umber",
-            mcp_args={
+            http_path_override=f"/v1/strip/serde/brutalist.static?value={_urlquote(crates_all, safe='')}&variant=umber",
+            mcp_args_override={
                 "type": "strip",
                 "title": "serde",
                 "value": crates_all,
@@ -4706,14 +2070,6 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             compose_spec=ComposeSpec(
                 type="strip", genome_id="brutalist", variant="onyx", title="tokio", value=scorecard_all
             ),
-            http_path=f"/v1/strip/tokio/brutalist.static?value={_urlquote(scorecard_all, safe='')}&variant=onyx",
-            mcp_args={
-                "type": "strip",
-                "title": "tokio",
-                "value": scorecard_all,
-                "genome": "brutalist",
-                "variant": "onyx",
-            },
         )
     )
 
@@ -4749,8 +2105,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             compose_spec=ComposeSpec(
                 type="marquee", genome_id=genome, variant=variant, title="HYPERWEAVE", data_tokens=toks
             ),
-            http_path=f"/v1/marquee/HYPERWEAVE/{gm}?variant={variant}&data={_urlquote(data, safe='')}",
-            mcp_args={
+            http_path_override=f"/v1/marquee/HYPERWEAVE/{gm}?variant={variant}&data={_urlquote(data, safe='')}",
+            mcp_args_override={
                 "type": "marquee",
                 "title": "HYPERWEAVE",
                 "genome": genome,
@@ -4788,8 +2144,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="AutoGPT",
                 value=autogpt_value,
             ),
-            http_path=f"/v1/strip/AutoGPT/chrome.static?value={autogpt_value}",
-            mcp_args={
+            http_path_override=f"/v1/strip/AutoGPT/chrome.static?value={autogpt_value}",
+            mcp_args_override={
                 "type": "strip",
                 "title": "AutoGPT",
                 "value": autogpt_value,
@@ -4812,8 +2168,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="claude-code",
                 value=cc_value,
             ),
-            http_path=f"/v1/strip/claude-code/brutalist.static?value={cc_value}",
-            mcp_args={
+            http_path_override=f"/v1/strip/claude-code/brutalist.static?value={cc_value}",
+            mcp_args_override={
                 "type": "strip",
                 "title": "claude-code",
                 "value": cc_value,
@@ -4840,8 +2196,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="skills",
                 value=skills_value,
             ),
-            http_path=f"/v1/strip/skills/automata.static?value={skills_value}&variant=teal",
-            mcp_args={
+            http_path_override=f"/v1/strip/skills/automata.static?value={skills_value}&variant=teal",
+            mcp_args_override={
                 "type": "strip",
                 "title": "skills",
                 "value": skills_value,
@@ -4912,8 +2268,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             ParitySpec(
                 spec_id=spec_id,
                 compose_spec=ComposeSpec(**compose_kwargs_a),
-                http_path=f"/v1/badge/{title}/{url_value}/automata.static?variant={variant}&size=compact{glyph_q}",
-                mcp_args=mcp_a,
+                http_path_override=f"/v1/badge/{title}/{url_value}/automata.static?variant={variant}&size=compact{glyph_q}",
+                mcp_args_override=mcp_a,
             )
         )
 
@@ -4938,8 +2294,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title="ARXIV",
                     value=arxiv_id,
                 ),
-                http_path=f"/v1/badge/ARXIV/{arxiv_id}/{genome}.static{variant_q}",
-                mcp_args={
+                http_path_override=f"/v1/badge/ARXIV/{arxiv_id}/{genome}.static{variant_q}",
+                mcp_args_override={
                     "type": "badge",
                     "title": "ARXIV",
                     "value": arxiv_id,
@@ -5047,7 +2403,7 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             "title": title,
             "value": value_str,
         }
-        mcp_a: dict[str, Any] = {
+        mcp_args_row: dict[str, Any] = {
             "type": "badge",
             "title": title,
             "value": value_str,
@@ -5056,13 +2412,13 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
         }
         if glyph_slug:
             compose_kwargs["glyph"] = glyph_slug
-            mcp_a["glyph"] = glyph_slug
+            mcp_args_row["glyph"] = glyph_slug
         specs.append(
             ParitySpec(
                 spec_id=spec_id,
                 compose_spec=ComposeSpec(**compose_kwargs),
-                http_path=f"/v1/badge/{title}/{url_value}/{genome}.static?{variant_q}{glyph_q}",
-                mcp_args=mcp_a,
+                http_path_override=f"/v1/badge/{title}/{url_value}/{genome}.static?{variant_q}{glyph_q}",
+                mcp_args_override=mcp_args_row,
             )
         )
 
@@ -5102,8 +2458,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             ParitySpec(
                 spec_id=spec_id,
                 compose_spec=ComposeSpec(**compose_kwargs_d),
-                http_path=f"/v1/badge/{title}/{url_value}/{genome}.static{variant_q}",
-                mcp_args=mcp_d,
+                http_path_override=f"/v1/badge/{title}/{url_value}/{genome}.static{variant_q}",
+                mcp_args_override=mcp_d,
             )
         )
 
@@ -5159,8 +2515,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             ParitySpec(
                 spec_id=spec_id,
                 compose_spec=ComposeSpec(**ck_z),
-                http_path=f"/v1/badge/{title}/{url_value}/{http_gm}?variant={variant}{glyph_q}",
-                mcp_args=mcp_z,
+                http_path_override=f"/v1/badge/{title}/{url_value}/{http_gm}?variant={variant}{glyph_q}",
+                mcp_args_override=mcp_z,
             )
         )
 
@@ -5184,11 +2540,11 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 value=_zai_strip_value,
                 connector_data={"repo_slug": "zai-org/GLM-5"},
             ),
-            http_path=(
+            http_path_override=(
                 f"/v1/strip/GLM-5/chrome.static?value={_zai_strip_value}"
                 f"&variant=abyssal&subtitle={_urlquote('zai-org/GLM-5', safe='')}"
             ),
-            mcp_args={
+            mcp_args_override={
                 "type": "strip",
                 "title": "GLM-5",
                 "value": _zai_strip_value,
@@ -5247,8 +2603,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             ParitySpec(
                 spec_id=spec_id,
                 compose_spec=ComposeSpec(**compose_kwargs_m),
-                http_path=f"/v1/badge/{title}/{url_value}/{paradigm}.static?variant={variant}{glyph_q}",
-                mcp_args=mcp_m,
+                http_path_override=f"/v1/badge/{title}/{url_value}/{paradigm}.static?variant={variant}{glyph_q}",
+                mcp_args_override=mcp_m,
             )
         )
 
@@ -5262,8 +2618,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="STATUS",
                 value="BETA",
             ),
-            http_path="/v1/badge/STATUS/BETA/brutalist.static",
-            mcp_args={
+            http_path_override="/v1/badge/STATUS/BETA/brutalist.static",
+            mcp_args_override={
                 "type": "badge",
                 "title": "STATUS",
                 "value": "BETA",
@@ -5281,8 +2637,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="STATUS",
                 value="ACTIVE",
             ),
-            http_path="/v1/badge/STATUS/ACTIVE/chrome.static?variant=horizon",
-            mcp_args={
+            http_path_override="/v1/badge/STATUS/ACTIVE/chrome.static?variant=horizon",
+            mcp_args_override={
                 "type": "badge",
                 "title": "STATUS",
                 "value": "ACTIVE",
@@ -5300,8 +2656,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="ENV",
                 value="PRODUCTION",
             ),
-            http_path="/v1/badge/ENV/PRODUCTION/brutalist.static",
-            mcp_args={
+            http_path_override="/v1/badge/ENV/PRODUCTION/brutalist.static",
+            mcp_args_override={
                 "type": "badge",
                 "title": "ENV",
                 "value": "PRODUCTION",
@@ -5337,8 +2693,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="vllm",
                 value=vllm_value,
             ),
-            http_path=f"/v1/strip/vllm/chrome.static?value={vllm_value}&variant=horizon",
-            mcp_args={
+            http_path_override=f"/v1/strip/vllm/chrome.static?value={vllm_value}&variant=horizon",
+            mcp_args_override={
                 "type": "strip",
                 "title": "vllm",
                 "value": vllm_value,
@@ -5366,8 +2722,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title="VERSION",
                     value=value,
                 ),
-                http_path=f"/v1/badge/VERSION/{_q(value, safe='')}/brutalist.static",
-                mcp_args={
+                http_path_override=f"/v1/badge/VERSION/{_q(value, safe='')}/brutalist.static",
+                mcp_args_override={
                     "type": "badge",
                     "title": "VERSION",
                     "value": value,
@@ -5392,8 +2748,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     value=value,
                 ),
-                http_path=f"/v1/badge/{title}/{value}/chrome.static?variant=horizon",
-                mcp_args={
+                http_path_override=f"/v1/badge/{title}/{value}/chrome.static?variant=horizon",
+                mcp_args_override={
                     "type": "badge",
                     "title": title,
                     "value": value,
@@ -5420,8 +2776,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="Significant-Gravitas/AutoGPT",
                 value=autogpt_4m,
             ),
-            http_path=(f"/v1/strip/_/brutalist.static?t=Significant-Gravitas%2FAutoGPT&value={autogpt_4m}"),
-            mcp_args={
+            http_path_override=(f"/v1/strip/_/brutalist.static?t=Significant-Gravitas%2FAutoGPT&value={autogpt_4m}"),
+            mcp_args_override={
                 "type": "strip",
                 "title": "Significant-Gravitas/AutoGPT",
                 "value": autogpt_4m,
@@ -5443,8 +2799,10 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title="Significant-Gravitas/AutoGPT",
                     value=autogpt_4m,
                 ),
-                http_path=(f"/v1/strip/_/{_ns_genome}.static?t=Significant-Gravitas%2FAutoGPT&value={autogpt_4m}"),
-                mcp_args={
+                http_path_override=(
+                    f"/v1/strip/_/{_ns_genome}.static?t=Significant-Gravitas%2FAutoGPT&value={autogpt_4m}"
+                ),
+                mcp_args_override={
                     "type": "strip",
                     "title": "Significant-Gravitas/AutoGPT",
                     "value": autogpt_4m,
@@ -5463,8 +2821,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="claude-code",
                 value=f"STARS:{cc_stars2}",
             ),
-            http_path=f"/v1/strip/claude-code/chrome.static?value=STARS:{cc_stars2}&variant=abyssal",
-            mcp_args={
+            http_path_override=f"/v1/strip/claude-code/chrome.static?value=STARS:{cc_stars2}&variant=abyssal",
+            mcp_args_override={
                 "type": "strip",
                 "title": "claude-code",
                 "value": f"STARS:{cc_stars2}",
@@ -5493,8 +2851,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 value=mixed_mag,
                 connector_data=_mixed_conn,
             ),
-            http_path=f"/v1/strip/demo-repo/automata.static?value={mixed_mag}&variant=violet&subtitle=demo%2Fsynthetic-magnitude",
-            mcp_args={
+            http_path_override=f"/v1/strip/demo-repo/automata.static?value={mixed_mag}&variant=violet&subtitle=demo%2Fsynthetic-magnitude",
+            mcp_args_override={
                 "type": "strip",
                 "title": "demo-repo",
                 "value": mixed_mag,
@@ -5527,8 +2885,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                         value=state,
                         state=state,
                     ),
-                    http_path=f"/v1/badge/BUILD/{state}/{http_gm}?state={state}{variant_q}",
-                    mcp_args={
+                    http_path_override=f"/v1/badge/BUILD/{state}/{http_gm}?state={state}{variant_q}",
+                    mcp_args_override={
                         "type": "badge",
                         "title": "BUILD",
                         "value": state,
@@ -5556,8 +2914,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title="STARS",
                     value=value,
                 ),
-                http_path=f"/v1/badge/STARS/{value}/brutalist.static",
-                mcp_args={
+                http_path_override=f"/v1/badge/STARS/{value}/brutalist.static",
+                mcp_args_override={
                     "type": "badge",
                     "title": "STARS",
                     "value": value,
@@ -5583,8 +2941,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     value="OK",
                 ),
-                http_path=f"/v1/badge/{_q2(title, safe='')}/OK/chrome.static?variant=moth",
-                mcp_args={
+                http_path_override=f"/v1/badge/{_q2(title, safe='')}/OK/chrome.static?variant=moth",
+                mcp_args_override={
                     "type": "badge",
                     "title": title,
                     "value": "OK",
@@ -5679,8 +3037,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     glyph=glyph_slug,
                     **({"variant": variant} if variant else {}),
                 ),
-                http_path=f"/v1/strip/{title}/{http_gm}?value={value}&glyph={glyph_slug}{variant_q}",
-                mcp_args={
+                http_path_override=f"/v1/strip/{title}/{http_gm}?value={value}&glyph={glyph_slug}{variant_q}",
+                mcp_args_override={
                     "type": "strip",
                     "title": title,
                     "value": value,
@@ -5723,8 +3081,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     **({"variant": variant} if variant else {}),
                 ),
-                http_path=f"/v1/marquee/{_q2(title, safe='')}/{http_gm}{variant_q}",
-                mcp_args={
+                http_path_override=f"/v1/marquee/{_q2(title, safe='')}/{http_gm}{variant_q}",
+                mcp_args_override={
                     "type": "marquee",
                     "title": title,
                     "genome": genome,
@@ -5751,14 +3109,6 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 title="HYPERWEAVE",
                 data_tokens=_df_toks,
             ),
-            http_path=f"/v1/marquee/HYPERWEAVE/chrome.static?variant=horizon&data={_urlquote(_df_data, safe='')}",
-            mcp_args={
-                "type": "marquee",
-                "title": "HYPERWEAVE",
-                "genome": "chrome",
-                "variant": "horizon",
-                "data": _df_data,
-            },
         )
     )
 
@@ -5805,8 +3155,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     value=value,
                 ),
-                http_path=f"/v1/badge/{title}/{_urlquote(value, safe='')}/automata.static?variant={variant}",
-                mcp_args={
+                http_path_override=f"/v1/badge/{title}/{_urlquote(value, safe='')}/automata.static?variant={variant}",
+                mcp_args_override={
                     "type": "badge",
                     "title": title,
                     "value": value,
@@ -5838,8 +3188,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     value=value,
                 ),
-                http_path=f"/v1/badge/{title}/{_urlquote(value, safe='')}/brutalist.static?variant={variant}",
-                mcp_args={
+                http_path_override=f"/v1/badge/{title}/{_urlquote(value, safe='')}/brutalist.static?variant={variant}",
+                mcp_args_override={
                     "type": "badge",
                     "title": title,
                     "value": value,
@@ -5869,8 +3219,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     value=value,
                 ),
-                http_path=f"/v1/badge/{title}/{_urlquote(value, safe='')}/chrome.static?variant={variant}",
-                mcp_args={
+                http_path_override=f"/v1/badge/{title}/{_urlquote(value, safe='')}/chrome.static?variant={variant}",
+                mcp_args_override={
                     "type": "badge",
                     "title": title,
                     "value": value,
@@ -5903,8 +3253,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                     title=title,
                     value=value,
                 ),
-                http_path=f"/v1/badge/{title}/{_urlquote(value, safe='')}/{genome}.static?variant={variant}",
-                mcp_args={
+                http_path_override=f"/v1/badge/{title}/{_urlquote(value, safe='')}/{genome}.static?variant={variant}",
+                mcp_args_override={
                     "type": "badge",
                     "title": title,
                     "value": value,
@@ -5943,10 +3293,10 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 ParitySpec(
                     spec_id=f"paired-glyph-{glyph_slug}-{genome}-{suffix}",
                     compose_spec=ComposeSpec(**kwargs),
-                    http_path=(
+                    http_path_override=(
                         f"/v1/badge/{title}/{_urlquote(value, safe='')}/{genome}.static?variant={variant}{glyph_q}"
                     ),
-                    mcp_args=mcp,
+                    mcp_args_override=mcp,
                 )
             )
 
@@ -6095,8 +3445,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
             ParitySpec(
                 spec_id=sid,
                 compose_spec=ComposeSpec(**kwargs2),
-                http_path=f"/v1/strip/{title}/{genome}.static?value={value}&variant={variant}{glyph_q2}{subtitle_q}",
-                mcp_args=mcp2,
+                http_path_override=f"/v1/strip/{title}/{genome}.static?value={value}&variant={variant}{glyph_q2}{subtitle_q}",
+                mcp_args_override=mcp2,
             )
         )
 
@@ -6113,8 +3463,8 @@ def _build_parity_matrix(resolved_data: dict[str, Any] | None = None) -> list[An
                 variant="porcelain",
                 connector_data={"matrix_adapter": "connector-registry"},
             ),
-            http_path="/v1/matrix/connectors/primer.static?variant=porcelain",
-            mcp_args={
+            http_path_override="/v1/matrix/connectors/primer.static?variant=porcelain",
+            mcp_args_override={
                 "type": "matrix",
                 "genome": "primer",
                 "variant": "porcelain",
@@ -6283,7 +3633,7 @@ async def _generate_render_only_specs() -> list[dict[str, Any]]:
     """Generate stats / star-chart artifacts that skip three-path parity.
 
     Each spec fetches its live data once, composes via the direct path with
-    pre-resolved ``connector_data``, and writes ``proofset/parity/{spec_id}-
+    pre-resolved ``connector_data``, and writes ``outputs/parity/{spec_id}-
     direct.svg``. Returned manifest entries are appended to ``manifest.json``
     after the parity matrix runs so the README Edge Cases section embeds
     them via the same path pattern as parity specs.
@@ -6299,7 +3649,7 @@ async def _generate_render_only_specs() -> list[dict[str, Any]]:
     # asyncio.run() ended, leaving the client bound to a dead loop. Fresh
     # client in the current loop avoids "Event loop is closed" on first fetch.
     await close_client()
-    out_dir = OUT / "proofset" / "parity"
+    out_dir = OUT / "parity"
     out_dir.mkdir(parents=True, exist_ok=True)
     entries: list[dict[str, Any]] = []
 
@@ -6367,7 +3717,7 @@ async def generate_parity_matrix() -> tuple[int, int, int]:
 
     Starts a uvicorn subprocess for FastAPI + an in-process MCP client,
     renders each ParitySpec via direct/http/mcp paths, saves all three
-    SVGs to outputs/proofset/parity/, and asserts byte-equality after
+    SVGs to outputs/parity/, and asserts byte-equality after
     normalization. Returns (specs_rendered, parity_passed, parity_failed).
 
     Cleans up the server subprocess on any error path. Test order is
@@ -6375,7 +3725,7 @@ async def generate_parity_matrix() -> tuple[int, int, int]:
     so the same order ships every run.
     """
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from proofset_harness import (
+    from scripts.examples.harness import (
         ParityReport,
         fastapi_server,
         load_fixtures,
@@ -6395,7 +3745,7 @@ async def generate_parity_matrix() -> tuple[int, int, int]:
         print(f"  cached {len(fixtures) - fixture_count_before} new connector values")
 
     specs = _build_parity_matrix(resolved_data)
-    out_dir = OUT / "proofset" / "parity"
+    out_dir = OUT / "parity"
     if out_dir.exists():
         import shutil
 
@@ -6913,14 +4263,14 @@ def _emit_edge_cases_readme_section() -> str:
     full-width one-per-row. Direct render only — HTTP and MCP renderings
     are byte-equal (verified by the parity summary below).
     """
-    manifest_path = OUT / "proofset" / "parity" / "manifest.json"
+    manifest_path = OUT / "parity" / "manifest.json"
     if not manifest_path.exists():
         return ""
     import json
 
     manifest = json.loads(manifest_path.read_text())
     by_id = {e["spec_id"]: e for e in manifest}
-    parity_dir = OUT / "proofset" / "parity"
+    parity_dir = OUT / "parity"
 
     # Genome + frame-type ordering for predictable section sequence
     _GENOME_ORDER = ["brutalist", "chrome", "automata", "mixed"]
@@ -7013,7 +4363,7 @@ def _emit_edge_cases_readme_section() -> str:
                         continue
                     spec_id, _label = cell
                     entry = by_id[spec_id]
-                    row_cells.append(f"![{spec_id}](proofset/parity/{entry['direct']})<br/>`{spec_id}`")
+                    row_cells.append(f"![{spec_id}](parity/{entry['direct']})<br/>`{spec_id}`")
                 lines.append("| " + " | ".join(row_cells) + " |")
             lines.append("")
         elif is_paired_glyph:
@@ -7022,9 +4372,9 @@ def _emit_edge_cases_readme_section() -> str:
             # Pair consecutive specs: with-glyph then no-glyph
             pair_row: list[str] = []
             for spec_id, label in present:
-                entry = by_id[spec_id]
-                cell = f"**{label}**<br/>`{spec_id}`<br/>![{spec_id}](proofset/parity/{entry['direct']})"
-                pair_row.append(cell)
+                paired_entry = by_id[spec_id]
+                paired_cell = f"**{label}**<br/>`{spec_id}`<br/>![{spec_id}](parity/{paired_entry['direct']})"
+                pair_row.append(paired_cell)
                 if len(pair_row) == 2:
                     lines.append("| " + " | ".join(pair_row) + " |")
                     pair_row = []
@@ -7037,9 +4387,9 @@ def _emit_edge_cases_readme_section() -> str:
             lines.append("|---|---|---|")
             row: list[str] = []
             for spec_id, label in present:
-                entry = by_id[spec_id]
-                cell = f"**{label}**<br/>`{spec_id}`<br/>![{spec_id}](proofset/parity/{entry['direct']})"
-                row.append(cell)
+                badge_entry = by_id[spec_id]
+                badge_cell = f"**{label}**<br/>`{spec_id}`<br/>![{spec_id}](parity/{badge_entry['direct']})"
+                row.append(badge_cell)
                 if len(row) == 3:
                     lines.append("| " + " | ".join(row) + " |")
                     row = []
@@ -7053,7 +4403,7 @@ def _emit_edge_cases_readme_section() -> str:
                 entry = by_id[spec_id]
                 lines.append(f"**{label}** — `{spec_id}`")
                 lines.append("")
-                lines.append(f"![{spec_id}](proofset/parity/{entry['direct']})")
+                lines.append(f"![{spec_id}](parity/{entry['direct']})")
                 lines.append("")
 
     for genome in _GENOME_ORDER:
@@ -7080,7 +4430,7 @@ def _emit_parity_readme_section(specs_count: int, passed: int, failed: int) -> s
     """
     if specs_count == 0:
         return ""
-    manifest_path = OUT / "proofset" / "parity" / "manifest.json"
+    manifest_path = OUT / "parity" / "manifest.json"
     if not manifest_path.exists():
         return ""
     import json
@@ -7125,36 +4475,192 @@ def _emit_parity_readme_section(specs_count: int, passed: int, failed: int) -> s
             sid = entry["spec_id"]
             lines.append(f"**`{sid}`** — direct vs http vs mcp")
             lines.append("")
-            lines.append(f"![{sid} direct](proofset/parity/{entry['direct']})")
+            lines.append(f"![{sid} direct]({entry['direct']})")
             lines.append("")
-            lines.append(f"![{sid} http](proofset/parity/{entry['http']})")
+            lines.append(f"![{sid} http]({entry['http']})")
             lines.append("")
-            lines.append(f"![{sid} mcp](proofset/parity/{entry['mcp']})")
+            lines.append(f"![{sid} mcp]({entry['mcp']})")
             lines.append("")
 
     return "\n".join(lines)
 
 
+def _discovered_sessions() -> dict[str, list[tuple[str, dict[str, Any]]]]:
+    """Parsed transcripts per harness, cost-bucketed, for the receipt gallery.
+
+    Discovery reaches into local agent history, which is a machine concern
+    rather than a gallery one — so it happens here and the gallery declares
+    from what was actually found.
+    """
+
+    def loaded(discovered: list[tuple[str, Path]]) -> list[tuple[str, dict[str, Any]]]:
+        out: list[tuple[str, dict[str, Any]]] = []
+        for label, path in discovered:
+            payload = _load_real_telemetry(path)
+            if payload is not None:
+                out.append((label, payload))
+        return out
+
+    return {"claude": loaded(_real_transcripts()), "codex": loaded(_real_codex_transcripts())}
+
+
+async def _generate_galleries(*, check_surfaces: bool, addenda: dict[str, list[str]]) -> int:
+    """Render and document the genome + matrix galleries; return the count.
+
+    One HTTP server and one MCP client for the whole sweep — the transports are
+    the expensive part, the renders are not. Divergence on any surface exits
+    non-zero: an artifact that differs depending on how you asked for it is an
+    Invariant 9 failure, and a proofset that shipped it green would be worse
+    than one that never checked.
+    """
+    from scripts.examples import artifacts, matrices, states, telemetry
+    from scripts.examples import genomes as genome_galleries
+    from scripts.examples.harness import fastapi_server, mcp_client
+    from scripts.examples.surfaces import WITNESSES, sweep
+
+    built = genome_galleries.build_all()
+    genome_names = set(built)
+    # Each module owns one gallery: what it declares, and the document it
+    # composes from those records. The genome emitter takes an extra argument
+    # (its live-data addenda), so it is dispatched by name rather than sharing
+    # this map's single-argument signature.
+    emitters: dict[str, Callable[[Gallery], Path]] = {
+        "matrices": matrices.emit,
+        "states": states.emit,
+        "telemetry": telemetry.emit,
+        "artifacts": artifacts.emit,
+    }
+    # The live data cards were rendered during generate_static (they need
+    # fetched payloads); hand each gallery what was written under its own root
+    # so its README shows the `stats` and `chart` frames it actually has.
+    for gallery in built.values():
+        adopted = genome_galleries.register_live_cards(gallery, _WRITTEN)
+        if adopted:
+            print(f"  {gallery.name}: adopted {adopted} live data-card artifacts")
+
+    galleries = [
+        *built.values(),
+        matrices.build_gallery(),
+        states.build_gallery(),
+        telemetry.build_gallery(_discovered_sessions()),
+        artifacts.build_gallery(),
+    ]
+    witnesses = WITNESSES if check_surfaces else ()
+    reports = []
+
+    if check_surfaces:
+        with fastapi_server(port=8766) as base_url:
+            async with mcp_client() as mcp:
+                for gallery in galleries:
+                    reports.append(await sweep(gallery, witnesses=witnesses, http_base_url=base_url, mcp=mcp))
+    else:
+        for gallery in galleries:
+            reports.append(await sweep(gallery, witnesses=()))
+
+    for gallery, report in zip(galleries, reports, strict=True):
+        print(f"  {report.summary()}")
+        for line in report.audit_lines():
+            print(line)
+        for artifact_id, surface, why in report.errors:
+            print(f"  [ERROR] {artifact_id} via {surface}: {why}")
+        if gallery.name in genome_names:
+            genome_galleries.emit(gallery, addenda=addenda.get(gallery.name, []))
+        else:
+            emitters[gallery.name](gallery)
+
+    diverged = [(g.name, aid, s) for g, r in zip(galleries, reports, strict=True) for aid, s in r.divergences]
+    errored = [(g.name, aid, s) for g, r in zip(galleries, reports, strict=True) for aid, s, _why in r.errors]
+    if diverged or errored:
+        print("\nSURFACE PARITY FAILURES:")
+        for name, artifact_id, surface in diverged:
+            print(f"  {name}/{artifact_id} diverged on {surface}")
+        for name, artifact_id, surface in errored:
+            print(f"  {name}/{artifact_id} errored on {surface}")
+        sys.exit(1)
+    return sum(r.rendered for r in reports)
+
+
+def _gallery_addenda() -> dict[str, list[str]]:
+    """Live-data sections the genome galleries carry beyond their static suites.
+
+    Built BEFORE the sweep opens its event loop: these sections drive their own
+    ``asyncio.run`` to resolve real connector tokens, and a nested run is an
+    error. Network-dependent, so they cannot be declared as artifacts either —
+    primer's stress test binds every metric to a live token and SKIPS loudly
+    when a fetch disagrees, rather than shipping a fabricated card.
+
+    The section emitters return markdown LINES; the document takes blocks, so
+    they are joined once here rather than teaching Doc a second input shape.
+    """
+    return {"primer": ["\n".join(_emit_primer_stress_section())]}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate HyperWeave proof set")
     parser.add_argument("--live", action="store_true", help="Include network-dependent artifacts")
+    parser.add_argument(
+        "--surfaces",
+        default="all",
+        choices=("all", "direct"),
+        help=(
+            "Which surfaces the galleries are checked on. 'all' renders every gallery artifact "
+            "through CLI, HTTP and MCP as well and requires byte-equality (the default, and what "
+            "makes Invariant 9 continuous). 'direct' renders only — the fast path while iterating."
+        ),
+    )
     args = parser.parse_args()
 
-    # Wipe outputs/proofset/ before regenerating so renamed/retired artifacts
-    # (paired-variant pairings, telemetry size variants) don't carry stale
-    # payloads forward and create false audit noise. READMEs live one level up
-    # (outputs/README*.md) and are preserved.
+    # Wipe the generated trees before regenerating so renamed or retired
+    # artifacts don't carry stale payloads forward and create false audit
+    # noise. Each gallery owns its own directory, and the documents are
+    # composed fresh into it on every run.
     import shutil
 
-    proofset_dir = OUT / "proofset"
-    if proofset_dir.exists():
-        stale = sum(1 for _ in proofset_dir.rglob("*.svg"))
-        shutil.rmtree(proofset_dir)
-        print(f"Cleaned {stale} stale artifacts from {proofset_dir}")
+    for stale_dir in (
+        OUT / "proofset",
+        OUT / "genomes",
+        OUT / "matrices",
+        OUT / "states",
+        OUT / "telemetry",
+        OUT / "verbs",
+        OUT / "artifacts",
+        OUT / "parity",
+    ):
+        if stale_dir.exists():
+            stale = sum(1 for _ in stale_dir.rglob("*.svg"))
+            shutil.rmtree(stale_dir)
+            print(f"Cleaned {stale} stale artifacts from {stale_dir}")
+
+    # The per-genome and matrix documents moved into their galleries. A leftover
+    # copy at the old path still LOOKS like current output while every image
+    # link in it points at an artifact tree that no longer exists — worse than
+    # no file, so retire them by name.
+    retired = {
+        "README_AUTOMATA.md": "genomes/automata/",
+        "README_BRUTALIST.md": "genomes/brutalist/",
+        "README_CHROME.md": "genomes/chrome/",
+        "README_PRIMER.md": "genomes/primer/",
+        "README_MATRIX.md": "matrices/",
+        "README_STATE.md": "states/",
+        "README_TELEMETRY.md": "telemetry/",
+        "README_VERB.md": "verbs/",
+    }
+    for name, home in retired.items():
+        if (OUT / name).exists():
+            (OUT / name).unlink()
+            print(f"Retired {name} — that gallery documents itself at {home}README.md")
 
     print("Generating static proof set...")
     total = generate_static()
     print(f"  {total} static artifacts")
+
+    # Genome + matrix galleries: declared once, rendered and documented off the
+    # same records, and (unless --surfaces direct) checked byte-for-byte across
+    # every surface that can address them.
+    print("Resolving live gallery addenda...")
+    addenda = _gallery_addenda()
+    gallery_total = asyncio.run(_generate_galleries(check_surfaces=args.surfaces == "all", addenda=addenda))
+    total += gallery_total
 
     live_total = 0
     if args.live:
@@ -7174,7 +4680,7 @@ def main() -> None:
     render_only_entries = asyncio.run(_generate_render_only_specs())
     print(f"  {len(render_only_entries)} render-only artifacts")
     if render_only_entries:
-        manifest_path = OUT / "proofset" / "parity" / "manifest.json"
+        manifest_path = OUT / "parity" / "manifest.json"
         if manifest_path.exists():
             import json as _json
 
@@ -7182,28 +4688,57 @@ def main() -> None:
             existing.extend(render_only_entries)
             manifest_path.write_text(_json.dumps(existing, indent=2))
 
+    # The verb chains are not a spec-per-artifact gallery — their artifacts are
+    # the OUTPUT of verb operations on other artifacts — so they compose
+    # themselves rather than riding the manifest sweep.
+    from scripts.examples.verbs import emit as emit_verbs
+
+    emit_verbs()
+
     generate_readme(total, live_total)
-    # Append the Edge Cases section + parity summary to the freshly-emitted
-    # README.md. Order matters: edge cases (full-width visual review) FIRST,
-    # parity summary (test report) LAST. The user needs visible artifacts
-    # to inspect, not just a PASS/FAIL list.
-    readme_path = OUT / "README.md"
-    edge_cases_section = _emit_edge_cases_readme_section()
-    parity_section = _emit_parity_readme_section(parity_count, parity_passed, parity_failed)
-    appended = []
-    if edge_cases_section:
-        appended.append(edge_cases_section)
-    if parity_section:
-        appended.append(parity_section)
-    if appended:
-        readme_path.write_text(readme_path.read_text() + "\n" + "\n".join(appended))
+
+    # The edge cases go on the INDEX, not into the parity gallery. They are the
+    # surface a reviewer actually scrolls — hostile values, extreme lengths,
+    # missing glyphs, every degenerate shape the frames have to survive — and
+    # burying them one directory down behind a document titled "parity" put the
+    # most-looked-at artifacts where nobody looks. The renders live under
+    # outputs/parity/ because the parity matrix produced them; the page that
+    # SHOWS them is the front page.
+    edge_cases = _emit_edge_cases_readme_section()
+    if edge_cases:
+        readme_path = OUT / "README.md"
+        readme_path.write_text(readme_path.read_text().rstrip() + "\n\n" + edge_cases)
+
+    # The parity gallery keeps the verdict: what was checked, on which surfaces,
+    # and what diverged. It cross-links the edge cases rather than repeating them.
+    parity_doc = [
+        "# HyperWeave Parity — One Intent, Every Surface",
+        "",
+        "Every spec is composed directly, fetched by its own URL, invoked through the real",
+        "`hyperweave compose` parser, and called as `hw_compose`. The renderings must be identical",
+        "after volatile-fragment scrubbing — that is Invariant 9, checked rather than asserted.",
+        "",
+        "The addresses are not written down anywhere: `surfaces/addressing.py` projects each one",
+        "from the spec. A spec no surface can express is refused with a reason rather than",
+        "silently rendering something else.",
+        "",
+        "These same renders are shown for visual review in the",
+        "[Edge Cases section of the proofset index](../README.md#edge-cases).",
+        "",
+        "---",
+        "",
+    ]
+    parity_report = _emit_parity_readme_section(parity_count, parity_passed, parity_failed)
+    if parity_report:
+        parity_doc.append(parity_report)
+    (OUT / "parity" / "README.md").write_text("\n".join(parity_doc) + "\n")
 
     grand = total + live_total + parity_count * 3
     print(f"Wrote {grand} artifacts + README to {OUT}/")
 
     if parity_failed > 0:
         print(f"\nPARITY FAILURES: {parity_failed} specs diverged across direct/http/mcp.")
-        print("  See outputs/proofset/parity/manifest.json for details.")
+        print("  See outputs/parity/manifest.json for details.")
         sys.exit(1)
 
 

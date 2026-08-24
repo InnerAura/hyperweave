@@ -171,7 +171,7 @@ def test_no_knobs_for_chrome_bearing_correction() -> None:
 
     v0.3.9 removed two consecutive band-aid knobs (``value_trailing_trim``,
     then ``text_end_bearing_em``) in favor of direct per-glyph LSB/RSB
-    extraction from the font outline (see scripts/extract_font_metrics.py
+    extraction from the font outline (see scripts/glyphs/font_metrics.py
     and core/text.py:measure_text_ink_width). The resolver computes per-text
     trailing bearing as ``measure_text(advance) - measure_text_ink_width``
     — a value that varies correctly per LAST GLYPH (S vs K vs I) instead

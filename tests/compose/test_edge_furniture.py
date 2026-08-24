@@ -2,7 +2,7 @@
 
 Where ``test_specimen_parity`` pins each idiom against ONE hand-authored ground
 truth, these pin the POLICIES across every GENERATED story
-(``scripts/generate_diagram_galleries.py``): a chip on a curved edge rides its
+(``python -m scripts.examples.diagrams``): a chip on a curved edge rides its
 true wire (not the chord), a fanout trunk sizes to its cargo, and no two
 arrivals stack on one card edge. Specimen = one point; the policy = the whole
 space (Specimen-Driven Development, standing law).
@@ -28,7 +28,7 @@ from .parity.svgfacts import Facts, parse_svg
 
 # The story specs live at the repo root (pytest only puts ``src`` on the path).
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.generate_diagram_galleries import SECTIONS
+from scripts.examples.diagrams import SECTIONS
 
 # Bundled presets that exercise the arrival/cargo/curve policies but aren't
 # topology stories (the dag fan-in family lives here, not in the readme).
