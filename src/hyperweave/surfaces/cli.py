@@ -5,7 +5,7 @@ Each command acquires input (a source resolved by :func:`_read_source`), calls
 and maps errors + negative outcomes to exit codes matching the house convention
 (``validate``): **2** = input problem (missing/unreadable source, bad JSON),
 **1** = the operation ran but the answer is negative (``verify`` invalid,
-``diff --exit-code`` differs) or a runtime ``HwError``.
+``diff --exit-code`` differs) or a caller refusal (see ``surfaces/refusals``).
 
 Typer is a core dependency, so this module may import it; ``registry`` and
 ``capabilities`` stay transport-agnostic. ``register_capability_commands(app)``
@@ -22,7 +22,7 @@ from typing import Annotated, Any
 
 import typer
 
-from hyperweave.core.errors import HwError
+from hyperweave.surfaces.refusals import caller_refusals, echo_refusal
 from hyperweave.surfaces.registry import CallContext, dispatch
 
 # CLI-surface context: no base_url, so transform/compose emit relative handles.
@@ -72,11 +72,18 @@ def _strip_format_suffix(handle: str) -> str:
 
 
 def _run(name: str, payload: dict[str, Any]) -> dict[str, Any]:
-    """Dispatch a capability, rendering an ``HwError`` to stderr + exit 1."""
+    """Dispatch a capability, rendering any caller refusal to stderr + exit 1.
+
+    Every verb here re-composes, so every verb can meet the same refusals
+    ``compose`` does. Catching only ``HwError`` let the rest of that family
+    through as a traceback: ``transform`` patching an ``orientation`` a topology
+    does not allow raised ``DiagramInputError``, a ``ValueError`` subclass, and
+    the caller got 171 lines of frames where ``compose`` gave them one sentence.
+    """
     try:
         return _run_async(dispatch(name, payload, _CTX))
-    except HwError as exc:
-        typer.echo(exc.cli_text(), err=True)
+    except caller_refusals() as exc:
+        echo_refusal(exc)
         raise typer.Exit(code=1) from exc
 
 

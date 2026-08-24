@@ -6,6 +6,7 @@ unsupported input fails with a clean one-line error rather than a traceback.
 from __future__ import annotations
 
 import json
+import re
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -140,8 +141,8 @@ def test_mid_solve_capacity_refusal_caught_by_validate_and_compose() -> None:
     what compose refuses, with the solver's own sentence on both surfaces."""
     chain = {
         "topology": "dag",
-        "nodes": [{"id": f"s{i}", "label": f"S{i}"} for i in range(6)],
-        "edges": [{"source": f"s{i}", "target": f"s{i + 1}"} for i in range(5)],
+        "nodes": [{"id": f"s{i}", "label": f"S{i}"} for i in range(9)],
+        "edges": [{"source": f"s{i}", "target": f"s{i + 1}"} for i in range(8)],
     }
     v = runner.invoke(app, ["validate", "--spec", json.dumps(chain)])
     assert v.exit_code == 1
@@ -544,3 +545,55 @@ def test_stdin_handling_leaves_preset_dispatch_alone() -> None:
 
     named = runner.invoke(app, ["validate", diagram_preset_names()[0]])
     assert named.exit_code == 0, named.output
+
+
+def test_the_documented_extract_to_compose_round_trip_works(tmp_path: Path) -> None:
+    """The README documents ``extract --respond payload`` into
+    ``compose --spec-file``, twice. It did not work.
+
+    ``extract`` prints its answer wrapped (``{respond, schema, payload}``) and
+    the payload wraps the spec (``{spec, rendered}``), so compose was handed the
+    outermost envelope and answered ``respond: unknown field`` — a copy-paste
+    path in the README that errors on the first line. Both shells are unwrapped
+    now, and the guard runs the documented commands rather than the helper
+    underneath them."""
+    art = tmp_path / "a.svg"
+    built = runner.invoke(app, ["compose", "diagram", "--spec-file", "dag-mesh", "-o", str(art)])
+    assert built.exit_code == 0, built.output
+
+    payload = tmp_path / "p.json"
+    got = runner.invoke(app, ["extract", str(art), "--respond", "payload"])
+    assert got.exit_code == 0, got.output
+    payload.write_text(got.stdout)
+    assert sorted(json.loads(got.stdout)) == ["payload", "respond", "schema"], "the wrapper is what extract prints"
+
+    again = tmp_path / "b.svg"
+    back = runner.invoke(app, ["compose", "diagram", "--spec-file", str(payload), "-o", str(again)])
+    assert back.exit_code == 0, back.output
+    assert "unknown field" not in back.output
+
+    # ...and it re-renders the same diagram, which is the point of the claim.
+    box = re.compile(r'viewBox="0 0 (\d+) (\d+)"')
+    first, second = box.search(art.read_text()), box.search(again.read_text())
+    assert first is not None and second is not None
+    assert first.group(0) == second.group(0), f"{first.group(0)} != {second.group(0)}"
+
+
+def test_a_bare_spec_is_untouched_by_the_unwrap(tmp_path: Path) -> None:
+    """The unwrap keys off ``payload`` / ``rendered``, neither of which a frame
+    spec carries, so an ordinary spec must reach compose byte-identically."""
+    spec_file = tmp_path / "s.json"
+    spec_file.write_text(
+        json.dumps(
+            {
+                "topology": "dag",
+                "title": "Plain",
+                "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+                "edges": [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}],
+            }
+        )
+    )
+    out = tmp_path / "o.svg"
+    res = runner.invoke(app, ["compose", "diagram", "--spec-file", str(spec_file), "-o", str(out)])
+    assert res.exit_code == 0, res.output
+    assert "is an extracted artifact" not in res.output, "a bare spec must not trip the unwrap note"

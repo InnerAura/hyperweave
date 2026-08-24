@@ -415,3 +415,25 @@ async def test_static_projection_counts_reach_the_mcp_envelope() -> None:
     records = [d for d in result.get("diagnostics", []) if d["rule"] == "static-projection"]
     assert records, "projection drop-counts never reached the envelope"
     assert "motion only elements removed" in records[0]["measured"]
+
+
+@pytest.mark.asyncio
+async def test_the_orientation_summary_matches_what_the_solver_refuses() -> None:
+    """`discover` is what an agent reads to decide what to ask for, so its
+    orientation answer has to be the one the solver enforces.
+
+    Hand-written, it went stale: it advertised "everything else horizontal"
+    while `dag` and `pipeline` accepted `vertical`, `cycle` accepted no
+    horizontal at all, and `fanout`'s `downward` was missing entirely. It is
+    derived from `orientation_legality` now, and this pins the two together."""
+    from hyperweave.config.loader import load_diagram_config
+    from hyperweave.core.diagram import Topology
+
+    summary = (await hw_discover("diagram"))["diagram"]["orientations"]
+    legality = load_diagram_config().get("orientation_legality") or {}
+    for topo in (t.value for t in Topology):
+        legal = legality.get(topo) or ["horizontal"]
+        if legal == ["horizontal"]:
+            assert topo in summary, f"{topo} is horizontal-only and must still be listed"
+            continue
+        assert f"{topo}: {' | '.join(legal)}" in summary, f"{topo} advertises the wrong orientations: {summary}"

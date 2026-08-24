@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
@@ -320,3 +321,98 @@ def test_transform_preserves_committed_face() -> None:
     assert 'data-hw-face="dark"' in svg0
     res = transform(svg0, [{"op": "replace", "path": "/title", "value": "Flow 2"}], ts=_FIXED_TS)
     assert 'data-hw-face="dark"' in res.svg
+
+
+def test_rotation_is_one_op_and_turns_the_flow_axis() -> None:
+    """``orientation`` is an ordinary spec field, so turning a graph needs no
+    verb of its own: one op, and the child keeps the parent's pinned rank order.
+
+    The assertion is the flow AXIS, not the canvas aspect. A three-card
+    pipeline is wider than it is tall in both flows, so an aspect check would
+    pass on a render that never turned; what actually has to change is which
+    coordinate the cards advance along."""
+    graph = {
+        "topology": "dag",
+        "title": "Services",
+        # A straight chain, deliberately: a fan puts cards on several rows AND
+        # several columns in both flows, so it cannot witness which axis the
+        # ranks advance along. A chain has exactly one rank per card.
+        "nodes": [
+            {"id": "web", "label": "Web"},
+            {"id": "api", "label": "API"},
+            {"id": "auth", "label": "Auth"},
+            {"id": "db", "label": "Postgres"},
+        ],
+        "edges": [
+            {"source": "web", "target": "api"},
+            {"source": "api", "target": "auth"},
+            {"source": "auth", "target": "db"},
+        ],
+    }
+    flat = compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant="porcelain",
+            ground="bare",
+            palette="fixed",
+            surface_face="light",
+            diagram=graph,
+        )
+    ).svg
+    turned = transform(flat, [{"op": "add", "path": "/orientation", "value": "vertical"}], ts=_FIXED_TS)
+
+    def _ranks(svg: str) -> tuple[int, int]:
+        """(distinct card columns, distinct card rows), measured on CENTRES.
+
+        Corner coordinates cannot answer this: cards of different widths
+        sharing one column all have different ``x``, so a vertical chain reads
+        as four columns of four rows. The centre is the seat."""
+        body = svg[svg.rfind("</style>") :]
+        num = r"-?[\d.]+"
+        cards = re.findall(
+            rf'<rect x="({num})" y="({num})" width="({num})" height="({num})"[^>]*-(?:cardbg|herobg)"', body
+        )
+        cx = {round(float(x) + float(w) / 2) for x, _, w, _ in cards}
+        cy = {round(float(y) + float(h) / 2) for _, y, _, h in cards}
+        return len(cx), len(cy)
+
+    assert _ranks(flat) == (4, 1), "flowing right, a 4-chain is four COLUMNS on one row"
+    assert _ranks(turned.svg) == (1, 4), "flowing down, the same chain is one column of four ROWS"
+    assert turned.lineage[-1]["patch"] == [{"op": "add", "path": "/orientation", "value": "vertical"}]
+    assert extract_embedded(turned.svg).payload["spec"]["orientation"] == "vertical"
+
+
+def test_an_illegal_rotation_refuses_in_one_sentence_through_the_real_cli() -> None:
+    """Guard Law: the refusal a caller MEETS, through the real parser.
+
+    Every verb re-composes, so every verb can raise what compose raises. The
+    verb surface caught only ``HwError`` while the rest of that family
+    subclasses ``ValueError``, so this exact command printed 171 lines of
+    traceback where ``compose`` printed one line. Both sentences are pinned
+    here, together, because the defect was that they disagreed."""
+    from typer.testing import CliRunner
+
+    from hyperweave.cli import app
+
+    runner = CliRunner()
+    machine = {
+        "topology": "state-machine",
+        "title": "Retry",
+        "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+        "edges": [{"source": "a", "target": "b"}, {"source": "b", "target": "c"}],
+    }
+    built = runner.invoke(app, ["compose", "diagram", "--spec", json.dumps(machine)])
+    assert built.exit_code == 0, built.output
+
+    turned = runner.invoke(
+        app,
+        ["transform", built.stdout, "--patch-json", '[{"op": "add", "path": "/orientation", "value": "vertical"}]'],
+    )
+    assert turned.exit_code != 0
+    assert "Traceback" not in turned.output, turned.output
+    assert "not legal for state-machine" in turned.output, turned.output
+
+    direct = runner.invoke(app, ["compose", "diagram", "--spec", json.dumps({**machine, "orientation": "vertical"})])
+    assert "Traceback" not in direct.output, direct.output
+    assert "not legal for state-machine" in direct.output, direct.output

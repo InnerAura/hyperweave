@@ -10,6 +10,30 @@ from __future__ import annotations
 from typing import Any
 
 
+def _orientation_summary() -> str:
+    """Which orientations each topology accepts, DERIVED from the legality
+    config the solver refuses against.
+
+    Hand-maintained, this string went stale the moment a topology gained an
+    axis: it advertised "everything else horizontal" while `dag` and `pipeline`
+    had `vertical`, `cycle` had no horizontal at all, and `fanout`'s `downward`
+    was missing. An agent reads this to decide what to ask for, so a wrong
+    answer here is a wrong request everywhere downstream."""
+    from hyperweave.config.loader import load_diagram_config
+    from hyperweave.core.diagram import Topology
+
+    legality: dict[str, list[str]] = load_diagram_config().get("orientation_legality") or {}
+    parts: list[str] = []
+    for topo in (t.value for t in Topology):
+        legal = legality.get(topo) or ["horizontal"]
+        if legal != ["horizontal"]:
+            parts.append(f"{topo}: {' | '.join(legal)}")
+    single = [t.value for t in Topology if (legality.get(t.value) or ["horizontal"]) == ["horizontal"]]
+    if single:
+        parts.append(f"horizontal only: {', '.join(single)}")
+    return "; ".join(parts)
+
+
 def capability_index() -> list[dict[str, Any]]:
     """The registry roster as a reachability table (for ``what="capabilities"``)."""
     from hyperweave.surfaces.registry import all_capabilities
@@ -207,11 +231,12 @@ def _render_diagram_frame() -> str:
         band = layouts.get(slug) or {}
         cap = f" [{band.get('min', '?')}-{band.get('max', '?')} nodes]" if band else ""
         lines.append(f"- `{slug}`{cap}: {guide}")
-    caps = engine.get("caps") or {}
+    dag_band = layouts.get("dag") or {}
     lines.append(
-        f"dag adds: <= {caps.get('dag_max_ranks')} ranks, <= {caps.get('dag_max_per_rank')} per rank, "
-        f"at most {caps.get('dag_max_skip_edges')} skip edges (authored `rank` overrides exist; forward edges "
-        "need source rank < target rank). Model a too-deep chain as a labeled flow edge instead."
+        f"dag adds: <= {dag_band.get('max_ranks')} ranks, <= {dag_band.get('max_per_rank')} per rank, "
+        f"at most {dag_band.get('max_skip_edges')} skip edges (authored `rank` overrides exist; forward edges "
+        "need source rank < target rank). Model a too-deep chain as a labeled flow edge instead. "
+        "`orientation: vertical` flows the same graph top-to-bottom, with its own band of the same caps."
     )
     lines.append("")
     lines.append(
@@ -515,8 +540,7 @@ def discover(what: str = "all") -> dict[str, Any]:
             "topologies": [t.value for t in Topology],
             "layout_slugs": registered_slugs(),
             "edge_rules": dict(_TOPOLOGY_EDGE_RULES),
-            "orientations": "fanout: horizontal | bilateral | upward | radial; tree: horizontal | radial "
-            "(radial requires depth >= 2 — the mindmap); everything else horizontal",
+            "orientations": _orientation_summary(),
             "edge_motion": "dash | particle — the closed kit pair, compositor-only by construction "
             "(genome allowlist enforced)",
             "node_styles": "card | card+glyph | card+label | glyph-circle | text — caller-chosen, never "
@@ -557,148 +581,58 @@ def discover(what: str = "all") -> dict[str, Any]:
 
 
 def _url_grammar() -> dict[str, Any]:
-    """The URL-grammar reference block (unchanged from the MCP server's copy)."""
-    data_grammar = (
-        "Comma-separated tokens: text:STRING | kv:KEY=VALUE | "
-        "gh:owner/repo.metric | pypi:pkg.metric | npm:pkg.metric | "
-        "hf:org/model.metric | arxiv:id.metric | docker:owner/image.metric | "
-        "crates:pkg.metric | scorecard:owner/repo.metric | dora:owner/repo.metric. "
-        "Embedded commas in text/kv payloads escape as \\,."
-    )
-    variant_note = (
-        "chrome: horizon | abyssal | lightning | graphite | moth. "
-        "automata: 16 solo tones (violet/teal/bone/steel/amber/jade/magenta/"
-        "cobalt/toxic/solar/abyssal/crimson/sulfur/indigo/burgundy/copper)."
-    )
-    pair_note = (
-        "automata only — second solo tone for bifamily strip + divider. "
-        "Composes any two tones at request time (e.g. ?variant=teal&pair=violet). "
-        "Other frame types silently ignore the parameter."
-    )
-    return {
-        "badge (static)": {
-            "pattern": "/v1/badge/{title}/{value}/{genome}.{motion}",
-            "query_params": {
-                "glyph": "Glyph identifier (e.g. github, python)",
-                "glyph_mode": "auto | fill | wire | none",
-                "state": "active | passing | building | warning | critical | failing | offline",
-                "regime": "normal | permissive | ungoverned",
-                "size": "default | compact",
-                "variant": variant_note,
-                "pair": pair_note,
-                "t": "Title override (use when title contains slashes)",
-            },
-            "example": "/v1/badge/build/passing/brutalist.static",
-        },
-        "badge (data-driven)": {
-            "pattern": "/v1/badge/{title}/{genome}.{motion}?data=...",
-            "query_params": {
-                "data": data_grammar,
-                "glyph": "Glyph identifier",
-                "glyph_mode": "auto | fill | wire | none",
-                "state": "Semantic state",
-                "variant": variant_note,
-                "pair": pair_note,
-            },
-            "example": "/v1/badge/STARS/brutalist.static?data=gh:anthropics/claude-code.stars",
-        },
-        "strip": {
-            "pattern": "/v1/strip/{title}/{genome}.{motion}",
-            "query_params": {
-                "value": "Static metrics: STARS:2.9k,FORKS:278",
-                "data": data_grammar,
-                "subtitle": "Subtitle under identity (cellular paradigm)",
-                "glyph": "Glyph identifier",
-                "state": "Semantic state",
-                "variant": variant_note,
-                "pair": pair_note,
-                "t": "Title override (use when title contains slashes)",
-            },
-            "example": "/v1/strip/readme-ai/brutalist.static?data=gh:eli64s/readme-ai.stars,gh:eli64s/readme-ai.forks",
-        },
-        "icon": {
-            "pattern": "/v1/icon/{glyph}/{genome}.{motion}",
-            "query_params": {
-                "shape": "square | circle",
-                "glyph_mode": "auto | fill | wire | none",
-                "state": "Semantic state",
-                "variant": variant_note,
-                "pair": pair_note,
-            },
-            "example": "/v1/icon/github/chrome.static?shape=circle",
-        },
-        "divider": {
-            "pattern": "/v1/divider/{divider_slug}/{genome}.{motion}",
-            "query_params": {
-                "divider_slug (path)": "block | current | takeoff | void | zeropoint | dissolve | seam | band",
-                "variant": variant_note,
-                "pair": "automata only — second solo tone for bifamily dissolve divider.",
-            },
-            "example": "/v1/divider/dissolve/automata.static?variant=teal&pair=violet",
-        },
-        "marquee": {
-            "pattern": "/v1/marquee/{title}/{genome}.{motion}",
-            "query_params": {
-                "data": data_grammar + " When set, drives the scroll directly and ignores title.",
-                "direction": "ltr | rtl",
-                "speeds": "Single float scroll speed multiplier",
-                "variant": variant_note,
-                "pair": pair_note,
-                "t": "Title override (use when title contains slashes)",
-            },
-            "example": "/v1/marquee/SCROLL/brutalist.static?data=text:NEW%20RELEASE,gh:anthropics/claude-code.stars",
-        },
-        "card": {
-            "pattern": "/v1/card/{username}/{genome}.{motion}",
-            "alias": "/v1/stats/{username}/{genome}.{motion} (permanent — same handler, no redirect)",
-            "query_params": {
-                "data": "Optional live data tokens appended as card metric slots.",
-                "variant": variant_note,
-                "pair": "automata only — silently ignored on card (kept for URL grammar uniformity).",
-            },
-            "example": "/v1/card/GLM-5/chrome.static?data=github:zai-org/GLM-5.stars,hf:zai-org/GLM-5.1.downloads",
-        },
-        "diagram": {
-            "pattern": "/v1/diagram/{preset}/{genome}.{motion}",
-            "query_params": {
-                "variant": "primer: noir | carbon | space | anvil | porcelain | cream | dusk | petrol",
-                "spec": (
-                    "base64url-encoded DiagramSpec JSON (preset must be 'custom'; decoded cap 8 KB). "
-                    "Presets: the bundled recreations in data/presets/diagram.yaml. Arbitrary "
-                    "topologies also ship via POST /v1/compose with a `diagram` body."
-                ),
-                "glyph_tint": "ink | brand | full — node-glyph fill selection (per-slot IR declarations outrank it)",
-                "edge_motion": "dash | particle — artifact-level edge-motion override (genome allowlist enforced)",
-                "performance": "composite-only — surface performance tier",
-                "surface": "plate | inlay | twin — surface preset (expands to ground/palette)",
-                "ground": "opaque | bare — surface ground axis",
-                "palette": "fixed | adaptive — surface palette axis",
-                "face": "light | dark — bake ONE scheme; commits palette=fixed (face wins over adaptive)",
-            },
-            "example": "/v1/diagram/frontier-serving/primer.static?variant=noir&surface=inlay",
-        },
-        "matrix": {
-            "pattern": "/v1/matrix/{preset}/{genome}.{motion}",
-            "query_params": {
-                "variant": "primer: noir | carbon | space | anvil | porcelain | cream | dusk | petrol",
-                "spec": (
-                    "base64url-encoded MatrixSpec JSON (preset must be 'custom'; decoded cap 8 KB). "
-                    "Presets: connectors — the generated connector-registry matrix. Arbitrary tables "
-                    "also ship via POST /v1/compose with a `matrix` body."
-                ),
-                "surface": "plate | inlay | twin — surface preset (expands to ground/palette)",
-                "ground": "opaque | bare — surface ground axis",
-                "palette": "fixed | adaptive — surface palette axis",
-                "face": "light | dark — bake ONE scheme; commits palette=fixed (face wins over adaptive)",
-            },
-            "example": "/v1/matrix/connectors/primer.static?variant=porcelain",
-        },
-        "chart-stars": {
-            "pattern": "/v1/chart/stars/{owner}/{repo}/{genome}.{motion}",
-            "query_params": {
-                "variant": variant_note,
-                "pair": "automata only — silently ignored on chart (kept for URL grammar uniformity).",
-            },
-            "example": "/v1/chart/stars/eli64s/readme-ai/automata.static?variant=bone",
-        },
+    """The URL-grammar reference block, rendered from data/config/url-grammar.yaml.
+
+    Patterns, query parameters and examples come from the same file
+    ``surfaces/addressing.py`` builds real URLs with, so the reference cannot
+    describe a route the addresser does not produce. Variant vocabulary is
+    filled from ``load_genomes()`` at render time — the previous hand-written
+    copy of this block spelled out the chrome and automata rosters inline and
+    went stale every time a variant shipped.
+    """
+    from hyperweave.config.loader import load_genomes, load_url_grammar
+
+    genomes = load_genomes()
+    rosters = ", ".join(f"{gid}: {' | '.join(cfg.variants)}" for gid, cfg in sorted(genomes.items()) if cfg.variants)
+    pair_genomes = sorted(gid for gid, cfg in genomes.items() if len(cfg.variants) > 1)
+    tokens = {
+        "variants": rosters,
+        "pairs": (
+            "Second solo tone for bifamily frames (strip, divider) — composed at request time, "
+            f"e.g. ?variant=teal&pair=violet. Declared by {', '.join(pair_genomes)}; "
+            "other frame types silently ignore it."
+        ),
+        "data": (
+            "Comma-separated tokens: text:STRING | kv:KEY=VALUE | gh:owner/repo.metric | "
+            "pypi:pkg.metric | npm:pkg.metric | hf:org/model.metric | arxiv:id.metric | "
+            "docker:owner/image.metric | crates:pkg.metric | scorecard:owner/repo.metric | "
+            "dora:owner/repo.metric. Embedded commas in text/kv payloads escape as \\,."
+        ),
     }
+
+    def _fill(text: str) -> str:
+        for token, value in tokens.items():
+            text = text.replace("{" + token + "}", value)
+        return text
+
+    grammar = load_url_grammar()
+    block: dict[str, Any] = {}
+    for frame, route in grammar["routes"].items():
+        entry: dict[str, Any] = {
+            "pattern": route["pattern"],
+            "query_params": {
+                name: _fill(str(decl.get("doc", ""))) for name, decl in (route.get("query") or {}).items()
+            },
+            "example": route.get("example", ""),
+        }
+        if alias := route.get("alias"):
+            entry["alias"] = f"{alias} (permanent — same handler, no redirect)"
+        if note := route.get("note"):
+            entry["note"] = note
+        for name, decl in (route.get("segments") or {}).items():
+            if doc := decl.get("doc"):
+                entry.setdefault("path_params", {})[name] = doc
+        block[str(route.get("doc_key", frame))] = entry
+    for frame, reason in grammar["unrouted"].items():
+        block[frame] = {"pattern": "POST /v1/compose", "query_params": {}, "note": reason}
+    return block

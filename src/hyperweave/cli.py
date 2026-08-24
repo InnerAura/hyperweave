@@ -9,6 +9,8 @@ from typing import Annotated, Any
 
 import typer
 
+from hyperweave.surfaces.refusals import caller_refusals, echo_refusal
+
 app = typer.Typer(
     name="hyperweave",
     help="Compositor API for self-contained SVG artifacts.",
@@ -133,6 +135,29 @@ def _is_bundled_name(name: str) -> bool:
     return any(name in bundled_spec_names(frame) for frame in ("diagram", "matrix"))
 
 
+def _unwrap_extracted(data: dict[str, Any], source: str) -> dict[str, Any]:
+    """Accept what ``extract`` prints, not only a bare spec.
+
+    The round-trip the README documents is ``extract --respond payload`` into
+    ``compose --spec-file``, and it did not work: extract prints its answer
+    wrapped (``{respond, schema, payload}``), the payload wraps the spec
+    (``{spec, rendered}``), and compose was handed the outermost envelope, so
+    the documented copy-paste answered ``respond: unknown field``. Asking a
+    caller to reach in with ``jq`` for a path the tool already knows is a worse
+    answer than unwrapping it here.
+
+    Both shells are recognised by their own keys, and neither collides with a
+    frame spec: no spec has a top-level ``payload`` or ``rendered``."""
+    inner = data
+    if "payload" in inner and isinstance(inner.get("payload"), dict):
+        inner = inner["payload"]
+    if "spec" in inner and isinstance(inner.get("spec"), dict) and "rendered" in inner:
+        inner = inner["spec"]
+    if inner is not data:
+        typer.echo(f"note: {source} is an extracted artifact; composing its embedded spec", err=True)
+    return inner
+
+
 def _read_spec_source(spec_file: Path) -> tuple[str, Any]:
     """Resolve a spec-file argument to ``('data', parsed_dict)`` or ``('preset', name)``.
 
@@ -156,7 +181,7 @@ def _read_spec_source(spec_file: Path) -> tuple[str, Any]:
     """
     name = str(spec_file)
     if name in _STDIN_NAMES:
-        return "data", _read_stdin_spec()
+        return "data", _unwrap_extracted(_read_stdin_spec(), "stdin")
     if spec_file.is_file() or (spec_file.exists() and not spec_file.is_dir()):
         import json
 
@@ -177,7 +202,7 @@ def _read_spec_source(spec_file: Path) -> tuple[str, Any]:
                 f"(pass ./{name} to silence this, or rename the file to use the bundled spec)",
                 err=True,
             )
-        return "data", data
+        return "data", _unwrap_extracted(data, str(spec_file))
     if spec_file.is_dir():
         if _looks_like_path(name):
             typer.echo(f"Error: {spec_file} is a directory, not a spec file", err=True)
@@ -188,41 +213,6 @@ def _read_spec_source(spec_file: Path) -> tuple[str, Any]:
         typer.echo(f"Error: {spec_file} not found", err=True)
         raise typer.Exit(2)
     return "preset", name
-
-
-def _compose_refusals() -> tuple[type[Exception], ...]:
-    """The caller-error family the compose engine raises.
-
-    Everything here must reach the agent as a clean sentence (message + fix,
-    exit 2), never a traceback — the refusal classes span the whole pipeline:
-    structured errors (HwError), input/solver refusals (DiagramInputError —
-    caps included — and MatrixInputError), and an unregistered genome id
-    (GenomeNotFoundError)."""
-    from hyperweave.compose.resolver import GenomeNotFoundError
-    from hyperweave.core.diagram import DiagramInputError
-    from hyperweave.core.errors import HwError
-    from hyperweave.core.matrix import MatrixInputError
-
-    return (HwError, DiagramInputError, MatrixInputError, GenomeNotFoundError)
-
-
-def _echo_refusal(exc: Exception) -> None:
-    """Print one compose refusal as clean stderr text: message, then fix."""
-    from hyperweave.compose.resolver import GenomeNotFoundError
-    from hyperweave.core.errors import HwError
-
-    if isinstance(exc, HwError):
-        typer.echo(exc.cli_text(), err=True)
-    elif isinstance(exc, GenomeNotFoundError):
-        from hyperweave.config.loader import get_loader
-
-        # GenomeNotFoundError is a KeyError carrying just the id — wording
-        # matches validate's GENOME_UNKNOWN so both surfaces teach identically.
-        genome_id = exc.args[0] if exc.args else "?"
-        typer.echo(f"Error: unknown genome {genome_id!r}", err=True)
-        typer.echo(f"  fix: known genomes: {', '.join(sorted(get_loader().genomes))}", err=True)
-    else:
-        typer.echo(f"Error: {exc}", err=True)
 
 
 def _sniff_spec_shape(
@@ -522,8 +512,8 @@ def _render_receipt_from_transcript(
     )
     try:
         result = do_compose(spec)
-    except _compose_refusals() as exc:
-        _echo_refusal(exc)
+    except caller_refusals() as exc:
+        echo_refusal(exc)
         raise typer.Exit(2) from exc
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(result.svg)
@@ -863,6 +853,13 @@ def compose(
     # Output
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Write the artifact to this file path")] = None,
     metrics: Annotated[str, typer.Option("--metrics", help="Strip metrics: 'STARS:2.9k,FORKS:278'")] = "",
+    subtitle: Annotated[
+        str,
+        typer.Option(
+            "--subtitle",
+            help="Strip subtitle under the identity line (e.g. 'eli64s/readme-ai'); paradigms that opt in render it",
+        ),
+    ] = "",
 ) -> None:
     r"""Compose a single HyperWeave artifact.
 
@@ -962,7 +959,12 @@ def compose(
         genome_explicit = True  # a loaded genome file always wins over an envelope's genome
 
     # ── Frame-type-specific argument interpretation + connector fetch ──
-    connector_data: dict[str, object] | None = None
+    # --subtitle wires through connector_data.repo_slug, the same field the
+    # strip resolver reads and the same one HTTP's ?subtitle= fills. Empty
+    # leaves connector_data None so paradigms that don't opt into subtitles
+    # are unaffected. Without this flag the CLI could not express a strip that
+    # both HTTP and MCP could — an Invariant 9 gap the proofset sweep found.
+    connector_data: dict[str, object] | None = {"repo_slug": subtitle} if subtitle else None
     stats_username = ""
     chart_owner = ""
     chart_repo = ""
@@ -1216,8 +1218,8 @@ def compose(
         for face_name in ("light", "dark"):
             try:
                 face_result = do_compose(spec.model_copy(update={"palette": "fixed", "surface_face": face_name}))
-            except _compose_refusals() as exc:
-                _echo_refusal(exc)
+            except caller_refusals() as exc:
+                echo_refusal(exc)
                 raise typer.Exit(2) from exc
             dest = output.with_name(f"{output.stem}-{face_name}{output.suffix}")
             dest.write_text(face_result.svg)
@@ -1243,8 +1245,8 @@ def compose(
 
     try:
         result = do_compose(spec)
-    except _compose_refusals() as exc:
-        _echo_refusal(exc)
+    except caller_refusals() as exc:
+        echo_refusal(exc)
         raise typer.Exit(2) from exc
 
     # Non-fatal normalization notes (e.g. a cyclic diagram declared as 'dag'
@@ -1348,8 +1350,8 @@ def compose(
     if not surface_explicit and is_flattening(output_format) and 'data-hw-adapt="adaptive"' in result.svg:
         try:
             result = do_compose(spec.model_copy(update={"ground": "opaque", "palette": "fixed"}))
-        except _compose_refusals() as exc:
-            _echo_refusal(exc)
+        except caller_refusals() as exc:
+            echo_refusal(exc)
             raise typer.Exit(2) from exc
 
     try:
