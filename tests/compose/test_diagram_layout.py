@@ -648,7 +648,7 @@ class TestStackTreeComparison:
         # masthead only exists at frame width, so the chassis width floors
         # the canvas — a hugging tree ran its kicker into the centered
         # crown the moment nothing else held the width open.
-        assert (lay.width, lay.height) == (1000, 415)
+        assert (lay.width, lay.height) == (880, 415)
 
     def test_comparison_fixed_canvas_and_single_connector(self) -> None:
         lay = solve(**CASES["comparison"])

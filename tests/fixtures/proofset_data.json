@@ -853,7 +853,7 @@
     "value": "n/a"
   },
   "snapshot:arxiv:2602.15763": {
-    "fetched_at": 1787734529.956108,
+    "fetched_at": 1787759462.886442,
     "value": {
       "bio": "GLM-5-Team et al. \u00b7 cs.LG \u00b7 cs.CL",
       "hero": {
@@ -889,13 +889,13 @@
     }
   },
   "snapshot:huggingface:zai-org/GLM-5.1": {
-    "fetched_at": 1787734529.941386,
+    "fetched_at": 1787759462.886434,
     "value": {
       "hero": {
         "label": "DOWNLOADS/MO",
         "provider": "huggingface",
-        "raw_value": 79695,
-        "value": "79.7K"
+        "raw_value": 84535,
+        "value": "84.5K"
       },
       "identity": "zai-org/GLM-5.1",
       "identity_subtitle": "transformers",
@@ -915,8 +915,8 @@
         {
           "label": "SPACES",
           "provider": "huggingface",
-          "raw_value": 82,
-          "value": "82"
+          "raw_value": 81,
+          "value": "81"
         }
       ],
       "provider": "huggingface",
@@ -927,7 +927,7 @@
     }
   },
   "snapshot:pypi:readmeai": {
-    "fetched_at": 1787734529.8750432,
+    "fetched_at": 1787759462.8864279,
     "value": {
       "activity": {
         "peak_label": "3,196",
@@ -1727,7 +1727,7 @@
     }
   },
   "snapshot:pypi:vllm": {
-    "fetched_at": 1787734530.026261,
+    "fetched_at": 1787759462.8864481,
     "value": {
       "activity": {
         "peak_label": "216.9K",
@@ -1778,7 +1778,7 @@
         {
           "label": "VERSION",
           "provider": "pypi",
-          "value": "0.27.1"
+          "value": "0.28.0"
         },
         {
           "label": "PYTHON",

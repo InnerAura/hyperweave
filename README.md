@@ -269,7 +269,7 @@ hyperweave compose diagram --spec-file cycle-flow -g primer --variant porcelain 
 <p align="center">
   <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-dark.svg" alt="One turn of the loop, performed: change, measure, keep or revert — guard chips inside the Stop? holder decide whether the loop returns or the champion ships" width="70%"
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-dark.svg" alt="One turn of the loop, performed: change, measure, keep or revert — guard chips inside the Stop? holder decide whether the loop returns or the champion ships" width="100%"
     >
   </picture>
 </p>

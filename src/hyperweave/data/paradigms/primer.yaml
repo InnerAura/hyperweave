@@ -728,7 +728,7 @@ diagram:
       # each level's members proportionally split their parent's span; depth
       # 1 is the derived star, depth 2 the taxonomy/dependency-audit ceiling.
       width_policy: aligned
-      width: 1000
+      width: 880
       # The tree composes a corner masthead — kicker top-left, legend
       # top-right, root centered between them — and those corners only
       # exist at frame width: a content-hugging canvas ran the kicker
