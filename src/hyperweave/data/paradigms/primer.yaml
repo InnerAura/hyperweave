@@ -1009,7 +1009,17 @@ diagram:
       # solved against the paradigm's tight 7/6 defaults whenever it lacked
       # its own hero.h citation — the same "tight oval" failure mode as
       # dag's hero.
-      node: { w: 140, h: 62, pad_y: 15.2, label_desc_gap: 6.6, desc_line_pitch: 19 }
+      # max_desc_lines: the paradigm root caps a std node's desc at ONE line,
+      # which ELLIPSIZES anything longer — and the root is what this family
+      # inherited, because no SM specimen carries a multi-line desc to cite.
+      # Silence in the corpus is not a one-line law, and the kit's
+      # never-truncate rule outranks an uncited inheritance: a desc grows its
+      # card, it never loses characters. The budget cites the SIBLING solver
+      # in this same layered family (graph.py solves dag and state-machine
+      # together, on the same ranks and the same card grammar), so the two
+      # cannot disagree about how much caption a card may carry. Descs that
+      # already fit one line still wrap to one — byte-identical.
+      node: { w: 140, h: 62, pad_y: 15.2, label_desc_gap: 6.6, desc_line_pitch: 19, max_desc_lines: 4 }
       # Hero: pp-state-machine.svg's own DEPLOY crown (175x78 rx16), name
       # baseline 34, name->desc gap 21 — solves to pad_y 21 / label_desc_gap
       # 9.1 at the hero voices (17/11), a genuinely measured 2-row hero

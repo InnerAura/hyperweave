@@ -214,6 +214,7 @@ _CIM_LEGAL_KEYFRAME_PROPS = frozenset(
 """animation-timing-function is a stop MODIFIER (the corpus easing
 envelope rides per-keyframe timing functions), never an animated channel."""
 _NAME_TEXT_RE = re.compile(r'<text[^>]*\bclass="hw-[0-9a-f]+-(name|hname|mname)"[^>]*>([^<]*)</text>')
+_DESC_TEXT_RE = re.compile(r'<text[^>]*\bclass="hw-[0-9a-f]+-(ndesc|hdesc|mdesc)"[^>]*>([^<]*)</text>')
 _TEXT_CLASS_RE = re.compile(r'<text[^>]*class="(hw-[0-9a-f]+)-([a-z]+)')
 _STYLE_FILL_RE = re.compile(r'<(?:rect|circle)\b[^>]*\bstyle="[^"]*fill:')
 _ELLIPSIS = "…"
@@ -439,6 +440,22 @@ def test_no_truncated_identity(name: str) -> None:
     upstream width reservation falls short."""
     r = _render(name)
     for cls, content in _NAME_TEXT_RE.findall(r.svg):
+        assert not content.rstrip().endswith(_ELLIPSIS), f"{name}: -{cls} run truncated: {content!r}"
+
+
+@pytest.mark.parametrize("name", _PRESET_NAMES)
+def test_no_truncated_desc(name: str) -> None:
+    """A node's CAPTION (-ndesc/-hdesc/-mdesc) never ends in an ellipsis
+    either. The identity gate above pins the half of the promise that was
+    always enforced; a desc is allowed to WRAP where a name is not, and that
+    licence quietly became a licence to truncate — a family whose chassis
+    left ``max_desc_lines`` at the paradigm root's 1 ellipsized every caption
+    too long for a single line, because one line has nowhere to wrap to.
+    Growth absorbs a long caption; the reader never loses characters. Pinned
+    as a sweep rather than one family's regression, so the next chassis added
+    without its own desc budget fails here instead of in a render."""
+    r = _render(name)
+    for cls, content in _DESC_TEXT_RE.findall(r.svg):
         assert not content.rstrip().endswith(_ELLIPSIS), f"{name}: -{cls} run truncated: {content!r}"
 
 

@@ -21,6 +21,7 @@ spec-boundary (callout straddling a hub spoke).
 
 from __future__ import annotations
 
+import itertools
 import math
 import pathlib
 import re
@@ -307,3 +308,174 @@ def test_annotation_footer_gap_min() -> None:
     assert lay.footer is not None, "publish-path story lost its footer caption"
     gap = lay.footer.y - (callout.box.y + callout.box.h)
     assert gap >= 39.5, f"footer baseline only {gap:.1f}px under the callout block"
+
+
+# ── Edge-label ownership ────────────────────────────────────────────────────
+#
+# A micro-label is attributed by PROXIMITY — there is no leader line to a bare
+# run, so the wire it sits nearest is the wire a reader reads it against. The
+# placement passes had no notion of this: the perpendicular lift always chose
+# "above", and the collide ladder's bar is zero OVERLAP. On a fan, "above"
+# points out of the diagram for the edge curving up and straight INTO the fan
+# for the edge curving down, so a lower edge's label was lifted toward its
+# siblings, cleared of overlap by the ladder, and left sitting almost exactly
+# between two wires. Not-overlapping and attributable are different properties,
+# and only the first one was ever checked.
+
+
+def _label_anns(layout: Any) -> list[Any]:
+    """Subsumed edge micro-labels — bare text beside a wire. Chips are exempt
+    by construction: a pill rides ON its run, so its own distance is ~0 and
+    ownership is never in question."""
+    return [a for a in layout.annotations if a.kind == "label" and a.box is not None]
+
+
+def _duplex_labels(spec_dict: dict[str, Any]) -> set[str]:
+    """Labels belonging to a reciprocal pair, which the law exempts.
+
+    A request/response pair is DRAWN as two wires side by side and its labels
+    belong in the channel between them — nearness to the partner wire is the
+    vocabulary there, not a failure to attribute. Exempt from day one rather
+    than after the fact: the dag solver takes reciprocal pairs natively next,
+    and a law that fought the duplex grammar would be self-inflicted."""
+    edges = spec_dict.get("edges") or []
+    pairs = {
+        (e.get("source"), e.get("target"))
+        for e in edges
+        if any(o.get("source") == e.get("target") and o.get("target") == e.get("source") for o in edges)
+    }
+    return {str(e.get("label")) for e in edges if (e.get("source"), e.get("target")) in pairs and e.get("label")}
+
+
+def _wire_distance(px: float, py: float, poly: list[tuple[float, float]]) -> float:
+    best = math.inf
+    for a, b in itertools.pairwise(poly):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L2 = dx * dx + dy * dy
+        t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((px - a[0]) * dx + (py - a[1]) * dy) / L2))
+        best = min(best, math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy)))
+    return best
+
+
+@pytest.mark.parametrize(
+    ("slug", "source", "spec"), [(s[0], s[1], s[2]) for s in _STORIES], ids=[s[0] for s in _STORIES]
+)
+def test_edge_label_reads_against_its_own_wire(slug: str, source: str, spec: dict[str, Any]) -> None:
+    """Every bare edge label sits decisively nearer ONE wire than any other.
+
+    Graded at the FINAL seat — after the lift and after the collide ladder —
+    because that is the only position a reader ever sees, and because it
+    catches a regression from either lift path rather than just the
+    perpendicular fallback. The ratio floor is calibrated from this corpus:
+    healthy labels sit at 2.3x and above, the borderline band is 1.34-1.44x,
+    and the failure that motivated the law measured 1.01x.
+    """
+    from hyperweave.compose.diagram.annotate import OWNERSHIP_MIN_RATIO
+
+    lay = _layout(spec)
+    polys = [_flatten(c.path_d) for c in lay.connectors]
+    polys = [p for p in polys if len(p) >= 2]
+    if len(polys) < 2:
+        pytest.skip("single-wire diagram — nothing to confuse a label with")
+    exempt = _duplex_labels(spec)
+    for ann in _label_anns(lay):
+        text = " ".join(t.text for t in ann.lines)
+        if text in exempt:
+            continue
+        cx, cy = ann.box.x + ann.box.w / 2, ann.box.y + ann.box.h / 2
+        ds = sorted(_wire_distance(cx, cy, p) for p in polys)
+        if ds[0] <= 1e-9:
+            continue  # sitting ON its wire: unambiguous
+        ratio = ds[1] / ds[0]
+        assert ratio >= OWNERSHIP_MIN_RATIO, (
+            f"{slug}: label {text!r} sits {ds[0]:.1f}px from one wire and {ds[1]:.1f}px from the next "
+            f"({ratio:.2f}x, law >={OWNERSHIP_MIN_RATIO}x) — a reader cannot tell which edge it labels"
+        )
+
+
+_FAN_SPEC: dict[str, Any] = {
+    "topology": "dag",
+    "title": "readme-ai Architecture",
+    "node_style": "card+glyph",
+    "nodes": [
+        {"id": "cli", "label": "CLI Interface", "desc": "Commands & Configuration", "glyph": "terminal"},
+        {"id": "parsers", "label": "Parsers & Extractors", "desc": "AST & Dependency Analysis", "glyph": "package"},
+        {
+            "id": "core",
+            "label": "Pipeline Engine",
+            "desc": "readme-ai async orchestrator",
+            "glyph": "cpu",
+            "role": "hero",
+        },
+        {"id": "models", "label": "Model Providers", "desc": "OpenAI / Gemini / Claude / Ollama", "glyph": "sparkles"},
+        {"id": "generators", "label": "Markdown & Visuals", "desc": "HyperWeave SVGs & Docs", "glyph": "layers"},
+    ],
+    "edges": [
+        {"source": "cli", "target": "core", "label": "invoke", "label_style": "chip"},
+        {"source": "core", "target": "parsers", "label": "extract", "label_style": "chip"},
+        {"source": "core", "target": "models", "label": "synthesize", "label_style": "chip"},
+        {"source": "core", "target": "generators", "label": "render", "label_style": "chip", "relation": "assert"},
+    ],
+}
+
+
+def _seat_of(lay: Any, text: str) -> tuple[float, float]:
+    hits = [a for a in lay.annotations if a.box is not None and " ".join(t.text for t in a.lines) == text]
+    assert len(hits) == 1, f"expected one {text!r} annotation, found {len(hits)}"
+    return (hits[0].box.x + hits[0].box.w / 2, hits[0].box.y + hits[0].box.h / 2)
+
+
+def _ratio_of(lay: Any, text: str) -> float:
+    cx, cy = _seat_of(lay, text)
+    polys = [p for p in (_flatten(c.path_d) for c in lay.connectors) if len(p) >= 2]
+    ds = sorted(_wire_distance(cx, cy, p) for p in polys)
+    return math.inf if ds[0] <= 1e-9 else ds[1] / ds[0]
+
+
+class TestFanLabelOwnership:
+    """The fan that motivated the ownership law.
+
+    Three edges leave one hero: one curves up, one runs straight, one curves
+    down. The up and down edges both bend past ``_chip_bend_max``, so both
+    lose their pill (correct — a chip has no home on bending wire) and fall to
+    the perpendicular lift. Under the old unconditional "above", the DOWN
+    edge's label was lifted into the fan toward its siblings.
+    """
+
+    def test_downward_edge_label_is_attributable(self) -> None:
+        # Measured 1.01x before the clear-side lift: 35.92px from its own wire
+        # and 36.46px from the neighbouring one — it won ownership by 0.54px.
+        lay = _layout(_FAN_SPEC)
+        assert _ratio_of(lay, "render") >= 1.5
+
+    def test_upward_edge_label_keeps_its_default_seat(self) -> None:
+        # Hysteresis: `extract`'s default (above) seat already reads at 2.29x,
+        # so the clear-side check must not touch it. This is the byte-stability
+        # half of the rule — a side chosen by bare comparison would trade seats
+        # between near-identical renders for no legibility gain.
+        assert _seat_of(_layout(_FAN_SPEC), "extract") == pytest.approx((770.1, 99.2), abs=0.5)
+
+    def test_straight_edge_keeps_its_chip_on_the_wire(self) -> None:
+        # The middle edge never bends, so it keeps its pill and rides its run.
+        lay = _layout(_FAN_SPEC)
+        chips = [a for a in lay.annotations if a.kind == "edge-chip"]
+        assert {" ".join(t.text for t in a.lines) for a in chips} == {"invoke", "synthesize"}
+
+
+def test_duplex_labels_are_exempt_from_the_ownership_law() -> None:
+    """A reciprocal pair's labels belong BETWEEN its two wires.
+
+    ``pipeline-row`` draws client⇄hw as `request →` over `← response`; both
+    sit at 1.34x, under the floor, and both are correct. The exemption is
+    keyed off the spec's own reciprocal edges, so it holds for any duplex the
+    dag solver draws rather than for these two strings.
+    """
+    from hyperweave.compose.bundled_specs import resolve_bundled_spec
+
+    spec = dict(resolve_bundled_spec("diagram", "pipeline-row").value)
+    exempt = _duplex_labels(spec)
+    assert exempt == {"request →", "← response"}
+    lay = _layout(spec)
+    # Precondition: they really are under the floor — otherwise this test
+    # would pass for the wrong reason if the seats ever drifted apart.
+    assert _ratio_of(lay, "request →") < 1.5

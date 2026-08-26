@@ -28,6 +28,7 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.diagram.recenter import translate_path
+from hyperweave.compose.diagram.sizing import CHIP_STUB_MIN
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -349,6 +350,91 @@ def _clear_own_incident(
     return fallback if fallback is not None else p
 
 
+def _chip_slide_candidates(
+    p: AnnotationPlacement, geo: EdgeGeo | None, slides: list[float]
+) -> list[AnnotationPlacement]:
+    """Seats along the chip's own DRAWN path, at the slide fractions, keeping
+    ``CHIP_STUB_MIN`` of visible wire on each side.
+
+    Always arc-length along the polyline, never the endpoint chord: on an
+    HVH skip route the chord cuts the corner and leaves the wire entirely,
+    which is the seat-offset law's whole subject. The stub floor is the same
+    constant the solvers reserve their runs with, so a slide can never spend
+    the clearance the run was widened to provide — a chip pushed up against
+    its own arrowhead reads as a chip on the wrong edge."""
+    if geo is None or p.box is None:
+        return []
+    poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
+    lens = [0.0]
+    for a, b in itertools.pairwise(poly):
+        lens.append(lens[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    total = lens[-1]
+    if total <= 0.0:
+        return []
+    cur_cx, cur_cy = p.box.x + p.box.w / 2, p.box.y + p.box.h / 2
+    out: list[AnnotationPlacement] = []
+    for f in slides:
+        target = f * total
+        for i, (a, b) in enumerate(itertools.pairwise(poly)):
+            if lens[i + 1] < target and i + 2 < len(lens):
+                continue
+            seg = lens[i + 1] - lens[i]
+            if seg <= 0.0:
+                continue
+            t = (target - lens[i]) / seg
+            # How much of the run this pill actually occupies depends on the
+            # direction the run leaves at: a 63x26 chip eats 63px of a
+            # horizontal wire but only 26 of a vertical one. Taking the wider
+            # side for both reserved 37px that a vertical run never spends,
+            # and rejected the only seats it had. This is the rectangle's
+            # support width along the local heading.
+            ux, uy = (b[0] - a[0]) / seg, (b[1] - a[1]) / seg
+            half = (abs(ux) * p.box.w + abs(uy) * p.box.h) / 2
+            # A stub of visible wire each side, measured the way the battery
+            # measures it: from the pill's edge to the end of the run.
+            if target - half < CHIP_STUB_MIN or (total - target) - half < CHIP_STUB_MIN:
+                break
+            out.append(_shift_placement(p, a[0] + (b[0] - a[0]) * t - cur_cx, a[1] + (b[1] - a[1]) * t - cur_cy))
+            break
+    return out
+
+
+def _resolve_chip(
+    p: AnnotationPlacement,
+    obstacles: list[Obstacle],
+    *,
+    geo: EdgeGeo | None,
+    slides: list[float],
+) -> tuple[AnnotationPlacement, bool]:
+    """Arbitrate one edge-chip against the other ANNOTATIONS, and nothing else.
+
+    A chip is an opaque pill that covers whatever it sits over — a wire, a
+    card corner, a band. That is the seat law, not a defect, and it is why
+    every non-annotation obstacle is filtered out here: re-seating a chip to
+    dodge geometry it is entitled to cover moves seats the specimens pin.
+    The one thing a pill must not cover is ANOTHER pill, because there is no
+    reading order between two opaque plates — the lower one is simply gone.
+
+    So: the preferred seat wins whenever no sibling annotation contests it,
+    which is every chip in every artifact that already composed. Otherwise
+    the chip slides along its own drawn path, inside the stub law. Mirror and
+    push are the OFF-wire moves and stay barred.
+
+    A chip that cannot find a clear seat anywhere on its run keeps its
+    preferred one and reports ``False`` — the caller warns. Burial is then a
+    stated defect on a crowded graph rather than a silent one, and the chip
+    still reads against the edge it belongs to."""
+    if p.box is None:
+        return p, True
+    siblings = [o for o in obstacles if o.kind == "label"]
+    if not siblings or _total_overlap(p.box, siblings) == 0.0:
+        return p, True
+    for cand in _chip_slide_candidates(p, geo, slides):
+        if cand.box is not None and _total_overlap(cand.box, siblings) == 0.0:
+            return cand, True
+    return p, False
+
+
 def _resolve_one(
     p: AnnotationPlacement,
     obstacles: list[Obstacle],
@@ -364,16 +450,27 @@ def _resolve_one(
     whether it was placed clean. The ladder order IS the tie-break. There is no
     ellipsis rung — a run that cannot be placed keeps its wrapped text and its
     preferred box (the caller warns); annotations never truncate to fit."""
+    if p.box is None:
+        return p, True
     # An edge-chip rides ON its wire by construction (the kit specimen sheet, piece 7: the
     # line runs through the chip's vertical center, even in / even out). It is
     # an OPAQUE pill that covers whatever it sits over — it must never be
-    # mirrored, slid, or pushed off the wire to dodge a neighbor. The ladder is
-    # for FLOATING labels (callouts, micro-labels, legends) that need clear
-    # ground; a chip's seat is correct-by-construction, so it exits here. This
-    # is the stage-4 rule the pass never learned — the ±16 perpendicular shove
-    # that lifted reads/emits/direct-read off their lines.
-    if p.box is None or p.kind == "edge-chip":
-        return p, True
+    # mirrored or pushed OFF the wire to dodge a neighbor. That is the stage-4
+    # rule the pass never learned — the ±16 perpendicular shove that lifted
+    # reads/emits/direct-read off their lines.
+    #
+    # What the law fixes is the chip's OFFSET from the thread, not its position
+    # ALONG it: the run midpoint is the preferred seat, not the only legal one.
+    # So a chip arbitrates by sliding down its own wire, where the line still
+    # runs through its vertical center and the pill still reads as that edge's.
+    # Its acceptance test is the INVERSE of a floating label's: a chip REQUIRES
+    # the wire through its box (that is the piece), where a callout requires
+    # clear ground. Without this a converging pair — a forward chip and a
+    # back-edge chip arriving at the same hero — both declared themselves
+    # correct-by-construction and one rendered buried under the other, with no
+    # warning, because the old exit reported every chip clean.
+    if p.kind == "edge-chip":
+        return _resolve_chip(p, obstacles, geo=geo, slides=slides)
     # The text-text margin only governs LABEL-vs-LABEL proximity (see
     # _total_overlap) — a callout/aside/legend keeps the plain zero-overlap
     # bar against everything, unchanged.
@@ -435,16 +532,36 @@ def resolve_labels(
     out: list[AnnotationPlacement] = []
     warns = list(warnings)
     labelled_indices = [j for j, e in enumerate(edges) if e.label and j in geo_of]
+
     # PINNED BEFORE MOVABLE. A chip rides its own wire at the run midpoint —
     # that seat is the law, so the ladder cannot move it. A bare micro-label
     # can go anywhere clear. Walking them in edge order therefore lets a chip
     # land on a micro-label that was already placed, and neither one yields.
     # Placing every pinned chip first puts its plate in the obstacle set before
     # a single free label is laddered, so the label steps around it instead.
-    order = sorted(
-        range(len(labels)),
-        key=lambda k: 0 if (k < len(labelled_indices) and edges[labelled_indices[k]].label_style == "chip") else 1,
-    )
+    # Among the chips, SHORTEST RUN FIRST. A chip can only slide along its own
+    # wire, so the length of that wire is exactly how much choice it has: a
+    # chip on a 100px run has one or two legal seats, one on a 365px run has
+    # its pick. Seating them in edge order handed the ground to whichever chip
+    # the caller happened to declare first and left the constrained one with
+    # nowhere legal to go — the short forward run to the generators lost to a
+    # long back-edge that had the whole graph to slide along. Serving the
+    # least-free chip first lets the free one route around it, which is the
+    # only ordering under which both can be right.
+    def _run_len(k: int) -> float:
+        if k >= len(labelled_indices):
+            return 0.0
+        geo = geo_of.get(labelled_indices[k])
+        if geo is None:
+            return 0.0
+        poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
+        return sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in itertools.pairwise(poly))
+
+    def _rank(k: int) -> tuple[int, float]:
+        is_chip = k < len(labelled_indices) and edges[labelled_indices[k]].label_style == "chip"
+        return (0, _run_len(k)) if is_chip else (1, 0.0)
+
+    order = sorted(range(len(labels)), key=_rank)
     placed_by_k: dict[int, AnnotationPlacement] = {}
     for k in order:
         p = labels[k]

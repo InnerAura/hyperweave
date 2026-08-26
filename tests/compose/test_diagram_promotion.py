@@ -11,6 +11,7 @@ promotion (byte-stability); the hub/lanes structural validators; and dag
 
 from __future__ import annotations
 
+import itertools
 import json
 import re
 from typing import Any
@@ -21,6 +22,7 @@ from hyperweave.compose.diagram.input import (
     NormalizedInput,
     coerce_diagram_input,
     promote_cyclic_dag,
+    reciprocal_pairs,
 )
 from hyperweave.compose.diagram.project import diagram_payload_json
 from hyperweave.compose.diagram.records import RenderedMotion
@@ -90,6 +92,49 @@ class TestPromotion:
         assert norm.warnings == ()
 
 
+class TestPromotionNamesEveryCause:
+    """The warning is the caller's whole account of why their dag became a
+    state-machine, so it names every cause. Naming only the first cycle the
+    DFS happened to reach let a caller unpick the pair they were shown and
+    promote again on the pair they were not — and request/response pairs
+    arrive in twos and threes on real architecture graphs."""
+
+    def test_one_reciprocal_pair_is_named_as_a_pair(self) -> None:
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "a")]))
+        assert norm.warnings[0] == "cyclic dag promoted to state-machine (1 reciprocal pair: A <-> B)"
+
+    def test_both_reciprocal_pairs_are_named(self) -> None:
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "a"), ("b", "c"), ("c", "b")]))
+        assert norm.warnings[0] == "cyclic dag promoted to state-machine (2 reciprocal pairs: A <-> B, B <-> C)"
+
+    def test_multi_hop_cycle_still_reads_as_a_cycle(self) -> None:
+        # A three-node loop is NOT a round trip between two nodes; stripping
+        # the pairs leaves it standing, so it keeps the cycle phrasing.
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "c"), ("c", "a")]))
+        assert "reciprocal" not in norm.warnings[0]
+        assert "cycle: A -> B -> C -> A" in norm.warnings[0]
+
+    def test_a_self_loop_is_not_a_reciprocal_pair(self) -> None:
+        # a -> a is one edge, not two opposed ones. It stays an ordinary
+        # cycle — the distinction the duplex work downstream depends on.
+        norm = promote_cyclic_dag(_dag([("a", "a"), ("a", "b")]))
+        assert "reciprocal" not in norm.warnings[0]
+        assert "cycle: A -> A" in norm.warnings[0]
+
+    def test_pairs_and_a_multi_hop_cycle_are_reported_together(self) -> None:
+        norm = promote_cyclic_dag(
+            _dag([("a", "b"), ("b", "c"), ("c", "a"), ("a", "d"), ("d", "a")], labels=("A", "B", "C", "D"))
+        )
+        assert "cycle: A -> B -> C -> A" in norm.warnings[0]
+        assert "1 reciprocal pair: A <-> D" in norm.warnings[0]
+
+    def test_reciprocal_pairs_helper_ignores_one_way_edges(self) -> None:
+        assert reciprocal_pairs({(0, 1), (1, 0), (1, 2)}) == [(0, 1)]
+
+    def test_reciprocal_pairs_helper_excludes_self_loops(self) -> None:
+        assert reciprocal_pairs({(0, 0), (1, 1)}) == []
+
+
 class TestNoInputErrorMessage:
     def test_names_every_real_path(self) -> None:
         # Every reachable input path must be named — the message shouldn't
@@ -133,10 +178,92 @@ _ACYCLIC_DAG = {
 }
 
 
+# The architecture graph a caller actually sent: five components, two
+# request/response pairs (engine<->parsers, engine<->models), captions longer
+# than a state card's one-line budget, and a chip on every edge. It renders
+# through the state-machine solver, so every state-machine defect it touches
+# is a defect a dag caller sees.
+_ARCHITECTURE_DAG = {
+    "topology": "dag",
+    "title": "readme-ai Architecture",
+    "subtitle": "Directed execution graph",
+    "node_style": "card+glyph",
+    "nodes": [
+        {"id": "cli", "label": "CLI Interface", "desc": "Commands & Configuration", "glyph": "terminal"},
+        {"id": "parsers", "label": "Parsers & Extractors", "desc": "AST & Dependency Analysis", "glyph": "package"},
+        {
+            "id": "core",
+            "label": "Pipeline Engine",
+            "desc": "readme-ai async orchestrator",
+            "glyph": "cpu",
+            "role": "hero",
+        },
+        {"id": "models", "label": "Model Providers", "desc": "OpenAI / Gemini / Claude / Ollama", "glyph": "sparkles"},
+        {"id": "generators", "label": "Markdown & Visuals", "desc": "HyperWeave SVGs & Docs", "glyph": "layers"},
+    ],
+    "edges": [
+        {"source": "cli", "target": "core", "label": "invoke", "label_style": "chip"},
+        {"source": "core", "target": "parsers", "label": "extract", "label_style": "chip"},
+        {"source": "parsers", "target": "core", "label": "context", "label_style": "chip"},
+        {"source": "core", "target": "models", "label": "synthesize", "label_style": "chip"},
+        {"source": "models", "target": "core", "label": "responses", "label_style": "chip"},
+        {"source": "core", "target": "generators", "label": "render", "label_style": "chip", "relation": "assert"},
+    ],
+}
+
+_CHIP_RECT_RE = re.compile(
+    r'<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"[^>]*class="hw-[0-9a-f]+-r?chipbg"'
+)
+_DESC_RE = re.compile(r'class="hw-[0-9a-f]+-[nmh]desc"[^>]*>([^<]*)</text>')
+
+
 def _payload_from_svg(svg: str) -> dict[str, Any]:
     m = re.search(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", svg, re.DOTALL)
     assert m, "hw:payload missing"
     return json.loads(m.group(1))  # type: ignore[no-any-return]
+
+
+class TestPromotedArchitectureRender:
+    """The promoted render, graded on what a reader can actually see.
+
+    A promoted spec is still somebody's artifact — until the dag solver takes
+    reciprocal pairs natively, this IS the output for every request/response
+    architecture graph, so the state-machine defects it exposes are pinned
+    here at the rendered-SVG level rather than at the solver beneath it."""
+
+    def _svg(self) -> str:
+        spec = ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=_ARCHITECTURE_DAG)
+        svg = compose(spec).svg
+        assert 'data-hw-topology="state-machine"' in svg, "precondition: this spec promotes"
+        return svg
+
+    def test_captions_grow_their_card_instead_of_ellipsizing(self) -> None:
+        # Three of these five captions outrun a single line. Under the
+        # inherited one-line budget each lost its tail to an ellipsis.
+        descs = _DESC_RE.findall(self._svg())
+        assert descs, "no node captions rendered"
+        truncated = [d for d in descs if d.rstrip().endswith("…")]
+        assert truncated == [], f"captions truncated: {truncated}"
+
+    def test_every_caption_survives_whole(self) -> None:
+        # Stronger than "no ellipsis": the wrapped runs must reassemble into
+        # the authored caption, so a silent mid-word drop cannot pass either.
+        rendered = " ".join(_DESC_RE.findall(self._svg())).replace("&amp;", "&")
+        for node in _ARCHITECTURE_DAG["nodes"]:
+            assert node["desc"] in rendered, f"caption lost: {node['desc']!r}"  # type: ignore[index]
+
+    def test_converging_chips_do_not_overlap(self) -> None:
+        # The forward chip to the generators and the back-edge chip from the
+        # parsers both arrive at the hero. Both are pinned to their own wire,
+        # so neither used to yield and one rendered buried under the other.
+        chips = [tuple(float(v) for v in m) for m in _CHIP_RECT_RE.findall(self._svg())]
+        assert len(chips) == 6, f"expected a chip per edge, got {len(chips)}"
+        for (x1, y1, w1, h1), (x2, y2, w2, h2) in itertools.combinations(chips, 2):
+            ox = min(x1 + w1, x2 + w2) - max(x1, x2)
+            oy = min(y1 + h1, y2 + h2) - max(y1, y2)
+            assert ox <= 0 or oy <= 0, (
+                f"chips overlap by {ox:.2f}x{oy:.2f}: ({x1:.0f},{y1:.0f}) and ({x2:.0f},{y2:.0f})"
+            )
 
 
 class TestPayloadRenderedTopology:

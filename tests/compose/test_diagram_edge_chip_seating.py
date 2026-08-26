@@ -238,3 +238,93 @@ def test_chip_measures_the_voice_it_renders() -> None:
     assert run.cls == "tag"
     expected = measure_voice(run.text, cfg.tag_voice) + 2 * CHIP_PAD_X
     assert abs(chips[0].box.w - expected) < 0.01, (chips[0].box.w, expected)
+
+
+def test_converging_chips_arbitrate_instead_of_burying_each_other() -> None:
+    """Two chips that want the same ground: the one placed second slides down
+    its OWN run rather than sitting on top of the first.
+
+    A chip's seat used to be treated as unconditionally correct — it rode its
+    wire by construction, so the resolver returned it untouched AND reported
+    it clean. That holds for one chip. Where a forward edge and a back-edge
+    converge on the same node, both pills claimed the same ground and the
+    later one rendered buried, with nothing on stderr to say so. The law that
+    a chip never leaves its wire governs its OFFSET from the thread, not its
+    position along it, so sliding is the move that resolves this without
+    breaking it.
+    """
+    # An architecture graph: a hero engine with a chip on every edge, two of
+    # them a request/response round trip. The `context` back-edge chip and the
+    # `render` forward chip both arrive at the engine and measurably collided
+    # (25.60 x 15.37px). A sparser graph does NOT reproduce it — the chips
+    # need the card widths this content solves to for their runs to converge.
+    spec = {
+        "title": "converging",
+        "topology": "state-machine",
+        "node_style": "card+glyph",
+        "nodes": [
+            {"id": "cli", "label": "CLI Interface", "desc": "Commands & Configuration", "glyph": "terminal"},
+            {"id": "parsers", "label": "Parsers & Extractors", "desc": "AST & Dependency Analysis", "glyph": "package"},
+            {
+                "id": "core",
+                "label": "Pipeline Engine",
+                "desc": "readme-ai async orchestrator",
+                "glyph": "cpu",
+                "role": "hero",
+            },
+            {
+                "id": "models",
+                "label": "Model Providers",
+                "desc": "OpenAI / Gemini / Claude / Ollama",
+                "glyph": "sparkles",
+            },
+            {"id": "generators", "label": "Markdown & Visuals", "desc": "HyperWeave SVGs & Docs", "glyph": "layers"},
+        ],
+        "edges": [
+            {"source": "cli", "target": "core", "label": "invoke", "label_style": "chip"},
+            {"source": "core", "target": "parsers", "label": "extract", "label_style": "chip"},
+            {"source": "parsers", "target": "core", "label": "context", "label_style": "chip"},
+            {"source": "core", "target": "models", "label": "synthesize", "label_style": "chip"},
+            {"source": "models", "target": "core", "label": "responses", "label_style": "chip"},
+            {"source": "core", "target": "generators", "label": "render", "label_style": "chip", "relation": "assert"},
+        ],
+    }
+    lay = _layout(spec)
+    chips = [a for a in lay.annotations if a.kind == "edge-chip"]
+    assert len(chips) == 6, f"expected a chip per edge, got {len(chips)}"
+    for a, b in itertools.combinations(chips, 2):
+        ox = min(a.box.x + a.box.w, b.box.x + b.box.w) - max(a.box.x, b.box.x)
+        oy = min(a.box.y + a.box.h, b.box.y + b.box.h) - max(a.box.y, b.box.y)
+        assert ox <= 0 or oy <= 0, (
+            f"chips overlap by {ox:.2f}x{oy:.2f} at ({a.box.x:.0f},{a.box.y:.0f}) and ({b.box.x:.0f},{b.box.y:.0f})"
+        )
+
+
+def test_a_chip_with_a_clear_seat_never_moves() -> None:
+    """The arbitration is byte-neutral where nothing converges: a chip whose
+    preferred seat is already clear keeps it exactly, so every artifact that
+    composed before this pass composes identically after it."""
+    spec = {
+        "title": "solo",
+        "topology": "state-machine",
+        "nodes": [
+            {"id": "a", "label": "Alpha"},
+            {"id": "b", "label": "Beta"},
+            {"id": "c", "label": "Gamma"},
+        ],
+        "edges": [
+            {"source": "a", "target": "b", "label": "carry", "label_style": "chip"},
+            {"source": "b", "target": "c"},
+        ],
+    }
+    lay = _layout(spec)
+    cx, cy = _chip_center(_chip(lay, "carry"))
+    # Its own wire still runs through the pill (_connector_through asserts a
+    # connector within 2px), and the seat is that run's MIDPOINT — the pill
+    # did not slide anywhere, because it had no reason to.
+    poly = _connector_through(lay, cx, cy)
+    mid_x = (poly[0][0] + poly[-1][0]) / 2
+    mid_y = (poly[0][1] + poly[-1][1]) / 2
+    assert math.hypot(cx - mid_x, cy - mid_y) < 2.0, (
+        f"a solo chip drifted off its run midpoint: seat ({cx:.1f},{cy:.1f}) vs mid ({mid_x:.1f},{mid_y:.1f})"
+    )

@@ -140,6 +140,33 @@ def _default_loop_orientation(raw: DiagramSpec) -> DiagramSpec:
     return raw
 
 
+def reciprocal_pairs(directed: set[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Every node pair joined in BOTH directions, each reported once as
+    ``(low, high)`` and ordered for a stable message.
+
+    A reciprocal pair is the request/response shape that dominates real
+    architecture graphs — ``core -> models`` with ``models -> core`` back. It
+    is a cycle, so the cycle finder reports it, but it is the most local kind
+    there is: two nodes, one round trip, no third party. Self-loops are
+    excluded by construction (``a < b``), so ``a -> a`` stays an ordinary
+    cycle."""
+    return sorted((a, b) for a, b in directed if a < b and (b, a) in directed)
+
+
+def _promotion_causes(n: int, directed: set[tuple[int, int]]) -> tuple[list[int], list[tuple[int, int]]]:
+    """What made this graph cyclic, split into its two species: a multi-hop
+    cycle (empty when there is none) and the reciprocal pairs.
+
+    The multi-hop search runs on the graph with every reciprocal pair's BOTH
+    directions removed, so a pair can never masquerade as multi-hop feedback
+    — what comes back is a cycle that survives independently of the round
+    trips, which is the distinction the warning has to state and the only one
+    a reader can act on."""
+    pairs = reciprocal_pairs(directed)
+    paired = {(a, b) for a, b in pairs} | {(b, a) for a, b in pairs}
+    return _find_cycle(n, directed - paired), pairs
+
+
 def promote_cyclic_dag(spec: DiagramSpec) -> NormalizedInput:
     """Promote a cyclic DAG to state-machine, or pass an acyclic spec through.
 
@@ -147,23 +174,36 @@ def promote_cyclic_dag(spec: DiagramSpec) -> NormalizedInput:
     rank. State-machine owns back-edges (the revise loop), so a caller who
     declared ``topology: dag`` for a graph that turns out cyclic gets a
     coherent artifact under the state-machine solver plus a warning naming
-    the cycle. Non-dag specs and acyclic dags return unchanged (``spec`` and
-    ``payload_spec`` identical, no warning → byte-identical payload). On
-    promotion ``spec`` becomes the state-machine variant (what renders) while
-    ``payload_spec`` keeps the caller's dag (what round-trips)."""
+    what made it cyclic. Non-dag specs and acyclic dags return unchanged
+    (``spec`` and ``payload_spec`` identical, no warning → byte-identical
+    payload). On promotion ``spec`` becomes the state-machine variant (what
+    renders) while ``payload_spec`` keeps the caller's dag (what round-trips).
+
+    The warning names EVERY cause, not the first one found. A graph with two
+    request/response pairs was being told about one of them, so a caller who
+    unpicked the named pair would promote again on the pair they were never
+    shown — and reciprocal pairs are exactly the shape that arrives in twos
+    and threes."""
     if spec.topology is not Topology.DAG:
         return NormalizedInput(spec=spec, payload_spec=spec)
     index = {(n.id or f"n{i}"): i for i, n in enumerate(spec.nodes)}
     directed = {(index[e.source], index[e.target]) for e in spec.edges}
-    cycle = _find_cycle(len(spec.nodes), directed)
-    if not cycle:
+    if not _find_cycle(len(spec.nodes), directed):
         return NormalizedInput(spec=spec, payload_spec=spec)
-    labels = " -> ".join(spec.nodes[i].label for i in cycle)
+    cycle, pairs = _promotion_causes(len(spec.nodes), directed)
+    label_of = [n.label or f"n{i}" for i, n in enumerate(spec.nodes)]
+    causes: list[str] = []
+    if cycle:
+        causes.append("cycle: " + " -> ".join(label_of[i] for i in cycle))
+    if pairs:
+        noun = "reciprocal pair" if len(pairs) == 1 else "reciprocal pairs"
+        named = ", ".join(f"{label_of[a]} <-> {label_of[b]}" for a, b in pairs)
+        causes.append(f"{len(pairs)} {noun}: {named}")
     promoted = spec.model_copy(update={"topology": Topology.STATE_MACHINE})
     return NormalizedInput(
         spec=promoted,
         payload_spec=spec,
-        warnings=(f"cyclic dag promoted to state-machine (cycle: {labels})",),
+        warnings=(f"cyclic dag promoted to state-machine ({'; '.join(causes)})",),
     )
 
 

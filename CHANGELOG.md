@@ -16,6 +16,10 @@ Gives diagrams a new dark look and fixes ANSI card padding, the loop's top spaci
 
 ### Fixed
 
+- **Removed card text truncation** — a caption wraps up to four lines and grows its card; `state-machine` diagrams were trimming everything past one line.
+- **Edge chips** — two chips arriving at the same node take separate seats along their own wires instead of one covering the other.
+- **Edge labels** — a label on a curving edge sits on the open side of its wire, so it reads against the edge it names rather than a neighbour.
+- **Cyclic `dag` warning** — names every two-way edge pair that promoted the diagram to `state-machine`, not just the first cycle found.
 - **`--format ansi`** — card text keeps a cell of padding inside its border instead of touching it.
 - **Loop top margin** — a loop's headers and first station get their full breathing room at the top of the canvas.
 - **Decision halos** — a loop decision lights its own diamond outline as the route arrives, so every station now glows on arrival.

@@ -48,10 +48,11 @@ from hyperweave.core.diagram import DiagramInputError
 from hyperweave.core.diagram_annotations import AnnotationKind, parse_edge_ref
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from hyperweave.compose.diagram.records import LaneBand, NodePlacement
     from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
+    from hyperweave.core.diagram import ResolvedEdge
     from hyperweave.core.diagram_annotations import DiagramAnnotation
 
 _GRID = 4.0
@@ -223,16 +224,111 @@ def _midpoint_and_tangent(
     return (poly[-1][0], poly[-1][1], b[0] - a[0], b[1] - a[1])
 
 
-def _perp_lift(geo: EdgeGeo, lift: float, half_w: float = 0.0, half_h: float = 0.0) -> tuple[float, float]:
+OWNERSHIP_MIN_RATIO = 1.5
+"""How much nearer its OWN wire a bare micro-label must sit than the nearest
+foreign one, for a reader to be able to tell which edge it labels.
+
+Calibrated from the bundled corpus, not chosen: the labels that read cleanly
+sit at 2.3x and above, the two ``pipeline-row`` duplex labels and
+``sm-recursive``'s ``error`` sit at 1.34-1.44x, and the readme-ai fan's
+``render`` — the label nobody could attribute — sits at 1.01x. 1.5 is the gap
+between the borderline band and the healthy one. A DUPLEX label is exempt: a
+paired request/response label belongs BETWEEN its pair by design, so
+proximity to the partner wire is the vocabulary, not a defect."""
+
+
+def _point_wire_distance(px: float, py: float, poly: tuple[tuple[float, float], ...]) -> float:
+    """Shortest distance from a point to a sampled polyline."""
+    best = math.inf
+    for a, b in itertools.pairwise(poly):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L2 = dx * dx + dy * dy
+        t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((px - a[0]) * dx + (py - a[1]) * dy) / L2))
+        best = min(best, math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy)))
+    return best
+
+
+def _ownership_ratio(
+    seat: tuple[float, float],
+    own: tuple[tuple[float, float], ...],
+    foreign: list[tuple[tuple[float, float], ...]],
+) -> float:
+    """How decisively a seat reads as belonging to ``own`` — the nearest
+    foreign wire's distance over its own. Above 1 it is nearer its own wire;
+    the ratio says by how much, which is the part a reader actually uses."""
+    d_own = _point_wire_distance(seat[0], seat[1], own)
+    if d_own <= 1e-9:
+        return math.inf
+    d_foreign = min((_point_wire_distance(seat[0], seat[1], f) for f in foreign), default=math.inf)
+    return d_foreign / d_own
+
+
+def is_duplex_edge(edges: Sequence[ResolvedEdge], j: int) -> bool:
+    """Whether edge ``j`` is one half of a reciprocal pair — the same u->v
+    with v->u that promotes a cyclic dag.
+
+    A duplex label is exempt from the ownership law: a request/response pair
+    is DRAWN as two wires side by side, and its two labels belong in the
+    channel between them. Proximity to the partner wire is the vocabulary
+    there, not a failure to attribute — which matters more than it looks,
+    because the dag work now takes reciprocal pairs natively and renders them
+    as one dual-channel conduit. A law that fought that grammar would be
+    fighting the feature that is arriving next."""
+    if not (0 <= j < len(edges)):
+        return False
+    e = edges[j]
+    return any(o.source == e.target and o.target == e.source for k, o in enumerate(edges) if k != j)
+
+
+def _foreign_wires(ctx: SolverContext, geos: list[EdgeGeo], j: int) -> list[tuple[tuple[float, float], ...]]:
+    """Every OTHER edge's drawn polyline — the competition a label has to be
+    told apart from. A duplex edge gets an empty list, which turns the
+    ownership check off for it entirely (see ``is_duplex_edge``)."""
+    if is_duplex_edge(ctx.edges, j):
+        return []
+    own = geos[j] if 0 <= j < len(geos) else None
+    out: list[tuple[tuple[float, float], ...]] = []
+    for k, g in enumerate(geos):
+        if g is None or k == j or (own is not None and g.index == own.index):
+            continue
+        out.append(g.polyline or ((g.sx, g.sy), (g.tx, g.ty)))
+    return out
+
+
+def _perp_lift(
+    geo: EdgeGeo,
+    lift: float,
+    half_w: float = 0.0,
+    half_h: float = 0.0,
+    foreign: list[tuple[tuple[float, float], ...]] | None = None,
+) -> tuple[float, float]:
     """A label anchor lifted along the wire's local perpendicular for a geo
-    the solver left unlabelled — the arc-length midpoint pushed off the wire
-    toward the smaller-y side so labels ride above it. The lift covers the
-    label BOX's support extent along the normal (|nx|·half_w + |ny|·half_h)
-    plus the configured margin: a fixed lift cleared horizontal wires but
-    left a middle-anchored run straddling vertical and diagonal spokes — and
-    a label's OWN wire is excluded from collision by design, so the
-    preferred position itself must clear it. Deterministic: the
-    perpendicular is fixed by the end tangent, reproducible run to run."""
+    the solver left unlabelled — the arc-length midpoint pushed off the wire,
+    by default toward the smaller-y side so labels ride above it. The lift
+    covers the label BOX's support extent along the normal (|nx|·half_w +
+    |ny|·half_h) plus the configured margin: a fixed lift cleared horizontal
+    wires but left a middle-anchored run straddling vertical and diagonal
+    spokes — and a label's OWN wire is excluded from collision by design, so
+    the preferred position itself must clear it. Deterministic: the
+    perpendicular is fixed by the end tangent, reproducible run to run.
+
+    ABOVE is the standing default, and it stays the answer for every wire
+    with room on that side. It is abandoned only when it produces a seat the
+    reader cannot attribute: on a FAN, "above" points out of the diagram for
+    the edge that curves up and straight INTO the fan for the edge that
+    curves down, so the lower edge's label was being lifted toward its
+    siblings — the readme-ai `render` label was born at 0.70x, nearer the
+    `synthesize` wire than its own, before any collision pass ran. The
+    collide ladder then cleared the OVERLAP and left the ambiguity, because
+    not-overlapping and attributable are different properties.
+
+    The flip is deliberately hysteretic, not a bare "pick the roomier side":
+    the default has to be AMBIGUOUS (below ``OWNERSHIP_MIN_RATIO``) and the
+    mirror has to actually FIX it. Two seats within a hair of each other
+    therefore never trade places between near-identical renders, which is
+    what would churn goldens for no legibility gain. Both candidates come out
+    of the same ``off`` formula, so the mirror keeps the standoff law rather
+    than trading clearance for attribution."""
     poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
     mx, my, ux, uy = _midpoint_and_tangent(poly)
     if ux == 0.0 and uy == 0.0:  # degenerate local segment — fall back to the end tangent
@@ -244,7 +340,15 @@ def _perp_lift(geo: EdgeGeo, lift: float, half_w: float = 0.0, half_h: float = 0
     if ny > 0:
         nx, ny = -nx, -ny
     off = lift + abs(nx) * half_w + abs(ny) * half_h
-    return (mx + nx * off, my + ny * off)
+    seat = (mx + nx * off, my + ny * off)
+    if not foreign:
+        return seat
+    if _ownership_ratio(seat, poly, foreign) >= OWNERSHIP_MIN_RATIO:
+        return seat
+    mirrored = (mx - nx * off, my - ny * off)
+    if _ownership_ratio(mirrored, poly, foreign) >= OWNERSHIP_MIN_RATIO:
+        return mirrored
+    return seat
 
 
 def _solver_label_lift(geo: EdgeGeo, point: tuple[float, float], lift: float, anchor: str) -> tuple[float, float]:
@@ -441,7 +545,7 @@ def subsume_edge_labels(
             anchor = "middle"
             half_w = ck.text_w(tuple(wrapped), voice) / 2
             half_h = ck.block_h(n, voice, style) / 2
-            lx, ly = _perp_lift(geo, label_lift, half_w, half_h)
+            lx, ly = _perp_lift(geo, label_lift, half_w, half_h, _foreign_wires(ctx, geos, j))
         lines = tuple(
             DiagramText(x=lx, y=ly + (k - (n - 1) / 2.0) * pitch, text=line, cls=label_cls, anchor=anchor)
             for k, line in enumerate(wrapped)
