@@ -31,11 +31,15 @@
       "ink2": "#8596AB",
       "s0": "#101216",
       "s1": "#1D1F25",
-      "sig": "#5894FF",
-      "sigt": "#C2E5FF"
+      "sig": "#3291FF",
+      "sigt": "#7CB8FF"
+    },
+    "light": {
+      "sig": "#0070F3",
+      "sigt": "#0070F3"
     }
   },
-  "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family \u2014 ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark \u2014 is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read \u2014 the language-law suite grades it directly.",
+  "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family \u2014 ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark \u2014 is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read \u2014 the language-law suite grades it directly. light.sig/sigt: the diagram accent adopts the loop expression corpus's unanimous azure #0070F3 (owner ruling 2026-08-26) over the authored face's #2563EB. dark.sig/sigt: the dark diagram accent re-inked to the rich azure #3291FF / #7CB8FF (owner ruling 2026-08-26 \u2014 the authored periwinkle read washed against the near-black plate).",
   "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-porcelain.svg",
   "variant": "porcelain"
 }

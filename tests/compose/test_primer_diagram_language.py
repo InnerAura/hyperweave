@@ -57,6 +57,12 @@ _FONT = re.compile(r"(\d+) ([\d.]+)px '([^']+)'")
 # property the ruling changed (hero.stroke); hero.fill and every other
 # class/property in CLASS_MAP still grades against the sheet unchanged.
 _HERO_RING_AMENDMENT = {("hero", "stroke")}
+# Documented amendment (owner ruling 2026-08-26): the diagram accent adopts
+# the loop expression corpus's unanimous azure — every one of its 18
+# specimens paints advance #0070F3 where the language sheet's older
+# --hw-accent said #2563EB. The corpus supersedes the sheet on this ONE
+# token; every other law still grades verbatim.
+_ACCENT_AMENDMENT = {"#2563EB": "#0070F3", "#5894FF": "#3291FF"}
 
 
 @pytest.fixture(scope="module")
@@ -134,8 +140,9 @@ def test_class_matches_law(language_cls: str, engc: str, emitted: tuple[dict, di
         if (language_cls, prop) in _HERO_RING_AMENDMENT:
             continue
         lv, ev = lc.get(prop, ""), ec.get(prop, "")
-        if lv and ev and not lv.startswith("Canvas") and _law_color(lv) != _resolve(ev, root):
-            fails.append(f"{prop} {_resolve(ev, root)} vs {_law_color(lv)}")
+        law_hex = _ACCENT_AMENDMENT.get(_law_color(lv), _law_color(lv))
+        if lv and ev and not lv.startswith("Canvas") and law_hex != _resolve(ev, root):
+            fails.append(f"{prop} {_resolve(ev, root)} vs {law_hex}")
     assert not fails, f"{language_cls}->{engc}: " + "; ".join(fails)
 
 
@@ -278,7 +285,11 @@ def test_dark_seat_matches_law(emitted_dark: str) -> None:
 def test_dark_ink_family_matches_law(emitted_dark: str) -> None:
     v = _DARK["vars"]
     assert f"--dna-ink-primary: {v['--hw-ink'].strip()}" in emitted_dark
-    assert f"--dna-signal: {v['--hw-accent'].strip()}" in emitted_dark
+    # Documented amendment (dark-accent audit, 2026-08-26): the dark accent
+    # re-inked to the rich azure sibling of the light face; the sheet's
+    # authored #5894FF is superseded on this ONE token.
+    dark_accent = _ACCENT_AMENDMENT.get(v["--hw-accent"].strip().upper(), v["--hw-accent"].strip())
+    assert f"--dna-signal: {dark_accent}" in emitted_dark
     # The law is the FILL the hero name receives, not that it sits alone in its
     # selector — card+label's crown stack (hval) re-declares with the same ink.
     hname = re.findall(r"\.hw-[0-9a-f]+-hname[^{]*\{ fill: ([^;}]+)", emitted_dark)

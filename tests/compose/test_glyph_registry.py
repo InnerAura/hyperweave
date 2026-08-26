@@ -34,7 +34,7 @@ _GEOMETRIC = {
     "braces",
     "textlines",
 }
-_EVENODD = {"azure", "langfuse", "msteams", "playwright", "vscode", "zoom"}
+_EVENODD = {"azure", "hyperweave", "langfuse", "msteams", "playwright", "vscode", "zoom"}
 
 
 class TestRegistryShape:
@@ -75,8 +75,10 @@ class TestRegistryShape:
         # 124/39: openrouter left the mono set for color_paths with its
         # rebrand lime (owner ruling — brand color on the cards like every
         # full-color mark).
-        assert len(monos) == 124
-        assert len(full) == 39
+        # hyperweave left the mono set for its gradient octahedral mark
+        # (owner-supplied icon, 2026-08-26) — the openrouter precedent.
+        assert len(monos) == 123
+        assert len(full) == 40
         assert len(set(GLYPHS) - monos - full) == 29  # the named wave-3 debt
 
     def test_color_paths_shape(self) -> None:
@@ -119,9 +121,10 @@ class TestTintSelection:
         # "circle" is one of the geometric entries with no brand identity —
         # brand_color stays null by design, so BRAND degrades to ink.
         assert resolve_glyph_mode(GLYPHS["circle"], GlyphTint.BRAND) == "ink"
-        # hyperweave now carries its own brand color: BRAND
-        # resolves to the mark itself instead of degrading.
-        assert resolve_glyph_mode(GLYPHS["hyperweave"], GlyphTint.BRAND) == "brand"
+        # hyperweave now carries its own gradient ramp (the octahedral
+        # brand mark): a BRAND request resolves to the mark's own gradient,
+        # the same way every gradient-class mark answers.
+        assert resolve_glyph_mode(GLYPHS["hyperweave"], GlyphTint.BRAND) == "gradient"
 
     @pytest.mark.parametrize("tint", list(GlyphTint))
     def test_every_entry_renders_under_every_tint(self, tint: GlyphTint) -> None:

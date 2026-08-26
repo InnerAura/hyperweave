@@ -95,14 +95,14 @@ def test_strip_dark_metric_label_is_label_text() -> None:
 def test_strip_defaults_to_hyperweave_sigil(genome: str) -> None:
     """No explicit glyph + no provider → the HyperWeave sigil fills the identity zone."""
     svg = _strip(genome, value="STARS:2.9k")
-    assert "M12 0 C15 3 21 9 24 12" in svg, f"{genome}: glyphless strip must default to the HyperWeave sigil"
+    assert "M128.0 9.0 L247.0 128.0" in svg, f"{genome}: glyphless strip must default to the HyperWeave sigil"
 
 
 @pytest.mark.parametrize("genome", ["brutalist", "chrome", "automata"])
 def test_strip_glyph_none_suppresses(genome: str) -> None:
     """``--glyph none`` suppresses the glyph entirely (no sigil, no glyph zone)."""
     svg = _strip(genome, value="STARS:2.9k", glyph="none")
-    assert "M12 0 C15 3 21 9 24 12" not in svg, f"{genome}: --glyph none must not render the sigil"
+    assert "M128.0 9.0 L247.0 128.0" not in svg, f"{genome}: --glyph none must not render the sigil"
     assert 'data-hw-zone="brand-glyph"' not in svg and 'data-hw-zone="glyph"' not in svg, (
         f"{genome}: --glyph none must render no glyph zone"
     )
@@ -111,7 +111,7 @@ def test_strip_glyph_none_suppresses(genome: str) -> None:
 def test_strip_explicit_glyph_overrides_default() -> None:
     """An explicit ``--glyph`` wins over the sigil default."""
     svg = _strip("brutalist", value="STARS:2.9k", glyph="github")
-    assert "M12 0 C15 3 21 9 24 12" not in svg, "explicit glyph must override the sigil default"
+    assert "M128.0 9.0 L247.0 128.0" not in svg, "explicit glyph must override the sigil default"
 
 
 # ── Strip identity textLength parity (camo bound) across genomes ──

@@ -83,9 +83,10 @@ def test_brutalist_default_glyph_and_stateless_terminus(monkeypatch: pytest.Monk
     ends at the last cell + pad rather than a decorative bookend square.
     """
     body = _render("brutalist", "celadon")
-    # Glyphless → HyperWeave sigil fills the identity zone.
+    # Glyphless → the HyperWeave octahedral mark (registry 'hyperweave',
+    # re-drawn 2026-08-26 from the brand icon) fills the identity zone.
     assert 'data-hw-zone="brand-glyph"' in body, "glyphless strip must default to the HyperWeave sigil"
-    assert "M12 0 C15 3 21 9 24 12" in body, "default identity glyph must be the HyperWeave sigil path"
+    assert "M128.0 9.0 L247.0 128.0" in body, "default identity glyph must be the HyperWeave sigil path"
     # No retired fallback ornament square at the old (22,19) identity slot.
     assert not re.search(r'<rect\s+x="22"\s+y="19"\s+width="14"\s+height="14"', body), (
         "default-sigil strip must NOT render the retired identity ornament square"
