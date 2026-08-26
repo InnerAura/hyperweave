@@ -190,21 +190,27 @@ _ROTATE_PATCH: list[dict[str, Any]] = [{"op": "add", "path": "/orientation", "va
 
 
 # Preset-named README diagram assets minted by plain compose, with the
-# README's own documented flags: (preset, file stem, variant).
-# A fourth field names spec keys to DROP before minting. The verb-algebra
+# README's own documented flags: (preset, file stem, variant, drop, caption).
+# The fourth field names spec keys to DROP before minting. The verb-algebra
 # figure sits under its own README heading, so the artifact's own title and
 # subtitle would print the same words twice, 48px above a section that just
-# said them.
-_DIAGRAM_SINGLES: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
-    ("dag-providers", "frontier-serving", "noir", ()),
-    ("pipeline-row", "mcp-gateway", "space", ()),
-    ("hub-zones", "verb-algebra-hub", "porcelain", ("title", "subtitle")),
+# said them. The fifth field overrides the subtitle — the caption band — so
+# every README figure captions as ``Topology · name`` like its neighbors
+# (the presets keep their own storytelling subtitles for direct use);
+# empty keeps the preset's.
+_DIAGRAM_SINGLES: tuple[tuple[str, str, str, tuple[str, ...], str], ...] = (
+    ("dag-providers", "frontier-serving", "noir", (), "DAG · frontier serving"),
+    ("pipeline-row", "mcp-gateway", "space", (), "Pipeline · MCP gateway"),
+    ("hub-zones", "verb-algebra-hub", "porcelain", ("title", "subtitle"), ""),
     # tree-health had no entry here, so the README's dependency-audit pair was
     # the one committed asset with no generator behind it — and it drifted: the
     # shipped file was 532x722 PORTRAIT while the engine now solves the same
     # preset at 1023x722 landscape. A README asset that nothing re-mints is a
     # hand-maintained copy pretending to be output.
-    ("tree-health", "tree-health", "porcelain", ()),
+    ("tree-health", "tree-health", "porcelain", (), "Tree · dependency audit"),
+    # The loop pair shipped hand-minted at first — the same no-generator
+    # drift tree-health documents one entry up.
+    ("loop-hillclimb-turn", "loop-hillclimb-turn", "porcelain", (), "Loop · hillclimb"),
 )
 
 # Each asset ships as a light/dark PAIR (``<stem>-light.svg`` /
@@ -246,6 +252,10 @@ def refresh_diagrams() -> list[Path]:
     with patch("hyperweave.compose.context.datetime", _FrozenDatetime):
         minted: list[tuple[str, str]] = []
         mesh = resolve_diagram_preset("dag-mesh")
+        # The README caption convention (Topology · name) — the preset keeps
+        # its own storytelling subtitle; the child and the turned figure
+        # inherit this one through the transform chain's embedded spec.
+        mesh["subtitle"] = "DAG · service dependencies"
         for face in _FACES:
             parent = _face(mesh, "porcelain", face)
             child = transform(parent, _SERVICE_PATCH, ts=_PINNED_CLOCK.isoformat())
@@ -266,8 +276,10 @@ def refresh_diagrams() -> list[Path]:
                 (f"service-dependencies-billing-{face}.svg", child.svg),
                 (f"service-dependencies-vertical-{face}.svg", _face(turned_spec, "noir", face)),
             ]
-        for preset, stem, variant, drop in _DIAGRAM_SINGLES:
+        for preset, stem, variant, drop, caption in _DIAGRAM_SINGLES:
             spec = {k: v for k, v in resolve_diagram_preset(preset).items() if k not in drop}
+            if caption:
+                spec["subtitle"] = caption
             minted += [(f"{stem}-{face}.svg", _face(spec, variant, face)) for face in _FACES]
         for filename, svg in minted:
             dest = _DIAGRAMS_OUT / filename

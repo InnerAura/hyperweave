@@ -1,6 +1,6 @@
 """Measured delta lists: the loop expression corpus vs the engine's current output.
 
-For each hand specimen under ``v04/v040/v044/loops/**-specimens*/`` this
+For each hand specimen under ``v04/v040/v044/loop/**-specimens*/`` this
 harness authors the nearest-LEGAL engine spec (only vocabulary the solver
 accepts today), renders it exactly as the parity board does (primer /
 porcelain / fixed), measures both sides with the same extractors the fixture

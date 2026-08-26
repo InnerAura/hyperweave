@@ -1,295 +1,345 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
-     viewBox="0 0 800 540" role="img" aria-labelledby="hSL-t hSL-d"
-     style="width:100%;height:auto;display:block" data-hw-component="hero-banner"
-     data-hw-chromatic="cherenkov-ink" data-hw-variant="stacked-pool-light"
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 604 560" width="420"
+     height="389" role="img" aria-labelledby="t d" data-hw-component="logo-stacked"
+     data-hw-chromatic="primer-porcelain" data-hw-variant="porcelain"
      data-hw-status="active" data-hw-regime="normal" data-protocol="hw-v1">
-  <title id="hSL-t">HyperWeave — stacked lockup, light</title>
-  <desc id="hSL-d">HyperWeave stacked lockup, light: faceted octahedral gem over the
-    wordmark over the subtitle, three rows on a shared centre axis in a laminar caustic
-    pool.</desc>
+  <title id="t">HyperWeave — The artifact layer for agent-human representations.</title>
+  <desc id="d">
+    HyperWeave stacked logo, Primer porcelain variant (fired white glaze,
+    cobalt underglaze — the editorial default). Octahedral mark with faceted volume,
+    glass core, and a lit-to-shadow transmitter highlight, above the HyperWeave wordmark
+    in Orbitron over the tagline THE ARTIFACT LAYER FOR AGENT-HUMAN REPRESENTATIONS.
+    Transparent (light surfaces). v3.1.0: two-line subtitle replaced by a single
+    sentence-case tagline; canvas re-fit 592 -&gt; 560.
+  </desc>
   <metadata>
-    <hw:artifact id="01a02a90-3d10-7f02-9b21-4e75c8a10d33" type="hero-banner"
-                 series="hyperweave-identity" version="3.9.1-stacked-light">
+    <hw:artifact id="0198c1a4-3f10-7e42-9d31-hyperweaveporcelain" type="logo-stacked"
+                 series="hyperweave-identity" version="3.1.0">
       <hw:provenance>
-        <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]</hw:generator>
-        <hw:created>2026-08-21T00:00:00Z</hw:created>
-        <hw:human-directed>true</hw:human-directed>
+        <hw:generator>
+          Claude Opus 5 (InnerAura Labs) [claude-opus-5]
+        </hw:generator>
+        <hw:created>
+          2026-08-26T00:00:00Z
+        </hw:created>
+        <hw:human-directed>
+          true
+        </hw:human-directed>
+        <hw:lineage parent="0197f47p-c020-7c68-9e70-hyperweaveporcelain"
+                    relation="revision" />
       </hw:provenance>
-      <hw:lineage parent="01a02a5e-4c20-7e02-9f36-8d1b64c27a55"
-                  operation="theme-set-emission" donor="cherenkov-ink-family"
-                  geometry-donor="faceted-octahedral-gem#0.2.1" />
-      <hw:spec size="800x540 fixed-ratio" performance="paint-ok" theme="light"
-               a11y="WCAG-AA" />
+      <hw:spec size="604x560" performance="paint-ok" theme="light" a11y="WCAG-AA" />
     </hw:artifact>
     <hw:aesthetic>
-      <hw:chromatic system="cherenkov-ink" space="srgb"
-                    contrast-ratio="&gt;7:1 lockup on substrate"
-                    theory="monochromatic-azure with cyan overtone" />
-      <hw:motion vocabulary="fluid-caustic-drift, field-pan, liquid-displacement, organic-breathe, vertex-dilate"
-                 physics="laminar-quantum-flow" timing="phi" cim-compliant="false" />
-      <hw:geometry form-language="angular" proportional-system="bilateral"
-                   mathematical-basis="octahedral-projection" symmetry="bilateral" />
-      <hw:material surface="faceted-glass+laminar-caustics+surface-matched-lockup"
-                   depth="deep" />
+      <hw:chromatic system="primer-porcelain" space="srgb" contrast-ratio="5.5" />
+      <hw:motion vocabulary="wave-collapse, breathe, fade" physics="damped" timing="phi"
+                 cim-compliant="false" />
+      <hw:geometry form-language="geometric" proportional-system="root2"
+                   mathematical-basis="golden-ratio" symmetry="radial" />
+      <hw:material surface="glass" depth="shallow" />
     </hw:aesthetic>
     <hw:reasoning>
-      <hw:intent>The vertical lockup: mark, wordmark, subtitle as three stacked rows for
-        square and portrait surfaces where the horizontal hero cannot fit.</hw:intent>
-      <hw:approach>Three rows on one centre axis at x400 in an 800x540 frame. The mark
-        grows to scale 1.50 because a stacked mark owns its row outright and carries the
-        hierarchy alone, opening mark-to-cap from 2.34 to 3.72. Row gaps are unequal on
-        purpose — 58 between the mark base and the cap top, 50 between the two baselines
-        — so the subtitle binds to the wordmark as a tail while the mark stands apart as
-        its own element. The wordmark centres on the path bounding box rather than the
-        H, since the flush-left rule that governs the horizontal lockup has no meaning
-        on a centre axis. Vignette goes to 88 on all four sides, even feathering for a
-        frame that is no longer wide.</hw:approach>
-      <hw:tradeoffs>Centre-axis stacking abandons the flush left edge the horizontal
-        lockup is built on, so the two forms do not share a spatial rule and neither can
-        be derived from the other — this is a second lockup to maintain, not a reflow.
-        Mark-to-cap opens from 2.34 to 3.72 because a stacked mark owns its row and can
-        carry the hierarchy alone; that also means the stacked wordmark reads smaller
-        than a naive scale of the horizontal one and the two should never appear on the
-        same surface. Subtitle sits at 14px, near the floor for 0.17em tracking to stay
-        legible, and its centred width (553) lands close enough to the wordmark (658)
-        that the block can read as accidentally justified at small sizes. Letter-spacing
-        adds tracking after the final character, so the centred subtitle is optically
-        about 1.2px left of true centre; uncompensated. Caustic base frequencies were
-        raised (0.0035 to 0.0045 and 0.0045 to 0.0055) because turbulence features are
-        absolute in user units and would otherwise read coarse in a frame two-thirds the
-        width. Reduced motion remains unresolved.</hw:tradeoffs>
-      <hw:spatial-notes>Canvas 800x540, three rows on a shared centre axis at x400. Row
-        1 mark translate(400,178) scale 1.50, spanning x280-520 y58-298, half-extent
-        120. Row 2 wordmark translate(22.92,-276.4) scale 1.24, width 658.1 centred
-        (x70.9-729.1), cap block 356-420.5, cap height 64.5. Row 3 subtitle centred at
-        x400 y470.5, 14px/0.17em, width about 553. Row gaps 58 (mark base to cap top)
-        and 50 (baseline to baseline). Margins 58 top, 69.5 bottom. Mark height to cap
-        height ratio 3.72. Vignette 88 on all four sides.</hw:spatial-notes>
+      <hw:intent>
+        HyperWeave stacked lockup, Primer porcelain colorway — fired white
+        glaze, cobalt underglaze — the editorial default. Now states the product
+        proposition directly instead of a mood line plus a company credit.
+      </hw:intent>
+      <hw:approach>
+        Copy-and-fit revision from v3.0.1. The mark geometry, node positions,
+        glass/volume/glow layers, palette, motion vocabulary, wordmark outlines and all
+        accessibility behavior are held byte-identical; only the text block below the
+        wordmark changed. The two tracked all-caps slots (516 / 550) collapse to one
+        sentence-case tagline on the 516 baseline, set in TeX Gyre Heros at 18px and
+        outlined to paths — no webfont, no runtime dependency. Glyphs are emitted once
+        into defs and placed with &lt;use&gt;, so the 50-character line costs 21
+        outlines
+        instead of 50. Removing the second slot frees 34px, so the viewBox drops 592
+        -&gt;
+        560 to restore even ~40px top and bottom margins.
+      </hw:approach>
+      <hw:tradeoffs>
+        Kept sentence case rather than converting the tagline to the tracked
+        all-caps of the line it replaces: at 50 characters, caps plus tracking runs past
+        the 531px wordmark and inverts the hierarchy, and a proposition reads as a
+        sentence while a mood line reads as a label. Chose glyph outlines over a
+        &lt;text&gt; element so the artifact still renders identically inside GitHub
+        &lt;img&gt; context where no font stack resolves — cost is a text layer that is
+        no longer string-editable, mitigated by the atlas structure and the
+        aria-labelled
+        title. Chose to crop the canvas rather than re-center the whole lockup, so the
+        mark keeps its exact v3.0.1 coordinates and the two versions overlay cleanly.
+        Chose a separate obsidian file over a prefers-color-scheme fork inside one file:
+        README and email surfaces pick assets by URL, not by media query. Subtitle
+        chromatic darkened #5C7C9E -&gt; #4E6B8A and opacity lifted .95 -&gt; 1 because
+        the
+        old value measured 4.37:1 on white and failed AA at body size.
+      </hw:tradeoffs>
+      <hw:spatial-notes>
+        604x560 (1.08:1), axis of symmetry x=302. Octahedral complex centered
+        (302,213.18) at scale 2.05; vertices r=80 local (mark footprint ~328x328, mark
+        vertical extent 42-&gt;384). Top margin 42 (canvas to mark crown), bottom margin
+        40
+        (tagline descender ~520 to canvas edge). Mark-&gt;wordmark gap 36px (bottom node
+        edge
+        ~384 to wordmark cap 420). Wordmark cap 52px, baseline 472. Single tagline
+        baseline 516 — 44px below the wordmark baseline, cap height 13.1px, run width
+        405.2px (67% of canvas, 76% of the 531px wordmark), centered on x=302 so the
+        widths nest 328 (mark) &lt; 405 (tagline) &lt; 531 (wordmark) and no edge
+        aligns.
+        Vertical rhythm now descends 42 &gt; 36 &gt; 44 &gt; 40. Faceted faces shaded on
+        a vertical
+        light(-80)-&gt;dark(+80) gradient for volume; transmitter glass fill -60..60;
+        inner
+        highlight crown-to-base on a 0.93-scaled concentric path. Five connection nodes
+        (4 vertices r=3.5 + center r=4).
+      </hw:spatial-notes>
     </hw:reasoning>
     <hw:stratum>
-      <hw:ring primary="002-TRIBE" />
+      <hw:ring primary="005-COSMIC" />
       <hw:affinities>
-        <hw:resonance ring="005-COSMIC" strength="0.7" />
+        <hw:resonance ring="002-TRIBE" strength="0.7" />
       </hw:affinities>
     </hw:stratum>
   </metadata>
   <defs>
-    <filter id="hSL-caustA" x="-20%" y="-40%" width="140%" height="180%"
-            color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.0045 0.0075" numOctaves="3"
-                    seed="418" result="n" />
-      <feGaussianBlur in="n" stdDeviation="14" result="sm" />
-      <feSpecularLighting in="sm" surfaceScale="28" specularConstant="2.4"
-                          specularExponent="36" lighting-color="#0084FF" result="g">
-        <fePointLight x="460" y="260" z="240">
-          <animate attributeName="x" values="260;660;260" dur="34s"
-                   repeatCount="indefinite" calcMode="spline"
-                   keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-          <animate attributeName="y" values="140;400;140" dur="24s"
-                   repeatCount="indefinite" calcMode="spline"
-                   keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-        </fePointLight>
-      </feSpecularLighting>
-      <feColorMatrix in="g" type="matrix"
-                     values="0.02 0 0 0 0  0 0.40 0 0 0  0 0 2.4 0 0.1  0 0 0 1 0"
-                     result="boosted" />
-      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2"
-                    seed="77" result="warp" />
-      <feDisplacementMap in="boosted" in2="warp" scale="10" xChannelSelector="R"
-                         yChannelSelector="G" result="liquid">
-        <animate attributeName="scale" values="5;15;5" dur="11s"
-                 repeatCount="indefinite" calcMode="spline"
-                 keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-      </feDisplacementMap>
-      <feComposite in="liquid" in2="SourceGraphic" operator="in" />
-    </filter>
-    <filter id="hSL-caustB" x="-20%" y="-40%" width="140%" height="180%"
-            color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.0055 0.0095" numOctaves="3"
-                    seed="192" result="n" />
-      <feGaussianBlur in="n" stdDeviation="11" result="sm" />
-      <feSpecularLighting in="sm" surfaceScale="22" specularConstant="1.9"
-                          specularExponent="48" lighting-color="#00F0FF" result="g">
-        <fePointLight x="560" y="200" z="220">
-          <animate attributeName="x" values="660;340;660" dur="42s"
-                   repeatCount="indefinite" calcMode="spline"
-                   keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-          <animate attributeName="y" values="180;360;180" dur="28s"
-                   repeatCount="indefinite" calcMode="spline"
-                   keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-        </fePointLight>
-      </feSpecularLighting>
-      <feComposite in="g" in2="SourceGraphic" operator="in" />
-    </filter>
-    <filter id="hSL-bloom" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="55" />
-    </filter>
-    <filter id="hSL-fx" x="-45%" y="-45%" width="190%" height="190%"
-            color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="2" stdDeviation="3.2" flood-color="#0A2C6E"
-                    flood-opacity="0.30" />
-    </filter>
-    <linearGradient id="hSL-type" gradientUnits="userSpaceOnUse" x1="0" y1="510" x2="0"
-                    y2="578">
-      <stop offset="0%" stop-color="#2E7CFF" />
-      <stop offset="55%" stop-color="#1444B8" />
-      <stop offset="100%" stop-color="#0A2C6E" />
+    <linearGradient id="ramp" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5C80E3" />
+      <stop offset="50%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#1E40A0" />
     </linearGradient>
-    <linearGradient id="hSL-sig" gradientUnits="userSpaceOnUse" x1="0" y1="-80" x2="0"
-                    y2="80">
-      <stop offset="0%" stop-color="#2E7CFF" />
-      <stop offset="55%" stop-color="#1444B8" />
-      <stop offset="100%" stop-color="#0A2C6E" />
+    <linearGradient id="wm" gradientUnits="userSpaceOnUse" x1="34.6" y1="0" x2="569.5"
+                    y2="0">
+      <stop offset="0%" stop-color="#2D5EE0" />
+      <stop offset="50%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#1E40A0" />
     </linearGradient>
-    <linearGradient id="hSL-sub" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#1450C8" />
-      <stop offset="100%" stop-color="#0A2C6E" />
-    </linearGradient>
-    <radialGradient id="hSL-glow" gradientUnits="userSpaceOnUse" cx="0" cy="-10" r="84">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.86" />
-      <stop offset="40%" stop-color="#DCEDFF" stop-opacity="0.48" />
-      <stop offset="74%" stop-color="#A8CEFF" stop-opacity="0.18" />
-      <stop offset="100%" stop-color="#8CBCFF" stop-opacity="0" />
+    <radialGradient id="nodeM" cx="40%" cy="36%" r="62%">
+      <stop offset="0%" stop-color="#BCCBF2" />
+      <stop offset="50%" stop-color="#4D7AE8" />
+      <stop offset="100%" stop-color="#1E40A0" />
     </radialGradient>
-    <linearGradient id="hSL-face" gradientUnits="userSpaceOnUse" x1="0" y1="-80" x2="0"
-                    y2="80">
-      <stop offset="0%" stop-color="#2E7CFF" stop-opacity="0.13" />
-      <stop offset="46%" stop-color="#1A54CC" stop-opacity="0.27" />
-      <stop offset="100%" stop-color="#0A2C6E" stop-opacity="0.41" />
+    <linearGradient id="subGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4E6B8A" />
+      <stop offset="100%" stop-color="#58748F" />
     </linearGradient>
-    <linearGradient id="hSL-glass" gradientUnits="userSpaceOnUse" x1="0" y1="-60" x2="0"
+    <radialGradient id="backGlow" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="86">
+      <stop offset="0%" stop-color="#1D4ED8" stop-opacity="0.10" />
+      <stop offset="55%" stop-color="#1D4ED8" stop-opacity="0.035" />
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="faceVol" gradientUnits="userSpaceOnUse" x1="0" y1="-80" x2="0"
+                    y2="80">
+      <stop offset="0%" stop-color="#1D4ED8" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0.05" />
+    </linearGradient>
+    <linearGradient id="glassFill" gradientUnits="userSpaceOnUse" x1="0" y1="-60" x2="0"
                     y2="60">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.72" />
-      <stop offset="38%" stop-color="#E4F1FF" stop-opacity="0.34" />
-      <stop offset="72%" stop-color="#9CC8FF" stop-opacity="0.2" />
-      <stop offset="100%" stop-color="#2E7CFF" stop-opacity="0.26" />
+      <stop offset="0%" stop-color="#1D4ED8" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0.06" />
     </linearGradient>
-    <linearGradient id="hSL-inner" gradientUnits="userSpaceOnUse" x1="0" y1="-56" x2="0"
-                    y2="56">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
-      <stop offset="40%" stop-color="#DCEEFF" stop-opacity="0.55" />
-      <stop offset="100%" stop-color="#2E7CFF" stop-opacity="0.28" />
+    <linearGradient id="innerLight" gradientUnits="userSpaceOnUse" x1="0" y1="-56"
+                    x2="0" y2="56">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.7" />
+      <stop offset="44%" stop-color="#ffffff" stop-opacity="0.06" />
+      <stop offset="56%" stop-color="#1E40A0" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#1E40A0" stop-opacity="0.5" />
     </linearGradient>
-    <radialGradient id="hSL-node" cx="38%" cy="32%" r="72%">
-      <stop offset="0%" stop-color="#FBFDFF" />
-      <stop offset="45%" stop-color="#2E7CFF" />
-      <stop offset="100%" stop-color="#0A2C6E" />
-    </radialGradient>
-    <linearGradient id="hSL-vigL" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#FBFDFF" />
-      <stop offset="100%" stop-color="#FBFDFF" stop-opacity="0" />
-    </linearGradient>
-    <linearGradient id="hSL-vigR" x1="1" y1="0" x2="0" y2="0">
-      <stop offset="0%" stop-color="#FBFDFF" />
-      <stop offset="100%" stop-color="#FBFDFF" stop-opacity="0" />
-    </linearGradient>
-    <linearGradient id="hSL-vigT" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#FBFDFF" />
-      <stop offset="100%" stop-color="#FBFDFF" stop-opacity="0" />
-    </linearGradient>
-    <linearGradient id="hSL-vigB" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#FBFDFF" />
-      <stop offset="100%" stop-color="#FBFDFF" stop-opacity="0" />
-    </linearGradient>
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" />
+      <feOffset dx="1.2" dy="1.8" result="o" />
+      <feFlood flood-color="#1E3A5F" flood-opacity="0.22" />
+      <feComposite in2="o" operator="in" />
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="waveFilter" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0" numOctaves="3" result="noise"
+                    seed="42">
+        <animate attributeName="baseFrequency" values="0.05;0" dur="2.4s" begin="0s"
+                 fill="freeze" />
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R"
+                         yChannelSelector="G">
+        <animate id="waveCollapse" attributeName="scale" values="20;0" dur="2.4s"
+                 begin="0s" fill="freeze" />
+      </feDisplacementMap>
+    </filter>
+    <path id="hg-T" d="M10.7 -11.6V-13.1H0.4V-11.6H4.7V0.0H6.4V-11.6Z" />
+    <path id="hg-h"
+          d="M8.7 0.0V-7.1C8.7 -8.7 7.6 -9.7 5.8 -9.7C4.4 -9.7 3.6 -9.3 2.8 -8.1V-13.1H1.3V0.0H2.8V-5.2C2.8 -7.1 3.8 -8.4 5.3 -8.4C6.4 -8.4 7.3 -7.8 7.3 -6.5V0.0Z" />
+    <path id="hg-e"
+          d="M9.2 -4.3C9.2 -5.7 9.1 -6.5 8.9 -7.2C8.2 -8.8 6.8 -9.7 5.0 -9.7C2.4 -9.7 0.7 -7.8 0.7 -4.7C0.7 -1.6 2.4 0.3 5.0 0.3C7.2 0.3 8.7 -1.0 9.0 -2.9H7.5C7.1 -1.6 6.3 -1.1 5.1 -1.1C3.5 -1.1 2.3 -2.1 2.3 -4.3ZM7.6 -5.6C7.6 -5.6 7.6 -5.5 7.6 -5.5H2.3C2.4 -7.2 3.5 -8.3 5.0 -8.3C6.5 -8.3 7.6 -7.1 7.6 -5.6Z" />
+    <path id="hg-a"
+          d="M9.6 -0.0V-1.2C9.5 -1.1 9.4 -1.1 9.3 -1.1C8.8 -1.1 8.5 -1.4 8.5 -1.9V-7.1C8.5 -8.8 7.3 -9.7 4.9 -9.7C2.7 -9.7 1.3 -8.8 1.2 -6.6H2.7C2.8 -7.8 3.5 -8.3 4.9 -8.3C6.2 -8.3 7.0 -7.8 7.0 -6.9V-6.5C7.0 -5.9 6.6 -5.6 5.4 -5.5C3.3 -5.2 3.0 -5.1 2.4 -4.9C1.3 -4.4 0.8 -3.6 0.8 -2.4C0.8 -0.7 1.9 0.3 3.9 0.3C5.1 0.3 6.2 -0.2 7.1 -1.1C7.2 -0.4 7.9 0.1 8.6 0.1C8.9 0.1 9.1 0.1 9.6 -0.0ZM7.0 -3.3C7.0 -1.9 5.6 -1.0 4.2 -1.0C3.0 -1.0 2.3 -1.5 2.3 -2.5C2.3 -3.5 3.0 -3.9 4.6 -4.1C6.2 -4.4 6.5 -4.4 7.0 -4.7Z" />
+    <path id="hg-r"
+          d="M5.8 -8.1V-9.6C5.5 -9.7 5.4 -9.7 5.2 -9.7C4.2 -9.7 3.5 -9.1 2.6 -7.7V-9.4H1.3V0.0H2.8V-4.9C2.8 -7.0 3.5 -8.1 5.8 -8.1Z" />
+    <path id="hg-t"
+          d="M4.6 0.0V-1.3C4.4 -1.2 4.1 -1.2 3.9 -1.2C3.2 -1.2 3.0 -1.4 3.0 -2.0V-8.2H4.6V-9.4H3.0V-12.0H1.5V-9.4H0.3V-8.2H1.5V-1.4C1.5 -0.4 2.2 0.1 3.3 0.1C3.7 0.1 4.1 0.1 4.6 0.0Z" />
+    <path id="hg-i" d="M2.8 0.0V-9.4H1.3V0.0ZM3.0 -10.9V-12.7H1.1V-10.9Z" />
+    <path id="hg-f"
+          d="M4.6 -8.2V-9.4H3.1V-10.9C3.1 -11.5 3.4 -11.9 4.1 -11.9C4.2 -11.9 4.3 -11.9 4.6 -11.8V-13.1C4.3 -13.2 4.1 -13.2 3.8 -13.2C2.4 -13.2 1.6 -12.4 1.6 -11.0V-9.4H0.3V-8.2H1.6V0.0H3.1V-8.2Z" />
+    <path id="hg-c"
+          d="M8.6 -3.2H7.1C6.8 -1.7 6.0 -1.1 4.8 -1.1C3.1 -1.1 2.1 -2.4 2.1 -4.6C2.1 -7.0 3.1 -8.3 4.7 -8.3C6.0 -8.3 6.8 -7.6 7.0 -6.3H8.5C8.3 -8.6 6.9 -9.7 4.8 -9.7C2.2 -9.7 0.6 -7.8 0.6 -4.6C0.6 -1.6 2.2 0.3 4.7 0.3C7.0 0.3 8.4 -1.1 8.6 -3.2Z" />
+    <path id="hg-l" d="M2.7 0.0V-13.1H1.2V0.0Z" />
+    <path id="hg-y"
+          d="M8.6 -9.4H7.0L4.4 -2.1L2.0 -9.4H0.4L3.5 0.0L3.0 1.5C2.7 2.2 2.4 2.4 1.8 2.4C1.5 2.4 1.3 2.4 1.0 2.3V3.7C1.3 3.9 1.6 3.9 2.0 3.9C3.0 3.9 3.9 3.3 4.4 2.0Z" />
+    <path id="hg-o"
+          d="M9.2 -4.6C9.2 -7.9 7.6 -9.7 4.9 -9.7C2.2 -9.7 0.6 -7.9 0.6 -4.7C0.6 -1.5 2.2 0.3 4.9 0.3C7.6 0.3 9.2 -1.5 9.2 -4.6ZM7.6 -4.7C7.6 -2.4 6.6 -1.1 4.9 -1.1C3.2 -1.1 2.2 -2.4 2.2 -4.7C2.2 -7.0 3.2 -8.3 4.9 -8.3C6.6 -8.3 7.6 -7.0 7.6 -4.7Z" />
+    <path id="hg-g"
+          d="M8.8 -1.5V-9.4H7.4V-8.1C6.7 -9.2 5.7 -9.7 4.5 -9.7C2.1 -9.7 0.5 -7.7 0.5 -4.6C0.5 -1.7 2.2 0.3 4.4 0.3C5.6 0.3 6.4 -0.2 7.4 -1.4V-0.8C7.4 1.7 6.4 2.7 4.6 2.7C3.5 2.7 2.5 2.2 2.4 1.1H0.8C1.0 2.9 2.4 3.9 4.6 3.9C7.5 3.9 8.8 2.6 8.8 -1.5ZM7.3 -4.7C7.3 -2.4 6.3 -1.1 4.7 -1.1C3.1 -1.1 2.1 -2.4 2.1 -4.7C2.1 -7.0 3.1 -8.3 4.7 -8.3C6.3 -8.3 7.3 -6.9 7.3 -4.7Z" />
+    <path id="hg-n"
+          d="M8.8 0.0V-7.1C8.8 -8.7 7.6 -9.7 5.8 -9.7C4.4 -9.7 3.5 -9.2 2.6 -7.8V-9.4H1.3V0.0H2.8V-5.2C2.8 -7.1 3.8 -8.4 5.3 -8.4C6.5 -8.4 7.3 -7.7 7.3 -6.5V0.0Z" />
+    <path id="hg-hyphen" d="M5.1 -4.3V-5.6H0.8V-4.3Z" />
+    <path id="hg-u"
+          d="M8.7 0.0V-9.4H7.2V-4.2C7.2 -2.3 6.2 -1.0 4.6 -1.0C3.4 -1.0 2.7 -1.8 2.7 -2.9V-9.4H1.2V-2.3C1.2 -0.7 2.3 0.3 4.2 0.3C5.6 0.3 6.4 -0.2 7.3 -1.5V0.0Z" />
+    <path id="hg-m"
+          d="M13.7 0.0V-7.1C13.7 -8.8 12.7 -9.7 11.0 -9.7C9.7 -9.7 9.0 -9.3 8.1 -8.3C7.5 -9.3 6.8 -9.7 5.5 -9.7C4.3 -9.7 3.5 -9.2 2.6 -8.1V-9.4H1.3V0.0H2.8V-5.9C2.8 -7.3 3.8 -8.4 5.0 -8.4C6.1 -8.4 6.7 -7.7 6.7 -6.5V0.0H8.2V-5.9C8.2 -7.3 9.2 -8.4 10.5 -8.4C11.6 -8.4 12.2 -7.7 12.2 -6.5V0.0Z" />
+    <path id="hg-p"
+          d="M9.4 -4.6C9.4 -7.8 7.9 -9.7 5.4 -9.7C4.1 -9.7 3.1 -9.1 2.4 -8.0V-9.4H1.0V3.9H2.5V-1.1C3.3 -0.2 4.2 0.3 5.4 0.3C7.8 0.3 9.4 -1.6 9.4 -4.6ZM7.8 -4.7C7.8 -2.5 6.7 -1.1 5.1 -1.1C3.5 -1.1 2.5 -2.4 2.5 -4.6C2.5 -6.9 3.5 -8.3 5.1 -8.3C6.8 -8.3 7.8 -6.9 7.8 -4.7Z" />
+    <path id="hg-s"
+          d="M8.3 -2.6C8.3 -4.0 7.5 -4.8 5.6 -5.2L4.2 -5.5C2.9 -5.8 2.4 -6.2 2.4 -6.9C2.4 -7.8 3.2 -8.3 4.4 -8.3C5.6 -8.3 6.3 -7.8 6.3 -6.8H7.9C7.9 -8.7 6.6 -9.7 4.5 -9.7C2.3 -9.7 0.8 -8.6 0.8 -6.8C0.8 -5.3 1.6 -4.6 3.8 -4.1L5.2 -3.8C6.3 -3.5 6.7 -3.2 6.7 -2.5C6.7 -1.6 5.8 -1.1 4.5 -1.1C3.1 -1.1 2.4 -1.4 2.2 -2.9H0.6C0.7 -0.7 1.9 0.3 4.4 0.3C6.7 0.3 8.3 -0.8 8.3 -2.6Z" />
+    <path id="hg-period" d="M3.4 0.0V-1.9H1.6V0.0Z" />
   </defs>
   <style>
-    .hero-sub {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.17em;
-      text-transform: uppercase;
+    svg {
+      color-scheme: light dark
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      * {
+    .word-rise,
+    .tagline {
+      will-change: opacity
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .word-rise {
+      animation: fade .8s ease 1.0s both
+    }
+
+    .tagline {
+      animation: fade .6s ease 1.3s both
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+
+      .word-rise,
+      .tagline {
         animation: none !important;
+        opacity: 1
+      }
+    }
+
+    @media (forced-colors:active) {
+      .wfill {
+        fill: CanvasText
       }
     }
   </style>
-  <g>
-    <rect width="800" height="540" fill="#EEF5FC" />
-    <circle cx="330" cy="210" r="180" fill="#8CBCFF" opacity="0.28"
-            filter="url(#hSL-bloom)">
-      <animate attributeName="opacity" values="0.22;0.34;0.22" dur="9s"
-               repeatCount="indefinite" calcMode="spline"
-               keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" />
-      <animate attributeName="cx" values="300;380;300" dur="18s"
-               repeatCount="indefinite" calcMode="spline"
-               keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-    </circle>
-    <circle cx="540" cy="340" r="150" fill="#B8E8FF" opacity="0.24"
-            filter="url(#hSL-bloom)">
-      <animate attributeName="opacity" values="0.18;0.30;0.18" dur="11s"
-               repeatCount="indefinite" calcMode="spline"
-               keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" />
-      <animate attributeName="cx" values="570;500;570" dur="22s"
-               repeatCount="indefinite" calcMode="spline"
-               keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-    </circle>
-    <g>
-      <animateTransform attributeName="transform" type="translate"
-                        values="0 0; 40 -14; 0 0; -34 16; 0 0" dur="36s"
-                        repeatCount="indefinite" calcMode="spline"
-                        keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" />
-      <rect x="-160" y="-160" width="1120" height="860" fill="#0077FF"
-            filter="url(#hSL-caustA)" opacity="0.3">
-        <animate attributeName="opacity" values="0.24;0.36;0.24" dur="14s"
-                 repeatCount="indefinite" calcMode="spline"
-                 keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-      </rect>
+  <!--bare transparent field-->
+  <g transform="translate(302, 213.18) scale(2.05)" filter="url(#waveFilter)">
+    <circle cx="0" cy="0" r="80" fill="url(#backGlow)" />
+    <g fill="url(#faceVol)">
+      <path d="M0,-80 L80,0 L0,0 Z" />
+      <path d="M0,-80 L0,0 L-80,0 Z" />
+      <path d="M0,80 L80,0 L0,0 Z" />
+      <path d="M0,80 L0,0 L-80,0 Z" />
     </g>
-    <g>
-      <animateTransform attributeName="transform" type="translate"
-                        values="0 0; -42 12; 0 0; 32 -15; 0 0" dur="47s"
-                        repeatCount="indefinite" calcMode="spline"
-                        keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" />
-      <rect x="-160" y="-160" width="1120" height="860" fill="#00F0FF"
-            filter="url(#hSL-caustB)" opacity="0.12" style="mix-blend-mode:screen">
-        <animate attributeName="opacity" values="0.08;0.16;0.08" dur="12s"
-                 repeatCount="indefinite" calcMode="spline"
-                 keySplines="0.45 0 0.55 1; 0.45 0 0.55 1" />
-      </rect>
+    <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"
+          fill="url(#glassFill)" />
+    <g stroke="url(#ramp)" stroke-width="2.5" opacity="0.95" stroke-linecap="round">
+      <line x1="0" y1="-80" x2="80" y2="0" />
+      <line x1="0" y1="-80" x2="0" y2="0" />
+      <line x1="0" y1="-80" x2="-80" y2="0" />
+      <line x1="0" y1="80" x2="80" y2="0" />
+      <line x1="0" y1="80" x2="0" y2="0" />
+      <line x1="0" y1="80" x2="-80" y2="0" />
+      <line x1="80" y1="0" x2="0" y2="0" />
+      <line x1="-80" y1="0" x2="0" y2="0" />
     </g>
-    <rect x="0" y="0" width="88" height="540" fill="url(#hSL-vigL)" />
-    <rect x="712" y="0" width="88" height="540" fill="url(#hSL-vigR)" />
-    <rect x="0" y="0" width="800" height="88" fill="url(#hSL-vigT)" />
-    <rect x="0" y="452" width="800" height="88" fill="url(#hSL-vigB)" />
-  </g>
-  <g transform="translate(400,178) scale(1.5)" data-hw-part="mark">
-    <circle cx="0" cy="0" r="100" fill="url(#hSL-glow)" />
-    <path d="M0,-80 L80,0 L0,80 L-80,0 Z" fill="url(#hSL-face)" stroke="url(#hSL-sig)"
-          stroke-width="2.5" stroke-opacity="1" stroke-linejoin="round" />
     <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"
-          fill="url(#hSL-glass)" />
-    <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"
-          fill="none" stroke="url(#hSL-sig)" stroke-width="9" stroke-linejoin="round"
-          stroke-linecap="round" filter="url(#hSL-fx)" opacity="0.96">
-      <animate attributeName="stroke-width" values="9;10.4;9" dur="2.618s" begin="1.2s"
-               repeatCount="indefinite" calcMode="spline"
-               keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
+          fill="none" stroke="url(#ramp)" stroke-width="9" stroke-linejoin="round"
+          stroke-linecap="round" filter="url(#softShadow)" opacity="0.96">
+      <animate attributeName="stroke-width" values="9;10.4;9" dur="2.618s"
+               begin="waveCollapse.end + 0.2s" repeatCount="indefinite"
+               calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1" />
     </path>
     <path d="M-13.95,-55.8 L-41.85,-27.9 C-55.8,-13.95 -55.8,13.95 -41.85,27.9 L-13.95,55.8 L13.95,55.8 L41.85,27.9 C55.8,13.95 55.8,-13.95 41.85,-27.9 L13.95,-55.8 Z"
-          fill="none" stroke="url(#hSL-inner)" stroke-width="1.5"
+          fill="none" stroke="url(#innerLight)" stroke-width="1.5"
           stroke-linejoin="round" stroke-linecap="round" />
-    <circle cx="0" cy="0" r="8.8" fill="#1444B8" opacity="0.15" />
     <g class="nodes">
-      <circle cx="0" cy="-80" r="3.5" fill="url(#hSL-node)" />
-      <circle cx="80" cy="0" r="3.5" fill="url(#hSL-node)" />
-      <circle cx="0" cy="80" r="3.5" fill="url(#hSL-node)" />
-      <circle cx="-80" cy="0" r="3.5" fill="url(#hSL-node)" />
+      <circle cx="0" cy="-80" r="3.5" fill="url(#nodeM)" />
+      <circle cx="80" cy="0" r="3.5" fill="url(#nodeM)" />
+      <circle cx="0" cy="80" r="3.5" fill="url(#nodeM)" />
+      <circle cx="-80" cy="0" r="3.5" fill="url(#nodeM)" />
       <g>
         <animateTransform attributeName="transform" type="scale" values="1;1.09;1"
-                          dur="3.236s" begin="1.6s" repeatCount="indefinite"
+                          dur="3.236s" begin="waveCollapse.end" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" />
-        <circle cx="0" cy="0" r="4" fill="url(#hSL-node)" />
+        <circle cx="0" cy="0" r="4" fill="url(#nodeM)" />
       </g>
     </g>
   </g>
-  <g transform="translate(22.92,-276.4) scale(1.24)">
-    <path fill="url(#hSL-type)"
-          d="M 38.72,562.00 L 38.72,510.00 L 47.38,510.00 L 47.38,531.60 L 83.21,531.60 L 83.21,510.00 L 91.87,510.00 L 91.87,562.00 L 83.21,562.00 L 83.21,540.40 L 47.38,540.40 L 47.38,562.00 L 38.72,562.00 Z M 106.24,577.74 L 106.24,577.74 L 106.24,569.08 L 131.75,569.08 Q 132.24,569.08 132.63,568.68 Q 133.04,568.28 133.04,567.78 L 133.04,562.00 L 108.76,562.00 Q 106.17,562.00 103.97,560.67 Q 101.77,559.33 100.43,557.16 Q 99.09,554.99 99.09,552.32 L 99.09,520.26 L 107.68,520.26 L 107.68,552.03 Q 107.68,552.61 108.08,553.01 Q 108.48,553.40 109.06,553.40 L 131.75,553.40 Q 132.24,553.40 132.63,553.01 Q 133.04,552.61 133.04,552.03 L 133.04,520.26 L 141.63,520.26 L 141.63,568.07 Q 141.63,570.81 140.36,572.98 Q 139.10,575.14 136.90,576.44 Q 134.70,577.74 132.03,577.74 L 106.24,577.74 Z M 149.44,578.61 L 149.44,578.61 L 149.44,520.11 L 182.37,520.11 Q 184.96,520.11 187.16,521.45 Q 189.37,522.78 190.67,524.95 Q 191.97,527.12 191.97,529.80 L 191.97,552.32 Q 191.97,554.99 190.67,557.16 Q 189.37,559.33 187.16,560.67 Q 184.96,562.00 182.37,562.00 L 158.03,562.00 L 158.03,578.61 L 149.44,578.61 Z M 159.40,553.40 L 182.07,553.40 Q 182.58,553.40 182.97,553.01 Q 183.38,552.61 183.38,552.03 L 183.38,530.08 Q 183.38,529.50 182.97,529.10 Q 182.58,528.71 182.07,528.71 L 159.40,528.71 Q 158.89,528.71 158.45,529.10 Q 158.03,529.50 158.03,530.08 L 158.03,552.03 Q 158.03,552.61 158.45,553.01 Q 158.89,553.40 159.40,553.40 Z M 206.85,562.00 Q 204.18,562.00 202.01,560.67 Q 199.84,559.33 198.50,557.16 Q 197.16,554.99 197.16,552.32 L 197.16,529.80 Q 197.16,527.12 198.50,524.95 Q 199.84,522.78 202.01,521.45 Q 204.18,520.11 206.85,520.11 L 230.03,520.11 Q 232.78,520.11 234.95,521.45 Q 237.12,522.78 238.41,524.95 Q 239.71,527.12 239.71,529.80 L 239.71,545.39 L 205.77,545.39 L 205.77,552.03 Q 205.77,552.61 206.16,553.01 Q 206.55,553.40 207.15,553.40 L 239.71,553.40 L 239.71,562.00 L 206.85,562.00 L 206.85,562.00 Z M 205.77,537.51 L 231.11,537.51 L 231.11,530.08 Q 231.11,529.50 230.72,529.10 Q 230.32,528.71 229.74,528.71 L 207.15,528.71 Q 206.55,528.71 206.16,529.10 Q 205.77,529.50 205.77,530.08 L 205.77,537.51 Z M 247.22,562.00 L 247.22,562.00 L 247.22,529.80 Q 247.22,527.12 248.56,524.95 Q 249.90,522.78 252.10,521.45 Q 254.30,520.11 256.89,520.11 L 280.24,520.11 L 280.24,528.71 L 257.19,528.71 Q 256.61,528.71 256.21,529.10 Q 255.81,529.50 255.81,530.08 L 255.81,562.00 L 247.22,562.00 Z M 302.40,562.00 L 302.40,562.00 L 283.48,510.00 L 292.72,510.00 L 305.87,546.05 L 319.01,510.00 L 327.83,510.00 L 341.04,546.05 L 354.19,510.00 L 363.43,510.00 L 344.51,562.00 L 337.50,562.00 L 323.42,523.36 L 309.33,562.00 L 302.40,562.00 Z M 379.46,562.00 Q 376.79,562.00 374.62,560.67 Q 372.46,559.33 371.11,557.16 Q 369.78,554.99 369.78,552.32 L 369.78,529.80 Q 369.78,527.12 371.11,524.95 Q 372.46,522.78 374.62,521.45 Q 376.79,520.11 379.46,520.11 L 402.64,520.11 Q 405.40,520.11 407.56,521.45 Q 409.73,522.78 411.02,524.95 Q 412.32,527.12 412.32,529.80 L 412.32,545.39 L 378.38,545.39 L 378.38,552.03 Q 378.38,552.61 378.78,553.01 Q 379.17,553.40 379.76,553.40 L 412.32,553.40 L 412.32,562.00 L 379.46,562.00 L 379.46,562.00 Z M 378.38,537.51 L 403.72,537.51 L 403.72,530.08 Q 403.72,529.50 403.33,529.10 Q 402.93,528.71 402.36,528.71 L 379.76,528.71 Q 379.17,528.71 378.78,529.10 Q 378.38,529.50 378.38,530.08 L 378.38,537.51 Z M 429.50,562.00 Q 426.85,562.00 424.63,560.67 Q 422.43,559.33 421.13,557.16 Q 419.83,554.99 419.83,552.32 L 419.83,536.72 L 453.78,536.72 L 453.78,530.08 Q 453.78,529.50 453.37,529.10 Q 452.98,528.71 452.41,528.71 L 419.83,528.71 L 419.83,520.11 L 452.69,520.11 Q 455.44,520.11 457.61,521.45 Q 459.77,522.78 461.07,524.95 Q 462.37,527.12 462.37,529.80 L 462.37,562.00 L 429.50,562.00 Z M 429.80,553.40 L 453.78,553.40 L 453.78,544.60 L 428.42,544.60 L 428.42,552.03 Q 428.42,552.61 428.82,553.01 Q 429.22,553.40 429.80,553.40 Z M 490.76,562.00 L 490.76,562.00 L 467.71,520.11 L 477.69,520.11 L 494.94,551.82 L 512.21,520.11 L 522.17,520.11 L 499.00,562.00 L 490.76,562.00 Z M 536.62,562.00 Q 533.94,562.00 531.78,560.67 Q 529.61,559.33 528.27,557.16 Q 526.93,554.99 526.93,552.32 L 526.93,529.80 Q 526.93,527.12 528.27,524.95 Q 529.61,522.78 531.78,521.45 Q 533.94,520.11 536.62,520.11 L 559.79,520.11 Q 562.55,520.11 564.72,521.45 Q 566.88,522.78 568.18,524.95 Q 569.48,527.12 569.48,529.80 L 569.48,545.39 L 535.53,545.39 L 535.53,552.03 Q 535.53,552.61 535.93,553.01 Q 536.32,553.40 536.91,553.40 L 569.48,553.40 L 569.48,562.00 L 536.62,562.00 L 536.62,562.00 Z M 535.53,537.51 L 560.88,537.51 L 560.88,530.08 Q 560.88,529.50 560.49,529.10 Q 560.09,528.71 559.51,528.71 L 536.91,528.71 Q 536.32,528.71 535.93,529.10 Q 535.53,529.50 535.53,530.08 L 535.53,537.51 Z" />
+  <g class="word-rise" transform="translate(0,-89.65)">
+    <path class="wfill"
+          d="M 38.72,562.00 L 38.72,510.00 L 47.38,510.00 L 47.38,531.60 L 83.21,531.60 L 83.21,510.00 L 91.87,510.00 L 91.87,562.00 L 83.21,562.00 L 83.21,540.40 L 47.38,540.40 L 47.38,562.00 L 38.72,562.00 Z M 106.24,577.74 L 106.24,577.74 L 106.24,569.08 L 131.75,569.08 Q 132.24,569.08 132.63,568.68 Q 133.04,568.28 133.04,567.78 L 133.04,562.00 L 108.76,562.00 Q 106.17,562.00 103.97,560.67 Q 101.77,559.33 100.43,557.16 Q 99.09,554.99 99.09,552.32 L 99.09,520.26 L 107.68,520.26 L 107.68,552.03 Q 107.68,552.61 108.08,553.01 Q 108.48,553.40 109.06,553.40 L 131.75,553.40 Q 132.24,553.40 132.63,553.01 Q 133.04,552.61 133.04,552.03 L 133.04,520.26 L 141.63,520.26 L 141.63,568.07 Q 141.63,570.81 140.36,572.98 Q 139.10,575.14 136.90,576.44 Q 134.70,577.74 132.03,577.74 L 106.24,577.74 Z M 149.44,578.61 L 149.44,578.61 L 149.44,520.11 L 182.37,520.11 Q 184.96,520.11 187.16,521.45 Q 189.37,522.78 190.67,524.95 Q 191.97,527.12 191.97,529.80 L 191.97,552.32 Q 191.97,554.99 190.67,557.16 Q 189.37,559.33 187.16,560.67 Q 184.96,562.00 182.37,562.00 L 158.03,562.00 L 158.03,578.61 L 149.44,578.61 Z M 159.40,553.40 L 182.07,553.40 Q 182.58,553.40 182.97,553.01 Q 183.38,552.61 183.38,552.03 L 183.38,530.08 Q 183.38,529.50 182.97,529.10 Q 182.58,528.71 182.07,528.71 L 159.40,528.71 Q 158.89,528.71 158.45,529.10 Q 158.03,529.50 158.03,530.08 L 158.03,552.03 Q 158.03,552.61 158.45,553.01 Q 158.89,553.40 159.40,553.40 Z M 206.85,562.00 Q 204.18,562.00 202.01,560.67 Q 199.84,559.33 198.50,557.16 Q 197.16,554.99 197.16,552.32 L 197.16,529.80 Q 197.16,527.12 198.50,524.95 Q 199.84,522.78 202.01,521.45 Q 204.18,520.11 206.85,520.11 L 230.03,520.11 Q 232.78,520.11 234.95,521.45 Q 237.12,522.78 238.41,524.95 Q 239.71,527.12 239.71,529.80 L 239.71,545.39 L 205.77,545.39 L 205.77,552.03 Q 205.77,552.61 206.16,553.01 Q 206.55,553.40 207.15,553.40 L 239.71,553.40 L 239.71,562.00 L 206.85,562.00 L 206.85,562.00 Z M 205.77,537.51 L 231.11,537.51 L 231.11,530.08 Q 231.11,529.50 230.72,529.10 Q 230.32,528.71 229.74,528.71 L 207.15,528.71 Q 206.55,528.71 206.16,529.10 Q 205.77,529.50 205.77,530.08 L 205.77,537.51 Z M 247.22,562.00 L 247.22,562.00 L 247.22,529.80 Q 247.22,527.12 248.56,524.95 Q 249.90,522.78 252.10,521.45 Q 254.30,520.11 256.89,520.11 L 280.24,520.11 L 280.24,528.71 L 257.19,528.71 Q 256.61,528.71 256.21,529.10 Q 255.81,529.50 255.81,530.08 L 255.81,562.00 L 247.22,562.00 Z M 302.40,562.00 L 302.40,562.00 L 283.48,510.00 L 292.72,510.00 L 305.87,546.05 L 319.01,510.00 L 327.83,510.00 L 341.04,546.05 L 354.19,510.00 L 363.43,510.00 L 344.51,562.00 L 337.50,562.00 L 323.42,523.36 L 309.33,562.00 L 302.40,562.00 Z M 379.46,562.00 Q 376.79,562.00 374.62,560.67 Q 372.46,559.33 371.11,557.16 Q 369.78,554.99 369.78,552.32 L 369.78,529.80 Q 369.78,527.12 371.11,524.95 Q 372.46,522.78 374.62,521.45 Q 376.79,520.11 379.46,520.11 L 402.64,520.11 Q 405.40,520.11 407.56,521.45 Q 409.73,522.78 411.02,524.95 Q 412.32,527.12 412.32,529.80 L 412.32,545.39 L 378.38,545.39 L 378.38,552.03 Q 378.38,552.61 378.78,553.01 Q 379.17,553.40 379.76,553.40 L 412.32,553.40 L 412.32,562.00 L 379.46,562.00 L 379.46,562.00 Z M 378.38,537.51 L 403.72,537.51 L 403.72,530.08 Q 403.72,529.50 403.33,529.10 Q 402.93,528.71 402.36,528.71 L 379.76,528.71 Q 379.17,528.71 378.78,529.10 Q 378.38,529.50 378.38,530.08 L 378.38,537.51 Z M 429.50,562.00 Q 426.85,562.00 424.63,560.67 Q 422.43,559.33 421.13,557.16 Q 419.83,554.99 419.83,552.32 L 419.83,536.72 L 453.78,536.72 L 453.78,530.08 Q 453.78,529.50 453.37,529.10 Q 452.98,528.71 452.41,528.71 L 419.83,528.71 L 419.83,520.11 L 452.69,520.11 Q 455.44,520.11 457.61,521.45 Q 459.77,522.78 461.07,524.95 Q 462.37,527.12 462.37,529.80 L 462.37,562.00 L 429.50,562.00 Z M 429.80,553.40 L 453.78,553.40 L 453.78,544.60 L 428.42,544.60 L 428.42,552.03 Q 428.42,552.61 428.82,553.01 Q 429.22,553.40 429.80,553.40 Z M 490.76,562.00 L 490.76,562.00 L 467.71,520.11 L 477.69,520.11 L 494.94,551.82 L 512.21,520.11 L 522.17,520.11 L 499.00,562.00 L 490.76,562.00 Z M 536.62,562.00 Q 533.94,562.00 531.78,560.67 Q 529.61,559.33 528.27,557.16 Q 526.93,554.99 526.93,552.32 L 526.93,529.80 Q 526.93,527.12 528.27,524.95 Q 529.61,522.78 531.78,521.45 Q 533.94,520.11 536.62,520.11 L 559.79,520.11 Q 562.55,520.11 564.72,521.45 Q 566.88,522.78 568.18,524.95 Q 569.48,527.12 569.48,529.80 L 569.48,545.39 L 535.53,545.39 L 535.53,552.03 Q 535.53,552.61 535.93,553.01 Q 536.32,553.40 536.91,553.40 L 569.48,553.40 L 569.48,562.00 L 536.62,562.00 L 536.62,562.00 Z M 535.53,537.51 L 560.88,537.51 L 560.88,530.08 Q 560.88,529.50 560.49,529.10 Q 560.09,528.71 559.51,528.71 L 536.91,528.71 Q 536.32,528.71 535.93,529.10 Q 535.53,529.50 535.53,530.08 L 535.53,537.51 Z"
+          fill="url(#wm)" />
   </g>
-  <text x="400" y="470.5" text-anchor="middle" fill="url(#hSL-sub)" class="hero-sub"
-        opacity="0.96">The artifact layer for agent-human representations</text>
+  <g class="tagline wfill" fill="url(#subGrad)">
+    <use href="#hg-T" xlink:href="#hg-T" x="99.4" y="516" />
+    <use href="#hg-h" xlink:href="#hg-h" x="110.4" y="516" />
+    <use href="#hg-e" xlink:href="#hg-e" x="120.4" y="516" />
+    <use href="#hg-a" xlink:href="#hg-a" x="135.4" y="516" />
+    <use href="#hg-r" xlink:href="#hg-r" x="145.4" y="516" />
+    <use href="#hg-t" xlink:href="#hg-t" x="151.4" y="516" />
+    <use href="#hg-i" xlink:href="#hg-i" x="156.4" y="516" />
+    <use href="#hg-f" xlink:href="#hg-f" x="160.4" y="516" />
+    <use href="#hg-a" xlink:href="#hg-a" x="165.4" y="516" />
+    <use href="#hg-c" xlink:href="#hg-c" x="175.4" y="516" />
+    <use href="#hg-t" xlink:href="#hg-t" x="184.4" y="516" />
+    <use href="#hg-l" xlink:href="#hg-l" x="194.5" y="516" />
+    <use href="#hg-a" xlink:href="#hg-a" x="198.4" y="516" />
+    <use href="#hg-y" xlink:href="#hg-y" x="208.5" y="516" />
+    <use href="#hg-e" xlink:href="#hg-e" x="217.5" y="516" />
+    <use href="#hg-r" xlink:href="#hg-r" x="227.5" y="516" />
+    <use href="#hg-f" xlink:href="#hg-f" x="238.5" y="516" />
+    <use href="#hg-o" xlink:href="#hg-o" x="243.5" y="516" />
+    <use href="#hg-r" xlink:href="#hg-r" x="253.5" y="516" />
+    <use href="#hg-a" xlink:href="#hg-a" x="264.5" y="516" />
+    <use href="#hg-g" xlink:href="#hg-g" x="274.5" y="516" />
+    <use href="#hg-e" xlink:href="#hg-e" x="284.5" y="516" />
+    <use href="#hg-n" xlink:href="#hg-n" x="294.5" y="516" />
+    <use href="#hg-t" xlink:href="#hg-t" x="304.5" y="516" />
+    <use href="#hg-hyphen" xlink:href="#hg-hyphen" x="309.5" y="516" />
+    <use href="#hg-h" xlink:href="#hg-h" x="315.5" y="516" />
+    <use href="#hg-u" xlink:href="#hg-u" x="325.5" y="516" />
+    <use href="#hg-m" xlink:href="#hg-m" x="335.5" y="516" />
+    <use href="#hg-a" xlink:href="#hg-a" x="350.5" y="516" />
+    <use href="#hg-n" xlink:href="#hg-n" x="360.5" y="516" />
+    <use href="#hg-r" xlink:href="#hg-r" x="375.5" y="516" />
+    <use href="#hg-e" xlink:href="#hg-e" x="381.5" y="516" />
+    <use href="#hg-p" xlink:href="#hg-p" x="391.5" y="516" />
+    <use href="#hg-r" xlink:href="#hg-r" x="401.5" y="516" />
+    <use href="#hg-e" xlink:href="#hg-e" x="407.5" y="516" />
+    <use href="#hg-s" xlink:href="#hg-s" x="417.5" y="516" />
+    <use href="#hg-e" xlink:href="#hg-e" x="426.5" y="516" />
+    <use href="#hg-n" xlink:href="#hg-n" x="436.5" y="516" />
+    <use href="#hg-t" xlink:href="#hg-t" x="446.6" y="516" />
+    <use href="#hg-a" xlink:href="#hg-a" x="451.6" y="516" />
+    <use href="#hg-t" xlink:href="#hg-t" x="461.6" y="516" />
+    <use href="#hg-i" xlink:href="#hg-i" x="466.6" y="516" />
+    <use href="#hg-o" xlink:href="#hg-o" x="470.6" y="516" />
+    <use href="#hg-n" xlink:href="#hg-n" x="480.6" y="516" />
+    <use href="#hg-s" xlink:href="#hg-s" x="490.6" y="516" />
+    <use href="#hg-period" xlink:href="#hg-period" x="499.6" y="516" />
+  </g>
 </svg>
