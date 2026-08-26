@@ -5,16 +5,20 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.5] - Unreleased
+## [0.4.5] - 2026-08-26
 
-Fixes the ANSI projection's card padding, the loop's top margin spacing, and the decision's arrival glow.
+Gives diagrams a new dark look and fixes ANSI card padding, the loop's top spacing, the decision's arrival glow, and the tree frame.
+
+### Changed
+
+- **Porcelain dark** — diagrams sit on a true-black ground with neutral near-white ink and richer blues; chips and quiet wires wear their own dark grays, and the deliberation amber lives only in the decision's arrival ring.
+- **Dark diagrams on every variant** — the advance path lands in a deep well of the variant's own accent, chips get solid rims and brighter text, and the decision's question reads in plain ink.
 
 ### Fixed
 
 - **`--format ansi`** — card text keeps a cell of padding inside its border instead of touching it.
 - **Loop top margin** — a loop's headers and first station get their full breathing room at the top of the canvas.
 - **Decision halos** — a loop decision lights its own diamond outline as the route arrives, so every station now glows on arrival.
-- **Porcelain dark** — diagrams sit on a true-black ground with neutral ink and richer blues; the deliberation amber lives only in the decision's arrival ring.
 - **Tree frame** — a tree diagram keeps its full frame width, so the header and legend hold their corners beside the centered root.
 
 ## [0.4.4] - 2026-08-26

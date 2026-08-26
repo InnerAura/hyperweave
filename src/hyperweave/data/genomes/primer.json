@@ -158,10 +158,10 @@
         "conn": "#555554",
         "glyph": "#E5E5E5",
         "border": "rgba(246, 246, 246, 0.28)",
-        "well": "#212121",
-        "well_rim": "#868686",
-        "chip_border": "#343434",
-        "chip_text": "#D2D2D2"
+        "well": "#1B1B1B",
+        "well_rim": "#8C8C8C",
+        "chip_border": "#333232",
+        "chip_text": "#D3D3D3"
       }
     },
     "carbon": {
@@ -269,10 +269,10 @@
         "conn": "#585857",
         "glyph": "#D4D4D4",
         "border": "rgba(228, 228, 228, 0.28)",
-        "well": "#331F12",
-        "well_rim": "#C75C12",
-        "chip_border": "#3B3B3B",
-        "chip_text": "#C6C6C6"
+        "well": "#341809",
+        "well_rim": "#E54A00",
+        "chip_border": "#3A3A39",
+        "chip_text": "#C7C7C6"
       }
     },
     "space": {
@@ -380,10 +380,10 @@
         "conn": "#505968",
         "glyph": "#CBD5E1",
         "border": "rgba(223, 229, 236, 0.28)",
-        "well": "#122A3F",
-        "well_rim": "#2D97C6",
-        "chip_border": "#343B4B",
-        "chip_text": "#BDC7D3"
+        "well": "#0E2632",
+        "well_rim": "#00A0E2",
+        "chip_border": "#333B46",
+        "chip_text": "#C3C7CC"
       }
     },
     "anvil": {
@@ -491,10 +491,10 @@
         "conn": "#5C5C5F",
         "glyph": "#E4E4E7",
         "border": "rgba(245, 245, 246, 0.28)",
-        "well": "#292A31",
-        "well_rim": "#6E7991",
-        "chip_border": "#434346",
-        "chip_text": "#D4D4D7"
+        "well": "#24262D",
+        "well_rim": "#6F7E9F",
+        "chip_border": "#414245",
+        "chip_text": "#D5D5D6"
       }
     },
     "porcelain": {
@@ -731,10 +731,10 @@
         "conn": "#5F574E",
         "glyph": "#EFDECE",
         "border": "rgba(249, 240, 231, 0.28)",
-        "well": "#312512",
-        "well_rim": "#B27B2A",
-        "chip_border": "#3F3B34",
-        "chip_text": "#DDCEBE"
+        "well": "#2D1F0C",
+        "well_rim": "#C77A00",
+        "chip_border": "#41392E",
+        "chip_text": "#D4D1CC"
       }
     },
     "dusk": {
@@ -851,10 +851,10 @@
         "conn": "#66535B",
         "glyph": "#FFD3E4",
         "border": "rgba(255, 234, 243, 0.28)",
-        "well": "#312026",
-        "well_rim": "#A46C7C",
-        "chip_border": "#44383D",
-        "chip_text": "#ECC3D3"
+        "well": "#2A1C20",
+        "well_rim": "#B66980",
+        "chip_border": "#4A333C",
+        "chip_text": "#D9CED2"
       }
     },
     "petrol": {
@@ -971,10 +971,10 @@
         "conn": "#4B5C5B",
         "glyph": "#C5EAE9",
         "border": "rgba(227, 247, 246, 0.28)",
-        "well": "#172A29",
-        "well_rim": "#428C86",
-        "chip_border": "#343E3E",
-        "chip_text": "#B6D8D7"
+        "well": "#132523",
+        "well_rim": "#16968F",
+        "chip_border": "#2A3F3E",
+        "chip_text": "#CAD3D3"
       }
     }
   },
