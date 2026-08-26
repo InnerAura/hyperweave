@@ -395,7 +395,7 @@ choreography:
     pulse_head: 18 # the head's dash length
     halo_stroke: 2.5 # arrival-halo outline width (every corpus specimen: .X-h stroke-width 2.5)
     halo_inflate: 0 # halos sit at the element's exact box (corpus law)
-    halo_diamond_inflate: 3 # a decision's rhombus halo pushes each vertex 3px out (the turn anchor: card E vertex 570 -> halo 573)
+    halo_diamond_inflate: 3 # a decision's ring pushes each vertex 3px out so it reads clear of the border
     halo_opacity: 1.0 # node halos peak (the corpus halos pop to full)
     tint_hold_s: 0.95 # a lit chip's hold (the tint groups: pop, ~0.95s, fade)
   # The meter registers ride the turn timeline and PERFORM the declared

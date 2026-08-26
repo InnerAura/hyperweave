@@ -12,8 +12,9 @@ Fixes the ANSI projection's card padding, the loop's top margin spacing, and the
 ### Fixed
 
 - **`--format ansi`** — card text keeps a cell of padding inside its border instead of touching it.
-- **Loop top margin** — a loop's zone headers and first station sit at the hand specimens' own air instead of 26px tighter.
-- **Decision halos** — a loop decision's rhombus lights in the deliberation amber as the route arrives, the way the hand specimens draw it.
+- **Loop top margin** — a loop's headers and first station get their full breathing room at the top of the canvas.
+- **Decision halos** — a loop decision lights its own diamond outline as the route arrives, so every station now glows on arrival.
+- **Tree frame** — a tree diagram keeps its full frame width, so the header and legend hold their corners beside the centered root.
 
 ## [0.4.4] - 2026-08-26
 

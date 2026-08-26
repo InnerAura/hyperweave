@@ -644,9 +644,11 @@ class TestStackTreeComparison:
         pts = [re.findall(r"(-?[\d.]+),(-?[\d.]+)", c.path_d) for c in lay.connectors]
         assert len({p[0] for p in pts}) == 1  # shared parent-stub start
         assert len({p[1] for p in pts}) == 1  # shared bus-y elbow
-        # Content-fit: tree hugs its leaf slots (chassis 1000 is the
-        # scale reference, not a floor) — same height, no phantom width.
-        assert (lay.width, lay.height) == (470, 415)  # caption_bottom_pad 44 re-pin
+        # Frame law (supersedes the content-fit re-pin): the tree's corner
+        # masthead only exists at frame width, so the chassis width floors
+        # the canvas — a hugging tree ran its kicker into the centered
+        # crown the moment nothing else held the width open.
+        assert (lay.width, lay.height) == (1000, 415)
 
     def test_comparison_fixed_canvas_and_single_connector(self) -> None:
         lay = solve(**CASES["comparison"])

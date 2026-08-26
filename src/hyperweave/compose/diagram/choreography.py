@@ -648,13 +648,10 @@ def _walk_act(
             tl.halo(f"hold:{key}", t, t + terminal_hold, hue=leg_hue)
             t += dwell
         elif node.station == "decision":
-            # The decision rings its OWN rhombus in the deliberation hue —
-            # the turn anchor halos both its diamonds (cyt1-hW paths fire
-            # on arrival for a card-class glow: lit ~0.95s of its 24.3s
-            # period, twice per pass through Improved?). The earlier
-            # "0/18" reading measured the expression corpus, which
-            # animates no halos at all — vacuous evidence the anchor
-            # overrules. The question's ink carries the rest of the
+            # A decision announces its arrival like every other station:
+            # its rhombus outline lights in the deliberation hue for the
+            # standard glow, keeping the whole route's rhythm uniform. The
+            # guard chips and the question ink carry the rest of the
             # deliberation.
             tl.halo(f"flash:{key}", t, t + halo_hold, hue="W")
             t += dwell_dec
@@ -1029,8 +1026,8 @@ def _emit(
             n = node_by_id.get(ident)
             if n is not None and n.shape == "diamond":
                 # The decision's halo is its own rhombus, each vertex pushed
-                # ``halo_diamond_inflate`` out (the turn anchor's cyt1-hW:
-                # card E vertex 570 -> halo 573), in the deliberation hue.
+                # ``halo_diamond_inflate`` out so the ring sits clear of the
+                # border, in the deliberation hue.
                 b = n.box
                 di = _tcfg(engine, "halo_diamond_inflate", 3.0)
                 dcx, dcy = b.x + b.w / 2, b.y + b.h / 2

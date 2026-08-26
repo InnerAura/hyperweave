@@ -636,11 +636,10 @@ diagram:
       display_w: 740
       margin_x: 40
       header_h: 66
-      # Corpus masthead air: the canvas top-anchors at margin_y + the 14px
-      # zone-ext pad, so 50 seats the zone baselines at the corpus y=64 and
-      # the first station at y=112 (both turn files; retry/tap/shuttle
-      # headers agree at 64). Undeclared, the default min(margin_x, 24)
-      # shaved 26px off the hand files' top air.
+      # Masthead air: the header row needs its own band above the content —
+      # 50 seats the zone baselines at y=64 with the first station at 112;
+      # the undeclared default (min(margin_x, 24)) crammed the headers
+      # against the cards.
       margin_y: 50
       footer_h: 54
       gap: 52 # face-to-face spine travel: the hillclimb's own e1/e2 run 47/55
@@ -674,9 +673,8 @@ diagram:
       width: 1256
       display_w: 740
       margin_x: 40
-      # Masthead air for a zoned lateral spec: every zoned loop hand file
-      # seats its headers at y=64 (cycle-shuttle-v2 included), so the cell
-      # shares the vertical cell's margin_y.
+      # A zoned lateral spec keeps the same masthead air as the vertical
+      # cell — the header band is a family fact, not an orientation fact.
       margin_y: 50
       header_h: 62
       footer_h: 54
@@ -731,6 +729,11 @@ diagram:
       # 1 is the derived star, depth 2 the taxonomy/dependency-audit ceiling.
       width_policy: aligned
       width: 1000
+      # The tree composes a corner masthead — kicker top-left, legend
+      # top-right, root centered between them — and those corners only
+      # exist at frame width: a content-hugging canvas ran the kicker
+      # into the crown the moment nothing else held the width open.
+      width_floor: true
       margin_x: 30
       header_h: 56 # the root card's top edge
       gap: 30
