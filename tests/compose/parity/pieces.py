@@ -542,6 +542,12 @@ def census(facts: Facts) -> Census:
         c.gather_buses = gather_buses(facts)
 
     marker_arrows = 0 if furniture_family else sum(1 for p in edges if p.marker_end)
+    # Not-an-arrow fences: a decision card drawn as a rhombus path, a parked
+    # choreography halo (engine ``-halo`` class; hand halos sit at opacity 0),
+    # and anything hidden all satisfy "small-ish closed polygon at an edge
+    # end" — every edge ARRIVES at the decision, so its own outline and its
+    # ring both terminate edges. Counting them made the board carry an
+    # arrow amendment that was really an instrument error.
     drawn_terminals = (
         []
         if furniture_family
@@ -550,6 +556,9 @@ def census(facts: Facts) -> Census:
             for p in facts.paths
             if (any(h in p.own_cls for h in _ARROW_PATH_HINTS) or _is_drawn_terminal(p))
             and _terminates_edge(p, edge_ends)
+            and not p.hidden
+            and "-halo" not in p.own_cls
+            and not _is_diamond_path(p)
         ]
     )
     # Choreography replays re-draw an arrowhead per pass — dedupe by d (the

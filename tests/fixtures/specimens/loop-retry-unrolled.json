@@ -1,76 +1,76 @@
 {
-  "aspect": 3.263,
-  "caption_text": null,
-  "caption_text_amended": "the budget IS the unrolling \u00b7 a finite attempt ladder, one gather bus, one drawn arrival",
-  "caption_text_amended_note": "the expression corpus authors bare cell panels (no masthead, no caption); the enrolled preset is a full artifact and speaks its own caption - the render grades against it verbatim",
-  "cards": {
-    "std_h_med": 84.0,
-    "std_h_values": [
-      80.0,
-      84.0,
-      84.0,
-      84.0,
-      84.0
-    ],
-    "std_h_values_amended": [
-      84.0,
-      84.0,
-      84.0,
-      84.0,
-      84.0
-    ],
-    "std_h_values_amended_note": "one terminal class: the hand Done pill stands 80 beside its 84 Failed flat; the engine renders the node2 family at its cited 84",
-    "std_w_med": 146.0,
-    "std_w_med_amended": 162,
-    "std_w_med_amended_note": "the engine renders content-snug aligned attempts (the snug-width ruling) where the hand ladder draws 146 columns - engine values recorded, dims stay the specimen's own target on file"
-  },
-  "census": {
-    "animated": true,
-    "arrow_terminals": 8,
-    "card_rx": 12.0,
-    "cards": 5,
-    "chips": 4,
-    "coins": 0,
-    "desc_lines": 5,
-    "drift_edges": 0,
-    "gather_buses": 1,
-    "gather_knots": 0,
-    "glyph_marks": 5,
-    "hero_cards": 0,
-    "hero_rx": 0.0,
-    "micro_labels": 0,
-    "muted_cards": 0,
-    "particles": 0,
-    "pills": 2,
-    "shell_marks": 1,
-    "solid_edges": 7,
-    "terminal_dots": 0,
-    "zone_headers": 0
-  },
-  "census_amendments": {
-    "arrow_terminals": 4,
-    "solid_edges": 6
-  },
-  "census_amendments_note": "reader-vocabulary residue on the second-generation dialect: the choreography replays draw per-scenario arrowheads and one wire wears replay dress - the render values recorded are the engine's honest counts. The shell-mark amendment retired when the ladder enclosure landed: the render's legend plate now matches the specimen's own count.",
-  "chip_homes": {
-    "in_card": 0,
-    "on_wire": 4,
-    "wire_offset_max": 0.0
-  },
-  "chip_stub_min": 20.2,
-  "height": null,
-  "occupancy": 0.697,
-  "plate": {
-    "content_bottom": 318.0,
-    "content_top": 20.0
-  },
-  "port_tolerance": 12.1,
-  "source": "v04/v040/v044/loop/retry/retry-specimens/diagram-loop-retry-unrolled-turn.svg",
-  "viewbox": [
-    0.0,
-    0.0,
-    1279.0,
-    392.0
+ "aspect": 3.263,
+ "caption_text": null,
+ "caption_text_amended": "the budget IS the unrolling · a finite attempt ladder, one gather bus, one drawn arrival",
+ "caption_text_amended_note": "the expression corpus authors bare cell panels (no masthead, no caption); the enrolled preset is a full artifact and speaks its own caption - the render grades against it verbatim",
+ "cards": {
+  "std_h_med": 84.0,
+  "std_h_values": [
+   80.0,
+   84.0,
+   84.0,
+   84.0,
+   84.0
   ],
-  "width": null
+  "std_h_values_amended": [
+   84.0,
+   84.0,
+   84.0,
+   84.0,
+   84.0
+  ],
+  "std_h_values_amended_note": "one terminal class: the hand Done pill stands 80 beside its 84 Failed flat; the engine renders the node2 family at its cited 84",
+  "std_w_med": 146.0,
+  "std_w_med_amended": 162,
+  "std_w_med_amended_note": "the engine renders content-snug aligned attempts (the snug-width ruling) where the hand ladder draws 146 columns - engine values recorded, dims stay the specimen's own target on file"
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 8,
+  "card_rx": 12.0,
+  "cards": 5,
+  "chips": 4,
+  "coins": 0,
+  "desc_lines": 5,
+  "drift_edges": 0,
+  "gather_buses": 1,
+  "gather_knots": 0,
+  "glyph_marks": 5,
+  "hero_cards": 0,
+  "hero_rx": 0.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 0,
+  "pills": 2,
+  "shell_marks": 1,
+  "solid_edges": 7,
+  "terminal_dots": 0,
+  "zone_headers": 0
+ },
+ "census_amendments": {
+  "solid_edges": 6,
+  "arrow_terminals": 4
+ },
+ "census_amendments_note": "reader-vocabulary residue on the second-generation dialect: the choreography replays draw per-scenario arrowheads and one wire wears replay dress - the render values recorded are the engine's honest counts. The shell-mark amendment retired when the ladder enclosure landed: the render's legend plate now matches the specimen's own count.",
+ "chip_homes": {
+  "in_card": 0,
+  "on_wire": 4,
+  "wire_offset_max": 0.0
+ },
+ "chip_stub_min": 20.2,
+ "height": null,
+ "occupancy": 0.697,
+ "plate": {
+  "content_bottom": 318.0,
+  "content_top": 20.0
+ },
+ "port_tolerance": 12.1,
+ "source": "v04/v040/v044/loop/retry/retry-specimens/diagram-loop-retry-unrolled-turn.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1279.0,
+  392.0
+ ],
+ "width": null
 }

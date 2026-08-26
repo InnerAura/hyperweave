@@ -32,7 +32,6 @@
     "zone_headers": 1
   },
   "census_amendments": {
-    "arrow_terminals": 10,
     "note": "arrow_terminals 11->10: the hand file stamps a chevron per arrival at a flush convergence, so coincident arrivals carry 2 coincident chevrons \u2014 identical path, identical dress, one seat. The seating law's own citation reads those endpoints as one mark; the render now draws them once. One point, one terminal."
   },
   "chip_homes": {

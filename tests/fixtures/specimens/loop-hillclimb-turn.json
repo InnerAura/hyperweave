@@ -1,79 +1,79 @@
 {
-  "aspect": 0.821,
-  "caption_text": "the loop, performed \u00b7 turn one improves and keeps \u00b7 turn two fails and reverts \u00b7 turn three stops on target",
-  "cards": {
-    "std_h_med": 72.0,
-    "std_h_values": [
-      56.0,
-      56.0,
-      72.0,
-      72.0,
-      72.0
-    ],
-    "std_h_values_amended": [
-      58.4,
-      58.4,
-      77.4,
-      77.4,
-      77.4
-    ],
-    "std_h_values_amended_note": "the name-wrap law reproduces the hand file's own 56/56/72/72/72 two-line distribution at the engine's metric-true line boxes (58.4 single / 77.4 wrapped) \u2014 same structure, metric residue only",
-    "std_w_med": 210.0,
-    "std_w_med_amended": 184,
-    "std_w_med_amended_note": "engine renders content-snug aligned columns (the snug-width ruling) with the kit glyph column engaged; the hand file draws fixed 210/170/220 modules \u2014 engine medians recorded"
-  },
-  "census": {
-    "animated": true,
-    "arrow_terminals": 12,
-    "card_rx": 13.0,
-    "cards": 7,
-    "chips": 7,
-    "coins": 0,
-    "desc_lines": 0,
-    "diamonds": 2,
-    "drift_edges": 0,
-    "gather_buses": 0,
-    "gather_knots": 0,
-    "glyph_marks": 3,
-    "hero_cards": 0,
-    "hero_rx": 0.0,
-    "micro_labels": 0,
-    "muted_cards": 0,
-    "particles": 0,
-    "pills": 0,
-    "shell_marks": 0,
-    "solid_edges": 8,
-    "terminal_dots": 0,
-    "zone_headers": 2
-  },
-  "census_amendments": {
-    "arrow_terminals": 9,
-    "card_rx": 14.0,
-    "glyph_marks": 5
-  },
-  "census_amendments_note": "source re-pointed to the kit-recreated generation (owner ruling 2026-08-24). Three recorded deltas: the render keeps rx 14 because the hillclimb twins are one byte-shared geometry with the register flipped and the drift anchor still draws rx 14 (the twin law outranks the dialect); the render's five marks are the preset's five honest kinds, matching the drift twin, where the new generation's compressed dialect reads as three to the census hints; its arrowhead count reads one high the same way - reader vocabulary, not composition arrow_terminals re-derived after the diamond warn halo retired (no corpus specimen rings a rhombus; the reader had counted the halo path among the drawn arrows).",
-  "chip_homes": {
-    "in_card": 3,
-    "on_wire": 4,
-    "wire_offset_max": 0.42
-  },
-  "chip_stub_min": 29.0,
-  "height": null,
-  "occupancy": 0.505,
-  "plate": {
-    "caption_pad": 34.0,
-    "caption_y": 1038.0,
-    "content_bottom": 978.0,
-    "content_top": 112.0,
-    "zone_y": 64.0
-  },
-  "port_tolerance": 2.5,
-  "source": "v04/v040/v044/loop/turn/cycle-turn-choreography-v2.svg",
-  "viewbox": [
-    0.0,
-    0.0,
-    880.0,
-    1072.0
+ "aspect": 0.821,
+ "caption_text": "the loop, performed · turn one improves and keeps · turn two fails and reverts · turn three stops on target",
+ "cards": {
+  "std_h_med": 72.0,
+  "std_h_values": [
+   56.0,
+   56.0,
+   72.0,
+   72.0,
+   72.0
   ],
-  "width": null
+  "std_h_values_amended": [
+   58.4,
+   58.4,
+   77.4,
+   77.4,
+   77.4
+  ],
+  "std_h_values_amended_note": "the name-wrap law reproduces the hand file's own 56/56/72/72/72 two-line distribution at the engine's metric-true line boxes (58.4 single / 77.4 wrapped) — same structure, metric residue only",
+  "std_w_med": 210.0,
+  "std_w_med_amended": 184,
+  "std_w_med_amended_note": "engine renders content-snug aligned columns (the snug-width ruling) with the kit glyph column engaged; the hand file draws fixed 210/170/220 modules — engine medians recorded"
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 8,
+  "card_rx": 13.0,
+  "cards": 7,
+  "chips": 7,
+  "coins": 0,
+  "desc_lines": 0,
+  "diamonds": 2,
+  "drift_edges": 0,
+  "gather_buses": 0,
+  "gather_knots": 0,
+  "glyph_marks": 3,
+  "hero_cards": 0,
+  "hero_rx": 0.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 0,
+  "pills": 0,
+  "shell_marks": 0,
+  "solid_edges": 8,
+  "terminal_dots": 0,
+  "zone_headers": 2
+ },
+ "census_amendments": {
+  "card_rx": 14.0,
+  "glyph_marks": 5,
+  "arrow_terminals": 7
+ },
+ "census_amendments_note": "source re-pointed to the kit-recreated generation (owner ruling 2026-08-24). Three recorded deltas: the render keeps rx 14 because the hillclimb twins are one byte-shared geometry with the register flipped and the drift anchor still draws rx 14 (the twin law outranks the dialect); the render's five marks are the preset's five honest kinds, matching the drift twin, where the new generation's compressed dialect reads as three to the census hints; its arrowhead count reads one high the same way - reader vocabulary, not composition arrow_terminals re-derived after the diamond warn halo retired (no corpus specimen rings a rhombus; the reader had counted the halo path among the drawn arrows).",
+ "chip_homes": {
+  "in_card": 3,
+  "on_wire": 4,
+  "wire_offset_max": 0.42
+ },
+ "chip_stub_min": 29.0,
+ "height": null,
+ "occupancy": 0.505,
+ "plate": {
+  "caption_pad": 34.0,
+  "caption_y": 1038.0,
+  "content_bottom": 978.0,
+  "content_top": 112.0,
+  "zone_y": 64.0
+ },
+ "port_tolerance": 2.5,
+ "source": "v04/v040/v044/loop/turn/cycle-turn-choreography-v2.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  880.0,
+  1072.0
+ ],
+ "width": null
 }

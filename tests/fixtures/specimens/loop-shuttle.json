@@ -1,67 +1,67 @@
 {
-  "aspect": 4.454,
-  "caption_text": null,
-  "caption_text_amended": "the exchange, performed \u00b7 one turn sends changes back \u00b7 the next turn approves and ships",
-  "caption_text_amended_note": "the expression corpus authors bare cell panels (no masthead, no caption); the enrolled preset is a full artifact and speaks its own caption - the render grades against it verbatim",
-  "cards": {
-    "std_h_med": 84.0,
-    "std_h_med_amended": 76.46,
-    "std_h_values_amended": [
-      58.4,
-      76.46,
-      76.46
-    ],
-    "std_w_med": 196.0,
-    "std_w_med_amended": 188,
-    "std_w_med_amended_note": "engine renders content-snug aligned columns (the snug-width ruling); the hand file draws fixed-width columns with hand-wrapped two-line labels \u2014 engine values recorded, dims stay the specimen's own target on file"
-  },
-  "census": {
-    "animated": true,
-    "arrow_terminals": 9,
-    "card_rx": 12.0,
-    "cards": 4,
-    "chips": 2,
-    "coins": 0,
-    "desc_lines": 3,
-    "diamonds": 1,
-    "drift_edges": 0,
-    "gather_buses": 0,
-    "gather_knots": 0,
-    "glyph_marks": 3,
-    "hero_cards": 0,
-    "hero_rx": 0.0,
-    "micro_labels": 0,
-    "muted_cards": 0,
-    "particles": 0,
-    "pills": 1,
-    "shell_marks": 0,
-    "solid_edges": 4,
-    "terminal_dots": 0,
-    "zone_headers": 0
-  },
-  "census_amendments": {
-    "arrow_terminals": 4
-  },
-  "census_amendments_note": "reader-vocabulary residue on the second-generation dialect: the choreography draws per-leg accent arrowhead overlays the census reads beside the four wire terminals - the render value recorded is the engine's honest count",
-  "chip_homes": {
-    "in_card": 0,
-    "on_wire": 2,
-    "wire_offset_max": 0.0
-  },
-  "chip_stub_min": 52.0,
-  "height": null,
-  "occupancy": 0.279,
-  "plate": {
-    "content_bottom": 254.0,
-    "content_top": 62.0
-  },
-  "port_tolerance": 12.1,
-  "source": "v04/v040/v044/loop/shuttle/shuttle-specimens/diagram-loop-shuttle-lateral-turn.svg",
-  "viewbox": [
-    0.0,
-    0.0,
-    1256.0,
-    282.0
+ "aspect": 4.454,
+ "caption_text": null,
+ "caption_text_amended": "the exchange, performed · one turn sends changes back · the next turn approves and ships",
+ "caption_text_amended_note": "the expression corpus authors bare cell panels (no masthead, no caption); the enrolled preset is a full artifact and speaks its own caption - the render grades against it verbatim",
+ "cards": {
+  "std_h_med": 84.0,
+  "std_h_med_amended": 76.46,
+  "std_h_values_amended": [
+   58.4,
+   76.46,
+   76.46
   ],
-  "width": null
+  "std_w_med": 196.0,
+  "std_w_med_amended": 188,
+  "std_w_med_amended_note": "engine renders content-snug aligned columns (the snug-width ruling); the hand file draws fixed-width columns with hand-wrapped two-line labels — engine values recorded, dims stay the specimen's own target on file"
+ },
+ "census": {
+  "animated": true,
+  "arrow_terminals": 9,
+  "card_rx": 12.0,
+  "cards": 4,
+  "chips": 2,
+  "coins": 0,
+  "desc_lines": 3,
+  "diamonds": 1,
+  "drift_edges": 0,
+  "gather_buses": 0,
+  "gather_knots": 0,
+  "glyph_marks": 3,
+  "hero_cards": 0,
+  "hero_rx": 0.0,
+  "micro_labels": 0,
+  "muted_cards": 0,
+  "particles": 0,
+  "pills": 1,
+  "shell_marks": 0,
+  "solid_edges": 4,
+  "terminal_dots": 0,
+  "zone_headers": 0
+ },
+ "census_amendments_note": "reader-vocabulary residue on the second-generation dialect: the choreography draws per-leg accent arrowhead overlays the census reads beside the four wire terminals - the render value recorded is the engine's honest count",
+ "chip_homes": {
+  "in_card": 0,
+  "on_wire": 2,
+  "wire_offset_max": 0.0
+ },
+ "chip_stub_min": 52.0,
+ "height": null,
+ "occupancy": 0.279,
+ "plate": {
+  "content_bottom": 254.0,
+  "content_top": 62.0
+ },
+ "port_tolerance": 12.1,
+ "source": "v04/v040/v044/loop/shuttle/shuttle-specimens/diagram-loop-shuttle-lateral-turn.svg",
+ "viewbox": [
+  0.0,
+  0.0,
+  1256.0,
+  282.0
+ ],
+ "width": null,
+ "census_amendments": {
+  "arrow_terminals": 4
+ }
 }
