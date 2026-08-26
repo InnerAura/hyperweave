@@ -320,6 +320,8 @@ routes:
         doc: "Glyph fill selection: ink | brand | full"
       edge_motion:
         doc: "Edge-motion override: dash | particle (rides the diagram IR, not a spec field)"
+      motion_register:
+        doc: "Choreography register: turn | drift (rides the diagram IR; loop's family default is turn)"
       performance:
         field: performance
         doc: Performance tier

@@ -23,6 +23,9 @@ class Rect:
     rx: float
     cls: str
     dashed: bool
+    hidden: bool = False
+    """Initial opacity 0 (attribute) — a choreography halo parked invisible;
+    never a card, chip, or plate."""
 
     @property
     def cx(self) -> float:
@@ -50,6 +53,8 @@ class PathEl:
     marker_end: bool
     dashed: bool
     animated: bool
+    hidden: bool = False
+    """Initial opacity 0 (attribute) — a parked halo outline, never an edge."""
 
     def endpoints(self) -> tuple[tuple[float, float], tuple[float, float]] | None:
         pts = _path_points(self.d)
@@ -315,6 +320,10 @@ def parse_svg(svg: str) -> Facts:
         own = el.get("class") or ""
         if own and any_cls_names(own, animated_cls):
             facts.css_animation_used = True
+        if "animation:" in (el.get("style") or ""):
+            # Choreography riders animate via inline style (hand corpus and
+            # engine alike) — as real as a class-carried animation.
+            facts.css_animation_used = True
         cls = (inherited + " " + own).strip()
         _collect(el, tag, cls, own)
         for child in el:
@@ -323,7 +332,7 @@ def parse_svg(svg: str) -> Facts:
     def _collect(el: ET.Element, tag: str, cls: str, own: str) -> None:
         if tag == "g":
             tf = el.get("transform") or ""
-            prim = [c for c in el if _local(c.tag) in ("path", "circle", "rect", "line")]
+            prim = [c for c in el if _local(c.tag) in ("path", "circle", "rect", "line", "ellipse")]
             # The identity-mark signature: a small group of drawn primitives,
             # placed EITHER by a translate transform (engine, most specimens)
             # OR by absolute coordinates under a glyph-family class (the hub
@@ -344,6 +353,7 @@ def parse_svg(svg: str) -> Facts:
                     dashed=("stroke-dasharray" in (el.get("style") or ""))
                     or el.get("stroke-dasharray") is not None
                     or any_cls_names(own, dashed_cls),
+                    hidden=(el.get("opacity") or "") == "0",
                 )
             )
         elif tag == "circle":
@@ -362,6 +372,7 @@ def parse_svg(svg: str) -> Facts:
                         marker_end=el.get("marker-end") is not None,
                         dashed=el.get("stroke-dasharray") is not None or any_cls_names(own, dashed_cls),
                         animated=any_cls_names(own, animated_cls),
+                        hidden=(el.get("opacity") or "") == "0",
                     )
                 )
         elif tag == "text":

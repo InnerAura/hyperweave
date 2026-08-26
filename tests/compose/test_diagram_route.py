@@ -308,6 +308,8 @@ class TestOrnamentFreeDefaults:
             "cycle-orbit",
             "tree",
             "cycle-ring",
+            "loop",
+            "loop-horizontal",
         }  # the confirmed wire-defaults set
         arrow_slugs = {slug for slug, cfg in wire_defaults.items() if cfg.get("terminal")}
         assert arrow_slugs == {
@@ -319,6 +321,8 @@ class TestOrnamentFreeDefaults:
             "cycle-orbit",
             "cycle-ring",
             "hub",
+            "loop",
+            "loop-horizontal",
         }
         offenders: list[tuple[str, str, int]] = []
         for name in sorted(diagram_preset_names()):

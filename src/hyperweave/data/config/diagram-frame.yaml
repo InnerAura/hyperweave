@@ -31,6 +31,11 @@ caps:
     fanin: { min: 3, max: 7 } # 2..6 inputs + target
     cycle-orbit: { min: 3, max: 7 } # 3..6 phases + optional axis
     cycle-ring: { min: 3, max: 8 } # equal stages, empty centre (cycle-ring runs 6)
+    # Loop counts EVERY node (stations + externals + the scope card + its
+    # members): the corpus tops out at cycle-nested's 8; a wider loop lifts
+    # its OWN cap via spec.caps rather than loosening the family default.
+    loop: { min: 2, max: 10 }
+    loop-horizontal: { min: 2, max: 7 } # the lateral row stays short (shuttle runs 4)
     pipeline-vertical: { min: 3, max: 7 } # result + 2..6 layers
     tree: { min: 3, max: 16 } # root + 2..15 nodes across depth 1..tree_horizontal_max_depth
     tree-radial: { min: 4, max: 16 } # root + ring-1 + ring-2 (depth 2..3)
@@ -106,6 +111,10 @@ orientation_legality:
   # both); fanin is honest about the one form its solver draws.
   pipeline: [horizontal, vertical]
   cycle: [orbit, ring]
+  # Loop (the procedural sibling of cycle): both directions, every device —
+  # vertical is the family default (the input seam flips an undeclared
+  # orientation; core cannot, its field default is horizontal).
+  loop: [vertical, horizontal]
   fanin: [horizontal]
   # An orientation names the AXIS a family flows along; the FAMILY names the
   # direction along it. So pipeline:vertical RISES (the operator stack —
@@ -140,6 +149,8 @@ orientation_phrases:
   fanin: converging left-to-right
   cycle-orbit: radial orbit
   cycle-ring: radial loop
+  loop: spine top-to-bottom, return up the margin rail
+  loop-horizontal: row left-to-right, return diving beneath it
   pipeline-vertical: bottom-to-top stack
   tree: top-down tree
   tree-radial: radial tree
@@ -182,6 +193,11 @@ wire_defaults:
   # flywheel-orbit: the ring reads as solid gray arcs + drawn arrowheads;
   # motion (particle/beam/flow) is opt-in per preset and stays unaffected.
   cycle-orbit: { wire: solid, terminal: arrow }
+  # Loop (the whole corpus): quiet solid tracks with drawn arrowheads — the
+  # turn register's pulses ride ON these tracks ("the tracks go solid so the
+  # pulse owns all motion"; dashed drift is retired in a choreographed cell).
+  loop: { wire: solid, terminal: arrow }
+  loop-horizontal: { wire: solid, terminal: arrow }
   # tree/dep-audit: the hierarchy is fully static (a pulsing tree would be
   # gratuitous) — NO terminal, direction reads from vertical position, never
   # an arrowhead (wiring.py's tree_exempt suppresses one regardless).
@@ -265,6 +281,133 @@ axial:
   # specimen's narrowest card, "the spec"); an explicit satellite_min_w only where a spec needs a wider floor
   satellite_max_w: 340 # ceiling for the widest cross card (the read chip-card seats extract/verify/diff/query)
   max_fan: 8 # destinations in the E half-plane
+
+# Loop family routing constants (frame-generic; card/diamond DIMENSIONS live
+# on the topology chassis). Sources: v04/v040/v044/loops —
+# turn/cycle-turn-choreography-v2.svg (the kit-anatomy bridge), retry/cycle-retry.svg,
+# nested/cycle-nested.svg, shuttle/cycle-shuttle-v2.svg.
+loop:
+  rail_r: 18 # margin-rail corner radius (the expression corpus turns every rail at Q18 — retry/flywheel/shuttle alike; supersedes the anchors' r10)
+  rank_hop: 66 # at-rank lateral exit run, face to face (cycle-retry: "exits leave at their
+  # decision's rank as short orthogonal hops (66px)"; the enrolled composition law bans the
+  # freeform long sweep — only the return is long, and the return takes rail geometry)
+  rail_clearance: 27 # rail run to nearest content edge (cycle-nested: "outer rail x=842,
+  # 27px clear of the scope")
+  chip_node_clearance: 4 # guard chip to node boundary air (cycle-nested: "chips at 4px
+  # node clearance")
+  holder_air: 88 # rank clearance each side of a chip-HOLDER decision (the anchor:
+  # dev bottom 576 -> Stop? apex 665 = 89 entering, Stop? bottom 835 -> Done top
+  # 922 = 87 leaving, against the plain 48-56 spine hops — the guard rows earn
+  # the rhombus its air, and the merge S-curves their tangential travel)
+  # The swimlane loop (the shuttle's role lanes). Sources: the swimlane
+  # specimen — "Lanes x=40 w=1000: agent y=56 h=160, human y=260 h=160,
+  # merged y=464 h=132, gutters 44 ... forward handoff column x=424,
+  # return channel y=238, fillet 18".
+  lane_pad_y: 38 # band pad around its card family (agent: 84-card in a 160 band;
+  # a diamond overhangs into the pad rather than growing the band — Approve?
+  # rides the same 160 with 22px air)
+  lane_pad_terminal: 26 # an all-terminal band sits tighter (merged: 80-pill in 132)
+  lane_gutter: 44 # inter-band air; the return channel rides a gutter's midline
+  lane_hop: 76 # handoff column offset from the source's forward face (424 - 348)
+  lane_r: 18 # crossing fillet radius
+  lane_reach: 34 # band overhang past the content columns (1040 - 1006)
+  # The gather bus (the unrolled ladder's merge piece, sibling of the
+  # gather knot). Source: retry's unrolled specimen — "success gather bus
+  # y=176" against attempts top 234 (58 off the cards), Done bottom 100
+  # (76 stem), "Fillet 18".
+  bus_gap: 58 # card sky face to the bus line
+  bus_stem: 76 # bus line to the gather terminal's face
+  bus_r: 18 # arm fillet radius onto the bus
+  scope_dash: "8 7" # the enclosure band's stroke (the expression corpus's own dash)
+  scope_header_inset: 73 # legend chip's left inset when the entry wire pierces the top rim (the inline scope specimen)
+  unrolled_pad_across: 26 # ladder enclosure pad across the flow (the unrolled specimen: attempts inset 26)
+  unrolled_pad_along: 34 # ladder enclosure pad along the flow (region 200 -> attempts 234)
+  unrolled_legend: "RETRY BUDGET · MAX {n}" # the ladder legend, n = rung count (the unrolled specimen at n=3)
+  # The meter kit piece (a declared gauge riding a return chip): lead mark +
+  # segment row, the row spanning the chip's own width, seated beneath it.
+  # Sources: the three meter specimens — nested's lap counter (3 x 24x13 on a
+  # 7 gap, chip bottom 361.5 -> row 375.5), retry's budget drain (3 x 26x13,
+  # 223.5 -> 237.5), the flywheel's accumulator (6 x 22x13, 300.5 -> 314.5).
+  # Gauge scale (owner ruling 2026-08-26): the cited 33-tall plate read too
+  # heavy beside the cards — the whole gauge scales ~0.78 from the meter
+  # specimens' constants; proportions hold, presence recedes.
+  meter_gap: 12 # chip bottom to segment-row top (plate seats 4 under the chip, the cited air)
+  meter_seg_h: 10 # segment height (cited 13, scaled)
+  meter_seg_rx: 3 # segment corner radius (cited 4, scaled)
+  meter_pad: 11 # plate side pads around mark + row (cited 14, scaled)
+  meter_wrap: 8 # plate wrap above/below the row (cited 10 — plate stands 26)
+  meter_plate_rx: 8 # plate corner radius (cited 11, scaled)
+  meter_rail_reach: 26 # vertical rail: plate reach past the chip each side
+  meter_rail_hang: 43 # horizontal rail: chip half + 4 air + the 26 plate, hung outward
+  meter_seg_gap: 6 # segment pitch air (lap 31-24, budget 33-26; the accumulator's
+  # 6 reads one tighter — the row-spans-the-chip law absorbs the difference)
+  meter_seg_w_min: 14 # derived width clamp: seg_w = (chip_w - (n-1)*gap) / n
+  meter_seg_w_max: 22 # (cited band 18-28, scaled)
+  meter_glyph_w: 14 # the lead mark's box, seated left of the row (cited 18, scaled)
+  scope_meter_extra: 48 # scope depth growth when the inner return carries a meter (the cited 280 band; the scaled gauge breathes inside it)
+  # (the lap scope stands 258 tall against the plain inline scope's 210)
+
+# Choreography registers — the artifact-scoped motion axis the compiler
+# (compose/diagram/choreography.py) reads. The register performs the
+# diagram's claim in time; geometry is inherited verbatim from the layout
+# (the corpus isolates the axis via expression-flip lineage). 'drift' is the
+# quiet standing face and needs no constants — it IS the track grammar
+# above. Timing here is RHYTHMIC (fixed leg durations), a deliberate
+# carve-out from the K1 speed law: "leg speed is rhythmic, not physical —
+# short legs and the long return get fixed durations rather than constant
+# px/s, trading kinematic honesty for legible pacing"
+# (turn/cycle-turn-choreography.svg hw:tradeoffs, verbatim).
+choreography:
+  # Which register an empty motion_register resolves to, per family —
+  # loop's turn default is the corpus's own human gate ("turn is the cycle
+  # family's default motion", enrolled rule 5); every unlisted family takes
+  # the universal quiet face, drift.
+  family_defaults: { loop: turn }
+  turn:
+    # The expression corpus's ONE choreography language, measured from its
+    # keyframes: leg duration = 0.058*sqrt(length) clamped 0.30-1.30s; every
+    # dwell 0.10s (retry and nested pace decisions and stations alike); a
+    # trail draws ONCE per turn and holds — later inner laps replay on the
+    # comet head alone at the same pace. Timing anchors: the flywheel's
+    # 66.4px hop draws in 0.473s, its 969px rail rides the clamp, the turn
+    # clears 0.10s after the rail lands, turns sit 0.30s apart, and the
+    # period ends on a breathing rest.
+    leg_k: 0.058 # seconds per sqrt(px)
+    leg_min_s: 0.30
+    leg_max_s: 1.30
+    dwell_s: 0.10 # station arrival (measured hop-to-hop air)
+    dwell_decision_s: 0.10 # decisions pace like stations (retry + nested keyframes)
+    clear_hold_s: 0.10 # last arrival -> the turn's clear
+    turn_beat_s: 0.30 # dark beat between turns
+    period_rest_s: 1.40 # the endless loop's rest (the flywheel's 82.6% -> 100%)
+    terminal_rest_extra_s: 1.0 # a terminal-ending period rests 2.40 (retry + nested both)
+    terminal_hold_s: 1.77 # the completion read: a terminal's halo holds into the dark beat
+    guard_preflash_s: 0.15 # the chip lights before its branch fires
+    tap_knock_s: 0.60 # the interrupt's own leg (the knock lands while the loop rests)
+    halo_hold_s: 0.77 # arrival glow (6.30% -> 15.83% of 8.04)
+    pop_s: 0.034 # opacity ramps (0.42% of 8.04)
+    fade_s: 0.088 # glow fade (1.1%)
+    trail_stroke: 2.6 # the lit route (.fwh-tr stroke-width:2.6)
+    # The comet head: a bright core trailed by two staggered washes —
+    # [stroke, opacity, delay_s] per layer, every corpus specimen unanimous
+    # (3.6 @ 1.00 / 5.4 @ .30 +0.058s / 7.5 @ .13 +0.115s).
+    pulse_layers: [[3.6, 1.0, 0.0], [5.4, 0.30, 0.058], [7.5, 0.13, 0.115]]
+    pulse_head: 18 # the head's dash length
+    halo_stroke: 2.5 # arrival-halo outline width (every corpus specimen: .X-h stroke-width 2.5)
+    halo_inflate: 0 # halos sit at the element's exact box (corpus law)
+    halo_opacity: 1.0 # node halos peak (the corpus halos pop to full)
+    tint_hold_s: 0.95 # a lit chip's hold (the tint groups: pop, ~0.95s, fade)
+  # The meter registers ride the turn timeline and PERFORM the declared
+  # gauge — three compile fns, one per arrow of time (the lap-counter ruling:
+  # "the flywheel's accumulator grows and holds, retry's budget drains and
+  # refills, a lap counter grows and resets with the outer turn"). Fill
+  # ramps reuse turn's pop_s.
+  laps:
+    fill_opacity: 1.0 # a completed lap's segment (nested's lap counter keyframes)
+  budget:
+    drain_floor: 0.12 # a spent segment's resting opacity (retry's budget drain: 1 -> 0.12)
+  accumulate:
+    fill_opacity: 1.0 # a banked segment holds (the accumulator: fills eased, holds to 96.96%)
 
 # sec 12.1 nested composition: an inner artifact (chrome:bare) scales into
 # its container card's content box. max_w caps the display width (scale =
@@ -374,6 +517,18 @@ health:
 # steps (a shallow dark ramp renders as full-width Mach bands — petrol's
 # saturated teal showed them as colored stripes; noise breaks the band
 # coherence). Grain scalars are the strip filter verbatim.
+# Terminal finishes + tint rims (the loop family's chromatic gestalt):
+# washes are COMPOSED from genome tokens at these alphas — an advance
+# terminal wears the signal wash with a signal-edge rim, an exhausted one
+# the flat page tone; a lit chip's rim matches (the corpus tint groups'
+# 1.4 stroke). Dress knobs, zero hex.
+finish:
+  term_wash_opacity: 0.07 # advance terminal's fill (signal over the ground)
+  term_rim_opacity: 0.45 # advance terminal's edge (light face)
+  term_rim_w: 1.4
+  term_dark_rim_opacity: 0.6 # the dark face keeps the card ramp, rims brighter
+  tint_rim_w: 1.4 # a lit chip's hue rim
+
 material:
   ramp_mid_offset: "0.4"
   ramp_mid_mix: 0.58 # card_mid = card_hi mixed toward card_lo by this fraction

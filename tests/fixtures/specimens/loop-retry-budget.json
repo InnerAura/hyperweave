@@ -1,0 +1,60 @@
+{
+  "aspect": 1.892,
+  "caption_text": null,
+  "caption_text_amended": "the budget, performed \u00b7 one segment drains per failed attempt \u00b7 the fresh run refills the gauge",
+  "caption_text_amended_note": "the expression corpus authors bare cell panels (no masthead, no caption); the enrolled preset is a full artifact and speaks its own caption - the render grades against it verbatim",
+  "cards": {
+    "std_h_med": 84.0,
+    "std_w_med": 190.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 11,
+    "card_rx": 42.0,
+    "cards": 6,
+    "chips": 5,
+    "coins": 0,
+    "desc_lines": 4,
+    "diamonds": 2,
+    "drift_edges": 0,
+    "gather_buses": 0,
+    "gather_knots": 0,
+    "glyph_marks": 5,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "pills": 2,
+    "shell_marks": 0,
+    "solid_edges": 5,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "census_amendments": {
+    "arrow_terminals": 8,
+    "solid_edges": 6
+  },
+  "census_amendments_note": "reader-vocabulary residue on the second-generation dialect: the choreography replays draw per-act arrowheads (and dress one wire per register) the census hints cannot coalesce - the render values recorded are the engine's honest per-wire counts arrow_terminals re-derived after the diamond warn halo retired (no corpus specimen rings a rhombus; the reader had counted the halo path among the drawn arrows).",
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 5,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 11.2,
+  "height": null,
+  "occupancy": 0.711,
+  "plate": {
+    "content_bottom": 582.0,
+    "content_top": 34.0
+  },
+  "port_tolerance": 12.1,
+  "source": "v04/v040/v044/loops/retry/retry-specimens/diagram-loop-retry-axial-budget.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1177.0,
+    622.0
+  ],
+  "width": null
+}

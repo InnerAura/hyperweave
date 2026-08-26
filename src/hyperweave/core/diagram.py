@@ -75,6 +75,15 @@ class Topology(StrEnum):
     FANIN = "fanin"
     """The fan family's inward direction: inputs fan into one mouth — the
     same fan-linear solver as ``fanout``, direction reversed."""
+    LOOP = "loop"
+    """Procedural directed loop: a spine of process stations with exclusive
+    decisions (guard chips), terminal exits, and a return rail closing the
+    circuit; one-level named scopes and external taps ride the same spec.
+    ``orientation: vertical`` (the family default) is the axial spine with a
+    margin-rail return; ``horizontal`` is the lateral row with an underslung
+    return. The ``cycle`` family (orbit|ring) is the closed-ring sibling —
+    endless rhythm, no branch logic; loop exists to say "repeat UNTIL,
+    then exit"."""
     TREE = "tree"
     COMPARISON = "comparison"
     SEQUENCE = "sequence"
@@ -148,6 +157,15 @@ class NodeStyle(StrEnum):
     card+glyph again), and an unresolved mark costs nothing (icon-or-nothing
     stays total). The hero register stacks the same two slots as an identity
     ROW (mark + mono id) over a centered display block — the crown."""
+    PILL = "pill"
+    """A capsule card — the same anatomy as card+glyph (glyph slot, name,
+    desc), with the capsule ends moving the text start: the side insets
+    anchor at the end radius (h/2) instead of the flat card's pads, and
+    connector anchors resolve to the true cap rim. Reintroduced on the loop
+    expression corpus' terminal capsules (retry's Done/Failed pair, the
+    shuttle's Shipped, nested's Done — an 84-tall capsule seats its glyph
+    at the 42px radius, name at radius + mark + gap, right pad = radius);
+    the earlier deletion recorded that no specimen drew it — these do."""
     TEXT = "text"
     """A containerless typographic block (hub-panel-02-orchestrator):
     containers earn their existence — a satellite carrying enough text to be
@@ -254,6 +272,36 @@ class DiagramNode(FrozenModel):
             "An aspect (a mark), never a second card. State-machine only."
         ),
     )
+    station: Literal["", "decision", "terminal", "external", "scope"] = Field(
+        default="",
+        description=(
+            "Loop station species ('' = process station). 'decision' renders the rhombus with its "
+            "question in deliberation ink; 'decision' + chips is the decision-holder (criteria chips "
+            "seated inside the diamond). 'terminal' is an exit card (a sink — no outgoing edges). "
+            "'external' is the tap-margin secondary species (only tap edges touch it). 'scope' is a "
+            "named enclosure holding a complete inner circuit. Loop-only. Distinct from ``kind`` "
+            "(the core-glyph slug) — a station may carry both."
+        ),
+    )
+    partition: Literal["", "advance", "discard", "exhausted"] = Field(
+        default="",
+        description=(
+            "Loop partition role driving the hue law: 'advance' takes the accent (name + wire), "
+            "'discard' the complement (wire-grade; name in secondary ink), 'exhausted' the "
+            "fall-through pair. Deliberately NOT NodeRole.MUTED — muted's gray dashed dress is a "
+            "different grammar than the discard station's solid chip-fill card. Loop-only."
+        ),
+    )
+    enclosure: str = Field(
+        default="",
+        description=(
+            "Membership in a named scope: the id of a 'station: scope' node this node lives inside "
+            "(the nested-loop cell). Members are FIRST-CLASS nodes of the same spec — never an "
+            "``embed`` (embeds are sealed documents on their own clock; nested choreography couples "
+            "inner and outer on ONE clock). Depth caps at one level: a scope never declares an "
+            "enclosure of its own. Loop-only."
+        ),
+    )
     gather: bool = Field(
         default=False,
         description=(
@@ -336,6 +384,38 @@ class DiagramEdge(FrozenModel):
     route: Literal["", "bus", "around"] = Field(
         default="",
         description="Lanes routing: bus (gutter-adjacent) | around (perimeter long-haul). Lanes-only",
+    )
+    circuit: Literal["", "return", "tap-in", "tap-out"] = Field(
+        default="",
+        description=(
+            "Loop circuit role: 'return' is the loop-closing rail (the one lawful long route — "
+            "margin rail on the vertical spine, underslung dive on the horizontal row); 'tap-in' is "
+            "an interrupting one-shot from an external into the loop (fires only while the loop "
+            "rests — a choreography law); 'tap-out' is a standing side emission to an external "
+            "(conn dash-drift dress, never choreographed). Tap edges require their far endpoint to "
+            "be a 'station: external' node. Loop-only."
+        ),
+    )
+    accumulates: bool = Field(
+        default=False,
+        description=(
+            "The return carries the gain (the flywheel-as-chip ruling): compounding is a "
+            "declaration on the RETURN edge, never a node species — it compiles to the return "
+            "chip's accent flash (the second flash holds longer) plus the payload accumulator. "
+            "Legal only on a 'circuit: return' edge. Loop-only."
+        ),
+    )
+    meter: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "A declared segment gauge riding this return edge's chip (the meter kit piece: a lead "
+            "mark plus a row of filled segments seated beneath the chip, the row spanning the "
+            "chip's own width). The REGISTER performs it — laps grows and resets, budget drains "
+            "and refills, accumulate grows and holds; the drift face keeps the static gauge. "
+            "Legal only on a 'circuit: return' edge (outer or inner) that carries a chip "
+            "(label + label_style: chip). Caps at 8 segments. Loop-only."
+        ),
     )
     exit: Literal["", "top", "bottom", "left", "right"] = Field(
         default="",
@@ -528,6 +608,23 @@ class DiagramSpec(FrozenModel):
     )
     edge_motion: EdgeMotion | None = Field(
         default=None, description="Artifact-level motion override; None defers to the genome default"
+    )
+    motion_register: Literal["", "turn", "drift", "laps", "budget", "accumulate"] = Field(
+        default="",
+        description=(
+            "Artifact-scoped choreography register. 'turn' performs the diagram's claim in time — "
+            "a pulse walks the circuit in acts, arrival halos flash each station in its own hue, "
+            "guard chips flash when their branch fires. 'drift' is the quiet standing face (today's "
+            "track dress; geometry identical — the two faces are one spec, register flipped). "
+            "The meter registers ride the turn and PERFORM a declared segment gauge (the meter "
+            "grammar's three arrows of time, per the expression corpus): 'laps' grows and resets "
+            "with the outer turn (requires a scope — it counts inner laps), 'budget' drains and "
+            "refills (requires a decision — something spends it), 'accumulate' grows and holds "
+            "(requires an 'accumulates: true' return — it performs the gain). "
+            "Empty resolves per family at the compose seam: loop defaults to turn (owner-gated "
+            "corpus ruling), every other family to drift. Additive; excluded from the payload by "
+            "default (exclude_defaults)."
+        ),
     )
     node_style: NodeStyle | None = Field(
         default=None, description="Artifact-level anatomy override; None defers to the chassis default"
@@ -771,6 +868,7 @@ class DiagramSpec(FrozenModel):
         self._validate_embeds()
         self._validate_hub_structure(declared)
         self._validate_lanes_structure()
+        self._validate_loop_structure()
         self._validate_annotations(declared)
         return self
 
@@ -950,6 +1048,38 @@ class DiagramSpec(FrozenModel):
         """Lanes: every node declares a category; ``route``, declared
         ``lanes``, and node ``morphology`` are lanes-only; declared lanes
         must cover node categories."""
+        if self.topology is Topology.LOOP and self.lanes:
+            # The swimlane loop (the corpus's role lanes): a loop may declare
+            # its lanes; every non-external outer node then declares a
+            # member category — work moves within a lane and crosses
+            # between them, the return crosses back through the gutter.
+            declared = set(self.lanes)
+            for i, n in enumerate(self.nodes):
+                if n.station == "external" or n.enclosure:
+                    continue
+                if not n.category:
+                    raise ValueError(
+                        f"node {i} ({n.label!r}) declares no category, but this loop declares lanes — "
+                        "every station lives in one"
+                    )
+                if n.category not in declared:
+                    raise ValueError(
+                        f"node {i} ({n.label!r}) category {n.category!r} is not in the declared lanes "
+                        f"{sorted(declared)}"
+                    )
+            for e in self.edges:
+                if e.route:
+                    raise ValueError(
+                        f"edge {e.source!r}->{e.target!r} sets route={e.route!r}, but lane routing is "
+                        "lanes-only (the swimlane loop routes structurally)"
+                    )
+            for i, n in enumerate(self.nodes):
+                if n.morphology:
+                    raise ValueError(
+                        f"node {i} ({n.label!r}) sets morphology={n.morphology!r}, but the "
+                        "category-by-shape axis is lanes-only"
+                    )
+            return
         if self.topology is not Topology.LANES:
             for e in self.edges:
                 if e.route:
@@ -981,6 +1111,260 @@ class DiagramSpec(FrozenModel):
                         f"lanes node {i} ({n.label!r}) has category {n.category!r} not in the declared "
                         f"'lanes' order {list(self.lanes)}"
                     )
+
+    def _validate_loop_structure(self) -> None:
+        """Loop grammar: stations, the circuit, taps, and scopes are all
+        STRUCTURAL — devices derive from what the spec contains, never from
+        flags. Off-loop, every loop-only field rejects legibly."""
+        if self.topology is not Topology.LOOP:
+            for i, n in enumerate(self.nodes):
+                for fname, val in (("station", n.station), ("partition", n.partition), ("enclosure", n.enclosure)):
+                    if val:
+                        raise ValueError(
+                            f"node {i} ({n.label!r}) sets {fname}={val!r}, but the station vocabulary "
+                            f"is loop-only (topology is {self.topology.value})"
+                        )
+            for e in self.edges:
+                if e.circuit or e.accumulates or e.meter:
+                    raise ValueError(
+                        f"edge {e.source!r}->{e.target!r} sets a loop circuit key (circuit/accumulates/meter) "
+                        f"but topology is {self.topology.value} (loop-only)"
+                    )
+            return
+        nodes = {(n.id or f"n{i}"): n for i, n in enumerate(self.nodes)}
+        scopes = {nid for nid, n in nodes.items() if n.station == "scope"}
+        member_of: dict[str, str] = {}
+        for nid, n in nodes.items():
+            if not n.enclosure:
+                continue
+            if n.enclosure not in scopes:
+                raise ValueError(
+                    f"node {nid!r} declares enclosure={n.enclosure!r}, which is not a "
+                    "'station: scope' node — a scope member names its scope by id"
+                )
+            if n.station:
+                # The inner loop is guard-less by corpus law (cycle-nested's own
+                # tradeoff: the claim is the boundary, not inner logic) — and a
+                # scope inside a scope is the depth ruling still pending.
+                raise ValueError(
+                    f"scope member {nid!r} is 'station: {n.station}', but scope members are plain "
+                    "process stations only (the inner loop is guard-less; nesting caps at one level)"
+                )
+            member_of[nid] = n.enclosure
+        for sid in scopes:
+            members = [nid for nid, s in member_of.items() if s == sid]
+            if len(members) < 2:
+                raise ValueError(
+                    f"scope {sid!r} holds {len(members)} member(s); a scope encloses a complete "
+                    "inner circuit — declare at least two members with enclosure pointing at it"
+                )
+        if not self.edges:
+            if any(n.station or n.enclosure for n in self.nodes):
+                raise ValueError(
+                    "loop edges derive only for a plain endless loop (every node a process "
+                    "station); a decision, terminal, external, or scope makes edges content — "
+                    "declare them"
+                )
+            return
+        externals = {nid for nid, n in nodes.items() if n.station == "external"}
+        terminals = {nid for nid, n in nodes.items() if n.station == "terminal"}
+        decisions = {nid for nid, n in nodes.items() if n.station == "decision"}
+        inner_edges: dict[str, list[DiagramEdge]] = {sid: [] for sid in scopes}
+        outer_edges: list[DiagramEdge] = []
+        for e in self.edges:
+            if e.direction == "both" and e.circuit:
+                raise ValueError(f"edge {e.source!r}->{e.target!r} is a {e.circuit} and cannot be bidirectional")
+            if e.accumulates and e.circuit != "return":
+                raise ValueError(
+                    f"edge {e.source!r}->{e.target!r} declares accumulates, which is legal only on "
+                    "a 'circuit: return' edge (the return carries the gain)"
+                )
+            if e.circuit == "tap-in":
+                if e.source not in externals or e.target in externals:
+                    raise ValueError(
+                        f"tap-in {e.source!r}->{e.target!r} must run FROM a 'station: external' node INTO the loop"
+                    )
+            elif e.circuit == "tap-out":
+                if e.target not in externals or e.source in externals:
+                    raise ValueError(
+                        f"tap-out {e.source!r}->{e.target!r} must run FROM the loop OUT to a 'station: external' node"
+                    )
+            elif e.source in externals or e.target in externals:
+                raise ValueError(
+                    f"edge {e.source!r}->{e.target!r} touches an external station without a tap "
+                    "circuit role — externals participate in tap edges only"
+                )
+            if e.source in terminals:
+                raise ValueError(
+                    f"terminal {e.source!r} has an outgoing edge — a terminal is a sink (the loop exits there)"
+                )
+            src_scope = member_of.get(e.source, "")
+            dst_scope = member_of.get(e.target, "")
+            if src_scope != dst_scope:
+                # "The scope is the node for port purposes": outer edges target
+                # the scope card itself; nothing crosses its boundary.
+                raise ValueError(
+                    f"edge {e.source!r}->{e.target!r} crosses a scope boundary — outer edges "
+                    "address the scope node itself, inner edges stay wholly inside"
+                )
+            if src_scope:
+                inner_edges[src_scope].append(e)
+            else:
+                outer_edges.append(e)
+        outer_returns = [e for e in outer_edges if e.circuit == "return"]
+        if len(outer_returns) > 1:
+            raise ValueError(
+                f"a loop closes on exactly one outer 'circuit: return' edge (got "
+                f"{len(outer_returns)}) — the rail is the one lawful long route"
+            )
+        if not outer_returns:
+            # The unrolled form (the budget IS the unrolling): a loop may
+            # trade its return for a finite attempt ladder whose success
+            # exits converge on ONE advance terminal — the gather bus. The
+            # signature is structural: at least two non-terminal stations
+            # sharing one advance-terminal target. Anything else without a
+            # return is not a loop.
+            adv_terms = {
+                (n.id or f"n{i}")
+                for i, n in enumerate(self.nodes)
+                if n.station == "terminal" and n.partition == "advance"
+            }
+            incoming: dict[str, int] = {}
+            for e in outer_edges:
+                if e.target in adv_terms and nodes[e.source].station == "":
+                    incoming[e.target] = incoming.get(e.target, 0) + 1
+            if not any(count >= 2 for count in incoming.values()):
+                raise ValueError(
+                    "a loop closes on exactly one outer 'circuit: return' edge (got "
+                    "0) — the rail is the one lawful long route (the unrolled ladder "
+                    "is the one exception: two or more stations converging on one "
+                    "advance terminal, the gather bus)"
+                )
+        # The forward graph is ACYCLIC: the return is the one back edge. A
+        # plain edge that closes a second cycle declares nothing the walk
+        # can seat (the quarantined tri-exit mesh is what this wall stops) —
+        # a diagram needing two returns is two diagrams, or a scope.
+        fwd_ids = {(n.id or f"n{i}"): i for i, n in enumerate(self.nodes)}
+        fwd_pairs = {
+            (fwd_ids[e.source], fwd_ids[e.target])
+            for e in outer_edges
+            if not e.circuit and e.source in fwd_ids and e.target in fwd_ids
+        }
+        cycle = _find_cycle(len(self.nodes), fwd_pairs)
+        if cycle:
+            labels = " -> ".join(self.nodes[i].label or f"n{i}" for i in cycle)
+            raise ValueError(
+                f"loop forward edges close a second cycle ({labels}) — only the "
+                "'circuit: return' edge travels backward; re-route this cycle through "
+                "the return, a scope, or split the diagram"
+            )
+        for sid, inner in inner_edges.items():
+            inner_returns = [e for e in inner if e.circuit == "return"]
+            if len(inner_returns) != 1:
+                raise ValueError(
+                    f"scope {sid!r} holds {len(inner_returns)} inner return edge(s); its inner "
+                    "circuit closes on exactly one"
+                )
+        # The meter kit piece: a declared gauge is legal only where the
+        # register can perform it — on a return edge, beside that edge's chip.
+        for e in self.edges:
+            if not e.meter:
+                continue
+            if e.circuit != "return":
+                raise ValueError(
+                    f"edge {e.source!r}->{e.target!r} declares meter={e.meter}, but the meter rides "
+                    "a 'circuit: return' edge (the register performs it there)"
+                )
+            if not (e.label and e.label_style == "chip"):
+                raise ValueError(
+                    f"return {e.source!r}->{e.target!r} declares meter={e.meter} without a chip "
+                    "(label + label_style: chip) — the segments seat beneath the chip and span its width"
+                )
+            if e.meter > 8:
+                raise ValueError(f"meter caps at 8 segments (got {e.meter}); a longer gauge is a chart, not a chip")
+        # The meter registers refuse without their structural anchor — the
+        # gauge must have something to count, spend, or hold.
+        if self.motion_register == "laps" and not inner_edges:
+            raise ValueError(
+                "motion_register 'laps' counts inner laps, and this spec declares no scope — "
+                "there is no inner circuit to count; enclose the counted loop in a scope, or use 'turn'"
+            )
+        if self.motion_register == "budget" and not decisions:
+            raise ValueError(
+                "motion_register 'budget' drains a retry budget, and this spec declares no decision — "
+                "nothing spends the budget; use 'turn'"
+            )
+        if self.motion_register == "accumulate" and not any(e.accumulates for e in outer_returns):
+            raise ValueError(
+                "motion_register 'accumulate' performs the return's gain, and the return declares no "
+                "'accumulates: true' — declare the gain on the return edge, or use 'turn'"
+            )
+        for did in decisions:
+            outgoing = [e for e in outer_edges if e.source == did and not e.circuit.startswith("tap")]
+            incident = [e for e in outer_edges if did in (e.source, e.target)]
+            if len(outgoing) != 2:
+                raise ValueError(
+                    f"decision {did!r} has {len(outgoing)} exits; an exclusive decision spends "
+                    "exactly two (each with its guard chip)"
+                )
+            if len(incident) > 4:
+                raise ValueError(
+                    f"decision {did!r} has {len(incident)} incident edges; a rhombus spends at "
+                    "most four ports (one edge per port)"
+                )
+        self._validate_loop_reachability(nodes, member_of, externals, outer_edges, inner_edges)
+
+    def _validate_loop_reachability(
+        self,
+        nodes: dict[str, DiagramNode],
+        member_of: dict[str, str],
+        externals: set[str],
+        outer_edges: list[DiagramEdge],
+        inner_edges: dict[str, list[DiagramEdge]],
+    ) -> None:
+        """Every station is part of its circuit: outer nodes reachable from
+        the outer return's target (the loop entry) over outer edges; scope
+        members reachable from their inner return's target over inner edges."""
+
+        def _walk(start: str, edges: list[DiagramEdge]) -> set[str]:
+            adj: dict[str, list[str]] = {}
+            for e in edges:
+                adj.setdefault(e.source, []).append(e.target)
+            seen = {start}
+            frontier = [start]
+            while frontier:
+                for nxt in adj.get(frontier.pop(), []):
+                    if nxt not in seen:
+                        seen.add(nxt)
+                        frontier.append(nxt)
+            return seen
+
+        walkable = [e for e in outer_edges if not e.circuit.startswith("tap")]
+        entry = next((e.target for e in outer_edges if e.circuit == "return"), None)
+        if entry is None:
+            # The unrolled ladder (no return, gather-validated): the entry
+            # is the chain head — the plain station nothing walks into.
+            targeted = {e.target for e in walkable}
+            entry = next(
+                (nid for nid, n in nodes.items() if n.station == "" and nid not in targeted and nid not in member_of),
+                None,
+            )
+            if entry is None:
+                raise ValueError("the unrolled ladder needs a chain head — a station no edge walks into")
+        seen = _walk(entry, walkable)
+        expected = {nid for nid in nodes if nid not in externals and nid not in member_of}
+        missing = sorted(expected - seen)
+        if missing:
+            raise ValueError(
+                f"loop stations {missing} are not reachable from the entry {entry!r} "
+                "(the return edge's target) — the circuit must visit every station"
+            )
+        for sid, inner in inner_edges.items():
+            inner_entry = next(e.target for e in inner if e.circuit == "return")
+            inner_seen = _walk(inner_entry, inner)
+            inner_missing = sorted({nid for nid, s in member_of.items() if s == sid} - inner_seen)
+            if inner_missing:
+                raise ValueError(f"scope {sid!r} members {inner_missing} are not reachable on its inner circuit")
 
     def _validate_annotations(self, declared: list[str]) -> None:
         """Referential checks for annotation anchors (arity/kind live on the
@@ -1084,9 +1468,9 @@ def _seat_side(spec: DiagramSpec, index: int, node: DiagramNode) -> str:
 def focal_slot(topology: Topology, n: int, orientation: Orientation = Orientation.HORIZONTAL) -> int | None:
     """The structural focal index AUTO resolves to HERO, or None.
 
-    A horizontal pipeline, the cycle family, sequence, dag, state-machine,
-    and lanes have no structural focal slot — their hero is caller
-    rhetoric. Hub has one: the center node (slot 0); the vertical pipeline
+    A horizontal pipeline, the cycle family, the loop family, sequence,
+    dag, state-machine, and lanes have no structural focal slot — their
+    hero is caller rhetoric (the runloop's crux station). Hub has one: the center node (slot 0); the vertical pipeline
     (the operator stack) crowns its top result (slot 0); fanin's mouth is
     the last node.
     """
@@ -1115,6 +1499,8 @@ def layout_slug(spec: DiagramSpec) -> str:
         return f"fanout-{spec.orientation.value}"
     if spec.topology is Topology.CYCLE:
         return f"cycle-{spec.orientation.value}"
+    if spec.topology is Topology.LOOP and spec.orientation is Orientation.HORIZONTAL:
+        return "loop-horizontal"
     if spec.topology is Topology.PIPELINE and spec.orientation is Orientation.VERTICAL:
         return "pipeline-vertical"
     if spec.topology is Topology.DAG and spec.orientation is Orientation.VERTICAL:
@@ -1149,9 +1535,12 @@ def derive_edges(spec: DiagramSpec) -> tuple[tuple[int, int], ...]:
     stack: nodes[0] is the top result; particles climb bottom -> top).
     fanout: nodes[0] -> each. fanin: each -> nodes[-1]. cycle: the loop —
     orbit cycles the non-hero ring (a hero is the center axis, lifted out
-    of the ring); ring cycles every node. tree: nodes[0] -> each (depth-1
-    star; multi-level trees declare explicit edges). comparison: the single
-    before -> after pair.
+    of the ring); ring cycles every node. loop: the chain plus the closing
+    return — derivable ONLY when every node is a plain process station (the
+    endless compile-by-omission rule: runloop/flywheel need no edges; any
+    decision/terminal/external/scope makes edges content). tree: nodes[0] ->
+    each (depth-1 star; multi-level trees declare explicit edges).
+    comparison: the single before -> after pair.
     """
     n = len(spec.nodes)
     t = spec.topology
@@ -1169,6 +1558,13 @@ def derive_edges(spec: DiagramSpec) -> tuple[tuple[int, int], ...]:
         ring = [i for i, node in enumerate(spec.nodes) if node.role is not NodeRole.HERO]
         k = len(ring)
         return tuple((ring[i], ring[(i + 1) % k]) for i in range(k))
+    if t is Topology.LOOP:
+        if any(node.station for node in spec.nodes):
+            raise DiagramInputError(
+                "loop edges derive only for a plain endless loop (every node a process station); "
+                "a decision, terminal, external, or scope makes edges content — declare them"
+            )
+        return (*((i, i + 1) for i in range(n - 1)), (n - 1, 0))
     if t is Topology.TREE:
         return tuple((0, j) for j in range(1, n))
     if t is Topology.COMPARISON:
@@ -1213,6 +1609,15 @@ class ResolvedEdge:
     label_style: str = ""
     """Line idiom ('' | assert | drift | flow | bypass) — binds the registry's
     default dress; explicit per-edge fields override channels (sec 3)."""
+    circuit: str = ""
+    """Loop circuit role ('' | return | tap-in | tap-out); the derived endless
+    loop marks its closing pair 'return' so solvers never guess which edge
+    is the rail."""
+    accumulates: bool = False
+    """The return carries the gain (loop flywheel declaration; return-only)."""
+    meter: int = 0
+    """Declared segment gauge riding this return's chip (the meter kit
+    piece; return-only, 0 = none)."""
 
 
 def resolved_edges(spec: DiagramSpec) -> tuple[ResolvedEdge, ...]:
@@ -1224,7 +1629,16 @@ def resolved_edges(spec: DiagramSpec) -> tuple[ResolvedEdge, ...]:
     topologies without explicit edges get the derived structure.
     """
     if not spec.edges:
-        return tuple(ResolvedEdge(source=a, target=b) for a, b in derive_edges(spec))
+        derived = derive_edges(spec)
+        if spec.topology is Topology.LOOP:
+            # The derived endless loop's closing pair IS the return rail;
+            # mark it so the solver and choreography never guess.
+            last = len(derived) - 1
+            return tuple(
+                ResolvedEdge(source=a, target=b, circuit="return" if i == last else "")
+                for i, (a, b) in enumerate(derived)
+            )
+        return tuple(ResolvedEdge(source=a, target=b) for a, b in derived)
     index = {n.id: i for i, n in enumerate(spec.nodes) if n.id}
     out: list[ResolvedEdge] = []
     for e in spec.edges:
@@ -1245,6 +1659,9 @@ def resolved_edges(spec: DiagramSpec) -> tuple[ResolvedEdge, ...]:
             route=e.route,
             relation=e.relation,
             label_style=e.label_style,
+            circuit=e.circuit,
+            accumulates=e.accumulates,
+            meter=e.meter,
         )
         out.append(base)
         if e.direction == "both":

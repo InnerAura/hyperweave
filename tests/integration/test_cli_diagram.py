@@ -200,6 +200,45 @@ def test_edge_motion_invalid_exits_2() -> None:
     assert "must be one of" in result.output
 
 
+def test_motion_register_override(tmp_path: Path) -> None:
+    """--motion-register flips the choreographed preset to its plain face
+    (parity with HTTP ?motion_register= — the one-flag toggle)."""
+    import json
+    import re
+
+    out = tmp_path / "reg.svg"
+    result = runner.invoke(
+        app,
+        [
+            "compose",
+            "diagram",
+            "--spec-file",
+            "loop-hillclimb-turn",
+            "-g",
+            "primer",
+            "--motion-register",
+            "drift",
+            "-o",
+            str(out),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    svg = out.read_text()
+    m = re.search(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", svg, re.DOTALL)
+    assert m, "hw:payload missing"
+    assert json.loads(m.group(1))["rendered"]["motion_register"] == "drift"
+    assert "-ch0" not in svg  # no choreography keyframes on the drift face
+
+
+def test_motion_register_invalid_exits_2() -> None:
+    result = runner.invoke(
+        app,
+        ["compose", "diagram", "--spec-file", "loop-runloop", "-g", "primer", "--motion-register", "waltz"],
+    )
+    assert result.exit_code == 2
+    assert "must be one of" in result.output
+
+
 def test_hub_incidence_error_names_the_recompose_path() -> None:
     """A hub spec with a satellite-to-satellite edge fails with the exit named:
     the printed message carries the actual rule text (not an error count) and
@@ -230,3 +269,35 @@ def test_hub_incidence_error_names_the_recompose_path() -> None:
     combined = result.output + result.stderr
     assert "not incident to the hub node" in combined
     assert "recompose with topology dag or lanes" in combined
+
+
+def test_motion_register_meter_values_accepted() -> None:
+    """The meter registers are legal CLI values; the structural anchor is
+    checked by the spec, not the flag — accumulate on the flywheel (whose
+    return declares the gain) composes."""
+    result = runner.invoke(
+        app,
+        ["compose", "diagram", "--spec-file", "loop-flywheel", "-g", "primer", "--motion-register", "accumulate"],
+    )
+    assert result.exit_code == 0, result.output
+
+
+def test_motion_register_invalid_value_names_the_full_set() -> None:
+    """The literal printed sentence enumerates all five registers."""
+    result = runner.invoke(
+        app,
+        ["compose", "diagram", "--spec-file", "loop-flywheel", "-g", "primer", "--motion-register", "spiral"],
+    )
+    assert result.exit_code != 0
+    assert "must be one of: turn | drift | laps | budget | accumulate" in result.output
+
+
+def test_motion_register_refuses_without_structural_anchor() -> None:
+    """A meter register without its anchor hears the spec's own refusal
+    through the CLI: laps needs a scope to count."""
+    result = runner.invoke(
+        app,
+        ["compose", "diagram", "--spec-file", "loop-flywheel", "-g", "primer", "--motion-register", "laps"],
+    )
+    assert result.exit_code != 0
+    assert "no inner circuit to count" in result.output

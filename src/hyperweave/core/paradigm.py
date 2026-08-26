@@ -1203,6 +1203,16 @@ class DiagramNodeChassis(FrozenModel):
     max_desc_lines: int = -1
     """Desc wrap ceiling for this node class. ``-1`` inherits the paradigm
     ROOT rhythm, same law as ``desc_line_pitch``."""
+    label_max_lines: int = 1
+    """NAME wrap ceiling for this node class. 1 (the kit default) keeps the
+    single-line name law — long names grow the card. >1 wraps the name at
+    the class's citation ceiling instead, in its own voice at the desc pitch
+    (turn/cycle-turn-choreography-v2: "Measure against"/"the target" at
+    baselines 533/552 inside the 210 module — pitch 19, both lines
+    ``cyt1-name``), so a long-named station reads squarish like the hand
+    cards, never a wide flat bar. Wrap engages only when the wrapped runs
+    carry the WHOLE name (never-truncate law: a name that cannot fit its
+    line cap at the ceiling falls back to single-line growth)."""
     label_gap: float = 14.0
     """Dot-center to label-start gap."""
     glyph_inset_x: float = 22.0
@@ -1341,6 +1351,11 @@ class DiagramTopologyChassis(FrozenModel):
     archetype width/height a caller never asked for."""
     node2: DiagramNodeChassis = Field(default_factory=lambda: DiagramNodeChassis(w=120.0, h=40.0, rx=12.0))
     """Ring-2 node class (tree-radial grandchildren)."""
+    dev: DiagramNodeChassis = Field(default_factory=DiagramNodeChassis)
+    """Loop deviation-pair class (the fork's offset twins). The turn corpus
+    sizes them as their own narrower module — 170x72 at x 125..295 / 505..675
+    against the 210 spine (turn/cycle-turn-choreography, both v1 and v2) —
+    so the pair tiles the spine card's edge instead of matching its width."""
     circle_r: float = -1.0
     """Glyph-circle radius for default nodes. ``-1`` (an impossible radius)
     inherits the paradigm ROOT radius (``ParadigmDiagramConfig.circle_r``,
@@ -1591,6 +1606,33 @@ class DiagramTopologyChassis(FrozenModel):
     """Lanes category-by-SHAPE mark radius (obi-engine' morphology idiom).
     The mark LEADS the label row (obi-engine) — its advance is
     ``2·morph_mark_r + ink_gap``, reserved via place_card's bullet lead."""
+    # ── Loop union-chassis fields ───────────────────────────────────────
+    connector_standoff: float | None = None
+    """Per-family marker standoff override (px off the target boundary).
+    ``None`` reads the engine-wide ``connector.standoff`` (0 — "the
+    specimens touch"). The loop corpus enrolled 2px (cycle-retry /
+    cycle-shuttle-v2 spatial-notes: "2px standoffs", endpoints asserted
+    0.5-3.5px) — a per-family citation, never a flip of the global."""
+    chip_visible_run: float = 0.0
+    """Per-SPEC chip-density citation (the caps-lift pattern — never the
+    family default). 0 inherits the enrolled occlusion law (<=1/3 with
+    >=30px visible per side). A spec whose specimen seats its guards
+    denser cites the specimen's own visible run here (the unrolled
+    ladder's audit records 22), and the run floor becomes span + 2x the
+    citation — the citation IS the density ruling for that cell."""
+    rail_side: str = ""
+    """Loop margin-rail side: '' derives (opposite the at-rank lateral-exit
+    side when one exists — cycle-retry's advance exits far, rail near; else
+    the advance side — turn/cycle-turn's right rail), 'near' | 'far' pin
+    it. Flow-frame words: they transpose with orientation like exit/entry."""
+    diamond_half_h: float = 52.0
+    """Decision rhombus half-height (turn/cycle-turn's Improved? 100x52,
+    cycle-retry's two 101x52/100x52; the holder GROWS past this to seat its
+    criteria chips). The horizontal cell cites its own 48 (shuttle's
+    Approve? 100x48)."""
+    diamond_half_w_min: float = 100.0
+    """Decision rhombus half-width FLOOR — the measured question width
+    solves the actual half-width; every corpus diamond floors at 100-101."""
 
 
 def _diagram_topology_defaults() -> dict[str, DiagramTopologyChassis]:
@@ -1941,6 +1983,12 @@ class ParadigmDiagramConfig(FrozenModel):
         default_factory=lambda: MatrixVoice(family="Inter", size=11.0, weight=700, tracking_em=0.08)
     )
     """Lanes category-band header — display face, tracked, the band's title."""
+    scope_header_voice: MatrixVoice = Field(
+        default_factory=lambda: MatrixVoice(family="Inter", size=10.5, weight=700, tracking_em=0.16)
+    )
+    """The loop family's band eyebrow (scope legend, swimlane lane titles) —
+    the expression corpus's own register (700 10.5px, .16em tracking), a
+    step quieter and wider-tracked than the lanes family's header."""
     count_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=8.0, weight=700, tracking_em=0.04))
     """Lanes member-count badge — small mono numeral."""
     region_label_voice: MatrixVoice = Field(default_factory=lambda: MatrixVoice(size=9.0, weight=400, tracking_em=0.14))
@@ -2007,10 +2055,12 @@ class ParadigmDiagramConfig(FrozenModel):
             tch_update: dict[str, object] = {
                 "node": resolve_node(tch.node, self.node),
                 "hero": resolve_node(tch.hero, self.hero),
-                # node2 (tree-radial's outer ring, tree's deepest row) has no
-                # dedicated root citation — it inherits the same root.node
-                # rhythm as the primary node class, the closest sibling.
+                # node2 (tree-radial's outer ring, tree's deepest row) and
+                # dev (loop's deviation pair) have no dedicated root
+                # citation — they inherit the same root.node rhythm as the
+                # primary node class, the closest sibling.
                 "node2": resolve_node(tch.node2, self.node),
+                "dev": resolve_node(tch.dev, self.node),
             }
             if tch.circle_r < 0:
                 tch_update["circle_r"] = self.circle_r

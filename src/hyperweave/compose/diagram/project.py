@@ -24,7 +24,7 @@ from hyperweave.core.diagram import DiagramSpec, EdgeKind, NodeRole, Topology, l
 from hyperweave.core.envelope import cdata_safe_json
 
 if TYPE_CHECKING:
-    from hyperweave.compose.diagram.records import RenderedMotion
+    from hyperweave.compose.diagram.records import ChoreographyPlan, RenderedMotion
 
 PAYLOAD_SCHEMA = "diagram/1"
 
@@ -33,7 +33,11 @@ ENVELOPE_EDGE_CAP = 16
 
 
 def diagram_payload_json(
-    spec: DiagramSpec, rendered: RenderedMotion, *, rendered_topology: Topology | None = None
+    spec: DiagramSpec,
+    rendered: RenderedMotion,
+    *,
+    rendered_topology: Topology | None = None,
+    choreography: ChoreographyPlan | None = None,
 ) -> str:
     """Canonical, lossless, CDATA-safe payload text.
 
@@ -66,6 +70,20 @@ def diagram_payload_json(
     # non-promoted diagram's payload is untouched by this parameter at all.
     if rendered_topology is not None and rendered_topology != spec.topology:
         rendered_block["topology"] = rendered_topology.value
+    # Choreography rides the payload ONLY when a register compiled (or the
+    # caller declared one) — the universal drift face stays byte-identical.
+    # The beats table is the hand corpus's own shape ([start, end] seconds
+    # per element key), engine-generated so keyframe agreement is testable.
+    if choreography is not None:
+        rendered_block["motion_register"] = choreography.register
+        rendered_block["choreography"] = {
+            "super_period_s": choreography.super_period_s,
+            "acts": list(choreography.acts),
+            "legs_s": dict(choreography.legs_s),
+        }
+        rendered_block["beats"] = {"table": {k: [list(w) for w in ws] for k, ws in choreography.beats.items()}}
+    elif rendered.motion_register and spec.motion_register:
+        rendered_block["motion_register"] = rendered.motion_register
     body: dict[str, Any] = {
         "spec": spec.model_dump(mode="json", exclude_defaults=True),
         "rendered": rendered_block,

@@ -1,0 +1,55 @@
+{
+  "aspect": 1.731,
+  "caption_text": null,
+  "caption_text_amended": "the gain, performed \u00b7 each turn banks its share and the gauge holds to the period bar",
+  "caption_text_amended_note": "the expression corpus authors bare cell panels (no masthead, no caption); the enrolled preset is a full artifact and speaks its own caption - the render grades against it verbatim",
+  "cards": {
+    "std_h_med": 80.0,
+    "std_w_med": 164.0
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 8,
+    "card_rx": 12.0,
+    "cards": 4,
+    "chips": 1,
+    "coins": 0,
+    "desc_lines": 4,
+    "drift_edges": 0,
+    "gather_buses": 0,
+    "gather_knots": 0,
+    "glyph_marks": 5,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "pills": 0,
+    "shell_marks": 0,
+    "solid_edges": 4,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "census_amendments": {
+    "arrow_terminals": 4,
+    "chips": 1,
+    "glyph_marks": 5
+  },
+  "census_amendments_note": "reader-vocabulary residue on the second-generation dialect: the choreography replays draw per-act arrowheads (and dress one wire per register) the census hints cannot coalesce - the render values recorded are the engine's honest per-wire counts",
+  "chip_stub_min": null,
+  "height": null,
+  "occupancy": 0.135,
+  "plate": {
+    "content_bottom": 584.0,
+    "content_top": 30.0
+  },
+  "port_tolerance": 12.1,
+  "source": "v04/v040/v044/loops/runloop/runloop-specimens-v2/diagram-loop-flywheel-axial-vertical-accumulate.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1080.0,
+    624.0
+  ],
+  "width": null
+}

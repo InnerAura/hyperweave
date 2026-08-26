@@ -58,12 +58,17 @@ from hyperweave.core.paradigm import DiagramTopologyChassis, ParadigmDiagramConf
 
 def enforce_caps(spec: DiagramSpec, slug: str, caps: Mapping[str, Any]) -> bool:
     """Hard caps raise; per-layout min/max raise; soft cap returns the
-    shrink flag (the named gap/pitch tightens by shrink_factor)."""
+    shrink flag (the named gap/pitch tightens by shrink_factor).
+
+    ``caps`` arrives with the spec's own overrides merged over the frame
+    table (the graph.py idiom): a flat ``max_nodes`` lifts THIS spec's
+    layout ceiling without loosening the family default — the hard cap
+    still binds above it."""
     n = len(spec.nodes)
     if n > int(caps.get("hard_nodes", 20)):
         raise DiagramCapacityError(f"{n} nodes exceeds the hard cap {caps.get('hard_nodes', 20)}; split the diagram")
     band = (caps.get("layouts") or {}).get(slug) or {}
-    lo, hi = int(band.get("min", 2)), int(band.get("max", 20))
+    lo, hi = int(band.get("min", 2)), int(caps.get("max_nodes", band.get("max", 20)))
     if n < lo:
         raise DiagramInputError(f"{slug} needs at least {lo} nodes (got {n})")
     if n > hi:
@@ -387,6 +392,13 @@ def connector_accents(
         # Lanes WIRES stay neutral (the kit's swimlanes: category lives on
         # the node marks, bands, and legend — colored rails would re-encode
         # the same axis twice and rainbow the gutter).
+        return tuple(-1 for _ in edges)
+    if spec.topology is Topology.LOOP:
+        # Loop hue is the family's OWN chromatic compile (loop.py's
+        # ``_edge_hue``: advance exits ride accent_wire, discard/failure
+        # exits the complement, everything else the quiet conn) — the
+        # generic spine inference would paint the whole chain accent and
+        # contradict it.
         return tuple(-1 for _ in edges)
     if spec.topology is Topology.SEQUENCE:
         # auth-sequence's binding: every RETURN message carries the accent
@@ -1059,6 +1071,15 @@ def finish_layout(
         # already calibrate) and seats the legend row in the air the stack
         # opened above it — never both centered on the same shared band.
         cap_dy = (fdy + (foot_h - caption_h)) if stacked_footer else fdy
+        # The caption centers under the CONTENT MASS, never the raw canvas:
+        # an asymmetric side channel (the loop's margin rail) widens the
+        # canvas past the node column, and canvas-centering drifted the
+        # sentence toward the empty channel. On a symmetric canvas the two
+        # centers coincide, so every other family reads byte-identically.
+        if nodes_paint and foot_w > 0:
+            xs = [n.box.x for n in nodes_paint] + [n.box.x + n.box.w for n in nodes_paint]
+            mass_cx = (min(xs) + max(xs)) / 2
+            fdx = min(max(mass_cx - foot_w / 2, m), max(m, width - foot_w - m))
         foot_text = shift_text(foot_text, fdx, cap_dy)
         legend_band_h = legend_row_h if stacked_footer else foot_h
         for a in foot_legends:
@@ -1132,6 +1153,7 @@ def finish_layout(
         activations=tuple(activations),
         annotations=annotations,
         lane_bands=tuple(lane_bands),
+        chip_visible_run=float(ch.chip_visible_run or 0.0),
         gathers=gathers,
         legend=legend,
         initial_dot=initial_dot,
@@ -1155,8 +1177,8 @@ def finish_layout(
 
 def apply_spec_chassis(ch: DiagramTopologyChassis, overrides: Mapping[str, Any]) -> DiagramTopologyChassis:
     """Merge a spec's shallow chassis overrides (design dims, never
-    coordinates) onto the topology chassis: node/hero/node2 sub-dicts merge
-    field-wise; scalar fields replace.
+    coordinates) onto the topology chassis: node/hero/node2/dev sub-dicts
+    merge field-wise; scalar fields replace.
 
     A ``hero`` sub-dict's own keys accumulate onto ``hero_declared`` — the
     explicitness carrier the hero sizing law reads (``sizing.hero_width_floor``
@@ -1168,7 +1190,7 @@ def apply_spec_chassis(ch: DiagramTopologyChassis, overrides: Mapping[str, Any])
         return ch
     update: dict[str, Any] = {}
     for key, value in overrides.items():
-        if key in ("node", "hero", "node2") and isinstance(value, Mapping):
+        if key in ("node", "hero", "node2", "dev") and isinstance(value, Mapping):
             # Re-VALIDATE the merged sub-chassis (model_copy(update=...)
             # skips pydantic coercion, so a preset's YAML ints leaked into
             # float fields raw — rx 16 rendered "16" where the paradigm's
@@ -1224,7 +1246,7 @@ def compute_diagram_layout(
     if any(n.role is NodeRole.AUTO for n in spec.nodes):
         raise DiagramInputError("spec reached the solver with AUTO roles; normalize via the input seam first")
     slug = layout_slug(spec)
-    caps = engine.get("caps") or {}
+    caps = {**(engine.get("caps") or {}), **(spec.caps or {})}
     check_orientation(spec, engine)
     check_routing_overridable(spec, slug, engine)
     shrink = enforce_caps(spec, slug, caps)
@@ -1310,6 +1332,7 @@ _SOLVER_MODULES = (
     "hub",
     "lanes",
     "linear",
+    "loop",
     "radial",
     "sequence",
 )

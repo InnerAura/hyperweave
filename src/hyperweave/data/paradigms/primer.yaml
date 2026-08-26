@@ -621,6 +621,68 @@ diagram:
       circle_r: 44
       circle_label_dy: 24 # name baseline cy+68 = r44 + 24
       node: { max_desc_lines: 3 } # wrapped stage descs (2-3 lines in the specimen)
+    loop: # axial spine (the loop family's default cell): process stations down one
+      # spine, decision rhombi with guard chips, at-rank exits, return up a
+      # margin rail. Anatomy is the KIT CARD — the family's converged dress
+      # (turn/cycle-turn-choreography-v2.svg, the bridge that put the loop on
+      # the same card grammar as the tree/fanout kit cells): glyph slot 24 @
+      # +17 with 1.6-stroke marks, text from x+58, rx 13, h56 single-line /
+      # h72 with baselines 29/48 at 19px pitch. Older-dialect specimens
+      # (runloop's 230x62 sink grammar, its 250x70 hero) cite their own
+      # dims via per-preset chassis overrides, the documented seam for
+      # prototypes of one family that disagree on card proportions.
+      width_policy: aligned # each seat family shares one solved width (spine 210s, deviation 170s, terminal 220s — the corpus columns)
+      width: 880 # the corpus canvas (hillclimb 880x1072, retry 880x724, runloop 880x472)
+      display_w: 740
+      margin_x: 40
+      header_h: 66
+      footer_h: 54
+      gap: 52 # face-to-face spine travel: the hillclimb's own e1/e2 run 47/55
+      # label_max_lines 2: station names WRAP at the module ceiling instead of
+      # widening the card — the corpus's own two-line names ("Measure against"/
+      # "the target" at 533/552, "Revert to"/"last best", "Keep as"/"new best";
+      # both turn choreography files render every name line in ONE voice), so
+      # a long-named station reads squarish (h72) like the hand cards.
+      node: { w: 210, h: 56, rx: 13, glyph_inset_x: 17, glyph_label_gap: 17, label_dy: 29, desc_dy: 48, desc_line_pitch: 19, max_desc_lines: 2, label_max_lines: 2 }
+      # Deviation pair (the fork's offset twins): the corpus's own narrower
+      # module — 170x72 at x 125..295 / 505..675, tiling the 210 spine's
+      # edges in both turn choreography files; 72 is the kit 56 grown by the
+      # two-line name wrap, never a chassis pin.
+      dev: { w: 170, h: 56, rx: 13, glyph_inset_x: 17, glyph_label_gap: 17, label_dy: 29, desc_dy: 48, desc_line_pitch: 19, max_desc_lines: 2, label_max_lines: 2 }
+      # Hero (runloop-v2's crux station wears the map-reduce hero grammar
+      # verbatim: 250x70, glyph x+22, text x+60, baselines +31.1/+50.1).
+      hero: { w: 250, h: 70, rx: 14, glyph_inset_x: 22, glyph_label_gap: 14, label_dy: 31.1, desc_dy: 50.1 }
+      # Secondary species: terminals and tap externals (turn's terminal card
+      # 220x56 rx14; tap-v3's externals "wear the secondary species in their
+      # own zone").
+      node2: { w: 220, h: 56, rx: 13, glyph_inset_x: 17, glyph_label_gap: 17, label_dy: 33, label_max_lines: 2 }
+      diamond_half_h: 52 # Improved? 100x52 halves (turn); retry's two at 101x52 / 100x52
+      diamond_half_w_min: 100
+      connector_standoff: 2 # the corpus-enrolled 2px marker standoff (retry/shuttle-v2)
+    loop-horizontal: # lateral row (the shuttle cell): stations left-to-right, a
+      # 3-port decision at the row's end, advance out in-row, return riding
+      # the underslung rail (diagram-loop-shuttle-lateral-turn.svg, 1256x282
+      # — the owner re-anchored this cell on the expression corpus's lateral
+      # shuttle, superseding cycle-shuttle-v2's dropped-terminal geometry).
+      aspect: banner
+      width: 1256
+      display_w: 740
+      margin_x: 40
+      header_h: 62
+      footer_h: 54
+      caption_gap: 40 # family caption band (the shuttle preset's own 40, promoted — a gauge hanging under the rail otherwise grazed the caption at the generic margin)
+      caption_pad: 34
+      gap: 92 # station face-to-face run (Draft right edge 236 -> next left 328)
+      node: { w: 196, h: 84, rx: 12, glyph_inset_x: 33, glyph_label_gap: 4, label_dy: 38, desc_dy: 57, desc_line_pitch: 19, max_desc_lines: 2, label_max_lines: 2 }
+      hero: { w: 250, h: 70, rx: 14, glyph_inset_x: 22, glyph_label_gap: 14, label_dy: 31.1, desc_dy: 50.1 }
+      width_policy: aligned
+      node2: { w: 212, h: 84, rx: 42, glyph_inset_x: 17, glyph_label_gap: 17, label_dy: 38, desc_dy: 57, label_max_lines: 2 }
+      # Deviation pair — same module as the vertical cell (the transpose law:
+      # boxes never rotate, so the twins keep their 170 dress across cells).
+      dev: { w: 170, h: 56, rx: 13, glyph_inset_x: 17, glyph_label_gap: 17, label_dy: 29, desc_dy: 48, desc_line_pitch: 19, max_desc_lines: 2, label_max_lines: 2 }
+      diamond_half_h: 62 # Approve? 96x62 halves (the lateral shuttle's 192x124 rhombus)
+      diamond_half_w_min: 96
+      connector_standoff: 2
     pipeline-vertical: # landscape operator stack: hero crown top-center, layer column
       # below it, gray ring+cross operators between consecutive layers.
       width_floor: true # content-fit audit: fixed landscape banner — the specimen explicitly rejects shrink-wrap

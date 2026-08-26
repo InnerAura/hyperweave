@@ -1254,6 +1254,19 @@ async def compose_diagram_url(
             pattern="^(|dash|particle)$",
         ),
     ] = "",
+    motion_register: Annotated[
+        str,
+        Query(
+            description=(
+                "Choreography register: turn (the pulse walks the circuit) | "
+                "drift (the quiet standing face) | laps · budget · accumulate "
+                "(the meter registers — the gauge grows-and-resets, "
+                "drains-and-refills, or grows-and-holds). Empty = family "
+                "default (loop composes turn)."
+            ),
+            pattern="^(|turn|drift|laps|budget|accumulate)$",
+        ),
+    ] = "",
     performance: Annotated[
         str,
         Query(
@@ -1348,6 +1361,8 @@ async def compose_diagram_url(
 
     if edge_motion and isinstance(diagram_payload, dict):
         diagram_payload = {**diagram_payload, "edge_motion": edge_motion}
+    if motion_register and isinstance(diagram_payload, dict):
+        diagram_payload = {**diagram_payload, "motion_register": motion_register}
 
     try:
         surface_ground, surface_palette = _resolve_surface_axes(surface, ground, palette)

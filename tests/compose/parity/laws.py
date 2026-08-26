@@ -23,6 +23,7 @@ from .pieces import (
     chip_rects,
     coin_circles,
     convergence_outer_chord_deg,
+    diamond_cards,
     edge_dress,
     edge_paths,
     gather_knots,
@@ -281,6 +282,15 @@ def _near_endpoints(facts: Facts) -> list[tuple[float, float, float, bool]]:
     that approaches a node."""
     cards = card_rects(facts)
     coins = coin_circles(facts)
+    # A decision rhombus is a card drawn as a path — its VERTICES are true
+    # ports. Without these the reader grades a diamond-vertex endpoint
+    # against whatever rect happens to sit nearby (a lane band's rim), a
+    # 20px-class blind spot the port envelope silently absorbed.
+    diamond_pts = [
+        (float(x), float(y))
+        for dp in diamond_cards(facts)
+        for x, y in re.findall(r"(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)", dp.d)
+    ]
     out: list[tuple[float, float, float, bool]] = []
     for p in edge_paths(facts):
         ends = p.endpoints()
@@ -289,6 +299,7 @@ def _near_endpoints(facts: Facts) -> list[tuple[float, float, float, bool]]:
         for idx, (px, py) in enumerate(ends):
             dists = [(_rect_boundary_dist(px, py, r)) for r in cards]
             dists += [abs(math.hypot(px - c.cx, py - c.cy) - c.r) for c in coins]
+            dists += [math.hypot(px - vx, py - vy) for vx, vy in diamond_pts]
             if not dists:
                 continue
             d = min(dists)
@@ -522,7 +533,11 @@ def law_lane_marks(facts: Facts, fixture: dict[str, Any]) -> list[LawResult]:
 # Chrome text the payload legitimately does not carry: the composed caption
 # sentence, masthead title/subtitle projections, zone headers, legend keys,
 # lane furniture, and count badges.
-_VOCAB_EXEMPT = ("ft", "cap", "cnt", "title", "sub", "key", "lane")
+# eyeb: region-legend furniture — a legend may derive from structure the way
+# a zone count does (the unrolled ladder's budget legend states the device
+# and its rung count, both structural facts); payload-sourced legends (a
+# scope node's label) ride the same class and trace regardless.
+_VOCAB_EXEMPT = ("ft", "cap", "cnt", "title", "sub", "key", "lane", "eyeb")
 
 
 def law_vocabulary(facts: Facts) -> list[LawResult]:
@@ -614,11 +629,20 @@ def law_honesty(facts: Facts) -> list[LawResult]:
                     for o in cards
                 )
 
-            rendered_nodes = sum(1 for r in cards if not _encloses_a_card(r)) + len(coin_circles(facts))
+            # Loop decisions render as rhombi (paths, not rects) and
+            # count as nodes; a loop's scope node renders as its ENCLOSURE
+            # band and its external stations as node2 cards — all species
+            # already covered by cards + diamonds here.
+            rendered_nodes = (
+                sum(1 for r in cards if not _encloses_a_card(r)) + len(coin_circles(facts)) + len(diamond_cards(facts))
+            )
             # A compact payload may declare its focal node under a separate
             # ``hub`` key beside the member list (the parity-beam hand file's
             # "one spec") — the hub IS a rendered node, so it counts.
-            declared = len(nodes) + (1 if spec.get("hub") else 0)
+            # A loop SCOPE node renders as its dashed enclosure (region
+            # chrome, excluded above on both sides) — declared drops it.
+            scopes = sum(1 for n in nodes if isinstance(n, dict) and n.get("station") == "scope")
+            declared = len(nodes) + (1 if spec.get("hub") else 0) - scopes
             out.append(
                 LawResult(
                     "honesty.payload-nodes",
@@ -634,6 +658,14 @@ def law_honesty(facts: Facts) -> list[LawResult]:
                 abs(nw - facts.vb_w) <= facts.vb_w * NOTES_DIM_TOL
                 and abs(nh - facts.vb_h) <= facts.vb_h * NOTES_DIM_TOL
             )
+            if not ok:
+                # A CONTENT-dims claim is honest when the notes also declare
+                # the normalised design width the viewBox actually carries
+                # ("Content 862x948, centred in a normalised 1080 design
+                # width") — the expression corpus's own convention.
+                norm = re.search(r"normalised\s+(\d+(?:\.\d+)?)\s+design width", facts.spatial_notes)
+                if norm and abs(float(norm.group(1)) - facts.vb_w) <= facts.vb_w * NOTES_DIM_TOL:
+                    ok = abs(nh - facts.vb_h) <= facts.vb_h * NOTES_DIM_TOL
             out.append(
                 LawResult(
                     "honesty.notes-dims",

@@ -27,6 +27,7 @@
     "coins": 7,
     "desc_lines": 0,
     "drift_edges": 0,
+    "gather_buses": 0,
     "gather_knots": 0,
     "glyph_marks": 7,
     "hero_cards": 0,
@@ -34,6 +35,7 @@
     "micro_labels": 0,
     "muted_cards": 0,
     "particles": 0,
+    "pills": 0,
     "shell_marks": 0,
     "solid_edges": 12,
     "terminal_dots": 0,
@@ -62,7 +64,7 @@
     "zone_y": 44.0
   },
   "port_tolerance": 0.5,
-  "source": "v04/v040/v042/diagram-prototypes/fanout-expressions/bilateral-symmetric-3x3.svg",
+  "source": "v04/specimens/artifacts/diagrams/topologies/fanout/bilateral-symmetric-3x3.svg",
   "viewbox": [
     0.0,
     0.0,

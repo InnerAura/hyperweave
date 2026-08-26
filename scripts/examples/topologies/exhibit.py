@@ -93,7 +93,11 @@ def exhibit(
     lines += [f"#### `{slug}` — {spec.get('title', slug)}", "", what, ""]
     if note:
         lines += [f"*{note}*", ""]
-    lines += [f"![{slug}]({sect}/{slug}.svg)", ""]
+    # The document lives in `topologies/` while the renders live in
+    # `renders/topologies/<family>/` — the image path must climb across
+    # (dag's own duplicate helper always did; the shared one silently
+    # wrote a section-relative path that resolved to nothing).
+    lines += [f"![{slug}](../renders/topologies/{out.name}/{sect}/{slug}.svg)", ""]
     return 1
 
 

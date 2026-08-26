@@ -38,18 +38,18 @@
    ground knob rides band DATA: 'panel' draws the contained rect; 'typographic'
    dissolves it into header + count + one hairline rule (the obi-engine flagship). #}
 {% for band in lay.lane_bands %}{% if band.ground == 'panel' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-laneband"/>
-{% endif %}{% if band.ground == 'enclosure' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-encl"/>
+{% endif %}{% if band.ground == 'enclosure' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-encl"{% if band.dash %} stroke-dasharray="{{ band.dash }}"{% endif %}/>
 {% endif %}{% if band.rule %}  <line x1="{{ band.rule.x1 }}" y1="{{ band.rule.y1 }}" x2="{{ band.rule.x2 }}" y2="{{ band.rule.y2 }}" class="{{ uid }}-lanerule"/>
 {% endif %}{% endfor %}
 {% for c in lay.connectors %}
 {# Partition-pair chromatics: an ink-group wire strokes ink, its accent-group
    twin takes the flow hue — one decision per GROUP, resolved in compose. #}
-{% set hue_cls = (uid ~ '-flink') if c.ink_wire else ((uid ~ '-fl' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-fls')) %}
+{% set hue_cls = (uid ~ '-flcomp') if c.comp_wire else ((uid ~ '-flink') if c.ink_wire else ((uid ~ '-fl' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-fls'))) %}
 {# Muted-connector knob: NEUTRAL static/dash wires quiet to the muted gray;
    the SPINE (accent-indexed) edge keeps its hue — the kit's one privileged
    relationship reads in accent while everything else recedes. Particles +
    markers keep hue_cls. Geometry-neutral — only the stroke class changes. #}
-{% set wire_cls = (uid ~ '-connmuted') if (conn_muted and not c.accent_wire and not c.ink_wire and c.accent_index < 0) else hue_cls %}
+{% set wire_cls = (uid ~ '-connmuted') if (conn_muted and not c.accent_wire and not c.ink_wire and not c.comp_wire and c.accent_index < 0) else hue_cls %}
 {% if c.beam %}{# Beam edge (reference recipe): the generic wire yields entirely to the 5-stroke
    stack on ONE path — glass conduit (casing + rail, survives reduced motion
    and static faces) under blurred glow, gradient core, and the comet front.
@@ -65,19 +65,26 @@
 {% elif c.track == 'dash-drift' %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }} {{ uid }}-retdrift"/>
 {% else %}  <path id="{{ uid }}-c{{ loop.index0 }}" d="{{ c.path_d }}" class="{{ uid }}-branch {{ wire_cls }}"{% if c.static_dash %} stroke-dasharray="{{ c.static_dash }}"{% endif %}/>
 {% endif %}
-{% if c.marker_d %}{% set mk_fill = (uid ~ '-flinkf') if c.ink_wire else ((uid ~ '-connmutedf') if (conn_muted and not c.accent_wire and c.accent_index < 0) else ((uid ~ '-flp' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-flps'))) %}  <path d="{{ c.marker_d }}" class="{{ uid }}-mk {{ mk_fill }}"/>
+{% if c.marker_d %}{% set mk_fill = (uid ~ '-flcompf') if c.comp_wire else ((uid ~ '-flinkf') if c.ink_wire else ((uid ~ '-connmutedf') if (conn_muted and not c.accent_wire and c.accent_index < 0) else ((uid ~ '-flp' ~ c.accent_index) if c.accent_index >= 0 else (uid ~ '-flps')))) %}  <path d="{{ c.marker_d }}" class="{{ uid }}-mk {{ mk_fill }}"/>
 {% endif %}
 {% endfor %}
-{# Region LABELS paint ABOVE the connectors. The band PANEL stays beneath —
-   a wire crossing a region is meaningful — but the label's plate exists to
-   occlude: "the hairline runs behind the plate rather than through the word".
-   A wire is the same problem as a border, so it takes the same answer. Drawn
-   under the same z-order the plate was invented for, the corner label needs no
-   extra room, which is why the region no longer widens to hold one. #}
-{% for band in lay.lane_bands %}{% if band.header_box %}  <rect x="{{ band.header_box.x }}" y="{{ band.header_box.y }}" width="{{ band.header_box.w }}" height="{{ band.header_box.h }}" rx="{{ band.header_box.rx }}" class="{{ uid }}-rchipbg"/>
-{% endif %}  <text x="{{ band.header.x }}" y="{{ band.header.y }}"{% if band.header.anchor != 'start' %} text-anchor="{{ band.header.anchor }}"{% endif %} class="{{ uid }}-{{ band.header.cls }}">{{ band.header.text | xml_escape }}</text>
-{% if band.count %}  <text x="{{ band.count.x }}" y="{{ band.count.y }}"{% if band.count.anchor != 'start' %} text-anchor="{{ band.count.anchor }}"{% endif %} class="{{ uid }}-{{ band.count.cls }}">{{ band.count.text | xml_escape }}</text>
-{% endif %}{% endfor %}
+{% if lay.choreography %}{# Choreography layer (the corpus's one language, z-order): TRAILS light
+   the route and hold; the comet head rides the drawing tip (soft washes
+   first, bright core last, each layer trailing on its own delay); the
+   arrowhead overlay pops in the leg's hue as it completes. Overlays ride
+   route_d — the path trimmed at the chevron's base — so the washes never
+   cross the arrowhead. Halos paint at the END of the document, ABOVE the
+   cards (the corpus lights the card's own border). Pure substitution. #}
+{% for tr in lay.choreography.trails %}  <path d="{{ tr.route_d }}" class="{{ uid }}-trl {{ uid }}-trl{{ tr.hue }}" stroke-dasharray="{{ tr.dasharray }}" stroke-dashoffset="{{ tr.rest_offset }}" style="animation:{{ uid }}-ch{{ tr.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% endfor %}
+{% for p in lay.choreography.pulses %}{% for layer in lay.choreography.pulse_layers | reverse %}  <path d="{{ p.route_d }}" class="{{ uid }}-pu {{ uid }}-pu{{ p.hue }}" stroke-width="{{ layer[0] }}" opacity="{{ layer[1] }}" stroke-dasharray="{{ p.dasharray }}" stroke-dashoffset="{{ p.rest_offset }}" style="animation:{{ uid }}-ch{{ p.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite{% if layer[2] %}; animation-delay:{{ layer[2] }}s{% endif %}"/>
+{% endfor %}{% endfor %}
+{% for k, anim in lay.choreography.marker_fades.items() %}  <path d="{{ lay.connectors[k].marker_d }}" class="{{ uid }}-hdo {{ uid }}-hdo{{ lay.choreography.marker_hues.get(k, 'A') }}" style="animation:{{ uid }}-ch{{ anim }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% endfor %}
+{% endif %}
+{# Region LABELS moved to the document END (the paint-order law): the
+   label's plate exists to occlude — a hairline, a wire, OR a region halo
+   runs behind the plate, never through the word. One seat, stamped last. #}
 {# Gather-fan ornaments: above the wires they bundle, below the cards. A
    seat ON a node boundary (solver.py's GatherPoint occlusion law) clips
    both the ring and its core dot to the boundary's outside — paint order
@@ -103,9 +110,11 @@
    its own bg classes, never the card/hero fill. #}
 {# Rect card fill by role: hero > muted (recessed page-toned card, MUTED family)
    > default. A circle carries no plate (bare ring on the paper). #}
-{% set rect_bg = (uid ~ '-cardhbg') if n.card_accent else ((uid ~ '-herobg') if n.role == 'hero' else ((uid ~ '-mcardbg') if n.role == 'muted' else (uid ~ '-cardbg'))) %}
+{% set rect_bg = (uid ~ '-' ~ n.card_dress) if n.card_dress else ((uid ~ '-cardhbg') if n.card_accent else ((uid ~ '-herobg') if n.role == 'hero' else ((uid ~ '-mcardbg') if n.role == 'muted' else (uid ~ '-cardbg')))) %}
 {% set bg_cls = ((uid ~ '-herocirclebg') if n.role == 'hero' else (uid ~ '-circlebg')) if n.shape == 'circle' else rect_bg %}
 {% if n.shape == 'circle' %}  <circle cx="{{ n.cx }}" cy="{{ n.cy }}" r="{{ n.r }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"/>
+{% elif n.shape == 'diamond' %}{# loop decision rhombus: precomputed outline path, card dress —
+   deliberation lives in the question TEXT (qname), never the frame #}  <path d="{{ n.shape_d }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}" stroke-linejoin="round" filter="url(#{{ uid }}-lift)"/>
 {% elif n.shape == 'text' %}{# typographic satellite (hub-panel doctrine): containers earn their
    existence — no plate, no mark; the type below IS the node #}
 {% else %}  <rect x="{{ n.box.x }}" y="{{ n.box.y }}" width="{{ n.box.w }}" height="{{ n.box.h }}" rx="{{ n.box.rx }}" class="{{ bg_cls }}" stroke-width="{{ n.stroke_width }}"{% if n.stroke_dasharray %} stroke-dasharray="{{ n.stroke_dasharray }}"{% endif %}{% if n.role != 'muted' %} filter="url(#{{ uid }}-lift)"{% endif %}/>
@@ -126,13 +135,15 @@
    independently on the same card. #}
 {% if n.health %}  <circle cx="{{ n.health_dot[0] }}" cy="{{ n.health_dot[1] }}" r="{{ diagram_style.health_dot_r }}" class="{{ uid }}-{{ 'crit' if n.health == 'vulnerable' else 'warn' }}{% if n.health == 'vulnerable' %} {{ uid }}-critp{% endif %}"/>
 {% endif %}
-{% if n.glyph %}{% set glyph_hue_cls = (uid ~ '-fl' ~ n.glyph.accent_index) if n.glyph.tint == 'hue' else '' %}{% if n.glyph.stroke_w %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal %} class="{{ glyph_hue_cls if glyph_hue_cls else (uid ~ '-fls') }}"{% endif %} fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ n.glyph.gradient ~ ')') if n.glyph.gradient else n.glyph.fill }}" stroke-width="{{ n.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ n.glyph.opacity }}">
+{% if n.glyph %}{% set glyph_hue_cls = (uid ~ '-fl' ~ n.glyph.accent_index) if n.glyph.tint == 'hue' else '' %}{% if n.glyph.stroke_w %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal or n.glyph.comp %} class="{{ glyph_hue_cls if glyph_hue_cls else (uid ~ ('-fls' if n.glyph.signal else '-flcomp')) }}"{% endif %} fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ n.glyph.gradient ~ ')') if n.glyph.gradient else n.glyph.fill }}" stroke-width="{{ n.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ n.glyph.opacity }}">
 {% else %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal %} class="{{ (uid ~ '-flp' ~ n.glyph.accent_index) if glyph_hue_cls else (uid ~ '-flps') }}"{% endif %}{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
 {% endif %}
 {% for gp in n.glyph.paths %}    <path d="{{ gp.d }}"{% if gp.fill %} fill="{{ gp.fill }}"{% endif %}/>
 {% endfor %}  </g>
 {% endif %}
   <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}{% if n.role == 'muted' and n.label.cls in ('nlbl', 'hlbl') %} {{ uid }}-nmuted{% endif %}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ n.label.text | xml_escape }}</text>
+{% for line in n.label_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ line.text | xml_escape }}</text>
+{% endfor %}
 {% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if n.role == 'muted' and line.cls in ('nval', 'hval') %} {{ uid }}-nmuted{% endif %}">{{ line.text | xml_escape }}</text>
 {% endfor %}
 {% for cb in n.chip_boxes %}  <rect x="{{ cb.x }}" y="{{ cb.y }}" width="{{ cb.w }}" height="{{ cb.h }}" rx="{{ cb.rx }}" class="{{ uid }}-chipbg"/>
@@ -182,6 +193,48 @@
 {% for line in a.lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if acc_cls and (a.lane_dress or a.kind not in ('label', 'edge-chip')) %} {{ acc_cls }}{% endif %}">{{ line.text | xml_escape }}</text>
 {% endfor %}
 {% endfor %}
+{# Chip tints (the corpus tint groups): the chip's OWN markup re-stamped in
+   an opacity-animated group — hue rim over the chip ground, text re-inked
+   in the hue. Painted after the static annotations so the lit chip covers
+   its quiet twin exactly. #}
+{% if lay.choreography %}{% for tn in lay.choreography.tints %}  <g class="{{ uid }}-tint {{ uid }}-tint{{ tn.hue }}" style="animation:{{ uid }}-ch{{ tn.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite">
+    <rect x="{{ tn.box.x }}" y="{{ tn.box.y }}" width="{{ tn.box.w }}" height="{{ tn.box.h }}" rx="{{ tn.box.rx }}" class="{{ uid }}-chipbg"/>
+{% for line in tn.lines %}    <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}">{{ line.text | xml_escape }}</text>
+{% endfor %}  </g>
+{% endfor %}
+{# Arrival halos paint above the cards, so the glow reads as the card's
+   own border lighting up (the corpus stacks its halo rects at the
+   document's end, over the card at the exact box). #}
+{% for h in lay.choreography.halos %}
+{% if h.shape == 'rect' %}  <rect x="{{ h.box.x }}" y="{{ h.box.y }}" width="{{ h.box.w }}" height="{{ h.box.h }}" rx="{{ h.box.rx }}" class="{{ uid }}-halo {{ uid }}-halo{{ h.hue }}" style="animation:{{ uid }}-ch{{ h.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% else %}  <path d="{{ h.d }}" stroke-linejoin="round" class="{{ uid }}-halo {{ uid }}-halo{{ h.hue }}" style="animation:{{ uid }}-ch{{ h.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% endif %}{% endfor %}
+{% endif %}
+{# Region headers paint LAST of all (the paint-order law): the legend
+   plate occludes whatever crosses its seat — hairline, wire, or halo —
+   so a region's glow can never strike through its own words. #}
+{% for band in lay.lane_bands %}{% if band.header_box %}  <rect x="{{ band.header_box.x }}" y="{{ band.header_box.y }}" width="{{ band.header_box.w }}" height="{{ band.header_box.h }}" rx="{{ band.header_box.rx }}" class="{{ uid }}-rchipbg"/>
+{% endif %}  <text x="{{ band.header.x }}" y="{{ band.header.y }}"{% if band.header.anchor != 'start' %} text-anchor="{{ band.header.anchor }}"{% endif %} class="{{ uid }}-{{ band.header.cls }}">{{ band.header.text | xml_escape }}</text>
+{% if band.count %}  <text x="{{ band.count.x }}" y="{{ band.count.y }}"{% if band.count.anchor != 'start' %} text-anchor="{{ band.count.anchor }}"{% endif %} class="{{ uid }}-{{ band.count.cls }}">{{ band.count.text | xml_escape }}</text>
+{% endif %}{% endfor %}
+{# The meter kit piece (loop family, edge.meter): a quiet backing plate, the
+   register's lead mark, and the base segment row — the STATIC gauge every
+   face draws; the register's fill layer rides the choreography block. #}
+{% for m in lay.meters %}  <rect x="{{ m.plate.x }}" y="{{ m.plate.y }}" width="{{ m.plate.w }}" height="{{ m.plate.h }}" rx="{{ m.plate.rx }}" class="{{ uid }}-mplate"/>
+{% if m.glyph %}{% if m.glyph.stroke_w %}  <g transform="{{ m.glyph.transform }}" class="{{ uid }}-mk{{ m.hue }}" fill="none" stroke-width="{{ m.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ m.glyph.opacity }}">
+{% else %}  <g transform="{{ m.glyph.transform }}" class="{{ uid }}-mk{{ m.hue }}" opacity="{{ m.glyph.opacity }}">
+{% endif %}{% for gp in m.glyph.paths %}    <path d="{{ gp.d }}"/>
+{% endfor %}  </g>
+{% endif %}
+{% for sb in m.boxes %}  <rect x="{{ sb.x }}" y="{{ sb.y }}" width="{{ sb.w }}" height="{{ sb.h }}" rx="{{ sb.rx }}" class="{{ uid }}-mseg"/>
+{% endfor %}
+{% endfor %}
+{# The register's fill layer rides ABOVE the base row (its own z-order —
+   the choreography block paints below cards, but a gauge's fill must cover
+   its base). rest opacity is the reduced-motion truth: a budget rests
+   full, a lap counter and an accumulator rest empty. #}
+{% if lay.choreography %}{% for f in lay.choreography.meter_fills %}  <rect x="{{ f.box.x }}" y="{{ f.box.y }}" width="{{ f.box.w }}" height="{{ f.box.h }}" rx="{{ f.box.rx }}" opacity="{{ f.rest_opacity }}" class="{{ uid }}-mfill" style="animation:{{ uid }}-ch{{ f.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% endfor %}{% endif %}
 {# Stack inter-layer compose operator (the stack specimen): a quiet ring + cross,
    the ring riding the card surface, the cross riding the muted-connector
    tone — the same drawn geometry a plain wire between layers uses. #}

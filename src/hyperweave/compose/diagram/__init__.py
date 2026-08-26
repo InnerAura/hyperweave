@@ -10,6 +10,7 @@ from hyperweave.compose.diagram import (  # noqa: F401  (solver registration)
     hub,
     lanes,
     linear,
+    loop,
     radial,
     sequence,
 )

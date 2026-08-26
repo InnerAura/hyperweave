@@ -23,6 +23,7 @@ join the obstacle set before the region-packed legends settle
 from __future__ import annotations
 
 import itertools
+import math
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
@@ -184,6 +185,14 @@ def _mirror_label(p: AnnotationPlacement, geo: EdgeGeo | None) -> AnnotationPlac
     poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
     dx = abs(poly[-1][0] - poly[0][0])
     dy = abs(poly[-1][1] - poly[0][1])
+    # An ARC's body bows far off its endpoint midline — mirroring across
+    # that midline would drop the label INTO the content band the arc
+    # exists to avoid (the breaker's probe label once landed inside the
+    # state row this way). No mirror candidate; the label slides instead.
+    ys = [pt[1] for pt in poly]
+    end_hi, end_lo = max(poly[0][1], poly[-1][1]), min(poly[0][1], poly[-1][1])
+    if max(max(ys) - end_hi, end_lo - min(ys)) > 20.0:
+        return None
     if dx >= dy:
         # Horizontal wire: reflect the box's y across the wire's midline y.
         wire_y = (geo.sy + geo.ty) / 2
@@ -224,18 +233,46 @@ def _slide_candidates(
     if geo is None or p.box is None:
         return []
     poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
-    start, end = poly[0], poly[-1]
-    # Current along-wire position of the box center (fraction 0.5 was the
-    # midpoint anchor). We translate to each requested fraction.
     cur_cx = p.box.x + p.box.w / 2
     cur_cy = p.box.y + p.box.h / 2
+    ys_ = [pt[1] for pt in poly]
+    bow = max(max(ys_) - max(poly[0][1], poly[-1][1]), min(poly[0][1], poly[-1][1]) - min(ys_))
+    if bow <= 20.0:
+        # Straight-ish wires slide along the endpoint chord (byte-identical
+        # to the original walk).
+        start, end = poly[0], poly[-1]
+        out_c: list[AnnotationPlacement] = []
+        for f in slides:
+            tx = start[0] + (end[0] - start[0]) * f
+            ty = start[1] + (end[1] - start[1]) * f
+            out_c.append(_shift_placement(p, tx - cur_cx, ty - cur_cy))
+        return out_c
+    # A BOWED geo (an over/under arc) slides along the POLYLINE: its chord
+    # runs at the content band's own line, so chord-sliding dropped arc
+    # labels onto the cards they float above. The box keeps its current
+    # offset from its nearest polyline point and rides the curve.
+    lens = [0.0]
+    for a, b in itertools.pairwise(poly):
+        lens.append(lens[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    total = lens[-1] or 1.0
+
+    def at(f: float) -> tuple[float, float]:
+        target = f * total
+        for i in range(1, len(lens)):
+            if lens[i] >= target:
+                seg = lens[i] - lens[i - 1] or 1.0
+                t = (target - lens[i - 1]) / seg
+                ax, ay = poly[i - 1]
+                bx, by = poly[i]
+                return (ax + (bx - ax) * t, ay + (by - ay) * t)
+        return poly[-1]
+
+    near = min(poly, key=lambda q: (q[0] - cur_cx) ** 2 + (q[1] - cur_cy) ** 2)
+    off_x, off_y = cur_cx - near[0], cur_cy - near[1]
     out: list[AnnotationPlacement] = []
     for f in slides:
-        tx = start[0] + (end[0] - start[0]) * f
-        ty = start[1] + (end[1] - start[1]) * f
-        # Keep the perpendicular offset the box already has by moving only along
-        # the wire direction: project the delta onto the wire axis.
-        out.append(_shift_placement(p, tx - cur_cx, ty - cur_cy))
+        tx, ty = at(f)
+        out.append(_shift_placement(p, tx + off_x - cur_cx, ty + off_y - cur_cy))
     return out
 
 

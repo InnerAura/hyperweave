@@ -45,6 +45,7 @@ from hyperweave.compose.diagram.sizing import (
     CHIP_PAD_X,
     CHIP_STUB_MIN,
     chip_run_min,
+    family_carries_marks,
     hero_height_floor,
     marker_reserved_stub,
     solve_node_box,
@@ -288,7 +289,15 @@ def _over_arc_peak(
 
 
 def _place_dag_node(
-    ctx: SolverContext, i: int, node: DiagramNode, cx: float, cy: float, w: float, h: float
+    ctx: SolverContext,
+    i: int,
+    node: DiagramNode,
+    cx: float,
+    cy: float,
+    w: float,
+    h: float,
+    *,
+    family_marked: bool = False,
 ) -> NodePlacement:
     """Dispatch a rank card to its resolved anatomy, centered at (cx, cy):
     card/card+glyph is the family default; glyph-circle (fixed chassis
@@ -305,7 +314,7 @@ def _place_dag_node(
         # hero chassis radius in BOTH the box solve and the placement.
         r = ctx.ch.hero_circle_r if node.role is NodeRole.HERO else ctx.ch.circle_r
         return place_node(ctx, node, i, cx, cy, w=2 * r, h=2 * r, hub=False)
-    return place_node(ctx, node, i, cx, cy, w=w, h=h)
+    return place_node(ctx, node, i, cx, cy, w=w, h=h, family_marked=family_marked)
 
 
 def _sibling_chip_major(
@@ -1099,6 +1108,7 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     # rank's long labels). Heights re-solve at the shared width so wrapped
     # descs stay in-card. Containers are excluded — a nested canvas is not a
     # column vote.
+    fam_col: set[int] = set()  # members of marked rank columns (the column law)
     for members in orders.values():
         col_ids = [
             i
@@ -1109,9 +1119,17 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         ]
         if not col_ids:
             continue
+        fam = len(col_ids) >= 2 and family_carries_marks(ctx, [spec.nodes[i] for i in col_ids])
+        if fam:
+            # Mixed-family column law: markless members re-measure at the
+            # column's glyph lead BEFORE the max, so the shared width
+            # already holds their column-indented text.
+            fam_col.update(col_ids)
+            for i in col_ids:
+                boxes[i] = solve_node_box(ctx, spec.nodes[i], i, family_marked=True)[:2]
         col_w = max(boxes[i][0] for i in col_ids)
         for i in col_ids:
-            _w2, h2, _ = solve_node_box(ctx, spec.nodes[i], i, min_w=col_w)
+            _w2, h2, _ = solve_node_box(ctx, spec.nodes[i], i, min_w=col_w, family_marked=fam)
             boxes[i] = (col_w, h2)
     # The crown solves SNUG (snug-width ruling): its own content + the
     # anchor envelope; ``hero.w``/``hero_min_w`` citations only bound growth
@@ -1436,7 +1454,9 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         for node_index in grid_members:
             w, h = boxes[node_index]
             cx, cy = axis.point(major_cursor + col_ext / 2, rows[node_index])
-            placed[node_index] = _place_dag_node(ctx, node_index, spec.nodes[node_index], cx, cy, w, h)
+            placed[node_index] = _place_dag_node(
+                ctx, node_index, spec.nodes[node_index], cx, cy, w, h, family_marked=node_index in fam_col
+            )
         for node_index in members:
             if node_index in lane_members:
                 # Seated after the channel solves — remember the rank position only.
@@ -1529,7 +1549,9 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             w, h = boxes[node_index]
             seat_minor = lane_channel.get(node_index, channel_base)
             cx, cy = axis.point(lane_cx[node_index], seat_minor)
-            placed[node_index] = _place_dag_node(ctx, node_index, spec.nodes[node_index], cx, cy, w, h)
+            placed[node_index] = _place_dag_node(
+                ctx, node_index, spec.nodes[node_index], cx, cy, w, h, family_marked=node_index in fam_col
+            )
             minor_total = max(minor_total, int(seat_minor + axis.box_minor(w, h) / 2 + clearance + minor_far_chrome))
     # Top channel for exit:top skips: above the shallowest card by a clear margin
     # (chip half-height + clearance) so the on-wire pill clears the card row.

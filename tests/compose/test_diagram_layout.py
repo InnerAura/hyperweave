@@ -1426,11 +1426,21 @@ class TestTextMetrics:
                 # A glyphless node under the card+glyph anatomy reserves its
                 # mark slot (mark_w_for) — the empty slot carries no ink, so
                 # the card's leftmost INK legitimately sits at the text
-                # column instead of the anchor.
-                slot_col = anchor + (nch.glyph_w or 24.0) + nch.glyph_label_gap
+                # column instead of the anchor. The anchor law binds per NODE
+                # CLASS: a ring-2/terminal (node2) or loop deviation twin
+                # (dev) seats its column at its OWN class's anchor (the loop
+                # kit's 17 vs the shuttle station's 33), so every declared
+                # class column is a legal seat.
+                class_cols: list[float] = []
+                for cch in (nch, merged_ch.node2, merged_ch.dev):
+                    a = cch.glyph_inset_x
+                    class_cols += [a, a + (cch.glyph_w or 24.0) + cch.glyph_label_gap]
+                    # Markless refinement (owner round, 2026-08-26): a row
+                    # with no mark seats at the pad_x envelope, both sides.
+                    class_cols.append(cch.pad_x)
 
-                def _anchored(lp: float, a: float = anchor, sc: float = slot_col) -> bool:
-                    return min(abs(lp - a), abs(lp - sc)) <= eps
+                def _anchored(lp: float, cols: tuple[float, ...] = tuple(class_cols)) -> bool:
+                    return min(abs(lp - c) for c in cols) <= eps
 
                 if policy == "free":
                     assert _anchored(left_pad), (preset, n.index, left_pad, anchor)
@@ -2146,3 +2156,52 @@ def test_cycle_family_shares_one_ring_radius() -> None:
         radii[preset] = sum(math.hypot(x - cx, y - cy) for x, y in centers) / len(centers)
     assert radii["cycle-orbit"] == pytest.approx(250.0, abs=0.5), radii
     assert radii["cycle-ring"] == pytest.approx(radii["cycle-orbit"], abs=0.5), radii
+
+
+def test_mixed_rank_column_joins_the_marked_column() -> None:
+    """Mixed-family column law on the dag rank seam (the loop seat-family
+    twin lives in test_loop_solver): a rank column that draws at least one
+    identity mark seats every member's text at the column's glyph lead — a
+    markless sibling reserves the mark advance art-free instead of
+    pad-anchoring inside the shared column width. Content is caller-supplied,
+    so any mark mix must compose well."""
+    from hyperweave.compose.diagram.input import coerce_diagram_input
+    from hyperweave.config.loader import load_glyphs
+    from hyperweave.core.matrix import GlyphTint
+    from hyperweave.core.models import ComposeSpec
+
+    dspec: dict[str, Any] = {
+        "topology": "dag",
+        "node_style": "card+glyph",
+        "nodes": [
+            {"id": "root", "label": "Ingest"},
+            {"id": "a", "label": "Parse", "kind": "zap"},
+            {"id": "b", "label": "Validate the payload"},
+            {"id": "out", "label": "Store"},
+        ],
+        "edges": [
+            {"source": "root", "target": "a"},
+            {"source": "root", "target": "b"},
+            {"source": "a", "target": "out"},
+            {"source": "b", "target": "out"},
+        ],
+    }
+    normalized = coerce_diagram_input(
+        None, ComposeSpec.model_validate({"type": "diagram", "genome_id": "primer", "diagram": dspec})
+    )
+    lay = compute_diagram_layout(
+        normalized.spec,
+        paradigm=load_paradigms()["primer"].diagram,
+        engine=ENGINE,
+        palette_len=5,
+        glyph_registry=load_glyphs(),
+        glyph_selections=tuple(GlyphTint.INK for _ in normalized.spec.nodes),
+    )
+    by_id = {n.node_id: n for n in lay.nodes}
+    a, b = by_id["a"], by_id["b"]
+    assert a.glyph is not None
+    assert b.glyph is None
+    assert b.box.w == pytest.approx(a.box.w), "the rank column shares one width"
+    assert (a.label.x - a.box.x) == pytest.approx(b.label.x - b.box.x, abs=0.01), (
+        "the markless rank sibling must sit on the column's text lead"
+    )

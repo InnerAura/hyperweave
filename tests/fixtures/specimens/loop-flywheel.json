@@ -1,0 +1,67 @@
+{
+  "aspect": 1.467,
+  "caption_text": "the flywheel \u00b7 generate, distribute, capture, improve \u2014 the return carries the gain, and the second turn says so louder",
+  "cards": {
+    "std_h_med": 62.0,
+    "std_h_med_amended": 76.46,
+    "std_w_med": 230.0,
+    "std_w_med_amended": 158,
+    "std_w_med_amended_note": "re-derived after the source re-point to the flywheel hand file: the engine renders content-snug aligned columns (the snug-width ruling) where the hand file draws fixed 230x62 columns on a 118px rhythm - engine values recorded, dims stay the specimen's own target on file"
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 4,
+    "card_rx": 13.0,
+    "cards": 4,
+    "chips": 1,
+    "coins": 0,
+    "desc_lines": 4,
+    "drift_edges": 0,
+    "gather_buses": 0,
+    "gather_knots": 0,
+    "glyph_marks": 4,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "pills": 0,
+    "shell_marks": 0,
+    "solid_edges": 4,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "census_amendments": {
+    "glyph_marks": 4
+  },
+  "census_amendments_note": "re-derived after the source re-point to the flywheel hand file: it draws four glyph groups (zap, send, database, cpu) but the census hint recognizes only three - the compound multi-element marks escape it; the render's four marks are honest",
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 1,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": null,
+  "edge_set": {
+    "Capture->Improve": "",
+    "Distribute->Capture": "",
+    "Generate->Distribute": "",
+    "Improve->Generate": ""
+  },
+  "height": null,
+  "occupancy": 0.181,
+  "plate": {
+    "caption_pad": 30.0,
+    "caption_y": 570.0,
+    "content_bottom": 525.0,
+    "content_top": 109.0
+  },
+  "port_tolerance": 2.5,
+  "source": "v04/v040/v044/loops/runloop/cycle-runloop-v1.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    880.0,
+    600.0
+  ],
+  "width": null
+}

@@ -1,0 +1,91 @@
+{
+  "aspect": 1.061,
+  "caption_text": "a loop inside a loop \u00b7 the outer turn delegates into the scope, the tool loop spins, the answer comes out \u2014 until Done? says done",
+  "cards": {
+    "std_h_med": 62.0,
+    "std_h_med_amended": 58.4,
+    "std_h_values": [
+      56.0,
+      56.0,
+      56.0,
+      62.0,
+      62.0,
+      62.0,
+      222.0
+    ],
+    "std_h_values_amended": [
+      58.4,
+      58.4,
+      58.4,
+      58.4,
+      58.4,
+      58.4,
+      210.4
+    ],
+    "std_w_med": 210.0,
+    "std_w_med_amended": 144,
+    "std_w_med_amended_note": "engine renders content-snug aligned columns (the snug-width ruling); the hand file draws fixed-width columns with hand-wrapped two-line labels \u2014 engine values recorded, dims stay the specimen's own target on file"
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 10,
+    "card_rx": 14.0,
+    "cards": 8,
+    "chips": 5,
+    "coins": 0,
+    "desc_lines": 4,
+    "diamonds": 1,
+    "drift_edges": 0,
+    "gather_buses": 0,
+    "gather_knots": 0,
+    "glyph_marks": 3,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 1,
+    "particles": 0,
+    "pills": 0,
+    "shell_marks": 0,
+    "solid_edges": 8,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "census_amendments": {
+    "arrow_terminals": 9,
+    "desc_lines": 0
+  },
+  "census_amendments_note": "the hand file's four desc-voiced runs are scope-legend furniture the census misreads as station descs; the engine's stations carry none \u2014 owner triage pending arrow_terminals re-derived after the diamond warn halo retired (no corpus specimen rings a rhombus; the reader had counted the halo path among the drawn arrows).",
+  "chip_homes": {
+    "in_card": 1,
+    "on_wire": 4,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": 16.7,
+  "edge_set": {
+    "dq->plan": "no \u00b7 go again",
+    "dq->term": "yes",
+    "i1->i2": "",
+    "i2->i3": "",
+    "i3->i1": "",
+    "integ->dq": "",
+    "plan->scope": "delegate",
+    "scope->integ": "answer found"
+  },
+  "height": null,
+  "occupancy": 0.518,
+  "plate": {
+    "caption_pad": 30.0,
+    "caption_y": 922.0,
+    "content_bottom": 876.0,
+    "content_top": 72.0
+  },
+  "port_tolerance": 2.5,
+  "source": "v04/v040/v044/loops/nested/cycle-nested.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    1010.0,
+    952.0
+  ],
+  "width": null
+}

@@ -178,7 +178,12 @@ _TOPOLOGY_GUIDE: dict[str, str] = {
     "pipeline": "a linear chain of stages (horizontal rows | vertical = the operator stack)",
     "fanout": "one source to many peers (horizontal | bilateral | upward | downward | radial)",
     "fanin": "many inputs fanning into one mouth (the fan family, direction reversed)",
-    "cycle": "the loop family (orbit = phases around a hero axis | ring = equal stages, empty centre)",
+    "cycle": "the CLOSED loop family — endless rhythm, no branch logic (orbit = phases around a hero "
+    "axis | ring = equal stages, empty centre); a loop with guards, exits, or terminals is topology loop",
+    "loop": "the procedural directed loop — process stations on a spine, exclusive decisions with guard "
+    "chips, terminal exits, and a return rail (vertical = spine + margin rail, the default | horizontal "
+    "= row + underslung return); devices are structural: two decisions = retry, tap edges = supervised "
+    "loop, a scope node = nested loop, accumulates on the return = flywheel",
     "tree": "a root branching to leaves (radial at depth >= 2 = the mindmap form)",
     "comparison": "exactly two cards, before/after",
     "sequence": "lifelines exchanging ordered messages",
@@ -201,6 +206,9 @@ _TOPOLOGY_EDGE_RULES: dict[str, str] = {
     "state-machine": "free graph including self-loops and back-edges; a self-loop cannot be bidirectional",
     "sequence": "messages connect lifelines in declaration order; edge kind (call/return) is sequence-only semantics",
     "lanes": "every node declares a category (its lane); edges may cross lanes freely",
+    "loop": "exactly one outer circuit:return edge closes the loop; tap-in/tap-out edges touch a "
+    "station:external node; a decision spends exactly two exits; scope members declare enclosure and "
+    "stay wholly inside their scope",
 }
 
 
@@ -543,6 +551,12 @@ def discover(what: str = "all") -> dict[str, Any]:
             "orientations": _orientation_summary(),
             "edge_motion": "dash | particle — the closed kit pair, compositor-only by construction "
             "(genome allowlist enforced)",
+            "motion_register": "turn | drift | laps | budget | accumulate — the artifact-scoped "
+            "choreography register; loop defaults to turn (a pulse walks the circuit in acts, arrival "
+            "halos flash each station, guard chips flash when their branch fires), drift is the quiet "
+            "standing face, and the meter registers perform a declared gauge (laps grows and resets, "
+            "budget drains and refills, accumulate grows and holds); override via "
+            "--motion-register / ?motion_register= / MCP motion_register",
             "node_styles": "card | card+glyph | card+label | glyph-circle | text — caller-chosen, never "
             "inferred. card+label inverts the default card: a small tracked label over a stack of display "
             "values, any glyph/kind demoted to a corner mark that reserves no column; text drops the box "

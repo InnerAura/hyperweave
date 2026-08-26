@@ -827,6 +827,18 @@ def compose(
             help="Diagram edge-motion override: dash | particle (overrides the spec/preset's motion)",
         ),
     ] = "",
+    motion_register: Annotated[
+        str,
+        typer.Option(
+            "--motion-register",
+            help=(
+                "Diagram choreography register: turn (the pulse walks the circuit) | drift "
+                "(the quiet standing face) | laps · budget · accumulate (the meter registers — "
+                "the gauge grows-and-resets, drains-and-refills, or grows-and-holds). "
+                "Empty = the family default (loop composes turn)."
+            ),
+        ),
+    ] = "",
     # Surface modes (matrix + diagram): how the artifact meets the host page.
     surface: Annotated[
         str,
@@ -1076,6 +1088,17 @@ def compose(
                 raise typer.Exit(2)
             if diagram_spec is not None:
                 diagram_spec = {**diagram_spec, "edge_motion": edge_motion}
+
+        # Choreography register override — the one-flag plain<->performed
+        # toggle (same IR-riding pattern as --edge-motion above).
+        if motion_register:
+            if motion_register not in {"turn", "drift", "laps", "budget", "accumulate"}:
+                typer.echo(
+                    "Error: --motion-register must be one of: turn | drift | laps | budget | accumulate", err=True
+                )
+                raise typer.Exit(2)
+            if diagram_spec is not None:
+                diagram_spec = {**diagram_spec, "motion_register": motion_register}
 
     # ── ?data= / --data: unified data-token grammar ──
     # Marquee-horizontal consumes spec.data_tokens directly (the resolved list);

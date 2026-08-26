@@ -13,6 +13,7 @@ import math
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.diagram.paths import rhombus_d
 from hyperweave.compose.diagram.records import DiagramText, GlyphArt, NodePlacement
 from hyperweave.compose.diagram.sizing import (
     BULLET_DESC_RIGHT_GAP,
@@ -31,6 +32,8 @@ from hyperweave.compose.diagram.sizing import (
     CHIP_GAP,
     CHIP_H,
     CHIP_RX,
+    DIAMOND_CHIP_DY0,
+    DIAMOND_CHIP_PITCH,
     DOT_MARK_W,
     GLYPH_MARK_W,
     HEAD_GLYPH_GAP,
@@ -50,6 +53,8 @@ from hyperweave.compose.diagram.sizing import (
     mark_w_for,
     node_anatomy_of,
     node_glyph_id,
+    pack_holder_rows,
+    pill_chassis,
     role_of,
     solve_card_box,
     solve_card_label_box,
@@ -58,6 +63,7 @@ from hyperweave.compose.diagram.sizing import (
     solve_node_box,
     style_of,
     voice_for,
+    wrap_label_runs,
 )
 from hyperweave.compose.matrix.cells import (
     glyph_mark_placement,
@@ -322,6 +328,7 @@ def _text_block(
     desc_pitch: float,
     label_desc_gap: float,
     extra_h: float = 0.0,
+    label_extra: float = 0.0,
 ) -> tuple[float, float, int]:
     """Metric-centered vertical layout for a node's text block (G2).
 
@@ -338,7 +345,7 @@ def _text_block(
     avail = box_h - 2 * cfg.min_pad_y
     kept = desc_lines
     while True:
-        block = label_size * (ar + dr) + extra_h
+        block = label_size * (ar + dr) + label_extra + extra_h
         if kept:
             block += label_desc_gap + desc_size * (ar + dr) + (kept - 1) * desc_pitch
         # Epsilon guards the exact-fit card: solve_card_box computes the same
@@ -349,8 +356,11 @@ def _text_block(
         kept -= 1
     top = box_y + (box_h - block) / 2
     label_baseline = top + label_size * ar
-    first_desc_baseline = label_baseline + label_size * dr + label_desc_gap + desc_size * ar
-    assert label_baseline + label_size * dr <= box_y + box_h - cfg.min_pad_y + 0.51, "label clips its card"
+    # ``label_extra`` (wrapped-name lines 2..n at the desc pitch) sits
+    # between the first name baseline and the desc block.
+    first_desc_baseline = label_baseline + label_extra + label_size * dr + label_desc_gap + desc_size * ar
+    last_label = label_baseline + label_extra
+    assert last_label + label_size * dr <= box_y + box_h - cfg.min_pad_y + 0.51, "label clips its card"
     if kept:
         last = first_desc_baseline + (kept - 1) * desc_pitch
         assert last + desc_size * dr <= box_y + box_h - cfg.min_pad_y + 0.51, "desc clips its card"
@@ -368,6 +378,7 @@ def _slot_vertical(
     desc_pitch: float,
     label_desc_gap: float,
     trailing_rows: tuple[float, ...] = (),
+    label_extra: float = 0.0,
 ) -> tuple[float, float, int, tuple[float, ...], float]:
     """Vertical slot rhythm for a card (the specimen slot model).
 
@@ -402,14 +413,17 @@ def _slot_vertical(
             desc_lines=desc_lines,
             desc_pitch=desc_pitch,
             label_desc_gap=label_desc_gap,
+            label_extra=label_extra,
         )
         label_top = lb - label_size * ar
-        last_desc_bottom = (db + (kept - 1) * desc_pitch + desc_size * dr) if kept else (lb + label_size * dr)
+        last_desc_bottom = (
+            (db + (kept - 1) * desc_pitch + desc_size * dr) if kept else (lb + label_extra + label_size * dr)
+        )
         return lb, db, kept, (), (label_top + last_desc_bottom) / 2
     trailing_content_h = sum(trailing_rows) + label_desc_gap * (len(trailing_rows) - 1)
     kept = desc_lines
     while True:
-        id_h = label_size * (ar + dr)
+        id_h = label_size * (ar + dr) + label_extra
         if kept:
             id_h += label_desc_gap + desc_size * (ar + dr) + (kept - 1) * desc_pitch
         snug = 2 * cfg.min_pad_y + id_h + label_desc_gap + trailing_content_h
@@ -419,7 +433,7 @@ def _slot_vertical(
     third = max(0.0, box_h - snug) / 3.0
     pad = cfg.min_pad_y + third
     label_base = box_y + pad + label_size * ar
-    first_desc_base = label_base + label_size * dr + label_desc_gap + desc_size * ar
+    first_desc_base = label_base + label_extra + label_size * dr + label_desc_gap + desc_size * ar
     trailing_first_top = box_y + box_h - pad - trailing_content_h
     tops: list[float] = []
     cursor = trailing_first_top
@@ -429,7 +443,9 @@ def _slot_vertical(
         _ = i
     label_top = label_base - label_size * ar
     last_desc_bottom = (
-        (first_desc_base + (kept - 1) * desc_pitch + desc_size * dr) if kept else label_base + label_size * dr
+        (first_desc_base + (kept - 1) * desc_pitch + desc_size * dr)
+        if kept
+        else label_base + label_extra + label_size * dr
     )
     return label_base, first_desc_base, kept, tuple(tops), (label_top + last_desc_bottom) / 2
 
@@ -498,6 +514,8 @@ def place_card(
     glyph_builder: Callable[[float, float], GlyphArt | None] | None = None,
     bullet_lead: float = 0.0,
     left_align: bool = False,
+    label_wrap_ceiling: float = 0.0,
+    family_marked: bool = False,
 ) -> NodePlacement:
     """A rectangular card: glyph column + left-aligned label/desc (default,
     muted — muted quiets the voices), hero or standard.
@@ -531,8 +549,9 @@ def place_card(
         # Name and desc share the text column: both budgets subtract the
         # lead, and the desc may run to the slim gap (the std-card law) —
         # mirrors solve_card_box exactly.
-        desc_max_w = w - nch.glyph_inset_x - hero_lead - BULLET_DESC_RIGHT_GAP
-        name_budget = w - anchor_pads(nch) - hero_lead
+        hero_anchor = nch.pad_x if hero_mark_w == 0 else nch.glyph_inset_x
+        desc_max_w = w - hero_anchor - hero_lead - BULLET_DESC_RIGHT_GAP
+        name_budget = w - anchor_pads(nch, markless=hero_mark_w == 0) - hero_lead
         lines = wrap_text_lines(node.desc, desc_max_w, cfg.hero_desc_voice, max_lines=nch.max_desc_lines)
         trailing_rows = ((CHIP_H,) if node.chips else ()) + ((node.embed_dims[1],) if node.embed_dims else ())
         label_base, desc_base, kept, trailing_tops, glyph_cy = _slot_vertical(
@@ -551,7 +570,7 @@ def place_card(
         # lead); chips ride the glyph column (group_left). The column is a
         # chassis fact: anchored at ``glyph_inset_x``, never re-derived from
         # this crown's own ink.
-        group_left = x + nch.glyph_inset_x
+        group_left = x + hero_anchor
         text_left = group_left + hero_lead
         glyph_art = glyph_builder(group_left + hero_mark_w / 2, glyph_cy) if glyph_builder is not None else None
         if glyph_art is not None and not glyph_art.gradient and glyph_art.tint == GlyphTint.INK:
@@ -593,8 +612,11 @@ def place_card(
     # Semantic Chromatics: the accent lives on the TITLE (prototype binding),
     # not a bullet dot — the diagram frame emits no default decoration dots.
     # A glyph still takes the mark slot; an accented, glyph-less card carries
-    # its accent through the title text, so there is no lead space to reserve.
-    mark_w = (nch.glyph_w or GLYPH_MARK_W) if glyph_builder is not None else 0.0
+    # its accent through the title text, so there is no lead space to reserve
+    # — unless the card's width-aligned family draws marks (``family_marked``,
+    # the mixed-family column law): then the markless member holds the
+    # family's text column, art-free, matching the sizing seam's budget.
+    mark_w = (nch.glyph_w or GLYPH_MARK_W) if (glyph_builder is not None or family_marked) else 0.0
     lead = mark_lead(mark_w, nch)
     label_cls = label_cls_for(node, mono_triggers) if role == "default" else "mname"
     label_voice = voice_for(cfg, label_cls)
@@ -605,9 +627,17 @@ def place_card(
     desc_budget = (
         (w - nch.pad_x - BULLET_DESC_RIGHT_GAP)
         if bullet_lead
-        else (w - nch.glyph_inset_x - lead - BULLET_DESC_RIGHT_GAP)
+        else (w - (nch.pad_x if lead == 0 else nch.glyph_inset_x) - lead - BULLET_DESC_RIGHT_GAP)
     )
     lines = wrap_text_lines(node.desc, desc_budget, cfg.desc_voice, max_lines=nch.max_desc_lines)
+    # NAME wrap mirror: the same ceiling-budget runs ``solve_card_box``
+    # sized the box for (see ``wrap_label_runs`` — the solved width is snug
+    # over the widest run, so these runs are exactly what the height holds).
+    label_runs = (
+        wrap_label_runs(node.label, nch, label_wrap_ceiling, lead, label_voice)
+        if label_wrap_ceiling and not bullet_lead
+        else [node.label]
+    )
     trailing_rows = ((CHIP_H,) if node.chips else ()) + ((node.embed_dims[1],) if node.embed_dims else ())
     label_base, desc_base, kept, trailing_tops, glyph_cy = _slot_vertical(
         cfg,
@@ -619,12 +649,15 @@ def place_card(
         desc_pitch=nch.desc_line_pitch,
         label_desc_gap=label_desc_gap,
         trailing_rows=trailing_rows,
+        label_extra=(len(label_runs) - 1) * nch.desc_line_pitch,
     )
     # The bulleted anatomy keeps its own symmetric pad_x envelope for the
     # label budget (its band widths were clamped against it) — the anchor
     # envelope governs card/card+glyph anatomies only.
-    label_budget = (w - 2 * nch.pad_x - bullet_lead) if bullet_lead else (w - anchor_pads(nch) - lead)
-    label_text = truncate_to_width(node.label, label_budget, label_voice)
+    label_budget = (
+        (w - 2 * nch.pad_x - bullet_lead) if bullet_lead else (w - anchor_pads(nch, markless=lead == 0) - lead)
+    )
+    label_text = truncate_to_width(label_runs[0], label_budget, label_voice)
     kept_lines = lines[:kept]
     # Content-anchor law: name and desc share ONE text column (specimen slot
     # model) — the desc indents to group_left + lead, right under the name,
@@ -637,12 +670,26 @@ def place_card(
     # bloated on both flanks. ``bullet_lead`` (the lanes bulleted-card
     # anatomy, the obi-engine specimen) keeps its own envelope: the group
     # hugs ``pad_x`` and only the label indents past the category mark.
-    group_left = x + (nch.pad_x if left_align else nch.glyph_inset_x)
+    # Markless rows share the refinement: no mark, no glyph anchor — the
+    # pad_x envelope holds both sides (see sizing.anchor_pads) — except a
+    # ``family_marked`` member, whose lead is already the family column's.
+    group_left = x + (nch.pad_x if (left_align or lead == 0) else nch.glyph_inset_x)
     # The identity mark rides the identity-BLOCK center (name + descs), not the
     # cap line: on a chip-bottomed card the block top-anchors, so the glyph
     # stays with the name instead of floating to the geometric card center.
     glyph_art = glyph_builder(group_left + mark_w / 2, glyph_cy) if glyph_builder is not None else None
     label = DiagramText(x=group_left + lead + bullet_lead, y=label_base, text=label_text, cls=label_cls)
+    # Wrapped-name lines 2..n share the first line's column, class and pitch
+    # (the corpus renders every name line in ONE voice — cyt1-name twice).
+    label_lines = tuple(
+        DiagramText(
+            x=group_left + lead + bullet_lead,
+            y=label_base + (q + 1) * nch.desc_line_pitch,
+            text=truncate_to_width(run, label_budget, label_voice),
+            cls=label_cls,
+        )
+        for q, run in enumerate(label_runs[1:])
+    )
     desc_cls = "ndesc" if role == "default" else "mdesc"
     desc_lines = tuple(
         DiagramText(x=group_left + lead, y=desc_base + i * nch.desc_line_pitch, text=line, cls=desc_cls)
@@ -672,6 +719,7 @@ def place_card(
         stroke_dasharray=muted_dash if role == "muted" else "",
         accent_index=accent_index,
         label=label,
+        label_lines=label_lines,
         desc_lines=desc_lines,
         dot=None,
         glyph=glyph_art,
@@ -1090,6 +1138,7 @@ def _seam_glyph_builder(
     if not unconditional and style_of(node, ctx.spec, ctx.ch) not in (
         NodeStyle.CARD_GLYPH.value,
         NodeStyle.CARD_LABEL.value,
+        NodeStyle.PILL.value,
     ):
         return None
     gid = node_glyph_id(node, ctx.glyph_registry)
@@ -1114,6 +1163,64 @@ def apply_health_dot(ctx: SolverContext, node: DiagramNode, placement: NodePlace
     inset_y = float(cfg.get("dot_inset_y", 13))
     b = placement.box
     return replace(placement, health=node.health.value, health_dot=(b.x + b.w - inset_x, b.y + inset_y))
+
+
+DIAMOND_Q_DY = 5.0
+"""Plain decision question baseline offset below the diamond center (the
+hillclimb's Improved? baseline 401 on a 396 center)."""
+DIAMOND_HOLDER_Q_DY = -32.0
+"""Decision-HOLDER question baseline offset — the question rises above
+center so the criteria-chip rows seat beneath it (Stop? baseline 718 on a
+750 center)."""
+
+
+def place_diamond(
+    ctx: SolverContext,
+    node: DiagramNode,
+    index: int,
+    cx: float,
+    cy: float,
+    *,
+    w: float,
+    h: float,
+) -> NodePlacement:
+    """The loop decision rhombus's placement half — mirrors
+    ``sizing.solve_diamond_box`` so measured growth and rendered geometry
+    agree. The question rides the ``qname`` voice (deliberation ink, text
+    only — never the frame: the diamond keeps the neutral card stroke);
+    holder chips seat the same ``pack_holder_rows`` split the sizing half
+    solved, centered on the vertical axis, rhombus-true by construction."""
+    hw, hh = w / 2, h / 2
+    box = RectSpec(x=cx - hw, y=cy - hh, w=w, h=h)
+    chip_boxes: tuple[RectSpec, ...] = ()
+    chip_texts: tuple[DiagramText, ...] = ()
+    if node.chips:
+        q_dy = DIAMOND_HOLDER_Q_DY
+        rows = pack_holder_rows(node.chips, ctx.cfg, row_cap=2 * ctx.ch.diamond_half_w_min)
+        boxes: list[RectSpec] = []
+        texts: list[DiagramText] = []
+        for r_i, row in enumerate(rows):
+            row_top = cy + DIAMOND_CHIP_DY0 + r_i * DIAMOND_CHIP_PITCH - CHIP_H / 2
+            b, t = _chip_row(row, ctx.cfg, row_top, center=cx)
+            boxes.extend(b)
+            texts.extend(t)
+        chip_boxes, chip_texts = tuple(boxes), tuple(texts)
+    else:
+        q_dy = DIAMOND_Q_DY
+    return NodePlacement(
+        index=index,
+        node_id=node.id or f"n{index}",
+        shape="diamond",
+        shape_d=rhombus_d(cx, cy, hw, hh),
+        box=box,
+        role="default",
+        stroke_width=1.0,
+        stroke_dasharray="",
+        accent_index=-1,
+        label=DiagramText(x=cx, y=cy + q_dy, text=node.label, cls="qname", anchor="middle"),
+        chip_boxes=chip_boxes,
+        chip_texts=chip_texts,
+    )
 
 
 def place_node(
@@ -1141,6 +1248,7 @@ def place_node(
     y: float | None = None,
     bullet_lead: float = 0.0,
     left_align: bool = False,
+    family_marked: bool = False,
 ) -> NodePlacement:
     """The positions-only solver seam's PLACEMENT half:
     every topology's per-node dispatch to ``place_card``/``place_circle``/
@@ -1176,11 +1284,17 @@ def place_node(
     (sequence's participant head, the one anatomy outside the style
     cascade)."""
     ch = ctx.ch
+    if node.station == "decision":
+        # The loop decision rhombus — its own placement dispatch, mirroring
+        # solve_node_box's diamond branch so sizing and render agree.
+        return place_diamond(ctx, node, index, cx, cy, w=w, h=h)
     is_hero = (node.role is NodeRole.HERO) if hero is None else hero
     if chassis is not None:
         nch = chassis
     elif chassis_class == "node2":
         nch = ch.node2
+    elif chassis_class == "dev":
+        nch = ch.dev
     else:
         nch = ch.hero if is_hero else ch.node
     # ``style`` stays the TRUE resolved anatomy under ``force_card`` too —
@@ -1299,6 +1413,30 @@ def place_node(
         )
     if not force_card and style == NodeStyle.TEXT.value:
         return place_text_block(index=index, node=node, cx=cx, cy=cy, cfg=ctx.cfg, accent_index=ctx.node_accents[index])
+    if not force_card and style == NodeStyle.PILL.value:
+        # The pill kit piece: the same card anatomy under the capsule
+        # chassis (sizing derived the box through the same helper, so the
+        # two agree), with shape="pill" so connector anchors resolve to the
+        # true cap rim instead of the bounding-box corner void.
+        pl = place_card(
+            index=index,
+            node=node,
+            x=left,
+            y=top,
+            nch=pill_chassis(nch, h),
+            cfg=ctx.cfg,
+            accent_index=ctx.node_accents[index],
+            mono_triggers=ctx.mono_triggers,
+            muted_dash=_muted_dash(ctx),
+            w_override=w,
+            h_override=h,
+            glyph_builder=builder,
+            bullet_lead=bullet_lead,
+            left_align=left_align,
+            label_wrap_ceiling=max(nch.w, ch.w_max, ch.card_min_w, w),
+            family_marked=family_marked,
+        )
+        return replace(pl, shape="pill")
     return place_card(
         index=index,
         node=node,
@@ -1314,4 +1452,6 @@ def place_node(
         glyph_builder=builder,
         bullet_lead=bullet_lead,
         left_align=left_align,
+        label_wrap_ceiling=max(nch.w, ch.w_max, ch.card_min_w, w),
+        family_marked=family_marked,
     )

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 # chips are 26-tall rx8 pills; cards are >=36-tall rx>=10 boxes (pill nodes
 # reach rx=h/2); gather knots are r5 ring + r2.5 core; terminal dots r2.3.
 _CHIP_H = (22.0, 30.0)
-_CHIP_RX = (5.0, 11.0)
+_CHIP_RX = (5.0, 12.0)  # the expression corpus's capsule chips run 24-tall rx12
 _CARD_MIN_W = 60.0
 _CARD_MIN_H = 36.0
 _CARD_MIN_RX = 10.0
@@ -44,6 +44,8 @@ _GLYPH_DECOR_HINTS = ("-light", "-gi", "-gia", "-gf", "-gm", "-mgi", "-hgi", "-h
 # (a vocabulary difference, never a piece difference).
 _MICRO_LABEL_HINTS = ("-ml", "-elbl", "-reqt", "-respt")
 _ARROW_PATH_HINTS = ("-mk",)  # engine draws terminals as filled paths
+_PULSE_HINTS = ("-pu",)  # choreography pulse riders (engine -pu / hand cyt1-pu) — never edges
+_DIAMOND_PATH_HINTS = ("-card", "-herobg", "-mcard", "-dec")  # decision rhombi drawn as paths
 
 _TERMINAL_MAX_SPAN = 20.0
 """A drawn terminal is a SMALL closed polygon. The kit's chevron is 8 long and
@@ -76,6 +78,9 @@ _FURNITURE_HINTS = ("taxis",)
 @dataclass(slots=True)
 class Census:
     cards: int = 0
+    pills: int = 0
+    """The pill kit piece (capsule cards, rx = h/2): its own species,
+    counted INSIDE ``cards`` — the total stays the total."""
     card_rx: float = 0.0
     hero_rx: float = 0.0
     zone_headers: int = 0
@@ -87,17 +92,21 @@ class Census:
     coins: int = 0
     chips: int = 0
     gather_knots: int = 0
+    gather_buses: int = 0
+    """The unrolled ladder's converging-arm junctions (the gather bus)."""
     terminal_dots: int = 0
     arrow_terminals: int = 0
     solid_edges: int = 0
     drift_edges: int = 0
     particles: int = 0
     micro_labels: int = 0
+    diamonds: int = 0
     animated: bool = False
 
     def as_dict(self) -> dict[str, float | int | bool]:
         return {
             "cards": self.cards,
+            "pills": self.pills,
             "card_rx": self.card_rx,
             "hero_rx": self.hero_rx,
             "zone_headers": self.zone_headers,
@@ -109,6 +118,7 @@ class Census:
             "coins": self.coins,
             "chips": self.chips,
             "gather_knots": self.gather_knots,
+            "gather_buses": self.gather_buses,
             "terminal_dots": self.terminal_dots,
             "arrow_terminals": self.arrow_terminals,
             "solid_edges": self.solid_edges,
@@ -116,6 +126,9 @@ class Census:
             "particles": self.particles,
             "micro_labels": self.micro_labels,
             "animated": self.animated,
+            # Additive, omit-when-zero: the 44 pre-loop fixtures stay
+            # byte-identical; a loop fixture records its rhombi.
+            **({"diamonds": self.diamonds} if self.diamonds else {}),
         }
 
 
@@ -131,11 +144,39 @@ def is_plate(r: Rect, facts: Facts) -> bool:
     return r.w >= facts.vb_w * 0.9 and r.h >= facts.vb_h * 0.9
 
 
+def _is_halo(r: Rect) -> bool:
+    """A choreography halo: parked invisible (opacity attr 0 in the hand
+    corpus) or the engine's -halo class — an outline OUTSIDE its element,
+    never a card, chip, or plate. The expression corpus compresses the
+    class to ``-h`` (with a hue letter: ``-hN``/``-hA``) and parks it via
+    its CSS rule instead of the attribute — the suffix is the signature."""
+    if r.hidden or "-halo" in r.cls:
+        return True
+    for tok in r.cls.split():
+        suf = tok.rsplit("-", 1)[-1]
+        if suf == "h" or (len(suf) == 2 and suf[0] == "h" and suf[1].isupper()):
+            return True
+    return False
+
+
 def is_chip(r: Rect) -> bool:
-    return _CHIP_H[0] <= r.h <= _CHIP_H[1] and _CHIP_RX[0] <= r.rx <= _CHIP_RX[1] and r.w <= 170
+    if _is_halo(r):
+        return False
+    if any(tok.rsplit("-", 1)[-1] in ("plate", "rchipbg", "mplate") for tok in r.cls.split()):
+        # A legend/eyebrow PLATE shares the chip's window (22-tall rx11) but
+        # is band furniture, not a guard — the corpus classes it -plate; the
+        # engine's region-header plate is -rchipbg and its gauge backing
+        # plate -mplate (26-tall at the owner-ruled scale, chip-shaped).
+        return False
+    # Width cap 185: the widest honest chip measured to date is the
+    # engine's own 'compounds · each turn' at 171.8 (the hand file's 159 —
+    # same text, different LUT); the retired 170 sat inside the corpus.
+    return _CHIP_H[0] <= r.h <= _CHIP_H[1] and _CHIP_RX[0] <= r.rx <= _CHIP_RX[1] and r.w <= 185
 
 
 def is_card(r: Rect, facts: Facts) -> bool:
+    if _is_halo(r):
+        return False
     return (
         r.w >= _CARD_MIN_W and r.h >= _CARD_MIN_H and r.rx >= _CARD_MIN_RX and not is_plate(r, facts) and not is_chip(r)
     )
@@ -172,6 +213,67 @@ def shell_rects(facts: Facts) -> list[Rect]:
     return shells
 
 
+def gather_buses(facts: Facts) -> int:
+    """Gather-bus junctions — the unrolled ladder's converging arms (the
+    named merge piece, sibling of the gather knot): two or more wire
+    ENDPOINTS meeting at one free point clear of every card face. The
+    junction signs the piece in both dialects: the hand file's three arm
+    paths end on the shared point; the engine's two bare arms meet the
+    marked stem's run there."""
+    ends: list[tuple[float, float]] = []
+    starts: list[tuple[float, float]] = []
+    polys: list[list[tuple[float, float]]] = []
+    seen_d: set[str] = set()
+    for p in edge_paths(facts):
+        if p.d in seen_d:
+            continue  # pulse riders re-draw their track verbatim — one wire, one endpoint
+        seen_d.add(p.d)
+        e = p.endpoints()
+        if e is not None:
+            starts.append(e[0])
+            ends.append(e[1])
+            polys.append([e[0], e[1]])
+    cards = card_rects(facts)
+    junctions = 0
+    used: set[int] = set()
+    for i, (x, y) in enumerate(ends):
+        if i in used:
+            continue
+        mates = [j for j in range(len(ends)) if j != i and abs(ends[j][0] - x) <= 1.0 and abs(ends[j][1] - y) <= 1.0]
+        if not mates:
+            continue
+        on_card = any(b.x - 2 <= x <= b.x + b.w + 2 and b.y - 2 <= y <= b.y + b.h + 2 for b in cards)
+        if on_card:
+            continue
+        # The junction needs its STEM: a third wire departing the point or
+        # passing through it (the hand bus's stem starts there; the
+        # engine's marked stem runs straight through) — two ends merely
+        # touching is a coincidence, not a gather.
+        third = any(abs(sx - x) <= 1.0 and abs(sy - y) <= 1.0 for sx, sy in starts) or any(
+            j not in {i, *mates}
+            and min(_pt_seg_dist(x, y, polys[j][k], polys[j][k + 1]) for k in range(len(polys[j]) - 1)) <= 1.0
+            for j in range(len(polys))
+            if j < len(polys) and j not in {i, *mates}
+        )
+        if not third:
+            continue
+        junctions += 1
+        used.update({i, *mates})
+    return junctions
+
+
+def _pt_seg_dist(x: float, y: float, a: tuple[float, float], b: tuple[float, float]) -> float:
+    ax_, ay_ = a
+    bx_, by_ = b
+    dx, dy = bx_ - ax_, by_ - ay_
+    seg2 = dx * dx + dy * dy
+    if seg2 <= 1e-9:
+        return ((x - ax_) ** 2 + (y - ay_) ** 2) ** 0.5
+    t = max(0.0, min(1.0, ((x - ax_) * dx + (y - ay_) * dy) / seg2))
+    px, py = ax_ + t * dx, ay_ + t * dy
+    return ((x - px) ** 2 + (y - py) ** 2) ** 0.5
+
+
 def is_hero_cls(cls: str) -> bool:
     """Is this figure the composition's CROWN, in either vocabulary? The
     engine's background classes are literally ``…-herobg`` /
@@ -182,6 +284,31 @@ def is_hero_cls(cls: str) -> bool:
     hub-named crown extracted its DIMS correctly and censused as zero cards."""
     low = cls.lower()
     return "hero" in low or "hub" in low
+
+
+def _is_diamond_path(p: PathEl) -> bool:
+    """A decision rhombus drawn as a path: a closed 4-line polygon at card
+    scale wearing a card-family class (engine -cardbg on the shape_d path;
+    the hand corpus's -card/-dec diamonds)."""
+    if not any(h in p.own_cls for h in _DIAMOND_PATH_HINTS):
+        return False
+    body = p.d.strip().upper()
+    if not body.endswith("Z"):
+        return False
+    if body.count("L") != 3 or "C" in body or "Q" in body or "A " in body:
+        return False
+    # A closed polygon's endpoint span is zero (Z returns home) — the card
+    # scale reads from the vertex extent instead.
+    xs = [float(v) for v in re.findall(r"(-?\d+(?:\.\d+)?),", p.d)]
+    ys = [float(v) for v in re.findall(r",(-?\d+(?:\.\d+)?)", p.d)]
+    if not xs or not ys:
+        return False
+    return max(max(xs) - min(xs), max(ys) - min(ys)) >= _CARD_MIN_W
+
+
+def diamond_cards(facts: Facts) -> list[PathEl]:
+    """Decision rhombi — the loop family's diamond node species."""
+    return [p for p in facts.paths if _is_diamond_path(p)]
 
 
 def card_rects(facts: Facts) -> list[Rect]:
@@ -200,7 +327,20 @@ def card_rects(facts: Facts) -> list[Rect]:
 
 
 def chip_rects(facts: Facts) -> list[Rect]:
-    return [r for r in facts.rects if is_chip(r)]
+    """One chip, one count: a flash/tint overlay re-draws its chip's exact
+    box (the choreography corpus's -tint layer) — geometry-identical
+    duplicates coalesce, whatever either dialect calls them."""
+    out: list[Rect] = []
+    seen: set[tuple[float, float, float, float]] = set()
+    for r in facts.rects:
+        if not is_chip(r):
+            continue
+        key = (round(r.x, 1), round(r.y, 1), round(r.w, 1), round(r.h, 1))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(r)
+    return out
 
 
 def coin_circles(facts: Facts) -> list[Circle]:
@@ -214,8 +354,19 @@ def edge_paths(facts: Facts) -> list[PathEl]:
     for p in facts.paths:
         if not p.own_cls:
             continue  # glyph strokes inside classed <g> groups
-        if any(h in p.own_cls for h in _GLYPH_DECOR_HINTS + _ARROW_PATH_HINTS + _FURNITURE_HINTS):
+        if any(h in p.own_cls for h in _GLYPH_DECOR_HINTS + _ARROW_PATH_HINTS + _FURNITURE_HINTS + _PULSE_HINTS):
             continue
+        if p.hidden or "-halo" in p.own_cls:
+            continue  # a parked choreography halo outline is never an edge
+        toks = [t.rsplit("-", 1)[-1] for t in p.own_cls.split()]
+        if any(t == "tr" or t.startswith("trl") for t in toks):
+            # A choreography TRAIL rides its wire (engine -trl/-trlA, hand
+            # -tr) — performance dress, never an edge. Class-gated, not
+            # d-deduped: the engine trail is TRIMMED at the arrowhead's
+            # base, so its d no longer duplicates the wire's.
+            continue
+        if _is_diamond_path(p):
+            continue  # a decision rhombus is a CARD drawn as a path
         if _span(p) < _EDGE_MIN_SPAN:
             continue
         out.append(p)
@@ -341,7 +492,8 @@ def _is_card_desc_cls(cls: str) -> bool:
     (document chrome, not a card desc)."""
     for tok in cls.split():
         suf = tok.rsplit("-", 1)[-1]
-        if suf.endswith(("desc", "sub", "val")) or suf in ("ns", "display"):
+        if suf.endswith(("desc", "sub", "val")) or suf in ("ns", "display", "s"):
+            # "s" is the expression corpus's compressed sub class.
             return True
     return False
 
@@ -371,14 +523,23 @@ def census(facts: Facts) -> Census:
 
     for r in card_rects(facts):  # double-rects coalesced to their bodies
         c.cards += 1
+        if r.rx >= r.h / 2 - 0.6:
+            c.pills += 1  # the capsule species, counted inside the total
         if is_hero_cls(r.cls):
             c.hero_cards += 1
         if r.dashed:
             c.muted_cards += 1
+    c.diamonds = len(diamond_cards(facts))
+    c.cards += c.diamonds  # a decision rhombus is a card drawn as a path
     c.chips = len(chip_rects(facts))
 
     c.coins = len(coin_circles(facts))
     c.gather_knots = len(knots)
+    if topo.startswith("loop"):
+        # The gather-bus species is the loop family's piece; other
+        # families' own wire meetings (lanes' perimeter merges) are their
+        # own vocabulary, not this one.
+        c.gather_buses = gather_buses(facts)
 
     marker_arrows = 0 if furniture_family else sum(1 for p in edges if p.marker_end)
     drawn_terminals = (
@@ -391,8 +552,12 @@ def census(facts: Facts) -> Census:
             and _terminates_edge(p, edge_ends)
         ]
     )
-    drawn_arrows = sum(1 for p in drawn_terminals if "L" in p.d.upper())
-    drawn_dots = len(drawn_terminals) - drawn_arrows
+    # Choreography replays re-draw an arrowhead per pass — dedupe by d (the
+    # rider law): one drawn chevron per wire end.
+    _seen_term_d: set[str] = set()
+    _unique_terminals = [p for p in drawn_terminals if not (p.d in _seen_term_d or _seen_term_d.add(p.d))]
+    drawn_arrows = sum(1 for p in _unique_terminals if "L" in p.d.upper())
+    drawn_dots = len(_unique_terminals) - drawn_arrows
     for circ in facts.circles:
         if circ.has_motion:
             c.particles += 1
@@ -411,11 +576,21 @@ def census(facts: Facts) -> Census:
     c.arrow_terminals = marker_arrows + drawn_arrows
 
     if not furniture_family:
+        # Pulse riders re-draw their track verbatim (the choreography
+        # corpus stamps several dashed copies per solid wire): a dashed
+        # animated path whose d duplicates a SOLID one is a rider, not a
+        # drift edge. Solid counting stays per-path (the beam family's
+        # coincident rails are each their own edge).
+        solid_d: set[str] = set()
+        seen_riders: set[str] = set()
         for p in edges:
-            if p.dashed and p.animated:
-                c.drift_edges += 1
-            elif not p.dashed:
+            if not p.dashed:
+                solid_d.add(p.d)
                 c.solid_edges += 1
+        for p in edges:
+            if p.dashed and p.animated and p.d not in solid_d and p.d not in seen_riders:
+                seen_riders.add(p.d)
+                c.drift_edges += 1
 
     # Micro-labels: the engine's -ml/-elbl floats, plus the specimen
     # vocabulary's FLOATING chip-voice runs (service-dependencies classes its bare
@@ -675,12 +850,23 @@ def chip_homes(facts: Facts) -> dict[str, float | int] | None:
     if not chips:
         return None
     cards = card_rects(facts)
+    # A decision-HOLDER's criteria chips live inside the rhombus — the
+    # in-card home, read against the diamond's bbox like any card row.
+    diamond_boxes: list[tuple[float, float, float, float]] = []
+    for dp in diamond_cards(facts):
+        xs = [float(v) for v in re.findall(r"(-?\d+(?:\.\d+)?),", dp.d)]
+        ys = [float(v) for v in re.findall(r",(-?\d+(?:\.\d+)?)", dp.d)]
+        if xs and ys:
+            diamond_boxes.append((min(xs), min(ys), max(xs), max(ys)))
     wires = [_sampled_points(p.d) for p in edge_paths(facts)]
     in_card = 0
     offsets: list[float] = []
     for chip in chips:
         ccx, ccy = chip.x + chip.w / 2, chip.y + chip.h / 2
         if any(r.x - 0.5 <= ccx <= r.x + r.w + 0.5 and r.y - 0.5 <= ccy <= r.y + r.h + 0.5 for r in cards):
+            in_card += 1
+            continue
+        if any(x0 <= ccx <= x1 and y0 <= ccy <= y1 for x0, y0, x1, y1 in diamond_boxes):
             in_card += 1
             continue
         best = None

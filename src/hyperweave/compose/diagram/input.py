@@ -29,6 +29,7 @@ from hyperweave.core.diagram import (
     DiagramNode,
     DiagramSpec,
     NodeRole,
+    Orientation,
     Topology,
     _find_cycle,
     focal_slot,
@@ -126,6 +127,19 @@ def resolve_auto_roles(spec: DiagramSpec) -> DiagramSpec:
     return spec.model_copy(update={"nodes": nodes, "edges": edges})
 
 
+def _default_loop_orientation(raw: DiagramSpec) -> DiagramSpec:
+    """Loop's family default is VERTICAL (the axial spine + margin rail);
+    the IR's shared ``orientation`` field default is HORIZONTAL. A loop spec
+    that never declared an orientation flips here — the one seam every
+    transport (CLI/HTTP/MCP/preset dict) passes through. Detection reads
+    ``model_fields_set``, so only inputs built as dicts/keywords are
+    distinguishable — a spec constructed some other way that wants the
+    lateral row says ``orientation: horizontal`` explicitly."""
+    if raw.topology is Topology.LOOP and "orientation" not in raw.model_fields_set:
+        return raw.model_copy(update={"orientation": Orientation.VERTICAL})
+    return raw
+
+
 def promote_cyclic_dag(spec: DiagramSpec) -> NormalizedInput:
     """Promote a cyclic DAG to state-machine, or pass an acyclic spec through.
 
@@ -180,6 +194,7 @@ def _finalize(raw: DiagramSpec) -> NormalizedInput:
     payload round-trips as written. For non-promoted inputs the two are the
     same spec, so role resolution is identical and payloads stay
     byte-stable."""
+    raw = _default_loop_orientation(raw)
     promoted = promote_cyclic_dag(raw)
     rendered_spec = resolve_auto_roles(promoted.spec)
     if promoted.payload_spec is promoted.spec:

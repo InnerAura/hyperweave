@@ -64,6 +64,11 @@ class GlyphArt:
     instead of its resolved ink — decided at placement (the card+label hero
     register's id-row mark, the same accent promotion the hub nucleus glyph
     gets), so the template stamps it and never re-derives the rule."""
+    comp: bool = False
+    """The mark rides the COMPLEMENT tone (``-flcomp``) — the loop's
+    discard-partition glyph hue (turn/cycle-turn-choreography's ``cyt1-gC``
+    undo-arc on the revert card, wire-grade complement like the discard
+    exit it echoes). Stroke-drawn core marks only; decided at placement."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +84,11 @@ class NodePlacement:
     stroke_dasharray: str  # "" | muted dash
     accent_index: int  # flow-palette slot; -1 = none/chassis accent
     label: DiagramText
+    label_lines: tuple[DiagramText, ...] = ()
+    """Wrapped-NAME lines 2..n (``label_max_lines`` > 1) — same voice and
+    column as ``label``, one desc-pitch apart (the corpus's two-line station
+    names: turn/cycle-turn-choreography-v2 at 533/552). Empty everywhere the
+    single-line name law holds."""
     desc_lines: tuple[DiagramText, ...] = ()
     dot: tuple[float, float] | None = None
     term_box: RectSpec | None = None
@@ -124,6 +134,17 @@ class NodePlacement:
     """Title carries the accent hue — the hub/axial accent-zone only (the
     hub DESTINATIONS binding). Everywhere else titles stay ink
     even when the node holds an accent slot (lanes category swatches)."""
+    card_dress: str = ""
+    """Dedicated card-fill class suffix ('' = role dispatch): the loop
+    family's terminal washes — advance terminals wear the signal wash with
+    a signal-edge rim, exhausted terminals the flat page tone (the corpus
+    -term / -flat finishes; chromatic gestalt is dress, never a new shape)."""
+    shape_d: str = ""
+    """Precomputed outline ``d`` when ``shape == 'diamond'`` (the loop
+    family's decision rhombus) — the template stamps a ``<path>`` with the
+    card classes instead of a rect. ``box`` still circumscribes (N/E/S/W
+    vertices at the box's edge midpoints by construction), so collision and
+    port math read the same record every rect reads."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -209,6 +230,11 @@ class ConnectorPlacement:
     headers already compile (``zoneh``/``zoneha``). The accent group needs no
     flag: its members carry an ``accent_index`` and take the flow hue, which
     resolves to the signal."""
+    comp_wire: bool = False
+    """Loop discard/revert dress: this wire (and its marker) strokes the
+    genome's ``diagram_complement`` — wire-grade only, the anchor's law
+    (edges and markers, never text or frames). Mirrors ``ink_wire``'s
+    mechanics on its own ``-flcomp``/``-flcompf`` classes."""
     relation: str = ""
     """The §3 line idiom this wire renders ('' | assert | drift | flow |
     bypass) — resolved from the edge or the solver's axis default. A
@@ -303,6 +329,10 @@ class AnnotationPlacement:
     kicker) — set once, at the same placement:left source that also picks
     the column's own relative geometry (chrome_kinds._place_legend_column),
     so the two never disagree."""
+    edge_index: int = -1
+    """The resolved-edge index an ``edge-chip`` placement was subsumed FROM
+    (-1 for every other kind) — the choreography compiler flashes a guard
+    chip when its branch fires, so the chip must know its edge."""
     lane_dress: bool = False
     """True ONLY for a bare ``label`` subsumed from a ``mo.lane_dress_applies``
     edge (the gateway specimen's request/response text) — the one case a
@@ -337,6 +367,11 @@ class LaneBand:
     dag-mapreduce enclosure seats a 144x20 chip centred on its top edge, so
     the hairline runs behind the plate instead of through the word). None
     leaves the label as plain text, byte-identical to before."""
+    dash: str = ""
+    """Enclosure stroke dasharray ('' = the solid hairline every SM
+    enclosure keeps). The loop scope wears the dashed region grammar
+    (cycle-nested: 'dashed outline + legend plate') — band data, never a
+    template branch."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -412,6 +447,141 @@ class TimeAxis:
 
 
 @dataclass(frozen=True, slots=True)
+class PulseOverlay:
+    """One choreographed pulse rider over a connector's track: a short dash
+    swept via ``stroke-dashoffset`` from parked-invisible (+dash, entirely
+    before the path) to full-exit (-length, entirely after) — the turn
+    register's capture vocabulary. Fires once per beat window; all windows
+    live in ONE keyframes block (``anim_index``) on the shared super-period
+    clock, exactly as the hand specimens author it."""
+
+    connector_index: int
+    hue: str  # A (accent) | C (complement) | N (neutral conn)
+    dasharray: str
+    rest_offset: float
+    anim_index: int
+    route_d: str = ""
+    """The path the overlay rides: the connector's route trimmed at the
+    arrowhead's BASE (the corpus stops the lit line there and draws the
+    chevron beyond it); the full path when the edge carries no marker."""
+
+
+@dataclass(frozen=True, slots=True)
+class HaloFlash:
+    """An arrival halo / guard flash / terminal hold / scope glow: an
+    opacity-animated outline in the element's OWN hue (motion adds no hue
+    roles). ``rect`` carries a box (node/chip inflated past its edges);
+    ``path`` carries a rhombus outline ``d`` for diamonds."""
+
+    shape: str  # rect | path
+    hue: str  # A | C | W (deliberation) | N (conn)
+    anim_index: int
+    box: RectSpec | None = None
+    d: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class ChipTint:
+    """A chip lighting up: the chip's OWN markup re-stamped inside an
+    opacity-animated group — ground re-drawn with the branch hue's rim,
+    text re-inked in the same hue (the corpus tint groups: white chip,
+    hue rim at 1.4, mono text in the hue). The box is the chip's exact
+    box, never inflated — the tint IS the chip, not a halo around it."""
+
+    box: RectSpec
+    lines: tuple[DiagramText, ...]
+    hue: str  # A | C | W (deliberation)
+    anim_index: int
+
+
+@dataclass(frozen=True, slots=True)
+class MeterStrip:
+    """The meter kit piece: a declared segment gauge riding a return edge's
+    chip — a quiet backing plate, a register-tinted lead mark, and a row of
+    base segments spanning the chip's own width, seated beneath the chip
+    (the three meter specimens: plate 33 tall rx 11 at 4px under the chip,
+    segments 13 tall rx 4 at plate top + 10). The layout carries the STATIC
+    gauge — every face draws it; the register's choreography fills it
+    (``ChoreographyPlan.meter_fills``)."""
+
+    edge_index: int
+    plate: RectSpec
+    boxes: tuple[RectSpec, ...]
+    glyph: GlyphArt | None = None
+    hue: str = "M"
+    """The lead mark's stroke class: A (accent — the accumulator's gain),
+    C (complement — the budget's drain), M (muted ink — the neutral lap
+    count). A CLASS, not an attribute: the complement token has no root
+    custom property, so an attribute var() would silently paint nothing
+    (the var-in-attribute trap)."""
+
+
+@dataclass(frozen=True, slots=True)
+class MeterFill:
+    """One animated fill segment over a meter base box — the register's
+    performance layer, carrying its arrow of time in the keyframes
+    (``anim_index``). ``rest_opacity`` is the reduced-motion resting state:
+    a budget gauge rests FULL (nothing spent), a lap counter and an
+    accumulator rest empty."""
+
+    box: RectSpec
+    anim_index: int
+    rest_opacity: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class KeyframeBlock:
+    """One precomputed ``@keyframes`` body — percentage stops as a finished
+    string ('every animation timing precomputed by the solver package;
+    templates do pure substitution'). ``prop`` names the single animated
+    property (stroke-dashoffset | opacity), CIM-legal by construction."""
+
+    prop: str
+    body: str
+
+
+@dataclass(frozen=True, slots=True)
+class ChoreographyPlan:
+    """The compiled register: the diagram's semantic claim performed in time.
+    ``beats`` is the payload's beat table ([start, end] seconds per element
+    key) — the engine-generated counterpart of the hand specimens' own
+    ``beats.table``, so keyframe agreement is testable at ±0.1s."""
+
+    register: str
+    super_period_s: float
+    acts: tuple[str, ...]
+    legs_s: dict[str, float]
+    beats: dict[str, tuple[tuple[float, float], ...]]
+    pulses: tuple[PulseOverlay, ...]
+    halos: tuple[HaloFlash, ...]
+    keyframes: tuple[KeyframeBlock, ...]
+    halo_stroke: float = 2.0
+    meter_fills: tuple[MeterFill, ...] = ()
+    """The meter registers' fill layer over ``DiagramLayout.meters`` —
+    empty for turn/drift, so existing plans stay byte-identical."""
+    trails: tuple[PulseOverlay, ...] = ()
+    """The lit route (the expression corpus's one language): per turn, each
+    leg's trail draws on in the accent and holds to the turn's clear."""
+    marker_fades: dict[int, int] = field(default_factory=dict)
+    """connector_index -> anim_index: the arrowhead pops when its leg
+    completes and hides at the clear."""
+    marker_hues: dict[int, str] = field(default_factory=dict)
+    """connector_index -> hue class letter: the popping arrowhead rides its
+    leg's own hue, exactly like the trail beneath it."""
+    trail_stroke: float = 2.6
+    pulse_layers: tuple[tuple[float, float, float], ...] = (
+        (3.6, 1.0, 0.0),
+        (5.4, 0.30, 0.058),
+        (7.5, 0.13, 0.115),
+    )
+    """The comet head riding the drawing tip: (stroke, opacity, delay_s)
+    per layer — a bright core trailed by two staggered translucent washes,
+    every corpus specimen unanimous on the trio."""
+    tints: tuple[ChipTint, ...] = ()
+    """Chips lighting up as their leg fires — the corpus's tint groups."""
+
+
+@dataclass(frozen=True, slots=True)
 class RenderedMotion:
     """Requested vs rendered — recorded in the payload so a fallback or a
     track resolution never silently diverges from what the caller asked."""
@@ -421,6 +591,10 @@ class RenderedMotion:
     glyph_tint: tuple[str, ...]
     performance: str  # paint-ok | composite-only
     fallback_applied: bool
+    motion_register: str = ""
+    """The resolved choreography register ('' pre-resolution; 'drift' |
+    'turn' once the compose seam decides) — additive default keeps every
+    existing payload byte-identical."""
     glyph_backing: tuple[str, ...] = ()
     """Per-node contrast-gate outcome (G5): '' (no mark) | default |
     plateless | exempt-ink | tint-<mode>. 'default' is a card/pill mark that
@@ -464,6 +638,13 @@ class DiagramLayout:
     that slice lands)."""
     lane_bands: tuple[LaneBand, ...] = ()
     """Lanes-topology category bands (the lanes solver fills these)."""
+    meters: tuple[MeterStrip, ...] = ()
+    """Meter kit pieces (loop family, ``edge.meter``) — derived on the
+    frozen layout from each metered return's placed chip (the choreography
+    precedent), so they ride no solve-time normalization channel."""
+    chip_visible_run: float = 0.0
+    """The spec's own chip-density citation, carried for the battery (0 =
+    the enrolled 30px/one-third law)."""
     gathers: tuple[GatherPoint, ...] = ()
     """Gather-fan ornaments at structural one-to-many junctions."""
     legend: DiagramText | None = None
@@ -476,6 +657,10 @@ class DiagramLayout:
     footer: DiagramText | None = None
     palette_slots: int = 0
     entrance: str = "none"
+    choreography: ChoreographyPlan | None = None
+    """The compiled motion register (turn today; enumerate is the next
+    wave's seam). None = the plain drift face — every pre-existing layout
+    stays byte-identical."""
     rendered: RenderedMotion = field(
         default_factory=lambda: RenderedMotion(
             edge_motion=(), track=(), glyph_tint=(), performance="composite-only", fallback_applied=False

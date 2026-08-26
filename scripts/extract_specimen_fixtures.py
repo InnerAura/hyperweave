@@ -42,13 +42,14 @@ from tests.compose.parity.svgfacts import Rect, css_tokens, parse_svg  # noqa: E
 # story) and the later REFERENCES (beam motion + the conformance faces).
 PROTOTYPES = REPO / "v04" / "specimens" / "artifacts" / "diagrams" / "diagrams-v04a6" / "diagrams-v3"
 REFERENCES = REPO / "v04" / "specimens" / "artifacts" / "diagrams" / "diagrams-v04a6" / "diagrams-v4"
-# The card+label generation: hand specimens authored for v0.4.2's anatomy work.
-# The anatomy prototypes moved during the v0.4.3 wave: some to the v043
-# prototype tree, some into the shared specimen corpus. Both roots are searched
-# by name rather than one being pinned, so a specimen that moves again is found
-# instead of silently breaking the extract AND every document citing it.
+# The hand-specimen roots. Specimens move between trees as waves close, so
+# roots are searched in order rather than one being pinned — a specimen that
+# moves again is found instead of silently breaking the extract AND every
+# document citing it.
 ANATOMY_ROOTS = (
-    REPO / "v04" / "v040" / "v043" / "diagram-prototypes",
+    # The loop-family corpus — first, so its same-named files outrank the
+    # shared tree (cycle-runloop-v1.svg exists in both, as different artifacts).
+    REPO / "v04" / "v040" / "v044" / "loops",
     REPO / "v04" / "specimens" / "artifacts" / "diagrams",
 )
 
@@ -56,21 +57,33 @@ ANATOMY_ROOTS = (
 def anatomy(*parts: str) -> Path:
     """A named anatomy specimen, wherever it currently lives.
 
-    Falls back to the first root so a missing file still produces a readable
-    path in the error rather than a None.
+    Resolution order: the exact fragment under each root, then a tail match
+    (every given part must line up), then a bare-name search only when the
+    name is UNIQUE across all roots. A first-match bare-name search once
+    resolved loop-flywheel to the shared tree's same-named endless-runloop
+    testbed instead of the authored flywheel file — ambiguity now fails
+    loud instead of guessing. Falls back to the first root so a missing
+    file still produces a readable path in the error rather than a None.
     """
-    name = parts[-1]
+    rel = Path(*parts)
     for root in ANATOMY_ROOTS:
-        direct = root.joinpath(*parts)
+        direct = root / rel
         if direct.exists():
             return direct
-        found = next(root.rglob(name), None) if root.exists() else None
-        if found is not None:
-            return found
-    return ANATOMY_ROOTS[0].joinpath(*parts)
+    hits = [p for root in ANATOMY_ROOTS if root.exists() for p in sorted(root.rglob(parts[-1]))]
+    tail_hits = [p for p in hits if p.parts[-len(parts) :] == tuple(parts)]
+    if tail_hits:
+        return tail_hits[0]
+    if len(hits) == 1:
+        return hits[0]
+    if hits:
+        raise SystemExit(
+            f"anatomy{parts!r}: {len(hits)} same-named specimens and no directory part narrows them: "
+            + ", ".join(str(p.relative_to(REPO)) for p in hits)
+        )
+    return ANATOMY_ROOTS[0] / rel
 
 
-ANATOMY = ANATOMY_ROOTS[0]
 OUT = REPO / "tests" / "fixtures" / "specimens"
 
 # Ground-truth set: one specimen per topology narrative, keyed by its clean
@@ -126,12 +139,43 @@ GEOMETRY_SPECIMENS: dict[str, Path] = {
     # carry the structural name (fixture ≡ preset law; the hand file's
     # rename+reclassification is recorded in its own hw:lineage, per
     # v04/decisions/hub-bilateral-family.md).
-    "hub-bilateral": anatomy("hub-expressions", "hub-bilateral.svg"),
+    "hub-bilateral": anatomy("hubs", "hub-bilateral.svg"),
     # The twin symmetric medallion bilaterals (owner-directed hand files):
     # the constant-family-frame, pair-pitch, pair-port and bilateral beam
     # citations all extract from this pair. Fixture ≡ preset, board 1:1.
-    "fanout-bilateral-pair": anatomy("fanout-expressions", "bilateral-symmetric-2x2.svg"),
-    "fanout-bilateral-trio": anatomy("fanout-expressions", "bilateral-symmetric-3x3.svg"),
+    "fanout-bilateral-pair": anatomy("fanout", "bilateral-symmetric-2x2.svg"),
+    "fanout-bilateral-trio": anatomy("fanout", "bilateral-symmetric-3x3.svg"),
+    # The loop family's golden set (v04/v040/v044/loops — topology amended
+    # cycle -> loop, owner ruling 2026-08-24). The hillclimb pair is the
+    # register twin: one geometry, drift vs turn.
+    "loop-hillclimb": anatomy("turn", "cycle-turn.svg"),
+    # The turn twin re-points to the kit-recreated generation (owner ruling
+    # 2026-08-24): full IR, the kit-anatomy bridge — the first choreography
+    # file remains in the corpus as the superseded generation.
+    "loop-hillclimb-turn": anatomy("turn", "cycle-turn-choreography-v2.svg"),
+    "loop-retry": anatomy("retry", "cycle-retry.svg"),
+    "loop-shuttle": anatomy("shuttle", "shuttle-specimens", "diagram-loop-shuttle-lateral-turn.svg"),
+    "loop-runloop": anatomy("runloop", "cycle-runloop-v2.svg"),
+    # The file name says runloop-v1; the artifact inside is the flywheel
+    # accumulator story (its own hw:lineage records it as runloop-v2's
+    # child) — the fixture keys the ARTIFACT, the path is provenance. The
+    # shared tree carries a SAME-NAMED endless-runloop testbed; the runloop
+    # directory part is what pins this to the flywheel file.
+    "loop-flywheel": anatomy("runloop", "cycle-runloop-v1.svg"),
+    "loop-nested": anatomy("nested", "cycle-nested.svg"),
+    "loop-tap": anatomy("tap", "cycle-tap-v3.svg"),
+    # The expression cells (the corpus's second generation) — each landed
+    # vocabulary's defining specimen: the budget drain, the lap counter,
+    # the accumulator gauge, the unrolled ladder's gather bus, the role
+    # swimlanes. Directory parts are explicit (the bare-name collision
+    # lesson).
+    "loop-retry-budget": anatomy("retry", "retry-specimens", "diagram-loop-retry-axial-budget.svg"),
+    "loop-nested-laps": anatomy("nested", "nested-specimens", "diagram-loop-nested-inline-laps.svg"),
+    "loop-flywheel-accumulate": anatomy(
+        "runloop", "runloop-specimens-v2", "diagram-loop-flywheel-axial-vertical-accumulate.svg"
+    ),
+    "loop-retry-unrolled": anatomy("retry", "retry-specimens", "diagram-loop-retry-unrolled-turn.svg"),
+    "loop-shuttle-swimlane": anatomy("shuttle", "shuttle-specimens", "diagram-loop-shuttle-swimlane-turn.svg"),
 }
 
 TWIN_DIR = PROTOTYPES / "primer-diagrams-v3"

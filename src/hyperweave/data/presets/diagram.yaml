@@ -364,10 +364,10 @@ presets:
     node_style: glyph-circle
     chassis: { width: 1000, ring_r: 250, arc_r: 250, arc_clear_deg: 4, circle_r: 44, hero_circle_r: 56, circle_label_dy: 18, node: { max_desc_lines: 2 } , zone_content_gap: 70, caption_gap: 70, caption_pad: 41}
     nodes:
-      - { id: generate, label: Generate, desc: agents create, kind: zap }
-      - { id: distribute, label: Distribute, desc: ship anywhere, kind: send }
-      - { id: capture, label: Capture, desc: corpus grows, kind: database }
-      - { id: improve, label: Improve, desc: model learns, kind: cpu }
+      - { id: generate, label: Generate, desc: "agents create", kind: zap }
+      - { id: distribute, label: Distribute, desc: "ship anywhere", kind: send }
+      - { id: capture, label: Capture, desc: "corpus grows", kind: database }
+      - { id: improve, label: Improve, desc: "model learns", kind: cpu }
       - { id: axis, label: the flywheel, desc: compounds each turn, role: hero, kind: refresh-cw }
 
   cycle-orbit:
@@ -382,10 +382,10 @@ presets:
     marker: arrow # flywheel-orbit: four discrete arrowed turns
     node_style: card+glyph
     nodes:
-      - { label: Generate, desc: agents create, kind: zap }
-      - { label: Distribute, desc: ship anywhere, kind: external-link }
-      - { label: Capture, desc: corpus grows, kind: database }
-      - { label: Improve, desc: model learns, kind: refresh-cw }
+      - { label: Generate, desc: "agents create", kind: zap }
+      - { label: Distribute, desc: "ship anywhere", kind: external-link }
+      - { label: Capture, desc: "corpus grows", kind: database }
+      - { label: Improve, desc: "model learns", kind: refresh-cw }
       - { label: the flywheel, desc: compounds each turn, role: hero, kind: repeat }
 
   cycle-flow:
@@ -398,10 +398,10 @@ presets:
     notes: flywheel flow
     node_style: card+glyph
     nodes:
-      - { id: generate, label: Generate, desc: agents create, kind: zap }
-      - { id: distribute, label: Distribute, desc: ship anywhere, kind: external-link }
-      - { id: capture, label: Capture, desc: corpus grows, kind: database }
-      - { id: improve, label: Improve, desc: model learns, kind: refresh-cw }
+      - { id: generate, label: Generate, desc: "agents create", kind: zap }
+      - { id: distribute, label: Distribute, desc: "ship anywhere", kind: external-link }
+      - { id: capture, label: Capture, desc: "corpus grows", kind: database }
+      - { id: improve, label: Improve, desc: "model learns", kind: refresh-cw }
       - { id: flywheel, label: the flywheel, desc: compounds each turn, role: hero, kind: repeat }
     # One continuous current around the rim: dashed marching arcs, no terminals.
     # The ring is furniture (tree-family census-skip) — it animates, nothing counts.
@@ -439,6 +439,335 @@ presets:
       - { id: build, label: "4. Build", desc: "build agents and workflows against real systems", kind: code }
       - { id: validate, label: "5. Validate", desc: "validate with users, measure impact, iterate fast", kind: circle-check } # specimen draws circle+check, not the shield
       - { id: ship, label: "6. Ship", desc: "ship solutions that save time, improve decisions, scale value", kind: rocket } # specimen draws the rocket
+
+  # ── Loop (the procedural directed loop; specimens in
+  #    v04/v040/v044/loops/) ──────────────────────────────────────────────
+  loop-hillclimb:
+    topology: loop
+    zones: ["discard", "advance"] # the anchor's corner pair, verbatim
+    chassis: { node: { rx: 14 }, hero: { rx: 14 }, node2: { rx: 14 }, dev: { rx: 14 }, caption_gap: 46, caption_pad: 34 } # the file's own rx-14 dialect + measured caption air
+    title: One turn of the loop
+    subtitle: "one turn of the cycle · change, measure, keep or revert — stop on target hit, no gains, or out of ideas" # the anchor's caption, verbatim
+    notes: hill climb
+    motion_register: drift # the anchor IS the plain face — the twin below flips only this
+    node_style: card+glyph # the payload's declared marks: pencil/gauge ink, stair-up accent, undo-arc complement, check accent
+    nodes:
+      - { id: change, label: Make one change, kind: pencil }
+      - { id: measure, label: Measure against the target, kind: gauge }
+      - { id: improved, label: "Improved?", station: decision }
+      - { id: revert, label: Revert to last best, partition: discard, kind: undo-arc }
+      - { id: keep, label: Keep as new best, partition: advance, kind: stair-up }
+      - { id: stop, label: "Stop?", station: decision, chips: ["target hit", "no gains", "out of ideas"] }
+      - { id: done, label: "Done. Report it.", station: terminal, partition: advance, kind: circle-check }
+    edges:
+      - { from: change, to: measure, relation: drift, marker: arrow }
+      - { from: measure, to: improved, relation: drift, marker: arrow }
+      - { from: improved, to: revert, label: "no", label_style: chip, relation: drift, marker: arrow }
+      - { from: improved, to: keep, label: "yes", label_style: chip, relation: drift, marker: arrow }
+      - { from: revert, to: stop, relation: drift, marker: arrow }
+      - { from: keep, to: stop, relation: drift, marker: arrow }
+      - { from: stop, to: done, label: "yes", label_style: chip, relation: drift, marker: arrow }
+      - { from: stop, to: change, label: "no · keep going", label_style: chip, circuit: return, relation: drift, marker: arrow }
+  loop-hillclimb-turn:
+    # The choreographed twin: geometry byte-shared with loop-hillclimb, the
+    # register flipped — the one-flag toggle, proved as a preset pair.
+    topology: loop
+    zones: ["discard", "advance"]
+    chassis: { node: { rx: 14 }, hero: { rx: 14 }, node2: { rx: 14 }, dev: { rx: 14 }, caption_gap: 46, caption_pad: 34 }
+    title: One turn of the loop, performed
+    subtitle: "the loop, performed · turn one improves and keeps · turn two fails and reverts · turn three stops on target" # the specimen's caption, verbatim
+    notes: hill climb performed
+    motion_register: turn
+    node_style: card+glyph
+    nodes:
+      - { id: change, label: Make one change, kind: pencil }
+      - { id: measure, label: Measure against the target, kind: gauge }
+      - { id: improved, label: "Improved?", station: decision }
+      - { id: revert, label: Revert to last best, partition: discard, kind: undo-arc }
+      - { id: keep, label: Keep as new best, partition: advance, kind: stair-up }
+      - { id: stop, label: "Stop?", station: decision, chips: ["target hit", "no gains", "out of ideas"] }
+      - { id: done, label: "Done. Report it.", station: terminal, partition: advance, kind: circle-check }
+    edges:
+      - { from: change, to: measure }
+      - { from: measure, to: improved }
+      - { from: improved, to: revert, label: "no", label_style: chip }
+      - { from: improved, to: keep, label: "yes", label_style: chip }
+      - { from: revert, to: stop }
+      - { from: keep, to: stop }
+      - { from: stop, to: done, label: "yes", label_style: chip }
+      - { from: stop, to: change, label: "no · keep going", label_style: chip, circuit: return }
+  loop-retry:
+    topology: loop
+    zones: ["retry", "advance"]
+    chassis: { node: { rx: 14 }, hero: { rx: 14 }, node2: { rx: 14 }, caption_gap: 54, caption_pad: 30 }
+    title: Retry with backoff
+    subtitle: "the loop, performed · attempt one fails and backs off · attempt two succeeds · the last turn exhausts the budget"
+    notes: retry backoff
+    node_style: card+glyph
+    nodes:
+      - { id: call, label: Call the tool, kind: zap }
+      - { id: succ, label: "Succeeded?", station: decision }
+      - { id: done, label: "Done. Return it.", station: terminal, partition: advance }
+      - { id: retry, label: "Retry?", station: decision }
+      - { id: back, label: Back off, kind: clock }
+      - { id: fail, label: "Failed. Surface it.", station: terminal, partition: exhausted }
+    edges:
+      - { from: call, to: succ }
+      - { from: succ, to: done, label: "yes", label_style: chip }
+      - { from: succ, to: retry, label: "no", label_style: chip }
+      - { from: retry, to: back, label: "yes", label_style: chip }
+      - { from: retry, to: fail, label: "no", label_style: chip }
+      - { from: back, to: call, label: "attempt n+1", label_style: chip, circuit: return }
+  loop-shuttle:
+    topology: loop
+    chassis: { caption_gap: 40, caption_pad: 34 }
+    orientation: horizontal # the lateral row — the shuttle cell
+    title: Revise and resubmit
+    subtitle: "the exchange, performed · one turn sends changes back · the next turn approves and ships"
+    notes: revise resubmit
+    node_style: card+glyph
+    nodes:
+      - { id: draft, label: Draft, desc: "agent writes v(n)", kind: file-code }
+      - { id: review, label: Review, desc: "human reads the diff", kind: eye }
+      - { id: appr, label: "Approve?", station: decision }
+      - { id: ship, label: Shipped, desc: "merged to main", station: terminal, partition: advance, kind: circle-check }
+    edges:
+      - { from: draft, to: review }
+      - { from: review, to: appr }
+      - { from: appr, to: ship, label: "approved", label_style: chip }
+      - { from: appr, to: draft, label: "changes requested", label_style: chip, circuit: return }
+  loop-runloop:
+    topology: loop
+    chassis: { caption_gap: 26, caption_pad: 34 }
+    title: The agent runloop
+    subtitle: "the runloop · decide, act, read — and go again · the pulse comes home to the deciding mind, and holds"
+    notes: agent runloop
+    node_style: card+glyph
+    nodes:
+      - { id: s1, label: Decide the next step, desc: "think · plan · choose", role: hero, kind: git-branch }
+      - { id: s2, label: Call the tool, desc: "act · mcp · code · search", kind: zap }
+      - { id: s3, label: Read the result, desc: "observe · update state", kind: eye }
+    edges:
+      - { from: s1, to: s2 }
+      - { from: s2, to: s3 }
+      - { from: s3, to: s1, label: "until interrupted", label_style: chip, circuit: return }
+  loop-flywheel:
+    topology: loop
+    chassis: { node: { rx: 13 }, hero: { rx: 13 }, node2: { rx: 13 }, caption_gap: 31, caption_pad: 30 } # the hand file's rx-13 dialect; caption air 45 measured (content 525 -> caption 570), pad 30
+    title: The data flywheel
+    subtitle: "the flywheel · generate, distribute, capture, improve — the return carries the gain, and the second turn says so louder" # the hand file's own caption, verbatim
+    notes: data flywheel
+    node_style: card+glyph
+    nodes:
+      - { id: gen, label: Generate, desc: "agents create", kind: zap }
+      - { id: dist, label: Distribute, desc: "ship anywhere", kind: upload }
+      - { id: cap, label: Capture, desc: "corpus grows", kind: database }
+      - { id: imp, label: Improve, desc: "model learns", kind: refresh-cw }
+    edges:
+      - { from: gen, to: dist }
+      - { from: dist, to: cap }
+      - { from: cap, to: imp }
+      - { from: imp, to: gen, label: "compounds · each turn", label_style: chip, circuit: return, accumulates: true }
+  loop-nested:
+    topology: loop
+    node_style: card+glyph
+    chassis: { node: { rx: 14 }, hero: { rx: 14 }, node2: { rx: 14 }, caption_gap: 32, caption_pad: 34 }
+    title: Plan, delegate, integrate
+    subtitle: "a loop inside a loop · the outer turn delegates into the scope, the tool loop spins, the answer comes out — until Done? says done"
+    notes: nested loop
+    nodes:
+      - { id: plan, label: Plan the task }
+      - { id: scope, label: "Tool loop · inner", station: scope }
+      - { id: i1, label: Decide, enclosure: scope, kind: git-branch }
+      - { id: i2, label: Call, enclosure: scope, kind: zap }
+      - { id: i3, label: Read, enclosure: scope, kind: eye }
+      - { id: integ, label: Integrate results }
+      - { id: dq, label: "Done?", station: decision }
+      - { id: term, label: "Done. Report it.", station: terminal, partition: advance }
+    edges:
+      - { from: plan, to: scope, label: "delegate", label_style: chip }
+      - { from: i1, to: i2 }
+      - { from: i2, to: i3 }
+      - { from: i3, to: i1, label: "next call", label_style: chip, circuit: return }
+      - { from: scope, to: integ, label: "answer found", label_style: chip }
+      - { from: integ, to: dq }
+      - { from: dq, to: term, label: "yes", label_style: chip }
+      - { from: dq, to: plan, label: "no · go again", label_style: chip, circuit: return }
+  loop-tap:
+    topology: loop
+    zones: ["outside", "the loop"]
+    chassis: { caption_gap: 99, caption_pad: 30 }
+    title: The supervised runloop
+    subtitle: "three turns on the anchor's beat · the knock lands in the gap · the one hold is the pause · the answer comes a felt beat late"
+    notes: supervised runloop
+    node_style: card+glyph
+    nodes:
+      - { id: hero, label: Decide the next step, desc: "think · plan · choose", role: hero, kind: git-branch }
+      - { id: call, label: Call the tool, desc: "act · mcp · code · search", kind: zap }
+      - { id: read, label: Read the result, desc: "observe · update state", kind: eye }
+      - { id: human, label: Human, desc: "can interrupt", station: external, kind: user } # the hand external wears the person mark (cycle-tap-v3 draws it on the card)
+      - { id: tele, label: Telemetry, desc: "every turn", station: external, kind: activity }
+    edges:
+      - { from: hero, to: call }
+      - { from: call, to: read }
+      - { from: read, to: hero, label: "next turn", label_style: chip, circuit: return }
+      - { from: human, to: hero, label: "interrupt", label_style: chip, circuit: tap-in }
+      - { from: read, to: tele, label: "metrics", label_style: chip, circuit: tap-out }
+  loop-flywheel-horizontal:
+    # First-render cell (accumulates x horizontal): no hand ground truth —
+    # constants cited from the approved engine render; the transpose law
+    # supplies the geometry (the corpus's own horizontal flywheel measures
+    # zero true deltas against it).
+    topology: loop
+    orientation: horizontal
+    chassis: { node: { rx: 13 }, hero: { rx: 13 }, node2: { rx: 13 }, caption_gap: 31, caption_pad: 30 }
+    title: The data flywheel
+    subtitle: "the flywheel · generate, distribute, capture, improve — the return carries the gain, and the second turn says so louder"
+    notes: data flywheel, lateral
+    node_style: card+glyph
+    nodes:
+      - { id: gen, label: Generate, desc: "agents create", kind: zap }
+      - { id: dist, label: Distribute, desc: "ship anywhere", kind: upload }
+      - { id: cap, label: Capture, desc: "corpus grows", kind: database }
+      - { id: imp, label: Improve, desc: "model learns", kind: refresh-cw }
+    edges:
+      - { from: gen, to: dist }
+      - { from: dist, to: cap }
+      - { from: cap, to: imp }
+      - { from: imp, to: gen, label: "compounds · each turn", label_style: chip, circuit: return, accumulates: true }
+  loop-shuttle-vertical:
+    # First-render cell (the shuttle transposed): the transpose law covers
+    # it outright — the corpus's vertical shuttle measures zero true deltas
+    # against the engine's own transpose.
+    topology: loop
+    zones: ["iterate", "ship"]
+    chassis: { caption_gap: 40, caption_pad: 34, zone_content_gap: 85 }
+    title: Revise and resubmit
+    subtitle: "the exchange, performed · one turn sends changes back · the next turn approves and ships"
+    notes: revise resubmit, vertical
+    node_style: card+glyph
+    nodes:
+      - { id: draft, label: Draft, desc: "agent writes v(n)", kind: file-code }
+      - { id: review, label: Review, desc: "human reads the diff", kind: eye }
+      - { id: appr, label: "Approve?", station: decision }
+      - { id: ship, label: "Shipped. Merged.", station: terminal, partition: advance }
+    edges:
+      - { from: draft, to: review }
+      - { from: review, to: appr }
+      - { from: appr, to: ship, label: "approved", label_style: chip }
+      - { from: appr, to: draft, label: "changes requested", label_style: chip, circuit: return }
+  # ── The expression cells (the loop corpus's second generation): each
+  #    enrolled with its defining specimen — dims cited from the hand files
+  #    (retry/swimlane cards 84-tall, nested/flywheel 80, the rx-12 dialect).
+  loop-retry-budget:
+    topology: loop
+    chassis: { node: { h: 84, rx: 12 }, node2: { h: 84, rx: 12 }, hero: { rx: 12 } }
+    title: Retry with a visible budget
+    subtitle: "the budget, performed · one segment drains per failed attempt · the fresh run refills the gauge"
+    notes: retry budget
+    node_style: card+glyph
+    motion_register: budget
+    nodes:
+      - { id: call, label: Call the tool, desc: "attempt n", kind: zap }
+      - { id: succ, label: "Succeeded?", station: decision }
+      - { id: done, label: Done, desc: "return the result", station: terminal, partition: advance, style: pill, kind: circle-check }
+      - { id: retry, label: "Retry?", station: decision }
+      - { id: back, label: Back off, desc: "wait 2^n + jitter", kind: clock }
+      - { id: fail, label: Failed, desc: "surface the error", station: terminal, partition: exhausted, style: pill, kind: circle-x }
+    edges:
+      - { from: call, to: succ }
+      - { from: succ, to: done, label: "yes", label_style: chip }
+      - { from: succ, to: retry, label: "no", label_style: chip }
+      - { from: retry, to: back, label: "yes · budget left", label_style: chip }
+      - { from: retry, to: fail, label: "no · budget out", label_style: chip }
+      - { from: back, to: call, label: "attempt n+1", label_style: chip, circuit: return, meter: 3 }
+  loop-nested-laps:
+    topology: loop
+    chassis: { node: { h: 80, rx: 12 }, node2: { h: 80, rx: 12 }, hero: { rx: 12 } }
+    title: Plan, delegate, integrate
+    subtitle: "the laps, performed · the inner circuit's counter grows per call and resets with the outer turn"
+    notes: nested laps
+    node_style: card+glyph
+    motion_register: laps
+    nodes:
+      - { id: plan, label: Plan the task, desc: "break it down" }
+      - { id: scope, label: "Tool loop · inner", station: scope }
+      - { id: i1, label: Decide, desc: "next move", enclosure: scope, kind: git-branch }
+      - { id: i2, label: Call, desc: "mcp · code", enclosure: scope, kind: zap }
+      - { id: i3, label: Read, desc: "observe", enclosure: scope, kind: eye }
+      - { id: integ, label: Integrate results, desc: "update the plan" }
+      - { id: dq, label: "Done?", station: decision }
+      - { id: term, label: Done, desc: "report it", station: terminal, partition: advance, style: pill, kind: circle-check }
+    edges:
+      - { from: plan, to: scope, label: "delegate", label_style: chip }
+      - { from: i1, to: i2 }
+      - { from: i2, to: i3 }
+      - { from: i3, to: i1, label: "next call", label_style: chip, circuit: return, meter: 3 }
+      - { from: scope, to: integ, label: "answer found", label_style: chip }
+      - { from: integ, to: dq }
+      - { from: dq, to: term, label: "yes", label_style: chip }
+      - { from: dq, to: plan, label: "no · go again", label_style: chip, circuit: return }
+  loop-flywheel-accumulate:
+    topology: loop
+    chassis: { node: { h: 80, rx: 12 }, node2: { h: 80, rx: 12 }, hero: { rx: 12 } }
+    title: The data flywheel, banked
+    subtitle: "the gain, performed · each turn banks its share and the gauge holds to the period bar"
+    notes: flywheel accumulate
+    node_style: card+glyph
+    motion_register: accumulate
+    nodes:
+      - { id: gen, label: Generate, desc: "agents create", kind: zap }
+      - { id: dist, label: Distribute, desc: "ship anywhere", kind: upload }
+      - { id: cap, label: Capture, desc: "corpus grows", kind: database }
+      - { id: imp, label: Improve, desc: "model learns", kind: refresh-cw }
+    edges:
+      - { from: gen, to: dist }
+      - { from: dist, to: cap }
+      - { from: cap, to: imp }
+      - { from: imp, to: gen, label: "compounds · each turn", label_style: chip, circuit: return, accumulates: true, meter: 6 }
+  loop-retry-unrolled:
+    topology: loop
+    orientation: horizontal
+    # chip_visible_run 22: the ladder's own density citation (its audit
+    # records run_in/out 22 on every wait chip — 118.2 + 2x22 = its 162.2
+    # runs exactly); the family's 30px/one-third law stands everywhere uncited.
+    chassis: { node: { h: 84, rx: 12 }, node2: { h: 84, rx: 12 }, hero: { rx: 12 }, chip_visible_run: 22 }
+    title: Retry, unrolled
+    subtitle: "the budget IS the unrolling · a finite attempt ladder, one gather bus, one drawn arrival"
+    notes: retry unrolled
+    node_style: card+glyph
+    nodes:
+      - { id: a1, label: Attempt 1, desc: "call the tool", kind: zap }
+      - { id: a2, label: Attempt 2, desc: "call the tool", kind: zap }
+      - { id: a3, label: Attempt 3, desc: "call the tool", kind: zap }
+      - { id: done, label: Done, desc: "return the result", station: terminal, partition: advance, style: pill, kind: circle-check }
+      - { id: fail, label: Failed, desc: "surface the error", station: terminal, partition: exhausted, style: pill, kind: circle-x }
+    edges:
+      - { from: a1, to: a2, label: "fail · wait 1s", label_style: chip }
+      - { from: a2, to: a3, label: "fail · wait 2s", label_style: chip }
+      - { from: a1, to: done }
+      - { from: a2, to: done, label: "succeeded", label_style: chip }
+      - { from: a3, to: done }
+      - { from: a3, to: fail, label: "budget out", label_style: chip }
+  loop-shuttle-swimlane:
+    topology: loop
+    orientation: horizontal
+    chassis: { node: { h: 84, rx: 12 }, node2: { h: 80, rx: 12 }, hero: { rx: 12 } } # its pill stands 80 in the 132 merged band
+    lanes: ["agent", "human", "merged"]
+    title: Review across the lanes
+    subtitle: "the exchange across role lanes · work crosses down at the handoff, the return crosses back through the gutter"
+    notes: review swimlanes
+    node_style: card+glyph
+    nodes:
+      - { id: draft, label: Draft, desc: "agent writes v(n)", kind: file-code, category: agent }
+      - { id: review, label: Review, desc: "human reads the diff", kind: eye, category: human }
+      - { id: appr, label: "Approve?", station: decision, category: human }
+      - { id: ship, label: Shipped, desc: "merged to main", station: terminal, partition: advance, style: pill, kind: circle-check, category: merged }
+    edges:
+      - { from: draft, to: review, label: "hands over", label_style: chip }
+      - { from: review, to: appr }
+      - { from: appr, to: ship, label: "approved", label_style: chip }
+      - { from: appr, to: draft, label: "changes requested", label_style: chip, circuit: return }
 
   # ── Stack ───────────────────────────────────────────────────────────────
   stack:
@@ -1016,7 +1345,7 @@ presets:
     nodes:
       - { id: services, label: services, desc: fleet, kind: boxes }
       - { id: collector, label: collector, desc: otel, kind: radio-tower } # specimen draws the antenna
-      - { id: metrics, label: metrics, desc: prometheus, glyph: prometheus }
+      - { id: metrics, label: "metrics", desc: prometheus, glyph: prometheus }
       - { id: logs, label: logs, desc: elastic, glyph: elasticsearch }
       - { id: traces, label: traces, desc: sentry, glyph: sentry }
       - { id: grafana, label: dashboards, desc: grafana, role: hero, gather: true, glyph: grafana, chips: [latency, errors, uptime] }
@@ -1047,7 +1376,7 @@ presets:
       - { id: openai, label: OpenAI, desc: gpt-4o, glyph: openai }
       - { id: gemini, label: Gemini, desc: flash, glyph: gemini }
       - { id: cache, label: cache, desc: redis, glyph: redis, gather: true } # a shared response cache across different models — KV tensors don't cross models, so the label says cache
-      - { id: metrics, label: metrics, desc: grafana, glyph: grafana, rank: 3 } # telemetry sink shares the cache column (pp-gateway-balanced.svg's rank-pin mechanic)
+      - { id: metrics, label: "metrics", desc: grafana, glyph: grafana, rank: 3 } # telemetry sink shares the cache column (pp-gateway-balanced.svg's rank-pin mechanic)
     edges:
       - { source: requests, target: hub, edge_motion: particle, relation: drift, marker: arrow }
       - { source: hub, target: anthropic, label: route, label_style: chip, edge_motion: particle, relation: drift, marker: arrow }
@@ -1137,7 +1466,7 @@ presets:
       - { id: deep, label: Deep tier, desc: Opus, kind: cpu }
       - { id: vision, label: Vision tier, desc: multimodal, kind: eye }
       - { id: cache, label: cache, desc: redis, glyph: redis, gather: true } # every tier converges here; gather:true collapses them to one coincident arrival (pp-gateway-refined.svg's own mechanic); a shared response cache — KV tensors don't cross models
-      - { id: metrics, label: metrics, desc: grafana, kind: layout-grid, rank: 3 } # model-gateway-tiers: 2x2 dashboard grid; telemetry sink shares the cache column (pp-gateway-balanced.svg's rank-pin mechanic)
+      - { id: metrics, label: "metrics", desc: grafana, kind: layout-grid, rank: 3 } # model-gateway-tiers: 2x2 dashboard grid; telemetry sink shares the cache column (pp-gateway-balanced.svg's rank-pin mechanic)
     edges:
       # Ruling 2026-07-14: call/telemetry ride CHIP pills (the gateway-balanced
       # dress), superseding pp-gateway-refined.svg's own bare micro-labels.
@@ -1253,7 +1582,7 @@ presets:
       - { id: deep, label: Deep tier, desc: Opus, kind: cpu }
       - { id: vision, label: Vision tier, desc: multimodal, kind: eye }
       - { id: cache, label: cache, desc: redis, glyph: redis, gather: true } # fast+deep+vision all converge here; gather:true collapses them to one coincident arrival (pp-gateway-balanced.svg's own mechanic); a shared response cache — KV tensors don't cross models
-      - { id: metrics, label: metrics, desc: grafana, kind: layout-grid, rank: 3 } # 2x2 dashboard grid; telemetry sink shares the cache column, below the request path
+      - { id: metrics, label: "metrics", desc: grafana, kind: layout-grid, rank: 3 } # 2x2 dashboard grid; telemetry sink shares the cache column, below the request path
     edges:
       - { source: requests, target: gateway, label: call, label_style: chip, relation: assert }
       - { source: gateway, target: fast, relation: assert }

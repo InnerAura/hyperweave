@@ -101,6 +101,9 @@ class EdgeGeo:
     accent_wire: bool = False
     """Role-bound accent stroke (§11.4b): the wire itself carries the accent
     class even under the muted default — the destination fan's dress."""
+    comp_wire: bool = False
+    """Loop discard/revert dress: the wire (and its marker) strokes the
+    genome complement — wire-grade only, never text or frames."""
     stage_key: int = -1
     """Beam relay stage group: edges sharing a key fire their beam
     window together — DAG stamps the source rank (rank-transition staging,
@@ -716,6 +719,7 @@ def wire_motion(
                 lane=ctx.lanes[geo.index],
                 inert=inert,
                 accent_wire=geo.accent_wire,
+                comp_wire=geo.comp_wire,
                 ink_wire=geo.index in ink_edges,
                 relation=rel,
                 beam=beam_paint,
@@ -741,10 +745,10 @@ def _one_terminal_per_point(connectors: list[ConnectorPlacement]) -> list[Connec
     mark. This decides the MARK only — no knot, no trunk, nothing about whether
     a plain fan-in means one thing or several, which stays with the ``gather``
     hint exactly as it does today."""
-    seen: set[tuple[str, bool, bool, int]] = set()
+    seen: set[tuple[str, bool, bool, bool, int]] = set()
     out: list[ConnectorPlacement] = []
     for c in connectors:
-        key = (c.marker_d, c.ink_wire, c.accent_wire, c.accent_index)
+        key = (c.marker_d, c.ink_wire, c.accent_wire, c.comp_wire, c.accent_index)
         if c.marker_d and key in seen:
             c = replace(c, marker_d="")
         elif c.marker_d:

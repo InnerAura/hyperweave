@@ -3753,7 +3753,7 @@ async def generate_parity_matrix() -> tuple[int, int, int]:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     reports: list[ParityReport] = []
-    with fastapi_server(port=8765) as base_url:
+    with fastapi_server() as base_url:
         async with mcp_client() as mcp:
             for spec in specs:
                 try:
@@ -4549,7 +4549,7 @@ async def _generate_galleries(*, check_surfaces: bool, addenda: dict[str, list[s
     reports = []
 
     if check_surfaces:
-        with fastapi_server(port=8766) as base_url:
+        with fastapi_server() as base_url:
             async with mcp_client() as mcp:
                 for gallery in galleries:
                     reports.append(await sweep(gallery, witnesses=witnesses, http_base_url=base_url, mcp=mcp))

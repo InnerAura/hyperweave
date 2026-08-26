@@ -140,6 +140,7 @@ def _allowed_dash_literals() -> frozenset[str]:
         str(track["return_dash"]),
         str(track["muted_dash"]),
         str(track["ring_dash"]),
+        str((cfg.get("loop") or {}).get("scope_dash", "8 7")),  # the enclosure band
     }
     if "return_drift_dash" in track:
         values.add(str(track["return_drift_dash"]))
@@ -207,7 +208,11 @@ def _brace_block(text: str, search_from: int) -> str | None:
 _DASH_ATTR_RE = re.compile(r'stroke-dasharray="([^"]+)"')
 _DASH_CSS_RE = re.compile(r"stroke-dasharray:\s*([^;}\"]+);")
 _KEYFRAMES_START_RE = re.compile(r"@keyframes\s+([\w-]+)\s*(?=\{)")
-_CIM_LEGAL_KEYFRAME_PROPS = frozenset({"transform", "opacity", "filter", "stroke-dashoffset", "stop-color"})
+_CIM_LEGAL_KEYFRAME_PROPS = frozenset(
+    {"transform", "opacity", "filter", "stroke-dashoffset", "stop-color", "animation-timing-function"}
+)
+"""animation-timing-function is a stop MODIFIER (the corpus easing
+envelope rides per-keyframe timing functions), never an animated channel."""
 _NAME_TEXT_RE = re.compile(r'<text[^>]*\bclass="hw-[0-9a-f]+-(name|hname|mname)"[^>]*>([^<]*)</text>')
 _TEXT_CLASS_RE = re.compile(r'<text[^>]*class="(hw-[0-9a-f]+)-([a-z]+)')
 _STYLE_FILL_RE = re.compile(r'<(?:rect|circle)\b[^>]*\bstyle="[^"]*fill:')
@@ -271,7 +276,13 @@ def test_kit_dash_grammar(name: str) -> None:
     allowed = _allowed_dash_literals()
     found = {" ".join(v.split()) for v in _DASH_ATTR_RE.findall(r.svg)}
     found |= {" ".join(v.split()) for v in _DASH_CSS_RE.findall(r.css)}
-    rogue = found - allowed
+    # The choreography rides its own capture vocabulary: the soft head is a
+    # ``pulse_head``-long dash parked against the connector's exact length
+    # (``18 {length+18}`` — the corpus authors precisely this), and a TRAIL's
+    # dasharray is its wire's own bare length (one number, derived per wire) —
+    # both gated by form rather than an enumerable set.
+    head_prefix = f"{load_diagram_config().get('choreography', {}).get('turn', {}).get('pulse_head', 18):g} "
+    rogue = {v for v in found - allowed if not v.startswith(head_prefix) and not re.fullmatch(r"[\d.]+", v)}
     assert not rogue, f"{name}: dasharray literal(s) {sorted(rogue)} outside the kit set {sorted(allowed)}"
 
 

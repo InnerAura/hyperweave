@@ -232,6 +232,22 @@ def resolve_diagram(
         glyph_selections=selections,
         warnings=normalized.warnings,
     )
+    # The choreography register compiles onto the FROZEN layout (final
+    # coordinates, exact lengths) — geometry untouched, the register axis
+    # isolated exactly as the corpus's expression-flip lineage isolates it.
+    from hyperweave.compose.diagram.choreography import apply_choreography, resolve_register
+    from hyperweave.compose.diagram.meter import apply_meters
+
+    register = resolve_register(dspec, engine)
+    # The static meter strips derive from the frozen chip placements FIRST,
+    # so the register's compile can fill them.
+    layout = apply_meters(layout, dspec, register=register, engine=engine, glyph_registry=glyphs)
+    layout = apply_choreography(layout, dspec, register=register, engine=engine)
+    # Loop self-consistency battery: hard asserts (engine fault, never a
+    # caller error) that the family's geometric + motion contract held.
+    from hyperweave.compose.diagram.battery import run_loop_battery
+
+    run_loop_battery(layout)
     # sec 6: the compiler teaches — advisory diagnostics measured on the
     # solved layout, surfaced on every surface, never a refusal.
     from hyperweave.compose.diagram.diagnostics import run_diagnostics
@@ -267,7 +283,9 @@ def resolve_diagram(
         "diagram",
         load_surface_modes(),
     )
-    payload_json = diagram_payload_json(payload_spec, layout.rendered, rendered_topology=dspec.topology)
+    payload_json = diagram_payload_json(
+        payload_spec, layout.rendered, rendered_topology=dspec.topology, choreography=layout.choreography
+    )
     # §2/§10.1a AMENDED: the region map is PUBLIC anatomy but CHROME-VARIANT
     # (masthead/footer bboxes exist only under card chrome), and the payload
     # must stay chrome-invariant — the envelope digest is artifact identity
@@ -456,6 +474,13 @@ def _style_params(engine: dict[str, Any], ch: DiagramTopologyChassis) -> dict[st
         "grain_seed": (engine.get("material") or {}).get("grain_seed", "19"),
         "grain_tint": (engine.get("material") or {}).get("grain_tint", "0.04"),
         "grain_alpha": (engine.get("material") or {}).get("grain_alpha", "0.08"),
+        # Terminal finishes + tint rims (finish: block — the loop family's
+        # chromatic gestalt, composed from genome tokens at config alphas).
+        "term_wash_op": (engine.get("finish") or {}).get("term_wash_opacity", 0.07),
+        "term_rim_op": (engine.get("finish") or {}).get("term_rim_opacity", 0.45),
+        "term_rim_w": (engine.get("finish") or {}).get("term_rim_w", 1.4),
+        "term_dark_rim_op": (engine.get("finish") or {}).get("term_dark_rim_opacity", 0.6),
+        "tint_rim_w": (engine.get("finish") or {}).get("tint_rim_w", 1.4),
         "march_opacity": track["march_opacity"],
         "return_drift_dash": track["return_drift_dash"],
         "return_drift_dur": track["return_drift_dur"],
@@ -537,6 +562,8 @@ def _layout_animates(layout: DiagramLayout) -> bool:
     fact — entrance fade, a gather pulse, a live dash-march track, or a
     dash-drift (sequence return) track. If none of those hold, no keyframes
     and no SMIL reach the document and the artifact is genuinely static."""
+    if layout.choreography is not None and (layout.choreography.pulses or layout.choreography.halos):
+        return True  # the register's own keyframes (pulse riders + halos)
     if any(c.beam for c in layout.connectors if not c.inert):
         return True
     if layout.particles:

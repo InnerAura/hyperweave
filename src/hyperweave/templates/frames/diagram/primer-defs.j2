@@ -148,6 +148,12 @@
 .{{ uid }}-dname { fill: var(--dna-signal-text, var(--dna-signal)); }
 .{{ uid }}-ft { fill: var(--dna-ink-muted); opacity: 0.7; }
 .{{ uid }}-cardbg { fill: var(--dna-surface-alt); stroke: var(--dna-border); }
+{# Terminal finishes (loop family): the outcome worn as dress — an advance
+   terminal in the signal wash with a signal-edge rim, an exhausted one in
+   the flat page tone. Token-composed washes (signal at low alpha over the
+   ground), never specimen hex. #}
+.{{ uid }}-termadvbg { fill: var(--dna-signal); fill-opacity: {{ diagram_style.term_wash_op }}; stroke: var(--dna-signal); stroke-opacity: {{ diagram_style.term_rim_op }}; stroke-width: {{ diagram_style.term_rim_w }}; }
+.{{ uid }}-termflatbg { fill: var(--dna-surface); stroke: var(--dna-border); }
 {# Hero-ring ruling (2026-07-13, v04/decisions/diagram-law-enrollment-audit.md): role:hero rings in
    the genome ACCENT by default — the pp corpus (hub-panel's own hero among others) strokes its hero
    in accent, not a neutral border, superseding the language sheet's "flat white, never an accent
@@ -213,8 +219,9 @@
    is a hairline accent at 42% — an aspect, not a second card; the enclosure is
    the lowest-ink hairline that still binds a common region. #}
 .{{ uid }}-term { fill: none; stroke: var(--dna-signal); stroke-width: 1.25; opacity: .42; }
-.{{ uid }}-encl { fill: none; stroke: var(--dna-border); stroke-width: 1; }
+.{{ uid }}-encl { fill: var(--dna-region); stroke: var(--dna-region-border); stroke-width: 1.4; }
 .{{ uid }}-rlabel { fill: var(--dna-ink-muted); }
+.{{ uid }}-eyeb { fill: var(--dna-ink-muted); }
 .{{ uid }}-p { will-change: transform; }
 {# Drawn terminals (chevron / dot) are FILLED in the wire's hue — the kit's
    solid triangle, never a stroked outline. #}
@@ -254,6 +261,31 @@
    with everything else (no far-face fork needed). #}
 .{{ uid }}-flink { stroke: var(--dna-ink-primary); }
 .{{ uid }}-flinkf { fill: var(--dna-ink-primary); }
+{% set diamond_nodes = diagram_layout.nodes | selectattr('shape', 'equalto', 'diamond') | list %}
+{% set comp_ns = namespace(present=false) %}
+{% for c in diagram_layout.connectors %}{% if c.comp_wire %}{% set comp_ns.present = true %}{% endif %}{% endfor %}
+{% for n in diagram_layout.nodes %}{% if n.glyph and n.glyph.comp %}{% set comp_ns.present = true %}{% endif %}{% endfor %}
+{% if diamond_nodes %}{# Loop deliberation ink (the anchor's law): decision-question TEXT only,
+   never a wire, marker, or frame — genome token, health-pattern rollout
+   (base literal, adaptive var, dark-block override below). #}
+.{{ uid }}-qname { fill: {{ _genome_raw.diagram_deliberation }}; }
+{% if surface_adapt %}#{{ uid }} { --dna-diagram-deliberation: {{ _genome_raw.diagram_deliberation }}; }
+.{{ uid }}-qname { fill: var(--dna-diagram-deliberation); }
+@media (prefers-color-scheme: dark) { #{{ uid }} { --dna-diagram-deliberation: {{ _genome_raw.diagram_deliberation_dark }}; } }
+{% endif %}
+{% endif %}
+{% if comp_ns.present %}{# Loop discard/revert complement: WIRE-GRADE only (edges + markers + the
+   discard card's stroke MARK — the anchor's undo-arc is declared
+   "accent_complement, wire-grade"; a discard station's name takes
+   secondary ink, never this). #}
+.{{ uid }}-flcomp { stroke: {{ _genome_raw.diagram_complement }}; }
+.{{ uid }}-flcompf { fill: {{ _genome_raw.diagram_complement }}; }
+{% if surface_adapt %}#{{ uid }} { --dna-diagram-complement: {{ _genome_raw.diagram_complement }}; }
+.{{ uid }}-flcomp { stroke: var(--dna-diagram-complement); }
+.{{ uid }}-flcompf { fill: var(--dna-diagram-complement); }
+@media (prefers-color-scheme: dark) { #{{ uid }} { --dna-diagram-complement: {{ _genome_raw.diagram_complement_dark }}; } }
+{% endif %}
+{% endif %}
 {# Adaptive far face: diagram_flow is a per-index communication palette DERIVED
    from the accent (compose/diagram/palette.py) — an element carrying an
    explicit accent index (a chip/annotation/node-label riding the spine hue)
@@ -314,6 +346,48 @@
 {% if diagram_layout.entrance == 'fade' %}.{{ uid }}-in { animation: {{ uid }}-enter {{ diagram_style.fade_dur }} {{ diagram_style.fade_ease }} both; }
 @keyframes {{ uid }}-enter { from { opacity: 0; } }
 {% endif %}
+{% set choreo = diagram_layout.choreography %}
+{% if choreo %}{# Choreography register (the turn recipe): pulse riders sweep
+   stroke-dashoffset over quiet solid tracks; halos flash opacity in the
+   element's OWN hue — motion adds no hue roles. Every percentage below is
+   solver-computed; this block stamps. CIM: stroke-dashoffset + opacity only. #}
+.{{ uid }}-trl { fill: none; stroke-width: {{ choreo.trail_stroke }}; stroke-linecap: butt; }
+.{{ uid }}-trlA { stroke: var(--dna-signal); }
+.{{ uid }}-trlN { stroke: var(--dna-ink-muted); }
+.{{ uid }}-pu { fill: none; stroke-linecap: butt; }
+.{{ uid }}-puA { stroke: var(--dna-signal); }
+.{{ uid }}-puN { stroke: var(--dna-ink-muted); }
+.{{ uid }}-hdo { opacity: 0; }
+.{{ uid }}-hdoA { fill: var(--dna-signal); }
+.{{ uid }}-hdoN { fill: var(--dna-ink-muted); }
+.{{ uid }}-halo { fill: none; stroke-width: {{ choreo.halo_stroke }}; opacity: 0; }
+.{{ uid }}-haloA { stroke: var(--dna-signal); }
+.{{ uid }}-haloN { stroke: {{ diagram_conn_muted if conn_muted else 'var(--dna-ink-muted)' }}; }
+.{{ uid }}-tint { opacity: 0; }
+.{{ uid }}-tintA rect { stroke: var(--dna-signal); stroke-width: {{ diagram_style.tint_rim_w }}; }
+.{{ uid }}-tintA text { fill: var(--dna-signal); }
+{% if _genome_raw.diagram_complement %}.{{ uid }}-puC { stroke: {{ _genome_raw.diagram_complement }}; }
+.{{ uid }}-trlC { stroke: {{ _genome_raw.diagram_complement }}; }
+.{{ uid }}-haloC { stroke: {{ _genome_raw.diagram_complement }}; }
+.{{ uid }}-hdoC { fill: {{ _genome_raw.diagram_complement }}; }
+.{{ uid }}-tintC rect { stroke: {{ _genome_raw.diagram_complement }}; stroke-width: {{ diagram_style.tint_rim_w }}; }
+.{{ uid }}-tintC text { fill: {{ _genome_raw.diagram_complement }}; }
+{% endif %}
+{% if _genome_raw.diagram_deliberation %}.{{ uid }}-tintW rect { stroke: {{ _genome_raw.diagram_deliberation }}; stroke-width: {{ diagram_style.tint_rim_w }}; }
+.{{ uid }}-tintW text { fill: {{ _genome_raw.diagram_deliberation }}; }
+{% endif %}
+{% for kb in choreo.keyframes %}@keyframes {{ uid }}-ch{{ loop.index0 }} { {{ kb.body }} }
+{% endfor %}{% endif %}
+{% if diagram_layout.meters %}{# The meter kit piece: quiet plate + base row; the register's fill
+   rides the accent. Static on every face — the fill layer animates only
+   under a compiled register. #}
+.{{ uid }}-mplate { fill: var(--dna-surface-alt); stroke: var(--dna-region-border); stroke-width: 1; }
+.{{ uid }}-mseg { fill: none; stroke: var(--dna-border); stroke-width: 1; }
+.{{ uid }}-mfill { fill: var(--dna-signal); }
+.{{ uid }}-mkA { stroke: var(--dna-signal); }
+.{{ uid }}-mkM { stroke: var(--dna-ink-muted); }
+.{{ uid }}-mkC { stroke: {{ _genome_raw.diagram_complement if _genome_raw.diagram_complement else 'var(--dna-ink-muted)' }}; }
+{% endif %}
 {# Adaptive shadow: the -lift feDropShadow bakes flood-color as a presentation
    ATTRIBUTE (var() can't resolve there, per the plate/raster path above). Under
    an adaptive palette the far face needs the shadow to re-tint, so a scoped CSS
@@ -325,6 +399,17 @@
 @media (prefers-reduced-motion: reduce) {
   .{{ uid }}-branch, .{{ uid }}-in { animation: none !important; }
   .{{ uid }}-p, .{{ uid }}-light { display: none; }
+{% if choreo %}{# The corpus's resting face: the route rests FULLY LIT with its
+   arrowheads shown; heads, halos, and tints vanish — reduced-motion users
+   lose the performance, never the argument. #}
+  .{{ uid }}-pu, .{{ uid }}-halo, .{{ uid }}-tint { animation: none !important; opacity: 0 !important; }
+  .{{ uid }}-trl { animation: none !important; stroke-dashoffset: 0 !important; }
+  .{{ uid }}-hdo { animation: none !important; opacity: 1 !important; }
+{% endif %}
+{% if diagram_layout.meters %}{# The gauge keeps its honest resting state: the rect's own
+   opacity attribute (a budget rests full; a counter rests empty). #}
+  .{{ uid }}-mfill { animation: none !important; }
+{% endif %}
 {% if diagram_beam_gradients %}  .{{ uid }}-rail { opacity: {{ diagram_style.beam_rail_reduced_op }}; }
 {% endif %}
 {% if diagram_layout.gathers %}  .{{ uid }}-gc { animation: none; }
@@ -355,9 +440,12 @@
    rung via the literal .chipbg rule below — never through the shared var. #}
 {% if diagram_dark_adaptive %}@media (prefers-color-scheme: dark) {
 {% endif %}#{{ uid }} { --dna-signal: {{ diagram_dark.accent }}; --dna-signal-text: {{ diagram_dark.accent_text }}; --dna-ink-primary: {{ diagram_dark.ink }}; --dna-ink-muted: {{ diagram_dark.ink_dim }}; --dna-border: {{ diagram_dark.border }}; --dna-surface: {{ diagram_dark.ground }}; --dna-surface-alt: {{ diagram_dark.card_hi }}; --dna-frame-fill: {{ diagram_dark.ground }}; }
-.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { fill: url(#{{ uid }}-cf); stroke: url(#{{ uid }}-es); }
-{% if surface_ground != 'bare' %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { filter: url(#{{ uid }}-seat); }
-{% else %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg { filter: url(#{{ uid }}-liftg); }
+.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg, .{{ uid }}-termflatbg, .{{ uid }}-termadvbg { fill: url(#{{ uid }}-cf); stroke: url(#{{ uid }}-es); }
+{# The advance terminal keeps the card ramp; only its rim re-inks (the cf
+   gradient stays referenced exactly once — the one-material law). #}
+.{{ uid }}-termadvbg { fill-opacity: 1; stroke: var(--dna-signal); stroke-opacity: {{ diagram_style.term_dark_rim_op }}; }
+{% if surface_ground != 'bare' %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg, .{{ uid }}-termadvbg, .{{ uid }}-termflatbg { filter: url(#{{ uid }}-seat); }
+{% else %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg, .{{ uid }}-termadvbg, .{{ uid }}-termflatbg { filter: url(#{{ uid }}-liftg); }
 {% endif %}
 {# The crown's display stack rides the hero-name ink on both faces: it IS the
    crown's name in the card+label register, and the specimen differentiates it
@@ -368,6 +456,9 @@
 .{{ uid }}-connmutedf { fill: {{ diagram_dark.conn }}; }
 {% endif %}{% if health_nodes or health_ns.legend %}.{{ uid }}-warn { fill: {{ _genome_raw.diagram_status_warning_dark }}; }
 .{{ uid }}-crit { fill: {{ _genome_raw.diagram_status_critical_dark }}; }
+{% endif %}{% if diamond_nodes %}.{{ uid }}-qname { fill: {{ _genome_raw.diagram_deliberation_dark }}; }
+{% endif %}{% if comp_ns.present %}.{{ uid }}-flcomp { stroke: {{ _genome_raw.diagram_complement_dark }}; }
+.{{ uid }}-flcompf { fill: {{ _genome_raw.diagram_complement_dark }}; }
 {% endif %}{% if diagram_dark_adaptive %}}
 {% endif %}
 {% endif %}

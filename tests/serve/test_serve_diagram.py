@@ -74,6 +74,25 @@ class TestGetCustom:
         response = client.get(f"/v1/diagram/custom/primer.static?spec={b64(TINY)}&edge_motion=particle")
         assert 'performance="composite-only"' in response.text
 
+    def test_motion_register_override(self, client: TestClient) -> None:
+        response = client.get("/v1/diagram/loop-hillclimb-turn/primer.static?motion_register=drift")
+        assert response.status_code == 200
+        rendered = payload_of(response.text)["rendered"]
+        assert rendered["motion_register"] == "drift"
+        assert "choreography" not in rendered
+
+    def test_motion_register_turn_carries_beats(self, client: TestClient) -> None:
+        response = client.get("/v1/diagram/loop-runloop/primer.static")
+        assert response.status_code == 200
+        rendered = payload_of(response.text)["rendered"]
+        assert rendered["motion_register"] == "turn"  # the loop family default
+        assert rendered["choreography"]["super_period_s"] > 0  # kinematic — legs pace by length
+        assert "table" in rendered["beats"]
+
+    def test_motion_register_invalid_rejected_at_the_edge(self, client: TestClient) -> None:
+        response = client.get("/v1/diagram/loop-runloop/primer.static?motion_register=waltz")
+        assert response.status_code == 422
+
     def test_retired_motion_rejected_at_the_edge(self, client: TestClient) -> None:
         # beam/flow retired with the kit grammar: the Query pattern 422s
         # before compose ever runs.
@@ -198,5 +217,5 @@ class TestFramesLayoutSlugs:
         frames = client.get("/v1/frames").json()
         dia = next(f for f in frames if f["type"] == "diagram")
         slugs = dia["layout_slugs"]
-        assert len(slugs) == 19
+        assert len(slugs) == 21
         assert {"fanout-radial", "fanout-downward", "tree-radial", "dag", "state-machine", "hub", "lanes"} <= set(slugs)

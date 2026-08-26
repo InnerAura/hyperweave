@@ -58,6 +58,7 @@ async def hw_compose(
     glyph_tint: str = "",
     performance: str = "",
     edge_motion: str = "",
+    motion_register: str = "",
     surface: str = "",
     ground: str = "",
     palette: str = "",
@@ -181,6 +182,13 @@ async def hw_compose(
     edge_motion: '' (use the spec/preset's own) | dash | particle —
           artifact-level override of the diagram's edge motion (per-edge IR
           declarations still outrank it). Parity with the HTTP ?edge_motion=.
+    motion_register: '' (family default: loop composes turn, every other
+          family drift) | turn | drift | laps | budget | accumulate — the
+          choreography register: turn performs the diagram's claim in time
+          (the pulse walks the circuit), drift is the quiet standing face,
+          and the meter registers perform a declared gauge (laps grows and
+          resets, budget drains and refills, accumulate grows and holds).
+          Parity with the HTTP ?motion_register=.
     surface (matrix/diagram): '' (plate) | plate | inlay | twin — how the
           artifact meets the host: plate carries its own ground, inlay borrows
           the host + adapts to its theme, twin bakes a light+dark pair.
@@ -212,6 +220,14 @@ async def hw_compose(
             raise ValueError(f"edge_motion must be one of: {allowed}")
         if diagram is not None:
             diagram = {**diagram, "edge_motion": edge_motion}
+
+    # Choreography register override — the one-flag plain<->performed toggle
+    # (parity with ?motion_register= and --motion-register).
+    if motion_register:
+        if motion_register not in {"turn", "drift", "laps", "budget", "accumulate"}:
+            raise ValueError("motion_register must be one of: turn | drift | laps | budget | accumulate")
+        if diagram is not None:
+            diagram = {**diagram, "motion_register": motion_register}
 
     # Live data-token resolution (async, frame-aware) — the shared path; the
     # rich MCP params below pack into the SpecEnvelope's `spec` dict, which the

@@ -853,7 +853,8 @@ class TestAlignedGroupContentEdge:
         )
         pads = self._ink_pads(lay, cfg)
         insets = {node_id: lp for node_id, lp, _rp in pads}
-        assert all(abs(lp - 22.0) <= 0.6 for lp in insets.values()), insets
+        # Markless refinement: no mark, no glyph column — pad_x both sides.
+        assert all(abs(lp - 12.0) <= 0.6 for lp in insets.values()), insets
         # Slack pools RIGHT: the short member's right pad exceeds its left.
         rp_by_id = {node_id: rp for node_id, _lp, rp in pads}
         assert rp_by_id["b"] > insets["b"] + 10, rp_by_id
@@ -870,7 +871,8 @@ class TestAlignedGroupContentEdge:
         edges = [{"source": "core", "target": f"o{i}", "role": "out"} for i in range(3)]
         lay = solve(topology="hub", title="T", hub_policy="compass", nodes=nodes, edges=edges)
         for node_id, lp, _rp in self._ink_pads(lay, cfg):
-            assert abs(lp - 22.0) <= 0.6, (node_id, lp)
+            # Markless refinement: pad_x, not the glyph anchor.
+            assert abs(lp - 12.0) <= 0.6, (node_id, lp)
 
 
 class TestLanesChromeHomes:
@@ -1020,7 +1022,8 @@ class TestAxialHeroProminence:
             if hero.shape != "rect":
                 continue
             lead = ((ch.hero.glyph_w or GLYPH_MARK_W) + ch.hero.glyph_label_gap) if hero.glyph is not None else 0.0
-            expected = ch.hero.glyph_inset_x + lead
+            # Markless refinement: no mark, no glyph column — pad_x anchors.
+            expected = (ch.hero.glyph_inset_x + lead) if hero.glyph is not None else ch.hero.pad_x
             left = hero.label.x - hero.box.x
             assert abs(left - expected) <= 0.6, f"{preset}: text column at +{left:.1f}, chassis law says +{expected:g}"
 

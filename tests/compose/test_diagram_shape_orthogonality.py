@@ -43,22 +43,46 @@ def _preset_layout(name: str) -> Any:
     return compute_diagram_layout(spec, paradigm=paradigm, engine=ENGINE, palette_len=8)
 
 
-def test_pill_style_is_rejected_at_the_schema() -> None:
-    """The pill anatomy is deleted (no specimen ever used it — all three
-    state-machine hand files are rx-13 cards): a spec declaring it must
-    hear a validation refusal, never a silent stadium."""
-    import pytest as _pytest
-
-    with _pytest.raises(Exception, match="pill"):
-        solve(
-            topology="pipeline",
-            title="states",
-            nodes=[
-                {"id": "a", "label": "INIT", "style": "pill"},
-                {"id": "b", "label": "RUN"},
-            ],
-            edges=[{"source": "a", "target": "b"}],
-        )
+def test_pill_style_renders_capsule_geometry() -> None:
+    """The pill kit piece — reintroduced on the loop expression corpus'
+    terminal capsules (retry's Done/Failed pair, the shuttle's Shipped,
+    nested's Done; the earlier deletion recorded that no specimen drew it,
+    and these now do). Pins the capsule contract: shape="pill" so
+    connector anchors resolve to the true cap rim, box radius = h/2, and
+    the capsule ends move the text start — the label anchors past the end
+    radius, never at the flat card's inset."""
+    lay = solve(
+        topology="loop",
+        title="retry",
+        node_style="card+glyph",
+        nodes=[
+            {"id": "call", "label": "Call the tool", "kind": "zap"},
+            {"id": "check", "label": "Succeeded?", "station": "decision"},
+            {
+                "id": "done",
+                "label": "Done",
+                "desc": "return the result",
+                "station": "terminal",
+                "partition": "advance",
+                "style": "pill",
+                "kind": "circle-check",
+            },
+        ],
+        edges=[
+            {"source": "call", "target": "check"},
+            {"source": "check", "target": "done", "label": "yes", "label_style": "chip"},
+            {"source": "check", "target": "call", "label": "no", "label_style": "chip", "circuit": "return"},
+        ],
+    )
+    by_id = {n.node_id: n for n in lay.nodes}
+    pill = by_id["done"]
+    assert pill.shape == "pill"
+    assert abs(pill.box.rx - pill.box.h / 2) < 0.01, "a capsule's radius is half its height"
+    assert pill.label.x >= pill.box.x + pill.box.h / 2, "the capsule end moves the text start past the radius"
+    # The flat siblings stay rx-13 cards — the pill is per-node, never a
+    # family flip.
+    assert by_id["call"].shape == "rect"
+    assert by_id["call"].box.rx < by_id["call"].box.h / 2
 
 
 def test_card_on_state_machine_renders_card_boxes() -> None:
@@ -76,7 +100,8 @@ def test_card_on_state_machine_renders_card_boxes() -> None:
     by_id = {n.node_id: n for n in lay.nodes}
     assert by_id["idle"].shape == "rect"
     # The chassis default is the rx-13 glyph-card chain (all three
-    # state-machine specimens); the retired pill anatomy is gone.
+    # state-machine specimens); a capsule appears only where a node
+    # declares the pill style.
     assert by_id["active"].shape == "rect"
     assert by_id["done"].shape == "rect"
 

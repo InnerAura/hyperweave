@@ -30,6 +30,7 @@ from hyperweave.compose.diagram.route import orthogonal_d
 from hyperweave.compose.diagram.sizing import (
     CHIP_STUB_MIN,
     chip_run_min,
+    family_carries_marks,
     hero_height_floor,
     node_anatomy_of,
     solve_node_box,
@@ -62,7 +63,9 @@ def _band_center(ctx: SolverContext, height: float) -> float:
     return ch.header_h + (height - ch.header_h - ch.footer_h) / 2
 
 
-def _pipeline_box(ctx: SolverContext, node: DiagramNode, i: int, *, min_w: float = 0.0) -> tuple[float, float]:
+def _pipeline_box(
+    ctx: SolverContext, node: DiagramNode, i: int, *, min_w: float = 0.0, family_marked: bool = False
+) -> tuple[float, float]:
     """A pipeline stage's natural (w, h) — the seam's own hero/chassis/style
     dispatch (``i == hero_idx`` matches ``node.role is NodeRole.HERO`` for
     every pipeline stage, so the seam's role-derived hero is byte-identical
@@ -81,19 +84,27 @@ def _pipeline_box(ctx: SolverContext, node: DiagramNode, i: int, *, min_w: float
     every uncited pipeline hero inherited a floor it never earned."""
     is_hero = node.role is NodeRole.HERO
     h_floor = hero_height_floor(ctx.ch) if is_hero else ctx.ch.node.h
-    w, h, _ = solve_node_box(ctx, node, i, min_w=min_w, h_floor=h_floor)
+    w, h, _ = solve_node_box(ctx, node, i, min_w=min_w, h_floor=h_floor, family_marked=family_marked)
     return w, h
 
 
 def _place_pipeline(
-    ctx: SolverContext, i: int, node: DiagramNode, x: float, cy: float, w: float, h: float
+    ctx: SolverContext,
+    i: int,
+    node: DiagramNode,
+    x: float,
+    cy: float,
+    w: float,
+    h: float,
+    *,
+    family_marked: bool = False,
 ) -> NodePlacement:
     """Dispatch a pipeline stage to its resolved anatomy at baseline center
     ``cy``: a pill centers on (x + w/2, cy); a card/card+glyph keeps the
     existing top-left ``x`` EXACTLY (the ``x=`` escape hatch — ``cx - w/2``
     would round differently than the original's stored ``x`` in some cases,
     a real byte-identity break the seam-conversion harness caught)."""
-    return place_node(ctx, node, i, x + w / 2, cy, w=w, h=h, x=x)
+    return place_node(ctx, node, i, x + w / 2, cy, w=w, h=h, x=x, family_marked=family_marked)
 
 
 def _pipeline_skip_geo(
@@ -256,7 +267,9 @@ def solve_pipeline(ctx: SolverContext) -> DiagramLayout:
     # the dag/state-machine use. The old model divided a fixed chassis width by
     # N, stretching a short/narrow pipeline's cards to fill a canvas sized for a
     # bigger diagram; the canvas is a derived quantity now, not a floor.
-    content_ws = [_pipeline_box(ctx, node, i)[0] for i, node in enumerate(spec.nodes)]
+    row_fam = family_carries_marks(ctx, [nd for nd in spec.nodes if nd.role is not NodeRole.HERO])
+    stage_fam = [row_fam and nd.role is not NodeRole.HERO for nd in spec.nodes]
+    content_ws = [_pipeline_box(ctx, node, i, family_marked=stage_fam[i])[0] for i, node in enumerate(spec.nodes)]
     divisor = ((n - 1) + ch.hero_ratio) if hero_idx is not None else float(n)
     # A container's inner canvas is never a unit vote — its slot grows past
     # the unit at the growth guard below; letting it vote inflated every
@@ -286,14 +299,16 @@ def solve_pipeline(ctx: SolverContext) -> DiagramLayout:
         max(w, node.embed_dims[0] + 2 * ch.node.pad_x) if node.embed_dims else w
         for w, node in zip(widths, spec.nodes, strict=True)
     ]
-    solved_hs = [_pipeline_box(ctx, node, i, min_w=widths[i])[1] for i, node in enumerate(spec.nodes)]
+    solved_hs = [
+        _pipeline_box(ctx, node, i, min_w=widths[i], family_marked=stage_fam[i])[1] for i, node in enumerate(spec.nodes)
+    ]
     text_hs2 = [h for h, node in zip(solved_hs, spec.nodes, strict=True) if node.embed is None]
     shared_h2 = max(text_hs2) if text_hs2 else ch.node.h
     heights2 = [h if node.embed is not None else shared_h2 for h, node in zip(solved_hs, spec.nodes, strict=True)]
     x = ch.margin_x
     for i, node in enumerate(spec.nodes):
         w = widths[i]
-        nodes.append(_place_pipeline(ctx, i, node, x, cy, w, heights2[i]))
+        nodes.append(_place_pipeline(ctx, i, node, x, cy, w, heights2[i], family_marked=stage_fam[i]))
         x += w + gap
     for k, edge in enumerate(ctx.edges):
         geos.append(_pipeline_edge_geo(ctx, k, edge, nodes, cy))

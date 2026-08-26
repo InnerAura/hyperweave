@@ -5,11 +5,12 @@ builds every diagram gallery and then sweeps all renders against the
 specimen laws (chip-on-wire, text-in-card, canvas containment, no-ellipsis),
 exiting non-zero on any violation:
 
-- ``README_TOPOLOGIES.md``     — 12 sections (11 topology families + the field stories), real HyperWeave
-  stories, porcelain light baked (``topologies`` subcommand)
-- ``SPECIMENS.md``      — every specimen-parity preset beside its
+- ``topologies/README_<FAMILY>.md`` — per-family galleries: deep exhibits
+  for the families in ``DEEP_FAMILIES`` (their own modules under
+  ``topologies/``), story skeletons for the rest (``topologies`` subcommand)
+- ``README_SPECIMENS.md`` — every specimen-parity preset beside its
   hand-authored specimen (``porcelain``)
-- ``PRESENTATION.md`` — the two language diagrams x 8 variants
+- ``README_PRESENTATION.md`` — the two language diagrams x 8 variants
   x inlay + plate (``primer-language``)
 
 Run: ``uv run python python -m scripts.examples.diagrams [subcommand]``
@@ -53,9 +54,9 @@ _TEXT_CFG = load_paradigms()["primer"].diagram
 # absent here. Any new card text class must join this set in the same change
 # that introduces it.
 _CARD_TEXT_CLASSES = frozenset(
-    {"name", "ndesc", "hname", "hdesc", "hsub", "sub", "mname", "mdesc", "nlbl", "nval", "hlbl", "hval"}
+    {"name", "ndesc", "hname", "hdesc", "hsub", "sub", "mname", "mdesc", "nlbl", "nval", "hlbl", "hval", "qname"}
 )
-_CARD_NAME_CLASSES = ("name", "hname", "mname", "dname", "nlbl", "hlbl")
+_CARD_NAME_CLASSES = ("name", "hname", "mname", "dname", "qname", "nlbl", "hlbl")
 """Name-family runs keep the wider 8px breathing gutter; value/desc runs keep
 the 3px floor. A card+label LABEL is a name (the card's identity), its values
 are content — so each takes its family's gutter."""
@@ -103,7 +104,7 @@ def family_doc(family: str) -> pathlib.Path:
 # story skeleton can compose, built over a review wave. build_topologies() skips
 # them so it cannot overwrite the richer work with the thinner form. A family
 # leaves the skeleton by joining this set, which is the migration ledger.
-DEEP_FAMILIES: frozenset[str] = frozenset({"dag"})
+DEEP_FAMILIES: frozenset[str] = frozenset({"dag", "loop"})
 
 # The cross-gallery topology registry lives in `topologies.exhibit`, NOT here:
 # this module runs as `__main__` under `python -m`, so a module that imports it
@@ -121,9 +122,9 @@ def _deep_exhibits() -> dict[str, Callable[[], int]]:
     comes FROM the module rather than being typed again beside it — the
     directory, the subcommand and every message derive from one string.
     """
-    from scripts.examples.topologies import dag
+    from scripts.examples.topologies import dag, loop
 
-    return {dag.FAMILY: dag.build_dag}
+    return {dag.FAMILY: dag.build_dag, loop.FAMILY: loop.build_loop}
 
 
 _PORC_FIX = _REPO / "tests" / "fixtures" / "specimens"
@@ -3071,9 +3072,13 @@ def build_porcelain() -> None:
                 "",
                 _identity_line("porcelain", "inlay", topo, subtitle),
                 "",
-                "| render | specimen |",
-                "| --- | --- |",
-                f"| ![render](renders/porcelain/{preset}.svg) | ![specimen](../../{_specimen_href(source)}) |",
+                # An HTML table with equal-width cells: markdown tables let
+                # each SVG render at natural size, so a wide specimen dwarfs
+                # its render and the pair can't be compared by eye.
+                '<table><tr><th width="50%">render</th><th width="50%">specimen</th></tr><tr>',
+                f'<td><img src="renders/porcelain/{preset}.svg" width="100%"></td>',
+                f'<td><img src="../../{_specimen_href(source)}" width="100%"></td>',
+                "</tr></table>",
                 "",
             ]
     (OUT / "README_SPECIMENS.md").write_text("\n".join(lines))
@@ -3911,10 +3916,10 @@ def build_card_label() -> None:
         "a documented amendment, every geometry law still graded live), so the",
         "recreation of the prototype itself belongs here.",
         "",
-        "| engine | hand specimen |",
-        "| --- | --- |",
-        f"| ![engine](renders/card-label/specimen-recreation.svg) "
-        f"| ![specimen](../../{_specimen_href(_CL_SPECIMEN_SRC)}) |",
+        '<table><tr><th width="50%">engine</th><th width="50%">hand specimen</th></tr><tr>',
+        '<td><img src="renders/card-label/specimen-recreation.svg" width="100%"></td>',
+        f'<td><img src="../../{_specimen_href(_CL_SPECIMEN_SRC)}" width="100%"></td>',
+        "</tr></table>",
         "",
     ]
     # Integrity: the "shipped composition" entry must BE the preset, not a
@@ -4255,6 +4260,16 @@ def sweep(path: pathlib.Path) -> list[str]:
     for m in re.finditer(r'<circle cx="([\d.-]+)" cy="([\d.-]+)" r="([\d.]+)"[^>]*-(circlebg|herocirclebg)"', body):
         ccx_, ccy_, cr_ = (float(v) for v in m.groups()[:3])
         node_figs.append(("circle", ccx_, ccy_, cr_, cr_, m.group(4) == "herocirclebg"))
+    # Loop decision rhombi are cards drawn as PATHS (four L points, Z): a
+    # decision-holder's interior criteria chips live inside the diamond —
+    # the in-card home, read against the rhombus's bbox like any card row.
+    for m in re.finditer(r'<path d="(M [\d.,\sLZ-]+Z)"[^>]*-(?:cardbg|herobg|mcardbg)"', body):
+        pts = re.findall(r"(-?[\d.]+),(-?[\d.]+)", m.group(1))
+        if len(pts) != 4:
+            continue
+        xs = [float(x) for x, _ in pts]
+        ys = [float(y) for _, y in pts]
+        node_figs.append(("rect", min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys), False))
 
     # 1a. wire-crosses-card: a wire terminates ON a card or runs clear of it —
     # never THROUGH it. A detour's travel leg was always cleared (the channel
@@ -4421,11 +4436,26 @@ def sweep(path: pathlib.Path) -> list[str]:
         right = (rx + rw) - max(f[0] + f[2] for f in seated)
         top = min(f[1] for f in seated) - ry
         bot = (ry + rh) - max(f[1] + f[3] for f in seated)
-        if abs(left - right) > 1.5:
-            fails.append(
-                f"region-pad-symmetry: region at ({rx:.0f},{ry:.0f}) pads {left:.0f} left vs {right:.0f} right "
-                f"with nothing seated across"
+        # A LANE STACK (two or more full-width siblings sharing one x-span)
+        # is the swimlane grammar: members seat at their RANK along the
+        # flow, so along-flow asymmetry is the lane's nature (the swimlane
+        # specimen's Draft sits far left of its full-width band). The
+        # cross-flow centering law still grades.
+        lane_stack = sum(1 for ox, _oy, ow, _oh in _regions if abs(ox - rx) <= 1 and abs(ow - rw) <= 1) >= 2
+        if not lane_stack and abs(left - right) > 1.5:
+            # The transposed twin of the top/bottom escape below: on the
+            # horizontal cell the scope's mini-rail (and its chip) lives in
+            # the deep SIDE pad — the wider pad passes when it holds one.
+            wide_lo_x, wide_hi_x = (rx, rx + left) if left > right else (rx + rw - right, rx + rw)
+            pad_holds_x = any(
+                px >= wide_lo_x - 2 and px + pw <= wide_hi_x + 2 and py >= ry - 2 and py + ph <= ry + rh + 2
+                for px, py, pw, ph in _plates
             )
+            if not pad_holds_x:
+                fails.append(
+                    f"region-pad-symmetry: region at ({rx:.0f},{ry:.0f}) pads {left:.0f} left vs {right:.0f} right "
+                    f"with nothing seated across"
+                )
         if abs(top - bot) > 1.5:
             # The wider pad must actually hold something.
             wide_lo, wide_hi = (ry, ry + top) if top > bot else (ry + rh - bot, ry + rh)
@@ -5085,8 +5115,13 @@ def run_sweep() -> int:
     for d in swept_dirs():
         # rglob, not glob: the per-family exhibit tree groups its renders into
         # section subdirectories, and a non-recursive sweep would silently stop
-        # guarding them the moment a gallery organised itself.
+        # guarding them the moment a gallery organised itself. The delta
+        # harness's expressions/ subdir is measurement data, not gallery — its
+        # nearest-legal candidate renders carry structural absences by design
+        # and are graded by the harness's own delta records instead.
         for f in sorted(d.rglob("*.svg")):
+            if "expressions" in f.relative_to(d).parts:
+                continue
             files += 1
             for fail in sweep(f):
                 total += 1
@@ -5237,8 +5272,10 @@ def main() -> None:
         build_primer_language()
     if which in ("all", "card-label"):
         build_card_label()
-    if which in ("all", "dag", "topology-families"):
+    if which in ("all", "dag", "loop", "topology-families"):
         for family, build in _deep_exhibits().items():
+            if which not in ("all", "topology-families") and which != family:
+                continue
             print(f"topologies/{family_doc(family).name} + {build()} renders (baked porcelain light)")
     if which in ("all", "topologies"):
         print(f"topologies/: {build_topologies()} story renders across the remaining families")

@@ -1,0 +1,76 @@
+{
+  "aspect": 1.864,
+  "caption_text": "the runloop \u00b7 decide, act, read \u2014 and go again \u00b7 the pulse comes home to the deciding mind, and holds",
+  "cards": {
+    "std_h_med": 62.0,
+    "std_h_med_amended": 76.46,
+    "std_h_values": [
+      62.0,
+      62.0,
+      70.0
+    ],
+    "std_h_values_amended": [
+      76.46,
+      76.46
+    ],
+    "std_w_med": 230.0,
+    "std_w_med_amended": 244,
+    "std_w_med_amended_note": "engine renders content-snug aligned columns (the snug-width ruling); the hand file draws fixed-width columns with hand-wrapped two-line labels \u2014 engine values recorded, dims stay the specimen's own target on file"
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 3,
+    "card_rx": 13.0,
+    "cards": 3,
+    "chips": 1,
+    "coins": 0,
+    "desc_lines": 3,
+    "drift_edges": 0,
+    "gather_buses": 0,
+    "gather_knots": 0,
+    "glyph_marks": 3,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "pills": 0,
+    "shell_marks": 0,
+    "solid_edges": 3,
+    "terminal_dots": 0,
+    "zone_headers": 0
+  },
+  "census_amendments": {
+    "hero_cards": 1,
+    "hero_rx": 14.0
+  },
+  "census_amendments_note": "the hand crux station wears the hero grammar typographically (no census-visible hero class); the engine declares role: hero and the census sees its ring",
+  "chip_homes": {
+    "in_card": 0,
+    "on_wire": 1,
+    "wire_offset_max": 0.0
+  },
+  "chip_stub_min": null,
+  "edge_set": {
+    "s1->s2": "",
+    "s2->s3": "",
+    "s3->s1": ""
+  },
+  "height": null,
+  "occupancy": 0.172,
+  "plate": {
+    "caption_pad": 34.0,
+    "caption_y": 438.0,
+    "content_bottom": 398.0,
+    "content_top": 112.0
+  },
+  "port_tolerance": 2.5,
+  "source": "v04/v040/v044/loops/runloop/cycle-runloop-v2.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    880.0,
+    472.0
+  ],
+  "width": null
+}

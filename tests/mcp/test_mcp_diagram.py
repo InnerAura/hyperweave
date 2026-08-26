@@ -132,11 +132,42 @@ async def test_edge_motion_invalid_raises() -> None:
         await hw_compose(type="diagram", genome="primer", diagram=TINY, edge_motion="zoom")
 
 
+LOOP_TINY = {
+    "topology": "loop",
+    "nodes": [{"label": "Decide"}, {"label": "Act"}, {"label": "Read"}],
+}
+
+
+@pytest.mark.asyncio
+async def test_motion_register_override() -> None:
+    """hw_compose motion_register flips the loop to its plain face (parity)."""
+    svg = _cached_svg(await hw_compose(type="diagram", genome="primer", diagram=LOOP_TINY, motion_register="drift"))
+    m = _PAYLOAD_RE.search(svg)
+    assert m, "hw:payload missing"
+    assert json.loads(m.group(1))["rendered"]["motion_register"] == "drift"
+
+
+@pytest.mark.asyncio
+async def test_motion_register_invalid_raises() -> None:
+    with pytest.raises(ValueError, match="motion_register must be one of"):
+        await hw_compose(type="diagram", genome="primer", diagram=LOOP_TINY, motion_register="waltz")
+
+
 @pytest.mark.asyncio
 async def test_discover_emits_layout_slugs() -> None:
     """hw_discover('diagram') lists the flattened requestable layout slugs."""
     res = await hw_discover("diagram")
     data = json.loads(res) if isinstance(res, str) else res
     slugs = data["diagram"]["layout_slugs"]
-    assert len(slugs) == 19
-    assert {"fanout-radial", "fanout-downward", "tree-radial", "dag", "state-machine", "hub", "lanes"} <= set(slugs)
+    assert len(slugs) == 21
+    assert {
+        "fanout-radial",
+        "fanout-downward",
+        "tree-radial",
+        "dag",
+        "state-machine",
+        "hub",
+        "lanes",
+        "loop",
+        "loop-horizontal",
+    } <= set(slugs)

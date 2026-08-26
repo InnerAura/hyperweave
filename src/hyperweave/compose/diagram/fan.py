@@ -17,6 +17,7 @@ from hyperweave.compose.diagram.route import square_arrival_path
 from hyperweave.compose.diagram.sizing import (
     CHIP_STUB_MIN,
     chip_run_min,
+    family_carries_marks,
     hero_height_floor,
     marker_reserved_stub,
     solve_node_box,
@@ -54,11 +55,20 @@ def _member_widths(ctx: SolverContext, nodes: list[DiagramNode]) -> list[float]:
     FIXED): a glyph-circle member reserves its true diameter — spacing no
     longer assumes a full card slot around a small coin."""
     ch = ctx.ch
-    widths = [solve_node_box(ctx, n, i)[0] for i, n in enumerate(nodes)]
+    fam = _members_marked(ctx, nodes)
+    widths = [solve_node_box(ctx, n, i, family_marked=fam)[0] for i, n in enumerate(nodes)]
     if ch.width_policy == "aligned":
         shared = max(widths)
         return [shared] * len(widths)
     return widths
+
+
+def _members_marked(ctx: SolverContext, nodes: list[DiagramNode]) -> bool:
+    """The member column's mixed-family fact (the column law): under the
+    aligned policy a column that draws at least one identity mark seats
+    EVERY member's text at the glyph column — computed once per group and
+    passed to both the sizing and placement halves so they agree."""
+    return ctx.ch.width_policy == "aligned" and len(nodes) >= 2 and family_carries_marks(ctx, nodes)
 
 
 def _member_boxes(ctx: SolverContext, nodes: list[DiagramNode]) -> tuple[list[float], list[float]]:
@@ -71,12 +81,13 @@ def _member_boxes(ctx: SolverContext, nodes: list[DiagramNode]) -> tuple[list[fl
     keep the chassis height and render byte-identically. Style/role-derived
     like ``_member_widths`` (mismatch #6, FIXED)."""
     ch = ctx.ch
-    boxes = [solve_node_box(ctx, n, i) for i, n in enumerate(nodes)]
+    fam = _members_marked(ctx, nodes)
+    boxes = [solve_node_box(ctx, n, i, family_marked=fam) for i, n in enumerate(nodes)]
     widths = [w for w, _, _ in boxes]
     if ch.width_policy == "aligned":
         shared_w = max(widths)
         widths = [shared_w] * len(nodes)
-        heights = [solve_node_box(ctx, n, i, min_w=shared_w)[1] for i, n in enumerate(nodes)]
+        heights = [solve_node_box(ctx, n, i, min_w=shared_w, family_marked=fam)[1] for i, n in enumerate(nodes)]
         shared_h = max(heights)
         return widths, [shared_h] * len(nodes)
     return widths, [h for _, h, _ in boxes]
@@ -99,6 +110,7 @@ def _place(
     hero: bool | None = None,
     w_override: float = 0.0,
     h_override: float = 0.0,
+    family_marked: bool = False,
 ) -> NodePlacement:
     """Card or glyph-circle per the style cascade; (x, y) is the card's
     top-left — circle placement converts to the equivalent center.
@@ -135,12 +147,12 @@ def _place(
         # pure; a satellite keeps the chassis height floor. Widths are snug
         # for both (the snug-width ruling).
         h_floor = hero_height_floor(ch) if is_hero else nch.h
-        sw, sh, _ = solve_node_box(ctx, node, i, h_floor=h_floor)
+        sw, sh, _ = solve_node_box(ctx, node, i, h_floor=h_floor, family_marked=family_marked)
         w = w_override or sw
         h = h_override or max(sh, h_floor)
     # ``x=x, y=y`` exact (the caller's literal top-left) — ``cx``/``cy`` are
     # otherwise unused by the card path (place_node's escape hatch).
-    return place_node(ctx, node, i, x + w / 2, y + h / 2, w=w, h=h, hero=is_hero, x=x, y=y)
+    return place_node(ctx, node, i, x + w / 2, y + h / 2, w=w, h=h, hero=is_hero, x=x, y=y, family_marked=family_marked)
 
 
 def _hero_content_box(ctx: SolverContext, index: int, node: DiagramNode) -> tuple[float, float] | None:
@@ -312,6 +324,7 @@ def _solve_fan_linear(ctx: SolverContext, *, direction: Literal["out", "in"]) ->
         member_idx = list(range(1, len(spec.nodes)))
         members = [spec.nodes[i] for i in member_idx]
         member_ws, member_hs = _member_boxes(ctx, members)
+        fam = _members_marked(ctx, members)
         member_h = max(member_hs)  # aligned column shares one card height
         # Grow the pitch by exactly the height a wrapped desc adds, so the
         # inter-card gap (p - nch.h) is preserved; byte-identical when the
@@ -333,6 +346,7 @@ def _solve_fan_linear(ctx: SolverContext, *, direction: Literal["out", "in"]) ->
                 y=content_top + slot * pitch,
                 w_override=member_ws[slot],
                 h_override=member_hs[slot],
+                family_marked=fam,
             )
         hero_box = _hero_content_box(ctx, focal_i, spec.nodes[focal_i])
         hero_h = hero_box[1] if hero_box is not None else None
@@ -350,6 +364,7 @@ def _solve_fan_linear(ctx: SolverContext, *, direction: Literal["out", "in"]) ->
         member_idx = list(range(len(spec.nodes) - 1))
         members = [spec.nodes[i] for i in member_idx]
         member_ws = _member_widths(ctx, members)
+        fam = _members_marked(ctx, members)
         column_h = (k - 1) * p + ch.node.h
         focal_cy = content_top + column_h / 2
         height = int(content_top + column_h + ch.bottom_m)
@@ -365,6 +380,7 @@ def _solve_fan_linear(ctx: SolverContext, *, direction: Literal["out", "in"]) ->
                 x=ch.margin_x,
                 y=content_top + slot * p,
                 w_override=member_ws[slot],
+                family_marked=fam,
             )
         # ``hero=True`` pinned (unconditional, not role-derived) — matches the
         # original's hardcoded ``hero=True``/``ch.hero``; the focal index is
@@ -522,6 +538,7 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
     if max(left_n, right_n) == 2 and ch.pitch_pair:
         p = ch.pitch_pair
     dest_ws, dest_hs = _member_boxes(ctx, list(spec.nodes[1:]))
+    dest_fam = _members_marked(ctx, list(spec.nodes[1:]))
     dest_h = max(dest_hs)  # both sides distribute over one shared card height
     # Grow the band pitch by the height a wrapped desc adds (byte-identical
     # when dest_h == nch.h), so taller cards never overlap.
@@ -616,6 +633,7 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
                 hero=False,
                 w_override=w,
                 h_override=dest_hs[i - 1],
+                family_marked=dest_fam,
             )
         )
         sides.append(0 if on_left else 1)
@@ -726,6 +744,7 @@ def solve_fanout_upward(ctx: SolverContext) -> DiagramLayout:
     width = ch.width
     k = len(spec.nodes) - 1
     dest_ws, dest_hs = _member_boxes(ctx, list(spec.nodes[1:]))
+    dest_fam = _members_marked(ctx, list(spec.nodes[1:]))
     slot = max(dest_ws)
     avail = width - 2 * ch.margin_x
     fit = max(1, int((avail + _ROW_AIR_MIN) // (slot + _ROW_AIR_MIN)))
@@ -776,7 +795,9 @@ def solve_fanout_upward(ctx: SolverContext) -> DiagramLayout:
     for i, node in enumerate(spec.nodes[1:], start=1):
         cx, bottom = positions[i - 1]
         w, h = dest_ws[i - 1], dest_hs[i - 1]
-        nodes.append(_place(ctx, i, node, x=cx - w / 2, y=bottom - h, w_override=w, h_override=h))
+        nodes.append(
+            _place(ctx, i, node, x=cx - w / 2, y=bottom - h, w_override=w, h_override=h, family_marked=dest_fam)
+        )
     # Launch grammar is AUTHORED (the two hand prototypes): the default is
     # one pitched port per wire on the source's top rim, ordered by dest x
     # so wires never cross (the balanced reference's 85/108/132/155 port
@@ -846,6 +867,7 @@ def solve_fanout_downward(ctx: SolverContext) -> DiagramLayout:
     width = ch.width
     k = len(spec.nodes) - 1
     dest_ws, dest_hs = _member_boxes(ctx, list(spec.nodes[1:]))
+    dest_fam = _members_marked(ctx, list(spec.nodes[1:]))
     dest_w = max(dest_ws)
     dest_h = max(dest_hs)
     pitch = _pitch(ctx) + max(0.0, dest_w - ch.node.w)
@@ -880,6 +902,7 @@ def solve_fanout_downward(ctx: SolverContext) -> DiagramLayout:
                 y=dest_top,
                 w_override=w,
                 h_override=dest_hs[i - 1],
+                family_marked=dest_fam,
             )
         )
         x += pitch

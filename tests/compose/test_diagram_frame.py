@@ -162,6 +162,11 @@ class TestMotionAnatomy:
             "cardbg",
             "herobg",
             "mcardbg",
+            # The loop terminal finishes ride the same dark-branch material
+            # block: the flat twin joins the card-face rule, the advance
+            # twin re-inks its rim only.
+            "termadvbg",
+            "termflatbg",
             "hname",
             "hval",
             "chipbg",
@@ -342,7 +347,7 @@ class TestSolverRegistryOrderIndependence:
         code = (
             "from hyperweave.compose.diagram.solver import registered_slugs\n"
             "s = registered_slugs()\n"
-            "assert len(s) == 19, f'expected 19, got {len(s)}: {sorted(s)}'\n"
+            "assert len(s) == 21, f'expected 21, got {len(s)}: {sorted(s)}'\n"
             "assert {'hub', 'lanes'} <= set(s), sorted(s)\n"
             "print('ok')\n"
         )
@@ -358,7 +363,7 @@ class TestSolverRegistryOrderIndependence:
         from hyperweave.compose.diagram.solver import registered_slugs
 
         assert registered_slugs() == registered_slugs()
-        assert len(registered_slugs()) == 19
+        assert len(registered_slugs()) == 21
 
 
 class TestConnectorPalette:

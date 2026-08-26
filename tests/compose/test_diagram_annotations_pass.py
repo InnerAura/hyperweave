@@ -114,9 +114,12 @@ _SM_PINS = [
     # Re-pinned (snug-width ruling 2026-07-14): the chain cards solve to
     # their own ink, packing the whole baseline tighter — every label and
     # the under-sweep belly ride the new chain positions.
-    (166.1, 55.0, "pay", "middle"),
-    (348.3, 55.0, "fulfill", "middle"),
-    (560.5, 55.0, "deliver", "middle"),
+    # Re-pinned (markless refinement, owner round 2026-08-26): a markless
+    # row's envelope is pad_x BOTH sides — the state cards narrowed by the
+    # glyph-inset excess and the whole chain packed tighter again.
+    (160.1, 55.0, "pay", "middle"),
+    (338.3, 55.0, "fulfill", "middle"),
+    (540.5, 55.0, "deliver", "middle"),
     # Re-pinned (label_pos convention collapse): graph.py's drop branch now
     # hands back the bare wire midpoint (290,148); annotate.py's single
     # presentation-offset owner (_solver_label_lift) applies a uniform
@@ -124,7 +127,7 @@ _SM_PINS = [
     # hand-tuned +12/+3 — same midpoint, a smaller, uniform clearance.
     # Re-pinned again (bare-label face-clearance law, see above): the same
     # chain-gap growth shifts this drop's anchor too.
-    (265.2, 148.0, "refund request", "start"),
+    (257.2, 148.0, "refund request", "start"),
     # Re-pinned (belly-label law): the back-edge label rides the sweep's own
     # deepest point, anchor middle — the retired source-relative offset
     # landed up to 105px off the ink.
@@ -161,7 +164,7 @@ _SM_PINS = [
     # 82.4deg off vertical on cicd-machine's own generated layout; "reopen"
     # is the same needs_basin archetype). c2's x moved onto tcx, shifting
     # the sweep's deepest point (hence the belly the label rides) by <1px.
-    (134.82, 306.79, "reopen", "middle"),
+    (131.72, 306.75, "reopen", "middle"),
 ]
 
 

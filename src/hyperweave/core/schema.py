@@ -459,6 +459,26 @@ class GenomeSpec(BaseModel):
     diagram_status_critical_dark: str = Field(
         default="", description="Health-dot vulnerable fill, dark substrate (red-400)"
     )
+    # -- Loop-family chromatic roles (the loop corpus'
+    # chromatic_compile: hues are genome TOKENS, the composer computes
+    # nothing). Deliberation lives in decision-question TEXT only — never the
+    # frame (the anchor's law); the complement is WIRE-GRADE on the light
+    # face (edges and markers only; a discard station's name takes secondary
+    # ink, not this). Separate channels from the status pair above — sharing
+    # a hex would collide deliberation with health (visual-channel-collision).
+    # Default "" leaves other genomes unaffected. --
+    diagram_deliberation: str = Field(
+        default="", description="Decision-question text ink, light substrate (the loop family's deliberation hue)"
+    )
+    diagram_deliberation_dark: str = Field(
+        default="", description="Decision-question text ink, dark substrate (lifted one ladder rung)"
+    )
+    diagram_complement: str = Field(
+        default="", description="Discard/revert wire+marker stroke, light substrate (accent-complement, wire-grade)"
+    )
+    diagram_complement_dark: str = Field(
+        default="", description="Discard/revert wire+marker stroke, dark substrate (lifted for dark legibility)"
+    )
     accent_deep: str = Field(
         default="", description="Deep accent (darker than accent): chart hero value + line-gradient end stop"
     )

@@ -26,7 +26,7 @@ from hyperweave.compose.diagram.motion import fmt_s, lane_endpoints
 from hyperweave.compose.diagram.paths import arc_d, arc_len, fmt, line_len, point_on, ray_d
 from hyperweave.compose.diagram.recenter import translate_path
 from hyperweave.compose.diagram.records import ParticlePlacement
-from hyperweave.compose.diagram.sizing import hero_height_floor, solve_node_box
+from hyperweave.compose.diagram.sizing import family_carries_marks, hero_height_floor, solve_node_box
 from hyperweave.compose.diagram.solver import finish_layout, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
 from hyperweave.compose.matrix.cells import measure_voice
@@ -48,6 +48,7 @@ def _place_at_center(
     nch_name: str = "",
     ring_center: tuple[float, float] | None = None,
     w_group: float = 0.0,
+    family_marked: bool = False,
 ) -> NodePlacement:
     ch = ctx.ch
     # ``nch`` computed here (not via the seam's own ``chassis_class`` hint)
@@ -74,6 +75,7 @@ def _place_at_center(
         chassis=nch,
         min_w=min_w,
         h_floor=hero_height_floor(ch) if hero else None,
+        family_marked=family_marked,
     )
     if w_group:
         w = w_group
@@ -82,7 +84,7 @@ def _place_at_center(
     # when the desc fits (solved height == chassis h).
     # Health dots apply centrally in ``finish_layout`` (the generic-chrome
     # seam), never per solver.
-    return place_node(ctx, node, i, cx, cy, w=w, h=h, hero=hero, chassis=nch)
+    return place_node(ctx, node, i, cx, cy, w=w, h=h, hero=hero, chassis=nch, family_marked=family_marked)
 
 
 def _facing_anchor(ctx: SolverContext, p: NodePlacement, hub_cx: float, hub_cy: float) -> tuple[float, float]:
@@ -206,12 +208,17 @@ def _ring_group_width(ctx: SolverContext, nodes: list[DiagramNode]) -> float:
         return 0.0
     # Role-derived (mismatch class FIXED): a declared hero dest measures
     # with the chassis its placement renders.
-    widths = [
-        solve_node_box(ctx, n, i)[0]
-        for i, n in enumerate(nodes)
-        if style_of(n, ctx.spec, ctx.ch) != NodeStyle.GLYPH_CIRCLE.value
-    ]
+    cards = [(i, n) for i, n in enumerate(nodes) if style_of(n, ctx.spec, ctx.ch) != NodeStyle.GLYPH_CIRCLE.value]
+    fam = _ring_family_marked(ctx, nodes)
+    widths = [solve_node_box(ctx, n, i, family_marked=fam)[0] for i, n in cards]
     return max(widths) if widths else 0.0
+
+
+def _ring_family_marked(ctx: SolverContext, nodes: list[DiagramNode]) -> bool:
+    """The ring's mixed-family fact (the column law) — one derivation for
+    the group-width measure and the spoke placements, so the two agree."""
+    cards = [n for n in nodes if style_of(n, ctx.spec, ctx.ch) != NodeStyle.GLYPH_CIRCLE.value]
+    return ctx.ch.width_policy == "aligned" and len(cards) >= 2 and family_carries_marks(ctx, cards)
 
 
 def solve_fanout_radial(ctx: SolverContext) -> DiagramLayout:
@@ -224,6 +231,7 @@ def solve_fanout_radial(ctx: SolverContext) -> DiagramLayout:
     # Aligned ring: every card dest takes the group-max width, so the ring is
     # uniform (0 = free policy / all circles → each keeps its solved width).
     dest_w = _ring_group_width(ctx, list(spec.nodes[1:]))
+    ring_fam = _ring_family_marked(ctx, list(spec.nodes[1:]))
     card_unit = max(ch.node.w, dest_w)  # the packing width the ring must clear
     # Fill sentinel (cell ``ring_r: 0``): the ring solves from the frame so
     # the E/W dests' outer edges land ON the side margins (fill-the-house-
@@ -262,7 +270,11 @@ def solve_fanout_radial(ctx: SolverContext) -> DiagramLayout:
         # label along the spoke away from the hub; a below-label would
         # point inward and the spoke would cross it. Card dests carry their
         # label inside the card — ring_center is inert for them.
-        dests.append(_place_at_center(ctx, i, node, cx, cy, hero=False, ring_center=(c, c), w_group=dest_w))
+        dests.append(
+            _place_at_center(
+                ctx, i, node, cx, cy, hero=False, ring_center=(c, c), w_group=dest_w, family_marked=ring_fam
+            )
+        )
     hub = _place_at_center(ctx, 0, spec.nodes[0], c, c, hero=True)
     hub, label_box = _hub_label_box(ctx, hub, spoke_angles)
     clear = float(ctx.engine["connector"].get("hub_label_clear", 6))

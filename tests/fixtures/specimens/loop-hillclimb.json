@@ -1,0 +1,90 @@
+{
+  "aspect": 0.821,
+  "caption_text": "one turn of the cycle \u00b7 change, measure, keep or revert \u2014 stop on target hit, no gains, or out of ideas",
+  "cards": {
+    "std_h_med": 72.0,
+    "std_h_values": [
+      56.0,
+      56.0,
+      72.0,
+      72.0,
+      72.0
+    ],
+    "std_h_values_amended": [
+      58.4,
+      58.4,
+      77.4,
+      77.4,
+      77.4
+    ],
+    "std_h_values_amended_note": "the name-wrap law reproduces the hand file's own 56/56/72/72/72 two-line distribution at the engine's metric-true line boxes (58.4 single / 77.4 wrapped) \u2014 same structure, metric residue only",
+    "std_w_med": 210.0,
+    "std_w_med_amended": 184,
+    "std_w_med_amended_note": "engine renders content-snug aligned columns (the snug-width ruling) with the kit glyph column engaged; the hand file draws fixed 210/170/220 modules \u2014 engine medians recorded"
+  },
+  "census": {
+    "animated": true,
+    "arrow_terminals": 10,
+    "card_rx": 14.0,
+    "cards": 7,
+    "chips": 7,
+    "coins": 0,
+    "desc_lines": 0,
+    "diamonds": 2,
+    "drift_edges": 8,
+    "gather_buses": 0,
+    "gather_knots": 0,
+    "glyph_marks": 0,
+    "hero_cards": 0,
+    "hero_rx": 0.0,
+    "micro_labels": 0,
+    "muted_cards": 0,
+    "particles": 0,
+    "pills": 0,
+    "shell_marks": 0,
+    "solid_edges": 0,
+    "terminal_dots": 0,
+    "zone_headers": 2
+  },
+  "census_amendments": {
+    "arrow_terminals": 9,
+    "drift_edges": 6,
+    "glyph_marks": 5,
+    "solid_edges": 2
+  },
+  "census_amendments_note": "engine keeps the fork pair's hue dress STILL under the drift relation (the accent-wire still law) \u2014 two of the hand file's eight drifting wires render solid, and the merge pair's one-drawn-arrival dedupes one chevron \u00b7 the hand file declares five identity marks in its payload glyph block and draws the deviation pair's two as absolute paths the extractor does not census \u2014 the engine renders the full declared set (pencil, gauge, undo-arc, stair-up, check-circle)",
+  "chip_homes": {
+    "in_card": 3,
+    "on_wire": 4,
+    "wire_offset_max": 0.42
+  },
+  "chip_stub_min": 29.0,
+  "edge_set": {
+    "change->measure": "",
+    "improved->keep": "yes",
+    "improved->revert": "no",
+    "keep->stop": "",
+    "measure->improved": "",
+    "revert->stop": "",
+    "stop->change": "no \u00b7 keep going",
+    "stop->done": "yes"
+  },
+  "height": null,
+  "occupancy": 0.505,
+  "plate": {
+    "caption_pad": 34.0,
+    "caption_y": 1038.0,
+    "content_bottom": 978.0,
+    "content_top": 112.0,
+    "zone_y": 64.0
+  },
+  "port_tolerance": 2.5,
+  "source": "v04/v040/v044/loops/turn/cycle-turn.svg",
+  "viewbox": [
+    0.0,
+    0.0,
+    880.0,
+    1072.0
+  ],
+  "width": null
+}

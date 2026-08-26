@@ -61,6 +61,19 @@ def diamond_d(cx: float, cy: float, r: float) -> str:
     return f"M {fmt(x0)},{fmt(y0)} {rest} Z"
 
 
+def rhombus_d(cx: float, cy: float, half_w: float, half_h: float) -> str:
+    """A card-scale decision rhombus (the loop family's diamond): N/E/S/W
+    vertices at the circumscribing box's edge midpoints by construction, so
+    every port a solver computes from the box lands exactly on a vertex.
+    Distinct from :func:`diamond_d` (the tiny lanes morphology mark) — a
+    decision has independent half-width/half-height (the corpus runs
+    100-170 x 48-85), never a square's single radius."""
+    pts = ((cx, cy - half_h), (cx + half_w, cy), (cx, cy + half_h), (cx - half_w, cy))
+    x0, y0 = pts[0]
+    rest = " ".join(f"L {fmt(x)},{fmt(y)}" for x, y in pts[1:])
+    return f"M {fmt(x0)},{fmt(y0)} {rest} Z"
+
+
 def square_d(cx: float, cy: float, r: float) -> str:
     """A filled square inscribed in radius ``r`` (half-diagonal) — the
     morphology idiom's fourth cycle shape."""

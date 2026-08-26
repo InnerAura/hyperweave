@@ -22,7 +22,7 @@ from hyperweave.core.diagram import DiagramNode, DiagramSpec, NodeHealth, NodeRo
 from hyperweave.core.paradigm import DiagramNodeChassis, DiagramTopologyChassis, MatrixVoice, ParadigmDiagramConfig
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
+    from collections.abc import Callable, Iterable, Mapping, Sequence
     from typing import Any
 
     from hyperweave.compose.diagram.wiring import SolverContext
@@ -90,6 +90,7 @@ VOICE_CLASSES: tuple[tuple[str, str], ...] = (
     ("sub", "subtitle_voice"),
     ("name", "label_voice"),
     ("dname", "label_voice"),
+    ("qname", "label_voice"),
     ("ndesc", "desc_voice"),
     ("hname", "hero_name_voice"),
     ("hdesc", "hero_desc_voice"),
@@ -112,6 +113,7 @@ VOICE_CLASSES: tuple[tuple[str, str], ...] = (
     ("ann", "annotation_voice"),
     ("lane", "lane_header_voice"),
     ("rlabel", "lane_header_voice"),
+    ("eyeb", "scope_header_voice"),
     ("zoneh", "lane_header_voice"),
     ("zoneha", "lane_header_voice"),
     ("cnt", "count_voice"),
@@ -182,21 +184,37 @@ def head_pad_x(nch: DiagramNodeChassis, *, hero: bool = False) -> float:
 def mark_w_for(style: str, node: DiagramNode, *, hero: bool = False) -> float:
     """The MEASURED mark advance a node's label row carries (G3): the
     identity mark or nothing. Width solving and placement both read this —
-    one measurement, no shims. Icon-or-nothing is total: a node with no
-    ``glyph``/``kind`` reserves NO advance — its content adjusts (an empty
-    reserved slot read as a centered card, the retired reservation defect).
-    Column uniformity down a rank comes from the nodes CARRYING their
-    specimen marks (every hand rank draws one per card), never from holding
-    a phantom slot open."""
+    one measurement, no shims. Icon-or-nothing is a PER-NODE fact: a node
+    with no ``glyph``/``kind`` reserves no advance of its own — an
+    unconditional reserved slot read as a centered card (the retired
+    reservation defect). A width-ALIGNED family that draws marks is the one
+    exception, decided a level up: content is caller-supplied and any mix
+    is legal, so the family's markless members join the glyph column via
+    ``family_carries_marks`` + the ``family_marked`` solve/place flag
+    (otherwise the shared width's slack pools right of a pad-anchored
+    text). Free-solved cards and all-markless families keep the pad
+    anchor."""
     # A card+glyph node declares its mark via EITHER a brand ``glyph`` or a
     # geometric ``kind`` — both resolve to a GLYPH_MARK_W-wide mark, so the
     # card must reserve that width or the label truncates under a kind glyph
     # solved as a narrow dot. A chassis ``glyph_w`` (the nucleus family's
     # 32) overrides at the solve seam, not here.
     del hero
-    if style == NodeStyle.CARD_GLYPH.value and (node.glyph or node.kind):
+    if style in (NodeStyle.CARD_GLYPH.value, NodeStyle.PILL.value) and (node.glyph or node.kind):
+        # The pill carries the same glyph slot as card+glyph (the corpus
+        # capsules seat circle-check/x-circle marks at the end radius).
         return GLYPH_MARK_W
     return 0.0
+
+
+def family_carries_marks(ctx: SolverContext, nodes: Iterable[DiagramNode]) -> bool:
+    """Whether a width-aligned family draws at least one identity mark —
+    the fact the mixed-family column law keys on (see ``mark_w_for``).
+    Solvers compute it once per aligned family and pass the SAME answer to
+    both ``solve_node_box`` and ``place_node`` as ``family_marked``, so the
+    two seam halves can never disagree about where the family's text column
+    sits."""
+    return any(mark_w_for(style_of(n, ctx.spec, ctx.ch), n) > 0.0 for n in nodes)
 
 
 def ink_gap(nch: DiagramNodeChassis) -> float:
@@ -342,7 +360,7 @@ def solve_card_w(
     wide hand specimen. Free-policy topologies solve each card;
     aligned-policy topologies take the max over members."""
     content = _hero_ink_w(node, nch, cfg, mark_w) if hero else card_ink_w(node, nch, cfg, mono_triggers, mark_w)
-    pads = anchor_pads(nch)
+    pads = anchor_pads(nch, markless=mark_w == 0)
     want = content + pads
     # The chassis width is the design TARGET, not a content-clipping wall:
     # the ceiling stretches just enough to hold the identity row — the full
@@ -370,6 +388,18 @@ CHIP_PAD_X = 10.0
 CHIP_H = 26.0
 CHIP_GAP = 6.0
 CHIP_RX = 8.0
+
+
+def pill_chassis(nch: DiagramNodeChassis, h: float) -> DiagramNodeChassis:
+    """The pill kit piece's chassis: a card whose capsule ends move the text
+    start — the box radius, glyph column, and side pads all anchor at the
+    end radius (h/2) instead of the flat card's insets. Cited from the loop
+    corpus terminals (an 84-tall capsule seats its glyph at x+42 = the
+    radius, name at radius + mark + gap, right pad = radius). Sizing and
+    placement both derive the capsule chassis through this one helper, so
+    the box that renders is the box that was solved."""
+    r = h / 2
+    return nch.model_copy(update={"rx": r, "glyph_inset_x": r, "pad_x": r})
 
 
 def solve_chip_box(text: str, cfg: ParadigmDiagramConfig) -> tuple[float, float]:
@@ -480,12 +510,19 @@ def chip_run_min(
     return max(chip_vals + bare_vals, default=0.0)
 
 
-def anchor_pads(nch: DiagramNodeChassis) -> float:
+def anchor_pads(nch: DiagramNodeChassis, *, markless: bool = False) -> float:
     """The card anatomy's horizontal MINIMUM: the ``glyph_inset_x`` content
     anchor on the left plus the ``pad_x`` truncation pad on the right — the
     asymmetric snug envelope every width solve and text budget shares (a
     min-width card can then never wrap or clip its own width-defining
-    run)."""
+    run). MARKLESS refinement (owner round, 2026-08-26): without a mark
+    there is no glyph anchor to hold the column — the chassis ``pad_x``
+    governs BOTH sides. Still a chassis fact, never per-card centering
+    (every content-anchor citation is a glyphed card; a markless row at the
+    glyph inset read lopsided — pad 33 left vs 17 right on the lateral
+    cell)."""
+    if markless:
+        return 2 * nch.pad_x
     return nch.glyph_inset_x + nch.pad_x
 
 
@@ -501,6 +538,52 @@ def mark_lead(mark_w: float, nch: DiagramNodeChassis) -> float:
     card's right edge (the overflow bug). One place, so the label and desc
     budgets can never disagree again."""
     return (mark_w + nch.glyph_label_gap) if mark_w else 0.0
+
+
+WRAP_STRETCH = 1.15
+"""How far a NAME may stretch its module before wrapping (see
+``wrap_label_runs``) — the wrap-at-the-ceiling law keeps its corpus
+citations; the band only rescues near-misses."""
+
+
+def wrap_label_runs(label: str, nch: DiagramNodeChassis, ceiling: float, lead: float, voice: MatrixVoice) -> list[str]:
+    """The NAME wrap seam (``label_max_lines`` > 1): wrap the name at the
+    node class's CITATION ceiling minus the anchor envelope and glyph lead —
+    never at the solved width, so ``solve_card_box`` and ``place_card``
+    derive identical runs from opposite ends of the pipeline (same label,
+    same budget, same walk). A two-line cap splits BALANCED — the break
+    minimizing the widest line, the corpus's own splits ("Revert to"/"last
+    best", "Keep as"/"new best", "Measure against"/"the target"; greedy
+    would pack "Revert to last"/"best"). Deeper caps keep the desc's greedy
+    walk (no specimen cites a 3-line name). Returns ``[label]`` untouched
+    when the class is single-line, the name already fits, or the cap cannot
+    carry the WHOLE name (never-truncate law: growth beats ellipsis — a
+    name too long for its cap falls back to the single-line width law)."""
+    if nch.label_max_lines <= 1:
+        return [label]
+    # The stretch band: a name may stretch its module up to WRAP_STRETCH
+    # before wrapping — the never-clip row growth then widens the card to
+    # hold it whole. Measured calibration: the near-misses that read as
+    # premature wraps sat at +0.1..12% over the ceiling ("Observe the
+    # cluster" missed by 0.2px); every corpus-cited wrap sits at +21% or
+    # more ("Measure against the target" +22%, "Revert to last best" +21%
+    # on the dev module) and stays wrapped.
+    budget = ceiling * WRAP_STRETCH - anchor_pads(nch, markless=lead == 0) - lead
+    if "\n" not in label and measure_voice(label, voice) <= budget:
+        return [label]
+    if nch.label_max_lines == 2 and "\n" not in label:
+        words = label.split()
+        best: tuple[float, list[str]] | None = None
+        for cut in range(1, len(words)):
+            a, b = " ".join(words[:cut]), " ".join(words[cut:])
+            widest = max(measure_voice(a, voice), measure_voice(b, voice))
+            if widest <= budget and (best is None or widest < best[0]):
+                best = (widest, [a, b])
+        return best[1] if best else [label]
+    runs = wrap_text_lines(label, budget, voice, max_lines=nch.label_max_lines)
+    if len(runs) > 1 and " ".join(runs) == label.replace("\n", " "):
+        return runs
+    return [label]
 
 
 def solve_card_box(
@@ -541,6 +624,33 @@ def solve_card_box(
         # the identity slot — the card+glyph reservation never applies (a
         # reserved-empty glyph column would double-indent every lane card).
         mark_w = 0.0
+    label_voice = (
+        cfg.hero_name_voice
+        if hero
+        else voice_for(cfg, label_cls_for(node, mono_triggers) if role_of(node) == "default" else "mname")
+    )
+    # NAME wrap (label_max_lines > 1): wrap at the class's CITATION ceiling —
+    # never the solved width, so solve and place derive identical runs — and
+    # measure every width term at the widest run. The height block then adds
+    # one desc-pitch per extra name line (the kit's one text rhythm:
+    # turn/cycle-turn-choreography-v2 names at 533/552, pitch 19).
+    label_runs = (
+        [node.label]
+        if hero or bullet_lead
+        else wrap_label_runs(
+            node.label,
+            nch,
+            # The family width raises the wrap ceiling: an aligned family
+            # solved wider than the citation must UNWRAP a name that now
+            # fits on one line — a wrapped label inside a family-wide card
+            # read as dead right slack (the champion-pair symptom).
+            max(nch.w, ch.w_max, ch.card_min_w, min_w),
+            mark_lead(mark_w, nch),
+            label_voice,
+        )
+    )
+    if len(label_runs) > 1:
+        node = node.model_copy(update={"label": max(label_runs, key=lambda r: measure_voice(r, label_voice))})
     content = _hero_ink_w(node, nch, cfg, mark_w) if hero else card_ink_w(node, nch, cfg, mono_triggers, mark_w)
     if bullet_lead:
         # The label row alone indents past the leading category mark — the
@@ -548,7 +658,7 @@ def solve_card_box(
         # The bulleted envelope keeps its own pad_x anchor (its specimen's
         # asymmetric column), never the card-glyph anchor inset.
         content = max(content, bullet_lead + label_row_w(node, nch, cfg, mono_triggers, 0.0))
-    pads = 2 * nch.pad_x if bullet_lead else anchor_pads(nch)
+    pads = 2 * nch.pad_x if bullet_lead else anchor_pads(nch, markless=mark_w == 0)
     want_w = content + pads
     # Never-clip rule: the ceiling stretches to hold the identity row whole —
     # and for heroes the whole TEXT COLUMN (name and desc share it under the
@@ -567,11 +677,6 @@ def solve_card_box(
     # exclusively for content-derived aligned shares (a rank/ring re-solve
     # at its widest sibling's own solve).
     w = max(min_w, min(w_ceiling, math.ceil(want_w / 2) * 2))
-    label_voice = (
-        cfg.hero_name_voice
-        if hero
-        else voice_for(cfg, label_cls_for(node, mono_triggers) if role_of(node) == "default" else "mname")
-    )
     desc_voice = cfg.hero_desc_voice if hero else cfg.desc_voice
     # Never-truncate rule (kit): the box clears the desc's widest unbreakable
     # word before wrapping — growth, not ellipsis, absorbs long tokens. The desc
@@ -595,12 +700,12 @@ def solve_card_box(
     desc_budget = (
         (w - nch.pad_x - BULLET_DESC_RIGHT_GAP)
         if bullet_lead
-        else (w - nch.glyph_inset_x - lead - BULLET_DESC_RIGHT_GAP)
+        else (w - (nch.pad_x if lead == 0 else nch.glyph_inset_x) - lead - BULLET_DESC_RIGHT_GAP)
     )
     lines = wrap_text_lines(node.desc, desc_budget, desc_voice, max_lines=nch.max_desc_lines)
     ar, dr = cfg.text_ascent_ratio, cfg.text_descent_ratio
     ldg = label_desc_gap_for(nch, cfg)
-    block = label_voice.size * (ar + dr)
+    block = label_voice.size * (ar + dr) + (len(label_runs) - 1) * nch.desc_line_pitch
     if lines:
         block += ldg + desc_voice.size * (ar + dr) + (len(lines) - 1) * nch.desc_line_pitch
     if node.chips:
@@ -612,7 +717,7 @@ def solve_card_box(
         # the crown at the slim pads (the observability hand crown's ~8px
         # symmetric seat); a std row rides the glyph column, reserving the
         # anchor envelope.
-        chip_pads = 2 * nch.pad_x if hero else anchor_pads(nch)
+        chip_pads = 2 * nch.pad_x if hero else anchor_pads(nch, markless=mark_w == 0)
         row_w = math.ceil((chip_row_w(node.chips, cfg) + chip_pads) / 2) * 2
         w_ceiling = max(w_ceiling, row_w)
         w = max(w, row_w)
@@ -641,10 +746,10 @@ def solve_card_box(
         budget = (
             (width - nch.pad_x - BULLET_DESC_RIGHT_GAP)
             if bullet_lead
-            else (width - nch.glyph_inset_x - lead - BULLET_DESC_RIGHT_GAP)
+            else (width - (nch.pad_x if lead == 0 else nch.glyph_inset_x) - lead - BULLET_DESC_RIGHT_GAP)
         )
         runs = wrap_text_lines(node.desc, budget, desc_voice, max_lines=nch.max_desc_lines)
-        blk = label_voice.size * (ar + dr)
+        blk = label_voice.size * (ar + dr) + (len(label_runs) - 1) * nch.desc_line_pitch
         if runs:
             blk += ldg + desc_voice.size * (ar + dr) + (len(runs) - 1) * nch.desc_line_pitch
         if node.chips:
@@ -982,6 +1087,98 @@ def apply_sliver_guard(
     return w, h, lines
 
 
+DIAMOND_CHIP_DY0 = 2.0
+"""First criteria-chip row's center offset below the diamond center (the
+hillclimb holder: row centers 752/786 about center 750)."""
+DIAMOND_CHIP_PITCH = 34.0
+"""Criteria-chip row pitch inside a decision-holder (752 -> 786)."""
+DIAMOND_CHIP_AIR = 36.0
+"""Vertical air below the lowest chip row's edge to the holder's south
+vertex (the hillclimb holder: rows end at center+49, half-height 85)."""
+
+
+def solve_diamond_box(ctx: SolverContext, node: DiagramNode) -> tuple[float, float, tuple[str, ...]]:
+    """The decision rhombus's sizing half (the loop family's diamond).
+
+    A plain decision floors at the chassis halves (``diamond_half_w_min`` x
+    ``diamond_half_h``) and grows half-width for a long question. A
+    decision-HOLDER (``node.chips`` — criteria chips seated INSIDE the
+    rhombus) grows like any content-solved card: rows pack greedily, the
+    half-height grows to hold the lowest row plus the specimen's own bottom
+    air, the half-width scales with it and then clears every row's own
+    corners against the linear taper (rhombus-true, not bbox-true — a
+    wrapped chip's far corner must satisfy |dy|/hh + |dx|/hw <= 1). The
+    hillclimb holder is the citation: 3 chips wrap 2-then-1 and 100x52
+    grows to ~170x85. Past two greedy rows the pack collapses to two full
+    rows (``pack_holder_rows``) so a chip-heavy holder grows wide-and-full,
+    never tall-and-sparse — the aspect term would otherwise outrun every
+    content need."""
+    ch = ctx.ch
+    base_hw, base_hh = ch.diamond_half_w_min, ch.diamond_half_h
+    q_w = measure_voice(node.label, ctx.cfg.label_voice)
+    hw = max(base_hw, q_w / 2 + 24.0)
+    hh = base_hh
+    if node.chips:
+        rows = pack_holder_rows(node.chips, ctx.cfg, row_cap=2 * base_hw)
+        dy_max = DIAMOND_CHIP_DY0 + (len(rows) - 1) * DIAMOND_CHIP_PITCH + CHIP_H / 2
+        hh = max(base_hh, dy_max + DIAMOND_CHIP_AIR)
+        hw = max(hw, base_hw * hh / base_hh)
+        clearance = float((ctx.engine.get("loop") or {}).get("chip_node_clearance", 4))
+        for r_i, row in enumerate(rows):
+            dy_edge = DIAMOND_CHIP_DY0 + r_i * DIAMOND_CHIP_PITCH + CHIP_H / 2
+            taper = 1.0 - dy_edge / hh
+            if taper > 0:
+                hw = max(hw, (holder_row_w(row, ctx.cfg) / 2 + clearance) / taper)
+    return 2 * hw, 2 * hh, ()
+
+
+def pack_holder_rows(chips: tuple[str, ...], cfg: ParadigmDiagramConfig, *, row_cap: float) -> list[tuple[str, ...]]:
+    """Holder chip rows — the ONE packing walk both halves consume (sizing
+    measures it, ``chrome.place_diamond`` seats it), so growth and geometry
+    can never disagree about which chip landed in which row.
+
+    Greedy under ``row_cap`` in declaration order; a chip wider than the cap
+    still gets its own row (the row widens the holder through the taper
+    constraint). Past two greedy rows the holder re-packs into exactly two
+    full rows — widest chips shallow where the taper leaves the most width,
+    the remainder deep, each row reading in declaration order — so the
+    holder stays in the two-row height class and both rows read full. The
+    3-chip hillclimb citation packs 2-then-1 under the cap and never
+    reaches the repack."""
+    widths = [solve_chip_box(chip, cfg)[0] for chip in chips]
+    rows: list[list[int]] = []
+    current: list[int] = []
+    current_w = 0.0
+    for i, cw in enumerate(widths):
+        candidate = cw if not current else current_w + CHIP_GAP + cw
+        if current and candidate > row_cap:
+            rows.append(current)
+            current, current_w = [i], cw
+        else:
+            current.append(i)
+            current_w = candidate
+    if current:
+        rows.append(current)
+    if len(rows) > 2:
+        order = sorted(range(len(chips)), key=lambda i: -widths[i])
+        half = (sum(widths) + CHIP_GAP * (len(chips) - 1)) / 2
+        shallow: list[int] = []
+        shallow_w = 0.0
+        for i in order[:-1]:  # the deep row always keeps at least one chip
+            if shallow and shallow_w >= half:
+                break
+            shallow_w += widths[i] if not shallow else CHIP_GAP + widths[i]
+            shallow.append(i)
+        deep = [i for i in range(len(chips)) if i not in shallow]
+        rows = [sorted(shallow), deep]
+    return [tuple(chips[i] for i in row) for row in rows]
+
+
+def holder_row_w(row: tuple[str, ...], cfg: ParadigmDiagramConfig) -> float:
+    """A packed holder row's inked width — chips plus the gaps between them."""
+    return sum(solve_chip_box(c, cfg)[0] for c in row) + CHIP_GAP * (len(row) - 1)
+
+
 def solve_node_box(
     ctx: SolverContext,
     node: DiagramNode,
@@ -997,6 +1194,7 @@ def solve_node_box(
     force_card: bool = False,
     h_floor: float | None = None,
     bullet_lead: float = 0.0,
+    family_marked: bool = False,
 ) -> tuple[float, float, tuple[str, ...]]:
     """The positions-only solver seam's SIZING half: every
     topology's per-node content-solved box collapses to this one call, so a
@@ -1028,9 +1226,18 @@ def solve_node_box(
     dispatch entirely (lanes, and linear's stack/comparison/tree never
     branch on a node's declared style — they always measure/render a card,
     so the box must match ``place_node``'s matching ``force_card``, never a
-    pill/circle box under a card render). Returns ``(w, h,
+    pill/circle box under a card render). ``family_marked``
+    (``family_carries_marks`` over the node's width-aligned family) budgets
+    a markless card at the family's glyph column — the mixed-family column
+    law; the caller passes the same flag to ``place_node``. Returns ``(w, h,
     wrapped_desc_lines)`` — lines is always ``()`` for pill/circle."""
     ch = ctx.ch
+    if node.station == "decision":
+        # The loop decision rhombus — its own sizing dispatch (question
+        # width + holder chip growth), never the card path. Style/hero/
+        # chassis flags don't apply to a diamond; the IR already confines
+        # ``station`` to the loop family.
+        return solve_diamond_box(ctx, node)
     # ``style`` is the TRUE resolved anatomy regardless of ``force_card`` —
     # mark_w_for still needs it to tell card+glyph from plain card (a forced
     # card render can still carry a glyph mark); only the SHAPE dispatch
@@ -1041,6 +1248,8 @@ def solve_node_box(
         nch = chassis
     elif chassis_class == "node2":
         nch = ch.node2
+    elif chassis_class == "dev":
+        nch = ch.dev
     else:
         nch = ch.hero if is_hero else ch.node
     if not force_card and style == NodeStyle.GLYPH_CIRCLE.value:
@@ -1098,8 +1307,53 @@ def solve_node_box(
     # floor — a ring-only hero at sibling size is a legal figure.
     topo = topo_chassis if topo_chassis is not None else ch
     mw = mark_w_for(style, node)
+    if mw == 0.0 and family_marked and not is_hero:
+        # Mixed-family column law: a markless member of a width-aligned
+        # family that draws marks budgets its text at the family's glyph
+        # column — byte-identical to a glyphed sibling minus the art —
+        # instead of the pad anchor pooling the shared width's slack right.
+        # Heroes are excluded on both seam halves: they solve alone
+        # (``resolved_min_w`` drops the aligned share) and anchor by the
+        # hero slot model.
+        mw = GLYPH_MARK_W
     if mw and nch.glyph_w:
         mw = nch.glyph_w
+    if not force_card and style == NodeStyle.PILL.value:
+        # The pill kit piece: the same content stack as a card, sized under
+        # the capsule chassis — the side insets anchor at the end radius, so
+        # height solves first (radius = h/2) and width re-solves at that
+        # radius until stable (a narrower text budget can wrap one more desc
+        # line, which raises h and with it the radius). Cited from the loop
+        # corpus terminals: an 84-tall capsule seats its glyph at x+42.
+        _w, h_cur, lines_p = solve_card_box(
+            node,
+            nch,
+            topo,
+            ctx.cfg,
+            ctx.mono_triggers,
+            hero=is_hero,
+            min_w=resolved_min_w,
+            mark_w=mw,
+            h_floor=h_floor,
+            bullet_lead=bullet_lead,
+        )
+        for _ in range(3):
+            w_p, h_p, lines_p = solve_card_box(
+                node,
+                pill_chassis(nch, h_cur),
+                topo,
+                ctx.cfg,
+                ctx.mono_triggers,
+                hero=is_hero,
+                min_w=resolved_min_w,
+                mark_w=mw,
+                h_floor=h_cur,
+                bullet_lead=bullet_lead,
+            )
+            if abs(h_p - h_cur) < 0.5:
+                break
+            h_cur = h_p
+        return w_p, h_p, lines_p
     return solve_card_box(
         node,
         nch,

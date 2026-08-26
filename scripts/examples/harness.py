@@ -21,6 +21,7 @@ tokens — on network failure the cache provides reproducibility.
 from __future__ import annotations
 
 import json
+import socket
 import subprocess
 import sys
 import time
@@ -65,15 +66,28 @@ def unwrap_mcp_svg(call_result: Any) -> str:
     return str(first.text)
 
 
+def _free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return int(s.getsockname()[1])
+
+
 @contextmanager
-def fastapi_server(port: int = 8765, ready_timeout: float = 15.0) -> Iterator[str]:
+def fastapi_server(port: int | None = None, ready_timeout: float = 15.0) -> Iterator[str]:
     """Start ``hyperweave.serve.app`` under uvicorn; yield base URL.
 
     Spawns a real subprocess so the harness exercises the network stack
     (headers, query parsing, response serialization) that ASGITransport
     would short-circuit. On exit: SIGTERM, wait 5s, SIGKILL if needed —
     guarantees no orphan processes even on exception.
+
+    The port defaults to a freshly-bound free one: a fixed number can be
+    held by an unrelated local server, and the readiness poll would then
+    time out against it — or worse, a foreign 200 on /health would hand
+    the harness someone else's server.
     """
+    if port is None:
+        port = _free_port()
     proc = subprocess.Popen(
         [
             sys.executable,

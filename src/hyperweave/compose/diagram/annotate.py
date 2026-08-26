@@ -339,7 +339,11 @@ def subsume_edge_labels(
             # regression backstop (never silently starve).
             if geo.label_pos is not None:
                 accent = ctx.edge_accents[j] if j < len(ctx.edge_accents) else -1
-                out.append(_chip_placement(edge.label, geo.label_pos[0], geo.label_pos[1], ctx.cfg, accent, style))
+                out.append(
+                    _chip_placement(
+                        edge.label, geo.label_pos[0], geo.label_pos[1], ctx.cfg, accent, style, edge_index=j
+                    )
+                )
                 continue
             # Balance rule (cicd-machine hw:approach): a chip must show
             # visible wire BOTH sides; a run too short to balance one floats
@@ -409,7 +413,7 @@ def subsume_edge_labels(
                                     cx, cy = cx - ux * step, cy - uy * step
                                     break
                 accent = ctx.edge_accents[j] if j < len(ctx.edge_accents) else -1
-                out.append(_chip_placement(edge.label, cx, cy, ctx.cfg, accent, style))
+                out.append(_chip_placement(edge.label, cx, cy, ctx.cfg, accent, style, edge_index=j))
                 continue
         # A micro-label floats ABOVE its wire (kit): its wrap allowance is the
         # edge run plus a small overhang, not a hard inset — a one-word label
@@ -478,7 +482,7 @@ def _label_placement(
 
 
 def _chip_placement(
-    text: str, cx: float, cy: float, cfg: Any, accent: int, style: ck.ChromeStyle
+    text: str, cx: float, cy: float, cfg: Any, accent: int, style: ck.ChromeStyle, edge_index: int = -1
 ) -> AnnotationPlacement:
     """The edge-chip: the SAME pill as a node chip (hub draws
     both at w=text+2*pad, h=26, rx=8 — a rounded rect, never a full pill),
@@ -488,7 +492,9 @@ def _chip_placement(
     box = RectSpec(x=cx - bw / 2, y=cy - bh / 2, w=bw, h=bh, rx=CHIP_RX)
     baseline = cy + cfg.tag_voice.size * cfg.text_ascent_ratio / 2
     run = DiagramText(x=cx, y=baseline, text=text, cls="tag", anchor="middle")
-    return AnnotationPlacement(kind="edge-chip", lines=(run,), box=box, accent_index=-1 if accent < 0 else accent)
+    return AnnotationPlacement(
+        kind="edge-chip", lines=(run,), box=box, accent_index=-1 if accent < 0 else accent, edge_index=edge_index
+    )
 
 
 # ── Anchor resolution ────────────────────────────────────────────────────────

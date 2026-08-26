@@ -99,8 +99,10 @@ class AxisMap:
     @classmethod
     def for_slug(cls, slug: str) -> AxisMap:
         """The map a layout slug solves in. Unknown slugs take RIGHT — the
-        identity — so a solver that never learned the axis is unchanged."""
-        return DOWN if slug == "dag-vertical" else RIGHT
+        identity — so a solver that never learned the axis is unchanged.
+        Loop's BARE slug is its vertical cell (the family default), so it
+        maps DOWN where every other bare slug is the identity."""
+        return _SLUG_AXES.get(slug, RIGHT)
 
 
 RIGHT: Final = AxisMap(
@@ -122,3 +124,9 @@ DOWN: Final = AxisMap(
 """Ranks advance +y, members spread +x. Sides are the transpose of RIGHT's:
 ``right``/``left`` reflect to ``bottom``/``top``, and ``top``/``bottom``
 reflect to ``left``/``right`` — see the chirality note in the module docstring."""
+
+_SLUG_AXES: Final[dict[str, AxisMap]] = {
+    "dag-vertical": DOWN,
+    "loop": DOWN,
+    "loop-horizontal": RIGHT,
+}
