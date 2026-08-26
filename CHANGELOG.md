@@ -5,6 +5,38 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-08-26
+
+Ships procedural loop diagrams with turn and meter choreography, uses custom names for each receipt file, and reads current Codex transcripts.
+
+### Added
+
+- **`topology: loop`** — draw processes that cycle: decisions, guard chips, terminal exits, and a return rail. One spec renders vertical or horizontal.
+- **Loop patterns come from structure** — no new flags. Two decisions give you a retry. `tap-in`/`tap-out` edges give a supervised loop. A `station: scope` node nests an inner loop. `accumulates` on the return makes a flywheel. `lanes:` plus per-node `category` gives swimlanes.
+- **`motion_register`** — animate the loop five ways. `turn` traces each route as it arrives. `laps`, `budget`, and `accumulate` animate a gauge (`meter: N`) that grows, drains, or banks. `drift` leaves it static. Set with `--motion-register`, `?motion_register=`, or MCP.
+- **`style: pill`** — capsule cards: glyph, name, and description, with connectors meeting the cap rim.
+- **Fifteen loop presets** — render one by name: `hyperweave compose diagram --spec-file loop-hillclimb-turn`.
+- **Five new glyphs** — `pencil` · `stair-up` · `undo-arc` · `rotate-cw` · `trending-up`.
+- Visual polish: decision questions and discard routes carry their own colors on light and dark faces; long station names wrap to two balanced lines.
+
+### Changed
+
+- **Receipts are named for their session** — the filename carries the session title and a short id; renaming a session moves its receipt instead of leaving a copy.
+- **Rates are dated** — a turn is priced at the rate in effect the day it ran.
+
+### Fixed
+
+- **Codex transcripts** — turn counts read the record shape current Codex writes; tool calls are classed; the injected preamble no longer counts as a prompt or names the receipt.
+- **Model rates** — GPT-5.6 and Claude Opus 5 price from their own cards; an unpriced model warns instead of guessing.
+- **`just proofset`** — the recipe exited before rendering.
+- **Mixed icon columns** — a card without an icon, in a column where its siblings have icons, now lines its text up with theirs instead of leaving a lopsided gap.
+
+### Notes
+
+- A `loop` holds 10 nodes (7 horizontal); scopes nest one level; a meter caps at 8 segments. `caps:` and `chassis:` lift the limits per spec.
+- Upgrading doesn't rename receipt files on disk; a receipt picks up its new name the next time its session ends.
+- Receipt pricing: Claude Sonnet 5's introductory rate ends 2026-08-31.
+
 ## [0.4.3] - 2026-08-24
 
 Improves `dag` diagrams, which now declare an `orientation` of `horizontal` or `vertical`, and fixes a broad set of bugs across the diagram system.

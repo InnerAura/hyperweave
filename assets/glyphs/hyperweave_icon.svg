@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 256 256" width="256" height="256" preserveAspectRatio="xMidYMid meet"
+     role="img" aria-labelledby="t d" data-hw-component="brand-glyph-mark"
+     data-hw-chromatic="primer-porcelain" data-hw-variant="porcelain"
+     data-hw-status="active" data-hw-regime="normal" data-protocol="hw-v1">
+    <title id="t">HyperWeave — Core Brand Glyph</title>
+    <desc id="d">
+        Standalone octahedral brand mark in Primer Porcelain colorway. Faceted volume,
+        opalescent transmitter prism, structural perimeter, and 5-node singularity
+        constellation.
+    </desc>
+    <metadata>
+        <hw:artifact id="0197f490-c108-72b1-9f20-hyperweaveglyphsolo"
+                     type="brand-glyph-mark" series="hyperweave-identity"
+                     version="1.0.3">
+            <hw:provenance>
+                <hw:generator>HyperWeave Design Engine [v1.0-porcelain-spec]
+                </hw:generator>
+                <hw:created>2026-08-25T00:00:00Z</hw:created>
+                <hw:human-directed>true</hw:human-directed>
+            </hw:provenance>
+            <hw:spec size="256x256" performance="paint-optimal" theme="light"
+                     a11y="WCAG-AA" />
+        </hw:artifact>
+        <hw:aesthetic>
+            <hw:chromatic system="primer-porcelain" space="srgb" contrast-ratio="6.8" />
+            <hw:motion vocabulary="pulse" physics="damped" timing="phi"
+                       cim-compliant="true" />
+            <hw:geometry form-language="geometric" proportional-system="root2"
+                         mathematical-basis="golden-ratio" symmetry="radial" />
+            <hw:material surface="glass" depth="shallow" />
+        </hw:aesthetic>
+        <hw:reasoning>
+            <hw:intent>
+                Maximize glyph presence and fill the 256x256 container edge-to-edge,
+                eliminating dead whitespace across all cardinal directions while
+                protecting boundary strokes.
+            </hw:intent>
+            <hw:approach>
+                Scaled the centered geometry complex to an optical factor of 1.425
+                (effective vertex radius r=114px). This contracts the outer boundary
+                padding from 48px down to a crisp 9.5px optical clearance around the
+                outer node beads and stroke miters.
+            </hw:approach>
+            <hw:tradeoffs>
+                Tightened outer safety buffer to 9.5px to prioritize mark footprint and
+                instant silhouette recognition at smaller rendering profiles.
+            </hw:tradeoffs>
+            <hw:spatial-notes>
+                Origin centered at (128, 128) with effective diamond span 228x228px.
+                N/S/E/W apex vertices terminate at coordinate offsets 14px and 242px.
+            </hw:spatial-notes>
+        </hw:reasoning>
+        <hw:stratum>
+            <hw:ring primary="005-COSMIC" />
+            <hw:affinities>
+                <hw:resonance ring="001-ALPHA" strength="0.95" />
+                <hw:resonance ring="002-TRIBE" strength="0.8" />
+            </hw:affinities>
+        </hw:stratum>
+    </metadata>
+    <defs>
+        <!-- Primer Porcelain Continuous Vector Ramp -->
+        <linearGradient id="ramp" x1="-80" y1="-80" x2="80" y2="80"
+                        gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5C80E3" />
+            <stop offset="50%" stop-color="#1D4ED8" />
+            <stop offset="100%" stop-color="#1E40A0" />
+        </linearGradient>
+        <!-- Singularity & Node Bead Specular Fill -->
+        <radialGradient id="nodeM" cx="35%" cy="32%" r="65%">
+            <stop offset="0%" stop-color="#EBF1FD" />
+            <stop offset="45%" stop-color="#4D7AE8" />
+            <stop offset="100%" stop-color="#1E3A8A" />
+        </radialGradient>
+        <!-- Radial Ambient Field -->
+        <radialGradient id="backGlow" cx="0" cy="0" r="88"
+                        gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.22" />
+            <stop offset="55%" stop-color="#1D4ED8" stop-opacity="0.06" />
+            <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0" />
+        </radialGradient>
+        <!-- Unified Diamond Volumetric Shading -->
+        <linearGradient id="faceVol" x1="0" y1="-80" x2="0" y2="80"
+                        gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.28" />
+            <stop offset="50%" stop-color="#1D4ED8" stop-opacity="0.10" />
+            <stop offset="100%" stop-color="#1E3A8A" stop-opacity="0.25" />
+        </linearGradient>
+        <!-- Prismatic Body Glass -->
+        <linearGradient id="glassFill" x1="0" y1="-60" x2="0" y2="60"
+                        gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#DBEAFE" stop-opacity="0.28" />
+            <stop offset="50%" stop-color="#3B82F6" stop-opacity="0.12" />
+            <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0.22" />
+        </linearGradient>
+        <!-- Specular Rim Refraction -->
+        <linearGradient id="innerLight" x1="0" y1="-56" x2="0" y2="56"
+                        gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+            <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0.20" />
+            <stop offset="65%" stop-color="#93C5FD" stop-opacity="0.15" />
+            <stop offset="100%" stop-color="#1E40AF" stop-opacity="0.65" />
+        </linearGradient>
+    </defs>
+    <style>
+        .node-singularity {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: pulseNode 3.236s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes pulseNode {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.95;
+            }
+
+            50% {
+                transform: scale(1.22);
+                opacity: 1;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .node-singularity {
+                animation: none !important;
+            }
+        }
+    </style>
+    <!-- Full-Bleed Scaled Geometry Stack (Origin 128,128 · Scale 1.425 · Tight 9.5px Padding) -->
+    <g transform="translate(128, 128) scale(1.425)">
+        <!-- Ambient Field Glow -->
+        <circle cx="0" cy="0" r="88" fill="url(#backGlow)" />
+        <!-- Layer 01: Volumetric Body -->
+        <polygon points="0,-80 80,0 0,80 -80,0" fill="url(#faceVol)" />
+        <!-- Layer 02: Optic Chamber Body -->
+        <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"
+              fill="url(#glassFill)" />
+        <!-- Layer 03: Structural Outer Perimeter Wireframe -->
+        <polygon points="0,-80 80,0 0,80 -80,0" fill="none" stroke="url(#ramp)"
+                 stroke-width="2" stroke-linejoin="round" opacity="0.95" />
+        <!-- Layer 04: Transmitter Outer Bevel -->
+        <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z"
+              fill="none" stroke="url(#ramp)" stroke-width="6.5" stroke-linejoin="round"
+              stroke-linecap="round" opacity="0.96" />
+        <!-- Layer 05: Concentric Specular Highlight -->
+        <path d="M -13.95,-55.8 L -41.85,-27.9 C -55.8,-13.95 -55.8,13.95 -41.85,27.9 L -13.95,55.8 L 13.95,55.8 L 41.85,27.9 C 55.8,13.95 55.8,-13.95 41.85,-27.9 L 13.95,-55.8 Z"
+              fill="none" stroke="url(#innerLight)" stroke-width="1.25"
+              stroke-linejoin="round" stroke-linecap="round" />
+        <!-- Layer 06: 5-Node Constellation -->
+        <g>
+            <circle cx="0" cy="-80" r="3.25" fill="url(#nodeM)" />
+            <circle cx="80" cy="0" r="3.25" fill="url(#nodeM)" />
+            <circle cx="0" cy="80" r="3.25" fill="url(#nodeM)" />
+            <circle cx="-80" cy="0" r="3.25" fill="url(#nodeM)" />
+            <circle cx="0" cy="0" r="4.25" fill="url(#nodeM)"
+                    class="node-singularity" />
+        </g>
+    </g>
+</svg>

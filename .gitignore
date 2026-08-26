@@ -40,5 +40,4 @@ examples/
 !assets/examples/
 !scripts/examples/
 outputs/
-scripts/extract_svgs.py
 v04/.learn/

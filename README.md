@@ -1,8 +1,8 @@
 <div id="top">
 
 <picture>
-  <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/hero/hyperweave_hero_light.svg" media="(prefers-color-scheme: light)">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/hero/hyperweave_hero_dark.svg" alt="HyperWeave" width="100%"
+  <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/hero/hyperweave_hero_stacked_light.svg" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/hero/hyperweave_hero_stacked_dark.svg" alt="HyperWeave" width="100%"
   >
 </picture>
 
@@ -107,7 +107,7 @@ hyperweave install-hook --genome raw     # the paper receipt
 
 ## Diagrams
 
-Diagrams encode topology, not pixels. HyperWeave supports the following diagram types: `pipeline`, `fanout`, `fanin`, `hub`, `cycle`, `dag`, `lanes`, `state-machine`, `sequence`, `tree`, and `comparison`. Nodes carry brand logo glyphs, labels, and tags. Edges carry labels and motion to help process information better. Every diagram renders as a self-contained SVG with its full spec and hash-verified digest embedded for agents to read directly. Render them in a markdown file, send to Slack as an image, or render directly in your terminal.
+Diagrams encode topology, not pixels. HyperWeave supports the following diagram types: `pipeline`, `fanout`, `fanin`, `hub`, `cycle`, `loop`, `dag`, `lanes`, `state-machine`, `sequence`, `tree`, and `comparison`. Nodes carry brand logo glyphs, labels, and tags. Edges carry labels and motion to help process information better. Every diagram renders as a self-contained SVG with its full spec and hash-verified digest embedded for agents to read directly. Render them in a markdown file, send to Slack as an image, or render directly in your terminal.
 
 <p align="center">
   <picture>
@@ -268,6 +268,25 @@ hyperweave compose diagram --spec-file cycle-flow -g primer --variant porcelain 
 
 <p align="center">
   <picture>
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-dark.svg" alt="One turn of the loop, performed: change, measure, keep or revert — guard chips inside the Stop? holder decide whether the loop returns or the champion ships" width="70%"
+    >
+  </picture>
+</p>
+
+<details>
+<summary>Compose this inline</summary>
+
+```bash
+hyperweave compose diagram --spec-file loop-hillclimb-turn -g primer --variant porcelain --surface inlay --face light -o loop-hillclimb-turn-light.svg
+```
+
+`loop-hillclimb-turn` is a bundled preset; the URL API renders it by name at `/v1/diagram/loop-hillclimb-turn/primer.static`.
+
+</details>
+
+<p align="center">
+  <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-light.svg" media="(prefers-color-scheme: light)">
     <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/tree-health-dark.svg" alt="Dependency audit tree: my-app roots direct dependencies react, lodash, and axios, transitive children hang on dashed edges, and health dots flag what is outdated or vulnerable" width="100%"
     >
@@ -290,7 +309,7 @@ hyperweave compose diagram --spec-file tree-health -g primer --variant porcelain
 | | | |
 |:---|:---|:---|
 | **Flows** | `pipeline` · `fanout` · `fanin` | stages in a line, one-to-many, many-to-one |
-| **Cycles** | `cycle` · `state-machine` | a loop, legal state transitions |
+| **Cycles** | `cycle` · `loop` · `state-machine` | a closed ring, a procedural loop with exits, legal state transitions |
 | **Structure** | `dag` · `tree` · `lanes` | dependencies, hierarchy, ownership rows |
 | **Centered** | `hub` | one thing at the middle of its world |
 | **Time** | `sequence` | who calls whom, in order |
@@ -304,6 +323,7 @@ Eleven layouts, forty-four bundled presets, one spec vocabulary. Variations are 
 | `fanout` | `horizontal` &middot; `bilateral` &middot; `upward` &middot; `downward` &middot; `radial` |
 | `tree` | `horizontal` &middot; `radial` |
 | `cycle` | `ring` &middot; `orbit` |
+| `loop` | `vertical` &middot; `horizontal` |
 | `fanin` &middot; `hub` &middot; `lanes` &middot; `sequence` &middot; `state-machine` &middot; `comparison` | `horizontal` |
 
 Render any preset by name at `/v1/diagram/{preset}/primer.static`, or run `hyperweave discover diagram` for every preset, orientation and field.
