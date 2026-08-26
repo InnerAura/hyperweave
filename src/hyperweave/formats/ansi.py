@@ -238,6 +238,7 @@ def _place_str(
     row_bounds: tuple[int, int] | None = None,
     *,
     only_if_free: bool = False,
+    col_floor: int | None = None,
 ) -> None:
     """Stamp ``text`` at its OWN solver-measured position — the same (x, y,
     anchor) the SVG template would stamp — rather than re-centering it
@@ -250,7 +251,10 @@ def _place_str(
     only ONE interior row at this resolution clamps label AND desc onto the
     very same row; ``only_if_free`` (secondary runs only — never the label)
     drops the run entirely rather than interleaving it, character by
-    character, into whatever the label already wrote there."""
+    character, into whatever the label already wrote there. ``col_floor``
+    is the column twin of the row clamp: a card's 12px text pad rounds to
+    ZERO cells at this resolution, gluing a start-anchored run onto the
+    border glyph, so interior runs floor one cell inside it."""
     if not text:
         return
     row, col = gs.cell(x, y)
@@ -264,6 +268,8 @@ def _place_str(
         start = col - len(text) + 1
     else:
         start = col
+    if col_floor is not None and anchor != "middle":
+        start = max(start, col_floor)
     if only_if_free:
         lo_c, hi_c = max(0, start), min(len(grid[0]), start + len(text))
         if lo_c >= hi_c or any(grid[row][cc] != " " for cc in range(lo_c, hi_c)):
@@ -332,16 +338,30 @@ def _paint_node(
     else:
         _paint_border(grid, hero, c0, r0, c1, r1)
         interior = (r0 + 1, r1 - 2)
-        _place_str(grid, gs, node.label.x, node.label.y, node.label.anchor, node.label.text + mark, interior)
+        pad_col = c0 + 2
+        _place_str(
+            grid, gs, node.label.x, node.label.y, node.label.anchor, node.label.text + mark, interior, col_floor=pad_col
+        )
+    floor = None if interior is None else c0 + 2
     for d in node.desc_lines:
-        _place_str(grid, gs, d.x, d.y, d.anchor, d.text, interior, only_if_free=True)
+        _place_str(grid, gs, d.x, d.y, d.anchor, d.text, interior, only_if_free=True, col_floor=floor)
     for chip in node.chip_texts:
-        _place_str(grid, gs, chip.x, chip.y, chip.anchor, chip.text, interior, only_if_free=True)
+        _place_str(grid, gs, chip.x, chip.y, chip.anchor, chip.text, interior, only_if_free=True, col_floor=floor)
     if node.short is not None:
         short = node.short
-        _place_str(grid, gs, short.x, short.y, short.anchor, short.text, interior, only_if_free=True)
+        _place_str(grid, gs, short.x, short.y, short.anchor, short.text, interior, only_if_free=True, col_floor=floor)
     if node.tag is not None:
-        _place_str(grid, gs, node.tag.x, node.tag.y, node.tag.anchor, node.tag.text, interior, only_if_free=True)
+        _place_str(
+            grid,
+            gs,
+            node.tag.x,
+            node.tag.y,
+            node.tag.anchor,
+            node.tag.text,
+            interior,
+            only_if_free=True,
+            col_floor=floor,
+        )
 
 
 def _content_grid(layout: DiagramLayout, dspec: DiagramSpec) -> tuple[str, list[str], int]:

@@ -65,7 +65,7 @@
     "content_top": 20.0
   },
   "port_tolerance": 12.1,
-  "source": "v04/v040/v044/loops/retry/retry-specimens/diagram-loop-retry-unrolled-turn.svg",
+  "source": "v04/v040/v044/loop/retry/retry-specimens/diagram-loop-retry-unrolled-turn.svg",
   "viewbox": [
     0.0,
     0.0,

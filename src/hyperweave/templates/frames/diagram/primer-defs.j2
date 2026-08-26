@@ -363,6 +363,8 @@
 .{{ uid }}-halo { fill: none; stroke-width: {{ choreo.halo_stroke }}; opacity: 0; }
 .{{ uid }}-haloA { stroke: var(--dna-signal); }
 .{{ uid }}-haloN { stroke: {{ diagram_conn_muted if conn_muted else 'var(--dna-ink-muted)' }}; }
+{% if diamond_nodes %}.{{ uid }}-haloW { stroke: {{ _genome_raw.diagram_deliberation }}; }
+{% endif %}
 .{{ uid }}-tint { opacity: 0; }
 .{{ uid }}-tintA rect { stroke: var(--dna-signal); stroke-width: {{ diagram_style.tint_rim_w }}; }
 .{{ uid }}-tintA text { fill: var(--dna-signal); }
@@ -457,6 +459,7 @@
 {% endif %}{% if health_nodes or health_ns.legend %}.{{ uid }}-warn { fill: {{ _genome_raw.diagram_status_warning_dark }}; }
 .{{ uid }}-crit { fill: {{ _genome_raw.diagram_status_critical_dark }}; }
 {% endif %}{% if diamond_nodes %}.{{ uid }}-qname { fill: {{ _genome_raw.diagram_deliberation_dark }}; }
+.{{ uid }}-haloW { stroke: {{ _genome_raw.diagram_deliberation_dark }}; }
 {% endif %}{% if comp_ns.present %}.{{ uid }}-flcomp { stroke: {{ _genome_raw.diagram_complement_dark }}; }
 .{{ uid }}-flcompf { fill: {{ _genome_raw.diagram_complement_dark }}; }
 {% endif %}{% if diagram_dark_adaptive %}}

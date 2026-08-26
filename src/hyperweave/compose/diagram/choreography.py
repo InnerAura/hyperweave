@@ -648,8 +648,15 @@ def _walk_act(
             tl.halo(f"hold:{key}", t, t + terminal_hold, hue=leg_hue)
             t += dwell
         elif node.station == "decision":
-            # No halo on a diamond — none of the 18 corpus specimens rings
-            # one; the deliberation lives in the question's own ink.
+            # The decision rings its OWN rhombus in the deliberation hue —
+            # the turn anchor halos both its diamonds (cyt1-hW paths fire
+            # on arrival for a card-class glow: lit ~0.95s of its 24.3s
+            # period, twice per pass through Improved?). The earlier
+            # "0/18" reading measured the expression corpus, which
+            # animates no halos at all — vacuous evidence the anchor
+            # overrules. The question's ink carries the rest of the
+            # deliberation.
+            tl.halo(f"flash:{key}", t, t + halo_hold, hue="W")
             t += dwell_dec
         else:
             # Arrival halos ride the arriving leg's hue — the corpus draws
@@ -1020,7 +1027,21 @@ def _emit(
                 )
         else:
             n = node_by_id.get(ident)
-            if n is not None and n.shape != "diamond":
+            if n is not None and n.shape == "diamond":
+                # The decision's halo is its own rhombus, each vertex pushed
+                # ``halo_diamond_inflate`` out (the turn anchor's cyt1-hW:
+                # card E vertex 570 -> halo 573), in the deliberation hue.
+                b = n.box
+                di = _tcfg(engine, "halo_diamond_inflate", 3.0)
+                dcx, dcy = b.x + b.w / 2, b.y + b.h / 2
+                d = (
+                    f"M {_fmt_num(round(dcx, 2))},{_fmt_num(round(b.y - di, 2))}"
+                    f" L {_fmt_num(round(b.x + b.w + di, 2))},{_fmt_num(round(dcy, 2))}"
+                    f" L {_fmt_num(round(dcx, 2))},{_fmt_num(round(b.y + b.h + di, 2))}"
+                    f" L {_fmt_num(round(b.x - di, 2))},{_fmt_num(round(dcy, 2))} Z"
+                )
+                halo = HaloFlash(shape="path", hue=tl.halo_hues.get(key) or "W", anim_index=anim, d=d)
+            elif n is not None:
                 b = n.box
                 # The arriving leg's hue when the walk recorded one (the
                 # corpus law); the partition read covers the rest.

@@ -441,7 +441,7 @@ presets:
       - { id: ship, label: "6. Ship", desc: "ship solutions that save time, improve decisions, scale value", kind: rocket } # specimen draws the rocket
 
   # ── Loop (the procedural directed loop; specimens in
-  #    v04/v040/v044/loops/) ──────────────────────────────────────────────
+  #    v04/v040/v044/loop/) ──────────────────────────────────────────────
   loop-hillclimb:
     topology: loop
     zones: ["discard", "advance"] # the anchor's corner pair, verbatim

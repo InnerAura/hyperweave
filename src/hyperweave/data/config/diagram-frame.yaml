@@ -283,7 +283,7 @@ axial:
   max_fan: 8 # destinations in the E half-plane
 
 # Loop family routing constants (frame-generic; card/diamond DIMENSIONS live
-# on the topology chassis). Sources: v04/v040/v044/loops —
+# on the topology chassis). Sources: v04/v040/v044/loop —
 # turn/cycle-turn-choreography-v2.svg (the kit-anatomy bridge), retry/cycle-retry.svg,
 # nested/cycle-nested.svg, shuttle/cycle-shuttle-v2.svg.
 loop:
@@ -395,6 +395,7 @@ choreography:
     pulse_head: 18 # the head's dash length
     halo_stroke: 2.5 # arrival-halo outline width (every corpus specimen: .X-h stroke-width 2.5)
     halo_inflate: 0 # halos sit at the element's exact box (corpus law)
+    halo_diamond_inflate: 3 # a decision's rhombus halo pushes each vertex 3px out (the turn anchor: card E vertex 570 -> halo 573)
     halo_opacity: 1.0 # node halos peak (the corpus halos pop to full)
     tint_hold_s: 0.95 # a lit chip's hold (the tint groups: pop, ~0.95s, fade)
   # The meter registers ride the turn timeline and PERFORM the declared

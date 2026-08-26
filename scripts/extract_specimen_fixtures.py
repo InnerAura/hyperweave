@@ -49,7 +49,7 @@ REFERENCES = REPO / "v04" / "specimens" / "artifacts" / "diagrams" / "diagrams-v
 ANATOMY_ROOTS = (
     # The loop-family corpus — first, so its same-named files outrank the
     # shared tree (cycle-runloop-v1.svg exists in both, as different artifacts).
-    REPO / "v04" / "v040" / "v044" / "loops",
+    REPO / "v04" / "v040" / "v044" / "loop",
     REPO / "v04" / "specimens" / "artifacts" / "diagrams",
 )
 
@@ -145,7 +145,7 @@ GEOMETRY_SPECIMENS: dict[str, Path] = {
     # citations all extract from this pair. Fixture ≡ preset, board 1:1.
     "fanout-bilateral-pair": anatomy("fanout", "bilateral-symmetric-2x2.svg"),
     "fanout-bilateral-trio": anatomy("fanout", "bilateral-symmetric-3x3.svg"),
-    # The loop family's golden set (v04/v040/v044/loops — topology amended
+    # The loop family's golden set (v04/v040/v044/loop — topology amended
     # cycle -> loop, owner ruling 2026-08-24). The hillclimb pair is the
     # register twin: one geometry, drift vs turn.
     "loop-hillclimb": anatomy("turn", "cycle-turn.svg"),

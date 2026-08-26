@@ -5,6 +5,16 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] - Unreleased
+
+Fixes the ANSI projection's card padding, the loop's top margin spacing, and the decision's arrival glow.
+
+### Fixed
+
+- **`--format ansi`** — card text keeps a cell of padding inside its border instead of touching it.
+- **Loop top margin** — a loop's zone headers and first station sit at the hand specimens' own air instead of 26px tighter.
+- **Decision halos** — a loop decision's rhombus lights in the deliberation amber as the route arrives, the way the hand specimens draw it.
+
 ## [0.4.4] - 2026-08-26
 
 Ships procedural loop diagrams with turn and meter choreography, uses custom names for each receipt file, and reads current Codex transcripts.

@@ -636,6 +636,12 @@ diagram:
       display_w: 740
       margin_x: 40
       header_h: 66
+      # Corpus masthead air: the canvas top-anchors at margin_y + the 14px
+      # zone-ext pad, so 50 seats the zone baselines at the corpus y=64 and
+      # the first station at y=112 (both turn files; retry/tap/shuttle
+      # headers agree at 64). Undeclared, the default min(margin_x, 24)
+      # shaved 26px off the hand files' top air.
+      margin_y: 50
       footer_h: 54
       gap: 52 # face-to-face spine travel: the hillclimb's own e1/e2 run 47/55
       # label_max_lines 2: station names WRAP at the module ceiling instead of
@@ -668,6 +674,10 @@ diagram:
       width: 1256
       display_w: 740
       margin_x: 40
+      # Masthead air for a zoned lateral spec: every zoned loop hand file
+      # seats its headers at y=64 (cycle-shuttle-v2 included), so the cell
+      # shares the vertical cell's margin_y.
+      margin_y: 50
       header_h: 62
       footer_h: 54
       caption_gap: 40 # family caption band (the shuttle preset's own 40, promoted — a gauge hanging under the rail otherwise grazed the caption at the generic margin)

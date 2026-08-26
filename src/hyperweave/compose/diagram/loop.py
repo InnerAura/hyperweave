@@ -34,7 +34,7 @@ ink lives in the decision question text (``qname``) — never the frame.
 Geometry constants: routing numbers in ``data/config/diagram-frame.yaml``'s
 ``loop:`` block, card/diamond dimensions on the topology chassis
 (``data/paradigms/primer.yaml`` topologies.loop / loop-horizontal) — every
-non-obvious number cites its specimen in v04/v040/v044/loops/.
+non-obvious number cites its specimen in v04/v040/v044/loop/.
 """
 
 from __future__ import annotations
