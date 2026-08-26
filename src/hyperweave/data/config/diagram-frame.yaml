@@ -387,13 +387,13 @@ choreography:
     halo_hold_s: 0.77 # arrival glow (6.30% -> 15.83% of 8.04)
     pop_s: 0.034 # opacity ramps (0.42% of 8.04)
     fade_s: 0.088 # glow fade (1.1%)
-    trail_stroke: 2.6 # the lit route (.fwh-tr stroke-width:2.6)
+    trail_stroke: 2.2 # the lit route's weight (the reference render draws 2.2)
     # The comet head: a bright core trailed by two staggered washes —
     # [stroke, opacity, delay_s] per layer, every corpus specimen unanimous
     # (3.6 @ 1.00 / 5.4 @ .30 +0.058s / 7.5 @ .13 +0.115s).
     pulse_layers: [[3.6, 1.0, 0.0], [5.4, 0.30, 0.058], [7.5, 0.13, 0.115]]
     pulse_head: 18 # the head's dash length
-    halo_stroke: 2.5 # arrival-halo outline width (every corpus specimen: .X-h stroke-width 2.5)
+    halo_stroke: 2 # arrival-halo outline width (the reference render rings at 2)
     halo_inflate: 0 # halos sit at the element's exact box (corpus law)
     halo_diamond_inflate: 3 # a decision's ring pushes each vertex 3px out so it reads clear of the border
     halo_opacity: 1.0 # node halos peak (the corpus halos pop to full)
@@ -527,7 +527,8 @@ finish:
   term_wash_opacity: 0.07 # advance terminal's fill (signal over the ground)
   term_rim_opacity: 0.45 # advance terminal's edge (light face)
   term_rim_w: 1.4
-  term_dark_rim_opacity: 0.6 # the dark face keeps the card ramp, rims brighter
+  term_dark_rim_opacity: 1 # the dark advance terminal wears the focus well: solid rim
+  term_dark_rim_w: 1.8 # the focus rim's weight (the reference render)
   tint_rim_w: 1.4 # a lit chip's hue rim
 
 material:

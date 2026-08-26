@@ -62,7 +62,7 @@ _HERO_RING_AMENDMENT = {("hero", "stroke")}
 # specimens paints advance #0070F3 where the language sheet's older
 # --hw-accent said #2563EB. The corpus supersedes the sheet on this ONE
 # token; every other law still grades verbatim.
-_ACCENT_AMENDMENT = {"#2563EB": "#0070F3", "#5894FF": "#3291FF"}
+_ACCENT_AMENDMENT = {"#2563EB": "#0070F3", "#5894FF": "#3B82F6"}
 
 
 @pytest.fixture(scope="module")
@@ -238,8 +238,12 @@ def test_dark_gradient_stops_match_law(emitted_dark: str) -> None:
     hi, lo = _rgb(genome_dark["card_hi"]), _rgb(genome_dark["card_lo"])
     sheet_deltas = [a - b for a, b in zip(sheet_hi, sheet_lo, strict=True)]
     amended_deltas = [a - b for a, b in zip(hi, lo, strict=True)]
-    for sheet_d, d in zip(sheet_deltas, amended_deltas, strict=True):
-        assert (sheet_d > 0) == (d > 0) or (sheet_d == 0 and abs(d) <= 1), "hue direction diverged from the sheet"
+    # Documented amendment (porcelain dark remap, 2026-08-26): an EXACTLY
+    # flat pair is a deliberate face (a flat fill cannot band); the law
+    # bans the near-flat 1..9 zone, not zero.
+    if any(amended_deltas):
+        for sheet_d, d in zip(sheet_deltas, amended_deltas, strict=True):
+            assert (sheet_d > 0) == (d > 0) or (sheet_d == 0 and abs(d) <= 1), "hue direction diverged from the sheet"
 
 
 def _rgb(hexstr: str) -> tuple[int, int, int]:
@@ -266,10 +270,11 @@ def test_card_ramp_renders_continuous(variant: str) -> None:
     and the luminance ladder holds — ground < card_lo < card_hi < chip."""
     d = _genome_diagram_dark(variant)
     hi, lo = _rgb(d["card_hi"]), _rgb(d["card_lo"])
-    assert max(abs(a - b) for a, b in zip(hi, lo, strict=True)) >= 10, (
-        f"{variant}: cf ramp below quantization threshold"
-    )
-    assert _lum(_rgb(d["ground"])) < _lum(lo) < _lum(hi) < _lum(_rgb(d["chip"])), f"{variant}: ladder order broken"
+    span = max(abs(a - b) for a, b in zip(hi, lo, strict=True))
+    # An EXACTLY flat pair is a deliberate face and cannot band; the banned
+    # zone is the near-flat 1..9 (porcelain dark remap, 2026-08-26).
+    assert span == 0 or span >= 10, f"{variant}: cf ramp in the near-flat banding zone"
+    assert _lum(_rgb(d["ground"])) < _lum(lo) <= _lum(hi) < _lum(_rgb(d["chip"])), f"{variant}: ladder order broken"
 
 
 def test_dark_seat_matches_law(emitted_dark: str) -> None:
@@ -282,9 +287,16 @@ def test_dark_seat_matches_law(emitted_dark: str) -> None:
     assert got.groups() == (want["dx"], want["dy"], want["stdDeviation"], want["flood-opacity"])
 
 
+# Documented amendment (porcelain dark remap, 2026-08-26): the dark face
+# moved to a true-black ground with NEUTRAL near-white ink; the sheet's
+# blue-cast ink is superseded on this token.
+_DARK_INK_AMENDMENT = {"#C2E4FF": "#F8FAFC", "#E0F2FF": "#F8FAFC"}
+
+
 def test_dark_ink_family_matches_law(emitted_dark: str) -> None:
     v = _DARK["vars"]
-    assert f"--dna-ink-primary: {v['--hw-ink'].strip()}" in emitted_dark
+    ink = _DARK_INK_AMENDMENT.get(v["--hw-ink"].strip().upper(), v["--hw-ink"].strip())
+    assert f"--dna-ink-primary: {ink}" in emitted_dark
     # Documented amendment (dark-accent audit, 2026-08-26): the dark accent
     # re-inked to the rich azure sibling of the light face; the sheet's
     # authored #5894FF is superseded on this ONE token.
@@ -293,7 +305,8 @@ def test_dark_ink_family_matches_law(emitted_dark: str) -> None:
     # The law is the FILL the hero name receives, not that it sits alone in its
     # selector — card+label's crown stack (hval) re-declares with the same ink.
     hname = re.findall(r"\.hw-[0-9a-f]+-hname[^{]*\{ fill: ([^;}]+)", emitted_dark)
-    assert v["--hw-ink-hero"].strip() in [h.strip() for h in hname], hname
+    ink_hero = _DARK_INK_AMENDMENT.get(v["--hw-ink-hero"].strip().upper(), v["--hw-ink-hero"].strip())
+    assert ink_hero in [h.strip() for h in hname], hname
 
 
 # ── surface invariance: one look through every door ──────────────────────────

@@ -1,45 +1,47 @@
 {
-  "faces": {
-    "dark": {
-      "conn": "#4C5F82",
-      "ink": "#D9E4F5",
-      "ink2": "#8296B4",
-      "inkhi": "#EDF3FC",
-      "s0": "#0C1220",
-      "s1": "#141E31",
-      "s2": "#1B2740",
-      "sig": "#7591D8",
-      "sigt": "#AAC6FF",
-      "stroke": "#2A3A58"
-    },
-    "light": {
-      "conn": "#A9B4C6",
-      "ink": "#1E293B",
-      "ink2": "#647588",
-      "inkhi": "#0F172A",
-      "s0": "#F7F9FC",
-      "s1": "#FFFFFF",
-      "s2": "#F7F9FC",
-      "sig": "#2563EB",
-      "sigt": "#2563EB",
-      "stroke": "#E9EDF3"
-    }
+ "faces": {
+  "dark": {
+   "conn": "#4C5F82",
+   "ink": "#D9E4F5",
+   "ink2": "#8296B4",
+   "inkhi": "#EDF3FC",
+   "s0": "#0C1220",
+   "s1": "#141E31",
+   "s2": "#1B2740",
+   "sig": "#7591D8",
+   "sigt": "#AAC6FF",
+   "stroke": "#2A3A58"
   },
-  "faces_superseded": {
-    "dark": {
-      "ink": "#C2E4FF",
-      "ink2": "#8596AB",
-      "s0": "#101216",
-      "s1": "#1D1F25",
-      "sig": "#3291FF",
-      "sigt": "#7CB8FF"
-    },
-    "light": {
-      "sig": "#0070F3",
-      "sigt": "#0070F3"
-    }
+  "light": {
+   "conn": "#A9B4C6",
+   "ink": "#1E293B",
+   "ink2": "#647588",
+   "inkhi": "#0F172A",
+   "s0": "#F7F9FC",
+   "s1": "#FFFFFF",
+   "s2": "#F7F9FC",
+   "sig": "#2563EB",
+   "sigt": "#2563EB",
+   "stroke": "#E9EDF3"
+  }
+ },
+ "faces_superseded": {
+  "dark": {
+   "ink": "#F8FAFC",
+   "ink2": "#94A3B8",
+   "s0": "#070709",
+   "s1": "#0C0D12",
+   "s2": "#141722",
+   "sig": "#3B82F6",
+   "sigt": "#60A5FA",
+   "stroke": "#383E4E"
   },
-  "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family \u2014 ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark \u2014 is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read \u2014 the language-law suite grades it directly. light.sig/sigt: the diagram accent adopts the loop expression corpus's unanimous azure #0070F3 (owner ruling 2026-08-26) over the authored face's #2563EB. dark.sig/sigt: the dark diagram accent re-inked to the rich azure #3291FF / #7CB8FF (owner ruling 2026-08-26 \u2014 the authored periwinkle read washed against the near-black plate).",
-  "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-porcelain.svg",
-  "variant": "porcelain"
+  "light": {
+   "sig": "#0070F3",
+   "sigt": "#0070F3"
+  }
+ },
+ "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family — ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark — is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read — the language-law suite grades it directly. light.sig/sigt: the diagram accent adopts the loop expression corpus's unanimous azure #0070F3 (owner ruling 2026-08-26) over the authored face's #2563EB. dark full-family: the porcelain dark face remapped 2026-08-26 to a true-black ground with neutral ink and the blue trio (owner-authored reference render); the twin's authored dark tokens record the earlier face and grade against these superseding values.",
+ "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-porcelain.svg",
+ "variant": "porcelain"
 }

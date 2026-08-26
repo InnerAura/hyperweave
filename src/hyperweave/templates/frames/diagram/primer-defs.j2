@@ -445,7 +445,7 @@
 .{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg, .{{ uid }}-termflatbg, .{{ uid }}-termadvbg { fill: url(#{{ uid }}-cf); stroke: url(#{{ uid }}-es); }
 {# The advance terminal keeps the card ramp; only its rim re-inks (the cf
    gradient stays referenced exactly once — the one-material law). #}
-.{{ uid }}-termadvbg { fill-opacity: 1; stroke: var(--dna-signal); stroke-opacity: {{ diagram_style.term_dark_rim_op }}; }
+.{{ uid }}-termadvbg { fill: {{ diagram_dark.well }}; fill-opacity: 1; stroke: {{ diagram_dark.well_rim }}; stroke-opacity: {{ diagram_style.term_dark_rim_op }}; stroke-width: {{ diagram_style.term_dark_rim_w }}; }
 {% if surface_ground != 'bare' %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg, .{{ uid }}-termadvbg, .{{ uid }}-termflatbg { filter: url(#{{ uid }}-seat); }
 {% else %}.{{ uid }}-cardbg, .{{ uid }}-herobg, .{{ uid }}-mcardbg, .{{ uid }}-termadvbg, .{{ uid }}-termflatbg { filter: url(#{{ uid }}-liftg); }
 {% endif %}
@@ -453,12 +453,27 @@
    crown's name in the card+label register, and the specimen differentiates it
    the same way (.psw-display on --hw-ink-hero over .psw-val on --hw-ink). #}
 .{{ uid }}-hname, .{{ uid }}-hval { fill: {{ diagram_dark.ink_hero }}; }
-.{{ uid }}-chipbg { fill: {{ diagram_dark.chip }}; stroke: {{ diagram_dark.edge_faint }}; }
+.{{ uid }}-chipbg { fill: {{ diagram_dark.chip }}; stroke: {{ diagram_dark.chip_border }}; }
+.{{ uid }}-tag { fill: {{ diagram_dark.chip_text }}; }
+.{{ uid }}-zoneh { fill: {{ diagram_dark.ink_zone }}; }
+{# Quiet legs rest in the wire gray on the dark face — the reference
+   render keeps every not-taken element at the same conn weight. #}
+.{{ uid }}-trlN, .{{ uid }}-puN { stroke: {{ diagram_dark.conn }}; }
+{# The discard route rests muted on the dark face (the reference render
+   draws every complement element in the quiet slate). #}
+.{{ uid }}-trlC, .{{ uid }}-puC, .{{ uid }}-haloC { stroke: {{ _genome_raw.diagram_complement_dark }}; }
+.{{ uid }}-hdoC { fill: {{ _genome_raw.diagram_complement_dark }}; }
+.{{ uid }}-connmuted, .{{ uid }}-fls, .{{ uid }}-flcomp { stroke-width: 1.6; }
+.{{ uid }}-cardbg { stroke-width: 1.5; }
+.{{ uid }}-hdoN { fill: {{ diagram_dark.conn }}; }
 {% if conn_muted %}.{{ uid }}-connmuted { stroke: {{ diagram_dark.conn }}; }
 .{{ uid }}-connmutedf { fill: {{ diagram_dark.conn }}; }
 {% endif %}{% if health_nodes or health_ns.legend %}.{{ uid }}-warn { fill: {{ _genome_raw.diagram_status_warning_dark }}; }
 .{{ uid }}-crit { fill: {{ _genome_raw.diagram_status_critical_dark }}; }
-{% endif %}{% if diamond_nodes %}.{{ uid }}-qname { fill: {{ _genome_raw.diagram_deliberation_dark }}; }
+{% endif %}{% if diamond_nodes %}{# On the dark face the question reads in the neutral ink — the
+   deliberation amber concentrates in the decision's arrival ring, so the
+   amber is an event, never a permanent text state. #}
+.{{ uid }}-qname { fill: {{ diagram_dark.ink }}; }
 .{{ uid }}-haloW { stroke: {{ _genome_raw.diagram_deliberation_dark }}; }
 {% endif %}{% if comp_ns.present %}.{{ uid }}-flcomp { stroke: {{ _genome_raw.diagram_complement_dark }}; }
 .{{ uid }}-flcompf { fill: {{ _genome_raw.diagram_complement_dark }}; }

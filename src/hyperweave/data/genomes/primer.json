@@ -157,7 +157,11 @@
         "accent_text": "#DBDBDB",
         "conn": "#555554",
         "glyph": "#E5E5E5",
-        "border": "rgba(246, 246, 246, 0.28)"
+        "border": "rgba(246, 246, 246, 0.28)",
+        "well": "#212121",
+        "well_rim": "#868686",
+        "chip_border": "#343434",
+        "chip_text": "#D2D2D2"
       }
     },
     "carbon": {
@@ -264,7 +268,11 @@
         "accent_text": "#FFB071",
         "conn": "#585857",
         "glyph": "#D4D4D4",
-        "border": "rgba(228, 228, 228, 0.28)"
+        "border": "rgba(228, 228, 228, 0.28)",
+        "well": "#331F12",
+        "well_rim": "#C75C12",
+        "chip_border": "#3B3B3B",
+        "chip_text": "#C6C6C6"
       }
     },
     "space": {
@@ -371,7 +379,11 @@
         "accent_text": "#8CF0FF",
         "conn": "#505968",
         "glyph": "#CBD5E1",
-        "border": "rgba(223, 229, 236, 0.28)"
+        "border": "rgba(223, 229, 236, 0.28)",
+        "well": "#122A3F",
+        "well_rim": "#2D97C6",
+        "chip_border": "#343B4B",
+        "chip_text": "#BDC7D3"
       }
     },
     "anvil": {
@@ -478,7 +490,11 @@
         "accent_text": "#B9C6E4",
         "conn": "#5C5C5F",
         "glyph": "#E4E4E7",
-        "border": "rgba(245, 245, 246, 0.28)"
+        "border": "rgba(245, 245, 246, 0.28)",
+        "well": "#292A31",
+        "well_rim": "#6E7991",
+        "chip_border": "#434346",
+        "chip_text": "#D4D4D7"
       }
     },
     "porcelain": {
@@ -560,41 +576,45 @@
           "diagram_conn_muted": "#A9B4C6"
         },
         "dark": {
-          "surface_0": "#0C1220",
-          "surface_1": "#141E31",
-          "surface_2": "#1B2740",
-          "ink": "#D9E4F5",
-          "ink_secondary": "#8296B4",
-          "ink_bright": "#EDF3FC",
-          "accent": "#3291FF",
-          "accent_text": "#7CB8FF",
-          "stroke": "#2A3A58",
-          "region_fill": "#162034",
-          "region_stroke": "#2A3A58",
-          "diagram_conn_muted": "#4C5F82"
+          "surface_0": "#070709",
+          "surface_1": "#0C0D12",
+          "surface_2": "#141722",
+          "ink": "#F8FAFC",
+          "ink_secondary": "#94A3B8",
+          "ink_bright": "#FFFFFF",
+          "accent": "#3B82F6",
+          "accent_text": "#60A5FA",
+          "stroke": "#383E4E",
+          "region_fill": "#0C0D12",
+          "region_stroke": "#2D3345",
+          "diagram_conn_muted": "#383E4E"
         }
       },
       "diagram_dark": {
         "seat": "#000000",
-        "ground": "#101216",
-        "card_lo": "#15171A",
-        "card_hi": "#1D1F25",
-        "chip": "#212328",
-        "hero_lo": "#1E242E",
-        "hero_hi": "#232933",
-        "edge_hi": "rgba(224, 242, 255, 0.16)",
-        "edge_mid": "rgba(224, 242, 255, 0.05)",
-        "edge_lo": "rgba(224, 242, 255, 0.02)",
-        "edge_faint": "rgba(224, 242, 255, 0.07)",
-        "ink": "#C2E4FF",
-        "ink_hero": "#E0F2FF",
-        "ink_dim": "#8596AB",
-        "ink_zone": "#C2E4FF",
-        "accent": "#3291FF",
-        "accent_text": "#7CB8FF",
-        "conn": "#4F5A67",
-        "glyph": "#C2E4FF",
-        "border": "rgba(224, 242, 255, 0.28)"
+        "ground": "#070709",
+        "card_lo": "#0C0D12",
+        "card_hi": "#0C0D12",
+        "chip": "#141722",
+        "hero_lo": "#0E1017",
+        "hero_hi": "#181C28",
+        "edge_hi": "#383E4E",
+        "edge_mid": "#383E4E",
+        "edge_lo": "#383E4E",
+        "edge_faint": "rgba(226, 232, 240, 0.07)",
+        "ink": "#F8FAFC",
+        "ink_hero": "#F8FAFC",
+        "ink_dim": "#94A3B8",
+        "ink_zone": "#94A3B8",
+        "accent": "#3B82F6",
+        "accent_text": "#60A5FA",
+        "conn": "#383E4E",
+        "glyph": "#F8FAFC",
+        "border": "#383E4E",
+        "well": "#09132B",
+        "well_rim": "#2563EB",
+        "chip_border": "#2D3345",
+        "chip_text": "#E2E8F0"
       }
     },
     "cream": {
@@ -710,7 +730,11 @@
         "accent_text": "#F0C27A",
         "conn": "#5F574E",
         "glyph": "#EFDECE",
-        "border": "rgba(249, 240, 231, 0.28)"
+        "border": "rgba(249, 240, 231, 0.28)",
+        "well": "#312512",
+        "well_rim": "#B27B2A",
+        "chip_border": "#3F3B34",
+        "chip_text": "#DDCEBE"
       }
     },
     "dusk": {
@@ -826,7 +850,11 @@
         "accent_text": "#FFD0E3",
         "conn": "#66535B",
         "glyph": "#FFD3E4",
-        "border": "rgba(255, 234, 243, 0.28)"
+        "border": "rgba(255, 234, 243, 0.28)",
+        "well": "#312026",
+        "well_rim": "#A46C7C",
+        "chip_border": "#44383D",
+        "chip_text": "#ECC3D3"
       }
     },
     "petrol": {
@@ -942,7 +970,11 @@
         "accent_text": "#A9DFD9",
         "conn": "#4B5C5B",
         "glyph": "#C5EAE9",
-        "border": "rgba(227, 247, 246, 0.28)"
+        "border": "rgba(227, 247, 246, 0.28)",
+        "well": "#172A29",
+        "well_rim": "#428C86",
+        "chip_border": "#343E3E",
+        "chip_text": "#B6D8D7"
       }
     }
   },
@@ -996,9 +1028,9 @@
   "diagram_status_critical": "#DC2626",
   "diagram_status_critical_dark": "#F87171",
   "diagram_deliberation": "#B45309",
-  "diagram_deliberation_dark": "#E3A455",
+  "diagram_deliberation_dark": "#FBBF24",
   "diagram_complement": "#5C7C9E",
-  "diagram_complement_dark": "#7E9DBE",
+  "diagram_complement_dark": "#94A3B8",
   "paradigms": {
     "badge": "primer",
     "strip": "primer",

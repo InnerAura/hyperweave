@@ -174,6 +174,21 @@ class TestMotionAnatomy:
             "connmutedf",
             "warn",
             "crit",
+            # The porcelain dark remap (2026-08-26) grew the material block:
+            # chip text and zone headers re-ink, the quiet/complement
+            # choreography families rest in the wire grays, and the flourish
+            # wires carry the reference weight.
+            "tag",
+            "zoneh",
+            "trlN",
+            "puN",
+            "hdoN",
+            "trlC",
+            "puC",
+            "hdoC",
+            "haloC",
+            "fls",
+            "flcomp",
         )
         allowed = {f"{uid}-{cls}" for cls in material}
         for m in re.finditer(r"@media[^{]*prefers-color-scheme[^{]*\{", svg):

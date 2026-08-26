@@ -14,6 +14,7 @@ Fixes the ANSI projection's card padding, the loop's top margin spacing, and the
 - **`--format ansi`** — card text keeps a cell of padding inside its border instead of touching it.
 - **Loop top margin** — a loop's headers and first station get their full breathing room at the top of the canvas.
 - **Decision halos** — a loop decision lights its own diamond outline as the route arrives, so every station now glows on arrival.
+- **Porcelain dark** — diagrams sit on a true-black ground with neutral ink and richer blues; the deliberation amber lives only in the decision's arrival ring.
 - **Tree frame** — a tree diagram keeps its full frame width, so the header and legend hold their corners beside the centered root.
 
 ## [0.4.4] - 2026-08-26

@@ -480,6 +480,7 @@ def _style_params(engine: dict[str, Any], ch: DiagramTopologyChassis) -> dict[st
         "term_rim_op": (engine.get("finish") or {}).get("term_rim_opacity", 0.45),
         "term_rim_w": (engine.get("finish") or {}).get("term_rim_w", 1.4),
         "term_dark_rim_op": (engine.get("finish") or {}).get("term_dark_rim_opacity", 0.6),
+        "term_dark_rim_w": (engine.get("finish") or {}).get("term_dark_rim_w", 1.8),
         "tint_rim_w": (engine.get("finish") or {}).get("tint_rim_w", 1.4),
         "march_opacity": track["march_opacity"],
         "return_drift_dash": track["return_drift_dash"],
