@@ -271,10 +271,8 @@ def test_card_ramp_renders_continuous(variant: str) -> None:
     d = _genome_diagram_dark(variant)
     hi, lo = _rgb(d["card_hi"]), _rgb(d["card_lo"])
     span = max(abs(a - b) for a, b in zip(hi, lo, strict=True))
-    # An EXACTLY flat pair is a deliberate face and cannot band; the banned
-    # zone is the near-flat 1..9 (porcelain dark remap, 2026-08-26).
-    assert span == 0 or span >= 10, f"{variant}: cf ramp in the near-flat banding zone"
-    assert _lum(_rgb(d["ground"])) < _lum(lo) <= _lum(hi) < _lum(_rgb(d["chip"])), f"{variant}: ladder order broken"
+    assert span >= 10, f"{variant}: cf ramp below quantization threshold"
+    assert _lum(_rgb(d["ground"])) < _lum(lo) < _lum(hi) < _lum(_rgb(d["chip"])), f"{variant}: ladder order broken"
 
 
 def test_dark_seat_matches_law(emitted_dark: str) -> None:
