@@ -1424,7 +1424,7 @@ presets:
   dag-bottleneck:
     topology: dag
     zones: ["service dependencies"] # specimen -zone runs, verbatim
-    chassis: { card_min_w: 145, node: { w: 145, h: 60 }, hero: { w: 145, h: 60, rx: 13 } , zone_content_gap: 209, caption_gap: 65, caption_pad: 21} # kernel-bottleneck: compact uniform glyph cards, hero == std
+    chassis: { card_min_w: 145, node: { w: 145, h: 60 }, hero: { w: 145, h: 60, rx: 13 } , caption_gap: 65, caption_pad: 21} # kernel-bottleneck: compact uniform glyph cards, hero == std. zone_content_gap 209 retired (owner triage 2026-08-27): it opened a 209px void between the zone word and the first row in BOTH orientations; the family's 42 governs
     title: Service dependency graph
     subtitle: Arrows point from each service to what it depends on — core is required by four, the one bottleneck
     notes: dependency bottleneck

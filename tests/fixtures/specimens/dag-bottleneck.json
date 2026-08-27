@@ -50,6 +50,7 @@
     "content_top": 273.0,
     "zone_y": 64.0
   },
+  "plate_amendment": "owner triage 2026-08-27: the hand sheet's 209px zone-to-content air is recorded as unfinished composition \u2014 it opened a void above the row in both orientations and the preset's zone_content_gap: 209 transplant is retired; the render grades against the family's 42. The specimen still validates its own 209.",
   "port_tolerance": 1.5,
   "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/dag-seq-tree/pp-dep-mesh-v2.svg",
   "viewbox": [

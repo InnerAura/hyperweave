@@ -264,25 +264,40 @@ def test_every_conduit_returns_along_its_own_corridor(pairs: int, orientation: s
 
 @pytest.mark.parametrize("pairs", [1, 2, 3])
 @pytest.mark.parametrize("orientation", ["horizontal", "vertical"])
-def test_conduit_chips_never_overlap(pairs: int, orientation: str) -> None:
+def test_conduit_wears_no_pills_and_labels_never_overlap(pairs: int, orientation: str) -> None:
+    """A conduit never wears chip pills — its labels are the bare BRACKET.
+
+    SUPERSEDED (owner bracket ruling): this test used to assert the
+    OPPOSITE — ``len(chips) == pairs * 2``, every authored chip rendered as
+    a pill on its channel. The owner's verdict on that render ("still
+    crowded on the chips") and the pp-mcp-gateway specimen retired it: a
+    pill on one lane occludes the partner lane by construction, so the
+    authored chip style takes a structural override and each conduit
+    renders one bare label pair instead. The no-overlap half of the old law
+    carries over to the labels.
+    """
     lay = _compose_layout(_duplex_spec(pairs, orientation=orientation, chips=True))
     chips = [a for a in lay.annotations if a.kind == "edge-chip" and a.box is not None]
-    assert len(chips) == pairs * 2, "every declared chip rendered as a pill"
-    for a, b in itertools.combinations(chips, 2):
+    assert chips == [], f"{orientation} {pairs}-pair: a conduit wears a pill"
+    labels = [a for a in lay.annotations if a.kind == "label" and a.box is not None]
+    assert len(labels) == pairs * 2, "every declared conduit label rendered as bare bracket text"
+    for a, b in itertools.combinations(labels, 2):
         ox = min(a.box.x + a.box.w, b.box.x + b.box.w) - max(a.box.x, b.box.x)
         oy = min(a.box.y + a.box.h, b.box.y + b.box.h) - max(a.box.y, b.box.y)
         assert ox <= 0 or oy <= 0, (
-            f"{orientation} {pairs}-pair: chips overlap by {ox:.1f}x{oy:.1f} — "
+            f"{orientation} {pairs}-pair: labels overlap by {ox:.1f}x{oy:.1f} — "
             f"{[t.text for t in a.lines]} and {[t.text for t in b.lines]}"
         )
 
 
 @pytest.mark.parametrize("orientation", ["horizontal", "vertical"])
 def test_both_channels_of_a_conduit_keep_the_same_label_grammar(orientation: str) -> None:
-    # One conduit cannot be half pill and half bare text.
+    # One conduit cannot be half pill and half bare text. (Since the
+    # bracket ruling the one grammar is BARE — the pill half of the old
+    # assertion lives on inverted in the no-pills law above.)
     lay = _compose_layout(_duplex_spec(2, orientation=orientation, chips=True))
     kinds = [a.kind for a in lay.annotations if a.box is not None]
-    assert set(kinds) == {"edge-chip"}, f"mixed label grammar on a conduit: {sorted(set(kinds))}"
+    assert set(kinds) == {"label"}, f"mixed label grammar on a conduit: {sorted(set(kinds))}"
 
 
 def _sample_any(d: str) -> list[tuple[float, float]]:
@@ -320,35 +335,133 @@ def _fanned_duplex_spec(*, orientation: str, chips: bool) -> dict[str, Any]:
 
 @pytest.mark.parametrize("orientation", ["horizontal", "vertical"])
 @pytest.mark.parametrize("chips", [False, True])
-def test_fanned_duplex_draws_the_familys_own_curve(orientation: str, chips: bool) -> None:
-    """A fanned conduit is the family's S-curve, not a chord.
+def test_fanned_duplex_routes_as_an_orthogonal_bus(orientation: str, chips: bool) -> None:
+    """One grammar per face: every off-row edge on a conduit-bearing face
+    takes the orthogonal channel route — the pair as a dual-lane bus, the
+    plain edge beside it as a single-lane channel.
 
-    Both channels must be cubics whose control points sit at the major
-    midpoint, exactly like the plain edge beside them — a straight ``L``
-    chord read as foreign geometry against its own siblings.
+    SUPERSEDED (owner composition ruling): this test used to pin the
+    OPPOSITE — ``"C" in d and " L " not in d``, the family's own S-curve for
+    a fanned conduit. The owner falsified that by eye ("not coherent with
+    5+ edges all stacked and bent on top of one another"): a free curve
+    separates a fan by curvature, which only reads while every wire on the
+    face travels the same way, and a conduit face carries traffic both
+    ways. The routes are now straight legs joined by fixed-radius fillets,
+    same as every other detour in the family.
     """
     spec = _fanned_duplex_spec(orientation=orientation, chips=chips)
     lay = _compose_layout(spec)
-    plain = lay.connectors[2].path_d
-    assert "C" in plain, "precondition: the family draws its plain edges as cubics"
-    for idx in (0, 1):
+    for idx in (0, 1, 2):
         d = lay.connectors[idx].path_d
-        assert "C" in d and " L " not in d, f"conduit channel {idx} drew a chord, not the family's curve: {d}"
+        assert "C" not in d and " L " in d and "Q " in d, (
+            f"channel {idx} is not an orthogonal route (legs + fillets): {d}"
+        )
 
 
 @pytest.mark.parametrize("orientation", ["horizontal", "vertical"])
-def test_fanned_duplex_channels_stay_parallel(orientation: str) -> None:
-    """Shifting both endpoints of a cubic by one pitch translates the whole
-    curve, so the two channels hold their separation end to end rather than
-    pinching or splaying."""
+def test_fanned_duplex_bus_holds_the_lane_gap(orientation: str) -> None:
+    """The pair is a LOCKED bus: both channels turn at the same elbows and
+    hold the lane gap throughout — never two free wires.
+
+    Graded from the drawn geometry against the gap's own terms
+    (``max(motion_lane_air, half_pill_h + foreign_clearance + headroom)``):
+    the channels never pinch below the corner floor, and the straight legs —
+    where the pills and the partner wire actually meet — hold the gap
+    itself. At a shared elbow the inner lane's corner legitimately nears the
+    outer lane's by ``(gap - fillet_r) * sqrt(2)``, which is the only place
+    the separation may dip under the gap.
+    """
     lay = _compose_layout(_fanned_duplex_spec(orientation=orientation, chips=True))
+    conn_cfg = ENGINE.get("connector") or {}
+    lane_air = float(ENGINE.get("lane_min_air") or 3)
+    clear = float(conn_cfg.get("chip_foreign_wire_clearance", 2))
+    headroom = float(conn_cfg.get("lane_rounding_headroom", 0.5))
+    # The gap's pill term measures the AUTHORED labels' pill boxes — the
+    # bracket renders them as bare text, but the pair keeps its separation
+    # floor (the bracket ruling left the lane gap untouched). Across-run
+    # extent is the pill's height on a flow leg flowing right, its width
+    # flowing down.
+    from hyperweave.compose.diagram.sizing import solve_chip_box
+
+    pills = [
+        solve_chip_box(str(e["label"]), PARADIGM)
+        for e in _fanned_duplex_spec(orientation=orientation, chips=True)["edges"][:2]
+    ]
+    across = max((h if orientation == "horizontal" else w) for w, h in pills)
+    gap = max(lane_air, across / 2 + clear + headroom)
+    arc_r = 7.0  # the chassis over_arc_r every detour fillet cites
     a = _sample_any(lay.connectors[0].path_d)
-    b = list(reversed(_sample_any(lay.connectors[1].path_d)))
-    n = min(len(a), len(b))
-    seps = [math.hypot(a[i][0] - b[i][0], a[i][1] - b[i][1]) for i in range(n)]
-    assert max(seps) - min(seps) < 6.0, (
-        f"{orientation}: conduit separation drifts {min(seps):.1f}..{max(seps):.1f}px along the run"
+    b = _sample_any(lay.connectors[1].path_d)
+    b_segs = list(itertools.pairwise(b))
+    seps = [min(_dist_to_seg(ax, ay, p, q) for p, q in b_segs) for ax, ay in a]
+    corner_floor = min(gap, (gap - arc_r) * math.sqrt(2.0))
+    assert min(seps) >= corner_floor - 0.6, (
+        f"{orientation}: the two channels pinch to {min(seps):.1f}px (corner floor {corner_floor:.1f})"
     )
+    # Locked means the closest approach IS the lane gap: two channels that
+    # never come within it are two free wires that happen to agree, not one
+    # conduit — and two parallel offset polylines meet exactly at the gap
+    # along their shared legs.
+    assert min(seps) <= gap + 1.0, (
+        f"{orientation}: the channels never close to the lane gap (nearest {min(seps):.1f} vs {gap:.1f}) — "
+        f"a bus is one conduit with two lanes, not two free wires"
+    )
+
+
+@pytest.mark.parametrize("orientation", ["horizontal", "vertical"])
+def test_fanned_duplex_labels_bracket_the_bus(orientation: str) -> None:
+    """The conduit's labels are one BRACKET: bare text, request outboard of
+    the outbound lane, response outboard of the return lane, both at the
+    same along-run coordinate on the caller-side legs — the dialogue reads
+    from position, question over the outbound, answer under the return.
+
+    SUPERSEDED (owner bracket ruling): this test used to pin pills riding
+    each channel's source-side leg ("Pills all ride", the round-6 §4). The
+    owner's verdict retired the pill grammar for conduits; the caller-side
+    reading carries over — both labels sit nearer the CALLER (the request's
+    source) than the callee.
+    """
+    lay = _compose_layout(_fanned_duplex_spec(orientation=orientation, chips=True))
+    boxes = {n.index: n.box for n in lay.nodes}
+    labels = {}
+    for a in lay.annotations:
+        if a.kind == "label" and a.box is not None:
+            labels[" ".join(t.text for t in a.lines)] = a
+    assert set(labels) >= {"req", "res"}, f"bracket labels missing: {sorted(labels)}"
+    req, res = labels["req"], labels["res"]
+    assert req.box is not None and res.box is not None
+    # Same along-run coordinate: x flowing right, y flowing down.
+    if orientation == "horizontal":
+        assert abs((req.box.x + req.box.w / 2) - (res.box.x + res.box.w / 2)) <= 1.0
+    else:
+        assert abs((req.box.y + req.box.h / 2) - (res.box.y + res.box.h / 2)) <= 1.0
+    # The bracket wraps the bus: the two labels sit on OPPOSITE sides of
+    # both lanes, outboard, never in the corridor between them.
+    req_pts = _sample_any(lay.connectors[0].path_d)
+    res_pts = _sample_any(lay.connectors[1].path_d)
+    for name, a in (("req", req), ("res", res)):
+        assert a.box is not None
+        cx, cy = a.box.x + a.box.w / 2, a.box.y + a.box.h / 2
+        own = 0 if name == "req" else 1
+        d_own = min(_dist_to_seg(cx, cy, p, q) for p, q in itertools.pairwise((req_pts, res_pts)[own]))
+        d_other = min(_dist_to_seg(cx, cy, p, q) for p, q in itertools.pairwise((req_pts, res_pts)[1 - own]))
+        assert d_own < d_other, f"{name} sits nearer its partner's lane than its own"
+        assert d_own > 2.0, f"{name} lies on its own wire — a bracket label sits beside its lane, never on it"
+        # Caller-side: nearer the request's source card than the callee's.
+        caller = boxes[lay.connectors[0].source_index]
+        callee = boxes[lay.connectors[0].target_index]
+        assert _box_gap((cx, cy), caller) < _box_gap((cx, cy), callee), (
+            f"{name} sits nearer the callee than the caller — the bracket seats on the caller-side legs"
+        )
+
+
+def _dist_to_seg(px: float, py: float, a: tuple[float, float], b: tuple[float, float]) -> float:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    denom = dx * dx + dy * dy
+    if denom == 0:
+        return math.hypot(px - a[0], py - a[1])
+    t = max(0.0, min(1.0, ((px - a[0]) * dx + (py - a[1]) * dy) / denom))
+    return math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy))
 
 
 @pytest.mark.parametrize("orientation", ["horizontal", "vertical"])

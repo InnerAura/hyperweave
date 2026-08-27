@@ -13,8 +13,8 @@ under-curves — the back-edge is the point.
 from __future__ import annotations
 
 import math
-from dataclasses import replace
-from typing import TYPE_CHECKING
+from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.diagram.anchors import boundary_anchor, port_row, side_anchor
 from hyperweave.compose.diagram.axis import RIGHT, AxisMap
@@ -60,7 +60,7 @@ from hyperweave.compose.spatial_records import LineSpec, RectSpec
 from hyperweave.core.diagram import DiagramCapacityError, DiagramInputError, DiagramNode, NodeRole, NodeStyle
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
     from hyperweave.compose.diagram.records import DiagramLayout, NodePlacement
     from hyperweave.core.diagram import ResolvedEdge
@@ -149,41 +149,90 @@ def _conduit_lane_gaps(ctx: SolverContext, axis: AxisMap, edges: Sequence[Resolv
     ]
 
 
-def _slot_pitch(
+def _face_neighbour_edges(edges: Sequence[ResolvedEdge], members: Sequence[int], node_i: int) -> dict[int, list[int]]:
+    """The face's edge indices grouped by which NEIGHBOUR they run to — one
+    slot per key, a pair's two channels under the same key."""
+    out: dict[int, list[int]] = {}
+    for j in members:
+        e = edges[j]
+        other = e.target if e.source == node_i else e.source
+        out.setdefault(other, []).append(j)
+    return out
+
+
+def _slot_extents(
     ctx: SolverContext,
     axis: AxisMap,
     edges: Sequence[ResolvedEdge],
-    members: Sequence[int],
+    idxs: Sequence[int],
+    lanes: Sequence[int],
     gaps: Sequence[float],
-    pitch_max: float,
-) -> float:
-    """Distance between neighbouring slots on one face, from its terms.
+) -> tuple[float, float]:
+    """What one slot occupies ACROSS the flow, each side of its centre.
 
-    Three demands, and the pitch is the largest:
-
-    ``pitch_max``  — the family's own port spacing, so wires read apart.
-    ``widest lane gap`` — a slot must hold the conduit it carries, or one
-    pair's channels reach into the next pair's slot and interleave.
-    ``pill air`` — two chips on ADJACENT slots share a seat fraction (both
-    outbound chips sit at t_out), so nothing separates them along the run and
-    the pitch alone has to clear their plates: ``max_pill_across + air``.
-
-    The third is easy to miss because it is not about the conduit at all: it
-    is about two DIFFERENT conduits whose chips land at the same fraction of
-    parallel runs. Without it the slots satisfy every conduit law and the
-    pills still fuse.
+    A conduit slot carries two lanes half a gap out, and the BRACKET label
+    outboard of each: on a flow-leg bracket that is the lift plus the type's
+    ascent above the outbound lane and the below offset plus the descent
+    under the return lane; flowing down the labels sit beside the lanes, so
+    the outboard cost is the lift plus the measured line. A single-edge
+    slot carries its pill's half-extent across the run, a bare-labelled one
+    half its text block, an unlabelled wire only its stroke. Slot spacing
+    and the face band price these — the flat pill constant this replaces
+    let a bracket label sit on the neighbouring conduit's wire (measured:
+    the label laddered 120px off its seat fleeing it).
     """
     conn = ctx.engine.get("connector") or {}
-    air = float(conn.get("chip_pill_air", 6))
-    widest_gap = max((gaps[j] for j in members if j < len(gaps) and gaps[j]), default=0.0)
-    pill_across = 0.0
-    for j in members:
-        e = edges[j]
-        if e.label and e.label_style == "chip":
-            w, h = solve_chip_box(e.label, ctx.cfg)
-            pill_across = max(pill_across, h if axis.flow == "right" else w)
-    pill_need = pill_across + air if pill_across else 0.0
-    return max(pitch_max, widest_gap, pill_need)
+    g = max((gaps[j] for j in idxs if j < len(gaps)), default=0.0)
+    voice = ctx.cfg.edge_label_voice
+    horiz = axis.flow == "right"
+    ascent = float(voice.size) * ctx.cfg.text_ascent_ratio
+    descent = float(voice.size) * ctx.cfg.text_descent_ratio
+    lane_members = [j for j in idxs if j < len(lanes) and lanes[j] != 0]
+    if lane_members:
+        lift = float(conn.get("sm_label_lift", 8))
+        if horiz:
+            above_off, below_off = _bracket_offsets(lift, float(voice.size), ctx.cfg.text_ascent_ratio)
+            return g / 2 + above_off + ascent, g / 2 + below_off + descent
+        req = next((j for j in lane_members if lanes[j] < 0), lane_members[0])
+        resp = next((j for j in lane_members if lanes[j] > 0), lane_members[-1])
+        w_req = measure_voice(edges[req].label, voice) if edges[req].label else 0.0
+        w_resp = measure_voice(edges[resp].label, voice) if edges[resp].label else 0.0
+        return g / 2 + lift + w_req, g / 2 + lift + w_resp
+    labelled = [j for j in idxs if edges[j].label]
+    chips = [j for j in labelled if edges[j].label_style == "chip"]
+    if chips:
+        half = max((CHIP_H if horiz else solve_chip_box(edges[j].label, ctx.cfg)[0]) for j in chips) / 2
+        return half, half
+    if labelled:
+        block = (ascent + descent) / 2 if horiz else max(measure_voice(edges[j].label, voice) for j in labelled) / 2
+        return block, block
+    return 1.0, 1.0
+
+
+def _slot_stack(
+    ctx: SolverContext,
+    axis: AxisMap,
+    edges: Sequence[ResolvedEdge],
+    ordered_idxs: Sequence[Sequence[int]],
+    lanes: Sequence[int],
+    gaps: Sequence[float],
+    pitch_max: float,
+) -> tuple[list[float], list[float], float]:
+    """Cumulative positions for an ORDERED row of slots: each adjacency is
+    spaced by its two occupants' extents plus the collide gate's air,
+    floored at the family port pitch. Returns the positions, each slot's
+    lane gap, and the face band the stack needs (span plus the end lanes'
+    half-gaps plus the row insets) — one construction shared by the
+    reservation and the placement, so the two can never price the same
+    slots differently."""
+    air = _slot_stack_air(ctx)
+    exts = [_slot_extents(ctx, axis, edges, idxs, lanes, gaps) for idxs in ordered_idxs]
+    pos = [0.0]
+    for r in range(1, len(ordered_idxs)):
+        pos.append(pos[-1] + max(pitch_max, exts[r - 1][1] + air + exts[r][0]))
+    gs = [max((gaps[j] for j in idxs if j < len(gaps)), default=0.0) for idxs in ordered_idxs]
+    band = pos[-1] + gs[0] / 2 + gs[-1] / 2 + 20.0
+    return pos, gs, band
 
 
 def _conduit_port_band(
@@ -196,26 +245,30 @@ def _conduit_port_band(
     *,
     pitch_max: float = 16.0,
 ) -> dict[int, float]:
-    """Minor band each conduit-bearing face needs to seat its own ports.
+    """Minor band a conduit-bearing flow face needs to seat its own port.
 
-    Deliberately independent of placement: the band follows from how many
-    NEIGHBOURS a face has and how wide the widest conduit on it is, and both
-    are known from the edge list alone. Only the ORDERING of the slots needs
-    positions, and that happens after sizing — which is the only order that
-    works, since the band feeds the height floor that sizing consumes.
+    Under PERIMETER ROUTING the flow face carries at most the flush traffic
+    — one same-row pair, since two neighbours cannot share the hub's row —
+    so the band prices exactly ONE conduit slot: the widest pair's own
+    extents (lanes plus bracket labels) with the row insets. This is what
+    returns the hub to the standard card class; the multi-slot stack the
+    perimeter superseded priced every off-row track's bracket onto this one
+    face and grew the hero past twice its neighbours.
     """
-
     faces = _incident_by_face(edges, rank)
     out: dict[int, float] = {}
     for (node_i, _face), members in faces.items():
         if not any(j < len(lanes) and lanes[j] != 0 for j in members):
             continue
-        others = {(edges[j].target if edges[j].source == node_i else edges[j].source) for j in members}
-        if len(others) < 2:
-            continue
-        widest = max((gaps[j] for j in members if j < len(gaps) and gaps[j]), default=pitch_max)
-        pitch = _slot_pitch(ctx, axis, edges, members, gaps, pitch_max)
-        out[node_i] = max(out.get(node_i, 0.0), (len(others) - 1) * pitch + widest + 20.0)
+        by_other = _face_neighbour_edges(edges, members, node_i)
+        widest = 0.0
+        for idxs in by_other.values():
+            if not any(j < len(lanes) and lanes[j] != 0 for j in idxs):
+                continue
+            above, below_e = _slot_extents(ctx, axis, edges, idxs, lanes, gaps)
+            widest = max(widest, above + below_e)
+        if widest:
+            out[node_i] = max(out.get(node_i, 0.0), widest + 20.0)
     return out
 
 
@@ -247,11 +300,13 @@ def _incident_by_face(edges: Sequence[ResolvedEdge], rank: Sequence[int]) -> dic
 def _conduit_face_slots(
     ctx: SolverContext,
     edges: tuple[ResolvedEdge, ...] | list[ResolvedEdge],
-    placed: dict[int, NodePlacement],
+    centers: Mapping[int, float],
+    face_len: Mapping[int, float],
     axis: AxisMap,
     lanes: Sequence[int],
     gaps: Sequence[float],
     rank: Sequence[int],
+    routed: Mapping[int, _ChannelRoute],
     *,
     pitch_max: float = 16.0,
 ) -> tuple[dict[tuple[int, int], float], dict[int, float]]:
@@ -277,31 +332,458 @@ def _conduit_face_slots(
     Returns the slot centres AND the minor band each face needs, so a face
     too short to seat its own ports can be grown by the residual rather than
     silently clamping its slots until neighbouring pairs interleave.
+
+    Positions come in as bare ``centers``/``face_len`` mappings rather than
+    placements so the SAME ordering can run before the boxes are seated: the
+    rank-gap reservation has to decide which edges route through the channel
+    from the rows alone, and a second, slightly different ordering there
+    would let the reservation and the route disagree about the same edge.
     """
     slots: dict[tuple[int, int], float] = {}
     band: dict[int, float] = {}
     for (node_i, _face), members in _incident_by_face(edges, rank).items():
-        if node_i not in placed:
+        if node_i not in centers:
             continue
         if not any(j < len(lanes) and lanes[j] != 0 for j in members):
             continue  # no conduit on this face — the centre mouth still rules
-        others = {(edges[j].target if edges[j].source == node_i else edges[j].source) for j in members}
+        by_other = _face_neighbour_edges(edges, members, node_i)
+        # A perimeter-routed neighbour left this face entirely — its track
+        # uses the hub's minor face — so it neither takes a slot nor prices
+        # the stack.
+        others = {o for o, idxs in by_other.items() if not all(j in routed for j in idxs)}
         if len(others) < 2:
             continue  # one neighbour, one slot: the centre already is it
-        box = placed[node_i].box
-        cy = _minor_center(axis, placed[node_i])
-        ordered = sorted(others, key=lambda k: _minor_center(axis, placed[k]))
-        # A slot must be at least as wide as the conduit it carries, or one
-        # pair's channels reach past their slot and interleave with the next
-        # pair's — a crossing, not merely a crowd.
-        widest = max((gaps[j] for j in members if j < len(gaps) and gaps[j]), default=pitch_max)
-        pitch = _slot_pitch(ctx, axis, edges, members, gaps, pitch_max)
-        face_len = axis.box_minor(box.w, box.h)
-        slot_offs = port_row(len(ordered), pitch=pitch, face_len=face_len, inset=10.0)
+        cy = centers[node_i]
+        ordered = sorted(others, key=lambda k: centers[k])
+        # Slots stack by their own EXTENTS — a conduit slot spends its lane
+        # gap plus its bracket labels, a pill slot its pill, a bare wire its
+        # stroke — with the air the collide gate will actually measure
+        # between neighbours (its label text margin, floored at the plate
+        # air), and the whole thing floored at the family's port pitch so
+        # wires read apart. A uniform pitch here must price every adjacency
+        # at the worst one; the stack gives each pair what its occupants
+        # need. Pricing the air below the gate's margin is how a lawful
+        # seat still gets laddered 100px off its bracket.
+        pos, gs, _band = _slot_stack(ctx, axis, edges, [by_other[o] for o in ordered], lanes, gaps, pitch_max)
+        # The face itself only has to seat the LANES (the labels hang out in
+        # the gap): outermost lane half-gaps inside the inset. What centres
+        # on the face is the full lane EXTENT — first lane to last lane —
+        # not the slot span: centring the span pushes the heavier end's lane
+        # past the inset whenever the end gaps differ (measured: a hub's top
+        # lane departing 6px under the face's own corner radius). A face
+        # still too short scales the whole stack rather than interleaving
+        # pairs — and the band returned below is what grows it instead.
+        ext_top = pos[0] - gs[0] / 2
+        ext_bot = pos[-1] + gs[-1] / 2
+        extent = ext_bot - ext_top
+        usable = face_len[node_i] - 2 * 10.0
+        scale = 1.0 if extent <= 0 else min(1.0, max(usable, 0.0) / extent)
+        mid = (ext_top + ext_bot) / 2
+        offs = [(p - mid) * scale for p in pos]
+        # SNAP: the stack's one free parameter is its translation, and a
+        # straight lane is worth more than centring (the lane law's own
+        # priority). Spend it on the slot that lands nearest its neighbour's
+        # row, so a same-row neighbour stays flush instead of inheriting a
+        # few px of stack asymmetry as a jog every reader can see.
+        deltas = [centers[o] - (cy + offs[r]) for r, o in enumerate(ordered) if o in centers]
+        snap = min(deltas, key=abs, default=0.0)
+        if abs(snap) > pitch_max:
+            snap = 0.0
         for r, other in enumerate(ordered):
-            slots[(node_i, other)] = cy + slot_offs[r]
-        band[node_i] = max(band.get(node_i, 0.0), (len(ordered) - 1) * pitch + widest + 20.0)
+            slots[(node_i, other)] = cy + offs[r] + snap
+        band[node_i] = max(band.get(node_i, 0.0), _band)
     return slots, band
+
+
+def _slot_stack_air(ctx: SolverContext) -> float:
+    """Air between adjacent slots' occupants — the same margin the collide
+    ladder measures label neighbours with (``min_clearance / 2``), floored
+    at the plate air, so a seat the stack blesses is a seat the gate will
+    not move."""
+    conn = ctx.engine.get("connector") or {}
+    return max(float(conn.get("chip_pill_air", 6)), float(ctx.engine.get("min_clearance", 18)) / 2.0)
+
+
+@dataclass(frozen=True)
+class _ChannelRoute:
+    """One routed edge's share of the channel plan (see ``_channel_plan``)."""
+
+    hub: int
+    """The conduit-bearing hub whose MINOR face this track uses."""
+    side: float
+    """Which minor face: -1 the near channel side, +1 the far."""
+    slot_off: float
+    """The slot's MAJOR offset from the hub's major centre along that face."""
+
+
+@dataclass(frozen=True)
+class _ChannelPlan:
+    """PERIMETER ROUTING (owner ruling, superseding "all conduits share the
+    flow face"): on a conduit-bearing hub, an off-row track leaves by the
+    MINOR face nearest its partner's side — a riser out of the top or bottom
+    face, one turn, a flow leg into the partner's own flow face. A pair is
+    still the locked dual-lane bus (both channels through shared elbows, the
+    lane gap held throughout); a plain off-row edge takes a single lane. The
+    flow face then carries only the flush traffic — at most one same-row
+    pair — which is what returns the hub to the standard card class instead
+    of growing it to seat every track's bracket on one face.
+
+    The round the perimeter superseded routed every off-row track out of the
+    flow face through riser columns in the rank gap; it fixed the braid but
+    priced the hub's face for all of them at once, and the owner's hero-size
+    verdict retired it. A neighbour too shallow to clear the hub's own minor
+    face (off-row past flush, yet within the face's half plus a fillet) has
+    no perimeter to reach and keeps the family curve.
+
+    The plan is decided ONCE, from the same rows the rank-gap reservation
+    reads, and reused verbatim when the routes are drawn — deciding it twice
+    from slightly different numbers is how a reservation and a route come to
+    disagree about the same edge.
+    """
+
+    routed: dict[int, _ChannelRoute]
+    perim_band: dict[int, float]
+    """Per-hub MAJOR floor: what each minor face's slot stack occupies along
+    the flow, so a narrow hub grows to seat its own perimeter ports."""
+
+
+def _channel_col_sep(occ_a: float, occ_b: float, lane_air: float, pitch_max: float) -> float:
+    """Centre-to-centre separation between two adjacent perimeter slots: the
+    two riser bands' half-widths (a bus occupies its lane gap, a single wire
+    none) plus the motion air, floored at the family's own port pitch so
+    parallel risers read apart the way ports on a face do."""
+    return max(pitch_max, (occ_a + occ_b) / 2 + lane_air)
+
+
+def _channel_plan(
+    ctx: SolverContext,
+    axis: AxisMap,
+    edges: tuple[ResolvedEdge, ...] | list[ResolvedEdge],
+    lanes: Sequence[int],
+    gaps: Sequence[float],
+    rank: Sequence[int],
+    centers: Mapping[int, float],
+    boxes: Mapping[int, tuple[float, float]],
+    *,
+    pitch_max: float = 16.0,
+) -> _ChannelPlan:
+    """Classify each conduit-hub track and seat its perimeter slot.
+
+    Per neighbour of a conduit-bearing hub face: a flush partner
+    (``_PORT_FLUSH``) keeps the flow face and the straight grammar; a
+    partner past the hub's own minor half-face (plus a fillet, so the riser
+    exists at all) takes the PERIMETER — the hub's near or far minor face,
+    whichever its row is on. The shallow between-band keeps the family
+    curve: it is off-row, but there is no perimeter face between the hub's
+    edge and a row the face itself spans. Skips keep the skip machinery and
+    authored routing means it, exactly as everywhere else in this solver.
+
+    Slot order per (hub, side) is what makes the perimeter planar: tracks
+    turn at their partner's row, so the partner with the MORE EXTREME row
+    must turn before its flow leg would cross a nearer partner's riser —
+    the extreme slot sits at the end of the face AWAY from the legs' travel
+    (flow-backward for downstream partners, flow-forward for upstream).
+    """
+    lane_air = float(ctx.engine.get("lane_min_air") or 3)
+    arc_r = float(ctx.ch.over_arc_r)
+    routed: dict[int, _ChannelRoute] = {}
+    perim_band: dict[int, float] = {}
+    claimed: set[int] = set()
+    groups = _incident_by_face(edges, rank)
+    for face_kind in ("exit", "entry"):
+        for (node_i, face), members in groups.items():
+            if face != face_kind or node_i not in centers or node_i not in boxes:
+                continue
+            if not any(j < len(lanes) and lanes[j] != 0 for j in members):
+                continue
+            others = {(edges[j].target if edges[j].source == node_i else edges[j].source) for j in members}
+            if len(others) < 2:
+                continue
+            cy = centers[node_i]
+            hub_half = axis.box_minor(*boxes[node_i]) / 2
+            by_other: dict[int, list[int]] = {}
+            for j in members:
+                e = edges[j]
+                if j in claimed or e.exit or e.entry or abs(rank[e.target] - rank[e.source]) != 1:
+                    continue
+                other = e.target if e.source == node_i else e.source
+                by_other.setdefault(other, []).append(j)
+            tracks: list[tuple[int, list[int], float]] = []
+            for other, idxs in sorted(by_other.items()):
+                delta = centers.get(other, cy) - cy
+                if abs(delta) <= max(_PORT_FLUSH, 0.0) or abs(delta) <= hub_half + 2 * arc_r:
+                    continue
+                tracks.append((other, idxs, delta))
+            if not tracks:
+                continue
+            legs_dir = 1.0 if face_kind == "exit" else -1.0
+            for side in (-1.0, 1.0):
+                side_tracks = [t for t in tracks if (1.0 if t[2] > 0 else -1.0) == side]
+                side_tracks.sort(key=lambda t: (-abs(t[2]), t[0]))
+                occs = [max((gaps[j] for j in idxs if j < len(gaps)), default=0.0) for _o, idxs, _d in side_tracks]
+                pos = [0.0]
+                for r in range(1, len(side_tracks)):
+                    pos.append(pos[-1] + _channel_col_sep(occs[r - 1], occs[r], lane_air, pitch_max))
+                span = pos[-1]
+                for r, (_other, idxs, _delta) in enumerate(side_tracks):
+                    # Extreme track at the end away from the legs' travel;
+                    # the stack centres on the hub's major middle.
+                    off = (pos[r] - span / 2) * legs_dir
+                    for j in idxs:
+                        routed[j] = _ChannelRoute(hub=node_i, side=side, slot_off=off)
+                        claimed.add(j)
+                band = span + occs[0] / 2 + occs[-1] / 2 + 2 * 10.0
+                perim_band[node_i] = max(perim_band.get(node_i, 0.0), band)
+    return _ChannelPlan(routed=routed, perim_band=perim_band)
+
+
+def _resolve_perimeter_slots(
+    ctx: SolverContext,
+    axis: AxisMap,
+    edges: tuple[ResolvedEdge, ...] | list[ResolvedEdge],
+    placed: dict[int, NodePlacement],
+    plan: _ChannelPlan,
+    blockers: Sequence[RectSpec],
+    clearance: float,
+    furniture: Callable[..., tuple[RectSpec, ...]],
+) -> dict[tuple[int, float, float], float]:
+    """Absolute slot major per planned perimeter slot.
+
+    A slot starts at the plan's offset from its hub's major centre, then its
+    riser clears every card and band standing in its own span through
+    ``_corridor_major`` — the one corridor law every detour branch runs.
+    Slots resolve in stack order and a displaced slot pushes the next one
+    ahead by the separation the plan priced, so displacement can never
+    reorder what the ordering made planar.
+    """
+    arc_r = float(ctx.ch.over_arc_r)
+    lane_air = float(ctx.engine.get("lane_min_air") or 3)
+    gaps = _conduit_lane_gaps(ctx, axis, edges)
+    by_group: dict[tuple[int, float], dict[float, list[int]]] = {}
+    for j, route in plan.routed.items():
+        by_group.setdefault((route.hub, route.side), {}).setdefault(route.slot_off, []).append(j)
+    out: dict[tuple[int, float, float], float] = {}
+    for (hub, side), slots_of in sorted(by_group.items()):
+        if hub not in placed:
+            continue
+        ph = placed[hub]
+        hub_mid = _major_center(axis, ph)
+        face_minor = _minor_near(axis, ph) if side < 0 else _minor_far(axis, ph)
+        prev_x: float | None = None
+        prev_occ = 0.0
+        for slot_off in sorted(slots_of):
+            idxs = slots_of[slot_off]
+            occ = max((gaps[j] for j in idxs if j < len(gaps)), default=0.0)
+            rows: list[float] = [face_minor]
+            skip_boxes: list[RectSpec] = [ph.box]
+            for j in idxs:
+                e = edges[j]
+                other = e.target if e.source == hub else e.source
+                if other in placed:
+                    rows.append(_minor_center(axis, placed[other]))
+                    skip_boxes.append(placed[other].box)
+            lo, hi = min(rows), max(rows)
+            x = _corridor_major(
+                axis,
+                blockers,
+                major=hub_mid + slot_off,
+                minor_lo=lo,
+                minor_hi=hi,
+                sgn=1.0,
+                pad=clearance + arc_r,
+                clearance=clearance,
+                skip=furniture(*skip_boxes),
+            )
+            if prev_x is not None:
+                sep = _channel_col_sep(prev_occ, occ, lane_air, 16.0)
+                x = max(x, prev_x + sep)
+            out[(hub, side, slot_off)] = x
+            prev_x, prev_occ = x, occ
+    return out
+
+
+def _channel_route_geo(
+    ctx: SolverContext,
+    axis: AxisMap,
+    j: int,
+    e: ResolvedEdge,
+    rank: Sequence[int],
+    route: _ChannelRoute,
+    placed: Mapping[int, NodePlacement],
+    slot_x: Mapping[tuple[int, float, float], float],
+) -> EdgeGeo:
+    """One perimeter track: a riser out of the hub's MINOR face at its slot,
+    one turn at the partner's row, a flow leg into the partner's own flow
+    face — the orthogonal detour family's construction (straight legs, a
+    fixed ``over_arc_r`` fillet shrinking only when a leg is shorter than
+    the diameter), leaving the hub's flow face to the flush traffic.
+
+    A pair's two channels are this same route displaced half the lane gap
+    each way along BOTH axes — the riser along the flow, the leg across
+    it — so they turn at the same elbow and hold the gap end to end: one
+    conduit with two lanes, never two free wires.
+
+    The label home is the LONGEST flat leg — the flow leg: a riding chip
+    seats at its midpoint, a pair's bracket wraps it. Emitted as a solver
+    ``label_pos`` so the annotate pass honours the seat.
+    """
+    hub = route.hub
+    far = e.target if e.source == hub else e.source
+    p_hub, p_far = placed[hub], placed[far]
+    lane = ctx.lanes[j] if j < len(ctx.lanes) else 0
+    gap = max(ctx.lane_offsets[j] if j < len(ctx.lane_offsets) else 0.0, _conduit_chip_gap(ctx, axis, j))
+    h = lane * gap / 2
+    hub_face = axis.channel_near if route.side < 0 else axis.channel_far
+    hub_at = slot_x[(hub, route.side, route.slot_off)] + h
+    far_face = axis.entry_side if rank[far] > rank[hub] else axis.exit_side
+    far_at = _minor_center(axis, p_far) + h
+    hub_pt = side_anchor(p_hub, side=hub_face, at=hub_at)
+    far_pt = side_anchor(p_far, side=far_face, at=far_at)
+    hm, hn = axis.major_of(*hub_pt), axis.minor_of(*hub_pt)
+    fm, fn = axis.major_of(*far_pt), axis.minor_of(*far_pt)
+    arc_r = float(ctx.ch.over_arc_r)
+    dirn = 1.0 if fn >= hn else -1.0
+    sgn = 1.0 if fm >= hm else -1.0
+    r1 = min(arc_r, abs(fn - hn) / 2, abs(fm - hm) / 2)
+    if e.source == hub:
+        d = (
+            f"M {_pt(axis, hm, hn)} "
+            f"L {_pt(axis, hm, fn - dirn * r1)} "
+            f"Q {_pt(axis, hm, fn)} {_pt(axis, hm + sgn * r1, fn)} "
+            f"L {_pt(axis, fm, fn)}"
+        )
+        sx, sy = hub_pt
+        tx, ty = far_pt
+        polyline = (hub_pt, axis.point(hm, fn), far_pt)
+        end_tangent = axis.point(sgn, 0.0)
+    else:
+        d = (
+            f"M {_pt(axis, fm, fn)} "
+            f"L {_pt(axis, hm + sgn * r1, fn)} "
+            f"Q {_pt(axis, hm, fn)} {_pt(axis, hm, fn - dirn * r1)} "
+            f"L {_pt(axis, hm, hn)}"
+        )
+        sx, sy = far_pt
+        tx, ty = hub_pt
+        polyline = (far_pt, axis.point(hm, fn), hub_pt)
+        end_tangent = axis.point(0.0, -dirn)
+    return EdgeGeo(
+        index=j,
+        d=d,
+        sx=sx,
+        sy=sy,
+        tx=tx,
+        ty=ty,
+        length=abs(fn - hn) + abs(fm - hm),
+        label_pos=axis.point((hm + sgn * r1 + fm) / 2, fn),
+        label_bare=True,
+        polyline=polyline,
+        end_tangent=end_tangent,
+    )
+
+
+def _bracket_offsets(lift: float, size: float, ascent_ratio: float) -> tuple[float, float]:
+    """Baseline offsets for a horizontal bracket label pair: the baseline
+    already sits under its ink, so a label ABOVE the wire clears it by the
+    lift alone, while one BELOW must also spend the ink's ascent (the same
+    ``text_ascent_ratio`` every block measurement in sizing shares) before
+    its clearance begins — the asymmetry is type metrics, not taste, and it
+    gives both sides the same visible air."""
+    return lift, lift + ascent_ratio * size
+
+
+def _bracket_conduit_labels(
+    ctx: SolverContext,
+    axis: AxisMap,
+    edges: tuple[ResolvedEdge, ...] | list[ResolvedEdge],
+    geos: list[EdgeGeo],
+    plan: _ChannelPlan,
+) -> list[EdgeGeo]:
+    """CONDUIT LABEL BRACKET (owner law; specimen and verdict in the round
+    record): a duplex conduit never wears chip pills — a pill on one lane
+    occludes the partner lane by construction, so the chip home does not
+    exist on a conduit any more than on a bent wire. Its labels render as
+    ONE bare micro-label pair per conduit: the request seated outboard of
+    the outbound lane, the response outboard of the return lane, both
+    anchor-middle at the SAME along-run coordinate on the pair's LONGEST
+    flat leg — the flow leg of a perimeter track, the whole run of a
+    straight pair. The arrowheads keep direction; the labels carry only
+    the verbs, and the dialogue reads from position — question over the
+    outbound, answer under the return.
+
+    Seats are FINAL points (``label_bare=False``): the solver owns the
+    bracket because only it knows which leg is the hub's and which lane is
+    which — neither is recoverable from the drawn path.
+    """
+    conn = ctx.engine["connector"]
+    lift = float(conn.get("sm_label_lift", 8))
+    voice = ctx.cfg.edge_label_voice
+    arc_r = float(ctx.ch.over_arc_r)
+    above, below = _bracket_offsets(lift, float(voice.size), ctx.cfg.text_ascent_ratio)
+    out = list(geos)
+    done: set[int] = set()
+
+    def _flow_leg(g: EdgeGeo, jj: int) -> tuple[tuple[float, float], tuple[float, float]]:
+        """(far endpoint, hub endpoint) of a perimeter track — the flow leg
+        runs between the far endpoint and the elbow."""
+        hub = plan.routed[jj].hub
+        if edges[jj].source == hub:
+            return (g.tx, g.ty), (g.sx, g.sy)
+        return (g.sx, g.sy), (g.tx, g.ty)
+
+    for j in range(len(edges)):
+        if j in done or not (j < len(ctx.lanes) and ctx.lanes[j] != 0):
+            continue
+        partner = _duplex_partner(edges, j)
+        if partner is None:
+            continue
+        req, resp = (j, partner) if ctx.lanes[j] < 0 else (partner, j)
+        done.update((j, partner))
+        gi_req = next((i for i, g in enumerate(out) if g.index == req), None)
+        gi_resp = next((i for i, g in enumerate(out) if g.index == resp), None)
+        if gi_req is None or gi_resp is None:
+            continue
+        g_req, g_resp = out[gi_req], out[gi_resp]
+        # The bracket's along-run seat: the midpoint of the request's FLOW
+        # leg on a perimeter track (the leg ends where the elbow's fillet
+        # begins), the midpoint of the shared run on a straight pair. Each
+        # label's lane is its own channel's flow-leg row.
+        if req in plan.routed and len(g_req.polyline) >= 3 and resp in plan.routed:
+            req_far, req_hub = _flow_leg(g_req, req)
+            resp_far, _resp_hub = _flow_leg(g_resp, resp)
+            corner = g_req.polyline[1]
+            c_maj, f_maj = axis.major_of(*corner), axis.major_of(*req_far)
+            riser_ext = abs(axis.minor_of(*corner) - axis.minor_of(*req_hub))
+            r1 = min(arc_r, riser_ext / 2, abs(f_maj - c_maj) / 2)
+            sgn_cf = 1.0 if f_maj >= c_maj else -1.0
+            bracket = (c_maj + sgn_cf * r1 + f_maj) / 2
+            req_minor = axis.minor_of(*req_far)
+            resp_minor = axis.minor_of(*resp_far)
+        else:
+            bracket = (axis.major_of(g_req.sx, g_req.sy) + axis.major_of(g_req.tx, g_req.ty)) / 2
+            req_minor = axis.minor_of(g_req.sx, g_req.sy)
+            resp_minor = axis.minor_of(g_resp.tx, g_resp.ty)
+        s_pair = 1.0 if resp_minor >= req_minor else -1.0
+        if axis.flow == "right":
+            req_seat = axis.point(bracket, req_minor - s_pair * above)
+            resp_seat = axis.point(bracket, resp_minor + s_pair * below)
+        else:
+            # Flowing down the lanes are vertical and the labels sit BESIDE
+            # them: the outboard support is the lift plus half the measured
+            # line, and the baseline drops a third of the type size so the
+            # ink centres on the bracket point.
+            base = bracket + 0.35 * float(voice.size)
+            req_w = measure_voice(edges[req].label, voice) if edges[req].label else 0.0
+            resp_w = measure_voice(edges[resp].label, voice) if edges[resp].label else 0.0
+            req_seat = axis.point(base, req_minor - s_pair * (lift + req_w / 2))
+            resp_seat = axis.point(base, resp_minor + s_pair * (lift + resp_w / 2))
+        if edges[req].label:
+            out[gi_req] = replace(g_req, label_pos=req_seat, label_bare=False, label_anchor="middle", label_micro=True)
+        if edges[resp].label:
+            out[gi_resp] = replace(
+                g_resp, label_pos=resp_seat, label_bare=False, label_anchor="middle", label_micro=True
+            )
+    return out
 
 
 def _self_loop_geo(ctx: SolverContext, j: int, e: ResolvedEdge, p: NodePlacement, *, default_side: str) -> EdgeGeo:
@@ -611,21 +1093,33 @@ def _reseat_region_labels(
     belongs on that edge."""
     if not bands:
         return bands
-    # CARDS only. Wires are not an obstacle for this label: its plate is opaque
-    # and paints ABOVE the connectors — occlusion is the plate's whole purpose
-    # ("the hairline runs behind the plate rather than through the word"), and
-    # a wire is the same problem as a border. Cards paint above the plate in
-    # turn, so they ARE obstacles. Treating wires as obstacles here is what
-    # made the region widen to hold a label it never needed room for.
+    # CARDS, plus the SEATED PLATES of sibling regions. Wires are not an
+    # obstacle for this label: its plate is opaque and paints ABOVE the
+    # connectors — occlusion is the plate's whole purpose ("the hairline runs
+    # behind the plate rather than through the word"), and a wire is the same
+    # problem as a border. Cards paint above the plate in turn, so they ARE
+    # obstacles — and so is another region's plate: two plates share no
+    # reading order, and when one region's members bracket the other's the
+    # two leading corners coincide and the inner label rendered buried under
+    # the outer one (rag-index-and-query's INDEX TIME under QUERY TIME).
+    # Bands resolve in declaration order, each against the plates already
+    # seated, so the arbitration is the same anchored near/far ladder.
     cards = [p.box for p in placed.values()]
+    seated: list[RectSpec] = []
 
     def _hits(bx: RectSpec) -> bool:
-        return any(bx.x < c.x + c.w and bx.x + bx.w > c.x and bx.y < c.y + c.h and bx.y + bx.h > c.y for c in cards)
+        return any(
+            bx.x < c.x + c.w and bx.x + bx.w > c.x and bx.y < c.y + c.h and bx.y + bx.h > c.y for c in (*cards, *seated)
+        )
 
     out: list[LaneBand] = []
     for lb in bands:
         hb = lb.header_box
-        if hb is None or not _hits(hb):
+        if hb is None:
+            out.append(lb)
+            continue
+        if not _hits(hb):
+            seated.append(hb)
             out.append(lb)
             continue
         # ANCHORED seats only. A region label names its region, so it has to
@@ -650,8 +1144,10 @@ def _reseat_region_labels(
                 best = cand
                 break
         if best is None:
+            seated.append(hb)
             out.append(lb)
             continue
+        seated.append(best)
         dx, dy = best.x - hb.x, best.y - hb.y
         out.append(replace(lb, header_box=best, header=replace(lb.header, x=lb.header.x + dx, y=lb.header.y + dy)))
     return tuple(out)
@@ -689,10 +1185,12 @@ def build_region_bands(ctx: SolverContext, placed: dict[int, NodePlacement]) -> 
     # Which label grammar this family cites — see region_label_on_edge.
     on_edge = ctx.slug in {str(x) for x in (rb.get("region_label_on_edge") or [])}
     bands: list[LaneBand] = []
+    rects: list[dict[str, Any]] = []
     for reg in spec.regions:
         member_boxes = [placed[id_of[m]].box for m in reg.members if m in id_of and id_of[m] in placed]
         if not member_boxes:
             continue
+        over_arc = False
         if reg.kind == "band":
             over_arc = any(e.exit == "top" and e.source in reg.members and e.target in reg.members for e in spec.edges)
             if over_arc:
@@ -724,36 +1222,6 @@ def build_region_bands(ctx: SolverContext, placed: dict[int, NodePlacement]) -> 
                     else float(rb.get("band_top_pad", 26))  # gateway-balanced's header strip
                 )
                 top_pad = _seated_pad(bot_pad, seating)
-            x0 = min(mb.x for mb in member_boxes) - side_pad
-            x1 = max(mb.x + mb.w for mb in member_boxes) + side_pad
-            y0 = min(mb.y for mb in member_boxes) - top_pad
-            y1 = max(mb.y + mb.h for mb in member_boxes) + bot_pad
-            # Label seating is AXIS-DEPENDENT, and it is not cosmetic: flowing
-            # down, the rank's own centre wire descends through the band's top
-            # centre — exactly where a centred label would sit — so the label
-            # and the arrival chevron collide. The vertical specimen seats its
-            # chip in the top-LEFT corner instead (band 60,284 -> chip 76,296:
-            # 16 in, 12 down), which is the same corner grammar the over-arc
-            # band already uses. Flowing right the centre wire enters the
-            # band's left face, the top centre is clear, and the centred label
-            # is the specimen's own reading.
-            corner_label = over_arc or axis.flow == "down"
-            if corner_label:
-                inset = float(rb.get("band_label_inset", 12))
-                # The inset is the PLATE's, not the baseline's: `_label_plate`
-                # back-computes its box as `baseline - CHIP_H/2 - 4`, so
-                # insetting the BASELINE by 12 landed the plate flush ON the
-                # border at inset 0. The specimen seats its pill 12px inside
-                # (region 284, pill 296..316), so solve for the baseline that
-                # puts the PLATE where the law says.
-                label = DiagramText(
-                    x=x0 + _REGION_RX + CHIP_PAD_X, y=y0 + inset + CHIP_H / 2 + 4.0, text=reg.label.upper(), cls="rcnt"
-                )
-                header_box = _label_plate(ctx, label, anchor="start") if on_edge else None
-            else:
-                label = DiagramText(x=(x0 + x1) / 2, y=y0 + 16.0, text=reg.label.upper(), cls="rcnt", anchor="middle")
-                header_box = None
-            ground = "panel"
         else:
             side_pad = float(rb.get("enclosure_side_pad", 20))
             # Same symmetry law. The cited 28 trailing pad is the STRIP
@@ -778,10 +1246,131 @@ def build_region_bands(ctx: SolverContext, placed: dict[int, NodePlacement]) -> 
             # stay the base. The vertical specimen is 25/25 for exactly that
             # reason. (An earlier pass corner-seated it INSIDE and opened a pad
             # to hold it, which is the band's treatment, not this one's.)
-            x0 = min(mb.x for mb in member_boxes) - side_pad
-            x1 = max(mb.x + mb.w for mb in member_boxes) + side_pad
-            y0 = min(mb.y for mb in member_boxes) - top_pad
-            y1 = max(mb.y + mb.h for mb in member_boxes) + bot_pad
+        rects.append(
+            {
+                "reg": reg,
+                "over_arc": over_arc,
+                "x0": min(mb.x for mb in member_boxes) - side_pad,
+                "x1": max(mb.x + mb.w for mb in member_boxes) + side_pad,
+                "y0": min(mb.y for mb in member_boxes) - top_pad,
+                "y1": max(mb.y + mb.h for mb in member_boxes) + bot_pad,
+            }
+        )
+    # NESTING LAW. Two regions whose rects intersect must NEST: the smaller
+    # sits fully inside the larger with the family's nest air on every side.
+    # Their rects CAN lawfully intersect while their memberships are disjoint
+    # — one region's members can bracket the other's ranks (rag's query-time
+    # enclosure spans rank 0 to rank 4 around the index-time band) — and a
+    # partial overlap then reads as a drafting accident: the inner band's
+    # edge poked 13px out of the enclosure's own left hairline. Growth only,
+    # outer over inner, iterated to a fixed point so a chain of regions
+    # settles however it was declared.
+    #
+    # SIBLING CAVEAT (recorded, not built): two near-equal partial
+    # overlappers are true siblings, not a nest — containment by growth is
+    # the wrong resolution there (one would swallow its peer), and the tie
+    # currently breaks by area then list order. No corpus spec draws that
+    # shape; if one arrives, siblings should SEPARATE rather than nest.
+    nest = float(rb.get("region_nest_air", 12))
+    for _ in range(max(len(rects), 1)):
+        grew = False
+        for a in rects:
+            for b in rects:
+                if a is b:
+                    continue
+                if not (a["x0"] < b["x1"] and a["x1"] > b["x0"] and a["y0"] < b["y1"] and a["y1"] > b["y0"]):
+                    continue
+                area_a = (a["x1"] - a["x0"]) * (a["y1"] - a["y0"])
+                area_b = (b["x1"] - b["x0"]) * (b["y1"] - b["y0"])
+                outer, inner = (a, b) if area_a >= area_b else (b, a)
+                want = {
+                    "x0": inner["x0"] - nest,
+                    "y0": inner["y0"] - nest,
+                    "x1": inner["x1"] + nest,
+                    "y1": inner["y1"] + nest,
+                }
+                if (
+                    outer["x0"] > want["x0"]
+                    or outer["y0"] > want["y0"]
+                    or outer["x1"] < want["x1"]
+                    or outer["y1"] < want["y1"]
+                ):
+                    outer["x0"] = min(outer["x0"], want["x0"])
+                    outer["y0"] = min(outer["y0"], want["y0"])
+                    outer["x1"] = max(outer["x1"], want["x1"])
+                    outer["y1"] = max(outer["y1"], want["y1"])
+                    grew = True
+        if not grew:
+            break
+
+    # NESTED-LABEL COORDINATION (owner, 2026-08-27). Nested regions' labels
+    # must know what is above and beside them, or each grammar lands its own
+    # word a near-miss apart: flowing down the outer's corner plate sat one
+    # nest-air higher than the inner's and the stagger read accidental;
+    # flowing right the inner band spoke bare centred text next to the
+    # outer's straddle plate — two label materials on one nest. So: an OUTER
+    # region's corner plate drops to its FIRST inner's own label row (one
+    # shared row, the plate arbitration then separates them horizontally),
+    # and a NESTED inner band takes the corner-plate grammar whatever the
+    # axis, so both labels wear the same material.
+    def _contains_rect(o: dict[str, Any], i: dict[str, Any]) -> bool:
+        return o is not i and o["x0"] <= i["x0"] and o["y0"] <= i["y0"] and o["x1"] >= i["x1"] and o["y1"] >= i["y1"]
+
+    for r in rects:
+        inners = [i for i in rects if _contains_rect(r, i)]
+        r["inner_y0"] = min((float(i["y0"]) for i in inners), default=None)
+        outers = [o for o in rects if _contains_rect(o, r)]
+        r["nested"] = bool(outers)
+        r["outer_y0"] = min((float(o["y0"]) for o in outers), default=None)
+    for r in rects:
+        reg = r["reg"]
+        over_arc = bool(r["over_arc"])
+        x0, x1, y0, y1 = float(r["x0"]), float(r["x1"]), float(r["y0"]), float(r["y1"])
+        row_y0 = float(r["inner_y0"]) if axis.flow == "down" and r["inner_y0"] is not None else y0
+        if reg.kind == "band":
+            # Label seating is AXIS-DEPENDENT, and it is not cosmetic: flowing
+            # down, the rank's own centre wire descends through the band's top
+            # centre — exactly where a centred label would sit — so the label
+            # and the arrival chevron collide. The vertical specimen seats its
+            # chip in the top-LEFT corner instead (band 60,284 -> chip 76,296:
+            # 16 in, 12 down), which is the same corner grammar the over-arc
+            # band already uses. Flowing right the centre wire enters the
+            # band's left face, the top centre is clear, and the centred label
+            # is the specimen's own reading.
+            corner_label = over_arc or axis.flow == "down"
+            if corner_label:
+                inset = float(rb.get("band_label_inset", 12))
+                # The inset is the PLATE's, not the baseline's: `_label_plate`
+                # back-computes its box as `baseline - CHIP_H/2 - 4`, so
+                # insetting the BASELINE by 12 landed the plate flush ON the
+                # border at inset 0. The specimen seats its pill 12px inside
+                # (region 284, pill 296..316), so solve for the baseline that
+                # puts the PLATE where the law says.
+                label = DiagramText(
+                    x=x0 + _REGION_RX + CHIP_PAD_X,
+                    y=row_y0 + inset + CHIP_H / 2 + 4.0,
+                    text=reg.label.upper(),
+                    cls="rcnt",
+                )
+                header_box = _label_plate(ctx, label, anchor="start") if on_edge else None
+            elif r["nested"] and on_edge:
+                # A NESTED band flowing right takes the plate material — and
+                # its plate sits on the OUTER's rim row, so the nest reads as
+                # one label line (x-separated over each box) instead of two
+                # plates a nest-air apart. The corner plate is not available
+                # here: it needs the corner seating pad the horizontal band
+                # never reserves (a first cut drew the plate over the band's
+                # own first member card by 12px).
+                rim_y0 = float(r["outer_y0"]) if r["outer_y0"] is not None else y0
+                label = DiagramText(
+                    x=(x0 + x1) / 2, y=rim_y0 + 4.0, text=reg.label.upper(), cls="rcnt", anchor="middle"
+                )
+                header_box = _label_plate(ctx, label, anchor="middle")
+            else:
+                label = DiagramText(x=(x0 + x1) / 2, y=y0 + 16.0, text=reg.label.upper(), cls="rcnt", anchor="middle")
+                header_box = None
+            ground = "panel"
+        else:
             if not on_edge:
                 # The STRIP grammar (agent-task-lifecycle's RECOVERY): the label
                 # sits inside the box along its trailing edge with no plate.
@@ -799,7 +1388,7 @@ def build_region_bands(ctx: SolverContext, placed: dict[int, NodePlacement]) -> 
                 inset = float(rb.get("band_label_inset", 12))
                 label = DiagramText(
                     x=x0 + _REGION_RX + CHIP_PAD_X,
-                    y=y0 + inset + CHIP_H / 2 + 4.0,
+                    y=row_y0 + inset + CHIP_H / 2 + 4.0,
                     text=reg.label.upper(),
                     cls="rcnt",
                 )
@@ -1209,17 +1798,17 @@ def _duplex_conduit_geo(
     rank: Sequence[int],
     slots: Mapping[tuple[int, int], float],
 ) -> EdgeGeo:
-    """One channel of a local duplex — the family's OWN edge, lane-shifted.
+    """One channel of a SAME-ROW local duplex — the family's OWN edge,
+    lane-shifted.
 
-    A conduit is not a routing species of its own. It is the same S-curve
-    every adjacent-rank edge draws, twice, a lane pitch apart: both control
-    points at the major midpoint so the wire leaves its source and meets its
-    target ALONG the flow (the attachment law). A same-row pair degenerates
-    to two parallel straight-looking runs on its own, and a fanned pair comes
-    out as two parallel curves, because shifting BOTH endpoints of a cubic by
-    the same amount translates the whole curve — the channels stay exactly a
-    pitch apart end to end. Drawing the conduit as a straight chord instead
-    made it read as foreign geometry next to its own siblings.
+    AMENDED SCOPE (owner composition ruling): only the flush pair reaches
+    this. It draws the same S-curve every adjacent-rank edge draws, twice, a
+    lane pitch apart — which for a same-row pair degenerates to two parallel
+    straight runs. The fanned case this construction used to cover (two
+    parallel curves, by translating both endpoints of the cubic) was
+    falsified by eye: a free curve separates a fan by curvature, and a face
+    carrying traffic both ways cannot be read that way — an off-row pair now
+    takes the orthogonal channel route (``_channel_route_geo``) instead.
 
     The one thing the return does differently is which faces it uses: routed
     like an ordinary edge it would exit the flow-forward face and cross the
@@ -1287,53 +1876,17 @@ def _conduit_chip_gap(ctx: SolverContext, axis: AxisMap, j: int) -> float:
             half_pill_h = max(half_pill_h, (h if axis.flow == "right" else w) / 2)
     if half_pill_h <= 0.0:
         return motion_lane_air
-    return max(motion_lane_air, half_pill_h + foreign_clear)
+    headroom = float(conn.get("lane_rounding_headroom", 0.5))
+    return max(motion_lane_air, half_pill_h + foreign_clear + headroom)
 
 
-def conduit_run_floor(
-    ctx: SolverContext,
-    edges: Sequence[ResolvedEdge],
-    j: int,
-    partner: int,
-    *,
-    stub: float,
-    vertical: bool,
-) -> float:
-    """Minimum run a duplex conduit needs, from its terms.
-
-    Two independent demands, each written as what it is:
-
-    ``reservation_need`` — the pill must sit at its OWN seat with a stub of
-    visible wire on the short side: ``(half_chip_widest + stub) / t_near``.
-    This binds HARDER as the seat approaches the face, which is the
-    falsification that retired the phi seats: a tighter t needs MORE run.
-
-    ``along_clearance_need`` — the pair's two pills must be disjoint ALONG
-    the wire, since that is what lets the lane gap fall back to its floor:
-    ``((w_a + w_b)/2 + air_min) / (t_in - t_out)``.
-
-    The floor is the larger. Every number here is evaluated from config and
-    the measured pills; today that comes out around 258px for the readme-ai
-    conduit, but that figure is an evaluation, never the law.
-    """
-    conn = ctx.engine.get("connector") or {}
-    seats = conn.get("duplex_chip_t") or {}
-    t_out = float(seats.get("outbound", 0.25))
-    t_in = float(seats.get("inbound", 0.75))
-    t_near = min(t_out, 1.0 - t_in)
-    spread = abs(t_in - t_out)
-    boxes = []
-    for k in (j, partner):
-        e = edges[k]
-        if not (e.label and e.label_style == "chip"):
-            return 0.0
-        boxes.append(solve_chip_box(e.label, ctx.cfg))
-    along = [(CHIP_H if vertical else w) for w, _h in boxes] if vertical else [w for w, _h in boxes]
-    half_chip_widest = max(along) / 2
-    air_min = float(conn.get("chip_pill_air", 6))
-    reservation_need = (half_chip_widest + stub) / t_near if t_near > 0 else 0.0
-    along_clearance_need = ((along[0] + along[1]) / 2 + air_min) / spread if spread > 0 else 0.0
-    return max(reservation_need, along_clearance_need)
+def _bare_twin(e: ResolvedEdge) -> ResolvedEdge:
+    """The edge as its label will actually render on a conduit: a bare
+    micro-label, whatever style was authored. A conduit never wears a pill
+    (the bracket law), so every run/leg floor for its labels must price the
+    ink, not the plate — feeding the authored chip style here books ~50px of
+    pill-and-stub run for a 10px-tall line of text."""
+    return replace(e, label_style="") if e.label_style else e
 
 
 def _duplex_partner(edges: Sequence[ResolvedEdge], j: int) -> int | None:
@@ -1695,49 +2248,78 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     _rank_channel_idx = [j for j, e in enumerate(edges) if e.source != e.target and rank[e.target] - rank[e.source] < 2]
     rank_chip_stub = float((ctx.engine.get("region_band") or {}).get("rank_chip_stub", CHIP_STUB_MIN))
 
-    # DUPLEX channels seat their pill off-centre (the dialogue seats), so the
-    # run they need is measured from THEIR t, not the midpoint — reserving
-    # the midpoint figure and then seating at 0.382 starved the pill and the
-    # annotate pass demoted it to a micro-label on a run that was supposed to
-    # carry it. Split the reservation so each population asks for what it
-    # actually spends.
     def _lane_at(j: int) -> int:
         return ctx.lanes[j] if j < len(ctx.lanes) else 0
 
-    _plain = [edges[j] for j in _rank_channel_idx if _lane_at(j) == 0]
     # A pill rides ACROSS a descending run, so what the gap must hold is its
     # HEIGHT flowing down and its WIDTH flowing right — the same split the
     # annotate pass makes when it decides whether a chip fits at all.
     _down = axis.flow == "down"
-    # A conduit asks for its own run floor, computed from its terms
-    # (``conduit_run_floor``): the seat reservation and the along-run pill
-    # clearance, whichever binds. A plain edge keeps the centred figure.
-    # The reservation term's job is "the pill never kisses the card", and the
-    # constant for minimum visible wire beside a pill ANYWHERE is
-    # ``chip_stub_min`` — the same floor the annotate balance gate applies.
-    # ``rank_chip_stub`` (60) is cited from a CENTRED chip on a rank channel
-    # (dag-mapreduce-enclosure: 180px of channel, 60px pill, 60 visible each
-    # side, symmetric). Dividing that symmetric citation by a staggered
-    # t=0.25 turns it into ~240px of dead far-side wire: (46+60)/0.25 = 424,
-    # which was exactly the measured span. A centred plain chip still asks
-    # for the rank citation below — that IS what it cites.
-    _conduit_stub = float((ctx.engine.get("connector") or {}).get("chip_stub_min", CHIP_STUB_MIN))
-    _duplex_floor = 0.0
-    for j in _rank_channel_idx:
-        if _lane_at(j) == 0:
+    # THE PERIMETER PLAN is decided here, from the same rows the gap
+    # reservation reads, and reused verbatim when the routes draw.
+    _plan = _channel_plan(ctx, axis, edges, ctx.lanes, _lane_gaps, rank, _rows_for_gap, boxes)
+    # A hub whose minor face carries a perimeter slot stack grows ALONG the
+    # flow to seat it — the slot-stack law rotated a quarter turn, feeding
+    # the same sizing seam. Rows are untouched: the bump moves only the
+    # major extent, and rows never read one.
+    for _i, _need in sorted(_plan.perim_band.items()):
+        _w0, _h0 = boxes[_i]
+        if axis.box_major(_w0, _h0) + 0.5 >= _need:
             continue
-        partner = _duplex_partner(edges, j)
-        if partner is None:
-            continue
-        _duplex_floor = max(
-            _duplex_floor,
-            conduit_run_floor(ctx, edges, j, partner, stub=_conduit_stub, vertical=_down),
+        if _down:
+            _w2, _h2, _ = solve_node_box(ctx, spec.nodes[_i], _i, h_floor=_need)
+        else:
+            _w2, _h2, _ = solve_node_box(ctx, spec.nodes[_i], _i, min_w=_need, h_floor=port_band.get(_i))
+        boxes[_i] = (max(_w0, _w2), max(_h0, _h2))
+        rank_ext[rank[_i]] = max(axis.box_major(*boxes[m]) for m in orders[rank[_i]])
+
+    # A channel-routed plain edge's pill rides its own flow leg, priced by
+    # the plan — leaving it in the centred full-gap reservation would book
+    # the whole gap for a pill that only ever occupies one leg of it.
+    # An unrouted (same-row) CONDUIT votes here too, as its labels will
+    # actually render: the bare bracket at the run midpoint, so the run must
+    # hold the wider label's ink plus the bare-label face clearances — the
+    # bare twin of the centred chip figure, through the same function.
+    # The same bend verdict the edge loop reaches, available here because the
+    # relative rows never depended on gaps: a chip past the bend threshold
+    # takes the FLOATED seat downstream, and a floated pill's run need is not
+    # a riding pill's (below).
+    def _floats_at_reservation(j: int) -> bool:
+        e = edges[j]
+        return (
+            bool(e.label)
+            and e.label_style == "chip"
+            and e.source != e.target
+            and e.source in _rows_for_gap
+            and e.target in _rows_for_gap
+            and not (ctx.spec.nodes[e.target].gather or ctx.spec.nodes[e.source].gather)
+            and not (e.exit == axis.channel_far and e.entry == axis.exit_side)
+            and abs(_rows_for_gap[e.target] - _rows_for_gap[e.source]) > _bend_max
         )
-    rank_gap = max(
-        ch.rank_gap,
-        chip_run_min(_plain, ctx.cfg, stub=rank_chip_stub, vertical=_down),
-        _duplex_floor,
+
+    _plain_idx = [j for j in _rank_channel_idx if j not in _plan.routed]
+    _riding = [
+        _bare_twin(edges[j]) if _lane_at(j) != 0 else edges[j] for j in _plain_idx if not _floats_at_reservation(j)
+    ]
+    _floating = [edges[j] for j in _plain_idx if _floats_at_reservation(j)]
+    # ``rank_chip_stub`` (60) is the RIDING-chip citation — a centred 60px
+    # pill on a 180px rank channel showing 60px of thread each side — and it
+    # is a HORIZONTAL one. Two populations never earn it:
+    #   - flowing down, the pill's along-run extent is 26, and booking 60px
+    #     of wire beside it is most of why a chipped vertical chain gapped
+    #     at 146 where the stack family sits near 63;
+    #   - a FLOATED pill hovers clear of the stroke, so the whole thread
+    #     stays visible whatever the stubs — its run need is the pill plus
+    #     the minimum-anywhere clearance (booking the riding citation for
+    #     it is how order-event-dlq's `dead letter` re-opened uniform 219px
+    #     gaps against the family's 150 floor).
+    # Both take ``chip_stub_min``; the horizontal riding chip keeps its own
+    # citation.
+    _chip_floor = max(
+        chip_run_min(_riding, ctx.cfg, stub=(CHIP_STUB_MIN if _down else rank_chip_stub), vertical=_down),
+        chip_run_min(_floating, ctx.cfg, stub=CHIP_STUB_MIN, vertical=_down),
     )
+    rank_gap = max(ch.rank_gap, _chip_floor)
     gap_into: dict[int, float] = {}
     _rows = _rows_for_gap if spread_ratio else {}
     for idx, r in enumerate(ranks_sorted):
@@ -1745,14 +2327,17 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             continue
         if spread_ratio:
             spread = _cross_travel(_rows, ranks_sorted[idx - 1], r)
-            # ``rank_gap`` carries the chip-run reservation, so it belongs in
-            # this max unconditionally. It used to be dropped whenever a
-            # ``gap_floor`` was cited, which left a cited floor free to sit
-            # UNDER the run a pill needs — invisible for as long as every
-            # chip fitted anyway, and the corpus does (this clause changes no
-            # bundled render). A duplex channel seats off-centre and needs a
-            # longer run than a centred one, which is what finally reached it.
-            gap_into[r] = max(gap_floor, spread_ratio * spread, rank_gap)
+            # The RESERVATION — the chip-run floor — participates
+            # unconditionally: a cited floor must never sit under the run a
+            # pill needs. ``ch.rank_gap``
+            # does NOT: on a chassis that cites a spread derivation, the
+            # flat gap is "retained as the fan-case reference; the
+            # derivation governs" (its own comment), and letting it back in
+            # through this max pinned every vertical gap at the horizontal
+            # 166 — a straight vertical chain swimming in exactly the dead
+            # air the derivation exists to remove, measured 166 against its
+            # own cited 74 floor.
+            gap_into[r] = max(gap_floor, spread_ratio * spread, _chip_floor)
         else:
             gap_into[r] = rank_gap
     span = sum(rank_ext.values()) + sum(gap_into.values()) + sum(gather_trunk.values())
@@ -1969,22 +2554,23 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         and e.source != e.target
         and e.source in placed
         and e.target in placed
-        and rank[e.target] - rank[e.source] == 1
+        and abs(rank[e.target] - rank[e.source]) == 1
         and not (ctx.spec.nodes[e.target].gather or ctx.spec.nodes[e.source].gather)
         # An authored elbow does not bow between those rows — it goes AROUND,
         # and its chip rides the flat gutter run. Reading its row offset as a
         # bend is the same category error one axis over, and it stripped
         # dag-mesh-billing's `writes` pill off a dead-straight leg.
         and not (e.exit == axis.channel_far and e.entry == axis.exit_side)
-        # A duplex channel does not bow either: ``_duplex_conduit_geo`` draws
-        # it as one straight run between the two faces, so its row offset is a
-        # slope, not a bend, and a pill rides it exactly as the kit intends.
-        # Reading the offset as a bend also split the two halves of a single
-        # conduit — the outbound matched ``rank[target] - rank[source] == 1``
-        # and lost its pill while the return, being a rank step DOWN, never
-        # reached this test and kept one. One conduit cannot wear two label
-        # grammars.
-        and (j >= len(ctx.lanes) or ctx.lanes[j] == 0)
+        # A duplex channel is judged like any other, and a channel-routed
+        # edge is subtracted from the result below: its legs are straight
+        # under the seat by construction, so a row offset there is travel a
+        # riser already absorbed, not a bend. What remains bent here is the
+        # S-curve population on faces without conduits.
+        #
+        # Both halves of a pair reach this test, because a return is a rank
+        # step DOWN and the ``== 1`` check above would only ever see the
+        # outbound — one conduit cannot wear two label grammars.
+        and (rank[e.target] - rank[e.source] == 1 or (j < len(ctx.lanes) and ctx.lanes[j] != 0))
         and abs(_minor_center(axis, placed[e.target]) - _minor_center(axis, placed[e.source])) > _chip_bend_max
     }
     # AMENDMENT (owner, 2026-08-26, at render review). A bent rank-step chip
@@ -2003,7 +2589,11 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     # the geo to decide WHICH chips float, and the rank-gap reservation below
     # now counts them, because a floated pill occupies run where a demoted
     # label did not.
-    del _bent
+    # A channel-routed edge never floats: its legs are straight under the
+    # seat by construction, so its pill RIDES — which is the ruling's §4.
+    # The floated seat stays law for genuinely bent single edges on faces
+    # without conduits.
+    _float_labels = {j for j in _bent if j not in _plan.routed}
 
     def _own_furniture(*boxes: RectSpec) -> tuple[RectSpec, ...]:
         """The boxes given, plus every enclosure CONTAINING any of them. A
@@ -2119,7 +2709,25 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         j for j, e in enumerate(edges) if rank[e.target] - rank[e.source] >= 2 and j not in straight_skips
     )
     _, fan_entry_y = _fan_spread(edges, placed, axis, skip_edges=skip_idx)  # exits collapse to the center mouth
-    conduit_slots, _ = _conduit_face_slots(ctx, edges, placed, axis, ctx.lanes, _lane_gaps, rank)
+    conduit_slots, _ = _conduit_face_slots(
+        ctx,
+        edges,
+        {i: _minor_center(axis, p) for i, p in placed.items()},
+        {i: axis.box_minor(p.box.w, p.box.h) for i, p in placed.items()},
+        axis,
+        ctx.lanes,
+        _lane_gaps,
+        rank,
+        _plan.routed,
+    )
+    # Perimeter slots, resolved to absolute majors: the plan's offsets grow
+    # from the hub's major centre, and each riser then clears every card and
+    # band in its own span through the one corridor law — sequentially per
+    # (hub, side), so a displaced slot can never leap its neighbour and undo
+    # the ordering that made the perimeter planar.
+    perimeter_x = _resolve_perimeter_slots(
+        ctx, axis, edges, placed, _plan, corridor_blockers, clearance, _own_furniture
+    )
 
     # Shared-east-face port stagger: a node that HOSTS an authored elbow entry
     # while also SOURCING a plain east exit would fuse both wires at center-y
@@ -2152,10 +2760,20 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             geos.append(_self_loop_geo(ctx, j, e, placed[e.source], default_side="top"))
             continue
         pa, pb = placed[e.source], placed[e.target]
+        if j in _plan.routed:
+            # PERIMETER ROUTING (owner ruling): an off-row track on a
+            # conduit-bearing hub leaves by the minor face nearest its
+            # partner's side — a fanned pair as a locked dual-lane bus, a
+            # plain off-row edge as a single lane — so the flow face keeps
+            # only the flush traffic. Same-row edges fall through to their
+            # straight grammar below.
+            geos.append(_channel_route_geo(ctx, axis, j, e, rank, _plan.routed[j], placed, perimeter_x))
+            continue
         if j < len(ctx.lanes) and ctx.lanes[j] != 0:
-            # A LOCAL DUPLEX draws as one dual-channel conduit in the corridor
-            # between its two cards — both halves adjacent-rank by
-            # construction, so neither needs the skip/elbow machinery below.
+            # A same-row LOCAL DUPLEX draws as one dual-channel conduit in
+            # the corridor between its two cards — both halves adjacent-rank
+            # by construction, so neither needs the skip/elbow machinery
+            # below. (An off-row pair took the channel route above.)
             geos.append(_duplex_conduit_geo(ctx, axis, j, e, pa, pb, rank, conduit_slots))
             continue
         # Fan-spread both ends into distinct ports so a bundle reads as separate
@@ -2307,7 +2925,15 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
                 tx_t, ty_t = axis.point(t_major, t_minor)
                 geos.append(EdgeGeo(index=j, d=d, sx=sx_t, sy=sy_t, tx=tx_t, ty=ty_t, length=length))
                 continue
-            if e.exit == axis.channel_far:
+            # An UNAUTHORED skip takes the bottom-face family too (owner
+            # ruling, 2026-08-27): a detour's whole job is to get under the
+            # ranks it bypasses, and the far-face route does it in TWO turns —
+            # out the far face, along the channel, up into the target's far
+            # face — where the old flow-face default spent FOUR turns plus a
+            # stub-jog off the face it left by. The flow-face five-leg route
+            # remains only for the authored entry-without-exit combination,
+            # where the author named the arrival face and means it.
+            if e.exit == axis.channel_far or not (e.exit or e.entry):
                 s_major, s_far = _major_center(axis, pa), _minor_far(axis, pa)
                 sx_b, sy_b = axis.point(s_major, s_far)
                 t_major, t_minor = axis.major_of(tx, tcy), axis.minor_of(tx, tcy)
@@ -2521,7 +3147,7 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
                     )
                 )
                 continue
-            # Default under-route (source RIGHT face -> target LEFT face):
+            # Flow-face under-route (source RIGHT face -> target LEFT face):
             # the same orthogonal detour law as the bottom-face family above —
             # straight legs, fixed ``ch.over_arc_r`` fillets — here as five
             # legs (exit stub, dive, channel run, rise, entry stub). The
@@ -2530,6 +3156,11 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
             # length mirrors the bottom-left branch's ``max(rise_r, 12)`` end
             # stub plus the fillet's own radius, so a full-radius corner
             # always fits the stub leg.
+            #
+            # No longer the default (owner ruling, 2026-08-27): an unauthored
+            # skip takes the two-turn bottom-face route above. This branch
+            # now serves only the skip that AUTHORS its entry face without an
+            # exit — the arrival face was named, so the route honours it.
             channel = channel_base + skip_seen * ch.skip_stack
             deepest_channel = max(deepest_channel, channel)
             skip_seen += 1
@@ -2799,6 +3430,12 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
     # (edges leaving one rank share a window). Stamp the source rank as the
     # stage key; wire_motion groups by it only when beams are present.
     geos = [replace(g, stage_key=rank[ctx.edges[g.index].source]) for g in geos]
+    # The bend verdict travels with the geo: annotate seats the pill, the
+    # solver decides whether it can sit level.
+    if _float_labels:
+        geos = [replace(g, float_label=True) if g.index in _float_labels else g for g in geos]
+    # Conduit labels take the bracket — final seats, chip style overridden.
+    geos = _bracket_conduit_labels(ctx, axis, edges, geos, _plan)
     paint = [placed[i] for i in sorted(placed)]
     bands = _reseat_region_labels(ctx, bands, geos, placed, axis)
     return finish_layout(ctx, width=width, height=height, nodes_paint=paint, geos=geos, lane_bands=bands)

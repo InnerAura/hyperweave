@@ -1390,6 +1390,20 @@ class DiagramTopologyChassis(FrozenModel):
     only topologies whose specimen carries the trunk declare it. This is the
     CHIP-BEARING length (chip_along + balanced stubs); a chipless fan uses
     ``depart_trunk_bare``."""
+    depart_bezel: bool = True
+    """Whether a gather's DEPART mouth wears the convergence bezel (ring +
+    core), on every gather family (fanout, hub, fanin, dag). The trunk
+    lengths are stub geometry, never the mark's switch —
+    model-gateway-tiers keeps its bezel at ``depart_trunk: 0`` ("gathers
+    knot-only, no stub") while pp-integration's out-fan leaves a bare
+    point, each spoke carrying its own chevron. Two specimen grammars, so
+    the mark gets its own knob; the bezel is the default."""
+    join_bezel: bool = True
+    """The join twin of ``depart_bezel``: whether a many-to-one mouth wears
+    the bezel, on every gather family. Waived, the convergence reads by the
+    shared point and whatever terminals the edges carry — pp-integration's
+    in-fan is the citation: three spokes meet one arrowhead on the engine's
+    face with no ring drawn."""
     depart_trunk_bare: float = 0.0
     """Chipless depart-trunk length: when NO fan edge carries a chip, the trunk
     shrinks to this shorter departure gesture so a bare wire doesn't dangle

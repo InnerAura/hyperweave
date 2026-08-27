@@ -64,6 +64,16 @@ _MARKER_SIZE = float((load_diagram_config().get("connector") or {}).get("marker_
 # The per-stage beam window law in wall-clock seconds (span x clock): every
 # citing hand file sits in the ~1.4-1.6s band — see check 11 below.
 _BEAM_STAGE_SECONDS_CAP = 1.6
+
+_CHIP_FLOAT_MAX = 120.0
+"""How far a pill may sit from every wire before it reads as orphaned.
+
+A RIDING pill sits on its stroke (or a gather seat's ~22px above it); a
+FLOATED pill clears a bend it cannot sit on, which measures tens of px on the
+corpus's worst case (order-event-dlq's `dead letter`, 49px on the vertical
+cell). The old 26px band admitted only the riding homes and called every
+floated seat a defect. This grades what actually breaks a reader — a pill
+with no wire near enough to belong to."""
 # Convergence gather-run law: pp-convergence-flow.svg (v04/specimens/artifacts/diagrams/diagrams-v04a6/
 # diagrams-v3/pp-convergence-flow.svg) is the only hand file that draws a
 # join trunk at all — 100px against its own 210px member card, 0.48x.
@@ -2644,6 +2654,49 @@ FANOUT.append(
         },
     )
 )
+FANOUT.append(
+    (
+        "sync-doors",
+        "pieces: the integration specimen's 3-in/3-out doors — three SOLID arrivals "
+        "converge on the engine's mouth where one ARROWHEAD reads (join_trunk: 0, "
+        "the flush arrowed convergence — each arrival keeps its chevron and the "
+        "identical endpoint reads as one; the knot bezel is the other join grammar), "
+        "and one solid fan leaves the far mouth for three destinations",
+        {
+            "topology": "dag",
+            "title": "Sync sources to destinations",
+            "subtitle": "three pulls join one engine; one engine fans three pushes",
+            "zones": ["integrations"],
+            "chassis": {"join_trunk": 0, "depart_bezel": False},
+            "glyph_tint": "full",
+            "node_style": "card+glyph",
+            "nodes": [
+                {"id": "postgres", "label": "Postgres", "desc": "app database", "glyph": "postgresql"},
+                {"id": "stripe", "label": "Stripe", "desc": "payments", "glyph": "stripe"},
+                {"id": "salesforce", "label": "Salesforce", "desc": "CRM records", "glyph": "salesforce"},
+                {
+                    "id": "sync",
+                    "label": "sync engine",
+                    "desc": "pull → transform → push",
+                    "role": "hero",
+                    "kind": "refresh-cw",
+                    "gather": True,
+                },
+                {"id": "slack", "label": "Slack", "desc": "alerts", "glyph": "slack"},
+                {"id": "notion", "label": "Notion", "desc": "team docs", "glyph": "notion"},
+                {"id": "drive", "label": "Drive", "desc": "exports", "glyph": "googledrive"},
+            ],
+            "edges": [
+                {"source": "postgres", "target": "sync", "relation": "assert"},
+                {"source": "stripe", "target": "sync", "relation": "assert"},
+                {"source": "salesforce", "target": "sync", "relation": "assert"},
+                {"source": "sync", "target": "slack", "relation": "assert"},
+                {"source": "sync", "target": "notion", "relation": "assert"},
+                {"source": "sync", "target": "drive", "relation": "assert"},
+            ],
+        },
+    )
+)
 HUB.append(
     (
         "verbs-mouth",
@@ -4527,9 +4580,20 @@ def sweep(path: pathlib.Path) -> list[str]:
         if in_card(cx, cy):
             continue  # in-card chip row — a different slot
         d = min((_seg_dist(cx, cy, seg) for seg in wires), default=1e9)
-        # a chip may legally sit lifted just above its wire (gather seat) —
-        # allow the seat offset (CHIP_H/2 + 9) plus tolerance
-        if d > 26.0:
+        # A chip has TWO lawful homes on a wire, so this grades belonging,
+        # not adjacency. It RIDES — on the stroke, or lifted the gather
+        # seat's CHIP_H/2 + 9 above it — or, where the run bends too hard to
+        # sit on, it FLOATS clear of the stroke entirely (owner amendment,
+        # 2026-08-26; the pill is the home a bent chip takes instead of being
+        # demoted to bare text). A floated pill is legitimately further off
+        # than a riding one, so the near band cannot be the whole law.
+        #
+        # What stays graded is ORPHANHOOD: a pill so far from every wire that
+        # no reader could attach it. The floated seat is bounded by its own
+        # clearance search, which stops at the first clear offset, so a
+        # correctly floated pill lands tens of px out and a lost one lands
+        # hundreds.
+        if d > _CHIP_FLOAT_MAX:
             fails.append(f"chip-on-wire: edge chip at ({cx:.0f},{cy:.0f}) is {d:.0f}px from any wire")
     # 2/3/4. text runs
     for m in re.finditer(r'<text x="([\d.-]+)" y="([\d.-]+)"([^>]*)>([^<]+)</text>', body):

@@ -42,6 +42,15 @@ CHIP_VISIBLE_RUN_MIN = 30.0
 _CONDUIT_ENDPOINT_TOL = 48.0
 """How far apart a conduit's two channels may face each other and still be
 recognised as one round trip: the lane gap plus the pill air it reserves."""
+_RIDING_SEAT_TOL = 8.0
+"""How near a stroke a pill's centre must sit to count as RIDING it.
+
+Calibrated from the corpus, not chosen: of 81 bundled chips, 78 sit 0.0-2.2px
+off the wire they ride and the state-machine back-arc pair (sm-terminal's
+throw/retry) sits at 7.5 on its lens, while every genuinely floated seat this
+wave introduces lands 22px or further out. 8.0 separates the two populations
+with room on both sides. A tighter 1.0 called most of the corpus floated —
+riding is a seat, not a sub-pixel coincidence."""
 _CONDUIT_ENDPOINT_SLACK = 1.0
 """How far inside its own card a departure may sit before it is a defect —
 a rounding hair, not a trim."""
@@ -372,6 +381,7 @@ def run_chip_air_battery(layout: DiagramLayout, engine: Mapping[str, Any] | None
     if engine is not None:
         air = float((engine.get("connector") or {}).get("chip_pill_air", 6))
     chips = [a for a in layout.annotations if a.kind == "edge-chip" and a.box is not None]
+    _check_no_wire_through_pill(layout, chips)
     for a, b in itertools.combinations(chips, 2):
         if a.box is None or b.box is None:
             continue
@@ -403,6 +413,8 @@ def run_duplex_battery(layout: DiagramLayout) -> None:
     _check_duplex_conduits(layout)
     _check_conduit_endpoints(layout)
     _check_conduit_face_planarity(layout)
+    _check_channel_chip_stubs(layout)
+    _check_slot_corner_zone(layout)
 
 
 def _conduit_pairs(layout: DiagramLayout) -> list[tuple[int, int]]:
@@ -435,48 +447,90 @@ def _conduit_pairs(layout: DiagramLayout) -> list[tuple[int, int]]:
 
 
 def _check_duplex_conduits(layout: DiagramLayout) -> None:
-    """Two chips on one conduit never overlap, and each keeps visible wire.
+    """A conduit wears NO chip pill — the bracket law.
 
-    A pill may only slide along its OWN run, and a conduit's two runs are the
-    same length in the same corridor — so if the channels are too close the
-    pills stack and neither can escape. The separation has to be right at the
-    geometry, which is what this grades.
+    A pill on one lane of a duplex occludes the partner lane by
+    construction (the pill's across-run extent exceeds the lane gap), so
+    the chip home does not exist on a conduit any more than on a bent wire;
+    a conduit's labels render as the bare micro-label bracket. Graded on
+    the drawn result so a pill that leaks back through ANY seam is refused
+    whatever seated it. This replaced the pill-overlap and conduit-stub
+    checks, both vacuous once no pill may exist here; the leg-stub law
+    lives on in ``_check_channel_chip_stubs`` for the single-edge pills
+    that still ride channel legs.
     """
-    chips = {a.edge_index: a for a in layout.annotations if a.kind == "edge-chip" and a.box is not None}
-    for i, k in _conduit_pairs(layout):
-        a, b = chips.get(i), chips.get(k)
-        if a is None or b is None or a.box is None or b.box is None:
-            continue
-        ox = min(a.box.x + a.box.w, b.box.x + b.box.w) - max(a.box.x, b.box.x)
-        oy = min(a.box.y + a.box.h, b.box.y + b.box.h) - max(a.box.y, b.box.y)
-        if ox > 0 and oy > 0:
-            raise AssertionError(
-                f"duplex battery: the two chips on the conduit between edges {i} and {k} overlap by "
-                f"{ox:.1f}x{oy:.1f}px — a chip can only slide along its own run, and both runs are "
-                f"the same length here, so neither can clear the other"
-            )
+    chips = {a.edge_index for a in layout.annotations if a.kind == "edge-chip" and a.box is not None}
     for i, k in _conduit_pairs(layout):
         for idx in (i, k):
-            chip = chips.get(idx)
-            conn = next((c for c in layout.connectors if c.index == idx), None)
-            if chip is None or chip.box is None or conn is None:
-                continue
-            pts = _path_points(conn.path_d)
-            if len(pts) < 2:
-                continue
-            ux, uy = pts[-1][0] - pts[0][0], pts[-1][1] - pts[0][1]
-            run = math.hypot(ux, uy)
-            if run <= 0:
-                continue
-            ux, uy = ux / run, uy / run
-            span = abs(chip.box.w * ux) + abs(chip.box.h * uy)
-            visible = (run - span) / 2
-            if visible < _CONDUIT_STUB_MIN - 0.5:
+            if idx in chips:
                 raise AssertionError(
-                    f"duplex battery: the chip on conduit channel {idx} leaves {visible:.1f}px of visible "
-                    f"wire each side (law >={_CONDUIT_STUB_MIN:g}px) — a pill with no thread reads as a "
-                    f"label floating between two cards, not as that channel's"
+                    f"duplex battery: conduit channel {idx} wears a chip pill — a pill on one lane "
+                    f"occludes the partner lane, so a conduit's labels are the bare bracket, never chips"
                 )
+
+
+def _check_channel_chip_stubs(layout: DiagramLayout) -> None:
+    """A pill riding an ORTHOGONAL route shows visible wire both sides of
+    its own LEG.
+
+    Scoped to chips whose connector draws the detour grammar — straight
+    legs joined by Q fillets, no cubic — because that is where a chord
+    figure lies about the run: the seat leg is what carries the pill, and
+    a leg sized to the riser centre instead of the fillet start starves a
+    stub the reservation promised. Rank S-curves and gather trunks grade
+    under their own laws; a floated pill has no leg to grade.
+    """
+    for a in layout.annotations:
+        if a.kind != "edge-chip" or a.box is None or a.edge_index < 0:
+            continue
+        conn = next((c for c in layout.connectors if c.index == a.edge_index), None)
+        if conn is None or "C" in conn.path_d or "Q" not in conn.path_d:
+            continue
+        pts = _path_points(conn.path_d)
+        if len(pts) < 2:
+            continue
+        cx, cy = a.box.x + a.box.w / 2, a.box.y + a.box.h / 2
+        best_i = min(range(len(pts) - 1), key=lambda s: _segment_distance(cx, cy, pts[s], pts[s + 1]))
+        if _segment_distance(cx, cy, pts[best_i], pts[best_i + 1]) > _RIDING_SEAT_TOL:
+            continue
+        near, far = _leg_stubs(pts, best_i, a.box)
+        visible = min(near, far)
+        if visible < _CONDUIT_STUB_MIN - 0.5:
+            raise AssertionError(
+                f"chip battery: the pill on channel-routed edge {a.edge_index} leaves {visible:.1f}px of "
+                f"visible wire on its short side (law >={_CONDUIT_STUB_MIN:g}px) — a pill with no thread "
+                f"reads as a label floating between two cards, not as that leg's"
+            )
+
+
+def _leg_stubs(pts: list[tuple[float, float]], i: int, box: RectSpec) -> tuple[float, float]:
+    """Visible wire each side of a pill on ITS OWN LEG.
+
+    The leg is the chain of near-colinear segments around the seat — a 90°
+    corner ends it — and each stub is the distance from the pill's along-run
+    edge to that end of the chain. The figure this replaces measured the
+    connector's endpoint-to-endpoint chord, which on an L-shaped channel is
+    a diagonal no wire follows, and it was symmetric, which on a staggered
+    dialogue seat reports the average of a tight stub and a generous one
+    instead of the tight one the law is about.
+    """
+
+    def _unit(j: int) -> tuple[float, float]:
+        dx, dy = pts[j + 1][0] - pts[j][0], pts[j + 1][1] - pts[j][1]
+        n = math.hypot(dx, dy) or 1.0
+        return dx / n, dy / n
+
+    cos_tol = math.cos(math.radians(10.0))
+    ux, uy = _unit(i)
+    lo, hi = i, i
+    while lo > 0 and _unit(lo - 1)[0] * ux + _unit(lo - 1)[1] * uy >= cos_tol:
+        lo -= 1
+    while hi < len(pts) - 2 and _unit(hi + 1)[0] * ux + _unit(hi + 1)[1] * uy >= cos_tol:
+        hi += 1
+    a, b = pts[lo], pts[hi + 1]
+    cx, cy = box.x + box.w / 2, box.y + box.h / 2
+    span = abs(box.w * ux) + abs(box.h * uy)
+    return math.hypot(cx - a[0], cy - a[1]) - span / 2, math.hypot(cx - b[0], cy - b[1]) - span / 2
 
 
 def _check_conduit_endpoints(layout: DiagramLayout) -> None:
@@ -597,3 +651,123 @@ def _first_crossing(a: list[tuple[float, float]], b: list[tuple[float, float]]) 
             if (d1 > 0) != (d2 > 0) and (d3 > 0) != (d4 > 0):
                 return ((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2)
     return None
+
+
+_SLOT_CORNER_AIR = 3.0
+"""Air a slot keeps beyond its face's corner radius — the wire-separation
+motion floor, restated here so the battery grades the render without
+importing the engine config. A wire anchored inside the corner arc departs
+from curved boundary and reads as leaking out of the card's shoulder."""
+
+
+def _check_slot_corner_zone(layout: DiagramLayout) -> None:
+    """No slot sits in its face's CORNER ZONE.
+
+    Every conduit channel and orthogonal channel route anchors on a flat
+    stretch of its card's face: its endpoint keeps at least the corner
+    radius plus the wire air from both ends of the face it meets. Scoped to
+    the slot machinery's own endpoints — a fan's curvature ports grade
+    under the attachment law, not this one. The gate exists to catch the
+    NEXT crowding: a face short enough to squeeze its slots into the
+    corners has outgrown its band, and that must refuse rather than ship a
+    wire out of a card's shoulder.
+    """
+    pair_idx = {i for pr in _conduit_pairs(layout) for i in pr}
+    by_index = {n.index: n for n in layout.nodes}
+    for c in layout.connectors:
+        ortho = "Q" in c.path_d and "C" not in c.path_d
+        if c.index not in pair_idx and not ortho:
+            continue
+        pts = _path_points(c.path_d)
+        if len(pts) < 2:
+            continue
+        for pt, node_idx in ((pts[0], c.source_index), (pts[-1], c.target_index)):
+            n = by_index.get(node_idx)
+            if n is None:
+                continue
+            b = n.box
+            rx = float(getattr(b, "rx", 0.0) or 0.0)
+            x, y = pt
+            d_left, d_right = abs(x - b.x), abs(x - (b.x + b.w))
+            d_top, d_bot = abs(y - b.y), abs(y - (b.y + b.h))
+            dmin = min(d_left, d_right, d_top, d_bot)
+            if dmin > 6.0:
+                continue  # not anchored on this card's boundary (a knot-collapsed trunk end)
+            if min(d_left, d_right) <= min(d_top, d_bot):
+                end_d = min(y - b.y, (b.y + b.h) - y)
+            else:
+                end_d = min(x - b.x, (b.x + b.w) - x)
+            floor = rx + _SLOT_CORNER_AIR
+            if end_d + 0.5 < floor:
+                raise AssertionError(
+                    f"slot battery: connector {c.index} anchors {end_d:.1f}px from the end of its face on "
+                    f"node {node_idx} (law >= rx {rx:g} + {_SLOT_CORNER_AIR:g}px air) — a slot in the corner "
+                    f"zone departs from curved boundary"
+                )
+
+
+def _check_no_wire_through_pill(layout: DiagramLayout, chips: list[Any]) -> None:
+    """A FLOATED pill contains no wire at all.
+
+    A pill has two lawful homes. It RIDES a run — its stroke through the
+    pill's centre, legible against the fill — or it FLOATS clear of a bend it
+    cannot sit level on. Riding is the only home where a wire belongs inside
+    the plate, and a floated pill that still catches a stroke has neither:
+    it reads as a label somebody dropped on the wiring.
+
+    Scoped to FLOATED pills on purpose. The existing foreign-wire check
+    already grades riding pills (with the swimlane specimen's declared
+    crossing exempted); what nothing graded was the floated seat, which is
+    how a render shipped with a wire crossing a pill's full diagonal and
+    every gate stayed green.
+
+    "Riding" is measured against ANY connector, not the pill's own edge
+    index: a gather/join chip rides the shared TRUNK, which carries a
+    different index than the edge that authored the label (dag-gate's
+    `release`, dag-join's `unify`). Keying the test to the authored index
+    called those trunk-ridden pills floated and their own trunk foreign.
+    """
+    if not chips:
+        return
+    paths = {c.index: _densify_path(_path_points(c.path_d)) for c in layout.connectors}
+    for chip in chips:
+        b = chip.box
+        if b is None:
+            continue
+        cx, cy = b.x + b.w / 2, b.y + b.h / 2
+        rides = any(any(math.hypot(cx - x, cy - y) <= _RIDING_SEAT_TOL for x, y in pts) for pts in paths.values())
+        if rides:
+            continue
+        for idx, pts in paths.items():
+            inside = sum(1 for x, y in pts if b.x <= x <= b.x + b.w and b.y <= y <= b.y + b.h)
+            if inside:
+                text = " ".join(t.text for t in chip.lines)
+                which = "its own" if idx == chip.edge_index else f"connector {idx}'s"
+                raise AssertionError(
+                    f"chip battery: {which} wire runs through the FLOATED pill {text!r} "
+                    f"({inside} sampled points inside the plate) — a floated pill is the seat for a "
+                    f"run it cannot sit on, so nothing may cross it; only a RIDING pill carries a wire"
+                )
+
+
+def _densify_path(pts: list[tuple[float, float]], samples: int = 240) -> list[tuple[float, float]]:
+    """Resample a polyline at even arc-length steps, so a long straight leg
+    cannot slip through the test between two distant vertices."""
+    if len(pts) < 2:
+        return pts
+    lens = [0.0]
+    for a, b in itertools.pairwise(pts):
+        lens.append(lens[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    total = lens[-1]
+    if total <= 0:
+        return pts
+    out: list[tuple[float, float]] = []
+    for i in range(samples + 1):
+        target = total * i / samples
+        for k, (a, b) in enumerate(itertools.pairwise(pts)):
+            if lens[k + 1] >= target or k + 2 == len(lens):
+                seg = lens[k + 1] - lens[k]
+                f = 0.0 if seg <= 0 else (target - lens[k]) / seg
+                out.append((a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f))
+                break
+    return out

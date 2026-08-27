@@ -372,6 +372,21 @@ def _chip_slide_candidates(
     if total <= 0.0:
         return []
     cur_cx, cur_cy = p.box.x + p.box.w / 2, p.box.y + p.box.h / 2
+    # A FLOATED chip keeps its offset from the run. Sliding a chip by putting
+    # its centre ON the polyline is right for a pill that rides its wire and
+    # destroys one that was deliberately lifted clear of a bend — the slide
+    # would hand it straight back the stroke the float exists to escape.
+    near_x, near_y = cur_cx, cur_cy
+    best = math.inf
+    for a, b in itertools.pairwise(poly):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L2 = dx * dx + dy * dy
+        t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((cur_cx - a[0]) * dx + (cur_cy - a[1]) * dy) / L2))
+        px, py = a[0] + t * dx, a[1] + t * dy
+        d = math.hypot(cur_cx - px, cur_cy - py)
+        if d < best:
+            best, near_x, near_y = d, px, py
+    off_x, off_y = cur_cx - near_x, cur_cy - near_y
     out: list[AnnotationPlacement] = []
     for f in slides:
         target = f * total
@@ -394,7 +409,9 @@ def _chip_slide_candidates(
             # measures it: from the pill's edge to the end of the run.
             if target - half < CHIP_STUB_MIN or (total - target) - half < CHIP_STUB_MIN:
                 break
-            out.append(_shift_placement(p, a[0] + (b[0] - a[0]) * t - cur_cx, a[1] + (b[1] - a[1]) * t - cur_cy))
+            tx = a[0] + (b[0] - a[0]) * t + off_x
+            ty = a[1] + (b[1] - a[1]) * t + off_y
+            out.append(_shift_placement(p, tx - cur_cx, ty - cur_cy))
             break
     return out
 

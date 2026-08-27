@@ -73,6 +73,22 @@ class EdgeGeo:
     self-loop (route.py's own outboard anchor), lens bow (already seats at
     its curve's own belly), and sequence message (its own -7 baseline
     convention) stays on this path unchanged."""
+    float_label: bool = False
+    """The SOLVER's verdict that this edge's chip cannot sit level, so its
+    pill takes the FLOATED seat instead of riding the stroke. Decided in the
+    solver because that is where the bend test lives with its exclusions (an
+    authored elbow goes AROUND rather than bowing; a gather trunk and a
+    duplex channel are straight where their rows are not), and none of that
+    is recoverable from the geometry alone — an S-curve is locally straight
+    AT ITS INFLECTION, exactly where a centred seat lands, so measuring the
+    drawn path told annotate a bend was flat."""
+    label_micro: bool = False
+    """Structural override: this edge's label renders as a bare micro-label
+    whatever the authored ``label_style``. The chip home does not exist on
+    this geometry — a pill on one lane of a duplex conduit occludes the
+    partner lane by construction — so the demotion is the solver's, the same
+    class of verdict as ``float_label``, and the spec stays untouched.
+    ``label_pos`` carries the final bracket seat."""
     track_override: str = ""
     """'static' forces the track regardless of motion — sequence message
     strokes are kind semantics (solid call / dashed return), never a march."""

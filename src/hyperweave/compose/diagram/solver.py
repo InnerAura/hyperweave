@@ -971,6 +971,18 @@ def finish_layout(
             # convergence-arrivals mark their knot explicitly and are unaffected.
             if dag_hinted and all(is_target for _, is_target in contribs) and not ctx.ch.join_trunk:
                 continue
+            # The BEZEL KNOBS, on every gather family: a mouth whose chassis
+            # waives its mark reads by the shared point alone — each spoke
+            # carries its own terminal, and the identical endpoint reads as
+            # one mouth. pp-integration is the citation for both sides:
+            # three solid spokes meet one arrowhead on the engine's face,
+            # three leave a bare point on the other. These are their OWN
+            # knobs, never the trunk lengths: model-gateway-tiers keeps its
+            # bezel at depart_trunk 0 ("gathers knot-only, no stub").
+            if all(not is_target for _, is_target in contribs) and not ctx.ch.depart_bezel:
+                continue
+            if all(is_target for _, is_target in contribs) and not ctx.ch.join_bezel:
+                continue
             owner = owners[0]
             # Occlusion is geometric law, not paint order (refined-fanout:
             # v04/specimens/artifacts/diagrams/diagrams-v04a6/primer-diagrams/primer-fanout-refined.html —

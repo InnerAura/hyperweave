@@ -552,6 +552,13 @@ region_band:
   band_side_pad: 18
   band_top_pad: 26
   band_bottom_pad: 12
+  # NESTING: two regions whose rects intersect commit to containment — the
+  # smaller fully inside the larger with this air on every side (their rects
+  # can lawfully intersect while their memberships are disjoint, when one
+  # region's members bracket the other's ranks). The air is the band
+  # grammar's own trailing pad, the family's tightest breathing room, so a
+  # nested hairline reads inset by the same air a band keeps under its row.
+  region_nest_air: 12
   # PER-AXIS CITATION. The three pads above are gateway-balanced's, and that is
   # a band whose members stack ALONG the flow; a vertical dag band's members
   # spread ACROSS it, and its own specimen (dag-vertical-mapreduce-band.svg,
@@ -671,40 +678,38 @@ connector:
   # the same face on different shapes. Under this offset the waist stays shallow enough to carry
   # the pill level (service-dependencies-billing's writes chip).
   sm_label_lift: 8 # state-machine specimens: solver-anchored micro-labels clear their wire by 8px (pp-state-machine(-alt2).svg chain/back-edge/over-arc guards)
-  # DUPLEX DIALOGUE SEATS (owner law, first-render, 2026-08-26). A single
-  # conduit's chip keeps the run midpoint. A PAIR's two chips always seat
-  # staggered — the request upstream, nearer the caller; the response
-  # downstream, nearer the callee — so the conduit reads as question then
-  # answer along its own run. Unconditional by design: a stagger triggered by
-  # a clearance test would trade seats between near-identical renders, the
-  # same churn the label-side hysteresis exists to prevent. On a fanned pair
-  # each chip follows its OWN curve at its t (rising limb / falling limb),
-  # which disperses the pair on both axes instead of stacking it in the
-  # bundle leaving the shared face.
-  duplex_chip_t:
-    outbound: 0.25
-    inbound: 0.75
-  # AMENDMENT (owner, final form). The phi pairs (0.382/0.618, and the
-  # tighter 0.236/0.764) are both superseded by one falsification: the stub
-  # reservation `t*L >= half_chip + stub` binds HARDER as t approaches the
-  # face, so a "tighter" seat needs MORE run, not less. 0.25/0.75 puts the
-  # two pills a full half-run apart — far enough that they clear ALONG the
-  # wire, which is what lets the lane gap fall back to its own floor instead
-  # of being inflated to hold two stacked plates.
+  # CONDUIT LABEL BRACKET (owner law, 2026-08-27, specimen pp-mcp-gateway):
+  # a duplex conduit never wears chip pills — its labels render as one bare
+  # micro-label pair, request above the outbound lane and response below the
+  # return lane, both at the same along-run point, cleared by sm_label_lift.
+  # This superseded the dialogue chip seats (duplex_chip_t 0.25/0.75); the
+  # seats' full history and retirement arithmetic live in the dag wave's
+  # round records.
   # Near a seated pill a foreign wire must clear the PILL BODY, not just the
   # stroke — so the pair gap floor is
   #   max(motion_lane_air, half_pill_h + chip_foreign_wire_clearance)
   # and never a bare motion constant. At +/-3.5 the partner wire threads
   # UNDER the pill and the foreign-wire battery says so.
   chip_foreign_wire_clearance: 2
+  # Headroom so the clearance above holds STRICTLY after the seat rounds.
+  # The lane-gap floor binds at exactly the clearance, and a seat rounded to
+  # a tenth (179.94 -> 179.9) spends 0.04 of it — the law then reads 1.96
+  # against its own 2, which is a real miss even though nothing moved. The
+  # floor carries the rounding it will be measured through.
+  lane_rounding_headroom: 0.5
   # A pill on a BENDING run floats clear of the stroke rather than sitting on
-  # it — pill corners over a curving line read rough. The specimens put it
-  # 7-13px off (frontier-serving cache/telemetry, the state-machine
-  # back-arcs); 10 is the middle of that measured band. AMENDMENT (owner,
+  # it — pill corners over a curving line read rough. AMENDMENT (owner,
   # 2026-08-26): this is what a bent rank-step chip takes INSTEAD of being
   # demoted to a micro-label — one conduit face should not mix two label
   # grammars when the specimens offer a home for both.
-  chip_curve_lift: 10
+  #
+  # The specimens' 7-13px is measured stroke-to-pill-EDGE (frontier-serving
+  # cache/telemetry, the state-machine back-arcs), NOT stroke-to-centre.
+  # Spending it as a centre offset leaves the stroke 2.6px INSIDE a 26px
+  # pill — the wire runs through the plate it is supposed to be clear of. So
+  # the centre offset is derived, never authored:
+  #     centre_offset = half_pill_across + chip_curve_clear
+  chip_curve_clear: 10
   # Minimum air between any two pills, family-wide. Two chips closer than
   # this read as one fused plate, whatever put them there — so the battery
   # grades it as its own law rather than as a side effect of the lane pitch,
