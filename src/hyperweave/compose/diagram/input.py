@@ -168,27 +168,40 @@ def _promotion_causes(n: int, directed: set[tuple[int, int]]) -> tuple[list[int]
 
 
 def promote_cyclic_dag(spec: DiagramSpec) -> NormalizedInput:
-    """Promote a cyclic DAG to state-machine, or pass an acyclic spec through.
+    """Promote a cyclic DAG to state-machine, or pass it through.
 
     The DAG solver is a longest-path layered layout — a back-edge has no
     rank. State-machine owns back-edges (the revise loop), so a caller who
-    declared ``topology: dag`` for a graph that turns out cyclic gets a
+    declared ``topology: dag`` for a graph carrying genuine feedback gets a
     coherent artifact under the state-machine solver plus a warning naming
     what made it cyclic. Non-dag specs and acyclic dags return unchanged
     (``spec`` and ``payload_spec`` identical, no warning → byte-identical
     payload). On promotion ``spec`` becomes the state-machine variant (what
     renders) while ``payload_spec`` keeps the caller's dag (what round-trips).
 
-    The warning names EVERY cause, not the first one found. A graph with two
-    request/response pairs was being told about one of them, so a caller who
-    unpicked the named pair would promote again on the pair they were never
-    shown — and reciprocal pairs are exactly the shape that arrives in twos
-    and threes."""
+    A LOCAL DUPLEX does not promote. A cycle that is exactly one edge pair —
+    ``u -> v`` with ``v -> u`` and nothing else — is a round trip between two
+    adjacent nodes, not feedback through the graph: both endpoints keep the
+    rank they would have had, and the pair draws as one dual-channel conduit
+    (``solve_dag``). Request/response is the dominant shape in real
+    architecture graphs and in mermaid output, so promoting on it handed the
+    state-machine solver exactly the graphs the dag solver exists for. What
+    still promotes: self-loops (``a -> a`` is one edge, never a pair),
+    multi-hop feedback (``A -> B -> C -> A``), and an explicit
+    ``topology: state-machine``.
+
+    The warning names EVERY remaining cause, not the first one found. A graph
+    with two request/response pairs was being told about one of them, so a
+    caller who unpicked the named pair would promote again on the pair they
+    were never shown."""
     if spec.topology is not Topology.DAG:
         return NormalizedInput(spec=spec, payload_spec=spec)
     index = {(n.id or f"n{i}"): i for i, n in enumerate(spec.nodes)}
     directed = {(index[e.source], index[e.target]) for e in spec.edges}
     if not _find_cycle(len(spec.nodes), directed):
+        return NormalizedInput(spec=spec, payload_spec=spec)
+    if not _promotion_causes(len(spec.nodes), directed)[0]:
+        # Cyclic, but every cycle is a local duplex — the dag solver takes it.
         return NormalizedInput(spec=spec, payload_spec=spec)
     cycle, pairs = _promotion_causes(len(spec.nodes), directed)
     label_of = [n.label or f"n{i}" for i, n in enumerate(spec.nodes)]

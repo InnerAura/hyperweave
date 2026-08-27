@@ -46,6 +46,37 @@ def split_self_loops(edges: Sequence[EdgeEnds]) -> tuple[list[int], list[int]]:
     return self_loops, non_self
 
 
+def duplex_return_indices(edges: Sequence[EdgeEnds], considered: Sequence[int] | None = None) -> set[int]:
+    """Positions of the RETURN half of every local duplex.
+
+    A local duplex is ``u -> v`` paired with ``v -> u``. Like a self-loop it
+    carries no rank information — ranking both halves would require v after u
+    and u after v simultaneously — but unlike a self-loop only ONE half is
+    redundant: the first-declared direction still steps the rank, and only its
+    reciprocal is set aside. Returns positions into the ORIGINAL edge list so
+    the caller keeps geo/motion alignment, the same contract
+    ``split_self_loops`` holds.
+
+    ``considered`` restricts which positions may pair (the caller's non-self
+    remainder); omitted, every edge is eligible. Self-loops can never pair
+    with themselves — ``source == target`` would have to match a partner whose
+    source and target are the same two values in the other order, which is the
+    same edge, and an edge is not its own reciprocal.
+    """
+    pool = list(range(len(edges))) if considered is None else [j for j in considered if 0 <= j < len(edges)]
+    seen: dict[tuple[int, int], int] = {}
+    out: set[int] = set()
+    for j in pool:
+        e = edges[j]
+        if e.source == e.target:
+            continue
+        if (e.target, e.source) in seen:
+            out.add(j)  # the reciprocal of an already-seen direction
+            continue
+        seen.setdefault((e.source, e.target), j)
+    return out
+
+
 def longest_path_ranks(n: int, edges: Sequence[EdgeEnds], fixed: Mapping[int, int] | None = None) -> list[int]:
     """Ordinal rank per node: the longest edge-count path from any source,
     seeded by caller pins and compressed to consecutive integers.

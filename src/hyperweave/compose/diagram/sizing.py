@@ -468,6 +468,7 @@ def chip_run_min(
     *,
     stub: float,
     vertical: bool = False,
+    seat_t: float = 0.5,
 ) -> float:
     """Minimum straight-run length for the LABELED edges in ``edges`` — chip
     or bare micro-label alike: a run can never be narrower than the label it
@@ -491,8 +492,17 @@ def chip_run_min(
     folding its ink into the uniform gap floor inflated every OTHER,
     unrelated gap in the chain to hold a label that was never confined to
     begin with)."""
+    # ``seat_t`` is where along the run the pill will actually sit. The
+    # shorter side has to hold half the pill plus a stub, so the run must be
+    # that need divided by the smaller fraction — which at the midpoint is
+    # exactly the old ``pill + 2*stub`` and stays byte-identical there. A
+    # duplex channel seats off-centre (the dialogue seats), and reserving the
+    # midpoint figure for an off-centre pill is how a chip ends up demoted to
+    # a micro-label on a run that was sized for it.
+    near = min(max(seat_t, 1e-6), 1.0 - 1e-6)
+    near = min(near, 1.0 - near)
     chip_vals = [
-        (CHIP_H if vertical else solve_chip_box(e.label, cfg)[0]) + 2 * stub
+        ((CHIP_H if vertical else solve_chip_box(e.label, cfg)[0]) / 2 + stub) / near
         for e in edges
         if e.label and e.label_style == "chip"
     ]

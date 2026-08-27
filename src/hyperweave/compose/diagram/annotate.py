@@ -263,6 +263,127 @@ def _ownership_ratio(
     return d_foreign / d_own
 
 
+def _straight_under_seat(
+    poly: tuple[tuple[float, float], ...], seat: tuple[float, float], span: float, tol: float = 0.6
+) -> bool:
+    """Is the wire straight along the stretch this pill will cover?
+
+    LOCAL, deliberately. Two coarser tests both fail here: endpoint delta
+    calls an elbow bent when its chip rides a dead-straight gutter leg, and
+    ``_channel_leg`` calls a straight CUBIC curved, because a sampled cubic
+    has no single segment carrying half the arc length even when every point
+    on it is collinear. What decides whether a pill can sit level is neither
+    — it is whether the run under the pill itself is flat.
+
+    So: take the sampled points the pill actually covers and measure their
+    deviation from the chord across them. Straight run, straight cubic, and
+    an elbow's flat leg all read flat; an S-curve's waist does not.
+    """
+    if len(poly) < 2 or span <= 0:
+        return True
+    half = span / 2
+    near = [p for p in poly if math.hypot(p[0] - seat[0], p[1] - seat[1]) <= half]
+    if len(near) < 3:
+        return True
+    ax, ay = near[0]
+    bx, by = near[-1]
+    dx, dy = bx - ax, by - ay
+    n = math.hypot(dx, dy)
+    if n == 0:
+        return True
+    ux, uy = dx / n, dy / n
+    worst = max(abs(-(p[1] - ay) * ux + (p[0] - ax) * uy) for p in near)
+    return worst <= tol
+
+
+def _lift_off_run(poly: tuple[tuple[float, float], ...], seat: tuple[float, float], lift: float) -> tuple[float, float]:
+    """Push a pill off its own run along the local perpendicular, toward the
+    OUTSIDE of the bend.
+
+    Outside, not a fixed side: a pill lifted into the concave side of a curve
+    moves toward the wire it is already closest to and toward whatever the
+    bend is bending around. The local turn direction decides, so the lift
+    reads the same on a rise and on a fall."""
+    if len(poly) < 2 or lift <= 0:
+        return seat
+    best_i, best_d = 0, math.inf
+    for i, (a, b) in enumerate(itertools.pairwise(poly)):
+        mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+        d = math.hypot(seat[0] - mx, seat[1] - my)
+        if d < best_d:
+            best_i, best_d = i, d
+    a, b = poly[best_i], poly[best_i + 1]
+    ux, uy = b[0] - a[0], b[1] - a[1]
+    n = math.hypot(ux, uy)
+    if n == 0:
+        return seat
+    ux, uy = ux / n, uy / n
+    nx, ny = -uy, ux
+    # Turn sign from the neighbouring segments: the outside of the bend is
+    # away from where the run is curving.
+    prev_i = max(best_i - 1, 0)
+    next_i = min(best_i + 1, len(poly) - 2)
+    p0, p1 = poly[prev_i], poly[prev_i + 1]
+    q0, q1 = poly[next_i], poly[next_i + 1]
+    turn = (p1[0] - p0[0]) * (q1[1] - q0[1]) - (p1[1] - p0[1]) * (q1[0] - q0[0])
+    if turn > 0:
+        nx, ny = -nx, -ny
+    return (seat[0] + nx * lift, seat[1] + ny * lift)
+
+
+def _duplex_seat_t(ctx: SolverContext, conn: Mapping[str, Any], j: int) -> float:
+    """Where along its own run this chip sits.
+
+    DUPLEX DIALOGUE SEATS (owner law, first-render): a lone conduit's chip
+    keeps the run midpoint; a PAIR's two chips always seat staggered, request
+    upstream and response downstream, so the conduit reads as question then
+    answer. The stagger is unconditional — deciding it from a clearance test
+    would trade the two seats between near-identical renders, exactly the
+    churn the label-side lift avoids by keeping its default and moving only
+    on a decisive margin.
+
+    Which half a channel is comes from its lane sign, the same structural
+    fact ``detect_lanes`` computes for every topology: -1 is the
+    first-declared direction (the request), +1 its reciprocal (the response).
+
+    The two t values are CONDUIT-frame — measured from the caller, along the
+    dialogue, for both channels. They have to be converted to each channel's
+    own parameterisation, because the response's polyline runs backwards: at
+    face value 0.382 on the request and 0.618 on the response land on the
+    SAME POINT IN SPACE (0.618 from one end is 0.382 from the other), which
+    collapses the stagger to nothing on a same-row pair and quietly undoes
+    the law. Flipping the response's t puts the pair 0.236 of the run apart,
+    which is the dispersal the seats are for.
+    """
+    if not (0 <= j < len(ctx.lanes)) or ctx.lanes[j] == 0:
+        return 0.5
+    seats = conn.get("duplex_chip_t") or {}
+    if ctx.lanes[j] < 0:
+        return float(seats.get("outbound", 0.25))
+    return 1.0 - float(seats.get("inbound", 0.75))
+
+
+def _point_at_t(poly: tuple[tuple[float, float], ...], t: float) -> tuple[float, float]:
+    """The point a fraction ``t`` along the polyline BY ARC LENGTH — so a
+    seat means the same thing on a curve as on a straight run (a parameter
+    fraction would bunch toward the control points on the bends)."""
+    if len(poly) < 2:
+        return poly[0] if poly else (0.0, 0.0)
+    lens = [0.0]
+    for a, b in itertools.pairwise(poly):
+        lens.append(lens[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    total = lens[-1]
+    if total <= 0:
+        return poly[0]
+    target = t * total
+    for i, (a, b) in enumerate(itertools.pairwise(poly)):
+        if lens[i + 1] >= target or i + 2 == len(lens):
+            seg = lens[i + 1] - lens[i]
+            f = 0.0 if seg <= 0 else (target - lens[i]) / seg
+            return (a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)
+    return poly[-1]
+
+
 def is_duplex_edge(edges: Sequence[ResolvedEdge], j: int) -> bool:
     """Whether edge ``j`` is one half of a reciprocal pair — the same u->v
     with v->u that promotes a cyclic dag.
@@ -459,7 +580,14 @@ def subsume_edge_labels(
             steep = abs(geo.ty - geo.sy) > abs(geo.tx - geo.sx)
             chip_along = chip_h if steep else chip_w
             stub_min = float(conn.get("chip_stub_min", 18))
-            if geo.length >= chip_along + 2 * stub_min:
+            # A duplex channel seats at its DIALOGUE t, not the midpoint, so
+            # the run it needs is measured from that t: the shorter side has
+            # to hold half the pill plus a stub, which is a longer run than a
+            # centred pill needs. Reserving the midpoint figure and then
+            # seating off-centre is how a pill ends up hard against its own
+            # arrowhead.
+            seat_t = _duplex_seat_t(ctx, conn, j)
+            if geo.length * min(seat_t, 1.0 - seat_t) >= chip_along / 2 + stub_min:
                 # Edge-chip: a single-run pill riding ON a STRAIGHT wire at
                 # its midpoint (never lifted — the pill ground makes riding
                 # legible). On a CURVED run the specimens float the pill
@@ -468,7 +596,31 @@ def subsume_edge_labels(
                 # bending line read rough. Emitted at this edge's slot so the
                 # collide pass keeps its label↔edge pairing.
                 poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
-                pmx, pmy = _channel_midpoint(poly)
+                pmx, pmy = _channel_midpoint(poly) if seat_t == 0.5 else _point_at_t(poly, seat_t)
+                # A run with NO flat leg to sit on takes the FLOATED seat
+                # (owner amendment): lifted clear of the bending stroke
+                # instead of riding it, which is the home the specimens give
+                # a pill that cannot sit level.
+                #
+                # The test is "is there a straight run under the seat", not
+                # "do the endpoints differ across the flow". An elbow's
+                # endpoints differ by a whole row and its chip still rides a
+                # dead-straight gutter leg — reading that offset as a bend
+                # floats a pill off a flat wire, which is what put
+                # dag-mesh-billing's `writes` 10px off its own run against a
+                # 2px specimen band. ``_channel_leg`` already answers the
+                # right question: it returns the dominant axis-aligned leg,
+                # or the chord of a 2-point wire, and None only when there is
+                # genuinely nothing flat to seat on.
+                # The window is the run the pill OWNS — its own span plus the
+                # stub it reserves each side — not the pill alone. An
+                # S-curve is locally straight AT ITS INFLECTION, which is
+                # exactly where a centred seat lands, so measuring the pill's
+                # width alone called `render`'s bend flat. Over the owned run
+                # the S bends and the elbow's gutter leg does not, which is
+                # the distinction that matters.
+                if not _straight_under_seat(poly, (pmx, pmy), chip_along + 2 * stub_min):
+                    pmx, pmy = _lift_off_run(poly, (pmx, pmy), float(conn.get("chip_curve_lift", 10)))
                 # The specimen grounds the pill ON the wire — the line runs
                 # through the pill center, legible against its fill. This holds on
                 # straight runs, channel-routed skips (seated at the CHANNEL's own

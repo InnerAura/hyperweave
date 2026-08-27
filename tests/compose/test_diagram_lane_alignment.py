@@ -163,17 +163,26 @@ def test_pinned_orders_replace_the_barycenter() -> None:
 _PLATEAU_RUN = re.compile(r"C [-0-9. ,]+ ([-0-9.]+),([-0-9.]+) L ([-0-9.]+),\2 C")
 
 
-def test_a_bending_chip_steps_off_the_wire() -> None:
+def test_a_bending_chip_floats_clear_of_the_wire() -> None:
     """A chip rides STRAIGHT wire. Where the edge bends past the threshold the
-    LABEL moves — it becomes a micro-label beside the wire (the three-homes
-    rule) — and the wire itself stays a pure single-cubic bow, identical in
-    family to its unchipped siblings.
+    LABEL moves off the stroke — and the wire itself stays a pure single-cubic
+    bow, identical in family to its unchipped siblings.
 
     The retired answer bent the edge FURTHER instead: a bow-flat-bow plateau
     that manufactured a straight run for the pill. It made a chipped edge and
     its unchipped sibling leave the same face on visibly different shapes, it
     fired on exactly one edge in the whole corpus, and no hand specimen draws
     it — every specimen chip sits centred on wire that was already straight.
+
+    AMENDMENT (owner, 2026-08-26, at render review). Where the label moves TO
+    has changed. It used to be demoted to a micro-label; it now keeps its pill
+    and takes the FLOATED seat, lifted clear of the bending stroke — the
+    frontier-serving cache/telemetry idiom. The three-homes rule was right
+    that a pill's corners over a bending line read rough, and wrong that the
+    only remaining home was off-wire text: the specimens offer a home for
+    both, and one face should not mix two label grammars. The original
+    assertion is kept below, inverted, so this file still records what the
+    rule was and what replaced it.
     """
     spec = _fan_spec(4, 1)
     spec["edges"][-1] = {"source": "svc0", "target": "db0", "label": "reads", "label_style": "chip"}
@@ -183,10 +192,15 @@ def test_a_bending_chip_steps_off_the_wire() -> None:
     assert abs(rows["db0"] - rows["svc0"]) < 0.5, "first labeled vote lost the store"
     assert abs(rows["db0"] - rows["svc3"]) > 60.0, "spec no longer bends the writes edge"
 
-    # The label survives — it just stops being a pill on a bent wire.
+    # The label survives, KEEPS its pill (amended — it used to be demoted to a
+    # micro-label here), and floats clear of the bending stroke.
     labels = [a for a in lay.annotations if a.lines and a.lines[0].text == "writes"]
     assert labels, "the bending label vanished instead of stepping off the wire"
-    assert not any(a.kind == "edge-chip" for a in labels), "a pill still rides the bent wire"
+    assert any(a.kind == "edge-chip" for a in labels), "the bent label lost its pill (pre-amendment behaviour)"
+    chip = next(a for a in labels if a.kind == "edge-chip")
+    geo = next(c for c in lay.connectors if c.index == chip.edge_index)
+    off = _distance_to_path(chip, geo)
+    assert off > 1.0, f"the bent pill still rides its stroke ({off:.1f}px off)"
 
     # `reads` runs flush (its store snapped to its row), so it KEEPS its chip.
     reads = [a for a in lay.annotations if a.lines and a.lines[0].text == "reads"]
@@ -257,3 +271,20 @@ def test_gateway_balanced_placements_reproduce() -> None:
     midpoint = (rows["fast"] + rows["vision"]) / 2
     assert abs(rows["cache"] - midpoint) < 0.5
     assert rows["metrics"] > rows["vision"] + 30.0, "telemetry sink left its rail"
+
+
+def _distance_to_path(chip: Any, conn: Any) -> float:
+    """How far a chip's centre sits off its own connector's drawn path."""
+    import itertools as _it
+    import math as _m
+
+    from hyperweave.compose.diagram.paths import sample_path
+
+    cx, cy = chip.box.x + chip.box.w / 2, chip.box.y + chip.box.h / 2
+    best = _m.inf
+    for a, b in _it.pairwise(sample_path(conn.path_d)):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L2 = dx * dx + dy * dy
+        t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((cx - a[0]) * dx + (cy - a[1]) * dy) / L2))
+        best = min(best, _m.hypot(cx - (a[0] + t * dx), cy - (a[1] + t * dy)))
+    return best

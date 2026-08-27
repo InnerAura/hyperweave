@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.5] - 2026-08-26
 
-Gives diagrams a new dark look and fixes ANSI card padding, the loop's top spacing, the decision's arrival glow, and the tree frame.
+Keeps request/response pairs on the `dag` solver, gives diagrams a new dark look, and fixes ANSI card padding, the loop's top spacing, the decision's arrival glow, and the tree frame.
 
 ### Changed
 
+- **`topology: dag` keeps two-way pairs** — nodes that call each other stay on their dag ranks and draw as one two-channel conduit, outbound over return, instead of turning the whole diagram into a `state-machine`.
 - **Porcelain dark** — diagrams sit on a true-black ground with neutral near-white ink and richer blues; chips and quiet wires wear their own dark grays, and the deliberation amber lives only in the decision's arrival ring.
 - **Dark diagrams on every variant** — the advance path lands in a deep well of the variant's own accent, chips get solid rims and brighter text, and the decision's question reads in plain ink.
 
@@ -19,7 +20,7 @@ Gives diagrams a new dark look and fixes ANSI card padding, the loop's top spaci
 - **Removed card text truncation** — a caption wraps up to four lines and grows its card; `state-machine` diagrams were trimming everything past one line.
 - **Edge chips** — two chips arriving at the same node take separate seats along their own wires instead of one covering the other.
 - **Edge labels** — a label on a curving edge sits on the open side of its wire, so it reads against the edge it names rather than a neighbour.
-- **Cyclic `dag` warning** — names every two-way edge pair that promoted the diagram to `state-machine`, not just the first cycle found.
+- **Cyclic `dag` warning** — names every cause that promoted the diagram to `state-machine`, not just the first cycle found; a self-loop or a longer feedback loop still promotes.
 - **`--format ansi`** — card text keeps a cell of padding inside its border instead of touching it.
 - **Loop top margin** — a loop's headers and first station get their full breathing room at the top of the canvas.
 - **Decision halos** — a loop decision lights its own diamond outline as the route arrives, so every station now glows on arrival.

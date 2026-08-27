@@ -449,17 +449,50 @@ class TestFanLabelOwnership:
         assert _ratio_of(lay, "render") >= 1.5
 
     def test_upward_edge_label_keeps_its_default_seat(self) -> None:
-        # Hysteresis: `extract`'s default (above) seat already reads at 2.29x,
-        # so the clear-side check must not touch it. This is the byte-stability
-        # half of the rule — a side chosen by bare comparison would trade seats
-        # between near-identical renders for no legibility gain.
-        assert _seat_of(_layout(_FAN_SPEC), "extract") == pytest.approx((770.1, 99.2), abs=0.5)
+        # Hysteresis: a label whose default (above) seat already reads clear
+        # must not be moved by the clear-side check. This is the
+        # byte-stability half of the rule — a side chosen by bare comparison
+        # would trade seats between near-identical renders for no legibility
+        # gain.
+        #
+        # Graded as "the seat does not move when foreign geometry is hidden"
+        # rather than against a pinned coordinate: the bent-chip amendment
+        # made this fan's curved edges keep floated PILLS, so the micro-label
+        # this once pinned by hand is no longer the shape under test, and a
+        # literal (770.1, 99.2) would only ever pin whichever label happened
+        # to survive.
+        import hyperweave.compose.diagram.annotate as _annotate
 
-    def test_straight_edge_keeps_its_chip_on_the_wire(self) -> None:
-        # The middle edge never bends, so it keeps its pill and rides its run.
         lay = _layout(_FAN_SPEC)
-        chips = [a for a in lay.annotations if a.kind == "edge-chip"]
-        assert {" ".join(t.text for t in a.lines) for a in chips} == {"invoke", "synthesize"}
+        bare = [a for a in lay.annotations if a.kind == "label" and a.box is not None]
+        if not bare:
+            pytest.skip("this fan carries no bare micro-label to grade")
+        seats = {" ".join(t.text for t in a.lines): (a.box.x, a.box.y) for a in bare}
+        real = _annotate._foreign_wires
+        _annotate._foreign_wires = lambda ctx, geos, j: []
+        try:
+            plain = _layout(_FAN_SPEC)
+        finally:
+            _annotate._foreign_wires = real
+        for a in plain.annotations:
+            if a.kind != "label" or a.box is None:
+                continue
+            text = " ".join(t.text for t in a.lines)
+            if text in seats:
+                assert seats[text] == pytest.approx((a.box.x, a.box.y), abs=0.5), (
+                    f"{text!r} moved although its default seat already read clear"
+                )
+
+    def test_every_declared_chip_keeps_its_pill(self) -> None:
+        # AMENDED: this once asserted only the two STRAIGHT edges kept pills,
+        # because a bent rank-step chip was demoted to a micro-label. A bent
+        # chip now takes the floated seat instead, so the face carries ONE
+        # label grammar — every declared chip renders as a pill, and the bent
+        # ones float clear of their stroke rather than riding it.
+        lay = _layout(_FAN_SPEC)
+        chips = {" ".join(t.text for t in a.lines) for a in lay.annotations if a.kind == "edge-chip"}
+        declared = {str(e["label"]) for e in _FAN_SPEC["edges"] if e.get("label_style") == "chip"}
+        assert chips == declared
 
 
 def test_duplex_labels_are_exempt_from_the_ownership_law() -> None:

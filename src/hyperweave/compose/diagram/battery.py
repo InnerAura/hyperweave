@@ -23,18 +23,32 @@ Checks:
 
 from __future__ import annotations
 
+import itertools
 import math
 import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from hyperweave.compose.diagram.records import DiagramLayout
+    from collections.abc import Mapping
+    from typing import Any
+
+    from hyperweave.compose.diagram.records import DiagramLayout, NodePlacement
     from hyperweave.compose.spatial_records import RectSpec
 
 _NUM = r"-?\d+(?:\.\d+)?"
 
 CHIP_OCCLUSION_MAX = 1 / 3
 CHIP_VISIBLE_RUN_MIN = 30.0
+_CONDUIT_ENDPOINT_TOL = 48.0
+"""How far apart a conduit's two channels may face each other and still be
+recognised as one round trip: the lane gap plus the pill air it reserves."""
+_CONDUIT_ENDPOINT_SLACK = 1.0
+"""How far inside its own card a departure may sit before it is a defect —
+a rounding hair, not a trim."""
+_CONDUIT_STUB_MIN = 18.4
+"""Visible wire each side of a conduit chip — the same floor a chip reserves
+anywhere else (sizing.CHIP_STUB_MIN), restated here so the battery grades the
+RENDER without importing the solver's sizing seam."""
 """The enrolled loop law (cycle-expression-map, corrected from 40 against
 the v4 corpus): a straddling chip leaves at least this much bare wire each
 side."""
@@ -341,3 +355,245 @@ def _check_pulses(layout: DiagramLayout) -> None:
             f"loop battery: pulse on connector {p.connector_index} stops mid-wire "
             f"(sweeps to {min(offsets)} on a {run:.0f}px run — full exit is the law)"
         )
+
+
+def run_chip_air_battery(layout: DiagramLayout, engine: Mapping[str, Any] | None = None) -> None:
+    """No two pills fuse — FAMILY-WIDE, on every topology.
+
+    Deliberately not a trigger for anything and not scoped to the shape that
+    prompted it: two plates closer than the air floor read as one plate
+    whatever seated them, so this grades the outcome rather than any
+    particular cause, and it will catch fusion on shapes the seat laws do not
+    yet describe. Kept separate from the duplex dialogue seats for the same
+    reason — a seat rule that also policed its own result could only ever
+    check the cases it already knew about.
+    """
+    air = 6.0
+    if engine is not None:
+        air = float((engine.get("connector") or {}).get("chip_pill_air", 6))
+    chips = [a for a in layout.annotations if a.kind == "edge-chip" and a.box is not None]
+    for a, b in itertools.combinations(chips, 2):
+        if a.box is None or b.box is None:
+            continue
+        gap_x = max(a.box.x - (b.box.x + b.box.w), b.box.x - (a.box.x + a.box.w))
+        gap_y = max(a.box.y - (b.box.y + b.box.h), b.box.y - (a.box.y + a.box.h))
+        gap = max(gap_x, gap_y)
+        if gap < air - 0.5:
+            at = " ".join(t.text for t in a.lines)
+            bt = " ".join(t.text for t in b.lines)
+            raise AssertionError(
+                f"chip battery: pills {at!r} and {bt!r} sit {gap:.1f}px apart (law >={air:g}px) — "
+                f"two plates that close read as one"
+            )
+
+
+def run_duplex_battery(layout: DiagramLayout) -> None:
+    """Hard asserts on a solved layout's DUPLEX CONDUITS — the dag family's
+    request/response pairs.
+
+    A conduit is recovered from geometry rather than from solver bookkeeping:
+    two connectors whose endpoints are each other's, reversed, are the two
+    channels of one round trip. That keeps the check honest about what
+    rendered — a conduit that lost its pairing somewhere between the solver
+    and the emitter simply stops being found, and its chips are then graded
+    by the ordinary laws instead of silently exempted.
+    """
+    if not layout.layout_slug.startswith("dag"):
+        return
+    _check_duplex_conduits(layout)
+    _check_conduit_endpoints(layout)
+    _check_conduit_face_planarity(layout)
+
+
+def _conduit_pairs(layout: DiagramLayout) -> list[tuple[int, int]]:
+    """Index pairs of connectors that run the same corridor in opposite
+    directions — endpoints swapped within the lane gap that separates them."""
+    ends: dict[int, tuple[tuple[float, float], tuple[float, float]]] = {}
+    for c in layout.connectors:
+        pts = _path_points(c.path_d)
+        if len(pts) >= 2:
+            ends[c.index] = (pts[0], pts[-1])
+    out: list[tuple[int, int]] = []
+    seen: set[int] = set()
+    for i, (si, ti) in ends.items():
+        if i in seen:
+            continue
+        for k, (sk, tk) in ends.items():
+            if k <= i or k in seen:
+                continue
+            # Reversed within a generous tolerance: the two channels are
+            # offset by the lane gap, so their endpoints never coincide
+            # exactly — they face each other across it.
+            if math.hypot(si[0] - tk[0], si[1] - tk[1]) < _CONDUIT_ENDPOINT_TOL and (
+                math.hypot(ti[0] - sk[0], ti[1] - sk[1]) < _CONDUIT_ENDPOINT_TOL
+            ):
+                out.append((i, k))
+                seen.add(i)
+                seen.add(k)
+                break
+    return out
+
+
+def _check_duplex_conduits(layout: DiagramLayout) -> None:
+    """Two chips on one conduit never overlap, and each keeps visible wire.
+
+    A pill may only slide along its OWN run, and a conduit's two runs are the
+    same length in the same corridor — so if the channels are too close the
+    pills stack and neither can escape. The separation has to be right at the
+    geometry, which is what this grades.
+    """
+    chips = {a.edge_index: a for a in layout.annotations if a.kind == "edge-chip" and a.box is not None}
+    for i, k in _conduit_pairs(layout):
+        a, b = chips.get(i), chips.get(k)
+        if a is None or b is None or a.box is None or b.box is None:
+            continue
+        ox = min(a.box.x + a.box.w, b.box.x + b.box.w) - max(a.box.x, b.box.x)
+        oy = min(a.box.y + a.box.h, b.box.y + b.box.h) - max(a.box.y, b.box.y)
+        if ox > 0 and oy > 0:
+            raise AssertionError(
+                f"duplex battery: the two chips on the conduit between edges {i} and {k} overlap by "
+                f"{ox:.1f}x{oy:.1f}px — a chip can only slide along its own run, and both runs are "
+                f"the same length here, so neither can clear the other"
+            )
+    for i, k in _conduit_pairs(layout):
+        for idx in (i, k):
+            chip = chips.get(idx)
+            conn = next((c for c in layout.connectors if c.index == idx), None)
+            if chip is None or chip.box is None or conn is None:
+                continue
+            pts = _path_points(conn.path_d)
+            if len(pts) < 2:
+                continue
+            ux, uy = pts[-1][0] - pts[0][0], pts[-1][1] - pts[0][1]
+            run = math.hypot(ux, uy)
+            if run <= 0:
+                continue
+            ux, uy = ux / run, uy / run
+            span = abs(chip.box.w * ux) + abs(chip.box.h * uy)
+            visible = (run - span) / 2
+            if visible < _CONDUIT_STUB_MIN - 0.5:
+                raise AssertionError(
+                    f"duplex battery: the chip on conduit channel {idx} leaves {visible:.1f}px of visible "
+                    f"wire each side (law >={_CONDUIT_STUB_MIN:g}px) — a pill with no thread reads as a "
+                    f"label floating between two cards, not as that channel's"
+                )
+
+
+def _check_conduit_endpoints(layout: DiagramLayout) -> None:
+    """Each conduit channel meets its OWN cards, computed from its OWN
+    direction.
+
+    A conduit is two edges pointing opposite ways, and it is the one place in
+    the family where it is easy to hand a channel its partner's numbers. The
+    symptom is silent and symmetric: offsetting a finished pair of endpoints
+    perpendicular to their shared chord is only parallel to a card face when
+    that chord is axis-aligned, so on a FANNED pair the outbound departed
+    8.3px inside the hero and the return's arrowhead stopped 8.3px outside
+    it, floating — both wrong, in mirror image, with the pair still looking
+    tidy because they were wrong by the same amount.
+
+    So both ends are graded, per channel: a departure originates ON its
+    source's boundary (never under it, where the card paints over the wire's
+    first pixels), and an arrival stands off by no more than the family's
+    ``STANDOFF_MAX``.
+    """
+    by_index = {n.index: n for n in layout.nodes}
+    for i, k in _conduit_pairs(layout):
+        for idx in (i, k):
+            conn = next((c for c in layout.connectors if c.index == idx), None)
+            if conn is None:
+                continue
+            pts = _path_points(conn.path_d)
+            if len(pts) < 2:
+                continue
+            source = by_index.get(conn.source_index)
+            target = by_index.get(conn.target_index)
+            if source is not None:
+                sx, sy = pts[0]
+                inset = _inset_depth(sx, sy, source)
+                if inset > _CONDUIT_ENDPOINT_SLACK:
+                    raise AssertionError(
+                        f"duplex battery: conduit channel {idx} departs {inset:.1f}px INSIDE its source card — "
+                        f"the card paints over the wire's own first pixels"
+                    )
+            if target is not None:
+                tx, ty = pts[-1]
+                d = _box_distance(tx, ty, target.box)
+                if d > STANDOFF_MAX:
+                    raise AssertionError(
+                        f"duplex battery: conduit channel {idx} stops {d:.1f}px short of its target "
+                        f"(law <={STANDOFF_MAX:g}px) — its arrowhead floats free of the card"
+                    )
+
+
+def _inset_depth(x: float, y: float, node: NodePlacement) -> float:
+    """How far a point lies inside the node's TRUE boundary (0 when on it or
+    outside).
+
+    Measured against the shape, not its bounding box. A card has rounded
+    corners, and ``side_anchor`` bisects to the real boundary — so a
+    departure seated near a corner is legitimately several px inside the BBOX
+    while sitting exactly on the card. Grading it against the box called that
+    a defect and would have pushed a correct anchor off its own face.
+    """
+    from hyperweave.compose.diagram.anchors import boundary_distance
+
+    return max(0.0, -boundary_distance(node, x, y))
+
+
+def _check_conduit_face_planarity(layout: DiagramLayout) -> None:
+    """No two runs meeting a conduit-bearing face cross each other.
+
+    Destination-monotonic port ordering exists to make this true: wires whose
+    ports are ordered by their far endpoint cannot cross, because the ordering
+    at the face IS the ordering in the field. Grading the drawn result rather
+    than the ordering is the point — the ordering can be perfectly applied and
+    still produce crossings if the slots are squeezed until neighbouring pairs
+    interleave, which is exactly how this first shipped.
+
+    Scoped to faces that carry a conduit, matching where the ordering law
+    applies. A pure fan-out keeps the centre mouth and separates by curvature,
+    and crossings there are a different question.
+    """
+    conduit_nodes: set[int] = set()
+    for i, k in _conduit_pairs(layout):
+        for idx in (i, k):
+            conn = next((c for c in layout.connectors if c.index == idx), None)
+            if conn is not None:
+                conduit_nodes.add(conn.source_index)
+                conduit_nodes.add(conn.target_index)
+    if not conduit_nodes:
+        return
+    for node_i in sorted(conduit_nodes):
+        runs = [
+            (c.index, _path_points(c.path_d))
+            for c in layout.connectors
+            if node_i in (c.source_index, c.target_index) and c.source_index != c.target_index
+        ]
+        for (ia, pa), (ib, pb) in itertools.combinations(runs, 2):
+            hit = _first_crossing(pa, pb)
+            if hit is not None:
+                raise AssertionError(
+                    f"duplex battery: runs {ia} and {ib} meeting node {node_i} cross at "
+                    f"({hit[0]:.1f},{hit[1]:.1f}) — ports ordered by destination cannot cross, so "
+                    f"either the ordering did not apply or the slots were squeezed until "
+                    f"neighbouring pairs interleaved"
+                )
+
+
+def _first_crossing(a: list[tuple[float, float]], b: list[tuple[float, float]]) -> tuple[float, float] | None:
+    """Where two sampled polylines properly cross, if they do. Shared
+    endpoints and grazes do not count — only a true sign change on both
+    segments, which is what a reader sees as one wire passing through
+    another."""
+
+    def cross(o: tuple[float, float], p: tuple[float, float], q: tuple[float, float]) -> float:
+        return (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0])
+
+    for p0, p1 in itertools.pairwise(a):
+        for q0, q1 in itertools.pairwise(b):
+            d1, d2 = cross(q0, q1, p0), cross(q0, q1, p1)
+            d3, d4 = cross(p0, p1, q0), cross(p0, p1, q1)
+            if (d1 > 0) != (d2 > 0) and (d3 > 0) != (d4 > 0):
+                return ((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2)
+    return None

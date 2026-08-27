@@ -245,9 +245,15 @@ def resolve_diagram(
     layout = apply_choreography(layout, dspec, register=register, engine=engine)
     # Loop self-consistency battery: hard asserts (engine fault, never a
     # caller error) that the family's geometric + motion contract held.
-    from hyperweave.compose.diagram.battery import run_loop_battery
+    from hyperweave.compose.diagram.battery import (
+        run_chip_air_battery,
+        run_duplex_battery,
+        run_loop_battery,
+    )
 
     run_loop_battery(layout)
+    run_duplex_battery(layout)
+    run_chip_air_battery(layout, engine)
     # sec 6: the compiler teaches — advisory diagnostics measured on the
     # solved layout, surfaced on every surface, never a refusal.
     from hyperweave.compose.diagram.diagnostics import run_diagnostics

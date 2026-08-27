@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import math
 import re
 from typing import Any
 
@@ -99,13 +100,18 @@ class TestPromotionNamesEveryCause:
     promote again on the pair they were not — and request/response pairs
     arrive in twos and threes on real architecture graphs."""
 
-    def test_one_reciprocal_pair_is_named_as_a_pair(self) -> None:
-        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "a")]))
-        assert norm.warnings[0] == "cyclic dag promoted to state-machine (1 reciprocal pair: A <-> B)"
-
-    def test_both_reciprocal_pairs_are_named(self) -> None:
-        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "a"), ("b", "c"), ("c", "b")]))
-        assert norm.warnings[0] == "cyclic dag promoted to state-machine (2 reciprocal pairs: A <-> B, B <-> C)"
+    def test_pairs_are_named_when_something_else_forces_the_promotion(self) -> None:
+        # Pure-duplex graphs no longer promote at all, so the pair NAMING is
+        # exercised on a graph that still does: the multi-hop cycle forces it,
+        # and the caller is told about the pairs riding along too — those pairs
+        # are why the state-machine solver sees more edges than the cycle.
+        norm = promote_cyclic_dag(
+            _dag(
+                [("a", "b"), ("b", "c"), ("c", "a"), ("a", "d"), ("d", "a"), ("b", "d"), ("d", "b")],
+                labels=("A", "B", "C", "D"),
+            )
+        )
+        assert "2 reciprocal pairs: A <-> D, B <-> D" in norm.warnings[0]
 
     def test_multi_hop_cycle_still_reads_as_a_cycle(self) -> None:
         # A three-node loop is NOT a round trip between two nodes; stripping
@@ -133,6 +139,73 @@ class TestPromotionNamesEveryCause:
 
     def test_reciprocal_pairs_helper_excludes_self_loops(self) -> None:
         assert reciprocal_pairs({(0, 0), (1, 1)}) == []
+
+
+class TestLocalDuplexNeverPromotes:
+    """A round trip between two adjacent nodes is not feedback.
+
+    Request/response is the dominant shape in real architecture graphs and in
+    mermaid output, so promoting on it handed the state-machine solver exactly
+    the graphs the dag solver exists for. The dag keeps its ranks and draws the
+    pair as one dual-channel conduit instead.
+    """
+
+    def test_a_single_pair_stays_a_dag(self) -> None:
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "a")]))
+        assert norm.spec.topology is Topology.DAG
+        assert norm.warnings == ()
+
+    def test_several_pairs_stay_a_dag(self) -> None:
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "a"), ("b", "c"), ("c", "b")]))
+        assert norm.spec.topology is Topology.DAG
+        assert norm.warnings == ()
+
+    def test_pairs_alongside_plain_forward_edges_stay_a_dag(self) -> None:
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "c"), ("c", "b"), ("c", "d")], labels=("A", "B", "C", "D")))
+        assert norm.spec.topology is Topology.DAG
+        assert norm.warnings == ()
+
+    def test_a_self_loop_still_promotes(self) -> None:
+        # a -> a is ONE edge. It is not a pair, it has no partner channel, and
+        # the dag solver has no rank for it.
+        norm = promote_cyclic_dag(_dag([("a", "a"), ("a", "b")]))
+        assert norm.spec.topology is Topology.STATE_MACHINE
+
+    def test_multi_hop_feedback_still_promotes(self) -> None:
+        norm = promote_cyclic_dag(_dag([("a", "b"), ("b", "c"), ("c", "a")]))
+        assert norm.spec.topology is Topology.STATE_MACHINE
+
+    def test_a_pair_does_not_rescue_a_multi_hop_cycle(self) -> None:
+        # The pair is stripped before the multi-hop search, so it can neither
+        # mask a real cycle nor be mistaken for one.
+        norm = promote_cyclic_dag(
+            _dag([("a", "b"), ("b", "c"), ("c", "a"), ("a", "d"), ("d", "a")], labels=("A", "B", "C", "D"))
+        )
+        assert norm.spec.topology is Topology.STATE_MACHINE
+
+    def test_duplex_dag_renders_through_the_dag_solver(self) -> None:
+        # Guard Law: through the real engine, reading the real SVG — the
+        # attribute a consumer actually sees.
+        svg = compose(
+            ComposeSpec(
+                type="diagram",
+                genome_id="primer",
+                variant="porcelain",
+                diagram={
+                    "topology": "dag",
+                    "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}],
+                    "edges": [
+                        {"source": "a", "target": "b"},
+                        {"source": "b", "target": "c"},
+                        {"source": "c", "target": "b"},
+                    ],
+                },
+            )
+        ).svg
+        assert 'data-hw-topology="dag"' in svg
+        payload = _payload_from_svg(svg)
+        assert "topology" not in payload["rendered"]  # nothing was promoted
+        assert "warnings" not in payload["rendered"]
 
 
 class TestNoInputErrorMessage:
@@ -217,24 +290,61 @@ _CHIP_RECT_RE = re.compile(
 _DESC_RE = re.compile(r'class="hw-[0-9a-f]+-[nmh]desc"[^>]*>([^<]*)</text>')
 
 
+def _layout_of(spec_dict: dict[str, Any]) -> Any:
+    """Solve a diagram to its layout record — connectors and annotations as
+    the template will emit them."""
+    from hyperweave.compose.diagram import compute_diagram_layout
+    from hyperweave.config.loader import load_diagram_config, load_glyphs, load_paradigms
+    from hyperweave.core.paradigm import ParadigmDiagramConfig
+
+    cs = ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=spec_dict)
+    normalized = coerce_diagram_input(cs.connector_data, cs)
+    pspec = load_paradigms().get("primer")
+    cfg = pspec.diagram if pspec is not None and hasattr(pspec, "diagram") else ParadigmDiagramConfig()
+    return compute_diagram_layout(
+        normalized.spec,
+        paradigm=cfg,
+        engine=load_diagram_config(),
+        palette_len=6,
+        glyph_registry=load_glyphs(),
+    )
+
+
+def _geo_of(lay: Any, spec_dict: dict[str, Any], label: str) -> list[tuple[float, float]] | None:
+    """The sampled polyline of the connector carrying ``label``. Connectors are
+    emitted in edge order, so the spec's own edge list is the index."""
+    from hyperweave.compose.diagram.paths import sample_path
+
+    for j, e in enumerate(spec_dict.get("edges") or []):
+        if e.get("label") == label and j < len(lay.connectors):
+            return list(sample_path(lay.connectors[j].path_d))
+    return None
+
+
 def _payload_from_svg(svg: str) -> dict[str, Any]:
     m = re.search(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", svg, re.DOTALL)
     assert m, "hw:payload missing"
     return json.loads(m.group(1))  # type: ignore[no-any-return]
 
 
-class TestPromotedArchitectureRender:
-    """The promoted render, graded on what a reader can actually see.
+class TestArchitectureRenderAsAStateMachine:
+    """The same architecture graph DECLARED as a state-machine.
 
-    A promoted spec is still somebody's artifact — until the dag solver takes
-    reciprocal pairs natively, this IS the output for every request/response
-    architecture graph, so the state-machine defects it exposes are pinned
-    here at the rendered-SVG level rather than at the solver beneath it."""
+    This spec used to arrive at the state-machine solver by promotion; it now
+    stays a dag, so the declaration is explicit here. The pins are unchanged:
+    they guard the two state-machine defects the caption budget and the chip
+    arbitration fixed, and those defects belong to the family whatever route a
+    caller took to reach it."""
 
     def _svg(self) -> str:
-        spec = ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=_ARCHITECTURE_DAG)
+        spec = ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant="porcelain",
+            diagram={**_ARCHITECTURE_DAG, "topology": "state-machine"},
+        )
         svg = compose(spec).svg
-        assert 'data-hw-topology="state-machine"' in svg, "precondition: this spec promotes"
+        assert 'data-hw-topology="state-machine"' in svg, "precondition: declared state-machine"
         return svg
 
     def test_captions_grow_their_card_instead_of_ellipsizing(self) -> None:
@@ -460,3 +570,96 @@ class TestAnnotationReferential:
             annotations=[{"text": "key", "kind": "legend", "region": "footer"}],  # type: ignore[list-item]
         )
         assert s.annotations[0].region == "footer"
+
+
+class TestArchitectureRenderAsADag:
+    """The wave's acceptance case: the readme-ai graph through the DAG solver.
+
+    Two request/response pairs used to promote it to a state machine, which
+    dressed an architecture graph in state syntax — a muted dashed provider
+    card, back-edge hooks sweeping over content, off-baseline seating. It now
+    keeps its ranks and draws each pair as one dual-channel conduit.
+    """
+
+    def _svg(self) -> str:
+        spec = ComposeSpec(type="diagram", genome_id="primer", variant="porcelain", diagram=_ARCHITECTURE_DAG)
+        return compose(spec).svg
+
+    def test_it_stays_a_dag(self) -> None:
+        svg = self._svg()
+        assert 'data-hw-topology="dag"' in svg
+        payload = _payload_from_svg(svg)
+        assert payload["spec"]["topology"] == "dag"
+        assert "topology" not in payload["rendered"], "nothing was promoted, so nothing to record"
+
+    def test_no_state_syntax_survives(self) -> None:
+        # The dashed outline is a state-machine word for a state that is not
+        # yet settled. On a provider card it meant nothing.
+        assert 'stroke-dasharray="4 4"' not in self._svg()
+
+    def test_both_pairs_draw_as_conduits(self) -> None:
+        # Each pair shares one corridor: the two channels run between the same
+        # pair of faces, in opposite directions, offset perpendicular.
+        lay = _layout_of(_ARCHITECTURE_DAG)
+        pairs = [("extract", "context"), ("synthesize", "responses")]
+        for out_label, back_label in pairs:
+            a, b = _geo_of(lay, _ARCHITECTURE_DAG, out_label), _geo_of(lay, _ARCHITECTURE_DAG, back_label)
+            assert a is not None and b is not None, f"missing conduit half for {out_label}/{back_label}"
+            # Opposite travel: the outbound's start is near the return's end.
+            assert math.hypot(a[0][0] - b[-1][0], a[0][1] - b[-1][1]) < 40, (
+                f"{back_label} does not return to where {out_label} left"
+            )
+            assert math.hypot(a[-1][0] - b[0][0], a[-1][1] - b[0][1]) < 40, (
+                f"{back_label} does not depart from where {out_label} arrived"
+            )
+
+    def test_conduit_chips_never_overlap(self) -> None:
+        lay = _layout_of(_ARCHITECTURE_DAG)
+        chips = [a for a in lay.annotations if a.kind == "edge-chip" and a.box is not None]
+        for a, b in itertools.combinations(chips, 2):
+            ox = min(a.box.x + a.box.w, b.box.x + b.box.w) - max(a.box.x, b.box.x)
+            oy = min(a.box.y + a.box.h, b.box.y + b.box.h) - max(a.box.y, b.box.y)
+            assert ox <= 0 or oy <= 0, (
+                f"chips overlap by {ox:.1f}x{oy:.1f}: {[t.text for t in a.lines]} and {[t.text for t in b.lines]}"
+            )
+
+    def test_both_channels_of_a_conduit_wear_the_same_label_grammar(self) -> None:
+        # One conduit cannot be half pill and half bare text: the outbound
+        # matched the bend rule and lost its chip while the return, a rank
+        # step DOWN, never reached that test and kept one.
+        lay = _layout_of(_ARCHITECTURE_DAG)
+        kinds = {" ".join(t.text for t in a.lines): a.kind for a in lay.annotations if a.box is not None}
+        assert kinds["extract"] == kinds["context"], f"conduit split: {kinds['extract']} vs {kinds['context']}"
+        assert kinds["synthesize"] == kinds["responses"]
+
+
+def test_architecture_dag_renders_planar() -> None:
+    """No wire crosses another. The battery asserts this during compose, so
+    this pin exists to state the intent and to name the repro that found it:
+    three crossing pairs at the hero's east face, two of them involving a
+    PLAIN edge that held the centre mouth while conduits were slotted around
+    it.
+    """
+    lay = _layout_of(_ARCHITECTURE_DAG)
+    polys = [_sample(c.path_d) for c in lay.connectors]
+    crossings = [(i, j) for i, j in itertools.combinations(range(len(polys)), 2) if _polys_cross(polys[i], polys[j])]
+    assert crossings == [], f"wires cross: {crossings}"
+
+
+def _sample(d: str) -> list[tuple[float, float]]:
+    from hyperweave.compose.diagram.paths import sample_path
+
+    return list(sample_path(d))
+
+
+def _polys_cross(a: list[tuple[float, float]], b: list[tuple[float, float]]) -> bool:
+    def cross(o: tuple[float, float], p: tuple[float, float], q: tuple[float, float]) -> float:
+        return (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0])
+
+    for p0, p1 in itertools.pairwise(a):
+        for q0, q1 in itertools.pairwise(b):
+            if (cross(q0, q1, p0) > 0) != (cross(q0, q1, p1) > 0) and (cross(p0, p1, q0) > 0) != (
+                cross(p0, p1, q1) > 0
+            ):
+                return True
+    return False
