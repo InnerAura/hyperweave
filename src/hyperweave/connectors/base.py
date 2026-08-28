@@ -306,6 +306,7 @@ TOTAL_TIMEOUT: float = 15.0
 #     test so each test gets a fresh client bound to its own event loop
 #     (pytest-asyncio asyncio_mode='auto' creates a new loop per test).
 _client: httpx.AsyncClient | None = None
+_client_loop: asyncio.AbstractEventLoop | None = None
 
 
 def get_client() -> httpx.AsyncClient:
@@ -315,9 +316,24 @@ def get_client() -> httpx.AsyncClient:
     tests to rebind the client to each test's event loop). Same code path
     serves FastAPI (lifespan-opened), CLI (lazy-opened), and tests (autouse-
     fixture-recreated).
+
+    Also re-creates when the running loop is not the one the client was built
+    on. A client whose loop has been reaped still reports ``is_closed`` False,
+    so the closed-check alone handed back a client whose transport was bound to
+    a dead loop: the fetch raised ``RuntimeError: Event loop is closed``, the
+    resolver swallowed it, and the artifact rendered its no-signal dashes with
+    no error class anywhere. Any caller that spans loops sees it -- a script
+    calling ``asyncio.run`` twice, a sync test client driving requests through
+    per-request portals. A server holds one loop for its lifetime and never
+    trips this. The stale client is dropped rather than closed: its loop is
+    already gone, so ``aclose()`` cannot run, and the OS reaps the sockets.
     """
-    global _client
-    if _client is None or _client.is_closed:
+    global _client, _client_loop
+    try:
+        running: asyncio.AbstractEventLoop | None = asyncio.get_running_loop()
+    except RuntimeError:
+        running = None
+    if _client is None or _client.is_closed or (running is not None and _client_loop is not running):
         timeout = httpx.Timeout(
             connect=CONNECT_TIMEOUT,
             read=TOTAL_TIMEOUT,
@@ -333,6 +349,7 @@ def get_client() -> httpx.AsyncClient:
                 keepalive_expiry=30.0,
             ),
         )
+        _client_loop = running
     return _client
 
 
@@ -350,7 +367,7 @@ async def close_client() -> None:
     Catch and drop the reference; the OS reaps the sockets at process exit
     and the next ``get_client()`` call rebinds to a live loop.
     """
-    global _client
+    global _client, _client_loop
     if _client is not None and not _client.is_closed:
         # Client may be bound to a different (now-closed) event loop -- e.g.
         # a sync test that ran asyncio.run() internally. Suppress and drop
@@ -358,6 +375,7 @@ async def close_client() -> None:
         with contextlib.suppress(RuntimeError):
             await _client.aclose()
     _client = None
+    _client_loop = None
 
 
 def pin_github_token() -> str | None:

@@ -564,9 +564,12 @@ def _generate_data_cards() -> int:
     stats_data: dict[str, Any] | None = None
     chart_data: dict[str, Any] | None = None
 
-    # Fetch real data from GitHub. Both fetches share a single asyncio.run() —
-    # the httpx singleton client binds to the loop on first use, so a second
-    # asyncio.run() finds it bound to a closed loop ("Event loop is closed").
+    # Fetch real data from GitHub. Both fetches share a single asyncio.run()
+    # so they reuse one connection pool rather than building a second. (This
+    # started as a workaround: the shared client used to survive its own loop
+    # and the second asyncio.run died with "Event loop is closed" —
+    # get_client now rebinds, so the coalescing is an efficiency, not a
+    # requirement.)
     from hyperweave.connectors.base import close_client
     from hyperweave.connectors.github import fetch_stargazer_history, fetch_user_stats
 

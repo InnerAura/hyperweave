@@ -437,6 +437,80 @@ class TestPyPIProvider:
             assert result["value"] == ">=3.9"
 
     @pytest.mark.asyncio
+    async def test_license_reads_the_pep639_expression_when_the_legacy_field_is_null(self) -> None:
+        # hyperweave's own PyPI record: adopting license_expression leaves the
+        # legacy field explicitly null, and a present-but-null key never takes
+        # a dict.get default -- the badge rendered the word "None" in
+        # production.
+        mock_data = {
+            "info": {
+                "license": None,
+                "license_expression": "Apache-2.0",
+                "classifiers": ["License :: OSI Approved :: Apache Software License"],
+            }
+        }
+
+        with patch(
+            "hyperweave.connectors.rest.fetch_json",
+            new_callable=AsyncMock,
+            return_value=mock_data,
+        ):
+            from hyperweave.connectors.rest import pypi_fetch_metric as fetch_metric
+
+            result = await fetch_metric("hyperweave", "license")
+            assert result["value"] == "Apache-2.0"
+
+    @pytest.mark.asyncio
+    async def test_license_falls_back_to_the_trove_classifier(self) -> None:
+        mock_data = {"info": {"license": None, "classifiers": ["License :: OSI Approved :: MIT License"]}}
+
+        with patch(
+            "hyperweave.connectors.rest.fetch_json",
+            new_callable=AsyncMock,
+            return_value=mock_data,
+        ):
+            from hyperweave.connectors.rest import pypi_fetch_metric as fetch_metric
+
+            result = await fetch_metric("older-package", "license")
+            assert result["value"] == "MIT License"
+
+    @pytest.mark.asyncio
+    async def test_license_refuses_a_pasted_license_body(self) -> None:
+        # Some packages paste the whole license into the legacy field; a badge
+        # slot holds a name, so the classifier wins past the name width.
+        mock_data = {
+            "info": {
+                "license": "Permission is hereby granted, free of charge, to any person obtaining a copy...",
+                "classifiers": ["License :: OSI Approved :: MIT License"],
+            }
+        }
+
+        with patch(
+            "hyperweave.connectors.rest.fetch_json",
+            new_callable=AsyncMock,
+            return_value=mock_data,
+        ):
+            from hyperweave.connectors.rest import pypi_fetch_metric as fetch_metric
+
+            result = await fetch_metric("verbose-package", "license")
+            assert result["value"] == "MIT License"
+
+    @pytest.mark.asyncio
+    async def test_absent_metadata_reads_unknown_never_the_word_none(self) -> None:
+        mock_data = {"info": {"license": None, "requires_python": None, "classifiers": []}}
+
+        with patch(
+            "hyperweave.connectors.rest.fetch_json",
+            new_callable=AsyncMock,
+            return_value=mock_data,
+        ):
+            from hyperweave.connectors.rest import pypi_fetch_metric as fetch_metric
+
+            for metric in ("license", "python_requires"):
+                result = await fetch_metric("bare-package", metric)
+                assert result["value"] == "Unknown", metric
+
+    @pytest.mark.asyncio
     async def test_downloads_metric_primary_pepy_total(self) -> None:
         # v0.3.12: downloads is sourced from pepy.tech v2 (total_downloads),
         # keyless and burst-tolerant. pypi.org's JSON never carried counts and
@@ -525,6 +599,43 @@ class TestNpmProvider:
 
             result = await fetch_metric("express", "version")
             assert result["value"] == "4.18.2"
+
+    @pytest.mark.asyncio
+    async def test_license_unwraps_the_legacy_object_form(self) -> None:
+        # Packages published before npm settled on a plain SPDX string carry
+        # ``{"type": ...}``; the object itself is not a license name.
+        mock_data = {
+            "dist-tags": {"latest": "1.0.0"},
+            "license": {"type": "ISC", "url": "https://example.invalid/LICENSE"},
+        }
+
+        with patch(
+            "hyperweave.connectors.rest.fetch_json",
+            new_callable=AsyncMock,
+            return_value=mock_data,
+        ):
+            from hyperweave.connectors.rest import npm_fetch_metric as fetch_metric
+
+            result = await fetch_metric("vintage", "license")
+            assert result["value"] == "ISC"
+
+    @pytest.mark.asyncio
+    async def test_license_reads_the_versioned_record_when_the_root_is_null(self) -> None:
+        mock_data = {
+            "dist-tags": {"latest": "4.18.2"},
+            "license": None,
+            "versions": {"4.18.2": {"license": "MIT"}},
+        }
+
+        with patch(
+            "hyperweave.connectors.rest.fetch_json",
+            new_callable=AsyncMock,
+            return_value=mock_data,
+        ):
+            from hyperweave.connectors.rest import npm_fetch_metric as fetch_metric
+
+            result = await fetch_metric("express", "license")
+            assert result["value"] == "MIT"
 
 
 # =========================================================================
@@ -2138,3 +2249,36 @@ class TestMidRetryBreaker:
             await fetch("https://api.github.com/repos/t/t", provider="mid-trip")
         assert instance.get.await_count == 1
         assert recorded_retry_waits == []
+
+
+class TestClientLoopBinding:
+    """The shared client must belong to the loop that is running now."""
+
+    @pytest.mark.asyncio
+    async def test_repeat_calls_on_one_loop_share_the_client(self) -> None:
+        from hyperweave.connectors.base import get_client
+
+        assert get_client() is get_client()
+
+    def test_a_new_loop_gets_a_new_client(self) -> None:
+        """A client built on a reaped loop still reports itself open, so the
+        closed-check alone handed it back and the next fetch died with
+        'Event loop is closed'. The resolver swallows that, so the artifact
+        rendered no-signal dashes with no error class -- silent, and only for
+        callers that span loops (a script calling asyncio.run twice, a sync
+        test client using per-request portals). A server holds one loop and
+        never sees it."""
+        import asyncio
+
+        from hyperweave.connectors.base import close_client, get_client
+
+        async def _grab() -> Any:
+            return get_client()
+
+        first = asyncio.run(_grab())
+        second = asyncio.run(_grab())
+        try:
+            assert second is not first
+            assert not first.is_closed, "the stale client reports itself open — why the closed-check missed it"
+        finally:
+            asyncio.run(close_client())

@@ -82,6 +82,45 @@ async def _pypi_downloads(identifier: str) -> int:
     return int(bucket.get("last_month", 0))
 
 
+def _first_text(*candidates: Any, default: str = "Unknown") -> str:
+    """The first candidate carrying actual text.
+
+    A provider that OMITS a field and one that sends it as ``null`` mean the
+    same thing to a reader, but ``dict.get(key, default)`` only defends the
+    first: the key is present, so the default never fires and ``None`` flows
+    on to be rendered as the literal word.
+    """
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    return default
+
+
+# A legacy ``license`` field is free text, and a handful of packages paste
+# their entire license into it. Past this width it is prose, not a name, so
+# the classifier reads better on a badge.
+_LICENSE_NAME_MAX = 40
+
+
+def _pypi_license(info: dict[str, Any]) -> str:
+    """The package's license name.
+
+    Three sources, newest first. PEP 639 moved the SPDX expression to
+    ``license_expression`` and leaves the legacy ``license`` field null for
+    packages that adopted it (hyperweave itself is one); older releases carry
+    neither and declare the license only through a trove classifier.
+    """
+    classifier = ""
+    for item in info.get("classifiers") or ():
+        if isinstance(item, str) and item.startswith("License ::"):
+            classifier = item.rsplit(" :: ", 1)[-1]
+            break
+    legacy = info.get("license")
+    if isinstance(legacy, str) and len(legacy.strip()) > _LICENSE_NAME_MAX:
+        legacy = None
+    return _first_text(info.get("license_expression"), legacy, classifier)
+
+
 async def _pypi_extract(identifier: str, metric: str) -> Any:
     # pypi.org/pypi/{pkg}/json hasn't carried download counts since 2016 —
     # ``info.downloads.last_month`` returns -1 for every package. The
@@ -96,8 +135,8 @@ async def _pypi_extract(identifier: str, metric: str) -> Any:
     info: dict[str, Any] = data.get("info", {})
     extractors: dict[str, Any] = {
         "version": info.get("version"),
-        "license": info.get("license", "Unknown"),
-        "python_requires": info.get("requires_python", "Unknown"),
+        "license": _pypi_license(info),
+        "python_requires": _first_text(info.get("requires_python")),
     }
     if metric not in extractors:
         available = [*extractors, "downloads"]
@@ -113,16 +152,22 @@ async def pypi_fetch_metric(identifier: str, metric: str) -> dict[str, Any]:
 # -- npm -------------------------------------------------------------------
 
 
+def _npm_license_name(raw: Any) -> str:
+    """The license name from npm's field, which is a string on current
+    packages and an object carrying ``type`` on ones published years ago."""
+    if isinstance(raw, dict):
+        raw = raw.get("type")
+    return raw if isinstance(raw, str) else ""
+
+
 async def _npm_extract(identifier: str, metric: str) -> Any:
     data = await fetch_json(f"https://registry.npmjs.org/{identifier}", provider="npm")
     if metric == "version":
         return data.get("dist-tags", {}).get("latest", "unknown")
     if metric == "license":
-        v = data.get("license")
-        if v is None:
-            latest = data.get("dist-tags", {}).get("latest", "")
-            v = data.get("versions", {}).get(latest, {}).get("license", "Unknown")
-        return v
+        latest = data.get("dist-tags", {}).get("latest", "")
+        versioned = data.get("versions", {}).get(latest, {})
+        return _first_text(_npm_license_name(data.get("license")), _npm_license_name(versioned.get("license")))
     if metric == "downloads":
         # npm download stats live on a separate api.npmjs.org subdomain;
         # registry.npmjs.org/-/downloads/* returns 404 for all packages

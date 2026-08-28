@@ -502,6 +502,27 @@ async def test_unknown_genome_returns_404_smpte_pattern(client: AsyncClient) -> 
     assert 'data-hw-status-code="404"' in body
 
 
+async def test_license_badge_renders_the_name_not_the_word_none(client: AsyncClient) -> None:
+    """The value a reader actually sees on the badge.
+
+    PyPI leaves the legacy ``license`` field null for packages that declare
+    the PEP 639 ``license_expression`` (hyperweave is one), and a null on a
+    PRESENT key never takes a ``dict.get`` default -- so the word ``None``
+    rendered in the value slot, in production.
+    """
+    from hyperweave.connectors.cache import get_cache
+
+    get_cache().clear()
+    payload = {"info": {"license": None, "license_expression": "Apache-2.0", "classifiers": []}}
+    with patch("hyperweave.connectors.rest.fetch_json", new_callable=AsyncMock, return_value=payload):
+        resp = await client.get("/v1/badge/LICENSE/primer.static", params={"data": "pypi:hyperweave.license"})
+    get_cache().clear()
+
+    assert resp.status_code == 200
+    assert ">Apache-2.0<" in resp.text
+    assert ">None<" not in resp.text
+
+
 # ===========================================================================
 # Camo-hardening middleware
 # ===========================================================================
