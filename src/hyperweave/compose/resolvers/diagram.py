@@ -327,6 +327,38 @@ def resolve_diagram(
         mix_t = float((engine.get("material") or {}).get("ramp_mid_mix", 0.58))
         card_mid = _mix_hex(str(diagram_dark["card_hi"]), str(diagram_dark["card_lo"]), mix_t)
         diagram_dark = {**diagram_dark, "card_mid": card_mid}
+    # LIGHT HERO BEVEL, the light-face counterpart of the dark card ramp. The
+    # dark face separates its cards by a ramp across every card; a light face
+    # has no such headroom, so only the HERO takes relief and the rest of the
+    # cards stay flat. Both gradients derive from the face's own tokens -- the
+    # face falls from the card tone to the deep surface, the rim runs from the
+    # card tone through the muted wire to a foot carried on toward muted ink --
+    # so a variant bevels in its own colours and nothing is authored twice.
+    diagram_light: dict[str, str] | None = None
+    if not dark_scheme:
+        # Read the AUTHORED light face, never the ambient genome: on an
+        # adaptive render the base scheme is light but ``genome`` is still the
+        # variant's native palette (the light base is written by the surface
+        # layer), so a dark-substrate variant would bevel its hero in its own
+        # dark tones. A light-substrate genome with no authored face IS its
+        # own light face; a dark one without a face has no light tones to
+        # bevel with, and takes no bevel at all.
+        _face_src = (genome.get("diagram_faces") or {}).get("light")
+        if _face_src is None and not native_dark:
+            _face_src = genome
+        _face_src = _face_src or {}
+        _mat = engine.get("material") or {}
+        _conn = str(_face_src.get("diagram_conn_muted") or _face_src.get("stroke") or "")
+        _ink2 = str(_face_src.get("ink_secondary") or "")
+        _face_hi = str(_face_src.get("surface_1") or "")
+        if _conn and _ink2 and _face_hi:
+            diagram_light = {
+                "face_hi": _face_hi,
+                "face_lo": str(_face_src.get("surface_2") or _face_hi),
+                "rim_hi": _face_hi,
+                "rim_mid": _conn,
+                "rim_lo": _mix_hex(_conn, _ink2, float(_mat.get("bevel_rim_mix", 0.5))),
+            }
 
     context: dict[str, Any] = {
         "diagram_layout": layout,
@@ -355,6 +387,10 @@ def resolve_diagram(
         # than the committed base scheme — the template ships the override
         # block inside @media (prefers-color-scheme: dark).
         "diagram_dark_adaptive": bool(diagram_dark) and dark_branch,
+        # The light face's hero bevel — present whenever the BASE scheme is
+        # light (a baked light face, a light-substrate variant, or the light
+        # base an adaptive render ships beneath its dark branch).
+        "diagram_light": diagram_light,
         "diagram_conn_muted": str(genome.get("diagram_conn_muted", "")),
         "diagram_conn_muted_far": diagram_conn_muted_far,
         "diagram_style": _style_params(engine, render_chassis(dspec, cfg)),
@@ -475,6 +511,8 @@ def _style_params(engine: dict[str, Any], ch: DiagramTopologyChassis) -> dict[st
         # Dark-face card material (card-ramp ruling): eased ramp midpoint +
         # the strip-recipe grain scalars the material filters stamp.
         "ramp_mid_offset": (engine.get("material") or {}).get("ramp_mid_offset", "0.4"),
+        "bevel_face_hold": (engine.get("material") or {}).get("bevel_face_hold", "0.7"),
+        "bevel_rim_turn": (engine.get("material") or {}).get("bevel_rim_turn", "0.4"),
         "grain_base_frequency": (engine.get("material") or {}).get("grain_base_frequency", "1.6"),
         "grain_octaves": (engine.get("material") or {}).get("grain_octaves", "2"),
         "grain_seed": (engine.get("material") or {}).get("grain_seed", "19"),

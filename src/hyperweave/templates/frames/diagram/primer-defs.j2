@@ -14,9 +14,28 @@
    for the mobile-raster discipline. Adaptive twins re-tint via the scoped
    CSS rule below. #}
 <filter id="{{ uid }}-lift" color-interpolation-filters="sRGB" x="-70%" y="-80%" width="240%" height="280%">
-  <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.05"/>
-  <feDropShadow dx="0" dy="9" stdDeviation="20" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.055"/>
+  <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.04"/>
+  <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.045"/>
 </filter>
+{% if diagram_light %}
+{# The light face's HERO bevel. The dark face ramps every card because a dark
+   ground has the headroom for it; a light face does not, so the cards stay
+   flat and only the hero takes relief — its face holds the card tone through
+   the upper body and falls to the deep surface at the foot, while its rim
+   runs bright at the crown and shadowed at the base, which reads as a lit
+   edge rather than a drawn one. Both gradients are stamped from tones the
+   resolver derived out of this face's own tokens. #}
+<linearGradient id="{{ uid }}-hf" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="{{ diagram_light.face_hi }}"/>
+  <stop offset="{{ diagram_style.bevel_face_hold }}" stop-color="{{ diagram_light.face_hi }}"/>
+  <stop offset="1" stop-color="{{ diagram_light.face_lo }}"/>
+</linearGradient>
+<linearGradient id="{{ uid }}-hr" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="{{ diagram_light.rim_hi }}"/>
+  <stop offset="{{ diagram_style.bevel_rim_turn }}" stop-color="{{ diagram_light.rim_mid }}"/>
+  <stop offset="1" stop-color="{{ diagram_light.rim_lo }}"/>
+</linearGradient>
+{% endif %}
 {% if diagram_dark %}
 {# Dark plate physics (primer_diagram_language, per-variant genome
    diagram_dark): cards fill a top-lit vertical gradient (card_hi over
@@ -159,7 +178,11 @@
    in accent, not a neutral border, superseding the language sheet's "flat white, never an accent
    outline" default. A spec sets hero_ring:quiet to opt back into the flat family border ONLY when
    ITS OWN specimen shows a neutral hero (cited at the preset, not a blanket taste override). #}
-.{{ uid }}-herobg { fill: var(--dna-surface-alt); stroke: {{ 'var(--dna-border)' if hero_ring_quiet else 'var(--dna-signal)' }}; }
+{# On a LIGHT face the hero separates by relief instead of by a ring: the
+   bevel above carries both its face and its rim, and the accent moves to the
+   wires it already owns. A spec that asked for the quiet ring still gets the
+   flat family border — asking for less chrome cannot hand back more. #}
+.{{ uid }}-herobg { fill: {% if diagram_light %}url(#{{ uid }}-hf){% else %}var(--dna-surface-alt){% endif %}; stroke: {% if hero_ring_quiet %}var(--dna-border){% elif diagram_light %}url(#{{ uid }}-hr){% else %}var(--dna-signal){% endif %}; }
 {# Muted / comparison card — the MUTED family, not the active-card tokens (the
    dash alone carried "muted" before). Sinks to the page ground (--dna-surface,
    recessed below the raised active card's --dna-surface-alt) and drops the lift

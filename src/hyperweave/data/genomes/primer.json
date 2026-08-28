@@ -109,18 +109,19 @@
       "receipt_dim_ink": "#8A8A8A",
       "diagram_faces": {
         "light": {
-          "surface_0": "#F4F4F4",
-          "surface_1": "#FEFEFE",
-          "surface_2": "#F2F2F2",
-          "ink": "#3A3A3A",
-          "ink_secondary": "#747474",
-          "ink_bright": "#262626",
-          "accent": "#000000",
-          "accent_text": "#000000",
-          "stroke": "#DDDDDD",
-          "region_fill": "#F8F8F8",
-          "region_stroke": "#DDDDDD",
-          "diagram_conn_muted": "#B4B4B4"
+          "surface_0": "#FFFFFF",
+          "surface_1": "#FFFFFF",
+          "surface_2": "#FAFAFA",
+          "ink": "#09090B",
+          "ink_secondary": "#71717A",
+          "ink_bright": "#27272A",
+          "accent": "#18181B",
+          "accent_text": "#18181B",
+          "stroke": "#E4E4E7",
+          "region_fill": "#FAFAFA",
+          "region_stroke": "#E4E4E7",
+          "diagram_conn_muted": "#D4D4D8",
+          "diagram_shadow_color": "#18181B"
         },
         "dark": {
           "surface_0": "#0A0A0A",
@@ -220,6 +221,7 @@
       "receipt_dim_ink": "#8C8C8C",
       "diagram_faces": {
         "light": {
+          "diagram_shadow_color": "#0F0F0F",
           "surface_0": "#F4F4F3",
           "surface_1": "#FDFDFC",
           "surface_2": "#F1F1EF",
@@ -331,6 +333,7 @@
       "receipt_dim_ink": "#7C8CA4",
       "diagram_faces": {
         "light": {
+          "diagram_shadow_color": "#0C1B2C",
           "surface_0": "#EDF4FB",
           "surface_1": "#FBFDFF",
           "surface_2": "#EEF4FB",
@@ -442,6 +445,7 @@
       "receipt_dim_ink": "#9A9AA2",
       "diagram_faces": {
         "light": {
+          "diagram_shadow_color": "#101014",
           "surface_0": "#F2F2F5",
           "surface_1": "#FBFBFD",
           "surface_2": "#F0F0F4",

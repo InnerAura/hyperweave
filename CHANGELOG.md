@@ -7,35 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.5] - 2026-08-27
 
-Keeps request/response pairs on `topology: dag` as two clean lanes, gives diagrams a new dark look, fixes ANSI card padding, region overlap, the loop's top spacing, the decision's arrival glow, and the tree frame.
+Improves `dag` layout and routing, refreshes the `primer` theme on light and dark, and fixes a broad set of diagram and badge bugs.
 
 ### Added
 
-- **`chassis: { depart_bezel: false }` and `join_bezel: false`** — turn off the small ring where edges leave or meet a shared point, on `fanout`, `fanin`, `hub`, and `dag` alike; the edges' own arrowheads carry the read.
+- **`chassis: { depart_bezel: false }` and `join_bezel: false`** — turn off the small ring drawn where edges meet at a shared point on `fanout`, `fanin`, `hub`, and `dag`; the arrowheads show direction instead.
 
 ### Changed
 
-- **Pair labels** — a two-way pair's labels sit as small text above the outgoing lane and below the returning one; single edges keep their label pills.
-- **The hero stays card-sized** — a pair headed to a higher or lower row leaves from the hero's top or bottom edge and turns once, instead of every wire stacking on one side.
-- **Long edges route under both cards** — an edge that skips columns, with no `exit` or `entry` set, leaves its source's bottom edge, runs beneath the rows, and rises into its target's bottom edge: two turns instead of four.
-- **Porcelain dark** — diagrams sit on a true-black ground with neutral near-white ink and richer blues; chips and muted wires wear their own dark grays, and amber appears only in the decision's arrival ring.
-- **Dark diagrams on every variant** — the moving route draws in a deep shade of the variant's own accent, chips get solid rims and brighter text, and the decision's question reads in plain ink.
-- **`topology: dag` keeps two-way pairs** — nodes that call each other stay in their columns and draw as two parallel lanes, request over response, instead of turning the whole diagram into a `state-machine`.
+- **`topology: dag` keeps two-way pairs** — nodes that call each other stay in their columns and draw as two parallel lines, request above response, instead of turning the whole diagram into a `state-machine`.
+- **Two-way edge labels** — both labels sit as plain text, one above the outgoing line and one below the returning one; one-way edges keep their `label_style: chip` boxes.
+- **A `role: hero` node looks raised on light diagrams** — soft top-to-bottom shading and a darker lower edge replace its colored outline, and each variant shades in its own palette.
+- **A `role: hero` node stays its neighbours' size** — connections to rows above or below leave from its top and bottom edges instead of stacking on one side.
+- **Long edges pass under the rows** — an edge that skips columns with no `exit` or `entry` set leaves the bottom of its source and rises into the bottom of its target: two turns instead of four.
+- **Porcelain dark** — diagrams sit on true black with near-white text and richer blues, and amber appears only on a decision as the route reaches it.
+- **Dark diagrams on every variant** — the moving route draws in a deep shade of the variant's own color, chips get solid borders and brighter text, and a decision's question reads in plain text.
+- **`primer.noir` light diagrams** — white cards and chips on thin gray borders, near-black text, and a softer shadow.
 
 ### Fixed
 
-- **Removed card text truncation** — a caption wraps up to four lines and grows its card; `state-machine` diagrams were trimming everything past one line.
-- **Edge chips** — two chips arriving at the same node slide apart along their own wires instead of one covering the other.
-- **Edge labels** — a label on a curving edge sits on the open side of its wire, so it reads against the edge it names rather than a neighbour.
-- **Cyclic `dag` warning** — names every cause that promoted the diagram to `state-machine`, not just the first cycle found; a self-loop or a longer feedback loop still promotes.
-- **Nested regions** — a region drawn around another now contains it with an even inset, and both labels sit on one row; their borders no longer cross.
-- **Horizontal `dag` gaps** — columns no longer spread to hold label pills that actually float beside bent wires; long horizontal diagrams pull in to the normal column gap.
-- **Vertical `dag` gaps** — a vertical diagram stacks at its own close spacing instead of inheriting the wider horizontal spacing; straight chains lose about a third of their height.
-- **`dag-bottleneck` preset** — the empty band between the zone word and the first row is gone in both orientations.
-- **Loop top margin** — a loop's headers and first station get their full breathing room at the top of the canvas.
-- **Decision halos** — a loop decision lights its own diamond outline as the route arrives, so every station now glows on arrival.
-- **Tree frame** — a tree diagram keeps its full frame width, so the header and legend hold their corners beside the centered root.
-- **`--format ansi`** — card text keeps a cell of padding inside its border instead of touching it.
+- **Removed card text truncation** — a `desc` wraps up to four lines and grows its card; `state-machine` diagrams were trimming everything past the first line.
+- **Overlapping edge chips** — two chips arriving at the same node move apart along their own lines instead of one covering the other.
+- **Labels on curved edges** — a label sits on the emptier side of its line, so it reads against the edge it names rather than a neighbour.
+- **Cyclic `dag` warning** — names every cause that turned the diagram into a `state-machine`, not just the first one found.
+- **Nested regions** — a region drawn around another contains it evenly and both labels share a row; their borders no longer cross.
+- **`dag` spacing** — columns no longer spread to make room for labels that sit beside a line rather than on it, and vertical diagrams use their own closer spacing: wide diagrams pull in, and straight chains lose about a third of their height.
+- **`dag-bottleneck` preset** — the empty band between the `zones` heading and the first row is gone in both orientations.
+- **Loop top margin** — a loop's headings and first `station` get their full space at the top of the canvas.
+- **Decision arrival glow** — a loop decision lights its own diamond outline as the route arrives, so every `station` now glows on arrival.
+- **Tree frame** — a tree diagram keeps its full width, so the heading and legend hold their corners beside the centered root.
+- **`--format ansi`** — card text keeps a space inside its border instead of touching it.
+- **`license` metrics** — `pypi:` reads packages that declare their license the modern way and `npm:` reads the older object form, instead of printing the word `None`.
+- **Live values after the first fetch** — a second lookup in the same command returns its value instead of `--`.
 
 ## [0.4.4] - 2026-08-26
 

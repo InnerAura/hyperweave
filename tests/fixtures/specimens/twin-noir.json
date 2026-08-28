@@ -33,9 +33,21 @@
       "s1": "#181818",
       "sig": "#A8A8A8",
       "sigt": "#DBDBDB"
+    },
+    "light": {
+      "conn": "#D4D4D8",
+      "ink": "#09090B",
+      "ink2": "#71717A",
+      "inkhi": "#27272A",
+      "s0": "#FFFFFF",
+      "s1": "#FFFFFF",
+      "s2": "#FAFAFA",
+      "sig": "#18181B",
+      "sigt": "#18181B",
+      "stroke": "#E4E4E7"
     }
   },
-  "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family \u2014 ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark \u2014 is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read \u2014 the language-law suite grades it directly.",
+  "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family \u2014 ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark \u2014 is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read \u2014 the language-law suite grades it directly. LIGHT face superseded 2026-08-28 (owner ruling): noir's light diagram face adopts the zinc ladder authored in v04/v040/v045a/primer-v2/primer-diagrams-v2/noir.light.v2/noir-light-inlay-v2.svg \u2014 white cards and chips separated by a #E4E4E7 hairline and an ink-tinted ambient lift, near-black ink, and #18181B active wire in place of pure black. The authored twin still records its own dress in faces; the engine grades against this overlay.",
   "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-noir.svg",
   "variant": "noir"
 }

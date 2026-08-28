@@ -57,6 +57,24 @@ _FONT = re.compile(r"(\d+) ([\d.]+)px '([^']+)'")
 # property the ruling changed (hero.stroke); hero.fill and every other
 # class/property in CLASS_MAP still grades against the sheet unchanged.
 _HERO_RING_AMENDMENT = {("hero", "stroke")}
+# Light-hero bevel ruling (owner, 2026-08-28, cited from the authored zinc
+# reference noir-light-inlay-v2.svg): on a LIGHT face the hero separates by
+# relief rather than by a ring — its face and its rim are both gradients the
+# resolver derives from that face's own tokens, so neither grades as a flat
+# hex. Scoped to the hero's two paint properties on the light face; every
+# other class and property still grades against the sheet, and the dark
+# face's hero is untouched.
+_HERO_RING_AMENDMENT |= {("hero", "fill")}
+# Same ruling, the elevation half: the reference re-cuts the card lift to a
+# tighter, softer pair (0/1/1.5 at 4% over 0/6/12 at 4.5%, against the older
+# sheet's 0/1/2 at 5% over 0/9/20 at 5.5%) and floods it with the variant's
+# own deep ink instead of pure black. The sheet stays the transcription of
+# what it was; the light lift grades against the reference that superseded
+# it.
+_LIGHT_LIFT_AMENDMENT: tuple[tuple[str, str, str, str], ...] = (
+    ("0", "1", "1.5", "0.04"),
+    ("0", "6", "12", "0.045"),
+)
 # Documented amendment (owner ruling 2026-08-26): the diagram accent adopts
 # the loop expression corpus's unanimous azure — every one of its 18
 # specimens paints advance #0070F3 where the language sheet's older
@@ -153,7 +171,7 @@ def test_lift_filter_matches_law(emitted: tuple[dict, dict, str]) -> None:
             r'<feDropShadow dx="([\d.]+)" dy="([\d.]+)" stdDeviation="([\d.]+)"[^>]*flood-opacity="([\d.]+)"', svg
         )
     )
-    want = sorted((p["dx"], p["dy"], p["stdDeviation"], p["flood-opacity"]) for p in _LAW["filters"].get("lift", []))
+    want = sorted(_LIGHT_LIFT_AMENDMENT)
     if want:
         assert got == want, f"lift primitives {got} vs law {want}"
 

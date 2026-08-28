@@ -534,6 +534,14 @@ finish:
 material:
   ramp_mid_offset: "0.4"
   ramp_mid_mix: 0.58 # card_mid = card_hi mixed toward card_lo by this fraction
+  # LIGHT HERO BEVEL. On a light face the hero separates by relief rather than
+  # by a ring: its face holds flat through the upper body and falls only near
+  # the base, while the rim runs bright at the crown to shadowed at the foot.
+  # Two stop offsets and one mix — every tone comes from the variant's own
+  # light tokens, so each family bevels in its own colours.
+  bevel_face_hold: "0.7" # the face stays flat this far down before it falls
+  bevel_rim_turn: "0.4" # where the rim leaves its crown highlight
+  bevel_rim_mix: 0.5 # rim foot = the muted wire tone carried this far to muted ink
   grain_base_frequency: "1.6"
   grain_octaves: "2"
   grain_seed: "19"
