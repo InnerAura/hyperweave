@@ -198,6 +198,17 @@ _ROTATE_PATCH: list[dict[str, Any]] = [{"op": "add", "path": "/orientation", "va
 # every README figure captions as ``Topology · name`` like its neighbors
 # (the presets keep their own storytelling subtitles for direct use);
 # empty keeps the preset's.
+# README assets replanted from their own embedded seed rather than re-derived
+# from a preset or a story — see the loop that consumes this in
+# ``refresh_diagrams``. All porcelain, all shipped as light/dark pairs.
+_DIAGRAM_REPLANTS: tuple[str, ...] = (
+    "broadcast-split",
+    "compose-gate",
+    "cycle-flow",
+    "provider-router",
+    "verbs-mouth",
+)
+
 _DIAGRAM_SINGLES: tuple[tuple[str, str, str, tuple[str, ...], str], ...] = (
     ("dag-providers", "frontier-serving", "noir", (), "DAG · frontier serving"),
     ("pipeline-row", "mcp-gateway", "space", (), "Pipeline · MCP gateway"),
@@ -281,6 +292,30 @@ def refresh_diagrams() -> list[Path]:
             if caption:
                 spec["subtitle"] = caption
             minted += [(f"{stem}-{face}.svg", _face(spec, variant, face)) for face in _FACES]
+        # REPLANTED assets. The five pairs below carry curated content that has
+        # moved AHEAD of the gallery story of the same name — provider-router
+        # ships the providers the README wants named today, where its story
+        # still lists the set it was written with. Re-minting from the story
+        # would quietly roll the README back, so each is replanted from its own
+        # `hw:payload`, the lossless seed the artifact was built to carry. Dress
+        # refreshes, content is preserved. The divergence itself is the real
+        # defect and belongs to whoever reconciles story and asset; until then
+        # these at least re-mint, which is the whole point of the entry.
+        for stem in _DIAGRAM_REPLANTS:
+            for face in _FACES:
+                src = _DIAGRAMS_OUT / f"{stem}-{face}.svg"
+                if not src.exists():
+                    raise RuntimeError(f"replanted asset {src.relative_to(_ROOT)} is missing its seed")
+                seed = extract_embedded(src.read_text()).payload["spec"]
+                minted.append((f"{stem}-{face}.svg", _face(seed, "porcelain", face)))
+        # Every committed asset must have a generator above. This list has been
+        # rebuilt twice already (tree-health, then the loop pair) because an
+        # asset nothing re-mints drifts silently into a hand-maintained copy;
+        # the third time it shipped a README with two different hero treatments
+        # side by side. Fail the refresh instead of discovering it by eye.
+        orphans = sorted(p.name for p in _DIAGRAMS_OUT.glob("*.svg") if p.name not in {name for name, _ in minted})
+        if orphans:
+            raise RuntimeError(f"committed diagram assets with no generator: {', '.join(orphans)}")
         for filename, svg in minted:
             dest = _DIAGRAMS_OUT / filename
             rel = dest.relative_to(_ROOT)
