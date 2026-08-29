@@ -41,7 +41,7 @@ from hyperweave.compose.engine import compose  # noqa: E402
 from hyperweave.core.models import ComposeSpec  # noqa: E402
 from scripts.extract_specimen_fixtures import extract_geometry  # noqa: E402
 
-CORPUS = REPO / "v04" / "v040" / "v044" / "loops"
+CORPUS = REPO / "v04" / "v040" / "v044" / "loop"
 OUT = REPO / "outputs" / "diagrams" / "renders" / "topologies" / "loop" / "expressions"
 PACKET = CORPUS / "docs" / "expression-wave-triage"
 
