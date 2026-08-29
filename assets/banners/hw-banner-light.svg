@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 774.3 165.7" width="620" height="132.7" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="t d" data-hw-component="lockup-inline" data-hw-chromatic="primer-porcelain" data-hw-variant="inline-porcelain" data-hw-status="active" data-hw-regime="normal" data-protocol="hw-v1">
+  <title id="t">HyperWeave</title>
+  <desc id="d">
+    HyperWeave inline horizontal lockup, primer-porcelain colorway — octahedral glyph, hairline
+    divider and HYPERWEAVE in Orbitron SemiBold caps. Transparent field, cropped to the ink:
+    for light surfaces.
+  </desc>
+  <metadata>
+    <hw:artifact id="0198c1f5-4a20-7b08-9c62-hwinlineporcel" type="lockup" series="hyperweave-identity" version="1.0.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]</hw:generator>
+        <hw:created>2026-08-26T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+        <hw:lineage parent="0198c1b7-7a40-7c19-bd6e-hwbannerporcel" relation="reformat"/>
+      </hw:provenance>
+      <hw:spec size="774.3x165.7" performance="paint-ok" theme="light" a11y="WCAG-AA" platform="markdown-inline"/>
+    </hw:artifact>
+    <hw:aesthetic>
+      <hw:chromatic system="primer-porcelain" space="srgb" measured-floor="9.1:1"/>
+      <hw:motion vocabulary="pulse" physics="damped" timing="phi" duration-base="3.236s" cim-compliant="true"/>
+      <hw:geometry form-language="geometric" proportional-system="root2" mathematical-basis="none" symmetry="bilateral"/>
+      <hw:typography stack="Orbitron 600 (outlined)" hierarchy="44" delivery="path-atlas"/>
+      <hw:material surface="glass" depth="shallow"/>
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>
+        The markdown-native lockup: a strip that can sit at the top of a README, in a docs page
+        or in a Slack message without carrying a plate, a margin or a colour assumption with it.
+      </hw:intent>
+      <hw:approach>
+        Cropped to the ink. The viewBox is the content bounding box plus a uniform 10px of air —
+        774.3x165.7, 4.7:1 — measured off the extremes that actually exist: the node beads at
+        (80+3.25)x0.875 = 72.8 from the glyph centre, and the wordmark run of 557.3. There is no
+        empty band above or below, so the gap a reader sees under the embed is the host's line box,
+        not padding shipped inside the file. Intrinsic size is declared at 620x132.7 rather than the
+        viewBox, so a bare markdown embed lands at a readable strip instead of 774px of logo.
+        Tagline and full-width rules are dropped — both add height, and height is the enemy of an
+        inline mark. The vertical divider stays: it is what makes two cells read as one lockup.
+      </hw:approach>
+      <hw:tradeoffs>
+        Transparent field means no contrast guarantee against an arbitrary host — this is the reason
+        the pair exists, and why the porcelain file must only be served to light surfaces. Cropping to
+        10px also removes the optical margin a logo normally sits in, so anything placed hard against
+        it will crowd the beads; the margin is now the document's job, not the artifact's. Chose to
+        keep the singularity pulse: it costs nothing at rest and it is the one signal that the mark is
+        an artifact rather than a picture of one.
+      </hw:tradeoffs>
+      <hw:spatial-notes>
+        774.3x165.7 (4.67:1), bilateral about y=82.8. Glyph cell 140 centred (80.0,82.8) at
+        scale 0.875; optical extent 145.7 bead-to-bead. Divider x=178.0, 76px tall, 28px gutters
+        either side. Wordmark cap 44 on baseline 104.8, run 557.3, centred x=485.6.
+        Uniform 10px crop on all four sides.
+      </hw:spatial-notes>
+    </hw:reasoning>
+    <hw:stratum>
+      <hw:ring primary="002-TRIBE"/>
+      <hw:affinities><hw:resonance ring="005-COSMIC" strength="0.6"/></hw:affinities>
+    </hw:stratum>
+    <hw:topology>
+      <hw:manifold type="euclidean" elasticity="0.0"><hw:aspect-lock>true</hw:aspect-lock></hw:manifold>
+      <hw:flow-field>
+        <hw:vector type="amplitude-pulsation" direction="bidirectional"/>
+        <hw:energy-source>transform-scale</hw:energy-source>
+      </hw:flow-field>
+      <hw:zones>
+        <hw:zone id="glyph-cell" shape="rect" capability="icon-slot"/>
+        <hw:zone id="type-cell" shape="rect" capability="chromatic-override"/>
+      </hw:zones>
+    </hw:topology>
+  </metadata>
+  <defs>
+    <linearGradient id="ramp" x1="-80" y1="-80" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5C80E3"/>
+      <stop offset="50%" stop-color="#1D4ED8"/>
+      <stop offset="100%" stop-color="#1E40A0"/>
+    </linearGradient>
+    <linearGradient id="wm" x1="207.0" y1="0" x2="764.2" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2D5EE0"/>
+      <stop offset="50%" stop-color="#1D4ED8"/>
+      <stop offset="100%" stop-color="#1E40A0"/>
+    </linearGradient>
+    <radialGradient id="nodeM" cx="35%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#EBF1FD"/>
+      <stop offset="45%" stop-color="#4D7AE8"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </radialGradient>
+    <radialGradient id="backGlow" cx="0" cy="0" r="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="#1D4ED8" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="faceVol" x1="0" y1="-80" x2="0" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.28"/>
+      <stop offset="50%" stop-color="#1D4ED8" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#1E3A8A" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="glassFill" x1="0" y1="-60" x2="0" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DBEAFE" stop-opacity="0.28"/>
+      <stop offset="50%" stop-color="#3B82F6" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="innerLight" x1="0" y1="-56" x2="0" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0.2"/>
+      <stop offset="65%" stop-color="#93C5FD" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#1E40AF" stop-opacity="0.65"/>
+    </linearGradient>
+    <linearGradient id="ruleV" x1="0" y1="44.8" x2="0" y2="120.8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1D4ED8" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#1D4ED8" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0"/>
+    </linearGradient>
+    <path id="wg-H" d="M3.5 0.0V-44.0H10.8V-25.7H41.1V-44.0H48.5V0.0H41.1V-18.3H10.8V0.0Z"/>
+    <path id="wg-Y" d="M20.9 0.0V-16.5L0.6 -44.0H9.3L24.6 -24.7L39.8 -44.0H48.6L28.3 -16.4V0.0Z"/>
+    <path id="wg-P" d="M3.4 0.0V-43.9H39.2Q41.4 -43.9 43.3 -42.8Q45.2 -41.7 46.3 -39.8Q47.4 -38.0 47.4 -35.7V-23.6Q47.4 -21.4 46.3 -19.5Q45.2 -17.6 43.3 -16.5Q41.4 -15.4 39.2 -15.4L10.8 -15.3V0.0ZM11.9 -22.8H38.9Q39.4 -22.8 39.7 -23.1Q40.0 -23.4 40.0 -23.9V-35.5Q40.0 -35.9 39.7 -36.3Q39.4 -36.6 38.9 -36.6H11.9Q11.4 -36.6 11.1 -36.3Q10.8 -35.9 10.8 -35.5V-23.9Q10.8 -23.4 11.1 -23.1Q11.4 -22.8 11.9 -22.8Z"/>
+    <path id="wg-E" d="M3.5 0.0V-44.0H43.9V-36.6H10.9V-25.7H37.5V-18.3H10.9V-7.4H43.9V0.0Z"/>
+    <path id="wg-R" d="M39.0 0.0 25.5 -16.1H35.1L47.2 -1.7V0.0ZM3.4 0.0V-43.9H39.2Q41.4 -43.9 43.3 -42.8Q45.2 -41.7 46.3 -39.8Q47.4 -38.0 47.4 -35.7V-23.6Q47.4 -21.4 46.3 -19.5Q45.2 -17.6 43.3 -16.5Q41.4 -15.4 39.2 -15.4L10.8 -15.3V0.0ZM11.9 -22.8H38.9Q39.4 -22.8 39.7 -23.1Q40.0 -23.4 40.0 -23.9V-35.5Q40.0 -35.9 39.7 -36.3Q39.4 -36.6 38.9 -36.6H11.9Q11.4 -36.6 11.1 -36.3Q10.8 -35.9 10.8 -35.5V-23.9Q10.8 -23.4 11.1 -23.1Q11.4 -22.8 11.9 -22.8Z"/>
+    <path id="wg-W" d="M18.2 0.0 2.1 -44.0H10.0L21.1 -13.5L32.2 -44.0H39.7L50.8 -13.5L62.0 -44.0H69.8L53.8 0.0H47.9L35.9 -32.7L24.0 0.0Z"/>
+    <path id="wg-A" d="M3.5 0.0V-35.8Q3.5 -38.0 4.6 -39.9Q5.7 -41.8 7.6 -42.9Q9.5 -44.0 11.8 -44.0H39.3Q41.6 -44.0 43.4 -42.9Q45.3 -41.8 46.4 -39.9Q47.5 -38.0 47.5 -35.8V0.0H40.2V-15.1H10.9V0.0H3.5ZM10.9 -22.4H40.2V-35.5Q40.2 -36.0 39.8 -36.3Q39.5 -36.6 39.0 -36.6H12.0Q11.6 -36.6 11.2 -36.3Q10.9 -36.0 10.9 -35.5V-22.4Z"/>
+    <path id="wg-V" d="M27.6 0.0 2.1 -44.0H10.7L31.0 -8.6L51.5 -44.0H60.0L34.5 0.0Z"/>
+  </defs>
+  <style>
+    svg { color-scheme: light }
+    .node-singularity {
+      transform-box: fill-box; transform-origin: center;
+      will-change: transform, opacity;
+      animation: pulseNode 3.236s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes pulseNode {
+      0%, 100% { transform: scale(1); opacity: .9 }
+      50% { transform: scale(1.22); opacity: 1 }
+    }
+    @media (prefers-reduced-motion: reduce) { .node-singularity { animation: none !important } }
+    @media (forced-colors: active) { .wfill { fill: CanvasText } .rule { fill: CanvasText } }
+  </style>
+  <rect class="rule" x="178.0" y="44.8" width="1" height="76" fill="url(#ruleV)"/>
+  <g transform="translate(80.0, 82.8) scale(0.875)" data-hw-part="glyph-cell">
+    <circle cx="0" cy="0" r="88" fill="url(#backGlow)"/>
+    <polygon points="0,-80 80,0 0,80 -80,0" fill="url(#faceVol)"/>
+    <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z" fill="url(#glassFill)"/>
+    <polygon points="0,-80 80,0 0,80 -80,0" fill="none" stroke="url(#ramp)" stroke-width="2.6" stroke-linejoin="round" opacity="0.92"/>
+    <path d="M -15,-60 L -45,-30 C -60,-15 -60,15 -45,30 L -15,60 L 15,60 L 45,30 C 60,15 60,-15 45,-30 L 15,-60 Z" fill="none" stroke="url(#ramp)" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.96"/>
+    <path d="M -13.95,-55.8 L -41.85,-27.9 C -55.8,-13.95 -55.8,13.95 -41.85,27.9 L -13.95,55.8 L 13.95,55.8 L 41.85,27.9 C 55.8,13.95 55.8,-13.95 41.85,-27.9 L 13.95,-55.8 Z" fill="none" stroke="url(#innerLight)" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>
+    <g>
+      <circle cx="0" cy="-80" r="3.25" fill="url(#nodeM)"/><circle cx="80" cy="0" r="3.25" fill="url(#nodeM)"/>
+      <circle cx="0" cy="80" r="3.25" fill="url(#nodeM)"/><circle cx="-80" cy="0" r="3.25" fill="url(#nodeM)"/>
+      <circle cx="0" cy="0" r="4.25" fill="url(#nodeM)" class="node-singularity"/>
+    </g>
+  </g>
+  <g class="wfill" fill="url(#wm)" data-hw-part="type-cell">
+    <use href="#wg-H" xlink:href="#wg-H" x="207.0" y="104.8"/>
+    <use href="#wg-Y" xlink:href="#wg-Y" x="262.6" y="104.8"/>
+    <use href="#wg-P" xlink:href="#wg-P" x="315.4" y="104.8"/>
+    <use href="#wg-E" xlink:href="#wg-E" x="367.4" y="104.8"/>
+    <use href="#wg-R" xlink:href="#wg-R" x="417.8" y="104.8"/>
+    <use href="#wg-W" xlink:href="#wg-W" x="471.8" y="104.8"/>
+    <use href="#wg-E" xlink:href="#wg-E" x="547.4" y="104.8"/>
+    <use href="#wg-A" xlink:href="#wg-A" x="597.8" y="104.8"/>
+    <use href="#wg-V" xlink:href="#wg-V" x="652.5" y="104.8"/>
+    <use href="#wg-E" xlink:href="#wg-E" x="717.4" y="104.8"/>
+  </g>
+</svg>

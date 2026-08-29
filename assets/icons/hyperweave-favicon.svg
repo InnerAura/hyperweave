@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="HyperWeave" data-hw-component="favicon" data-hw-variant="adaptive" data-protocol="hw-v1">
+  <title>HyperWeave</title>
+  <desc>HyperWeave favicon — octahedral silhouette reduced to a 32-unit grid: diamond ring, tinted field, solid transmitter core. Adapts to the host colour scheme.</desc>
+  <metadata>
+    <hw:artifact id="0198c204-6e10-7f44-b0a3-hwfaviconadapt" type="favicon" series="hyperweave-identity" version="2.0.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]</hw:generator>
+        <hw:created>2026-08-26T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+        <hw:selection-signal rank="1" of="10" cohort="micro-forms-a-j" reason="Eli, reviewing the ten-form specimen sheet: B and C named favourites, then E, then I. Rejected the filled-core forms (A, J) as centre-heavy."/>
+        <hw:selection-signal rank="1" of="10" cohort="micro-forms-a-j" reason="Eli, reviewing the ten-form specimen sheet: B and C named favourites, then E, then I. Rejected the filled-core forms (A, J) as centre-heavy."/>
+        <hw:lineage parent="0197f490-c108-72b1-9f20-hyperweaveglyphsolo" relation="reduction"/>
+      </hw:provenance>
+      <hw:spec size="32x32" performance="paint-ok" theme="adaptive" a11y="WCAG-AA"/>
+    </hw:artifact>
+    <hw:aesthetic>
+      <hw:chromatic system="primer-adaptive" space="srgb" contrast-ratio="6.0"/>
+      <hw:motion vocabulary="none" physics="none" timing="none" cim-compliant="true"/>
+      <hw:geometry form-language="geometric" proportional-system="root2" mathematical-basis="none" symmetry="radial"/>
+      <hw:material surface="matte" depth="flat"/>
+    </hw:aesthetic>
+    <hw:reasoning>
+      <hw:intent>
+        One file for every context where the mark is smaller than the type around it: browser tab,
+        inline markdown badge, Slack emoji, list bullet.
+      </hw:intent>
+      <hw:approach>
+        Redrawn, not downscaled. The full glyph has five layers of stroke and glass that fuse into a
+        smudge below 32px, so the micro form keeps only what survives: the diamond ring at 2.4 units,
+        a 10% field tint that gives the silhouette body without a third edge, and the transmitter
+        kept as a concentric second ring at 0.155 of local scale with the singularity as a 1.6-unit point. Every coordinate is snapped to the 32-unit
+        grid so the ring lands on whole device pixels at 16 and 32. Colour is a single ink per file —
+        gradients dither at this size — driven here by a custom property so one file serves both
+        schemes.
+      </hw:approach>
+      <hw:tradeoffs>
+        Selected as form C from a ten-form specimen sheet: the filled-core forms (A, J) put the mass
+        at the centre, turning the outer diamond into a frame around a slab. Cost of the concentric
+        answer is that at 16px the two rings sit two pixels apart and can moire on non-integer
+        scaling — pinned to the 32-unit grid to keep them on whole pixels at 16 and 32.
+        Dropped the four vertex beads for the same reason — round line joins already carry the
+        vertices, and discrete beads at 16px alias into fuzz. Dropped the pulse: a favicon animating
+        in a browser tab is a distraction, and Safari ignores it regardless. Kept the field tint even
+        though it is nearly invisible on dark hosts, so the light-host form is not a different drawing.
+      </hw:tradeoffs>
+      <hw:spatial-notes>
+        32x32 grid, radial symmetry about (16,16). Diamond vertices at 2.6 and 29.4 leaving 2.6 units
+        of clearance for the stroke miter; ring stroke 2.4 with round joins. Transmitter ring spans 18.6 units across at 0.155 local scale — 59% of the
+        diamond width — stroked at 2 units against the outer ring's 2.4, so the two edges read as
+        concentric rather than as frame-and-fill. Singularity r=1.6. Field tint 10%.
+      </hw:spatial-notes>
+    </hw:reasoning>
+  </metadata>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .i { fill: #8FB2FF } .s { stroke: #8FB2FF }
+    }
+    @media (forced-colors: active) {
+      .i { fill: CanvasText } .s { stroke: CanvasText }
+    }
+  </style>
+  <path d="M16 2.6 L29.4 16 L16 29.4 L2.6 16 Z" class="i" fill="#1D4ED8" opacity="0.10"/>
+  <path d="M16 2.6 L29.4 16 L16 29.4 L2.6 16 Z" class="s" fill="none" stroke="#1D4ED8" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M13.68 6.70 L9.03 11.35 C6.70 13.68 6.70 18.32 9.03 20.65 L13.68 25.30 L18.32 25.30 L22.98 20.65 C25.30 18.32 25.30 13.68 22.98 11.35 L18.32 6.70 Z" class="s" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linejoin="round"/>
+  <circle class="i" cx="16" cy="16" r="1.6" fill="#1D4ED8"/>
+</svg>
