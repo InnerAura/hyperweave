@@ -1,0 +1,278 @@
+{#- One page over every topology exhibit: a tab per family, the whole document
+    in one vertical scroll. Composed by scripts/examples/topologies/viewer.py
+    from the README_<FAMILY>.md files beside it — nothing here is authored. -#}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Topology exhibits — HyperWeave diagrams</title>
+<style>
+:root {
+  --page: #FBFCFE;
+  --card: #FFFFFF;
+  --figure: #F7F9FC;
+  --border: #DFE5EE;
+  --ink: #26313F;
+  --ink-hi: #0F1720;
+  --dim: #6B7A8D;
+  --signal: #2563EB;
+  --code: #F1F4F9;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0E1319;
+    --card: #151C24;
+    --figure: #F7F9FC;
+    --border: #263140;
+    --ink: #C7D1DD;
+    --ink-hi: #EDF2F8;
+    --dim: #7C8B9E;
+    --signal: #7AA2F7;
+    --code: #1B242E;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 128px; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 400 15px/1.65 'Inter', -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--signal); }
+
+/* ── chrome ─────────────────────────────────────────────── */
+.top {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--page); border-bottom: 1px solid var(--border);
+}
+.top .bar {
+  max-width: 1440px; margin: 0 auto; padding: 14px 28px 0;
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+}
+.top h1 {
+  margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--ink-hi);
+}
+.top .count {
+  font: 400 11px 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: .04em; color: var(--dim);
+}
+.tabs {
+  max-width: 1440px; margin: 0 auto; padding: 10px 28px 0;
+  display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin;
+}
+.tabs button {
+  flex: 0 0 auto; padding: 8px 14px 10px; border: 0; background: none; cursor: pointer;
+  color: var(--dim); border-bottom: 2px solid transparent;
+  font: 600 12px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .06em;
+}
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink-hi); border-bottom-color: var(--signal); }
+.tabs button .n { margin-left: 7px; font-weight: 400; font-size: 10px; color: var(--dim); }
+
+/* ── layout ─────────────────────────────────────────────── */
+main { max-width: 1440px; margin: 0 auto; padding: 0 28px 120px; display: grid;
+       grid-template-columns: 210px minmax(0, 1fr); gap: 44px; align-items: start; }
+@media (max-width: 1080px) { main { grid-template-columns: minmax(0, 1fr); } .rail { display: none; } }
+
+.rail { position: sticky; top: 118px; padding-top: 36px; }
+.rail p { margin: 0 0 10px; font: 700 9px 'JetBrains Mono', ui-monospace, monospace;
+          letter-spacing: .18em; text-transform: uppercase; color: var(--dim); }
+.rail ol { list-style: none; margin: 0; padding: 0; display: none; }
+.rail ol[data-active] { display: block; }
+.rail li { margin: 0 0 2px; }
+.rail a { display: block; padding: 5px 10px; border-left: 2px solid var(--border);
+          color: var(--dim); text-decoration: none; font-size: 12.5px; line-height: 1.4; }
+.rail a:hover { color: var(--ink-hi); border-left-color: var(--signal); background: var(--card); }
+
+.pane { padding-top: 30px; min-width: 0; }
+.pane[hidden] { display: none; }
+.pane > header { padding-bottom: 22px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+.pane > header h2 { margin: 0; font-size: 25px; font-weight: 640; letter-spacing: -.012em;
+                    color: var(--ink-hi); line-height: 1.3; }
+.pane > header .src { margin: 10px 0 0; font: 400 11px 'JetBrains Mono', ui-monospace, monospace;
+                      letter-spacing: .04em; color: var(--dim); }
+
+/* ── document ───────────────────────────────────────────── */
+.doc { max-width: 82ch; }
+.doc h3 { margin: 52px 0 12px; padding-top: 14px; font-size: 12px; font-weight: 700;
+          letter-spacing: .16em; text-transform: uppercase; color: var(--ink-hi);
+          border-top: 1px solid var(--border); }
+.doc h4 { margin: 34px 0 8px; font-size: 17px; font-weight: 620; color: var(--ink-hi); }
+.doc h5 { margin: 30px 0 6px; font-size: 14px; font-weight: 640; color: var(--ink-hi); }
+.doc h6 { margin: 24px 0 6px; font-size: 13px; font-weight: 640; color: var(--dim); }
+.doc h4 code, .doc h5 code { font-size: .92em; }
+.doc p { margin: 0 0 14px; }
+.doc ul { margin: 0 0 16px; padding-left: 20px; }
+.doc li { margin-bottom: 5px; }
+.doc hr { margin: 40px 0; border: 0; border-top: 1px solid var(--border); }
+.doc blockquote {
+  margin: 0 0 18px; padding: 12px 16px; border-left: 3px solid var(--signal);
+  background: var(--card); border-radius: 0 8px 8px 0; color: var(--ink);
+}
+.doc code { padding: 1.5px 5px; border-radius: 5px; background: var(--code);
+            font: 400 .86em 'JetBrains Mono', ui-monospace, monospace; }
+.doc pre {
+  margin: 0 0 18px; padding: 14px 16px; overflow-x: auto; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--code);
+  font: 400 12px/1.6 'JetBrains Mono', ui-monospace, monospace; white-space: pre;
+}
+.doc pre code { padding: 0; background: none; font-size: inherit; }
+.doc table { border-collapse: collapse; margin: 0 0 20px; font-size: 13px; width: 100%; }
+.doc th, .doc td { padding: 7px 14px 7px 0; text-align: left; border-bottom: 1px solid var(--border); }
+.doc th { font: 700 9px 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .16em;
+          text-transform: uppercase; color: var(--dim); }
+.doc sub { font-size: .8em; color: var(--dim); }
+
+/* Figures keep a light ground whatever the page is wearing: every exhibit is
+   baked on the porcelain light face with a bare (transparent) ground, so a
+   dark card would drop the ink out from under it. */
+.figs { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 22px; }
+.figs a {
+  display: block; flex: 0 1 auto; max-width: 100%; padding: 16px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--figure);
+}
+.figs a:hover { border-color: var(--signal); }
+.figs img { display: block; max-width: 100%; height: auto; }
+
+footer { max-width: 1440px; margin: 0 auto; padding: 24px 28px 60px;
+         border-top: 1px solid var(--border);
+         font: 400 11px/1.7 'JetBrains Mono', ui-monospace, monospace;
+         letter-spacing: .04em; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="bar">
+    <h1>Topology exhibits</h1>
+    <span class="count">{{ families | length }} families · {{ figures }} figures · every one a live engine render</span>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Topology families">
+    {%- for family in families %}
+    <button role="tab" id="tab-{{ family.slug }}" data-slug="{{ family.slug }}"
+            aria-controls="pane-{{ family.slug }}" aria-selected="false" tabindex="-1">
+      {{ family.slug }}<span class="n">{{ family.figures }}</span>
+    </button>
+    {%- endfor %}
+  </div>
+</div>
+
+<main>
+  <nav class="rail" aria-label="Sections">
+    <p>Sections</p>
+    {%- for family in families %}
+    <ol id="rail-{{ family.slug }}">
+      {%- for entry in family.outline %}
+      <li><a href="#{{ family.slug }}__{{ entry.id }}">{{ entry.text }}</a></li>
+      {%- endfor %}
+    </ol>
+    {%- endfor %}
+  </nav>
+
+  <div>
+  {%- for family in families %}
+    <article class="pane" id="pane-{{ family.slug }}" role="tabpanel"
+             aria-labelledby="tab-{{ family.slug }}" tabindex="0" hidden>
+      <header>
+        <h2>{{ family.title }}</h2>
+        <p class="src">{{ family.source }} · {{ family.figures }} figures</p>
+      </header>
+      <div class="doc">
+      {%- for block in family.blocks %}
+        {%- if block.kind == 'heading' %}
+        <h{{ block.level + 1 }} id="{{ family.slug }}__{{ block.id }}">{{ block.html | safe }}</h{{ block.level + 1 }}>
+        {%- elif block.kind == 'para' %}
+        <p>{{ block.html | safe }}</p>
+        {%- elif block.kind == 'figures' %}
+        <div class="figs">
+          {%- for image in block.images %}
+          <a href="{{ image.src }}" target="_blank" rel="noopener">
+            <img src="{{ image.src }}" alt="{{ image.alt }}" loading="lazy" decoding="async"
+                 {% if image.w is defined %}width="{{ image.w }}" height="{{ image.h }}"{% endif %}>
+          </a>
+          {%- endfor %}
+        </div>
+        {%- elif block.kind == 'list' %}
+        <ul>{% for item in block['items'] %}<li>{{ item | safe }}</li>{% endfor %}</ul>
+        {%- elif block.kind == 'quote' %}
+        <blockquote>{{ block.html | safe }}</blockquote>
+        {%- elif block.kind == 'code' %}
+        <pre><code>{{ block.text }}</code></pre>
+        {%- elif block.kind == 'table' %}
+        <table>
+          <thead><tr>{% for cell in block.head %}<th>{{ cell | safe }}</th>{% endfor %}</tr></thead>
+          <tbody>
+          {%- for row in block.rows %}
+            <tr>{% for cell in row %}<td>{{ cell | safe }}</td>{% endfor %}</tr>
+          {%- endfor %}
+          </tbody>
+        </table>
+        {%- elif block.kind == 'rule' %}
+        <hr>
+        {%- endif %}
+      {%- endfor %}
+      </div>
+    </article>
+  {%- endfor %}
+  </div>
+</main>
+
+<footer>
+  Composed from the family documents beside this file by
+  <code>scripts/examples/topologies/viewer.py</code>. Figures are referenced, not embedded — a
+  re-rendered SVG shows its new bytes on the next reload. Rebuild the prose with
+  <code>just topology-viewer</code>, or the whole gallery with <code>just diagrams</code>.
+</footer>
+
+<script>
+(function () {
+  const tabs = Array.from(document.querySelectorAll('.tabs button'));
+  const slugs = tabs.map(t => t.dataset.slug);
+
+  function show(slug, {focus = false, push = true} = {}) {
+    if (!slugs.includes(slug)) slug = slugs[0];
+    for (const tab of tabs) {
+      const on = tab.dataset.slug === slug;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+      document.getElementById('pane-' + tab.dataset.slug).hidden = !on;
+      const rail = document.getElementById('rail-' + tab.dataset.slug);
+      if (on) rail.setAttribute('data-active', ''); else rail.removeAttribute('data-active');
+      if (on && focus) tab.focus();
+      if (on) tab.scrollIntoView({block: 'nearest', inline: 'nearest'});
+    }
+    if (push && location.hash.split('__')[0] !== '#' + slug) history.replaceState(null, '', '#' + slug);
+    return slug;
+  }
+
+  for (const tab of tabs) {
+    tab.addEventListener('click', () => { show(tab.dataset.slug); window.scrollTo({top: 0}); });
+    tab.addEventListener('keydown', event => {
+      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (!step) return;
+      event.preventDefault();
+      const next = (slugs.indexOf(tab.dataset.slug) + step + slugs.length) % slugs.length;
+      show(slugs[next], {focus: true});
+      window.scrollTo({top: 0});
+    });
+  }
+
+  // `#dag` selects a tab; `#dag__1-specimens` selects it and lands on a section.
+  function route(push) {
+    const [slug, section] = decodeURIComponent(location.hash.slice(1)).split('__');
+    const active = show(slug, {push: push});
+    if (!section) return;
+    const target = document.getElementById(active + '__' + section);
+    if (target) target.scrollIntoView();
+  }
+
+  window.addEventListener('hashchange', () => route(false));
+  route(!location.hash);
+})();
+</script>
+</body>
+</html>
