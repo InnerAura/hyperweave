@@ -876,7 +876,34 @@ diagram:
       margin_x: 40
       header_h: 66
       footer_h: 54
-      rank_gap: 150
+      # SAME DERIVATION AS THE VERTICAL CELL — one spatial law, two axes.
+      # The vertical block below reads "a flat gap suits the horizontal cell
+      # (wide cards)". That premise held for its own 196-wide card and fails
+      # here: a horizontal dag's cards content-solve from 76 to 190 wide, so
+      # the flat 150 ran WIDER than the card it separated on every straight
+      # chain (134:150, 140:150, 167:150, 137:150 across the gallery — all
+      # reading stretched). The gap is a function of what crosses it on both
+      # axes; nothing about the flow direction changes that.
+      #
+      #   floor  74, pipeline-vertical's `gap` above — the repo's one cited
+      #          run with nothing to bow around, and the SAME number the
+      #          vertical cell floors on. A straight run's gap is the distance
+      #          two card FACES need with nothing between them, which is not an
+      #          axis fact: transposing the figure does not change what the
+      #          faces need. One constant, both cells; a second one here would
+      #          be two numbers for one distance.
+      #   ratio  1.15, the vertical cell's own tolerance. The bow it prices is
+      #          that same bow transposed, so importing a second constant here
+      #          would be two numbers for one geometry.
+      #
+      # A gap carrying a CHIP still takes chip_run_min, which derives the run a
+      # pill needs from the pill. That is where the retired 150 came from — the
+      # chipped gap, hardened into a flat floor and then applied to gaps with
+      # no chip in them, so chip_run_min and the chassis both priced the same
+      # thing and the wider one always won.
+      rank_gap: 150 # retained as the fan-case reference; the derivation governs
+      rank_gap_spread_ratio: 1.15
+      rank_gap_min: 74
       rank_pitch_max: 118 # language pitch floor (router providers ride cy step 118)
       # Language fan gap measured off the sheet itself: providers are 76 tall
       # at cy step 118 → gap 42 (the prior 58 mis-derived the gap from h60

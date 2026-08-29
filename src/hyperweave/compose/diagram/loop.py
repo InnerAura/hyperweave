@@ -44,10 +44,18 @@ from typing import TYPE_CHECKING
 
 from hyperweave.compose.diagram.axis import AxisMap
 from hyperweave.compose.diagram.chrome import place_node
+from hyperweave.compose.diagram.grouping import hull_of
 from hyperweave.compose.diagram.paths import cubic_len, fmt, line_d, line_len
 from hyperweave.compose.diagram.records import DiagramText, LaneBand, NodePlacement
 from hyperweave.compose.diagram.route import orthogonal_d
-from hyperweave.compose.diagram.sizing import CHIP_H, family_carries_marks, solve_chip_box, solve_node_box
+from hyperweave.compose.diagram.sizing import (
+    CHIP_H,
+    centred_baseline,
+    family_carries_marks,
+    solve_chip_box,
+    solve_node_box,
+    voice_for,
+)
 from hyperweave.compose.diagram.solver import finish_layout, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
 from hyperweave.compose.matrix.cells import measure_voice
@@ -826,10 +834,9 @@ def _ladder_band(ctx: SolverContext, sh: _Shape, placed: dict[int, NodePlacement
     boxes = [placed[i].box for i in sources]
     pad_x = _lcfg(ctx, "unrolled_pad_across", 26.0)
     pad_y = _lcfg(ctx, "unrolled_pad_along", 34.0)
-    x0 = min(b.x for b in boxes) - pad_x
-    x1 = max(b.x + b.w for b in boxes) + pad_x
-    y0 = min(b.y for b in boxes) - pad_y
-    y1 = max(b.y + b.h for b in boxes) + pad_y
+    hx0, hy0, hx1, hy1 = hull_of(boxes)
+    x0, x1 = hx0 - pad_x, hx1 + pad_x
+    y0, y1 = hy0 - pad_y, hy1 + pad_y
     box = RectSpec(x=x0, y=y0, w=x1 - x0, h=y1 - y0, rx=18.0)
     # The legend always rides a HORIZONTAL rim (its text is horizontal).
     # On the lateral ladder that is the sky rim facing the gather — the
@@ -847,14 +854,20 @@ def _ladder_band(ctx: SolverContext, sh: _Shape, placed: dict[int, NodePlacement
         crossings = []
     label = str((ctx.engine.get("loop") or {}).get("unrolled_legend", "RETRY BUDGET · MAX {n}")).format(n=len(sources))
     plate_h = 22.0
-    plate_w = measure_voice(label, ctx.cfg.scope_header_voice) + 28.0
+    plate_w = measure_voice(label, voice_for(ctx.cfg, "rcnt")) + 28.0
     edges_x = [x0, *crossings, x1]
     runs = [(edges_x[i], edges_x[i + 1]) for i in range(len(edges_x) - 1)]
     lo, hi = max(runs, key=lambda r: r[1] - r[0])
     plate_cx = min(max((lo + hi) / 2, x0 + plate_w / 2), x1 - plate_w / 2)
     plate_x = plate_cx - plate_w / 2
     header_box = RectSpec(x=plate_x, y=rim_y - plate_h / 2, w=plate_w, h=plate_h, rx=plate_h / 2)
-    header = DiagramText(x=plate_x + 14.0, y=rim_y + 4.2, text=label, cls="eyeb", anchor="start")
+    header = DiagramText(
+        x=plate_x + 14.0,
+        y=centred_baseline(rim_y, voice_for(ctx.cfg, "rcnt"), ctx.cfg),
+        text=label,
+        cls="rcnt",
+        anchor="start",
+    )
     scope_dash = str((ctx.engine.get("loop") or {}).get("scope_dash", "8 7"))
     return LaneBand(box=box, header=header, ground="enclosure", header_box=header_box, dash=scope_dash)
 
@@ -878,7 +891,7 @@ def _place_scope(
     # seats on the left clear run (the inline scope specimen: inset 73 from
     # the region's left edge); an unpierced rim centers it (aside/lateral).
     plate_h = 22.0
-    plate_w = measure_voice(label, ctx.cfg.scope_header_voice) + 28.0
+    plate_w = measure_voice(label, voice_for(ctx.cfg, "rcnt")) + 28.0
     ax = AxisMap.for_slug(ctx.slug)
     if ax.flow == "down":
         inset = float((ctx.engine.get("loop") or {}).get("scope_header_inset", 73.0))
@@ -886,7 +899,13 @@ def _place_scope(
     else:
         plate_x = cx - plate_w / 2
     header_box = RectSpec(x=plate_x, y=box.y - plate_h / 2, w=plate_w, h=plate_h, rx=plate_h / 2)
-    header = DiagramText(x=plate_x + 14.0, y=box.y + 4.2, text=label, cls="eyeb", anchor="start")
+    header = DiagramText(
+        x=plate_x + 14.0,
+        y=centred_baseline(box.y, voice_for(ctx.cfg, "rcnt"), ctx.cfg),
+        text=label,
+        cls="rcnt",
+        anchor="start",
+    )
     # The expression corpus's enclosure stroke — a config knob so the kit
     # dash grammar can enumerate it.
     scope_dash = str((ctx.engine.get("loop") or {}).get("scope_dash", "8 7"))

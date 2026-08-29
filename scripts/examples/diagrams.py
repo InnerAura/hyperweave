@@ -1900,11 +1900,11 @@ FIELD_STORIES: list[Story] = [
     ),
     (
         "monorepo-build-graph",
-        "pieces: dag rank ceiling ridden (11 nodes · 5 ranks) · both skip exits · chips",
+        "pieces: dag rank ceiling ridden (11 nodes · 5 ranks) · all three skip routings · chips",
         {
             "topology": "dag",
             "title": "A monorepo builds",
-            "subtitle": "eleven jobs, five ranks, two shortcut channels — the graph at its rank ceiling",
+            "subtitle": "eleven jobs, five ranks, two shortcuts — the graph at its rank ceiling",
             "zones": ["ci"],
             "node_style": "card+glyph",
             "nodes": [
@@ -1933,13 +1933,19 @@ FIELD_STORIES: list[Story] = [
                 {"source": "integration", "target": "preview"},
                 {"source": "e2e", "target": "deploy"},
                 {"source": "preview", "target": "deploy"},
+                # No authored exit: push and preview sit on one row with a
+                # clear run between them, so the solver draws the straight
+                # chord. The `exit: top` this used to carry forced the over-
+                # channel — 1402px of wire around three ranks for a hop the
+                # figure had room to make directly. Top-channel routing is
+                # still exercised by dag-mesh, dag-mesh-billing and the two
+                # service-dependency stories.
                 {
                     "source": "push",
                     "target": "preview",
                     "label": "cached",
                     "label_style": "chip",
                     "relation": "drift",
-                    "exit": "top",
                 },
                 {
                     "source": "unit",
@@ -2154,9 +2160,14 @@ FIELD_STORIES: list[Story] = [
                 {"source": "index", "target": "retrieve"},
                 {"source": "retrieve", "target": "generate"},
             ],
+            # `query` is un-regioned deliberately: it is a rank-0 source, so a
+            # query-time region containing it would span rank 0 to rank 4 and
+            # bracket the index-time band — two regions no pair of rectangles
+            # can express (compose/diagram/grouping.py names that pair and
+            # draws neither). The subtitle already gives `query` its role.
             "regions": [
-                {"label": "index time", "members": ["corpus", "embed"], "kind": "band"},
-                {"label": "query time", "members": ["query", "retrieve", "generate"], "kind": "enclosure"},
+                {"label": "index time", "members": ["corpus", "embed", "index"], "kind": "band"},
+                {"label": "query time", "members": ["retrieve", "generate"], "kind": "enclosure"},
             ],
         },
     ),
@@ -2898,6 +2909,7 @@ def build_index() -> None:
         "render of that topology owned by a gallery organised on a different axis, so a family",
         "reads in one scroll instead of being scattered across documents.",
         "",
+        "- [topologies/index.html](topologies/index.html) — all of them in one page, a tab per family",
         *[f"- [{f}](topologies/README_{f.upper().replace('-', '_')}.md)" for f in families],
         "",
         "## Boards",
@@ -2918,6 +2930,21 @@ def build_index() -> None:
     ]
     (OUT / "README.md").write_text("\n".join(lines) + "\n")
     print(f"README.md + {len(families)} family links")
+
+
+def build_viewer() -> None:
+    """The tabbed page over every family document — `topologies/index.html`.
+
+    Runs after EVERY subcommand, not just ``all``: it composes from whatever
+    documents are on disk, so rebuilding one family leaves the page describing
+    the other eleven correctly and the rebuilt one freshly. Skipping it on a
+    single-family run is how a viewer goes stale against the thing it views.
+    """
+    from scripts.examples.topologies.viewer import build
+
+    if not TOPOLOGIES.exists():
+        return
+    print(f"topologies/{build(TOPOLOGIES).name} (every family, tabbed)")
 
 
 def build_topologies() -> int:
@@ -4441,9 +4468,41 @@ def sweep(path: pathlib.Path) -> list[str]:
     _regions = [
         (float(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4)))
         for m in re.finditer(
-            r'<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"[^>]*-(?:laneband|encl)[a-z]*"', body
+            r'<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"'
+            r'[^>]*-(?:laneband|encl|outline)[a-z]*"',
+            body,
         )
     ]
+    # 1a-v. REGION FRAMES NEVER CROSS. Two group boxes may intersect only when
+    # one CONTAINS the other — the declared nest, which draws the inner inset
+    # by the family's air on every side. A partial overlap asserts a
+    # containment nobody declared and reads as a drafting accident: an inner
+    # band's edge poking out of an enclosure's own hairline.
+    #
+    # The compositor cannot produce this any more (compose/diagram/grouping.py
+    # suppresses a crossed pair and names it), so this law guards the
+    # geometry against regression rather than the author against a mistake.
+    # Its falsifier is the pre-fix rag-index-and-query render, where the
+    # query-time enclosure had swallowed the index-time band.
+    #
+    # Read geometrically because membership is not in the SVG — which is exactly
+    # right here: crossing is a fact about rectangles.
+    for _i in range(len(_regions)):
+        for _j in range(_i + 1, len(_regions)):
+            ax, ay, aw, ah = _regions[_i]
+            bx, by, bw, bh = _regions[_j]
+            if min(ax + aw, bx + bw) - max(ax, bx) <= 0 or min(ay + ah, by + bh) - max(ay, by) <= 0:
+                continue
+
+            def _holds(o: tuple[float, float, float, float], i: tuple[float, float, float, float]) -> bool:
+                return o[0] <= i[0] and o[1] <= i[1] and o[0] + o[2] >= i[0] + i[2] and o[1] + o[3] >= i[1] + i[3]
+
+            if _holds(_regions[_i], _regions[_j]) or _holds(_regions[_j], _regions[_i]):
+                continue
+            fails.append(
+                f"region frames cross without containment: "
+                f"({ax:.0f},{ay:.0f},{aw:.0f},{ah:.0f}) vs ({bx:.0f},{by:.0f},{bw:.0f},{bh:.0f})"
+            )
     # What can occupy a pad: a label PLATE, or the bare label run itself (a
     # header strip carries no plate — gateway-balanced's is plain text).
     _plates = [
@@ -4465,12 +4524,16 @@ def sweep(path: pathlib.Path) -> list[str]:
     for rx, ry, rw, rh in _regions:
         # Membership is not in the SVG, so this reads the cards GEOMETRICALLY
         # inside the region — which is only the same thing when no other region
-        # overlaps. rag-index-and-query's offline band sits bodily inside its
-        # online enclosure (query is rank 0 and generate rank 4, so the
-        # enclosure spans the full height), and the band's cards then read as
-        # the enclosure's, skewing pads that are in fact symmetric. Skip the
-        # ambiguous case rather than grade it on the wrong members; exact
-        # membership would need the engine to stamp it.
+        # overlaps. A DECLARED NEST genuinely overlaps: the outer's rect holds
+        # the inner's members too, so they read as the outer's own and skew
+        # pads that are in fact symmetric. Skip the ambiguous case rather than
+        # grade it on the wrong members; exact membership would need the engine
+        # to stamp it.
+        #
+        # (This clause used to cite rag-index-and-query, whose enclosure had
+        # swallowed its band. That was never a nest — it was containment
+        # inferred from geometry, and the law that produced it is retired. A
+        # nest is the only overlap left, which is why the skip survives.)
         if any(
             (ox, oy, ow, oh) != (rx, ry, rw, rh)
             and min(rx + rw, ox + ow) - max(rx, ox) > 0
@@ -5345,6 +5408,7 @@ def main() -> None:
         print(f"topologies/: {build_topologies()} story renders across the remaining families")
     if which == "all":
         build_index()
+    build_viewer()
     violations = run_sweep()
     violations += len(_degradation_lint(swept_dirs()))
     sys.exit(1 if violations else 0)

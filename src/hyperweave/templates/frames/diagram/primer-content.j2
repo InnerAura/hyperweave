@@ -38,7 +38,8 @@
    ground knob rides band DATA: 'panel' draws the contained rect; 'typographic'
    dissolves it into header + count + one hairline rule (the obi-engine flagship). #}
 {% for band in lay.lane_bands %}{% if band.ground == 'panel' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-laneband"/>
-{% endif %}{% if band.ground == 'enclosure' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-encl"{% if band.dash %} stroke-dasharray="{{ band.dash }}"{% endif %}/>
+{% endif %}{% if band.ground == 'enclosure' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-{{ 'outline' if band.outline else 'encl' }}"{% if band.dash %} stroke-dasharray="{{ band.dash }}"{% endif %}/>
+
 {% endif %}{% if band.rule %}  <line x1="{{ band.rule.x1 }}" y1="{{ band.rule.y1 }}" x2="{{ band.rule.x2 }}" y2="{{ band.rule.y2 }}" class="{{ uid }}-lanerule"/>
 {% endif %}{% endfor %}
 {% for c in lay.connectors %}

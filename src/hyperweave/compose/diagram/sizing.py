@@ -130,6 +130,20 @@ def voice_for(cfg: ParadigmDiagramConfig, cls: str) -> MatrixVoice:
     raise KeyError(f"unknown diagram voice class {cls!r}")
 
 
+def centred_baseline(mid: float, voice: MatrixVoice, cfg: ParadigmDiagramConfig) -> float:
+    """The baseline that puts a run's INK on ``mid``.
+
+    A baseline is the bottom of the letterform, not its middle, so seating text
+    by its baseline at a plate's centre hangs it high by half the ascent. The
+    lanes solver already derives this; every other plate carried a hand-tuned
+    constant instead — the swimlane title's ``+2.0`` sat 1.9px high on a 10.5px
+    face, and a scope legend's ``+4.2`` was solved for a voice it no longer
+    renders in, so the number went stale the moment the voice was ruled.
+
+    One term, visible: half the ascent, and the ascent is the face's own."""
+    return mid + voice.size * float(cfg.text_ascent_ratio) / 2
+
+
 def label_cls_for(node: DiagramNode, mono_triggers: list[str]) -> str:
     """Node labels are display-face; a run carrying arrow/operator glyphs
     Inter lacks routes to the mono desc voice (the matrix mono_triggers
@@ -1092,6 +1106,10 @@ DIAMOND_CHIP_DY0 = 2.0
 hillclimb holder: row centers 752/786 about center 750)."""
 DIAMOND_CHIP_PITCH = 34.0
 """Criteria-chip row pitch inside a decision-holder (752 -> 786)."""
+DIAMOND_HOLDER_Q_DY = -32.0
+"""Holder question baseline offset above the diamond centre (Stop? baseline
+718 on a 750 centre). Shared with ``chrome.place_diamond`` so the matrix the
+sizing half clears is the matrix the placement half draws."""
 DIAMOND_CHIP_AIR = 36.0
 """Vertical air below the lowest chip row's edge to the holder's south
 vertex (the hillclimb holder: rows end at center+49, half-height 85)."""
@@ -1120,16 +1138,47 @@ def solve_diamond_box(ctx: SolverContext, node: DiagramNode) -> tuple[float, flo
     hh = base_hh
     if node.chips:
         rows = pack_holder_rows(node.chips, ctx.cfg, row_cap=2 * base_hw)
+        # Height answers to the ROW COUNT — unchanged, so a holder that gains
+        # chips without gaining a row stays in its own height class.
         dy_max = DIAMOND_CHIP_DY0 + (len(rows) - 1) * DIAMOND_CHIP_PITCH + CHIP_H / 2
         hh = max(base_hh, dy_max + DIAMOND_CHIP_AIR)
         hw = max(hw, base_hw * hh / base_hh)
         clearance = float((ctx.engine.get("loop") or {}).get("chip_node_clearance", 4))
-        for r_i, row in enumerate(rows):
-            dy_edge = DIAMOND_CHIP_DY0 + r_i * DIAMOND_CHIP_PITCH + CHIP_H / 2
-            taper = 1.0 - dy_edge / hh
+        offsets = holder_row_offsets(len(rows), hh=hh, q_dy=DIAMOND_HOLDER_Q_DY, air=DIAMOND_CHIP_AIR)
+        for dy, row in zip(offsets, rows, strict=True):
+            taper = 1.0 - (abs(dy) + CHIP_H / 2) / hh
             if taper > 0:
                 hw = max(hw, (holder_row_w(row, ctx.cfg) / 2 + clearance) / taper)
     return 2 * hw, 2 * hh, ()
+
+
+DIAMOND_Q_INK_GAP = 9.0
+"""Clear air between the holder question's baseline and the first chip row's
+top edge — the citation's own 21px baseline-to-row-top less the question's
+descent, so the matrix may rise until the words nearly touch and no further."""
+
+
+def holder_row_offsets(n: int, *, hh: float, q_dy: float, air: float) -> list[float]:
+    """Each chip row's centre offset from the diamond's OWN centre.
+
+    A rhombus is widest at its centre and tapers to nothing at its vertices, so
+    the cheapest place for wide content is the middle. The rows used to HANG
+    from the top of the band instead — first row at +2, each next a pitch
+    deeper — which is a card's title-over-content stack, the one arrangement a
+    rhombus punishes: `cap-holder-growth` sat a 175px row at depth 49 of 85,
+    where 42% of the half-width survives, and paid 433px of width to carry a
+    219px row.
+
+    So the matrix sits AS NEAR THE CENTRE AS THE QUESTION ABOVE IT ALLOWS —
+    clamped between the question's own air and the south vertex's. Height is
+    untouched: it answers to the ROW COUNT, as it did, and only the width
+    responds to how wide the rows are. Those are different questions and the
+    old code answered them with one number."""
+    half = (n - 1) * DIAMOND_CHIP_PITCH / 2 + CHIP_H / 2
+    lo = q_dy + DIAMOND_Q_INK_GAP + half
+    hi = hh - air - half
+    centre = min(max(0.0, lo), hi) if hi >= lo else (lo + hi) / 2
+    return [centre + (i - (n - 1) / 2.0) * DIAMOND_CHIP_PITCH for i in range(n)]
 
 
 def pack_holder_rows(chips: tuple[str, ...], cfg: ParadigmDiagramConfig, *, row_cap: float) -> list[tuple[str, ...]]:

@@ -36,7 +36,7 @@ from hyperweave.compose.diagram.loop import (
 )
 from hyperweave.compose.diagram.records import DiagramText, LaneBand, NodePlacement
 from hyperweave.compose.diagram.route import orthogonal_d
-from hyperweave.compose.diagram.sizing import solve_node_box
+from hyperweave.compose.diagram.sizing import centred_baseline, solve_node_box
 from hyperweave.compose.diagram.solver import finish_layout
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
 from hyperweave.compose.matrix.cells import measure_voice
@@ -153,9 +153,22 @@ def solve_loop_lanes(ctx: SolverContext) -> DiagramLayout:
             rx=16.0,
         )
         label = name.upper()
-        header = DiagramText(x=box.x + 12.0, y=box.y + 18.0, text=label, cls="eyeb", anchor="start")
-        plate_w = measure_voice(label, ctx.cfg.scope_header_voice) + 24.0
+        # The title sits CENTRED in its plate on both axes. It used to inset 6
+        # from a plate padded 24, which is 6 left against 18 right, and to seat
+        # its baseline 2px under the plate's middle where half a 10.5px ascent
+        # is 3.9 — so the run read pushed up and to the left of its own chip.
+        # Both pads are now the one pad, and the baseline derives.
+        voice = ctx.cfg.scope_header_voice
+        pad = 12.0
+        plate_w = measure_voice(label, voice) + 2 * pad
         header_box = RectSpec(x=box.x + 6.0, y=box.y + 6.0, w=plate_w, h=20.0, rx=6.0)
+        header = DiagramText(
+            x=header_box.x + pad,
+            y=centred_baseline(header_box.y + header_box.h / 2, voice, ctx.cfg),
+            text=label,
+            cls="eyeb",
+            anchor="start",
+        )
         bands.append(LaneBand(box=box, header=header, ground="panel", header_box=header_box))
 
     # ── Edges ────────────────────────────────────────────────────────────

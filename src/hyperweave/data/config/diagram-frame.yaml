@@ -548,9 +548,10 @@ material:
   grain_tint: "0.04"
   grain_alpha: "0.08"
 
-# Compound-region chrome pads (graph.py build_region_bands), DERIVED from what
-# the region frames, never authored per-spec. Two region kinds: BAND (a filled
-# panel) and ENCLOSURE (a hairline box); a band's own pads split further on
+# Compound-region chrome pads (grouping.py build_region_bands), DERIVED from
+# what the region frames, never authored per-spec. Two region kinds: BAND (a
+# filled panel, no dash) and ENCLOSURE (a dashed outline, no fill); a band's
+# own pads split further on
 # whether it frames an over-arc return (the tall top pad lifts the panel off
 # the row so the re-plan bow clears it — see build_region_bands' docstring).
 region_band:
@@ -560,12 +561,14 @@ region_band:
   band_side_pad: 18
   band_top_pad: 26
   band_bottom_pad: 12
-  # NESTING: two regions whose rects intersect commit to containment — the
-  # smaller fully inside the larger with this air on every side (their rects
-  # can lawfully intersect while their memberships are disjoint, when one
-  # region's members bracket the other's ranks). The air is the band
-  # grammar's own trailing pad, the family's tightest breathing room, so a
-  # nested hairline reads inset by the same air a band keeps under its row.
+  # HOW FAR ONE REGION KEEPS FROM ANOTHER — inside it or beside it, one idea
+  # and one constant. Nested (a region whose members are a SUBSET of another's)
+  # sits inside with this air on every side; neighbours (members separable
+  # along the flow) get it as the clearance between their two frames, and the
+  # rank gap between them is priced to hold both pads plus this
+  # (grouping.flow_gap_reservation). The air is the band grammar's own
+  # trailing pad — the family's tightest breathing room — so a nested hairline
+  # reads inset by the same air a band keeps under its row.
   region_nest_air: 12
   # PER-AXIS CITATION. The three pads above are gateway-balanced's, and that is
   # a band whose members stack ALONG the flow; a vertical dag band's members
@@ -618,7 +621,13 @@ region_band:
   #   sm   — agent-task-lifecycle's RECOVERY puts its label in a bottom
   #          STRIP inside the box, no plate.
   # Slugs listed here take the on-edge chip; everything else keeps the strip.
-  region_label_on_edge: [dag, dag-vertical]
+  # Topologies that REFUSE `regions:` by name. A family already grouping its
+  # nodes cannot host a second grouping over the first without the reader
+  # having to work out which box means what; lanes draws a full-height band per
+  # category, so a region across categories contradicts it and a region within
+  # one restates it. Every other topology draws — a group of nodes is a group
+  # whatever pattern places them.
+  region_refusals: [lanes]
 
 # Universal display pin (the prototypes render at exactly this width, every
 # topology): a chassis without its own display_w scales its canvas to this

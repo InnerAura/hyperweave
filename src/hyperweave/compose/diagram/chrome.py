@@ -32,8 +32,8 @@ from hyperweave.compose.diagram.sizing import (
     CHIP_GAP,
     CHIP_H,
     CHIP_RX,
-    DIAMOND_CHIP_DY0,
-    DIAMOND_CHIP_PITCH,
+    DIAMOND_CHIP_AIR,
+    DIAMOND_HOLDER_Q_DY,
     DOT_MARK_W,
     GLYPH_MARK_W,
     HEAD_GLYPH_GAP,
@@ -47,6 +47,7 @@ from hyperweave.compose.diagram.sizing import (
     card_label_voices,
     crown_within_band,
     head_pad_x,
+    holder_row_offsets,
     label_cls_for,
     label_desc_gap_for,
     mark_lead,
@@ -1168,10 +1169,6 @@ def apply_health_dot(ctx: SolverContext, node: DiagramNode, placement: NodePlace
 DIAMOND_Q_DY = 5.0
 """Plain decision question baseline offset below the diamond center (the
 hillclimb's Improved? baseline 401 on a 396 center)."""
-DIAMOND_HOLDER_Q_DY = -32.0
-"""Decision-HOLDER question baseline offset — the question rises above
-center so the criteria-chip rows seat beneath it (Stop? baseline 718 on a
-750 center)."""
 
 
 def place_diamond(
@@ -1197,10 +1194,11 @@ def place_diamond(
     if node.chips:
         q_dy = DIAMOND_HOLDER_Q_DY
         rows = pack_holder_rows(node.chips, ctx.cfg, row_cap=2 * ctx.ch.diamond_half_w_min)
+        offsets = holder_row_offsets(len(rows), hh=hh, q_dy=q_dy, air=DIAMOND_CHIP_AIR)
         boxes: list[RectSpec] = []
         texts: list[DiagramText] = []
-        for r_i, row in enumerate(rows):
-            row_top = cy + DIAMOND_CHIP_DY0 + r_i * DIAMOND_CHIP_PITCH - CHIP_H / 2
+        for dy, row in zip(offsets, rows, strict=True):
+            row_top = cy + dy - CHIP_H / 2
             b, t = _chip_row(row, ctx.cfg, row_top, center=cx)
             boxes.extend(b)
             texts.extend(t)

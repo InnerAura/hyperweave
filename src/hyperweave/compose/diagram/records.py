@@ -372,6 +372,16 @@ class LaneBand:
     enclosure keeps). The loop scope wears the dashed region grammar
     (cycle-nested: 'dashed outline + legend plate') — band data, never a
     template branch."""
+    outline: bool = False
+    """Draw the frame UNFILLED. A region ``enclosure`` is a dashed outline where
+    a ``band`` is a filled panel; the loop scope is a third thing — a filled box
+    with a dashed rim — so the material cannot be read off the ground alone."""
+    region_id: str = ""
+    """The authored ``regions:`` entry this band draws ('' for a lane band, a
+    swimlane or a zone header). Two readers need it: the diagnostics pass, to
+    tell a region that DREW from one the grouping law suppressed, and the
+    shared region pass, to recognise bands a solver already built rather than
+    building them twice."""
 
 
 @dataclass(frozen=True, slots=True)

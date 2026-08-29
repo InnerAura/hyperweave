@@ -11,19 +11,22 @@ Rules: mass-ratio, canonical-slot, sector-balance, height-budget, margin-band, c
 palette, nucleus-underweight, accent-unbound, unbundled-fan,
 unresolved-glyph, relation-ambiguous, crossing-count, visual-channel-collision,
 nesting-depth (advisory at the cap; >2 refuses at the seam),
-nested-density, annotation-failure. cross-boundary-edge is seam-enforced
-(a hard error carrying the rule name) — it never reaches this pass.
+nested-density, annotation-failure, region-overlap, skip-detour. cross-boundary-edge is
+seam-enforced (a hard error carrying the rule name) — it never reaches this
+pass.
 """
 
 from __future__ import annotations
 
 import itertools
 import math
+import re
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.diagram.paths import count_polyline_crossings, sample_path
 from hyperweave.core.color import contrast_ratio
 from hyperweave.core.diagnostics import Diagnostic
+from hyperweave.core.diagram import resolved_edges
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -434,6 +437,99 @@ def _over_arc_zone_collision(layout: DiagramLayout) -> Diagnostic | None:
     return None
 
 
+def _skip_detour(spec: DiagramSpec, layout: DiagramLayout, engine: Mapping[str, Any]) -> Diagnostic | None:
+    """An AUTHORED route that costs a detour the geometry did not need.
+
+    ``exit``/``entry`` bypass every automatic routing tier — an author who
+    names a face means it, and that is the right default. The cost is that a
+    face named once, while the figure was a different shape, keeps being
+    honoured after the shape changes: monorepo-build-graph's `cached` carried
+    ``exit: top`` and drew 1402px around three ranks while the straight line
+    between its two cards was clear the whole way, and nothing said so.
+
+    So: report an authored edge whose drawn wire runs far past the straight
+    line between its own cards WHEN that line is clear of every other card.
+    Unauthored edges are never reported — the solver already routes those as
+    short as the geometry allows, so a long one is a fact about the figure,
+    not a decision anybody can revisit."""
+    ratio_max = float((engine.get("diagnostics") or {}).get("detour_ratio_max") or 1.5)
+    boxes = {n.node_id: n.box for n in layout.nodes}
+    drawn = {c.index: c.path_d for c in layout.connectors}
+    hits: list[str] = []
+    for j, e in enumerate(resolved_edges(spec)):
+        if not (e.exit or e.entry) or e.source == e.target:
+            continue
+        ids = [n.id for n in spec.nodes]
+        if not (0 <= e.source < len(ids) and 0 <= e.target < len(ids)):
+            continue
+        a, b = boxes.get(ids[e.source]), boxes.get(ids[e.target])
+        if a is None or b is None or j not in drawn:
+            continue
+        pts = [(float(x), float(y)) for x, y in re.findall(r"(-?[\d.]+),(-?[\d.]+)", drawn[j])]
+        if len(pts) < 2:
+            continue
+        run = sum(math.dist(pts[i], pts[i + 1]) for i in range(len(pts) - 1))
+        acy, bcy = a.y + a.h / 2, b.y + b.h / 2
+        acx, bcx = a.x + a.w / 2, b.x + b.w / 2
+        flush_y, flush_x = abs(acy - bcy) <= 3.0, abs(acx - bcx) <= 3.0
+        if not (flush_y or flush_x):
+            continue
+        lo, hi = (min(a.x + a.w, b.x + b.w), max(a.x, b.x)) if flush_y else (min(a.y + a.h, b.y + b.h), max(a.y, b.y))
+        blocked = any(
+            (o.x < hi and o.x + o.w > lo and o.y < acy < o.y + o.h)
+            if flush_y
+            else (o.y < hi and o.y + o.h > lo and o.x < acx < o.x + o.w)
+            for k, o in boxes.items()
+            if k not in (ids[e.source], ids[e.target])
+        )
+        direct = max(hi - lo, 1.0)
+        if not blocked and run > direct * ratio_max:
+            hits.append(f"{ids[e.source]}->{ids[e.target]} runs {run:.0f}px where {direct:.0f}px is clear")
+    if not hits:
+        return None
+    return Diagnostic(
+        rule="skip-detour",
+        measured="; ".join(hits),
+        band=f"an authored route runs at most {ratio_max:g}x the clear straight line between its cards",
+        suggestion=(
+            "drop the edge's exit/entry and the solver takes the direct route; keep it only where the "
+            "named face is the point"
+        ),
+    )
+
+
+def _region_overlap(spec: DiagramSpec, layout: DiagramLayout) -> Diagnostic | None:
+    """An authored region the grouping law could not draw.
+
+    Two regions whose members interleave along the flow have no pair of
+    rectangles that expresses them, so the compositor draws NEITHER (see
+    compose/diagram/grouping.py). That absence is the honest outcome, but it is
+    still an absence — the spec asked for a box and the artifact has none — so
+    it is reported here as well as on ``rendered.warnings``.
+
+    Every unresolvable pair is named, not the first found (the cyclic-dag
+    precedent): an author who unpicks the one pair they were shown would
+    otherwise hit the next one blind."""
+    drawn = {b.region_id for b in layout.lane_bands if b.region_id}
+    missing = [r.label for r in spec.regions if r.label not in drawn]
+    if not missing:
+        return None
+    seated = {r.label for r in spec.regions if any(m in {n.node_id for n in layout.nodes} for m in r.members)}
+    named = [m for m in missing if m in seated]
+    if not named:
+        return None  # a region over nodes the solver never placed — nothing to group
+    return Diagnostic(
+        rule="region-overlap",
+        measured=f"{len(named)} declared region(s) drew no box: {', '.join(repr(m) for m in named)}",
+        band="every region draws, or contains another, or sits clear of it along the flow",
+        suggestion=(
+            "regions overlap along the flow without one containing the other — move the interleaving "
+            "member, or make one region's members a subset of the other's; the artifact's warnings name "
+            "which member sits inside which region"
+        ),
+    )
+
+
 def run_diagnostics(
     spec: DiagramSpec,
     layout: DiagramLayout,
@@ -462,5 +558,7 @@ def run_diagnostics(
         _nesting_depth(spec),
         _nested_density(spec, engine),
         _annotation_failure(layout),
+        _region_overlap(spec, layout),
+        _skip_detour(spec, layout, engine),
     )
     return tuple(d for d in checks if d is not None)

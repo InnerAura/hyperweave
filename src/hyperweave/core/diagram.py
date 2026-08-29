@@ -495,17 +495,30 @@ class DiagramEdge(FrozenModel):
 class DiagramRegion(FrozenModel):
     """An authored compound made visible: a region binding member nodes,
     labeled in uppercase. The common-region Gestalt piece — grouping, never a
-    hue. Two treatments: ``enclosure`` is a concentric hairline box with a
-    bottom-strip label (agent-task-lifecycle's RECOVERY); ``band`` is a FILLED
-    panel with a small top-left count-voice label that also reserves the
-    over-arc space above the row (agent-runtime's AGENT RUNTIME control-loop
-    frame, gateway-balanced's MODEL POOL)."""
+    hue.
+
+    ``kind`` picks the MATERIAL. ``band`` is a filled panel with an undashed
+    rim; ``enclosure`` is an unfilled dashed outline. Only a band makes the
+    over-arc reservation that lifts a panel clear of a back-edge bow."""
 
     label: str = Field(min_length=1, description="Region name (renders uppercase, letter-spaced)")
-    members: list[str] = Field(min_length=1, description="Node ids the enclosure binds")
+    members: list[str] = Field(min_length=1, description="Node ids the region binds")
     kind: Literal["enclosure", "band"] = Field(
         default="enclosure",
-        description="enclosure = concentric hairline + bottom label; band = filled panel + top-left cnt label",
+        description=(
+            "band = a filled panel, undashed, and the only kind that reserves over-arc room above its "
+            "row; enclosure = an unfilled dashed outline. Pads differ with the material."
+        ),
+    )
+    label_style: Literal["", "chip", "strip"] = Field(
+        default="",
+        description=(
+            "How the region names itself. 'chip' (the default) seats the label on a plate that occludes "
+            "the border it rides; 'strip' sets it as free text inside the box, along the trailing edge. "
+            "Both are available on every region and every topology — the treatment used to be decided "
+            "by which family the diagram happened to be, which is why a plain box got bare text and a "
+            "dag got a plate for the same declaration."
+        ),
     )
 
 

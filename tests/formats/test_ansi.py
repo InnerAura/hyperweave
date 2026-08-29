@@ -70,7 +70,11 @@ _STATE_MACHINE_SPEC = {
 # envelope (card width minimum = glyph_inset_x + ink + pad_x; cards widen
 # a few columns and the grids re-flow with them). Re-pinned again for the
 # snug-width ruling (width citations are ceilings; cards solve to ink and
-# the grids pack tighter).
+# the grids pack tighter). Re-pinned again for the horizontal dag's rank-gap
+# DERIVATION (the vertical cell's spread ratio + a cited floor, replacing a
+# flat 150 that ran wider than the card it separated) — the dag grid packs 19
+# columns tighter and the pipeline grid is untouched, which is the derivation
+# reaching exactly the cell it was added to.
 _PIPELINE_GOLDEN = """\
 ┌─ content · pipeline · 3 nodes · 2 edges ────────────────────────────────────────────┐
 │ ╭────────────────╮               ╭───────────────╮                ╭───────────────╮ │
@@ -84,22 +88,22 @@ _PIPELINE_GOLDEN = """\
 """
 
 _DAG_GOLDEN = """\
-┌─ content · dag · 4 nodes · 4 edges ─────────────────────────────────┐
-│                             ╭──────────╮                            │
-│                             │          │                            │
-│                             ▶ branch-a │┄┄┄┄┄┄┄╮                    │
-│                      ┄┄┄┄┄┄┄╰──────────╯       ┄┄┄┄┄╮               │
-│ ╭────────╮           ┆                              ┄┄┄┄┄┄┄╭──────╮ │
-│ │        │      ┄┄┄┄┄╯                                     ▶      │ │
-│ │ source │┄┄┄┄┄┄╮                                          ▶ sink │ │
-│ ╰────────╯      ┄┄┄┄┄╮      ╭──────────╮            ┄┄┄┄┄┄┄╰──────╯ │
-│                      ┄┄┄┄┄┄┄│          │            ┆               │
-│                             ▶          │┄┄┄┄┄┄┄┄┄┄┄┄╯               │
-│                             │ branch-b │                            │
-│                             ╰──────────╯                            │
-└─────────────────────────────────────────────────────────────────────┘
-┌─ footer ──────┐
-└───────────────┘
+┌─ content · dag · 4 nodes · 4 edges ──────────────┐
+│                    ╭─────────╮                   │
+│                    │         │                   │
+│                    ▶ branch-a│┄┄┄┄╮              │
+│                ┄┄┄┄╰─────────╯    ┄┄╮            │
+│ ╭────────╮     ┆                    ┄┄┄┄╭──────╮ │
+│ │        │   ┄┄╯                        ▶      │ │
+│ │ source │┄┄┄╮                          ▶ sink │ │
+│ ╰────────╯   ┄┄╮   ╭─────────╮      ┄┄┄┄╰──────╯ │
+│                ┄┄┄┄│         │      ┆            │
+│                    ▶         │┄┄┄┄┄┄╯            │
+│                    │ branch-b│                   │
+│                    ╰─────────╯                   │
+└──────────────────────────────────────────────────┘
+┌─ footer ───────────┐
+└────────────────────┘
 """
 
 # Re-pinned (pill retirement + the drift-return and caption-pad laws):

@@ -96,6 +96,15 @@ class AxisMap:
             RIGHT.channel_far: self.channel_far,
         }.get(name, name)
 
+    @staticmethod
+    def maps(slug: str) -> bool:
+        """Does the table SPEAK for this slug, or is it handing back the
+        identity because it has nothing to say? ``for_slug`` cannot answer that
+        — an unmapped slug and a genuinely right-flowing one both return RIGHT,
+        and a caller that needs to fall back on measurement has to tell them
+        apart."""
+        return slug in _SLUG_AXES
+
     @classmethod
     def for_slug(cls, slug: str) -> AxisMap:
         """The map a layout slug solves in. Unknown slugs take RIGHT — the

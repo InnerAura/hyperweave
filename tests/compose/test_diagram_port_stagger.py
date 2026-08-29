@@ -33,20 +33,27 @@ _PROBE = {
 
 
 def _wire_ys_at_shared_face(svg: str) -> tuple[float, float]:
-    """(plain-exit start y, elbow landing y) at the shared east face x."""
+    """(plain-exit start y, elbow landing y) at the shared east face x.
+
+    The shared face is found STRUCTURALLY — the elbow's landing x, then the
+    plain exit that departs from that same x — never by a coordinate
+    threshold. An earlier cut looked for the first exit past x=300, which
+    silently stopped finding one the moment the family's rank gap tightened:
+    the law was intact and the guard went red for a reason unrelated to it."""
     paths = re.findall(r'<path[^>]* d="(M[^"]+)"', svg)
-    exit_start = None
     elbow_land = None
     for d in paths:
-        start = re.match(r"M (\d+(?:\.\d+)?),(\d+(?:\.\d+)?) C", d)
-        if start and exit_start is None and float(start.group(1)) > 300:
-            exit_start = (float(start.group(1)), float(start.group(2)))
         landing = re.search(r"L (\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$", d)
         if landing and "Q" in d and d.startswith("M "):
             elbow_land = (float(landing.group(1)), float(landing.group(2)))
-    assert exit_start is not None, "no plain east exit found"
     assert elbow_land is not None, "no elbow landing found"
-    assert exit_start[0] == elbow_land[0], "the two wires must touch the same face x"
+    exit_start = None
+    for d in paths:
+        start = re.match(r"M (\d+(?:\.\d+)?),(\d+(?:\.\d+)?) C", d)
+        if start and float(start.group(1)) == elbow_land[0]:
+            exit_start = (float(start.group(1)), float(start.group(2)))
+            break
+    assert exit_start is not None, f"no plain exit departing the elbow's face at x={elbow_land[0]}"
     return exit_start[1], elbow_land[1]
 
 

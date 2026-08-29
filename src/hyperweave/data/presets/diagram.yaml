@@ -905,8 +905,14 @@ presets:
       - { id: review, label: review, desc: inspect, kind: eye }
       - { id: done, label: done, desc: shipped, kind: circle-check, role: hero, terminal: true }
       - { id: failed, label: failed, desc: errored, kind: circle-x, role: muted }
+    # label_style: strip — pp-state-machine-alt2.svg draws RECOVERY as bare text
+    # inside the box's trailing edge, and that specimen is still this preset's
+    # citation. The engine default is the plate; this says so out loud rather
+    # than letting a family-wide default decide, which is what the retired
+    # `region_label_on_edge` list did. Drops when the sm refresh supersedes the
+    # specimen (its own newer sheet seats a plate).
     regions:
-      - { label: recovery, members: [failed] }
+      - { label: recovery, members: [failed], label_style: strip }
     edges:
       - { source: idle, target: planning, label: assigned }
       - { source: planning, target: executing, label: approved }

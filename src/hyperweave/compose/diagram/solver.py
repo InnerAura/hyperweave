@@ -20,6 +20,7 @@ from hyperweave.compose.diagram.anchors import boundary_distance
 from hyperweave.compose.diagram.annotate import Region as AnnRegion
 from hyperweave.compose.diagram.annotate import build_annotations
 from hyperweave.compose.diagram.chrome import apply_health_dot, measure_caption, voice_for
+from hyperweave.compose.diagram.grouping import build_region_bands, placement_axis, reseat_region_labels
 from hyperweave.compose.diagram.layered import back_edges, split_self_loops
 from hyperweave.compose.diagram.recenter import content_extents, shift_content, translate_path
 from hyperweave.compose.diagram.records import (
@@ -562,6 +563,7 @@ def finish_layout(
     initial_stub: Any = None,
     header_width: float = 0.0,
     lane_bands: tuple[Any, ...] = (),
+    region_notes: tuple[str, ...] = (),
     extra_regions: Mapping[str, Any] | None = None,
     auto_annotations: tuple[Any, ...] = (),
     extra_particles: tuple[ParticlePlacement, ...] = (),
@@ -579,7 +581,10 @@ def finish_layout(
     solver-synthesized annotations (lanes' category legend); empty for every
     other solver, so this path is byte-identical for them. ``extra_particles``
     is the flywheel rim-orbit seam: riders outside the uniform edge->particle
-    wiring (not tied 1:1 to a connector) — empty for every other solver."""
+    wiring (not tied 1:1 to a connector) — empty for every other solver.
+    ``region_notes`` carry the grouping law's verdict on regions it could NOT
+    draw (compose/diagram/grouping.py) through to ``rendered.warnings``, so a
+    suppressed region is never a silent absence."""
     # The health channel is GENERIC chrome (dep-audit contract: card-corner
     # status dot, orthogonal to identity accent) applied at the one seam
     # every solver exits through — a declared health is never a silently
@@ -611,6 +616,30 @@ def finish_layout(
     # as a wide one.
     _margin_y = getattr(ctx.ch, "margin_y", None)
     mv = float(_margin_y) if _margin_y else min(m, 24.0)
+    # AUTHORED REGIONS, ON EVERY TOPOLOGY. `regions:` used to validate on any
+    # spec and draw on three slugs, so every other family accepted the key and
+    # silently rendered nothing. The pass runs HERE because this is the one seam
+    # every solver exits through, and it needs only placed cards by id — the
+    # single shape they all agree on.
+    #
+    # A solver that built its own bands upstream (dag and state-machine need
+    # each band's bottom edge before they can route the under-channel) is
+    # recognised by the `region_id` those bands carry, so it is never built
+    # twice. The gate describes itself rather than being a boolean flag.
+    if ctx.spec.regions and not any(getattr(b, "region_id", "") for b in lane_bands):
+        refuse = {str(x) for x in ((ctx.engine.get("region_band") or {}).get("region_refusals") or [])}
+        if ctx.slug in refuse:
+            raise DiagramInputError(
+                f"{ctx.slug} already groups its nodes by category, so `regions:` would draw a second "
+                f"grouping over the first; drop `regions:` or move the members between categories"
+            )
+        _rboxes = {p.node_id: p.box for p in nodes_paint if p.node_id}
+        _raxis = placement_axis(ctx.slug, _rboxes)
+        _rbands, _rnotes = build_region_bands(ctx, _rboxes, _raxis)
+        if _rbands:
+            _rbands = reseat_region_labels(ctx, _rbands, geos, [p.box for p in nodes_paint], _raxis)
+        lane_bands = tuple(_rbands) + tuple(lane_bands)
+        region_notes = region_notes + _rnotes
     ext = content_extents(
         nodes_paint, geos, tuple(lane_bands), tuple(lifelines), tuple(activations), initial_dot, initial_stub
     )
@@ -1117,7 +1146,7 @@ def finish_layout(
             [motion_by_index.get(i, m) for i, m in enumerate(ctx.motions)], [e.inert for e in ctx.edges]
         ),
         fallback_applied=ctx.fallback_applied,
-        warnings=ctx.warnings + chrome_notes,
+        warnings=ctx.warnings + region_notes + chrome_notes,
     )
     ch = ctx.ch
     # Display scale is a CONSTANT per resolved chassis (the content-fit law): the chassis

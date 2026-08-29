@@ -12,6 +12,8 @@ Improves `dag` layout and routing, refreshes the `primer` theme on light and dar
 ### Added
 
 - **`chassis: { depart_bezel: false }` and `join_bezel: false`** — turn off the small ring drawn where edges meet at a shared point on `fanout`, `fanin`, `hub`, and `dag`; the arrowheads show direction instead.
+- **Detour warning** — an edge whose `exit` or `entry` sends it more than half again the clear straight line between its own cards is reported, with both distances.
+- **`regions:` on every layout** — a named group of nodes draws its box on `pipeline`, `tree`, `fanout`, `fanin`, `hub`, `sequence`, `loop`, the radial and cycle layouts, and both `dag` axes; `lanes` refuses it, since its categories already group.
 
 ### Changed
 
@@ -19,7 +21,9 @@ Improves `dag` layout and routing, refreshes the `primer` theme on light and dar
 - **Two-way edge labels** — both labels sit as plain text, one above the outgoing line and one below the returning one; one-way edges keep their `label_style: chip` boxes.
 - **A `role: hero` node looks raised on light diagrams** — soft top-to-bottom shading and a darker lower edge replace its colored outline, and each variant shades in its own palette.
 - **A `role: hero` node stays its neighbours' size** — connections to rows above or below leave from its top and bottom edges instead of stacking on one side.
-- **Long edges pass under the rows** — an edge that skips columns with no `exit` or `entry` set leaves the bottom of its source and rises into the bottom of its target: two turns instead of four.
+- **Long edges take the shortest clear path** — an edge that skips columns with no `exit` or `entry` set runs straight when the row between its ends is clear, through the gap between two rows when one is free, and under the diagram only when neither is; setting `exit` still routes it by hand.
+- **Region labels read in one voice** — every named group, including a loop `station: scope`, labels itself in the small mono face the `dag` bands already used.
+- **`topology: dag` column spacing** — a left-to-right `dag` sizes the space between columns from what crosses it, the way a vertical one already did; a plain chain now packs about a third narrower instead of holding a fixed gap wider than the cards.
 - **Porcelain dark** — diagrams sit on true black with near-white text and richer blues, and amber appears only on a decision as the route reaches it.
 - **Dark diagrams on every variant** — the moving route draws in a deep shade of the variant's own color, chips get solid borders and brighter text, and a decision's question reads in plain text.
 - **`primer.noir` light diagrams** — white cards and chips on thin gray borders, near-black text, and a softer shadow.
@@ -30,7 +34,7 @@ Improves `dag` layout and routing, refreshes the `primer` theme on light and dar
 - **Overlapping edge chips** — two chips arriving at the same node move apart along their own lines instead of one covering the other.
 - **Labels on curved edges** — a label sits on the emptier side of its line, so it reads against the edge it names rather than a neighbour.
 - **Cyclic `dag` warning** — names every cause that turned the diagram into a `state-machine`, not just the first one found.
-- **Nested regions** — a region drawn around another contains it evenly and both labels share a row; their borders no longer cross.
+- **Nested regions** — a region whose members all belong to another sits inside it with even air and both labels share a row; two regions that merely overlap on screen are named in the warnings instead of merged into one box.
 - **`dag` spacing** — columns no longer spread to make room for labels that sit beside a line rather than on it, and vertical diagrams use their own closer spacing: wide diagrams pull in, and straight chains lose about a third of their height.
 - **`dag-bottleneck` preset** — the empty band between the `zones` heading and the first row is gone in both orientations.
 - **Loop top margin** — a loop's headings and first `station` get their full space at the top of the canvas.

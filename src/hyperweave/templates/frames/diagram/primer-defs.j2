@@ -243,6 +243,12 @@
    the lowest-ink hairline that still binds a common region. #}
 .{{ uid }}-term { fill: none; stroke: var(--dna-signal); stroke-width: 1.25; opacity: .42; }
 .{{ uid }}-encl { fill: var(--dna-region); stroke: var(--dna-region-border); stroke-width: 1.4; }
+{# A region ENCLOSURE is the UNFILLED dashed outline; a BAND is the filled one with no dash.
+   Both mapreduce specimens draw it that way, on a connector-weight stroke rather than the faint
+   region border — an unfilled box needs a visible edge, so it takes muted ink at the opacity that
+   lands on the specimen's own slate. The rhythm is the kit's outline dash, shared with the loop
+   scope, which is a FILLED box with a dashed rim and keeps `.encl`. #}
+.{{ uid }}-outline { fill: none; stroke: var(--dna-ink-muted); stroke-width: 1.5; stroke-dasharray: 8 7; opacity: .7; }
 .{{ uid }}-rlabel { fill: var(--dna-ink-muted); }
 .{{ uid }}-eyeb { fill: var(--dna-ink-muted); }
 .{{ uid }}-p { will-change: transform; }
