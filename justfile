@@ -1,8 +1,14 @@
 default:
     @just --list
 
+
+# ──────────────────────────────
+# Quality Gates
+# ──────────────────────────────
+
 qa: lint typecheck test
 
+# Both, always: a format-only failure has pushed red twice.
 lint:
     uv run ruff check .
     uv run ruff format --check .
@@ -23,12 +29,18 @@ test-debug *ARGS:
 snapshots:
     uv run pytest tests/ -k snapshot --snapshot-update
 
+
+# ──────────────────────────────
+# Smoke
+# ──────────────────────────────
+
 smoke:
     uv run hyperweave compose badge "build" "passing" --genome brutalist
 
 smoke-receipt:
     uv run hyperweave compose receipt tests/fixtures/session.jsonl -o /tmp/hw-smoke-receipt.svg
 
+# Every frame against every genome; prints only the pairs that fail.
 proof-set:
     #!/usr/bin/env bash
     for genome in $(uv run hyperweave genomes list --ids-only); do
@@ -37,25 +49,36 @@ proof-set:
         done
     done
 
-# Build the visual acceptance surface under outputs/ — the genome and matrix
-# galleries plus the cross-genome documents. Every gallery artifact is rendered
-# through direct compose, the CLI, HTTP and MCP and must agree byte-for-byte;
-# `just proofset direct` skips the three witnesses while iterating on content.
+
+# ──────────────────────────────
+# Galleries
+# ──────────────────────────────
+
+# Renders each artifact through compose, CLI, HTTP and MCP and requires
+# byte-agreement. `just proofset direct` skips the three witnesses.
 proofset SURFACES="all":
     uv run python -m scripts.examples --surfaces {{SURFACES}}
 
-# The diagram galleries: one exhibit directory per topology family, the
-# specimen board, the primer-language sweep, the card+label slots. Ends with the
-# law sweep over every render — exits non-zero on a violation.
+# Ends with the law sweep over every render - exits non-zero on a violation.
 diagrams TARGET="all":
     uv run python -m scripts.examples.diagrams {{TARGET}}
 
-# The Surface Modes cross-product (plate/inlay/twin x every primer variant).
+# Rebuilds the tabbed page from the family documents on disk - no re-render.
+topology-viewer:
+    uv run python -m scripts.examples.topologies.viewer
+
+# not committed (wip)
+# `just kit check` checks the plates only; `just kit html` skips the checks.
+kit TARGET="all":
+    uv run python -m scripts.kit {{TARGET}}
+
 surface-matrix:
     uv run python scripts/examples/surface_matrix.py
 
-serve:
-    uv run hyperweave serve --port 8000 --reload
+
+# ──────────────────────────────
+# Glyph Registry
+# ──────────────────────────────
 
 extract-glyphs:
     uv run python scripts/glyphs/extract.py
@@ -63,16 +86,41 @@ extract-glyphs:
 fetch-core-glyphs:
     uv run python scripts/glyphs/fetch.py
 
-# Run after any glyph registry rebuild: renders every entry in headless
-# Chromium and asserts the geometry stays inside its viewBox (needs Playwright).
+# Run after any registry rebuild. Needs Playwright.
 glyph-audit:
     uv run python scripts/glyphs/audit.py
 
-# Re-render the committed telemetry example receipts (assets/examples/telemetry/).
-# Default renders from real local transcripts (skips loudly if none found);
+
+# ──────────────────────────────
+# Examples
+# ──────────────────────────────
+
+# Renders from real local transcripts, skipping loudly if none are found.
 # `--mock` is dev-only synthetic data and must never be committed.
 refresh-examples *ARGS:
     uv run python scripts/examples/refresh.py {{ARGS}}
+
+
+# ──────────────────────────────
+# App & Site
+# ──────────────────────────────
+
+serve:
+    uv run hyperweave serve --port 8000 --reload
+
+# not committed (wip)
+registry OUT="apps/hw-app/public/registry":
+    uv run python -m scripts.registry --out {{OUT}}
+
+# not committed (wip)
+# Indexes and glyphs only — skips the ~28MB render copy.
+registry-fast OUT="apps/hw-app/public/registry":
+    uv run python -m scripts.registry --out {{OUT}} --no-renders
+
+
+# ──────────────────────────────
+# Release
+# ──────────────────────────────
 
 build:
     uv build
@@ -81,6 +129,7 @@ version-refresh:
     uv pip install -e . --force-reinstall --no-deps --quiet
     @uv run python -c "import hyperweave; print(f'_version.py refreshed to {hyperweave.__version__}')"
 
+# ANNOTATED, never lightweight — a lightweight tag breaks --follow-tags.
 tag VERSION MESSAGE:
     #!/usr/bin/env bash
     set -euo pipefail
