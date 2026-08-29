@@ -512,3 +512,63 @@ def test_duplex_labels_are_exempt_from_the_ownership_law() -> None:
     # Precondition: they really are under the floor — otherwise this test
     # would pass for the wrong reason if the seats ever drifted apart.
     assert _ratio_of(lay, "request →") < 1.5
+
+
+def test_two_labels_on_one_run_take_the_bracket_on_any_topology() -> None:
+    """Two labelled edges DRAWN ON THE SAME RUN never both wear a pill.
+
+    A chip's seat is the run midpoint and the ladder may not move it, so a
+    shared run pins two plates to one point and they fuse by construction.
+    The slide ladder cannot rescue it either: separating these two pills
+    needs ~141px where the whole slack on their 253px run is 32. So the pair
+    drops the pill and brackets the run instead — one label above, one below.
+
+    Graded on `hub`, which has no duplex machinery of its own: the law lives
+    in the shared annotation pass, not in a solver, so it holds wherever the
+    geometry happens rather than only where a solver was taught about it.
+    """
+    spec = {
+        "topology": "hub",
+        "title": "t",
+        "nodes": [
+            {"id": "h", "label": "Orchestrator", "role": "hero"},
+            {"id": "a", "label": "Providers"},
+            {"id": "b", "label": "Parsers"},
+            {"id": "c", "label": "Docs"},
+            {"id": "d", "label": "Runtime"},
+            {"id": "e", "label": "Config"},
+            {"id": "f", "label": "Scanner"},
+            {"id": "g", "label": "Badges"},
+        ],
+        "edges": [
+            {"source": "h", "target": "a", "label": "prompt payload", "label_style": "chip"},
+            {"source": "a", "target": "h", "label": "structured summary", "label_style": "chip"},
+            *[
+                {"source": "h", "target": n, "label": f"to {n}", "label_style": "chip"}
+                for n in ("b", "c", "d", "e", "f", "g")
+            ],
+        ],
+    }
+    from hyperweave.compose.engine import compose
+
+    svg = compose(
+        ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            variant="porcelain",
+            ground="opaque",
+            palette="fixed",
+            diagram=spec,
+        )
+    ).svg
+    body = svg.split("</defs>")[-1]
+    seats = {
+        m.group(2): float(m.group(1))
+        for m in re.finditer(r'<text[^>]*y="([\d.]+)"[^>]*>(prompt payload|structured summary)</text>', body)
+    }
+    assert set(seats) == {"prompt payload", "structured summary"}, f"a shared-run label was dropped: {seats}"
+    # One line of the 10px edge-label voice plus air — these are bare runs,
+    # not plates, so the floor is the ink they actually occupy.
+    assert abs(seats["prompt payload"] - seats["structured summary"]) > 12.0, f"the pair still shares a row: {seats}"
+    # Neither wears a pill — a plate on one lane occludes the other.
+    assert "prompt payload" not in re.findall(r'-tag">([^<]+)<', body)

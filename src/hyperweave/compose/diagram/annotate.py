@@ -472,12 +472,61 @@ def _foreign_wires(ctx: SolverContext, geos: list[EdgeGeo], j: int) -> list[tupl
     return out
 
 
+def _coincident_label_runs(
+    edges: Sequence[ResolvedEdge], geo_of: Mapping[int, EdgeGeo], tol: float = 1.0
+) -> dict[int, tuple[int, int]]:
+    """Labelled edges that are DRAWN ON THE SAME RUN, grouped and sided.
+
+    A chip's seat is the run midpoint and the ladder may not move it, so two
+    labelled edges sharing one run pin two pills to one point and fuse by
+    construction — the arithmetic is not close: separating a 121 and a 150
+    wide pill needs 141px where the slide ladder's whole slack on a 253px run
+    is 32. No amount of nudging resolves it, which is why this is decided
+    here rather than left to the collide pass.
+
+    Keyed on the GEOMETRY, not on reciprocity. A request/response pair is the
+    common cause but not the condition: sequence draws each message on its
+    own arrow and a state machine on its own back-arc, so neither coincides
+    and neither is touched, while two parallel edges that are not a pair at
+    all still fuse and still need this. Only runs the solver left unseated
+    are considered — a ``label_pos`` means the solver already chose.
+
+    Returns ``{edge index: (side, rank)}``: sides alternate so the first
+    declared rides above its run and its partner below, and rank pushes any
+    third-and-beyond member further out rather than back onto a taken seat.
+    """
+    groups: list[list[int]] = []
+    for j, e in enumerate(edges):
+        g = geo_of.get(j)
+        if not e.label or g is None or g.label_pos is not None:
+            continue
+        ends = ((g.sx, g.sy), (g.tx, g.ty))
+        for grp in groups:
+            h = geo_of[grp[0]]
+            other = ((h.sx, h.sy), (h.tx, h.ty))
+            fwd = math.dist(ends[0], other[0]) <= tol and math.dist(ends[1], other[1]) <= tol
+            rev = math.dist(ends[0], other[1]) <= tol and math.dist(ends[1], other[0]) <= tol
+            if fwd or rev:
+                grp.append(j)
+                break
+        else:
+            groups.append([j])
+    sided: dict[int, tuple[int, int]] = {}
+    for grp in groups:
+        if len(grp) < 2:
+            continue
+        for rank, j in enumerate(grp):
+            sided[j] = (1 if rank % 2 == 0 else -1, rank // 2)
+    return sided
+
+
 def _perp_lift(
     geo: EdgeGeo,
     lift: float,
     half_w: float = 0.0,
     half_h: float = 0.0,
     foreign: list[tuple[tuple[float, float], ...]] | None = None,
+    side: int = 0,
 ) -> tuple[float, float]:
     """A label anchor lifted along the wire's local perpendicular for a geo
     the solver left unlabelled — the arc-length midpoint pushed off the wire,
@@ -518,6 +567,11 @@ def _perp_lift(
         nx, ny = -nx, -ny
     off = lift + abs(nx) * half_w + abs(ny) * half_h
     seat = (mx + nx * off, my + ny * off)
+    if side:
+        # A run shared by two labels: the side is assigned, not chosen. The
+        # ownership test below cannot decide it — both labels name the SAME
+        # wire, so every ratio is 1.0 and the hysteresis has nothing to weigh.
+        return seat if side > 0 else (mx - nx * off, my - ny * off)
     if not foreign:
         return seat
     if _ownership_ratio(seat, poly, foreign) >= OWNERSHIP_MIN_RATIO:
@@ -599,13 +653,16 @@ def subsume_edge_labels(
     band_boxes = [lb.box for lb in lane_bands if lb.ground in ("panel", "enclosure")]
     band_clear = float((ctx.engine.get("region_band") or {}).get("band_chip_clearance", 20))
     out: list[AnnotationPlacement] = []
+    # Two labels drawn on one run cannot both wear a pill at its midpoint;
+    # they take the bracket instead — one above the run, one below.
+    shared_run = _coincident_label_runs(ctx.edges, geo_of)
     for j, edge in enumerate(ctx.edges):
         if not edge.label:
             continue
         geo = geo_of.get(j)
         if geo is None:
             continue
-        if edge.label_style == "chip" and not geo.label_micro:
+        if edge.label_style == "chip" and not geo.label_micro and j not in shared_run:
             # ``label_micro`` is the solver's structural override — a conduit
             # channel has no chip home (a pill on one lane occludes the
             # partner lane), so its authored chip renders as the bare bracket
@@ -758,7 +815,15 @@ def subsume_edge_labels(
             anchor = "middle"
             half_w = ck.text_w(tuple(wrapped), voice) / 2
             half_h = ck.block_h(n, voice, style) / 2
-            lx, ly = _perp_lift(geo, label_lift, half_w, half_h, _foreign_wires(ctx, geos, j))
+            _side, _rank = shared_run.get(j, (0, 0))
+            lx, ly = _perp_lift(
+                geo,
+                label_lift + _rank * (pitch + label_lift),
+                half_w,
+                half_h,
+                _foreign_wires(ctx, geos, j),
+                side=_side,
+            )
         lines = tuple(
             DiagramText(x=lx, y=ly + (k - (n - 1) / 2.0) * pitch, text=line, cls=label_cls, anchor=anchor)
             for k, line in enumerate(wrapped)
