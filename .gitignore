@@ -30,14 +30,20 @@ htmlcov/
 # CLAUDE.md
 
 apps/
+archive/
 assets/banners/banners-animated/
+assets/brand-assets/
 assets/cards/halftone/
 assets/cards/substrate/
 assets/marquees/
 assets/rapid-match-cuts/
+assets/videos/
 docs/
 examples/
 !assets/examples/
 !scripts/examples/
+scripts/kit/
+scripts/registry/
+scripts/utils/
 outputs/
 v04/.learn/
