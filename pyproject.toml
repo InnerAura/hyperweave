@@ -7,12 +7,16 @@ license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]
 readme = "README.md"
 keywords = [
+    "ai-agents",
     "agent-memory",
     "agent-observability",
     "agent-visualization",
-    "ai-agents",
+    "architecture-diagram",
     "artifacts",
+    "code-visualization",
     "developer-tools",
+    "diagram",
+    "diagram-as-code",
     "generative-ui",
     "markdown",
     "mcp",
