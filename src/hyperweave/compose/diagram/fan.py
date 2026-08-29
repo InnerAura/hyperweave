@@ -457,7 +457,7 @@ def _solve_fan_linear(ctx: SolverContext, *, direction: Literal["out", "in"]) ->
                 )
         elif direction == "in":
             _gather_join(ctx, geos, focal_i)
-    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="right")
 
 
 def _gather_join(ctx: SolverContext, geos: list[EdgeGeo], focal_i: int) -> None:
@@ -700,6 +700,7 @@ def solve_fanout_bilateral(ctx: SolverContext) -> DiagramLayout:
         geos=geos,
         content_pad_y=band_pad,
         zone_center_inset=ch.circle_r if all_medallions else 0.0,
+        flow="right",
     )
 
 
@@ -847,7 +848,7 @@ def solve_fanout_upward(ctx: SolverContext) -> DiagramLayout:
                 end_tangent=tangent,
             )
         )
-    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="down")
 
 
 def solve_fanin(ctx: SolverContext) -> DiagramLayout:
@@ -957,7 +958,7 @@ def solve_fanout_downward(ctx: SolverContext) -> DiagramLayout:
                 vertical=True,
                 mouth=mouth,
             )
-    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="down")
 
 
 register_solvers(

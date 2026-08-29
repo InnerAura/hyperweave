@@ -164,6 +164,7 @@ def solve_sequence(ctx: SolverContext) -> DiagramLayout:
         geos=geos,
         lifelines=lifelines,
         activations=activations,
+        flow="right",
     )
     return _attach_sequence_furniture(
         layout, ctx, hero_lifeline_index=hero_idx, hero_activation_index=hero_activation_index

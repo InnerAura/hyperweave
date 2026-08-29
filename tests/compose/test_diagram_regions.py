@@ -266,3 +266,52 @@ def test_label_style_moves_the_box_by_a_stated_amount() -> None:
         f"strip {heights['strip']} vs chip {heights['chip']}: the box should differ by exactly "
         f"the trailing-pad delta ({delta}), which is the label's own seating"
     )
+
+
+def _region_pads(lay: Any, member_ids: list[str]) -> tuple[float, float, float, float]:
+    """Left/right/top/bottom air between a region's box and its member hull."""
+    box = next(b.box for b in lay.lane_bands if b.region_id)
+    mem = [p.box for p in lay.nodes if p.node_id in member_ids]
+    return (
+        round(min(m.x for m in mem) - box.x, 1),
+        round(box.x + box.w - max(m.x + m.w for m in mem), 1),
+        round(min(m.y for m in mem) - box.y, 1),
+        round(box.y + box.h - max(m.y + m.h for m in mem), 1),
+    )
+
+
+@pytest.mark.parametrize(
+    ("orientation", "small", "large"),
+    [("horizontal", 4, 9), ("upward", 4, 7), ("downward", 4, 7)],
+)
+def test_region_pads_do_not_change_when_members_are_added(orientation: str, small: int, large: int) -> None:
+    """A region's pads answer to the FLOW, so widening the fan cannot move them.
+
+    The flow axis used to be measured from the placed bounding box, which grows
+    with member count: a nine-way `fanout-horizontal` spans 826px down against
+    769 across, reads as a vertical family, and its band swaps the along-flow
+    pads for the across-flow ones — pads (26, 12) become (56, 38), reserving
+    over-arc clearance a horizontal fan has no return edge to need. Nothing was
+    red, because no corpus fanout is wide enough and no corpus fanout authors a
+    region. `fanout-upward` was wrong at every size, its flow being vertical
+    while its members spread across the full canvas width.
+
+    Adding a member is the falsifier because it changes only the thing the old
+    instrument read and nothing the answer depends on.
+    """
+    ids = lambda n: [f"n{i}" for i in range(1, n)]  # noqa: E731 - member ids, one expression
+    pads = {}
+    for n in (small, large):
+        lay = _solve(
+            title="T",
+            topology="fanout",
+            orientation=orientation,
+            nodes=[{"id": f"n{i}", "label": f"node {i}"} for i in range(n)],
+            edges=[{"source": "n0", "target": f"n{i}"} for i in range(1, n)],
+            regions=[{"label": "workers", "members": ids(n), "kind": "band"}],
+        )
+        pads[n] = _region_pads(lay, ids(n))
+    assert pads[small] == pads[large], (
+        f"fanout-{orientation}: {small} members pad {pads[small]}, {large} members pad {pads[large]} — "
+        f"the flow axis is a constant of the solver, so member count must not reach it"
+    )

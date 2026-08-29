@@ -13,12 +13,13 @@ from __future__ import annotations
 import itertools
 from collections.abc import Callable, Mapping
 from dataclasses import replace as _dc_replace
-from typing import Any
+from typing import Any, Literal
 
 from hyperweave.compose.diagram import motion as mo
 from hyperweave.compose.diagram.anchors import boundary_distance
 from hyperweave.compose.diagram.annotate import Region as AnnRegion
 from hyperweave.compose.diagram.annotate import build_annotations
+from hyperweave.compose.diagram.axis import DOWN, RIGHT
 from hyperweave.compose.diagram.chrome import apply_health_dot, measure_caption, voice_for
 from hyperweave.compose.diagram.grouping import build_region_bands, placement_axis, reseat_region_labels
 from hyperweave.compose.diagram.layered import back_edges, split_self_loops
@@ -569,6 +570,7 @@ def finish_layout(
     extra_particles: tuple[ParticlePlacement, ...] = (),
     content_pad_y: float = 0.0,
     zone_center_inset: float = 0.0,
+    flow: Literal["right", "down"] | None = None,
 ) -> DiagramLayout:
     """Shared assembly: chrome + motion wiring + annotation pass + the record.
 
@@ -622,6 +624,15 @@ def finish_layout(
     # every solver exits through, and it needs only placed cards by id — the
     # single shape they all agree on.
     #
+    # `flow` is the screen axis this solver's ranks advance along, DECLARED by
+    # the solver because only the solver knows it. Measuring it here cannot
+    # work: a bounding box grows with member count, so a nine-way fanout reads
+    # taller than wide and inverts, and averaging edge displacement inverts
+    # again on any family with a back-edge. Both are attempts to rediscover at
+    # render time a constant of the code. A solver with no privileged axis —
+    # the radials, the compass hub — declares nothing and takes the measured
+    # fallback, which is the honest answer when no axis is privileged.
+    #
     # A solver that built its own bands upstream (dag and state-machine need
     # each band's bottom edge before they can route the under-channel) is
     # recognised by the `region_id` those bands carry, so it is never built
@@ -634,7 +645,7 @@ def finish_layout(
                 f"grouping over the first; drop `regions:` or move the members between categories"
             )
         _rboxes = {p.node_id: p.box for p in nodes_paint if p.node_id}
-        _raxis = placement_axis(ctx.slug, _rboxes)
+        _raxis = (RIGHT if flow == "right" else DOWN) if flow else placement_axis(ctx.slug, _rboxes)
         _rbands, _rnotes = build_region_bands(ctx, _rboxes, _raxis)
         if _rbands:
             _rbands = reseat_region_labels(ctx, _rbands, geos, [p.box for p in nodes_paint], _raxis)

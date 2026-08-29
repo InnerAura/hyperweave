@@ -642,6 +642,7 @@ def solve_loop(ctx: SolverContext) -> DiagramLayout:
         nodes_paint=nodes_paint,
         geos=geos,
         lane_bands=tuple(bands),
+        flow=ax.flow,
     )
 
 

@@ -233,7 +233,7 @@ def solve_pipeline(ctx: SolverContext) -> DiagramLayout:
             geos.append(
                 EdgeGeo(index=k, d=line_d(x1, y1, x2, y2), sx=x1, sy=y1, tx=x2, ty=y2, length=line_len(x1, y1, x2, y2))
             )
-        return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+        return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="right")
     hero_idx = next((i for i, node in enumerate(spec.nodes) if node.role is NodeRole.HERO), None)
     # Wire-major (K3): an ALL-RECIPROCAL composition makes the channel the
     # subject — cards shrink to content, every run holds the dash-period
@@ -260,7 +260,7 @@ def solve_pipeline(ctx: SolverContext) -> DiagramLayout:
             x += widths[i] + run
         for k, edge in enumerate(ctx.edges):
             geos.append(_pipeline_edge_geo(ctx, k, edge, nodes, cy))
-        return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+        return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="right")
     # Cards size to their CONTENT. Solve each card's content width, back out the
     # unit it implies (the hero divides by its ratio), take the max (aligned
     # columns, like fan.py), and DERIVE the canvas from it — the content-sizing
@@ -312,7 +312,7 @@ def solve_pipeline(ctx: SolverContext) -> DiagramLayout:
         x += w + gap
     for k, edge in enumerate(ctx.edges):
         geos.append(_pipeline_edge_geo(ctx, k, edge, nodes, cy))
-    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="right")
 
 
 def _operator_mark(cx: float, cy: float, r: float, cross: float) -> OperatorMark:
@@ -390,7 +390,14 @@ def solve_stack(ctx: SolverContext) -> DiagramLayout:
     )
     lane_bands = ()  # stack band headers ride the solver zone law (preset zones data)
     return finish_layout(
-        ctx, width=width, height=height, nodes_paint=nodes, geos=geos, operators=operators, lane_bands=lane_bands
+        ctx,
+        width=width,
+        height=height,
+        nodes_paint=nodes,
+        geos=geos,
+        operators=operators,
+        lane_bands=lane_bands,
+        flow="down",
     )
 
 
@@ -475,7 +482,7 @@ def solve_comparison(ctx: SolverContext) -> DiagramLayout:
         geos.append(
             EdgeGeo(index=k, d=line_d(x1, y1, x2, y2), sx=x1, sy=y1, tx=x2, ty=y2, length=line_len(x1, y1, x2, y2))
         )
-    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="right")
 
 
 def _tree_children(ctx: SolverContext) -> dict[int, list[int]]:
@@ -664,7 +671,7 @@ def solve_tree(ctx: SolverContext) -> DiagramLayout:
         geos.append(
             EdgeGeo(index=j, d=d_path, sx=sx, sy=sy, tx=tx, ty=ty, length=length, polyline=poly, end_tangent=tangent)
         )
-    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos)
+    return finish_layout(ctx, width=width, height=height, nodes_paint=nodes, geos=geos, flow="down")
 
 
 register_solvers(

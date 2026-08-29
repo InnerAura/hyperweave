@@ -3291,6 +3291,7 @@ def solve_dag(ctx: SolverContext) -> DiagramLayout:
         geos=geos,
         lane_bands=bands,
         region_notes=region_notes,
+        flow=axis.flow,
     )
 
 
@@ -4005,6 +4006,7 @@ def solve_state_machine(ctx: SolverContext) -> DiagramLayout:
         region_notes=sm_region_notes,
         initial_dot=initial_dot,
         initial_stub=initial_stub,
+        flow="right",
     )
 
 

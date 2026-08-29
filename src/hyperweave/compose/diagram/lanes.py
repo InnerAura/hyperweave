@@ -233,6 +233,7 @@ def solve_lanes(ctx: SolverContext) -> DiagramLayout:
         lane_bands=tuple(bands),
         extra_regions=regions,
         auto_annotations=auto_legend,
+        flow="right",
     )
 
 
