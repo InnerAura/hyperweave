@@ -1,8 +1,8 @@
 <div id="top">
 
 <picture>
-  <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/hero/hyperweave_hero_stacked_light.svg" media="(prefers-color-scheme: light)">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/hero/hyperweave_hero_stacked_dark.svg" alt="HyperWeave" width="100%"
+  <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-light.svg" media="(prefers-color-scheme: light)">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-dark.svg" alt="HyperWeave" width="100%"
   >
 </picture>
 
@@ -45,6 +45,13 @@
        │ text form     │  ← markdown/terminal
        └───────────────┘
 ```
+
+Beautiful, verified diagrams for coding agents.
+Beautiful diagrams for agents that stay structurally correct.
+Ask your coding agent for a diagram. Get verified SVG.
+HyperWeave is a visual compiler for agents.
+
+Ask your agent to explain something visually. HyperWeave turns its intent into a deterministic, verified, self-contained SVG or HTML artifact that can be inspected, transformed, diffed, and regenerated without the agent manually drawing coordinates.
 -->
 
 ---
@@ -269,7 +276,7 @@ hyperweave compose diagram --spec-file cycle-flow -g primer --variant porcelain 
 <p align="center">
   <picture>
     <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-dark.svg" alt="One turn of the loop, performed: change, measure, keep or revert — guard chips inside the Stop? holder decide whether the loop returns or the champion ships" width="100%"
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/diagrams/loop-hillclimb-turn-dark.svg" alt="One turn of the loop, performed: change, measure, keep or revert — guard chips inside the Stop? holder decide whether the loop returns or the champion ships" width="70%"
     >
   </picture>
 </p>
@@ -315,7 +322,7 @@ hyperweave compose diagram --spec-file tree-health -g primer --variant porcelain
 | **Time** | `sequence` | who calls whom, in order |
 | **Side by side** | `comparison` | two options on one sheet |
 
-Eleven layouts, forty-four bundled presets, one spec vocabulary. Variations are values of `orientation`, not layouts of their own:
+Twelve layouts, fifty-nine bundled presets, one spec vocabulary. Variations are values of `orientation`, not layouts of their own:
 
 | | |
 |:---|:---|
