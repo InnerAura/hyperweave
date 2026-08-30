@@ -239,7 +239,9 @@ class ComposeRequest(BaseModel):
     """Response shape: ``svg`` (raw image bytes, default) | ``json``
     (``{svg, markdown, width, height}`` — the markdown shadow alongside) |
     ``envelope`` (``{envelope, url}`` — the actionable read + content handle,
-    no pixels inline; the same shape the CLI/MCP surfaces return)."""
+    no pixels inline; the same shape the CLI/MCP surfaces return) |
+    ``report`` (one bounded ``report/1`` document: ok, artifact, integrity,
+    diagnostics, warnings, proof, next — never the SVG inline)."""
 
 
 # Composition endpoints
@@ -773,9 +775,9 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         )
         return JSONResponse(err.envelope(), status_code=err.http_status)
 
-    if req.respond == "envelope":
+    if req.respond in ("envelope", "report"):
         # Route through the shared compose capability so the {envelope, url}
-        # shape is byte-identical to the CLI/MCP surfaces (no drift).
+        # and report/1 shapes are byte-identical to the CLI/MCP surfaces.
         from hyperweave.surfaces.registry import CallContext, dispatch
 
         payload = _flat_body_to_compose_input(req, raw)
@@ -910,6 +912,7 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
         "spec": spec,
         "data": str(raw.get("data", "")),
         "format": str(raw.get("format", "svg")),
+        "respond": req.respond if req.respond in ("envelope", "report") else "envelope",
     }
 
 
