@@ -77,7 +77,15 @@ def _subset_b64(slug: str, char_set_str: str) -> str:
         options.with_zopfli = False
         options.hinting = False
         options.desubroutinize = True
-        options.layout_features = ["*"]
+        # Retained OpenType layout features — an EXPLICIT pinned list, never
+        # ["*"] (keeps every stylistic set and alternate: measured ~29 KB raw /
+        # ~39 KB base64 of dead weight per artifact, ~24% of total bytes) and
+        # never [] (drops kern, which moves rendered advances off the metrics
+        # LUT the solver measured with). fontTools' own default set is
+        # unbounded across versions, so the list is pinned here for the shipped
+        # Latin faces: kern/liga/calt/clig keep shaping, mark/mkmk keep
+        # combining marks, ccmp keeps composition, locl keeps locale forms.
+        options.layout_features = ["kern", "liga", "calt", "clig", "mark", "mkmk", "ccmp", "locl"]
         options.name_IDs = ["*"]
         options.notdef_glyph = True
         options.notdef_outline = True
