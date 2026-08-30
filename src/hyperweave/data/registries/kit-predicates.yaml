@@ -1,0 +1,158 @@
+# THE SINGLE ACTIVATION AUTHORITY — packaged under src/hyperweave/data/ per
+# Invariant 5 (moved from scripts/registry/ 2026-08-30; the local registry
+# tooling reads THIS copy through hyperweave.config.loader.load_kit_predicates,
+# and the skill's kit-catalog.json is GENERATED from it, never hand-authored).
+#
+# Which spec feature makes a kit part PRESENT in an artifact.
+#
+# The kit plate tells you a part exists and which families may carry it
+# (`ships`). It cannot tell you which artifacts actually spend it — that is a
+# fact about the corpus, and it is what makes the kit browsable in both
+# directions: "this figure uses these parts", and "this part is used by these
+# figures".
+#
+# Rather than hand-listing artifacts per part (which goes stale the moment
+# anything is re-rendered), each part declares the spec shape that IMPLIES it.
+# The builder evaluates these against every artifact's own `diagram/1` spec.
+#
+# EVERY rule below is transcribed from that part's own `field` string on the
+# plate — `hero` is "role: hero", `unrolled` is "a loop with no return". Where a
+# rule cannot be read off the field it is left out rather than invented, and the
+# builder reports the part as ruleless. An earlier pass guessed at five of these
+# and got four wrong (crown, region-*, gather-bus, unrolled); the plate is the
+# authority, not the shape of the slug.
+#
+# A part whose predicate matches nothing reports zero uses. That is a real
+# finding — the part ships but no artifact in the corpus exercises it — and it
+# must not be papered over with a looser rule.
+
+parts:
+  # ── card anatomy ──────────────────────────────────────────────────────────
+  card-anatomy: # every card
+    spec: { node_style: [card, card+glyph, card+label] }
+  style-card: # style: card
+    spec: { node_style: card }
+  style-card-glyph: # style: card+glyph
+    spec: { node_style: card+glyph }
+  style-card-label: # style: card+label
+    spec: { node_style: card+label }
+  style-circle: # style: glyph-circle
+    spec: { node_style: glyph-circle }
+  style-pill: # style: pill
+    spec: { node_style: pill }
+  style-text: # style: text
+    spec: { node_style: text }
+  anatomy-head: # node_anatomy: head
+    spec: { node_anatomy: head }
+  glyph-slots: # glyph · kind · glyph_tint
+    any_node: { kind: true }
+
+  # ── roles ─────────────────────────────────────────────────────────────────
+  hero: # role: hero
+    any_node: { role: hero }
+  role-muted: # role: muted
+    any_node: { role: muted }
+  crown: # style: card+label + role: hero
+    spec: { node_style: card+label }
+    any_node: { role: hero }
+
+  # ── marks ─────────────────────────────────────────────────────────────────
+  brand-mark: # glyph
+    any_node: { glyph: true }
+  core-mark: # kind
+    any_node: { kind: true }
+  health: # health
+    any_node: { health: true }
+  morphology: # morphology
+    any_node: { morphology: true }
+  chip-row: # chips
+    any_node: { chips: true }
+
+  # ── stations ──────────────────────────────────────────────────────────────
+  decision: # station: decision
+    any_node: { station: decision }
+  decision-holder: # station: decision + chips
+    any_node: { station: decision, chips: true }
+  terminal-ring: # terminal: true
+    any_node: { terminal: true }
+  terminal-advance: # station: terminal + partition: advance
+    any_node: { station: terminal, partition: advance }
+  terminal-exhausted: # partition: exhausted
+    any_node: { partition: exhausted }
+  scope: # station: scope
+    any_node: { station: scope }
+  embed: # embed
+    any_node: { embed: true }
+
+  # ── regions and bands ─────────────────────────────────────────────────────
+  # DiagramRegion.kind defaults to "enclosure", so a region that declares no
+  # kind IS one — hence the `null` member. Matching only the literal string
+  # missed all ten of the corpus's enclosures.
+  region-enclosure: # regions kind: enclosure
+    any_region: { kind: { any_of: [enclosure, null] } }
+  region-band: # regions kind: band
+    any_region: { kind: band }
+  # region-on-edge retired 2026-08-30: a pre-consolidation duplicate of
+  # region-enclosure narrowed to dag — the v0.4.5 region wave consolidated the
+  # region pieces and no plate names it; the plate is the authority.
+
+  # lane-typographic and lane-panel declare the SAME field ("lanes + category")
+  # on the plate: they are two treatments of one declaration, chosen by the
+  # chassis rather than by the spec. Same rule for both, honestly — inventing a
+  # distinguishing field would put a fact in the index the spec does not carry.
+  lane-typographic: # lanes + category
+    spec: { topology: lanes }
+    any_node: { category: true }
+  lane-panel: # lanes + category
+    spec: { topology: lanes }
+    any_node: { category: true }
+  swimlane-loop: # topology: loop + lanes
+    spec: { topology: loop }
+    any_node: { category: true }
+
+  # ── circuit members ───────────────────────────────────────────────────────
+  circuit-return: # circuit: return
+    any_edge: { circuit: return }
+  circuit-tap: # circuit: tap-in | tap-out
+    any_edge: { circuit: [tap-in, tap-out] }
+  gather-knot: # gather: true
+    any_node: { gather: true }
+  # Both of these are "a loop with no return" on the plate, proved by the same
+  # preset: the ladder and its bus are what a loop becomes once the return rail
+  # is gone. One condition, stated twice, because the plate names two parts.
+  unrolled: # a loop with no return
+    spec: { topology: loop }
+    no_edge: { circuit: return }
+  gather-bus: # a loop with no return
+    spec: { topology: loop }
+    no_edge: { circuit: return }
+
+  # ── relations ─────────────────────────────────────────────────────────────
+  relation-assert: # relation: assert
+    any_edge: { relation: assert }
+  relation-drift: # relation: drift
+    any_edge: { relation: drift }
+  relation-flow: # relation: flow
+    any_edge: { relation: flow }
+  relation-bypass: # relation: bypass
+    any_edge: { relation: bypass }
+  kind-call-return: # kind: call | return
+    any_edge: { kind: [call, return] }
+  reciprocal: # direction: both
+    any_edge: { direction: both }
+  inert: # state: inert
+    any_edge: { state: inert }
+
+  # ── edge dress ────────────────────────────────────────────────────────────
+  edge-knobs: # every per-edge setting
+    census: { edges: { min: 1 } }
+  marker-arrow: # marker: arrow
+    any_edge: { marker: arrow }
+  marker-dot: # marker: dot
+    any_edge: { marker: dot }
+  marker-none: # marker: none
+    any_edge: { marker: none }
+  edge-chip: # label + label_style: chip
+    any_edge: { label: true, label_style: chip }
+  micro-label: # label
+    any_edge: { label: true }
