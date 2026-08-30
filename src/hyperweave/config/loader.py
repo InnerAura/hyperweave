@@ -347,6 +347,23 @@ def load_diagram_config() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
+def load_kit_predicates() -> dict[str, dict[str, Any]]:
+    """Load the kit activation authority from data/registries/kit-predicates.yaml.
+
+    ``{part_id: predicate}`` — which spec shape makes a kit part PRESENT in an
+    artifact. This is the single authority the local registry tooling evaluates
+    and the skill's generated catalog derives from; the file's own header
+    carries the transcription law (the plate's ``field`` string is the source,
+    never the shape of the slug).
+    """
+    path = _data_path("registries/kit-predicates.yaml")
+    if not path.exists():
+        return {}
+    raw = _read_yaml(path) or {}
+    return dict(raw.get("parts") or {})
+
+
+@lru_cache(maxsize=1)
 def load_diagram_presets() -> dict[str, dict[str, Any]]:
     """Load server-known diagram presets from data/presets/diagram.yaml.
 
