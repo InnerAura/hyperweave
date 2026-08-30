@@ -50,6 +50,13 @@ class ComposeInput(BaseModel):
     emit: list[str] = Field(
         default_factory=lambda: ["svg"], description="Emit targets: svg | md | payload | compressed."
     )
+    respond: str = Field(
+        default="envelope",
+        description=(
+            "envelope (default — the actionable handle) | report (one bounded report/1 document: "
+            "ok, artifact, integrity, diagnostics, warnings, proof, next — never the SVG inline)."
+        ),
+    )
 
 
 class ValidateInput(BaseModel):
@@ -163,6 +170,36 @@ async def _compose(model: BaseModel, ctx: CallContext) -> dict[str, Any]:
     # caches under the digest, and returns the ResponseEnvelope. to_dict() always
     # carries the actionable `envelope` + `url`; the pixels ride `url` for raster.
     response = compose_surface(env, base_url=ctx.base_url, data_tokens=data_tokens_resolved)
+    from hyperweave.core.errors import HwError, HwErrorCode
+
+    if model.respond == "report":
+        # One bounded answer instead of compose + validate + verify as three
+        # calls; shared builder, so the shape is identical on every surface.
+        if not response.svg:
+            raise HwError(
+                HwErrorCode.SPEC_INVALID,
+                f"respond=report needs an SVG projection (got format={model.format!r})",
+                fix="compose with format=svg; fetch raster bytes from the report's url",
+            )
+        from hyperweave.surfaces.report import build_report
+
+        return build_report(
+            svg=response.svg,
+            url=response.url,
+            envelope=response.envelope,
+            width=response.width,
+            height=response.height,
+            genome=response.genome,
+            variant=response.variant,
+            diagnostics=response.diagnostics,
+            warnings=response.warnings,
+        )
+    if model.respond != "envelope":
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"unknown respond mode {model.respond!r}",
+            fix="respond is 'envelope' (default) or 'report'",
+        )
     return response.to_dict()
 
 

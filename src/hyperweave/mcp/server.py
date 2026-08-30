@@ -356,6 +356,21 @@ async def hw_compose(
     # into inline pixels; the artifact is cached under `url` either way.
     if respond == "svg":
         return response.svg
+    if respond == "report":
+        # One bounded report/1 answer — shared builder, so CLI/HTTP/MCP agree.
+        from hyperweave.surfaces.report import build_report
+
+        return build_report(
+            svg=response.svg,
+            url=response.url,
+            envelope=response.envelope,
+            width=response.width,
+            height=response.height,
+            genome=response.genome,
+            variant=response.variant,
+            diagnostics=response.diagnostics,
+            warnings=response.warnings,
+        )
     result: dict[str, Any] = {
         "envelope": response.envelope,
         "url": response.url,

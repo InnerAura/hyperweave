@@ -686,13 +686,14 @@ def validate(
     raise typer.Exit(code=70 if is_engine_fault_code(str(err.get("code"))) else 1)
 
 
-def _write_proof(result: Any, output: Path) -> list[Path]:
+def _write_proof(result: Any, output: Path) -> tuple[dict[str, Any], list[Path]]:
     """Write the ``proof/1`` record + sidecar frames beside ``output``.
 
     Everything derives from the delivered bytes (``result.svg``) — the
     delivered-equals-inspected law lives in ``formats/proof.py``. Returns the
-    written paths for the ``wrote`` document; stderr carries the one-line
-    verdict summary, the reliable inspection path the recorded session lacked.
+    record (so ``--respond report`` embeds it) plus the written paths for the
+    ``wrote`` document; stderr carries the one-line verdict summary, the
+    reliable inspection path the recorded session lacked.
     """
     import json as _json
 
@@ -716,7 +717,7 @@ def _write_proof(result: Any, output: Path) -> list[Path]:
     wrote.append(proof_path)
     summary = " · ".join(f"{key}: {str(value).split(' — ')[0]}" for key, value in record["verdicts"].items())
     typer.echo(f"proof: {proof_path.name} — {summary}", err=True)
-    return wrote
+    return record, wrote
 
 
 @app.command()
@@ -845,7 +846,8 @@ def compose(
             "--respond",
             help="Machine-readable stdout instead of SVG bytes: envelope ({envelope, url} — the "
             "actionable read, no pixels inline; same shape HTTP/MCP return) | json ({svg, markdown, "
-            "width, height}).",
+            "width, height}) | report (one bounded report/1 document: ok, artifact, integrity, "
+            "diagnostics, proof, next — pairs with --proof).",
         ),
     ] = "",
     target: Annotated[
@@ -1374,8 +1376,8 @@ def compose(
     # svg + markdown shadow inline. Either way stdout is one JSON document; the
     # -o file write still happens additionally (transform's -o convention).
     if respond:
-        if respond not in ("envelope", "json"):
-            typer.echo(f"Error: --respond must be 'envelope' or 'json' (got {respond!r})", err=True)
+        if respond not in ("envelope", "json", "report"):
+            typer.echo(f"Error: --respond must be 'envelope', 'json', or 'report' (got {respond!r})", err=True)
             raise typer.Exit(2)
         if output_format != "svg":
             typer.echo("Error: --respond emits the live artifact; it composes with --format svg only", err=True)
@@ -1413,12 +1415,32 @@ def compose(
                     "url resolves under `hyperweave serve`; pass -o/--output to write the SVG to a file",
                     err=True,
                 )
+        proof_record: dict[str, Any] | None = None
         proof_wrote: list[Path] = []
         if output is not None:
             output.write_text(result.svg)
             typer.echo(f"Wrote {output} ({result.width}x{result.height})", err=True)
             if proof:
-                proof_wrote = _write_proof(result, output)
+                proof_record, proof_wrote = _write_proof(result, output)
+        if respond == "report":
+            # The report/1 document is the complete bounded answer — it carries
+            # its own `next` and the proof record; nothing wraps it.
+            from hyperweave.surfaces.report import build_report
+
+            respond_doc = build_report(
+                svg=result.svg,
+                url=str(respond_doc.get("url", "")),
+                envelope=respond_doc.get("envelope") or {},
+                width=result.width,
+                height=result.height,
+                genome=spec.genome_id,
+                variant=spec.variant,
+                diagnostics=result.diagnostics,
+                warnings=result.warnings,
+                proof=proof_record,
+            )
+            typer.echo(_json.dumps(respond_doc, indent=2))
+            return
         # `next`/`text` join as TOP-LEVEL siblings of the wrapper's own keys.
         # They must never land inside respond_doc["envelope"] — that object is
         # the content-addressed seed extract/verify read back, so absorbing a
@@ -1482,7 +1504,8 @@ def compose(
         if markdown_out is not None and result.markdown:
             tail_wrote.append(markdown_out)
         if proof:
-            tail_wrote.extend(_write_proof(result, output))
+            _proof_record, proof_paths = _write_proof(result, output)
+            tail_wrote.extend(proof_paths)
         typer.echo(
             _json.dumps(
                 _next_document(artifact_id=advert_id, wrote=tail_wrote, frame_type=frame_type, handle=str(output)),
