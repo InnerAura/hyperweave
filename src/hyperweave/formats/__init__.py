@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+from xml.etree import ElementTree as ET
 
 from hyperweave.core.errors import HwError, HwErrorCode
 
@@ -143,6 +144,11 @@ def project(svg: str, fmt: FormatId | str, *, max_width: int | None = None, is_f
     """
     fid = fmt if isinstance(fmt, FormatId) else parse_format(fmt)
 
+    # Precondition — the composed source itself is well-formed XML. Raising here
+    # distinguishes a malformed COMPOSE (this) from a malformed PROJECTION (the
+    # per-pass check below); neither ever reaches a written file or a zero exit.
+    _ensure_parses(svg, stage="source", fmt=fid.value)
+
     if fid is FormatId.GIF:
         raise HwError(
             HwErrorCode.FORMAT_UNAVAILABLE,
@@ -193,13 +199,40 @@ def project(svg: str, fmt: FormatId | str, *, max_width: int | None = None, is_f
     return Projection(data, _MEDIA_TYPE[fid], _EXT[fid], diagnostics=counts)
 
 
+def _ensure_parses(text: str, *, stage: str, fmt: str) -> None:
+    """Postcondition: ``text`` is well-formed XML, or a typed engine fault names
+    the stage that broke it. ``stage`` is ``"source"`` (the composed input) or a
+    pass name from the static pipeline — honest attribution, per pass, so a
+    projection failure never reports as a caller error or a generic parse crash.
+    """
+    try:
+        ET.fromstring(text)
+    except ET.ParseError as exc:
+        where = "composed source" if stage == "source" else f"projection after pass {stage!r}"
+        raise HwError(
+            HwErrorCode.PROJECTION_INVALID,
+            f"{where} is not well-formed XML for format={fmt!r}: {exc}",
+            fix="this is an engine fault, not a spec problem — report it with the spec that produced it",
+            detail={"pass": stage, "format": fmt, "parse_error": str(exc)},
+        ) from exc
+
+
 def _static_svg_counted(svg: str) -> tuple[str, dict[str, int]]:
-    """Apply the ``svg-static`` pass pipeline (vars→hex, strip motion) + counts."""
+    """Apply the ``svg-static`` pass pipeline (vars→hex, strip motion) + counts,
+    validating well-formedness after every configured pass (``detail.pass`` names
+    the offender). png/webp inherit the guarantee by rasterizing only this
+    already-validated intermediate."""
     from hyperweave.config.loader import load_output_format_pipelines
     from hyperweave.formats.static import run_passes_counted
 
     passes = load_output_format_pipelines().get(FormatId.SVG_STATIC.value, ["vars", "noanim"])
-    return run_passes_counted(svg, passes)
+    counts: dict[str, int] = {}
+    for name in passes:
+        svg, pass_counts = run_passes_counted(svg, [name])
+        for key, value in pass_counts.items():
+            counts[key] = counts.get(key, 0) + value
+        _ensure_parses(svg, stage=name, fmt=FormatId.SVG_STATIC.value)
+    return svg, counts
 
 
 def format_ext(fmt: FormatId) -> str:

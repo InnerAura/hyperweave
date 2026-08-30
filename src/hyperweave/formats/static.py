@@ -1,4 +1,4 @@
-"""Static-projection passes — pure string transforms over an assembled SVG.
+"""Static-projection passes — byte-span transforms over an assembled SVG.
 
 A composed artifact is ``var(--dna-*)``-based and animated by default (the ``svg``
 format). Off-browser rasterizers (resvg, CairoSVG, email clients, PDF converters)
@@ -9,6 +9,14 @@ passes applied in order; ``png``/``webp`` rasterize that static projection.
 The passes are deliberately self-contained: ``resolve_vars_to_hex`` reads the
 artifact's OWN ``--dna-*: #hex`` declarations (every composed SVG emits them), so
 the flatten needs no access to the genome registry.
+
+Every pass edits located byte spans in place and never parses-and-reserializes:
+an ElementTree round-trip destroys CDATA sections (``hw:payload`` among them),
+drops comments, and rewrites namespace prefixes. Animation stripping locates
+each syntactic scope — a SMIL element, a ``<style>`` body, a ``style`` attribute
+value — and rewrites only that span with a scope-appropriate scanner; no pattern
+ever crosses an attribute or element boundary. Comments and CDATA sections
+outside ``<style>`` bodies are never edited.
 """
 
 from __future__ import annotations
@@ -23,11 +31,6 @@ _DECL_RE = re.compile(r"(--dna-[a-z0-9-]+)\s*:\s*(#[0-9A-Fa-f]{3,8}|rgba?\([^)]*
 # Matches any --* custom property. Fallback group allows one nesting level
 # (var(--a, var(--b))); a fixpoint loop resolves deeper nesting.
 _VAR_RE = re.compile(r"var\(\s*(--[a-z][a-z0-9-]*)\s*(?:,\s*((?:[^()]|\([^)]*\))*))?\)")
-_ANIM_SELF = re.compile(r"<animate[A-Za-z]*\b[^>]*?/>")
-_ANIM_PAIR = re.compile(r"<animate([A-Za-z]*)\b[^>]*?>.*?</animate\1>", re.DOTALL)
-_KEYFRAMES = re.compile(r"@(-webkit-)?keyframes[^{]*\{(?:[^{}]*\{[^}]*\})*[^}]*\}")
-_ANIM_DECL = re.compile(r"animation(?:-[a-z]+)?\s*:[^;}]*;?")
-
 
 _STATUS_RE = re.compile(r'data-hw-status="([^"]+)"')
 _ANYDECL_RE = re.compile(r"(--[a-z][a-z0-9-]*)\s*:\s*([^;}]+)")
@@ -78,15 +81,338 @@ def resolve_vars_to_hex(svg: str) -> str:
     return svg
 
 
+# ---------------------------------------------------------------------------
+# Protected spans — comments and CDATA sections are opaque to every markup
+# pass (a hw:payload CDATA can legally contain the literal text of any tag).
+
+_PROTECTED_RE = re.compile(r"<!--.*?-->|<!\[CDATA\[.*?\]\]>", re.DOTALL)
+
+
+def _protected_spans(svg: str) -> list[tuple[int, int]]:
+    return [m.span() for m in _PROTECTED_RE.finditer(svg)]
+
+
+def _inside(pos: int, spans: list[tuple[int, int]]) -> bool:
+    return any(s <= pos < e for s, e in spans)
+
+
+def _delete_matches_outside(svg: str, pattern: re.Pattern[str]) -> tuple[str, int]:
+    """Delete every match whose start lies outside a protected span."""
+    spans = _protected_spans(svg)
+    out: list[str] = []
+    last = 0
+    count = 0
+    for m in pattern.finditer(svg):
+        if _inside(m.start(), spans):
+            continue
+        out.append(svg[last : m.start()])
+        last = m.end()
+        count += 1
+    out.append(svg[last:])
+    return "".join(out), count
+
+
+# ---------------------------------------------------------------------------
+# SMIL removal — a scanner, not a paired regex. The paired form
+# ``<animateX …>…</animateX>`` and the self-closing form ``<animateX …/>`` can
+# coexist in one document; a lazy pair regex bridges from a self-closing
+# instance to the NEXT close tag and deletes everything between them.
+
+_SMIL_OPEN = re.compile(r"<animate[A-Za-z]*")
+
+
+def _tag_end(svg: str, i: int) -> int | None:
+    """Index just past the ``>`` closing the tag whose attributes start at ``i``.
+
+    Skips quoted attribute values so a ``>`` inside a value never terminates
+    the tag early. Returns None on truncated markup (left untouched).
+    """
+    n = len(svg)
+    while i < n:
+        c = svg[i]
+        if c in {'"', "'"}:
+            k = svg.find(c, i + 1)
+            if k == -1:
+                return None
+            i = k + 1
+            continue
+        if c == ">":
+            return i + 1
+        i += 1
+    return None
+
+
+def _smil_spans(svg: str) -> list[tuple[int, int]]:
+    """Byte spans of every SMIL ``<animate*>`` element outside protected spans."""
+    protected = _protected_spans(svg)
+    spans: list[tuple[int, int]] = []
+    pos = 0
+    for m in _SMIL_OPEN.finditer(svg):
+        start = m.start()
+        if start < pos or _inside(start, protected):
+            continue
+        after = svg[m.end() : m.end() + 1]
+        if after not in {"", " ", "\t", "\r", "\n", ">", "/"}:
+            continue
+        end_open = _tag_end(svg, m.end())
+        if end_open is None:
+            continue
+        if svg[end_open - 2 : end_open] == "/>":
+            end = end_open
+        else:
+            name = m.group(0)[1:]
+            close = svg.find(f"</{name}>", end_open)
+            if close == -1:
+                continue  # unmatched open tag — conservatively left alone
+            end = close + len(name) + 3
+        spans.append((start, end))
+        pos = end
+    return spans
+
+
+def _delete_spans(svg: str, spans: list[tuple[int, int]]) -> str:
+    if not spans:
+        return svg
+    out: list[str] = []
+    last = 0
+    for s, e in spans:
+        out.append(svg[last:s])
+        last = e
+    out.append(svg[last:])
+    return "".join(out)
+
+
+# ---------------------------------------------------------------------------
+# CSS scanning — a lexer over one syntactic scope (a <style> body or a style
+# attribute value), never a regex over the document.
+
+# All animation-* longhands, multi-dash included (animation-iteration-count,
+# animation-timing-function) — the old single-segment pattern shipped those.
+_ANIM_PROP = re.compile(r"animation(?:-[a-z]+)*\Z")
+_KEYFRAMES_AT = re.compile(r"@(?:-[a-z]+-)?keyframes\b")
+_ENTITY = re.compile(r"&(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]*);")
+
+
+def _skip_string(css: str, i: int) -> int:
+    """Index past a CSS string starting at ``i`` (handles backslash escapes)."""
+    quote = css[i]
+    i += 1
+    n = len(css)
+    while i < n:
+        c = css[i]
+        if c == "\\":
+            i += 2
+            continue
+        if c == quote:
+            return i + 1
+        i += 1
+    return n
+
+
+def _skip_comment(css: str, i: int) -> int:
+    end = css.find("*/", i + 2)
+    return len(css) if end == -1 else end + 2
+
+
+def _strip_css_animation(css: str) -> str:
+    """Remove ``@keyframes`` blocks and ``animation``/``animation-*`` declarations
+    from CSS text, leaving every other byte identical.
+
+    String-, comment-, paren-, and brace-aware; nested at-rules (``@media`` over
+    keyframes, keyframes inside ``@supports``) resolve by depth counting.
+    """
+    drops: list[tuple[int, int]] = []
+    n = len(css)
+    i = 0
+    depth = 0
+    decl_start = -1  # start of the current declaration-ish run inside a body
+    while i < n:
+        c = css[i]
+        if c in {'"', "'"}:
+            i = _skip_string(css, i)
+            continue
+        if css.startswith("/*", i):
+            i = _skip_comment(css, i)
+            continue
+        if c == "@":
+            m = _KEYFRAMES_AT.match(css, i)
+            if m:
+                # consume prelude to '{', then the balanced block
+                j = m.end()
+                while j < n and css[j] != "{":
+                    if css[j] in {'"', "'"}:
+                        j = _skip_string(css, j)
+                    elif css.startswith("/*", j):
+                        j = _skip_comment(css, j)
+                    else:
+                        j += 1
+                d = 0
+                while j < n:
+                    ch = css[j]
+                    if ch in {'"', "'"}:
+                        j = _skip_string(css, j)
+                        continue
+                    if css.startswith("/*", j):
+                        j = _skip_comment(css, j)
+                        continue
+                    if ch == "{":
+                        d += 1
+                    elif ch == "}":
+                        d -= 1
+                        if d == 0:
+                            j += 1
+                            break
+                    j += 1
+                drops.append((i, j))
+                i = j
+                decl_start = -1
+                continue
+            i += 1
+            continue
+        if c == "{":
+            depth += 1
+            decl_start = i + 1
+            i += 1
+            continue
+        if c == "}":
+            depth -= 1
+            decl_start = -1
+            i += 1
+            continue
+        if c == ";":
+            decl_start = i + 1
+            i += 1
+            continue
+        if depth > 0 and decl_start >= 0 and not c.isspace():
+            # at the start of a declaration: read the property name
+            j = i
+            while j < n and (css[j].isalnum() or css[j] == "-"):
+                j += 1
+            prop = css[i:j].lower()
+            if _ANIM_PROP.match(prop):
+                # consume the declaration value: to ';' or '}' at paren depth 0
+                k = j
+                paren = 0
+                while k < n:
+                    ch = css[k]
+                    if ch in {'"', "'"}:
+                        k = _skip_string(css, k)
+                        continue
+                    if css.startswith("/*", k):
+                        k = _skip_comment(css, k)
+                        continue
+                    if ch == "(":
+                        paren += 1
+                    elif ch == ")":
+                        paren = max(0, paren - 1)
+                    elif paren == 0 and ch == ";":
+                        k += 1  # the separator goes with the dropped declaration
+                        break
+                    elif paren == 0 and ch == "}":
+                        break
+                    k += 1
+                drops.append((i, k))
+                i = k
+                decl_start = i
+                continue
+            decl_start = -1  # mid-declaration from here to the next ; or }
+            i = j if j > i else i + 1
+            continue
+        i += 1
+    return _delete_spans(css, drops)
+
+
+def _strip_decl_animation(value: str) -> str:
+    """Remove ``animation``/``animation-*`` declarations from a ``style``
+    attribute value (a declaration list), leaving kept declarations byte-identical.
+
+    Splits at top-level ``;`` only — paren-aware (``url(data:…;…)``), quote-aware,
+    and XML-entity-aware (``&#59;`` is content, not a separator).
+    """
+    n = len(value)
+    decls: list[tuple[int, int]] = []  # [start, end) — each including its trailing ';'
+    i = 0
+    start = 0
+    paren = 0
+    while i < n:
+        c = value[i]
+        if c == "&":
+            m = _ENTITY.match(value, i)
+            i = m.end() if m else i + 1
+            continue
+        if c in {'"', "'"}:
+            k = value.find(c, i + 1)
+            i = n if k == -1 else k + 1
+            continue
+        if c == "(":
+            paren += 1
+        elif c == ")":
+            paren = max(0, paren - 1)
+        elif c == ";" and paren == 0:
+            decls.append((start, i + 1))
+            start = i + 1
+        i += 1
+    if start < n:
+        decls.append((start, n))
+
+    kept: list[str] = []
+    for s, e in decls:
+        seg = value[s:e]
+        prop = seg.split(":", 1)[0].strip().lower()
+        if _ANIM_PROP.match(prop):
+            continue
+        kept.append(seg)
+    return "".join(kept)
+
+
+# ---------------------------------------------------------------------------
+# Scope location — <style> bodies (CDATA-wrapped or bare) and style attributes.
+
+_STYLE_ELEMENT = re.compile(r"(<style\b[^>]*>)(.*?)(</style>)", re.DOTALL | re.IGNORECASE)
+_CDATA_BODY = re.compile(r"\A(\s*<!\[CDATA\[)(.*)(\]\]>\s*)\Z", re.DOTALL)
+_STYLE_ATTR = re.compile(r"""(\bstyle\s*=\s*)("([^"]*)"|'([^']*)')""")
+
+
+def _rewrite_style_elements(svg: str) -> str:
+    def _sub(m: re.Match[str]) -> str:
+        body = m.group(2)
+        cd = _CDATA_BODY.match(body)
+        body = cd.group(1) + _strip_css_animation(cd.group(2)) + cd.group(3) if cd else _strip_css_animation(body)
+        return m.group(1) + body + m.group(3)
+
+    return _STYLE_ELEMENT.sub(_sub, svg)
+
+
+def _rewrite_style_attributes(svg: str) -> str:
+    """Rewrite each ``style="…"`` attribute value in isolation.
+
+    Skips protected spans and ``<style>`` bodies (where attribute-shaped text
+    would be CSS content, not markup)."""
+    opaque = _protected_spans(svg)
+    opaque += [m.span() for m in _STYLE_ELEMENT.finditer(svg)]
+
+    def _sub(m: re.Match[str]) -> str:
+        if _inside(m.start(), opaque):
+            return m.group(0)
+        quote = m.group(2)[0]
+        inner = m.group(3) if m.group(3) is not None else m.group(4)
+        return f"{m.group(1)}{quote}{_strip_decl_animation(inner)}{quote}"
+
+    return _STYLE_ATTR.sub(_sub, svg)
+
+
+# ---------------------------------------------------------------------------
 # An element resting at opacity="0" whose body carries an <animate*> child has
 # animation as its ONLY lift — stripping the child would leave permanently
 # invisible dead DOM (diagram motion particles, divider takeoff boosters).
 # The opacity attribute + animate-in-body conjunction IS the two-part gate:
 # intentionally-static opacity-0 content has no animate child and never matches.
 # The lookbehind keeps fill-opacity="0"/stroke-opacity="0" (paint channels, not
-# element visibility) from false-positive whole-element deletion.
+# element visibility) from false-positive whole-element deletion. The (?<!/)
+# guard rejects self-closing shapes — with no body and no close tag of their
+# own, a lazy match would otherwise bridge to an unrelated close tag.
 _ANIMATION_ONLY_ELEMENT = re.compile(
-    r'<(circle|ellipse|rect|path)\b[^>]*(?<![\w-])opacity="0"[^>]*>(?:(?!</\1>).)*?<animate(?:(?!</\1>).)*?</\1>\s*',
+    r'<(circle|ellipse|rect|path)\b[^>]*(?<![\w-])opacity="0"[^>]*(?<!/)>(?:(?!</\1>).)*?<animate(?:(?!</\1>).)*?</\1>\s*',
     re.DOTALL,
 )
 # The <g opacity="0"> fade-in group is the same dead-DOM class. Scoped to
@@ -116,14 +442,13 @@ def strip_animation_counted(svg: str) -> tuple[str, dict[str, int]]:
     dropped elements); ``motion_only_elements_removed`` = elements deleted
     because animation was their only visibility.
     """
-    animated = sum(1 for _ in _ANIM_PAIR.finditer(svg)) + sum(1 for _ in _ANIM_SELF.finditer(svg))
-    svg, dead = _ANIMATION_ONLY_ELEMENT.subn("", svg)
-    svg, dead_groups = _ANIMATION_ONLY_GROUP.subn("", svg)
+    animated = len(_smil_spans(svg))
+    svg, dead = _delete_matches_outside(svg, _ANIMATION_ONLY_ELEMENT)
+    svg, dead_groups = _delete_matches_outside(svg, _ANIMATION_ONLY_GROUP)
     dead += dead_groups
-    svg = _ANIM_PAIR.sub("", svg)
-    svg = _ANIM_SELF.sub("", svg)
-    svg = _KEYFRAMES.sub("", svg)
-    svg = _ANIM_DECL.sub("", svg)
+    svg = _delete_spans(svg, _smil_spans(svg))
+    svg = _rewrite_style_elements(svg)
+    svg = _rewrite_style_attributes(svg)
     counts: dict[str, int] = {}
     if animated:
         counts["animated_elements_stripped"] = animated
