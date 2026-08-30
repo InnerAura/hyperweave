@@ -1012,8 +1012,11 @@ class TestPolicy:
         assert over_soft == {"tree", "tree-radial", "lanes", "hub"}
 
     def test_layout_min_max_from_yaml(self) -> None:
+        # Pipeline's floor is 2 (the census's two-node relations are legal) and
+        # pydantic's own list-min is also 2, so the config band's "at least"
+        # sentence is probed through dag, whose floor is 3.
         with pytest.raises(DiagramInputError, match="at least"):
-            solve(topology="pipeline", nodes=labeled("A"))
+            solve(topology="dag", nodes=labeled("A", "B"), edges=[{"source": "n0", "target": "n1"}])
         with pytest.raises(DiagramCapacityError, match="caps at"):
             solve(topology="comparison", nodes=labeled("A", "B", "C"))
 

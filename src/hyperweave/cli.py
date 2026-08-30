@@ -686,6 +686,39 @@ def validate(
     raise typer.Exit(code=70 if is_engine_fault_code(str(err.get("code"))) else 1)
 
 
+def _write_proof(result: Any, output: Path) -> list[Path]:
+    """Write the ``proof/1`` record + sidecar frames beside ``output``.
+
+    Everything derives from the delivered bytes (``result.svg``) — the
+    delivered-equals-inspected law lives in ``formats/proof.py``. Returns the
+    written paths for the ``wrote`` document; stderr carries the one-line
+    verdict summary, the reliable inspection path the recorded session lacked.
+    """
+    import json as _json
+
+    from hyperweave.formats.proof import build_proof
+
+    record, files = build_proof(result.svg, diagnostics=result.diagnostics, warnings=result.warnings)
+    wrote: list[Path] = []
+    for suffix, data in files.items():
+        path = output.with_name(f"{output.stem}.{suffix}")
+        if suffix == "static.svg":
+            record["resting_frame"]["file"] = path.name
+        elif suffix == "png":
+            record["raster"]["file"] = path.name
+        else:  # beat-<t>s.svg — the sampled choreography frames, in beat order
+            record["motion"].setdefault("frames", []).append(path.name)
+        if path != output:  # --format png -o x.png already delivered these bytes
+            path.write_bytes(data)
+            wrote.append(path)
+    proof_path = output.with_name(f"{output.stem}.proof.json")
+    proof_path.write_text(_json.dumps(record, indent=2))
+    wrote.append(proof_path)
+    summary = " · ".join(f"{key}: {str(value).split(' — ')[0]}" for key, value in record["verdicts"].items())
+    typer.echo(f"proof: {proof_path.name} — {summary}", err=True)
+    return wrote
+
+
 @app.command()
 def compose(
     frame_type: Annotated[
@@ -868,6 +901,16 @@ def compose(
     faces: Annotated[
         bool,
         typer.Option("--faces", help="Twin: also write <out>-light.svg / <out>-dark.svg (the <picture> pair)"),
+    ] = False,
+    proof: Annotated[
+        bool,
+        typer.Option(
+            "--proof",
+            help=(
+                "Also write <out>.proof.json + resting frame (+ png when the raster extra is installed) "
+                "beside -o — the inspection record: measured geometry, diagnostics, resources, verdicts."
+            ),
+        ),
     ] = False,
     face: Annotated[
         str,
@@ -1236,6 +1279,16 @@ def compose(
             raise typer.Exit(2)
         spec = spec.model_copy(update={"palette": "fixed", "surface_face": face})
 
+    # ── --proof: the inspection record lands beside -o, derived from the
+    # delivered bytes only (the inspected artifact IS the delivered artifact).
+    if proof:
+        if output is None:
+            typer.echo("Error: --proof writes its record beside the artifact — pass -o/--output", err=True)
+            raise typer.Exit(2)
+        if faces:
+            typer.echo("Error: --proof covers one delivered artifact — compose each face separately", err=True)
+            raise typer.Exit(2)
+
     # ── --faces: twin → write both baked faces beside -o ──
     # A twin's light + dark faces are plain plate renders (surface_face pinned; the
     # resolver merges the flipped palette for dark). Each writes to a suffixed path
@@ -1360,9 +1413,12 @@ def compose(
                     "url resolves under `hyperweave serve`; pass -o/--output to write the SVG to a file",
                     err=True,
                 )
+        proof_wrote: list[Path] = []
         if output is not None:
             output.write_text(result.svg)
             typer.echo(f"Wrote {output} ({result.width}x{result.height})", err=True)
+            if proof:
+                proof_wrote = _write_proof(result, output)
         # `next`/`text` join as TOP-LEVEL siblings of the wrapper's own keys.
         # They must never land inside respond_doc["envelope"] — that object is
         # the content-addressed seed extract/verify read back, so absorbing a
@@ -1371,7 +1427,7 @@ def compose(
         respond_doc.update(
             _next_document(
                 artifact_id=advert_id,
-                wrote=[output] if output is not None else [],
+                wrote=[output, *proof_wrote] if output is not None else [],
                 frame_type=frame_type,
                 handle=handle,
             )
@@ -1425,6 +1481,8 @@ def compose(
         tail_wrote = [output]
         if markdown_out is not None and result.markdown:
             tail_wrote.append(markdown_out)
+        if proof:
+            tail_wrote.extend(_write_proof(result, output))
         typer.echo(
             _json.dumps(
                 _next_document(artifact_id=advert_id, wrote=tail_wrote, frame_type=frame_type, handle=str(output)),
@@ -2002,12 +2060,14 @@ def _doctor_runtime_status(runtime: str, home_dir: Path) -> str:
 
 @app.command()
 def doctor() -> None:
-    """Diagnose hyperweave telemetry wiring across agent runtimes.
+    """Diagnose compositor readiness and telemetry wiring.
 
-    Reports per-runtime detection state (initialized / binary-only /
-    absent), hook registration status, transcript dir state, and recent
-    receipt activity in the current directory. Read-only — never
-    modifies any config. Always exits 0.
+    Compositor first — raster availability, bundled fonts, the format set,
+    genome registry — so an agent learns what this install can produce BEFORE
+    composing, not from a failed projection after. Then per-runtime telemetry
+    detection state (initialized / binary-only / absent), hook registration
+    status, transcript dir state, and recent receipt activity in the current
+    directory. Read-only — never modifies any config. Always exits 0.
     """
     import shutil
     from datetime import datetime, timedelta
@@ -2015,6 +2075,24 @@ def doctor() -> None:
     from hyperweave import __version__
 
     typer.echo(f"hyperweave doctor — v{__version__}")
+    typer.echo("")
+    typer.echo("Compositor:")
+    from hyperweave.config.loader import get_loader
+    from hyperweave.formats import FormatId, raster_available
+
+    if raster_available():
+        typer.echo("  ✓ raster (png/webp): available")
+    else:
+        typer.echo("  ✗ raster (png/webp): unavailable — install hyperweave[raster] before pixels are needed")
+    from importlib import resources as _resources
+
+    font_faces = sum(1 for p in _resources.files("hyperweave.data.fonts").iterdir() if p.name.endswith(".b64"))
+    typer.echo(f"  ✓ fonts: {font_faces} bundled faces (decoded to a temp dir for resvg — never hand the")
+    typer.echo("    canonical SVG to an external rasterizer; it resolves none of the var(--dna-*) roles)")
+    live_formats = " · ".join(f.value for f in FormatId if f is not FormatId.GIF)
+    typer.echo(f"  ✓ formats: {live_formats} (gif unavailable)")
+    typer.echo(f"  ✓ genomes: {len(get_loader().genomes)} registered")
+    typer.echo("  · inspection: compose --proof -o <file> writes the proof record + resting frame beside it")
     typer.echo("")
     typer.echo("Runtimes:")
     for runtime, (dirname, binname) in _RUNTIME_DETECTION.items():
