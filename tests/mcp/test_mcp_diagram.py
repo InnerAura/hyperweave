@@ -51,9 +51,9 @@ async def test_hw_compose_card_label_explicit_payload() -> None:
 
 
 @pytest.mark.asyncio
-async def test_composite_only_is_the_only_tier() -> None:
-    # The kit grammar is compositor-only by construction (dash | particle) —
-    # performance is always composite-only and nothing ladders down.
+async def test_particle_diagram_stays_composite_only() -> None:
+    # Particle rides transform/opacity, so a particle-only diagram keeps the
+    # composite-only tier under the derived motion_tiers predicate.
     svg = _cached_svg(
         await hw_compose(
             type="diagram",
@@ -92,8 +92,12 @@ async def test_hw_discover_diagram_section() -> None:
     assert "sequence" in section["topologies"]
     assert "state-machine" in section["topologies"]
     assert "pipeline-head" in section["presets"]
+    # The vocabulary head derives from the live enum — beam is a member and
+    # must appear (the old assertion pinned its omission as correct); "flow"
+    # is not an EdgeMotion member and must not.
     assert "dash" in section["edge_motion"] and "particle" in section["edge_motion"]
-    assert "beam" not in section["edge_motion"] and "flow" not in section["edge_motion"]
+    assert "beam" in section["edge_motion"]
+    assert "flow" not in section["edge_motion"].split(" — ")[0]
 
 
 @pytest.mark.asyncio
