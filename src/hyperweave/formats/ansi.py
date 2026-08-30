@@ -491,15 +491,16 @@ def _content_grid(layout: DiagramLayout, dspec: DiagramSpec) -> tuple[str, list[
     return label, rows_out, cols
 
 
-def project_ansi(svg: str) -> str:
-    """The structural grid. Raises ``ValueError`` when the artifact carries
-    no region sidecar (non-diagram frames have no region tree to project)."""
+def read_region_sidecar(svg: str) -> list[dict[str, Any]]:
+    """The artifact's own ``hw:regions`` sidecar as ``{id, x, y, w, h}`` rows,
+    or ``[]`` when none is present. Sidecar schema: ``{id, bbox: [x, y, w, h],
+    margin, strategy}``. Shared by the ansi grid and the proof record — one
+    reader, one interpretation of the delivered geometry."""
     rm = _REGIONS.search(svg)
     if rm is None or not rm.group(1).strip():
-        raise ValueError("ansi projection requires an hw:regions sidecar (diagram artifacts carry one)")
+        return []
     raw: list[dict[str, Any]] = json.loads(rm.group(1))
-    # Sidecar schema: {id, bbox: [x, y, w, h], margin, strategy}.
-    regions = [
+    return [
         {
             "id": r.get("id", ""),
             "x": float(r["bbox"][0]),
@@ -510,6 +511,14 @@ def project_ansi(svg: str) -> str:
         for r in raw
         if r.get("bbox") and float(r["bbox"][2]) > 0 and float(r["bbox"][3]) > 0
     ]
+
+
+def project_ansi(svg: str) -> str:
+    """The structural grid. Raises ``ValueError`` when the artifact carries
+    no region sidecar (non-diagram frames have no region tree to project)."""
+    regions = read_region_sidecar(svg)
+    if not regions:
+        raise ValueError("ansi projection requires an hw:regions sidecar (diagram artifacts carry one)")
     pm = _PAYLOAD.search(svg)
     payload: dict[str, Any] = json.loads(pm.group(1)) if pm else {}
     tm = _TITLE.search(svg)
