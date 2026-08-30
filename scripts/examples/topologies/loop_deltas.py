@@ -449,13 +449,11 @@ _CANDIDATES: list[tuple[str, str, str, list[tuple[str, str, str]], dict[str, Any
         "retry-unrolled",
         "The loop unrolled: a finite budget ladder with a convergent success bus.",
         "retry/retry-specimens/diagram-loop-retry-unrolled-turn.svg",
-        [
-            (
-                "unrolled budget ladder inside a scope + success gather bus",
-                "Scope 838x152 sized BY the ladder; three 146x84 attempts on a 174 gap, gather bus y=176",
-                "compose/diagram/loop.py:_build_geos merge forms (dev-pair S-curve is the only one)",
-            )
-        ],
+        # The gather bus landed (loop.py:_bus_geo — arms, bus_r fillets, one marked
+        # stem), so this cell has no structural absence left. What remains is a spatial
+        # limit, not a missing piece: the shipped preset clears the chip-occlusion law
+        # only on a cited `chip_visible_run` waiver.
+        [],
         _retry_unrolled_spec(),
     ),
     (

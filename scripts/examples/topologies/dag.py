@@ -837,7 +837,7 @@ def build_dag() -> int:
         flow = spec.get("orientation", "horizontal")
         shape = "branching" if slug.endswith("asymmetric") else "1,N,1"
         region = (spec.get("regions") or [{}])[0].get("kind", "none")
-        lines.append(f"| {flow} | {shape} | {region} | [{slug}](axis-grid/{slug}.svg) |")
+        lines.append(f"| {flow} | {shape} | {region} | [{slug}](../renders/topologies/{FAMILY}/axis-grid/{slug}.svg) |")
     lines.append("")
     for slug, what, spec in _axis_grid():
         total += _exhibit(lines, slug, what, spec, "axis-grid")
@@ -889,13 +889,13 @@ def build_dag() -> int:
         try:
             _render(f"corpus-{slug}-{authored}", spec, "corpus")
             total += 1
-            a_cell = f"[{authored}](corpus/corpus-{slug}-{authored}.svg)"
+            a_cell = f"[{authored}](../renders/topologies/{FAMILY}/corpus/corpus-{slug}-{authored}.svg)"
         except Exception as exc:
             a_cell = f"refuses — {type(exc).__name__}"
         try:
             _render(f"corpus-{slug}-{other}", flipped, "corpus")
             total += 1
-            o_cell = f"[{other}](corpus/corpus-{slug}-{other}.svg)"
+            o_cell = f"[{other}](../renders/topologies/{FAMILY}/corpus/corpus-{slug}-{other}.svg)"
         except Exception as exc:
             o_cell = f"refuses — `{str(exc).split(chr(10))[0][:90]}`"
         corpus_rows.append((slug, a_cell, o_cell))
