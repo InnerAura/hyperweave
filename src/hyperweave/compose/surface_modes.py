@@ -55,6 +55,7 @@ from hyperweave.core.color import (
     contrast_ratio,
     hex_to_rgb,
     hex_to_rgb_triplet,
+    mix_hex,
     oklch_to_rgb,
     relative_luminance,
     rgb_to_hex,
@@ -269,6 +270,28 @@ def _flip_rgba(token_rgba: str, far_ink_hex: str) -> str:
     triplet = hex_to_rgb_triplet(far_ink_hex)
     alpha = token_rgba.rsplit(",", 1)[-1].rstrip(") ") if "," in token_rgba else "1"
     return f"rgba({triplet},{alpha})"
+
+
+INK_ICON_MIX = 0.1
+"""Fraction of the card fill mixed into the glyph ink for ``--dna-ink-icon`` —
+the pre-blended equivalent of the ``opacity="0.9"`` the ink kind-marks used to
+carry as group opacity (one offscreen compositing layer per mark). Exact over
+the flat card fill; no per-glyph isolation layer."""
+
+
+def derived_ink_icon(mapping: dict[str, Any]) -> str:
+    """The ``--dna-ink-icon`` value for a palette mapping, or ``""``.
+
+    Ink pre-blended :data:`INK_ICON_MIX` toward the card fill (``surface_1``,
+    falling back to ``surface_0``). Empty when either side is missing or not a
+    plain hex — the consumer's ``var()`` then simply never resolves brighter
+    than the declared fallback chain."""
+    ink = str(mapping.get("ink") or "")
+    ground = str(mapping.get("surface_1") or mapping.get("surface_0") or "")
+    try:
+        return mix_hex(ink, ground, INK_ICON_MIX)
+    except ValueError:
+        return ""
 
 
 def flip_palette(genome_mapping: dict[str, Any], cfg: SurfaceModesConfig) -> dict[str, str]:
@@ -486,6 +509,14 @@ def adaptive_css(
     never appear, holding across the flip. Scoped to ``#root_id`` so multiple
     adaptive artifacts coexist on one page.
     """
+    if "ink_icon" not in far:
+        # The far dicts (flip_palette / native_palette / authored faces) stay
+        # pure palette filters — the derived icon token is computed here, at
+        # the emission seam, from the face's own ink/card pair, so the dark
+        # branch repaints the pre-blended marks too.
+        icon = derived_ink_icon(far)
+        if icon:
+            far = {**far, "ink_icon": icon}
     far_decls = _css_var_block(far)
     near_body = near_decls.strip()
     if override_decls.strip():
@@ -521,6 +552,7 @@ _VAR_NAMES: dict[str, str] = {
     "surface_1": "--dna-surface-alt",
     "surface_2": "--dna-surface-deep",
     "ink": "--dna-ink-primary",
+    "ink_icon": "--dna-ink-icon",
     "ink_secondary": "--dna-ink-muted",
     "ink_bright": "--dna-ink-bright",
     "ink_on_accent": "--dna-ink-on-accent",

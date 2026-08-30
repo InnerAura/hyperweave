@@ -300,7 +300,7 @@ class TestDrawOrderAndFurniture:
         # never a floating multiply-sign character — three marks between the 4 layers.
         svg = compose_fixture("pipeline-vertical")
         assert svg.count('r="11.0"') == 3
-        assert svg.count('-cardbg"/><path d="M ') == 3
+        assert svg.count('-cardbg"/><path aria-hidden="true" d="M ') == 3
 
     def test_state_machine_furniture(self) -> None:
         svg = compose_fixture("state-machine")
@@ -413,7 +413,7 @@ class TestConnectorPalette:
         chrome, not the baseline (the wire-rainbow review decision)."""
         svg = compose_fixture("dag")
         assert "-connmuted {" in svg
-        assert "#A9B4C6" in svg  # porcelain's muted wire tone
+        assert "#848FA0" in svg  # porcelain muted wire, repaired to the 3:1 graphical floor
 
     def test_colored_opts_back_into_hue(self) -> None:
         """connector_palette='colored' restores the genome flow palette."""
@@ -436,7 +436,7 @@ class TestConnectorPalette:
         """Muted wires reference the neutral connector class in the artifact."""
         svg = self._muted_svg()
         assert "-connmuted {" in svg  # the neutral class is declared
-        assert "#A9B4C6" in svg  # porcelain's muted wire tone
+        assert "#848FA0" in svg  # porcelain muted wire, repaired to the 3:1 graphical floor
 
     def test_muted_absent_no_warning(self) -> None:
         """A plain muted request (no beam/flow) emits no warning."""

@@ -902,7 +902,10 @@ def glyph_mark_placement(
             # (SVG2: presentation attributes are the lowest specificity).
             group_fill, opacity, glyph_gradient = "var(--dna-ink-primary)", 1.0, ""
         else:
-            group_fill, opacity, glyph_gradient = "var(--dna-ink-primary)", 0.9, ""
+            # Pre-blended icon ink (ink mixed toward the card fill at the old
+            # 0.9 group-opacity ratio) — same rendered tone, zero offscreen
+            # compositing layers. surface_modes.derived_ink_icon declares it.
+            group_fill, opacity, glyph_gradient = "var(--dna-ink-icon, var(--dna-ink-primary))", 1.0, ""
 
     parts = viewbox_src.split()
     if len(parts) == 4:

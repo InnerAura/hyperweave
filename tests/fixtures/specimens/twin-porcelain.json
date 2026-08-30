@@ -38,10 +38,11 @@
   },
   "light": {
    "sig": "#0070F3",
-   "sigt": "#0070F3"
+   "sigt": "#0070F3",
+   "ink2": "#637486"
   }
  },
- "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family — ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark — is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read — the language-law suite grades it directly. light.sig/sigt: the diagram accent adopts the loop expression corpus's unanimous azure #0070F3 (owner ruling 2026-08-26) over the authored face's #2563EB. dark full-family: the porcelain dark face remapped 2026-08-26 to a true-black ground with neutral ink and the blue trio (owner-authored reference render); the twin's authored dark tokens record the earlier face and grade against these superseding values.",
+ "faces_superseded_note": "dark-face tokens superseded by the primer diagram language material law (2026-07-15 surface-invariance ruling): the diagram_dark family — ink/ink2/sig/sigt/s0/s1 from genome variant_overrides.{v}.diagram_dark — is what every dark-scheme render wears (baked face, fixed dark variant, adaptive dark branch). The authored twin specimen still records itself in faces; light face grades unamended. stroke stays authored: the material border is an rgba the hex token parser does not read — the language-law suite grades it directly. light.sig/sigt: the diagram accent adopts the loop expression corpus's unanimous azure #0070F3 (owner ruling 2026-08-26) over the authored face's #2563EB. dark full-family: the porcelain dark face remapped 2026-08-26 to a true-black ground with neutral ink and the blue trio (owner-authored reference render); the twin's authored dark tokens record the earlier face and grade against these superseding values. light.ink2 superseded 2026-08-30 (Stage 4 session C role-aware contrast repair): the authored face's muted ink measured under the 4.5:1 text floor against its own ground; the genome carries the minimal-lightness repair and the render grades against it. The authored specimen still records its original value in faces.",
  "source": "v04/specimens/artifacts/diagrams/diagrams-v04a6/diagrams-v3/primer-diagrams-v3/verb-algebra-primer-porcelain.svg",
  "variant": "porcelain"
 }

@@ -376,16 +376,32 @@ def parse_svg(svg: str) -> Facts:
                     )
                 )
         elif tag == "text":
-            content = "".join(el.itertext()).strip()
-            facts.texts.append(
-                TextEl(
-                    x=_f(el, "x"),
-                    y=_f(el, "y"),
-                    anchor=el.get("text-anchor") or "start",
-                    cls=cls,
-                    content=content,
+            # A positioned <tspan> is a ROW — the engine consolidates a
+            # multi-line stack into one <text> of tspans, and the census
+            # counts lines, not layout objects. Un-positioned tspans (inline
+            # emphasis) stay part of their parent's single row.
+            spans = [c for c in el if _local(c.tag) == "tspan" and c.get("x") is not None]
+            if spans:
+                for span in spans:
+                    facts.texts.append(
+                        TextEl(
+                            x=_f(span, "x"),
+                            y=_f(span, "y"),
+                            anchor=el.get("text-anchor") or "start",
+                            cls=cls,
+                            content="".join(span.itertext()).strip(),
+                        )
+                    )
+            else:
+                facts.texts.append(
+                    TextEl(
+                        x=_f(el, "x"),
+                        y=_f(el, "y"),
+                        anchor=el.get("text-anchor") or "start",
+                        cls=cls,
+                        content="".join(el.itertext()).strip(),
+                    )
                 )
-            )
 
     walk(root, "")
     return facts

@@ -29,6 +29,7 @@ from hyperweave.compose.diagram.project import (
 )
 from hyperweave.compose.surface_modes import flip_token, stamp_surface, surface_from_props
 from hyperweave.config.loader import load_diagram_config, load_glyphs, load_surface_modes
+from hyperweave.core.color import mix_hex
 from hyperweave.core.errors import HwError, HwErrorCode
 from hyperweave.core.matrix import GlyphTint
 from hyperweave.core.paradigm import DiagramTopologyChassis, MatrixVoice, ParadigmDiagramConfig
@@ -329,7 +330,7 @@ def resolve_diagram(
         # DERIVED (hi mixed toward lo by the chassis fraction), never authored
         # per variant, so every variant's crown falls at the same eased rate.
         mix_t = float((engine.get("material") or {}).get("ramp_mid_mix", 0.58))
-        card_mid = _mix_hex(str(diagram_dark["card_hi"]), str(diagram_dark["card_lo"]), mix_t)
+        card_mid = mix_hex(str(diagram_dark["card_hi"]), str(diagram_dark["card_lo"]), mix_t)
         diagram_dark = {**diagram_dark, "card_mid": card_mid}
     # LIGHT HERO BEVEL, the light-face counterpart of the dark card ramp. The
     # dark face separates its cards by a ramp across every card; a light face
@@ -361,7 +362,7 @@ def resolve_diagram(
                 "face_lo": str(_face_src.get("surface_2") or _face_hi),
                 "rim_hi": _face_hi,
                 "rim_mid": _conn,
-                "rim_lo": _mix_hex(_conn, _ink2, float(_mat.get("bevel_rim_mix", 0.5))),
+                "rim_lo": mix_hex(_conn, _ink2, float(_mat.get("bevel_rim_mix", 0.5))),
             }
 
     context: dict[str, Any] = {
@@ -484,16 +485,6 @@ def _resolve_connector_palette(dspec: DiagramSpec, genome: dict[str, Any]) -> tu
     # palette cleanly, so a 'muted' request needs no colored-edge warning
     # sweep. (Flow, the hue-carrying tube, stays retired.)
     return True, []
-
-
-def _mix_hex(a: str, b: str, t: float) -> str:
-    """``a`` mixed toward ``b`` by ``t`` in sRGB, rounded once per channel —
-    the card-ramp mid stop derivation (compose owns the color math; the
-    template stamps the result)."""
-    ar, ag, ab = (int(a.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
-    br, bg, bb = (int(b.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
-    mr, mg, mb = round(ar + (br - ar) * t), round(ag + (bg - ag) * t), round(ab + (bb - ab) * t)
-    return f"#{mr:02X}{mg:02X}{mb:02X}"
 
 
 def _style_params(engine: dict[str, Any], ch: DiagramTopologyChassis) -> dict[str, Any]:
