@@ -113,11 +113,11 @@
 .{{ uid }}-chart .hw-chart-endpoint { transform-box: fill-box; transform-origin: center; animation: {{ uid }}-ping 3s cubic-bezier(0.16,1,0.3,1) 2.6s infinite; will-change: transform, opacity; }
 @keyframes {{ uid }}-ping { 0% { opacity: 0.3; transform: scale(1); } 100% { opacity: 0; transform: scale(2.4); } }
 @media (prefers-reduced-motion: reduce) {
-  .{{ uid }}-chart .hw-chart-line-draw { animation: none; stroke-dashoffset: 0; }
+  .{{ uid }}-chart .hw-chart-line-draw { animation: none !important; stroke-dashoffset: 0 !important; }
   .{{ uid }}-chart .hw-chart-area-smooth,
-  .{{ uid }}-chart [data-hw-zone="markers"] { animation: none; opacity: 1; }
-  .{{ uid }}-chart .hw-chart-endpoint { animation: none; }
-  .{{ uid }}-pulse, .{{ uid }}-live-word { animation: none !important; opacity: 1; }
+  .{{ uid }}-chart [data-hw-zone="markers"] { animation: none !important; opacity: 1 !important; }
+  .{{ uid }}-chart .hw-chart-endpoint { animation: none !important; }
+  .{{ uid }}-pulse, .{{ uid }}-live-word { animation: none !important; opacity: 1 !important; }
 }
 </style>
 {{ chart_defs | default("") | safe }}

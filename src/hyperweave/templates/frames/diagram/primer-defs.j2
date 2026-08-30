@@ -429,7 +429,7 @@
 {% endif %}
 @media (prefers-reduced-motion: reduce) {
   .{{ uid }}-branch, .{{ uid }}-in { animation: none !important; }
-  .{{ uid }}-p, .{{ uid }}-light { display: none; }
+  .{{ uid }}-p, .{{ uid }}-light { display: none !important; }
 {% if choreo %}{# The corpus's resting face: the route rests FULLY LIT with its
    arrowheads shown; heads, halos, and tints vanish — reduced-motion users
    lose the performance, never the argument. #}
@@ -441,11 +441,11 @@
    opacity attribute (a budget rests full; a counter rests empty). #}
   .{{ uid }}-mfill { animation: none !important; }
 {% endif %}
-{% if diagram_beam_gradients %}  .{{ uid }}-rail { opacity: {{ diagram_style.beam_rail_reduced_op }}; }
+{% if diagram_beam_gradients %}  .{{ uid }}-rail { opacity: {{ diagram_style.beam_rail_reduced_op }} !important; }
 {% endif %}
-{% if diagram_layout.gathers %}  .{{ uid }}-gc { animation: none; }
+{% if diagram_layout.gathers %}  .{{ uid }}-gc { animation: none !important; }
 {% endif %}
-{% if health_nodes | selectattr('health', 'equalto', 'vulnerable') | list %}  .{{ uid }}-critp { animation: none; }
+{% if health_nodes | selectattr('health', 'equalto', 'vulnerable') | list %}  .{{ uid }}-critp { animation: none !important; }
 {% endif %}}
 {% if diagram_dark %}
 /* Dark plate physics: material + the dark ink family (genome

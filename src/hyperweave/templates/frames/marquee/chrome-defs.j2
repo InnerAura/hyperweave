@@ -16,7 +16,7 @@
      state cascade, no data-hw-status). prefers-reduced-motion freezes it. #}
   .hw-mq-diamond { will-change: opacity; animation: hw-mq-pulse 2.618s ease-in-out infinite; }
   @keyframes hw-mq-pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.15 } }
-  @media (prefers-reduced-motion: reduce) { .hw-mq-diamond { animation: none !important; opacity: 0.8; } }
+  @media (prefers-reduced-motion: reduce) { .hw-mq-diamond { animation: none !important; opacity: 0.8 !important; } }
   </style>
 
   {# 11-stop chrome envelope · drift-animated 6.854s (φ⁴) on the body fill #}

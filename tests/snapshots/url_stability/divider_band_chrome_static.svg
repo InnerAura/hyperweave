@@ -129,8 +129,8 @@ svg, :root {
 
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
-  .hw-logic-bit { animation: none !important; opacity: .8; }
-  .hw-scanner { animation: none; opacity: 0; }
+  .hw-logic-bit { animation: none !important; opacity: .8 !important; }
+  .hw-scanner { animation: none !important; opacity: 0 !important; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -148,7 +148,7 @@ svg, :root {
 @media (forced-colors: active) {
   text { fill: CanvasText !important; }
   rect, path, circle, ellipse, polygon, polyline, line {
-    stroke: CanvasText;
+    stroke: CanvasText !important;
   }
   .hw-frame-bg { fill: Canvas !important; }
   .hw-accent-bar { fill: Highlight !important; }
@@ -182,7 +182,7 @@ svg, :root {
     animate { display: none !important; }
   }
   @media (forced-colors: active) {
-    rect { stroke: CanvasText; }
+    rect { stroke: CanvasText !important; }
   }
 </style>
   </defs>
