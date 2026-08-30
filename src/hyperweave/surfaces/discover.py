@@ -416,6 +416,78 @@ def _normalize_selector(what: str) -> str:
     return what
 
 
+def agent_capsule(topology: str = "") -> dict[str, Any]:
+    """The compact agent contract — single-digit kilobytes, derived from the
+    same enums, legality config, and registries the solver refuses against;
+    no hand-maintained prose. Carries a content digest so an agent can cache
+    it and skip the rediscovery ritual. The full JSON Schema stays the exact
+    contract beside it (``discover schema:diagram/1``); the capsule is the
+    summary, never a replacement."""
+    import hashlib
+    import json as _json
+    from typing import get_args
+
+    from hyperweave import __version__
+    from hyperweave.config.loader import load_diagram_config, load_diagram_presets
+    from hyperweave.core.diagram import (
+        DiagramEdge,
+        DiagramSpec,
+        EdgeKind,
+        EdgeMotion,
+        NodeRole,
+        NodeStyle,
+        Topology,
+    )
+    from hyperweave.core.errors import HwError, HwErrorCode
+
+    engine = load_diagram_config()
+    legality: dict[str, list[str]] = engine.get("orientation_legality") or {}
+    caps = dict((engine.get("caps") or {}).get("layouts") or {})
+    topos = [t.value for t in Topology]
+    if topology:
+        if topology not in topos:
+            raise HwError(
+                HwErrorCode.TOPOLOGY_UNKNOWN,
+                f"unknown topology {topology!r}",
+                fix="one of: " + ", ".join(topos),
+            )
+        topos = [topology]
+    presets = load_diagram_presets()
+    families: dict[str, Any] = {}
+    for topo in topos:
+        slugs = sorted(s for s in caps if s == topo or s.startswith(topo + "-"))
+        families[topo] = {
+            "caps": {s: caps[s] for s in slugs},
+            "orientations": legality.get(topo) or ["horizontal"],
+            "edge_rule": _TOPOLOGY_EDGE_RULES.get(topo) or _TOPOLOGY_EDGE_RULES.get("any", ""),
+            "presets": sorted(n for n, spec in presets.items() if spec.get("topology") == topo),
+        }
+    scalar_caps = {k: v for k, v in (engine.get("caps") or {}).items() if not isinstance(v, dict)}
+    body: dict[str, Any] = {
+        "schema": "capsule/1",
+        "engine": __version__,
+        "scope": topology or "all",
+        "families": families,
+        "shared_caps": scalar_caps,
+        "vocabulary": {
+            "edge_motion": [m.value for m in EdgeMotion if m.value],
+            "node_styles": [s.value for s in NodeStyle if s.value],
+            "edge_kinds": [k.value for k in EdgeKind if k.value],
+            "roles": [r.value for r in NodeRole if r.value],
+            "relations": [v for v in get_args(DiagramEdge.model_fields["relation"].annotation) if v],
+            "motion_registers": [v for v in get_args(DiagramSpec.model_fields["motion_register"].annotation) if v],
+        },
+        "compose": {
+            "cli": "hw compose diagram --spec-file spec.json -o out.svg [--proof]",
+            "http": "POST /v1/compose",
+            "mcp": "hw_compose(diagram=...)",
+            "exact_contract": "discover schema:diagram/1",
+        },
+    }
+    digest = "sha256:" + hashlib.sha256(_json.dumps(body, sort_keys=True).encode("utf-8")).hexdigest()
+    return {**body, "digest": digest}
+
+
 def discover(what: str = "all") -> dict[str, Any]:
     """Return discovery data for the ``what`` selector.
 
@@ -438,6 +510,8 @@ def discover(what: str = "all") -> dict[str, Any]:
         return {"example": _discover_example(frame_type, name)}
     if what.startswith("genome:"):
         return {"genome": genome_deep_dive(what.removeprefix("genome:"))}
+    if what == "agent" or what.startswith("agent:"):
+        return {"capsule": agent_capsule(what.partition(":")[2])}
 
     if what not in _SECTION_SELECTORS:
         raise HwError(
@@ -445,7 +519,7 @@ def discover(what: str = "all") -> dict[str, Any]:
             f"unknown discover selector {what!r}",
             fix="valid selectors: "
             + " | ".join(_SECTION_SELECTORS)
-            + " — plus schema:<id>, example:<frame_type>/<name>, genome:<id>",
+            + " — plus agent[:<topology>] (the compact capsule), schema:<id>, example:<frame_type>/<name>, genome:<id>",
         )
 
     loader = get_loader()
@@ -542,25 +616,29 @@ def discover(what: str = "all") -> dict[str, Any]:
     if what in ("all", "diagram"):
         from hyperweave.compose.diagram import registered_slugs
         from hyperweave.compose.diagram.input import diagram_preset_names
-        from hyperweave.core.diagram import Topology
+        from hyperweave.core.diagram import EdgeMotion, NodeStyle, Topology
 
         result["diagram"] = {
             "topologies": [t.value for t in Topology],
             "layout_slugs": registered_slugs(),
             "edge_rules": dict(_TOPOLOGY_EDGE_RULES),
             "orientations": _orientation_summary(),
-            "edge_motion": "dash | particle — the closed kit pair, compositor-only by construction "
-            "(genome allowlist enforced)",
+            "edge_motion": " | ".join(m.value for m in EdgeMotion if m.value)
+            + " — the closed kit set (genome allowlist enforced); tiers derive from the motion_tiers "
+            "table: dash marches stroke-dashoffset (paint-ok), particle rides composited "
+            "(composite-only), beam animates its gradient window (paint-ok) and degrades to particle "
+            "on composite-only surfaces",
             "motion_register": "turn | drift | laps | budget | accumulate — the artifact-scoped "
             "choreography register; loop defaults to turn (a pulse walks the circuit in acts, arrival "
             "halos flash each station, guard chips flash when their branch fires), drift is the quiet "
             "standing face, and the meter registers perform a declared gauge (laps grows and resets, "
             "budget drains and refills, accumulate grows and holds); override via "
             "--motion-register / ?motion_register= / MCP motion_register",
-            "node_styles": "card | card+glyph | card+label | glyph-circle | text — caller-chosen, never "
-            "inferred. card+label inverts the default card: a small tracked label over a stack of display "
-            "values, any glyph/kind demoted to a corner mark that reserves no column; text drops the box "
-            "entirely (the type IS the node)",
+            "node_styles": " | ".join(s.value for s in NodeStyle if s.value)
+            + " — caller-chosen, never inferred. card+label inverts the default card: a small tracked "
+            "label over a stack of display values, any glyph/kind demoted to a corner mark that reserves "
+            "no column; pill is the capsule card (card+glyph anatomy with capsule ends — the terminal/"
+            "advance silhouette); text drops the box entirely (the type IS the node)",
             "roles": "default | hero | muted — hero gets the signal ring; muted is the comparison-left grammar",
             "hub": "focal node = slot 0. hub_policy: '' | compass | axial — explicit wins; compass when any "
             "member speaks compass vocabulary (zone/angle/anchor/distribution); AXIAL is the default for "

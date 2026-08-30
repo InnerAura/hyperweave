@@ -245,13 +245,35 @@ def discover_cmd(
         str,
         typer.Argument(
             help="all | genomes | motions | glyphs | frames | verbs | matrix | diagram | url_grammar | "
-            "capabilities | schemas — plus schema:<id> (published JSON Schema), "
+            "capabilities | schemas — plus agent[:<topology>] (the compact capsule), "
+            "schema:<id> (published JSON Schema), "
             "example:<frame_type>/<name> (a full bundled spec, compose-ready), and "
             "genome:<id> (role-structured token deep-dive)"
         ),
     ] = "all",
+    agent: Annotated[
+        bool,
+        typer.Option("--agent", help="The compact capsule: caps, legality, vocabulary, presets + a digest."),
+    ] = False,
+    topology: Annotated[
+        str,
+        typer.Option("--topology", help="Scope the capsule to one topology family (with --agent)."),
+    ] = "",
+    needs: Annotated[
+        str,
+        typer.Option("--needs", help="Comma-separated extra sections beside the capsule, e.g. glyphs,motions."),
+    ] = "",
 ) -> None:
     """Discover available genomes, motions, glyphs, frames, verbs, and capabilities."""
+    if (topology or needs) and not agent:
+        typer.echo("Error: --topology and --needs scope the capsule — pass --agent with them", err=True)
+        raise typer.Exit(code=2)
+    if agent:
+        result = _run("discover", {"what": f"agent:{topology}" if topology else "agent"})
+        for need in (n.strip() for n in needs.split(",") if n.strip()):
+            result.update(_run("discover", {"what": need}))
+        _emit(result)
+        return
     _emit(_run("discover", {"what": what}))
 
 
