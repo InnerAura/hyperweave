@@ -1013,7 +1013,7 @@ class TestPolicy:
 
     def test_layout_min_max_from_yaml(self) -> None:
         with pytest.raises(DiagramInputError, match="at least"):
-            solve(topology="pipeline", nodes=labeled("A", "B"))
+            solve(topology="pipeline", nodes=labeled("A"))
         with pytest.raises(DiagramCapacityError, match="caps at"):
             solve(topology="comparison", nodes=labeled("A", "B", "C"))
 

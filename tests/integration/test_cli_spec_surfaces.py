@@ -111,28 +111,30 @@ def test_mismatched_envelope_type_in_compose_errors_cleanly(tmp_path: Path) -> N
     assert "diagram" in result.output
 
 
-TWO_NODE_PIPELINE = {
-    "topology": "pipeline",
+TWO_NODE_DAG = {
+    "topology": "dag",
     "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}],
     "edges": [{"source": "a", "target": "b"}],
 }
 
 
-def test_two_node_pipeline_fails_validate_and_compose_with_the_same_error(tmp_path: Path) -> None:
+def test_below_floor_dag_fails_validate_and_compose_with_the_same_error(tmp_path: Path) -> None:
     """The invariant: a file that validates always composes — so a file that
     can't compose (topology min-node band) must fail validate too, and both
-    surfaces speak the same refusal sentence."""
-    spec_file = tmp_path / "two.json"
-    spec_file.write_text(json.dumps(TWO_NODE_PIPELINE))
+    surfaces speak the same refusal sentence. Pipeline's floor is now 2 (the
+    census's two-node relations are legal), so the config-band probe rides
+    dag, whose floor is 3."""
+    spec_file = tmp_path / "two-dag.json"
+    spec_file.write_text(json.dumps(TWO_NODE_DAG))
 
     v = runner.invoke(app, ["validate", str(spec_file)])
     assert v.exit_code == 1
-    assert "pipeline needs at least 3 nodes (got 2)" in v.output
+    assert "dag needs at least 3 nodes (got 2)" in v.output
 
     c = runner.invoke(app, ["compose", "diagram", "--spec-file", str(spec_file)])
     assert c.exit_code == 2
     assert _no_traceback(c.output)
-    assert "pipeline needs at least 3 nodes (got 2)" in c.output
+    assert "dag needs at least 3 nodes (got 2)" in c.output
 
 
 def test_mid_solve_capacity_refusal_caught_by_validate_and_compose() -> None:

@@ -5,6 +5,34 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.6] - Unreleased
+
+Static projections always parse, engine faults reach every surface as typed records, and artifact metadata stops claiming what the render doesn't do.
+
+### Added
+
+- **`--intent` on transform** — CLI, HTTP, and MCP record why a patch was made in the new artifact's lineage entry.
+- **`validate --json`** — prints the machine-readable report every other surface already receives.
+- **Two-node pipelines** — `pipeline` and `pipeline-vertical` compose at 2 nodes.
+
+### Changed
+
+- **Engine faults are typed records** — a broken projection or post-solve invariant returns `PROJECTION_INVALID` / `ENGINE_INVARIANT` with HTTP 500 and CLI exit 70 under an `engine fault:` prefix, never a traceback.
+- **Colliding edge pills reseat** — a fused pair moves along its own wire and records a `chip-air` advisory; a pair no lawful seat separates refuses, naming both chips and the measured gap.
+- **`diff` sees edges** — label, kind, relation, and motion changes on an edge report as field-level deltas instead of `same: true`; repeated node pairs keep identity by declaration index.
+- **Honest performance tier** — the tier derives from the properties each motion animates; artifacts with dash motion declare `performance="paint-ok"` and drop the `cim-compliant` claim.
+- **Metadata claims carry referents** — `contrast-ratio` is the measured minimum over named role pairs with the worst pair named, `timing` names the register actually running, and `data-hw-state` reads `frozen` instead of `static`.
+
+### Fixed
+
+- **Static projections parse** — animation stripping edits byte spans within syntactic scopes and every pass is validated by name; 239 previously malformed `svg-static` projections across the corpus now parse.
+- **`animation-*` longhands strip** — multi-dash properties such as `animation-iteration-count` no longer survive into static projections.
+
+### Notes
+
+- `validate` and `diff` output shapes changed; `data-hw-state` now reads `bound | frozen`; most diagram artifacts' declared performance tier flips to `paint-ok`.
+- Engine faults exit 70; caller refusals keep their existing exit codes.
+
 ## [0.4.5] - 2026-08-29
 
 Expands region support across diagram layouts, tightens graph spacing and routing, refreshes light and dark themes, and fixes labels, framing, terminal output, and connector metrics.

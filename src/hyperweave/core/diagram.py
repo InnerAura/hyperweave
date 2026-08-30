@@ -681,10 +681,11 @@ class DiagramSpec(FrozenModel):
         default="",
         max_length=4,
         description=(
-            "Stack riser-rail annotation (G9): a short mono token stamped at "
-            "each riser midpoint — the Composited Upward specimen's x. The "
-            "SLOT is chassis geometry; the content is preset data. Empty "
-            "renders no rail."
+            "Stack riser-rail switch (G9): any non-empty value draws the "
+            "fixed ring-and-cross operator mark at each riser midpoint — the "
+            "Composited Upward specimen's device, drawn geometry, never a "
+            "floating character glyph. The value gates the rail on; its "
+            "characters are not rendered. Empty renders no rail."
         ),
     )
     annotations: list[DiagramAnnotation] = Field(

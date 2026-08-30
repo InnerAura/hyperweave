@@ -40,7 +40,7 @@ _ENVELOPE = re.compile(r"<hw:envelope[^>]*><!\[CDATA\[(.*?)\]\]></hw:envelope>",
 
 _HEALTH_VOCAB = {"active", "passing", "building", "warning", "critical", "failing", "offline", "loop"}
 _REGIME_VOCAB = {"normal", "permissive", "ungoverned"}
-_LIFECYCLE_VOCAB = {"bound", "static"}
+_LIFECYCLE_VOCAB = {"bound", "frozen"}
 
 _MATRIX = {
     "title": "Cost by model",

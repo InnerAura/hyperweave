@@ -13,7 +13,9 @@
       <hw:created>{{ created_at }}</hw:created>
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
-    <hw:spec size="{{ width }}x{{ height }}" performance="{{ performance_tier | default('composite-only') }}"
+{# performance carries NO default — a missing tier must fail loudly, never
+   silently claim the stronger (composite-only) tier. #}
+    <hw:spec size="{{ width }}x{{ height }}" performance="{{ performance_tier }}"
              theme="{{ theme_category }}" a11y="WCAG-AA" platform="{{ platform }}"/>
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
@@ -42,11 +44,17 @@
 {% endif %}
 {% if metadata_tier >= 3 %}
   <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
+{# contrast-ratio is the measured MINIMUM over the named role pairs and
+   contrast-worst-pair names which one — a claim with a referent, never a
+   single flattering scalar over a multi-role palette. #}
     <hw:chromatic system="{{ genome_id }}" space="oklch"
-                  palette="{{ palette }}" contrast-ratio="{{ contrast_ratio | default('') }}"/>
+                  palette="{{ palette }}" contrast-ratio="{{ contrast_ratio }}" contrast-worst-pair="{{ contrast_worst_pair }}"/>
     <hw:motion vocabulary="{{ motion_vocabulary | default(motion_id) }}" physics="{{ motion_physics | default('none') }}"
-               timing="phi" duration-base="{{ rhythm_base }}"
-               stagger-regime="{{ motion_stagger_regime | default('contemplative') }}" cim-compliant="{{ cim_compliant }}"/>
+               timing="{{ timing_doctrine }}" duration-base="{{ rhythm_base }}"
+{# cim-compliant DERIVES from the tier in one seam — an artifact whose motion
+   animates a Paint-stage property (dash's stroke-dashoffset) is not
+   compositor-inspired-motion compliant, whatever it used to claim. #}
+               stagger-regime="{{ motion_stagger_regime | default('contemplative') }}" cim-compliant="{{ 'true' if performance_tier == 'composite-only' else 'false' }}"/>
     <hw:geometry form-language="{{ form_language }}" corner-radius="{{ corner | default('5px') }}"
                  grid="auto" proportional-system="phi"
                  mathematical-basis="golden-ratio" symmetry="bilateral"/>
@@ -62,7 +70,7 @@
     <hw:intent>{{ reasoning_intent | default('') | xml_escape }}</hw:intent>
     <hw:approach>{{ reasoning_approach | default('') | xml_escape }}</hw:approach>
     <hw:tradeoffs>{{ reasoning_tradeoffs | default('') | xml_escape }}</hw:tradeoffs>
-    <hw:constraints-applied>{{ font_constraint | xml_escape }}, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:constraints-applied>{{ font_constraint | xml_escape }}{% if performance_tier == 'composite-only' %}, cim-compliant{% endif %}, wcag-aa</hw:constraints-applied>
     <hw:spatial-notes>{{ spatial_notes | xml_escape }}</hw:spatial-notes>
   </hw:reasoning>
 {% endif %}

@@ -9,11 +9,24 @@
 #
 # The motion vocabulary is CLOSED — a 2x2, not a list:
 #                  discrete    continuous
-#   composite-only  particle    dash
-#   paint-ok        beam        flow
+#   composite-only  particle    —
+#   paint-ok        beam        dash · flow
+# (dash cell corrected 2026-08-30: it marches stroke-dashoffset — a
+# Paint-stage property — so its old composite-only cell was the root of a
+# corpus-wide false performance claim. The tier now derives from the
+# motion_tiers property column below, never from the grid by eye.)
 # New aesthetics are parameters here (and in the genome's kinetic channel),
 # never new enum values. Reference implementation for every value below is
 # the corresponding specimen in v04/specimens/diagrams/diagram-topologies/.
+
+# Tier-by-derivation: which render stage each motion kind's animated
+# properties hit. transform/opacity = compositor; anything else = Paint.
+# performance_tier() reads this table; the Stage 4 animated-property
+# allowlist gate derives from the same column.
+motion_tiers:
+  particle: { tier: composite-only, properties: [transform, opacity] }
+  dash: { tier: paint-ok, properties: [stroke-dashoffset] }
+  beam: { tier: paint-ok, properties: [gradientTransform] }
 
 caps:
   soft_nodes: 12 # past this: shrink step (named gap/pitch x shrink_factor)
@@ -22,7 +35,10 @@ caps:
   # Per-layout node-count policy. min violations -> DiagramInputError;
   # max violations -> DiagramCapacityError ("split the diagram").
   layouts:
-    pipeline: { min: 3, max: 7 }
+    # min 2, not 3: the honest-demand census (v04-ascii-diagram-coverage §1)
+    # found six real two-node relations refused by a floor the solver never
+    # needed — the solver was proven safe at 2 by in-process probe.
+    pipeline: { min: 2, max: 7 }
     fanout-horizontal: { min: 3, max: 9 } # source + 2..8
     fanout-bilateral: { min: 4, max: 11 } # source + 3..10
     fanout-upward: { min: 3, max: 7 } # source + 2..6 (two rows of 3)
@@ -36,7 +52,7 @@ caps:
     # its OWN cap via spec.caps rather than loosening the family default.
     loop: { min: 2, max: 10 }
     loop-horizontal: { min: 2, max: 7 } # the lateral row stays short (shuttle runs 4)
-    pipeline-vertical: { min: 3, max: 7 } # result + 2..6 layers
+    pipeline-vertical: { min: 2, max: 7 } # result + 1..6 layers (two-node floor: census §1)
     tree: { min: 3, max: 16 } # root + 2..15 nodes across depth 1..tree_horizontal_max_depth
     tree-radial: { min: 4, max: 16 } # root + ring-1 + ring-2 (depth 2..3)
     comparison: { min: 2, max: 2 }

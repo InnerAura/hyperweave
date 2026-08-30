@@ -311,10 +311,12 @@ primer:
         with an edge-stroke gradient down its own ladder, and each flow slot
         gets its own --dna-flow-{i} so both faces resolve independently.
       tradeoffs: |-
-        Elevation cannot follow the palette, because var() does not resolve in
-        filter attributes: the light face's two-layer lift (0/1/2 at 5 percent
-        over 0/9/20 at 5.5) and the dark face's 0/6/12 seat are literal genome
-        values selected by paired CSS rules, so retuning either is a config
+        Elevation's geometry cannot follow the palette — var() does not
+        resolve in the filter's geometry attributes (dx/dy/stdDeviation are
+        attribute-only) — while its paint can: flood-color and flood-opacity
+        accept var(). The light face's two-layer lift (0/1/2 at 5 percent
+        over 0/9/20 at 5.5) and the dark face's 0/6/12 seat keep literal
+        geometry selected by paired CSS rules, so retuning either is a config
         edit. The seat is also ground-keyed — it casts ink outside the card, so
         it only draws on a plate the artifact owns; on a bare ground the lift
         pair carries elevation instead, trading depth for not banding an

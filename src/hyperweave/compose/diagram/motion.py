@@ -1,13 +1,16 @@
 """The closed edge-motion grammar's math — pure functions over config.
 
-Three kinetic pieces: dash march and particle riders (composite-only) plus
-the BEAM — a gradient-window comet pair on one shared relay clock
-(paint-ok; the recipe generalizes the frontier-handoff and parity-beam
-reference specimens). The beam animates
-gradient COORDINATES only (animateTransform on gradientTransform —
-transform-class CIM); geometry never moves. The flow tube grammar stays
-retired. All constants arrive from ``data/config/diagram-frame.yaml`` —
-this module owns formulas, not numbers.
+Three kinetic pieces: particle riders (composite-only — transform/opacity),
+the dash march (paint-ok — it marches ``stroke-dashoffset``, a Paint-stage
+property; corrected 2026-08-30 from a composite-only claim), and the BEAM —
+a gradient-window comet pair on one shared relay clock (paint-ok; the recipe
+generalizes the frontier-handoff and parity-beam reference specimens). The
+beam animates gradient COORDINATES only (animateTransform on
+gradientTransform — a paint-server transform, so the PAINT re-rasters while
+element geometry never moves). The flow tube grammar stays retired. Tier
+classification lives in ``motion_tiers`` (``data/config/diagram-frame.yaml``);
+all constants arrive from the same file — this module owns formulas, not
+numbers.
 """
 
 from __future__ import annotations
@@ -76,12 +79,19 @@ def resolve_track(motion: str, *, track_map: Mapping[str, str], semantic_dash: s
 
 
 def performance_tier(motions: Sequence[str], inert: Sequence[bool]) -> str:
-    """The beam animates PAINT (a gradient window over a static tube), so an
-    artifact carrying a rendered beam declares performance="paint-ok". The other
-    kinetic pieces (dash march, particle riders) animate transform/dashoffset
-    only — a beam-free artifact stays composite-only."""
+    """The tier DERIVES from the properties each rendered motion kind animates
+    (the ``motion_tiers`` table in ``diagram-frame.yaml``): any kind touching a
+    Paint-stage property is ``paint-ok``; transform/opacity kinds are
+    ``composite-only``. This replaced a single-enum predicate that equated
+    paint-stage with the beam while the default dash marched
+    ``stroke-dashoffset`` — Paint — on every artifact claiming composite-only
+    (corrected 2026-08-30; a composited dash implementation is recorded
+    future motion work)."""
     del inert
-    return "paint-ok" if any(m == EdgeMotion.BEAM.value for m in motions) else "composite-only"
+    from hyperweave.config.loader import load_diagram_config
+
+    tiers: Mapping[str, Any] = load_diagram_config().get("motion_tiers") or {}
+    return "paint-ok" if any((tiers.get(m) or {}).get("tier") == "paint-ok" for m in motions) else "composite-only"
 
 
 def replay_clock(

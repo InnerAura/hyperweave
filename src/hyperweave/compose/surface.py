@@ -503,5 +503,15 @@ def _validate_ir_structure(cspec: ComposeSpec) -> None:
         compose(cspec)
     except HwError:
         raise
+    except AssertionError as exc:
+        # A bare assert anywhere in the solve is an engine invariant failing,
+        # never the caller's spec — it must cross this boundary as a typed
+        # record, not escape validate as a traceback (the recorded failure)
+        # and never be misfiled under SPEC_INVALID.
+        raise HwError(
+            HwErrorCode.ENGINE_INVARIANT,
+            f"engine invariant failed while validating: {exc}",
+            fix="this is an engine fault, not a spec problem — report it with the spec that produced it",
+        ) from exc
     except (ValueError, TypeError) as exc:
         raise HwError(HwErrorCode.SPEC_INVALID, str(exc)) from exc

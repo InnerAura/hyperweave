@@ -75,14 +75,37 @@ def _diff_diagram(
     def _nodes(spec: dict[str, Any]) -> dict[str, dict[str, Any]]:
         return {str(n.get("id", n.get("label", i))): n for i, n in enumerate(spec.get("nodes", []))}
 
-    def _edges(spec: dict[str, Any]) -> set[str]:
-        return {f"{e.get('source')}->{e.get('target')}" for e in spec.get("edges", [])}
+    def _edges(spec: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        # Keyed records, not identity strings: edge identity is (source, target)
+        # plus a declaration-index discriminator when the pair repeats, so a
+        # label/relation/motion/guard/circuit change on an edge is visible
+        # instead of collapsing into "same".
+        recs: dict[str, dict[str, Any]] = {}
+        seen: dict[tuple[str, str], int] = {}
+        for e in spec.get("edges", []):
+            pair = (str(e.get("source")), str(e.get("target")))
+            n = seen.get(pair, 0)
+            seen[pair] = n + 1
+            key = f"{pair[0]}->{pair[1]}" + (f"#{n}" if n else "")
+            recs[key] = e
+        return recs
 
     na, nb = _nodes(a), _nodes(b)
     ea, eb = _edges(a), _edges(b)
-    added = {"nodes": [k for k in nb if k not in na], "edges": sorted(eb - ea)}
-    removed = {"nodes": [k for k in na if k not in nb], "edges": sorted(ea - eb)}
-    changed = [{"node": k, "from": na[k], "to": nb[k]} for k in na.keys() & nb.keys() if na[k] != nb[k]]
+    added = {"nodes": [k for k in nb if k not in na], "edges": sorted(eb.keys() - ea.keys())}
+    removed = {"nodes": [k for k in na if k not in nb], "edges": sorted(ea.keys() - eb.keys())}
+    changed: list[dict[str, Any]] = [
+        {"node": k, "from": na[k], "to": nb[k]} for k in na.keys() & nb.keys() if na[k] != nb[k]
+    ]
+    for k in sorted(ea.keys() & eb.keys()):
+        if ea[k] == eb[k]:
+            continue
+        fields = sorted(set(ea[k]) | set(eb[k]))
+        changed.extend(
+            {"edge": k, "field": f, "from": ea[k].get(f), "to": eb[k].get(f)}
+            for f in fields
+            if ea[k].get(f) != eb[k].get(f)
+        )
     return added, removed, changed
 
 

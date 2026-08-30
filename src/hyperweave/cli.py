@@ -9,7 +9,7 @@ from typing import Annotated, Any
 
 import typer
 
-from hyperweave.surfaces.refusals import caller_refusals, echo_refusal
+from hyperweave.surfaces.refusals import caller_refusals, echo_refusal, refusal_exit
 
 app = typer.Typer(
     name="hyperweave",
@@ -523,7 +523,7 @@ def _render_receipt_from_transcript(
         result = do_compose(spec)
     except caller_refusals() as exc:
         echo_refusal(exc)
-        raise typer.Exit(2) from exc
+        raise typer.Exit(refusal_exit(exc, default=2)) from exc
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(result.svg)
 
@@ -610,13 +610,16 @@ def validate(
         typer.Option("--spec-file", help="Same as the positional spec-file argument."),
     ] = None,
     spec: Annotated[str, typer.Option("--spec", help="Inline spec envelope or bare IR JSON.")] = "",
+    as_json: Annotated[
+        bool, typer.Option("--json", help="Print the full machine-readable report dict instead of prose.")
+    ] = False,
 ) -> None:
     """Validate a spec envelope, bare IR, or bundled preset name without rendering.
 
     Accepts the same shapes ``compose --spec-file``/``--spec`` accept: a
     ``{type, spec}`` envelope, bare diagram/matrix IR, or a bundled preset
     name (resolved against the diagram then matrix store). Exits non-zero
-    when invalid.
+    when invalid; ``--json`` emits the same report every other surface gets.
     """
     import json as _json
 
@@ -666,14 +669,21 @@ def validate(
         env = _sniff_validate_shape(data)
 
     report = validate_surface(env)
-    if report.get("valid"):
+    if as_json:
+        typer.echo(_json.dumps(report, indent=2))
+        if report.get("valid"):
+            return
+    elif report.get("valid"):
         typer.echo(f"valid: {report['type']} ({report['genome']})")
         return
     err = report.get("error", {})
-    typer.echo(f"INVALID [{err.get('code')}]: {err.get('message')}", err=True)
-    if err.get("fix"):
-        typer.echo(f"  fix: {err['fix']}", err=True)
-    raise typer.Exit(code=1)
+    if not as_json:
+        typer.echo(f"INVALID [{err.get('code')}]: {err.get('message')}", err=True)
+        if err.get("fix"):
+            typer.echo(f"  fix: {err['fix']}", err=True)
+    from hyperweave.core.errors import is_engine_fault_code
+
+    raise typer.Exit(code=70 if is_engine_fault_code(str(err.get("code"))) else 1)
 
 
 @app.command()
@@ -1252,7 +1262,7 @@ def compose(
                 face_result = do_compose(spec.model_copy(update={"palette": "fixed", "surface_face": face_name}))
             except caller_refusals() as exc:
                 echo_refusal(exc)
-                raise typer.Exit(2) from exc
+                raise typer.Exit(refusal_exit(exc, default=2)) from exc
             dest = output.with_name(f"{output.stem}-{face_name}{output.suffix}")
             dest.write_text(face_result.svg)
             typer.echo(f"Wrote {dest} ({face_result.width}x{face_result.height})", err=True)
@@ -1279,7 +1289,7 @@ def compose(
         result = do_compose(spec)
     except caller_refusals() as exc:
         echo_refusal(exc)
-        raise typer.Exit(2) from exc
+        raise typer.Exit(refusal_exit(exc, default=2)) from exc
 
     # Non-fatal normalization notes (e.g. a cyclic diagram declared as 'dag'
     # promoted to 'state-machine') go to stderr so they never corrupt bytes on
@@ -1384,7 +1394,7 @@ def compose(
             result = do_compose(spec.model_copy(update={"ground": "opaque", "palette": "fixed"}))
         except caller_refusals() as exc:
             echo_refusal(exc)
-            raise typer.Exit(2) from exc
+            raise typer.Exit(refusal_exit(exc, default=2)) from exc
 
     try:
         projection = project(result.svg, output_format, is_face=spec.surface_face != "")
