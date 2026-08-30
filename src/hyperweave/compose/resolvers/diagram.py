@@ -368,6 +368,9 @@ def resolve_diagram(
     context: dict[str, Any] = {
         "diagram_layout": layout,
         "diagram_chrome": spec.chrome,
+        # The comet's dual registers (loop-edges ruling): the normal register
+        # blooms through the fuse filter; composite-only keeps the bare stroke.
+        "performance_register": spec.performance == "composite-only",
         # Hero-ring ruling (2026-07-13): role:hero rings in the genome accent by
         # default; 'quiet' opts a spec back into the flat family border (herobg/
         # herocirclebg dispatch in primer-defs.j2).

@@ -133,14 +133,20 @@ def _is_adaptive(svg: str, *, is_face: bool) -> bool:
     return 'data-hw-adapt="adaptive"' in svg
 
 
-def project(svg: str, fmt: FormatId | str, *, max_width: int | None = None, is_face: bool = False) -> Projection:
+def project(
+    svg: str, fmt: FormatId | str, *, max_width: int | None = None, is_face: bool = False, face: str = ""
+) -> Projection:
     """Project a composed SVG into ``fmt``.
 
     ``svg`` (live), ``svg-static`` (flattened + de-animated), ``png``/``webp``
     (rasterized from the static projection). An adaptive-palette source is
-    rejected for every flattening format unless it is a face render. ``gif``
-    always raises ``FORMAT_UNAVAILABLE``; png/webp raise it when the ``[raster]``
-    extra is absent.
+    rejected for every flattening format unless it is a face render
+    (``is_face`` — the input was already committed at compose time) or the
+    caller selects a ``face`` to bake here (``"light"`` | ``"dark"`` — the
+    scheme media queries resolve before the flatten, so the static pipeline
+    knows which face it is committing; a destination profile's face policy is
+    the intended caller). ``gif`` always raises ``FORMAT_UNAVAILABLE``;
+    png/webp raise it when the ``[raster]`` extra is absent.
     """
     fid = fmt if isinstance(fmt, FormatId) else parse_format(fmt)
 
@@ -155,6 +161,19 @@ def project(svg: str, fmt: FormatId | str, *, max_width: int | None = None, is_f
             "gif output is not available",
             fix="use png for a static image or svg for motion",
         )
+
+    if face not in ("", "light", "dark"):
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"unknown face {face!r}",
+            fix="select face='light' or face='dark'",
+        )
+
+    if face and fid in _FLATTENING_FORMATS and _is_adaptive(svg, is_face=is_face):
+        from hyperweave.formats.static import bake_face
+
+        svg = bake_face(svg, face)
+        _ensure_parses(svg, stage="face-bake", fmt=fid.value)
 
     if fid in _FLATTENING_FORMATS and _is_adaptive(svg, is_face=is_face):
         raise HwError(

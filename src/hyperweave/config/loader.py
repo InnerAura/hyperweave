@@ -364,6 +364,20 @@ def load_kit_predicates() -> dict[str, dict[str, Any]]:
 
 
 @lru_cache(maxsize=1)
+def load_destination_profiles() -> dict[str, dict[str, Any]]:
+    """Load the destination contract from data/config/destinations.yaml.
+
+    ``{profile_id: profile}`` — where artifacts render: width (or range),
+    scale policy, dpr, font mode, surface and face policy, each width carrying
+    its dated ``basis``. The five profile ids are pinned at definition; the
+    scale gates (``formats/destinations.py``) evaluate against this table and
+    nothing else.
+    """
+    raw = _read_yaml(_data_path("config/destinations.yaml")) or {}
+    return dict(raw.get("profiles") or {})
+
+
+@lru_cache(maxsize=1)
 def load_diagram_presets() -> dict[str, dict[str, Any]]:
     """Load server-known diagram presets from data/presets/diagram.yaml.
 

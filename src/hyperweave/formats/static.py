@@ -373,6 +373,65 @@ _CDATA_BODY = re.compile(r"\A(\s*<!\[CDATA\[)(.*)(\]\]>\s*)\Z", re.DOTALL)
 _STYLE_ATTR = re.compile(r"""(\bstyle\s*=\s*)("([^"]*)"|'([^']*)')""")
 
 
+_SCHEME_MEDIA = re.compile(r"@media[^{]*prefers-color-scheme\s*:\s*(dark|light)[^{]*\{")
+
+
+def bake_face(svg: str, face: str) -> str:
+    """Commit ONE face of an adaptive artifact at projection time.
+
+    Every ``prefers-color-scheme`` media wrapper is resolved: the selected
+    face's body unwraps IN PLACE (dark rules already follow their base rules
+    under the pinned cascade mechanism, so unwrapping keeps them winning by
+    order), the other face's block deletes whole. Non-scheme media
+    (reduced-motion, forced-colors) are untouched. The committed face stamps
+    ``data-hw-face`` on the root — the same honesty mark a compose-time face
+    bake carries. Byte-span edits inside ``<style>`` bodies only.
+    """
+
+    def _one(css: str) -> str:
+        out: list[str] = []
+        i, n = 0, len(css)
+        while True:
+            m = _SCHEME_MEDIA.search(css, i)
+            if not m:
+                out.append(css[i:])
+                break
+            depth, j = 1, m.end()
+            while j < n and depth:
+                ch = css[j]
+                if ch in {'"', "'"}:
+                    j = _skip_string(css, j)
+                    continue
+                if css.startswith("/*", j):
+                    j = _skip_comment(css, j)
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                j += 1
+            out.append(css[i : m.start()])
+            if m.group(1) == face:
+                out.append(css[m.end() : j - 1])
+            i = j
+        return "".join(out)
+
+    def _sub(m: re.Match[str]) -> str:
+        body = m.group(2)
+        cd = _CDATA_BODY.match(body)
+        body = cd.group(1) + _one(cd.group(2)) + cd.group(3) if cd else _one(body)
+        return m.group(1) + body + m.group(3)
+
+    baked = _STYLE_ELEMENT.sub(_sub, svg)
+    # The root's claims follow the bytes: the artifact no longer adapts, and
+    # it carries a committed face — the same attribute shape a compose-time
+    # face render wears (the flatten guard reads both).
+    baked = re.sub(r'\s*data-hw-adapt="adaptive"', "", baked, count=1)
+    if "data-hw-face=" not in baked:
+        baked = baked.replace('data-hw-chromatic="', f'data-hw-face="{face}" data-hw-chromatic="', 1)
+    return baked
+
+
 def _rewrite_style_elements(svg: str) -> str:
     def _sub(m: re.Match[str]) -> str:
         body = m.group(2)

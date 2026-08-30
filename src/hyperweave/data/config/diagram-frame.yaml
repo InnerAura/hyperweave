@@ -404,10 +404,13 @@ choreography:
     pop_s: 0.034 # opacity ramps (0.42% of 8.04)
     fade_s: 0.088 # glow fade (1.1%)
     trail_stroke: 2.2 # the lit route's weight (the reference render draws 2.2)
-    # The comet head: a bright core trailed by two staggered washes —
-    # [stroke, opacity, delay_s] per layer, every corpus specimen unanimous
-    # (3.6 @ 1.00 / 5.4 @ .30 +0.058s / 7.5 @ .13 +0.115s).
-    pulse_layers: [[3.6, 1.0, 0.0], [5.4, 0.30, 0.058], [7.5, 0.13, 0.115]]
+    # The comet head (flywheel hand asset, owner ruling 2026-08-30): ONE
+    # rounded-cap 4.5 stroke + a two-pass bloom filter — tight core sigma 2.5
+    # @ .8 flood under a wide wash sigma 6 @ .4 — replaces the 3-layer
+    # animation-delay stack (temporal smear, bezier tearing). The performance
+    # register (composite-only) keeps the bare stroke, no filter.
+    pulse_stroke: 4.5
+    comet_bloom: [[2.5, 0.8], [6.0, 0.4]] # [stdDeviation, flood-opacity] per pass
     pulse_head: 18 # the head's dash length
     halo_stroke: 2 # arrival-halo outline width (the reference render rings at 2)
     halo_inflate: 0 # halos sit at the element's exact box (corpus law)

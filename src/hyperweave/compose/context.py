@@ -214,20 +214,53 @@ _TEXT_FIELDS_BY_FRAME: dict[str, tuple[str, ...]] = {
         "chart_axes",
         "chart_milestones",
         "chart_empty_state",
+        "chart_hero_label",
+        "chart_hero_suffix",
+        "chart_primer_callout_value",
+        "chart_primer_callout_label",
+        "chart_primer_subtitle",
+        "chart_primer_delta",
+        "chart_date_range",
+        "chart_x_labels",
+        "chart_y_labels",
     ),
-    "marquee": ("scroll_items",),
+    "marquee": ("scroll_items", "separator_glyph"),
     "matrix": ("matrix_text_surface",),
     "diagram": ("diagram_text_surface",),
     "receipt": ("receipt_text_surface",),
 }
 
-# Conservative baseline character set. Always included even when the
-# template's resolved text is sparse — covers axis tick labels, %
-# suffixes, numeric formatters, paren-wrapped clarifiers, and unicode
-# arrows / dots used in chrome/brutalist label glyphs.
-_SAFE_BASELINE: frozenset[str] = frozenset(
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .:,;-_/·→×%+()[]"  # noqa: RUF001  middle-dot / right-arrow / multiplication-sign are deliberate
-)
+# MEASURED baseline character sets (2026-08-30, tofu-gate rebuild) — cited
+# terms, nothing chosen, and PER-FRAME because template literals are:
+#   - _SHARED_LITERALS: literal codepoints inside <text>/<tspan> bodies of the
+#     shared templates (document root, components/, partials/, motions/) —
+#     text the ctx extractor can never see;
+#   - _FRAME_LITERALS: the same scan per frames/<frame>* — a strip's "=>"
+#     literal must not drag JetBrains Mono's coding-ligature glyph closure
+#     (calt/liga are pinned) into every diagram's subset, which is exactly
+#     what one global baseline did;
+#   - _FORMATTER_ALPHABET: glyphs render-time filters build from NUMERIC ctx
+#     values the collector skips — format_number's digits/./M/K, negatives'
+#     hyphen, truncate_text's ellipsis.
+# Everything else rides per-artifact extraction (_TEXT_FIELDS_BY_FRAME); the
+# tofu gate (tests/render/test_tofu_and_destinations.py) fails loudly on any
+# rendered codepoint the embedded subset misses — the insurance the old
+# 79-char guess-baseline rented in bytes, enforced instead. Re-run the scan
+# and update these when a template gains literal text; the gate is the drift
+# alarm.
+_SHARED_LITERALS = "AEGILNORS_ "
+_FORMATTER_ALPHABET = "0123456789.MK-…"
+_FRAME_LITERALS: dict[str, str] = {
+    "chart": "CDHPTUVWY·",
+    "divider": "§⚠",
+    "marquee": "V",
+    "receipt": "=eors·",
+    "stats": "/0235BCDHKPTVWY·—",
+}
+
+
+def _frame_baseline(frame_type: str) -> frozenset[str]:
+    return frozenset(_SHARED_LITERALS + _FORMATTER_ALPHABET + _FRAME_LITERALS.get(frame_type, ""))
 
 
 def _collect_text(value: Any, chars: set[str]) -> None:
@@ -242,7 +275,13 @@ def _collect_text(value: Any, chars: set[str]) -> None:
     if value is None:
         return
     if isinstance(value, str):
+        # Case CLOSURE, not just the literal string: templates uppercase
+        # labels (18 `| upper` sites) and stats lowercase handles — the
+        # rendered glyph is the transformed one, and the tofu gate holds the
+        # subset to what actually renders.
         chars.update(value)
+        chars.update(value.upper())
+        chars.update(value.lower())
         return
     if isinstance(value, list | tuple):
         for item in value:
@@ -253,6 +292,12 @@ def _collect_text(value: Any, chars: set[str]) -> None:
             if isinstance(k, str):
                 chars.update(k)
             _collect_text(v, chars)
+        return
+    text = getattr(value, "text", None)
+    if isinstance(text, str):
+        # Positioned text records (TextSpec and kin) carry their glyphs in a
+        # `.text` attribute the container walk above cannot see.
+        _collect_text(text, chars)
 
 
 def _extract_char_set(ctx: dict[str, Any], frame_type: str) -> frozenset[str]:
@@ -267,7 +312,7 @@ def _extract_char_set(ctx: dict[str, Any], frame_type: str) -> frozenset[str]:
     ``stats_username`` are visible) — see the ordering note on
     :func:`build_context`.
     """
-    chars: set[str] = set(_SAFE_BASELINE)
+    chars: set[str] = set(_frame_baseline(frame_type))
     for field in _TEXT_FIELDS_BY_FRAME.get(frame_type, ()):
         _collect_text(ctx.get(field), chars)
     return frozenset(chars)

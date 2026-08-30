@@ -908,12 +908,8 @@ def _emit(
     fade = _tcfg(engine, "fade_s", 0.088)
     halo_inflate = _tcfg(engine, "halo_inflate", 0.0)
     halo_op = _tcfg(engine, "halo_opacity", 1.0)
-    layers_raw = ((engine.get("choreography") or {}).get("turn") or {}).get("pulse_layers") or [
-        [3.6, 1.0, 0.0],
-        [5.4, 0.30, 0.058],
-        [7.5, 0.13, 0.115],
-    ]
-    pulse_layers = tuple((float(w), float(o), float(d)) for w, o, d in layers_raw)
+    bloom_raw = ((engine.get("choreography") or {}).get("turn") or {}).get("comet_bloom") or [[2.5, 0.8], [6.0, 0.4]]
+    comet_bloom = tuple((float(sd), float(op)) for sd, op in bloom_raw)
     conn_by_index = {c.index: c for c in layout.connectors}
     node_by_id = {n.node_id: n for n in layout.nodes}
     chip_by_edge = {a.edge_index: a for a in layout.annotations if a.kind == "edge-chip" and a.edge_index >= 0}
@@ -1094,6 +1090,7 @@ def _emit(
         marker_fades=marker_fades,
         marker_hues=marker_hues,
         trail_stroke=_tcfg(engine, "trail_stroke", 2.6),
-        pulse_layers=pulse_layers,
+        pulse_stroke=_tcfg(engine, "pulse_stroke", 4.5),
+        comet_bloom=comet_bloom,
         tints=tuple(tints),
     )
