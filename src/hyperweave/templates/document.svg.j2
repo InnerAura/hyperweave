@@ -37,8 +37,8 @@
 {% endif %}
 {% if inline_style_overrides | default('') %}     style="{{ inline_style_overrides }}"
 {% endif %}
-{% if surface_adapt | default(false) %}     id="{{ uid }}"
-     data-hw-adapt="{{ data_hw_adapt }}"
+     id="{{ uid }}"
+{% if surface_adapt | default(false) %}     data-hw-adapt="{{ data_hw_adapt }}"
      data-hw-ground="{{ surface_ground }}"
      data-hw-surface="{{ surface_preset }}"
 {% endif %}

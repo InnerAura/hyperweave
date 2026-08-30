@@ -264,5 +264,8 @@ class TestLaw3PaletteDerivation:
                 type="diagram", genome_id="primer", variant="porcelain", diagram=resolve_diagram_preset("lanes")
             )
         ).svg
-        flow_classes = set(re.findall(r"-fl(\d+) \{", svg))
-        assert len(flow_classes) >= 3, flow_classes  # categorical hues engaged
+        # Lanes consume the categorical palette through --dna-flow-N tokens in
+        # the body (the .uid-flN class rules belong to topologies that put the
+        # class on edges; the emit-time finisher drops them when unmatched).
+        flow_tokens = set(re.findall(r"--dna-flow-(\d+)", svg))
+        assert len(flow_tokens) >= 3, flow_tokens  # categorical hues engaged

@@ -27,10 +27,28 @@ PHI_BEATS = (1.618, 2.618, 4.236, 6.854)
 """The motion grammar's own timing ladder — the beats a reviewer samples at."""
 
 _INLINE_ANIM = re.compile(r"animation:\s*(hw-[\w]+-ch\d+)\s+([\d.]+)s[^;\"']*;?")
-_KEYFRAMES_BLOCK = re.compile(r"@keyframes\s+(hw-[\w]+-ch\d+)\s*\{(.*?)\n\s*\}", re.DOTALL)
+_KEYFRAMES_HEAD = re.compile(r"@keyframes\s+(hw-[\w]+-ch\d+)\s*\{")
 _STOP = re.compile(r"([\d.]+)%\s*\{([^}]*)\}")
 _NUMERIC_DECL = re.compile(r"(stroke-dashoffset|opacity)\s*:\s*(-?[\d.]+)")
 _STYLE_ATTR = re.compile(r'style="([^"]*)"')
+
+
+def _keyframes_bodies(svg: str) -> list[tuple[str, str]]:
+    """Every channel ``@keyframes`` block as ``(name, inner_body)``, extracted
+    by brace walking — a regex anchored on formatting silently merged all
+    channels into the first block's body when the emitter wrote them on one
+    line, leaving every channel but the first unsampled."""
+    out: list[tuple[str, str]] = []
+    for m in _KEYFRAMES_HEAD.finditer(svg):
+        depth, i = 1, m.end()
+        while i < len(svg) and depth:
+            if svg[i] == "{":
+                depth += 1
+            elif svg[i] == "}":
+                depth -= 1
+            i += 1
+        out.append((m.group(1), svg[m.end() : i - 1]))
+    return out
 
 
 def _channel_stops(svg: str) -> dict[str, list[tuple[float, dict[str, float]]]]:
@@ -38,7 +56,7 @@ def _channel_stops(svg: str) -> dict[str, list[tuple[float, dict[str, float]]]]:
     artifact's own ``@keyframes`` blocks. Duplicate percents (the engine's
     easing-boundary idiom) keep the last declaration, matching CSS."""
     out: dict[str, list[tuple[float, dict[str, float]]]] = {}
-    for name, body in _KEYFRAMES_BLOCK.findall(svg):
+    for name, body in _keyframes_bodies(svg):
         stops: dict[float, dict[str, float]] = {}
         for pct, decls in _STOP.findall(body):
             props = {p: float(v) for p, v in _NUMERIC_DECL.findall(decls)}

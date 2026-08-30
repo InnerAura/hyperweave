@@ -361,34 +361,45 @@ def _compose_surface_svg(variant: str, ground: str, palette: str, face: str = ""
     ).svg
 
 
+def _dark_spans(norm: str) -> list[tuple[int, int]]:
+    """Inner-body span of every dark @media wrapper, brace-walked — the
+    emit-time finisher merges each stylesheet's dark rules into one wrapper,
+    so line adjacency no longer locates the branch; containment does."""
+    spans: list[tuple[int, int]] = []
+    for m in re.finditer(re.escape(_DARK_WRAPPER[:-1]) + r"\s*\{", norm):
+        depth, i = 1, m.end()
+        while i < len(norm) and depth:
+            if norm[i] == "{":
+                depth += 1
+            elif norm[i] == "}":
+                depth -= 1
+            i += 1
+        spans.append((m.end(), i - 1))
+    return spans
+
+
 def _material_block(svg: str) -> list[str]:
     """The dark material override block as uid-normalized lines: from the
-    ``#UID { --dna-signal:`` rule to the block's end (the wrapper's lone ``}``
-    on an adaptive render, ``</style>`` on a committed one). Empty when the
-    render carries no material."""
-    out: list[str] = []
-    taking = False
-    for ln in _UID_NORM.sub("UID", svg).splitlines():
-        if not taking and ln.startswith("#UID { --dna-signal:"):
-            taking = True
-        if taking:
-            if ln.strip() in ("}", "</style>"):
-                break
-            if ln.strip():
-                out.append(ln)
-    return out
+    ``#UID { --dna-signal:`` rule to the end of its enclosing dark wrapper
+    (adaptive) or to ``</style>`` (committed). Empty when the render carries
+    no material."""
+    norm = _UID_NORM.sub("UID", svg)
+    start = norm.find("#UID { --dna-signal:")
+    if start == -1:
+        return []
+    end = next((e for s, e in _dark_spans(norm) if s <= start < e), norm.index("</style>", start))
+    return [ln for ln in norm[start:end].splitlines() if ln.strip()]
 
 
 def _material_scope(svg: str) -> str:
     """``none`` (no material block), ``committed`` (declared bare, wins the
     cascade on the render's one scheme) or ``dark-branch`` (inside the dark
     @media wrapper of an adaptive render)."""
-    lines = _UID_NORM.sub("UID", svg).splitlines()
-    for i, ln in enumerate(lines):
-        if ln.startswith("#UID { --dna-signal:"):
-            prev = next((p for p in reversed(lines[:i]) if p.strip()), "")
-            return "dark-branch" if prev.strip() == _DARK_WRAPPER else "committed"
-    return "none"
+    norm = _UID_NORM.sub("UID", svg)
+    start = norm.find("#UID { --dna-signal:")
+    if start == -1:
+        return "none"
+    return "dark-branch" if any(s <= start < e for s, e in _dark_spans(norm)) else "committed"
 
 
 @pytest.mark.parametrize(("variant", "substrate"), [("porcelain", "light"), ("noir", "dark")])
