@@ -579,14 +579,17 @@ class ChoreographyPlan:
     """connector_index -> hue class letter: the popping arrowhead rides its
     leg's own hue, exactly like the trail beneath it."""
     trail_stroke: float = 2.6
-    pulse_layers: tuple[tuple[float, float, float], ...] = (
-        (3.6, 1.0, 0.0),
-        (5.4, 0.30, 0.058),
-        (7.5, 0.13, 0.115),
-    )
-    """The comet head riding the drawing tip: (stroke, opacity, delay_s)
-    per layer — a bright core trailed by two staggered translucent washes,
-    every corpus specimen unanimous on the trio."""
+    pulse_stroke: float = 4.5
+    """The comet head riding the drawing tip: ONE rounded-cap stroke whose
+    glowing tail comes from the bloom filter, extracted from the flywheel
+    hand asset (owner ruling 2026-08-30) — the 3-layer animation-delay
+    stack it replaces smeared the head temporally and tore on bezier
+    acceleration."""
+    comet_bloom: tuple[tuple[float, float], ...] = ((2.5, 0.8), (6.0, 0.4))
+    """(stdDeviation, flood-opacity) per bloom pass of the comet fuse filter
+    — the hand asset's tight-core + wide-wash pair. The performance register
+    (``performance=composite-only``) drops the filter and keeps the bare
+    stroke."""
     tints: tuple[ChipTint, ...] = ()
     """Chips lighting up as their leg fires — the corpus's tint groups."""
 

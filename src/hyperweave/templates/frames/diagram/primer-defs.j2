@@ -125,6 +125,16 @@
   <feGaussianBlur stdDeviation="{{ diagram_style.beam_glow_blur }}"/>
 </filter>
 {% endif %}
+{% if diagram_layout.choreography and not performance_register %}{# The comet
+   fuse (flywheel hand asset): the pulse's glowing tail is a two-pass bloom
+   on ONE rounded stroke, per hue actually pulsed. Floods stamp the near
+   face literally (the rasterizer's var()-in-attribute bug); adaptive
+   renders re-tint via the id-scoped CSS rule after the shadow override. #}
+{% set fuse_flood = {'A': _genome_raw.accent, 'N': _genome_raw.ink_secondary, 'C': _genome_raw.diagram_complement, 'W': _genome_raw.diagram_deliberation} %}
+{% for hue in diagram_layout.choreography.pulses | map(attribute='hue') | unique %}<filter id="{{ uid }}-fuse{{ hue }}" x="-50%" y="-50%" width="200%" height="200%">
+{% for pass_sd, pass_op in diagram_layout.choreography.comet_bloom %}  <feDropShadow dx="0" dy="0" stdDeviation="{{ pass_sd }}" flood-color="{{ fuse_flood[hue] }}" flood-opacity="{{ pass_op }}"/>
+{% endfor %}</filter>
+{% endfor %}{% endif %}
 {% for gp in diagram_layout.gathers %}{% if gp.clip_shape %}{# Gather-ring occlusion (refined-fanout: v04/specimens/artifacts/diagrams/diagrams-v04a6/primer-diagrams/
    primer-fanout-refined.html — bezel at the mouth, the node occludes the
    inward half): clip the ring+core to the OUTSIDE of the seat's own node
@@ -390,7 +400,7 @@
 .{{ uid }}-trl { fill: none; stroke-width: {{ choreo.trail_stroke }}; stroke-linecap: butt; }
 .{{ uid }}-trlA { stroke: var(--dna-signal); }
 .{{ uid }}-trlN { stroke: var(--dna-ink-muted); }
-.{{ uid }}-pu { fill: none; stroke-linecap: butt; }
+.{{ uid }}-pu { fill: none; stroke-linecap: round; stroke-width: {{ choreo.pulse_stroke }}; }
 .{{ uid }}-puA { stroke: var(--dna-signal); }
 .{{ uid }}-puN { stroke: var(--dna-ink-muted); }
 .{{ uid }}-hdo { opacity: 0; }
@@ -433,7 +443,15 @@
    browser-only, so the rasterizer's var()-in-attribute bug is unreachable here.
    --dna-diagram-shadow-color flips in the @media(prefers-color-scheme) far block. #}
 {% if surface_adapt %}#{{ uid }} feDropShadow { flood-color: var(--dna-diagram-shadow-color); }
-{% endif %}
+{% if choreo and not performance_register %}{# Comet fuse floods: AFTER the
+   blanket shadow re-tint (equal specificity, later wins) so the bloom keeps
+   its hue on both faces. Rules for hues no pulse uses reference filter ids
+   that don't exist — the emit-time finisher drops them. #}
+#{{ uid }}-fuseA feDropShadow { flood-color: var(--dna-signal); }
+#{{ uid }}-fuseN feDropShadow { flood-color: var(--dna-ink-muted); }
+#{{ uid }}-fuseC feDropShadow { flood-color: var(--dna-diagram-complement); }
+#{{ uid }}-fuseW feDropShadow { flood-color: var(--dna-diagram-deliberation); }
+{% endif %}{% endif %}
 @media (prefers-reduced-motion: reduce) {
   .{{ uid }}-branch, .{{ uid }}-in { animation: none !important; }
   .{{ uid }}-p, .{{ uid }}-light { display: none !important; }

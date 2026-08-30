@@ -79,8 +79,8 @@
    cards (the corpus lights the card's own border). Pure substitution. #}
 {% for tr in lay.choreography.trails %}  <path d="{{ tr.route_d }}" class="{{ uid }}-trl {{ uid }}-trl{{ tr.hue }}" stroke-dasharray="{{ tr.dasharray }}" stroke-dashoffset="{{ tr.rest_offset }}" style="animation:{{ uid }}-ch{{ tr.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
 {% endfor %}
-{% for p in lay.choreography.pulses %}{% for layer in lay.choreography.pulse_layers | reverse %}  <path d="{{ p.route_d }}" class="{{ uid }}-pu {{ uid }}-pu{{ p.hue }}" stroke-width="{{ layer[0] }}" opacity="{{ layer[1] }}" stroke-dasharray="{{ p.dasharray }}" stroke-dashoffset="{{ p.rest_offset }}" style="animation:{{ uid }}-ch{{ p.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite{% if layer[2] %}; animation-delay:{{ layer[2] }}s{% endif %}"/>
-{% endfor %}{% endfor %}
+{% for p in lay.choreography.pulses %}  <path d="{{ p.route_d }}" class="{{ uid }}-pu {{ uid }}-pu{{ p.hue }}" stroke-dasharray="{{ p.dasharray }}" stroke-dashoffset="{{ p.rest_offset }}"{% if not performance_register %} filter="url(#{{ uid }}-fuse{{ p.hue }})"{% endif %} style="animation:{{ uid }}-ch{{ p.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% endfor %}
 {% for k, anim in lay.choreography.marker_fades.items() %}  <path d="{{ lay.connectors[k].marker_d }}" class="{{ uid }}-hdo {{ uid }}-hdo{{ lay.choreography.marker_hues.get(k, 'A') }}" style="animation:{{ uid }}-ch{{ anim }} {{ lay.choreography.super_period_s }}s linear infinite"/>
 {% endfor %}
 {% endif %}

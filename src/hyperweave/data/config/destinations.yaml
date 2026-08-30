@@ -1,0 +1,78 @@
+# Destination contract — where artifacts actually render (Stage 4 slice).
+#
+# The FIVE profile ids are pinned at definition (r7 ruling): standalone ·
+# github-readme · landing-hero · slides · chat-raster. Stage 6 appends
+# corpus-derived geometry bands to these same objects; Stage 7 appends
+# per-profile resource policy. Never a sixth id without a ruling.
+#
+# Every width is measured or derived with its terms written down and DATED in
+# `basis` — a width nobody can re-derive is a gate against a guess. Responsive
+# destinations record a RANGE; the scale gates apply at the range MINIMUM
+# (min_width / viewBox_width), so a failing verdict at a destination's floor
+# is a true fact about density there, not a corpus wall — `standalone` is the
+# default compose target and carries the identity policy.
+#
+# face_policy vocabulary:
+#   media                — the artifact's own @media picks the face at view time
+#   media-chromium-only  — img contexts: Chromium/Firefox evaluate the scheme
+#                          query, WebKit serves the base face (MQ5, CSSWG #7213)
+#   baked                — one face committed at projection (project(face=...))
+profiles:
+  standalone:
+    render_width: null
+    scale_policy: identity # viewBox width == render width (svg-optimize V.2 law)
+    dpr: 1
+    font_mode: embed
+    surface: adaptive
+    face_policy: media
+    basis: >-
+      Policy, not measurement: a standalone file has no embedding column, so the
+      design width IS the delivery width (design-at-delivery-scale law).
+  github-readme:
+    render_width: { min: 256, max: 896 }
+    scale_policy: fit-column
+    dpr: 2
+    font_mode: embed # an img context loads no external resources; cdn fonts are invalid here
+    surface: adaptive
+    face_policy: media-chromium-only
+    basis: >-
+      Derived 2026-08-30 from GitHub Primer first-party docs
+      (primer.style/foundations/layout, fetched 2026-08-30): page layouts cap at
+      xlarge 1280; minus the repo Layout sidebar (~296), column gap and README
+      padding, the desktop README column lands ~896. Floor: the 320 xsmall
+      breakpoint minus 2x32 README padding = 256. The sidebar/padding terms are
+      Primer-token-derived estimates pending a devtools measurement — replace
+      them with measured values and re-date when taken.
+  landing-hero:
+    render_width: null
+    scale_policy: identity
+    dpr: 2
+    font_mode: embed
+    surface: adaptive
+    face_policy: media
+    basis: >-
+      UNMEASURED — no live landing page to cite (hyperweave.app returned 404,
+      2026-08-30). Inherits the standalone identity policy until the landing
+      ships; measure its container and re-date then.
+  slides:
+    render_width: { min: 960, max: 1920 }
+    scale_policy: fit-column
+    dpr: 1
+    font_mode: embed
+    surface: fixed
+    face_policy: baked
+    basis: >-
+      16:9 canvas format constants — 720p (1280) and 1080p (1920) frame widths,
+      artifact placed full-bleed with 960 as the half-frame floor for two-up
+      layouts. Format-defined, dated 2026-08-30.
+  chat-raster:
+    render_width: null
+    scale_policy: caller # the requested raster pixel width IS the render width
+    dpr: 1
+    font_mode: embed
+    surface: fixed
+    face_policy: baked
+    basis: >-
+      Policy (dated 2026-08-30): png/webp exports carry an explicit pixel
+      width, so the scale term is raster_width / viewBox_width — supplied per
+      call, never assumed.
