@@ -559,7 +559,11 @@ material:
   bevel_rim_turn: "0.4" # where the rim leaves its crown highlight
   bevel_rim_mix: 0.5 # rim foot = the muted wire tone carried this far to muted ink
   grain_base_frequency: "1.6"
-  grain_octaves: "2"
+  # One octave: the dither works at +/-1 LSB regardless of octave stack, and
+  # the second octave (base frequency 3.2, ~0.3px wavelength) is beyond
+  # Nyquist at every delivery scale — pure aliasing compute. Halves the cost
+  # of the most expensive primitive in the material chain.
+  grain_octaves: "1"
   grain_seed: "19"
   grain_tint: "0.04"
   grain_alpha: "0.08"

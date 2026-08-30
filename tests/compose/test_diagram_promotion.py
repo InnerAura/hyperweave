@@ -285,9 +285,20 @@ _ARCHITECTURE_DAG = {
 }
 
 _CHIP_RECT_RE = re.compile(
-    r'<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"[^>]*class="hw-[0-9a-f]+-r?chipbg"'
+    r'<rect (?:aria-hidden="true" )?x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"'
+    r'[^>]*class="hw-[0-9a-f]+-r?chipbg"'
 )
-_DESC_RE = re.compile(r'class="hw-[0-9a-f]+-[nmh]desc"[^>]*>([^<]*)</text>')
+_DESC_TEXT_RE = re.compile(r'class="hw-[0-9a-f]+-[nmh]desc"[^>]*>(.*?)</text>', re.DOTALL)
+
+
+def _desc_rows(svg: str) -> list[str]:
+    """Caption rows: a plain desc ``<text>`` or each positioned ``<tspan>``
+    of a consolidated multi-line stack."""
+    rows: list[str] = []
+    for body in _DESC_TEXT_RE.findall(svg):
+        spans = re.findall(r"<tspan[^>]*>([^<]*)</tspan>", body)
+        rows.extend(spans if spans else [body])
+    return rows
 
 
 def _layout_of(spec_dict: dict[str, Any]) -> Any:
@@ -350,7 +361,7 @@ class TestArchitectureRenderAsAStateMachine:
     def test_captions_grow_their_card_instead_of_ellipsizing(self) -> None:
         # Three of these five captions outrun a single line. Under the
         # inherited one-line budget each lost its tail to an ellipsis.
-        descs = _DESC_RE.findall(self._svg())
+        descs = _desc_rows(self._svg())
         assert descs, "no node captions rendered"
         truncated = [d for d in descs if d.rstrip().endswith("…")]
         assert truncated == [], f"captions truncated: {truncated}"
@@ -358,7 +369,7 @@ class TestArchitectureRenderAsAStateMachine:
     def test_every_caption_survives_whole(self) -> None:
         # Stronger than "no ellipsis": the wrapped runs must reassemble into
         # the authored caption, so a silent mid-word drop cannot pass either.
-        rendered = " ".join(_DESC_RE.findall(self._svg())).replace("&amp;", "&")
+        rendered = " ".join(_desc_rows(self._svg())).replace("&amp;", "&")
         for node in _ARCHITECTURE_DAG["nodes"]:
             assert node["desc"] in rendered, f"caption lost: {node['desc']!r}"  # type: ignore[index]
 

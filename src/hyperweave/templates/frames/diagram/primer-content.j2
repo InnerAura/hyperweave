@@ -21,27 +21,28 @@
 {% for w in lay.wire_legend %}
 {% set wlstroke = (uid ~ '-fls') if w.accent else ((uid ~ '-connmuted') if conn_muted else (uid ~ '-fls')) %}
 {% set wlfill = (uid ~ '-flps') if w.accent else ((uid ~ '-connmutedf') if conn_muted else (uid ~ '-flps')) %}
-  <path d="{{ w.stub_d }}" class="{{ uid }}-branch {{ wlstroke }}{% if w.drift %} {{ uid }}-retdrift{% endif %}"/>
-  <path d="{{ w.marker_d }}" class="{{ uid }}-mk {{ wlfill }}"/>
+  <path aria-hidden="true" d="{{ w.stub_d }}" class="{{ uid }}-branch {{ wlstroke }}{% if w.drift %} {{ uid }}-retdrift{% endif %}"/>
+  <path aria-hidden="true" d="{{ w.marker_d }}" class="{{ uid }}-mk {{ wlfill }}"/>
   <text x="{{ w.label.x }}" y="{{ w.label.y }}" class="{{ uid }}-{{ w.label.cls }}">{{ w.label.text | xml_escape }}</text>
 {% endfor %}
-{% for l in lay.lifelines %}  <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" class="{{ uid }}-life{{ 'h' if loop.index0 == lay.hero_lifeline_index else '' }}"/>
+{% for l in lay.lifelines %}  <line aria-hidden="true" x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" class="{{ uid }}-life{{ 'h' if loop.index0 == lay.hero_lifeline_index else '' }}"/>
 {% endfor %}
-{% for a in lay.activations %}  <rect x="{{ a.x }}" y="{{ a.y }}" width="{{ a.w }}" height="{{ a.h }}" rx="{{ a.rx }}" class="{{ uid }}-act{{ 'h' if loop.index0 == lay.hero_activation_index else '' }}"/>
+{% for a in lay.activations %}  <rect aria-hidden="true" x="{{ a.x }}" y="{{ a.y }}" width="{{ a.w }}" height="{{ a.h }}" rx="{{ a.rx }}" class="{{ uid }}-act{{ 'h' if loop.index0 == lay.hero_activation_index else '' }}"/>
 {% endfor %}
-{% if lay.time_axis %}  <path d="{{ lay.time_axis.stub_d }}" class="{{ uid }}-taxis"/>
-  <path d="{{ lay.time_axis.marker_d }}" class="{{ uid }}-taxism"/>
+{% if lay.time_axis %}  <path aria-hidden="true" d="{{ lay.time_axis.stub_d }}" class="{{ uid }}-taxis"/>
+  <path aria-hidden="true" d="{{ lay.time_axis.marker_d }}" class="{{ uid }}-taxism"/>
   <text x="{{ lay.time_axis.label.x }}" y="{{ lay.time_axis.label.y }}" class="{{ uid }}-{{ lay.time_axis.label.cls }}">{{ lay.time_axis.label.text | xml_escape }}</text>
 {% endif %}
 {# Lanes category bands (the lanes solver fills lay.lane_bands; empty for every
    other topology). Bands paint beneath connectors so wires cross them. The
    ground knob rides band DATA: 'panel' draws the contained rect; 'typographic'
    dissolves it into header + count + one hairline rule (the obi-engine flagship). #}
-{% for band in lay.lane_bands %}{% if band.ground == 'panel' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-laneband"/>
-{% endif %}{% if band.ground == 'enclosure' %}  <rect x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-{{ 'outline' if band.outline else 'encl' }}"{% if band.dash %} stroke-dasharray="{{ band.dash }}"{% endif %}/>
+{% for band in lay.lane_bands %}{% if band.ground == 'panel' %}  <rect aria-hidden="true" x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-laneband"/>
+{% endif %}{% if band.ground == 'enclosure' %}  <rect aria-hidden="true" x="{{ band.box.x }}" y="{{ band.box.y }}" width="{{ band.box.w }}" height="{{ band.box.h }}" rx="{{ band.box.rx }}" class="{{ uid }}-{{ 'outline' if band.outline else 'encl' }}"{% if band.dash %} stroke-dasharray="{{ band.dash }}"{% endif %}/>
 
-{% endif %}{% if band.rule %}  <line x1="{{ band.rule.x1 }}" y1="{{ band.rule.y1 }}" x2="{{ band.rule.x2 }}" y2="{{ band.rule.y2 }}" class="{{ uid }}-lanerule"/>
+{% endif %}{% if band.rule %}  <line aria-hidden="true" x1="{{ band.rule.x1 }}" y1="{{ band.rule.y1 }}" x2="{{ band.rule.x2 }}" y2="{{ band.rule.y2 }}" class="{{ uid }}-lanerule"/>
 {% endif %}{% endfor %}
+<g aria-hidden="true">
 {% for c in lay.connectors %}
 {# Partition-pair chromatics: an ink-group wire strokes ink, its accent-group
    twin takes the flow hue — one decision per GROUP, resolved in compose. #}
@@ -106,6 +107,7 @@
 {% endif %}
 {% if lay.initial_stub %}  <line x1="{{ lay.initial_stub.x1 }}" y1="{{ lay.initial_stub.y1 }}" x2="{{ lay.initial_stub.x2 }}" y2="{{ lay.initial_stub.y2 }}" class="{{ uid }}-stub"/>
 {% endif %}
+</g>
 {% for n in lay.nodes %}
 {# A circle carries no card plate (kit anatomy: a bare ring on the paper) —
    its own bg classes, never the card/hero fill. #}
@@ -136,18 +138,23 @@
    independently on the same card. #}
 {% if n.health %}  <circle cx="{{ n.health_dot[0] }}" cy="{{ n.health_dot[1] }}" r="{{ diagram_style.health_dot_r }}" class="{{ uid }}-{{ 'crit' if n.health == 'vulnerable' else 'warn' }}{% if n.health == 'vulnerable' %} {{ uid }}-critp{% endif %}"/>
 {% endif %}
-{% if n.glyph %}{% set glyph_hue_cls = (uid ~ '-fl' ~ n.glyph.accent_index) if n.glyph.tint == 'hue' else '' %}{% if n.glyph.stroke_w %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal or n.glyph.comp %} class="{{ glyph_hue_cls if glyph_hue_cls else (uid ~ ('-fls' if n.glyph.signal else '-flcomp')) }}"{% endif %} fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ n.glyph.gradient ~ ')') if n.glyph.gradient else n.glyph.fill }}" stroke-width="{{ n.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ n.glyph.opacity }}">
-{% else %}  <g transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal %} class="{{ (uid ~ '-flp' ~ n.glyph.accent_index) if glyph_hue_cls else (uid ~ '-flps') }}"{% endif %}{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
+{% if n.glyph %}{% set glyph_hue_cls = (uid ~ '-fl' ~ n.glyph.accent_index) if n.glyph.tint == 'hue' else '' %}{% if n.glyph.stroke_w %}  <g aria-hidden="true" transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal or n.glyph.comp %} class="{{ glyph_hue_cls if glyph_hue_cls else (uid ~ ('-fls' if n.glyph.signal else '-flcomp')) }}"{% endif %} fill="none" stroke="{{ ('url(#' ~ uid ~ '-gg-' ~ n.glyph.gradient ~ ')') if n.glyph.gradient else n.glyph.fill }}" stroke-width="{{ n.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ n.glyph.opacity }}">
+{% else %}  <g aria-hidden="true" transform="{{ n.glyph.transform }}"{% if glyph_hue_cls or n.glyph.signal %} class="{{ (uid ~ '-flp' ~ n.glyph.accent_index) if glyph_hue_cls else (uid ~ '-flps') }}"{% endif %}{% if n.glyph.gradient %} fill="url(#{{ uid }}-gg-{{ n.glyph.gradient }})"{% elif n.glyph.fill %} fill="{{ n.glyph.fill }}"{% endif %}{% if n.glyph.fill_rule %} fill-rule="{{ n.glyph.fill_rule }}"{% endif %} opacity="{{ n.glyph.opacity }}">
 {% endif %}
 {% for gp in n.glyph.paths %}    <path d="{{ gp.d }}"{% if gp.fill %} fill="{{ gp.fill }}"{% endif %}/>
 {% endfor %}  </g>
 {% endif %}
   <text x="{{ n.label.x }}" y="{{ n.label.y }}"{% if n.label.anchor != 'start' %} text-anchor="{{ n.label.anchor }}"{% endif %} class="{{ uid }}-{{ n.label.cls }}{% if n.role == 'muted' and n.label.cls in ('nlbl', 'hlbl') %} {{ uid }}-nmuted{% endif %}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ n.label.text | xml_escape }}</text>
-{% for line in n.label_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ line.text | xml_escape }}</text>
-{% endfor %}
-{% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if n.role == 'muted' and line.cls in ('nval', 'hval') %} {{ uid }}-nmuted{% endif %}">{{ line.text | xml_escape }}</text>
-{% endfor %}
-{% for cb in n.chip_boxes %}  <rect x="{{ cb.x }}" y="{{ cb.y }}" width="{{ cb.w }}" height="{{ cb.h }}" rx="{{ cb.rx }}" class="{{ uid }}-chipbg"/>
+{# Multi-line stacks consolidate to one <text> of <tspan> rows (uniform
+   cls/anchor/x per stack by solver construction) — one layout object per
+   stack instead of one per line. Single lines keep the plain form. #}
+{% if n.label_lines | length > 1 %}  <text{% if n.label_lines[0].anchor != 'start' %} text-anchor="{{ n.label_lines[0].anchor }}"{% endif %} class="{{ uid }}-{{ n.label_lines[0].cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{% for line in n.label_lines %}<tspan x="{{ line.x }}" y="{{ line.y }}">{{ line.text | xml_escape }}</tspan>{% endfor %}</text>
+{% else %}{% for line in n.label_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if n.label_accent %} {{ uid }}-flp{{ n.accent_index }}{% endif %}">{{ line.text | xml_escape }}</text>
+{% endfor %}{% endif %}
+{% if n.desc_lines | length > 1 %}  <text{% if n.desc_lines[0].anchor != 'start' %} text-anchor="{{ n.desc_lines[0].anchor }}"{% endif %} class="{{ uid }}-{{ n.desc_lines[0].cls }}{% if n.role == 'muted' and n.desc_lines[0].cls in ('nval', 'hval') %} {{ uid }}-nmuted{% endif %}">{% for line in n.desc_lines %}<tspan x="{{ line.x }}" y="{{ line.y }}">{{ line.text | xml_escape }}</tspan>{% endfor %}</text>
+{% else %}{% for line in n.desc_lines %}  <text x="{{ line.x }}" y="{{ line.y }}"{% if line.anchor != 'start' %} text-anchor="{{ line.anchor }}"{% endif %} class="{{ uid }}-{{ line.cls }}{% if n.role == 'muted' and line.cls in ('nval', 'hval') %} {{ uid }}-nmuted{% endif %}">{{ line.text | xml_escape }}</text>
+{% endfor %}{% endif %}
+{% for cb in n.chip_boxes %}  <rect aria-hidden="true" x="{{ cb.x }}" y="{{ cb.y }}" width="{{ cb.w }}" height="{{ cb.h }}" rx="{{ cb.rx }}" class="{{ uid }}-chipbg"/>
 {% endfor %}
 {# sec 12.1 nested composition: the inner artifact is a complete bare-chrome
    document riding a scaled child <svg> — its own uid-scoped styles travel
@@ -167,19 +174,19 @@
    rises. Zero arithmetic: every coordinate is pre-solved. #}
 {% for a in lay.annotations %}
 {% set acc_cls = (uid ~ '-flp' ~ a.accent_index) if a.accent_index >= 0 else '' %}
-{% if a.leader %}  <path d="{{ a.leader }}" class="{{ uid }}-lead"/>
+{% if a.leader %}  <path aria-hidden="true" d="{{ a.leader }}" class="{{ uid }}-lead"/>
 {% endif %}
-{% if a.box and a.kind == 'edge-chip' %}  <rect x="{{ a.box.x }}" y="{{ a.box.y }}" width="{{ a.box.w }}" height="{{ a.box.h }}" rx="{{ a.box.rx }}" class="{{ uid }}-chipbg"/>
+{% if a.box and a.kind == 'edge-chip' %}  <rect aria-hidden="true" x="{{ a.box.x }}" y="{{ a.box.y }}" width="{{ a.box.w }}" height="{{ a.box.h }}" rx="{{ a.box.rx }}" class="{{ uid }}-chipbg"/>
 {% endif %}
 {% for e in a.entries %}{% if e.swatch_r > 0 %}
-{% if e.health %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-{{ 'crit' if e.health == 'vulnerable' else 'warn' }}"/>
-{% elif e.swatch_shape == 'diamond' or e.swatch_shape == 'square' %}  <path d="{{ e.swatch_path }}" class="{{ (uid ~ '-flp' ~ e.accent_index) if e.accent_index >= 0 else (uid ~ '-idot') }}"/>
-{% elif e.swatch_shape == 'line' %}  <path d="{{ e.swatch_path }}" class="{{ uid }}-branch {{ uid }}-connmuted"/>
-{% elif e.swatch_shape == 'line-dashed' %}  <path d="{{ e.swatch_path }}" class="{{ uid }}-branch {{ uid }}-connmuted" stroke-dasharray="{{ diagram_style.legend_dash }}"/>
-{% elif e.swatch_shape == 'ring' %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-mkr"/>
-{% elif e.swatch_shape == 'disc' %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-idot"/>
-{% elif e.swatch_shape == 'disc-muted' %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-mkx"/>
-{% else %}  <circle cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ (uid ~ '-flp' ~ e.accent_index) if e.accent_index >= 0 else (uid ~ '-flps') }}"/>
+{% if e.health %}  <circle aria-hidden="true" cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-{{ 'crit' if e.health == 'vulnerable' else 'warn' }}"/>
+{% elif e.swatch_shape == 'diamond' or e.swatch_shape == 'square' %}  <path aria-hidden="true" d="{{ e.swatch_path }}" class="{{ (uid ~ '-flp' ~ e.accent_index) if e.accent_index >= 0 else (uid ~ '-idot') }}"/>
+{% elif e.swatch_shape == 'line' %}  <path aria-hidden="true" d="{{ e.swatch_path }}" class="{{ uid }}-branch {{ uid }}-connmuted"/>
+{% elif e.swatch_shape == 'line-dashed' %}  <path aria-hidden="true" d="{{ e.swatch_path }}" class="{{ uid }}-branch {{ uid }}-connmuted" stroke-dasharray="{{ diagram_style.legend_dash }}"/>
+{% elif e.swatch_shape == 'ring' %}  <circle aria-hidden="true" cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-mkr"/>
+{% elif e.swatch_shape == 'disc' %}  <circle aria-hidden="true" cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-idot"/>
+{% elif e.swatch_shape == 'disc-muted' %}  <circle aria-hidden="true" cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ uid }}-mkx"/>
+{% else %}  <circle aria-hidden="true" cx="{{ e.swatch_x }}" cy="{{ e.swatch_y }}" r="{{ e.swatch_r }}" class="{{ (uid ~ '-flp' ~ e.accent_index) if e.accent_index >= 0 else (uid ~ '-flps') }}"/>
 {% endif %}
 {% endif %}  <text x="{{ e.text.x }}" y="{{ e.text.y }}"{% if e.text.anchor != 'start' %} text-anchor="{{ e.text.anchor }}"{% endif %} class="{{ uid }}-{{ e.text.cls }}">{{ e.text.text | xml_escape }}</text>
 {% endfor %}
@@ -207,39 +214,39 @@
    own border lighting up (the corpus stacks its halo rects at the
    document's end, over the card at the exact box). #}
 {% for h in lay.choreography.halos %}
-{% if h.shape == 'rect' %}  <rect x="{{ h.box.x }}" y="{{ h.box.y }}" width="{{ h.box.w }}" height="{{ h.box.h }}" rx="{{ h.box.rx }}" class="{{ uid }}-halo {{ uid }}-halo{{ h.hue }}" style="animation:{{ uid }}-ch{{ h.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
-{% else %}  <path d="{{ h.d }}" stroke-linejoin="round" class="{{ uid }}-halo {{ uid }}-halo{{ h.hue }}" style="animation:{{ uid }}-ch{{ h.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% if h.shape == 'rect' %}  <rect aria-hidden="true" x="{{ h.box.x }}" y="{{ h.box.y }}" width="{{ h.box.w }}" height="{{ h.box.h }}" rx="{{ h.box.rx }}" class="{{ uid }}-halo {{ uid }}-halo{{ h.hue }}" style="animation:{{ uid }}-ch{{ h.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% else %}  <path aria-hidden="true" d="{{ h.d }}" stroke-linejoin="round" class="{{ uid }}-halo {{ uid }}-halo{{ h.hue }}" style="animation:{{ uid }}-ch{{ h.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
 {% endif %}{% endfor %}
 {% endif %}
 {# Region headers paint LAST of all (the paint-order law): the legend
    plate occludes whatever crosses its seat — hairline, wire, or halo —
    so a region's glow can never strike through its own words. #}
-{% for band in lay.lane_bands %}{% if band.header_box %}  <rect x="{{ band.header_box.x }}" y="{{ band.header_box.y }}" width="{{ band.header_box.w }}" height="{{ band.header_box.h }}" rx="{{ band.header_box.rx }}" class="{{ uid }}-rchipbg"/>
+{% for band in lay.lane_bands %}{% if band.header_box %}  <rect aria-hidden="true" x="{{ band.header_box.x }}" y="{{ band.header_box.y }}" width="{{ band.header_box.w }}" height="{{ band.header_box.h }}" rx="{{ band.header_box.rx }}" class="{{ uid }}-rchipbg"/>
 {% endif %}  <text x="{{ band.header.x }}" y="{{ band.header.y }}"{% if band.header.anchor != 'start' %} text-anchor="{{ band.header.anchor }}"{% endif %} class="{{ uid }}-{{ band.header.cls }}">{{ band.header.text | xml_escape }}</text>
 {% if band.count %}  <text x="{{ band.count.x }}" y="{{ band.count.y }}"{% if band.count.anchor != 'start' %} text-anchor="{{ band.count.anchor }}"{% endif %} class="{{ uid }}-{{ band.count.cls }}">{{ band.count.text | xml_escape }}</text>
 {% endif %}{% endfor %}
 {# The meter kit piece (loop family, edge.meter): a quiet backing plate, the
    register's lead mark, and the base segment row — the STATIC gauge every
    face draws; the register's fill layer rides the choreography block. #}
-{% for m in lay.meters %}  <rect x="{{ m.plate.x }}" y="{{ m.plate.y }}" width="{{ m.plate.w }}" height="{{ m.plate.h }}" rx="{{ m.plate.rx }}" class="{{ uid }}-mplate"/>
-{% if m.glyph %}{% if m.glyph.stroke_w %}  <g transform="{{ m.glyph.transform }}" class="{{ uid }}-mk{{ m.hue }}" fill="none" stroke-width="{{ m.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ m.glyph.opacity }}">
-{% else %}  <g transform="{{ m.glyph.transform }}" class="{{ uid }}-mk{{ m.hue }}" opacity="{{ m.glyph.opacity }}">
+{% for m in lay.meters %}  <rect aria-hidden="true" x="{{ m.plate.x }}" y="{{ m.plate.y }}" width="{{ m.plate.w }}" height="{{ m.plate.h }}" rx="{{ m.plate.rx }}" class="{{ uid }}-mplate"/>
+{% if m.glyph %}{% if m.glyph.stroke_w %}  <g aria-hidden="true" transform="{{ m.glyph.transform }}" class="{{ uid }}-mk{{ m.hue }}" fill="none" stroke-width="{{ m.glyph.stroke_w }}" stroke-linecap="round" stroke-linejoin="round" opacity="{{ m.glyph.opacity }}">
+{% else %}  <g aria-hidden="true" transform="{{ m.glyph.transform }}" class="{{ uid }}-mk{{ m.hue }}" opacity="{{ m.glyph.opacity }}">
 {% endif %}{% for gp in m.glyph.paths %}    <path d="{{ gp.d }}"/>
 {% endfor %}  </g>
 {% endif %}
-{% for sb in m.boxes %}  <rect x="{{ sb.x }}" y="{{ sb.y }}" width="{{ sb.w }}" height="{{ sb.h }}" rx="{{ sb.rx }}" class="{{ uid }}-mseg"/>
+{% for sb in m.boxes %}  <rect aria-hidden="true" x="{{ sb.x }}" y="{{ sb.y }}" width="{{ sb.w }}" height="{{ sb.h }}" rx="{{ sb.rx }}" class="{{ uid }}-mseg"/>
 {% endfor %}
 {% endfor %}
 {# The register's fill layer rides ABOVE the base row (its own z-order —
    the choreography block paints below cards, but a gauge's fill must cover
    its base). rest opacity is the reduced-motion truth: a budget rests
    full, a lap counter and an accumulator rest empty. #}
-{% if lay.choreography %}{% for f in lay.choreography.meter_fills %}  <rect x="{{ f.box.x }}" y="{{ f.box.y }}" width="{{ f.box.w }}" height="{{ f.box.h }}" rx="{{ f.box.rx }}" opacity="{{ f.rest_opacity }}" class="{{ uid }}-mfill" style="animation:{{ uid }}-ch{{ f.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
+{% if lay.choreography %}{% for f in lay.choreography.meter_fills %}  <rect aria-hidden="true" x="{{ f.box.x }}" y="{{ f.box.y }}" width="{{ f.box.w }}" height="{{ f.box.h }}" rx="{{ f.box.rx }}" opacity="{{ f.rest_opacity }}" class="{{ uid }}-mfill" style="animation:{{ uid }}-ch{{ f.anim_index }} {{ lay.choreography.super_period_s }}s linear infinite"/>
 {% endfor %}{% endif %}
 {# Stack inter-layer compose operator (the stack specimen): a quiet ring + cross,
    the ring riding the card surface, the cross riding the muted-connector
    tone — the same drawn geometry a plain wire between layers uses. #}
-{% for op in lay.operators %}  <circle cx="{{ op.cx }}" cy="{{ op.cy }}" r="{{ op.r }}" class="{{ uid }}-cardbg"/><path d="{{ op.cross_d }}" class="{{ (uid ~ '-connmuted') if conn_muted else (uid ~ '-fls') }}"/>
+{% for op in lay.operators %}  <circle aria-hidden="true" cx="{{ op.cx }}" cy="{{ op.cy }}" r="{{ op.r }}" class="{{ uid }}-cardbg"/><path aria-hidden="true" d="{{ op.cross_d }}" class="{{ (uid ~ '-connmuted') if conn_muted else (uid ~ '-fls') }}"/>
 
 {% endfor %}
 {% if lay.legend %}  <text x="{{ lay.legend.x }}" y="{{ lay.legend.y }}" class="{{ uid }}-key">{{ lay.legend.text | xml_escape }}</text>

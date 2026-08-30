@@ -81,6 +81,9 @@
    first). On a bare ground the host's tone is unknown; a 30% black band over a
    host lighter than the cards reads as a two-toned stripe under every bottom
    edge (the no-drop-shadows-on-unowned-grounds law). #}
+{# Region percentages are sized by the SMALLEST filtered consumer (an 83u
+   diamond rides the same cardbg class), where 3*sigma is ~43% of width —
+   the margins that look oversized on a 171u card are near-exact there. #}
 <filter id="{{ uid }}-seat" color-interpolation-filters="sRGB" x="-40%" y="-60%" width="180%" height="220%">
   <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="{{ diagram_dark.seat }}" flood-opacity="0.3" result="seated"/>
 {{ grain_pass("seated") }}
@@ -88,6 +91,10 @@
 {% else %}{# Bare grounds: no seat (unowned ground) — the lift pair from the light
    face carries elevation, and the grain pass rides the same chain so the
    dark face dithers identically on every surface. #}
+{# Region percentages are sized by the SMALLEST filtered consumer (an 83u
+   diamond rides the same cardbg class): the sigma=20 layer's 3-sigma
+   envelope is 60u — 72% of that shape's width, which the 70% margin just
+   covers. Sized for the worst case, not the typical card. #}
 <filter id="{{ uid }}-liftg" color-interpolation-filters="sRGB" x="-70%" y="-80%" width="240%" height="280%">
   <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.05"/>
   <feDropShadow dx="0" dy="9" stdDeviation="20" flood-color="{{ _genome_raw.diagram_shadow_color }}" flood-opacity="0.055" result="lifted"/>

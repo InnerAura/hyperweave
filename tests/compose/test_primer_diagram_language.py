@@ -81,6 +81,11 @@ _LIGHT_LIFT_AMENDMENT: tuple[tuple[str, str, str, str], ...] = (
 # --hw-accent said #2563EB. The corpus supersedes the sheet on this ONE
 # token; every other law still grades verbatim.
 _ACCENT_AMENDMENT = {"#2563EB": "#0070F3", "#5894FF": "#3B82F6"}
+# Documented amendment (Stage 4 session C, 2026-08-30): the porcelain muted
+# ink repaired minimally to the 4.5:1 text floor against its own face ground
+# (4.48 → 4.55). The sheet stays the transcription of the pre-repair value;
+# the render grades against the repair.
+_ACCENT_AMENDMENT |= {"#647588": "#637486"}
 
 
 @pytest.fixture(scope="module")

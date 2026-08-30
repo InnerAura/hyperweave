@@ -461,7 +461,7 @@ def test_sweep_exercises_chip_tags_and_they_are_neutral() -> None:
 
 _GLYPH_PRESETS = ["dag-providers", "cycle-orbit"]
 
-_GLYPH_GROUP_RE = re.compile(r'<g transform="translate\([^)]*\) scale\([^)]*\)"([^>]*)>')
+_GLYPH_GROUP_RE = re.compile(r'<g (?:aria-hidden="true" )?transform="translate\([^)]*\) scale\([^)]*\)"([^>]*)>')
 _GLYPH_ATTR_RE = re.compile(r'\b(fill|stroke)="([^"]*)"')
 _NODE_BG_RE = re.compile(r"<(rect|circle)\b[^>]*\bclass=\"([^\"]+)\"")
 

@@ -57,6 +57,16 @@ def _render(preset: str, overrides: dict[str, Any] | None = None) -> str:
     return compose(spec).svg
 
 
+def _text_rows(tail: str, cls: str) -> list[tuple[str, str]]:
+    """``(x, y)`` per rendered ROW of a text class — a row is a plain
+    ``<text x y>`` or a positioned ``<tspan>`` inside a consolidated stack."""
+    rows = re.findall(rf'<text x="([\d.]+)" y="([\d.]+)"[^>]*class="[a-z0-9-]+-{cls}[" ]', tail)
+    stack_re = rf'<text[^>]*class="[a-z0-9-]+-{cls}[" ][^>]*>((?:<tspan [^>]*>[^<]*</tspan>)+)</text>'
+    for tm in re.finditer(stack_re, tail):
+        rows.extend(re.findall(r'<tspan x="([\d.]+)" y="([\d.]+)"', tm.group(1)))
+    return sorted(rows, key=lambda p: float(p[1]))
+
+
 def _card_geometry(svg: str, *, rx: int, name_cls: str, desc_cls: str, after: int = 0) -> dict[str, float]:
     """The rendered box + derived slot metrics for the first card of corner
     radius ``rx`` at or after character offset ``after`` — mirrors
@@ -68,9 +78,9 @@ def _card_geometry(svg: str, *, rx: int, name_cls: str, desc_cls: str, after: in
     assert m, f"no rx={rx} card rect found"
     bx, by, bw, bh = (float(g) for g in m.groups())
     tail = svg[after + m.end() : after + m.end() + 1400]
-    gm = re.search(r'<g transform="translate\(([\d.]+),([\d.]+)\)', tail)
-    names = re.findall(rf'<text x="([\d.]+)" y="([\d.]+)"[^>]*class="[a-z0-9-]+-{name_cls}"', tail)
-    descs = re.findall(rf'<text x="([\d.]+)" y="([\d.]+)"[^>]*class="[a-z0-9-]+-{desc_cls}"', tail)
+    gm = re.search(r'<g (?:aria-hidden="true" )?transform="translate\(([\d.]+),([\d.]+)\)', tail)
+    names = _text_rows(tail, name_cls)
+    descs = _text_rows(tail, desc_cls)
     assert names, f"no .{name_cls} text found for this card"
     nx, ny = float(names[0][0]), float(names[0][1])
     out = {
@@ -164,7 +174,7 @@ def test_axial_nucleus_matches_its_hand_crown() -> None:
     assert abs(got["name_desc_gap"] - 19.0) <= VERTICAL_TOL, got["name_desc_gap"]
     assert abs(got["glyph_inset_x"] - 22.0) <= 0.6, got["glyph_inset_x"]
     assert abs(got["text_lead"] - 60.0) <= 0.6, got["text_lead"]  # column inset: 22 anchor + 24 slot + 14 gap
-    m = re.search(r'<text[^>]*class="[a-z0-9-]+-hdesc"[^>]*>([^<]*)</text>', svg)
+    m = re.search(r'<text[^>]*class="[a-z0-9-]+-hdesc"[^>]*>(?:<tspan[^>]*>)?([^<]*)', svg)
     assert m and m.group(1) == "hw:payload · hwz/1 · sha", m.group(1) if m else "no hdesc"
 
 

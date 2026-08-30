@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.surface_modes import derived_ink_icon
 from hyperweave.core.enums import FrameType, MotionId
 
 if TYPE_CHECKING:
@@ -116,6 +117,9 @@ _CORE_CSS_MAPPING: list[tuple[str, str]] = [
     ("surface_2", "--dna-surface-deep"),
     # Inks
     ("ink", "--dna-ink-primary"),
+    # Derived when absent (surface_modes.derived_ink_icon): the glyph ink
+    # pre-blended over the card fill — replaces the marks' group opacity.
+    ("ink_icon", "--dna-ink-icon"),
     ("ink_secondary", "--dna-ink-muted"),
     ("ink_on_accent", "--dna-ink-on-accent"),
     ("ink_bright", "--dna-ink-bright"),
@@ -287,6 +291,13 @@ def variant_override_declarations(genome: dict[str, Any], resolved_variant: str)
         safe = str(value).replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
         for prop in props:
             declarations.append(f"{prop}:{safe};")
+    if not overrides.get("ink_icon") and any(f in overrides for f in ("ink", "surface_1", "surface_0")):
+        # A variant that moves the ink or the card fill moves the pre-blended
+        # icon tone with it — recompute from the merged mapping, since the
+        # genome layer's derived value used the base pair.
+        icon = derived_ink_icon({**genome, **overrides})
+        if icon:
+            declarations.append(f"--dna-ink-icon:{icon};")
     return declarations
 
 
@@ -397,6 +408,10 @@ def css_declarations(genome: dict[str, Any], frame_type: str = "") -> list[str]:
         val = genome.get(field)
         if val:  # skip empty/None — lets CSS var() fallbacks activate
             decls.append(f"{prop}: {val};")
+    if not genome.get("ink_icon"):
+        icon = derived_ink_icon(genome)
+        if icon:
+            decls.append(f"--dna-ink-icon: {icon};")
     if "sep" not in genome and "stroke" in genome:
         decls.append(f"--dna-sep: {genome['stroke']};")
     if "status_delta_positive" not in genome:

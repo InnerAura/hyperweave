@@ -5032,8 +5032,17 @@ def sweep(path: pathlib.Path) -> list[str]:
         rights: list[float] = []
         tops: list[float] = []
         bottoms: list[float] = []
-        for m in re.finditer(r'<text x="([\d.-]+)" y="([\d.-]+)"([^>]*)>([^<]+)</text>', body):
-            tx, ty, attrs, txt = float(m.group(1)), float(m.group(2)), m.group(3), _text_ink(m.group(4))
+        # A text ROW is a plain single-line <text x y> or a positioned <tspan>
+        # inside a consolidated multi-line stack (the emit-time tspan
+        # consolidation) — the ink measure counts rows either way.
+        rows: list[tuple[float, float, str, str]] = [
+            (float(m.group(1)), float(m.group(2)), m.group(3), _text_ink(m.group(4)))
+            for m in re.finditer(r'<text x="([\d.-]+)" y="([\d.-]+)"([^>]*)>([^<]+)</text>', body)
+        ]
+        for m in re.finditer(r"<text([^>]*)>((?:<tspan [^>]*>[^<]*</tspan>)+)</text>", body):
+            for sm in re.finditer(r'<tspan x="([\d.-]+)" y="([\d.-]+)"[^>]*>([^<]*)</tspan>', m.group(2)):
+                rows.append((float(sm.group(1)), float(sm.group(2)), m.group(1), _text_ink(sm.group(3))))
+        for tx, ty, attrs, txt in rows:
             if not (fx - 2 <= tx <= fx + fw + 2 and fy - 2 <= ty <= fy + fh + 2):
                 continue
             cls_m = re.search(r'-([a-z]+)"', attrs)

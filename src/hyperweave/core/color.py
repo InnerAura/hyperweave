@@ -17,6 +17,17 @@ def rgb_to_hex(r: int, g: int, b: int) -> str:
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
+def mix_hex(a: str, b: str, t: float) -> str:
+    """``a`` mixed toward ``b`` by ``t`` in sRGB, rounded once per channel.
+
+    The pre-blend primitive: ``mix_hex(ink, ground, 1 - alpha)`` is the exact
+    composited color of ``ink`` drawn at ``alpha`` over an opaque ``ground``.
+    """
+    ar, ag, ab = hex_to_rgb(a)
+    br, bg, bb = hex_to_rgb(b)
+    return rgb_to_hex(round(ar + (br - ar) * t), round(ag + (bg - ag) * t), round(ab + (bb - ab) * t))
+
+
 def hex_to_rgb_triplet(hex_color: str) -> str:
     """Convert a hex color to an ``"r,g,b"`` string for rgba() embedding.
 
