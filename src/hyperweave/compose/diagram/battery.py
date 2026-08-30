@@ -1,13 +1,21 @@
-"""Loop self-consistency battery — hard asserts on a SOLVED loop layout.
+"""Layout self-consistency batteries — hard laws on a SOLVED layout.
 
 The corpus's time-domain QA, enrolled as pipeline law (cycle-expression-map:
 "a motion checker in the pipeline — park-invisible, full-exit, occlusion
-ratio, minimum visible runs as hard asserts"). Runs inside the resolver for
-loop slugs only, AFTER layout + choreography. A failure here means the
-engine broke its own geometric or motion contract on an input that was
-otherwise legal — it raises ``AssertionError`` (an engine fault, 500-class),
-never ``DiagramInputError`` (the caller asked for something lawful and the
-engine failed while building it).
+ratio, minimum visible runs as hard asserts"). Runs inside the resolver
+AFTER layout + choreography. A failure here means the engine broke its own
+geometric or motion contract on an input that was otherwise legal — it
+raises a typed ``HwError`` with code ``ENGINE_INVARIANT`` (an engine fault,
+500-class, CLI exit 70), never ``DiagramInputError`` (the caller asked for
+something lawful and the engine failed while building it) and never a bare
+``AssertionError`` (which escapes every surface as a traceback and vanishes
+under ``python -O``).
+
+The one exception is the chip-air battery, which classifies by the owner's
+reseat-then-classify ruling: a colliding pill pair is first RESEATED along
+its own run; success composes with a ``chip-air`` advisory diagnostic
+recording the near miss, and only a pair no lawful seat can separate becomes
+an author-repairable ``SPEC_INVALID`` naming both chips and the measured gap.
 
 Checks:
 * endpoint standoffs — every connector arrival lands 0-3.5px off its
@@ -23,19 +31,39 @@ Checks:
 
 from __future__ import annotations
 
+import dataclasses
 import itertools
 import math
 import re
 from typing import TYPE_CHECKING
 
+from hyperweave.core.diagnostics import Diagnostic
+from hyperweave.core.errors import HwError, HwErrorCode
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
-    from hyperweave.compose.diagram.records import DiagramLayout, NodePlacement
+    from hyperweave.compose.diagram.records import AnnotationPlacement, DiagramLayout, NodePlacement
     from hyperweave.compose.spatial_records import RectSpec
 
 _NUM = r"-?\d+(?:\.\d+)?"
+
+
+def _fault(message: str) -> HwError:
+    """A typed engine fault — the battery's own measurement is the evidence."""
+    return HwError(
+        HwErrorCode.ENGINE_INVARIANT,
+        message,
+        fix="this is an engine fault, not a spec problem — report it with the spec that produced it",
+    )
+
+
+def _law(condition: bool, message: str) -> None:
+    """Hard law: raise a typed engine fault when ``condition`` fails."""
+    if not condition:
+        raise _fault(message)
+
 
 CHIP_OCCLUSION_MAX = 1 / 3
 CHIP_VISIBLE_RUN_MIN = 30.0
@@ -131,23 +159,26 @@ def _check_meter_seating(layout: DiagramLayout) -> None:
     plate."""
     for m in layout.meters:
         p = m.plate
-        assert p.x >= 0 and p.y >= 0 and p.x + p.w <= layout.width and p.y + p.h <= layout.height, (
-            f"meter plate leaves the canvas: ({p.x},{p.y}) {p.w}x{p.h} on {layout.width}x{layout.height}"
+        _law(
+            p.x >= 0 and p.y >= 0 and p.x + p.w <= layout.width and p.y + p.h <= layout.height,
+            f"meter plate leaves the canvas: ({p.x},{p.y}) {p.w}x{p.h} on {layout.width}x{layout.height}",
         )
         for n in layout.nodes:
             b = n.box
             overlap_x = min(p.x + p.w, b.x + b.w) - max(p.x, b.x)
             overlap_y = min(p.y + p.h, b.y + b.h) - max(p.y, b.y)
-            assert overlap_x <= 0 or overlap_y <= 0, (
-                f"meter plate overlaps node {n.node_id!r}: plate ({p.x},{p.y}) {p.w}x{p.h} vs box ({b.x},{b.y})"
+            _law(
+                overlap_x <= 0 or overlap_y <= 0,
+                f"meter plate overlaps node {n.node_id!r}: plate ({p.x},{p.y}) {p.w}x{p.h} vs box ({b.x},{b.y})",
             )
         for sb in m.boxes:
-            assert (
+            _law(
                 sb.x >= p.x - 0.5
                 and sb.y >= p.y - 0.5
                 and sb.x + sb.w <= p.x + p.w + 0.5
-                and sb.y + sb.h <= p.y + p.h + 0.5
-            ), "meter segment escapes its plate"
+                and sb.y + sb.h <= p.y + p.h + 0.5,
+                "meter segment escapes its plate",
+            )
 
 
 def _check_standoffs(layout: DiagramLayout) -> None:
@@ -174,9 +205,10 @@ def _check_standoffs(layout: DiagramLayout) -> None:
             )
             if on_a_wire:
                 continue
-        assert d <= STANDOFF_MAX, (
+        _law(
+            d <= STANDOFF_MAX,
             f"loop battery: connector {c.index} arrives {d:.2f}px off its target "
-            f"(the family standoff law holds arrivals within {STANDOFF_MAX}px)"
+            f"(the family standoff law holds arrivals within {STANDOFF_MAX}px)",
         )
 
 
@@ -194,9 +226,10 @@ def _check_chip_seating(layout: DiagramLayout) -> None:
         pts = _path_points(c.path_d)
         best_i = min(range(len(pts) - 1), key=lambda i: _segment_distance(cx, cy, pts[i], pts[i + 1]))
         seat_error = _segment_distance(cx, cy, pts[best_i], pts[best_i + 1])
-        assert seat_error <= 8.0, (
+        _law(
+            seat_error <= 8.0,
             f"loop battery: guard chip for edge {a.edge_index} floats {seat_error:.1f}px off its wire "
-            "(chips seat at named geometry, never a path parameter)"
+            "(chips seat at named geometry, never a path parameter)",
         )
         # Occlusion: the chip's span ALONG the run (the box's projection on
         # the local wire direction — a 26-tall chip on a vertical run spends
@@ -220,15 +253,17 @@ def _check_chip_seating(layout: DiagramLayout) -> None:
                 # the run holds the chip plus 2x the CITED visible run —
                 # the ratio term is the citation's to waive, and the
                 # default law stands everywhere uncited.
-                assert visible >= cited - 0.5, (
+                _law(
+                    visible >= cited - 0.5,
                     f"loop battery: guard chip for edge {a.edge_index} leaves {visible:.1f}px visible "
-                    f"each side against its spec's own {cited:.0f}px citation"
+                    f"each side against its spec's own {cited:.0f}px citation",
                 )
             else:
-                assert ratio <= CHIP_OCCLUSION_MAX and visible >= CHIP_VISIBLE_RUN_MIN - 0.5, (
+                _law(
+                    ratio <= CHIP_OCCLUSION_MAX and visible >= CHIP_VISIBLE_RUN_MIN - 0.5,
                     f"loop battery: guard chip for edge {a.edge_index} occludes {ratio:.0%} of its "
                     f"{run:.0f}px run with {visible:.1f}px visible each side "
-                    f"(the enrolled law: <=1/3 occlusion with >={CHIP_VISIBLE_RUN_MIN:.0f}px visible per side)"
+                    f"(the enrolled law: <=1/3 occlusion with >={CHIP_VISIBLE_RUN_MIN:.0f}px visible per side)",
                 )
 
 
@@ -306,7 +341,7 @@ def _check_chip_foreign_wires(layout: DiagramLayout) -> None:
                         # crossing — "routing around it would cost more than
                         # it buys", its own tradeoff record verbatim).
                         continue
-                    raise AssertionError(
+                    raise _fault(
                         f"loop battery: guard chip for edge {a.edge_index} overlaps connector "
                         f"{c.index}'s wire — a chip straddles its own wire and no other"
                     )
@@ -346,27 +381,123 @@ def _check_pulses(layout: DiagramLayout) -> None:
     for tr in plan.trails:
         body = plan.keyframes[tr.anim_index].body
         offsets = [float(v) for v in re.findall(r"stroke-dashoffset:(-?[\d.]+)", body)]
-        assert offsets and abs(max(offsets) - tr.rest_offset) < 0.6 and tr.rest_offset > 0, (
-            f"loop battery: trail on connector {tr.connector_index} never parks invisible"
+        _law(
+            bool(offsets) and abs(max(offsets) - tr.rest_offset) < 0.6 and tr.rest_offset > 0,
+            f"loop battery: trail on connector {tr.connector_index} never parks invisible",
         )
-        assert min(offsets) >= -0.01, f"loop battery: trail on connector {tr.connector_index} overshoots its own wire"
-        assert abs(offsets[-1] - tr.rest_offset) < 0.6, (
-            f"loop battery: trail on connector {tr.connector_index} ends lit — the route clears at the wrap"
+        _law(min(offsets) >= -0.01, f"loop battery: trail on connector {tr.connector_index} overshoots its own wire")
+        _law(
+            abs(offsets[-1] - tr.rest_offset) < 0.6,
+            f"loop battery: trail on connector {tr.connector_index} ends lit — the route clears at the wrap",
         )
     for p in plan.pulses:
         body = plan.keyframes[p.anim_index].body
         offsets = [float(v) for v in re.findall(r"stroke-dashoffset: ?(-?[\d.]+)", body)]
-        assert offsets and max(offsets) == p.rest_offset > 0, (
-            f"loop battery: pulse on connector {p.connector_index} never parks invisible"
+        _law(
+            bool(offsets) and max(offsets) == p.rest_offset > 0,
+            f"loop battery: pulse on connector {p.connector_index} never parks invisible",
         )
         run = runs.get(p.connector_index, lengths[p.connector_index])
-        assert min(offsets) <= -run + 0.01, (
+        _law(
+            min(offsets) <= -run + 0.01,
             f"loop battery: pulse on connector {p.connector_index} stops mid-wire "
-            f"(sweeps to {min(offsets)} on a {run:.0f}px run — full exit is the law)"
+            f"(sweeps to {min(offsets)} on a {run:.0f}px run — full exit is the law)",
         )
 
 
-def run_chip_air_battery(layout: DiagramLayout, engine: Mapping[str, Any] | None = None) -> None:
+_RESEAT_ROUNDS = 4
+"""How many colliding pairs one figure may reseat before the density itself is
+the finding — each round separates the worst pair, so exhausting the budget
+means the author's label density outruns the runs available to carry it."""
+
+
+def _pill_gap(a: RectSpec, b: RectSpec) -> float:
+    gap_x = max(a.x - (b.x + b.w), b.x - (a.x + a.w))
+    gap_y = max(a.y - (b.y + b.h), b.y - (a.y + a.h))
+    return max(gap_x, gap_y)
+
+
+def _boxes_overlap(a: RectSpec, b: RectSpec) -> bool:
+    return min(a.x + a.w, b.x + b.w) > max(a.x, b.x) and min(a.y + a.h, b.y + b.h) > max(a.y, b.y)
+
+
+def _worst_fused_pair(
+    chips: list[AnnotationPlacement], air: float
+) -> tuple[AnnotationPlacement, AnnotationPlacement, float] | None:
+    worst: tuple[AnnotationPlacement, AnnotationPlacement, float] | None = None
+    for a, b in itertools.combinations(chips, 2):
+        if a.box is None or b.box is None:
+            continue
+        gap = _pill_gap(a.box, b.box)
+        if gap < air - 0.5 and (worst is None or gap < worst[2]):
+            worst = (a, b, gap)
+    return worst
+
+
+def _seat_visible_run(pts: list[tuple[float, float]], box: RectSpec) -> float:
+    """The tighter visible stub either side of a pill's seat on its own leg."""
+    if len(pts) < 2:
+        return 0.0
+    cx, cy = box.x + box.w / 2, box.y + box.h / 2
+    best_i = min(range(len(pts) - 1), key=lambda i: _segment_distance(cx, cy, pts[i], pts[i + 1]))
+    near, far = _leg_stubs(pts, best_i, box)
+    return min(near, far)
+
+
+def _translate_annotation(a: AnnotationPlacement, dx: float, dy: float) -> AnnotationPlacement:
+    box = a.box
+    if box is None:
+        return a
+    moved = dataclasses.replace(box, x=box.x + dx, y=box.y + dy)
+    lines = tuple(dataclasses.replace(t, x=t.x + dx, y=t.y + dy) for t in a.lines)
+    return dataclasses.replace(a, box=moved, lines=lines)
+
+
+def _reseat_candidates(
+    layout: DiagramLayout, chips: list[AnnotationPlacement], moving: AnnotationPlacement, air: float
+) -> list[tuple[float, float, float]]:
+    """Lawful alternate seats for one pill along its OWN connector, nearest
+    first: air to every other pill holds, the pill stays on the canvas and off
+    the node cards, and its visible-stub read never gets worse than the seat
+    it left. Riding its own wire is true by construction (candidates are the
+    wire's own sampled points)."""
+    if moving.box is None or moving.edge_index < 0:
+        return []
+    conn = next((c for c in layout.connectors if c.index == moving.edge_index), None)
+    if conn is None:
+        return []
+    pts = _densify_path(_path_points(conn.path_d), samples=96)
+    if len(pts) < 2:
+        return []
+    box = moving.box
+    cx, cy = box.x + box.w / 2, box.y + box.h / 2
+    floor_visible = min(CHIP_VISIBLE_RUN_MIN, max(_seat_visible_run(pts, box), 0.0))
+    others = [c for c in chips if c is not moving and c.box is not None]
+    node_boxes = [n.box for n in layout.nodes]
+    margin = max(1, len(pts) // 8)  # keep off the departure and arrowhead zones
+    scored: list[tuple[float, float, float]] = []
+    for x, y in pts[margin : len(pts) - margin]:
+        dx, dy = x - cx, y - cy
+        dist = math.hypot(dx, dy)
+        if dist < 1.0:
+            continue
+        nb = dataclasses.replace(box, x=box.x + dx, y=box.y + dy)
+        if nb.x < 0 or nb.y < 0 or nb.x + nb.w > layout.width or nb.y + nb.h > layout.height:
+            continue
+        if any(o.box is not None and _pill_gap(nb, o.box) < air - 0.5 for o in others):
+            continue
+        if any(_boxes_overlap(nb, b) for b in node_boxes):
+            continue
+        if _seat_visible_run(pts, nb) < floor_visible - 0.5:
+            continue
+        scored.append((dist, dx, dy))
+    scored.sort()
+    return [(dx, dy, dist) for dist, dx, dy in scored]
+
+
+def run_chip_air_battery(
+    layout: DiagramLayout, engine: Mapping[str, Any] | None = None
+) -> tuple[DiagramLayout, tuple[Diagnostic, ...]]:
     """No two pills fuse — FAMILY-WIDE, on every topology.
 
     Deliberately not a trigger for anything and not scoped to the shape that
@@ -376,25 +507,69 @@ def run_chip_air_battery(layout: DiagramLayout, engine: Mapping[str, Any] | None
     yet describe. Kept separate from the duplex dialogue seats for the same
     reason — a seat rule that also policed its own result could only ever
     check the cases it already knew about.
+
+    Classification is the owner's reseat-then-classify ruling (2026-08-30):
+
+    1. a colliding pair is RESEATED along its own run — success composes,
+       with a ``chip-air`` advisory diagnostic recording the near miss;
+    2. a pair no lawful seat can separate is the author's density, not the
+       engine's geometry — ``SPEC_INVALID`` naming both chips and the
+       measured gap;
+    3. every other battery law stays a typed engine fault
+       (``ENGINE_INVARIANT``), because those grade geometry the caller
+       cannot lawfully influence.
+
+    Returns the (possibly reseated) layout plus the advisory diagnostics.
     """
     air = 6.0
     if engine is not None:
         air = float((engine.get("connector") or {}).get("chip_pill_air", 6))
     chips = [a for a in layout.annotations if a.kind == "edge-chip" and a.box is not None]
     _check_no_wire_through_pill(layout, chips)
-    for a, b in itertools.combinations(chips, 2):
-        if a.box is None or b.box is None:
-            continue
-        gap_x = max(a.box.x - (b.box.x + b.box.w), b.box.x - (a.box.x + a.box.w))
-        gap_y = max(a.box.y - (b.box.y + b.box.h), b.box.y - (a.box.y + a.box.h))
-        gap = max(gap_x, gap_y)
-        if gap < air - 0.5:
-            at = " ".join(t.text for t in a.lines)
-            bt = " ".join(t.text for t in b.lines)
-            raise AssertionError(
-                f"chip battery: pills {at!r} and {bt!r} sit {gap:.1f}px apart (law >={air:g}px) — "
-                f"two plates that close read as one"
+    diags: list[Diagnostic] = []
+    for _ in range(_RESEAT_ROUNDS):
+        pair = _worst_fused_pair(chips, air)
+        if pair is None:
+            break
+        a, b, gap = pair
+        moved: tuple[AnnotationPlacement, AnnotationPlacement, float] | None = None
+        for cand in (a, b):
+            for dx, dy, dist in _reseat_candidates(layout, chips, cand, air):
+                replacement = _translate_annotation(cand, dx, dy)
+                idx = next(i for i, c in enumerate(chips) if c is cand)
+                chips[idx] = replacement
+                layout = dataclasses.replace(
+                    layout,
+                    annotations=tuple(replacement if ann is cand else ann for ann in layout.annotations),
+                )
+                moved = (cand, replacement, dist)
+                break
+            if moved is not None:
+                break
+        if moved is None:
+            break
+        at = " ".join(t.text for t in a.lines)
+        bt = " ".join(t.text for t in b.lines)
+        diags.append(
+            Diagnostic(
+                rule="chip-air",
+                measured=f"pills {at!r} and {bt!r} sat {gap:.1f}px apart; one reseated {moved[2]:.0f}px along its run",
+                band=f">={air:g}px air",
+                suggestion="the reseat held the law — shorten a label if the new seat reads far from its wire",
             )
+        )
+    pair = _worst_fused_pair(chips, air)
+    if pair is not None:
+        a, b, gap = pair
+        at = " ".join(t.text for t in a.lines)
+        bt = " ".join(t.text for t in b.lines)
+        raise HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"chip battery: pills {at!r} and {bt!r} sit {gap:.1f}px apart (law >={air:g}px) and no lawful "
+            f"reseat separates them — two plates that close read as one",
+            fix="shorten or drop one of the two labels, or thin the chip density around this run",
+        )
+    return layout, tuple(diags)
 
 
 def run_duplex_battery(layout: DiagramLayout) -> None:
@@ -463,7 +638,7 @@ def _check_duplex_conduits(layout: DiagramLayout) -> None:
     for i, k in _conduit_pairs(layout):
         for idx in (i, k):
             if idx in chips:
-                raise AssertionError(
+                raise _fault(
                     f"duplex battery: conduit channel {idx} wears a chip pill — a pill on one lane "
                     f"occludes the partner lane, so a conduit's labels are the bare bracket, never chips"
                 )
@@ -496,7 +671,7 @@ def _check_channel_chip_stubs(layout: DiagramLayout) -> None:
         near, far = _leg_stubs(pts, best_i, a.box)
         visible = min(near, far)
         if visible < _CONDUIT_STUB_MIN - 0.5:
-            raise AssertionError(
+            raise _fault(
                 f"chip battery: the pill on channel-routed edge {a.edge_index} leaves {visible:.1f}px of "
                 f"visible wire on its short side (law >={_CONDUIT_STUB_MIN:g}px) — a pill with no thread "
                 f"reads as a label floating between two cards, not as that leg's"
@@ -566,7 +741,7 @@ def _check_conduit_endpoints(layout: DiagramLayout) -> None:
                 sx, sy = pts[0]
                 inset = _inset_depth(sx, sy, source)
                 if inset > _CONDUIT_ENDPOINT_SLACK:
-                    raise AssertionError(
+                    raise _fault(
                         f"duplex battery: conduit channel {idx} departs {inset:.1f}px INSIDE its source card — "
                         f"the card paints over the wire's own first pixels"
                     )
@@ -574,7 +749,7 @@ def _check_conduit_endpoints(layout: DiagramLayout) -> None:
                 tx, ty = pts[-1]
                 d = _box_distance(tx, ty, target.box)
                 if d > STANDOFF_MAX:
-                    raise AssertionError(
+                    raise _fault(
                         f"duplex battery: conduit channel {idx} stops {d:.1f}px short of its target "
                         f"(law <={STANDOFF_MAX:g}px) — its arrowhead floats free of the card"
                     )
@@ -627,7 +802,7 @@ def _check_conduit_face_planarity(layout: DiagramLayout) -> None:
         for (ia, pa), (ib, pb) in itertools.combinations(runs, 2):
             hit = _first_crossing(pa, pb)
             if hit is not None:
-                raise AssertionError(
+                raise _fault(
                     f"duplex battery: runs {ia} and {ib} meeting node {node_i} cross at "
                     f"({hit[0]:.1f},{hit[1]:.1f}) — ports ordered by destination cannot cross, so "
                     f"either the ordering did not apply or the slots were squeezed until "
@@ -699,7 +874,7 @@ def _check_slot_corner_zone(layout: DiagramLayout) -> None:
                 end_d = min(x - b.x, (b.x + b.w) - x)
             floor = rx + _SLOT_CORNER_AIR
             if end_d + 0.5 < floor:
-                raise AssertionError(
+                raise _fault(
                     f"slot battery: connector {c.index} anchors {end_d:.1f}px from the end of its face on "
                     f"node {node_idx} (law >= rx {rx:g} + {_SLOT_CORNER_AIR:g}px air) — a slot in the corner "
                     f"zone departs from curved boundary"
@@ -743,7 +918,7 @@ def _check_no_wire_through_pill(layout: DiagramLayout, chips: list[Any]) -> None
             if inside:
                 text = " ".join(t.text for t in chip.lines)
                 which = "its own" if idx == chip.edge_index else f"connector {idx}'s"
-                raise AssertionError(
+                raise _fault(
                     f"chip battery: {which} wire runs through the FLOATED pill {text!r} "
                     f"({inside} sampled points inside the plate) — a floated pill is the seat for a "
                     f"run it cannot sit on, so nothing may cross it; only a RIDING pill carries a wire"

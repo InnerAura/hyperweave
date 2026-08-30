@@ -439,7 +439,9 @@ async def hw_verify(source: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def hw_transform(source: str, mutations: list[dict[str, Any]], respond: str = "envelope") -> dict[str, Any] | str:
+async def hw_transform(
+    source: str, mutations: list[dict[str, Any]], respond: str = "envelope", intent: str = ""
+) -> dict[str, Any] | str:
     """Mutate an artifact via structural JSON patch → a new artifact.
 
     ``source`` is an artifact SVG string, a /v1/a/{digest} url, or a digest/id.
@@ -448,8 +450,12 @@ async def hw_transform(source: str, mutations: list[dict[str, Any]], respond: st
     ``respond="svg"`` for the raw markup inline (hw_compose parity).
     ``mutations`` is a list of RFC-6902 ops (add/remove/replace/move/copy/test); a
     patch that breaks the frame schema fails cleanly as SPEC_INVALID.
+    ``intent`` is why this patch — a short correction label recorded in the new
+    artifact's lineage entry.
     """
-    result = await _dispatch("transform", {"source": source, "mutations": mutations, "respond": respond})
+    result = await _dispatch(
+        "transform", {"source": source, "mutations": mutations, "respond": respond, "intent": intent}
+    )
     if respond == "svg":
         return str(result.get("svg", ""))
     return result

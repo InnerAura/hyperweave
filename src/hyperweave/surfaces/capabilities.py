@@ -84,6 +84,10 @@ class TransformInput(BaseModel):
 
     source: str = Field(description="Artifact SVG string, a /v1/a/{digest} url, or a digest/id.")
     mutations: list[dict[str, Any]] = Field(description="RFC-6902 op list (add/remove/replace/move/copy/test).")
+    intent: str = Field(
+        default="",
+        description="Why this patch — a short correction label recorded in the new artifact's lineage entry.",
+    )
     respond: str = Field(
         default="envelope",
         description="envelope (default — the handle; fetch `url` for pixels) | svg (include the new markup inline).",
@@ -187,7 +191,7 @@ async def _transform(model: BaseModel, ctx: CallContext) -> dict[str, Any]:
     assert isinstance(model, TransformInput)
     from hyperweave.verbs import transform
 
-    result = transform(model.source, model.mutations, base_url=ctx.base_url)
+    result = transform(model.source, model.mutations, base_url=ctx.base_url, intent=model.intent)
     out = result.to_dict()
     if model.respond == "svg":
         # The write-verb escape hatch hw_compose already has: inline markup on

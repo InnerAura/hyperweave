@@ -11,7 +11,7 @@
      data-hw-genome="chrome"
      data-hw-mode="dark"
      data-hw-status="active"
-     data-hw-state="static"
+     data-hw-state="frozen"
      data-hw-profile="dimensional"
      data-hw-motion="static"
      data-hw-generation="1"
@@ -52,7 +52,7 @@
   </rdf:RDF>
   <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
     <hw:chromatic system="chrome" space="oklch"
-                  palette="chrome" contrast-ratio="16.6:1"/>
+                  palette="chrome" contrast-ratio="6.8:1" contrast-worst-pair="ink-secondary/surface"/>
     <hw:motion vocabulary="static" physics="none"
                timing="phi" duration-base="6s"
                stagger-regime="contemplative" cim-compliant="true"/>
@@ -111,15 +111,20 @@ svg, :root {
  * Non-negotiable media queries for motion, color scheme, and forced colors.
  * Included in EVERY artifact.
  *
- * CAMO NOTE: @media (prefers-color-scheme) and @media (forced-colors: active)
- * are INERT when served through GitHub Camo as img tags. The img element
- * creates an isolated browsing context — the parent document's color scheme
- * and forced-colors mode do not propagate into it. Artifacts will always
- * render in their default (dark) theme on GitHub READMEs.
+ * CAMO NOTE (corrected 2026-08-30): an SVG served as an img — GitHub's Camo
+ * proxy included — evaluates @media (prefers-color-scheme) against the
+ * EMBEDDING element's used color-scheme (Media Queries 5; CSSWG #7213).
+ * Chromium and Firefox implement this, so the adaptive flip works in GitHub
+ * READMEs there (owner-observed on github.com, 2026-08-30). WebKit does not
+ * evaluate it in image contexts (wpt Interop #1058), so Safari and iOS
+ * readers get the artifact's BASE face — the recorded iPhone 13 behavior.
+ * Treat the single-file flip as progressive enhancement; the committed-face
+ * picture pair stays the cross-engine delivery. forced-colors remains
+ * unreliable in image contexts (CSSWG #10331). An img context also loads NO
+ * external resources of any kind, which is why the cdn font mode and
+ * github-readme delivery are mutually exclusive.
  *
- * These queries DO activate when the SVG is embedded directly (svg inline,
- * object, or opened as a standalone document). This is a known accepted
- * tradeoff: dark-default through Camo, adaptive in direct embed.
+ * Inline, object, and standalone embeds evaluate every query everywhere.
  */
 
 /* ── Reduced Motion ── */

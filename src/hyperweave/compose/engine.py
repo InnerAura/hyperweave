@@ -119,13 +119,14 @@ def compose(spec: ComposeSpec) -> ComposeResult:
         diagnostics=list(context.get("diagnostics") or []),
     )
 
-    # ── 7. Emit telemetry event (fire-and-forget) ──
-    try:
-        from hyperweave.telemetry.capture import emit_generation_event
+    # ── 7. Build the generation-event record ──
+    # A constructor with no sink: the event is built and DISCARDED — compose
+    # records no telemetry anywhere (capture.py says so in its own docstring).
+    # It runs unguarded on purpose: it is pure getattr construction, and the
+    # old blanket `except Exception: pass` could only ever hide a real bug.
+    from hyperweave.telemetry.capture import emit_generation_event
 
-        emit_generation_event(spec, result)
-    except Exception:
-        pass  # telemetry must never break compose
+    emit_generation_event(spec, result)
 
     return result
 

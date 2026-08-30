@@ -103,6 +103,32 @@ def _resolve_reasoning_context(spec: ComposeSpec, resolved: ResolvedArtifact) ->
     }
 
 
+_CONTRAST_PAIRS = (
+    ("ink/surface", "ink", "surface_0"),
+    ("ink-secondary/surface", "ink_secondary", "surface_0"),
+    ("ink-on-accent/accent", "ink_on_accent", "accent"),
+)
+
+
+def _contrast_floor(genome: dict[str, Any]) -> tuple[str, str]:
+    """The measured MINIMUM WCAG ratio across the named role pairs, plus which
+    pair measured worst — a claim with a referent. A single flattering scalar
+    over a multi-role palette hid a 2.88:1 live pair behind a declared 15.7:1."""
+    worst_ratio = ""
+    worst_pair = ""
+    best: float | None = None
+    for name, fg_key, bg_key in _CONTRAST_PAIRS:
+        r = _compute_contrast_ratio(str(genome.get(fg_key, "")), str(genome.get(bg_key, "")))
+        if not r:
+            continue
+        val = float(r.split(":")[0])
+        if best is None or val < best:
+            best = val
+            worst_ratio = r
+            worst_pair = name
+    return worst_ratio, worst_pair
+
+
 def _compute_contrast_ratio(fg_hex: str, bg_hex: str) -> str:
     """Return WCAG contrast ratio like "7.2:1" or empty if inputs unusable."""
     if not fg_hex or not bg_hex:
@@ -537,7 +563,11 @@ def _base_context(
         # frame kind — an aggregated report that re-pulls across sessions is
         # "bound" while a one-shot receipt of the same frame is "static".
         # Independent of spec.state by construction — vocabularies are disjoint.
-        "lifecycle": "bound" if (spec.data_tokens or spec.connector_data) else "static",
+        # Renamed from "static" (2026-08-30): that word collided with the
+        # motion vocabulary, so data-hw-state="static" beside
+        # data-hw-motion="animated" read as a contradiction on axes that are
+        # disjoint by construction.
+        "lifecycle": "bound" if (spec.data_tokens or spec.connector_data) else "frozen",
         "size": spec.size,
         "motion_id": resolved.motion,
         "motion": resolved.motion,
@@ -675,6 +705,15 @@ def _base_context(
         # "2.618s"). Empty falls through to template default for genomes that
         # don't declare it.
         "rhythm_base": resolved.genome.get("rhythm_base", ""),
+        # Temporal doctrine the hw:motion block claims. Non-diagram frames
+        # animate on the phi ladder; the diagram resolver overrides with the
+        # choreography register actually governing the artifact ("none" when
+        # nothing animates) so timing="phi" never labels an 18.7s replay clock.
+        "timing_doctrine": "phi",
+        # Every non-diagram frame animates transform/opacity/filter only (the
+        # house motion allowlist), so composite-only is the honest base tier;
+        # the diagram resolver overrides with the solved layout's derived tier.
+        "performance_tier": "composite-only",
         # Font stack — substrate-aware. Light scholar artifacts get the
         # scholar heading font alongside the mono body; dark artifacts get
         # the display + mono pair.
@@ -694,11 +733,10 @@ def _base_context(
         "form_language": (resolved.genome.get("structural") or {}).get("data_layout", ""),
         # Contrast ratio — simple WCAG-style approximation of ink-on-surface.
         # Empty when ink or surface_0 missing.
-        "contrast_ratio": _compute_contrast_ratio(resolved.genome.get("ink", ""), resolved.genome.get("surface_0", "")),
-        # CIM compliance — placeholder. Motion-side helper (cim_compliant
-        # check against MotionId vocabulary) not yet extracted; refactoring
-        # to read the actual motion compliance bit is queued for v0.3.3.
-        "cim_compliant": "true",
+        "contrast_ratio": _contrast_floor(resolved.genome)[0],
+        "contrast_worst_pair": _contrast_floor(resolved.genome)[1],
+        # cim-compliant is DERIVED in the metadata template from
+        # performance_tier — one seam, never a static claim.
         # Reasoning — per-frame x per-substrate intent/approach/tradeoffs
         # sourced from data/reasoning/{genome}.yaml. ReasoningFields min_length
         # enforced at load time; missing entries return None and the metadata
@@ -1007,7 +1045,6 @@ def _ctx_diagram(spec: ComposeSpec, resolved: ResolvedArtifact, css: dict[str, s
     ctx["diagram_title"] = ""
     ctx["diagram_text_surface"] = []
     ctx["data_hw_topology"] = ""
-    ctx["performance_tier"] = "composite-only"
     ctx["motion_vocabulary"] = "static"
     ctx.update(resolved.frame_context)
 

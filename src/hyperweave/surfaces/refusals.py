@@ -21,13 +21,15 @@ import typer
 
 
 def caller_refusals() -> tuple[type[Exception], ...]:
-    """The caller-error family the compose engine raises.
+    """The typed-error family the compose engine raises.
 
     Everything here must reach the agent as a clean sentence (message + fix),
     never a traceback. The refusal classes span the whole pipeline: structured
     errors (HwError), input/solver refusals (DiagramInputError — caps included
     — and MatrixInputError), and an unregistered genome id
-    (GenomeNotFoundError)."""
+    (GenomeNotFoundError). An HwError that is an ENGINE FAULT rides the same
+    catchable tuple but is rendered and exit-coded distinctly — see
+    :func:`refusal_exit` — so widening the catch never widens the blame."""
     from hyperweave.compose.resolver import GenomeNotFoundError
     from hyperweave.core.diagram import DiagramInputError
     from hyperweave.core.errors import HwError
@@ -36,12 +38,31 @@ def caller_refusals() -> tuple[type[Exception], ...]:
     return (HwError, DiagramInputError, MatrixInputError, GenomeNotFoundError)
 
 
+def refusal_exit(exc: Exception, *, default: int = 1) -> int:
+    """The CLI exit code for one caught typed error.
+
+    A caller refusal keeps the surface's own refusal code (``default``); an
+    engine fault exits 70 (EX_SOFTWARE — internal software error) on every
+    surface, so scripts and agents can tell "fix your spec" from "report this"
+    without parsing prose."""
+    from hyperweave.core.errors import HwError
+
+    if isinstance(exc, HwError) and exc.is_engine_fault:
+        return 70
+    return default
+
+
 def echo_refusal(exc: Exception) -> None:
-    """Print one refusal as clean stderr text: message, then fix."""
+    """Print one refusal as clean stderr text: message, then fix.
+
+    An engine fault prints with an ``engine fault:`` prefix — the one visible
+    marker that the spec is not the problem."""
     from hyperweave.compose.resolver import GenomeNotFoundError
     from hyperweave.core.errors import HwError
 
-    if isinstance(exc, HwError):
+    if isinstance(exc, HwError) and exc.is_engine_fault:
+        typer.echo(f"engine fault: {exc.cli_text()}", err=True)
+    elif isinstance(exc, HwError):
         typer.echo(exc.cli_text(), err=True)
     elif isinstance(exc, GenomeNotFoundError):
         from hyperweave.config.loader import get_loader

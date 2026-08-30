@@ -42,6 +42,9 @@ class HwErrorCode(StrEnum):
     # Engine fault: a projection pass produced (or received) malformed XML —
     # never the caller's doing. 500-class on HTTP.
     PROJECTION_INVALID = "PROJECTION_INVALID"
+    # Engine fault: a post-solve invariant failed on an input that was lawful —
+    # the engine broke its own geometric or motion contract while building it.
+    ENGINE_INVARIANT = "ENGINE_INVARIANT"
 
 
 def format_error_loc(loc: tuple[Any, ...]) -> str:
@@ -91,10 +94,25 @@ _STATUS_BY_CODE: dict[HwErrorCode, int] = {
     # 501 Not Implemented — the format is known but this build can't produce it
     # (the [raster] extra is not installed, or gif has no supported path).
     HwErrorCode.FORMAT_UNAVAILABLE: 501,
-    # Engine fault, not a caller error — the projection pipeline broke well-formed
-    # input (or compose emitted malformed source). Never a 4xx.
+    # Engine faults, not caller errors — the pipeline broke its own contract on
+    # lawful input. Never a 4xx.
     HwErrorCode.PROJECTION_INVALID: 500,
+    HwErrorCode.ENGINE_INVARIANT: 500,
 }
+
+# The engine-fault family: failures the caller cannot repair by editing the
+# spec. Surfaces render these distinctly (CLI: "engine fault:" + exit 70;
+# HTTP: 500) so a fault is never mistaken for a refusal.
+_ENGINE_FAULT_CODES = frozenset({HwErrorCode.PROJECTION_INVALID, HwErrorCode.ENGINE_INVARIANT})
+
+
+def is_engine_fault_code(code: str) -> bool:
+    """True when a serialized error code names an engine fault — for surfaces
+    that hold a report dict rather than the exception."""
+    try:
+        return HwErrorCode(code) in _ENGINE_FAULT_CODES
+    except ValueError:
+        return False
 
 
 @dataclass
@@ -113,6 +131,13 @@ class HwError(Exception):
     def http_status(self) -> int:
         """Mapped 4xx/5xx status; defaults to 400 (bad request)."""
         return _STATUS_BY_CODE.get(self.code, 400)
+
+    @property
+    def is_engine_fault(self) -> bool:
+        """True when this error is the engine's fault, not the caller's —
+        a spec edit cannot repair it and surfaces must not present it as a
+        refusal."""
+        return self.code in _ENGINE_FAULT_CODES
 
     def envelope(self) -> dict[str, Any]:
         """The canonical error-envelope dict (one shape, all transports)."""

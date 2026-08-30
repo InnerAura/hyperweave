@@ -253,12 +253,16 @@ def resolve_diagram(
 
     run_loop_battery(layout)
     run_duplex_battery(layout)
-    run_chip_air_battery(layout, engine)
+    # Reseat-then-classify: a fused pill pair is reseated (advisory) or, when
+    # no lawful seat separates it, refused as the author's density.
+    layout, chip_air_diags = run_chip_air_battery(layout, engine)
     # sec 6: the compiler teaches — advisory diagnostics measured on the
     # solved layout, surfaced on every surface, never a refusal.
     from hyperweave.compose.diagram.diagnostics import run_diagnostics
 
-    diagnostics = run_diagnostics(dspec, layout, genome=genome, engine=engine, palette_len=len(palette))
+    diagnostics = (
+        run_diagnostics(dspec, layout, genome=genome, engine=engine, palette_len=len(palette)) + chip_air_diags
+    )
     layout = apply_glyph_contrast(
         layout,
         genome=genome,
@@ -421,6 +425,11 @@ def resolve_diagram(
         # the real canvas + layout_slug orientation. They override the base
         # context's defaults via ctx.update(resolved.frame_context).
         "data_hw_motion": "animated" if _layout_animates(layout) else "static",
+        # The temporal doctrine actually governing this artifact: the
+        # choreography register (its clock is replay_clock, not the phi
+        # ladder), or "none" when nothing animates — timing="phi" must never
+        # label an 18.7s replay cycle.
+        "timing_doctrine": register if _layout_animates(layout) else "none",
         "spatial_notes": _spatial_notes(layout, engine),
         "performance_tier": layout.rendered.performance,
         "motion_vocabulary": _motion_vocabulary(layout),

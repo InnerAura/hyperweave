@@ -22,7 +22,7 @@ from typing import Annotated, Any
 
 import typer
 
-from hyperweave.surfaces.refusals import caller_refusals, echo_refusal
+from hyperweave.surfaces.refusals import caller_refusals, echo_refusal, refusal_exit
 from hyperweave.surfaces.registry import CallContext, dispatch
 
 # CLI-surface context: no base_url, so transform/compose emit relative handles.
@@ -84,7 +84,7 @@ def _run(name: str, payload: dict[str, Any]) -> dict[str, Any]:
         return _run_async(dispatch(name, payload, _CTX))
     except caller_refusals() as exc:
         echo_refusal(exc)
-        raise typer.Exit(code=1) from exc
+        raise typer.Exit(code=refusal_exit(exc)) from exc
 
 
 def _run_async(coro: Any) -> dict[str, Any]:
@@ -184,6 +184,10 @@ def transform_cmd(
         str,
         typer.Option("--respond", help="envelope (default — the handle) | svg (include the new markup inline)."),
     ] = "envelope",
+    intent: Annotated[
+        str,
+        typer.Option("--intent", help="Why this patch — a short correction label recorded in the lineage entry."),
+    ] = "",
 ) -> None:
     """Mutate an artifact via an RFC-6902 JSON patch → a new artifact.
 
@@ -215,7 +219,7 @@ def transform_cmd(
         typer.echo("patch must be a JSON list of RFC-6902 ops", err=True)
         raise typer.Exit(code=2)
 
-    result = _run("transform", {"source": _read_source(source), "mutations": ops, "respond": respond})
+    result = _run("transform", {"source": _read_source(source), "mutations": ops, "respond": respond, "intent": intent})
     _emit(result)
 
     if out is None:

@@ -136,7 +136,8 @@ def test_performance_composite_only_same_grammar(tmp_path: Path) -> None:
     m = re.search(r"<hw:payload[^>]*><!\[CDATA\[(.*?)\]\]></hw:payload>", svg, re.DOTALL)
     assert m, "hw:payload missing"
     payload = json.loads(m.group(1))
-    assert payload["rendered"]["performance"] == "composite-only"
+    # dash marches stroke-dashoffset (Paint-stage) — the honest tier since 2026-08-30
+    assert payload["rendered"]["performance"] == "paint-ok"
     assert set(payload["rendered"]["edge_motion"]) <= {"dash", "particle"}
 
 

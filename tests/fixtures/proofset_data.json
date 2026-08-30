@@ -853,7 +853,7 @@
     "value": "n/a"
   },
   "snapshot:arxiv:2602.15763": {
-    "fetched_at": 1788048665.845234,
+    "fetched_at": 1788077941.3129358,
     "value": {
       "bio": "GLM-5-Team et al. \u00b7 cs.LG \u00b7 cs.CL",
       "hero": {
@@ -889,7 +889,7 @@
     }
   },
   "snapshot:huggingface:zai-org/GLM-5.1": {
-    "fetched_at": 1788048665.831487,
+    "fetched_at": 1788077941.3129332,
     "value": {
       "hero": {
         "label": "DOWNLOADS/MO",
@@ -927,50 +927,50 @@
     }
   },
   "snapshot:pypi:readmeai": {
-    "fetched_at": 1788048665.769453,
+    "fetched_at": 1788077941.312931,
     "value": {
       "activity": {
-        "peak_label": "3,196",
-        "peak_value": 3196,
+        "peak_label": "1,274",
+        "peak_value": 1274,
         "points": [
+          0.2771,
+          0.0353,
+          0.0651,
+          0.314,
+          0.0675,
+          0.2802,
+          0.0714,
+          0.4741,
+          0.0416,
+          0.5094,
+          0.0314,
+          0.2684,
+          0.0235,
+          0.0251,
+          0.0188,
+          0.2551,
+          0.0181,
+          0.0235,
+          0.0251,
+          0.0345,
+          0.04,
+          0.0314,
+          0.0126,
+          0.0063,
           1.0,
-          0.1105,
-          0.0141,
-          0.026,
-          0.1252,
-          0.0269,
-          0.1117,
-          0.0285,
-          0.189,
-          0.0166,
-          0.2031,
-          0.0125,
-          0.107,
-          0.0094,
-          0.01,
-          0.0075,
-          0.1017,
-          0.0072,
-          0.0094,
-          0.01,
-          0.0138,
-          0.016,
-          0.0125,
-          0.005,
-          0.0025,
-          0.3986,
-          0.0013,
-          0.0028,
-          0.1436,
-          0.0081
+          0.0031,
+          0.0071,
+          0.3603,
+          0.0204,
+          0.0063
         ],
         "type": "sparkline_30d"
       },
       "hero": {
         "label": "DOWNLOADS/MO",
         "provider": "pypi",
-        "raw_value": 8726,
-        "value": "8,726"
+        "raw_value": 5538,
+        "value": "5,538"
       },
       "identity": "readmeai",
       "identity_subtitle": "PyPI package",
@@ -988,17 +988,13 @@
         {
           "label": "DAILY",
           "provider": "pypi",
-          "raw_value": 26,
-          "value": "26"
+          "raw_value": 8,
+          "value": "8"
         }
       ],
       "provider": "pypi",
       "series_label": "DOWNLOADS",
       "series_points": [
-        {
-          "count": 33,
-          "date": "2026-03-01"
-        },
         {
           "count": 724,
           "date": "2026-03-02"
@@ -1718,6 +1714,10 @@
         {
           "count": 26,
           "date": "2026-08-28"
+        },
+        {
+          "count": 8,
+          "date": "2026-08-29"
         }
       ],
       "source_url": "https://pypi.org/project/readmeai/",
@@ -1727,13 +1727,12 @@
     }
   },
   "snapshot:pypi:vllm": {
-    "fetched_at": 1788048665.918984,
+    "fetched_at": 1788077941.312938,
     "value": {
       "activity": {
         "peak_label": "216.9K",
         "peak_value": 216851,
         "points": [
-          0.937,
           0.8077,
           0.5543,
           0.4936,
@@ -1762,15 +1761,16 @@
           0.3805,
           0.3545,
           0.3536,
-          0.315
+          0.315,
+          0.3413
         ],
         "type": "sparkline_30d"
       },
       "hero": {
         "label": "DOWNLOADS/MO",
         "provider": "pypi",
-        "raw_value": 4654451,
-        "value": "4.7M"
+        "raw_value": 4525277,
+        "value": "4.5M"
       },
       "identity": "vllm",
       "identity_subtitle": "PyPI package",
@@ -1788,17 +1788,13 @@
         {
           "label": "DAILY",
           "provider": "pypi",
-          "raw_value": 68317,
-          "value": "68.3K"
+          "raw_value": 74015,
+          "value": "74.0K"
         }
       ],
       "provider": "pypi",
       "series_label": "DOWNLOADS",
       "series_points": [
-        {
-          "count": 109753,
-          "date": "2026-03-01"
-        },
         {
           "count": 547936,
           "date": "2026-03-02"
@@ -2518,6 +2514,10 @@
         {
           "count": 68317,
           "date": "2026-08-28"
+        },
+        {
+          "count": 74015,
+          "date": "2026-08-29"
         }
       ],
       "source_url": "https://pypi.org/project/vllm/",
