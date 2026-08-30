@@ -18,6 +18,7 @@
      data-hw-contract="divider-035a187e40869bbb"
      data-hw-size="default"
      data-hw-regime="normal"
+     id="hw-UID"
      data-hw-chromatic="chrome">
   <title id="hw-UID-title">HyperWeave divider artifact</title>
   <desc id="hw-UID-desc">A divider artifact, using chrome genome.</desc>
@@ -126,36 +127,22 @@ svg, :root {
  *
  * Inline, object, and standalone embeds evaluate every query everywhere.
  */
-
 /* ── Reduced Motion ── */
-@media (prefers-reduced-motion: reduce) {
-  .hw-logic-bit { animation: none !important; opacity: .8 !important; }
-  .hw-scanner { animation: none !important; opacity: 0 !important; }
-  *, *::before, *::after {
+@media (prefers-reduced-motion: reduce) {*, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  animate, animateTransform, animateMotion, set {
+animate, animateTransform, animateMotion, set {
     display: none !important;
-  }
-}
-
+  }}
 /* ── Light Mode Override (see CAMO NOTE above — inert through img) ── */
 /* Light mode: genome alleles injected by CSS assembler into per-artifact @media block. */
-
 /* ── Forced Colors (Windows High Contrast) ── */
-@media (forced-colors: active) {
-  text { fill: CanvasText !important; }
-  rect, path, circle, ellipse, polygon, polyline, line {
+@media (forced-colors: active) {text { fill: CanvasText !important; }
+rect, path, circle, ellipse, polygon, polyline, line {
     stroke: CanvasText !important;
-  }
-  .hw-frame-bg { fill: Canvas !important; }
-  .hw-accent-bar { fill: Highlight !important; }
-  .hw-signal { fill: Highlight !important; }
-  .hw-logic-bit { fill: Highlight !important; }
-}
-</style>
+  }}</style>
   <defs>
 <linearGradient id="hw-UID-env" x1="0" x2="1" y1="0" y2="0">
   <stop offset="0%" stop-color="#000A14"/>
@@ -177,14 +164,8 @@ svg, :root {
            keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
 </linearGradient>
 
-<style>
-  @media (prefers-reduced-motion: reduce) {
-    animate { display: none !important; }
-  }
-  @media (forced-colors: active) {
-    rect { stroke: CanvasText !important; }
-  }
-</style>
+<style>@media (prefers-reduced-motion: reduce) {animate { display: none !important; }}
+@media (forced-colors: active) {rect { stroke: CanvasText !important; }}</style>
   </defs>
 <rect x="0" y="6" width="800" height="4" rx="0.8" fill="url(#hw-UID-env)" opacity="0.75"/>
 </svg>

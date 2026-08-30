@@ -309,8 +309,23 @@ class TestDrawOrderAndFurniture:
         # text tag died with the retired pill anatomy, and this fixture
         # authors no terminal.
         assert '-term"' not in svg
-        assert "-idot" in svg and "-stub" in svg
+        # The initial pseudo-state is AUTHORED too (chassis stub_len > 0,
+        # graph.py's sm solver): this fixture authors none, so no dot and no
+        # stub render — an earlier assertion held the opposite, green only on
+        # the defs' unbound .uid-idot rule, which the emit-time finisher now
+        # shakes out. (Comments may still mention the classes; markup may not.)
+        assert not re.search(r'class="[^"]*-(?:idot|stub)"', svg)
         assert "review ✓" in svg
+
+    def test_state_machine_authored_stub_renders_furniture(self) -> None:
+        # The other side of the authored-furniture law: a chassis that
+        # declares a stub gets the initial dot + stub line in the BODY, with
+        # their style rules retained by the finisher.
+        svg = compose_fixture("state-machine", chassis={"stub_len": 16})
+        body = re.sub(r"<style\b[^>]*>.*?</style>", "", svg, flags=re.DOTALL)
+        assert re.search(r'<circle [^>]*class="hw-[0-9a-f]+-idot"', body)
+        assert re.search(r'<line [^>]*class="hw-[0-9a-f]+-stub"', body)
+        assert re.search(r"\.hw-[0-9a-f]+-idot\b[^{]*\{", svg)
 
     def test_sequence_furniture(self) -> None:
         # auth-sequence anatomy: the fixture's one hero ("hw") gets the accent

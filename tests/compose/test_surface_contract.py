@@ -213,7 +213,7 @@ def test_adaptive_scopes_to_root_id() -> None:
     # near block scoped to #uid
     assert f"#{uid} {{ color-scheme: light dark;" in svg
     # exactly one @media(prefers-color-scheme) far block, scoped to the same id
-    media_blocks = re.findall(r"@media \(prefers-color-scheme: \w+\) \{ #(hw-[0-9a-f]+) \{", svg)
+    media_blocks = re.findall(r"@media \(prefers-color-scheme: \w+\) \{\s*#(hw-[0-9a-f]+) \{", svg)
     assert media_blocks == [uid]
     # no leftover global genome rule
     assert "svg, :root {" not in svg

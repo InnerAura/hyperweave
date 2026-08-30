@@ -99,9 +99,16 @@ def _digest(svg: str) -> str:
 
 
 def _far_media_block(svg: str) -> str:
-    m = re.search(r"@media \(prefers-color-scheme: \w+\) \{ #hw-[0-9a-f]+ \{(.*?)\} \}", svg, re.DOTALL)
-    assert m is not None, "adaptive artifact has no far @media block"
-    return m.group(1)
+    # The emit-time finisher consolidates every dark rule into one media block
+    # per stylesheet, so the far #uid rule sits among merged rules. The far
+    # PALETTE rule is the genome layer's — the first bare #uid rule in
+    # document order; later #uid rules in dark blocks are the frame's material
+    # overrides, a different object.
+    blocks = re.findall(r"@media \(prefers-color-scheme: \w+\)\s*\{((?:[^{}]|\{[^{}]*\})*)\}", svg)
+    assert blocks, "adaptive artifact has no far @media block"
+    bodies = [body for block in blocks for body in re.findall(r"#hw-[0-9a-f]+ \{([^{}]*)\}", block)]
+    assert bodies, "far @media block has no #uid rule"
+    return bodies[0]
 
 
 def _near_block(svg: str) -> str:

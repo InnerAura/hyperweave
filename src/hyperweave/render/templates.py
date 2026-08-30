@@ -8,6 +8,8 @@ from typing import Any
 
 import jinja2
 
+from hyperweave.render.css_finish import finish_css
+
 # Template directory resolution
 
 _TEMPLATES_DIR_OVERRIDE: Path | None = None
@@ -59,10 +61,16 @@ def create_jinja_env(templates_dir: str | None = None) -> jinja2.Environment:
 
 
 def render_artifact(template_name: str, context: dict[str, Any]) -> str:
-    """Render an artifact SVG from a template and context."""
+    """Render an artifact SVG from a template and context, then finish its CSS.
+
+    The finishing pass (see ``css_finish``) runs here and only here — on whole
+    artifacts, never on partial templates rendered via ``render_template``,
+    whose output may be spliced into a larger document where the "unused"
+    classes exist.
+    """
     env = create_jinja_env()
     template = env.get_template(template_name)
-    return template.render(**context)
+    return finish_css(template.render(**context))
 
 
 def render_template(template_name: str, context: dict[str, Any]) -> str:

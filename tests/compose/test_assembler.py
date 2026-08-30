@@ -70,21 +70,40 @@ def test_chrome_stats_and_chart_headers_use_badge_identity_roles() -> None:
 def test_static_motion_omits_motion_css_but_retains_status() -> None:
     """motion=static should exclude motion keyframes but keep ambient status animations.
 
-    Status indicator breathe/pulse/strobe are AMBIENT — always present on
-    stateful frames regardless of motion input. Motion-layer CSS (border
-    animations, kinetic keyframes) is gated by motion != static.
+    The ambient status animation is asserted as a BINDING, not a string: some
+    class carried by an element inside the status zone must have an
+    ``animation:`` rule in the delivered stylesheet, and that rule's keyframes
+    must ship. (An earlier version asserted ``hw-breathe`` by name — dead text
+    from status.css that never matched the primer badge's ping indicator; the
+    emit-time finisher now shakes exactly that kind of unbound CSS out.)
+    Motion-layer CSS (border animations, kinetic keyframes) stays gated by
+    motion != static.
     """
-    result = compose(ComposeSpec(type="badge", title="build", value="passing"))
-    css = result.svg
+    import re
 
-    # Ambient status animations MUST be present (badge is a stateful frame)
-    assert "hw-breathe" in css, "Badge should include ambient hw-breathe animation"
-    assert "hw-logic-bit" in css, "Badge should include status indicator class"
+    svg = compose(ComposeSpec(type="badge", title="build", value="passing")).svg
+
+    zone = re.search(r'<g data-hw-zone="status".*?</g>', svg, re.DOTALL)
+    assert zone is not None, "stateful badge must render a status zone"
+    zone_classes = {cls for value in re.findall(r'class="([^"]*)"', zone.group(0)) for cls in value.split()}
+    assert zone_classes, "status indicator carries no classes to bind animation to"
+
+    bound = {
+        cls
+        for cls in zone_classes
+        for m in re.finditer(rf"\.{re.escape(cls)}[^{{}}]*\{{([^{{}}]*)\}}", svg)
+        if "animation:" in m.group(1) and "animation:none" not in m.group(1).replace(" ", "")
+    }
+    assert bound, f"no status-zone class has an animation rule (zone classes: {sorted(zone_classes)})"
+
+    keyframe_names = set(re.findall(r"@keyframes\s+([\w-]+)", svg))
+    referenced = set(re.findall(r"animation:\s*([\w-]+)", svg))
+    assert keyframe_names & referenced, "status animation keyframes missing from the delivered stylesheet"
 
     # Default motion is static — no motion-layer CSS should be present
     # Border motions (chromatic-pulse, corner-trace, etc.) inject SMIL, not CSS keyframes,
     # but the motion CSS slot should be empty for static
-    assert "chromatic-pulse" not in css, "Static badge should not include motion-specific CSS"
+    assert "chromatic-pulse" not in svg, "Static badge should not include motion-specific CSS"
 
 
 def test_non_stateful_frame_omits_status_and_expression() -> None:

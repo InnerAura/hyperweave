@@ -490,12 +490,27 @@ def adaptive_css(
     near_body = near_decls.strip()
     if override_decls.strip():
         near_body = f"{near_body} {override_decls.strip()}".strip()
+    near_body = _dedup_declarations(near_body)
     lines = [
         f"#{root_id} {{ color-scheme: light dark; {near_body} }}",
     ]
     if far_decls:
         lines.append(f"@media (prefers-color-scheme: dark) {{ #{root_id} {{ {far_decls} }} }}")
     return "\n".join(lines)
+
+
+def _dedup_declarations(decls: str) -> str:
+    """Collapse the genome-layer + variant fan-out union to one declaration per
+    property, LAST occurrence winning — the variant override is the more
+    specific source, and within one declaration block the cascade already
+    resolves duplicates last-wins, so this changes bytes, never behavior."""
+    winners: dict[str, str] = {}
+    for chunk in decls.split(";"):
+        if ":" not in chunk:
+            continue
+        prop = chunk.split(":", 1)[0].strip()
+        winners[prop] = chunk.strip()
+    return " ".join(f"{decl};" for decl in winners.values())
 
 
 # Palette field → the CSS custom property the templates read. Only fields that

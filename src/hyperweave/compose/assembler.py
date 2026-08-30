@@ -430,7 +430,7 @@ def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
                 ".ink1 { fill: var(--dna-ink-primary); }",
                 ".ink2 { fill: var(--dna-ink-muted); }",
                 ".ink3 { fill: var(--dna-ink-tertiary); }",
-                "@media (forced-colors: active) { text { fill: CanvasText; } }",
+                "@media (forced-colors: active) { text { fill: CanvasText !important; } }",
             ]
         )
 

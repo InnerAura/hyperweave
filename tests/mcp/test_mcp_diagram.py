@@ -47,7 +47,11 @@ async def test_hw_compose_card_label_explicit_payload() -> None:
         ],
     )
     svg = _cached_svg(await hw_compose(type="diagram", genome="primer", diagram=diagram))
-    assert "-nlbl" in svg and "-nval" in svg and "-hlbl" in svg and "-hval" in svg
+    # Pipeline heroes keep the STANDARD register with hero dress (the crown
+    # register is chassis-gated; see chrome.py card_label_crown) — so the body
+    # contract is nlbl/nval text plus the hero card background, not hlbl/hval.
+    assert re.search(r'class="hw-[0-9a-f]+-nlbl"', svg) and re.search(r'class="hw-[0-9a-f]+-nval"', svg)
+    assert "-herobg" in svg
 
 
 @pytest.mark.asyncio
