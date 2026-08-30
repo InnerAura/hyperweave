@@ -39,6 +39,9 @@ class HwErrorCode(StrEnum):
     TYPE_UNKNOWN = "TYPE_UNKNOWN"
     DATA_RESOLVE_FAIL = "DATA_RESOLVE_FAIL"
     FORMAT_UNAVAILABLE = "FORMAT_UNAVAILABLE"  # raster extra missing / gif unsupported
+    # Engine fault: a projection pass produced (or received) malformed XML —
+    # never the caller's doing. 500-class on HTTP.
+    PROJECTION_INVALID = "PROJECTION_INVALID"
 
 
 def format_error_loc(loc: tuple[Any, ...]) -> str:
@@ -88,6 +91,9 @@ _STATUS_BY_CODE: dict[HwErrorCode, int] = {
     # 501 Not Implemented — the format is known but this build can't produce it
     # (the [raster] extra is not installed, or gif has no supported path).
     HwErrorCode.FORMAT_UNAVAILABLE: 501,
+    # Engine fault, not a caller error — the projection pipeline broke well-formed
+    # input (or compose emitted malformed source). Never a 4xx.
+    HwErrorCode.PROJECTION_INVALID: 500,
 }
 
 
