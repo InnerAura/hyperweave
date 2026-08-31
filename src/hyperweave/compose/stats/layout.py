@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from hyperweave.compose.spatial_records import LineSpec, RectSpec, TextSpec
 from hyperweave.core.text import measure_text, measure_text_ink_width
@@ -1509,7 +1509,7 @@ def compute_stats_layout(
     has_activity: bool | None = None,
     has_heatmap: bool | None = None,
     has_proportional_bar: bool | None = None,
-    substrate_kind: Literal["dark", "light"] | str = "dark",
+    substrate_kind: str = "dark",
 ) -> StatsLayout:
     """Compute all resolver-owned stats geometry for the active paradigm."""
     is_light = substrate_kind == "light"

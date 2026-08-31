@@ -38,8 +38,9 @@ def _dollars(cost: str) -> float:
     return float(cost.replace("$", "").replace(",", ""))
 
 
+_RAMP: list[str] = ["#FAFAFA", "#D7D7D7", "#B5B5B5", "#929292", "#6F6F6F"]
+
 _PALETTE: dict[str, str] = {
-    "ramp": ["#FAFAFA", "#D7D7D7", "#B5B5B5", "#929292", "#6F6F6F"],  # type: ignore[dict-item]
     "area_fill": "#FAFAFA",
     "signal": "#FAFAFA",
     "track": "#1A1A1A",
@@ -116,12 +117,12 @@ SPECIMEN_PAYLOAD: dict[str, Any] = {
 
 class TestCostByModelSegments:
     def test_segments_sum_exactly_to_content_width(self) -> None:
-        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         total = sum(s.w for s in cbm.segments)
         assert abs(total - CONTENT_W) < 1e-6, f"segments must close on {CONTENT_W}, got {total}"
 
     def test_last_segment_lands_on_right_rail(self) -> None:
-        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         last = cbm.segments[-1]
         assert abs((last.x + last.w) - RIGHT_RAIL) < 0.05
 
@@ -131,19 +132,19 @@ class TestCostByModelSegments:
             {"name": "top", "role": "main thread", "cost_usd": 90.0, "cost_pct": 69},
             {"name": "low", "role": "subagent", "cost_usd": 10.0, "cost_pct": 8},
         ]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": shuffled}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": shuffled}, palette=_PALETTE, ramp=_RAMP)
         assert [r.name for r in cbm.rows] == ["top", "mid", "low"]
         costs = [_dollars(r.cost) for r in cbm.rows]
         assert costs == sorted(costs, reverse=True)
 
     def test_markers_color_map_to_segments(self) -> None:
         # A reader maps a row to its slice: marker fill == segment fill, in order.
-        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         assert [r.marker_fill for r in cbm.rows] == [s.fill for s in cbm.segments]
 
     def test_solo_model_plain_one_row(self) -> None:
         solo = {**SPECIMEN_PAYLOAD, "models": [SPECIMEN_PAYLOAD["models"][0]]}
-        cbm = build_cost_by_model(solo, palette=_PALETTE)
+        cbm = build_cost_by_model(solo, palette=_PALETTE, ramp=_RAMP)
         assert len(cbm.segments) == 1
         assert cbm.segments[0].w == pytest.approx(CONTENT_W, abs=0.05)
         assert cbm.count_label == ""  # no count for a solo run
@@ -154,7 +155,7 @@ class TestCostByModelSegments:
     def test_two_models_stay_plain(self) -> None:
         # ≤2 models: no right-eyebrow, no dividers, no closing rule (the cream case).
         models = SPECIMEN_PAYLOAD["models"][:2]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE, ramp=_RAMP)
         assert not cbm.rich
         assert cbm.count_label == ""
         assert cbm.dividers == []
@@ -162,7 +163,7 @@ class TestCostByModelSegments:
 
     def test_three_plus_models_go_rich(self) -> None:
         # ≥3 models: right-eyebrow count + one divider per internal boundary.
-        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE)  # 3 models
+        cbm = build_cost_by_model(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)  # 3 models
         assert cbm.rich
         assert cbm.count_label == "3 MODELS · WITH SUBAGENTS"
         assert len(cbm.dividers) == len(cbm.segments) - 1
@@ -176,7 +177,7 @@ class TestCostByModelSegments:
             {"name": "gpt-5.4", "role": "subagent", "cost_usd": 20, "cost_pct": 10},
             {"name": "gemini-3", "role": "subagent", "cost_usd": 10, "cost_pct": 5},
         ]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE, ramp=_RAMP)
         # No '+N more' collapse: every model gets a segment AND a row.
         assert len(cbm.segments) == 5
         assert len(cbm.rows) == 5
@@ -189,7 +190,7 @@ class TestCostByModelSegments:
             {"name": "sonnet-4.6", "role": "main thread", "cost_usd": 30, "cost_pct": 30},
             {"name": "haiku-4.5", "role": "main thread", "cost_usd": 10, "cost_pct": 10},
         ]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE, ramp=_RAMP)
         assert cbm.count_label == "3 MODELS"
 
     def test_sub_one_percent_sliver_renders_and_reads_lt1(self) -> None:
@@ -199,7 +200,7 @@ class TestCostByModelSegments:
             {"name": "opus-4.7", "role": "main thread", "cost_usd": 607.57, "cost_pct": 100},
             {"name": "haiku-4.5", "role": "11 subagents", "cost_usd": 2.59, "cost_pct": 0},
         ]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE, ramp=_RAMP)
         assert cbm.segments[-1].w > 0  # sliver is visible, not zero-width
         assert cbm.rows[-1].pct == "<1%"
         assert cbm.rows[-1].cost == "$2.59"
@@ -210,7 +211,7 @@ class TestCostByModelSegments:
             {"name": "b", "role": "1 subagents", "cost_usd": 30, "cost_pct": 30},
             {"name": "c", "role": "6 subagents", "cost_usd": 20, "cost_pct": 20},
         ]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE, ramp=_RAMP)
         assert [r.role for r in cbm.rows] == ["main thread", "subagent", "subagents ×6"]  # noqa: RUF001
 
     def test_dominant_name_in_wide_bar_sliver_skips(self) -> None:
@@ -219,7 +220,7 @@ class TestCostByModelSegments:
             {"name": "opus-4.7", "role": "main thread", "cost_usd": 607.57, "cost_pct": 100},
             {"name": "haiku-4.5", "role": "subagent", "cost_usd": 2.59, "cost_pct": 0},
         ]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE, ramp=_RAMP)
         names = {bn.text for bn in cbm.bar_names}
         assert "opus-4.7" in names
         assert "haiku-4.5" not in names  # sliver too thin for a label
@@ -230,7 +231,7 @@ class TestCostByModelSegments:
             {"name": "anthropic-claude-opus-4.7-preview", "role": "6 subagents", "cost_usd": 90, "cost_pct": 90},
             {"name": "x", "role": "main thread", "cost_usd": 10, "cost_pct": 10},
         ]
-        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE)
+        cbm = build_cost_by_model({**SPECIMEN_PAYLOAD, "models": models}, palette=_PALETTE, ramp=_RAMP)
         row = cbm.rows[0]
         label = f"{row.name} · {row.role}"
         label_w = measure_text(label, font_family=_MONO_FF, font_size=11.0, font_weight=700, letter_spacing_em=0.0)
@@ -245,36 +246,36 @@ class TestCostByModelSegments:
 
 class TestToolSpendOverflow:
     def test_long_list_collapses_tail_into_others_row(self) -> None:
-        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         names = [r.name for r in ts.rows]
         assert any(n.startswith("+") and "others" in n for n in names)
 
     def test_others_row_tokens_are_remainder_of_working_total(self) -> None:
         """'+N others' tokens = working total minus the shown rows (sparse tail)."""
-        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         others = next(r for r in ts.rows if r.is_tail)
         # working 1024800 minus (Edit 709300 + Bash 116400 + Read 94600 + TaskCreate 30200) = 74300
         assert others.tokens == "74.3K"
 
     def test_row_count_fits_vertical_band(self) -> None:
-        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         # Rows from y137 pitch 23 down to the legend at y261 → at most 5 rows.
         assert len(ts.rows) <= 5
         for r in ts.rows:
             assert r.accent_y < 261.0
 
     def test_leader_bar_fills_track(self) -> None:
-        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         # The top tool (Edit) is the width reference → full 322px bar.
         assert ts.rows[0].bar_fill_w == pytest.approx(322.0, abs=0.1)
 
     def test_pct_is_share_of_session_working(self) -> None:
-        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         # Edit 709300 / working 1024800 = 69%.
         assert ts.rows[0].pct == "69%"
 
     def test_errcount_only_on_rows_with_errors(self) -> None:
-        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE)
+        ts = build_tool_spend(SPECIMEN_PAYLOAD, palette=_PALETTE, ramp=_RAMP)
         edit = next(r for r in ts.rows if r.name == "Edit")
         assert edit.err == 6
         # A zero-error tool would carry err == 0 (the template suppresses the badge).
@@ -289,7 +290,7 @@ class TestToolSpendOverflow:
                 {"name": "Read", "tok": 500, "calls": 1, "class": "explore"},
             ],
         }
-        ts = build_tool_spend(payload, palette=_PALETTE)
+        ts = build_tool_spend(payload, palette=_PALETTE, ramp=_RAMP)
         assert all(not r.is_tail for r in ts.rows)
         assert len(ts.rows) == 2
 

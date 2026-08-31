@@ -95,7 +95,7 @@ def load_idioms() -> dict[str, Any]:
     path = _data_path("registries/idioms.yaml")
     if not path.exists():
         return {}
-    return _read_yaml(path)  # type: ignore[no-any-return]
+    return _read_yaml(path)
 
 
 def load_glyphs() -> dict[str, dict[str, Any]]:
@@ -130,7 +130,7 @@ def load_badge_modes() -> frozenset[str]:
     """
     path = _data_path("config/badge-modes.yaml")
     if not path.exists():
-        return frozenset()
+        return frozenset[str]()
     raw = _read_yaml(path) or {}
     return frozenset(str(t).lower() for t in raw.get("stateful_types", []))
 
@@ -245,7 +245,7 @@ def load_output_format_pipelines() -> dict[str, list[str]]:
     install never loses the projection. Cached because the format projection
     reads it on every derive.
     """
-    default = {"svg": [], "svg-static": ["vars", "noanim"]}
+    default: dict[str, list[str]] = {"svg": [], "svg-static": ["vars", "noanim"]}
     path = _data_path("config/output-formats.yaml")
     if not path.exists():
         return default
@@ -426,7 +426,7 @@ def _available_font_slugs() -> frozenset[str]:
     """Return the set of font slugs present in data/fonts/ as .b64 + .meta.json pairs."""
     fonts_dir = _data_path("fonts")
     if not fonts_dir.exists():
-        return frozenset()
+        return frozenset[str]()
     slugs: set[str] = set()
     for b64 in fonts_dir.glob("*.b64"):
         meta = b64.with_suffix(".meta.json")

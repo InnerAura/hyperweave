@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import typer
 
@@ -1384,6 +1384,9 @@ def compose(
             raise typer.Exit(2)
         import json as _json
 
+        # Established on every path: the report branch below reads it, and only
+        # the non-json branch fills it.
+        envelope: dict[str, Any] = {}
         if respond == "json":
             respond_doc: dict[str, Any] = {
                 "svg": result.svg,
@@ -1430,7 +1433,7 @@ def compose(
             respond_doc = build_report(
                 svg=result.svg,
                 url=str(respond_doc.get("url", "")),
-                envelope=respond_doc.get("envelope") or {},
+                envelope=envelope,
                 width=result.width,
                 height=result.height,
                 genome=spec.genome_id,
@@ -2247,7 +2250,6 @@ def mcp(
     transport: Annotated[str, typer.Option("--transport")] = "stdio",
 ) -> None:
     """Start the HyperWeave MCP server."""
-    from typing import Literal, cast
 
     try:
         from hyperweave.mcp.server import mcp as mcp_server
@@ -2261,15 +2263,19 @@ def mcp(
         )
         raise typer.Exit(1) from exc
 
-    # FastMCP's run() accepts a narrow Literal for transport. Cast after
-    # validating the input instead of changing the user-facing CLI type.
-    allowed: tuple[str, ...] = ("stdio", "http", "sse", "streamable-http")
+    # FastMCP's run() accepts a narrow Literal for transport; the membership
+    # test below narrows the user-facing str to exactly that set, so no cast is
+    # needed after it.
+    allowed: tuple[Literal["stdio", "http", "sse", "streamable-http"], ...] = (
+        "stdio",
+        "http",
+        "sse",
+        "streamable-http",
+    )
     if transport not in allowed:
         typer.echo(f"Error: transport must be one of {allowed}, got {transport!r}", err=True)
         raise typer.Exit(1)
-    mcp_server.run(
-        transport=cast("Literal['stdio', 'http', 'sse', 'streamable-http']", transport),
-    )
+    mcp_server.run(transport=transport)
 
 
 @app.command()

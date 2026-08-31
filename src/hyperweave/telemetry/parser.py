@@ -238,16 +238,16 @@ def _extract_user_text(obj: _JsonObj) -> str | None:
     content = msg.get("content", "")
 
     if isinstance(content, str):
-        text = content.strip()
+        text = str(content).strip()
         if _ENVELOPE_ONLY.match(text):
             return None
         return text if text else None
 
     if isinstance(content, list):
-        texts = []
+        texts: list[str] = []
         for block in content:
             if isinstance(block, dict) and block.get("type") == "text":
-                texts.append(block.get("text", ""))
+                texts.append(str(block.get("text", "")))
             elif isinstance(block, str):
                 texts.append(block)
         combined = " ".join(texts).strip()

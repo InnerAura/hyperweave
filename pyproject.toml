@@ -44,7 +44,7 @@ classifiers = [
 dependencies = [
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
-    "typer[all]>=0.15",
+    "typer>=0.15",
     "jinja2>=3.1",
     "httpx[http2]>=0.28",
     "pyyaml>=6.0",
@@ -108,13 +108,16 @@ dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "pytest-cov>=6.0",
+    "pytest-fastest>=0.0.12",
     "pytest-mock>=3.14",
     "pytest-pretty>=1.2",
     "pytest-randomly>=3.16",
     "pytest-sugar>=1.0",
     "pytest-xdist>=3.5",
-    "ruff>=0.9",
-    "mypy>=1.14",
+    "ruff>=0.15",
+    # Exact pin: ty is 0.0.x beta with no stability guarantee, and the gate's
+    # rule set is calibrated against this build.
+    "ty==0.0.75",
     "types-pyyaml>=6.0.12.20250915",
     "pre-commit>=4.0",
 ]
@@ -123,28 +126,65 @@ dev = [
 # "." puts the repo root on the path so `scripts.examples` — the gallery
 # generators — is importable by the tests that guard them. testpaths keeps
 # collection inside tests/ regardless.
-pythonpath = ["src", "."]
-testpaths = ["tests"]
-asyncio_mode = "auto"
-addopts = ["--strict-markers", "--strict-config", "-ra"]
+addopts = [
+    "-ra",
+    "-vv",
+    "-n=auto",
+    "--durations=5",
+    # "--fastest-mode=skip",
+    # "--fastest-commit=main",
+    # "--cov=hyperweave",
+    # "--cov-append",
+    # "--cov-branch",
+    # "--cov-fail-under=80",
+    # "--cov-report=term-missing:skip-covered",
+    # "--cov-report=json:tests/.reports/coverage.json",
+    "--strict-config",
+    "--strict-markers"
+]
 markers = [
     "slow: marks tests as slow",
     "snapshot: visual regression",
     "live: network access (deselect with '-m \"not live\"')",
 ]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+pythonpath = ["src", "."]
+testpaths = ["tests"]
 
 [tool.ruff]
+# target-version is derived from project.requires-python.
 line-length = 120
-target-version = "py312"
 src = ["src"]
 extend-exclude = ["v04"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "TCH", "RUF"]
+# `explicit-preview-rules` keeps preview opt-in per rule: PYI033 activates
+# because it is named by code, while the ~449 other preview diagnostics stay
+# off. ANN enforces the missing-annotation coverage ty has no rule for;
+# ANN401 stays off because explicit `Any` is correct at dynamic JSON and
+# framework boundaries.
+preview = true
+explicit-preview-rules = true
+select = ["ANN", "B", "E", "F", "I", "PYI", "PYI033", "RUF", "SIM", "TCH", "UP", "W"]
+ignore = ["ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+# ANN is scoped to the shipped package, matching the type gate's own scope.
+"tests/**" = ["ANN"]
+"scripts/**" = ["ANN"]
 
 [tool.ruff.format]
 docstring-code-format = true
 
-[tool.mypy]
-strict = true
-plugins = ["pydantic.mypy"]
+[tool.ty.src]
+include = ["src/hyperweave"]
+
+[tool.ty.rules]
+dynamic-function-decorator-return = "error"
+missing-type-argument = "error"
+possibly-unresolved-reference = "warn"
+unsound-return-statement = "error"
+
+[tool.ty.terminal]
+error-on-warning = true

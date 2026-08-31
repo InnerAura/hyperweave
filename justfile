@@ -2,13 +2,16 @@ default:
     @just --list
 
 
-# ──────────────────────────────
+# -------------
 # Quality Gates
-# ──────────────────────────────
+# -------------
 
 qa: lint typecheck test
 
-# Both, always: a format-only failure has pushed red twice.
+# Exactly what CI installs — the lockfile, nothing resolved fresh.
+install:
+    uv sync --locked --group dev
+
 lint:
     uv run ruff check .
     uv run ruff format --check .
@@ -18,21 +21,31 @@ fmt:
     uv run ruff check --fix .
 
 typecheck:
-    uv run mypy src/hyperweave/ --strict
+    uv run ty check
 
 test *ARGS:
-    uv run pytest -n auto --cov=hyperweave --cov-report=term-missing {{ARGS}}
+    PYTHONDONTWRITEBYTECODE=1 uv run pytest -n auto --cov=hyperweave --cov-report=term-missing {{ARGS}}
 
+# log_cli is opt-in HERE only: Click's CliRunner (via typer.testing) swaps
+# sys.stdout, and a live-logging handler outliving that swap breaks every CLI
+# test with "I/O operation on closed file". Never set it globally.
 test-debug *ARGS:
-    uv run pytest -x -vvs {{ARGS}}
+    uv run pytest -x -vvs -o log_cli=true -o log_level=INFO {{ARGS}}
+
+# Fast local loop: reruns only tests touched since main. -n0 overrides the
+# -n=auto in addopts so it really is one process. The FIRST run is a slow serial
+# bootstrap that traces coverage into .fastest.coverage (gitignored, ~8MB, holds
+# absolute local paths); later runs are the fast ones.
+test-fast *ARGS:
+    uv run pytest -n0 --fastest-mode=skip --fastest-commit=main {{ARGS}}
 
 snapshots:
     uv run pytest tests/ -k snapshot --snapshot-update
 
 
-# ──────────────────────────────
+# -------------
 # Smoke
-# ──────────────────────────────
+# -------------
 
 smoke:
     uv run hyperweave compose badge "build" "passing" --genome brutalist
@@ -50,9 +63,9 @@ proof-set:
     done
 
 
-# ──────────────────────────────
-# Galleries
-# ──────────────────────────────
+# -------------
+# Examples
+# -------------
 
 # Renders each artifact through compose, CLI, HTTP and MCP and requires
 # byte-agreement. `just proofset direct` skips the three witnesses.
@@ -75,10 +88,15 @@ kit TARGET="all":
 surface-matrix:
     uv run python scripts/examples/surface_matrix.py
 
+# Renders from real local transcripts, skipping loudly if none are found.
+# `--mock` is dev-only synthetic data and must never be committed.
+refresh-examples *ARGS:
+    uv run python scripts/examples/refresh.py {{ARGS}}
 
-# ──────────────────────────────
-# Glyph Registry
-# ──────────────────────────────
+
+# -------------
+# Glyphs
+# -------------
 
 extract-glyphs:
     uv run python scripts/glyphs/extract.py
@@ -91,19 +109,9 @@ glyph-audit:
     uv run python scripts/glyphs/audit.py
 
 
-# ──────────────────────────────
-# Examples
-# ──────────────────────────────
-
-# Renders from real local transcripts, skipping loudly if none are found.
-# `--mock` is dev-only synthetic data and must never be committed.
-refresh-examples *ARGS:
-    uv run python scripts/examples/refresh.py {{ARGS}}
-
-
-# ──────────────────────────────
-# App & Site
-# ──────────────────────────────
+# -------------
+# App
+# -------------
 
 serve:
     uv run hyperweave serve --port 8000 --reload
@@ -117,10 +125,28 @@ registry OUT="apps/hw-app/public/registry":
 registry-fast OUT="apps/hw-app/public/registry":
     uv run python -m scripts.registry --out {{OUT}} --no-renders
 
+# not committed (wip)
+# http://localhost:5273 — NOT 3000, which another local tool holds.
+app:
+    cd apps/hw-app && bun run dev
 
-# ──────────────────────────────
+# not committed (wip)
+# Compile the registry, then start the app. Use after any diagram change.
+app-fresh: registry app
+
+# not committed (wip)
+# The app's own gate: biome, tsc --noEmit, vitest.
+app-gate:
+    cd apps/hw-app && bun run gate
+
+# not committed (wip)
+app-build:
+    cd apps/hw-app && bun run build
+
+
+# -------------
 # Release
-# ──────────────────────────────
+# -------------
 
 build:
     uv build

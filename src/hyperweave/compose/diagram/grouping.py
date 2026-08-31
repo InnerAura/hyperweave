@@ -201,7 +201,7 @@ def coordinated_regions(spec: DiagramSpec, boxes: Mapping[str, RectSpec], *, air
     Measured on the MEMBER hulls, never on the padded rims, because the pads
     are what this answer decides: asking the rims would make the leading pad a
     function of itself."""
-    tops = {}
+    tops: dict[int, float] = {}
     for i, reg in enumerate(spec.regions):
         seated = [boxes[m] for m in reg.members if m in boxes]
         if seated:
@@ -656,7 +656,9 @@ def build_region_bands(
     # and a NESTED inner band takes the corner-plate grammar whatever the
     # axis, so both labels wear the same material.
     def _contains_rect(o: dict[str, Any], i: dict[str, Any]) -> bool:
-        return o is not i and o["x0"] <= i["x0"] and o["y0"] <= i["y0"] and o["x1"] >= i["x1"] and o["y1"] >= i["y1"]
+        return bool(
+            o is not i and o["x0"] <= i["x0"] and o["y0"] <= i["y0"] and o["x1"] >= i["x1"] and o["y1"] >= i["y1"]
+        )
 
     for r in rects:
         inners = [i for i in rects if _contains_rect(r, i)]

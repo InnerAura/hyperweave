@@ -24,7 +24,7 @@ import itertools
 import json
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from hyperweave.compose.diagram.paths import sample_path
 
@@ -136,7 +136,8 @@ def _reconstruct_layout(spec_dict: dict[str, Any]) -> tuple[DiagramLayout, Diagr
         glyph_registry=load_glyphs(),
         warnings=normalized.warnings,
     )
-    return layout, dspec
+    # _compose_embeds returns the stamped spec as Any; it is a DiagramSpec.
+    return layout, cast("DiagramSpec", dspec)
 
 
 def _grid_divisors(content_w: float) -> tuple[float, float]:

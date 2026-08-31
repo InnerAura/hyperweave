@@ -162,9 +162,11 @@ def resolve_chart(
         return f"{round(n)}"
 
     def _num(x: object) -> float:
+        if not isinstance(x, int | float | str):
+            return 0.0
         try:
-            return float(x)  # type: ignore[arg-type]
-        except (TypeError, ValueError):
+            return float(x)
+        except ValueError:
             return 0.0
 
     _pt_vals = [(_num(p.get("count")) or _num(p.get("value"))) for p in raw_points]

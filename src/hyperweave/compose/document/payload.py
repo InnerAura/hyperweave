@@ -26,7 +26,7 @@ def _block_label(block: Block) -> str:
         return block.caption or str(block.frame.type)
     if isinstance(block, FlowBlock):
         return block.caption or str(block.diagram.get("title", "flow"))
-    return getattr(block, "text", "")[:48]
+    return str(getattr(block, "text", ""))[:48]
 
 
 def document_envelope(doc: DocumentSpec, payload_json: str, *, version: str, created: str) -> dict[str, Any]:

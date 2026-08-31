@@ -338,6 +338,9 @@ def _lane_bands(
         header_y = strip_mid + lane_voice.size * float(cfg.text_ascent_ratio) / 2
         count_y = strip_mid + cnt_voice.size * float(cfg.text_ascent_ratio) / 2
         header_x_pad, count_x_pad = pad, pad
+        # Panel ground draws no rule; the value is unread under this branch's
+        # guard below, but every path defines it.
+        rule_y = 0.0
     bands: list[LaneBand] = []
     for b, cat in enumerate(categories):
         members = rows[b]

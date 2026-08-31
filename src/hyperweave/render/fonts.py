@@ -23,8 +23,8 @@ import logging
 from functools import lru_cache
 from pathlib import Path
 
-from fontTools.subset import Options, Subsetter  # type: ignore[import-untyped]
-from fontTools.ttLib import TTFont  # type: ignore[import-untyped]
+from fontTools.subset import Options, Subsetter
+from fontTools.ttLib import TTFont
 
 _FONTS_DIR = Path(__file__).resolve().parent.parent / "data" / "fonts"
 _LOG = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def _load_font(slug: str) -> tuple[str, str, str, str]:
     meta_path = _FONTS_DIR / f"{slug}.meta.json"
     b64 = b64_path.read_text().strip()
     meta = json.loads(meta_path.read_text())
-    return meta["family"], meta["weight"], meta.get("style", "normal"), b64
+    return str(meta["family"]), str(meta["weight"]), str(meta.get("style", "normal")), b64
 
 
 @lru_cache(maxsize=8)
@@ -86,7 +86,9 @@ def _subset_b64(slug: str, char_set_str: str) -> str:
         # Latin faces: kern/liga/calt/clig keep shaping, mark/mkmk keep
         # combining marks, ccmp keeps composition, locl keeps locale forms.
         options.layout_features = ["kern", "liga", "calt", "clig", "mark", "mkmk", "ccmp", "locl"]
-        options.name_IDs = ["*"]
+        # "*" is fontTools' keep-everything sentinel; the stub types the field as
+        # list[int] (name-record IDs) and cannot express it.
+        options.name_IDs = ["*"]  # ty: ignore[invalid-assignment]
         options.notdef_glyph = True
         options.notdef_outline = True
         subsetter = Subsetter(options=options)

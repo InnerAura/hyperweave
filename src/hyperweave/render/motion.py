@@ -13,6 +13,7 @@ from hyperweave.core.enums import (
     MotionId,
     Regime,
 )
+from hyperweave.core.errors import HwError, HwErrorCode
 
 # Loading (cached)
 
@@ -350,7 +351,14 @@ def _extract_border_parts(
     env = create_jinja_env()
     # Load the motion template source and wrap it to output defs + overlay
     tpl_path = f"motions/border/{motion_id}.svg.j2"
-    source = env.loader.get_source(env, tpl_path)[0]  # type: ignore[union-attr]
+    loader = env.loader
+    if loader is None:
+        raise HwError(
+            HwErrorCode.ENGINE_INVARIANT,
+            "the Jinja environment has no template loader, so border motion sources cannot be read",
+            fix="build the environment with create_jinja_env(), which installs the package loader",
+        )
+    source = loader.get_source(env, tpl_path)[0]
 
     # Build a wrapper template that includes the motion template and
     # outputs the defs/overlay set-blocks separated by a marker.

@@ -99,11 +99,10 @@ def build_proof(
         proj = project(svg, FormatId.SVG_STATIC, face=face)
         static = proj.data.decode("utf-8")
         files["static.svg"] = proj.data
-        record["resting_frame"] = {"available": True, "diagnostics": dict(proj.diagnostics)}
+        resting: dict[str, Any] = {"available": True, "diagnostics": dict(proj.diagnostics)}
         if adaptive:
-            record["resting_frame"]["face"] = (
-                "light — the adaptive artifact's base face; the dark branch is not pictured"
-            )
+            resting["face"] = "light — the adaptive artifact's base face; the dark branch is not pictured"
+        record["resting_frame"] = resting
     except HwError as exc:
         record["resting_frame"] = {"available": False, "reason": exc.message, "fix": exc.fix}
         projection_verdict = "not inspected — " + exc.message

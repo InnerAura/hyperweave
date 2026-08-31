@@ -233,7 +233,7 @@ def _slide_candidates(
     position changes. Falls back to no candidates when there is no geo."""
     if geo is None or p.box is None:
         return []
-    poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
+    poly: tuple[tuple[float, float], ...] = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
     cur_cx = p.box.x + p.box.w / 2
     cur_cy = p.box.y + p.box.h / 2
     ys_ = [pt[1] for pt in poly]
@@ -252,7 +252,7 @@ def _slide_candidates(
     # runs at the content band's own line, so chord-sliding dropped arc
     # labels onto the cards they float above. The box keeps its current
     # offset from its nearest polyline point and rides the curve.
-    lens = [0.0]
+    lens: list[float] = [0.0]
     for a, b in itertools.pairwise(poly):
         lens.append(lens[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
     total = lens[-1] or 1.0

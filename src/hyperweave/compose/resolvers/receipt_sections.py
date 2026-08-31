@@ -522,7 +522,9 @@ _TS_ERR_X = 769.0  # errcount badge centre
 _TS_MAX_ROWS = 5  # specimen full-session maximum (4 tools + '+N others')
 
 
-def build_tool_spend(payload: dict[str, Any], *, palette: dict[str, str], header_y: float = 124.0) -> ToolSpend:
+def build_tool_spend(
+    payload: dict[str, Any], *, palette: dict[str, str], ramp: list[str], header_y: float = 124.0
+) -> ToolSpend:
     """Lay out the tool-spend bars: top-N by working-token share + '+N OTHERS'.
 
     The header sits on ``header_y`` (threaded by the cursor; 124 in the
@@ -535,7 +537,6 @@ def build_tool_spend(payload: dict[str, Any], *, palette: dict[str, str], header
     the ramp tier and a lighter pct-label tone come from the palette by index.
     """
     tools = _coerce_tools(payload.get("tools"))
-    ramp = palette["ramp"] if isinstance(palette.get("ramp"), list) else []
     ramp_list: list[str] = list(ramp) if ramp else ["#FAFAFA"]
 
     # Per-tool percent is the tool's working tokens over the SESSION working
@@ -906,7 +907,9 @@ class CostByModel:
     separator_y: float
 
 
-def build_cost_by_model(payload: dict[str, Any], *, palette: dict[str, str], eyebrow_y: float = 281.0) -> CostByModel:
+def build_cost_by_model(
+    payload: dict[str, Any], *, palette: dict[str, str], ramp: list[str], eyebrow_y: float = 281.0
+) -> CostByModel:
     """Partition one bar by cost share + lay a row per model beneath it.
 
     Models sort by cost descending. Segment widths come from real ``cost_usd``
@@ -921,7 +924,6 @@ def build_cost_by_model(payload: dict[str, Any], *, palette: dict[str, str], eye
     models: list[dict[str, Any]] = list(payload.get("models") or [])
     # High→low by cost: the bar reads left-heavy, the rows top-heavy.
     models.sort(key=lambda m: float(m.get("cost_usd", 0) or 0), reverse=True)
-    ramp = palette["ramp"] if isinstance(palette.get("ramp"), list) else []
     ramp_list: list[str] = list(ramp) if ramp else ["#FAFAFA"]
     n = len(models)
     rich = n >= _CBM_RICH_MIN_MODELS
@@ -1383,6 +1385,7 @@ def compute_receipt_layout(
     payload: dict[str, Any],
     *,
     palette: dict[str, str],
+    ramp: list[str],
     glyph_id: str,
     wordmark: str,
     display_name: str,
@@ -1410,12 +1413,12 @@ def compute_receipt_layout(
 
     # ── Tool-spend (variable height) ───────────────────────────────────────
     ts_header_y = round(cursor + _RULE_TO_TS_HEADER, 1)
-    tool_spend = build_tool_spend(payload, palette=palette, header_y=ts_header_y)
+    tool_spend = build_tool_spend(payload, palette=palette, ramp=ramp, header_y=ts_header_y)
     cursor = tool_spend.rule_y  # the tool-spend closing rule
 
     # ── Cost-by-model (present iff models) ─────────────────────────────────
     cbm_eyebrow_y = round(cursor + _TS_RULE_TO_CBM, 1)
-    cost_by_model = build_cost_by_model(payload, palette=palette, eyebrow_y=cbm_eyebrow_y)
+    cost_by_model = build_cost_by_model(payload, palette=palette, ramp=ramp, eyebrow_y=cbm_eyebrow_y)
     if cost_by_model.show:
         cursor = cost_by_model.rows_bottom  # last model-row baseline
         # Rich mode lays a closing rule then more air before the chart; plain mode

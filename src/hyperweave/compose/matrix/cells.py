@@ -70,7 +70,7 @@ def truncate_to_width(text: str, max_w: float, voice: MatrixVoice) -> str:
     return text[:lo].rstrip() + _ELLIPSIS
 
 
-def display_value(value: bool | int | float | str | None) -> str:
+def display_value(value: bool | float | str | None) -> str:
     """Canonical display string for a cell value."""
     if value is None:
         return ""
@@ -83,7 +83,7 @@ def display_value(value: bool | int | float | str | None) -> str:
     return value
 
 
-def is_numeric_value(value: bool | int | float | str | None) -> bool:
+def is_numeric_value(value: bool | float | str | None) -> bool:
     """Whether a summary value is a score (numbers, numeric strings) or a
     phrase. Scores take the large summary voices; phrases take the quiet
     summary text voice — the tiers-specimen split."""
@@ -180,7 +180,7 @@ def _heat_rgb(t: float, palette: Mapping[str, Any]) -> tuple[float, float, float
         a, b, u = mid, good, (t - 0.5) * 2.0
     else:
         a, b, u = bad, mid, t * 2.0
-    r, g, bl = (a[i] + (b[i] - a[i]) * u for i in range(3))
+    r, g, bl = (float(a[i]) + (float(b[i]) - float(a[i])) * u for i in range(3))
     return r, g, bl
 
 

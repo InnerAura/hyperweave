@@ -231,7 +231,7 @@ def _slot_stack(
     slots differently."""
     air = _slot_stack_air(ctx)
     exts = [_slot_extents(ctx, axis, edges, idxs, lanes, gaps) for idxs in ordered_idxs]
-    pos = [0.0]
+    pos: list[float] = [0.0]
     for r in range(1, len(ordered_idxs)):
         pos.append(pos[-1] + max(pitch_max, exts[r - 1][1] + air + exts[r][0]))
     gs = [max((gaps[j] for j in idxs if j < len(gaps)), default=0.0) for idxs in ordered_idxs]

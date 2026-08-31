@@ -18,7 +18,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 import typer
 
@@ -41,7 +41,7 @@ def _read_source(value: str) -> str:
     resolves the source digest.
     """
     if value == "-":
-        return sys.stdin.read()
+        return str(sys.stdin.read())
     if value.startswith(("http://", "https://")):
         import httpx
 
@@ -103,7 +103,7 @@ def _run_async(coro: Any) -> dict[str, Any]:
     import concurrent.futures
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        return pool.submit(asyncio.run, coro).result()  # type: ignore[no-any-return]
+        return cast("dict[str, Any]", pool.submit(asyncio.run, coro).result())
 
 
 def _emit(result: dict[str, Any]) -> None:

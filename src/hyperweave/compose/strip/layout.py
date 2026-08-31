@@ -44,7 +44,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -408,6 +408,10 @@ def compute_badge_zones(
     # chrome / cellular) leave ``indicator_leads_value`` False and skip this; the
     # indicator goes after the value below — keeping their geometry byte-identical.
     lead_indicator = indicator_leads_value and has_state_indicator
+    # 0.0 is the no-indicator value; the leading and trailing slots below each
+    # overwrite it. Set here so every path defines it before the unconditional
+    # read in BadgeZones.
+    indicator_x = 0.0
     if lead_indicator:
         indicator_x = cursor
         cursor += indicator_size + (resolved_visual_gap if visual_gap_active else pad)
@@ -441,8 +445,6 @@ def compute_badge_zones(
         cursor = indicator_x + indicator_size + end_gap
     else:
         cursor = value_visual_right + end_gap
-        if not has_state_indicator:
-            indicator_x = 0.0
 
     # Total width includes any paradigm-specific right-canvas inset (cellular: 2px
     # structural slab inset — adds on top of the right-edge pad gap).
@@ -1013,7 +1015,7 @@ def compute_strip_zones(
     subtitle_text: str = "",
     # Per-cell layouts (pre-computed via compute_cell_layout).
     cell_widths: list[int] | None = None,
-    cell_layouts_records: list[dict] | None = None,  # type: ignore[type-arg]
+    cell_layouts_records: list[dict[str, Any]] | None = None,
     metric_pitch_fallback: int = 0,
     # Status indicator zone.
     has_status_indicator: bool = False,
@@ -1201,7 +1203,7 @@ def compute_strip_zones(
         base_extra = extra // len(cell_widths)
         remainder = extra % len(cell_widths)
         stretched_widths: list[int] = []
-        stretched_records: list[dict] = []  # type: ignore[type-arg]
+        stretched_records: list[dict[str, Any]] = []
         for index, width_in in enumerate(cell_widths):
             width_out = width_in + base_extra + (1 if index < remainder else 0)
             record = dict(cell_layouts_records[index])
@@ -1262,6 +1264,9 @@ def compute_strip_zones(
             # ornament), so the last value's right margin mirrors its left.
             bookend_x = last_cell_right
             width = last_cell_right + stateless_trailing
+        # owns_strip renders its own bookend, so content ends where the strip
+        # does — the same equivalence content_width relies on below.
+        natural_content_width = width
     else:
         # Adaptive layout: identity + cells + status + flanks. The trailing
         # clearance sits outside content_width as transparent SVG canvas (not
@@ -1381,8 +1386,8 @@ def compute_strip_zones(
     cellular_panel_w = width - (2 * flank_width) if has_flanks else width
     cellular_panel_h = max(0, height - 4)
 
-    cellular_left_flank_cells: list[dict] = []  # type: ignore[type-arg]
-    cellular_right_flank_cells: list[dict] = []  # type: ignore[type-arg]
+    cellular_left_flank_cells: list[dict[str, object]] = []
+    cellular_right_flank_cells: list[dict[str, object]] = []
     if has_flanks and flank_cell_size > 0:
         n_rows = height // flank_cell_size
         n_cols = flank_width // flank_cell_size

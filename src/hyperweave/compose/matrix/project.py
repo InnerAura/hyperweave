@@ -177,7 +177,7 @@ def _md_align(column: MatrixColumn | None) -> str:
     return ":---"
 
 
-def _md_value(value: bool | int | float | str | None) -> str:
+def _md_value(value: bool | float | str | None) -> str:
     if value is None or value == "":
         return "—"
     if isinstance(value, bool):

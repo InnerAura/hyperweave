@@ -110,7 +110,7 @@ def rgb_to_oklch(r: float, g: float, b: float) -> tuple[float, float, float]:
     lc = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
     mc = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
     sc = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
-    l_, m_, s_ = lc ** (1 / 3), mc ** (1 / 3), sc ** (1 / 3)
+    l_, m_, s_ = float(lc ** (1 / 3)), float(mc ** (1 / 3)), float(sc ** (1 / 3))
     lightness = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
     a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
     bb = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
@@ -129,7 +129,8 @@ def oklch_to_rgb(lightness: float, chroma: float, hue_deg: float) -> tuple[int, 
     lr = 4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_
     lg = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
     lb = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
-    return tuple(max(0, min(255, round(_linear_to_srgb(v) * 255))) for v in (lr, lg, lb))  # type: ignore[return-value]
+    r, g, b = (max(0, min(255, round(_linear_to_srgb(v) * 255))) for v in (lr, lg, lb))
+    return r, g, b
 
 
 def adjust_oklch(hex_color: str, *, dl: float = 0.0, dc: float = 1.0, dh: float = 0.0) -> str:

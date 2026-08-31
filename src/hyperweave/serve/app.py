@@ -14,7 +14,10 @@ from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncIterator, Awaitable, Callable
+
+    # What Starlette hands an @app.middleware("http") function as `call_next`.
+    _CallNext = Callable[[Request], Awaitable[Response]]
 
 from hyperweave import __version__
 from hyperweave.compose.artifact_store import get_artifact
@@ -112,7 +115,7 @@ async def health() -> Response:
 
 
 @app.middleware("http")
-async def svg_camo_headers(request: Request, call_next):  # type: ignore[no-untyped-def]
+async def svg_camo_headers(request: Request, call_next: _CallNext) -> Response:
     response = await call_next(request)
     if response.headers.get("content-type", "").startswith("image/svg+xml"):
         response.headers["Access-Control-Allow-Origin"] = "*"
@@ -165,7 +168,7 @@ def _scrub(value: str | None) -> str:
 
 
 @app.middleware("http")
-async def access_log(request: Request, call_next):  # type: ignore[no-untyped-def]
+async def access_log(request: Request, call_next: _CallNext) -> Response:
     response = await call_next(request)
     if request.url.path in _SILENT_PATHS:
         return response
@@ -1587,8 +1590,11 @@ def _frame_url_grammar() -> dict[str, dict[str, Any]]:
     return out
 
 
-@app.get("/v1/discover")
-async def discover_capability(what: str = "all") -> dict[str, Any]:
+# response_model is explicit rather than None: the union return annotation is
+# what lets the error branch hand back a JSONResponse, but leaving FastAPI to
+# infer from it would erase the published 200 schema.
+@app.get("/v1/discover", response_model=dict[str, Any])
+async def discover_capability(what: str = "all") -> dict[str, Any] | JSONResponse:
     """Registry `discover` face — the same dispatch the CLI and MCP adapters use.
 
     A bespoke GET rather than the verb factory's POST shape: discover takes a
@@ -1602,7 +1608,7 @@ async def discover_capability(what: str = "all") -> dict[str, Any]:
     try:
         return await dispatch("discover", {"what": what}, CallContext(surface="http"))
     except HwError as exc:
-        return JSONResponse(exc.envelope(), status_code=exc.http_status)  # type: ignore[return-value]
+        return JSONResponse(exc.envelope(), status_code=exc.http_status)
 
 
 @app.get("/v1/frames")
