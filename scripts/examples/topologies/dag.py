@@ -314,7 +314,7 @@ _SCENARIOS: list[tuple[str, str, str, dict[str, Any]]] = [
     ),
     (
         "real-ci-gate",
-        "the repo's own gate: pytest + ruff check + ruff format --check + mypy",
+        "the repo's own gate: pytest + ruff check + ruff format --check + ty",
         "The four-command gate, with the real tools. Every check must pass to tag.",
         {
             "title": "Release gate",
@@ -324,7 +324,7 @@ _SCENARIOS: list[tuple[str, str, str, dict[str, Any]]] = [
                 {"id": "push", "label": "Push", "desc": "branch lands", "glyph": "github"},
                 {"id": "tests", "label": "pytest", "desc": "unit + guards", "kind": "shield-check"},
                 {"id": "lint", "label": "ruff", "desc": "check + format", "kind": "sparkle"},
-                {"id": "types", "label": "mypy", "desc": "strict", "glyph": "python"},
+                {"id": "types", "label": "ty", "desc": "strict", "glyph": "python"},
                 {
                     "id": "tag",
                     "label": "Tag",
