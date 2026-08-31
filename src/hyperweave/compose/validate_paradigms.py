@@ -763,3 +763,133 @@ def validate_genome_chromatic_coverage(genome: GenomeSpec) -> None:
     ]
     if violations:
         raise ValueError(f"Genome '{genome.id}' chromatic coverage is broken:\n" + "\n".join(violations))
+
+
+def run_genome_battery(
+    genome: GenomeSpec,
+    paradigms: dict[str, ParadigmSpec],
+    surface_frames: frozenset[str],
+) -> None:
+    """The one genome cross-validation battery, shared by registry and override.
+
+    Runs the full sequence a built-in genome passes at config load —
+    paradigm requirements, variant grammar, surface-mode contract, role
+    grouping, chromatic coverage — so an inline ``genome_override``
+    (``config/genome_validator.validate_genome_override``) is validated
+    exactly as hard as a registry genome and the two paths cannot drift.
+
+    :raises ValueError: enumerating every violation the sequence finds.
+    """
+    validate_genome_against_paradigms(genome, paradigms)
+    validate_genome_paradigm_dispatch(genome)
+    validate_genome_motions(genome)
+    validate_genome_variants(genome)
+    validate_genome_surface_contract(genome, surface_frames)
+    validate_genome_roles(genome)
+    validate_genome_chromatic_coverage(genome)
+
+
+# The divider frame dispatches by VARIANT (``frames/divider/<genome>-<slug>``),
+# not by a ``<paradigm>-content.j2`` partial, so its paradigm entry names a
+# chromatic family rather than a template. Every other frame interpolates its
+# paradigm slug straight into an include path.
+_PARADIGM_DISPATCH_EXEMPT: frozenset[str] = frozenset({"divider"})
+
+
+def validate_genome_paradigm_dispatch(genome: GenomeSpec) -> None:
+    """Assert every declared paradigm slug satisfies its frame's WHOLE include
+    contract.
+
+    Invariant 12 resolves a paradigm by interpolating its slug into the frame
+    template's includes — for most frames ``-defs.j2`` AND ``-content.j2``,
+    for strip also ``-status.j2``. Checking only the content partial accepted
+    substrate SUBPARTIALS (``primer-light``, ``brutalist-dark``): files that
+    exist, are included BY a paradigm's own content partial, and have no
+    ``-defs.j2`` of their own — so they passed the boundary and then died at
+    render time on the missing defs. The required suffix set is read from the
+    frame template itself, so a frame that grows an include enrolls here with
+    no edit.
+
+    :raises ValueError: enumerating every frame whose paradigm cannot dispatch.
+    """
+    from hyperweave.render.templates import template_exists
+
+    violations: list[str] = []
+    for frame, slug in (genome.paradigms or {}).items():
+        if frame in _PARADIGM_DISPATCH_EXEMPT:
+            continue
+        missing = [
+            f"frames/{frame}/{slug}-{suffix}.j2"
+            for suffix in _dispatch_suffixes(frame)
+            if not template_exists(f"frames/{frame}/{slug}-{suffix}.j2")
+        ]
+        if not missing:
+            continue
+        available = sorted(_available_paradigms(frame))
+        known = f" (dispatchable for {frame}: {', '.join(available)})" if available else ""
+        violations.append(f"  paradigms.{frame} = '{slug}' is missing {', '.join(missing)}{known}")
+    if violations:
+        raise ValueError(f"Genome '{genome.id}' declares paradigms that dispatch nowhere:\n" + "\n".join(violations))
+
+
+def _dispatch_suffixes(frame: str) -> tuple[str, ...]:
+    """Partial suffixes ``frames/<frame>.svg.j2`` interpolates a paradigm into.
+
+    Read from the template source rather than a table in Python: the frame
+    template IS the contract, so it cannot drift from this check.
+    """
+    import pathlib
+
+    import hyperweave
+
+    template = pathlib.Path(hyperweave.__file__).parent / "templates" / "frames" / f"{frame}.svg.j2"
+    if not template.is_file():
+        return ("content",)
+    # `ignore missing` marks an OPTIONAL partial (marquee's -overlay.j2): the
+    # frame renders fine without it, so requiring it would reject a genome for
+    # using an otherwise valid paradigm. The trailing group captures whatever
+    # follows the include path so those can be excluded.
+    pattern = re.compile(rf'"frames/{re.escape(frame)}/"\s*~\s*([^~]*?)~\s*"-([a-z-]+)\.j2"([^%]*)')
+    suffixes: set[str] = {
+        match.group(2)
+        for match in pattern.finditer(template.read_text())
+        if "paradigm" in match.group(1) and "ignore missing" not in match.group(3)
+    }
+    return tuple(sorted(suffixes)) if suffixes else ("content",)
+
+
+def _available_paradigms(frame: str) -> set[str]:
+    """Paradigm slugs with a real content partial for ``frame``."""
+    import pathlib
+
+    import hyperweave
+
+    frame_dir = pathlib.Path(hyperweave.__file__).parent / "templates" / "frames" / frame
+    if not frame_dir.is_dir():
+        return set()
+    suffixes = _dispatch_suffixes(frame)
+    candidates = {path.name.removesuffix(f"-{suffixes[0]}.j2") for path in frame_dir.glob(f"*-{suffixes[0]}.j2")}
+    return {slug for slug in candidates if all((frame_dir / f"{slug}-{s}.j2").exists() for s in suffixes)}
+
+
+def validate_genome_motions(genome: GenomeSpec) -> None:
+    """Assert every compatible motion id exists in the motion registry.
+
+    The slug grammar (``GenomeSpec.validate_motions_include_static``) keeps an
+    id from breaking the ``data-hw-motion`` attribute it lands in; this keeps a
+    lawful-looking-but-absent id (``"nonexistent"``) from being declared,
+    requested, and then silently rendered as a static artifact that still
+    CLAIMS the motion.
+
+    :raises ValueError: naming the unknown ids and the registry's vocabulary.
+    """
+    from hyperweave.config.loader import load_motions
+
+    registry = load_motions()
+    unknown = [motion for motion in genome.compatible_motions if motion not in registry]
+    if unknown:
+        msg = (
+            f"Genome '{genome.id}' declares motions absent from the registry: {', '.join(sorted(unknown))}\n"
+            f"  known motions: {', '.join(sorted(registry))}"
+        )
+        raise ValueError(msg)

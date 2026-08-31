@@ -9,8 +9,32 @@ manual visual review is for.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _frozen_fixture_cache() -> Iterator[None]:
+    """A TEST run must never rewrite the committed proofset fixture cache.
+
+    The generators save the cache after successful live fetches; under pytest
+    that silently clobbers a locally modified fixture file. Frozen mode keeps
+    the smoke test on cached values and refuses the write. Module-scoped
+    (plain os.environ, not monkeypatch) so it wraps the module-scoped
+    generator fixtures below."""
+    import os
+
+    previous = os.environ.get("HW_PROOFSET_FROZEN")
+    os.environ["HW_PROOFSET_FROZEN"] = "1"
+    yield
+    if previous is None:
+        os.environ.pop("HW_PROOFSET_FROZEN", None)
+    else:
+        os.environ["HW_PROOFSET_FROZEN"] = previous
 
 
 @pytest.fixture(scope="module")

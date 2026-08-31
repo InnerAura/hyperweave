@@ -150,8 +150,23 @@ def load_fixtures() -> dict[str, Any]:
     return dict(json.loads(FIXTURE_PATH.read_text()))
 
 
+def frozen_fixtures() -> bool:
+    """True when ``HW_PROOFSET_FROZEN=1``: the fixture file is read-only for
+    this run — no network fetches, no cache writes. Lets a proofset gate run
+    against a locally modified fixture without overwriting it."""
+    import os
+
+    return os.environ.get("HW_PROOFSET_FROZEN", "") == "1"
+
+
 def save_fixtures(data: dict[str, Any]) -> None:
-    """Persist connector cache, sorted for deterministic diffs."""
+    """Persist connector cache, sorted for deterministic diffs.
+
+    Refuses under frozen mode — a frozen run must leave the fixture file
+    byte-identical."""
+    if frozen_fixtures():
+        print("  [FROZEN] HW_PROOFSET_FROZEN=1 — fixture write refused")
+        return
     FIXTURE_PATH.parent.mkdir(parents=True, exist_ok=True)
     FIXTURE_PATH.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
 
@@ -171,6 +186,11 @@ async def fetch_or_cache(
     from hyperweave.connectors import fetch_metric
 
     cache_key = f"{provider}:{identifier}.{metric}"
+    if frozen_fixtures():
+        cached = fixtures.get(cache_key)
+        if cached is not None:
+            return cached["value"]
+        raise RuntimeError(f"HW_PROOFSET_FROZEN=1 and no fixture cache for {cache_key}")
     try:
         result = await fetch_metric(provider, identifier, metric)
         # connectors return dict with 'value' key

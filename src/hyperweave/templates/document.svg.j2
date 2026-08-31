@@ -4,49 +4,49 @@
 <svg xmlns="http://www.w3.org/2000/svg"
      xmlns:hw="https://hyperweave.app/hw/v1.0"
      role="img"
-     aria-labelledby="{{ uid }}-title {{ uid }}-desc"
-     viewBox="0 0 {{ viewbox_w | default(0) or width }} {{ viewbox_h | default(0) or height }}"
-     width="{{ width }}" height="{{ height }}"
+     aria-labelledby="{{ uid | xml_escape }}-title {{ uid | xml_escape }}-desc"
+     viewBox="0 0 {{ (viewbox_w | default(0) or width) | xml_escape }} {{ (viewbox_h | default(0) or height) | xml_escape }}"
+     width="{{ width | xml_escape }}" height="{{ height | xml_escape }}"
      shape-rendering="geometricPrecision"
-     data-hw-id="{{ artifact_id }}"
-     data-hw-type="{{ frame_type }}"
-     data-hw-frame="{{ frame_public | default(frame_type) }}"
-     data-hw-genome="{{ genome_id }}"
-     data-hw-mode="{{ theme_category | default('dark') }}"
-     data-hw-status="{{ status }}"
-     data-hw-state="{{ lifecycle }}"
-     data-hw-profile="{{ profile_id }}"
-     data-hw-motion="{{ data_hw_motion }}"
+     data-hw-id="{{ artifact_id | xml_escape }}"
+     data-hw-type="{{ frame_type | xml_escape }}"
+     data-hw-frame="{{ frame_public | default(frame_type) | xml_escape }}"
+     data-hw-genome="{{ genome_id | xml_escape }}"
+     data-hw-mode="{{ theme_category | default('dark') | xml_escape }}"
+     data-hw-status="{{ status | xml_escape }}"
+     data-hw-state="{{ lifecycle | xml_escape }}"
+     data-hw-profile="{{ profile_id | xml_escape }}"
+     data-hw-motion="{{ data_hw_motion | xml_escape }}"
      data-hw-generation="1"
-     data-hw-contract="{{ contract_id }}"
-     data-hw-size="{{ size | default('default') }}"
-{% if data_hw_fonts | default('') %}     data-hw-fonts="{{ data_hw_fonts }}"
+     data-hw-contract="{{ contract_id | xml_escape }}"
+     data-hw-size="{{ size | default('default') | xml_escape }}"
+{% if data_hw_fonts | default('') %}     data-hw-fonts="{{ data_hw_fonts | xml_escape }}"
 {% endif %}
-{% if regime %}     data-hw-regime="{{ regime }}"
+{% if regime %}     data-hw-regime="{{ regime | xml_escape }}"
 {% endif %}
-{% if has_glyph | default(false) %}     data-hw-glyph="{{ glyph_id }}"
+{% if has_glyph | default(false) %}     data-hw-glyph="{{ glyph_id | xml_escape }}"
 {% endif %}
 {% if data_hw_value %}     data-hw-value="{{ data_hw_value | xml_escape }}"
 {% endif %}
-{% if data_hw_statemode and data_hw_statemode != 'off' %}     data-hw-statemode="{{ data_hw_statemode }}"
+{% if data_hw_statemode and data_hw_statemode != 'off' %}     data-hw-statemode="{{ data_hw_statemode | xml_escape }}"
 {% endif %}
-{% if data_hw_state_shape | default('') %}     data-hw-state-shape="{{ data_hw_state_shape }}"
+{% if data_hw_state_shape | default('') %}     data-hw-state-shape="{{ data_hw_state_shape | xml_escape }}"
 {% endif %}
-{% if data_hw_topology | default('') %}     data-hw-topology="{{ data_hw_topology }}"
-{% endif %}{% if data_hw_subvariant | default('') %}     data-hw-subvariant="{{ data_hw_subvariant }}"
+{% if data_hw_topology | default('') %}     data-hw-topology="{{ data_hw_topology | xml_escape }}"
+{% endif %}{% if data_hw_subvariant | default('') %}     data-hw-subvariant="{{ data_hw_subvariant | xml_escape }}"
 {% endif %}
 {% if inline_style_overrides | default('') %}     style="{{ inline_style_overrides }}"
 {% endif %}
-     id="{{ uid }}"
-{% if surface_adapt | default(false) %}     data-hw-adapt="{{ data_hw_adapt }}"
-     data-hw-ground="{{ surface_ground }}"
-     data-hw-surface="{{ surface_preset }}"
+     id="{{ uid | xml_escape }}"
+{% if surface_adapt | default(false) %}     data-hw-adapt="{{ data_hw_adapt | xml_escape }}"
+     data-hw-ground="{{ surface_ground | xml_escape }}"
+     data-hw-surface="{{ surface_preset | xml_escape }}"
 {% endif %}
-{% if data_hw_face | default('') %}     data-hw-face="{{ data_hw_face }}"
+{% if data_hw_face | default('') %}     data-hw-face="{{ data_hw_face | xml_escape }}"
 {% endif %}
-     data-hw-chromatic="{{ genome_id }}">
-  <title id="{{ uid }}-title">{{ title_text | xml_escape }}</title>
-  <desc id="{{ uid }}-desc">{{ desc_text | xml_escape }}</desc>
+     data-hw-chromatic="{{ genome_id | xml_escape }}">
+  <title id="{{ uid | xml_escape }}-title">{{ title_text | xml_escape }}</title>
+  <desc id="{{ uid | xml_escape }}-desc">{{ desc_text | xml_escape }}</desc>
   <!-- {{ self_instruct }} -->
 {% if metadata_tier >= 1 %}
 {% include "components/metadata.svg.j2" %}

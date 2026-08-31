@@ -390,56 +390,6 @@ def _lift_direction(
     return 1.0 if comp >= 0 else -1.0
 
 
-def _lift_off_run(
-    poly: tuple[tuple[float, float], ...],
-    seat: tuple[float, float],
-    lift: float,
-    *,
-    lane: int = 0,
-    steep: bool = False,
-) -> tuple[float, float]:
-    """Push a pill off its own run, clear of the stroke.
-
-    A DUPLEX channel (``lane`` non-zero) floats OUTWARD OF ITS PAIR: away
-    from the partner wire, along the minor axis, in the direction its own
-    lane sign already put it. The corridor between two channels is one lane
-    gap wide — it can never hold a pill — so any rule that can point inward
-    lands the pill on its partner's wire, which is what shipped.
-
-    A lone bent edge has no partner to avoid, so it takes the OUTSIDE of the
-    bend: a pill lifted into the concave side moves toward whatever the bend
-    is bending around. The local turn decides, so it reads the same on a rise
-    and a fall."""
-    if len(poly) < 2 or lift <= 0:
-        return seat
-    if lane != 0:
-        sign = 1.0 if lane > 0 else -1.0
-        return (seat[0] + sign * lift, seat[1]) if steep else (seat[0], seat[1] + sign * lift)
-    best_i, best_d = 0, math.inf
-    for i, (a, b) in enumerate(itertools.pairwise(poly)):
-        mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
-        d = math.hypot(seat[0] - mx, seat[1] - my)
-        if d < best_d:
-            best_i, best_d = i, d
-    a, b = poly[best_i], poly[best_i + 1]
-    ux, uy = b[0] - a[0], b[1] - a[1]
-    n = math.hypot(ux, uy)
-    if n == 0:
-        return seat
-    ux, uy = ux / n, uy / n
-    nx, ny = -uy, ux
-    # Turn sign from the neighbouring segments: the outside of the bend is
-    # away from where the run is curving.
-    prev_i = max(best_i - 1, 0)
-    next_i = min(best_i + 1, len(poly) - 2)
-    p0, p1 = poly[prev_i], poly[prev_i + 1]
-    q0, q1 = poly[next_i], poly[next_i + 1]
-    turn = (p1[0] - p0[0]) * (q1[1] - q0[1]) - (p1[1] - p0[1]) * (q1[0] - q0[0])
-    if turn > 0:
-        nx, ny = -nx, -ny
-    return (seat[0] + nx * lift, seat[1] + ny * lift)
-
-
 def is_duplex_edge(edges: Sequence[ResolvedEdge], j: int) -> bool:
     """Whether edge ``j`` is one half of a reciprocal pair — the same u->v
     with v->u that promotes a cyclic dag.

@@ -236,3 +236,39 @@ def _finish_once(svg: str) -> str:
         return f"{m.group(1)}{finished}{m.group(3)}"
 
     return _STYLE_SPAN.sub(_sub, svg)
+
+
+_KEYFRAMES_HEAD = re.compile(r"@(?:-webkit-)?keyframes\b[^{]*\{")
+_KF_PROPERTY = re.compile(r"([A-Za-z-]+)\s*:")
+_SMIL_ATTR_NAME = re.compile(r"<animate(?:Transform)?\b[^>]*\battributeName=\"([^\"]+)\"")
+_ANIMATE_MOTION = re.compile(r"<animateMotion\b")
+
+
+def rendered_animated_properties(svg: str) -> set[str]:
+    """Animated property names in a FINAL document — the truth referent for
+    the ``performance``/``cim-compliant`` claims.
+
+    Three sources: declarations inside every kept ``@keyframes`` body (after
+    :func:`finish_css` a surviving keyframes block is referenced by
+    construction), SMIL ``attributeName`` on ``animate``/``animateTransform``,
+    and ``animateMotion`` (which moves the element's transform). Used by
+    ``tests/render/test_performance_truth.py`` so the ``performance.yaml``
+    table can never silently drift from the templates.
+    """
+    props: set[str] = set()
+    for style_match in _STYLE_SPAN.finditer(svg):
+        css = style_match.group(2)
+        for head in _KEYFRAMES_HEAD.finditer(css):
+            depth, i = 1, head.end()
+            while i < len(css) and depth:
+                ch = css[i]
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                i += 1
+            props.update(_KF_PROPERTY.findall(css[head.end() : i]))
+    props.update(_SMIL_ATTR_NAME.findall(svg))
+    if _ANIMATE_MOTION.search(svg):
+        props.add("transform")
+    return props

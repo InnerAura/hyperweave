@@ -853,7 +853,7 @@
     "value": "n/a"
   },
   "snapshot:arxiv:2602.15763": {
-    "fetched_at": 1788145293.68994,
+    "fetched_at": 1788196420.119362,
     "value": {
       "bio": "GLM-5-Team et al. \u00b7 cs.LG \u00b7 cs.CL",
       "hero": {
@@ -889,13 +889,13 @@
     }
   },
   "snapshot:huggingface:zai-org/GLM-5.1": {
-    "fetched_at": 1788146317.623502,
+    "fetched_at": 1788196420.119336,
     "value": {
       "hero": {
         "label": "DOWNLOADS/MO",
         "provider": "huggingface",
-        "raw_value": 85045,
-        "value": "85.0K"
+        "raw_value": 87292,
+        "value": "87.3K"
       },
       "identity": "zai-org/GLM-5.1",
       "identity_subtitle": "transformers",
@@ -927,7 +927,7 @@
     }
   },
   "snapshot:pypi:readmeai": {
-    "fetched_at": 1788146317.540565,
+    "fetched_at": 1788196420.1193202,
     "value": {
       "activity": {
         "peak_label": "1,274",
@@ -1727,7 +1727,7 @@
     }
   },
   "snapshot:pypi:vllm": {
-    "fetched_at": 1788146371.1106932,
+    "fetched_at": 1788196420.119381,
     "value": {
       "activity": {
         "peak_label": "216.9K",

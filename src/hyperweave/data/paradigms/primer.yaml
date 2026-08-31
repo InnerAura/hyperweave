@@ -127,8 +127,9 @@ chart:
   viewport_y: 140
   viewport_w: 880
   viewport_h: 340
-  # CIM motion (transform/opacity only): the line draws on, the area + markers
-  # fade in, the endpoint pings — like the chart specimens. Reduced-motion stills.
+  # Chart reveal: the line draws on (stroke-dashoffset — Paint stage, so the
+  # tier derives paint-ok), the area + markers fade in, the endpoint pings —
+  # like the chart specimens. Reduced-motion stills.
   line_animate: true
   # Blue axis details (top Y-tick + current X-tick accent) and vertical gridlines
   # at every X-tick, per the porcelain chart specimen.

@@ -131,6 +131,49 @@ class TestValidateJson:
         report = json.loads(result.stdout)
         assert report["valid"] is False and report["error"]["code"]
 
+    # --json promises the machine-readable report on EVERY outcome — including
+    # refusals that fire before a spec envelope exists. Each pre-parse class,
+    # through the real parser: stdout parses as the {valid, error} shape, exit 2.
+
+    @pytest.mark.parametrize(
+        ("args", "code"),
+        [
+            pytest.param(["validate", "--json"], "SPEC_INVALID", id="no-source"),
+            pytest.param(["validate", "--spec", "{not json", "--json"], "SPEC_INVALID", id="invalid-json"),
+            pytest.param(["validate", "--spec", "[1,2]", "--json"], "SPEC_INVALID", id="non-object"),
+            pytest.param(["validate", "definitely-no-such-preset", "--json"], "PRESET_UNKNOWN", id="unknown-preset"),
+            pytest.param(["validate", "./missing/spec.json", "--json"], "SPEC_INVALID", id="missing-file"),
+        ],
+    )
+    def test_pre_parse_refusals_emit_json(self, args: list[str], code: str) -> None:
+        from hyperweave.cli import app
+
+        result = runner.invoke(app, args)
+        assert result.exit_code == 2, result.output
+        report = json.loads(result.stdout)
+        assert report["valid"] is False
+        assert report["error"]["code"] == code
+        assert report["error"]["message"]
+
+    def test_conflicting_spec_files_emit_json(self, tmp_path: Any) -> None:
+        from hyperweave.cli import app
+
+        a, b = tmp_path / "a.json", tmp_path / "b.json"
+        a.write_text("{}")
+        b.write_text("{}")
+        result = runner.invoke(app, ["validate", str(a), "--spec-file", str(b), "--json"])
+        assert result.exit_code == 2
+        report = json.loads(result.stdout)
+        assert report["valid"] is False and report["error"]["code"] == "SPEC_INVALID"
+
+    def test_pre_parse_refusal_stays_prose_without_json(self) -> None:
+        from hyperweave.cli import app
+
+        result = runner.invoke(app, ["validate", "--spec", "{not json"])
+        assert result.exit_code == 2
+        assert "invalid JSON" in result.output
+        assert not result.stdout.strip().startswith("{")
+
 
 class TestTwoNodeFloor:
     @pytest.mark.parametrize("topology", ["pipeline", "pipeline-vertical"])

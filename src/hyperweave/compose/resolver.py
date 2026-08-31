@@ -797,7 +797,7 @@ def resolve_badge(
     label_start_bearing = label_metrics.leading_bearing if label_metrics is not None else 0.0
     value_start_bearing = value_metrics.leading_bearing if value_metrics is not None else 0.0
 
-    has_glyph = bool(glyph_path or glyph_data.get("custom_svg"))
+    has_glyph = bool(glyph_path)
     badge_cfg = paradigm_spec.badge if paradigm_spec else None
 
     # Legacy glyph-left offset fallback. Paradigms with rendered left
@@ -2559,6 +2559,9 @@ def resolve_divider(
     ctx: dict[str, Any] = {
         "divider_label": spec.value or "",
         "variant": spec.variant or "",
+        # Performance-tier lookup key (compose/motion.py): the template
+        # identity actually dispatched, mirroring the slug interpolation above.
+        "tier_key": f"divider.{spec.genome_id}-{variant}" if template == genome_specific else f"divider.{variant}",
         # Pass through chrome chromosomes so chrome-band template's envelope_stops
         # for-loop has data. brutalist-seam needs accent + accent_complement (was
         # accent_signal pre-v0.3.3 — see brutalist-seam.svg.j2 header for the
@@ -3667,10 +3670,12 @@ class GenomeNotFoundError(KeyError):
 def _load_genome(genome_id: str, override: dict[str, Any] | None = None) -> dict[str, Any]:
     """Load a genome dict by slug, or return the override if provided.
 
-    Session 2A+2B: when ``override`` is a dict, it is returned verbatim.
-    This is the ``--genome-file`` path — the CLI loads JSON, validates via
-    ``GenomeSpec``, and passes the resulting dict through ``ComposeSpec.genome_override``.
-    The resolver trusts the caller to have validated.
+    An ``override`` dict is safe to return verbatim because the ComposeSpec
+    boundary (``core/models.py::_validate_genome_override``, backed by
+    ``config/genome_validator.validate_genome_override``) has already run the
+    full GenomeSpec grammar + battery + profile-contract validation and
+    normalized the dict to the registry shape — on every surface, before
+    anything reads it.
 
     Raises:
         GenomeNotFoundError: when ``genome_id`` is not registered and no
@@ -3764,14 +3769,6 @@ def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
         glyph_id = spec.glyph
         if glyph_id and glyph_id in glyphs:
             return _glyph_payload(glyph_id, glyphs)
-        if spec.custom_glyph_svg:
-            return {
-                "id": "custom",
-                "path": "",
-                "viewBox": "",
-                "custom_svg": spec.custom_glyph_svg,
-            }
-
         inferred = _infer_glyph_id(spec, glyphs, infer_glyph)
         if inferred and inferred in glyphs:
             return _glyph_payload(inferred, glyphs)
@@ -3785,14 +3782,6 @@ def _resolve_glyph(spec: ComposeSpec) -> dict[str, Any]:
             return _glyph_payload("hyperweave", glyphs)
     except (ImportError, Exception):
         pass
-
-    if spec.custom_glyph_svg:
-        return {
-            "id": "custom",
-            "path": "",
-            "viewBox": "",
-            "custom_svg": spec.custom_glyph_svg,
-        }
 
     return {}
 
@@ -3930,11 +3919,23 @@ def _resolve_motion(spec: ComposeSpec, genome: dict[str, Any]) -> str:
     if motion in compatible:
         return motion
 
-    # Ungoverned regime allows any motion
-    if spec.regime == Regime.UNGOVERNED:
+    # The ungoverned regime waives the genome's COMPATIBILITY policy, not
+    # existence: a motion with no definition animates nothing, so honoring the
+    # request would emit data-hw-motion / hw:motion vocabulary naming a motion
+    # the artifact does not perform. Report static, truthfully.
+    if spec.regime == Regime.UNGOVERNED and _motion_exists(motion):
         return motion
 
     return MotionId.STATIC
+
+
+def _motion_exists(motion_id: str) -> bool:
+    """Whether ``motion_id`` has a definition in the motion registry."""
+    try:
+        from hyperweave.config.loader import load_motions
+    except ImportError:  # bootstrap-only path, mirroring _load_genome
+        return False
+    return motion_id in load_motions()
 
 
 def _parse_metrics(spec: ComposeSpec) -> list[dict[str, Any]]:

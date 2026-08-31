@@ -101,10 +101,12 @@
 .{{ uid }}-chart .hw-chart-milestone-label { font-family: var(--dna-font-mono, 'JetBrains Mono', ui-monospace, monospace); font-size: 9px; font-weight: 700; letter-spacing: 0.10em; fill: var(--dna-ink-primary); }
 .{{ uid }}-pulse { animation: {{ uid }}-pulse var(--dna-rhythm-base, 2.618s) ease-in-out infinite; will-change: opacity; }
 @keyframes {{ uid }}-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
-{# CIM chart motion (transform/opacity only). Default state is fully visible
-   (dashoffset 0, opacity 1) so static renderers show the finished chart; the
-   keyframes animate FROM the hidden state, so animation-capable renderers play
-   the reveal. Line draws on, area + markers fade in staggered, endpoint pings. #}
+{# Chart reveal motion. The line draw marches stroke-dashoffset — a
+   Paint-stage property, so this paradigm's tier derives paint-ok
+   (performance.yaml baked_animations chart.primer). Default state is fully
+   visible (dashoffset 0, opacity 1) so static renderers show the finished
+   chart; the keyframes animate FROM the hidden state, so animation-capable
+   renderers play the reveal. Area + markers fade in staggered, endpoint pings. #}
 .{{ uid }}-chart .hw-chart-line-draw { stroke-dashoffset: 0; animation: {{ uid }}-draw 2.4s cubic-bezier(0.16,1,0.3,1) 0.25s backwards; will-change: stroke-dashoffset; }
 @keyframes {{ uid }}-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 .{{ uid }}-chart .hw-chart-area-smooth { animation: {{ uid }}-rise 1.2s ease-out 1.0s backwards; }

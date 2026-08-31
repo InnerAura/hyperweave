@@ -219,6 +219,10 @@ class ComposeRequest(BaseModel):
     glyph_tint: str = ""
     """Glyph fill selection: ink | brand | full (empty defers to the
     genome default). Per-slot IR declarations outrank it."""
+    genome_override: dict[str, Any] | None = None
+    """Inline custom genome (CLI ``--genome-file`` / MCP ``genome_override``
+    parity). Validated at the shared custom-genome boundary exactly as hard
+    as a registry genome; its ``id`` is canonical over ``genome``."""
     performance: str = ""
     """Surface performance tier: '' (paint-ok) | 'composite-only'. The kit
     grammar (dash | particle) is compositor-only by construction — both
@@ -811,11 +815,22 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
     # Shared presentation resolution (primer default, dotted split, genome/
     # frame/variant gates) — an HwError propagates to the compose exception
     # handler and renders the classified error artifact, same as render-time
-    # failures always have.
-    genome_id, variant = resolve_presentation(req.type, req.genome, req.variant)
+    # failures always have. An inline genome runs the custom-genome boundary
+    # FIRST, before anything reads the raw dict; its id is canonical.
+    genome, override = req.genome, req.genome_override
+    if override is not None:
+        from hyperweave.config.genome_validator import validate_genome_override
+
+        try:
+            override = validate_genome_override(override)
+        except HwError as exc:
+            return JSONResponse(exc.envelope(), status_code=exc.http_status)
+        genome = str(override["id"])
+    genome_id, variant = resolve_presentation(req.type, genome, req.variant, genome_override=override)
     spec = ComposeSpec(
         type=req.type,
         genome_id=genome_id,
+        genome_override=override,
         title=req.title,
         value=req.value,
         state=req.state,
@@ -887,6 +902,8 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
         connector = raw.get("connector_data")
         if connector is not None:
             spec["connector_data"] = connector
+        if req.genome_override is not None:
+            spec["genome_override"] = req.genome_override
     else:
         spec = {
             "title": req.title,
@@ -905,6 +922,8 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
         }
         if req.speeds is not None:
             spec["marquee_speeds"] = req.speeds
+        if req.genome_override is not None:
+            spec["genome_override"] = req.genome_override
     # Surface axes forward through compose_surface's model_fields partition as
     # ComposeSpec top-level fields. `surface` is a preset (no ComposeSpec field) —
     # expand it to ground/palette here so only the axes travel; a bad preset/axis

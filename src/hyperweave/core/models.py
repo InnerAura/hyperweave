@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from hyperweave.core.base import FrozenModel as FrozenModel
 from hyperweave.core.defaults import default_genome
@@ -86,6 +86,30 @@ class ComposeSpec(FrozenModel):
 
     @model_validator(mode="before")
     @classmethod
+    def _validate_genome_override(cls, data: object) -> object:
+        """Invariant-3 boundary: an inline genome is validated exactly as hard
+        as a registry genome, whatever delivered it — the direct-library guard
+        behind the surface-level call in ``compose/surface.py``. Normalizes the
+        dict to ``GenomeSpec.model_dump()`` (the registry shape; idempotent, so
+        surface-validated dicts pass through unchanged) and canonicalizes
+        ``genome_id`` to the override's ``id``.
+        """
+        if not (isinstance(data, dict) and isinstance(data.get("genome_override"), dict)):
+            return data
+        from hyperweave.config.genome_validator import validate_genome_override
+        from hyperweave.core.errors import HwError
+
+        try:
+            data["genome_override"] = validate_genome_override(data["genome_override"])
+        except HwError as exc:
+            # build_compose_spec's exception seam maps ValidationError/ValueError,
+            # not HwError — wrap so raw construction fails through the same seam.
+            raise ValueError(exc.cli_text()) from exc
+        data["genome_id"] = str(data["genome_override"]["id"])
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
     def _resolve_profile_from_genome(cls, data: object) -> object:
         """Auto-resolve profile_id from genome_id when not explicitly set."""
         if not isinstance(data, dict):
@@ -139,6 +163,52 @@ class ComposeSpec(FrozenModel):
     slots: list[SlotContent] = Field(default_factory=list, description="Content filling frame zones")
     state: str = Field(default="active", description="Semantic state: active, warning, critical, passing, etc.")
     motion: str = Field(default="static", description="Animation primitive (genome.compatible_motions)")
+
+    # Every field below names a thing rather than saying something: an id, a
+    # dispatch key, a policy axis. Each one reaches an SVG attribute, a CSS
+    # selector, or a template include, so all of them take the SHARED slug
+    # grammar — not one regex per reported reproduction. Prose fields (title,
+    # value, reasoning, connector names) are excluded by design: they carry
+    # arbitrary user text and are xml_escaped at their sinks instead.
+    _SLUG_FIELDS = (
+        "state",
+        "size",
+        "motion",
+        "frame_id",
+        "profile_id",
+        "glyph",
+        "font_mode",
+        "shape",
+        "series",
+        "platform",
+        "marquee_direction",
+        "glyph_tint",
+        "performance",
+        "chrome",
+        "ground",
+        "palette",
+        "surface_face",
+    )
+
+    @field_validator(*_SLUG_FIELDS)
+    @classmethod
+    def _validate_slug_field(cls, v: str, info: ValidationInfo) -> str:
+        """Identity and dispatch values must be slugs.
+
+        ``_resolve_motion`` drops an incompatible motion to static under the
+        governed lanes, but the UNGOVERNED regime deliberately passes the
+        caller's id through — straight into ``data-hw-motion``, where an
+        entity-bearing id produced malformed XML (Invariant 14). The same
+        shape of hole existed on every sibling field, so the grammar is
+        applied to the whole class at once.
+        """
+        from hyperweave.core.schema import is_slug
+
+        if v and not is_slug(v):
+            msg = f"{info.field_name} must be a slug (lowercase id characters), got '{v}'"
+            raise ValueError(msg)
+        return v
+
     glyph: str = Field(default="", description="Glyph identifier")
     glyph_mode: GlyphMode = Field(default=GlyphMode.AUTO, description="Glyph rendering mode: auto, fill, wire, none")
     font_mode: str = Field(
@@ -149,7 +219,6 @@ class ComposeSpec(FrozenModel):
             "system (no @font-face — the fallback stacks render)"
         ),
     )
-    custom_glyph_svg: str = Field(default="", description="Raw SVG for custom glyphs")
     size: str = Field(default="default", description="Frame size: default, compact")
     shape: str = Field(default="", description="Icon frame shape: square, circle")
     variant: str = Field(

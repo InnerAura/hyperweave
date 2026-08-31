@@ -547,6 +547,51 @@ def strip_animation_counted(svg: str) -> tuple[str, dict[str, int]]:
     return svg, counts
 
 
+_HW_MOTION_TAG = re.compile(r"<hw:motion\b[^>]*>")
+_HW_ENVIRONMENT_MOTION = re.compile(r'(<hw:environment\b[^>]*?)\bmotion="[^"]*"')
+_HW_SPEC_PERFORMANCE = re.compile(r'(<hw:spec\b[^>]*?)\bperformance="[^"]*"')
+_CONSTRAINTS_APPLIED = re.compile(r"(<hw:constraints-applied>)([^<]*)(</hw:constraints-applied>)")
+_MOTION_CLAIM_ATTRS = {"vocabulary": "static", "physics": "none", "timing": "none", "stagger-regime": "none"}
+
+
+def rewrite_motion_claims(svg: str) -> str:
+    """Make the projected document's motion claims describe the PROJECTION.
+
+    ``noanim`` strips every animation but used to leave the live source's
+    claims behind — a static file declaring ``paint-ok`` /
+    ``cim-compliant="false"`` / ``data-hw-motion="animated"`` contradicts its
+    own body. Projected metadata describes the rendered projection, not its
+    source, so the complete claim set rewrites: the root ``data-hw-motion``,
+    ``hw:spec performance``, ``hw:environment motion``, every ``hw:motion``
+    doctrine attribute (``rhythm-base`` stays — it names a genome token, not a
+    clock), ``cim-compliant``, and the ``cim-compliant`` constraint token.
+    """
+    svg = re.sub(r'\bdata-hw-motion="[^"]*"', 'data-hw-motion="static"', svg)
+    svg = _HW_SPEC_PERFORMANCE.sub(r'\1performance="composite-only"', svg)
+    svg = _HW_ENVIRONMENT_MOTION.sub(r'\1motion="static"', svg)
+    svg = re.sub(r'\bcim-compliant="[^"]*"', 'cim-compliant="true"', svg)
+
+    def _still_motion_tag(m: re.Match[str]) -> str:
+        tag = m.group(0)
+        for attr, value in _MOTION_CLAIM_ATTRS.items():
+            tag = re.sub(rf'\b{attr}="[^"]*"', f'{attr}="{value}"', tag)
+        return tag
+
+    svg = _HW_MOTION_TAG.sub(_still_motion_tag, svg)
+
+    def _with_cim_constraint(m: re.Match[str]) -> str:
+        body = m.group(2)
+        if "cim-compliant" not in body:
+            body = (
+                body.replace(", wcag-aa", ", cim-compliant, wcag-aa")
+                if ", wcag-aa" in body
+                else (f"{body}, cim-compliant")
+            )
+        return f"{m.group(1)}{body}{m.group(3)}"
+
+    return _CONSTRAINTS_APPLIED.sub(_with_cim_constraint, svg)
+
+
 def clamp_width(svg: str, max_w: int = 800) -> str:
     """Cap the rendered width; viewBox preserves aspect ratio."""
     m = re.search(r'\bwidth="(\d+)"', svg)
@@ -561,6 +606,7 @@ def clamp_width(svg: str, max_w: int = 800) -> str:
 _PASSES: dict[str, Callable[[str], str]] = {
     "vars": resolve_vars_to_hex,
     "noanim": strip_animation,
+    "claims": rewrite_motion_claims,
     "clamp": clamp_width,
 }
 

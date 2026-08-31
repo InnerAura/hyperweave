@@ -1,31 +1,32 @@
-"""Test-only helpers for constructing bypass state.
+"""Test-only helpers for constructing inline genomes.
 
-These helpers exist ONLY for test fixtures that need to construct
-genomes that would fail the production
-``validate_genome_against_paradigms`` check (e.g. a minimal genome for a
-smoke test that doesn't declare chrome-specific fields).
+``build_minimal_genome_for_testing`` emits a COMPLETE minimal genome — one
+that passes the full custom-genome boundary (GenomeSpec grammar, the
+cross-validation battery, the profile contract) exactly like a registry
+genome. There is no bypass shape anymore: since the P0 injection fix,
+``ComposeSpec.genome_override`` validates every inline genome, so a partial
+dict fails closed on every surface.
 
 Production code paths MUST NOT import from this module. Grep
-``build_partial_genome_for_testing`` to audit usage.
+``build_minimal_genome_for_testing`` to audit usage.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+_CHROMATIC_PREFIXES = ("#", "rgba(", "rgb(", "linear-gradient", "radial-gradient")
 
-def build_partial_genome_for_testing(**overrides: Any) -> dict[str, Any]:
-    """Build a minimal genome dict that bypasses paradigm-requirement checks.
 
-    Returns a plain dict (not a validated ``GenomeSpec``) so the caller
-    can feed it into compose paths that accept ``genome_override``
-    without tripping :func:`hyperweave.compose.validate_paradigms.validate_genome_against_paradigms`.
+def build_minimal_genome_for_testing(**overrides: Any) -> dict[str, Any]:
+    """Build the smallest genome dict that survives the override boundary.
 
-    The returned genome is sufficient for :class:`GenomeSpec` Pydantic
-    construction (all required fields populated with neutral placeholders)
-    but does not declare any chrome-paradigm-specific chromatic fields,
-    so tests that route it through a ``chrome`` template will produce
-    empty gradients rather than chrome specimen colors — the
+    All required GenomeSpec fields carry neutral placeholders that clear the
+    flat profile contract's WCAG pairs; ``roles`` is auto-derived from the
+    final chromatic values so ``validate_genome_roles`` /
+    ``validate_genome_chromatic_coverage`` hold whatever colors a caller
+    overrides in. No chrome-paradigm chromatic fields are declared, so tests
+    routing it through a ``chrome`` template still get empty gradients — the
     deliberate safe failure mode.
     """
     defaults: dict[str, Any] = {
@@ -55,4 +56,11 @@ def build_partial_genome_for_testing(**overrides: Any) -> dict[str, Any]:
         "paradigms": {},
     }
     defaults.update(overrides)
+    if "roles" not in defaults:
+        chromatic = [
+            key
+            for key, value in defaults.items()
+            if key != "roles" and isinstance(value, str) and value.startswith(_CHROMATIC_PREFIXES)
+        ]
+        defaults["roles"] = {"core": chromatic}
     return defaults

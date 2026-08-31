@@ -229,10 +229,6 @@ chart:
   axis_y_label_y_offset: 4
   x_axis_label_y: 348
   milestone_label_y_offset: -24
-  # One-shot stroke-dashoffset draw animation on the polyline. Cellular
-  # specimen renders the data line as an arriving signal rather than a
-  # printed plot; gated by prefers-reduced-motion at the CSS layer.
-  line_animate: true
 
 stats:
   # v0.3.0 cellular stat card refresh — 530×233 compact form with 3 vertical

@@ -329,6 +329,18 @@ def load_matrix_config() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
+def load_performance_config() -> dict[str, Any]:
+    """Load the compositor law + baked-animations table from
+    data/config/performance.yaml. Feeds ``compose.motion``'s frame-generic
+    performance-tier derivation; diagram keeps its per-kind ``motion_tiers``
+    table in diagram-frame.yaml. Cached — every compose reads it."""
+    path = _data_path("config/performance.yaml")
+    if not path.exists():
+        return {}
+    return dict(_read_yaml(path) or {})
+
+
+@lru_cache(maxsize=1)
 def load_diagram_config() -> dict[str, Any]:
     """Load diagram engine config from data/config/diagram-frame.yaml.
 
@@ -543,12 +555,8 @@ class ConfigLoader:
         # self-consistency: variant_overrides keys ⊆ variants[], variant_tones
         # structural shape, variant_pairs primary/secondary in tones, etc.
         from hyperweave.compose.validate_paradigms import (
+            run_genome_battery,
             validate_font_embedding,
-            validate_genome_against_paradigms,
-            validate_genome_chromatic_coverage,
-            validate_genome_roles,
-            validate_genome_surface_contract,
-            validate_genome_variants,
         )
 
         # Surface Modes supply contract: a genome opting into a surface-capable
@@ -557,12 +565,18 @@ class ConfigLoader:
         # lets a future genome (vellum) inherit inlay/twin with zero code.
         surface_frames = frozenset(load_surface_modes().frames)
 
+        from hyperweave.config.genome_validator import effective_variant_errors
+
         for genome_spec in self.genome_specs.values():
-            validate_genome_against_paradigms(genome_spec, self.paradigms)
-            validate_genome_variants(genome_spec)
-            validate_genome_surface_contract(genome_spec, surface_frames)
-            validate_genome_roles(genome_spec)
-            validate_genome_chromatic_coverage(genome_spec)
+            run_genome_battery(genome_spec, self.paradigms, surface_frames)
+            # Registry genomes face the identical effective-variant gate an
+            # inline genome does, so "validated exactly as hard as a registry
+            # genome" is a true statement in both directions.
+            variant_errors = effective_variant_errors(genome_spec, genome_spec.profile)
+            if variant_errors:
+                raise ValueError(
+                    f"Genome '{genome_spec.id}' has invalid variant overrides:\n  " + "\n  ".join(variant_errors)
+                )
 
         # Cross-validate the font embedding gate against the loaded genomes
         # and the on-disk font files. Catches typos, missing .b64 files,
