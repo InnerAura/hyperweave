@@ -1,10 +1,18 @@
 <div id="top">
 
-<picture>
-  <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-light.svg" media="(prefers-color-scheme: light)">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-dark.svg" alt="HyperWeave" width="100%"
-  >
-</picture>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-adaptive.svg" alt="HyperWeave Logo" width="100%"/>
+</p>
+
+<!--
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/.svg)">
+    <img alt="Logo" src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/.svg" width="50%">
+  </picture>
+</p>
+-->
 
 <p align="center">
   <strong>The artifact layer for agent-human representations.</strong><br/>
