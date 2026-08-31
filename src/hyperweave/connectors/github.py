@@ -8,7 +8,7 @@ import math
 import re
 import time
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlencode
 
 from hyperweave.connectors.base import (
@@ -89,7 +89,7 @@ async def _fetch_build_status(identifier: str) -> dict[str, Any]:
     cache_key = f"{_CACHE_NS}:{identifier}:build"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     # Get default branch
     repo_url = f"https://api.github.com/repos/{identifier}"
@@ -179,7 +179,7 @@ async def _fetch_contributors_count(identifier: str) -> dict[str, Any]:
     cache_key = f"{_CACHE_NS}:{identifier}:contributors"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     url = f"https://api.github.com/repos/{identifier}/contributors?per_page=1&anon=true"
     response = await fetch(url, provider=_PROVIDER_CORE)
@@ -213,7 +213,7 @@ async def _fetch_open_pr_count(identifier: str) -> dict[str, Any]:
     cache_key = f"{_CACHE_NS}:{identifier}:pull_requests"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     params = urlencode({"q": f"repo:{identifier} type:pr state:open", "per_page": 1})
     url = f"https://api.github.com/search/issues?{params}"
@@ -250,7 +250,7 @@ async def fetch_metric(identifier: str, metric: str) -> dict[str, Any]:
     cache_key = f"{_CACHE_NS}:{identifier}:{metric}"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     url = f"https://api.github.com/repos/{identifier}"
     data = await fetch_json(url, provider=_PROVIDER_CORE)
@@ -330,7 +330,7 @@ async def fetch_stargazer_history(
     cache_key = f"{_CACHE_NS}:{identifier}:stargazer-history"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     # Two bounds, different failure modes: the retry-sleep pool caps how long
     # rate-limit BACKOFF may accumulate across the fan-out; the wall-clock
@@ -696,7 +696,7 @@ def _extract_response_headers(exc: BaseException) -> Mapping[str, str] | None:
         response = getattr(current, "response", None)
         headers = getattr(response, "headers", None)
         if headers is not None:
-            return headers  # type: ignore[no-any-return]
+            return cast("Mapping[str, str]", headers)
         current = current.__cause__
     return None
 
@@ -1208,7 +1208,7 @@ async def fetch_user_stats(username: str) -> dict[str, Any]:
     cache_key = f"{_CACHE_NS}:{username}:profile-stats"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     primary = await _fetch_user_stats_graphql(username)
     if primary is _FETCH_FAILED:

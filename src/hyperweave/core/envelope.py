@@ -68,7 +68,7 @@ def extract_payload(svg: str) -> tuple[str, str] | None:
     embedded bytes, so ``envelope_id(payload_json)`` recomputes the id.
     """
     m = _PAYLOAD_RE.search(svg)
-    return (m.group(1), m.group(2)) if m else None
+    return (str(m.group(1)), str(m.group(2))) if m else None
 
 
 def extract_envelope(svg: str) -> dict[str, Any] | None:

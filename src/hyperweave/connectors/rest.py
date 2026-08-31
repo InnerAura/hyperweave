@@ -24,7 +24,7 @@ async def _fetch_cached(
     key = f"{provider}:{identifier}:{metric}"
     cached = cache.get(key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
     value = await extractor(identifier, metric)
     result: dict[str, Any] = {
         "provider": provider,
@@ -92,7 +92,7 @@ def _first_text(*candidates: Any, default: str = "Unknown") -> str:
     """
     for candidate in candidates:
         if isinstance(candidate, str) and candidate.strip():
-            return candidate.strip()
+            return str(candidate).strip()
     return default
 
 
@@ -204,7 +204,7 @@ def _hf_license(data: dict[str, Any]) -> str:
             return str(card_license)
     for tag in data.get("tags", []):
         if isinstance(tag, str) and tag.startswith("license:"):
-            return tag.split(":", 1)[1]
+            return str(tag).split(":", 1)[1]
     return "Unknown"
 
 

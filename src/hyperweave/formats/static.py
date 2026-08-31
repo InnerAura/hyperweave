@@ -100,7 +100,7 @@ def resolve_vars_to_hex(svg: str) -> str:
             name, fallback = m.group(1), m.group(2)
             if name in decls:
                 return decls[name]
-            return fallback.strip() if fallback else ink
+            return str(fallback).strip() if fallback else ink
 
         flat = _VAR_RE.sub(_sub, svg)
         if flat == svg:
@@ -448,7 +448,7 @@ def bake_face(svg: str, face: str) -> str:
         body = m.group(2)
         cd = _CDATA_BODY.match(body)
         body = cd.group(1) + _one(cd.group(2)) + cd.group(3) if cd else _one(body)
-        return m.group(1) + body + m.group(3)
+        return f"{m.group(1)}{body}{m.group(3)}"
 
     baked = _STYLE_ELEMENT.sub(_sub, svg)
     # The root's claims follow the bytes: the artifact no longer adapts, and
@@ -468,7 +468,7 @@ def _rewrite_style_elements(svg: str) -> str:
         body = m.group(2)
         cd = _CDATA_BODY.match(body)
         body = cd.group(1) + _strip_css_animation(cd.group(2)) + cd.group(3) if cd else _strip_css_animation(body)
-        return m.group(1) + body + m.group(3)
+        return f"{m.group(1)}{body}{m.group(3)}"
 
     return _STYLE_ELEMENT.sub(_sub, svg)
 

@@ -10,6 +10,7 @@ MCP carry the dict form.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from typing import cast
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,7 +23,8 @@ class Diagnostic:
     suggestion: str
 
     def as_dict(self) -> dict[str, str]:
-        return asdict(self)
+        # Every field on this dataclass is a str; asdict widens to Any.
+        return cast("dict[str, str]", asdict(self))
 
     def cli_text(self) -> str:
         return f"diagnostic: {self.rule} — {self.measured} (band: {self.band}) → {self.suggestion}"

@@ -232,7 +232,7 @@ async def _aggregate(identifier: str, window_days: int) -> dict[str, Any]:
     cache_key = f"{PROVIDER}:{identifier}:w{window_days}"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     owner, repo = identifier.split("/", 1)
     cutoff = datetime.now(UTC) - timedelta(days=window_days)

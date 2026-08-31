@@ -6,8 +6,8 @@ import math
 from dataclasses import dataclass
 from functools import lru_cache
 
-from fontTools.pens.boundsPen import BoundsPen  # type: ignore[import-untyped]
-from fontTools.svgLib.path import parse_path  # type: ignore[import-untyped]
+from fontTools.pens.boundsPen import BoundsPen
+from fontTools.svgLib.path import parse_path
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +76,7 @@ def _fmt_number(value: float) -> str:
 def parse_viewbox(viewbox: str) -> tuple[float, float, float, float]:
     """Parse an SVG viewBox string, falling back to the registry default."""
 
+    values: list[float]
     try:
         values = [float(part) for part in viewbox.replace(",", " ").split()]
     except ValueError:

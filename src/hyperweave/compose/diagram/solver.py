@@ -229,7 +229,7 @@ def spine_members(spec: DiagramSpec) -> tuple[frozenset[int], frozenset[int]]:
         # generic default below) would accent EVERY root edge in blue on
         # any tree whose root carries the focal role (every tree, always).
         # No spine without an explicit ``spec.spine`` declaration.
-        e_idx = frozenset()
+        e_idx = frozenset[int]()
     elif hero_i is not None:
         hero_id = ids[hero_i]
         roled = any(e.role for e in edges)
@@ -242,11 +242,11 @@ def spine_members(spec: DiagramSpec) -> tuple[frozenset[int], frozenset[int]]:
             # several arrivals there is no single privileged hop; the hero
             # ring and riders carry the emphasis, the wires stay neutral.
             arriving = [j for j, e in enumerate(edges) if e.target == hero_id]
-            e_idx = frozenset(arriving) if len(arriving) == 1 else frozenset()
+            e_idx = frozenset(arriving) if len(arriving) == 1 else frozenset[int]()
     else:
         path = _longest_directed_path(edges)
         if len(path) < 2:
-            return frozenset(), frozenset()
+            return frozenset[int](), frozenset[int]()
         seq = set(itertools.pairwise(path))
         e_idx = frozenset(j for j, e in enumerate(edges) if (e.source, e.target) in seq)
 

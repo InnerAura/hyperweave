@@ -18,12 +18,12 @@ build/
 .benchmarks/
 .coverage
 .coverage.*
+.fastest.coverage
 htmlcov/
 tests/
 
 # code quality
 .ruff_cache/
-.mypy_cache/
 .pyright/
 
 # javascript

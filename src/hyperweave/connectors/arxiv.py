@@ -70,7 +70,7 @@ async def fetch_metric(identifier: str, metric: str) -> dict[str, Any]:
     cache_key = f"{PROVIDER}:{identifier}:{metric}"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     url = f"https://export.arxiv.org/api/query?id_list={identifier}"
     xml_text = await fetch_text(url, provider=PROVIDER)

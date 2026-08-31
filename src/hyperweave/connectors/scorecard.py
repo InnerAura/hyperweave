@@ -79,7 +79,7 @@ async def _fetch_payload(identifier: str) -> dict[str, Any]:
     cache_key = f"{PROVIDER}:{identifier}:payload"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     owner, repo = identifier.split("/", 1)
     url = f"https://api.securityscorecards.dev/projects/github.com/{owner}/{repo}"

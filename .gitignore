@@ -7,7 +7,6 @@ build/
 src/hyperweave/_version.py
 .pytest_cache/
 .ruff_cache/
-.mypy_cache/
 .pyright/
 .env
 .venv/
@@ -21,6 +20,7 @@ node_modules/
 # testing
 .coverage
 .coverage.*
+.fastest.coverage
 htmlcov/
 
 # inneraura/hyperweave

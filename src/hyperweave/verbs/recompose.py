@@ -78,10 +78,28 @@ def payload_to_compose_spec(
     """
     genome, variant = _genome_variant(prov)
     surface = _surface_kwargs(spec_dict) or (_surface_kwargs_from_parent(parent_svg) if parent_svg else {})
+    ground, palette = surface.get("ground", ""), surface.get("palette", "")
+    face = surface.get("surface_face", "")
     if schema == "matrix/1":
-        return ComposeSpec(type="matrix", matrix=spec_dict, genome_id=genome, variant=variant, **surface)
+        return ComposeSpec(
+            type="matrix",
+            matrix=spec_dict,
+            genome_id=genome,
+            variant=variant,
+            ground=ground,
+            palette=palette,
+            surface_face=face,
+        )
     if schema == "diagram/1":
-        return ComposeSpec(type="diagram", diagram=spec_dict, genome_id=genome, variant=variant, **surface)
+        return ComposeSpec(
+            type="diagram",
+            diagram=spec_dict,
+            genome_id=genome,
+            variant=variant,
+            ground=ground,
+            palette=palette,
+            surface_face=face,
+        )
     raise HwError(
         HwErrorCode.SPEC_INVALID,
         f"transform supports matrix and diagram artifacts; {schema!r} is not yet supported",

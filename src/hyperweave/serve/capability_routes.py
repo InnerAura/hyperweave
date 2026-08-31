@@ -61,7 +61,9 @@ def _make_endpoint(cap: Capability) -> Any:
     endpoint.__doc__ = cap.summary
     # Stamp the concrete model so FastAPI reads it as the JSON body model.
     param = inspect.Parameter("body", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=cap.input_model)
-    endpoint.__signature__ = inspect.Signature([param])  # type: ignore[attr-defined]
+    # Functions carry no __signature__ until one is stamped; FastAPI reads this
+    # override to discover the body model, so the attribute is created here.
+    endpoint.__signature__ = inspect.Signature([param])  # ty: ignore[unresolved-attribute]
     endpoint.__annotations__ = {"body": cap.input_model, "return": JSONResponse}
     return endpoint
 

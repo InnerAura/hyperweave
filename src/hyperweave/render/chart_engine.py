@@ -1137,6 +1137,7 @@ def _build_x_date_labels(
         min_step_seconds = timedelta(days=1).total_seconds()
     target_step_seconds = max(raw_step_seconds, min_step_seconds)
     use_calendar_months = timedelta(days=90) <= span < timedelta(days=730)
+    candidates: list[dict[str, Any]]
     if use_calendar_months:
         format_str = "%b %Y"
         candidates = _calendar_month_candidates(t0, t1, vp, _TARGET_LABEL_COUNT)

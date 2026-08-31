@@ -178,10 +178,7 @@ def _palette(genome: dict[str, Any]) -> dict[str, str]:
     condition — we read with ``str(...)`` and let a KeyError surface loudly if
     the validation contract was bypassed (e.g. a hand-built test genome).
     """
-    ramp_raw = genome.get("receipt_ramp") or []
-    ramp = [str(c) for c in ramp_raw]
     return {
-        "ramp": ramp,  # type: ignore[dict-item]  # ordered tier list (5 stops)
         "area_fill": str(genome.get("receipt_area_fill", "")),
         "signal": str(genome.get("receipt_signal", "")),
         "track": str(genome.get("receipt_track", "")),
@@ -205,6 +202,15 @@ def _palette(genome: dict[str, Any]) -> dict[str, str]:
         # name stamped inside a dark cost-by-model bar segment.
         "on_accent": str(genome.get("ink_on_accent", "")),
     }
+
+
+def _ramp(genome: dict[str, Any]) -> list[str]:
+    """The ordered tier list (5 stops) the bar sections index by rank.
+
+    Kept out of ``_palette`` because that is a flat role-to-hex map; a sequence
+    threaded through it would have to be re-narrowed at every read.
+    """
+    return [str(c) for c in genome.get("receipt_ramp") or []]
 
 
 def _fmt_footer_timestamp(start_iso: str) -> str:
@@ -313,6 +319,7 @@ def _resolve_primer(spec: ComposeSpec, genome: dict[str, Any], payload: dict[str
     layout: ReceiptLayout = compute_receipt_layout(
         payload,
         palette=palette,
+        ramp=_ramp(genome),
         glyph_id=glyph_id,
         wordmark=wordmark,
         display_name=_footer_display_name(spec),
@@ -425,7 +432,7 @@ def _footer_display_name(spec: ComposeSpec) -> str:
     callers that don't set it render the footer identity as 'repo · branch' with
     no name segment.
     """
-    return getattr(spec, "receipt_display_name", "") or ""
+    return str(getattr(spec, "receipt_display_name", "") or "")
 
 
 def _fmt_money(value: Any) -> str:

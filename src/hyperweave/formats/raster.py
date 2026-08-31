@@ -69,7 +69,7 @@ def _ensure_font_dir() -> str:
 
     import io
 
-    from fontTools.ttLib import TTFont  # type: ignore[import-untyped]
+    from fontTools.ttLib import TTFont
 
     dest = tempfile.mkdtemp(prefix="hw-raster-fonts-")
     for b64_path in sorted(_FONTS_DIR.glob("*.b64")):
@@ -115,10 +115,10 @@ def to_png(static_svg: str, *, max_width: int | None = None) -> bytes:
     if max_width is not None and (target_w == 0 or target_w > max_width):
         target_w = max_width
 
-    kwargs: dict[str, object] = {"svg_string": static_svg, "font_dirs": [font_dir]}
     if target_w:
-        kwargs["width"] = target_w
-    raw = resvg_py.svg_to_bytes(**kwargs)  # type: ignore[arg-type]
+        raw = resvg_py.svg_to_bytes(svg_string=static_svg, font_dirs=[font_dir], width=target_w)
+    else:
+        raw = resvg_py.svg_to_bytes(svg_string=static_svg, font_dirs=[font_dir])
     return bytes(raw)
 
 

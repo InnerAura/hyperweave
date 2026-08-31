@@ -541,7 +541,7 @@ def _shift_placement(p: NodePlacement, dx: float, dy: float) -> NodePlacement:
         p,
         box=RectSpec(x=p.box.x + dx, y=p.box.y + dy, w=p.box.w, h=p.box.h, rx=p.box.rx),
         label=label,
-        desc_lines=tuple(sh_text(d) for d in p.desc_lines if d is not None),  # type: ignore[misc]
+        desc_lines=tuple(sh_text(d) for d in p.desc_lines if d is not None),
         dot=(p.dot[0] + dx, p.dot[1] + dy) if p.dot else None,
         dot_path=translate_path(p.dot_path, dx, dy),
         health_dot=(p.health_dot[0] + dx, p.health_dot[1] + dy) if p.health_dot else None,

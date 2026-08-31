@@ -30,7 +30,7 @@ async def fetch_hf_snapshot(identifier: str) -> dict[str, Any]:
     cache_key = f"huggingface:{normalized}:snapshot"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     if "/" in normalized:
         result = await _fetch_hf_model_snapshot(normalized)
@@ -49,7 +49,7 @@ async def fetch_pypi_snapshot(package: str) -> dict[str, Any]:
     cache_key = f"pypi:{normalized}:snapshot"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     quoted = quote(normalized, safe="")
     metadata = await fetch_json(f"https://pypi.org/pypi/{quoted}/json", provider="pypi")
@@ -115,7 +115,7 @@ async def fetch_arxiv_snapshot(paper_id: str) -> dict[str, Any]:
     cache_key = f"arxiv:{normalized}:snapshot"
     cached = cache.get(cache_key)
     if cached is not None:
-        return cached  # type: ignore[no-any-return]
+        return cached
 
     xml_text = await fetch_text(
         f"https://export.arxiv.org/api/query?id_list={quote(normalized, safe='')}",
@@ -357,7 +357,7 @@ def _python_version_bounds(specifier: str) -> tuple[tuple[str, str] | None, tupl
         match = re.fullmatch(r"(<=|>=|<|>|==)\s*([0-9]+(?:\.[0-9]+){0,2})", part)
         if match is None:
             return None
-        op, version = match.groups()
+        op, version = str(match.group(1)), str(match.group(2))
         if op in {">=", ">"}:
             lower = (op, version)
         elif op in {"<", "<="}:

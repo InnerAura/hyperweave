@@ -58,7 +58,7 @@ def fonts_for_frame(frame_type: str, genome_id: str = "") -> frozenset[str]:
         slugs = genome_block.get(frame_type) or []
     else:
         slugs = embedding["defaults"].get(frame_type) or []
-    return frozenset(slugs)
+    return frozenset(str(slug) for slug in slugs)
 
 
 def frame_needs_fonts(frame_type: str, genome_id: str = "") -> bool:

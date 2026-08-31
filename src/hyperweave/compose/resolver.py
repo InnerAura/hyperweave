@@ -74,7 +74,7 @@ def resolve_variant(spec: ComposeSpec, genome: dict[str, Any], paradigm_spec: An
     resolved = spec.variant
     if not resolved and paradigm_spec is not None:
         defaults = getattr(paradigm_spec, "frame_variant_defaults", {}) or {}
-        resolved = defaults.get(spec.type, "")
+        resolved = str(defaults.get(spec.type, ""))
     if not resolved:
         resolved = str(genome.get("flagship_variant", ""))
 
@@ -3852,12 +3852,12 @@ def _glyph_provider_votes(spec: ComposeSpec) -> tuple[dict[str, int], str]:
     raw = spec.connector_data
     if isinstance(raw, Mapping):
         direct_providers = _providers_from_mapping(raw)
-        direct_single = direct_providers[0] if len(direct_providers) == 1 else ""
+        direct_single = str(direct_providers[0]) if len(direct_providers) == 1 else ""
         hero = raw.get("hero")
         if isinstance(hero, Mapping):
             hero_parts = _providers_from_mapping(hero) or ([direct_single] if direct_single else [])
             if hero_parts:
-                hero_provider = hero_parts[0]
+                hero_provider = str(hero_parts[0])
                 vote(hero_provider)
         elif direct_single and any(key in raw for key in ("hero_label", "hero_value", "stars_total", "current_stars")):
             hero_provider = direct_single
@@ -3878,7 +3878,7 @@ def _glyph_provider_votes(spec: ComposeSpec) -> tuple[dict[str, int], str]:
             for provider in direct_providers:
                 vote(provider)
             if direct_providers and not hero_provider:
-                hero_provider = direct_providers[0]
+                hero_provider = str(direct_providers[0])
 
     token_value = spec.data_tokens
     if isinstance(token_value, Sequence) and not isinstance(token_value, str | bytes | bytearray):

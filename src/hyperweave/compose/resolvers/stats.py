@@ -273,7 +273,7 @@ def resolve_stats(
         metric = metric_by_label.get(label)
         return metric.value if metric is not None else "—"
 
-    def _raw_int(value: int | float | None) -> int:
+    def _raw_int(value: float | None) -> int:
         return int(value) if isinstance(value, int | float) else 0
 
     hero_raw_value = input_data.hero.raw_value
@@ -432,11 +432,10 @@ def resolve_stats(
         if stats_cfg is not None
         else metric_entries
     )
+    display_username = username
     if stats_cfg is not None:
         if stats_cfg.metric_layout_mode == "cellular_inline":
             display_username = _fit_identity_display(username, stats_cfg)
-        else:
-            display_username = username
         stats_context["stats_username"] = display_username
         card_height = compute_stats_card_height(
             stats=stats_cfg,

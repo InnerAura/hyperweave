@@ -233,6 +233,6 @@ def _finish_once(svg: str) -> str:
     def _sub(m: re.Match[str]) -> str:
         finished = _filter_css(m.group(2), classes, ids, inline_anim, consumed)
         finished = _consolidate_dark(finished)
-        return m.group(1) + finished + m.group(3)
+        return f"{m.group(1)}{finished}{m.group(3)}"
 
     return _STYLE_SPAN.sub(_sub, svg)

@@ -48,8 +48,8 @@ def _compose_font_stack(resolved: ResolvedArtifact) -> str:
     display = genome.get("font_display") or (genome.get("typography") or {}).get("hero_font", "")
     if substrate == "light":
         heading = genome.get("scholar_heading_font") or display
-        return ", ".join(p for p in (heading, mono) if p) or "system-ui"
-    return ", ".join(p for p in (display, mono) if p) or "system-ui"
+        return ", ".join(str(p) for p in (heading, mono) if p) or "system-ui"
+    return ", ".join(str(p) for p in (display, mono) if p) or "system-ui"
 
 
 def _hex_to_relative_luminance(hex_color: str) -> float | None:
@@ -63,7 +63,7 @@ def _hex_to_relative_luminance(hex_color: str) -> float | None:
         return None
 
     def _channel(c: float) -> float:
-        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+        return c / 12.92 if c <= 0.03928 else float(((c + 0.055) / 1.055) ** 2.4)
 
     return 0.2126 * _channel(r) + 0.7152 * _channel(g) + 0.0722 * _channel(b)
 

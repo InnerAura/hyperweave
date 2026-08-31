@@ -1,24 +1,26 @@
-# Runs `ruff check` + `ruff format` automatically on every `git commit`.
-# Mirrors the two lint steps CI enforces in .github/workflows/ci.yml so CI
-# never surfaces formatting or lint failures that local commits should catch.
+# Runs `ruff check`, `ruff format` and `ty check` automatically on every
+# `git commit`. Mirrors the quality job in .github/workflows/ci.yml so CI never
+# surfaces a lint, format or typing failure that a local commit should catch.
 #
 # One-time setup after cloning:
-#   uv sync --group dev
+#   uv sync --locked --group dev
 #   uv run pre-commit install
 #
 # Manual run across the whole repo:
 #   uv run pre-commit run --all-files
 
 repos:
+  # Pinned to the ruff version in uv.lock. A mismatch here silently disagrees
+  # with CI — the config uses `explicit-preview-rules`, which older ruff ignores.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.0
+    rev: v0.15.6
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: \.svg$
@@ -29,3 +31,16 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=500]
+
+  # Local rather than a mirror repo, so pre-commit and CI run the exact ty
+  # pinned in uv.lock. `pass_filenames: false` means ty always checks the whole
+  # project (deleting b.py can break a.py), so `files` keeps docs- and
+  # asset-only commits from paying for a type check.
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check
+        entry: uv run ty check
+        language: system
+        pass_filenames: false
+        files: ^(src/hyperweave/|pyproject\.toml|uv\.lock)

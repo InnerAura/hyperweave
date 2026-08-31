@@ -97,7 +97,7 @@ def _message_text(payload: _JsonObj) -> str:
     blocks = payload.get("content")
     if not isinstance(blocks, list):
         return ""
-    parts = [b["text"] for b in blocks if isinstance(b, dict) and isinstance(b.get("text"), str)]
+    parts: list[str] = [str(b["text"]) for b in blocks if isinstance(b, dict) and isinstance(b.get("text"), str)]
     return "".join(parts).strip()
 
 

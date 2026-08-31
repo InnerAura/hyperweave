@@ -131,13 +131,13 @@ def _is_meaningful(cell: MatrixCell) -> bool:
     return bool(cell.state is not None or cell.chips or cell.glyph or (cell.value is not None and cell.value != ""))
 
 
-def _is_bool_like(value: bool | int | float | str) -> bool:
+def _is_bool_like(value: bool | float | str) -> bool:
     if isinstance(value, bool):
         return True
     return isinstance(value, str) and value.strip().lower() in _BOOL_STRINGS
 
 
-def _is_numeric(value: bool | int | float | str) -> bool:
+def _is_numeric(value: bool | float | str) -> bool:
     if isinstance(value, bool):
         return False
     if isinstance(value, int | float):
