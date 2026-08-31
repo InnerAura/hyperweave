@@ -66,7 +66,7 @@
     <hw:material surface="genome-native" depth="deep" texture="none"/>
   </hw:aesthetic>
   <hw:chromatic-surface xmlns:hw="https://hyperweave.app/hw/v1.0">
-    <hw:zone id="chassis" capability="chromatic-override" count="28" tokens="--dna-bg --dna-bg-alt --dna-border --dna-border-tint --dna-brand-text --dna-corner --dna-diamond-housing --dna-diamond-stroke --dna-font-display --dna-font-mono --dna-glow --dna-ink-bright --dna-ink-icon --dna-ink-muted --dna-ink-on-accent --dna-ink-primary --dna-ink-sub --dna-rhythm-base --dna-sep --dna-shadow-color --dna-shadow-opacity --dna-signal --dna-signal-dim --dna-status-delta-negative --dna-status-delta-positive --dna-surface --dna-surface-alt --dna-surface-deep"/>
+    <hw:zone id="chassis" capability="chromatic-override" count="27" tokens="--dna-bg --dna-bg-alt --dna-border --dna-border-tint --dna-brand-text --dna-corner --dna-diamond-housing --dna-diamond-stroke --dna-font-display --dna-font-mono --dna-glow --dna-ink-bright --dna-ink-icon --dna-ink-muted --dna-ink-on-accent --dna-ink-primary --dna-ink-sub --dna-rhythm-base --dna-sep --dna-shadow-color --dna-signal --dna-signal-dim --dna-status-delta-negative --dna-status-delta-positive --dna-surface --dna-surface-alt --dna-surface-deep"/>
     <hw:zone id="material" capability="fixed" sinks="fill stroke stop-color flood-color" reason="var() does not resolve in an SVG presentation attribute, so this paint is decided at compose time"/>
     <hw:zone id="brand" capability="fixed" count="1" glyphs="github" reason="licensed brand colour, independent of the genome"/>
   </hw:chromatic-surface>
@@ -97,7 +97,6 @@ svg, :root {
   --dna-border: #060810;
   --dna-border-tint: rgba(91,163,212,0.18);
   --dna-shadow-color: #000000;
-  --dna-shadow-opacity: 0.30;
   --dna-glow: 0px;
   --dna-corner: 4px;
   --dna-rhythm-base: 6s;

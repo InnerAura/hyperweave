@@ -23,8 +23,13 @@ from xml.etree import ElementTree as ET
 
 from hyperweave.formats.static import run_passes_counted
 
-PHI_BEATS = (1.618, 2.618, 4.236, 6.854)
-"""The motion grammar's own timing ladder — the beats a reviewer samples at."""
+PHI_BEATS = (0.236, 0.472, 0.618, 0.854)
+"""Beat FRACTIONS of the artifact's own cycle — the golden-ratio
+low-discrepancy points (k/phi mod 1, k=1..4), sorted. Absolute seconds from
+the motion grammar's duration ladder sampled only the first third of a long
+cycle (1.618s to 6.854s of an 18.7s turn — review finding, 2026-08-30); fractions
+of the artifact's OWN cycle spread the four frames across every act, and 0%
+is deliberately absent — the resting frame already shows it."""
 
 _INLINE_ANIM = re.compile(r"animation:\s*(hw-[\w]+-ch\d+)\s+([\d.]+)s[^;\"']*;?")
 _KEYFRAMES_HEAD = re.compile(r"@keyframes\s+(hw-[\w]+-ch\d+)\s*\{")
@@ -127,12 +132,13 @@ def sample_choreography(svg: str) -> tuple[dict[str, Any], dict[str, bytes]] | N
 
     frames: dict[str, bytes] = {}
     beats: list[str] = []
-    for beat in PHI_BEATS:
+    for fraction in PHI_BEATS:
+        beat = fraction * cycle
         frame = _bake_frame(svg, beat, stops)
         static, _counts = run_passes_counted(frame, ["vars", "noanim"])
         ET.fromstring(static)  # each frame obeys the projection postcondition
-        frames[f"beat-{beat:g}s.svg"] = static.encode("utf-8")
-        beats.append(f"{beat:g}s")
+        frames[f"beat-{beat:.2f}s.svg"] = static.encode("utf-8")
+        beats.append(f"{beat:.2f}s")
 
     record: dict[str, Any] = {
         "sampled": True,

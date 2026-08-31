@@ -534,14 +534,26 @@ def run_chip_air_battery(
         a, b, gap = pair
         moved: tuple[AnnotationPlacement, AnnotationPlacement, float] | None = None
         for cand in (a, b):
+            idx = next(i for i, c in enumerate(chips) if c is cand)
             for dx, dy, dist in _reseat_candidates(layout, chips, cand, air):
                 replacement = _translate_annotation(cand, dx, dy)
-                idx = next(i for i, c in enumerate(chips) if c is cand)
-                chips[idx] = replacement
-                layout = dataclasses.replace(
+                tentative_chips = [replacement if c is cand else c for c in chips]
+                tentative = dataclasses.replace(
                     layout,
                     annotations=tuple(replacement if ann is cand else ann for ann in layout.annotations),
                 )
+                # A candidate is lawful only if the WHOLE geometry stays
+                # lawful after the move — the seat checks above are local,
+                # but a reseated pill can land on a foreign wire or break a
+                # loop/duplex law the earlier batteries already cleared.
+                try:
+                    _check_no_wire_through_pill(tentative, tentative_chips)
+                    run_loop_battery(tentative)
+                    run_duplex_battery(tentative)
+                except HwError:
+                    continue
+                chips[idx] = replacement
+                layout = tentative
                 moved = (cand, replacement, dist)
                 break
             if moved is not None:

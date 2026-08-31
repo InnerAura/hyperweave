@@ -775,6 +775,16 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         )
         return JSONResponse(err.envelope(), status_code=err.http_status)
 
+    if req.respond not in ("svg", "json", "envelope", "report"):
+        # A typo must refuse, never silently fall through to SVG bytes —
+        # CLI and MCP reject unknown modes, so HTTP does too (parity).
+        bad = HwError(
+            HwErrorCode.SPEC_INVALID,
+            f"respond must be 'svg', 'json', 'envelope', or 'report' (got {req.respond!r})",
+            fix="pick one of the four response shapes",
+        )
+        return JSONResponse(bad.envelope(), status_code=bad.http_status)
+
     if req.respond in ("envelope", "report"):
         # Route through the shared compose capability so the {envelope, url}
         # and report/1 shapes are byte-identical to the CLI/MCP surfaces.

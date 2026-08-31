@@ -90,16 +90,20 @@ class TestProofRecord:
         assert "hyperweave[raster]" in record["raster"]["fix"]
         assert "png" not in files
 
-    def test_adaptive_face_reports_not_inspected(self) -> None:
-        # A default (adaptive) compose refuses flattening — the proof reports
-        # the honest reason instead of substituting a committed face.
+    def test_adaptive_artifact_bakes_its_light_face(self) -> None:
+        # The default (adaptive) compose is the PRIMARY --proof invocation —
+        # it bakes the light base face, names it in the record, and writes
+        # every frame (review round 3, 2026-08-30: the proof path must never
+        # be weaker than the export path it certifies).
         svg = compose(
             ComposeSpec(type="diagram", genome_id="primer", diagram=dict(load_diagram_presets()["loop-retry"]))
         ).svg
         record, files = build_proof(svg)
-        assert record["resting_frame"]["available"] is False
-        assert record["verdicts"]["projection_well_formed"].startswith("not inspected")
-        assert "static.svg" not in files
+        assert record["resting_frame"]["available"] is True
+        assert record["resting_frame"]["face"].startswith("light")
+        assert record["verdicts"]["projection_well_formed"] == "pass"
+        assert "static.svg" in files
+        assert 'data-hw-face="light"' in files["static.svg"].decode()
 
     def test_cdn_fonts_are_a_declared_tradeoff_not_a_failure(self) -> None:
         # The cdn font mode is a configured delivery: its import reports as

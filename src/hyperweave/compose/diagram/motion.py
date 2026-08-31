@@ -87,11 +87,14 @@ def performance_tier(motions: Sequence[str], inert: Sequence[bool]) -> str:
     ``stroke-dashoffset`` — Paint — on every artifact claiming composite-only
     (corrected 2026-08-30; a composited dash implementation is recorded
     future motion work)."""
-    del inert
     from hyperweave.config.loader import load_diagram_config
 
     tiers: Mapping[str, Any] = load_diagram_config().get("motion_tiers") or {}
-    return "paint-ok" if any((tiers.get(m) or {}).get("tier") == "paint-ok" for m in motions) else "composite-only"
+    # An INERT motion animates nothing — a declared kind whose rendered track
+    # resolved static must not drag the whole artifact's tier to paint-ok
+    # (review finding 2026-08-30: a keyframe-free render claimed paint-ok).
+    live = [m for m, still in zip(motions, inert, strict=True) if not still]
+    return "paint-ok" if any((tiers.get(m) or {}).get("tier") == "paint-ok" for m in live) else "composite-only"
 
 
 def replay_clock(

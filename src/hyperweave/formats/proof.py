@@ -87,15 +87,23 @@ def build_proof(
     )
 
     # ── Resting frame — the static projection of THESE bytes, or the honest
-    # reason there isn't one. An adaptive artifact refuses flattening; that is
-    # "not inspected", never a substitute render. ──
+    # reason there isn't one. An adaptive artifact bakes its LIGHT face (the
+    # universal base every renderer without scheme support serves), and the
+    # record names the face inspected — the proof path must never be weaker
+    # than the export path it certifies. ──
     projection_verdict = "pass"
     static: str | None = None
+    adaptive = 'data-hw-adapt="adaptive"' in svg
+    face = "light" if adaptive else ""
     try:
-        proj = project(svg, FormatId.SVG_STATIC)
+        proj = project(svg, FormatId.SVG_STATIC, face=face)
         static = proj.data.decode("utf-8")
         files["static.svg"] = proj.data
         record["resting_frame"] = {"available": True, "diagnostics": dict(proj.diagnostics)}
+        if adaptive:
+            record["resting_frame"]["face"] = (
+                "light — the adaptive artifact's base face; the dark branch is not pictured"
+            )
     except HwError as exc:
         record["resting_frame"] = {"available": False, "reason": exc.message, "fix": exc.fix}
         projection_verdict = "not inspected — " + exc.message
@@ -106,7 +114,7 @@ def build_proof(
     elif raster_available():
         try:
             record["raster"] = {"available": True, "format": "png"}
-            files["png"] = project(svg, FormatId.PNG).data
+            files["png"] = project(svg, FormatId.PNG, face=face).data
         except HwError as exc:
             record["raster"] = {"available": False, "reason": exc.message, "fix": exc.fix}
     else:
@@ -154,7 +162,7 @@ def build_proof(
     # ── Resource inventory ──
     fm = _FONT_MODE.search(svg)
     font_mode = fm.group(1) if fm else ""
-    font_bytes = sum(len(m.group(1)) * 3 // 4 for m in _FONT_DATA.finditer(svg))
+    font_bytes = sum(len(m.group(1)) * 3 // 4 - m.group(1).count("=") for m in _FONT_DATA.finditer(svg))
     externals = _external_references(svg)
     record["resources"] = {
         "font_mode": font_mode,

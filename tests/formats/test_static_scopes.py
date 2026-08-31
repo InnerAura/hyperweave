@@ -155,3 +155,72 @@ class TestProtectedSpans:
         out = strip_animation(svg)
         assert payload in out
         assert 'style=""' in out
+
+
+class TestVarFlattenScopes:
+    """The variable flatten edits CSS and attribute values only — a label
+    that literally reads ``var(--dna-signal)`` is content, and the payload's
+    CDATA copy of it is evidence (review finding, 2026-08-30)."""
+
+    def test_text_content_and_payload_survive_the_flatten(self) -> None:
+        from hyperweave.formats.static import resolve_vars_to_hex
+
+        svg = (
+            "<svg><style>:root { --dna-signal: #1D4ED8; } .a { fill: var(--dna-signal); }</style>"
+            '<metadata><hw:payload xmlns:hw="x"><![CDATA[{"label":"var(--dna-signal)"}]]></hw:payload></metadata>'
+            '<text fill="var(--dna-signal)">shows var(--dna-signal) live</text>'
+            '<rect fill="var(--dna-signal)"/></svg>'
+        )
+        out = resolve_vars_to_hex(svg)
+        assert '<![CDATA[{"label":"var(--dna-signal)"}]]>' in out, "payload CDATA was edited"
+        assert ">shows var(--dna-signal) live</text>" in out, "rendered text was edited"
+        assert 'fill="#1D4ED8"' in out and "fill: #1D4ED8" in out, "real sinks must still resolve"
+        assert '<text fill="#1D4ED8"' in out, "text-element ATTRIBUTES must still resolve"
+
+    def test_static_projection_of_a_var_shaped_label_round_trips(self) -> None:
+        from hyperweave.compose.engine import compose
+        from hyperweave.core.models import ComposeSpec
+        from hyperweave.formats import project
+
+        spec = ComposeSpec(
+            type="diagram",
+            genome_id="primer",
+            ground="opaque",
+            palette="fixed",
+            diagram={
+                "topology": "pipeline",
+                "nodes": [
+                    {"id": "r", "label": "read", "desc": "uses var(--dna-signal)"},
+                    {"id": "w", "label": "write"},
+                ],
+                "edges": [{"source": "r", "target": "w"}],
+            },
+        )
+        data = project(compose(spec).svg, "svg-static").data
+        text = data.decode() if isinstance(data, bytes) else data
+        assert "var(--dna-signal)" in text, "the literal label text must survive the flatten"
+        assert text.count("var(--dna-") >= 2, "label + payload copies both survive"
+
+    def test_reasoning_metadata_survives_the_flatten(self) -> None:
+        from hyperweave.formats.static import resolve_vars_to_hex
+
+        svg = (
+            "<svg><style>:root { --dna-signal: #1D4ED8; }</style>"
+            '<metadata><hw:reasoning xmlns:hw="x"><hw:intent>bind var(--dna-signal) to the rail</hw:intent>'
+            '</hw:reasoning></metadata><rect fill="var(--dna-signal)"/></svg>'
+        )
+        out = resolve_vars_to_hex(svg)
+        assert "<hw:intent>bind var(--dna-signal) to the rail</hw:intent>" in out
+        assert 'fill="#1D4ED8"' in out
+
+    def test_dublin_core_provenance_survives_the_flatten(self) -> None:
+        from hyperweave.formats.static import resolve_vars_to_hex
+
+        svg = (
+            "<svg><style>:root { --dna-signal: #1D4ED8; }</style>"
+            '<metadata><rdf:RDF xmlns:rdf="r"><dc:title xmlns:dc="d">css: var(--dna-signal) demo</dc:title>'
+            '</rdf:RDF></metadata><rect fill="var(--dna-signal)"/></svg>'
+        )
+        out = resolve_vars_to_hex(svg)
+        assert "<dc:title" in out and "var(--dna-signal) demo</dc:title>" in out
+        assert 'fill="#1D4ED8"' in out

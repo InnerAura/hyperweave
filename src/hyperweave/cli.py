@@ -1474,11 +1474,21 @@ def compose(
             echo_refusal(exc)
             raise typer.Exit(refusal_exit(exc, default=2)) from exc
 
+    # The proof/1 law is delivered-equals-inspected: a proof of the live SVG
+    # beside an ANSI grid or a width-capped PNG would describe bytes the
+    # caller never received. Same guard shape as --respond above.
+    if proof and output_format != "svg":
+        typer.echo("Error: --proof inspects the live artifact; it composes with --format svg only", err=True)
+        raise typer.Exit(2)
+
     try:
         projection = project(result.svg, output_format, is_face=spec.surface_face != "")
     except HwError as exc:
-        typer.echo(f"Error: {exc.cli_text()}", err=True)
-        raise typer.Exit(2) from exc
+        # A projection failure after a successful compose may be OURS
+        # (PROJECTION_INVALID / ENGINE_INVARIANT) — classify instead of
+        # blaming the caller with a flat Error: exit 2.
+        echo_refusal(exc)
+        raise typer.Exit(refusal_exit(exc, default=2)) from exc
 
     # Projection honesty (stderr, mirrors the warnings pattern): declare what
     # the flattening dropped instead of stripping blind.

@@ -34,6 +34,14 @@ async def test_hw_compose_diagram_svg() -> None:
 
 
 @pytest.mark.asyncio
+async def test_unknown_respond_mode_is_rejected() -> None:
+    # A typo like respond='receipt' used to fall through to the envelope
+    # silently; CLI and HTTP refuse it, so MCP must too (three-surface parity).
+    with pytest.raises(ValueError, match="respond must be"):
+        await hw_compose(type="diagram", genome="primer", diagram=TINY, respond="receipt")
+
+
+@pytest.mark.asyncio
 async def test_hw_compose_card_label_explicit_payload() -> None:
     """MCP has an explicit diagram payload, not a separate preset argument;
     the anatomy must compose through that public seam."""

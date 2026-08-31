@@ -85,21 +85,21 @@ class TestTofuGate:
         missing = _rendered_codepoints(svg) - cmap - _UNCOVERABLE
         assert not missing, f"{label}: tofu — rendered but not in the subset: {[hex(cp) for cp in sorted(missing)]}"
 
-    @pytest.mark.parametrize("preset", ("loop-retry-budget", "dag-gate", "lanes"))
-    def test_diagram_corpus_is_tofu_free(self, preset: str) -> None:
-        svg = compose(
-            ComposeSpec(
-                type="diagram",
-                genome_id="primer",
-                ground="opaque",
-                palette="fixed",
-                diagram=dict(load_diagram_presets()[preset]),
-            )
-        ).svg
-        cmap = _embedded_cmap(svg)
-        assert cmap, "diagram must embed its fonts"
-        missing = _rendered_codepoints(svg) - cmap - _UNCOVERABLE
-        assert not missing, f"{preset}: tofu — {[hex(cp) for cp in sorted(missing)]}"
+    def test_the_full_preset_corpus_is_tofu_free(self) -> None:
+        # The FULL corpus, not a sample — a 3-preset spot check missed five
+        # presets whose chip, legend, and tint text rode fields the subsetter
+        # never saw (review finding, 2026-08-30).
+        failures: list[str] = []
+        for preset, payload in sorted(load_diagram_presets().items()):
+            svg = compose(
+                ComposeSpec(type="diagram", genome_id="primer", ground="opaque", palette="fixed", diagram=dict(payload))
+            ).svg
+            cmap = _embedded_cmap(svg)
+            assert cmap, f"{preset}: diagram must embed its fonts"
+            missing = _rendered_codepoints(svg) - cmap - _UNCOVERABLE
+            if missing:
+                failures.append(f"{preset}: {[hex(cp) for cp in sorted(missing)]}")
+        assert not failures, "tofu in the preset corpus:\n" + "\n".join(failures)
 
 
 class TestDestinationContract:
@@ -208,3 +208,67 @@ class TestFaceBake:
         data = project(adaptive_svg, "svg-static", face="light").data
         text = data.decode() if isinstance(data, bytes) else data
         assert "prefers-reduced-motion" in text
+
+
+class TestSecondReviewGuards:
+    def test_face_stamp_survives_a_colliding_title(self) -> None:
+        # User content containing the literal attribute text must not
+        # suppress the root stamp — only the ROOT TAG is inspected.
+        from hyperweave.formats.static import bake_face
+
+        svg = (
+            '<svg data-hw-adapt="adaptive" data-hw-chromatic="primer">'
+            "<style>@media (prefers-color-scheme: dark) { svg { color: red; } }</style>"
+            '<text>mentions data-hw-face="dark" in prose</text></svg>'
+        )
+        baked = bake_face(svg, "dark")
+        root = baked[: baked.find(">") + 1]
+        assert 'data-hw-face="dark"' in root
+
+    def test_contrast_claim_matches_the_delivered_faces(self) -> None:
+        # The metadata's measured minimum is measured over the palettes that
+        # RENDER (both overlaid faces) — a 5.7:1 claim once sat over a
+        # delivered 1.12:1 pair (review finding, 2026-08-30).
+        import re as _re
+
+        from hyperweave.core.color import contrast_ratio
+
+        preset = dict(load_diagram_presets()["dag-gate"])
+        for variant in ("noir", "porcelain", "carbon"):
+            svg = compose(ComposeSpec(type="diagram", genome_id="primer", variant=variant, diagram=preset)).svg
+            claim = float(_re.search(r'contrast-ratio="([\d.]+):1"', svg).group(1))
+            css = "\n".join(_re.findall(r"<style\b[^>]*>(.*?)</style>", svg, _re.DOTALL))
+            near = dict(_re.findall(r"(--dna-[\w-]+):\s*(#[0-9A-Fa-f]{6})", css.split("@media")[0]))
+            darkcss = "\n".join(_re.findall(r"@media[^{]*dark[^{]*\{((?:[^{}]|\{[^{}]*\})*)\}", css))
+            far = {**near, **dict(_re.findall(r"(--dna-[\w-]+):\s*(#[0-9A-Fa-f]{6})", darkcss))}
+            measured = min(
+                contrast_ratio(t[fg], t[bg])
+                for t in (near, far)
+                for fg, bg in (
+                    ("--dna-ink-primary", "--dna-surface"),
+                    ("--dna-ink-muted", "--dna-surface"),
+                    ("--dna-ink-on-accent", "--dna-signal"),
+                )
+                if t.get(fg) and t.get(bg)
+            )
+            assert abs(claim - measured) <= 0.15, f"{variant}: claim {claim} vs delivered {measured:.2f}"
+            assert measured >= 4.5, f"{variant}: delivered floor {measured:.2f}"
+
+    def test_inert_edges_keep_the_composite_only_tier(self) -> None:
+        import re as _re
+
+        svg = compose(
+            ComposeSpec(
+                type="diagram",
+                genome_id="primer",
+                ground="opaque",
+                palette="fixed",
+                diagram={
+                    "topology": "pipeline",
+                    "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}],
+                    "edges": [{"source": "a", "target": "b", "state": "inert"}],
+                },
+            )
+        ).svg
+        assert "@keyframes" not in svg
+        assert _re.search(r'"performance":\s*"composite-only"', svg)
