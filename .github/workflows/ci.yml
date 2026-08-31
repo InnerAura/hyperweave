@@ -6,38 +6,92 @@ on:
   pull_request:
     branches: [main]
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.12", "3.13"]
+permissions:
+  contents: read
 
+# Supersede stale pull-request runs; never cancel a main push mid-flight.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Everything that has no reason to run once per Python version.
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # hatch-vcs derives the version from git tags during `uv sync`, so a
+          # shallow clone breaks the install, not just the build.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          python-version: ${{ matrix.python-version }}
+          version: "0.12.7"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
-      - uses: astral-sh/setup-uv@v4
-
-      - name: Install dependencies
-        run: uv sync --group dev
+      - name: Install
+        run: uv sync --locked --group dev
 
       - name: Lint
-        run: uv run ruff check src/
+        run: uv run ruff check .
 
       - name: Format check
-        run: uv run ruff format --check src/
+        run: uv run ruff format --check .
 
-      - name: Test
-        run: uv run pytest tests/ -v --tb=short
+      - name: Type check
+        run: uv run ty check
 
-      - name: MCP Integration Test
+      - name: MCP server inspect
         run: uv run fastmcp inspect src/hyperweave/mcp/server.py
 
       - name: Build
         run: uv build
+
+  # Only the compatibility surface repeats per version.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.7"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install
+        run: uv sync --locked --group dev
+
+      # -n auto is stated here rather than inherited from addopts, so this job
+      # cannot silently go serial (and blow the timeout) if that setting moves.
+      # -qq overrides the -vv in addopts (-q alone only nets +1 against it);
+      # -p no:sugar leaves a single terminal reporter.
+      - name: Test
+        run: uv run pytest -n auto -qq --tb=short -p no:sugar
+
+  # One stable name for branch protection, so renaming a job above never
+  # silently drops the required check.
+  ci:
+    if: always()
+    needs: [quality, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require quality and every test cell to pass
+        run: |
+          set -euo pipefail
+          echo "quality=${{ needs.quality.result }} test=${{ needs.test.result }}"
+          [ "${{ needs.quality.result }}" = "success" ] || exit 1
+          [ "${{ needs.test.result }}" = "success" ] || exit 1
