@@ -1,16 +1,46 @@
 name: Deploy
 
+# Runs only after CI succeeds on a main push — never in parallel with it.
+# Note: workflow_run only fires once this file is on the default branch, so the
+# first real exercise is the first main push after merge.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
+
+permissions:
+  contents: read
+
+# Serializes production so two deploys cannot race. Note that GitHub cancels an
+# already-PENDING run when a newer one queues (cancel-in-progress only governs
+# the in-progress one), so intermediate commits may be skipped — the newest
+# green commit always deploys, and it contains the skipped ones.
+#
+# That cancellation is also why there is no changed-paths filter here. Any
+# filter based on run history can compare against a commit whose own deploy was
+# cancelled, conclude "documentation only", and strand real code changes
+# undeployed. Deploying every green main commit trades a few redundant
+# documentation-only deploys for never missing a code one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # The exact commit that passed, not wherever main points now.
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+
       - name: Get version from git
         id: version
         run: |
@@ -26,7 +56,10 @@ jobs:
             VERSION="0.0.0.dev0+g${RAW}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only --build-arg SETUPTOOLS_SCM_PRETEND_VERSION=${{ steps.version.outputs.version }}
+
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # 1.6
+
+      - name: Deploy
+        run: flyctl deploy --remote-only --build-arg SETUPTOOLS_SCM_PRETEND_VERSION=${{ steps.version.outputs.version }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

@@ -4,28 +4,126 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history for hatch-vcs
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.7"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      # --no-sources drops any local tool.uv.sources override, so what ships is
+      # built from declared dependencies alone.
+      - name: Build
+        run: uv build --no-sources
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  # Deliberately NO checkout: the workspace holds only the downloaded dist/, so
+  # importing the source tree instead of the built artifact is impossible.
+  smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        artifact: [wheel, sdist]
+    steps:
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.7"
+          python-version: "3.12"
+          # No uv.lock in this workspace, so there is nothing to key a cache on.
+          enable-cache: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist
+
+      - name: Install and exercise the built ${{ matrix.artifact }}
+        run: |
+          set -euo pipefail
+          case "${{ matrix.artifact }}" in
+            wheel) PKG=$(ls "$GITHUB_WORKSPACE"/dist/*.whl) ;;
+            sdist) PKG=$(ls "$GITHUB_WORKSPACE"/dist/*.tar.gz) ;;
+          esac
+          echo "installing $PKG"
+
+          VENV="$RUNNER_TEMP/smoke"
+          uv venv "$VENV"
+          # Bare install (no extras) also proves the core install stays lean.
+          uv pip install --python "$VENV/bin/python" "$PKG"
+
+          EXPECTED="${GITHUB_REF_NAME#v}"
+          cd "$RUNNER_TEMP" # never resolve imports from a source tree
+
+          "$VENV/bin/python" - "$EXPECTED" <<'EOF'
+          import importlib.metadata as md
+          import sys
+
+          import hyperweave
+
+          expected = sys.argv[1]
+          assert hyperweave.__version__ == expected, f"__version__ {hyperweave.__version__} != {expected}"
+          assert md.version("hyperweave") == expected, f"metadata {md.version('hyperweave')} != {expected}"
+          print("import + version OK:", expected)
+          EOF
+
+          # Both console scripts are public API; check output, not just exit code.
+          for BIN in hyperweave hw; do
+            OUT=$("$VENV/bin/$BIN" --version)
+            echo "$BIN --version -> $OUT"
+            [ "$OUT" = "hyperweave v$EXPECTED" ] || { echo "unexpected $BIN --version output"; exit 1; }
+          done
+
+          "$VENV/bin/hyperweave" compose badge build passing --genome brutalist > badge.svg
+          grep -q '<svg' badge.svg
+          grep -q 'xmlns:hw' badge.svg
+          echo "compose smoke OK"
+
+  publish:
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: pypi
     permissions:
-      id-token: write  # OIDC for trusted publishing
-
+      contents: read
+      # The ONLY job holding the publishing identity. `attestations: write` is
+      # deliberately absent: PEP 740 attestations here are Sigstore-signed with
+      # this same OIDC token, while `attestations: write` belongs to GitHub
+      # Artifact Attestations (actions/attest-*), which this workflow never uses.
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          fetch-depth: 0  # full history for hatch-vcs
+          name: dist
+          path: dist
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - uses: astral-sh/setup-uv@v4
-
-      - name: Build
-        run: uv build
-
-      - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
+      # No rebuild — publishes exactly the bytes smoke tested.
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
