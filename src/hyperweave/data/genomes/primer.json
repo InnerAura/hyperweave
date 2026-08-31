@@ -109,6 +109,7 @@
       "receipt_dim_ink": "#8A8A8A",
       "diagram_faces": {
         "light": {
+          "ink_on_accent": "#FFFFFF",
           "surface_0": "#FFFFFF",
           "surface_1": "#FFFFFF",
           "surface_2": "#FAFAFA",
@@ -124,6 +125,7 @@
           "diagram_shadow_color": "#18181B"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#0A0A0A",
           "surface_1": "#141414",
           "surface_2": "#1C1C1C",
@@ -221,6 +223,7 @@
       "receipt_dim_ink": "#8C8C8C",
       "diagram_faces": {
         "light": {
+          "ink_on_accent": "#FFFFFF",
           "diagram_shadow_color": "#0F0F0F",
           "surface_0": "#F4F4F3",
           "surface_1": "#FDFDFC",
@@ -236,6 +239,7 @@
           "diagram_conn_muted": "#8C8C86"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#111111",
           "surface_1": "#1A1A1A",
           "surface_2": "#212121",
@@ -333,6 +337,7 @@
       "receipt_dim_ink": "#7C8CA4",
       "diagram_faces": {
         "light": {
+          "ink_on_accent": "#FFFFFF",
           "diagram_shadow_color": "#0C1B2C",
           "surface_0": "#EDF4FB",
           "surface_1": "#FBFDFF",
@@ -348,6 +353,7 @@
           "diagram_conn_muted": "#788CA3"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#0B1120",
           "surface_1": "#131D31",
           "surface_2": "#1A2740",
@@ -445,6 +451,7 @@
       "receipt_dim_ink": "#9A9AA2",
       "diagram_faces": {
         "light": {
+          "ink_on_accent": "#FFFFFF",
           "diagram_shadow_color": "#101014",
           "surface_0": "#F2F2F5",
           "surface_1": "#FBFBFD",
@@ -460,6 +467,7 @@
           "diagram_conn_muted": "#8A8A94"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#18181B",
           "surface_1": "#212125",
           "surface_2": "#292930",
@@ -580,6 +588,7 @@
           "diagram_conn_muted": "#8690A2"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#070709",
           "surface_1": "#0C0D12",
           "surface_2": "#141722",
@@ -700,6 +709,7 @@
           "diagram_conn_muted": "#9D8964"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#171009",
           "surface_1": "#211811",
           "surface_2": "#2B2015",
@@ -820,6 +830,7 @@
           "diagram_conn_muted": "#A07D8D"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#191016",
           "surface_1": "#251720",
           "surface_2": "#2D1D28",
@@ -940,6 +951,7 @@
           "diagram_conn_muted": "#709091"
         },
         "dark": {
+          "ink_on_accent": "#0A0A0A",
           "surface_0": "#0C1414",
           "surface_1": "#142121",
           "surface_2": "#1B2C2C",

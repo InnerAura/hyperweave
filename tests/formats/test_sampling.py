@@ -36,7 +36,7 @@ class TestSampleChoreography:
         assert sampled is not None
         record, frames = sampled
         assert record["sampled"] is True
-        assert record["beats"] == [f"{b:g}s" for b in PHI_BEATS]
+        assert record["beats"] == [f"{b * record['cycle_s']:.2f}s" for b in PHI_BEATS]
         assert record["cycle_s"] > 0
         assert "easing functions are not simulated" in record["interpolation"]
         assert len(frames) == len(PHI_BEATS)

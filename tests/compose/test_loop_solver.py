@@ -128,9 +128,7 @@ class TestDiamond:
 
     def test_four_chip_holder_packs_two_full_rows(self) -> None:
         # Past two greedy rows the holder re-packs into exactly two full
-        # rows, widest chips shallow — it stays in the 3-chip holder's
-        # height class and spends width on full rows, never a sparse tall
-        # midband whose aspect term outruns every content need.
+        # rows, widest chips shallow, spending width on full rows.
         dspec = hillclimb()
         stop = next(n for n in dspec["nodes"] if n["id"] == "stop")
         stop["chips"] = ["target hit", "no gains", "out of ideas", "budget spent"]
@@ -142,8 +140,17 @@ class TestDiamond:
         by_row = [[cb for cb in holder.chip_boxes if round(cb.y, 1) == y] for y in row_tops]
         assert [len(r) for r in by_row] == [2, 2]
         assert sum(cb.w for cb in by_row[0]) >= sum(cb.w for cb in by_row[1])
-        assert holder.box.h == node_by_id(solve(hillclimb()), "stop").box.h
+        # AMENDED (owner aspect ruling, 2026-08-30): the height-class law
+        # ("gains chips without gaining a row -> same height") is superseded
+        # by aspect invariance — w/h stays the chassis ratio, so a wider row
+        # propagates into height and 2+2 no longer shares 2+1's class. The
+        # holder still solves TALLER-or-equal, never shorter, than the 2+1
+        # form, and the aspect pin below is the new law.
+        three_chip = node_by_id(solve(hillclimb()), "stop")
+        assert holder.box.h >= three_chip.box.h
+        assert abs(holder.box.w / holder.box.h - three_chip.box.w / three_chip.box.h) < 0.01
         hw, hh = holder.box.w / 2, holder.box.h / 2
+        assert abs(hw / hh - 100 / 52) < 0.01  # the chassis aspect, both specimens sit on it
         cx, cy = holder.box.x + hw, holder.box.y + hh
         for cb in holder.chip_boxes:
             for corner in ((cb.x, cb.y), (cb.x + cb.w, cb.y), (cb.x, cb.y + cb.h), (cb.x + cb.w, cb.y + cb.h)):

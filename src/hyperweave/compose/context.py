@@ -487,6 +487,16 @@ def _apply_adaptive_css(ctx: dict[str, Any], spec: ComposeSpec, resolved: Resolv
         ctx["css"] = scoped + "\n" + css
     # Fold the inline overrides into the near block instead of the root attr.
     ctx["inline_style_overrides"] = ""
+    # The contrast claim follows the DELIVERY: an adaptive artifact renders
+    # the overlaid faces, not the pre-overlay genome the base context
+    # measured — the review caught a 5.7:1 claim over a delivered 1.12:1
+    # ink-on-accent pair. Re-measure over BOTH faces and keep the worst.
+    candidates = [_contrast_floor(base_genome), _contrast_floor({**base_genome, **dark_face})]
+    scored = [(float(ratio.split(":")[0]), ratio, pair) for ratio, pair in candidates if ratio]
+    if scored:
+        _, ratio, pair = min(scored)
+        ctx["contrast_ratio"] = ratio
+        ctx["contrast_worst_pair"] = pair
 
 
 # ── Base context (shared by all frames) ──────────────────────────────

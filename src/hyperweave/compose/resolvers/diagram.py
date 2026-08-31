@@ -668,7 +668,9 @@ def _text_surface(layout: DiagramLayout) -> list[str]:
     strings: list[str] = []
     for n in layout.nodes:
         strings.append(n.label.text)
+        strings.extend(line.text for line in n.label_lines)
         strings.extend(line.text for line in n.desc_lines)
+        strings.extend(ct.text for ct in n.chip_texts)
         if n.short is not None:
             strings.append(n.short.text)
         if n.tag is not None:
@@ -689,4 +691,14 @@ def _text_surface(layout: DiagramLayout) -> list[str]:
         strings.append(layout.legend.text)
     if layout.footer is not None:
         strings.append(layout.footer.text)
+    # Masthead furniture + choreography re-stamps render their own glyphs too:
+    # the sequence call/return mini-legend, the time axis, and chip tint groups
+    # (tofu sweep 2026-08-30 caught all three classes missing on 5 presets).
+    for w in layout.wire_legend:
+        strings.append(w.label.text)
+    if layout.time_axis is not None:
+        strings.append(layout.time_axis.label.text)
+    if layout.choreography is not None:
+        for tn in layout.choreography.tints:
+            strings.extend(line.text for line in tn.lines)
     return [s for s in strings if s]

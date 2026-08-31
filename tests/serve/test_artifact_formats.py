@@ -108,3 +108,15 @@ async def test_artifact_png_and_width_cap(client: AsyncClient) -> None:
     from PIL import Image
 
     assert Image.open(BytesIO(capped.content)).width <= 100
+
+
+async def test_compose_unknown_respond_is_refused(client: AsyncClient) -> None:
+    # A typo must never silently fall through to SVG bytes — CLI and MCP
+    # reject unknown modes, so HTTP does too (three-surface parity).
+    resp = await client.post(
+        "/v1/compose",
+        json={"type": "badge", "genome": "primer", "title": "X", "value": "y", "respond": "receipt"},
+    )
+    assert resp.status_code == 400, resp.text
+    body = resp.json()
+    assert "respond" in str(body)

@@ -55,25 +55,53 @@ def _active_state_decls(svg: str) -> dict[str, str]:
     return decls
 
 
+def _var_keepout_spans(svg: str) -> list[tuple[int, int]]:
+    """Spans the variable flatten must never edit: comments, CDATA (the
+    ``hw:payload`` copy of a spec), and the TEXT NODES of text-bearing
+    elements — a label that literally reads ``var(--dna-signal)`` is content,
+    not a declaration. Attributes on those elements stay editable (a text
+    element's ``fill="var(--dna-…)"`` must still resolve)."""
+    spans = _protected_spans(svg)
+    for m in re.finditer(r"<(text|tspan|title|desc|metadata|hw:[a-z-]+)\b", svg):
+        close = svg.find(f"</{m.group(1)}", m.end())
+        if close == -1:
+            continue
+        i = svg.find(">", m.end())
+        while i != -1 and i < close:
+            j = svg.find("<", i + 1)
+            if j == -1 or j > close:
+                j = close
+            spans.append((i + 1, j))
+            i = svg.find(">", j)
+    return spans
+
+
 def resolve_vars_to_hex(svg: str) -> str:
     """Flatten ``var(--*)`` to literal hex using the artifact's own declarations.
 
     A used var with no declaration falls back to its inline fallback, then to the
-    ink — never to empty (the black/transparent collapse this pass exists to prevent).
+    ink — never to empty (the black/transparent collapse this pass exists to
+    prevent). Substitution is span-scoped: CSS and attribute values only, never
+    comments, CDATA payloads, or rendered text content.
     """
     decls: dict[str, str] = dict(_DECL_RE.findall(svg))
     decls.update(_active_state_decls(svg))
     ink = decls.get("--dna-ink-primary") or decls.get("--dna-ink") or "#111111"
 
-    def _sub(m: re.Match[str]) -> str:
-        name, fallback = m.group(1), m.group(2)
-        if name in decls:
-            return decls[name]
-        return fallback.strip() if fallback else ink
-
     # Fixpoint: each pass resolves the outermost var(); nested fallbacks resolve
-    # on the next pass. Bounded to avoid pathological input.
+    # on the next pass. Bounded to avoid pathological input. Keep-out spans are
+    # recomputed per pass — substitutions shift offsets.
     for _ in range(8):
+        keepout = _var_keepout_spans(svg)
+
+        def _sub(m: re.Match[str], _keepout: list[tuple[int, int]] = keepout) -> str:
+            if _inside(m.start(), _keepout):
+                return m.group(0)
+            name, fallback = m.group(1), m.group(2)
+            if name in decls:
+                return decls[name]
+            return fallback.strip() if fallback else ink
+
         flat = _VAR_RE.sub(_sub, svg)
         if flat == svg:
             break
@@ -427,7 +455,10 @@ def bake_face(svg: str, face: str) -> str:
     # it carries a committed face — the same attribute shape a compose-time
     # face render wears (the flatten guard reads both).
     baked = re.sub(r'\s*data-hw-adapt="adaptive"', "", baked, count=1)
-    if "data-hw-face=" not in baked:
+    # Inspect the ROOT TAG only — a title or label that happens to contain
+    # the literal attribute text must not suppress the stamp.
+    root_end = baked.find(">", baked.find("<svg"))
+    if "data-hw-face=" not in baked[: root_end + 1]:
         baked = baked.replace('data-hw-chromatic="', f'data-hw-face="{face}" data-hw-chromatic="', 1)
     return baked
 

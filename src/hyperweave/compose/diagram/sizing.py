@@ -1110,9 +1110,16 @@ DIAMOND_HOLDER_Q_DY = -32.0
 """Holder question baseline offset above the diamond centre (Stop? baseline
 718 on a 750 centre). Shared with ``chrome.place_diamond`` so the matrix the
 sizing half clears is the matrix the placement half draws."""
-DIAMOND_CHIP_AIR = 36.0
-"""Vertical air below the lowest chip row's edge to the holder's south
-vertex (the hillclimb holder: rows end at center+49, half-height 85)."""
+DIAMOND_CHIP_AIR = 16.0
+"""MINIMUM vertical air below the lowest chip row's edge to the holder's
+south vertex. Owner tightening ruling (2026-08-30, supersedes the 36 cited
+from the hillclimb holder's own slack). Measured under the aspect-locked
+solve (vertex-relative, hillclimb specs): a 2+1 holder lands 271.8x141.3
+(was 326.9x170.0) with 33.6px below the rows; a 2+2 holder lands
+325.7x169.3 with 50.7px — extra air beyond this minimum is the honest
+remainder when the question or a wide row forces scale along the aspect
+line. One constant feeds BOTH the scale floor and holder_row_offsets'
+south clamp, so seat and growth stay consistent."""
 
 
 def solve_diamond_box(ctx: SolverContext, node: DiagramNode) -> tuple[float, float, tuple[str, ...]]:
@@ -1137,18 +1144,32 @@ def solve_diamond_box(ctx: SolverContext, node: DiagramNode) -> tuple[float, flo
     hw = max(base_hw, q_w / 2 + 24.0)
     hh = base_hh
     if node.chips:
+        # THE RELATION (spatial-repair, 2026-08-30): both shipped diamonds —
+        # the chipless 200x104 and the Stop? holder 327x170 — keep w/h equal
+        # to the chassis ratio base_hw/base_hh. A holder therefore never
+        # grows one axis alone: content solves a single SCALE along the
+        # aspect line, and every taper constraint (each chip corner AND the
+        # question's ascent band, which previously rode a widest-line scalar)
+        # is checked at the scaled halves. Iterative: the row seats depend on
+        # the height they sit in; growth is monotone, four passes converge.
         rows = pack_holder_rows(node.chips, ctx.cfg, row_cap=2 * base_hw)
-        # Height answers to the ROW COUNT — unchanged, so a holder that gains
-        # chips without gaining a row stays in its own height class.
-        dy_max = DIAMOND_CHIP_DY0 + (len(rows) - 1) * DIAMOND_CHIP_PITCH + CHIP_H / 2
-        hh = max(base_hh, dy_max + DIAMOND_CHIP_AIR)
-        hw = max(hw, base_hw * hh / base_hh)
+        half_rows = (len(rows) - 1) * DIAMOND_CHIP_PITCH / 2 + CHIP_H / 2
         clearance = float((ctx.engine.get("loop") or {}).get("chip_node_clearance", 4))
-        offsets = holder_row_offsets(len(rows), hh=hh, q_dy=DIAMOND_HOLDER_Q_DY, air=DIAMOND_CHIP_AIR)
-        for dy, row in zip(offsets, rows, strict=True):
-            taper = 1.0 - (abs(dy) + CHIP_H / 2) / hh
-            if taper > 0:
-                hw = max(hw, (holder_row_w(row, ctx.cfg) / 2 + clearance) / taper)
+        q_half = q_w / 2 + clearance
+        q_top = abs(DIAMOND_HOLDER_Q_DY) + ctx.cfg.label_voice.size
+        lo = DIAMOND_HOLDER_Q_DY + DIAMOND_Q_INK_GAP + half_rows
+        scale = max(1.0, (lo + half_rows + DIAMOND_CHIP_AIR) / base_hh)
+        for _ in range(4):
+            hh, hw = scale * base_hh, scale * base_hw
+            offsets = holder_row_offsets(len(rows), hh=hh, q_dy=DIAMOND_HOLDER_Q_DY, air=DIAMOND_CHIP_AIR)
+            need = q_half / hw + q_top / hh
+            for dy, row in zip(offsets, rows, strict=True):
+                a = holder_row_w(row, ctx.cfg) / 2 + clearance
+                need = max(need, a / hw + (abs(dy) + CHIP_H / 2) / hh)
+            if need <= 1.0:
+                break
+            scale *= need
+        hh, hw = scale * base_hh, max(hw, scale * base_hw)
     return 2 * hw, 2 * hh, ()
 
 
@@ -1191,7 +1212,8 @@ def pack_holder_rows(chips: tuple[str, ...], cfg: ParadigmDiagramConfig, *, row_
     constraint). Past two greedy rows the holder re-packs into exactly two
     full rows — widest chips shallow where the taper leaves the most width,
     the remainder deep, each row reading in declaration order — so the
-    holder stays in the two-row height class and both rows read full. The
+    holder stays at two ROWS and both read full (height follows the aspect
+    line, not the row count — see DIAMOND_CHIP_AIR). The
     3-chip hillclimb citation packs 2-then-1 under the cap and never
     reaches the repack."""
     widths = [solve_chip_box(chip, cfg)[0] for chip in chips]

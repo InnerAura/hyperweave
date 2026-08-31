@@ -28,40 +28,81 @@ ENGINE = load_diagram_config()
 runner = CliRunner()
 
 
+AIRY_ENGINE = {"connector": {"chip_pill_air": 90.0}}
+"""The doctored tests run under a 90px air law: hillclimb cannot produce two
+LAWFULLY SEATED chips within 6px (measured best on-wire approach is 87px), and
+an off-wire teleport would break the loop chip-seat law the battery's pipeline
+position guarantees green on entry. Raising the config-driven air floor fuses
+a lawful pair instead — every other law holds, exactly the production shape."""
+
+
 def _fused_layout() -> Any:
-    """A real solved layout doctored so two guard chips sit fused (<6px air)."""
+    """A real solved layout doctored so two chips sit fused under AIRY_ENGINE.
+
+    One chip slides ALONG ITS OWN WIRE to its closest lawful approach to a
+    sibling (87px) — realistic density, loop/duplex laws green on entry."""
+    import math
+
     lay = solve(hillclimb())
     chips = [a for a in lay.annotations if a.kind == "edge-chip" and a.box is not None]
-    assert len(chips) >= 2, "harness premise: hillclimb carries guard chips"
-    a, b = chips[0], chips[1]
-    assert a.box is not None and b.box is not None
-    from hyperweave.compose.diagram.battery import _translate_annotation
+    assert len(chips) >= 4, "harness premise: hillclimb carries guard chips"
+    mover, target = chips[1], chips[3]
+    assert mover.box is not None and target.box is not None
+    from hyperweave.compose.diagram.battery import _densify_path, _path_points, _pill_gap, _translate_annotation
 
-    dx = (a.box.x + 2.0) - b.box.x
-    dy = a.box.y - b.box.y
-    moved_b = _translate_annotation(b, dx, dy)
-    annotations = tuple(moved_b if ann is b else ann for ann in lay.annotations)
-    return replace(lay, annotations=annotations)
+    conn = next(c for c in lay.connectors if c.index == mover.edge_index)
+    pts = _densify_path(_path_points(conn.path_d), samples=96)
+    bx, by = mover.box.x + mover.box.w / 2, mover.box.y + mover.box.h / 2
+
+    def gap_at(p: tuple[float, float]) -> float:
+        import dataclasses
+
+        nb = dataclasses.replace(mover.box, x=p[0] - mover.box.w / 2, y=p[1] - mover.box.h / 2)
+        return _pill_gap(nb, target.box)
+
+    tx, ty = min(pts[12:-12], key=gap_at)
+    moved = _translate_annotation(mover, tx - bx, ty - by)
+    annotations = tuple(moved if ann is mover else ann for ann in lay.annotations)
+    doctored = replace(lay, annotations=annotations)
+    assert math.isfinite(gap_at((tx, ty))) and gap_at((tx, ty)) < 90.0
+    return doctored
 
 
 class TestChipAirReseatThenClassify:
     def test_reseat_succeeds_with_advisory(self) -> None:
         doctored = _fused_layout()
-        reseated, diags = run_chip_air_battery(doctored, ENGINE)
+        reseated, diags = run_chip_air_battery(doctored, AIRY_ENGINE)
         assert len(diags) >= 1
         assert diags[0].rule == "chip-air"
         assert "px apart" in diags[0].measured and "reseated" in diags[0].measured
         # The result satisfies its own law: a second run finds nothing.
-        again, more = run_chip_air_battery(reseated, ENGINE)
+        again, more = run_chip_air_battery(reseated, AIRY_ENGINE)
         assert more == ()
         assert again.annotations == reseated.annotations
+
+    def test_reseat_leaves_the_whole_geometry_lawful(self) -> None:
+        # A candidate seat is legal only if EVERY law still holds after the
+        # move — the review found a reseated pill could land on a foreign
+        # wire or break a loop/duplex law the earlier batteries had cleared.
+        from hyperweave.compose.diagram.battery import (
+            _check_no_wire_through_pill,
+            run_duplex_battery,
+            run_loop_battery,
+        )
+
+        reseated, diags = run_chip_air_battery(_fused_layout(), AIRY_ENGINE)
+        assert diags, "harness premise: the fused pair reseats"
+        chips = [a for a in reseated.annotations if a.kind == "edge-chip" and a.box is not None]
+        _check_no_wire_through_pill(reseated, chips)
+        run_loop_battery(reseated)
+        run_duplex_battery(reseated)
 
     def test_unsatisfiable_density_is_spec_invalid_naming_both_chips(self) -> None:
         # Shrinking the canvas denies every candidate seat: the density is the
         # author's to repair, so the outcome is a refusal, never a fault.
         doctored = replace(_fused_layout(), width=1.0, height=1.0)
         with pytest.raises(HwError) as exc:
-            run_chip_air_battery(doctored, ENGINE)
+            run_chip_air_battery(doctored, AIRY_ENGINE)
         assert exc.value.code is HwErrorCode.SPEC_INVALID
         assert not exc.value.is_engine_fault
         assert "px apart" in exc.value.message
@@ -98,6 +139,36 @@ class TestFaultThroughRealCli:
         assert "probe invariant" in result.output
         assert "Traceback" not in result.output
         assert not out.exists(), "an engine fault never writes a file"
+
+    def test_projection_fault_exits_70_not_2(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
+        # A projection failure AFTER a successful compose is ours, not the
+        # caller's — the generic catch used to print Error: and exit 2.
+        import hyperweave.formats.static as static_mod
+        from hyperweave.cli import app
+
+        def boom(svg: str, passes: Any) -> Any:
+            raise HwError(HwErrorCode.PROJECTION_INVALID, "static projection failed its postcondition (seeded)")
+
+        monkeypatch.setattr(static_mod, "run_passes_counted", boom)
+        out = tmp_path / "out.svg"
+        result = runner.invoke(
+            app, ["compose", "diagram", "--spec-file", "loop-retry", "--format", "svg-static", "-o", str(out)]
+        )
+        assert result.exit_code == 70
+        assert "engine fault:" in result.output
+        assert "Traceback" not in result.output
+
+    def test_proof_refuses_non_live_formats(self, tmp_path: Any) -> None:
+        # proof/1 law: delivered-equals-inspected. A proof of the live SVG
+        # beside an ANSI grid would describe bytes the caller never received.
+        from hyperweave.cli import app
+
+        out = tmp_path / "out.txt"
+        result = runner.invoke(
+            app, ["compose", "diagram", "--spec-file", "loop-retry", "--format", "ansi", "-o", str(out), "--proof"]
+        )
+        assert result.exit_code == 2
+        assert "--format svg only" in result.output
 
     def test_caller_refusal_keeps_exit_2_without_fault_prefix(self, tmp_path: Any) -> None:
         spec = tmp_path / "seq5.json"

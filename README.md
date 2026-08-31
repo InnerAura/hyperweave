@@ -834,7 +834,7 @@ Every HyperWeave artifact is a re-ingestible object, not just an image. It carri
     "edges": ["web → API gateway", "API gateway → Auth", "API gateway → Orders", "API gateway → Search", "Auth → Postgres (reads)", "Orders → Postgres", "Orders → Kafka (emits)", "Search → Redis (cache)", "API gateway → Postgres (direct read)"]
   },
   "frames": [{ "t": "diagram", "l": "Service dependencies" }],
-  "prov": { "by": "hyperweave", "ver": "0.4.0a6", "genome": "primer.porcelain", "ts": "2026-07-15T02:01:15.613547+00:00" }
+  "prov": { "by": "hyperweave", "ver": "0.4.6", "genome": "primer.porcelain", "ts": "2026-07-15T02:01:15.613547+00:00" }
 }
 </hw:envelope>
 ```
@@ -1708,7 +1708,7 @@ Every artifact ships with:
 - **Re-ingestible payload:** the full spec (`hw:payload`) plus a hash-verified `hwz/1` envelope, so an agent can recover, verify, and edit it - the basis of [the verb algebra](#read-at-a-budget-the-verb-algebra).
 - **Semantic metadata:** provenance, reasoning, spatial trace, aesthetic DNA. Machine-readable context so the next agent in the chain knows what it's looking at and why.
 - **CSS state machines:** `data-hw-status`, `data-hw-state`, `data-hw-regime` drive visual transitions through the Custom Property Bridge. No JavaScript.
-- **Pure CSS/SMIL animation:** all motion uses compositor-safe properties (`transform`, `opacity`, `filter`). No script tags. Works anywhere SVGs render: GitHub's Camo proxy, email clients, Notion embeds.
+- **Pure CSS/SMIL animation:** no script tags, ever. Each artifact declares its measured tier — `composite-only` (transform/opacity) or `paint-ok` (the default dash march rides `stroke-dashoffset`). Works anywhere SVGs render: GitHub's Camo proxy, email clients, Notion embeds.
 - **Accessibility:** WCAG AA, `prefers-reduced-motion`, `prefers-color-scheme`, `forced-colors`, ARIA markup. Structural, not decorative.
 
 | Dimension | Count |

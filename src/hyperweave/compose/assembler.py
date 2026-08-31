@@ -150,7 +150,6 @@ _CORE_CSS_MAPPING: list[tuple[str, str]] = [
     ("chart_title_bg", "--dna-chart-title-bg"),
     # Shadow / Glow
     ("shadow_color", "--dna-shadow-color"),
-    ("shadow_opacity", "--dna-shadow-opacity"),
     # Diagram carries its own neutral drop-shadow tint (distinct from the shared
     # shadow_color the other frames use); adaptive twins flip this var via the
     # scoped feDropShadow rule in frames/diagram/primer-defs.j2.

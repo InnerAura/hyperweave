@@ -354,6 +354,10 @@ async def hw_compose(
     # {envelope, url} contract — the SVG bytes never enter the agent's context: it
     # emits ![](url) (~10 tokens), not tens of KB of markup. `respond='svg'` opts
     # into inline pixels; the artifact is cached under `url` either way.
+    # Reject unknown modes instead of silently falling through to the envelope
+    # — the same refusal a typo gets on CLI and HTTP (three-surface parity).
+    if respond not in ("envelope", "svg", "report"):
+        raise ValueError(f"respond must be 'envelope', 'svg', or 'report' (got {respond!r})")
     if respond == "svg":
         return response.svg
     if respond == "report":
