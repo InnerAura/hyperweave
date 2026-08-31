@@ -1,0 +1,58 @@
+# Release Drafter v7 config. v7 replaced v6's `version-resolver` / `exclude-labels`
+# keys with this `categories` pipeline; `when:` supports conventional-commit
+# predicates, which is how most changes here classify without needing a label.
+#
+# NOTE: `conventional` reads the PULL REQUEST TITLE, not commit subjects. A pull
+# request needs a `feat:` / `fix:` title or an `enhancement` / `bug` label, or it
+# lands in Changed.
+#
+# CHANGELOG.md stays the curated record; this only keeps a draft warm between
+# releases. The workflow sets `publish: false`, so nothing is ever released
+# automatically.
+
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+tag-prefix: "v"
+
+categories:
+  - type: pre-exclude
+    when:
+      label: "release: skip"
+
+  - title: Added
+    semver-increment: minor
+    exclusive: true
+    when:
+      - conventional:
+          type: feat
+      - labels:
+          - enhancement
+
+  - title: Fixed
+    exclusive: true
+    when:
+      - conventional:
+          type: fix
+      - labels:
+          - bug
+
+  # Catch-all: omitting `when` matches every remaining change (refactor, docs,
+  # test, chore, perf, ci, and anything non-conventional).
+  - title: Changed
+    exclusive: true
+
+  - type: version-resolver
+    semver-increment: major
+    when:
+      conventional:
+        breaking: true
+
+change-template: "- $TITLE (#$NUMBER) $AUTHORS"
+change-title-escapes: '\<*_&'
+no-changes-template: "- No user-facing changes"
+
+template: |
+  $CHANGES
+
+  ---
+  Curated notes for this version live in [CHANGELOG.md](https://github.com/InnerAura/hyperweave/blob/main/CHANGELOG.md).

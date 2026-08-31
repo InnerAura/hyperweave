@@ -1,0 +1,32 @@
+name: Release Drafter
+
+# Draft-only, and only after a pull request lands on main. There is no
+# `pull_request` trigger: the ask is "update a draft after merge", and omitting
+# it also avoids the fork-token problem that pushes people to
+# pull_request_target.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-drafter
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # create/update the draft release
+      pull-requests: read # read merged titles and labels
+    steps:
+      - uses: release-drafter/release-drafter@34d80673e067bdc0c24568d3af899c216adcfaa9 # v7.7.0
+        with:
+          config-name: release-drafter.yml
+          # Explicit so "this cannot publish" is readable here, not inferred
+          # from a default. Publishing a release stays a manual act.
+          publish: false
