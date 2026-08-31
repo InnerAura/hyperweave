@@ -378,15 +378,29 @@ def _artifact_short_id(svg: str) -> str:
     return str(envelope.get("id", "")).removeprefix("sha256:")[:12]
 
 
-def _next_document(*, artifact_id: str, wrote: list[Path], frame_type: str, handle: str) -> dict[str, Any]:
+def _artifact_title(svg: str) -> str:
+    """The COMPOSED artifact's title, read from its embedded envelope — correct
+    for the positional-arg path and the ``--spec`` path alike (a spec's title
+    lives in the frame IR, not on the CLI arguments)."""
+    from hyperweave.core.envelope import extract_envelope
+
+    return str((extract_envelope(svg) or {}).get("title", ""))
+
+
+def _next_document(
+    *, artifact_id: str, wrote: list[Path], frame_type: str, handle: str, title: str = ""
+) -> dict[str, Any]:
     """The compose result as one machine-readable document for stdout.
 
     The verb hint used to be prose on stderr — the stream an agent is trained
     to treat as noise — so a cold agent did archaeology instead of running the
-    verbs. This is the same information as runnable commands, plus ``text``:
-    where each string the caller passed actually landed (diagram ``title``
-    reaching the accessible name rather than a drawn heading is the case that
-    cost a turn).
+    verbs. This is the same information as runnable commands, plus ``title``
+    (what this compose actually named the artifact) and ``text``: where each
+    string the caller passed actually landed (diagram ``title`` reaching the
+    accessible name rather than a drawn heading is the case that cost a turn).
+    ``title`` is the composed value; ``text`` stays the role map — the
+    document used to print only the roles, so ``text.title`` read as a schema
+    sentence where the caller expected their own words.
 
     The governing rule for the caller: **stdout carries one machine-readable
     document unless it is carrying the artifact.** A compose without ``-o``
@@ -397,6 +411,8 @@ def _next_document(*, artifact_id: str, wrote: list[Path], frame_type: str, hand
     doc: dict[str, Any] = {}
     if artifact_id:
         doc["artifact"] = artifact_id
+    if title:
+        doc["title"] = title
     doc["wrote"] = [str(path) for path in wrote]
     roles = text_roles(frame_type)
     if roles:
@@ -625,9 +641,20 @@ def validate(
 
     from hyperweave.compose.surface import validate_surface
 
+    def _pre_parse_refusal(message: str, *, code: str = "SPEC_INVALID") -> typer.Exit:
+        """A refusal BEFORE a spec envelope exists. ``--json`` promises the
+        machine-readable report on every outcome, so these paths emit the same
+        ``{valid, error}`` shape the post-parse report carries (stdout, like
+        the report at the bottom); prose otherwise. Exit stays 2 — the
+        pre-parse refusal code, distinct from post-parse invalid (1/70)."""
+        if as_json:
+            typer.echo(_json.dumps({"valid": False, "error": {"code": code, "message": message}}, indent=2))
+        else:
+            typer.echo(message, err=True)
+        return typer.Exit(code=2)
+
     if spec_file is not None and spec_file_opt is not None and str(spec_file) != str(spec_file_opt):
-        typer.echo("Error: the positional spec-file and --spec-file disagree; pass only one", err=True)
-        raise typer.Exit(code=2)
+        raise _pre_parse_refusal("Error: the positional spec-file and --spec-file disagree; pass only one")
     spec_file = spec_file if spec_file is not None else spec_file_opt
 
     env: Any = None
@@ -637,8 +664,18 @@ def validate(
     elif spec_file is not None:
         # The SAME stdin/file/preset decision compose makes (stdin aliases,
         # is_file/is_dir/missing/shadow all handled there — never an
-        # IsADirectoryError, and `-` means stdin on both verbs).
-        kind, payload = _read_spec_source(spec_file)
+        # IsADirectoryError, and `-` means stdin on both verbs). Its own
+        # refusals print prose to stderr and exit 2; under --json the intercept
+        # below adds the machine-readable envelope on stdout so the promised
+        # report exists on every outcome.
+        try:
+            kind, payload = _read_spec_source(spec_file)
+        except typer.Exit as exc:
+            if as_json:
+                raise _pre_parse_refusal(
+                    f"spec source {spec_file} could not be read as a spec (detail on stderr)"
+                ) from exc
+            raise
         if kind == "data":
             env = _sniff_validate_shape(payload)
         else:
@@ -646,26 +683,22 @@ def validate(
             if env is None:
                 from hyperweave.compose.bundled_specs import bundled_spec_names
 
-                typer.echo(
+                raise _pre_parse_refusal(
                     f"Error: {payload!r} is not a spec file, and matches no bundled diagram or matrix preset.\n"
                     f"  known diagram specs: {', '.join(bundled_spec_names('diagram')) or '(none configured)'}\n"
                     f"  known matrix specs: {', '.join(bundled_spec_names('matrix')) or '(none configured)'}",
-                    err=True,
+                    code="PRESET_UNKNOWN",
                 )
-                raise typer.Exit(code=2)
     else:
-        typer.echo("provide a spec file, --spec '{...}', or - for stdin", err=True)
-        raise typer.Exit(code=2)
+        raise _pre_parse_refusal("provide a spec file, --spec '{...}', or - for stdin")
 
     if env is None:
         try:
             data = _json.loads(raw)
         except _json.JSONDecodeError as exc:
-            typer.echo(f"invalid JSON: {exc}", err=True)
-            raise typer.Exit(code=2) from exc
+            raise _pre_parse_refusal(f"invalid JSON: {exc}") from exc
         if not isinstance(data, dict):
-            typer.echo("invalid spec: top-level JSON must be an object", err=True)
-            raise typer.Exit(code=2)
+            raise _pre_parse_refusal("invalid spec: top-level JSON must be an object")
         env = _sniff_validate_shape(data)
 
     report = validate_surface(env)
@@ -1016,20 +1049,20 @@ def compose(
     genome_override: dict[str, object] | None = None
     if genome_file is not None:
         from hyperweave.config.genome_validator import load_and_validate_genome_file
+        from hyperweave.core.errors import HwError
 
         try:
-            genome_override, errors = load_and_validate_genome_file(genome_file)
+            genome_override = load_and_validate_genome_file(genome_file)
         except FileNotFoundError as exc:
             typer.echo(f"Error: {exc}", err=True)
             raise typer.Exit(2) from exc
         except json.JSONDecodeError as exc:
             typer.echo(f"Error: {genome_file} is not valid JSON: {exc}", err=True)
             raise typer.Exit(2) from exc
-        if errors:
+        except HwError as exc:
             typer.echo(f"Genome file validation failed for {genome_file.name}:", err=True)
-            for err in errors:
-                typer.echo(f"  {err}", err=True)
-            raise typer.Exit(2)
+            typer.echo(exc.cli_text(), err=True)
+            raise typer.Exit(2) from exc
         # Update the genome slug to match the loaded file (so data-hw-genome is correct).
         genome = str(genome_override.get("id", genome))
         genome_explicit = True  # a loaded genome file always wins over an envelope's genome
@@ -1312,6 +1345,7 @@ def compose(
 
         faces_wrote: list[Path] = []
         faces_id = ""
+        faces_title = ""
         for face_name in ("light", "dark"):
             try:
                 face_result = do_compose(spec.model_copy(update={"palette": "fixed", "surface_face": face_name}))
@@ -1327,6 +1361,7 @@ def compose(
                 # the base scope a renderer without prefers-color-scheme shows
                 # (surface_modes invariant 3), so the handle in `next` resolves.
                 faces_id = _artifact_short_id(face_result.svg)
+                faces_title = _artifact_title(face_result.svg)
         typer.echo(
             _json.dumps(
                 _next_document(
@@ -1334,6 +1369,7 @@ def compose(
                     wrote=faces_wrote,
                     frame_type=frame_type,
                     handle=str(faces_wrote[0]),
+                    title=faces_title,
                 ),
                 indent=2,
             )
@@ -1455,6 +1491,7 @@ def compose(
                 wrote=[output, *proof_wrote] if output is not None else [],
                 frame_type=frame_type,
                 handle=handle,
+                title=_artifact_title(result.svg),
             )
         )
         typer.echo(_json.dumps(respond_doc, indent=2))
@@ -1521,7 +1558,13 @@ def compose(
             tail_wrote.extend(proof_paths)
         typer.echo(
             _json.dumps(
-                _next_document(artifact_id=advert_id, wrote=tail_wrote, frame_type=frame_type, handle=str(output)),
+                _next_document(
+                    artifact_id=advert_id,
+                    wrote=tail_wrote,
+                    frame_type=frame_type,
+                    handle=str(output),
+                    title=_artifact_title(result.svg),
+                ),
                 indent=2,
             )
         )
@@ -2183,66 +2226,33 @@ def validate_genome(
     genome_path: Annotated[Path, typer.Argument(help="Path to genome JSON file")],
     profile: Annotated[str, typer.Option("--profile", help="Profile to validate against")] = "",
 ) -> None:
-    """Validate a genome JSON against a profile contract schema."""
+    """Validate a genome JSON through the shared custom-genome boundary.
+
+    Runs the exact validation compose applies to ``--genome-file`` /
+    ``genome_override``: GenomeSpec grammar, profile existence, the genome
+    cross-validation battery, and the profile contract (required DNA vars,
+    material fields, WCAG contrast pairs). Exit 2 on an invalid genome —
+    the same refusal code the compose surface uses.
+    """
     import json
 
-    from hyperweave.core.color import contrast_ratio
+    from hyperweave.config.genome_validator import load_and_validate_genome_file
+    from hyperweave.core.errors import HwError
 
-    if not genome_path.exists():
-        typer.echo(f"Error: {genome_path} not found", err=True)
-        raise typer.Exit(1)
+    try:
+        genome = load_and_validate_genome_file(genome_path, profile_override=profile)
+    except FileNotFoundError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    except json.JSONDecodeError as exc:
+        typer.echo(f"Error: {genome_path} is not valid JSON: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    except HwError as exc:
+        typer.echo(f"Validation FAILED for {genome_path.name}:", err=True)
+        typer.echo(exc.cli_text(), err=True)
+        raise typer.Exit(2) from exc
 
-    genome = json.loads(genome_path.read_text())
-    profile_id = profile or genome.get("profile", "flat")
-
-    # Load contract schema
-    contract_path = Path(__file__).parent / "data" / "profiles" / f"{profile_id}.contract.json"
-    if not contract_path.exists():
-        typer.echo(f"Error: no contract schema for profile '{profile_id}'", err=True)
-        raise typer.Exit(1)
-
-    contract = json.loads(contract_path.read_text())
-    errors: list[str] = []
-
-    # Check required DNA vars have corresponding genome keys
-    for var_name, var_spec in contract.get("required_dna_vars", {}).items():
-        source_key = var_spec.get("source", "")
-        if source_key and not genome.get(source_key):
-            errors.append(f"MISSING: {var_name} (genome key '{source_key}' not set)")
-
-    # Check material-layer (dimensional profile) requirements
-    for key, key_spec in contract.get("material_required", {}).items():
-        val = genome.get(key)
-        if not val:
-            errors.append(f"MISSING: material required field '{key}'")
-        elif key_spec.get("type") == "array" and isinstance(val, list):
-            min_items = key_spec.get("min_items", 1)
-            if len(val) < min_items:
-                errors.append(f"INVALID: '{key}' has {len(val)} items, needs >= {min_items}")
-
-    # WCAG contrast checks
-    for pair in contract.get("contrast_pairs", []):
-        fg = genome.get(pair["foreground"], "")
-        bg = genome.get(pair["background"], "")
-        if not fg or not bg or not fg.startswith("#") or not bg.startswith("#"):
-            continue
-        try:
-            ratio = contrast_ratio(fg, bg)
-            min_ratio = pair["min_ratio"]
-            if ratio < min_ratio:
-                errors.append(f"WCAG FAIL: {pair['label']} — {ratio:.1f}:1 < {min_ratio}:1 ({fg} on {bg})")
-            else:
-                typer.echo(f"  PASS: {pair['label']} — {ratio:.1f}:1 >= {min_ratio}:1")
-        except (ValueError, TypeError):
-            errors.append(f"INVALID COLOR: {pair['label']} — cannot parse {fg} or {bg}")
-
-    if errors:
-        typer.echo(f"\nValidation FAILED for {genome_path.name} against {profile_id}:")
-        for e in errors:
-            typer.echo(f"  {e}", err=True)
-        raise typer.Exit(1)
-    else:
-        typer.echo(f"\nValidation PASSED: {genome_path.name} is a valid {profile_id} genome.")
+    typer.echo(f"Validation PASSED: {genome_path.name} is a valid {genome.get('profile', 'flat')} genome.")
 
 
 @app.command()

@@ -135,9 +135,9 @@ def test_validator_rejects_genome_missing_paradigm_required_fields() -> None:
     # Construct a genome with chrome-family-style declarations but missing
     # envelope_stops/well_top — simulates what happens when a designer
     # forgets the chromatic declarations for a paradigm they opt into.
-    from tests.helpers import build_partial_genome_for_testing
+    from tests.helpers import build_minimal_genome_for_testing
 
-    partial = build_partial_genome_for_testing(
+    partial = build_minimal_genome_for_testing(
         id="test-partial",
         profile="dimensional",
         paradigms={"badge": "vellum"},

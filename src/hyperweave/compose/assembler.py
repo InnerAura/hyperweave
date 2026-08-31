@@ -264,6 +264,19 @@ for _mapping in (
             _ALL_CSS_MAPPING[_field].append(_prop)
 
 
+def _css_safe(value: object) -> str:
+    """Escape a genome value for interpolation into CSS declarations.
+
+    Defense in depth behind the GenomeSpec grammar boundary: neutralizes the
+    XML/attribute breakout characters so even a value that slipped a grammar
+    cannot close a ``<style>`` block or an inline ``style=`` attribute, nor
+    leave a bare ``&`` that the XML parser reads as an undefined entity. This
+    is escaping only — it cannot make arbitrary text safe as CSS; the paint
+    grammar upstream remains the boundary, and this never replaces it.
+    """
+    return str(value).replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def variant_override_declarations(genome: dict[str, Any], resolved_variant: str) -> list[str]:
     """Return the fanned-out ``--dna-*:value;`` declarations for a variant override.
 
@@ -287,7 +300,7 @@ def variant_override_declarations(genome: dict[str, Any], resolved_variant: str)
         props = _ALL_CSS_MAPPING.get(field)
         if not props or not value:
             continue
-        safe = str(value).replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+        safe = _css_safe(value)
         for prop in props:
             declarations.append(f"{prop}:{safe};")
     if not overrides.get("ink_icon") and any(f in overrides for f in ("ink", "surface_1", "surface_0")):
@@ -406,7 +419,7 @@ def css_declarations(genome: dict[str, Any], frame_type: str = "") -> list[str]:
     for field, prop in _frame_css_mapping(genome, frame_type):
         val = genome.get(field)
         if val:  # skip empty/None — lets CSS var() fallbacks activate
-            decls.append(f"{prop}: {val};")
+            decls.append(f"{prop}: {_css_safe(val)};")
     if not genome.get("ink_icon"):
         icon = derived_ink_icon(genome)
         if icon:
@@ -473,7 +486,7 @@ def genome_to_css(genome: dict[str, Any], frame_type: str = "") -> str:
         for field, prop in lm_map:
             val = light.get(field)
             if val is not None:
-                lines.append(f"    {prop}: {val};")
+                lines.append(f"    {prop}: {_css_safe(val)};")
         lines.append("  }")
         lines.append("}")
 

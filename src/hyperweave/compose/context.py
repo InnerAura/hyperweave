@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 from hyperweave.compose.assembler import font_delivery_labels, fonts_for_frame, frame_needs_fonts
 from hyperweave.compose.chromatic import chromatic_zones
 from hyperweave.compose.diagram.pinning import transform_note_facts
+from hyperweave.compose.motion import derive_performance_tier
 from hyperweave.compose.payload import build_simple_payload
 from hyperweave.compose.reasoning import load_reasoning, load_transform_note
 from hyperweave.config.loader import frame_public_name
@@ -765,10 +766,17 @@ def _base_context(
         # choreography register actually governing the artifact ("none" when
         # nothing animates) so timing="phi" never labels an 18.7s replay clock.
         "timing_doctrine": "phi",
-        # Every non-diagram frame animates transform/opacity/filter only (the
-        # house motion allowlist), so composite-only is the honest base tier;
-        # the diagram resolver overrides with the solved layout's derived tier.
-        "performance_tier": "composite-only",
+        # The tier DERIVES from what this render animates (compose/motion.py):
+        # the request-selected motion's registry properties plus the dispatch
+        # slug's template-baked animations (performance.yaml). The diagram
+        # resolver overrides with the solved layout's richer derived tier.
+        "performance_tier": derive_performance_tier(
+            str(resolved.motion),
+            str(
+                resolved.frame_context.get("tier_key")
+                or f"{spec.type.value}.{resolved.frame_context.get('paradigm') or 'default'}"
+            ),
+        ),
         # Font stack — substrate-aware. Light scholar artifacts get the
         # scholar heading font alongside the mono body; dark artifacts get
         # the display + mono pair.

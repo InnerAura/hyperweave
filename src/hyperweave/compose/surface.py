@@ -29,6 +29,7 @@ from hyperweave.core.envelope import extract_envelope, extract_payload
 from hyperweave.core.errors import HwError, HwErrorCode, format_error_line
 from hyperweave.core.matrix import MatrixSpec
 from hyperweave.core.models import ComposeSpec
+from hyperweave.core.schema import is_slug
 from hyperweave.formats import FormatId, Projection, parse_format, project
 
 # Frame content that maps to a dedicated ComposeSpec field rather than a kwarg.
@@ -119,6 +120,15 @@ def resolve_presentation(
         )
 
     allowed = list(g.get("variants") or [])
+    if variant and not is_slug(variant):
+        # A genome that declares no whitelist skipped the check below entirely,
+        # so an arbitrary string reached the emitted variant. Path B keeps
+        # validation at resolve time (not Pydantic), so the refusal lands here.
+        raise HwError(
+            HwErrorCode.VARIANT_UNKNOWN,
+            f"unknown variant {variant!r} for genome {genome!r}",
+            fix=f"known variants: {', '.join(allowed)}" if allowed else "this genome declares no variants",
+        )
     if allowed and variant and variant not in allowed:
         raise HwError(
             HwErrorCode.VARIANT_UNKNOWN,
@@ -265,9 +275,20 @@ def _to_compose_spec(env: SpecEnvelope, *, data_tokens: list[Any] | None = None)
     # retired axis.
     content.pop("chrome", None)
     override = content.get("genome_override")
+    genome = env.genome
+    if isinstance(override, dict):
+        # The injection boundary runs BEFORE anything reads the raw dict —
+        # resolve_presentation consults the override's paradigm/variant
+        # whitelists, so it must only ever see validated, normalized data.
+        # The override's id is canonical when the envelope genome disagrees.
+        from hyperweave.config.genome_validator import validate_genome_override
+
+        override = validate_genome_override(override)
+        content["genome_override"] = override
+        genome = str(override["id"])
     genome_id, variant = resolve_presentation(
         env.type,
-        env.genome,
+        genome,
         env.variant,
         genome_override=override if isinstance(override, dict) else None,
     )

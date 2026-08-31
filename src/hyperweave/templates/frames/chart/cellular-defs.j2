@@ -82,9 +82,7 @@ text{font-family:'JetBrains Mono',monospace;shape-rendering:geometricPrecision}
    outer halo (10px) + tight white inner glow (3px). The white core dominates;
    the tinted halo carries variant chromatic identity around it. #}
 .hw-chart-line{stroke:var(--dna-chart-line-core, var(--dna-ink-primary));stroke-width:3;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 10px {{ chart_info_accent }}) drop-shadow(0 0 3px var(--dna-chart-line-core, var(--dna-ink-primary)))}
-.hw-chart-line-draw{animation:hw-line-draw 2.618s cubic-bezier(.25,.85,.35,1) forwards;will-change:stroke-dashoffset}
-@keyframes hw-line-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 .hw-chart-milestone-line{stroke:{{ chart_info_accent }};stroke-width:0.5;opacity:0.18;stroke-dasharray:3 3}
 .hw-chart-milestone-label{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700;fill:{{ chart_info_accent }};opacity:0.4}
-@media(prefers-reduced-motion:reduce){.b1,.b2,.b3,.b4{animation:none!important;opacity:.5!important}.hw-chart-line-draw{animation:none!important;stroke-dashoffset:0!important}}
+@media(prefers-reduced-motion:reduce){.b1,.b2,.b3,.b4{animation:none!important;opacity:.5!important}}
 </style>

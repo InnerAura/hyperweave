@@ -265,3 +265,41 @@ def test_receipt_sub_percent_model_share_stays_well_formed() -> None:
     svg = compose(ComposeSpec(type="receipt", genome_id="primer", telemetry_data=_SUB_PERCENT_TELEMETRY)).svg
     assert "&lt;1%" in svg
     ET.fromstring(svg)
+
+
+# ── Hostile-genome sweep: a genome_override must never smuggle markup ──
+# The user-content cases above inject through labels; these inject through
+# the genome itself — the P0 vector the custom-genome boundary closes.
+
+
+def test_hostile_genome_override_fails_closed() -> None:
+    """A style-breakout <script> payload in a genome field never composes."""
+    from tests.helpers import build_minimal_genome_for_testing
+
+    hostile = build_minimal_genome_for_testing(id="hostile-invariant")
+    hostile["ink"] = "</style><script data-audit=1></script><style>"
+    with pytest.raises(ValueError):
+        ComposeSpec(type="badge", title="X", value="1", genome_override=hostile)
+
+
+def test_custom_genome_output_is_well_formed_and_script_free() -> None:
+    """A lawful custom genome composes to inert, well-formed XML: the escaped
+    attribute path (data-hw-genome / hw:genome) and the CSS block both hold."""
+    from tests.helpers import build_minimal_genome_for_testing
+
+    genome = build_minimal_genome_for_testing(id="lawful-invariant", paradigms={"badge": "default"})
+    svg = compose(ComposeSpec(type="badge", title="X", value="1", genome_override=genome)).svg
+    assert "<script" not in svg.lower()
+    assert 'data-hw-genome="lawful-invariant"' in svg
+    ET.fromstring(svg)
+
+
+def test_css_declarations_escape_breakout_characters() -> None:
+    """Defense in depth at the assembler sink: even a value that slipped a
+    grammar cannot close the <style> block (escaping, not CSS safety)."""
+    from hyperweave.compose.assembler import css_declarations
+
+    decls = css_declarations({"ink": '</style><x y="z">'})
+    joined = "\n".join(decls)
+    assert "<" not in joined and ">" not in joined and '"' not in joined
+    assert "&lt;/style&gt;" in joined

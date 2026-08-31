@@ -17,50 +17,34 @@ from hyperweave.compose.engine import compose
 from hyperweave.compose.resolver import _load_genome, _load_profile, _resolve_paradigm, resolve
 from hyperweave.config.loader import load_profiles
 from hyperweave.core.models import ComposeSpec
-from tests.helpers import build_partial_genome_for_testing
+from tests.helpers import build_minimal_genome_for_testing
 
 
 @pytest.fixture()
 def minimal_genome_override() -> dict[str, object]:
-    """A minimal but valid genome dict for override testing.
+    """A minimal fully-lawful genome dict for override testing.
 
-    Not validated by GenomeSpec here — the resolver trusts upstream.
-    The CLI path validates via GenomeSpec before passing as override.
+    Since the P0 injection fix, ``ComposeSpec.genome_override`` runs the full
+    custom-genome boundary (GenomeSpec grammar + battery + profile contract)
+    on every surface, so this fixture must be a complete valid genome.
     """
-    return {
-        "id": "inline-test",
-        "name": "Inline Test",
-        "category": "dark",
-        "profile": "flat",
-        "surface_0": "#111111",
-        "surface_1": "#1A1A1A",
-        "surface_2": "#0A0A0A",
-        "ink": "#FFFFFF",
-        "ink_secondary": "#CCCCCC",
-        "ink_on_accent": "#000000",
-        "accent": "#FF00FF",
-        "accent_complement": "#CC00CC",
-        "accent_signal": "#00FF00",
-        "accent_warning": "#FFAA00",
-        "accent_error": "#FF0000",
-        "stroke": "#333333",
-        "shadow_color": "#000000",
-        "shadow_opacity": "0.3",
-        "glow": "0px",
-        "corner": "0",
-        "rhythm_base": "2s",
-        "density": "0.7",
-        "compatible_motions": ["static"],
-        "paradigms": {
+    return build_minimal_genome_for_testing(
+        id="inline-test",
+        name="Inline Test",
+        accent="#FF00FF",
+        accent_complement="#CC00CC",
+        rhythm_base="2s",
+        density="0.7",
+        paradigms={
             "badge": "default",
             "stats": "brutalist",
             "chart": "brutalist",
         },
-        "structural": {
+        structural={
             "stroke_linejoin": "miter",
             "data_point_shape": "square",
         },
-    }
+    )
 
 
 # ============================================================================
@@ -215,31 +199,26 @@ def test_resolve_paradigm_differs_between_genomes() -> None:
 
 
 def test_profile_less_genome_resolves_to_existing_flat_profile() -> None:
-    """A genome declaring NO ``profile`` field must resolve to an EXISTING profile
-    (``flat``), never a dangling lookup that silently degrades to ``_default_profile()``.
+    """The ``flat`` profile exists and a profile-less override fails closed.
 
-    This is the latent-default guard for the brutalist→flat profile rename: the
-    renamed string-default fallbacks (resolver/cli/genome_validator/mcp) are never
-    exercised by the proofset (every shipped genome declares ``profile``), so a
-    missed default would only surface when a profile-less genome hits it at runtime.
-    No other test walks this path.
+    First half is the latent-default guard for the brutalist→flat profile
+    rename. Second half pins the boundary behavior: GenomeSpec requires
+    ``profile``, so an override without one is refused at ComposeSpec
+    construction rather than silently degrading to a default profile.
     """
     profiles = load_profiles()
     assert "flat" in profiles, "flat profile must exist after the brutalist→flat rename"
     # _load_profile lands on the REAL flat profile (id == 'flat'), not the fallback dict.
     assert _load_profile("flat").get("id") == "flat"
 
-    # End-to-end: an override with no `profile` key resolves profile_id='flat' and renders.
-    override = build_partial_genome_for_testing(id="profileless-test")
+    override = build_minimal_genome_for_testing(id="profileless-test")
     override.pop("profile", None)
     assert "profile" not in override
-    spec = ComposeSpec(
-        type="badge",
-        genome_id="profileless-test",
-        genome_override=override,
-        title="BUILD",
-        value="passing",
-    )
-    assert spec.profile_id == "flat"
-    result = compose(spec)
-    assert "<svg" in result.svg and "</svg>" in result.svg
+    with pytest.raises(ValueError, match="profile"):
+        ComposeSpec(
+            type="badge",
+            genome_id="profileless-test",
+            genome_override=override,
+            title="BUILD",
+            value="passing",
+        )

@@ -375,7 +375,8 @@
       "badge_pass_sep": "#9B2226",
       "badge_pass_core": "#9B2226",
       "shadow_color": "#281015",
-      "frame_fill": "#F4E5D2"
+      "frame_fill": "#F4E5D2",
+      "accent_warning": "#B45309"
     },
     "archive": {
       "substrate_kind": "light",
@@ -415,7 +416,8 @@
       "badge_pass_sep": "#7A5F18",
       "badge_pass_core": "#7A5F18",
       "shadow_color": "#2A2013",
-      "frame_fill": "#F3E8CE"
+      "frame_fill": "#F3E8CE",
+      "accent_warning": "#B45309"
     },
     "depth": {
       "substrate_kind": "light",
@@ -455,7 +457,8 @@
       "badge_pass_sep": "#2A5FA8",
       "badge_pass_core": "#2A5FA8",
       "shadow_color": "#0E1626",
-      "frame_fill": "#E7EBF2"
+      "frame_fill": "#E7EBF2",
+      "accent_warning": "#B45309"
     },
     "signal": {
       "substrate_kind": "light",
@@ -495,7 +498,8 @@
       "badge_pass_sep": "#1F6B3E",
       "badge_pass_core": "#1F6B3E",
       "shadow_color": "#102018",
-      "frame_fill": "#E8F0E7"
+      "frame_fill": "#E8F0E7",
+      "accent_warning": "#B45309"
     },
     "afterimage": {
       "substrate_kind": "light",
@@ -535,7 +539,8 @@
       "badge_pass_sep": "#6A3AA0",
       "badge_pass_core": "#6A3AA0",
       "shadow_color": "#1C1428",
-      "frame_fill": "#EEE9F3"
+      "frame_fill": "#EEE9F3",
+      "accent_warning": "#B45309"
     },
     "primer": {
       "substrate_kind": "light",
@@ -575,7 +580,8 @@
       "badge_pass_sep": "#515C66",
       "badge_pass_core": "#515C66",
       "shadow_color": "#161819",
-      "frame_fill": "#EBECEA"
+      "frame_fill": "#EBECEA",
+      "accent_warning": "#B45309"
     },
     "ferro": {
       "substrate_kind": "light",
@@ -615,7 +621,8 @@
       "badge_pass_sep": "#A8501F",
       "badge_pass_core": "#A8501F",
       "shadow_color": "#2A1810",
-      "frame_fill": "#F2E9DE"
+      "frame_fill": "#F2E9DE",
+      "accent_warning": "#B45309"
     },
     "ozalid": {
       "substrate_kind": "light",
@@ -655,7 +662,8 @@
       "badge_pass_sep": "#136663",
       "badge_pass_core": "#136663",
       "shadow_color": "#0C1F1E",
-      "frame_fill": "#E4EEED"
+      "frame_fill": "#E4EEED",
+      "accent_warning": "#B45309"
     },
     "sulfur": {
       "substrate_kind": "light",
@@ -695,7 +703,8 @@
       "badge_pass_sep": "#5E680F",
       "badge_pass_core": "#5E680F",
       "shadow_color": "#20240E",
-      "frame_fill": "#F0F1DE"
+      "frame_fill": "#F0F1DE",
+      "accent_warning": "#B45309"
     },
     "tyrian": {
       "substrate_kind": "light",
@@ -735,7 +744,8 @@
       "badge_pass_sep": "#9E2B6E",
       "badge_pass_core": "#9E2B6E",
       "shadow_color": "#251020",
-      "frame_fill": "#F2E6EE"
+      "frame_fill": "#F2E6EE",
+      "accent_warning": "#B45309"
     },
     "indigo": {
       "substrate_kind": "light",
@@ -775,7 +785,8 @@
       "badge_pass_sep": "#3A3A8C",
       "badge_pass_core": "#3A3A8C",
       "shadow_color": "#121233",
-      "frame_fill": "#E9E9F2"
+      "frame_fill": "#E9E9F2",
+      "accent_warning": "#B45309"
     },
     "patina": {
       "substrate_kind": "light",
@@ -815,7 +826,8 @@
       "badge_pass_sep": "#357059",
       "badge_pass_core": "#357059",
       "shadow_color": "#0E2018",
-      "frame_fill": "#E6EFE9"
+      "frame_fill": "#E6EFE9",
+      "accent_warning": "#B45309"
     },
     "graphite": {
       "substrate_kind": "light",
@@ -855,7 +867,8 @@
       "badge_pass_sep": "#414D59",
       "badge_pass_core": "#414D59",
       "shadow_color": "#14181C",
-      "frame_fill": "#E9EBED"
+      "frame_fill": "#E9EBED",
+      "accent_warning": "#B45309"
     },
     "cyan": {
       "substrate_kind": "light",
@@ -895,7 +908,8 @@
       "badge_pass_sep": "#0C6A88",
       "badge_pass_core": "#0C6A88",
       "shadow_color": "#08202A",
-      "frame_fill": "#E2EEF2"
+      "frame_fill": "#E2EEF2",
+      "accent_warning": "#B45309"
     }
   },
   "dividers": [
@@ -972,9 +986,51 @@
     ]
   },
   "roles": {
-    "accent": ["accent", "accent_complement", "accent_error", "accent_signal", "accent_warning"],
-    "surface": ["bg", "bg_alt", "border_tint", "frame_fill", "seam_gap", "shadow_color", "stroke", "surface_0", "surface_1", "surface_2"],
-    "ink": ["badge_value_text", "brand_text", "glyph_inner", "ink", "ink_bright", "ink_on_accent", "ink_secondary", "ink_sub", "label_text", "metric_text"],
-    "status": ["badge_pass_core", "badge_pass_sep", "badge_warn_color", "state_building_bright", "state_building_core", "state_critical_bright", "state_critical_core", "state_offline_bright", "state_offline_core", "state_passing_bright", "state_passing_core", "state_warning_bright", "state_warning_core"]
+    "accent": [
+      "accent",
+      "accent_complement",
+      "accent_error",
+      "accent_signal",
+      "accent_warning"
+    ],
+    "surface": [
+      "bg",
+      "bg_alt",
+      "border_tint",
+      "frame_fill",
+      "seam_gap",
+      "shadow_color",
+      "stroke",
+      "surface_0",
+      "surface_1",
+      "surface_2"
+    ],
+    "ink": [
+      "badge_value_text",
+      "brand_text",
+      "glyph_inner",
+      "ink",
+      "ink_bright",
+      "ink_on_accent",
+      "ink_secondary",
+      "ink_sub",
+      "label_text",
+      "metric_text"
+    ],
+    "status": [
+      "badge_pass_core",
+      "badge_pass_sep",
+      "badge_warn_color",
+      "state_building_bright",
+      "state_building_core",
+      "state_critical_bright",
+      "state_critical_core",
+      "state_offline_bright",
+      "state_offline_core",
+      "state_passing_bright",
+      "state_passing_core",
+      "state_warning_bright",
+      "state_warning_core"
+    ]
   }
 }

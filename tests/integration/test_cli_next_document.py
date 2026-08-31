@@ -269,3 +269,31 @@ def test_the_query_example_resolves_a_real_field(tmp_path: Path) -> None:
     answer = json.loads(result.stdout)
     assert answer["field"] == "data.n"
     assert answer["answer"] == "3"
+
+
+# ── the composed title is in the document ────────────────────────────────
+
+
+def test_document_carries_the_composed_title(tmp_path: Path) -> None:
+    """The reported bug: the document printed only the static role sentences
+    (`text`), so a --spec caller never saw their own title back. `title` is
+    the COMPOSED value read from the artifact's envelope — correct for the
+    --spec path where the title lives in the frame IR, not the CLI args."""
+    out = tmp_path / "a.svg"
+    doc = json.loads(_compose(["compose", "diagram", "--spec", json.dumps(_SPEC), "-g", "primer", "-o", str(out)]))
+    assert doc["title"] == "A pipeline"
+    # The role map stays — value and role are both told.
+    assert "<title>" in doc["text"]["title"]
+
+
+def test_respond_document_carries_the_composed_title(tmp_path: Path) -> None:
+    doc = json.loads(
+        _compose(["compose", "diagram", "--spec", json.dumps(_SPEC), "-g", "primer", "--respond", "envelope"])
+    )
+    assert doc["title"] == "A pipeline"
+
+
+def test_positional_title_reaches_the_document(tmp_path: Path) -> None:
+    out = tmp_path / "b.svg"
+    doc = json.loads(_compose(["compose", "badge", "STARS", "42", "-g", "primer", "-o", str(out)]))
+    assert doc["title"] == "STARS"

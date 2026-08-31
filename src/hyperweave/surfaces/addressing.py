@@ -351,7 +351,6 @@ _NOT_INTENT: frozenset[str] = frozenset(
         "frame_id",
         "profile_id",
         "slots",
-        "custom_glyph_svg",
         "intent",
         "approach",
         "tradeoffs",

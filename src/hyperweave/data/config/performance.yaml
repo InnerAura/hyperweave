@@ -1,0 +1,26 @@
+# The compositor law: properties the compositor animates without re-Paint.
+# Any rendered animation touching a property outside this list makes the
+# artifact paint-ok. Diagram keeps its richer per-kind motion_tiers table
+# (diagram-frame.yaml); both tables express the same law, and
+# tests/render/test_performance_truth.py holds every claim to the rendered
+# document — change a template's animation and the matrix test fails until
+# this table (and therefore the claim) follows.
+compositor_properties: [transform, opacity, filter]
+
+# Template-baked animated properties, keyed by the dispatch slug the template
+# system already interpolates (Invariant 12): "<frame>.<paradigm>" by default;
+# the divider resolver publishes its template identity via
+# frame_context["tier_key"] ("divider.<variant>" / "divider.<genome>-<slug>").
+# A missing key means the branch bakes no animation. Request-selected border
+# motions contribute separately through data/motions/*.yaml animated_properties.
+baked_animations:
+  chart.primer: [stroke-dashoffset]
+  chart.chrome: [gradientTransform, x1, x2]
+  badge.chrome: [gradientTransform]
+  strip.chrome: [gradientTransform]
+  stats.chrome: [gradientTransform, x1, x2]
+  icon.chrome: [gradientTransform, x1, x2]
+  marquee.chrome: [gradientTransform, x1, x2]
+  divider.chrome-band: [x1, x2]
+  divider.current: [x1, stroke-dashoffset]
+  divider.takeoff: [stop-color]

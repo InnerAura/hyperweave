@@ -14,22 +14,25 @@
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
 {# performance carries NO default — a missing tier must fail loudly, never
-   silently claim the stronger (composite-only) tier. #}
-    <hw:spec size="{{ width }}x{{ height }}" performance="{{ performance_tier }}"
-             theme="{{ theme_category }}" a11y="WCAG-AA" platform="{{ platform }}"/>
+   silently claim the stronger (composite-only) tier. size is the CSS-px
+   render size (the root width/height attributes), declared as such because
+   frames with a scaled viewBox (diagram, icon) render at a different size
+   than their user-unit space — hw:regions below declares its own units. #}
+    <hw:spec size="{{ width }}x{{ height }}" size-units="px" performance="{{ performance_tier }}"
+             theme="{{ theme_category | xml_escape }}" a11y="WCAG-AA" platform="{{ platform | xml_escape }}"/>
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
-    <hw:frame>{{ frame_public | default(frame_type) }}</hw:frame>
-    <hw:genome>{{ genome_id }}@{{ version }}</hw:genome>
-{% if variant %}    <hw:variant>{{ variant }}</hw:variant>
-{% endif %}{% if profile_id %}    <hw:profile>{{ profile_id }}</hw:profile>
-{% endif %}{% if stratum %}    <hw:stratum>{{ stratum }}</hw:stratum>
+    <hw:frame>{{ frame_public | default(frame_type) | xml_escape }}</hw:frame>
+    <hw:genome>{{ genome_id | xml_escape }}@{{ version }}</hw:genome>
+{% if variant %}    <hw:variant>{{ variant | xml_escape }}</hw:variant>
+{% endif %}{% if profile_id %}    <hw:profile>{{ profile_id | xml_escape }}</hw:profile>
+{% endif %}{% if stratum %}    <hw:stratum>{{ stratum | xml_escape }}</hw:stratum>
 {% endif %}    <hw:slots>
 {% for slot in slots | default([]) %}
       <hw:slot zone="{{ slot.zone | xml_escape }}" {% if slot.value %}value="{{ slot.value | xml_escape }}"{% endif %}{% if slot.data %} data="{{ slot.data | xml_escape }}"{% endif %}/>
 {% endfor %}
     </hw:slots>
-    <hw:environment platform="{{ platform }}" motion="{{ data_hw_motion }}" status="{{ status }}"/>
+    <hw:environment platform="{{ platform | xml_escape }}" motion="{{ data_hw_motion | xml_escape }}" status="{{ status | xml_escape }}"/>
   </hw:composition>
 {% if metadata_tier >= 2 %}
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -47,20 +50,24 @@
 {# contrast-ratio is the measured MINIMUM over the named role pairs and
    contrast-worst-pair names which one — a claim with a referent, never a
    single flattering scalar over a multi-role palette. #}
-    <hw:chromatic system="{{ genome_id }}" space="oklch"
-                  palette="{{ palette }}" contrast-ratio="{{ contrast_ratio }}" contrast-worst-pair="{{ contrast_worst_pair }}"/>
-    <hw:motion vocabulary="{{ motion_vocabulary | default(motion_id) }}" physics="{{ motion_physics | default('none') }}"
-               timing="{{ timing_doctrine }}" duration-base="{{ rhythm_base }}"
+    <hw:chromatic system="{{ genome_id | xml_escape }}" space="oklch"
+                  palette="{{ palette | xml_escape }}" contrast-ratio="{{ contrast_ratio }}" contrast-worst-pair="{{ contrast_worst_pair }}"/>
+{# rhythm-base names the genome's rhythm token (--dna-rhythm-base) — the phi
+   anchor a template MAY consume, never a claim about this artifact's actual
+   animation clocks (most durations are template literals or diagram-derived).
+   The old ``duration-base`` label implied the latter and was false. #}
+    <hw:motion vocabulary="{{ motion_vocabulary | default(motion_id) | xml_escape }}" physics="{{ motion_physics | default('none') | xml_escape }}"
+               timing="{{ timing_doctrine }}" rhythm-base="{{ rhythm_base }}"
 {# cim-compliant DERIVES from the tier in one seam — an artifact whose motion
    animates a Paint-stage property (dash's stroke-dashoffset) is not
    compositor-inspired-motion compliant, whatever it used to claim. #}
-               stagger-regime="{{ motion_stagger_regime | default('contemplative') }}" cim-compliant="{{ 'true' if performance_tier == 'composite-only' else 'false' }}"/>
-    <hw:geometry form-language="{{ form_language }}" corner-radius="{{ corner | default('5px') }}"
+               stagger-regime="{{ motion_stagger_regime | default('contemplative') | xml_escape }}" cim-compliant="{{ 'true' if performance_tier == 'composite-only' else 'false' }}"/>
+    <hw:geometry form-language="{{ form_language | xml_escape }}" corner-radius="{{ corner | default('5px') | xml_escape }}"
                  grid="auto" proportional-system="phi"
                  mathematical-basis="golden-ratio" symmetry="bilateral"/>
     <hw:typography stack="{{ font_stack }}" hierarchy="11/18/8"
                    weight-range="500-900" metrics-method="lut"/>
-    <hw:material surface="genome-native" depth="{{ material_depth }}" texture="none"/>
+    <hw:material surface="genome-native" depth="{{ material_depth | xml_escape }}" texture="none"/>
   </hw:aesthetic>
 {% include "components/chromatic-surface.svg.j2" %}
   <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
@@ -81,5 +88,7 @@
    envelope id is recomputable as sha256 of the payload bytes below. #}
 {% if payload_json %}  <hw:payload xmlns:hw="https://hyperweave.app/hw/v1.0" schema="{{ payload_schema }}" media-type="application/json"><![CDATA[{{ payload_json }}]]></hw:payload>
 {% endif %}{% if envelope_json %}  <hw:envelope xmlns:hw="https://hyperweave.app/hw/v1.0" format="{{ envelope_format }}" media-type="application/json"><![CDATA[{{ envelope_json }}]]></hw:envelope>
-{% endif %}{% if regions_json %}  <hw:regions xmlns:hw="https://hyperweave.app/hw/v1.0" media-type="application/json"><![CDATA[{{ regions_json }}]]></hw:regions>
+{% endif %}{% if regions_json %}{# regions bboxes live in USER units (the solver's viewBox space), which on a
+   scaled frame differs from hw:spec's CSS-px size by the display factor —
+   both sides declare their space so a consumer can convert. #}  <hw:regions xmlns:hw="https://hyperweave.app/hw/v1.0" media-type="application/json" units="user" viewbox="0 0 {{ (viewbox_w | default(0) or width) | xml_escape }} {{ (viewbox_h | default(0) or height) | xml_escape }}"><![CDATA[{{ regions_json }}]]></hw:regions>
 {% endif %}</metadata>

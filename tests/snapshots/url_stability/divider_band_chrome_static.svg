@@ -31,7 +31,7 @@
       <hw:created>TIMESTAMP</hw:created>
       <hw:human-directed>true</hw:human-directed>
     </hw:provenance>
-    <hw:spec size="800x22" performance="composite-only"
+    <hw:spec size="800x22" size-units="px" performance="paint-ok"
              theme="dark" a11y="WCAG-AA" platform="github-readme"/>
   </hw:artifact>
   <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
@@ -55,8 +55,8 @@
     <hw:chromatic system="chrome" space="oklch"
                   palette="chrome" contrast-ratio="6.8:1" contrast-worst-pair="ink-secondary/surface"/>
     <hw:motion vocabulary="static" physics="none"
-               timing="phi" duration-base="6s"
-               stagger-regime="contemplative" cim-compliant="true"/>
+               timing="phi" rhythm-base="6s"
+               stagger-regime="contemplative" cim-compliant="false"/>
     <hw:geometry form-language="chrome" corner-radius="5px"
                  grid="auto" proportional-system="phi"
                  mathematical-basis="golden-ratio" symmetry="bilateral"/>
@@ -72,7 +72,7 @@
     <hw:intent></hw:intent>
     <hw:approach></hw:approach>
     <hw:tradeoffs></hw:tradeoffs>
-    <hw:constraints-applied>self-contained, cim-compliant, wcag-aa</hw:constraints-applied>
+    <hw:constraints-applied>self-contained, wcag-aa</hw:constraints-applied>
     <hw:spatial-notes>800x22 (36.36), left-to-right</hw:spatial-notes>
   </hw:reasoning>
   <hw:payload xmlns:hw="https://hyperweave.app/hw/v1.0" schema="divider/1" media-type="application/json"><![CDATA[{"variant":"band"}]]></hw:payload>

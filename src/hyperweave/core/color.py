@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 
 def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     """Convert a hex color string to an (R, G, B) tuple."""
@@ -149,3 +151,53 @@ def adjust_oklch(hex_color: str, *, dl: float = 0.0, dc: float = 1.0, dh: float 
         (hue + dh) % 360.0,
     )
     return rgb_to_hex(r, g, b)
+
+
+_CSS_RGB_RE = re.compile(r"^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*([0-9.]+)\s*)?\)$")
+
+
+def parse_css_rgb(value: str) -> tuple[int, int, int, float] | None:
+    """``rgb()``/``rgba()`` to ``(r, g, b, alpha)``, or None when unparseable.
+
+    Channels outside 0-255 and alpha outside 0-1 return None — an out-of-gamut
+    declaration is not a color anything can render.
+    """
+    match = _CSS_RGB_RE.match(value.strip())
+    if not match:
+        return None
+    r, g, b = (int(match.group(i)) for i in (1, 2, 3))
+    if any(channel > 255 for channel in (r, g, b)):
+        return None
+    alpha = 1.0 if match.group(4) is None else float(match.group(4))
+    if not 0.0 <= alpha <= 1.0:
+        return None
+    return r, g, b, alpha
+
+
+def flatten_to_hex(value: str, backdrop: str) -> str | None:
+    """Resolve a declared color to the opaque hex a reader actually sees.
+
+    Hex passes through; ``rgb()``/``rgba()`` composites over ``backdrop``
+    (source-over, the compositing every renderer performs). Returns None when
+    the value is not a color at all — callers must fail closed rather than
+    treat an unresolvable color as absent, which is how a translucent surface
+    used to skip its WCAG pair entirely.
+    """
+    text = value.strip()
+    if len(text.lstrip("#")) == 6 and text.startswith("#"):
+        try:
+            hex_to_rgb(text)
+        except ValueError:
+            return None
+        return text.upper()
+    parsed = parse_css_rgb(text)
+    if parsed is None:
+        return None
+    r, g, b, alpha = parsed
+    if alpha >= 1.0:
+        return rgb_to_hex(r, g, b)
+    try:
+        br, bg, bb = hex_to_rgb(backdrop)
+    except ValueError:
+        return None
+    return rgb_to_hex(*(round(c * alpha + bc * (1.0 - alpha)) for c, bc in ((r, br), (g, bg), (b, bb))))

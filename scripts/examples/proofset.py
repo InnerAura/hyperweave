@@ -536,9 +536,20 @@ async def _fetch_snapshot_or_cache(
     label: str,
     fetcher: Any,
 ) -> dict[str, Any]:
-    """Fetch a provider snapshot live, falling back to the proofset fixture cache."""
+    """Fetch a provider snapshot live, falling back to the proofset fixture cache.
+
+    Frozen mode (``HW_PROOFSET_FROZEN=1``) skips the network entirely: cache
+    hit or raise, and the fixture dict is never mutated."""
     import time
 
+    from scripts.examples.harness import frozen_fixtures
+
+    if frozen_fixtures():
+        cached = fixtures.get(cache_key)
+        if isinstance(cached, dict) and isinstance(cached.get("value"), dict):
+            print(f"  [FROZEN] {label}: using cached live fixture")
+            return dict(cached["value"])
+        raise RuntimeError(f"HW_PROOFSET_FROZEN=1 and no fixture cache for {cache_key}")
     try:
         result = await fetcher()
         fixtures[cache_key] = {"value": result, "fetched_at": time.time()}
