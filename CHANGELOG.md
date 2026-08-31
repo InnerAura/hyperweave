@@ -5,6 +5,38 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Inline genomes validate as hard as built-ins, performance claims derive from what actually animates, and deploys gate on a green, smoke-tested build.
+
+### Added
+- **Custom genomes on HTTP:** `genome_override` reaches `POST /v1/compose` alongside the CLI's `--genome-file` and MCP's parameter, all validated at one shared boundary.
+- **Machine-readable refusals:** `validate --json` emits the `{valid, error}` report on pre-parse failures (bad JSON, unknown preset, missing file) instead of prose.
+- **Composed title:** the compose stdout document carries `title` — the artifact's actual name — beside the existing `text` role map.
+
+### Changed
+- **Derived performance tier:** every frame's `performance`/`cim-compliant` metadata derives from the properties its rendered motion animates; chrome-paradigm badges, icons, stats, charts, strips, and marquees, animated dividers, and border motions now read `paint-ok`.
+- **Still projections say so:** `svg-static`/`png`/`webp` rewrite the whole motion claim set (`data-hw-motion`, tier, vocabulary, physics, timing, stagger) to describe the stilled file.
+- **Declared metadata units:** `hw:spec` carries `size-units="px"`; `hw:regions` declares `units="user"` plus its viewBox; the `duration-base` attribute is renamed `rhythm-base`.
+- **validate-genome:** runs the same shared boundary as compose and exits 2 on an invalid genome.
+- **CI toolchain:** ty replaces mypy at an exact pin, quality and tests run as split jobs, deploys gate on a green workflow with a smoke-tested package, and release notes draft from merged pull requests.
+
+### Fixed
+- **Genome fail-closed validation:** paradigm slugs must satisfy their frame's whole include contract, variant slugs and map keys take the shared grammar, durations must parse finite and positive, motion ids must exist in the registry, and rgb/rgba channels and alpha must be in range.
+- **Effective variants are validated:** a variant override is re-checked as the genome it renders as — typed models for every nested structure, the profile's WCAG pairs, and a refusal for control-plane keys — where overrides were merged after validation and never faced the gate.
+- **Typed chromatic fields:** every colour field on a genome takes a paint grammar from a canonical registry — opaque by default, alpha only on atmospheric surfaces and the documented diagram edge washes, `transparent` only on layers documented to render absent — on base genomes and variant overrides alike, where 73 were unconstrained strings.
+- **Attribute-safe identity fields:** every value that names an id, dispatch key or policy axis takes one slug grammar, and every root SVG attribute is escaped, closing an attribute-injection path through `state` and `size`.
+- **Light-substrate warning amber:** brutalist's 14 light variants declare `#B45309`, clearing the 3:1 floor at 4.06-4.39:1 where the inherited `#F59E0B` measured 1.7-1.9:1.
+- **Contrast is never skipped:** every contract pair is graded — translucent colors composite over a deterministic backdrop and unresolvable ones are refused, where a non-hex color used to bypass the WCAG gate entirely.
+- **Genome markup injection:** a hostile `genome_override` could inject `<script>` and CSS through MCP, HTTP, and direct dispatch; inline genomes now pass full grammar, contract, and battery validation, and genome values are escaped at the CSS and attribute sinks.
+
+### Removed
+- **`custom_glyph_svg`:** the field silently dropped user SVG while stamping `data-hw-glyph="custom"`; specs carrying it are now refused as an unknown field.
+
+### Notes
+- Partial `--genome-file` files that passed the old contract-only check are refused until fully lawful; `validate-genome` exits 2 (was 1) on invalid input.
+- The tier flips, unit declarations, and `rhythm-base` rename change metadata bytes on every artifact; no change here moves a rendered pixel. The refreshed `assets/examples/` corpus is a larger diff because it was last generated at 0.4.4 and now carries 0.4.6's shipped geometry and byte repairs as well.
+
 ## [0.4.6] - 2026-08-30
 
 The reference diagram gzips 48% lighter, glyph-mark opacity layers are gone, muted wires and inks clear their contrast floors, and adaptive files can flatten to a static light or dark theme.

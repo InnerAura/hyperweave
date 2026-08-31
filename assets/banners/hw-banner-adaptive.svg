@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:hw="https://hyperweave.app/hw/v1.0"
+     id="hw-root" viewBox="0 0 853.4 169.0" width="820" height="162.4"
+     preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="hwTitle hwDesc"
+     lang="en" data-hw-component="lockup-line" data-hw-genome="ADAPTIVE"
+     data-hw-species="lockup" data-hw-chromatic="primer-porcelain/noctilucent-beacon"
+     data-hw-variant="single-line-phi" data-hw-status="active" data-hw-regime="normal"
+     data-protocol="hw-v1">
+  <title id="hwTitle">HyperWeave — The artifact layer for agent-human representations.
+  </title>
+  <desc id="hwDesc">
+    HyperWeave two-line block lockup: the octahedral transmitter glyph beside a stacked
+    type block
+    of the HYPERWEAVE wordmark in Orbitron SemiBold caps over the product tagline. The
+    mark is
+    scaled to the whole block rather than to the word. Primer Porcelain base for light
+    surfaces,
+    inverting to the Noctilucent Chrome treatment — dark chamber under an ice-to-indigo
+    bevel — where
+    prefers-color-scheme resolves. Transparent field, cropped to the ink.
+  </desc>
+  <metadata>
+    <hw:artifact xmlns:hw="https://hyperweave.app/hw/v1.0"
+                 id="0198c30a-4b70-7d55-8e19-hwlockupline02" type="lockup"
+                 series="hyperweave-identity" version="2.0.0">
+      <hw:provenance>
+        <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]</hw:generator>
+        <hw:created>2026-08-29T00:00:00Z</hw:created>
+        <hw:human-directed>true</hw:human-directed>
+        <hw:lineage parent="0198c2e0-3f10-7b44-9d07-hwlockupblock1"
+                    relation="reduction" />
+        <hw:selection-signal rank="1" of="5" cohort="composition-strategies-a-e"
+                             reason="Eli: mark too small against the wordmark at phi, and the Beacon dark treatment should not go white. Restored the block lockup mark scale on one line, and replaced the dark colorway with DNA mined from the noctilucent banner and its raster crops." />
+      </hw:provenance>
+      <hw:spec size="853.4x169.0" performance="composite-only" theme="adaptive"
+               a11y="WCAG-AA" platform="markdown-inline" />
+    </hw:artifact>
+    <hw:composition xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:frame>lockup-line</hw:frame>
+      <hw:genome>adaptive@1.0.0</hw:genome>
+      <hw:variant>single-line-phi</hw:variant>
+      <hw:profile>transparent</hw:profile>
+      <hw:stratum>002-TRIBE</hw:stratum>
+      <hw:slots>
+        <hw:slot id="glyph-cell" source="identity/solo-glyph" />
+        <hw:slot id="type-cell" source="identity/orbitron-caps-compound" />
+      </hw:slots>
+      <hw:environment platform="markdown-inline" motion="ambient" status="active" />
+    </hw:composition>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <rdf:Description>
+        <dc:title>HyperWeave block lockup — adaptive</dc:title>
+        <dc:creator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]</dc:creator>
+        <dc:date>2026-08-29T00:00:00Z</dc:date>
+        <dc:rights>Proprietary InnerAura Labs — HyperWeave Protocol</dc:rights>
+      </rdf:Description>
+    </rdf:RDF>
+    <hw:aesthetic xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:chromatic system="primer-porcelain" space="srgb" measured-floor="5.5:1"
+                    phenomenology="Cobalt on paper; inverts to a chrome bevel over a dark chamber" />
+      <hw:motion vocabulary="pulse" physics="damped" timing="phi" duration-base="3.236s"
+                 cim-compliant="true" />
+      <hw:geometry form-language="geometric" proportional-system="phi-to-block"
+                   mathematical-basis="none" symmetry="bilateral" />
+      <hw:typography stack="Orbitron 600 (compound path)" hierarchy="52"
+                     metrics-method="lut" delivery="aot-baked" />
+      <hw:material surface="glass" depth="shallow" />
+    </hw:aesthetic>
+    <hw:chromatic-surface xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:zone id="chassis" capability="chromatic-override"
+               tokens="--dna-ramp-* --dna-wm-* --dna-node-*" />
+      <hw:zone id="material" capability="fixed" sinks="stop-color"
+               reason="Alpha is carried in eight-digit hex on stop-color; a var() in stop-opacity falls back to 1, not to the literal" />
+    </hw:chromatic-surface>
+    <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:intent>
+        The approved block composition with the subtitle removed and the mark left at
+        the size it
+        was drawn, plus a dark colorway mined from the noctilucent banner rather than
+        invented.
+      </hw:intent>
+      <hw:approach>
+        Two corrections. Size: v1.0.0 re-derived the mark from phi once the block
+        collapsed to one
+        line, which shrank it to 1.618 x cap and made the glyph a bullet beside the
+        type. This build
+        holds the mark at the block lockup's exact 149 units and cap 52, so the
+        composition Eli
+        approved is preserved verbatim and the ratio reads 2.87:1. The two files now
+        overlay and the
+        subtitle is the only difference between them. Chroma: the dark colorway was
+        re-mined rather
+        than re-invented. SIGMA on banner-01a02c9f4b007a16 recovered the ramp E8F2FF -
+        6090E8 -
+        1B245A on the -80,-80 to 80,80 diagonal, a flat 080C24 body at 75% and a flat
+        1B245A chamber
+        at 45%; SIGMA-R on the two raster crops corroborated it at measured confidence —
+        bevel lit
+        side 7F9DDF falling to 455C9E and 141940 at the base, node beads F2F6FE, chamber
+        interior
+        151B42. Those readings are carried as tokens: the diamond stays dark and the
+        ring does the
+        work, which is what makes the mark read as chrome rather than as a lamp.
+        Wordmark is one
+        compound path. Colour is entirely --dna-* roles with literal var() fallbacks;
+        porcelain is
+        the base, Chrome the override.
+      </hw:approach>
+      <hw:tradeoffs>
+        Retired the Beacon treatment entirely rather than dimming it: filling the
+        chamber with light
+        inverted the material logic — the mark stopped being a machined object and
+        became a lamp, and
+        no amount of tuning the fill opacity would have recovered the bevel, because the
+        bevel is a
+        luminance ramp across the ring and a bright interior competes with it. Cost of
+        the mined
+        alternative is real: the ramp terminal 1B245A measures 1.33:1 against a plain
+        dark host, so
+        the lower-right arc of the ring genuinely falls into the ground. That is chrome
+        behaviour and
+        it is kept deliberately, with the 45% cobalt bloom carrying separation instead —
+        but on a
+        pure black surface the silhouette is a crescent, not a diamond, and a flat-ink
+        variant should
+        be cut for any placement where the full outline must survive. Dropping the
+        tagline costs the
+        artifact its proposition: this lockup says who, not what, so a README needs the
+        sentence in
+        markdown underneath or the block file instead. Base is porcelain
+        rather than dark-first, inverting the Camo rule in the spec, because Camo
+        renders the media
+        query inert and this repository publishes on a light README — the base must be
+        the surface
+        actually shipped to. The cost is that a GitHub dark-theme reader sees porcelain
+        unless the
+        embed uses a picture element. Kept one composited pulse rather than compiling a
+        static
+        projection, so the file is never fully idle; cut a static build for print and
+        email.
+      </hw:tradeoffs>
+      <hw:constraints-applied>cim-compliant, wcag-aa-gated, zero-js, zero-filter,
+        zero-fbo, reduced-motion, forced-colors, href-only</hw:constraints-applied>
+      <hw:spatial-notes>
+        853.4x169.0 (5.05:1). Mark centred (84.52,84.52) at scale 0.8951; optical
+        half-extent 74.52
+        measured bead to bead, so the 10px crop is uniform on all four sides. Cap band
+        spans
+        y=58.52 to 110.52 and is centred on the mark's axis; wordmark cap 52 on baseline
+        110.52, run
+        648.4, tracking 0.06em. Gutter 36 from bead edge to the H. Mark 149 against cap
+        52
+        is 2.87:1, identical geometry to the block lockup. Intrinsic 820x162.4.
+      </hw:spatial-notes>
+    </hw:reasoning>
+    <hw:spatial-trace xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:geometry-type>composite</hw:geometry-type>
+      <hw:bounding-box x="0" y="0" width="853.4" height="169.0" />
+      <hw:content-box x="10.0" y="10.0" width="833.4" height="149.0" />
+      <hw:animated-properties>transform opacity</hw:animated-properties>
+      <hw:animation-count>1</hw:animation-count>
+      <hw:timing-signature dur="3.236s" min-dur="3.236s"
+                           easing="cubic-bezier(0.4,0,0.2,1)" repeat="indefinite" />
+      <hw:motion-class primary="amplitude-pulsation">opacity-coupled</hw:motion-class>
+      <hw:performance-tier>composite-only</hw:performance-tier>
+      <hw:cim-compliant>true</hw:cim-compliant>
+    </hw:spatial-trace>
+    <hw:topology xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:manifold type="euclidean" elasticity="0.0">
+        <hw:aspect-lock>true</hw:aspect-lock></hw:manifold>
+      <hw:flow-field>
+        <hw:vector type="amplitude-pulsation" direction="bidirectional" />
+        <hw:energy-source>transform-scale</hw:energy-source>
+      </hw:flow-field>
+      <hw:zones>
+        <hw:zone id="glyph-cell" shape="rect" capability="icon-slot" />
+        <hw:zone id="type-cell" shape="path" capability="chromatic-override" />
+      </hw:zones>
+      <hw:parameters>
+        <hw:param name="pulse-speed" target="animation-duration" min="1.618" max="6.854"
+                  default="3.236" mapping="inverse" />
+      </hw:parameters>
+    </hw:topology>
+    <hw:envelope xmlns:hw="https://hyperweave.app/hw/v1.0" format="hwz/1">
+      HyperWeave line lockup. Octahedron glyph + Orbitron caps, mark 2.87x cap.
+      853.4x169.0, transparent, no filters, no script, no external refs. One composited
+      pulse.
+      Porcelain base, Noctilucent Chrome dark override on prefers-color-scheme.
+    </hw:envelope>
+  </metadata>
+  <style>
+    #hw-root {
+      --dna-ramp-hi: #5C80E3;
+      --dna-ramp-mid: #1D4ED8;
+      --dna-ramp-lo: #1E40A0;
+      --dna-wm-hi: #2D5EE0;
+      --dna-wm-mid: #1D4ED8;
+      --dna-wm-lo: #1E40A0;
+      --dna-node-spec: #EBF1FD;
+      --dna-node-mid: #4D7AE8;
+      --dna-node-lo: #1E3A8A;
+      --dna-glow-0: #3B82F638;
+      --dna-glow-1: #1D4ED80F;
+      --dna-glow-2: #1D4ED800;
+      --dna-face-0: #3B82F647;
+      --dna-face-1: #1D4ED81A;
+      --dna-face-2: #1E3A8A40;
+      --dna-glass-0: #DBEAFE47;
+      --dna-glass-1: #3B82F61F;
+      --dna-glass-2: #1D4ED838;
+      --dna-rim-0: #FFFFFFF2;
+      --dna-rim-1: #FFFFFF33;
+      --dna-rim-2: #93C5FD26;
+      --dna-rim-3: #1E40AFA6;
+      color-scheme: light dark;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #hw-root {
+        --dna-ramp-hi: #E8F2FF;
+        --dna-ramp-mid: #6090E8;
+        --dna-ramp-lo: #1B245A;
+        --dna-wm-hi: #F4F8FF;
+        --dna-wm-mid: #EAF2FF;
+        --dna-wm-lo: #DCE9FF;
+        --dna-node-spec: #FFFFFF;
+        --dna-node-mid: #E8F2FF;
+        --dna-node-lo: #0B1030;
+        --dna-glow-0: #6090E873;
+        --dna-glow-1: #1B245A33;
+        --dna-glow-2: #080C2400;
+        --dna-face-0: #080C24BF;
+        --dna-face-1: #080C24BF;
+        --dna-face-2: #080C24BF;
+        --dna-glass-0: #1B245A73;
+        --dna-glass-1: #1B245A73;
+        --dna-glass-2: #1B245A73;
+        --dna-rim-0: #FFFFFFF2;
+        --dna-rim-1: #E8F2FF99;
+        --dna-rim-2: #6090E84D;
+        --dna-rim-3: #1B245AD9;
+      }
+    }
+
+    .node-core {
+      transform-box: fill-box;
+      transform-origin: center;
+      will-change: transform, opacity;
+      animation: hw-pulse 3.236s cubic-bezier(.4, 0, .2, 1) infinite;
+    }
+
+    @keyframes hw-pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: .9
+      }
+
+      50% {
+        transform: scale(1.22);
+        opacity: 1
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @media (forced-colors: active) {
+
+      .wm,
+      .node {
+        fill: CanvasText
+      }
+
+      .wire,
+      .rim {
+        stroke: CanvasText
+      }
+
+      .veil {
+        opacity: .15
+      }
+    }
+  </style>
+  <defs>
+    <linearGradient id="hw-ramp" x1="-80" y1="-80" x2="80" y2="80"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--dna-ramp-hi, #5C80E3)" />
+      <stop offset="40%" stop-color="var(--dna-ramp-mid, #1D4ED8)" />
+      <stop offset="100%" stop-color="var(--dna-ramp-lo, #1E40A0)" />
+    </linearGradient>
+    <linearGradient id="hw-wm" x1="195.04" y1="0" x2="843.4" y2="0"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--dna-wm-hi, #2D5EE0)" />
+      <stop offset="50%" stop-color="var(--dna-wm-mid, #1D4ED8)" />
+      <stop offset="100%" stop-color="var(--dna-wm-lo, #1E40A0)" />
+    </linearGradient>
+    <radialGradient id="hw-node" cx="35%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="var(--dna-node-spec, #EBF1FD)" />
+      <stop offset="45%" stop-color="var(--dna-node-mid, #4D7AE8)" />
+      <stop offset="100%" stop-color="var(--dna-node-lo, #1E3A8A)" />
+    </radialGradient>
+    <radialGradient id="hw-glow" cx="0" cy="0" r="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--dna-glow-0, #3B82F638)" />
+      <stop offset="55%" stop-color="var(--dna-glow-1, #1D4ED80F)" />
+      <stop offset="100%" stop-color="var(--dna-glow-2, #1D4ED800)" />
+    </radialGradient>
+    <linearGradient id="hw-face" x1="0" y1="-80" x2="0" y2="80"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--dna-face-0, #3B82F647)" />
+      <stop offset="50%" stop-color="var(--dna-face-1, #1D4ED81A)" />
+      <stop offset="100%" stop-color="var(--dna-face-2, #1E3A8A40)" />
+    </linearGradient>
+    <linearGradient id="hw-glass" x1="0" y1="-60" x2="0" y2="60"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--dna-glass-0, #DBEAFE47)" />
+      <stop offset="50%" stop-color="var(--dna-glass-1, #3B82F61F)" />
+      <stop offset="100%" stop-color="var(--dna-glass-2, #1D4ED838)" />
+    </linearGradient>
+    <linearGradient id="hw-rim" x1="0" y1="-56" x2="0" y2="56"
+                    gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="var(--dna-rim-0, #FFFFFFF2)" />
+      <stop offset="35%" stop-color="var(--dna-rim-1, #FFFFFF33)" />
+      <stop offset="65%" stop-color="var(--dna-rim-2, #93C5FD26)" />
+      <stop offset="100%" stop-color="var(--dna-rim-3, #1E40AFA6)" />
+    </linearGradient>
+  </defs>
+  <g data-hw-part="glyph-cell" aria-hidden="true"
+     transform="translate(84.52 84.52) scale(0.8951)">
+    <circle class="veil" r="88" fill="url(#hw-glow)" />
+    <path class="veil" d="M0-80 80 0 0 80-80 0Z" fill="url(#hw-face)" />
+    <path class="veil"
+          d="M-15-60-45-30C-60-15-60 15-45 30L-15 60 15 60 45 30C60 15 60-15 45-30L15-60Z"
+          fill="url(#hw-glass)" />
+    <path class="wire" d="M0-80 80 0 0 80-80 0Z" fill="none" stroke="url(#hw-ramp)"
+          stroke-width="2.4" stroke-linejoin="round" opacity=".92" />
+    <path class="wire"
+          d="M-15-60-45-30C-60-15-60 15-45 30L-15 60 15 60 45 30C60 15 60-15 45-30L15-60Z"
+          fill="none" stroke="url(#hw-ramp)" stroke-width="6.5" stroke-linejoin="round"
+          stroke-linecap="round" opacity=".96" />
+    <path class="rim"
+          d="M-13.95-55.8-41.85-27.9C-55.8-13.95-55.8 13.95-41.85 27.9L-13.95 55.8 13.95 55.8 41.85 27.9C55.8 13.95 55.8-13.95 41.85-27.9L13.95-55.8Z"
+          fill="none" stroke="url(#hw-rim)" stroke-width="1.25" stroke-linejoin="round"
+          stroke-linecap="round" />
+    <path class="node"
+          d="M0-83.25a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 1 0 0-6.5M83.25 0a3.25 3.25 0 1 0-6.5 0 3.25 3.25 0 1 0 6.5 0M0 83.25a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 1 0 0 6.5M-83.25 0a3.25 3.25 0 1 0 6.5 0 3.25 3.25 0 1 0-6.5 0"
+          fill="url(#hw-node)" />
+    <circle class="node node-core" r="4.25" fill="url(#hw-node)" />
+  </g>
+  <path class="wm" data-hw-part="type-cell"
+        d="M199.2 110.5V58.5H207.8V80.1H243.6V58.5H252.3V110.5H243.6V88.9H207.8V110.5ZM284.3 110.5V91.0L260.3 58.5H270.6L288.7 81.3L306.7 58.5H317.1L293.1 91.1V110.5ZM325.0 110.5V58.6H367.2Q369.9 58.6 372.1 59.9Q374.3 61.3 375.7 63.5Q377.0 65.7 377.0 68.3V82.6Q377.0 85.2 375.7 87.5Q374.3 89.7 372.1 91.0Q369.9 92.3 367.2 92.3L333.7 92.4V110.5ZM335.0 83.6H366.9Q367.5 83.6 367.9 83.2Q368.3 82.9 368.3 82.3V68.6Q368.3 68.1 367.9 67.7Q367.5 67.3 366.9 67.3H335.0Q334.5 67.3 334.1 67.7Q333.7 68.1 333.7 68.6V82.3Q333.7 82.9 334.1 83.2Q334.5 83.6 335.0 83.6ZM385.4 110.5V58.5H433.1V67.3H394.1V80.1H425.5V88.9H394.1V101.8H433.1V110.5ZM485.7 110.5 469.8 91.5H481.1L495.5 108.5V110.5ZM443.7 110.5V58.6H485.9Q488.6 58.6 490.8 59.9Q493.0 61.3 494.4 63.5Q495.7 65.7 495.7 68.3V82.6Q495.7 85.2 494.4 87.5Q493.0 89.7 490.8 91.0Q488.6 92.3 485.9 92.3L452.4 92.4V110.5ZM453.7 83.6H485.6Q486.2 83.6 486.6 83.2Q486.9 82.9 486.9 82.3V68.6Q486.9 68.1 486.6 67.7Q486.2 67.3 485.6 67.3H453.7Q453.1 67.3 452.8 67.7Q452.4 68.1 452.4 68.6V82.3Q452.4 82.9 452.8 83.2Q453.1 83.6 453.7 83.6ZM523.8 110.5 504.9 58.5H514.1L527.3 94.6L540.4 58.5H549.2L562.4 94.6L575.6 58.5H584.8L565.9 110.5H558.9L544.8 71.9L530.7 110.5ZM594.8 110.5V58.5H642.5V67.3H603.5V80.1H635.0V88.9H603.5V101.8H642.5V110.5ZM653.2 110.5V68.3Q653.2 65.6 654.5 63.4Q655.8 61.1 658.1 59.8Q660.3 58.5 663.0 58.5H695.5Q698.2 58.5 700.4 59.8Q702.6 61.1 703.9 63.4Q705.2 65.6 705.2 68.3V110.5H696.5V92.7H661.9V110.5H653.2ZM661.9 84.0H696.5V68.6Q696.5 68.0 696.1 67.6Q695.7 67.3 695.1 67.3H663.2Q662.7 67.3 662.3 67.6Q661.9 68.0 661.9 68.6V84.0ZM745.2 110.5 715.1 58.5H725.2L749.2 100.3L773.4 58.5H783.4L753.3 110.5ZM792.3 110.5V58.5H840.0V67.3H801.0V80.1H832.5V88.9H801.0V101.8H840.0V110.5Z"
+        fill="url(#hw-wm)" />
+</svg>
