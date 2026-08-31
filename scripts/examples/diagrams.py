@@ -284,7 +284,7 @@ PIPELINE: list[Story] = [
                     "kind": "circle-check",
                     "chips": ["snapshot", "live"],
                 },
-                {"id": "lint", "label": "ruff · mypy", "desc": "strict clean", "kind": "shield-check"},
+                {"id": "lint", "label": "ruff · ty", "desc": "strict clean", "kind": "shield-check"},
                 {"id": "tag", "label": "tag", "desc": "annotated only", "role": "hero", "glyph": "githubactions"},
             ],
             "edges": [
@@ -1132,13 +1132,13 @@ CONVERGENCE: list[Story] = [
         {
             "topology": "fanin",
             "title": "Four gates, one verdict",
-            "subtitle": "pytest, ruff, format and mypy all assert into the release bit",
+            "subtitle": "pytest, ruff, format and ty all assert into the release bit",
             "node_style": "card+glyph",
             "glyph_tint": "full",
             "nodes": [
                 {"id": "pytest", "label": "pytest", "desc": "3,800+ tests", "kind": "circle-check"},
                 {"id": "ruff", "label": "ruff", "desc": "lint + format", "glyph": "ruff"},
-                {"id": "mypy", "label": "mypy", "desc": "--strict", "kind": "shield-check"},
+                {"id": "ty", "label": "ty", "desc": "strict", "kind": "shield-check"},
                 {
                     "id": "ship",
                     "label": "shippable",
@@ -1151,7 +1151,7 @@ CONVERGENCE: list[Story] = [
             "edges": [
                 {"source": "pytest", "target": "ship", "label": "gate", "label_style": "chip"},
                 {"source": "ruff", "target": "ship"},
-                {"source": "mypy", "target": "ship"},
+                {"source": "ty", "target": "ship"},
             ],
         },
     ),
@@ -1910,7 +1910,7 @@ FIELD_STORIES: list[Story] = [
             "nodes": [
                 {"id": "push", "label": "push", "desc": "trigger", "kind": "git-branch"},
                 {"id": "lint", "label": "lint", "desc": "ruff", "kind": "search"},
-                {"id": "types", "label": "typecheck", "desc": "mypy", "kind": "shield"},
+                {"id": "types", "label": "typecheck", "desc": "ty", "kind": "shield"},
                 {"id": "unit", "label": "unit", "desc": "fast tests", "kind": "zap"},
                 {"id": "buildapi", "label": "build api", "desc": "wheel", "kind": "box"},
                 {"id": "buildweb", "label": "build web", "desc": "bundle", "kind": "code"},
