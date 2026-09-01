@@ -29,20 +29,21 @@ profiles:
       Policy, not measurement: a standalone file has no embedding column, so the
       design width IS the delivery width (design-at-delivery-scale law).
   github-readme:
-    render_width: { min: 256, max: 896 }
+    render_width: { min: 254, max: 838 }
     scale_policy: fit-column
     dpr: 2
     font_mode: embed # an img context loads no external resources; cdn fonts are invalid here
     surface: adaptive
     face_policy: media-chromium-only
     basis: >-
-      Derived 2026-08-30 from GitHub Primer first-party docs
-      (primer.style/foundations/layout, fetched 2026-08-30): page layouts cap at
-      xlarge 1280; minus the repo Layout sidebar (~296), column gap and README
-      padding, the desktop README column lands ~896. Floor: the 320 xsmall
-      breakpoint minus 2x32 README padding = 256. The sidebar/padding terms are
-      Primer-token-derived estimates pending a devtools measurement — replace
-      them with measured values and re-date when taken.
+      Measured 2026-09-01, headless Chromium: content-box width of
+      article.markdown-body (0 own padding) on two live repo home pages
+      (anthropics/claude-code, InnerAura/hyperweave), identical on both.
+      Cap 838 holds from the 1280 viewport through 1920 (page layout caps at
+      xlarge). Floor 254 at the 320 xsmall breakpoint; intermediate points
+      1012->570, 768->406 (About sidebar still adjacent), 544->446 (sidebar
+      stacked), 375->309. Supersedes the 2026-08-30 Primer-token estimate
+      (256..896).
   landing-hero:
     render_width: null
     scale_policy: identity
