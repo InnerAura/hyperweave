@@ -1049,3 +1049,20 @@ def test_role_map_policy_defaults_opaque_and_names_real_leaves() -> None:
     washes = _ROLE_MAP_TRANSLUCENT_LEAVES["diagram_dark"]
     assert washes <= declared, f"wash allowlist names absent roles: {sorted(washes - declared)}"
     assert not (washes & set(_SEMANTIC_DIAGRAM_LEAVES))
+
+
+@pytest.mark.parametrize("field", ["material", "structural", "typography", "motion_config"])
+def test_free_form_cascade_values_reject_the_entity_character(field: str) -> None:
+    """The character sweep over the free-form cascade dicts must reject ``&``.
+
+    These dicts are the one part of a genome with no typed grammar, and their
+    values reach context (``material.depth`` lands in ``hw:material``). A bare
+    ``&`` in an XML document is an undefined entity reference, so it is refused
+    here as well as escaped at the sink — the escape is the second layer, not
+    the rule. Without this the sweep could lose ``&`` and no test would notice.
+    """
+    with pytest.raises(HwError) as exc:
+        validate_genome_override(
+            build_minimal_genome_for_testing(id="sweep", paradigms={"badge": "default"}, **{field: {"depth": "a&b"}})
+        )
+    assert exc.value.code is HwErrorCode.SPEC_INVALID
