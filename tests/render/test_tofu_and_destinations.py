@@ -125,8 +125,8 @@ class TestDestinationContract:
     def test_github_readme_range_and_worst_case_scale(self) -> None:
         profile = load_destination_profiles()["github-readme"]
         width = profile["render_width"]
-        assert width["min"] == 256 and width["max"] == 896
-        assert min_scale(profile, 1024.0) == 0.25
+        assert width["min"] == 254 and width["max"] == 838
+        assert min_scale(profile, 1024.0) == 254 / 1024
         assert min_scale(profile, 200.0) == 1.0  # narrower than the column: natural size
 
 
@@ -147,7 +147,7 @@ class TestScaleGates:
         assert scale_gates(loop_svg, load_destination_profiles()["standalone"]) == []
 
     def test_github_mobile_floor_fails_the_font_gate_honestly(self, loop_svg: str) -> None:
-        # A design-width loop at GitHub's 256px mobile floor renders its body
+        # A design-width loop at GitHub's 254px mobile floor renders its body
         # text far below 9 CSS px. That verdict is the gate WORKING — the
         # instrument states the density fact; Stage 7's delivery shell decides
         # what a compose-for-destination does with it.
