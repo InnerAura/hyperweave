@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
 from hyperweave import __version__
@@ -702,8 +702,8 @@ def _base_context(
         # Telemetry
         "telemetry": spec.telemetry_data or {},
         # Timestamp
-        "created": datetime.now(UTC).isoformat(),
-        "created_at": datetime.now(UTC).isoformat(),
+        "created": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         # Version -- read by templates/components/metadata.svg.j2
         "version": __version__,
         # hw:payload / hwz envelope projections + sub-variant root attribute.

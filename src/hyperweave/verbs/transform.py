@@ -11,7 +11,7 @@ is a labelled trajectory for the spatial-model corpus.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from hyperweave.compose.artifact_store import store_artifact
@@ -120,7 +120,7 @@ def transform(
         patched["layout"] = {"rank_orders": child_rank_orders(spec_dict, patched)}
 
     # append lineage INTO the hashed payload, so the new id covers the chain
-    entry = build_lineage_entry(parent_id, relation, mutation, ts or datetime.now(UTC).isoformat(), intent)
+    entry = build_lineage_entry(parent_id, relation, mutation, ts or datetime.now(timezone.utc).isoformat(), intent)
     new_lineage = [*list(patched.get("lineage", [])), entry]
     patched["lineage"] = new_lineage
 

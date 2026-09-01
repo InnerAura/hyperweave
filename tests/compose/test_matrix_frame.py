@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -46,7 +46,7 @@ def compose_fixture(name: str, variant: str = "porcelain", **kw: object) -> str:
 class _FrozenDatetime(datetime):
     @classmethod
     def now(cls, tz: object = None) -> datetime:  # type: ignore[override]
-        return datetime(2026, 6, 9, 12, 0, 0, tzinfo=UTC)
+        return datetime(2026, 6, 9, 12, 0, 0, tzinfo=timezone.utc)
 
 
 class TestByteDeterminism:

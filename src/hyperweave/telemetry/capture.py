@@ -11,7 +11,7 @@ telemetry, and any claim that compose records telemetry is false.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -39,7 +39,7 @@ def emit_generation_event(
     Despite the name, nothing is emitted anywhere: the event is constructed
     and returned, and the one caller (``compose()``) discards it. This is the
     schema witness, not a telemetry write."""
-    now = datetime.now(tz=UTC).isoformat()
+    now = datetime.now(tz=timezone.utc).isoformat()
 
     return GenerationEvent(
         timestamp=now,

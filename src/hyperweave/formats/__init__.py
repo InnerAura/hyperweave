@@ -20,9 +20,9 @@ has no time-sampled animation capture, and the browserless engines that do
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import StrEnum
 from xml.etree import ElementTree as ET
 
+from hyperweave.core.enums import StringEnum
 from hyperweave.core.errors import HwError, HwErrorCode
 
 # Fix text shared by the adaptive-guard on every flatten/raster path (WC's guard,
@@ -34,7 +34,7 @@ _ADAPTIVE_FIX = (
 )
 
 
-class FormatId(StrEnum):
+class FormatId(StringEnum):
     """The closed output-format set."""
 
     SVG = "svg"

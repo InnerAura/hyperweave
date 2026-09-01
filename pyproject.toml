@@ -2,7 +2,7 @@
 name = "hyperweave"
 dynamic = ["version"]
 description = "Artifact layer for agent-human representations. One API call, one SVG. Zero dependencies, renders in any markdown."
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]
 readme = "README.md"
@@ -30,6 +30,8 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries",

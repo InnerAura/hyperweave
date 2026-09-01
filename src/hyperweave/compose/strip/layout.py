@@ -1343,7 +1343,7 @@ def compute_strip_zones(
     # Templates can render cell groups from these named fields without a local
     # running namespace.
     def _pixel_number(value: float) -> int | float:
-        return int(value) if value.is_integer() else round(value, 1)
+        return int(value) if float(value).is_integer() else round(value, 1)
 
     resolved_cell_layouts = []
     for index, record in enumerate(cell_layouts_records):

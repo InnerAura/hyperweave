@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +29,7 @@ _ENVELOPE_RE = re.compile(r"<hw:envelope[^>]*><!\[CDATA\[(.*?)\]\]></hw:envelope
 class _FrozenDatetime(datetime):
     @classmethod
     def now(cls, tz: object = None) -> datetime:  # type: ignore[override]
-        return datetime(2026, 6, 11, 12, 0, 0, tzinfo=UTC)
+        return datetime(2026, 6, 11, 12, 0, 0, tzinfo=timezone.utc)
 
 
 def load_fixture(name: str) -> dict[str, Any]:

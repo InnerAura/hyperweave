@@ -14,7 +14,7 @@ stats card a COMPOSITION of stats + chart, not two separate artifacts.
 
 from __future__ import annotations
 
-from datetime import UTC
+from datetime import timezone
 from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.schema import ActivityData, coerce_stats_input, format_count
@@ -298,7 +298,7 @@ def resolve_stats(
     import contextlib
     from datetime import datetime
 
-    heatmap_year = datetime.now(UTC).year
+    heatmap_year = datetime.now(timezone.utc).year
     if heatmap_grid:
         tail = heatmap_grid[-1]
         if isinstance(tail, dict):
@@ -609,7 +609,7 @@ def _synthetic_series_from_total(total: int) -> list[dict[str, Any]]:
     """
     from datetime import datetime, timedelta
 
-    today = datetime.now(UTC)
+    today = datetime.now(timezone.utc)
     fractions = (0.08, 0.18, 0.34, 0.52, 0.76, 1.0)
     months_ago = (360, 300, 240, 180, 120, 60)
     return [

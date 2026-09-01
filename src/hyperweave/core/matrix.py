@@ -21,16 +21,16 @@ This module is a leaf: it imports only ``core.base`` so that
 from __future__ import annotations
 
 import itertools
-from enum import StrEnum
 from typing import Any
 
 from pydantic import Field, model_validator
 
 from hyperweave.core.base import FrozenModel
+from hyperweave.core.enums import StringEnum
 from hyperweave.core.surface_spec import SurfaceSpec  # noqa: TC001 (Pydantic needs at runtime)
 
 
-class CellKind(StrEnum):
+class CellKind(StringEnum):
     """Cell renderer a column dispatches to — the open registry seam.
 
     Each non-AUTO kind maps 1:1 to a template partial at
@@ -49,7 +49,7 @@ class CellKind(StrEnum):
     GLYPH = "glyph"
 
 
-class Polarity(StrEnum):
+class Polarity(StringEnum):
     """Direction of "better" for numeric columns — drives heat tinting."""
 
     HIGHER = "higher"
@@ -57,7 +57,7 @@ class Polarity(StrEnum):
     NONE = "none"
 
 
-class Align(StrEnum):
+class Align(StringEnum):
     """Column text alignment; AUTO resolves by role/kind at inference."""
 
     AUTO = "auto"
@@ -66,7 +66,7 @@ class Align(StrEnum):
     RIGHT = "right"
 
 
-class ColRole(StrEnum):
+class ColRole(StringEnum):
     """Structural role of a column within the table."""
 
     LABEL = "label"
@@ -74,7 +74,7 @@ class ColRole(StrEnum):
     SUMMARY = "summary"
 
 
-class CellState(StrEnum):
+class CellState(StringEnum):
     """Tri-valence check / binary indicator states (check, dot, pill)."""
 
     FULL = "full"
@@ -84,7 +84,7 @@ class CellState(StrEnum):
     OFF = "off"
 
 
-class RowHeight(StrEnum):
+class RowHeight(StringEnum):
     """Row-height policy, resolved in the layout solver.
 
     Chip columns ALWAYS grow rows to fit their packed chips — wrapping
@@ -98,7 +98,7 @@ class RowHeight(StrEnum):
     AUTO = "auto"
 
 
-class GlyphTint(StrEnum):
+class GlyphTint(StringEnum):
     """Glyph fill contract for glyph cells.
 
     ``ink`` binds the mark to the genome ink (monochrome marks invert

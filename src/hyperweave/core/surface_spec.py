@@ -22,14 +22,13 @@ token flipping, re-grounding, adaptive CSS) lives in ``compose/surface_modes.py`
 
 from __future__ import annotations
 
-from enum import StrEnum
-
 from pydantic import Field, model_validator
 
 from hyperweave.core.base import FrozenModel
+from hyperweave.core.enums import StringEnum
 
 
-class Ground(StrEnum):
+class Ground(StringEnum):
     """Does the artifact paint its own background?
 
     ``opaque`` carries a ground; ``bare`` is transparent and borrows the host
@@ -40,7 +39,7 @@ class Ground(StrEnum):
     BARE = "bare"
 
 
-class PaletteMode(StrEnum):
+class PaletteMode(StringEnum):
     """One baked palette, or a light/dark pair driven by the reader's theme?
 
     ``fixed`` bakes one scheme (identical everywhere). ``adaptive`` emits a

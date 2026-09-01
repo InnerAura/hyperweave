@@ -6,7 +6,7 @@ marker shape dispatch, and the public ``build_chart_svg`` entry point.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -63,8 +63,8 @@ def test_normalize_points_dict_form(sample_points_dict: list[dict[str, object]])
 def test_normalize_points_accepts_tuples() -> None:
     pts = _normalize_points(
         [
-            (datetime(2025, 1, 1, tzinfo=UTC), 100),
-            (datetime(2025, 6, 1, tzinfo=UTC), 500),
+            (datetime(2025, 1, 1, tzinfo=timezone.utc), 100),
+            (datetime(2025, 6, 1, tzinfo=timezone.utc), 500),
         ],
     )
     assert len(pts) == 2
@@ -101,7 +101,7 @@ def test_project_points_empty_returns_empty(sample_viewport: Viewport) -> None:
 
 
 def test_project_points_single_returns_center(sample_viewport: Viewport) -> None:
-    pt = ChartPoint(date=datetime(2025, 6, 1, tzinfo=UTC), value=500)
+    pt = ChartPoint(date=datetime(2025, 6, 1, tzinfo=timezone.utc), value=500)
     out = _project_points([pt], sample_viewport)
     assert out == [(400, 200)]  # center of the viewport
 
@@ -849,7 +849,7 @@ def test_project_points_identical_timestamps_distributes_by_index(
     sample_viewport: Viewport,
 ) -> None:
     """All-same-timestamp points must not collapse to vp.x (zero-span defense)."""
-    same_date = datetime(2025, 5, 1, tzinfo=UTC)
+    same_date = datetime(2025, 5, 1, tzinfo=timezone.utc)
     pts = [ChartPoint(date=same_date, value=i + 1) for i in range(4)]
     projected = _project_points(pts, sample_viewport)
     xs = [x for (x, _) in projected]

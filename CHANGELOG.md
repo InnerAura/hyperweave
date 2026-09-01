@@ -28,6 +28,8 @@ reflects what actually animates, and deploys only ship from a green build.
   slug grammar, and root SVG attributes are escaped.
 
 ### Changed
+- **Python 3.10+:** the install floor drops from 3.12 to 3.10; CI tests 3.10–3.13 and the publish
+  smoke installs the built wheel and sdist on 3.10 and 3.12.
 - **CI:** `ty` replaces `mypy` at a pinned version, quality and tests run as separate jobs, and
   release notes draft from merged PRs. Deploys require a green workflow and a smoke-tested package.
 - **Performance tier is measured, not declared:** each frame's `performance` and `cim-compliant`

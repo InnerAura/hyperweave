@@ -37,7 +37,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import Field, model_validator
@@ -47,11 +46,12 @@ from hyperweave.core.diagram_annotations import (
     DiagramAnnotation,
     parse_edge_ref,
 )
+from hyperweave.core.enums import StringEnum
 from hyperweave.core.matrix import GlyphTint  # noqa: TC001 (Pydantic needs at runtime)
 from hyperweave.core.surface_spec import SurfaceSpec  # noqa: TC001 (Pydantic needs at runtime)
 
 
-class Topology(StrEnum):
+class Topology(StringEnum):
     """Named layout FAMILY — the semantic unit of a diagram (the family x
     expression consolidation, owner ruling 2026-08-20: fourteen flat words
     folded into families whose expressions ride the ``orientation`` axis).
@@ -93,7 +93,7 @@ class Topology(StrEnum):
     LANES = "lanes"
 
 
-class Orientation(StrEnum):
+class Orientation(StringEnum):
     """The EXPRESSION axis: which cell of its family a spec asks for.
     Legality per topology is config data (``data/config/diagram-frame.yaml:
     orientation_legality``), enforced at the input seam."""
@@ -112,7 +112,7 @@ class Orientation(StrEnum):
     """Cycle: the equal-stage empty-centre loop (the retired ``ring`` word)."""
 
 
-class NodeRole(StrEnum):
+class NodeRole(StringEnum):
     """Card treatment. AUTO resolves at the input seam and never reaches a
     layout: focal slot -> HERO, comparison left -> MUTED, else DEFAULT."""
 
@@ -125,7 +125,7 @@ class NodeRole(StrEnum):
     # policy can never promote it, and the payload names the intent)
 
 
-class NodeHealth(StrEnum):
+class NodeHealth(StringEnum):
     """Dependency-audit health channel: a card-corner status dot, ORTHOGONAL
     to identity accent (pp-tree-radial-v2.svg's own hw:chromatic: "node
     HEALTH on a separate status channel ... Identity accent and health
@@ -138,7 +138,7 @@ class NodeHealth(StrEnum):
     VULNERABLE = "vulnerable"  # red dot, pulsing
 
 
-class NodeStyle(StrEnum):
+class NodeStyle(StringEnum):
     """Node identity anatomy — caller-chosen, never inferred. Rectangular
     card anatomies are topology-orthogonal; a topology whose connector math
     requires a plate may constrain non-card silhouettes. Frame defaults come
@@ -174,7 +174,7 @@ class NodeStyle(StrEnum):
     connectors and collision."""
 
 
-class EdgeMotion(StrEnum):
+class EdgeMotion(StringEnum):
     """Kit motion dress for a wire: the marching dash, a particle rider, or the
     beam — a gradient-window comet that animates ONLY the gradient's coordinates
     (animateTransform on gradientTransform, transform-class CIM; geometry never
@@ -187,7 +187,7 @@ class EdgeMotion(StrEnum):
     BEAM = "beam"
 
 
-class EdgeKind(StrEnum):
+class EdgeKind(StringEnum):
     """Sequence message semantics: solid stroke = call, dashed = return.
     Meaning-bearing dasharray — the track channel yields to it (P3)."""
 

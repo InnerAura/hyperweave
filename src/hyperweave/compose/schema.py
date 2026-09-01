@@ -604,7 +604,7 @@ def _number(value: object) -> int | float | None:
         number = float(text) * multiplier
     except ValueError:
         return None
-    return int(number) if number.is_integer() else number
+    return int(number) if float(number).is_integer() else number
 
 
 def _format_streak(value: object) -> str:

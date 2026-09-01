@@ -53,11 +53,14 @@ jobs:
       fail-fast: true
       matrix:
         artifact: [wheel, sdist]
+        # Floor and current: the shipped artifacts must install and run at the
+        # advertised requires-python floor, not just the dev interpreter.
+        python-version: ["3.10", "3.12"]
     steps:
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: "0.12.7"
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           # No uv.lock in this workspace, so there is nothing to key a cache on.
           enable-cache: false
 

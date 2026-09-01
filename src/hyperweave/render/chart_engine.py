@@ -33,7 +33,7 @@ from __future__ import annotations
 import math
 from calendar import monthrange
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 # ── Data types ─────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ def _normalize_points(raw: list[Any]) -> list[ChartPoint]:
         else:
             continue
         if d.tzinfo is None:
-            d = d.replace(tzinfo=UTC)
+            d = d.replace(tzinfo=timezone.utc)
         try:
             v = int(v_raw)
         except (TypeError, ValueError):

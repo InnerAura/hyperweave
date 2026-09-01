@@ -38,7 +38,7 @@ from __future__ import annotations
 import asyncio
 import statistics
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from hyperweave.connectors.base import (
@@ -235,7 +235,7 @@ async def _aggregate(identifier: str, window_days: int) -> dict[str, Any]:
         return cached
 
     owner, repo = identifier.split("/", 1)
-    cutoff = datetime.now(UTC) - timedelta(days=window_days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
     # Pin one token across the whole windowed op so /deployments, /statuses, and
     # /commits see a consistent view (token rotation happens BETWEEN ops).
     token = pin_github_token()

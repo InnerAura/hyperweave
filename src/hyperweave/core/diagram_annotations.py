@@ -16,14 +16,13 @@ what is self-contained — anchor arity and kind/shape legality.
 
 from __future__ import annotations
 
-from enum import StrEnum
-
 from pydantic import Field, model_validator
 
 from hyperweave.core.base import FrozenModel
+from hyperweave.core.enums import StringEnum
 
 
-class AnnotationKind(StrEnum):
+class AnnotationKind(StringEnum):
     """Annotation anatomy — caller-chosen, drives the placement record.
 
     callout: boxed text with a leader line to its anchor. legend: a column

@@ -30,7 +30,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import pytest
 
@@ -52,7 +52,10 @@ _VARIANT = "porcelain"  # flagship, light-native default — the PLATE/porcelain
 _ADAPTIVE_PRESET = "dag-providers"  # fixed glyph-rich preset (also used by test_far_face_legibility)
 
 
-def _with_retry[T](build: Callable[[], T], *, attempts: int = 8, delay: float = 0.25) -> T:
+T = TypeVar("T")
+
+
+def _with_retry(build: Callable[[], T], *, attempts: int = 8, delay: float = 0.25) -> T:
     """Retry ``build`` across a brief window.
 
     ``data/presets/diagram.yaml`` may be mid-write by a parallel agent when
