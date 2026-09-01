@@ -45,9 +45,9 @@ reflects what actually animates, and deploys only ship from a green build.
 - **Variant overrides are validated:** they used to merge after validation and skip the gate
   entirely. They are now re-checked as the genome they render as, including WCAG pairs, with
   control-plane keys refused.
-- **Color fields are typed:** 73 fields were unconstrained strings and now take a real color
-  grammar — opaque by default, alpha only on atmospheric surfaces and documented diagram edge
-  washes, `transparent` only where a layer is documented to render absent.
+- **Color fields are typed:** 71 of the 84 color fields were unconstrained strings; all of them
+  now take a real color grammar — opaque by default, alpha only on atmospheric surfaces and
+  documented diagram edge washes, `transparent` only where a layer is documented to render absent.
 - **Warning amber on light backgrounds:** brutalist's 14 light variants now use `#B45309` at 4.06:1
   to 4.39:1. The inherited `#F59E0B` measured 1.7:1 to 1.9:1.
 - **Contrast is always checked:** non-hex colors used to bypass the WCAG gate. Translucent colors
