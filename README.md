@@ -85,41 +85,6 @@ HyperWeave turns structured specs into deterministic visual artifacts. Each arti
 
 </details>
 
-## Agentic Artifacts
-
-Hyperweave parses agent coding sessions into a portable SVG artifact, including the model and tool usage, token spend, and context load. Install the hook once and every session emits one:
-
-```bash
-pip install hyperweave
-hyperweave install-hook
-```
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_cream.svg" alt="A HyperWeave session receipt for a Claude Code run: &#36;1,787.28 across 1686.0M tokens and 3795 calls, opus-4.8 dominant, with a tool-spend breakdown, a cost-by-model bar, and a context-load curve." width="800"/>
-</p>
-<p align="center"><sub>Claude Code &middot; &#36;1,787.28 &middot; 1686.0M tokens &middot; 3795 calls &middot; opus-4.8</sub></p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_porcelain.svg" alt="A HyperWeave session receipt for a Codex run: &#36;10.72 across 32.4M tokens and 346 calls, gpt-5.3." width="800"/>
-</p>
-<p align="center"><sub>Codex &middot; &#36;10.72 &middot; 32.4M tokens &middot; 346 calls &middot; gpt-5.3</sub></p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_raw.svg" alt="The same Claude Code session printed as a thermal register tape: tools as line items priced in tokens, models as payment tender, failed calls as voids." width="300"/>
-</p>
-<p align="center"><sub>The same Claude session if you fancy a proper receipt</sub></p>
-
-The hook reads your session's JSONL transcript from disk and detects the harness automatically (Claude Code or Codex). Theme it with any of the [8 primer themes](#primer), or the paper receipt style above.
-
-```bash
-hyperweave install-hook --genome cream   # any primer theme
-hyperweave install-hook --genome raw     # the paper receipt
-```
-
-&rarr; [Open an issue](https://github.com/InnerAura/hyperweave/issues/new) to request a missing agent harness.
-
----
-
 ## Diagrams
 
 Diagrams encode topology, not pixels. HyperWeave supports the following diagram types: `pipeline`, `fanout`, `fanin`, `hub`, `cycle`, `loop`, `dag`, `lanes`, `state-machine`, `sequence`, `tree`, and `comparison`. Nodes carry brand logo glyphs, labels, and tags. Edges carry labels and motion to help process information better. Every diagram renders as a self-contained SVG with its full spec and hash-verified digest embedded for agents to read directly. Render them in a markdown file, send to Slack as an image, or render directly in your terminal.
@@ -768,6 +733,51 @@ JSON
 
 ---
 
+## Agentic Artifacts
+
+Hyperweave parses agent coding sessions into a portable SVG artifact, including the model and tool usage, token spend, and context load. Install the hook once and every session emits one:
+
+```bash
+uv tool install hyperweave   # or: pip install hyperweave
+hyperweave install-hook
+```
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_cream.svg" alt="A HyperWeave session receipt for a Claude Code run: &#36;1,787.28 across 1686.0M tokens and 3795 calls, opus-4.8 dominant, with a tool-spend breakdown, a cost-by-model bar, and a context-load curve." width="800"/>
+</p>
+<p align="center"><sub>Claude Code &middot; &#36;1,787.28 &middot; 1686.0M tokens &middot; 3795 calls &middot; opus-4.8</sub></p>
+
+<details>
+<summary>View the Codex receipt</summary>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_porcelain.svg" alt="A HyperWeave session receipt for a Codex run: &#36;10.72 across 32.4M tokens and 346 calls, gpt-5.3." width="800"/>
+</p>
+<p align="center"><sub>Codex &middot; &#36;10.72 &middot; 32.4M tokens &middot; 346 calls &middot; gpt-5.3</sub></p>
+
+</details>
+
+<details>
+<summary>View the same session as a thermal register tape</summary>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/examples/telemetry/receipt_raw.svg" alt="The same Claude Code session printed as a thermal register tape: tools as line items priced in tokens, models as payment tender, failed calls as voids." width="300"/>
+</p>
+<p align="center"><sub>The same Claude session if you fancy a proper receipt</sub></p>
+
+</details>
+
+The hook reads your session's JSONL transcript from disk and detects the harness automatically (Claude Code or Codex). Theme it with any of the [8 primer themes](#primer), or the paper receipt style above.
+
+```bash
+hyperweave install-hook --genome cream   # any primer theme
+hyperweave install-hook --genome raw     # the paper receipt
+```
+
+&rarr; [Open an issue](https://github.com/InnerAura/hyperweave/issues/new) to request a missing agent harness.
+
+---
+
 ## Inside every artifact
 
 <!--
@@ -1090,6 +1100,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 
 <h3 id="brutalist">brutalist</h3>
 
+<details>
+<summary>View the brutalist catalog</summary>
+
 <p align="center">
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=celadon" alt="PYPI - celadon variant"/>
   <img src="https://hyperweave.app/v1/badge/PYPI/brutalist.static?data=pypi:hyperweave.version&glyph=python&variant=alloy" alt="PYPI - alloy variant"/>
@@ -1204,7 +1217,13 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 </table>
+
+</details>
+
 <h3 id="automata">automata</h3>
+
+<details>
+<summary>View the automata catalog</summary>
 
 <p align="center">
   <img src="https://hyperweave.app/v1/badge/PYPI/automata.static?data=pypi:hyperweave.version&glyph=python&variant=crimson&size=compact" alt="PYPI - crimson variant"/>
@@ -1317,7 +1336,13 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </td>
 </tr>
 </table>
+
+</details>
+
 <h3 id="chrome">chrome</h3>
+
+<details>
+<summary>View the chrome catalog</summary>
 
 <p align="center">
   <img src="https://hyperweave.app/v1/badge/PYPI/chrome.static?data=pypi:hyperweave.version&glyph=python&variant=horizon" alt="PYPI - horizon variant"/>
@@ -1417,6 +1442,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </tr>
 </table>
 
+
+</details>
+
 <br />
 
 | | primer | brutalist | automata | chrome |
@@ -1429,6 +1457,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 <br />
 
 <h3 id="dividers"><code>/a/inneraura/dividers/</code></h3>
+
+<details>
+<summary>View the divider catalog</summary>
 
 <table>
 <tr>
@@ -1488,6 +1519,9 @@ Why genome and not theme? Because brand isn't a design problem, it's an infrastr
 </tr>
 </table>
 
+
+</details>
+
 <h3 id="error-fallback">Error fallback: SMPTE NO SIGNAL</h3>
 
 Every broken `<img>` URL renders the SMPTE RP 219 test pattern with `ERR_NNN` matching the HTTP status, instead of a browser broken-image icon.
@@ -1515,9 +1549,11 @@ uv add 'hyperweave[serve]'   # + HTTP server  (hyperweave serve)
 uv add 'hyperweave[mcp]'     # + MCP server   (hyperweave mcp)
 uv add 'hyperweave[all]'     # + both servers
 # or swap `uv add` for `pip install`
+
+uv tool install hyperweave   # standalone `hw` CLI: uv provisions Python itself
 ```
 
-Requires Python 3.12+. The base install is CLI + rendering; the HTTP and MCP servers are optional extras so the core stays lean.
+<sub>Requires Python 3.10+</sub>
 
 ---
 
@@ -1636,6 +1672,32 @@ hyperweave diff v1.svg v2.svg --exit-code           # structural diff, git-style
 hyperweave verify diagram.svg                       # payload ↔ envelope integrity
 hyperweave query diagram.svg 'nodes[0].label'       # read one field
 hyperweave transform diagram.svg --patch patch.json # mint a new artifact + lineage
+```
+
+### Agent loop
+
+The same CLI runs as a machine-readable loop: learn what the install can do, validate before composing, compose with an inspection record, and say why each edit happened.
+
+```bash
+# Capability capsule for an agent context: caps, legality, vocabulary, presets + a digest
+hyperweave discover --agent
+hyperweave discover --agent --topology hub          # scoped to one topology family
+
+# Install readiness before composing: formats, fonts, genomes, telemetry wiring
+hyperweave doctor
+
+# Machine-readable validation report, the same report every surface returns
+hyperweave validate spec.json --json
+
+# Proof sidecars beside the SVG: measured geometry, diagnostics, verdicts,
+# a motion-stripped resting frame, and a png when the raster extra is installed
+hyperweave compose diagram --spec-file pipeline-head -o out.svg --proof
+
+# One bounded JSON report on stdout instead of SVG bytes: ok, artifact, integrity, diagnostics, next
+hyperweave compose badge build passing --respond report
+
+# Say why a patch happened; the reason is recorded in the new artifact's lineage
+hyperweave transform out.svg --patch patch.json --intent "rename entry node"
 ```
 
 ### HTTP API
