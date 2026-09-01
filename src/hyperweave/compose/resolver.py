@@ -1108,7 +1108,7 @@ def resolve_badge(
             # Exact frame width (primer): frame_context overrides the base
             # context's int so document.svg.j2 renders the unrounded rail width
             # (right-edge gap == declared pad). ResolvedArtifact.width stays int.
-            **({"width": int(_frame_w) if _frame_w.is_integer() else round(_frame_w, 1)} if _exact_rail else {}),
+            **({"width": int(_frame_w) if float(_frame_w).is_integer() else round(_frame_w, 1)} if _exact_rail else {}),
             "label": label_raw,
             "label_display": label_display,
             "value": value_raw,

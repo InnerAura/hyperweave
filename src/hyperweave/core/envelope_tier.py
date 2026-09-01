@@ -14,12 +14,11 @@ a valid envelope, just a shallow one.
 
 from __future__ import annotations
 
-from enum import StrEnum
-
 from hyperweave.config.loader import load_envelope_tiers
+from hyperweave.core.enums import StringEnum
 
 
-class EnvelopeTier(StrEnum):
+class EnvelopeTier(StringEnum):
     """Envelope data depth. Schema is invariant; only ``data`` richness scales."""
 
     MINIMAL = "minimal"

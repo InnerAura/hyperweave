@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from hyperweave import __version__
@@ -131,7 +131,7 @@ def _render_svg(doc: DocumentSpec) -> tuple[str, int, int]:
 
 
 def _wrap_document_svg(doc: DocumentSpec, body: str, w: int, h: int, *, embedded: bool) -> tuple[str, int, int]:
-    created = datetime.now(UTC).isoformat()
+    created = datetime.now(timezone.utc).isoformat()
     payload_json = document_payload_json(doc)
     envelope = document_envelope(doc, payload_json, version=__version__, created=created)
     bg = "" if embedded else f'<rect width="{w}" height="{h}" fill="var(--dna-surface, #0b0e14)"/>'
@@ -186,7 +186,7 @@ def render(doc: DocumentSpec, target: RenderTarget | str = RenderTarget.SVG) -> 
         return DocumentResult(target="markdown", markdown=_render_markdown(doc))
     if target is RenderTarget.JSON:
         payload_json = document_payload_json(doc)
-        created = datetime.now(UTC).isoformat()
+        created = datetime.now(timezone.utc).isoformat()
         import json
 
         return DocumentResult(

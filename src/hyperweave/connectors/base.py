@@ -8,11 +8,12 @@ import contextvars
 import os
 import time
 from dataclasses import dataclass, field
-from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import httpx
+
+from hyperweave.core.enums import StringEnum
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -195,7 +196,7 @@ def validate_url(url: str) -> str:
 # Circuit Breaker
 
 
-class CircuitState(StrEnum):
+class CircuitState(StringEnum):
     """Circuit breaker states."""
 
     CLOSED = "closed"

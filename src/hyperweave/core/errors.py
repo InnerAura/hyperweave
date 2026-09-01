@@ -14,14 +14,15 @@ so a receiving agent can branch on it without parsing prose.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import StrEnum
 from typing import TYPE_CHECKING, Any
+
+from hyperweave.core.enums import StringEnum
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
-class HwErrorCode(StrEnum):
+class HwErrorCode(StringEnum):
     """The closed error-code registry."""
 
     DAG_RANK_CAP = "DAG_RANK_CAP"

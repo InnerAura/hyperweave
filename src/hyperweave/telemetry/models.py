@@ -16,11 +16,12 @@ registries) per Phase A of v0.2.23.
 from __future__ import annotations
 
 from datetime import datetime  # noqa: TC003 (Pydantic needs at runtime)
-from enum import StrEnum
 from pathlib import Path
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
+
+from hyperweave.core.enums import StringEnum
 
 # --------------------------------------------------------------------------- #
 # YAML LOADER
@@ -40,7 +41,7 @@ def _load_yaml(name: str) -> dict[str, str]:
 # --------------------------------------------------------------------------- #
 
 
-class ToolOutcome(StrEnum):
+class ToolOutcome(StringEnum):
     """Outcome of a tool invocation."""
 
     SUCCESS = "success"
@@ -54,7 +55,7 @@ class ToolOutcome(StrEnum):
     NO_VERDICT = "no_verdict"
 
 
-class ToolClass(StrEnum):
+class ToolClass(StringEnum):
     """Functional classification of tools.
 
     Used by the stage detector to identify dominant behavioral modes
@@ -68,7 +69,7 @@ class ToolClass(StrEnum):
     REFLECT = "reflect"
 
 
-class StageLabel(StrEnum):
+class StageLabel(StringEnum):
     """Human-readable stage labels derived from dominant tool class."""
 
     RECONNAISSANCE = "reconnaissance"
@@ -78,7 +79,7 @@ class StageLabel(StrEnum):
     DELIBERATION = "deliberation"
 
 
-class UserEventCategory(StrEnum):
+class UserEventCategory(StringEnum):
     """Classification of user messages by intent."""
 
     CORRECTION = "correction"
@@ -87,7 +88,7 @@ class UserEventCategory(StrEnum):
     CONTINUATION = "continuation"
 
 
-class ConfidenceLevel(StrEnum):
+class ConfidenceLevel(StringEnum):
     """Three-level ordinal confidence. No fake precision."""
 
     HIGH = "high"
@@ -207,7 +208,7 @@ class AgentSpan(BaseModel):
         return 0
 
 
-class CommandResetKind(StrEnum):
+class CommandResetKind(StringEnum):
     """Kind of context-window reset event.
 
     ``COMPACT`` / ``CLEAR`` are user slash-commands; ``AUTO`` is the

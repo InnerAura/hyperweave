@@ -7,7 +7,7 @@ import logging
 import math
 import re
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlencode
 
@@ -152,7 +152,7 @@ def _format_relative_time(iso_ts: str) -> str:
         then = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
     except (ValueError, AttributeError, TypeError):
         return "unknown"
-    secs = (datetime.now(UTC) - then).total_seconds()
+    secs = (datetime.now(timezone.utc) - then).total_seconds()
     if secs < 60:
         return "JUST NOW"
     if secs < 3600:
@@ -335,13 +335,16 @@ async def fetch_stargazer_history(
     # Two bounds, different failure modes: the retry-sleep pool caps how long
     # rate-limit BACKOFF may accumulate across the fan-out; the wall-clock
     # deadline caps EVERYTHING — a hanging upstream is cancelled in-flight
-    # (asyncio.timeout cancels the gather's children) and the render degrades
-    # to its truthful overlay instead of holding the request open.
+    # (wait_for cancels the wrapped task, and the gather propagates that to
+    # its children) and the render degrades to its truthful overlay instead
+    # of holding the request open.
+    async def _budgeted_fetch() -> dict[str, Any]:
+        with retry_budget(15.0):
+            return await _fetch_stargazer_history_rest(owner, repo, sample_pages)
+
     try:
-        async with asyncio.timeout(_RENDER_DEADLINE_S):
-            with retry_budget(15.0):
-                result = await _fetch_stargazer_history_rest(owner, repo, sample_pages)
-    except TimeoutError as exc:
+        result = await asyncio.wait_for(_budgeted_fetch(), _RENDER_DEADLINE_S)
+    except asyncio.TimeoutError as exc:
         raise ConnectorError(
             f"star history for {identifier} exceeded the {_RENDER_DEADLINE_S:.0f}s render deadline"
         ) from exc
@@ -564,7 +567,7 @@ async def _fetch_stargazer_history_rest(
     # terminal timestamp produced polylines that ended in the past. The count
     # is still the real stargazers_count; only the timestamp becomes "now".
     if points:
-        points.append({"date": datetime.now(UTC).isoformat(), "count": total_stars})
+        points.append({"date": datetime.now(timezone.utc).isoformat(), "count": total_stars})
     points.sort(key=lambda p: p["date"])
 
     # Every sampled page failing (points empty despite a known non-zero

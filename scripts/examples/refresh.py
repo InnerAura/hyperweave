@@ -28,7 +28,7 @@ import argparse
 import json
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -61,7 +61,7 @@ _MATRICES_OUT = _ROOT / "assets" / "examples" / "matrices"
 
 # A fixed instant so the embedded <hw:created> stamp is stable across runs —
 # the recipe is idempotent (re-run with no code change ⇒ byte-identical files).
-_PINNED_CLOCK = datetime(2026, 7, 1, 12, 0, 0, tzinfo=UTC)
+_PINNED_CLOCK = datetime(2026, 7, 1, 12, 0, 0, tzinfo=timezone.utc)
 
 # The committed specimen set: (filename, genome, variant, harness source).
 # Two harnesses, two session shapes BY DESIGN — cream shows a Claude Code

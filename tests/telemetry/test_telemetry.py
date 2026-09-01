@@ -12,7 +12,7 @@ from __future__ import annotations
 import ast
 import json
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -248,7 +248,7 @@ class TestStageDetector:
         """
         from datetime import timedelta
 
-        base = datetime(2026, 1, 1, 10, 0, 0, tzinfo=UTC)
+        base = datetime(2026, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         calls = []
         for i in range(6):
             calls.append(
@@ -274,7 +274,7 @@ class TestStageDetector:
 
     def test_all_calls_assigned(self) -> None:
         """Every tool call appears in exactly one stage."""
-        base = datetime(2026, 1, 1, 10, 0, 0, tzinfo=UTC)
+        base = datetime(2026, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         calls = [self._make_call("Read", base.replace(second=i)) for i in range(10)]
         stages = detect_stages(calls)
         total_in_stages = sum(s.call_count for s in stages)
@@ -435,14 +435,14 @@ class TestCostCalculator:
             "cache_creation_input_tokens": 0,
             "cache_read_input_tokens": 0,
         }
-        during = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=UTC))
+        during = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=timezone.utc))
         assert abs(during - 12.0) < 1e-9  # $2/M input + $10/M output
 
     def test_introductory_end_date_is_inclusive(self) -> None:
         """The last day of the promotion still bills at the promotional rate."""
         usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
-        last_day = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 31, tzinfo=UTC))
-        first_after = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 9, 1, tzinfo=UTC))
+        last_day = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 31, tzinfo=timezone.utc))
+        first_after = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 9, 1, tzinfo=timezone.utc))
         assert abs(last_day - 2.0) < 1e-9
         assert abs(first_after - 3.0) < 1e-9
 
@@ -453,8 +453,8 @@ class TestCostCalculator:
         introductory rate must keep reporting that cost forever.
         """
         usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
-        as_billed = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=UTC))
-        regenerated = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=UTC))
+        as_billed = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=timezone.utc))
+        regenerated = calculate_turn_cost(usage, "claude-sonnet-5", datetime(2026, 8, 24, tzinfo=timezone.utc))
         assert as_billed == regenerated == 2.0
 
     def test_undated_call_uses_the_sticker_rate(self) -> None:
@@ -469,13 +469,13 @@ class TestCostCalculator:
         1970 precedes every `until` date that will ever be written.
         """
         usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
-        cost = calculate_turn_cost(usage, "claude-sonnet-5", datetime.fromtimestamp(0, tz=UTC))
+        cost = calculate_turn_cost(usage, "claude-sonnet-5", datetime.fromtimestamp(0, tz=timezone.utc))
         assert abs(cost - 3.0) < 1e-9, "epoch fallback should price at the sticker"
 
     def test_model_without_introductory_block_is_unaffected(self) -> None:
         """Dating a rate must not change models that carry a single rate."""
         usage: dict[str, int] = {"input_tokens": 1_000_000, "output_tokens": 0}
-        dated = calculate_turn_cost(usage, "claude-opus-5", datetime(2026, 8, 24, tzinfo=UTC))
+        dated = calculate_turn_cost(usage, "claude-opus-5", datetime(2026, 8, 24, tzinfo=timezone.utc))
         undated = calculate_turn_cost(usage, "claude-opus-5")
         assert dated == undated == 5.0
 

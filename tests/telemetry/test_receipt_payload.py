@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
 import pytest
@@ -56,7 +56,7 @@ SYNTHETIC_FIXTURE = FIXTURES_DIR / "synthetic_session.jsonl"
 COMPACT_FIXTURE = FIXTURES_DIR / "compact_session.jsonl"
 CODEX_FIXTURE = FIXTURES_DIR / "codex_session.jsonl"
 
-_BASE_TS = datetime(2026, 6, 1, 10, 0, 0, tzinfo=UTC)
+_BASE_TS = datetime(2026, 6, 1, 10, 0, 0, tzinfo=timezone.utc)
 
 
 # --------------------------------------------------------------------------- #

@@ -62,9 +62,8 @@ class ComposeSpec(FrozenModel):
         description=("Frame type: badge, strip, icon, divider, marquee, stats, chart, matrix, diagram, receipt"),
     )
     frame_id: str = Field(default="", description="Resolved frame identifier")
-    # NOTE: relaxed from GenomeId StrEnum to str in Session 2A+2B so that
-    # --genome-file can load arbitrary genome slugs not in the built-in registry.
-    # GenomeId enum remains valid for internal defaults and type-hinting.
+    # str rather than GenomeId so --genome-file can load arbitrary genome slugs
+    # not in the built-in registry; GenomeId stays valid for internal defaults.
     genome_id: str = Field(
         default_factory=default_genome,
         description="Genome slug (built-in or custom from --genome-file)",

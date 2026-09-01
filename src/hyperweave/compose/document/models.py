@@ -5,17 +5,17 @@ composition. One genome per document (coherence)."""
 
 from __future__ import annotations
 
-from enum import StrEnum
 from typing import Annotated, Any, Literal
 
 from pydantic import Field
 
 from hyperweave.core.base import FrozenModel
 from hyperweave.core.defaults import default_genome
+from hyperweave.core.enums import StringEnum
 from hyperweave.core.models import ComposeSpec  # noqa: TC001  (Pydantic resolves this at runtime)
 
 
-class RenderTarget(StrEnum):
+class RenderTarget(StringEnum):
     """A render target over the plan — same data, same blocks, deterministic."""
 
     SVG = "svg"
@@ -24,7 +24,7 @@ class RenderTarget(StrEnum):
     HTML = "html"  # reserved v0.5 seam — render(doc, "html") raises NotImplementedError
 
 
-class BlockKind(StrEnum):
+class BlockKind(StringEnum):
     ARTIFACT = "artifact"  # a real frame (any L1 frame)
     FLOW = "flow"  # unambiguously the diagram frame embedded
     HEADING = "heading"

@@ -1,16 +1,28 @@
 """Shared enum values used across HyperWeave.
 
-All enums are StrEnum so that ``"badge" == FrameType.BADGE`` holds True,
+All enums are StringEnum so that ``"badge" == FrameType.BADGE`` holds True,
 preserving backward compatibility with YAML configs, Jinja2 templates,
 and existing string comparisons throughout the codebase.
 """
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import Enum
 
 
-class FrameType(StrEnum):
+class StringEnum(str, Enum):
+    """String-valued enum base for every HyperWeave enum.
+
+    Behaviorally identical to ``enum.StrEnum`` (members compare equal to their
+    values, ``str(x)`` and ``format(x)`` yield the bare value); owned by the
+    project so the same class runs on every supported interpreter (3.10+).
+    """
+
+    __str__ = str.__str__
+    __format__ = str.__format__
+
+
+class FrameType(StringEnum):
     """Artifact frame type -- each maps to a distinct Jinja2 template."""
 
     BADGE = "badge"
@@ -25,7 +37,7 @@ class FrameType(StrEnum):
     DIAGRAM = "diagram"
 
 
-class GenomeId(StrEnum):
+class GenomeId(StringEnum):
     """Genome identifier -- maps to a JSON config in data/genomes/."""
 
     BRUTALIST = "brutalist"
@@ -34,7 +46,7 @@ class GenomeId(StrEnum):
     PRIMER = "primer"
 
 
-class ProfileId(StrEnum):
+class ProfileId(StringEnum):
     """Structural profile -- controls typography, geometry, and glyph rendering.
 
     Named on the one axis the contracts differ on: presence of a material/depth
@@ -46,7 +58,7 @@ class ProfileId(StrEnum):
     DIMENSIONAL = "dimensional"
 
 
-class BorderMotionId(StrEnum):
+class BorderMotionId(StringEnum):
     """SMIL border overlay motions for badge/strip frames."""
 
     CHROMATIC_PULSE = "chromatic-pulse"
@@ -56,7 +68,7 @@ class BorderMotionId(StrEnum):
     RIMRUN = "rimrun"
 
 
-class MotionId(StrEnum):
+class MotionId(StringEnum):
     """All motion primitives -- union of static + border.
 
     Use BorderMotionId when the context constrains which system applies.
@@ -73,7 +85,7 @@ class MotionId(StrEnum):
     RIMRUN = "rimrun"
 
 
-class DividerVariant(StrEnum):
+class DividerVariant(StringEnum):
     """Divider variant slug — both editorial generics and genome-themed.
 
     Post-v0.2.19 split:
@@ -98,7 +110,7 @@ class DividerVariant(StrEnum):
     AURA = "aura"  # primer (luminous filament over a blurred aura)
 
 
-class GlyphMode(StrEnum):
+class GlyphMode(StringEnum):
     """Glyph rendering mode -- controls fill/stroke treatment."""
 
     AUTO = "auto"
@@ -107,7 +119,7 @@ class GlyphMode(StrEnum):
     NONE = "none"
 
 
-class Regime(StrEnum):
+class Regime(StringEnum):
     """Policy regime -- controls CIM enforcement and validation strictness."""
 
     NORMAL = "normal"
@@ -115,7 +127,7 @@ class Regime(StrEnum):
     UNGOVERNED = "ungoverned"
 
 
-class ArtifactStatus(StrEnum):
+class ArtifactStatus(StringEnum):
     """Semantic status of an artifact -- drives status indicator color."""
 
     ACTIVE = "active"
@@ -128,7 +140,7 @@ class ArtifactStatus(StrEnum):
     LOOP = "loop"
 
 
-class PlatformId(StrEnum):
+class PlatformId(StringEnum):
     """Target rendering platform -- controls SVG feature compatibility."""
 
     GITHUB_README = "github-readme"
@@ -139,7 +151,7 @@ class PlatformId(StrEnum):
     GMAIL = "gmail"
 
 
-class PolicyLane(StrEnum):
+class PolicyLane(StringEnum):
     """Governance policy lane -- controls artifact trust level."""
 
     UNGOVERNED = "ungoverned"
@@ -149,7 +161,7 @@ class PolicyLane(StrEnum):
     MANUAL = "manual"
 
 
-class ConnectorFailureCause(StrEnum):
+class ConnectorFailureCause(StringEnum):
     """Why a connector fetch failed — threaded to truthful degradation overlays.
 
     A bare 403 without rate-limit evidence is a credential/scope problem, not a

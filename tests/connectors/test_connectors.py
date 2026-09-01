@@ -6,8 +6,9 @@ parsing for all six providers, and the TTL cache.
 
 from __future__ import annotations
 
+import asyncio
 import time
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, ClassVar
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -310,7 +311,7 @@ class TestGitHubProvider:
     def test_format_relative_time_buckets(self) -> None:
         from hyperweave.connectors.github import _format_relative_time
 
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         # Deltas sit safely mid-bucket so sub-second drift can't cross a boundary.
         assert _format_relative_time((now - timedelta(seconds=20)).isoformat()) == "JUST NOW"
         assert _format_relative_time((now - timedelta(hours=3, minutes=20)).isoformat()) == "3H AGO"
@@ -320,7 +321,7 @@ class TestGitHubProvider:
 
     @pytest.mark.asyncio
     async def test_last_push_metric_formats_relative(self) -> None:
-        recent = (datetime.now(UTC) - timedelta(hours=5, minutes=20)).isoformat().replace("+00:00", "Z")
+        recent = (datetime.now(timezone.utc) - timedelta(hours=5, minutes=20)).isoformat().replace("+00:00", "Z")
         with patch(
             "hyperweave.connectors.github.fetch_json",
             new_callable=AsyncMock,
@@ -1179,7 +1180,7 @@ class TestStargazerPagination:
 
         # Now-point uses current UTC, not the 2015 mock date.
         assert result["points"], "expected at least one point"
-        now_year = str(datetime.now(UTC).year)
+        now_year = str(datetime.now(timezone.utc).year)
         assert result["points"][-1]["date"].startswith(now_year)
         # Real star total preserved on the now-point.
         assert result["points"][-1]["count"] == 357_000
@@ -1204,6 +1205,31 @@ class TestStargazerPagination:
         # All requested pages within the actual total-pages range (5).
         assert captured_pages, "expected at least one stargazer fetch"
         assert max(captured_pages) <= 5
+
+    @pytest.mark.asyncio
+    async def test_hanging_fetch_cancelled_at_render_deadline(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """A hung upstream is cancelled in-flight and surfaces as ConnectorError.
+
+        Guards the wall-clock deadline itself: the fetch blocks forever, the
+        deadline fires, the hanging coroutine is actually cancelled (observed
+        via its ``finally``), and the caller gets the deadline-shaped error
+        instead of an open request.
+        """
+        cancelled = asyncio.Event()
+
+        async def hanging_fetch(*_args: Any, **_kwargs: Any) -> Any:
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.set()
+
+        monkeypatch.setattr("hyperweave.connectors.github._fetch_stargazer_history_rest", hanging_fetch)
+        monkeypatch.setattr("hyperweave.connectors.github._RENDER_DEADLINE_S", 0.05)
+        from hyperweave.connectors.github import fetch_stargazer_history
+
+        with pytest.raises(ConnectorError, match="render deadline"):
+            await fetch_stargazer_history("torvalds", "linux")
+        assert cancelled.is_set(), "hanging fetch was not cancelled by the deadline"
 
 
 # =========================================================================
@@ -1475,7 +1501,7 @@ class TestStargazerRESTSampling:
 
         result = await fetch_stargazer_history("owner", "repo")
 
-        now_year = str(datetime.now(UTC).year)
+        now_year = str(datetime.now(timezone.utc).year)
         assert result["points"][-1]["date"].startswith(now_year)
         # Real total preserved on the now-point.
         assert result["points"][-1]["count"] == 500
@@ -1766,7 +1792,7 @@ class TestDoraProvider:
 
     @pytest.mark.asyncio
     async def test_deployments_path_computes_metrics(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         deployments = [
             {
                 "id": 3,
@@ -1822,7 +1848,7 @@ class TestDoraProvider:
 
     @pytest.mark.asyncio
     async def test_fetch_once_shares_aggregate(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         deployments = [
             {
                 "id": 1,
@@ -1854,7 +1880,7 @@ class TestDoraProvider:
 
     @pytest.mark.asyncio
     async def test_actions_fallback_when_no_deployments(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         runs = {
             "workflow_runs": [
                 {
