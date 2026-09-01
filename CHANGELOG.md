@@ -7,66 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Inline genomes validate as hard as built-ins, performance claims derive from what actually animates, and deploys gate on a green, smoke-tested build.
+Custom genomes now work over HTTP, and all entry points share one validator. Performance metadata
+reflects what actually animates, and deploys only ship from a green build.
+
+**Breaking:** partial `--genome-file` files are now rejected, so genomes must be complete and valid.
+`validate-genome` exits 2 (was 1), and specs using `custom_glyph_svg` are rejected.
 
 ### Added
-- **Custom genomes on HTTP:** `genome_override` reaches `POST /v1/compose` alongside the CLI's `--genome-file` and MCP's parameter, all validated at one shared boundary.
-- **Machine-readable refusals:** `validate --json` emits the `{valid, error}` report on pre-parse failures (bad JSON, unknown preset, missing file) instead of prose.
-- **Composed title:** the compose stdout document carries `title` — the artifact's actual name — beside the existing `text` role map.
+- **HTTP genome override:** `genome_override` now works on `POST /v1/compose`, matching the CLI's
+  `--genome-file` and the MCP parameter. All three run the same validation.
+- **JSON validation errors:** `validate --json` returns `{valid, error}` for setup failures such as
+  bad JSON, unknown presets, and missing files.
+- **Title in compose output:** the artifact's name now ships alongside the text roles.
+
+### Security
+- **Markup injection via `genome_override`:** a hostile genome could inject `<script>` and CSS
+  through MCP, HTTP, or direct dispatch. Inline genomes now get full validation, and values are
+  escaped at the CSS and attribute sinks.
+- **Attribute injection via `state` and `size`:** ids, dispatch keys, and policy axes now share one
+  slug grammar, and root SVG attributes are escaped.
 
 ### Changed
-- **Derived performance tier:** every frame's `performance`/`cim-compliant` metadata derives from the properties its rendered motion animates; chrome-paradigm badges, icons, stats, charts, strips, and marquees, animated dividers, and border motions now read `paint-ok`.
-- **Still projections say so:** `svg-static`/`png`/`webp` rewrite the whole motion claim set (`data-hw-motion`, tier, vocabulary, physics, timing, stagger) to describe the stilled file.
-- **Declared metadata units:** `hw:spec` carries `size-units="px"`; `hw:regions` declares `units="user"` plus its viewBox; the `duration-base` attribute is renamed `rhythm-base`.
-- **validate-genome:** runs the same shared boundary as compose and exits 2 on an invalid genome.
-- **CI toolchain:** ty replaces mypy at an exact pin, quality and tests run as split jobs, deploys gate on a green workflow with a smoke-tested package, and release notes draft from merged pull requests.
+- **CI:** `ty` replaces `mypy` at a pinned version, quality and tests run as separate jobs, and
+  release notes draft from merged PRs. Deploys require a green workflow and a smoke-tested package.
+- **Performance tier is measured, not declared:** each frame's `performance` and `cim-compliant`
+  values come from the properties its motion animates. Badges, icons, stats, charts, strips,
+  marquees, animated dividers, and border motions now report `paint-ok`.
+- **Static exports drop motion claims:** `svg-static`, `png`, and `webp` rewrite motion metadata to
+  describe a still image, covering tier, vocabulary, physics, timing, and stagger.
+- **Metadata declares its units:** `hw:spec` carries `size-units="px"`, `hw:regions` declares
+  `units="user"` and its viewBox, and `duration-base` is renamed `rhythm-base`.
+- **`validate-genome`:** now runs the same validator as compose.
 
 ### Fixed
-- **Genome fail-closed validation:** paradigm slugs must satisfy their frame's whole include contract, variant slugs and map keys take the shared grammar, durations must parse finite and positive, motion ids must exist in the registry, and rgb/rgba channels and alpha must be in range.
-- **Effective variants are validated:** a variant override is re-checked as the genome it renders as — typed models for every nested structure, the profile's WCAG pairs, and a refusal for control-plane keys — where overrides were merged after validation and never faced the gate.
-- **Typed chromatic fields:** every colour field on a genome takes a paint grammar from a canonical registry — opaque by default, alpha only on atmospheric surfaces and the documented diagram edge washes, `transparent` only on layers documented to render absent — on base genomes and variant overrides alike, where 73 were unconstrained strings.
-- **Attribute-safe identity fields:** every value that names an id, dispatch key or policy axis takes one slug grammar, and every root SVG attribute is escaped, closing an attribute-injection path through `state` and `size`.
-- **Light-substrate warning amber:** brutalist's 14 light variants declare `#B45309`, clearing the 3:1 floor at 4.06-4.39:1 where the inherited `#F59E0B` measured 1.7-1.9:1.
-- **Contrast is never skipped:** every contract pair is graded — translucent colors composite over a deterministic backdrop and unresolvable ones are refused, where a non-hex color used to bypass the WCAG gate entirely.
-- **Genome markup injection:** a hostile `genome_override` could inject `<script>` and CSS through MCP, HTTP, and direct dispatch; inline genomes now pass full grammar, contract, and battery validation, and genome values are escaped at the CSS and attribute sinks.
+- **Genomes fail closed:** invalid paradigm and variant slugs are rejected, along with non-finite or
+  negative durations, unknown motion ids, and out-of-range rgb/rgba values.
+- **Variant overrides are validated:** they used to merge after validation and skip the gate
+  entirely. They are now re-checked as the genome they render as, including WCAG pairs, with
+  control-plane keys refused.
+- **Color fields are typed:** 73 fields were unconstrained strings and now take a real color
+  grammar — opaque by default, alpha only on atmospheric surfaces and documented diagram edge
+  washes, `transparent` only where a layer is documented to render absent.
+- **Warning amber on light backgrounds:** brutalist's 14 light variants now use `#B45309` at 4.06:1
+  to 4.39:1. The inherited `#F59E0B` measured 1.7:1 to 1.9:1.
+- **Contrast is always checked:** non-hex colors used to bypass the WCAG gate. Translucent colors
+  now composite over a fixed backdrop, and anything unresolvable is refused.
 
 ### Removed
-- **`custom_glyph_svg`:** the field silently dropped user SVG while stamping `data-hw-glyph="custom"`; specs carrying it are now refused as an unknown field.
+- **`custom_glyph_svg`:** it silently discarded your SVG while marking the output
+  `data-hw-glyph="custom"`. Now rejected as an unknown field.
 
 ### Notes
-- Partial `--genome-file` files that passed the old contract-only check are refused until fully lawful; `validate-genome` exits 2 (was 1) on invalid input.
-- The tier flips, unit declarations, and `rhythm-base` rename change metadata bytes on every artifact; no change here moves a rendered pixel. The refreshed `assets/examples/` corpus is a larger diff because it was last generated at 0.4.4 and now carries 0.4.6's shipped geometry and byte repairs as well.
-
-## [0.4.6] - 2026-08-30
-
-The reference diagram gzips 48% lighter, glyph-mark opacity layers are gone, muted wires and inks clear their contrast floors, and adaptive files can flatten to a static light or dark theme.
-
-### Added
-- **Single-theme export:** Flatten an adaptive SVG to a fixed light or dark face at projection time with `project(..., face="light"|"dark")`.
-- **Inspection proofs:** `compose --proof` writes an inspection record plus resting and phi-beat motion frames beside the artifact. `hw doctor` checks raster readiness.
-- **Agent contract & reports:** `discover --agent` prints a digest-stamped machine contract. `--respond report` returns ok, URL, sizes, checks, and the proof from one call.
-- **Intent & machine output:** `--intent` on transform lands in the new artifact's lineage on CLI, HTTP, and MCP. `validate --json` prints the machine-readable report.
-- **Destination profiles:** `destinations.yaml` records where artifacts render (GitHub READMEs, slides, hero images) with dated width citations.
-
-### Changed
-- **48% lighter payloads:** Pinned-feature font subsets, dead-CSS elimination, and one dark-mode block per stylesheet cut the reference diagram from 90 KB to 46 KB gzipped.
-- **Pre-blended marks:** Glyph-mark `opacity="0.9"` group layers become the solid pre-blended `--dna-ink-icon` token, ending offscreen compositing for kind marks.
-- **Single-stroke comets:** One rounded bloom-filtered stroke replaces the 3-layer pulse stack, dropping the loop from 18 pulse paths to 6. The `composite-only` performance tier keeps the bare stroke.
-- **Accessible tree:** Decorative wires and choreography particles carry `aria-hidden="true"`. Multi-line labels merge into single `<text>` elements with `<tspan>` rows.
-- **Typed engine faults:** `PROJECTION_INVALID` and `ENGINE_INVARIANT` return exit 70 and HTTP 500 with an `engine fault:` prefix instead of tracebacks.
-- **Honest metadata:** `contrast-ratio` is the measured minimum over named role pairs, the performance tier derives from what each motion animates, and `data-hw-state` reads `frozen`.
-- **Semantic diffs:** `diff` reports field-level edge deltas for label, kind, relation, and motion. Two-node `pipeline` and `pipeline-vertical` now compose.
-- **Decision holders keep their aspect:** a chip-holder diamond scales along the chassis w/h line until its question and every chip corner sit inside the taper. The 3-chip holder shrinks from 327x170 to 272x141; the unused `--dna-shadow-opacity` token is no longer declared.
-
-### Fixed
-- **Contrast floors:** 37 minimal OKLCH lightness repairs bring muted wires to 3:1 and muted ink to 4.5:1 on both faces of every primer variant.
-- **Static export parsing:** Animation stripping edits byte spans within syntactic scopes and validates after every pass. All 239 malformed projections now parse.
-- **Material bindings:** The root id is stamped on every render, so committed material tokens bind to an element.
-- **Glyph coverage:** Every rendered codepoint is gated against the embedded font subset. Chart callouts and date ranges now embed theirs.
-
-### Notes
-- Engine faults exit 70. `validate` and `diff` output shapes changed. Most diagrams' declared performance tier flips to `paint-ok`.
-- `--proof` and raster export bake the light face; `project()` still refuses an adaptive artifact unless you pass `face`.
+- Metadata changes touch every artifact, but nothing moves a pixel.
+- `assets/examples/` has a large diff. It was last regenerated at 0.4.4, so it now carries 0.4.6's
+  geometry and byte fixes too.
 
 ## [0.4.5] - 2026-08-29
 
