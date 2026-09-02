@@ -1,0 +1,53 @@
+{
+  "id": "lin-01-pipeline-7",
+  "defects": [
+    "LIN-01"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 4 (03-diagram-solver-pipeline); linear.py:291, no width budget",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "pipeline",
+      "title": "Diagram solver pipeline",
+      "nodes": [
+        {
+          "id": "s1",
+          "label": "AST Parse",
+          "desc": "extract grammar trees"
+        },
+        {
+          "id": "s2",
+          "label": "Type Check",
+          "desc": "strict verify"
+        },
+        {
+          "id": "s3",
+          "label": "Constraint Solver",
+          "desc": "solve linear inequalities"
+        },
+        {
+          "id": "s4",
+          "label": "Topology Router",
+          "desc": "route Manhattan paths"
+        },
+        {
+          "id": "s5",
+          "label": "SVG Synthesis",
+          "desc": "emit DOM elements"
+        },
+        {
+          "id": "s6",
+          "label": "Raster Verify",
+          "desc": "snapshot diff check"
+        },
+        {
+          "id": "s7",
+          "label": "Telemetry Sink",
+          "desc": "publish metrics"
+        }
+      ]
+    }
+  }
+}

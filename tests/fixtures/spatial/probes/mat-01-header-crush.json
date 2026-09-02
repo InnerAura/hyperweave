@@ -1,0 +1,125 @@
+{
+  "id": "mat-01-header-crush",
+  "defects": [
+    "MAT-01"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 1, rewritten to legal MatrixSpec grammar; verified live 2026-09-01 (layout.py:683-686,695,738-749)",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "Execution paradigms",
+      "columns": [
+        {
+          "id": "feat",
+          "label": "FEATURE",
+          "role": "label"
+        },
+        {
+          "id": "ast",
+          "label": "EMBEDDED AST SEED",
+          "kind": "chip"
+        },
+        {
+          "id": "turn",
+          "label": "TURN 1 LOOKS GOOD",
+          "kind": "check"
+        },
+        {
+          "id": "safe",
+          "label": "MULTI-TURN SAFE",
+          "kind": "check"
+        },
+        {
+          "id": "env",
+          "label": "SUPPORTED RUNTIME ENVIRONMENTS",
+          "kind": "chip"
+        },
+        {
+          "id": "det",
+          "label": "DETERMINISTIC OUTPUT",
+          "kind": "check"
+        }
+      ],
+      "rows": [
+        {
+          "label": "Deterministic AST pass",
+          "cells": [
+            {
+              "chips": [
+                "Deterministic",
+                "Solver",
+                "JSON Schema"
+              ]
+            },
+            {
+              "state": "full"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "chips": [
+                "Python",
+                "Node"
+              ]
+            },
+            {
+              "state": "full"
+            }
+          ]
+        },
+        {
+          "label": "Stateful tool execution",
+          "cells": [
+            {
+              "chips": [
+                "Sandbox",
+                "Replay"
+              ]
+            },
+            {
+              "state": "partial"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "chips": [
+                "Docker"
+              ]
+            },
+            {
+              "state": "partial"
+            }
+          ]
+        },
+        {
+          "label": "Prompt-only generation",
+          "cells": [
+            {
+              "chips": [
+                "Freeform"
+              ]
+            },
+            {
+              "state": "none"
+            },
+            {
+              "state": "none"
+            },
+            {
+              "chips": [
+                "Any"
+              ]
+            },
+            {
+              "state": "none"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "div-01-variant-widths",
+  "defects": [
+    "DIV-01"
+  ],
+  "surface": "engine-sweep",
+  "source": "compose/resolver.py:2535-2546 variant_dims 700 vs 800; editorial generics are genome-agnostic, themed variants belong to one genome each",
+  "compose": {
+    "type": "divider",
+    "genome_id": "primer"
+  },
+  "sweep": {
+    "items": [
+      {
+        "divider_variant": "block",
+        "genome_id": "primer"
+      },
+      {
+        "divider_variant": "current",
+        "genome_id": "primer"
+      },
+      {
+        "divider_variant": "takeoff",
+        "genome_id": "primer"
+      },
+      {
+        "divider_variant": "void",
+        "genome_id": "primer"
+      },
+      {
+        "divider_variant": "zeropoint",
+        "genome_id": "primer"
+      },
+      {
+        "divider_variant": "aura",
+        "genome_id": "primer"
+      },
+      {
+        "divider_variant": "dissolve",
+        "genome_id": "automata"
+      },
+      {
+        "divider_variant": "band",
+        "genome_id": "chrome"
+      },
+      {
+        "divider_variant": "seam",
+        "genome_id": "brutalist"
+      },
+      {
+        "divider_variant": "sigil",
+        "genome_id": "brutalist"
+      }
+    ]
+  }
+}

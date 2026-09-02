@@ -1,0 +1,57 @@
+{
+  "id": "stk-04-downward-bypass",
+  "defects": [
+    "STK-02",
+    "STK-04"
+  ],
+  "surface": "cli",
+  "source": "explorer probe 2026-09-01: downward-authored stack risers span both endpoint cards (linear.py:372-376); bypass pierces intermediates",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "pipeline",
+      "orientation": "vertical",
+      "title": "Stack",
+      "nodes": [
+        {
+          "id": "crown",
+          "label": "Synthesized Target Model",
+          "role": "hero"
+        },
+        {
+          "id": "l1",
+          "label": "Schema Normalizer"
+        },
+        {
+          "id": "l2",
+          "label": "AST Transformer"
+        },
+        {
+          "id": "l3",
+          "label": "Source Lexer"
+        }
+      ],
+      "edges": [
+        {
+          "source": "crown",
+          "target": "l1"
+        },
+        {
+          "source": "l1",
+          "target": "l2"
+        },
+        {
+          "source": "l2",
+          "target": "l3"
+        },
+        {
+          "source": "l3",
+          "target": "crown",
+          "relation": "bypass",
+          "label": "direct"
+        }
+      ]
+    }
+  }
+}

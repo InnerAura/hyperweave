@@ -1,0 +1,14 @@
+{
+  "id": "rec-fixture-session",
+  "defects": [
+    "REC-02",
+    "REC-03"
+  ],
+  "surface": "cli-receipt",
+  "source": "receipt_sections.py:1170,1198-1199,988-999 — measured on the shipped fixture session (no long-name authoring surface exists)",
+  "compose": {
+    "type": "receipt",
+    "genome_id": "primer",
+    "session": "tests/fixtures/session.jsonl"
+  }
+}

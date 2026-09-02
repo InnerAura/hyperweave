@@ -1,0 +1,77 @@
+{
+  "id": "seq-cap-5-lifelines",
+  "defects": [
+    "SEQ-CAP"
+  ],
+  "surface": "cli",
+  "expect_refusal": true,
+  "source": "census 2026-08-30: 5 lifelines / 6 messages is the demand median-max; diagram-frame.yaml sequence {min: 2, max: 4}",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "sequence",
+      "title": "Five lifelines",
+      "nodes": [
+        {
+          "id": "p0",
+          "label": "Party 0"
+        },
+        {
+          "id": "p1",
+          "label": "Party 1"
+        },
+        {
+          "id": "p2",
+          "label": "Party 2"
+        },
+        {
+          "id": "p3",
+          "label": "Party 3"
+        },
+        {
+          "id": "p4",
+          "label": "Party 4"
+        }
+      ],
+      "edges": [
+        {
+          "source": "p0",
+          "target": "p1",
+          "label": "msg 0",
+          "kind": "call"
+        },
+        {
+          "source": "p1",
+          "target": "p2",
+          "label": "msg 1",
+          "kind": "call"
+        },
+        {
+          "source": "p2",
+          "target": "p3",
+          "label": "msg 2",
+          "kind": "call"
+        },
+        {
+          "source": "p3",
+          "target": "p4",
+          "label": "msg 3",
+          "kind": "call"
+        },
+        {
+          "source": "p4",
+          "target": "p0",
+          "label": "done",
+          "kind": "return"
+        },
+        {
+          "source": "p0",
+          "target": "p2",
+          "label": "ack",
+          "kind": "call"
+        }
+      ]
+    }
+  }
+}

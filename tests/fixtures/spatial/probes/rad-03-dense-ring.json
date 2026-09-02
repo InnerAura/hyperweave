@@ -1,0 +1,100 @@
+{
+  "id": "rad-03-dense-ring",
+  "defects": [
+    "RAD-01",
+    "RAD-02",
+    "RAD-03"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 9 within fanout-radial cap 9; radial.py:98-152,164-166,208-236",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "fanout",
+      "orientation": "radial",
+      "title": "Telemetry dispatcher",
+      "nodes": [
+        {
+          "id": "hub",
+          "label": "Central Telemetry Dispatcher Engine",
+          "role": "hero"
+        },
+        {
+          "id": "s0",
+          "label": "Long Description Satellite Service Worker"
+        },
+        {
+          "id": "s1",
+          "label": "Compact"
+        },
+        {
+          "id": "s2",
+          "label": "Medium Satellite Node"
+        },
+        {
+          "id": "s3",
+          "label": "Another Long Titled Satellite Service"
+        },
+        {
+          "id": "s4",
+          "label": "Audit"
+        },
+        {
+          "id": "s5",
+          "label": "Stream Events"
+        },
+        {
+          "id": "s6",
+          "label": "Sync"
+        },
+        {
+          "id": "s7",
+          "label": "Poll"
+        }
+      ],
+      "edges": [
+        {
+          "source": "hub",
+          "target": "s0",
+          "label": "op_0()"
+        },
+        {
+          "source": "hub",
+          "target": "s1",
+          "label": "op_1()"
+        },
+        {
+          "source": "hub",
+          "target": "s2",
+          "label": "op_2()"
+        },
+        {
+          "source": "hub",
+          "target": "s3",
+          "label": "op_3()"
+        },
+        {
+          "source": "hub",
+          "target": "s4",
+          "label": "op_4()"
+        },
+        {
+          "source": "hub",
+          "target": "s5",
+          "label": "op_5()"
+        },
+        {
+          "source": "hub",
+          "target": "s6",
+          "label": "op_6()"
+        },
+        {
+          "source": "hub",
+          "target": "s7",
+          "label": "op_7()"
+        }
+      ]
+    }
+  }
+}

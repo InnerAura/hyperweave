@@ -1,0 +1,14 @@
+{
+  "id": "stp-01-long-identity",
+  "defects": [
+    "STP-01"
+  ],
+  "surface": "engine",
+  "source": "compose/strip/layout.py:1277,1294 floor only",
+  "compose": {
+    "type": "strip",
+    "genome_id": "primer",
+    "title": "ALPHA BETA GAMMA DELTA EPSILON ZETA ETA THETA IOTA KAPPA LAMBDA MU ALPHA BETA GA",
+    "value": "READY"
+  }
+}

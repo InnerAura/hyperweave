@@ -1,0 +1,94 @@
+{
+  "id": "lan-01-header-badge-skip",
+  "defects": [
+    "LAN-01",
+    "LAN-02",
+    "LAN-03"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 3 (05-target-state-architecture-v2), legal lanes grammar; lanes.py:160-163,463-483",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "lanes",
+      "title": "Target state",
+      "lanes": [
+        "Agent Swarms & Streaming",
+        "Continuous Geometry Core",
+        "Projection & Steering"
+      ],
+      "nodes": [
+        {
+          "id": "agents",
+          "label": "Autonomous Swarms",
+          "desc": "planner, coders, auditors",
+          "category": "Agent Swarms & Streaming"
+        },
+        {
+          "id": "hwc",
+          "label": "hwc Bytecode Parser",
+          "desc": "spatial thinking tokens",
+          "category": "Agent Swarms & Streaming"
+        },
+        {
+          "id": "stream",
+          "label": "Delta-Weave SSE",
+          "desc": "sub-element state stream",
+          "category": "Agent Swarms & Streaming"
+        },
+        {
+          "id": "rust",
+          "label": "Rust/WASM Continuous Geometry Solver",
+          "desc": "simplex constraint propagation",
+          "category": "Continuous Geometry Core"
+        },
+        {
+          "id": "gov",
+          "label": "Aspect Governor",
+          "desc": "auto-folds 1D chains",
+          "category": "Continuous Geometry Core"
+        },
+        {
+          "id": "canvas",
+          "label": "Living SVG Canvas",
+          "desc": "multi-beat timelines",
+          "category": "Projection & Steering"
+        },
+        {
+          "id": "steer",
+          "label": "Human Steering Gate",
+          "desc": "zero-JS intent anchors",
+          "category": "Projection & Steering"
+        }
+      ],
+      "edges": [
+        {
+          "source": "agents",
+          "target": "stream",
+          "label": "runtime updates"
+        },
+        {
+          "source": "agents",
+          "target": "rust",
+          "label": "tokens"
+        },
+        {
+          "source": "rust",
+          "target": "gov",
+          "label": "geometry"
+        },
+        {
+          "source": "gov",
+          "target": "canvas",
+          "label": "compiles"
+        },
+        {
+          "source": "stream",
+          "target": "steer",
+          "label": "steers intent"
+        }
+      ]
+    }
+  }
+}

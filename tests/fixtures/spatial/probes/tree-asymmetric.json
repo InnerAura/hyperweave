@@ -1,0 +1,74 @@
+{
+  "id": "tree-asymmetric",
+  "defects": [
+    "TREE-01",
+    "TREE-02"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 12 (documented laws at linear.py:498-502,623-645) — recorded for the corpus, not a defect claim",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "tree",
+      "title": "Root orchestrator",
+      "nodes": [
+        {
+          "id": "root",
+          "label": "Root Orchestrator",
+          "role": "hero"
+        },
+        {
+          "id": "b1",
+          "label": "Single Child Branch with Very Long Label"
+        },
+        {
+          "id": "b2",
+          "label": "Dense Branch"
+        },
+        {
+          "id": "c1",
+          "label": "Leaf 1"
+        },
+        {
+          "id": "c2",
+          "label": "Leaf 2"
+        },
+        {
+          "id": "c3",
+          "label": "Leaf 3"
+        },
+        {
+          "id": "c4",
+          "label": "Leaf 4"
+        }
+      ],
+      "edges": [
+        {
+          "source": "root",
+          "target": "b1"
+        },
+        {
+          "source": "root",
+          "target": "b2"
+        },
+        {
+          "source": "b2",
+          "target": "c1"
+        },
+        {
+          "source": "b2",
+          "target": "c2"
+        },
+        {
+          "source": "b2",
+          "target": "c3"
+        },
+        {
+          "source": "b2",
+          "target": "c4"
+        }
+      ]
+    }
+  }
+}

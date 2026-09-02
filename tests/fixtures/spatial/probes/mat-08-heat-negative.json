@@ -1,0 +1,211 @@
+{
+  "id": "mat-08-heat-negative",
+  "defects": [
+    "MAT-08"
+  ],
+  "surface": "cli",
+  "source": "DEEP_SPATIAL_SWARM_AUDIT D8; cells.py:694,701,711 — eleven chip columns + one heat numeric",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "Heat under pressure",
+      "columns": [
+        {
+          "id": "m",
+          "label": "MODEL",
+          "role": "label"
+        },
+        {
+          "id": "c0",
+          "label": "C0",
+          "kind": "chip"
+        },
+        {
+          "id": "c1",
+          "label": "C1",
+          "kind": "chip"
+        },
+        {
+          "id": "c2",
+          "label": "C2",
+          "kind": "chip"
+        },
+        {
+          "id": "c3",
+          "label": "C3",
+          "kind": "chip"
+        },
+        {
+          "id": "c4",
+          "label": "C4",
+          "kind": "chip"
+        },
+        {
+          "id": "c5",
+          "label": "C5",
+          "kind": "chip"
+        },
+        {
+          "id": "c6",
+          "label": "C6",
+          "kind": "chip"
+        },
+        {
+          "id": "c7",
+          "label": "C7",
+          "kind": "chip"
+        },
+        {
+          "id": "c8",
+          "label": "C8",
+          "kind": "chip"
+        },
+        {
+          "id": "c9",
+          "label": "C9",
+          "kind": "chip"
+        },
+        {
+          "id": "c10",
+          "label": "C10",
+          "kind": "chip"
+        },
+        {
+          "id": "score",
+          "label": "SCORE",
+          "kind": "numeric",
+          "polarity": "higher"
+        }
+      ],
+      "rows": [
+        {
+          "label": "A",
+          "cells": [
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "chips": [
+                "x"
+              ]
+            },
+            {
+              "value": 91.2
+            }
+          ]
+        },
+        {
+          "label": "B",
+          "cells": [
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "chips": [
+                "y"
+              ]
+            },
+            {
+              "value": 42.0
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

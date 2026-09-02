@@ -1,0 +1,64 @@
+{
+  "id": "seq-03-long-label-selfcall",
+  "defects": [
+    "SEQ-02",
+    "SEQ-03",
+    "SEQ-04"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 6, within the 4-lifeline cap; sequence.py:73-78,136-140,204-211",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "sequence",
+      "title": "Auth sequence",
+      "nodes": [
+        {
+          "id": "client",
+          "label": "Client App"
+        },
+        {
+          "id": "auth",
+          "label": "Auth Service"
+        },
+        {
+          "id": "db",
+          "label": "User Store"
+        }
+      ],
+      "edges": [
+        {
+          "source": "client",
+          "target": "auth",
+          "label": "POST /oauth/token (grant_type=authorization_code)",
+          "kind": "call"
+        },
+        {
+          "source": "auth",
+          "target": "auth",
+          "label": "validate_pkce_challenge()",
+          "kind": "call"
+        },
+        {
+          "source": "auth",
+          "target": "db",
+          "label": "fetch_user()",
+          "kind": "call"
+        },
+        {
+          "source": "db",
+          "target": "auth",
+          "label": "user_record",
+          "kind": "return"
+        },
+        {
+          "source": "auth",
+          "target": "client",
+          "label": "jwt_bearer_token",
+          "kind": "return"
+        }
+      ]
+    }
+  }
+}

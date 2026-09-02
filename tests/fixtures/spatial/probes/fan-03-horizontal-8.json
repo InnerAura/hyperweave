@@ -1,0 +1,90 @@
+{
+  "id": "fan-03-horizontal-8",
+  "defects": [
+    "FAN-03"
+  ],
+  "surface": "cli",
+  "source": "DEEP_SPATIAL_SWARM_AUDIT FAN-3 (paths.py:38-41 mid-x controls); 8 dests within fanout-horizontal cap 9",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "fanout",
+      "orientation": "horizontal",
+      "title": "Dispatcher",
+      "nodes": [
+        {
+          "id": "hub",
+          "label": "Core Dispatcher",
+          "role": "hero"
+        },
+        {
+          "id": "w0",
+          "label": "Worker 0"
+        },
+        {
+          "id": "w1",
+          "label": "Worker 1"
+        },
+        {
+          "id": "w2",
+          "label": "Worker 2"
+        },
+        {
+          "id": "w3",
+          "label": "Worker 3"
+        },
+        {
+          "id": "w4",
+          "label": "Worker 4"
+        },
+        {
+          "id": "w5",
+          "label": "Worker 5"
+        },
+        {
+          "id": "w6",
+          "label": "Worker 6"
+        },
+        {
+          "id": "w7",
+          "label": "Worker 7"
+        }
+      ],
+      "edges": [
+        {
+          "source": "hub",
+          "target": "w0"
+        },
+        {
+          "source": "hub",
+          "target": "w1"
+        },
+        {
+          "source": "hub",
+          "target": "w2"
+        },
+        {
+          "source": "hub",
+          "target": "w3"
+        },
+        {
+          "source": "hub",
+          "target": "w4"
+        },
+        {
+          "source": "hub",
+          "target": "w5"
+        },
+        {
+          "source": "hub",
+          "target": "w6"
+        },
+        {
+          "source": "hub",
+          "target": "w7"
+        }
+      ]
+    }
+  }
+}

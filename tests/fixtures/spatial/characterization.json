@@ -1,0 +1,737 @@
+{
+  "schema": "spatial-characterization/1",
+  "recorded": "2026-09-01",
+  "note": "Present-state measurements of the spatial probe corpus. Not a statement of lawfulness; each family repair flips its slice and re-records.",
+  "probes": {
+    "bdg-01-long-label": {
+      "defects": [
+        "BDG-01"
+      ],
+      "surface": "engine",
+      "measured": {
+        "refused": false,
+        "width": 553,
+        "height": 20,
+        "warnings": 0,
+        "diagnostics": [],
+        "viewbox_w": 552.7,
+        "viewbox_h": 20.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0
+      }
+    },
+    "cht-01-ticks": {
+      "defects": [
+        "CHT-01"
+      ],
+      "surface": "unit",
+      "measured": {
+        "refused": false,
+        "result": [
+          "0",
+          "20000K",
+          "40000K",
+          "60000K"
+        ]
+      }
+    },
+    "div-01-variant-widths": {
+      "defects": [
+        "DIV-01"
+      ],
+      "surface": "engine-sweep",
+      "measured": {
+        "refused": false,
+        "widths": {
+          "block": 700,
+          "current": 700,
+          "takeoff": 700,
+          "void": 700,
+          "zeropoint": 700,
+          "aura": 800,
+          "dissolve": 800,
+          "band": 800,
+          "seam": 800,
+          "sigil": 800
+        }
+      }
+    },
+    "fan-03-horizontal-8": {
+      "defects": [
+        "FAN-03"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 920.0,
+        "viewbox_h": 1011.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "layout_slug": "fanout-horizontal",
+          "width": 920,
+          "height": 1011,
+          "display_w": 740,
+          "nodes": 9,
+          "connectors": 8,
+          "scale_at_github_readme_max": 0.911,
+          "truncated_texts": 0,
+          "wires_through_cards": [],
+          "endpoint_penetration_max": 0.0
+        }
+      }
+    },
+    "hub-01-hero-desc": {
+      "defects": [
+        "HUB-01",
+        "HUB-02"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 1224.0,
+        "viewbox_h": 889.0,
+        "ellipses": 4,
+        "wire_card_crossings": 0,
+        "layout": {
+          "layout_slug": "hub",
+          "width": 1224,
+          "height": 889,
+          "display_w": 740,
+          "nodes": 5,
+          "connectors": 4,
+          "scale_at_github_readme_max": 0.685,
+          "truncated_texts": 4,
+          "wires_through_cards": [],
+          "endpoint_penetration_max": 0.0
+        }
+      }
+    },
+    "lan-01-header-badge-skip": {
+      "defects": [
+        "LAN-01",
+        "LAN-02",
+        "LAN-03"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 1,
+        "viewbox_w": 895.0,
+        "viewbox_h": 493.0,
+        "ellipses": 2,
+        "wire_card_crossings": 1,
+        "layout": {
+          "layout_slug": "lanes",
+          "width": 895,
+          "height": 493,
+          "display_w": 720,
+          "nodes": 7,
+          "connectors": 5,
+          "scale_at_github_readme_max": 0.936,
+          "truncated_texts": 2,
+          "wires_through_cards": [
+            {
+              "connector": 0,
+              "node": "hwc",
+              "inside_px": 65.1
+            }
+          ],
+          "endpoint_penetration_max": 0.0,
+          "lane_bands": [
+            {
+              "band": "AGENT SWARMS & STREAMING",
+              "band_w": 208,
+              "header_ink": 234.7,
+              "overlap_px": 31.5
+            },
+            {
+              "band": "CONTINUOUS GEOMETRY CORE",
+              "band_w": 244.0,
+              "header_ink": 237.7,
+              "overlap_px": -1.5
+            },
+            {
+              "band": "PROJECTION & STEERING",
+              "band_w": 206,
+              "header_ink": 189.3,
+              "overlap_px": -11.9
+            }
+          ]
+        }
+      }
+    },
+    "lin-01-pipeline-7": {
+      "defects": [
+        "LIN-01"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 1864.0,
+        "viewbox_h": 187.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "layout_slug": "pipeline",
+          "width": 1864,
+          "height": 187,
+          "display_w": 740,
+          "nodes": 7,
+          "connectors": 6,
+          "scale_at_github_readme_max": 0.45,
+          "truncated_texts": 0,
+          "wires_through_cards": [],
+          "endpoint_penetration_max": 0.0
+        }
+      }
+    },
+    "mat-01-header-crush": {
+      "defects": [
+        "MAT-01"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 327.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 327,
+          "col_w": [
+            167.6,
+            102.4,
+            102.4,
+            167.6,
+            102.4
+          ],
+          "header_overruns": [
+            -101.8,
+            24.6,
+            24.6,
+            -52.8,
+            104.2
+          ],
+          "title_size": 29.0,
+          "title_end_x": 382.9,
+          "content_right": 866.0,
+          "title_overrun": -483.1,
+          "title_vs_headline": 0.0,
+          "label_w": 189.6,
+          "label_need": 189.6,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_cells": 0,
+          "axis_right": 0.0,
+          "track_right": 0.0,
+          "shift": 0.0
+        }
+      }
+    },
+    "mat-02-label-slack": {
+      "defects": [
+        "MAT-02"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 731.0,
+        "viewbox_h": 290.0,
+        "ellipses": 1,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 731,
+          "height": 290,
+          "col_w": [
+            110.1,
+            110.1,
+            110.1
+          ],
+          "header_overruns": [
+            -25.9,
+            -74.8,
+            -44.2
+          ],
+          "title_size": 29.0,
+          "title_end_x": 229.6,
+          "content_right": 697.0,
+          "title_overrun": -467.4,
+          "title_vs_headline": 0.0,
+          "label_w": 332.8,
+          "label_need": 420.0,
+          "truncated_labels": 1,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_cells": 0,
+          "axis_right": 0.0,
+          "track_right": 0.0,
+          "shift": 0.0
+        }
+      }
+    },
+    "mat-03-title-headline": {
+      "defects": [
+        "MAT-03",
+        "MAT-04"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 231.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 231,
+          "col_w": [
+            346.0,
+            346.0
+          ],
+          "header_overruns": [
+            -249.6,
+            -286.3
+          ],
+          "title_size": 29.0,
+          "title_end_x": 1096.0,
+          "content_right": 866.0,
+          "title_overrun": 230.0,
+          "title_vs_headline": 443.1,
+          "label_w": 140.0,
+          "label_need": 124.8,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_cells": 0,
+          "axis_right": 0.0,
+          "track_right": 0.0,
+          "shift": 0.0
+        }
+      }
+    },
+    "mat-05-summary-label": {
+      "defects": [
+        "MAT-05"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 600.0,
+        "viewbox_h": 351.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 600,
+          "height": 351,
+          "col_w": [
+            130.7,
+            130.7,
+            130.7
+          ],
+          "header_overruns": [
+            -46.5,
+            -89.3,
+            -89.3
+          ],
+          "title_size": 27.5,
+          "title_end_x": 345.9,
+          "content_right": 566.0,
+          "title_overrun": -220.1,
+          "title_vs_headline": 0.0,
+          "label_w": 140.0,
+          "label_need": 124.8,
+          "truncated_labels": 0,
+          "summary_label_overrun": 110.8,
+          "negative_rects": 0,
+          "truncated_cells": 0,
+          "axis_right": 0.0,
+          "track_right": 0.0,
+          "shift": 0.0
+        }
+      }
+    },
+    "mat-07-bar-axis": {
+      "defects": [
+        "MAT-07"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 301.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 301,
+          "col_w": [
+            692.0
+          ],
+          "header_overruns": [
+            -644.5
+          ],
+          "title_size": 29.0,
+          "title_end_x": 297.4,
+          "content_right": 866.0,
+          "title_overrun": -568.6,
+          "title_vs_headline": 0.0,
+          "label_w": 140.0,
+          "label_need": 110.4,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_cells": 0,
+          "axis_right": 643.1,
+          "track_right": 806.5,
+          "shift": 163.4
+        }
+      }
+    },
+    "mat-08-heat-negative": {
+      "defects": [
+        "MAT-08"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 219.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 219,
+          "col_w": [
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            59.6,
+            36.4
+          ],
+          "header_overruns": [
+            -6.0,
+            -24.4,
+            -24.4,
+            -24.4,
+            -24.4,
+            -24.4,
+            -24.4,
+            -24.4,
+            -24.4,
+            -24.4,
+            -24.4,
+            4.9
+          ],
+          "title_size": 29.0,
+          "title_end_x": 370.8,
+          "content_right": 866.0,
+          "title_overrun": -495.2,
+          "title_vs_headline": 0.0,
+          "label_w": 140.0,
+          "label_need": 31.2,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 2,
+          "truncated_cells": 0,
+          "axis_right": 0.0,
+          "track_right": 0.0,
+          "shift": 0.0
+        }
+      }
+    },
+    "rad-03-dense-ring": {
+      "defects": [
+        "RAD-01",
+        "RAD-02",
+        "RAD-03"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 1422.0,
+        "viewbox_h": 1229.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "layout_slug": "fanout-radial",
+          "width": 1422,
+          "height": 1229,
+          "display_w": 740,
+          "nodes": 9,
+          "connectors": 8,
+          "scale_at_github_readme_max": 0.589,
+          "truncated_texts": 0,
+          "wires_through_cards": [],
+          "endpoint_penetration_max": 165.5
+        }
+      }
+    },
+    "rec-fixture-session": {
+      "defects": [
+        "REC-02",
+        "REC-03"
+      ],
+      "surface": "cli-receipt",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_honored": false,
+        "viewbox_w": 800.0,
+        "viewbox_h": 578.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0
+      }
+    },
+    "seq-03-long-label-selfcall": {
+      "defects": [
+        "SEQ-02",
+        "SEQ-03",
+        "SEQ-04"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [
+          "margin-band"
+        ],
+        "warnings": 0,
+        "viewbox_w": 825.0,
+        "viewbox_h": 529.0,
+        "ellipses": 1,
+        "wire_card_crossings": 0,
+        "layout": {
+          "layout_slug": "sequence",
+          "width": 825,
+          "height": 529,
+          "display_w": 582,
+          "nodes": 3,
+          "connectors": 5,
+          "scale_at_github_readme_max": 1.0,
+          "truncated_texts": 1,
+          "wires_through_cards": [],
+          "endpoint_penetration_max": 0.0
+        }
+      }
+    },
+    "seq-cap-5-lifelines": {
+      "defects": [
+        "SEQ-CAP"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": true,
+        "exit_code": 2,
+        "message": "Error: sequence caps at 4 nodes (got 5); split the diagram"
+      }
+    },
+    "sm-02-nested-returns": {
+      "defects": [
+        "SM-02",
+        "SM-04"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 640.0,
+        "viewbox_h": 349.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "layout_slug": "state-machine",
+          "width": 640,
+          "height": 349,
+          "display_w": 515,
+          "nodes": 6,
+          "connectors": 7,
+          "scale_at_github_readme_max": 1.0,
+          "truncated_texts": 0,
+          "wires_through_cards": [],
+          "endpoint_penetration_max": 0.0
+        }
+      }
+    },
+    "sta-01-brutalist-bio": {
+      "defects": [
+        "STA-01",
+        "STA-03",
+        "STA-04"
+      ],
+      "surface": "engine",
+      "measured": {
+        "refused": false,
+        "width": 495,
+        "height": 280,
+        "warnings": 0,
+        "diagnostics": [],
+        "viewbox_w": 495.0,
+        "viewbox_h": 280.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0
+      }
+    },
+    "sta-02-primer-editorial-bio": {
+      "defects": [
+        "STA-02"
+      ],
+      "surface": "engine",
+      "measured": {
+        "refused": false,
+        "width": 480,
+        "height": 210,
+        "warnings": 0,
+        "diagnostics": [],
+        "viewbox_w": 480.0,
+        "viewbox_h": 210.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0
+      }
+    },
+    "stk-04-downward-bypass": {
+      "defects": [
+        "STK-02",
+        "STK-04"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 612.0,
+        "ellipses": 0,
+        "wire_card_crossings": 2,
+        "layout": {
+          "layout_slug": "pipeline-vertical",
+          "width": 900,
+          "height": 612,
+          "display_w": 724,
+          "nodes": 4,
+          "connectors": 4,
+          "scale_at_github_readme_max": 0.931,
+          "truncated_texts": 0,
+          "wires_through_cards": [
+            {
+              "connector": 3,
+              "node": "l1",
+              "inside_px": 63.0
+            },
+            {
+              "connector": 3,
+              "node": "l2",
+              "inside_px": 63.0
+            }
+          ],
+          "endpoint_penetration_max": 66.3
+        }
+      }
+    },
+    "stp-01-long-identity": {
+      "defects": [
+        "STP-01"
+      ],
+      "surface": "engine",
+      "measured": {
+        "refused": false,
+        "width": 816,
+        "height": 46,
+        "warnings": 0,
+        "diagnostics": [],
+        "viewbox_w": 816.0,
+        "viewbox_h": 46.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0
+      }
+    },
+    "tree-asymmetric": {
+      "defects": [
+        "TREE-01",
+        "TREE-02"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 1242.0,
+        "viewbox_h": 621.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "layout_slug": "tree",
+          "width": 1242,
+          "height": 621,
+          "display_w": 740,
+          "nodes": 7,
+          "connectors": 6,
+          "scale_at_github_readme_max": 0.675,
+          "truncated_texts": 0,
+          "wires_through_cards": [],
+          "endpoint_penetration_max": 0.0
+        }
+      }
+    }
+  }
+}

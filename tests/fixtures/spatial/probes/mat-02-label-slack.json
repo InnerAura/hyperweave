@@ -1,0 +1,82 @@
+{
+  "id": "mat-02-label-slack",
+  "defects": [
+    "MAT-02"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe (08-hyperweave-capabilities-matrix); layout.py:136-139 ratio cap off ceiling_avail",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "variant": "porcelain",
+    "matrix": {
+      "title": "Capabilities",
+      "columns": [
+        {
+          "id": "cap",
+          "label": "CAPABILITY",
+          "role": "label"
+        },
+        {
+          "id": "hw",
+          "label": "HW",
+          "kind": "check"
+        },
+        {
+          "id": "mm",
+          "label": "MERMAID",
+          "kind": "check"
+        },
+        {
+          "id": "d2",
+          "label": "D2",
+          "kind": "check"
+        }
+      ],
+      "rows": [
+        {
+          "label": "Receipt (telemetry tracking) with a very long qualifier",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "state": "none"
+            },
+            {
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "Verify",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "state": "none"
+            },
+            {
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "Transform",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "state": "none"
+            },
+            {
+              "state": "partial"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

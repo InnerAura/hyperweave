@@ -1,0 +1,61 @@
+{
+  "id": "mat-03-title-headline",
+  "defects": [
+    "MAT-03",
+    "MAT-04"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 2 (10-agent-experience-slide); layout.py:158,185-186,223-227",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "Realtime autonomous agent fleet telemetry and orchestration",
+      "headline": {
+        "value": "99.98%",
+        "label": "System availability SLA"
+      },
+      "columns": [
+        {
+          "id": "node",
+          "label": "COMPUTE NODE",
+          "role": "label"
+        },
+        {
+          "id": "stat",
+          "label": "HEALTH",
+          "kind": "check"
+        },
+        {
+          "id": "reg",
+          "label": "REGION",
+          "kind": "text"
+        }
+      ],
+      "rows": [
+        {
+          "label": "Worker node 01",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "value": "us-east"
+            }
+          ]
+        },
+        {
+          "label": "Worker node 02",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "value": "eu-west"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

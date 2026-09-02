@@ -1,0 +1,53 @@
+{
+  "id": "mat-07-bar-axis",
+  "defects": [
+    "MAT-07"
+  ],
+  "surface": "cli",
+  "source": "DEEP_SPATIAL_SWARM_AUDIT D7; layout.py:1191,1197 vs cells.py:549",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "Tokens per tool",
+      "columns": [
+        {
+          "id": "tool",
+          "label": "TOOL",
+          "role": "label"
+        },
+        {
+          "id": "tok",
+          "label": "TOKENS",
+          "kind": "bar"
+        }
+      ],
+      "rows": [
+        {
+          "label": "parse_schema",
+          "cells": [
+            {
+              "value": 3420
+            }
+          ]
+        },
+        {
+          "label": "execute",
+          "cells": [
+            {
+              "value": 1800
+            }
+          ]
+        },
+        {
+          "label": "migrate",
+          "cells": [
+            {
+              "value": 640
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

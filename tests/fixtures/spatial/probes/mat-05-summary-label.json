@@ -1,0 +1,93 @@
+{
+  "id": "mat-05-summary-label",
+  "defects": [
+    "MAT-05"
+  ],
+  "surface": "cli",
+  "source": "DEEP_SPATIAL_SWARM_AUDIT D5; layout.py:131-135,429-436",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "Format comparison",
+      "summary_label": "OVERALL SUITABILITY SCORE ACROSS TOOLCHAIN",
+      "columns": [
+        {
+          "id": "cap",
+          "label": "CAPABILITY",
+          "role": "label"
+        },
+        {
+          "id": "svg",
+          "label": "SVG",
+          "kind": "check"
+        },
+        {
+          "id": "png",
+          "label": "PNG",
+          "kind": "check"
+        },
+        {
+          "id": "md",
+          "label": "MD",
+          "kind": "check"
+        }
+      ],
+      "rows": [
+        {
+          "label": "Renders",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "state": "full"
+            }
+          ]
+        },
+        {
+          "label": "Self-contained",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "Editable",
+          "cells": [
+            {
+              "state": "full"
+            },
+            {
+              "state": "none"
+            },
+            {
+              "state": "partial"
+            }
+          ]
+        }
+      ],
+      "summary_row": [
+        {
+          "value": "9/10"
+        },
+        {
+          "value": "6/10"
+        },
+        {
+          "value": "4/10"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "sm-02-nested-returns",
+  "defects": [
+    "SM-02",
+    "SM-04"
+  ],
+  "surface": "cli",
+  "source": "DEEP_SPATIAL_SWARM_AUDIT SM-2/SM-4 (graph.py:3723 nest 24 vs CHIP_H 26; :3441-3450 per-anchor pitch)",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "state-machine",
+      "title": "Review lifecycle",
+      "nodes": [
+        {
+          "id": "draft",
+          "label": "Draft"
+        },
+        {
+          "id": "review",
+          "label": "In Review"
+        },
+        {
+          "id": "approved",
+          "label": "Approved"
+        },
+        {
+          "id": "shipped",
+          "label": "Shipped",
+          "role": "hero"
+        },
+        {
+          "id": "rejected",
+          "label": "Rejected"
+        },
+        {
+          "id": "stale",
+          "label": "Stale"
+        }
+      ],
+      "edges": [
+        {
+          "source": "draft",
+          "target": "review",
+          "label": "submit"
+        },
+        {
+          "source": "review",
+          "target": "approved",
+          "label": "accept"
+        },
+        {
+          "source": "approved",
+          "target": "shipped",
+          "label": "release"
+        },
+        {
+          "source": "review",
+          "target": "rejected",
+          "label": "reject"
+        },
+        {
+          "source": "approved",
+          "target": "stale",
+          "label": "expire"
+        },
+        {
+          "source": "rejected",
+          "target": "draft",
+          "label": "retry"
+        },
+        {
+          "source": "approved",
+          "target": "draft",
+          "label": "revise"
+        }
+      ]
+    }
+  }
+}

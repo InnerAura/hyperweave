@@ -1,0 +1,14 @@
+{
+  "id": "cht-01-ticks",
+  "defects": [
+    "CHT-01"
+  ],
+  "surface": "unit",
+  "source": "render/chart_engine.py:921-931 K-only formatting",
+  "unit": {
+    "fn": "chart_ticks",
+    "args": [
+      42000000
+    ]
+  }
+}

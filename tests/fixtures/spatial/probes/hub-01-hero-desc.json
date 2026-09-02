@@ -1,0 +1,67 @@
+{
+  "id": "hub-01-hero-desc",
+  "defects": [
+    "HUB-01",
+    "HUB-02"
+  ],
+  "surface": "cli",
+  "source": "agy-20260831 probe 5 (11-readme-ai); sizing.py:345-354 unwrapped hero desc, primer.yaml:349 root max_desc_lines 1",
+  "compose": {
+    "type": "diagram",
+    "genome_id": "primer",
+    "diagram": {
+      "topology": "hub",
+      "title": "ReadmeAI",
+      "nodes": [
+        {
+          "id": "hero",
+          "role": "hero",
+          "label": "ReadmeAI Orchestrator",
+          "desc": "Central CLI engine coordinating repository analysis, AST parsing, and document synthesis"
+        },
+        {
+          "id": "sat1",
+          "label": "Retriever",
+          "desc": "Semantic search and vector retrieval over repository embeddings"
+        },
+        {
+          "id": "sat2",
+          "label": "Indexer",
+          "desc": "Continuous background AST indexing and symbol extraction"
+        },
+        {
+          "id": "sat3",
+          "label": "Renderer",
+          "desc": "Markdown assembly with badge and asset generation"
+        },
+        {
+          "id": "sat4",
+          "label": "Providers",
+          "desc": "Dispatches structured generation to OpenAI, Gemini, and Claude"
+        }
+      ],
+      "edges": [
+        {
+          "source": "hero",
+          "target": "sat1",
+          "label": "AST parse"
+        },
+        {
+          "source": "hero",
+          "target": "sat2",
+          "label": "inference"
+        },
+        {
+          "source": "hero",
+          "target": "sat3",
+          "label": "assets"
+        },
+        {
+          "source": "hero",
+          "target": "sat4",
+          "label": "emit doc"
+        }
+      ]
+    }
+  }
+}
