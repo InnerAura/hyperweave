@@ -17,7 +17,7 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from hyperweave.compose.matrix.cells import measure_voice, wrap_text_lines
+from hyperweave.compose.geometry.text import measure_voice, wrap_text_lines
 from hyperweave.core.diagram import DiagramNode, DiagramSpec, NodeHealth, NodeRole, NodeStyle
 from hyperweave.core.paradigm import DiagramNodeChassis, DiagramTopologyChassis, MatrixVoice, ParadigmDiagramConfig
 

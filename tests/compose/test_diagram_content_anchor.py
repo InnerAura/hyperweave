@@ -144,7 +144,7 @@ def test_text_ink_stays_inside_its_card() -> None:
     from hyperweave.compose.diagram.input import diagram_preset_names
     from hyperweave.compose.diagram.sizing import voice_for
     from hyperweave.compose.diagram.solver import effective_render_cfg
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     overflows: list[str] = []
     for preset in sorted(diagram_preset_names()):

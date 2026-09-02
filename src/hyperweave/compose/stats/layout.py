@@ -11,7 +11,9 @@ import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from hyperweave.compose.geometry.text import fit_line
 from hyperweave.compose.spatial_records import LineSpec, RectSpec, TextSpec
+from hyperweave.core.paradigm import MatrixVoice
 from hyperweave.core.text import measure_text, measure_text_ink_width
 
 if TYPE_CHECKING:
@@ -757,19 +759,13 @@ def _fit_metric_display(
     if len(display) <= 10:
         return display, False
     if any(ch.isalpha() for ch in display):
-        candidate = display
-        while len(candidate) > 4:
-            measured = measure_text(
-                candidate + "...",
-                font_family=stats.metric_value_font_family,
-                font_size=stats.metric_value_font_size,
-                font_weight=stats.metric_value_font_weight,
-                letter_spacing_em=stats.metric_value_letter_spacing_em,
-            )
-            if measured <= budget:
-                return candidate + "...", False
-            candidate = candidate[:-1]
-        return display[:4] + "...", False
+        voice = MatrixVoice(
+            family=stats.metric_value_font_family,
+            size=stats.metric_value_font_size,
+            weight=stats.metric_value_font_weight,
+            tracking_em=stats.metric_value_letter_spacing_em,
+        )
+        return fit_line(display, voice, budget), False
     return display, True
 
 

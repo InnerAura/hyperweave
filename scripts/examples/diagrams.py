@@ -42,7 +42,7 @@ from hyperweave.compose.diagram.graph import _GATHER_STANDOFF  # noqa: E402
 from hyperweave.compose.diagram.paths import end_tangent_of, sample_path  # noqa: E402
 from hyperweave.compose.diagram.sizing import CROWN_DOMINANCE_MAX, voice_for  # noqa: E402
 from hyperweave.compose.engine import compose  # noqa: E402
-from hyperweave.compose.matrix.cells import measure_voice  # noqa: E402
+from hyperweave.compose.geometry.text import measure_voice  # noqa: E402
 from hyperweave.config.loader import load_diagram_config, load_glyphs, load_paradigms  # noqa: E402
 from hyperweave.core.models import ComposeSpec  # noqa: E402
 from hyperweave.core.paradigm import MatrixVoice  # noqa: E402

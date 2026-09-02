@@ -59,7 +59,7 @@ from hyperweave.compose.diagram.sizing import (
 )
 from hyperweave.compose.diagram.solver import finish_layout, layout_cap, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext, knot_collapse
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.compose.spatial_records import LineSpec, RectSpec
 from hyperweave.core.diagram import DiagramCapacityError, DiagramInputError, DiagramNode, NodeRole, NodeStyle
 

@@ -48,10 +48,11 @@ def _fused_layout() -> Any:
     assert len(chips) >= 4, "harness premise: hillclimb carries guard chips"
     mover, target = chips[1], chips[3]
     assert mover.box is not None and target.box is not None
-    from hyperweave.compose.diagram.battery import _densify_path, _path_points, _pill_gap, _translate_annotation
+    from hyperweave.compose.diagram.battery import _densify_path, _pill_gap, _translate_annotation
+    from hyperweave.compose.geometry.paths import flatten_points
 
     conn = next(c for c in lay.connectors if c.index == mover.edge_index)
-    pts = _densify_path(_path_points(conn.path_d), samples=96)
+    pts = _densify_path(flatten_points(conn.path_d, curve_samples=16), samples=96)
     bx, by = mover.box.x + mover.box.w / 2, mover.box.y + mover.box.h / 2
 
     def gap_at(p: tuple[float, float]) -> float:

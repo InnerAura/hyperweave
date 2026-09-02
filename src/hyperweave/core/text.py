@@ -116,6 +116,8 @@ def measure_text(
 
     if metrics.is_monospace:
         base_px = len(text) * metrics.char_width_px * (font_size / baseline)
+        if font_weight >= 700:
+            base_px *= metrics.bold_expansion_factor
     else:
         widths, used_weighted_metrics = _widths_for_weight(metrics, font_weight)
         total_tenths = 0.0
@@ -192,6 +194,8 @@ def measure_text_ink_metrics(
         font_weight=font_weight,
         letter_spacing_em=letter_spacing_em,
     )
+    if not text.strip():
+        return TextInkMetrics(advance_width=advance, ink_width=0.0, leading_bearing=0.0, trailing_bearing=0.0)
     metrics = get_registry().get(font_family)
     baseline = metrics.baseline_size_px
     scale = font_size / baseline
@@ -266,6 +270,24 @@ def measure_text_trailing_bearing(
         font_size=font_size,
         font_weight=font_weight,
     ).trailing_bearing
+
+
+def format_compact_number(value: float, *, integer_k: bool = False) -> str:
+    """Collapse a magnitude to its largest unit: ``1500 → 1.5K``, ``1500000 →
+    1.5M``, ``2e9 → 2B``; below 1000 the rounded integer. One decimal, with a
+    trailing ``.0`` dropped, so axis ticks, hero callouts, and context-window
+    labels all speak one register. ``integer_k`` rounds the K band to whole
+    thousands (``196400 → 196K``) for the occupancy labels whose specimen
+    reads ``200K`` / ``196K``. Negative inputs format by magnitude.
+    """
+    n = abs(value)
+    for unit, divisor in (("B", 1_000_000_000), ("M", 1_000_000), ("K", 1_000)):
+        if n >= divisor:
+            scaled = n / divisor
+            if unit == "K" and integer_k:
+                return f"{round(scaled)}K"
+            return f"{scaled:.1f}".rstrip("0").rstrip(".") + unit
+    return f"{round(n)}"
 
 
 def format_duration(minutes: float) -> str:

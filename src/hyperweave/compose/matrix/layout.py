@@ -22,6 +22,7 @@ import math
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.geometry.text import measure_voice, text_lines_needed, truncate_to_width
 from hyperweave.compose.matrix.cells import (
     build_cell,
     chip_line_width,
@@ -31,9 +32,6 @@ from hyperweave.compose.matrix.cells import (
     format_value_with_unit,
     glyph_mark_placement,
     is_numeric_value,
-    measure_voice,
-    text_lines_needed,
-    truncate_to_width,
 )
 from hyperweave.compose.matrix.records import (
     AxisSpec,

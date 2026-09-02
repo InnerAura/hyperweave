@@ -17,9 +17,10 @@ from __future__ import annotations
 from datetime import timezone
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.geometry.text import fit_line
 from hyperweave.compose.schema import ActivityData, coerce_stats_input, format_count
 from hyperweave.compose.stats.layout import compute_stats_card_height, compute_stats_layout
-from hyperweave.core.text import measure_text
+from hyperweave.core.paradigm import MatrixVoice
 from hyperweave.render.chart_engine import Viewport, build_chart_svg
 
 if TYPE_CHECKING:
@@ -135,32 +136,16 @@ def _emphasis_for(label: object, raw_value: object) -> str | None:
 
 def _fit_identity_display(username: str, stats: ParadigmStatsConfig) -> str:
     display = username.upper() if stats.identity_text_transform == "uppercase" else username
-    budget = max(0.0, float(stats.bio_x - stats.identity_x - stats.identity_padding))
+    budget = float(stats.bio_x - stats.identity_x - stats.identity_padding)
     if budget <= 0:
         return display
-    measured = measure_text(
-        display,
-        font_family=stats.identity_font_family,
-        font_size=stats.identity_font_size,
-        font_weight=stats.identity_font_weight,
-        letter_spacing_em=stats.identity_letter_spacing_em,
+    voice = MatrixVoice(
+        family=stats.identity_font_family,
+        size=stats.identity_font_size,
+        weight=stats.identity_font_weight,
+        tracking_em=stats.identity_letter_spacing_em,
     )
-    if measured <= budget:
-        return display
-    candidate = display
-    while len(candidate) > 4:
-        text = candidate + "..."
-        measured = measure_text(
-            text,
-            font_family=stats.identity_font_family,
-            font_size=stats.identity_font_size,
-            font_weight=stats.identity_font_weight,
-            letter_spacing_em=stats.identity_letter_spacing_em,
-        )
-        if measured <= budget:
-            return text
-        candidate = candidate[:-1]
-    return display[:4] + "..."
+    return fit_line(display, voice, budget)
 
 
 def _truncate_to_width(
@@ -172,50 +157,9 @@ def _truncate_to_width(
     font_weight: int,
     letter_spacing_em: float,
 ) -> str:
-    """Return ``text`` or a right-truncated ``...`` variant within ``budget``."""
-    if not text or budget <= 0:
-        return ""
-    measured = measure_text(
-        text,
-        font_family=font_family,
-        font_size=font_size,
-        font_weight=font_weight,
-        letter_spacing_em=letter_spacing_em,
-    )
-    if measured <= budget:
-        return text
-
-    suffix = "..."
-    suffix_w = measure_text(
-        suffix,
-        font_family=font_family,
-        font_size=font_size,
-        font_weight=font_weight,
-        letter_spacing_em=letter_spacing_em,
-    )
-    if suffix_w > budget:
-        return suffix
-
-    lo = 0
-    hi = len(text)
-    best = ""
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        candidate = text[:mid].rstrip()
-        display = f"{candidate}{suffix}" if candidate else suffix
-        width = measure_text(
-            display,
-            font_family=font_family,
-            font_size=font_size,
-            font_weight=font_weight,
-            letter_spacing_em=letter_spacing_em,
-        )
-        if width <= budget:
-            best = display
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    return best or suffix
+    """One shared fitter for the subtitle: the text, its ellipsized prefix, or nothing."""
+    voice = MatrixVoice(family=font_family, size=font_size, weight=font_weight, tracking_em=letter_spacing_em)
+    return fit_line(text, voice, budget)
 
 
 def _truncate_subtitle_context(

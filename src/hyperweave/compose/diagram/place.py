@@ -25,7 +25,7 @@ from hyperweave.compose.diagram import chrome_kinds as ck
 from hyperweave.compose.diagram.paths import fmt
 from hyperweave.compose.diagram.records import AnnotationPlacement, DiagramText
 from hyperweave.compose.diagram.sizing import voice_for
-from hyperweave.compose.matrix.cells import measure_voice, wrap_text_lines
+from hyperweave.compose.geometry.text import measure_voice, wrap_text_lines
 from hyperweave.compose.spatial_records import RectSpec
 
 if TYPE_CHECKING:

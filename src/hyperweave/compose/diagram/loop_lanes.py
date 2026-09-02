@@ -39,7 +39,7 @@ from hyperweave.compose.diagram.route import orthogonal_d
 from hyperweave.compose.diagram.sizing import centred_baseline, solve_node_box
 from hyperweave.compose.diagram.solver import finish_layout
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.compose.spatial_records import RectSpec
 
 if TYPE_CHECKING:

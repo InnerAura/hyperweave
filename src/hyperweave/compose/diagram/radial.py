@@ -29,7 +29,7 @@ from hyperweave.compose.diagram.records import ParticlePlacement
 from hyperweave.compose.diagram.sizing import family_carries_marks, hero_height_floor, solve_node_box
 from hyperweave.compose.diagram.solver import finish_layout, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.core.diagram import DiagramInputError, NodeRole, NodeStyle, resolved_edges
 
 if TYPE_CHECKING:
@@ -109,7 +109,7 @@ def _hub_label_box(
     if math.hypot(hub.label.x - hub.cx, hub.label.y - hub.cy) <= hub.r:
         return hub, None
     from hyperweave.compose.diagram.chrome import voice_for
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     cfg = ctx.cfg
     clear = float(ctx.engine["connector"].get("hub_label_clear", 6))
@@ -718,7 +718,7 @@ def solve_tree_radial(ctx: SolverContext) -> DiagramLayout:
         radius_of = {d: r * 1.12 for d, r in radius_of.items()}
 
     # ── bbox crop (G6): the canvas is the content, not the ring formula ──
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     def extents(p: NodePlacement) -> tuple[float, float, float, float]:
         x0, y0 = p.box.x, p.box.y

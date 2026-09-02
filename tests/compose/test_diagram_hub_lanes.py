@@ -809,7 +809,7 @@ class TestAlignedGroupContentEdge:
     @staticmethod
     def _ink_pads(lay: object, cfg: object) -> list[tuple[str, float, float]]:
         from hyperweave.compose.diagram.chrome import voice_for
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
 
         out: list[tuple[str, float, float]] = []
         for n in lay.nodes:  # type: ignore[attr-defined]
@@ -1134,7 +1134,7 @@ def test_hub_hero_text_stays_inside_the_padded_interior() -> None:
     past the right one. Solve and place must share one text decision: every
     hero run stays inside the padded interior, both sides."""
     from hyperweave.compose.diagram.sizing import voice_for
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     spec = {
         "topology": "hub",

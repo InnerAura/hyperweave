@@ -18,7 +18,7 @@ from typing import Any
 import yaml
 
 import hyperweave
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.core.text import measure_text
 from tests.compose.parity.svgfacts import parse_svg
 
@@ -422,9 +422,10 @@ def svg_summary(svg: str) -> dict[str, Any]:
 
 
 def chart_ticks(v_max: int) -> list[str]:
-    from hyperweave.render.chart_engine import _format_y_tick, _nice_y_ticks
+    from hyperweave.core.text import format_compact_number
+    from hyperweave.render.chart_engine import _nice_y_ticks
 
-    return [_format_y_tick(v) for v in _nice_y_ticks(v_max)]
+    return [format_compact_number(v) for v in _nice_y_ticks(v_max)]
 
 
 def text_ink(text: str, *, family: str, size: float, weight: int, tracking_em: float = 0.0) -> float:

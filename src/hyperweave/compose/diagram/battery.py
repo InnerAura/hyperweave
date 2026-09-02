@@ -37,6 +37,8 @@ import math
 import re
 from typing import TYPE_CHECKING
 
+from hyperweave.compose.geometry.bounds import inflate, segment_crosses_box
+from hyperweave.compose.geometry.paths import flatten_points
 from hyperweave.core.diagnostics import Diagnostic
 from hyperweave.core.errors import HwError, HwErrorCode
 
@@ -47,7 +49,10 @@ if TYPE_CHECKING:
     from hyperweave.compose.diagram.records import AnnotationPlacement, DiagramLayout, NodePlacement
     from hyperweave.compose.spatial_records import RectSpec
 
-_NUM = r"-?\d+(?:\.\d+)?"
+_SEAT_SAMPLES = 16
+"""Bezier samples per segment for seat and run measurements — the even coverage
+the chip ladder needs, reproduced through the one path parser. A judgement
+that needs a bound flattens adaptively instead (``flatten_points(d)``)."""
 
 
 def _fault(message: str) -> HwError:
@@ -103,49 +108,6 @@ def run_loop_battery(layout: DiagramLayout) -> None:
     _check_meter_seating(layout)
 
 
-def _path_points(d: str) -> list[tuple[float, float]]:
-    """A sampled polyline along the path: L runs keep their endpoints, C
-    segments sample the actual bezier (a control-polygon read once measured
-    a correctly-seated fork chip 12px 'off its wire'), and rail arcs pass as
-    chords (no chip ever seats on a corner)."""
-    out: list[tuple[float, float]] = []
-    cursor: tuple[float, float] | None = None
-    for cmd, args in re.findall(r"([MLCQA])\s*((?:[-\d.,\s]|(?<=e)-)+)", d):
-        nums = [float(v) for v in re.findall(_NUM, args)]
-        if cmd == "M" and len(nums) >= 2:
-            cursor = (nums[0], nums[1])
-            out.append(cursor)
-        elif cmd == "L":
-            for i in range(0, len(nums) - 1, 2):
-                cursor = (nums[i], nums[i + 1])
-                out.append(cursor)
-        elif cmd == "C" and cursor is not None and len(nums) >= 6:
-            x0, y0 = cursor
-            c1x, c1y, c2x, c2y, x1, y1 = nums[:6]
-            for step in range(1, 17):
-                t = step / 16.0
-                v = 1.0 - t
-                out.append(
-                    (
-                        v**3 * x0 + 3 * v**2 * t * c1x + 3 * v * t**2 * c2x + t**3 * x1,
-                        v**3 * y0 + 3 * v**2 * t * c1y + 3 * v * t**2 * c2y + t**3 * y1,
-                    )
-                )
-            cursor = (x1, y1)
-        elif cmd == "Q" and cursor is not None and len(nums) >= 4:
-            x0, y0 = cursor
-            cx_, cy_, x1, y1 = nums[:4]
-            for step in range(1, 9):
-                t = step / 8.0
-                v = 1.0 - t
-                out.append((v**2 * x0 + 2 * v * t * cx_ + t**2 * x1, v**2 * y0 + 2 * v * t * cy_ + t**2 * y1))
-            cursor = (x1, y1)
-        elif cmd == "A" and len(nums) >= 7:
-            cursor = (nums[-2], nums[-1])
-            out.append(cursor)
-    return out
-
-
 def _box_distance(x: float, y: float, box: RectSpec) -> float:
     dx = max(box.x - x, x - (box.x + box.w), 0.0)
     dy = max(box.y - y, y - (box.y + box.h), 0.0)
@@ -183,12 +145,12 @@ def _check_meter_seating(layout: DiagramLayout) -> None:
 
 def _check_standoffs(layout: DiagramLayout) -> None:
     by_index = {n.index: n for n in layout.nodes}
-    polylines = [(c.index, _path_points(c.path_d)) for c in layout.connectors]
+    polylines = [(c.index, flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES)) for c in layout.connectors]
     for c in layout.connectors:
         target = by_index.get(c.target_index)
         if target is None:
             continue  # scope arrivals anchor on the enclosure band
-        pts = _path_points(c.path_d)
+        pts = flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES)
         if not pts:
             continue
         x, y = pts[-1]
@@ -223,7 +185,7 @@ def _check_chip_seating(layout: DiagramLayout) -> None:
         cx, cy = a.box.x + a.box.w / 2, a.box.y + a.box.h / 2
         # Geometric seating: the chip's center lies ON its wire (measured
         # against the SAMPLED path — the curve, never its control polygon).
-        pts = _path_points(c.path_d)
+        pts = flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES)
         best_i = min(range(len(pts) - 1), key=lambda i: _segment_distance(cx, cy, pts[i], pts[i + 1]))
         seat_error = _segment_distance(cx, cy, pts[best_i], pts[best_i + 1])
         _law(
@@ -319,20 +281,20 @@ def _check_chip_foreign_wires(layout: DiagramLayout) -> None:
     air) never crosses a foreign connector's run — the flywheel's compounding
     chip once reached back over the spine's Distribute -> Capture wire, and
     nothing said so until a human looked."""
-    own_by_index = {c.index: _path_points(c.path_d) for c in layout.connectors}
+    own_by_index = {c.index: flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES) for c in layout.connectors}
     for a in layout.annotations:
         if a.kind != "edge-chip" or a.box is None:
             continue
         b = a.box
-        x0, y0, x1, y1 = b.x - 2, b.y - 2, b.x + b.w + 2, b.y + b.h + 2
+        chip_box = inflate(b, 2.0)
         own = own_by_index.get(a.edge_index, [])
-        own_in_box = any(_segment_crosses_box(own[i], own[i + 1], x0, y0, x1, y1) for i in range(len(own) - 1))
+        own_in_box = any(segment_crosses_box(own[i], own[i + 1], chip_box) for i in range(len(own) - 1))
         for c in layout.connectors:
             if c.index == a.edge_index:
                 continue
-            pts = _path_points(c.path_d)
+            pts = flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES)
             for i in range(len(pts) - 1):
-                if _segment_crosses_box(pts[i], pts[i + 1], x0, y0, x1, y1):
+                if segment_crosses_box(pts[i], pts[i + 1], chip_box):
                     if own_in_box:
                         # The declared crossing: where a chip's OWN wire and
                         # the foreign one cross inside the chip, the chip
@@ -345,29 +307,6 @@ def _check_chip_foreign_wires(layout: DiagramLayout) -> None:
                         f"loop battery: guard chip for edge {a.edge_index} overlaps connector "
                         f"{c.index}'s wire — a chip straddles its own wire and no other"
                     )
-
-
-def _segment_crosses_box(
-    a: tuple[float, float], b: tuple[float, float], x0: float, y0: float, x1: float, y1: float
-) -> bool:
-    """Liang-Barsky style clip test: does segment a-b intersect the box?"""
-    ax, ay = a
-    bx, by = b
-    dx, dy = bx - ax, by - ay
-    t0, t1 = 0.0, 1.0
-    for p, q in ((-dx, ax - x0), (dx, x1 - ax), (-dy, ay - y0), (dy, y1 - ay)):
-        if p == 0:
-            if q < 0:
-                return False
-            continue
-        r = q / p
-        if p < 0:
-            t0 = max(t0, r)
-        else:
-            t1 = min(t1, r)
-        if t0 > t1:
-            return False
-    return True
 
 
 def _check_pulses(layout: DiagramLayout) -> None:
@@ -466,7 +405,7 @@ def _reseat_candidates(
     conn = next((c for c in layout.connectors if c.index == moving.edge_index), None)
     if conn is None:
         return []
-    pts = _densify_path(_path_points(conn.path_d), samples=96)
+    pts = _densify_path(flatten_points(conn.path_d, curve_samples=_SEAT_SAMPLES), samples=96)
     if len(pts) < 2:
         return []
     box = moving.box
@@ -609,7 +548,7 @@ def _conduit_pairs(layout: DiagramLayout) -> list[tuple[int, int]]:
     directions — endpoints swapped within the lane gap that separates them."""
     ends: dict[int, tuple[tuple[float, float], tuple[float, float]]] = {}
     for c in layout.connectors:
-        pts = _path_points(c.path_d)
+        pts = flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES)
         if len(pts) >= 2:
             ends[c.index] = (pts[0], pts[-1])
     out: list[tuple[int, int]] = []
@@ -673,7 +612,7 @@ def _check_channel_chip_stubs(layout: DiagramLayout) -> None:
         conn = next((c for c in layout.connectors if c.index == a.edge_index), None)
         if conn is None or "C" in conn.path_d or "Q" not in conn.path_d:
             continue
-        pts = _path_points(conn.path_d)
+        pts = flatten_points(conn.path_d, curve_samples=_SEAT_SAMPLES)
         if len(pts) < 2:
             continue
         cx, cy = a.box.x + a.box.w / 2, a.box.y + a.box.h / 2
@@ -744,7 +683,7 @@ def _check_conduit_endpoints(layout: DiagramLayout) -> None:
             conn = next((c for c in layout.connectors if c.index == idx), None)
             if conn is None:
                 continue
-            pts = _path_points(conn.path_d)
+            pts = flatten_points(conn.path_d, curve_samples=_SEAT_SAMPLES)
             if len(pts) < 2:
                 continue
             source = by_index.get(conn.source_index)
@@ -807,7 +746,7 @@ def _check_conduit_face_planarity(layout: DiagramLayout) -> None:
         return
     for node_i in sorted(conduit_nodes):
         runs = [
-            (c.index, _path_points(c.path_d))
+            (c.index, flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES))
             for c in layout.connectors
             if node_i in (c.source_index, c.target_index) and c.source_index != c.target_index
         ]
@@ -865,7 +804,7 @@ def _check_slot_corner_zone(layout: DiagramLayout) -> None:
         ortho = "Q" in c.path_d and "C" not in c.path_d
         if c.index not in pair_idx and not ortho:
             continue
-        pts = _path_points(c.path_d)
+        pts = flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES)
         if len(pts) < 2:
             continue
         for pt, node_idx in ((pts[0], c.source_index), (pts[-1], c.target_index)):
@@ -916,7 +855,7 @@ def _check_no_wire_through_pill(layout: DiagramLayout, chips: list[Any]) -> None
     """
     if not chips:
         return
-    paths = {c.index: _densify_path(_path_points(c.path_d)) for c in layout.connectors}
+    paths = {c.index: _densify_path(flatten_points(c.path_d, curve_samples=_SEAT_SAMPLES)) for c in layout.connectors}
     for chip in chips:
         b = chip.box
         if b is None:

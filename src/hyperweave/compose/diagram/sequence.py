@@ -36,7 +36,7 @@ from hyperweave.compose.diagram.route import marker_path
 from hyperweave.compose.diagram.sizing import HEAD_GLYPH_SIZE, HEAD_PAD_X
 from hyperweave.compose.diagram.solver import finish_layout, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.compose.spatial_records import LineSpec, RectSpec
 from hyperweave.core.diagram import EdgeKind, NodeRole
 

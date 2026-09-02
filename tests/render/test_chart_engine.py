@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from hyperweave.core.text import format_compact_number
 from hyperweave.render.chart_engine import (
     ChartPoint,
     Viewport,
@@ -20,7 +21,6 @@ from hyperweave.render.chart_engine import (
     _build_milestones,
     _build_polyline_points,
     _build_x_date_labels,
-    _format_y_tick,
     _nice_y_ticks,
     _normalize_points,
     _project_points,
@@ -503,15 +503,21 @@ def test_nice_y_ticks_across_bands(v_max: int, expected: list[int]) -> None:
     assert _nice_y_ticks(v_max) == expected
 
 
-def test_format_y_tick_integer_and_k_notation() -> None:
-    """< 1000 → integer; 1000..9999 → K notation with no trailing zeros; 10K+ → integer K."""
-    assert _format_y_tick(0) == "0"
-    assert _format_y_tick(6) == "6"
-    assert _format_y_tick(500) == "500"
-    assert _format_y_tick(1000) == "1K"
-    assert _format_y_tick(1500) == "1.5K"
-    assert _format_y_tick(2000) == "2K"
-    assert _format_y_tick(10000) == "10K"
+def test_tick_labels_cascade_through_k_m_and_b() -> None:
+    """Axis ticks, hero callouts, and window labels share one formatter; a
+    150M axis reads ``150M``, never ``150000K``."""
+    assert format_compact_number(0) == "0"
+    assert format_compact_number(6) == "6"
+    assert format_compact_number(500) == "500"
+    assert format_compact_number(1000) == "1K"
+    assert format_compact_number(1500) == "1.5K"
+    assert format_compact_number(2000) == "2K"
+    assert format_compact_number(10000) == "10K"
+    assert format_compact_number(1_500_000) == "1.5M"
+    assert format_compact_number(42_000_000) == "42M"
+    assert format_compact_number(2_000_000_000) == "2B"
+    assert format_compact_number(196_400, integer_k=True) == "196K"
+    assert [format_compact_number(v) for v in _nice_y_ticks(42_000_000)] == ["0", "20M", "40M", "60M"]
 
 
 # ── X-axis year labels ────────────────────────────────────────────────

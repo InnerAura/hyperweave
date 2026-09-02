@@ -42,6 +42,8 @@ from hyperweave.compose.chart.area import (
     ResetMarker,
     layout_context_load,
 )
+from hyperweave.compose.geometry.text import fit_line
+from hyperweave.core.paradigm import MatrixVoice
 from hyperweave.core.text import format_duration, measure_text
 
 # --------------------------------------------------------------------------- #
@@ -1195,22 +1197,8 @@ def build_footer(
 
 
 def _truncate(text: str, *, budget: float, font_family: str, font_size: float, font_weight: int) -> str:
-    """Right-truncate ``text`` with an ellipsis to fit ``budget`` px."""
-    if budget <= 0 or not text:
-        return text
-    if measure_text(text, font_family=font_family, font_size=font_size, font_weight=font_weight) <= budget:
-        return text
-    ell = "…"
-    lo, hi, best = 0, len(text), ell
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        cand = text[:mid].rstrip() + ell
-        if measure_text(cand, font_family=font_family, font_size=font_size, font_weight=font_weight) <= budget:
-            best = cand
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    return best
+    """Right-truncate ``text`` with an ellipsis to fit ``budget`` px; no room yields no text."""
+    return fit_line(text, MatrixVoice(family=font_family, size=font_size, weight=font_weight), budget)
 
 
 # --------------------------------------------------------------------------- #

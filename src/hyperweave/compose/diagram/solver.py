@@ -38,7 +38,7 @@ from hyperweave.compose.diagram.records import (
 from hyperweave.compose.diagram.regions import MeasuredRegion, stack_regions
 from hyperweave.compose.diagram.sizing import effective_diagram_cfg
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext, enrich_geos, wire_motion
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.compose.spatial_records import RectSpec
 from hyperweave.core.diagram import (
     DiagramCapacityError,

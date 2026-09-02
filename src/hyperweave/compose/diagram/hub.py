@@ -44,7 +44,7 @@ from hyperweave.compose.diagram.route import route_path
 from hyperweave.compose.diagram.sizing import hero_height_floor, solve_node_box
 from hyperweave.compose.diagram.solver import finish_layout, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
-from hyperweave.compose.matrix.cells import wrap_text_lines
+from hyperweave.compose.geometry.text import wrap_text_lines
 from hyperweave.core.diagram import DiagramCapacityError, DiagramNode, NodeStyle
 
 if TYPE_CHECKING:

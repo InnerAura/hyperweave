@@ -12,7 +12,8 @@ from __future__ import annotations
 import re
 
 from hyperweave.compose.engine import compose
-from hyperweave.compose.matrix.cells import _note_sub_fields, wrap_text_lines
+from hyperweave.compose.geometry.text import wrap_text_lines
+from hyperweave.compose.matrix.cells import _note_sub_fields
 from hyperweave.core.models import ComposeSpec
 from hyperweave.core.paradigm import MatrixVoice
 

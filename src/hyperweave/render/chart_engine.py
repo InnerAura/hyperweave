@@ -36,6 +36,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from hyperweave.core.text import format_compact_number
+
 # ── Data types ─────────────────────────────────────────────────────────────
 
 
@@ -918,19 +920,6 @@ def _nice_y_ticks(v_max: int, target_count: int = 4) -> list[int]:
     return list(range(0, nice_max + 1, step))
 
 
-def _format_y_tick(value: int) -> str:
-    """Format tick value: ``< 1000`` → integer, ``>= 1000`` → K notation.
-
-    Examples: 0 → "0", 6 → "6", 1000 → "1K", 1500 → "1.5K", 10000 → "10K".
-    Sibling of the hero-value ``_format_compact`` in chart.py, but breaks at
-    1K instead of 10K since tick labels are tighter.
-    """
-    if value < 1000:
-        return str(value)
-    s = f"{value / 1000:.1f}".rstrip("0").rstrip(".")
-    return f"{s}K"
-
-
 def _build_y_labels(ticks: list[int], v_min: int, v_max: int, vp: Viewport) -> list[dict[str, Any]]:
     """Project tick values into ``{y, text}`` dicts for template consumption.
 
@@ -945,7 +934,7 @@ def _build_y_labels(ticks: list[int], v_min: int, v_max: int, vp: Viewport) -> l
     for t in ticks:
         frac_v = (t - v_min) / v_span
         py = vp.y + vp.h - round(frac_v * vp.h)
-        out.append({"y": py, "text": _format_y_tick(t)})
+        out.append({"y": py, "text": format_compact_number(t)})
     return out
 
 

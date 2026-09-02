@@ -37,7 +37,7 @@ from hyperweave.compose.diagram.sizing import (
 )
 from hyperweave.compose.diagram.solver import finish_layout, register_solvers
 from hyperweave.compose.diagram.wiring import EdgeGeo, SolverContext
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.core.diagram import DiagramNode, NodeRole, NodeStyle
 
 if TYPE_CHECKING:

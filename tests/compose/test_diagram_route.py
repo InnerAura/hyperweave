@@ -453,7 +453,7 @@ class TestContentSizedCards:
         # truncate; the grown width is the row's own measured span (mark +
         # gap + label + 2*pad), rounded up to the even grid.
         from hyperweave.compose.diagram.sizing import DOT_MARK_W, anchor_pads, mark_lead
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
 
         cfg, ch = self._cfg_ch("hub")
         assert ch.w_max > 0.0

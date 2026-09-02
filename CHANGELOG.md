@@ -42,6 +42,10 @@ reflects what actually animates, and deploys only ship from a green build.
 - **`validate-genome`:** now runs the same validator as compose.
 
 ### Fixed
+- **Chart axis ticks cascade through K, M, and B:** a 42M axis reads `20M · 40M · 60M`, never
+  `20000K`; ticks, hero callouts, and context-window labels share one formatter.
+- **One ellipsis character:** stats identity, subtitle, and metric truncation now end in `…` like
+  matrix, receipt, and raw text; a truncator handed no room renders nothing instead of the full run.
 - **Genomes fail closed:** invalid paradigm and variant slugs are rejected, along with non-finite or
   negative durations, unknown motion ids, and out-of-range rgb/rgba values.
 - **Variant overrides are validated:** they used to merge after validation and skip the gate

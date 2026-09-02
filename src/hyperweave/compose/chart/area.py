@@ -66,7 +66,7 @@ import math
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 
-from hyperweave.core.text import format_duration, measure_text
+from hyperweave.core.text import format_compact_number, format_duration, measure_text
 
 LegendKind = Literal["line", "compact", "clear", "auto", "error"]
 """Swatch glyph selector for a legend item."""
@@ -375,18 +375,6 @@ class ContextLoadLayout:
 # --------------------------------------------------------------------------- #
 
 
-def _format_k(tokens: float) -> str:
-    """Format an occupancy value as a compact 'NK' / 'NM' label.
-
-    Context windows are reported in thousands; values are rounded to the nearest
-    1K below 1M and 0.1M above, matching the specimen's '200K' / '196K' labels.
-    """
-    if tokens >= 1_000_000:
-        m = tokens / 1_000_000
-        return f"{m:.0f}M" if m >= 10 else f"{m:.1f}M"
-    return f"{round(tokens / 1000)}K"
-
-
 def _y_for_occ(occ: float, plot_top: float, plot_h: float, window: float) -> float:
     """Map an occupancy (absolute tokens) to a group-local y coordinate.
 
@@ -683,7 +671,7 @@ def layout_context_load(
         y=plot_top,
         x1=plot_left,
         x2=plot_right,
-        label=_format_k(window),
+        label=format_compact_number(window, integer_k=True),
         label_x=AXIS_LABEL_X,
         label_y=plot_top + 2.7,
         dashed=True,
@@ -793,7 +781,7 @@ def _build_gridlines(
             y=y,
             x1=plot_left,
             x2=plot_right,
-            label=_format_k(mid),
+            label=format_compact_number(mid, integer_k=True),
             label_x=AXIS_LABEL_X,
             label_y=y + 2.7,
             dashed=True,
@@ -1045,10 +1033,10 @@ def _build_header(
     eyebrow_w = measure_text(
         eyebrow, font_family=AXIS_LABEL_FONT, font_size=7.0, font_weight=700, letter_spacing_em=0.22
     )
-    detail = f"· {_format_k(window)} WINDOW · {format_duration(span_min)}"
+    detail = f"· {format_compact_number(window, integer_k=True)} WINDOW · {format_duration(span_min)}"
     detail_x = eyebrow_w + 1.0
 
-    peak_label = f"{_format_k(peak_ctx)} PEAK"
+    peak_label = f"{format_compact_number(peak_ctx, integer_k=True)} PEAK"
     peak_label_x = plot_right
 
     if reset_count > 0:

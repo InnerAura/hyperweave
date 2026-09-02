@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.diagram.recenter import translate_path
 from hyperweave.compose.diagram.sizing import CHIP_STUB_MIN
+from hyperweave.compose.geometry.bounds import inflate, overlap_area, segment_crosses_box
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -55,17 +56,6 @@ class Obstacle:
     ref: int = -1
 
 
-def _rect_overlap(a: RectSpec, b: RectSpec) -> float:
-    """The intersection AREA of two rects (0 = disjoint or edge-touching)."""
-    ix = max(0.0, min(a.x + a.w, b.x + b.w) - max(a.x, b.x))
-    iy = max(0.0, min(a.y + a.h, b.y + b.h) - max(a.y, b.y))
-    return ix * iy
-
-
-def _inflate(box: RectSpec, margin: float) -> RectSpec:
-    return replace(box, x=box.x - margin, y=box.y - margin, w=box.w + 2 * margin, h=box.h + 2 * margin)
-
-
 def _total_overlap(box: RectSpec, obstacles: list[Obstacle], *, text_margin: float = 0.0) -> float:
     """Total intersection area against every obstacle. ``text_margin``
     inflates the check against LABEL-kind obstacles only (a placed label
@@ -79,28 +69,9 @@ def _total_overlap(box: RectSpec, obstacles: list[Obstacle], *, text_margin: flo
     margin fix, scoped to the ONE obstacle kind it's meant for."""
     total = 0.0
     for o in obstacles:
-        ob = _inflate(o.box, text_margin) if (text_margin and o.kind == "label") else o.box
-        total += _rect_overlap(box, ob)
+        ob = inflate(o.box, text_margin) if (text_margin and o.kind == "label") else o.box
+        total += overlap_area(box, ob)
     return total
-
-
-def _seg_rect_cross(x1: float, y1: float, x2: float, y2: float, box: RectSpec) -> bool:
-    """Does the segment (x1,y1)->(x2,y2) intersect the box's interior?
-    Liang-Barsky slab clip against the AABB."""
-    rx0, ry0, rx1, ry1 = box.x, box.y, box.x + box.w, box.y + box.h
-    dx, dy = x2 - x1, y2 - y1
-    t0, t1 = 0.0, 1.0
-    for p, q in ((-dx, x1 - rx0), (dx, rx1 - x1), (-dy, y1 - ry0), (dy, ry1 - y1)):
-        if p == 0.0:
-            if q < 0.0:
-                return False
-        else:
-            t = q / p
-            if p < 0.0:
-                t0 = max(t0, t)
-            else:
-                t1 = min(t1, t)
-    return t0 <= t1
 
 
 def _wire_through_box(box: RectSpec, geo: EdgeGeo | None) -> bool:
@@ -115,7 +86,7 @@ def _wire_through_box(box: RectSpec, geo: EdgeGeo | None) -> bool:
         return False
     poly = geo.polyline or ((geo.sx, geo.sy), (geo.tx, geo.ty))
     segs = itertools.pairwise(poly)
-    return any(_seg_rect_cross(x1, y1, x2, y2, box) for (x1, y1), (x2, y2) in segs)
+    return any(segment_crosses_box(a, b, box) for a, b in segs)
 
 
 def _band_border_crossed(box: RectSpec, band: RectSpec, clear: float = 0.0) -> bool:
@@ -136,7 +107,7 @@ def _band_border_crossed(box: RectSpec, band: RectSpec, clear: float = 0.0) -> b
         ((bx1, by1), (bx0, by1)),  # bottom
         ((bx0, by1), (bx0, by0)),  # left
     )
-    return any(_seg_rect_cross(x1s, y1s, x2s, y2s, padded) for (x1s, y1s), (x2s, y2s) in perimeter)
+    return any(segment_crosses_box(a, b, padded) for a, b in perimeter)
 
 
 def _translate(box: RectSpec, dx: float, dy: float) -> RectSpec:

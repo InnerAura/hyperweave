@@ -39,7 +39,7 @@ from typing import TYPE_CHECKING, Any
 from hyperweave.compose.diagram.axis import DOWN, RIGHT, AxisMap
 from hyperweave.compose.diagram.records import DiagramText, LaneBand
 from hyperweave.compose.diagram.sizing import CHIP_H, CHIP_PAD_X, voice_for
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.compose.spatial_records import RectSpec
 
 if TYPE_CHECKING:

@@ -238,7 +238,7 @@ def test_long_label_never_runs_under_its_mark() -> None:
     lay = _wings([{"id": "a", "label": "a very long subsystem label indeed", "desc": "v", "kind": "database"}])
     n = _node(lay, "a")
     from hyperweave.compose.diagram.sizing import card_label_voices
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     label_voice, _ = card_label_voices(load_paradigms()["primer"].diagram, hero=False)
     label_right = n.label.x + measure_voice(n.label.text, label_voice)
@@ -262,7 +262,7 @@ def test_health_dot_and_corner_mark_share_the_corner_without_overlap() -> None:
     assert mark_right + CARD_LABEL_MARK_HEALTH_GAP <= dot_left + 0.01
     # The label-row clearance follows the shifted mark: still no run-under.
     from hyperweave.compose.diagram.sizing import card_label_voices
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     label_voice, _ = card_label_voices(load_paradigms()["primer"].diagram, hero=False)
     assert n.label.x + measure_voice(n.label.text, label_voice) <= n.glyph.cx - n.glyph.size / 2 + 0.51
@@ -309,7 +309,7 @@ def test_breakable_values_never_rewrap_the_authored_stack() -> None:
     n = _node(lay, "a")
     assert [t.text for t in n.desc_lines] == [words]
     from hyperweave.compose.diagram.sizing import card_label_voices
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     _, value_voice = card_label_voices(load_paradigms()["primer"].diagram, hero=False)
     for t in n.desc_lines:
@@ -669,7 +669,7 @@ def test_forced_plate_callers_preserve_card_label_anatomy() -> None:
     focal = _node(convergence, "verdict")
     assert focal.label.cls == "nlbl"
     value_voice = load_paradigms()["primer"].diagram.card_value_voice
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
 
     assert all(measure_voice(t.text, value_voice) <= focal.box.w + 0.51 for t in focal.desc_lines)
 

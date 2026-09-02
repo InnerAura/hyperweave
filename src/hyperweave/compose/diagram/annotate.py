@@ -42,7 +42,7 @@ from hyperweave.compose.diagram.collide import (
 )
 from hyperweave.compose.diagram.records import AnnotationPlacement, DiagramText, LaneBand
 from hyperweave.compose.diagram.sizing import CHIP_RX, solve_chip_box, voice_for
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.compose.spatial_records import RectSpec
 from hyperweave.core.diagram import DiagramInputError
 from hyperweave.core.diagram_annotations import AnnotationKind, parse_edge_ref

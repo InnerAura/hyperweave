@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 from hyperweave.compose.engine import compose
-from hyperweave.compose.matrix.cells import measure_voice
+from hyperweave.compose.geometry.text import measure_voice
 from hyperweave.compose.matrix.infer import infer_matrix
 from hyperweave.compose.matrix.layout import _column_statistics, compute_matrix_layout
 from hyperweave.config.loader import load_glyphs, load_matrix_config, load_paradigms

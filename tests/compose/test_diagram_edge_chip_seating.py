@@ -214,7 +214,7 @@ def test_chip_measures_the_voice_it_renders() -> None:
     badge path measured tag_voice while painting the sub voice (41.93px of
     phantom side padding)."""
     from hyperweave.compose.diagram.sizing import CHIP_PAD_X
-    from hyperweave.compose.matrix.cells import measure_voice
+    from hyperweave.compose.geometry.text import measure_voice
     from hyperweave.config.loader import load_paradigms
 
     cfg = load_paradigms()["primer"].diagram

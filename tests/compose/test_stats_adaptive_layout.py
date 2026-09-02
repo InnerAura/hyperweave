@@ -330,7 +330,7 @@ def test_cellular_subtitle_truncates_without_textlength_compression() -> None:
 
     match = re.search(r'<text[^>]*class="[^"]+-bio"[^>]*>(.*?)</text>', result.svg)
     assert match is not None
-    assert "..." in match.group(1)
+    assert "…" in match.group(1)
     assert "textLength" not in match.group(0)
     assert "lengthAdjust" not in match.group(0)
     assert "HYPERWEAVE" in result.svg
@@ -378,7 +378,7 @@ def test_arxiv_automata_identity_truncates_instead_of_textlength_compression() -
 
     username = re.search(r'<text[^>]*class="[^"]+-username"[^>]*>([^<]+)</text>', result.svg)
     assert username is not None
-    assert "..." in username.group(1)
+    assert "…" in username.group(1)
     assert "textLength" not in username.group(0)
 
 

@@ -29,9 +29,9 @@
         "refused": false,
         "result": [
           "0",
-          "20000K",
-          "40000K",
-          "60000K"
+          "20M",
+          "40M",
+          "60M"
         ]
       }
     },
@@ -624,7 +624,7 @@
         "diagnostics": [],
         "viewbox_w": 495.0,
         "viewbox_h": 280.0,
-        "ellipses": 0,
+        "ellipses": 1,
         "wire_card_crossings": 0
       }
     },

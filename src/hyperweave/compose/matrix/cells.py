@@ -18,11 +18,11 @@ from collections.abc import Mapping
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
+from hyperweave.compose.geometry.text import measure_voice, wrap_text_lines
 from hyperweave.compose.matrix.records import CellPlacement, ChipPlacement, GlyphPath
 from hyperweave.compose.spatial_records import RectSpec, TextSpec
 from hyperweave.core.color import is_achromatic, oklch_to_rgb, rgb_to_oklch
 from hyperweave.core.matrix import Align, CellKind, CellState, GlyphTint, MatrixCell, MatrixColumn
-from hyperweave.core.text import measure_text
 
 # Surface luminance at or above this reads as a LIGHT substrate (dark ink);
 # below it reads as DARK (light ink). The 8 primer variants split cleanly —
@@ -33,41 +33,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
     from hyperweave.core.paradigm import MatrixVoice, ParadigmMatrixConfig
-
-_ELLIPSIS = "…"
-
-
-def measure_voice(text: str, voice: MatrixVoice) -> float:
-    """Measure ``text`` in a named matrix type voice."""
-    return measure_text(
-        text,
-        font_family=voice.family,
-        font_size=voice.size,
-        font_weight=voice.weight,
-        letter_spacing_em=voice.tracking_em,
-    )
-
-
-def truncate_to_width(text: str, max_w: float, voice: MatrixVoice) -> str:
-    """Longest prefix of ``text`` that fits ``max_w``, ellipsized.
-
-    Measurement-based (per-font LUTs), so the ellipsis lands where the ink
-    actually runs out. The untruncated string stays in the payload by
-    construction — truncation only affects the rendered run.
-    """
-    if not text or max_w <= 0 or measure_voice(text, voice) <= max_w:
-        return text
-    lo, hi = 0, len(text)
-    while lo < hi:
-        mid = (lo + hi + 1) // 2
-        candidate = text[:mid].rstrip() + _ELLIPSIS
-        if measure_voice(candidate, voice) <= max_w:
-            lo = mid
-        else:
-            hi = mid - 1
-    if lo == 0:
-        return _ELLIPSIS
-    return text[:lo].rstrip() + _ELLIPSIS
 
 
 def display_value(value: bool | float | str | None) -> str:
@@ -96,59 +61,6 @@ def is_numeric_value(value: bool | float | str | None) -> bool:
     except ValueError:
         return False
     return True
-
-
-def wrap_text_lines(text: str, max_w: float, voice: MatrixVoice, *, max_lines: int) -> list[str]:
-    """Greedy word wrap into at most ``max_lines`` runs.
-
-    Wrapping is the default overflow behavior for text cells — the
-    ellipsis appears only on the final permitted line, when content
-    genuinely exceeds the cap (or a single word outruns the column).
-    """
-    if not text:
-        return []
-    # Honor AUTHORED line breaks first, then greedy-wrap each paragraph into
-    # the remaining budget — an explicit break beats the heuristic, so a
-    # two-phrase subtitle can declare exactly where it splits. Paragraphs
-    # never drop (boxes grow to hold what the author wrote; max_lines is the
-    # WRAP cap for one long paragraph, never a paragraph-count cap): the
-    # effective budget floors at the authored paragraph count, and each
-    # paragraph's own slice reserves one line for every paragraph still to
-    # come, so an early long paragraph can no longer eat the whole budget
-    # and silently erase a later one — the old `if len(out) >= max_lines:
-    # break` dropped a whole paragraph with no ellipsis, no trace.
-    if "\n" in text:
-        paras = text.split("\n")
-        n = len(paras)
-        effective_max_lines = max(max_lines, n)
-        out: list[str] = []
-        for k, para in enumerate(paras):
-            reserve = n - k - 1
-            budget = max(1, effective_max_lines - len(out) - reserve)
-            out.extend(wrap_text_lines(para, max_w, voice, max_lines=budget))
-        return out[:effective_max_lines]
-    if max_lines <= 1 or measure_voice(text, voice) <= max_w:
-        return [truncate_to_width(text, max_w, voice)]
-    words = text.split(" ")
-    lines: list[str] = []
-    i = 0
-    while i < len(words):
-        if len(lines) == max_lines - 1:
-            lines.append(truncate_to_width(" ".join(words[i:]), max_w, voice))
-            return lines
-        current = words[i]
-        i += 1
-        while i < len(words) and measure_voice(current + " " + words[i], voice) <= max_w:
-            current = current + " " + words[i]
-            i += 1
-        lines.append(truncate_to_width(current, max_w, voice))
-    return lines
-
-
-def text_lines_needed(text: str, max_w: float, voice: MatrixVoice, *, max_lines: int) -> int:
-    """Line count :func:`wrap_text_lines` will produce — keeps the
-    row-height pre-pass and the cell builder coupled."""
-    return max(1, len(wrap_text_lines(text, max_w, voice, max_lines=max_lines)))
 
 
 def _note_sub_fields(

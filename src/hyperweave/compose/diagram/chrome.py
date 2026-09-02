@@ -66,13 +66,8 @@ from hyperweave.compose.diagram.sizing import (
     voice_for,
     wrap_label_runs,
 )
-from hyperweave.compose.matrix.cells import (
-    glyph_mark_placement,
-    measure_voice,
-    resolve_glyph_mode,
-    truncate_to_width,
-    wrap_text_lines,
-)
+from hyperweave.compose.geometry.text import measure_voice, truncate_to_width, wrap_text_lines
+from hyperweave.compose.matrix.cells import glyph_mark_placement, resolve_glyph_mode
 from hyperweave.compose.spatial_records import RectSpec
 from hyperweave.core.diagram import NodeHealth, NodeRole, NodeStyle
 from hyperweave.core.matrix import GlyphTint

@@ -39,7 +39,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from hyperweave.core.text import measure_text
+from hyperweave.compose.geometry.text import fit_line
+from hyperweave.core.paradigm import MatrixVoice
 
 from .receipt_sections import (
     _coerce_tools,
@@ -709,28 +710,9 @@ def _fmt_ctx(n: int) -> str:
 
 def _fit(text: str, *, budget: float, size: float) -> str:
     """Right-truncate (ellipsis) ``text`` to ``budget`` px at the mono ``size``."""
-    if not text:
-        return text
-    if measure_text(text, font_family=_MONO, font_size=size, font_weight=500) <= budget:
-        return text
-    ell = "…"
-    lo, hi, best = 0, len(text), ell
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        cand = text[:mid].rstrip() + ell
-        if measure_text(cand, font_family=_MONO, font_size=size, font_weight=500) <= budget:
-            best = cand
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    return best
+    return fit_line(text, MatrixVoice(family=_MONO, size=size, weight=500), budget)
 
 
-# Barcode stripe pattern (deterministic from the session hash so the same
-# session always prints the same code). Widths cycle through a Code-128-ish
-# {1,2,3} px set; the gap between stripes is a constant 2px. The specimen drew
-# 31 stripes; we derive the count + widths from the hash digits so every
-# session's "machine-readable identity" differs while staying tape-furniture.
 _BARCODE_WIDTHS = (2, 1, 3, 1, 2, 3, 1, 2, 3, 1)
 _BARCODE_GAP = 2.0
 _BARCODE_COUNT = 31

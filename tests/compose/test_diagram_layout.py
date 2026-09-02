@@ -158,7 +158,7 @@ class TestUniversalInvariants:
         # Truncation is measurement-based: a start-anchored run must not
         # cross its card's right padding edge.
         from hyperweave.compose.diagram.chrome import voice_for
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
 
         cfg = load_paradigms()["primer"].diagram
         lay = solve(**CASES[slug])
@@ -1069,7 +1069,7 @@ class TestTreeRadial:
         at least 55% of the canvas, and the canvas is no longer the ring
         formula's square."""
         from hyperweave.compose.diagram.chrome import voice_for
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
         from hyperweave.config.loader import load_glyphs
         from hyperweave.core.matrix import GlyphTint
 
@@ -1266,7 +1266,7 @@ class TestTextMetrics:
         nodes, each label places radially outboard and its box keeps clear
         of the ring stroke — no 3/9 o'clock collision."""
         from hyperweave.compose.diagram.chrome import voice_for
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
 
         cfg = load_paradigms()["primer"].diagram
         # Coin-ring labels are a glyph-circle feature; no parity preset renders
@@ -1374,7 +1374,7 @@ class TestTextMetrics:
         from hyperweave.compose.diagram.chrome import CARD_LABEL_PAD_X, DOT_MARK_W, voice_for
         from hyperweave.compose.diagram.input import diagram_preset_names
         from hyperweave.compose.diagram.solver import apply_spec_chassis
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
         from hyperweave.config.loader import load_glyphs
         from hyperweave.core.matrix import GlyphTint
 
@@ -1529,7 +1529,7 @@ class TestTextMetrics:
         """G4: the radial hub label sits in an angular gap and every spoke
         (and the particle path riding it) keeps clear of the label box."""
         from hyperweave.compose.diagram.chrome import voice_for
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
         from hyperweave.config.loader import load_glyphs
         from hyperweave.core.matrix import GlyphTint
 
@@ -2090,7 +2090,7 @@ class TestCardLego:
     def test_portrait_text_stays_inside_the_card(self) -> None:
         # The bleed law: every text run's measured extent fits its card.
         from hyperweave.compose.diagram.sizing import voice_for
-        from hyperweave.compose.matrix.cells import measure_voice
+        from hyperweave.compose.geometry.text import measure_voice
 
         cfg = load_paradigms()["primer"].diagram
         lay = solve(**self._PIPE)

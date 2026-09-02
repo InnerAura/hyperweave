@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.chart.layout import compute_chart_layout, position_x_labels, position_y_labels
 from hyperweave.compose.schema import coerce_chart_input
+from hyperweave.core.text import format_compact_number
 from hyperweave.render.chart_engine import Viewport, build_chart_svg
 
 if TYPE_CHECKING:
@@ -153,14 +154,6 @@ def resolve_chart(
     # (CURRENT / DELTA / WINDOW) and the floating glass growth callout — replacing
     # the brutalist milestone annotations the prior pass carried. Other paradigms
     # ignore these context keys.
-    def _fmt_compact(n: float) -> str:
-        n = abs(n)
-        if n >= 1_000_000:
-            return f"{n / 1_000_000:.1f}M".replace(".0M", "M")
-        if n >= 1_000:
-            return f"{n / 1_000:.1f}K".replace(".0K", "K")
-        return f"{round(n)}"
-
     def _num(x: object) -> float:
         if not isinstance(x, int | float | str):
             return 0.0
@@ -178,11 +171,11 @@ def resolve_chart(
         _delta_pct = round((_last_val - _first_nz) / _first_nz * 100)
         chart_primer_delta = f"+{_delta_pct}%"
         _mult = _last_val / _first_nz
-        chart_primer_callout_value = f"{_mult:.0f}\u00d7" if _mult >= 2 else f"+{_fmt_compact(_net)}"
+        chart_primer_callout_value = f"{_mult:.0f}\u00d7" if _mult >= 2 else f"+{format_compact_number(_net)}"
         chart_primer_callout_label = "GROWTH" if _mult >= 2 else "GAINED"
     else:
-        chart_primer_delta = f"+{_fmt_compact(_net)}"
-        chart_primer_callout_value = f"+{_fmt_compact(_net)}"
+        chart_primer_delta = f"+{format_compact_number(_net)}"
+        chart_primer_callout_value = f"+{format_compact_number(_net)}"
         chart_primer_callout_label = "GAINED"
 
     def _ym(point: dict[str, object]) -> tuple[int, int] | None:
