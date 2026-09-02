@@ -22,7 +22,7 @@
   <metadata>
     <hw:artifact xmlns:hw="https://hyperweave.app/hw/v1.0"
                  id="0198c30a-4b70-7d55-8e19-hwlockupline02" type="lockup"
-                 series="hyperweave-identity" version="2.0.0">
+                 series="hyperweave-identity" version="2.1.0">
       <hw:provenance>
         <hw:generator>Claude Opus 5 (InnerAura Labs) [claude-opus-5]</hw:generator>
         <hw:created>2026-08-29T00:00:00Z</hw:created>
@@ -30,7 +30,7 @@
         <hw:lineage parent="0198c2e0-3f10-7b44-9d07-hwlockupblock1"
                     relation="reduction" />
         <hw:selection-signal rank="1" of="5" cohort="composition-strategies-a-e"
-                             reason="Eli: mark too small against the wordmark at phi, and the Beacon dark treatment should not go white. Restored the block lockup mark scale on one line, and replaced the dark colorway with DNA mined from the noctilucent banner and its raster crops." />
+                             reason="Eli, on GitHub dark: the east and south vertices read as holes in the structure. Fix the silhouette floor without losing the chrome bevel. Earlier in the same cohort: mark too small against the wordmark at phi, and the Beacon dark treatment should not go white. Restored the block lockup mark scale on one line, and replaced the dark colorway with DNA mined from the noctilucent banner and its raster crops." />
       </hw:provenance>
       <hw:spec size="853.4x169.0" performance="composite-only" theme="adaptive"
                a11y="WCAG-AA" platform="markdown-inline" />
@@ -69,16 +69,17 @@
     </hw:aesthetic>
     <hw:chromatic-surface xmlns:hw="https://hyperweave.app/hw/v1.0">
       <hw:zone id="chassis" capability="chromatic-override"
-               tokens="--dna-ramp-* --dna-wm-* --dna-node-*" />
+               tokens="--dna-ramp-* --dna-wire-floor --dna-wm-* --dna-node-*" />
       <hw:zone id="material" capability="fixed" sinks="stop-color"
                reason="Alpha is carried in eight-digit hex on stop-color; a var() in stop-opacity falls back to 1, not to the literal" />
     </hw:chromatic-surface>
     <hw:reasoning xmlns:hw="https://hyperweave.app/hw/v1.0">
       <hw:intent>
-        The approved block composition with the subtitle removed and the mark left at
-        the size it
-        was drawn, plus a dark colorway mined from the noctilucent banner rather than
-        invented.
+        The approved block composition with the subtitle removed, the mark left at the
+        size it was
+        drawn, and a dark colourway that keeps the mined chrome bevel without letting
+        the shadow side
+        of the mark fall through the floor of the page.
       </hw:intent>
       <hw:approach>
         Two corrections. Size: v1.0.0 re-derived the mark from phi once the block
@@ -101,31 +102,52 @@
         interior
         151B42. Those readings are carried as tokens: the diamond stays dark and the
         ring does the
-        work, which is what makes the mark read as chrome rather than as a lamp.
-        Wordmark is one
+        work, which is what makes the mark read as chrome rather than as a lamp. v2.1.0
+        then repairs
+        the consequence. The bevel ramp no longer terminates in a colour at all — it
+        terminates in
+        transparency, and a flat structural keyline of the same width sits underneath
+        every stroke it
+        paints. The gradient is therefore a highlight laid over a solid outline rather
+        than the
+        outline itself, so the lit side is unchanged while the shadow side resolves to
+        the floor
+        token instead of to the ground. Floor is 4166C4 on dark, measuring 3.53:1 on
+        #0D1117 and
+        3.92:1 on black, above the 3:1 non-text threshold at every vertex; on light it
+        is the
+        1E40A0 the ramp used to end on, so the porcelain rendering is unchanged. The
+        facets and
+        chamber were lifted with it — 080C24 at 75% was darker than GitHub dark itself,
+        which is what
+        turned the lower half of the diamond into a void rather than a plane. Wordmark
+        is one
         compound path. Colour is entirely --dna-* roles with literal var() fallbacks;
         porcelain is
         the base, Chrome the override.
       </hw:approach>
       <hw:tradeoffs>
-        Retired the Beacon treatment entirely rather than dimming it: filling the
-        chamber with light
-        inverted the material logic — the mark stopped being a machined object and
-        became a lamp, and
-        no amount of tuning the fill opacity would have recovered the bevel, because the
-        bevel is a
-        luminance ramp across the ring and a bright interior competes with it. Cost of
-        the mined
-        alternative is real: the ramp terminal 1B245A measures 1.33:1 against a plain
-        dark host, so
-        the lower-right arc of the ring genuinely falls into the ground. That is chrome
-        behaviour and
-        it is kept deliberately, with the 45% cobalt bloom carrying separation instead —
-        but on a
-        pure black surface the silhouette is a crescent, not a diamond, and a flat-ink
-        variant should
-        be cut for any placement where the full outline must survive. Dropping the
-        tagline costs the
+        v2.0.0 shipped the mined ramp verbatim and defended the resulting 1.33:1 shadow
+        terminal as
+        chrome behaviour. That was wrong, and the failure mode was specific: the east
+        and south
+        vertices are exactly where the ramp is darkest and where the geometry is
+        thinnest, so the
+        outline did not merely dim there, it disappeared, and the mark read as a diamond
+        with two
+        bites taken out of it. Fidelity to the donor is not worth a broken silhouette —
+        the donor
+        could afford a black terminal because it sat on a lit camouflage field, and a
+        transparent
+        artifact on flat #0D1117 cannot. The floor keyline costs two extra stroked paths
+        per mark,
+        roughly 380 bytes, and it slightly cools the very brightest crown of the bevel
+        where the
+        transparent ramp now lets a little floor through. Chose that over raising the
+        ramp terminal
+        directly, which would have compressed the bevel's whole luminance range and
+        flattened the
+        machined read the mining was for. Dropping the tagline costs the
         artifact its proposition: this lockup says who, not what, so a README needs the
         sentence in
         markdown underneath or the block file instead. Base is porcelain
@@ -151,7 +173,12 @@
         110.52, run
         648.4, tracking 0.06em. Gutter 36 from bead edge to the H. Mark 149 against cap
         52
-        is 2.87:1, identical geometry to the block lockup. Intrinsic 820x162.4.
+        is 2.87:1, identical geometry to the block lockup. Every stroked path in the
+        mark is drawn
+        twice at identical width — a flat floor keyline, then the bevel ramp over it —
+        so the
+        silhouette is carried by the floor and the gradient only adds the highlight.
+        Intrinsic 820x162.4.
       </hw:spatial-notes>
     </hw:reasoning>
     <hw:spatial-trace xmlns:hw="https://hyperweave.app/hw/v1.0">
@@ -193,7 +220,8 @@
     #hw-root {
       --dna-ramp-hi: #5C80E3;
       --dna-ramp-mid: #1D4ED8;
-      --dna-ramp-lo: #1E40A0;
+      --dna-ramp-lo: #1D4ED800;
+      --dna-wire-floor: #1E40A0;
       --dna-wm-hi: #2D5EE0;
       --dna-wm-mid: #1D4ED8;
       --dna-wm-lo: #1E40A0;
@@ -220,22 +248,23 @@
       #hw-root {
         --dna-ramp-hi: #E8F2FF;
         --dna-ramp-mid: #6090E8;
-        --dna-ramp-lo: #1B245A;
+        --dna-ramp-lo: #6090E800;
+        --dna-wire-floor: #4166C4;
         --dna-wm-hi: #F4F8FF;
         --dna-wm-mid: #EAF2FF;
         --dna-wm-lo: #DCE9FF;
         --dna-node-spec: #FFFFFF;
         --dna-node-mid: #E8F2FF;
-        --dna-node-lo: #0B1030;
+        --dna-node-lo: #2F5CE0;
         --dna-glow-0: #6090E873;
         --dna-glow-1: #1B245A33;
         --dna-glow-2: #080C2400;
-        --dna-face-0: #080C24BF;
-        --dna-face-1: #080C24BF;
-        --dna-face-2: #080C24BF;
-        --dna-glass-0: #1B245A73;
-        --dna-glass-1: #1B245A73;
-        --dna-glass-2: #1B245A73;
+        --dna-face-0: #1A2454E6;
+        --dna-face-1: #151D46E6;
+        --dna-face-2: #101740E6;
+        --dna-glass-0: #26326E8C;
+        --dna-glass-1: #1E2A608C;
+        --dna-glass-2: #18215180;
         --dna-rim-0: #FFFFFFF2;
         --dna-rim-1: #E8F2FF99;
         --dna-rim-2: #6090E84D;
@@ -296,8 +325,8 @@
     <linearGradient id="hw-ramp" x1="-80" y1="-80" x2="80" y2="80"
                     gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="var(--dna-ramp-hi, #5C80E3)" />
-      <stop offset="40%" stop-color="var(--dna-ramp-mid, #1D4ED8)" />
-      <stop offset="100%" stop-color="var(--dna-ramp-lo, #1E40A0)" />
+      <stop offset="45%" stop-color="var(--dna-ramp-mid, #1D4ED8)" />
+      <stop offset="100%" stop-color="var(--dna-ramp-lo, #1D4ED800)" />
     </linearGradient>
     <linearGradient id="hw-wm" x1="195.04" y1="0" x2="843.4" y2="0"
                     gradientUnits="userSpaceOnUse">
@@ -342,8 +371,15 @@
     <path class="veil"
           d="M-15-60-45-30C-60-15-60 15-45 30L-15 60 15 60 45 30C60 15 60-15 45-30L15-60Z"
           fill="url(#hw-glass)" />
+    <path class="wire" d="M0-80 80 0 0 80-80 0Z" fill="none"
+          stroke="var(--dna-wire-floor, #1E40A0)" stroke-width="2.4"
+          stroke-linejoin="round" opacity=".92" />
     <path class="wire" d="M0-80 80 0 0 80-80 0Z" fill="none" stroke="url(#hw-ramp)"
           stroke-width="2.4" stroke-linejoin="round" opacity=".92" />
+    <path class="wire"
+          d="M-15-60-45-30C-60-15-60 15-45 30L-15 60 15 60 45 30C60 15 60-15 45-30L15-60Z"
+          fill="none" stroke="var(--dna-wire-floor, #1E40A0)" stroke-width="6.5"
+          stroke-linejoin="round" stroke-linecap="round" opacity=".96" />
     <path class="wire"
           d="M-15-60-45-30C-60-15-60 15-45 30L-15 60 15 60 45 30C60 15 60-15 45-30L15-60Z"
           fill="none" stroke="url(#hw-ramp)" stroke-width="6.5" stroke-linejoin="round"
