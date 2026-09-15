@@ -226,6 +226,7 @@ def _text_surface(layout: MatrixLayout) -> list[str]:
             strings.append(text_spec.text)
     for header in layout.colheaders:
         strings.append(header.label.text)
+        strings.extend(line.text for line in header.lines)
         if header.sublabel is not None:
             strings.append(header.sublabel.text)
     for band in layout.section_bands:
@@ -233,8 +234,10 @@ def _text_surface(layout: MatrixLayout) -> list[str]:
     for cell in layout.cells:
         if cell.text:
             strings.append(cell.text)
+        strings.extend(line.text for line in cell.text_lines)
         if cell.sub_text:
             strings.append(cell.sub_text)
+        strings.extend(line.text for line in cell.sub_lines)
         for chip in cell.chips:
             strings.append(chip.text)
     if layout.axis is not None:
