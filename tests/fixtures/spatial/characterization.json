@@ -210,43 +210,44 @@
         "refused": false,
         "exit_code": 0,
         "report_ok": true,
-        "diagnostics": [],
+        "diagnostics": [
+          "column-compressed"
+        ],
         "warnings": 0,
         "viewbox_w": 900.0,
-        "viewbox_h": 327.0,
+        "viewbox_h": 340.0,
         "ellipses": 0,
         "wire_card_crossings": 0,
         "layout": {
           "width": 900,
-          "height": 327,
+          "height": 340,
           "col_w": [
-            167.6,
-            102.4,
-            102.4,
-            167.6,
-            102.4
+            167.5,
+            99.9,
+            101.0,
+            165.0,
+            108.7
           ],
           "header_overruns": [
-            -101.8,
-            24.6,
-            24.6,
-            -52.8,
-            104.2
+            -40.5,
+            -3.5,
+            -16.8,
+            -38.0,
+            -6.1
           ],
           "title_size": 29.0,
           "title_end_x": 382.9,
           "content_right": 866.0,
           "title_overrun": -483.1,
           "title_vs_headline": 0.0,
-          "label_w": 189.6,
+          "label_w": 190.0,
           "label_need": 189.6,
           "truncated_labels": 0,
           "summary_label_overrun": 0.0,
           "negative_rects": 0,
-          "truncated_cells": 0,
-          "axis_right": 0.0,
-          "track_right": 0.0,
-          "shift": 0.0
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
         }
       }
     },
@@ -261,37 +262,36 @@
         "report_ok": true,
         "diagnostics": [],
         "warnings": 0,
-        "viewbox_w": 731.0,
+        "viewbox_w": 818.0,
         "viewbox_h": 290.0,
-        "ellipses": 1,
+        "ellipses": 0,
         "wire_card_crossings": 0,
         "layout": {
-          "width": 731,
+          "width": 818,
           "height": 290,
           "col_w": [
-            110.1,
-            110.1,
-            110.1
+            110.0,
+            110.0,
+            110.0
           ],
           "header_overruns": [
-            -25.9,
             -74.8,
-            -44.2
+            -44.2,
+            -74.8
           ],
           "title_size": 29.0,
           "title_end_x": 229.6,
-          "content_right": 697.0,
-          "title_overrun": -467.4,
+          "content_right": 784.0,
+          "title_overrun": -554.4,
           "title_vs_headline": 0.0,
-          "label_w": 332.8,
+          "label_w": 420.0,
           "label_need": 420.0,
-          "truncated_labels": 1,
+          "truncated_labels": 0,
           "summary_label_overrun": 0.0,
           "negative_rects": 0,
-          "truncated_cells": 0,
-          "axis_right": 0.0,
-          "track_right": 0.0,
-          "shift": 0.0
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
         }
       }
     },
@@ -305,11 +305,13 @@
         "refused": false,
         "exit_code": 0,
         "report_ok": true,
-        "diagnostics": [],
+        "diagnostics": [
+          "masthead-title"
+        ],
         "warnings": 0,
         "viewbox_w": 900.0,
         "viewbox_h": 231.0,
-        "ellipses": 0,
+        "ellipses": 1,
         "wire_card_crossings": 0,
         "layout": {
           "width": 900,
@@ -319,23 +321,22 @@
             346.0
           ],
           "header_overruns": [
-            -249.6,
+            -286.3,
             -286.3
           ],
-          "title_size": 29.0,
-          "title_end_x": 1096.0,
+          "title_size": 23.0,
+          "title_end_x": 616.5,
           "content_right": 866.0,
-          "title_overrun": 230.0,
-          "title_vs_headline": 443.1,
+          "title_overrun": -249.5,
+          "title_vs_headline": -36.4,
           "label_w": 140.0,
           "label_need": 124.8,
           "truncated_labels": 0,
           "summary_label_overrun": 0.0,
           "negative_rects": 0,
-          "truncated_cells": 0,
-          "axis_right": 0.0,
-          "track_right": 0.0,
-          "shift": 0.0
+          "truncated_runs": 1,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
         }
       }
     },
@@ -350,37 +351,36 @@
         "report_ok": true,
         "diagnostics": [],
         "warnings": 0,
-        "viewbox_w": 600.0,
+        "viewbox_w": 679.0,
         "viewbox_h": 351.0,
         "ellipses": 0,
         "wire_card_crossings": 0,
         "layout": {
-          "width": 600,
+          "width": 679,
           "height": 351,
           "col_w": [
-            130.7,
-            130.7,
-            130.7
+            110.0,
+            110.0,
+            110.0
           ],
           "header_overruns": [
-            -46.5,
-            -89.3,
-            -89.3
+            -68.7,
+            -68.7,
+            -74.8
           ],
-          "title_size": 27.5,
-          "title_end_x": 345.9,
-          "content_right": 566.0,
-          "title_overrun": -220.1,
+          "title_size": 29.0,
+          "title_end_x": 363.0,
+          "content_right": 645.0,
+          "title_overrun": -282.0,
           "title_vs_headline": 0.0,
-          "label_w": 140.0,
+          "label_w": 281.0,
           "label_need": 124.8,
           "truncated_labels": 0,
-          "summary_label_overrun": 110.8,
+          "summary_label_overrun": -30.2,
           "negative_rects": 0,
-          "truncated_cells": 0,
-          "axis_right": 0.0,
-          "track_right": 0.0,
-          "shift": 0.0
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
         }
       }
     },
@@ -406,7 +406,7 @@
             692.0
           ],
           "header_overruns": [
-            -644.5
+            -632.3
           ],
           "title_size": 29.0,
           "title_end_x": 297.4,
@@ -418,10 +418,9 @@
           "truncated_labels": 0,
           "summary_label_overrun": 0.0,
           "negative_rects": 0,
-          "truncated_cells": 0,
-          "axis_right": 643.1,
-          "track_right": 806.5,
-          "shift": 163.4
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
         }
       }
     },
@@ -434,7 +433,9 @@
         "refused": false,
         "exit_code": 0,
         "report_ok": true,
-        "diagnostics": [],
+        "diagnostics": [
+          "column-compressed"
+        ],
         "warnings": 0,
         "viewbox_w": 900.0,
         "viewbox_h": 219.0,
@@ -444,32 +445,32 @@
           "width": 900,
           "height": 219,
           "col_w": [
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            59.6,
-            36.4
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            57.5,
+            59.1
           ],
           "header_overruns": [
-            -6.0,
-            -24.4,
-            -24.4,
-            -24.4,
-            -24.4,
-            -24.4,
-            -24.4,
-            -24.4,
-            -24.4,
-            -24.4,
-            -24.4,
-            4.9
+            -22.3,
+            -22.3,
+            -22.3,
+            -22.3,
+            -22.3,
+            -22.3,
+            -22.3,
+            -22.3,
+            -22.3,
+            -22.3,
+            -16.2,
+            -5.5
           ],
           "title_size": 29.0,
           "title_end_x": 370.8,
@@ -480,11 +481,213 @@
           "label_need": 31.2,
           "truncated_labels": 0,
           "summary_label_overrun": 0.0,
-          "negative_rects": 2,
-          "truncated_cells": 0,
-          "axis_right": 0.0,
-          "track_right": 0.0,
-          "shift": 0.0
+          "negative_rects": 0,
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
+        }
+      }
+    },
+    "mat-audit-agent-experience": {
+      "defects": [
+        "MAT-03"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 658.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 658,
+          "col_w": [
+            56.0,
+            240.0,
+            80.3,
+            262.7
+          ],
+          "header_overruns": [
+            -32.0,
+            -15.1,
+            -20.6,
+            -111.2
+          ],
+          "title_size": 24.8,
+          "title_end_x": 863.9,
+          "content_right": 866.0,
+          "title_overrun": -2.1,
+          "title_vs_headline": 0.0,
+          "label_w": 193.0,
+          "label_need": 196.8,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
+        }
+      }
+    },
+    "mat-audit-capabilities": {
+      "defects": [
+        "MAT-02"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 710.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 710,
+          "col_w": [
+            56.0,
+            226.4,
+            180.0,
+            99.6,
+            110.0
+          ],
+          "header_overruns": [
+            -32.0,
+            -105.5,
+            -65.2,
+            -39.9,
+            -50.3
+          ],
+          "title_size": 27.1,
+          "title_end_x": 645.2,
+          "content_right": 866.0,
+          "title_overrun": -220.8,
+          "title_vs_headline": 0.0,
+          "label_w": 160.0,
+          "label_need": 160.8,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
+        }
+      }
+    },
+    "mat-audit-defect-ledger": {
+      "defects": [
+        "MAT-01",
+        "MAT-02",
+        "MAT-03"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [
+          "column-compressed"
+        ],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 808.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 808,
+          "col_w": [
+            114.0,
+            111.7,
+            136.5,
+            91.5,
+            84.0,
+            97.3
+          ],
+          "header_overruns": [
+            -29.8,
+            -3.0,
+            -3.4,
+            -19.6,
+            -24.3,
+            -25.4
+          ],
+          "title_size": 29.0,
+          "title_end_x": 846.9,
+          "content_right": 866.0,
+          "title_overrun": -19.1,
+          "title_vs_headline": 0.0,
+          "label_w": 197.0,
+          "label_need": 196.8,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
+        }
+      }
+    },
+    "mat-audit-prompt-generators": {
+      "defects": [
+        "MAT-01",
+        "MAT-02"
+      ],
+      "surface": "cli",
+      "measured": {
+        "refused": false,
+        "exit_code": 0,
+        "report_ok": true,
+        "diagnostics": [
+          "column-compressed"
+        ],
+        "warnings": 0,
+        "viewbox_w": 900.0,
+        "viewbox_h": 711.0,
+        "ellipses": 0,
+        "wire_card_crossings": 0,
+        "layout": {
+          "width": 900,
+          "height": 711,
+          "col_w": [
+            49.1,
+            121.5,
+            71.0,
+            75.3,
+            150.4,
+            87.9,
+            83.7
+          ],
+          "header_overruns": [
+            -25.1,
+            -43.4,
+            -11.3,
+            -15.6,
+            -23.4,
+            -9.9,
+            -11.8
+          ],
+          "title_size": 25.3,
+          "title_end_x": 645.2,
+          "content_right": 866.0,
+          "title_overrun": -220.8,
+          "title_vs_headline": 0.0,
+          "label_w": 193.0,
+          "label_need": 196.8,
+          "truncated_labels": 0,
+          "summary_label_overrun": 0.0,
+          "negative_rects": 0,
+          "truncated_runs": 0,
+          "cell_escapes": [],
+          "tick_misalignment": 0.0
         }
       }
     },

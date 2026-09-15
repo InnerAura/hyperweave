@@ -1090,8 +1090,9 @@ class ParadigmMatrixConfig(FrozenModel):
     span the layout truncates them to preserve this gap — a clearance rule, so
     notes and brand never collide for ANY notes length or table width."""
     label_col_min: float = 140.0
-    label_col_max_ratio: float = 0.4
-    """Label column ceiling as a fraction of the content width."""
+    title_size_floor: float = 23.0
+    """Smallest display size a long masthead title may shrink to before it
+    truncates instead — shrunk titles stay legible."""
     max_col: float = 240.0
     """Per-column width ceiling for content-sized (non-flexible) columns."""
     cell_pad_x: float = 12.0

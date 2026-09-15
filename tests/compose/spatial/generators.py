@@ -22,13 +22,13 @@ SHORT, LONG = 10, 46
 
 
 def text(n_chars: int, offset: int = 0) -> str:
-    """A deterministic run of at least ``n_chars`` characters from a word bank."""
+    """A deterministic run of exactly ``n_chars`` characters from a word bank."""
     words: list[str] = []
     i = offset
     while len(" ".join(words)) < n_chars:
         words.append(_BANK[i % len(_BANK)])
         i += 1
-    return " ".join(words)
+    return " ".join(words)[:n_chars].rstrip()
 
 
 def _diagram(name: str, spec: dict[str, Any]) -> Case:

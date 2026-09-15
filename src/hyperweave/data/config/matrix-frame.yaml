@@ -106,11 +106,10 @@ semantic_palette:
 cell_geometry:
   text:
     min_col: 64
-    # Overflow wraps by default: up to max_lines runs at line_pitch, the
-    # row growing to fit (content mode). The ellipsis appears only on the
-    # final permitted line — never as the first behavior.
+    # Overflow wraps: as many runs as the text needs at line_pitch, the row
+    # growing to fit (content mode). Nothing ellipsizes except a single word
+    # wider than a caller-declared column width.
     line_pitch: 16
-    max_lines: 3
   check:
     stroke_width: 2
     check: "l3,3.2 l6.1,-7.3" # relative body appended to M{x},{y}

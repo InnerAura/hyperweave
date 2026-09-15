@@ -281,15 +281,55 @@ def diagram_summary(layout: Any) -> dict[str, Any]:
 
 
 def matrix_header_overruns(layout: Any, cfg: Any) -> list[float]:
-    """Header ink plus both pads minus the solved column width (positive = overrun)."""
+    """Widest rendered header run plus both cell pads minus the solved column
+    width, per data column (positive = the header ink lacks its pad). Wrapped
+    headers render ``lines``; the label header, when present, leads
+    ``colheaders`` and is skipped."""
+    headers = list(layout.colheaders)[-len(layout.col_w) :] if layout.col_w else []
     out: list[float] = []
-    for j, col in enumerate(layout.colheaders):
-        if j >= len(layout.col_w):
-            break
-        ink = measure_voice(col.label.text, cfg.colhead_voice)
+    for col, w in zip(headers, layout.col_w, strict=True):
+        runs = [t.text for t in col.lines] if col.lines else [col.label.text]
+        ink = max(measure_voice(run, cfg.colhead_voice) for run in runs)
         if col.sublabel is not None:
             ink = max(ink, measure_voice(col.sublabel.text, cfg.colhead_sub_voice))
-        out.append(round(ink + 2 * cfg.cell_pad_x - layout.col_w[j], 1))
+        out.append(round(ink + 2 * cfg.cell_pad_x - w, 1))
+    return out
+
+
+def matrix_truncated_runs(layout: Any) -> int:
+    """Every rendered text channel that ends in an ellipsis: single runs,
+    wrapped runs, notes, note runs, header runs, summary and footer text."""
+    count = 0
+    for cell in layout.cells:
+        runs = [cell.text, cell.sub_text, *(t.text for t in cell.text_lines), *(t.text for t in cell.sub_lines)]
+        runs.extend(chip.text for chip in cell.chips)
+        count += sum(1 for r in runs if r.endswith("…"))
+    for header in layout.colheaders:
+        runs = [t.text for t in header.lines] if header.lines else [header.label.text]
+        count += sum(1 for r in runs if r.endswith("…"))
+    if layout.header.title is not None and layout.header.title.text.endswith("…"):
+        count += 1
+    if layout.summary is not None and layout.summary.label is not None and layout.summary.label.text.endswith("…"):
+        count += 1
+    if layout.footer is not None and layout.footer.notes is not None and layout.footer.notes.text.endswith("…"):
+        count += 1
+    return count
+
+
+def matrix_cell_escapes(layout: Any) -> list[dict[str, Any]]:
+    """Any drawn primitive (chip, pill, tile, track, glyph box) that leaves its
+    cell's horizontal bounds, with the escape in px."""
+    out: list[dict[str, Any]] = []
+    for cell in layout.cells:
+        x0, x1 = cell.box.x, cell.box.x + cell.box.w
+        rects = [cell.track, cell.bar_fill, cell.pill, cell.heat_tile, cell.heat_track, cell.heat_underline]
+        rects.extend(chip.rect for chip in cell.chips)
+        for rect in rects:
+            if rect is None:
+                continue
+            over = max(x0 - rect.x, (rect.x + rect.w) - x1)
+            if over > 0.01:
+                out.append({"row": cell.row, "col": cell.col, "kind": cell.kind, "escape_px": round(over, 2)})
     return out
 
 
@@ -313,7 +353,11 @@ def matrix_title_metrics(layout: Any, cfg: Any) -> dict[str, float]:
 def matrix_label_metrics(layout: Any, spec: Any, cfg: Any) -> dict[str, Any]:
     label_w = layout.col_x[0] - cfg.margin_x if layout.col_x else 0.0
     need = max((measure_voice(row.label, cfg.row_label_voice) for row in spec.rows), default=0.0) + 2 * cfg.cell_pad_x
-    truncated = sum(1 for c in layout.cells if c.col == -1 and c.text.endswith("…"))
+    truncated = sum(
+        1
+        for c in layout.cells
+        if c.col == -1 and (c.text.endswith("…") or any(t.text.endswith("…") for t in c.text_lines))
+    )
     summary = layout.summary.label if layout.summary is not None else None
     summary_overrun = 0.0
     if summary is not None and summary.text:
@@ -335,17 +379,35 @@ def matrix_negative_rects(layout: Any) -> int:
     return count
 
 
-def matrix_axis_vs_track(layout: Any) -> dict[str, float]:
+def matrix_axis_vs_track(layout: Any, spec: Any) -> dict[str, float]:
+    """Tick-to-track alignment for the first bar column: each gridline should
+    sit where the bar track maps its tick value (positive = misaligned px)."""
     if layout.axis is None or not layout.axis.grid_lines:
-        return {"axis_right": 0.0, "track_right": 0.0, "shift": 0.0}
-    axis_right = max(line.x1 for line in layout.axis.grid_lines)
-    tracks = [c.track for c in layout.cells if c.track is not None]
-    track_right = max((t.x + t.w for t in tracks), default=0.0)
-    return {
-        "axis_right": round(axis_right, 1),
-        "track_right": round(track_right, 1),
-        "shift": round(track_right - axis_right, 1),
-    }
+        return {"tick_misalignment": 0.0}
+    bar_cells = [c for c in layout.cells if c.kind == "bar" and c.track is not None]
+    if not bar_cells:
+        return {"tick_misalignment": 0.0}
+    track = bar_cells[0].track
+    values = []
+    for row in spec.rows:
+        for cell in row.cells:
+            try:
+                values.append(float(cell.value))
+            except (TypeError, ValueError):
+                continue
+    axis_max = float(spec.axis_max) if spec.axis_max else (max(values) if values else 0.0)
+    if axis_max <= 0:
+        return {"tick_misalignment": 0.0}
+    worst = 0.0
+    for tick in layout.axis.tick_labels:
+        label = tick.text.rstrip("k")
+        try:
+            v = float(label) * (1000.0 if tick.text.endswith("k") else 1.0)
+        except ValueError:
+            continue
+        expected = track.x + (v / axis_max) * track.w
+        worst = max(worst, abs(tick.x - expected))
+    return {"tick_misalignment": round(worst, 1)}
 
 
 def matrix_summary(layout: Any, spec: Any, cfg: Any) -> dict[str, Any]:
@@ -357,8 +419,9 @@ def matrix_summary(layout: Any, spec: Any, cfg: Any) -> dict[str, Any]:
         **matrix_title_metrics(layout, cfg),
         **matrix_label_metrics(layout, spec, cfg),
         "negative_rects": matrix_negative_rects(layout),
-        "truncated_cells": sum(1 for c in layout.cells if c.col >= 0 and c.text.endswith("…")),
-        **matrix_axis_vs_track(layout),
+        "truncated_runs": matrix_truncated_runs(layout),
+        "cell_escapes": matrix_cell_escapes(layout),
+        **matrix_axis_vs_track(layout, spec),
     }
 
 

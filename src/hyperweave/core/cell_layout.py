@@ -87,10 +87,14 @@ def compute_cell_layout(
     value_w = value.rendered_width
     content_w = max(label_w, value_w)
     cell_w = math.ceil(max(content_w, float(min_cell_w)) + cell_pad)
+    # Left and right air are equal for every anchor: a start- or end-anchored
+    # run sits at the same distance from its near edge that the far edge
+    # keeps from its ink, so ``text_inset`` never buys one side more room.
+    side_air = (cell_w - content_w) / 2.0
     if anchor == "start":
-        text_x = float(text_inset)
+        text_x = side_air
     elif anchor == "end":
-        text_x = float(cell_w - text_inset)
+        text_x = cell_w - side_air
     else:
         text_x = cell_w / 2.0
     return CellLayout(

@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from hyperweave.compose.spatial_records import LineSpec, RectSpec, TextSpec
+    from hyperweave.core.diagnostics import Diagnostic
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,11 +131,15 @@ class CellPlacement:
 
 @dataclass(frozen=True, slots=True)
 class ColHeader:
-    """One column header: label line, optional sublabel line."""
+    """One column header: label line(s), optional sublabel line."""
 
     label: TextSpec
     sublabel: TextSpec | None = None
     accent: bool = False
+    lines: tuple[TextSpec, ...] = ()
+    """Wrapped header runs when the label needs more than one line at its
+    solved column width, bottom run on the header baseline; empty when the
+    label fits on one line (``label`` renders)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -243,3 +248,7 @@ class MatrixLayout:
     rects: dict[str, RectSpec] = field(default_factory=dict)
     lines: dict[str, LineSpec] = field(default_factory=dict)
     texts: dict[str, TextSpec] = field(default_factory=dict)
+    diagnostics: tuple[Diagnostic, ...] = ()
+    """Advisory findings from the solve — a label that gave ground at the
+    frame ceiling, a title truncated at its size floor, columns compressed
+    below their kind floor. A clean table reports nothing."""

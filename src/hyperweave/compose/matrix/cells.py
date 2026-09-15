@@ -18,7 +18,7 @@ from collections.abc import Mapping
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.geometry.text import measure_voice, wrap_text_lines
+from hyperweave.compose.geometry.text import measure_voice, truncate_to_width, widest_fragment, wrap_natural
 from hyperweave.compose.matrix.records import CellPlacement, ChipPlacement, GlyphPath
 from hyperweave.compose.spatial_records import RectSpec, TextSpec
 from hyperweave.core.color import is_achromatic, oklch_to_rgb, rgb_to_oklch
@@ -73,10 +73,10 @@ def _note_sub_fields(
     ellipsis landing only on the final line — never a mid-word ``Claude C…``.
     The row-height pre-pass reserves the matching vertical budget.
     """
-    lines = wrap_text_lines(note, max_w, voice, max_lines=2)
+    lines = fit_runs(note, max_w, voice)
     if len(lines) <= 1:
         return {"sub_text": lines[0] if lines else "", "sub_x": x, "sub_y": y0, "sub_cls": "rowsub"}
-    pitch = voice.size + 4.0
+    pitch = voice.size + _NOTE_LINE_AIR
     return {
         "sub_lines": tuple(TextSpec(x=x, y=y0 + k * pitch, anchor=anchor, text=line) for k, line in enumerate(lines)),
         "sub_cls": "rowsub",
@@ -179,6 +179,47 @@ def content_width(
     return max(floor, widest + pad)
 
 
+def content_floor(
+    kind: CellKind,
+    cells: Sequence[MatrixCell],
+    column: MatrixColumn,
+    *,
+    cfg: ParadigmMatrixConfig,
+    geometry: Mapping[str, Any],
+) -> float:
+    """The intrinsic minimum a column may compress to: the geometry it draws
+    (a mark, a glyph, a bar stub, the widest single chip or pill, the widest
+    unbreakable word) plus both cell pads. Below this something escapes its
+    cell, so no solve goes under it — the text floor's sibling for geometry.
+    """
+    geo = geometry.get(kind.value) or {}
+    pad = cfg.cell_pad_x * 2
+    if kind is CellKind.GLYPH:
+        return float(geo.get("size", 22)) + pad
+    if kind is CellKind.CHECK:
+        return 2 * float(geo.get("cross_arm", 7.4)) + pad
+    if kind is CellKind.DOT:
+        return 2 * max(float(geo.get("filled_r", 4.4)), float(geo.get("hollow_r", 4.1))) + pad
+    if kind is CellKind.PILL:
+        widest = max((measure_voice(_pill_text(c), cfg.pill_voice) for c in cells), default=0.0)
+        return widest + 2 * float(geo.get("pad_x", 11)) + pad
+    if kind is CellKind.CHIP:
+        chip_pad = float(geo.get("pad_x", 8))
+        widest = max(
+            (measure_voice(chip, cfg.chip_voice) + 2 * chip_pad for c in cells for chip in c.chips), default=0.0
+        )
+        return widest + pad
+    if kind is CellKind.BAR:
+        widest_value = max((measure_voice(display_value(c.value), cfg.cell_strong_voice) for c in cells), default=0.0)
+        return float(geo.get("min_bar_px", 14)) + _BAR_VALUE_GAP + widest_value + pad
+    if kind is CellKind.NUMERIC:
+        widest_value = max((measure_voice(display_value(c.value), cfg.cell_strong_voice) for c in cells), default=0.0)
+        return widest_value + pad
+    words = widest_fragment([display_value(c.value) for c in cells], cfg.cell_strong_voice)
+    note_words = widest_fragment([c.note for c in cells if c.note], cfg.row_sub_voice)
+    return max(words, note_words) + pad
+
+
 def chip_line_width(chips: Sequence[str], *, cfg: ParadigmMatrixConfig, geometry: Mapping[str, Any]) -> float:
     """Width of all chips packed on one line (no overflow)."""
     geo = geometry.get("chip") or {}
@@ -269,6 +310,47 @@ def _baseline(cy: float, voice: MatrixVoice) -> float:
     return cy + voice.size * 0.35
 
 
+_NOTE_LINE_AIR = 4.0
+"""Air between stacked note lines and above the first one."""
+
+_BAR_VALUE_GAP = 10.0
+"""Air between a bar track's end and its value run."""
+
+
+def bar_track_w(col_w: float, *, value_zone_w: float, pad: float) -> float:
+    """Width of a bar column's track — the same number the axis draws its
+    gridlines over, so a tick and the bar it grades land on one x."""
+    return max(0.0, col_w - 2 * pad - value_zone_w - _BAR_VALUE_GAP)
+
+
+def fit_runs(text: str, max_w: float, voice: MatrixVoice) -> list[str]:
+    """Natural word wrap into ``max_w``; a run wrapping cannot break (a single
+    word wider than the budget, only reachable under a caller-declared column
+    width) ellipsizes rather than escaping. Rows grow to hold every run."""
+    natural = wrap_natural(text, voice, max_w)
+    return [
+        truncate_to_width(line, max_w, voice) if measure_voice(line, voice) > max_w else line for line in natural.lines
+    ]
+
+
+def runs_needed(text: str, max_w: float, voice: MatrixVoice) -> int:
+    """Line count :func:`fit_runs` will produce — the row-height pass and
+    the cell builder read one number."""
+    return max(1, len(fit_runs(text, max_w, voice))) if text else 0
+
+
+def note_stack_below(lines: int, note_lines: int, *, voice: MatrixVoice, sub_voice: MatrixVoice, pitch: float) -> float:
+    """How far below a text cell's centre its last note line reaches (ink
+    bottom), mirroring the placement in :func:`_text` — the row-height pass
+    reserves this so an authored multi-paragraph note never leaves the row.
+    """
+    if note_lines <= 0:
+        return 0.0
+    first = voice.size * 0.62 if lines <= 1 else (lines - 1) / 2 * pitch + sub_voice.size + _NOTE_LINE_AIR
+    note_pitch = sub_voice.size + _NOTE_LINE_AIR
+    return first + sub_voice.size * 0.35 + (note_lines - 1) * note_pitch + sub_voice.size * 0.25
+
+
 def _text(
     *,
     cell: MatrixCell,
@@ -287,12 +369,7 @@ def _text(
     x, anchor = _anchor_x(box, column.align, cfg.cell_pad_x)
     cy = box.y + box.h / 2
     text_geo = geometry.get("text") or {}
-    lines = wrap_text_lines(
-        display_value(cell.value),
-        box.w - 2 * cfg.cell_pad_x,
-        voice,
-        max_lines=int(text_geo.get("max_lines", 3)),
-    )
+    lines = fit_runs(display_value(cell.value), box.w - 2 * cfg.cell_pad_x, voice)
     if len(lines) > 1:
         # Overflow wraps by default — the row grew in content mode, so the
         # stack centers in its taller box. An optional note becomes one
@@ -316,7 +393,7 @@ def _text(
         )
         if cell.note and row >= 0:
             sub_voice = cfg.row_sub_voice
-            y0 = _baseline(cy + (n - 1) / 2 * pitch + sub_voice.size + 4.0, sub_voice)
+            y0 = _baseline(cy + (n - 1) / 2 * pitch + sub_voice.size + _NOTE_LINE_AIR, sub_voice)
             placement = _with(
                 placement,
                 **_note_sub_fields(
@@ -457,8 +534,7 @@ def _bar(
             text_anchor=anchor,
             cls="cell",
         )
-    gap = 10.0
-    track_w = max(0.0, box.w - 2 * pad - value_zone_w - gap)
+    track_w = bar_track_w(box.w, value_zone_w=value_zone_w, pad=pad)
     track = RectSpec(box.x + pad, cy - track_h / 2, track_w, track_h, radius)
     fill_w = max(float(geo.get("min_bar_px", 14)), (axis_frac or 0.0) * track_w)
     unit = column.unit
@@ -497,7 +573,7 @@ def _pill_text(cell: MatrixCell) -> str:
     if cell.state is CellState.PARTIAL:
         return display_value(cell.value) or "Opt-in"
     if cell.state in (CellState.NONE, CellState.OFF):
-        return ""
+        return display_value(cell.value)
     if isinstance(cell.value, bool):
         return "Yes" if cell.value else ""
     return display_value(cell.value)
@@ -603,7 +679,10 @@ def _numeric(
     # (heat_tile_opacity). The VALUE carries the semantic hue; the thin
     # underline gauges within-range magnitude over a faint neutral track —
     # "fixed band · underline = gauged magnitude".
-    tile_w = box.w - 2 * cfg.cell_pad_x
+    # A compressed column shrinks the tile with it; the underline needs its
+    # insets on both sides, so a tile too narrow to hold them draws none —
+    # no rect ever reaches the template with a negative width.
+    tile_w = max(0.0, box.w - 2 * cfg.cell_pad_x)
     tile_h = float(geo.get("tile_h", 30))
     cx = box.x + box.w / 2
     tile = RectSpec(cx - tile_w / 2, cy - tile_h / 2, tile_w, tile_h, float(geo.get("tile_radius", 6)))
@@ -612,6 +691,7 @@ def _numeric(
     ul_h = float(geo.get("underline_h", 1.5))
     ul_track_w = tile_w - 2 * inset
     ul_y = tile.y + tile_h - inset / 2 - ul_h
+    has_underline = ul_track_w > 0.0
     return CellPlacement(
         kind="numeric",
         row=row,
@@ -620,8 +700,12 @@ def _numeric(
         emphasis=emphasis,
         note=cell.note,
         heat_tile=tile,
-        heat_track=RectSpec(tile.x + inset, ul_y, ul_track_w, ul_h, ul_h / 2),
-        heat_underline=RectSpec(tile.x + inset, ul_y, max(0.0, (axis_frac or 0.0) * ul_track_w), ul_h, ul_h / 2),
+        heat_track=RectSpec(tile.x + inset, ul_y, ul_track_w, ul_h, ul_h / 2) if has_underline else None,
+        heat_underline=(
+            RectSpec(tile.x + inset, ul_y, max(0.0, (axis_frac or 0.0) * ul_track_w), ul_h, ul_h / 2)
+            if has_underline
+            else None
+        ),
         tone=fill,
         tone_opacity=(
             float(palette.get("heat_tile_opacity_dark", 0.18))
@@ -660,7 +744,15 @@ def _chip(
     avail = box.w - 2 * cfg.cell_pad_x
     x0 = box.x + cfg.cell_pad_x
 
-    widths = [measure_voice(c, cfg.chip_voice) + 2 * pad_x for c in cell.chips]
+    # A chip wider than the cell (only under a caller-declared column width —
+    # the column floor holds the widest chip otherwise) ellipsizes to fit.
+    texts = [
+        c
+        if measure_voice(c, cfg.chip_voice) + 2 * pad_x <= avail
+        else truncate_to_width(c, avail - 2 * pad_x, cfg.chip_voice)
+        for c in cell.chips
+    ]
+    widths = [min(avail, measure_voice(c, cfg.chip_voice) + 2 * pad_x) for c in texts]
     placed: list[tuple[int, float, float, str]] = []  # (line, x, w, text)
     line, cursor = 0, 0.0
     hidden_from = len(cell.chips)
@@ -671,7 +763,7 @@ def _chip(
                 hidden_from = i
                 break
             line, cursor, step = line + 1, 0.0, w
-        placed.append((line, cursor if cursor == 0 else cursor + gap, w, cell.chips[i]))
+        placed.append((line, cursor if cursor == 0 else cursor + gap, w, texts[i]))
         cursor = (cursor + step) if cursor > 0 else w
 
     hidden = len(cell.chips) - hidden_from
@@ -693,6 +785,7 @@ def _chip(
     chips: list[ChipPlacement] = []
     for idx, (ln, x, w, text) in enumerate(placed):
         rect = RectSpec(x0 + x, top + ln * pitch, w, h, rx)
+        assert rect.x + rect.w <= x0 + avail + 0.01, "chip escapes its cell"
         chips.append(
             ChipPlacement(
                 rect=rect,

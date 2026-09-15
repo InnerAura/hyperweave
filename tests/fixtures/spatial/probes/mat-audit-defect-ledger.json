@@ -1,0 +1,248 @@
+{
+  "id": "mat-audit-defect-ledger",
+  "defects": [
+    "MAT-01",
+    "MAT-02",
+    "MAT-03"
+  ],
+  "surface": "cli",
+  "source": "the audit's own render input 12-spatial-defect-ledger.json (agy-20260831), kept verbatim as an acceptance input",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "HyperWeave Spatial Engine: 7 Core Defects Ledger",
+      "subtitle": "Forensic root causes, measured deltas, and line citations from SPATIAL_ENGINE_AUDIT.md",
+      "columns": [
+        {
+          "id": "defect",
+          "label": "DEFECT IDENTIFIED",
+          "kind": "text"
+        },
+        {
+          "id": "topo",
+          "label": "SURFACE / TOPO",
+          "kind": "chip"
+        },
+        {
+          "id": "invariant",
+          "label": "VIOLATED GEOMETRIC INVARIANT",
+          "kind": "text"
+        },
+        {
+          "id": "delta",
+          "label": "MEASURED DELTA",
+          "kind": "text"
+        },
+        {
+          "id": "cause",
+          "label": "ROOT CAUSE FILE & LINE",
+          "kind": "text"
+        },
+        {
+          "id": "severity",
+          "label": "SEVERITY",
+          "kind": "pill"
+        }
+      ],
+      "rows": [
+        {
+          "label": "Column Header Smash",
+          "cells": [
+            {
+              "value": "Column Headers Colliding & Smashing"
+            },
+            {
+              "value": "matrix",
+              "chips": [
+                "matrix/09",
+                "table"
+              ]
+            },
+            {
+              "value": "col_w >= header_ink_w + 2*pad_x"
+            },
+            {
+              "value": "88.4px text overlap"
+            },
+            {
+              "value": "matrix/layout.py:683"
+            },
+            {
+              "value": "CRITICAL",
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "Premature Row Truncation",
+          "cells": [
+            {
+              "value": "Row Label Truncated with Ellipsis"
+            },
+            {
+              "value": "matrix",
+              "chips": [
+                "matrix/08",
+                "cells"
+              ]
+            },
+            {
+              "value": "label_w = min(content, avail - sum(floors))"
+            },
+            {
+              "value": "+142.0px unused slack"
+            },
+            {
+              "value": "matrix/layout.py:136"
+            },
+            {
+              "value": "HIGH",
+              "state": "partial"
+            }
+          ]
+        },
+        {
+          "label": "Masthead Title Overflow",
+          "cells": [
+            {
+              "value": "Masthead Title Canvas Overflow"
+            },
+            {
+              "value": "matrix",
+              "chips": [
+                "matrix/10",
+                "masthead"
+              ]
+            },
+            {
+              "value": "title_end_x <= width - margin_x"
+            },
+            {
+              "value": "+112.0px right overflow"
+            },
+            {
+              "value": "matrix/layout.py:222"
+            },
+            {
+              "value": "CRITICAL",
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "Lane Header Smash",
+          "cells": [
+            {
+              "value": "Lane Category Header Collides with Badge"
+            },
+            {
+              "value": "diagram",
+              "chips": [
+                "diagram/05",
+                "lanes"
+              ]
+            },
+            {
+              "value": "band_w >= header_ink + count_w + pad"
+            },
+            {
+              "value": "45.0px badge smash"
+            },
+            {
+              "value": "diagram/lanes.py:162"
+            },
+            {
+              "value": "CRITICAL",
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "Card Piercing Wire",
+          "cells": [
+            {
+              "value": "Wire Slices Intermediate Card Body"
+            },
+            {
+              "value": "diagram",
+              "chips": [
+                "diagram/05",
+                "routing"
+              ]
+            },
+            {
+              "value": "min_clearance(wire, card) > 0 (Never pierce)"
+            },
+            {
+              "value": "100% card pierced"
+            },
+            {
+              "value": "diagram/lanes.py:463"
+            },
+            {
+              "value": "CRITICAL",
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "1D Ribbon Collapse",
+          "cells": [
+            {
+              "value": "Linear Chain Height Collapses to 63px"
+            },
+            {
+              "value": "diagram",
+              "chips": [
+                "diagram/03",
+                "linear"
+              ]
+            },
+            {
+              "value": "target_aspect <= 2.2 (Auto-fold chains)"
+            },
+            {
+              "value": "11.8:1 aspect ratio"
+            },
+            {
+              "value": "diagram/linear.py:120"
+            },
+            {
+              "value": "CRITICAL",
+              "state": "none"
+            }
+          ]
+        },
+        {
+          "label": "Hero 700px Monolith",
+          "cells": [
+            {
+              "value": "Hero Card Inflates to 700px Single Line"
+            },
+            {
+              "value": "diagram",
+              "chips": [
+                "architecture",
+                "sizing"
+              ]
+            },
+            {
+              "value": "hero_w <= 2.5 * h (Wrap desc to 2 lines)"
+            },
+            {
+              "value": "648px unwrapped desc"
+            },
+            {
+              "value": "diagram/sizing.py:345"
+            },
+            {
+              "value": "HIGH",
+              "state": "partial"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

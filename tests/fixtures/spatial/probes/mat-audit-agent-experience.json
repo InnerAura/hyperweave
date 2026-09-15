@@ -1,0 +1,183 @@
+{
+  "id": "mat-audit-agent-experience",
+  "defects": [
+    "MAT-03"
+  ],
+  "surface": "cli",
+  "source": "the audit's own render input 10-agent-experience-slide.json (agy-20260831), kept verbatim as an acceptance input",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "Pair Programming with HyperWeave: The Agent Perspective",
+      "subtitle": "Observations, core moats, and architectural findings from today's pairing session",
+      "columns": [
+        {
+          "id": "axis",
+          "label": "EVALUATION AXIS",
+          "kind": "text",
+          "align": "left",
+          "role": "label"
+        },
+        {
+          "id": "mark",
+          "label": "",
+          "kind": "glyph",
+          "align": "center",
+          "glyph_tint": "full"
+        },
+        {
+          "id": "finding",
+          "label": "OBSERVED BEHAVIOR & AGENT VERDICT",
+          "kind": "text",
+          "align": "left"
+        },
+        {
+          "id": "state",
+          "label": "STATUS",
+          "kind": "pill",
+          "align": "center"
+        },
+        {
+          "id": "impact",
+          "label": "AGENT WORKFLOW IMPACT",
+          "kind": "chip",
+          "align": "left"
+        }
+      ],
+      "rows": [
+        {
+          "label": "Spatial Geometry Solver",
+          "section": "STRENGTHS & MOATS",
+          "cells": [
+            {
+              "glyph": "cpu"
+            },
+            {
+              "value": "100% deterministic layout math; arrows seat cleanly on ports every run"
+            },
+            {
+              "state": "on"
+            },
+            {
+              "chips": [
+                "Zero Coordinate Hallucination",
+                "Rock Solid"
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Verb Algebra (Transform)",
+          "section": "STRENGTHS & MOATS",
+          "cells": [
+            {
+              "glyph": "refresh-cw"
+            },
+            {
+              "value": "Surgical RFC-6902 JSON patches preserve lineage without full redrawing"
+            },
+            {
+              "state": "on"
+            },
+            {
+              "chips": [
+                "90% Token Savings",
+                "Fast Multi-Turn"
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Curated Glyph Library",
+          "section": "STRENGTHS & MOATS",
+          "cells": [
+            {
+              "glyph": "anthropic"
+            },
+            {
+              "value": "200+ frontier AI and infra vector marks built-in with zero CDN dependencies"
+            },
+            {
+              "state": "on"
+            },
+            {
+              "chips": [
+                "Unmatched Moat",
+                "Zero Config"
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Invariant & Guard Laws",
+          "section": "STRENGTHS & MOATS",
+          "cells": [
+            {
+              "glyph": "shield-check"
+            },
+            {
+              "value": "Strict schema & invariant gates catch topological errors before rasterization"
+            },
+            {
+              "state": "on"
+            },
+            {
+              "chips": [
+                "Fail-Fast",
+                "Clean Diagnostics"
+              ]
+            }
+          ]
+        },
+        {
+          "label": "1D Ribbon Shrink Trap",
+          "section": "FRICTION POINTS & ACTIONABLE FIXES",
+          "cells": [
+            {
+              "glyph": "layout-grid"
+            },
+            {
+              "value": "1D horizontal chains (>4 nodes) shrink to 63px ribbon; solved via 2D folding"
+            },
+            {
+              "state": "partial"
+            },
+            {
+              "chips": [
+                "Solved via 2D Lanes/DAG",
+                "Aspect Governor"
+              ]
+            }
+          ]
+        },
+        {
+          "label": "MCP Packaging Extra",
+          "section": "FRICTION POINTS & ACTIONABLE FIXES",
+          "cells": [
+            {
+              "glyph": "mcp"
+            },
+            {
+              "value": "fastmcp in optional extra caused EOF error; moving to core makes install 1-click"
+            },
+            {
+              "state": "partial"
+            },
+            {
+              "chips": [
+                "Immediate DX Win",
+                "Zero-Config MCP"
+              ]
+            }
+          ]
+        }
+      ],
+      "sections": [
+        "STRENGTHS & MOATS",
+        "FRICTION POINTS & ACTIONABLE FIXES"
+      ],
+      "notes": "Antigravity Pairing Audit · Evaluated against live 2026 agent workflows and compiler invariants"
+    }
+  }
+}

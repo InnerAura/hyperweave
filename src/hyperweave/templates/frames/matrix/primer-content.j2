@@ -71,7 +71,11 @@
 {% endfor %}
   {# ── Column headers ── #}
 {% for h in matrix_layout.colheaders %}
+{% if h.lines %}{% for line in h.lines %}
+  <text class="{{ uid }}-colhead{% if h.accent %} {{ uid }}-colhead-accent{% endif %}" x="{{ line.x }}" y="{{ line.y }}" text-anchor="{{ line.anchor }}">{{ line.text | xml_escape }}</text>
+{% endfor %}{% else %}
   <text class="{{ uid }}-colhead{% if h.accent %} {{ uid }}-colhead-accent{% endif %}" x="{{ h.label.x }}" y="{{ h.label.y }}" text-anchor="{{ h.label.anchor }}">{{ h.label.text | xml_escape }}</text>
+{% endif %}
 {% if h.sublabel %}
   <text class="{{ uid }}-colheadsub" x="{{ h.sublabel.x }}" y="{{ h.sublabel.y }}" text-anchor="{{ h.sublabel.anchor }}">{{ h.sublabel.text | xml_escape }}</text>
 {% endif %}

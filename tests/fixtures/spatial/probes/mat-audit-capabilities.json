@@ -1,0 +1,236 @@
+{
+  "id": "mat-audit-capabilities",
+  "defects": [
+    "MAT-02"
+  ],
+  "surface": "cli",
+  "source": "the audit's own render input 08-hyperweave-capabilities-matrix.json (agy-20260831), kept verbatim as an acceptance input",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "HyperWeave System Capabilities Matrix",
+      "subtitle": "The complete taxonomy of frames, verbs, motion regimes, and architectural layers",
+      "columns": [
+        {
+          "id": "surface",
+          "label": "SURFACE / FRAME",
+          "kind": "text",
+          "align": "left",
+          "role": "label"
+        },
+        {
+          "id": "mark",
+          "label": "",
+          "kind": "glyph",
+          "align": "center",
+          "glyph_tint": "full"
+        },
+        {
+          "id": "scope",
+          "label": "SCOPE & CONTRACT",
+          "kind": "text",
+          "align": "left"
+        },
+        {
+          "id": "verbs",
+          "label": "SUPPORTED VERBS",
+          "kind": "chip",
+          "align": "left"
+        },
+        {
+          "id": "motion",
+          "label": "MOTION REGIME",
+          "kind": "pill",
+          "align": "center"
+        },
+        {
+          "id": "status",
+          "label": "STATUS",
+          "kind": "check",
+          "align": "center"
+        }
+      ],
+      "rows": [
+        {
+          "label": "Diagram (diagram/1)",
+          "section": "CORE AGENT ARTIFACTS",
+          "cells": [
+            {
+              "glyph": "hyperweave"
+            },
+            {
+              "value": "12 topologies · 21 layout slugs · 61 presets"
+            },
+            {
+              "chips": [
+                "compose",
+                "extract",
+                "transform",
+                "diff",
+                "verify"
+              ]
+            },
+            {
+              "state": "on"
+            },
+            {
+              "state": "full"
+            }
+          ]
+        },
+        {
+          "label": "Matrix (matrix/1)",
+          "section": "CORE AGENT ARTIFACTS",
+          "cells": [
+            {
+              "glyph": "table"
+            },
+            {
+              "value": "Universal table IR · kind auto-infer · GFM twin"
+            },
+            {
+              "chips": [
+                "compose",
+                "extract",
+                "transform",
+                "diff"
+              ]
+            },
+            {
+              "state": "off"
+            },
+            {
+              "state": "full"
+            }
+          ]
+        },
+        {
+          "label": "Receipt (telemetry)",
+          "section": "CORE AGENT ARTIFACTS",
+          "cells": [
+            {
+              "glyph": "terminal"
+            },
+            {
+              "value": "Claude & Codex session spend · token & cost audit"
+            },
+            {
+              "chips": [
+                "compose",
+                "extract",
+                "verify"
+              ]
+            },
+            {
+              "state": "on"
+            },
+            {
+              "state": "full"
+            }
+          ]
+        },
+        {
+          "label": "Badge & Strip",
+          "section": "IDENTITY & STATUS FRAMES",
+          "cells": [
+            {
+              "glyph": "github"
+            },
+            {
+              "value": "Live data tokens (gh, pypi, npm) · 8 themes"
+            },
+            {
+              "chips": [
+                "compose"
+              ]
+            },
+            {
+              "state": "on"
+            },
+            {
+              "state": "full"
+            }
+          ]
+        },
+        {
+          "label": "Marquee & Divider",
+          "section": "IDENTITY & STATUS FRAMES",
+          "cells": [
+            {
+              "glyph": "layout-grid"
+            },
+            {
+              "value": "Headline ticker · editorial dividers"
+            },
+            {
+              "chips": [
+                "compose"
+              ]
+            },
+            {
+              "state": "on"
+            },
+            {
+              "state": "full"
+            }
+          ]
+        },
+        {
+          "label": "Delta-Weave (2.0)",
+          "section": "NEXT-GEN COGNITIVE SUBSTRATE",
+          "cells": [
+            {
+              "glyph": "refresh-cw"
+            },
+            {
+              "value": "Sub-element live stream over SSE/WebSockets"
+            },
+            {
+              "chips": [
+                "stream",
+                "patch"
+              ]
+            },
+            {
+              "state": "on"
+            },
+            {
+              "state": "partial"
+            }
+          ]
+        },
+        {
+          "label": "WASM Solver (2.0)",
+          "section": "NEXT-GEN COGNITIVE SUBSTRATE",
+          "cells": [
+            {
+              "glyph": "cpu"
+            },
+            {
+              "value": "Rust Simplex solver · 500+ node capacity & rank folding"
+            },
+            {
+              "chips": [
+                "solve",
+                "fold"
+              ]
+            },
+            {
+              "state": "off"
+            },
+            {
+              "state": "partial"
+            }
+          ]
+        }
+      ],
+      "sections": [
+        "CORE AGENT ARTIFACTS",
+        "IDENTITY & STATUS FRAMES",
+        "NEXT-GEN COGNITIVE SUBSTRATE"
+      ],
+      "notes": "HyperWeave v0.4.3 · The deterministic artifact layer for AI agents"
+    }
+  }
+}

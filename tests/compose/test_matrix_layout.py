@@ -254,10 +254,11 @@ class TestCells:
         # wrapped to the full row cap before capping
         assert len({round(ch.rect.y, 2) for ch in chip_cell.chips}) == 4
 
-    def test_text_overflow_wraps_then_caps(self) -> None:
-        """Text cells wrap by default — the row grows in content mode; the
-        ellipsis appears only on the final permitted line once content
-        exceeds max_lines. Short siblings stay single-run."""
+    def test_text_wraps_to_its_full_demand(self) -> None:
+        """Text cells wrap by default and the row grows to hold every run —
+        there is no line cap and no ellipsis. Short siblings stay single-run."""
+        from hyperweave.compose.geometry.text import required_lines
+
         long = "a commit subject that runs well past a narrow column and keeps going with more words " * 2
         spec = MatrixSpec(
             title="T",
@@ -266,15 +267,14 @@ class TestCells:
             rows=[{"label": "r", "cells": [{"value": long}, {"value": "short"}, {"value": "also short"}]}],
         )
         layout = solve(spec)
-        geometry = load_matrix_config()["cell_geometry"]
-        max_lines = int(geometry["text"]["max_lines"])
         wrapped = next(c for c in layout.cells if c.row == 0 and c.col == 0)
-        assert len(wrapped.text_lines) == max_lines
-        assert wrapped.text_lines[-1].text.endswith("…")
-        assert all(not line.text.endswith("…") for line in wrapped.text_lines[:-1])
+        assert len(wrapped.text_lines) == required_lines(
+            long.strip(), CFG.cell_voice, wrapped.box.w - 2 * CFG.cell_pad_x
+        )
+        assert not any(line.text.endswith("…") for line in wrapped.text_lines)
         short = next(c for c in layout.cells if c.row == 0 and c.col == 1)
         assert short.text_lines == () and short.text == "short"
-        assert layout.row_h[0] > CFG.row_pitch  # the row grew to fit the stack
+        assert layout.row_h[0] > CFG.row_pitch
 
     def test_sectioned_labels_take_the_quiet_voice(self) -> None:
         """Sectioned rows are sub-fields: quiet voice, indented under the
@@ -302,7 +302,10 @@ class TestCells:
         scan = layout.rects["scan"]
         assert scan.x == (layout.width - CFG.scan_w) / 2
 
-    def test_label_truncation_is_measured(self) -> None:
+    def test_long_label_widens_the_frame_instead_of_truncating(self) -> None:
+        """A row label is content: the frame grows to hold it (up to the
+        ceiling) and the label column takes its need, so no ellipsis appears
+        while lawful slack exists."""
         from hyperweave.compose.geometry.text import measure_voice
 
         long_label = "An extremely long capability label that cannot possibly fit the label column"
@@ -313,9 +316,29 @@ class TestCells:
         )
         layout = solve(spec)
         label_cell = next(c for c in layout.cells if c.kind == "text" and c.row == 0)
-        assert label_cell.text.endswith("…")
-        max_w = label_cell.box.w - 2 * CFG.cell_pad_x
-        assert measure_voice(label_cell.text, CFG.row_label_voice) <= max_w
+        assert label_cell.text == long_label
+        label_w = layout.col_x[0] - CFG.margin_x
+        assert measure_voice(long_label, CFG.row_label_voice) + 2 * CFG.cell_pad_x <= label_w + 0.01
+        assert layout.diagnostics == ()
+
+    def test_label_wraps_at_the_ceiling_and_says_so(self) -> None:
+        """Past the frame ceiling the label column gives ground down to its
+        widest word: labels wrap, rows grow, nothing ellipsizes, and the
+        solve reports the wrap."""
+        label = " ".join(["capability"] * 14)
+        spec = MatrixSpec(
+            title="T",
+            columns=[{"id": "l", "label": "L", "role": "label"}]
+            + [{"id": f"c{j}", "label": f"C{j}", "kind": "check"} for j in range(5)],
+            rows=[{"label": label, "cells": [{"state": "full"}] * 5}],
+        )
+        layout = solve(spec)
+        assert layout.width == CFG.width
+        label_cell = next(c for c in layout.cells if c.kind == "text" and c.row == 0)
+        assert len(label_cell.text_lines) > 1
+        assert " ".join(t.text for t in label_cell.text_lines) == label
+        assert layout.row_h[0] > CFG.row_pitch
+        assert "label-column" in [d.rule for d in layout.diagnostics]
 
     def test_heat_tile_clamps_to_compressed_column(self) -> None:
         """Regression: eight heat columns compress below the 96px tile —
@@ -332,8 +355,11 @@ class TestCells:
         for cell in tiles:
             tile = cell.heat_tile
             assert tile is not None
+            assert tile.w >= 0.0
             assert tile.x >= layout.col_x[cell.col] - 0.01
             assert tile.x + tile.w <= layout.col_x[cell.col] + layout.col_w[cell.col] + 0.01
+            for rect in (cell.heat_track, cell.heat_underline):
+                assert rect is None or rect.w >= 0.0
 
     def test_heat_identical_values_share_neutral_mid(self) -> None:
         spec = MatrixSpec(
@@ -563,3 +589,354 @@ class TestOptionalBlocks:
         raw = MatrixSpec(title="T", columns=[{"id": "v", "label": "V"}], rows=[{"label": "r", "cells": [{"value": 1}]}])
         with pytest.raises(MatrixInputError, match="kind=auto"):
             compute_matrix_layout(raw, matrix=CFG, config=load_matrix_config(), glyph_registry=load_glyphs())
+
+
+class TestRelationalWidths:
+    """Every width is a relation over measured ink; no column crushes its
+    header, no title leaves its line, no rect goes negative."""
+
+    @staticmethod
+    def _header_overruns(layout: MatrixLayout) -> list[float]:
+        """Widest rendered header run plus both cell pads minus the column
+        width, per data column; wrapped headers render ``lines``; the label
+        header leads ``colheaders`` and is skipped."""
+        from hyperweave.compose.geometry.text import measure_voice
+
+        headers = list(layout.colheaders)[-len(layout.col_w) :]
+        overruns = []
+        for col, w in zip(headers, layout.col_w, strict=True):
+            runs = [t.text for t in col.lines] if col.lines else [col.label.text]
+            ink = max(measure_voice(run, CFG.colhead_voice) for run in runs)
+            if col.sublabel is not None:
+                ink = max(ink, measure_voice(col.sublabel.text, CFG.colhead_sub_voice))
+            overruns.append(ink + 2 * CFG.cell_pad_x - w)
+        return overruns
+
+    @pytest.mark.parametrize("name", ["check", "tiers", "readcost", "plans", "benchmark", "connectors"])
+    def test_every_column_holds_its_header(self, name: str) -> None:
+        layout = solve(all_fixture_specs()[name])
+        assert max(self._header_overruns(layout), default=0.0) <= 0.01, name
+
+    def test_flexible_columns_hold_long_headers_under_deficit(self) -> None:
+        """Chip and check columns headed by long labels keep their header ink
+        when the naturals exceed the frame and the solver shrinks — the
+        crushed-headers defect (`EXECUTIONPARADIGMS GOODMULTI-TURN SAFE`)."""
+        spec = MatrixSpec(
+            title="Execution paradigms",
+            columns=[
+                {"id": "feat", "label": "FEATURE", "role": "label"},
+                {"id": "ast", "label": "EMBEDDED AST SEED", "kind": "chip"},
+                {"id": "turn", "label": "TURN 1 LOOKS GOOD", "kind": "check"},
+                {"id": "safe", "label": "MULTI-TURN SAFE", "kind": "check"},
+            ],
+            rows=[
+                {
+                    "label": "Deterministic AST pass with a long qualifying phrase",
+                    "cells": [
+                        {"chips": ["Deterministic", "Solver", "JSON Schema", "Replay"]},
+                        {"state": "full"},
+                        {"state": "full"},
+                    ],
+                },
+                {
+                    "label": "Stateful tool execution",
+                    "cells": [{"chips": ["Sandbox"]}, {"state": "partial"}, {"state": "full"}],
+                },
+            ],
+        )
+        layout = solve(spec)
+        assert max(self._header_overruns(layout)) <= 0.01
+        avail = layout.width - 2 * CFG.margin_x
+        assert abs((layout.col_x[0] - CFG.margin_x) + sum(layout.col_w) - avail) < 0.01
+
+    def test_geometry_compresses_before_text_and_the_solve_says_so(self) -> None:
+        """Eight heat tiles cannot all be 110 wide at the ceiling: the tiles
+        shrink toward their header ink and the compression is reported."""
+        spec = MatrixSpec(
+            title="Wall",
+            columns=[{"id": "l", "label": "L", "role": "label"}]
+            + [{"id": f"h{j}", "label": f"H{j}", "kind": "numeric", "polarity": "higher"} for j in range(8)],
+            rows=[{"label": "r", "cells": [{"value": 40 + j} for j in range(8)]}],
+        )
+        layout = solve(spec)
+        assert max(self._header_overruns(layout)) <= 0.01
+        assert "column-compressed" in [d.rule for d in layout.diagnostics]
+
+    def test_headers_that_cannot_fit_the_frame_refuse_by_name(self) -> None:
+        """A header wraps at word boundaries; only a single word wider than
+        the frame can hold is a true capacity failure, and it refuses by name."""
+        spec = MatrixSpec(
+            title="T",
+            columns=[{"id": "l", "label": "L", "role": "label"}]
+            + [{"id": f"c{j}", "label": f"UNBREAKABLEHEADERWORDNUMBER{j}", "kind": "check"} for j in range(6)],
+            rows=[{"label": "r", "cells": [{"state": "full"}] * 6}],
+        )
+        with pytest.raises(MatrixCapacityError, match="shorten the widest headers"):
+            solve(spec)
+
+    def test_wide_headers_wrap_instead_of_refusing(self) -> None:
+        """Six long text headers on a 900px frame wrap to two runs inside their
+        own columns; the header band grows and nothing truncates."""
+        spec = MatrixSpec(
+            title="Ledger",
+            columns=[
+                {"id": "d", "label": "DEFECT IDENTIFIED", "role": "label"},
+                {"id": "s", "label": "SURFACE / TOPO", "kind": "chip"},
+                {"id": "v", "label": "VIOLATED GEOMETRIC INVARIANT", "kind": "text"},
+                {"id": "m", "label": "MEASURED DELTA", "kind": "text"},
+                {"id": "r", "label": "ROOT CAUSE FILE & LINE", "kind": "text"},
+                {"id": "sev", "label": "SEVERITY", "kind": "pill"},
+            ],
+            rows=[
+                {
+                    "label": "Column Header Smashing",
+                    "cells": [
+                        {"chips": ["matrix"]},
+                        {"value": "col_w >= header_ink_w + 2*pad_x"},
+                        {"value": "88.4px"},
+                        {"value": "matrix/layout.py"},
+                        {"value": "high"},
+                    ],
+                }
+            ],
+        )
+        layout = solve(spec)
+        assert max(self._header_overruns(layout)) <= 0.01
+        assert max(len(h.lines) for h in layout.colheaders) >= 2
+        assert not any(t.text.endswith("…") for h in layout.colheaders for t in h.lines)
+        collapsed_masthead = CFG.masthead_h - CFG.desc_line_h  # no subtitle, no legend line
+        assert layout.row_y[0] >= collapsed_masthead + CFG.colheader_h + (CFG.colhead_voice.size + 4.0) - 0.01
+
+    def test_pill_keeps_its_value_at_every_state(self) -> None:
+        """A pill labels its state: a supplied value renders in the state's
+        tint for none and off too; only a valueless none pill draws the dash."""
+        spec = MatrixSpec(
+            title="T",
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "s", "label": "SEVERITY", "kind": "pill"}],
+            rows=[
+                {"label": "a", "cells": [{"value": "CRITICAL", "state": "none"}]},
+                {"label": "b", "cells": [{"value": "HIGH", "state": "partial"}]},
+                {"label": "c", "cells": [{"state": "none"}]},
+            ],
+        )
+        pills = [c for c in solve(spec).cells if c.kind == "pill"]
+        assert [c.text for c in pills] == ["CRITICAL", "HIGH", "—"]
+        assert pills[0].pill is not None and pills[0].mark_state == "none"
+        assert pills[2].pill is None
+
+    def test_glyph_column_never_compresses_below_its_mark(self) -> None:
+        geometry = load_matrix_config()["cell_geometry"]
+        spec = MatrixSpec(
+            title="T",
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "g", "label": "", "kind": "glyph"}]
+            + [{"id": f"c{j}", "label": f"A LONG HEADER LABEL {j}", "kind": "text"} for j in range(6)],
+            rows=[{"label": "r", "cells": [{"glyph": "github"}] + [{"value": "some value text"}] * 6}],
+        )
+        layout = solve(spec)
+        assert layout.col_w[0] >= geometry["glyph"]["size"] + 2 * CFG.cell_pad_x - 0.01
+
+    def test_single_oversized_chip_stays_inside_its_cell(self) -> None:
+        """A caller-declared width narrower than the widest single chip yields
+        to the chip's intrinsic floor: the column grows and the chip stays
+        whole inside its cell."""
+        spec = MatrixSpec(
+            title="T",
+            columns=[
+                {"id": "l", "label": "L", "role": "label"},
+                {"id": "c", "label": "C", "kind": "chip", "width": 70},
+            ],
+            rows=[{"label": "r", "cells": [{"chips": ["none (opaque html)", "ok"]}]}],
+        )
+        layout = solve(spec)
+        cell = next(c for c in layout.cells if c.kind == "chip")
+        for chip in cell.chips:
+            assert chip.rect.x >= cell.box.x - 0.01
+            assert chip.rect.x + chip.rect.w <= cell.box.x + cell.box.w + 0.01
+        assert cell.chips[0].text == "none (opaque html)"
+        assert cell.box.w >= cell.chips[0].rect.w + 2 * CFG.cell_pad_x - 0.01
+
+    def test_title_takes_the_largest_size_that_fits(self) -> None:
+        """The fitted title size floors to the tenth-pixel grid and is re-measured:
+        a size rounded 0.03px high used to ellipsize a title that fit whole."""
+        from hyperweave.compose.geometry.text import measure_voice
+
+        title = "Pair Programming with HyperWeave: The Agent Perspective"
+        spec = MatrixSpec(
+            title=title,
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "v", "label": "V", "kind": "text"}],
+            rows=[{"label": "r", "cells": [{"value": "v"}]}],
+        )
+        layout = solve(spec)
+        assert layout.header.title is not None
+        assert layout.header.title.text == title.upper()
+        assert layout.title_size == 24.8
+        voice = CFG.title_voice.model_copy(update={"size": layout.title_size})
+        assert measure_voice(title.upper(), voice) <= layout.width - 2 * CFG.margin_x + 0.01
+        bigger = CFG.title_voice.model_copy(update={"size": round(layout.title_size + 0.1, 1)})
+        assert (
+            measure_voice(title.upper(), bigger) > layout.width - 2 * CFG.margin_x
+            or layout.title_size == CFG.title_voice.size
+        )
+
+    @pytest.mark.parametrize(
+        "probe",
+        [
+            "mat-audit-capabilities",
+            "mat-audit-prompt-generators",
+            "mat-audit-agent-experience",
+            "mat-audit-defect-ledger",
+        ],
+    )
+    def test_audit_matrices_render_contained_and_whole(self, probe: str) -> None:
+        """The four matrices the audit rendered: every header run inside its
+        column with both pads, every drawn primitive inside its cell, and no
+        ellipsis anywhere except a title that has reached its size floor."""
+        import json
+        from pathlib import Path
+
+        from hyperweave.compose.geometry.text import measure_voice
+
+        payload = json.loads(
+            (Path(__file__).parents[1] / "fixtures" / "spatial" / "probes" / f"{probe}.json").read_text()
+        )
+        layout = solve(MatrixSpec(**payload["compose"]["matrix"]))
+        assert max(self._header_overruns(layout)) <= 0.01
+        for cell in layout.cells:
+            x0, x1 = cell.box.x - 0.01, cell.box.x + cell.box.w + 0.01
+            rects = [cell.track, cell.bar_fill, cell.pill, cell.heat_tile, cell.heat_track, cell.heat_underline]
+            rects.extend(chip.rect for chip in cell.chips)
+            assert all(x0 <= r.x and r.x + r.w <= x1 for r in rects if r is not None), (probe, cell.row, cell.col)
+            runs = [cell.text, cell.sub_text, *(t.text for t in cell.text_lines), *(t.text for t in cell.sub_lines)]
+            runs.extend(chip.text for chip in cell.chips)
+            assert not any(r.endswith("…") for r in runs), (probe, cell.row, cell.col, runs)
+        if layout.header.title is not None and layout.header.title.text.endswith("…"):
+            assert layout.title_size == CFG.title_size_floor
+        else:
+            voice = CFG.title_voice.model_copy(update={"size": layout.title_size})
+            assert layout.header.title is None or (
+                layout.header.title.x + measure_voice(layout.header.title.text, voice)
+                <= layout.width - CFG.margin_x + 0.01
+            )
+
+    def test_title_clears_the_headline_chip(self) -> None:
+        from hyperweave.compose.geometry.text import measure_voice
+
+        spec = MatrixSpec(
+            title="Realtime autonomous agent fleet telemetry and orchestration",
+            headline={"value": "99.98%", "label": "System availability SLA"},
+            columns=[
+                {"id": "node", "label": "COMPUTE NODE", "role": "label"},
+                {"id": "stat", "label": "HEALTH", "kind": "check"},
+                {"id": "reg", "label": "REGION", "kind": "text"},
+            ],
+            rows=[{"label": "Worker node 01", "cells": [{"state": "full"}, {"value": "us-east"}]}],
+        )
+        layout = solve(spec)
+        assert layout.header.title is not None and layout.header.headline_chip is not None
+        voice = CFG.title_voice.model_copy(update={"size": layout.title_size})
+        title_right = layout.header.title.x + measure_voice(layout.header.title.text, voice)
+        assert title_right <= layout.header.headline_chip.x + 0.01
+        assert title_right <= layout.width - CFG.margin_x + 0.01
+
+    def test_title_without_furniture_still_fits_the_content_box(self) -> None:
+        from hyperweave.compose.geometry.text import measure_voice
+
+        spec = MatrixSpec(
+            title="Pair programming with the compositor from the agent perspective at length",
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "v", "label": "V", "kind": "check"}],
+            rows=[{"label": "r", "cells": [{"state": "full"}]}],
+        )
+        layout = solve(spec)
+        assert layout.header.title is not None
+        voice = CFG.title_voice.model_copy(update={"size": layout.title_size})
+        title_right = layout.header.title.x + measure_voice(layout.header.title.text, voice)
+        assert title_right <= layout.width - CFG.margin_x + 0.01
+        assert layout.title_size >= CFG.title_size_floor
+
+    def test_summary_label_sizes_the_label_column(self) -> None:
+        from hyperweave.compose.geometry.text import measure_voice
+
+        spec = MatrixSpec(
+            title="Format comparison",
+            summary_label="OVERALL SUITABILITY SCORE ACROSS TOOLCHAIN",
+            columns=[{"id": "cap", "label": "CAPABILITY", "role": "label"}]
+            + [{"id": f"c{j}", "label": f"C{j}", "kind": "check"} for j in range(3)],
+            rows=[{"label": "Renders", "cells": [{"state": "full"}] * 3}],
+            summary_row=[{"value": "9/10"}, {"value": "6/10"}, {"value": "4/10"}],
+        )
+        layout = solve(spec)
+        assert layout.summary is not None and layout.summary.label is not None
+        label_w = layout.col_x[0] - CFG.margin_x
+        assert measure_voice(layout.summary.label.text, CFG.colhead_voice) + 2 * CFG.cell_pad_x <= label_w + 0.01
+        assert layout.summary.label.text == spec.summary_label
+
+    def test_bar_axis_grades_the_bar_track(self) -> None:
+        spec = MatrixSpec(
+            title="Tokens per tool",
+            columns=[{"id": "tool", "label": "TOOL", "role": "label"}, {"id": "tok", "label": "TOKENS", "kind": "bar"}],
+            rows=[
+                {"label": "parse_schema", "cells": [{"value": 3420}]},
+                {"label": "execute", "cells": [{"value": 1800}]},
+            ],
+        )
+        layout = solve(spec)
+        assert layout.axis is not None
+        track = next(c.track for c in layout.cells if c.kind == "bar" and c.track is not None)
+        axis_right = max(line.x1 for line in layout.axis.grid_lines)
+        assert axis_right <= track.x + track.w + 0.01
+        # The tick for the maximum value lands on the full bar's end.
+        full = next(c for c in layout.cells if c.kind == "bar" and c.text.startswith("3,420"))
+        assert full.bar_fill is not None
+        assert abs((full.bar_fill.x + full.bar_fill.w) - (track.x + track.w)) <= 0.01
+
+    def test_no_rect_is_ever_negative(self) -> None:
+        spec = MatrixSpec(
+            title="Heat under pressure",
+            columns=[{"id": "m", "label": "MODEL", "role": "label"}]
+            + [{"id": f"c{j}", "label": f"C{j}", "kind": "chip"} for j in range(11)]
+            + [{"id": "score", "label": "SCORE", "kind": "numeric", "polarity": "higher"}],
+            rows=[
+                {"label": "A", "cells": [{"chips": ["x"]} for _ in range(11)] + [{"value": 91.2}]},
+                {"label": "B", "cells": [{"chips": ["y"]} for _ in range(11)] + [{"value": 42.0}]},
+            ],
+        )
+        layout = solve(spec)
+        for cell in layout.cells:
+            rects = [
+                cell.box,
+                cell.track,
+                cell.bar_fill,
+                cell.pill,
+                cell.heat_tile,
+                cell.heat_track,
+                cell.heat_underline,
+            ]
+            rects.extend(chip.rect for chip in cell.chips)
+            assert all(r.w >= 0.0 and r.h >= 0.0 for r in rects if r is not None), cell
+
+    def test_sectioned_labels_at_their_exact_need_never_ellipsize(self) -> None:
+        """The label column's need is whole pixels, so a label whose ink equals
+        the budget to the last bit still renders whole (the `Diagram (diagram/…`
+        knife edge on the capabilities matrix)."""
+        labels = ["Diagram (diagram/1)", "Matrix (matrix/1)", "Receipt (telemetry)", "Badge & Strip"]
+        spec = MatrixSpec(
+            title="Capabilities",
+            sections=["Core"],
+            columns=[{"id": "s", "label": "SURFACE", "role": "label"}, {"id": "v", "label": "VERBS", "kind": "chip"}],
+            rows=[{"label": lb, "section": "Core", "cells": [{"chips": ["compose"]}]} for lb in labels],
+        )
+        layout = solve(spec)
+        rendered = [c.text for c in layout.cells if c.col == -1 and c.kind == "text"]
+        assert rendered == labels
+
+    def test_authored_note_paragraphs_stay_inside_their_row(self) -> None:
+        note = "\n".join(f"paragraph {k}" for k in range(5))
+        spec = MatrixSpec(
+            title="T",
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "t", "label": "TEXT", "kind": "text"}],
+            rows=[{"label": "r", "cells": [{"value": "value", "note": note}]}],
+        )
+        layout = solve(spec)
+        cell = next(c for c in layout.cells if c.kind == "text" and c.col == 0)
+        bottom = max((t.y for t in cell.sub_lines), default=cell.sub_y) + CFG.row_sub_voice.size * 0.25
+        assert bottom <= cell.box.y + cell.box.h + 0.01

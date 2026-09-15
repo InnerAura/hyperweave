@@ -22,16 +22,21 @@ import math
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.geometry.text import measure_voice, text_lines_needed, truncate_to_width
+from hyperweave.compose.geometry.text import measure_voice, truncate_to_width, widest_fragment, wrap_natural
 from hyperweave.compose.matrix.cells import (
+    bar_track_w,
     build_cell,
     chip_line_width,
     chip_rows_needed,
+    content_floor,
     content_width,
     display_value,
+    fit_runs,
     format_value_with_unit,
     glyph_mark_placement,
     is_numeric_value,
+    note_stack_below,
+    runs_needed,
 )
 from hyperweave.compose.matrix.records import (
     AxisSpec,
@@ -45,6 +50,7 @@ from hyperweave.compose.matrix.records import (
     TierSpan,
 )
 from hyperweave.compose.spatial_records import LineSpec, RectSpec, TextSpec
+from hyperweave.core.diagnostics import Diagnostic
 from hyperweave.core.matrix import (
     Align,
     CellKind,
@@ -111,7 +117,6 @@ def compute_matrix_layout(
 
     ceiling = cfg.width
     margin = cfg.margin_x
-    ceiling_avail = ceiling - 2 * margin
 
     # ── Label column ────────────────────────────────────────────────────
     glyph_size = float((geometry.get("glyph") or {}).get("size", 22))
@@ -126,22 +131,39 @@ def compute_matrix_layout(
     # keep the primary row-title voice. Width measures with the same
     # voice the cells render with.
     label_voice = cfg.row_label_sub_voice if spec.sections else cfg.row_label_voice
+    # The summary label shares the column, so it measures with the rows.
     label_text_w = max(
         [measure_voice(row.label, label_voice) for row in spec.rows]
         + [measure_voice(row.sublabel, cfg.row_sub_voice) for row in spec.rows]
         + [measure_voice(label_header, cfg.colhead_voice)]
+        + [measure_voice(spec.summary_label, cfg.colhead_voice)]
     )
-    label_w = min(
-        max(glyph_indent + section_indent + label_text_w + 2 * cfg.cell_pad_x, cfg.label_col_min),
-        ceiling_avail * cfg.label_col_max_ratio,
+    # The label column is content: it asks for its ink and takes what the
+    # data columns' floors leave once the frame is solved — never a ratio.
+    # Whole pixels: a need equal to the ink to the last bit lands the cell's
+    # own fit check on the wrong side of a float, and the label ellipsizes.
+    label_indent = glyph_indent + section_indent
+    label_need = float(math.ceil(max(label_indent + label_text_w + 2 * cfg.cell_pad_x, cfg.label_col_min)))
+    # Below the need labels WRAP; the floor is what wrapping cannot break —
+    # the widest single word — plus the header and summary label, which stay
+    # on one line.
+    label_word_w = max(
+        widest_fragment([row.label for row in spec.rows], label_voice),
+        widest_fragment([row.sublabel for row in spec.rows if row.sublabel], cfg.row_sub_voice),
+        measure_voice(label_header, cfg.colhead_voice),
+        measure_voice(spec.summary_label, cfg.colhead_voice),
     )
+    label_floor = float(math.ceil(max(label_indent + label_word_w + 2 * cfg.cell_pad_x, cfg.label_col_min)))
+    diagnostics: list[Diagnostic] = []
 
     # ── Natural column widths (one source for sizing AND solving) ───────
     # Per column: max(header, data content, SUMMARY content) — the summary
     # row occupies the same columns, so "agent corpora" under a 9px dot
     # column widens the column, never crams.
     hero_j = _hero_index(spec, data_cols)
-    naturals, floors = _natural_widths(spec, data_cols, cells_by_col, hero_j=hero_j, cfg=cfg, geometry=geometry)
+    naturals, floors, hard_floors = _natural_widths(
+        spec, data_cols, cells_by_col, hero_j=hero_j, cfg=cfg, geometry=geometry
+    )
 
     # ── Adaptive frame width ─────────────────────────────────────────────
     # The frame fits its content: cfg.width is a CEILING, not a constant.
@@ -195,7 +217,7 @@ def compute_matrix_layout(
                 sizing_total += max(one_line + 2 * cfg.cell_pad_x, naturals[j])
             else:
                 sizing_total += naturals[j]
-        content_w = 2 * margin + label_w + sizing_total
+        content_w = 2 * margin + label_need + sizing_total
         # The footer line is shared: notes left, brand right.
         footer_w = 0.0
         if spec.notes:
@@ -212,20 +234,75 @@ def compute_matrix_layout(
         width = min(math.ceil(max(content_w, masthead_w, footer_w, float(cfg.min_width))), ceiling)
     avail = width - 2 * margin
 
-    # The title clears the key's column: when a legend occupies the
-    # descriptor line, a long title shrinks just enough that its right
-    # edge stops short of the legend's left edge (plus a gap) instead of
-    # overhanging it from the line above. Short titles keep the full
-    # voice; the floor keeps shrunk titles legible.
+    # ── Label column allocation ────────────────────────────────────────
+    # Relational slack: the label takes its need while every data column
+    # keeps at least its floor. At the ceiling, kind (geometry) floors give
+    # ground before the label does; text floors never give — a header is
+    # never truncated, so a frame that cannot hold its headers and a
+    # minimum label column refuses by name instead of crushing.
+    soft_budget = avail - sum(floors)
+    hard_budget = avail - sum(hard_floors)
+    label_room = soft_budget if soft_budget >= label_need else max(hard_budget, label_floor)
+    label_w = min(label_need, max(label_room, label_floor))
+    if label_w + sum(hard_floors) > avail + 1e-6:
+        raise MatrixCapacityError(
+            _capacity_message(data_cols, hard_floors, label_w=label_w, avail=avail, ceiling=ceiling)
+        )
+    label_max_w = label_w - 2 * cfg.cell_pad_x - label_indent
+    label_runs = [runs_needed(row.label, label_max_w, label_voice) for row in spec.rows]
+    if max(label_runs, default=1) > 1:
+        diagnostics.append(
+            Diagnostic(
+                rule="label-column",
+                measured=(
+                    f"row labels need {label_need:.0f}px on one line, the column holds {label_w:.0f}px at the "
+                    f"{ceiling}px frame; {sum(1 for n in label_runs if n > 1)} labels wrap to {max(label_runs)} lines"
+                ),
+                band="label column >= widest label, or labels wrap",
+                suggestion="shorten the longest row labels or remove a data column",
+            )
+        )
+
+    # The title always clears whatever shares its masthead: a headline chip
+    # on its own line, or a legend adjacent to it. It shrinks just enough,
+    # never below the legibility floor; past the floor it truncates and says so.
     title_size = cfg.title_voice.size
+    title_text = spec.title.upper() if spec.title else ""
     legend_adjacent = has_legend and (legend_inline or not has_subtitle)
-    if spec.title and legend_adjacent:
-        title_cap = avail - masthead_right_w - 24.0
+    right_occupant = masthead_right_w + 24.0 if (spec.headline is not None or legend_adjacent) else 0.0
+    if spec.title:
+        title_cap = avail - right_occupant
         if 0 < title_cap < title_w:
-            title_size = max(23.0, round(cfg.title_voice.size * title_cap / title_w, 1))
+            title_size = _largest_fitting_title_size(title_text, title_cap, cfg)
+            floor_voice = cfg.title_voice.model_copy(update={"size": title_size})
+            if measure_voice(title_text, floor_voice) > title_cap:
+                title_text = truncate_to_width(title_text, title_cap, floor_voice)
+                diagnostics.append(
+                    Diagnostic(
+                        rule="masthead-title",
+                        measured=(
+                            f"title needs {title_w:.0f}px, {title_cap:.0f}px is clear at the {title_size:g}px floor"
+                        ),
+                        band="title fits its line at or above the size floor",
+                        suggestion="shorten the title or drop the headline chip",
+                    )
+                )
 
     # ── Data column widths ─────────────────────────────────────────────
-    col_w = _solve_column_widths(data_cols, naturals=naturals, floors=floors, rest=avail - label_w)
+    col_w = _solve_column_widths(
+        data_cols, naturals=naturals, floors=floors, hard_floors=hard_floors, rest=avail - label_w
+    )
+    compressed = [(data_cols[j].label, floors[j] - col_w[j]) for j in range(len(col_w)) if col_w[j] < floors[j] - 0.5]
+    if compressed:
+        worst = max(d for _, d in compressed)
+        diagnostics.append(
+            Diagnostic(
+                rule="column-compressed",
+                measured=f"{len(compressed)} columns sit below their kind floor, the tightest by {worst:.0f}px",
+                band="column width >= kind floor",
+                suggestion="remove a column or widen the frame ceiling",
+            )
+        )
     col_x: list[float] = []
     cursor = margin + label_w
     for w in col_w:
@@ -240,19 +317,14 @@ def compute_matrix_layout(
     chip_pitch = float(chip_geo.get("row_pitch", 24))
     text_geo = geometry.get("text") or {}
     text_pitch = float(text_geo.get("line_pitch", 16))
-    text_max_lines = int(text_geo.get("max_lines", 3))
+    label_pitch = label_voice.size + 4.0
 
     def _text_overflow_lines(row: MatrixRow, j: int) -> int:
         voice = cfg.cell_strong_voice if row.emphasis else cfg.cell_voice
-        return text_lines_needed(
-            display_value(row.cells[j].value), col_w[j] - 2 * cfg.cell_pad_x, voice, max_lines=text_max_lines
-        )
+        return runs_needed(display_value(row.cells[j].value), col_w[j] - 2 * cfg.cell_pad_x, voice)
 
     def _note_overflow_lines(row: MatrixRow, j: int) -> int:
-        note = row.cells[j].note
-        if not note:
-            return 0
-        return text_lines_needed(note, col_w[j] - 2 * cfg.cell_pad_x, cfg.row_sub_voice, max_lines=2)
+        return runs_needed(row.cells[j].note, col_w[j] - 2 * cfg.cell_pad_x, cfg.row_sub_voice)
 
     mode = spec.row_height
     chip_wraps = any(
@@ -273,10 +345,9 @@ def compute_matrix_layout(
         column.kind is CellKind.TEXT and any(_note_overflow_lines(row, j) > 1 for row in spec.rows)
         for j, column in enumerate(data_cols)
     )
-    if chip_wraps or text_wraps or note_wraps:
-        # Chip and text columns ALWAYS grow rows to fit — packed lists and
-        # wrapped runs are the standard rendering; truncation/overflow caps
-        # are for the extreme case (past max_chip_rows / max_lines). A
+    label_wraps = max(label_runs, default=1) > 1
+    if chip_wraps or text_wraps or note_wraps or label_wraps:
+        # Wrapped runs and packed chip lists always grow their rows; a
         # declared UNIFORM never strangles content to one line.
         mode = RowHeight.CONTENT
     elif mode is RowHeight.AUTO:
@@ -301,14 +372,32 @@ def compute_matrix_layout(
                 # whole note below its stack, so every note line is extra.
                 extra_note = note_lines if lines > 1 else max(0, note_lines - 1)
                 extra = extra_note * (cfg.row_sub_voice.size + 6.0)
-                h = max(h, (lines - 1) * text_pitch + cfg.row_pitch + extra)
+                voice = cfg.cell_strong_voice if row.emphasis else cfg.cell_voice
+                below = note_stack_below(lines, note_lines, voice=voice, sub_voice=cfg.row_sub_voice, pitch=text_pitch)
+                h = max(h, (lines - 1) * text_pitch + cfg.row_pitch + extra, 2 * below)
+        # A wrapped row label stacks at its own pitch; its sublabel rides below the stack.
+        label_lines = label_runs[len(row_h)]
+        sub_extra = cfg.row_sub_voice.size + 2.0 if (row.sublabel and label_lines > 1) else 0.0
+        h = max(h, (label_lines - 1) * label_pitch + cfg.row_pitch + sub_extra)
         row_h.append(h)
 
     # ── Vertical stacking (section bands interleaved) ───────────────────
     # Sublabels add a second header line; grow the colheader block so the
     # label line clears the hero cap tab instead of colliding with it.
     has_sublabels = any(c.sublabel for c in data_cols)
-    colheader_h = cfg.colheader_h + (cfg.colhead_sub_voice.size + 4.0 if has_sublabels else 0.0)
+    # A header wraps at its solved column width (it never truncates); the band
+    # grows one header pitch per extra run across the widest wrap.
+    header_pitch = cfg.colhead_voice.size + 4.0
+    header_runs = [
+        wrap_natural(column.label, cfg.colhead_voice, col_w[j] - 2 * cfg.cell_pad_x).lines or (column.label,)
+        for j, column in enumerate(data_cols)
+    ]
+    max_header_runs = max((len(runs) for runs in header_runs), default=1)
+    colheader_h = (
+        cfg.colheader_h
+        + (max_header_runs - 1) * header_pitch
+        + (cfg.colhead_sub_voice.size + 4.0 if has_sublabels else 0.0)
+    )
     # An empty masthead collapses: no title/subtitle/headline → the zone
     # releases its space and the rail/scan/legend are suppressed. Empty
     # slots never reserve geometry (the stats-card slot-removal principle).
@@ -428,7 +517,7 @@ def compute_matrix_layout(
                 x=margin + cfg.cell_pad_x,
                 y=value_y,
                 anchor="start",
-                text=spec.summary_label,
+                text=truncate_to_width(spec.summary_label, label_w - 2 * cfg.cell_pad_x, cfg.colhead_voice),
             )
             if spec.summary_label
             else None,
@@ -463,6 +552,7 @@ def compute_matrix_layout(
     # ── Chassis blocks ───────────────────────────────────────────────────
     header = _header_block(
         spec,
+        title_text=title_text,
         cfg=cfg,
         geometry=geometry,
         palette=palette,
@@ -482,6 +572,8 @@ def compute_matrix_layout(
         cfg=cfg,
         margin=margin,
         base_y=rows_top - 12.0,
+        header_runs=header_runs,
+        header_pitch=header_pitch,
     )
 
     hero_band = hero_cap = None
@@ -536,7 +628,15 @@ def compute_matrix_layout(
 
     axis = (
         _axis_block(
-            spec, data_cols, cells_by_col, col_x=col_x, col_w=col_w, rows_top=rows_top, axis_top=axis_top, cfg=cfg
+            spec,
+            data_cols,
+            cells_by_col,
+            col_x=col_x,
+            col_w=col_w,
+            rows_top=rows_top,
+            axis_top=axis_top,
+            cfg=cfg,
+            value_zones=value_zones,
         )
         if has_bar
         else None
@@ -625,6 +725,7 @@ def compute_matrix_layout(
         row_stripes=row_stripes,
         stripe_opacity=cfg.stripe_opacity,
         title_size=title_size,
+        diagnostics=tuple(diagnostics),
         tier_spans=tuple(tier_spans),
         tier_span_opacity=float((geometry.get("dot") or {}).get("span_opacity", 0.28)),
         footer=footer,
@@ -642,27 +743,34 @@ def _natural_widths(
     hero_j: int | None,
     cfg: ParadigmMatrixConfig,
     geometry: Mapping[str, Any],
-) -> tuple[list[float], list[float]]:
-    """Natural width + floor per column — the ONE source both the adaptive
-    width decision and the column solver consume.
+) -> tuple[list[float], list[float], list[float]]:
+    """Natural width, floor, and text floor per column — the ONE source the
+    adaptive width decision and the column solver both consume.
 
     Per column: ``max(header, data content, summary content)``, clamped to
     ``[kind floor, max_col]`` for content-sized kinds. The summary row
     occupies the same columns as the data, so its values and qualifiers
     widen structurally-narrow columns (a dot column holding "agent
     corpora" in its score band) instead of cramming.
+
+    Two floors, one relation each. The *hard floor* is what compression can
+    never take: the widest single header word with both pads (a header wraps
+    at its column width, it never truncates), the padded summary run, and the
+    kind's intrinsic geometry (:func:`content_floor` — mark, glyph, bar stub,
+    widest chip or pill or word). The *floor* is that or the kind's natural
+    geometry floor, whichever is larger; only the air between the two
+    compresses when the frame is at its ceiling.
     """
     naturals: list[float] = []
     floors: list[float] = []
+    hard_floors: list[float] = []
     for j, column in enumerate(data_cols):
         floor = _kind_floor(column, geometry)
-        header_w = (
-            max(
-                measure_voice(column.label, cfg.colhead_voice),
-                measure_voice(column.sublabel, cfg.colhead_sub_voice),
-            )
-            + 2 * cfg.cell_pad_x
+        header_ink = max(
+            measure_voice(column.label, cfg.colhead_voice),
+            measure_voice(column.sublabel, cfg.colhead_sub_voice),
         )
+        header_w = header_ink + 2 * cfg.cell_pad_x
         summary_w = 0.0
         if spec.summary_row is not None:
             s_cell = spec.summary_row[j]
@@ -676,22 +784,67 @@ def _natural_widths(
             if s_cell.note:
                 summary_w = max(summary_w, measure_voice(s_cell.note, cfg.summary_qual_voice))
             summary_w += 2 * cfg.cell_pad_x
+        header_word = (
+            max(
+                widest_fragment([column.label], cfg.colhead_voice),
+                widest_fragment([column.sublabel], cfg.colhead_sub_voice),
+            )
+            + 2 * cfg.cell_pad_x
+        )
+        geometry_floor = content_floor(column.kind, cells_by_col[j], column, cfg=cfg, geometry=geometry)
+        text_floor = max(header_word, summary_w, geometry_floor)
         if column.width is not None:
+            # A declared width is the caller's contract on both counts.
             w = float(column.width)
+            hard = w
         elif column.kind in _FLEX_KINDS:
             # Flexible kinds absorb the remainder; their natural is the
-            # kind floor raised by any summary occupancy.
-            w = max(floor, summary_w)
+            # kind floor raised by whatever text the column carries.
+            w = max(floor, text_floor)
+            hard = text_floor
         else:
             w = max(
                 content_width(column.kind, cells_by_col[j], column, cfg=cfg, geometry=geometry),
                 header_w,
                 summary_w,
             )
-            w = min(max(w, floor), cfg.max_col)
+            # The ceiling caps content, never the header ink above it.
+            w = max(min(max(w, floor), cfg.max_col), text_floor)
+            hard = text_floor
         naturals.append(w)
-        floors.append(min(floor, w))
-    return naturals, floors
+        floors.append(max(min(floor, w), hard))
+        hard_floors.append(hard)
+    return naturals, floors, hard_floors
+
+
+def _largest_fitting_title_size(title: str, cap: float, cfg: ParadigmMatrixConfig) -> float:
+    """The largest tenth-of-a-pixel display size at or above the floor whose
+    measured title fits ``cap``: the proportional estimate rounded DOWN to the
+    grid, stepped down while it still overflows. Rounding to the nearest tenth
+    landed 0.03px high and ellipsized a title that fit whole one step lower."""
+    voice = cfg.title_voice
+    size = math.floor(voice.size * cap / max(measure_voice(title, voice), 1e-9) * 10.0) / 10.0
+    size = max(cfg.title_size_floor, size)
+    while size > cfg.title_size_floor and measure_voice(title, voice.model_copy(update={"size": size})) > cap:
+        size = round(size - 0.1, 1)
+    return max(cfg.title_size_floor, size)
+
+
+def _capacity_message(
+    data_cols: Sequence[MatrixColumn],
+    hard_floors: Sequence[float],
+    *,
+    label_w: float,
+    avail: float,
+    ceiling: int,
+) -> str:
+    deficit = label_w + sum(hard_floors) - avail
+    widest = sorted(range(len(data_cols)), key=lambda j: hard_floors[j], reverse=True)[:3]
+    names = ", ".join(repr(data_cols[j].label) for j in widest)
+    return (
+        f"the column headers and a minimum label column need {deficit:.0f}px more than the {ceiling}px "
+        f"frame holds; shorten the widest headers ({names}) or split the table"
+    )
 
 
 def _solve_column_widths(
@@ -699,14 +852,17 @@ def _solve_column_widths(
     *,
     naturals: Sequence[float],
     floors: Sequence[float],
+    hard_floors: Sequence[float],
     rest: float,
 ) -> list[float]:
     """Distribute ``rest`` across the columns so that Σ == ``rest`` exactly.
 
     Flexible kinds (bar, chip) absorb the remainder. With no flexible
     column, leftover distributes toward equal column widths (the
-    check-specimen look); deficits shrink columns proportionally down to
-    their floors.
+    check-specimen look). A deficit spends slack above the floors
+    proportionally; if the floors themselves do not fit, only the geometry
+    between each floor and its text floor compresses — the caller has
+    already proven ``Σ hard_floors <= rest``, so headers keep their ink.
     """
     n = len(data_cols)
     flex = [j for j, c in enumerate(data_cols) if c.kind in _FLEX_KINDS and c.width is None]
@@ -728,11 +884,6 @@ def _solve_column_widths(
                 for j in grow:
                     widths[j] += extra * ((target - widths[j]) / room) if room else 0.0
 
-    # Normalize a deficit: spend slack above the kind floors proportionally;
-    # if the floors themselves don't fit, feasibility beats legibility —
-    # scale every column to the same fraction of its floor. Both paths keep
-    # every width strictly positive (a negative width would march columns
-    # backward over the label zone).
     total = sum(widths)
     if total > rest:
         slack = [widths[j] - floors[j] for j in range(n)]
@@ -742,9 +893,11 @@ def _solve_column_widths(
             for j in range(n):
                 widths[j] -= over * (slack[j] / slack_sum)
         else:
-            floor_sum = sum(floors)
-            scale = rest / floor_sum if floor_sum > 0 else 0.0
-            widths = [floors[j] * scale for j in range(n)]
+            soft = [floors[j] - hard_floors[j] for j in range(n)]
+            soft_sum = sum(soft)
+            need = sum(floors) - rest
+            keep = 1.0 - min(1.0, need / soft_sum) if soft_sum > 0 else 0.0
+            widths = [hard_floors[j] + soft[j] * keep for j in range(n)]
     # Pin Σ == rest exactly: absorb float residue in the widest column,
     # never letting it dip below half its solved width.
     residue = rest - sum(widths)
@@ -874,6 +1027,42 @@ def _label_cells(
                 ink_adaptive_mono=True,
             )
         )
+    # The label wraps at the column width it was given; rows grew to hold
+    # every run. A sublabel hangs under the stack.
+    runs = fit_runs(row.label, max_w, label_voice)
+    n = len(runs)
+    pitch = label_voice.size + 4.0
+    sub_h = cfg.row_sub_voice.size + 2.0 if row.sublabel else 0.0
+    stack_cy = cy - sub_h / 2 if n > 1 else cy
+    sub_text = " ".join(fit_runs(row.sublabel, max_w, cfg.row_sub_voice)) if row.sublabel else ""
+    if n > 1:
+        text_lines = tuple(
+            TextSpec(
+                x=text_x,
+                y=stack_cy + (k - (n - 1) / 2) * pitch + label_voice.size * 0.35,
+                anchor="start",
+                text=run,
+            )
+            for k, run in enumerate(runs)
+        )
+        placements.append(
+            CellPlacement(
+                kind="text",
+                row=i,
+                col=-1,
+                box=box,
+                emphasis=row.emphasis,
+                text_anchor="start",
+                cls=label_cls,
+                text_lines=text_lines,
+                sub_text=sub_text,
+                sub_x=text_x,
+                sub_y=stack_cy + (n - 1) / 2 * pitch + cfg.row_sub_voice.size + 3.0,
+                sub_cls="rowsub",
+            )
+        )
+        return placements
+    label_text = runs[0] if runs else ""
     if row.sublabel:
         placements.append(
             CellPlacement(
@@ -882,12 +1071,12 @@ def _label_cells(
                 col=-1,
                 box=box,
                 emphasis=row.emphasis,
-                text=truncate_to_width(row.label, max_w, label_voice),
+                text=label_text,
                 text_x=text_x,
                 text_y=cy - 1.0,
                 text_anchor="start",
                 cls=label_cls,
-                sub_text=truncate_to_width(row.sublabel, max_w, cfg.row_sub_voice),
+                sub_text=sub_text,
                 sub_x=text_x,
                 sub_y=cy + cfg.row_sub_voice.size + 1.0,
                 sub_cls="rowsub",
@@ -901,7 +1090,7 @@ def _label_cells(
                 col=-1,
                 box=box,
                 emphasis=row.emphasis,
-                text=truncate_to_width(row.label, max_w, label_voice),
+                text=label_text,
                 text_x=text_x,
                 text_y=cy + label_voice.size * 0.35,
                 text_anchor="start",
@@ -966,6 +1155,7 @@ def _masthead_right_width(
 def _header_block(
     spec: MatrixSpec,
     *,
+    title_text: str,
     cfg: ParadigmMatrixConfig,
     geometry: Mapping[str, Any],
     palette: Mapping[str, Any],
@@ -986,7 +1176,7 @@ def _header_block(
     # masthead's bottom edge (which a released subtitle pulls up and a
     # legend line pushes down).
     rule_y = masthead_h + 0.5
-    title = TextSpec(x=margin, y=54.0, anchor="start", text=spec.title.upper()) if spec.title else None
+    title = TextSpec(x=margin, y=54.0, anchor="start", text=title_text) if spec.title else None
     subtitle = (
         TextSpec(x=margin, y=54.0 + cfg.desc_line_h, anchor="start", text=spec.subtitle) if spec.subtitle else None
     )
@@ -1129,6 +1319,8 @@ def _colheaders(
     cfg: ParadigmMatrixConfig,
     margin: float,
     base_y: float,
+    header_runs: Sequence[Sequence[str]],
+    header_pitch: float,
 ) -> list[ColHeader]:
     headers: list[ColHeader] = []
     if label_header:
@@ -1145,11 +1337,23 @@ def _colheaders(
         else:
             x, anchor = cx, "middle"
         label_y = base_y - (cfg.colhead_sub_voice.size + 2.0 if column.sublabel else 0.0)
+        runs = list(header_runs[j])
+        # Wrapped runs stack upward from the header baseline; the bottom run
+        # sits where a one-line header would.
+        lines = (
+            tuple(
+                TextSpec(x=x, y=label_y - (len(runs) - 1 - k) * header_pitch, anchor=anchor, text=run)
+                for k, run in enumerate(runs)
+            )
+            if len(runs) > 1
+            else ()
+        )
         headers.append(
             ColHeader(
                 label=TextSpec(x=x, y=label_y, anchor=anchor, text=column.label),
                 sublabel=TextSpec(x=x, y=base_y, anchor=anchor, text=column.sublabel) if column.sublabel else None,
                 accent=(hero is not None and column.id == hero),
+                lines=lines,
             )
         )
     return headers
@@ -1165,6 +1369,7 @@ def _axis_block(
     rows_top: float,
     axis_top: float,
     cfg: ParadigmMatrixConfig,
+    value_zones: Mapping[int, float],
 ) -> AxisSpec | None:
     """Gridlines + tick labels for the first bar column's shared axis."""
     j = next((k for k, c in enumerate(data_cols) if c.kind is CellKind.BAR), None)
@@ -1181,18 +1386,18 @@ def _axis_block(
     axis_max = spec.axis_max if spec.axis_max else (max(values) if values else 0.0)
     if axis_max <= 0:
         return None
-    # Track origin mirrors the bar builder: column left + pad; width minus
-    # the value zone is unknowable here, so gridlines span the track start
-    # to the column's 2/3 point per tick fraction over axis_max.
+    # The axis grades the bars' own track: column left + pad, as wide as
+    # the bar builder leaves after the value zone — a tick and the bar end
+    # it labels share one x.
     step = _nice_step(axis_max / 3.0)
     x0 = col_x[j] + cfg.cell_pad_x
-    track_w = col_w[j] - 2 * cfg.cell_pad_x
+    track_w = bar_track_w(col_w[j], value_zone_w=value_zones.get(j, 0.0), pad=cfg.cell_pad_x)
     grid: list[LineSpec] = []
     ticks: list[TextSpec] = []
     tick_y = axis_top + cfg.axis_voice.size + 6.0
     v = 0.0
     while v <= axis_max + 1e-9:
-        x = x0 + (v / axis_max) * track_w * 0.78
+        x = x0 + (v / axis_max) * track_w
         grid.append(LineSpec(x, rows_top + 2.0, x, axis_top))
         ticks.append(TextSpec(x=x, y=tick_y, anchor="middle", text=_fmt_tick(v)))
         v += step

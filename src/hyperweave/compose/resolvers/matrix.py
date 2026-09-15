@@ -97,6 +97,7 @@ def resolve_matrix(
 
     context: dict[str, Any] = {
         "matrix_layout": layout,
+        "diagnostics": [d.as_dict() for d in layout.diagnostics],
         "matrix_cfg": cfg,
         "matrix_title": table.title,
         "matrix_subtitle": table.subtitle,

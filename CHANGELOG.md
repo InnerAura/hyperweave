@@ -42,6 +42,24 @@ reflects what actually animates, and deploys only ship from a green build.
 - **`validate-genome`:** now runs the same validator as compose.
 
 ### Fixed
+- **Matrix headers wrap inside their columns:** a header breaks into as many runs as it needs
+  and the header band grows; every column floors at its widest header word, its widest chip,
+  glyph, or check mark, with a cell pad on both sides, so nothing escapes its cell. Marks and
+  tiles compress before text does and the solve reports `column-compressed`; a table whose
+  widest words cannot fit the 900px frame refuses by name.
+- **Matrix text wraps instead of truncating:** cells, notes, and row labels wrap at word
+  boundaries with no line cap and rows grow to hold them; a run with no space breaks after
+  `/ - _ : .` joints (`matrix/layout.py:683` splits as a path). Row labels take their measured
+  width, fall back to wrapping past the ceiling with a `label-column` diagnostic, and the summary
+  label sizes the column too.
+- **Matrix masthead title always fits its line:** it takes the largest tenth-pixel size that
+  clears a headline chip or legend, floors at 23px, and reports `masthead-title` if it still had
+  to truncate.
+- **Matrix pills keep their value at every state:** `CRITICAL` with state `none` renders as a
+  pill in the none tint instead of a dash.
+- **Matrix bar axis grades the bar track:** gridlines and ticks land where the bars end; heat
+  tiles in compressed columns never emit a negative-width rect; multi-paragraph notes stay inside
+  their row.
 - **Chart axis ticks cascade through K, M, and B:** a 42M axis reads `20M · 40M · 60M`, never
   `20000K`; ticks, hero callouts, and context-window labels share one formatter.
 - **One ellipsis character:** stats identity, subtitle, and metric truncation now end in `…` like

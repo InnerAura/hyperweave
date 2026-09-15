@@ -26,6 +26,8 @@ from typing import TYPE_CHECKING, Literal
 from hyperweave.core.text import measure_text
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from hyperweave.core.paradigm import MatrixVoice
 
 ELLIPSIS = "…"
@@ -33,6 +35,11 @@ WIDTH_QUANTUM = 0.5
 """Widths are searched on this grid so the narrowest lawful width is byte-stable."""
 
 Policy = Literal["grow", "report", "ellipsize"]
+
+SOFT_BREAKS = "/-_:."
+"""Joints a run may break after when the whole run overflows its width — the
+separators paths, identifiers, and ranges carry (``matrix/layout.py:683-686``
+breaks after ``/`` and ``:`` and ``-``). A run with no joint is unbreakable."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,11 +104,41 @@ def fit_line(text: str, voice: MatrixVoice, avail: float) -> str:
     return truncate_to_width(text, avail, voice)
 
 
+def break_fragments(word: str) -> list[str]:
+    """Split a run after each soft-break joint; a run without joints is one fragment."""
+    fragments: list[str] = []
+    current = ""
+    for ch in word:
+        current += ch
+        if ch in SOFT_BREAKS:
+            fragments.append(current)
+            current = ""
+    if current:
+        fragments.append(current)
+    return fragments
+
+
+def widest_fragment(texts: Sequence[str], voice: MatrixVoice) -> float:
+    """The narrowest width that can hold every run in ``texts`` without
+    ellipsis: the widest fragment wrapping cannot break further."""
+    return max(
+        (
+            measure_voice(fragment, voice)
+            for text in texts
+            for word in text.split()
+            for fragment in break_fragments(word)
+        ),
+        default=0.0,
+    )
+
+
 def wrap_natural(text: str, voice: MatrixVoice, avail: float) -> Natural:
     """Greedy word wrap with no line cap, honoring authored line breaks.
 
-    A run wider than ``avail`` sits alone on its line and is *reported*
-    through ``unbreakable_overflow``; it is never split or ellipsized here.
+    Words break only at spaces. A run wider than ``avail`` breaks after its
+    soft-break joints (``/ - _ : .``) instead of escaping; a fragment that
+    still exceeds ``avail`` sits alone on its line and is *reported* through
+    ``unbreakable_overflow`` — never split or ellipsized here.
     """
     if not text:
         return Natural((), False)
@@ -110,14 +147,29 @@ def wrap_natural(text: str, voice: MatrixVoice, avail: float) -> Natural:
     for para in text.split("\n"):
         current = ""
         for word in para.split(" "):
+            if measure_voice(word, voice) > avail:
+                fragments = break_fragments(word)
+                if len(fragments) == 1:
+                    overflow = True
+                if current:
+                    lines.append(current)
+                current = ""
+                for fragment in fragments:
+                    candidate = current + fragment
+                    if not current or measure_voice(candidate, voice) <= avail:
+                        current = candidate
+                    else:
+                        lines.append(current)
+                        current = fragment
+                    if measure_voice(fragment, voice) > avail:
+                        overflow = True
+                continue
             candidate = word if not current else f"{current} {word}"
             if not current or measure_voice(candidate, voice) <= avail:
                 current = candidate
             else:
                 lines.append(current)
                 current = word
-            if measure_voice(word, voice) > avail:
-                overflow = True
         lines.append(current)
     return Natural(tuple(lines), overflow)
 

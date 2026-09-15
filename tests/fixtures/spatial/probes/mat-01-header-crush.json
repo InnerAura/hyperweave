@@ -4,7 +4,7 @@
     "MAT-01"
   ],
   "surface": "cli",
-  "source": "agy-20260831 probe 1, rewritten to legal MatrixSpec grammar; verified live 2026-09-01 (layout.py:683-686,695,738-749)",
+  "source": "agy-20260831 probe 1, rewritten to legal MatrixSpec grammar; five long headers at a 900px frame — headers wrap, never refuse while their widest word fits",
   "compose": {
     "type": "matrix",
     "genome_id": "primer",

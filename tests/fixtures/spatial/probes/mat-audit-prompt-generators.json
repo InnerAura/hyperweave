@@ -1,0 +1,196 @@
+{
+  "id": "mat-audit-prompt-generators",
+  "defects": [
+    "MAT-01",
+    "MAT-02"
+  ],
+  "surface": "cli",
+  "source": "the audit's own render input 09-hyperweave-vs-prompt-generators.json (agy-20260831), kept verbatim as an acceptance input",
+  "compose": {
+    "type": "matrix",
+    "genome_id": "primer",
+    "matrix": {
+      "title": "HyperWeave vs. Prompt-Based Generators",
+      "subtitle": "Comparing deterministic spatial compilers against prompt-only HTML/SVG wrappers",
+      "columns": [
+        {
+          "id": "tool",
+          "label": "PLATFORM / ARCHITECTURE",
+          "kind": "text",
+          "align": "left",
+          "role": "label"
+        },
+        {
+          "id": "mark",
+          "label": "",
+          "kind": "glyph",
+          "align": "center",
+          "glyph_tint": "full"
+        },
+        {
+          "id": "paradigm",
+          "label": "EXECUTION PARADIGM",
+          "kind": "text",
+          "align": "left"
+        },
+        {
+          "id": "turn1",
+          "label": "TURN 1 LOOKS GOOD",
+          "kind": "check",
+          "align": "center"
+        },
+        {
+          "id": "turn2",
+          "label": "MULTI-TURN SAFE",
+          "kind": "check",
+          "align": "center"
+        },
+        {
+          "id": "ast",
+          "label": "EMBEDDED AST SEED",
+          "kind": "chip",
+          "align": "left"
+        },
+        {
+          "id": "collision",
+          "label": "ZERO COLLISION",
+          "kind": "check",
+          "align": "center"
+        },
+        {
+          "id": "score",
+          "label": "COMPILER RIGOR",
+          "kind": "numeric",
+          "align": "center",
+          "polarity": "higher",
+          "unit": "/10"
+        }
+      ],
+      "rows": [
+        {
+          "label": "HyperWeave (v0.4+)",
+          "section": "DETERMINISTIC COMPILER",
+          "cells": [
+            {
+              "glyph": "hyperweave"
+            },
+            {
+              "value": "Deterministic Solvers + Jinja2 SVG Template Engine"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "chips": [
+                "hw:payload",
+                "hwz/1 digest"
+              ]
+            },
+            {
+              "state": "full"
+            },
+            {
+              "value": 9.8
+            }
+          ]
+        },
+        {
+          "label": "archify / diagram-design",
+          "section": "PROMPT-BASED SKILLS",
+          "cells": [
+            {
+              "glyph": "bot"
+            },
+            {
+              "value": "Raw LLM HTML/SVG generation with hardcoded pixel coordinates"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "state": "none"
+            },
+            {
+              "chips": [
+                "none (opaque html)"
+              ]
+            },
+            {
+              "state": "partial"
+            },
+            {
+              "value": 5.2
+            }
+          ]
+        },
+        {
+          "label": "Mermaid.js",
+          "section": "LEGACY DIAGRAM PROTOCOLS",
+          "cells": [
+            {
+              "glyph": "code"
+            },
+            {
+              "value": "Client-side JS runtime with 1990s flowchart aesthetic"
+            },
+            {
+              "state": "partial"
+            },
+            {
+              "state": "partial"
+            },
+            {
+              "chips": [
+                "text string only"
+              ]
+            },
+            {
+              "state": "partial"
+            },
+            {
+              "value": 5.5
+            }
+          ]
+        },
+        {
+          "label": "Draw.io / Excalidraw",
+          "section": "LEGACY DIAGRAM PROTOCOLS",
+          "cells": [
+            {
+              "glyph": "pencil"
+            },
+            {
+              "value": "Manual human canvas with unversioned opaque XML storage"
+            },
+            {
+              "state": "full"
+            },
+            {
+              "state": "none"
+            },
+            {
+              "chips": [
+                "opaque binary/xml"
+              ]
+            },
+            {
+              "state": "full"
+            },
+            {
+              "value": 4.8
+            }
+          ]
+        }
+      ],
+      "sections": [
+        "DETERMINISTIC COMPILER",
+        "PROMPT-BASED SKILLS",
+        "LEGACY DIAGRAM PROTOCOLS"
+      ],
+      "notes": "Why deterministic spatial compilation wins the long game against raw prompt-generated markup"
+    }
+  }
+}
