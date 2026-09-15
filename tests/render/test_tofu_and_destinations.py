@@ -38,8 +38,37 @@ from hyperweave.formats.destinations import min_scale, scale_gates
 _NS = "{http://www.w3.org/2000/svg}"
 _UNCOVERABLE = {0x25AE}  # marquee separator bar: absent from every shipped font
 
+_WRAPPED_MATRIX = {
+    "title": "Ømega ledger",
+    "subtitle": "wrapped runs carry glyphs the header set never sees",
+    "headline": {"value": "99.9%", "label": "Ωmega availability"},
+    "columns": [
+        {"id": "l", "label": "Ünit", "role": "label"},
+        {"id": "t", "label": "DESCRIPTION OF THE BEHAVIOUR UNDER TEST", "kind": "text", "width": 120},
+        {"id": "c", "label": "TAGS", "kind": "chip", "width": 90},
+        {"id": "k", "label": "STATE", "kind": "check"},
+        {"id": "b", "label": "SIZE", "kind": "bar"},
+    ],
+    "rows": [
+        {
+            "label": "Straße parsing of unicode text",
+            "sublabel": "μ-benchmark",
+            "cells": [
+                {
+                    "value": "Ωmega binding digits map every sigma into the ledger " * 2,
+                    "note": "naïve first pass over the corpus",
+                },
+                {"chips": ["none (opaque html)", "ß"]},
+                {"state": "partial"},
+                {"value": 3420},
+            ],
+        }
+    ],
+}
+
 _TOFU_SPECS: tuple[tuple[str, ComposeSpec], ...] = (
     ("badge", ComposeSpec(type="badge", genome_id="brutalist", title="BUILD", value="passing")),
+    ("matrix", ComposeSpec(type="matrix", genome_id="primer", matrix=_WRAPPED_MATRIX)),
     ("strip", ComposeSpec(type="strip", genome_id="primer", title="repo", value="STARS:1")),
     ("marquee", ComposeSpec(type="marquee", genome_id="brutalist", title="HW|TEST")),
     (
@@ -84,6 +113,26 @@ class TestTofuGate:
             pytest.skip(f"{label}: no embedded fonts (system font mode)")
         missing = _rendered_codepoints(svg) - cmap - _UNCOVERABLE
         assert not missing, f"{label}: tofu — rendered but not in the subset: {[hex(cp) for cp in sorted(missing)]}"
+
+    def test_the_matrix_corpus_is_tofu_free(self) -> None:
+        """Every matrix fixture and every audit probe: wrapped cell runs,
+        note runs, and wrapped header runs all ride the subset surface."""
+        import json
+        from pathlib import Path
+
+        root = Path(__file__).parents[1] / "fixtures"
+        specs = {p.stem: json.loads(p.read_text()) for p in sorted((root / "matrix").glob("*.json"))}
+        for probe in sorted((root / "spatial" / "probes").glob("mat-audit-*.json")):
+            specs[probe.stem] = json.loads(probe.read_text())["compose"]["matrix"]
+        failures: list[str] = []
+        for name, payload in specs.items():
+            svg = compose(ComposeSpec(type="matrix", genome_id="primer", matrix=payload)).svg
+            cmap = _embedded_cmap(svg)
+            assert cmap, f"{name}: matrix must embed its fonts"
+            missing = _rendered_codepoints(svg) - cmap - _UNCOVERABLE
+            if missing:
+                failures.append(f"{name}: {[hex(cp) for cp in sorted(missing)]}")
+        assert not failures, "tofu in the matrix corpus:\n" + "\n".join(failures)
 
     def test_the_full_preset_corpus_is_tofu_free(self) -> None:
         # The FULL corpus, not a sample — a 3-preset spot check missed five
