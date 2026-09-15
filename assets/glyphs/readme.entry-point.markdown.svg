@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 28 24"
+     width="28"
+     height="24"
+     preserveAspectRatio="xMidYMid meet"
+     role="img"
+     aria-labelledby="md-title md-desc">
+  <title id="md-title">Markdown SKILL.md Action Glyph</title>
+  <desc id="md-desc">Hand-drawn Markdown badge in HyperWeave marker-cobalt DNA with an inked M glyph and a drifting cobalt arrow.</desc>
+
+  <metadata>
+    <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:artifactType>inline-action-glyph</hw:artifactType>
+      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:geometryFormLanguage>hand-drawn-markdown-plate</hw:geometryFormLanguage>
+      <hw:reasoning>
+        <hw:intent>Translate the standard Markdown logo into HyperWeave's hand-drawn marker-cobalt whiteboard aesthetic for inline SKILL.md link display.</hw:intent>
+        <hw:approach>Placed the iconic 'M' and downward arrow inside the unified 28x24 wobbly whiteboard chassis. Rendered the 'M' in heavy dark ink and the downward directional arrow in cobalt blue with a subtle CIM-compliant bounce pulse.</hw:approach>
+        <hw:tradeoffs>Avoided mechanical fonts and rigid raster assets to maintain stroke weight, kerning, and jitter consistency with sibling CLI and API glyphs.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:metadata>
+  </metadata>
+
+  <style>
+    :root {
+      --hw-paper: #FFFFFF;
+      --hw-ink: #1B1B1D;
+      --hw-cobalt: #1D4ED8;
+      --hw-sketch: rgba(29, 78, 216, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-paper: #0F172A;
+        --hw-ink: #F8FAFC;
+        --hw-cobalt: #60A5FA;
+        --hw-sketch: rgba(96, 165, 250, 0.14);
+      }
+    }
+
+    .sketch-plate {
+      fill: var(--hw-paper);
+      stroke: var(--hw-ink);
+      stroke-width: 1.35;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: fill 0.2s ease, stroke 0.2s ease;
+    }
+
+    .sketch-shadow {
+      fill: var(--hw-sketch);
+      stroke: none;
+    }
+
+    .m-glyph {
+      fill: none;
+      stroke: var(--hw-ink);
+      stroke-width: 1.55;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease;
+    }
+
+    .arrow-glyph {
+      fill: none;
+      stroke: var(--hw-cobalt);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transform-origin: 19.2px 11.8px;
+      animation: arrow-bounce 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+      transition: stroke 0.2s ease;
+    }
+
+    @keyframes arrow-bounce {
+      0% {
+        transform: translateY(-0.6px);
+      }
+      100% {
+        transform: translateY(0.8px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .arrow-glyph {
+        animation: none;
+        transform: none;
+      }
+    }
+
+    @media (forced-colors: active) {
+      .sketch-plate { stroke: CanvasText; fill: Canvas; }
+      .m-glyph, .arrow-glyph { stroke: CanvasText; }
+    }
+  </style>
+
+  <!-- Offset Sketch Shadow -->
+  <path class="sketch-shadow"
+        d="M 3.2 4.4
+           C 9.6 3.9, 17.6 4.1, 24.8 4.6
+           C 25.3 9.4, 25.1 14.4, 24.5 19.3
+           C 17.8 19.8, 9.8 19.5, 3.0 19.0
+           C 2.6 14.1, 2.7 9.1, 3.2 4.4 Z" />
+
+  <!-- Hand-Drawn Whiteboard Chassis -->
+  <path class="sketch-plate"
+        d="M 3.2 3.8
+           C 9.6 3.2, 17.6 3.5, 24.8 4.0
+           C 25.3 8.9, 25.1 14.0, 24.5 18.7
+           C 17.8 19.2, 9.8 18.9, 3.0 18.4
+           C 2.6 13.5, 2.7 8.5, 3.2 3.8 Z" />
+
+  <!-- Hand-Drawn 'M' -->
+  <path class="m-glyph"
+        d="M 6.4 15.8
+           L 6.4 7.6
+           L 9.6 11.6
+           L 12.8 7.6
+           L 12.8 15.8" />
+
+  <!-- Kinetic Cobalt Down Arrow -->
+  <g class="arrow-glyph">
+    <line x1="19.2" y1="7.6" x2="19.2" y2="15.8" />
+    <polyline points="16.4,12.8 19.2,15.8 22.0,12.8" />
+  </g>
+</svg>

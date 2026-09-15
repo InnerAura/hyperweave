@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 512 512"
+     width="512"
+     height="512"
+     preserveAspectRatio="xMidYMid meet"
+     role="img"
+     aria-labelledby="open-sign-title open-sign-desc">
+  <title id="open-sign-title">Hand-Drawn Open Sign</title>
+  <desc id="open-sign-desc">Adaptive vector illustration of a suspended hand-lettered marker open sign with marigold frame, emerald panel, and harmonic pendulum sway.</desc>
+
+  <metadata>
+    <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:artifactType>signage-illustration</hw:artifactType>
+      <hw:chromaticSystem>marker-pop-adaptive</hw:chromaticSystem>
+      <hw:geometryFormLanguage>hand-drawn-organic-contour</hw:geometryFormLanguage>
+      <hw:reasoning>
+        <hw:intent>Recreate the hand-drawn physical 'OPEN' hanging sign as a self-contained, responsive vector asset that honors authentic marker line weighting, wobbly contours, and physical suspension mechanics.</hw:intent>
+        <hw:approach>Rendered organic, hand-modeled bezier paths for the board, inner plate, and block typography. Suspended the entire signboard from an overhead mounting peg at (256, 62). Applied a subtle CIM-compliant pendulum oscillation (±2deg) running purely on CSS transforms, with full prefers-reduced-motion fallback. Leveraged CSS custom properties to ensure rich, vibrant pigment reproduction across both light and dark host viewports.</hw:approach>
+        <hw:tradeoffs>Rejected blurred drop shadows, diffuse glows, and synthetic raster filters in strict adherence to anti-soft-gradient doctrines. Left typographic paths as native vector strokes rather than system fonts to ensure 100% faithful glyph reproduction across arbitrary user agents without CDN font dependencies.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:metadata>
+  </metadata>
+
+  <style>
+    :root {
+      --hw-bg: #FFFFFF;
+      --hw-ink: #0D1117;
+      --hw-frame: #F6B426;
+      --hw-panel: #2DB87D;
+      --hw-peg: #F37023;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-bg: #0B0F19;
+        --hw-ink: #0B0E14;
+        --hw-frame: #F5B82A;
+        --hw-panel: #28B277;
+        --hw-peg: #F46C1E;
+      }
+    }
+
+    /* Hanging Rig Assembly (CIM Doctrine: Transform Only) */
+    .suspension-rig {
+      transform-origin: 256px 62px;
+      animation: sign-sway 6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+    }
+
+    /* Ink Contours */
+    .ink-stroke {
+      stroke: var(--hw-ink);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .frame-border {
+      fill: var(--hw-frame);
+      stroke: var(--hw-ink);
+      stroke-width: 14;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .panel-body {
+      fill: var(--hw-panel);
+      stroke: var(--hw-ink);
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .peg-node {
+      fill: var(--hw-peg);
+      stroke: var(--hw-ink);
+      stroke-width: 11;
+    }
+
+    .cord-line {
+      fill: none;
+      stroke: var(--hw-ink);
+      stroke-width: 12;
+      stroke-linecap: round;
+    }
+
+    .letter-glyph {
+      fill: none;
+      stroke: var(--hw-ink);
+      stroke-width: 15;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    @keyframes sign-sway {
+      0% {
+        transform: rotate(-2.2deg);
+      }
+      100% {
+        transform: rotate(2.2deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .suspension-rig {
+        animation: none;
+      }
+    }
+  </style>
+
+  <!-- Mounting Wall Anchor -->
+  <g id="anchor-peg">
+    <circle class="peg-node" cx="256" cy="62" r="18" />
+  </g>
+
+  <!-- Oscillating Assembly -->
+  <g id="hanging-rig" class="suspension-rig">
+    <!-- Hanging Cords -->
+    <g id="suspension-cords">
+      <path class="cord-line" d="M 242 74 C 200 110 152 146 112 172" />
+      <path class="cord-line" d="M 270 74 C 312 110 360 146 400 172" />
+    </g>
+
+    <!-- Signboard Body -->
+    <g id="signboard">
+      <!-- Outer Marigold Frame -->
+      <path class="frame-border"
+            d="M 64 174
+               C 114 171 224 166 448 168
+               C 462 168 466 176 464 192
+               C 461 260 464 342 460 416
+               C 459 428 450 434 436 433
+               C 330 429 170 433 72 431
+               C 58 430 52 422 53 408
+               C 55 334 53 252 56 188
+               C 57 178 60 174 64 174 Z" />
+
+      <!-- Inner Emerald Marker Panel -->
+      <path class="panel-body"
+            d="M 94 204
+               C 140 202 240 198 420 201
+               C 429 201 433 206 432 216
+               C 430 265 432 330 430 388
+               C 429 397 423 401 413 400
+               C 330 398 180 401 104 399
+               C 94 399 90 394 91 385
+               C 92 328 90 262 92 214
+               C 92 207 94 204 94 204 Z" />
+
+      <!-- Hand-Drawn OPEN Lettering -->
+      <g id="sign-lettering">
+        <!-- O -->
+        <path class="letter-glyph"
+              d="M 152 252
+                 C 126 252 115 272 115 298
+                 C 115 324 126 344 152 344
+                 C 178 344 189 324 189 298
+                 C 189 272 178 252 152 252 Z" />
+
+        <!-- P -->
+        <path class="letter-glyph"
+              d="M 215 252 L 215 344
+                 M 215 252
+                 C 242 250 258 258 258 276
+                 C 258 294 242 302 215 302" />
+
+        <!-- E -->
+        <path class="letter-glyph"
+              d="M 280 252 L 280 344
+                 M 280 252 L 326 252
+                 M 280 298 L 318 298
+                 M 280 344 L 326 344" />
+
+        <!-- N -->
+        <path class="letter-glyph"
+              d="M 350 344 L 350 252
+                 L 394 344
+                 L 394 252" />
+      </g>
+    </g>
+  </g>
+</svg>

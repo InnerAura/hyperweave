@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 28 28"
+     width="28"
+     height="28"
+     preserveAspectRatio="xMidYMid meet"
+     role="img"
+     aria-labelledby="tetra-title tetra-desc">
+  <title id="tetra-title">Polished Tetrahedron Platonic Glyph</title>
+  <desc id="tetra-desc">Polished 3D wireframe tetrahedron representing pure zero-JavaScript static immutability, featuring dimensional definition and a substantial, glossy core.</desc>
+
+  <metadata>
+    <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:artifactType>philosophy-platonic-glyph</hw:artifactType>
+      <hw:chromaticSystem>excalidraw-marker-cobalt-polished</hw:chromaticSystem>
+      <hw:geometryFormLanguage>platonic-tetrahedron-dimensional</hw:geometryFormLanguage>
+      <hw:reasoning>
+        <hw:intent>Refine the tetrahedron glyph to feel more polished and dimensional, reducing the transparency of the central node while maintaining the zero-JavaScript metaphorical foundation.</hw:intent>
+        <hw:approach>Constructed a detailed wireframe projection. Replaced flat edge colors with linear gradients for rounding and depth. Replaced the flat central node with a polished sphere utilizing an intricate adaptive radial gradient for gloss and substance, and removed its opacity animation. Applied subtle depth-of-field filters to the entire structure.</hw:approach>
+        <hw:tradeoffs>Avoided adding explicit face fills to preserve the light and scannable nature at 18–20px heights, relying on rich gradients and depth cues.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:metadata>
+  </metadata>
+
+  <defs>
+    <!-- Adaptive polished core gradient -->
+    <radialGradient id="grad-core-polished" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#E1EAFB"/>
+      <stop offset="30%" stop-color="#3A63EC"/>
+      <stop offset="95%" stop-color="#1434A0"/>
+      <stop offset="100%" stop-color="#0F287F"/>
+    </radialGradient>
+
+    <!-- Edge gradients for rounding and light hits -->
+    <linearGradient id="grad-edge-main-ink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D3B51"/>
+      <stop offset="100%" stop-color="#1B1B1D"/>
+    </linearGradient>
+    
+    <linearGradient id="grad-edge-dimensional-ink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B1B1D"/>
+      <stop offset="100%" stop-color="#0C0E14"/>
+    </linearGradient>
+
+    <!-- Subtle soft shadow for lift -->
+    <filter id="shadow-tetra" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="1" dy="1.5" stdDeviation="1.5" flood-color="var(--hw-ink)" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <style>
+    :root {
+      --hw-paper: #FFFFFF;
+      --hw-ink: #1B1B1D;
+      --hw-cobalt: #1D4ED8;
+      --hw-sketch: rgba(29, 78, 216, 0.08);
+      
+      --edge-gradient-main: url(#grad-edge-main-ink);
+      --edge-gradient-dimensional: url(#grad-edge-dimensional-ink);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-paper: #0F172A;
+        --hw-ink: #F8FAFC;
+        --hw-cobalt: #60A5FA;
+        --hw-sketch: rgba(96, 165, 250, 0.14);
+        
+        /* Simpler dark-aware gradients directly in path definitions are cleaner */
+        --edge-gradient-main: var(--hw-ink);
+        --edge-gradient-dimensional: var(--hw-ink);
+      }
+    }
+
+    .tetra-group {
+      filter: url(#shadow-tetra);
+    }
+
+    .tetra-edge-main {
+      fill: none;
+      stroke: var(--edge-gradient-main);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease;
+    }
+
+    .tetra-edge-dimensional {
+      fill: none;
+      stroke: var(--edge-gradient-dimensional);
+      stroke-width: 1.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.8;
+      transition: stroke 0.2s ease;
+    }
+
+    .tetra-edge-cobalt {
+      fill: none;
+      stroke: var(--hw-cobalt);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease;
+    }
+
+    .tetra-core-polished {
+      fill: url(#grad-core-polished);
+      stroke: #0A1B51;
+      stroke-width: 0.8;
+      transform-origin: 14px 17px;
+      animation: core-breathing 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+    }
+
+    @keyframes core-breathing {
+      0% { transform: scale(0.92); opacity: 0.95; }
+      100% { transform: scale(1.15); opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tetra-core-polished { animation: none; opacity: 1; transform: scale(1); }
+    }
+
+    @media (forced-colors: active) {
+      .tetra-edge-main, .tetra-edge-dimensional, .tetra-edge-cobalt, .tetra-core-polished { stroke: CanvasText; fill: none; }
+      .tetra-core-polished { fill: CanvasText; }
+    }
+  </style>
+
+  <g class="tetra-group">
+    <!-- Outer Triangular Boundary - Dimensionality Gaps and gradients defined here -->
+    <path class="tetra-edge-main"
+          d="M 14.0 4.2
+             L 24.2 22.8" />
+    <path class="tetra-edge-dimensional"
+          d="M 24.2 22.8
+             L 3.8 22.8" />
+    <path class="tetra-edge-dimensional"
+          d="M 3.8 22.8
+             L 14.0 4.2" />
+
+    <!-- Internal Converging Edges - Redefined dimensionality cues -->
+    <line class="tetra-edge-dimensional" x1="3.8" y1="22.8" x2="14.0" y2="17.0" />
+    <line class="tetra-edge-main" x1="24.2" y1="22.8" x2="14.0" y2="17.0" />
+    <line class="tetra-edge-cobalt" x1="14.0" y1="4.2" x2="14.0" y2="17.0" />
+
+    <!-- Polished, glossy, substantial core sphere -->
+    <circle class="tetra-core-polished" cx="14.0" cy="17.0" r="2.2" />
+  </g>
+</svg>

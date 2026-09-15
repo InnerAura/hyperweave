@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 28 28"
+     width="28"
+     height="28"
+     preserveAspectRatio="xMidYMid meet"
+     role="img"
+     aria-labelledby="ex-title ex-desc">
+  <title id="ex-title">Exclamation Heading Glyph</title>
+  <desc id="ex-desc">Hand-drawn marker exclamation point signifying urgency, importance, and core problem statements.</desc>
+
+  <metadata>
+    <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:artifactType>heading-glyph</hw:artifactType>
+      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:geometryFormLanguage>hand-drawn-emphatic-stroke</hw:geometryFormLanguage>
+      <hw:reasoning>
+        <hw:intent>Create a high-contrast exclamation glyph for 'Why It Exists' sections to focus attention on the core problem statement.</hw:intent>
+        <hw:approach>Constructed a tapered hand-inked downward shaft paired with an independent cobalt node. Added a micro-oscillation animation to the shaft to deliver a persistent sense of urgency without layout shift.</hw:approach>
+        <hw:tradeoffs>Selected raw freestanding geometry over a warning triangle to maintain minimal footprint next to bold markdown text.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:metadata>
+  </metadata>
+
+  <style>
+    :root {
+      --hw-paper: #FFFFFF;
+      --hw-ink: #1B1B1D;
+      --hw-cobalt: #1D4ED8;
+      --hw-sketch: rgba(29, 78, 216, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-paper: #0F172A;
+        --hw-ink: #F8FAFC;
+        --hw-cobalt: #60A5FA;
+        --hw-sketch: rgba(96, 165, 250, 0.14);
+      }
+    }
+
+    .ex-shaft-group {
+      transform-origin: 14px 4px;
+      animation: alert-tilt 3s ease-in-out infinite alternate;
+    }
+
+    .ex-shaft {
+      fill: none;
+      stroke: var(--hw-ink);
+      stroke-width: 2.3;
+      stroke-linecap: round;
+      transition: stroke 0.2s ease;
+    }
+
+    .ex-shadow {
+      fill: none;
+      stroke: var(--hw-sketch);
+      stroke-width: 3.5;
+      stroke-linecap: round;
+    }
+
+    .ex-dot {
+      fill: var(--hw-cobalt);
+      stroke: var(--hw-ink);
+      stroke-width: 0.8;
+      transform-origin: 14px 22px;
+      animation: alert-ping 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+      transition: fill 0.2s ease, stroke 0.2s ease;
+    }
+
+    @keyframes alert-tilt {
+      0% { transform: rotate(-1.5deg); }
+      100% { transform: rotate(1.5deg); }
+    }
+
+    @keyframes alert-ping {
+      0% { transform: scale(0.92); opacity: 0.85; }
+      100% { transform: scale(1.22); opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ex-shaft-group, .ex-dot { animation: none; transform: none; }
+    }
+
+    @media (forced-colors: active) {
+      .ex-shaft, .ex-dot { stroke: CanvasText; }
+      .ex-dot { fill: CanvasText; }
+    }
+  </style>
+
+  <!-- Animated Tapered Shaft -->
+  <g class="ex-shaft-group">
+    <path class="ex-shadow" d="M 13.8 4.6 L 14.1 16.2" />
+    <path class="ex-shaft" d="M 13.8 4.6 L 14.1 16.2" />
+  </g>
+
+  <!-- Cobalt Node -->
+  <circle class="ex-dot" cx="14" cy="22" r="2.1" />
+</svg>

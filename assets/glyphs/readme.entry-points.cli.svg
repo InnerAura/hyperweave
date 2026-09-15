@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 28 24"
+     width="28"
+     height="24"
+     preserveAspectRatio="xMidYMid meet"
+     role="img"
+     aria-labelledby="cli-sketch-title cli-sketch-desc">
+  <title id="cli-sketch-title">Hand-Drawn CLI Prompt</title>
+  <desc id="cli-sketch-desc">Wobbly sketch terminal window featuring a cobalt greater-than prompt and a blinking underscore cursor.</desc>
+
+  <metadata>
+    <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:artifactType>inline-action-glyph</hw:artifactType>
+      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:geometryFormLanguage>hand-drawn-terminal-box</hw:geometryFormLanguage>
+      <hw:reasoning>
+        <hw:intent>Create a tactile, hand-drawn terminal console icon featuring the iconic '> _' sequence with a rhythmic flashing underscore for CLI command links.</hw:intent>
+        <hw:approach>Constructed a wobbly, organic rectangular console container with uneven pen contours. Positioned an inked cobalt blue chevron (>) alongside an underscore cursor (_) that blinks using pure CSS opacity stepping. Integrated dark mode paper adaptations.</hw:approach>
+        <hw:tradeoffs>Used CSS step-based opacity keyframes to achieve an authentic hardware terminal blink without JavaScript or paint-heavy blur transitions.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:metadata>
+  </metadata>
+
+  <style>
+    :root {
+      --hw-paper: #FFFFFF;
+      --hw-ink: #1B1B1D;
+      --hw-cobalt: #1D4ED8;
+      --hw-sketch: rgba(29, 78, 216, 0.06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-paper: #0F172A;
+        --hw-ink: #F8FAFC;
+        --hw-cobalt: #60A5FA;
+        --hw-sketch: rgba(96, 165, 250, 0.12);
+      }
+    }
+
+    .term-box {
+      fill: var(--hw-paper);
+      stroke: var(--hw-ink);
+      stroke-width: 1.35;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .sketch-bg {
+      fill: var(--hw-sketch);
+      stroke: none;
+    }
+
+    .prompt-gt {
+      fill: none;
+      stroke: var(--hw-cobalt);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .cursor-under {
+      stroke: var(--hw-ink);
+      stroke-width: 2.1;
+      stroke-linecap: round;
+      animation: cursor-flash 1s steps(1, start) infinite;
+    }
+
+    @keyframes cursor-flash {
+      0%, 49% {
+        opacity: 1;
+      }
+      50%, 100% {
+        opacity: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cursor-under {
+        animation: none;
+        opacity: 1;
+      }
+    }
+
+    @media (forced-colors: active) {
+      .term-box { stroke: CanvasText; fill: Canvas; }
+      .prompt-gt, .cursor-under { stroke: CanvasText; }
+    }
+  </style>
+
+  <!-- Hand-Drawn Terminal Enclosure (Organic Wobble) -->
+  <path class="sketch-bg"
+        d="M 3.8 4.2 C 10.8 3.7, 18.2 4.1, 24.6 4.3 C 25.1 9.8, 24.8 15.4, 24.4 19.8 C 17.6 20.4, 10.4 19.9, 3.4 19.7 C 3.1 14.5, 3.3 9.2, 3.8 4.2 Z" />
+
+  <path class="term-box"
+        d="M 3.8 4.2
+           C 10.6 3.6, 18.2 4.1, 24.6 4.3
+           C 25.1 9.8, 24.8 15.4, 24.4 19.8
+           C 17.6 20.4, 10.4 19.9, 3.4 19.7
+           C 3.1 14.5, 3.3 9.2, 3.8 4.2 Z" />
+
+  <!-- Hand-Drawn Prompt: > -->
+  <path class="prompt-gt" d="M 7.5 8.8 L 12.2 12 L 7.5 15.2" />
+
+  <!-- Hand-Drawn Flashing Underscore: _ -->
+  <line class="cursor-under" x1="14.8" y1="15.8" x2="20.6" y2="15.8" />
+</svg>

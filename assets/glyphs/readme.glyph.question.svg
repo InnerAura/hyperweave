@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 28 28"
+     width="28"
+     height="28"
+     preserveAspectRatio="xMidYMid meet"
+     role="img"
+     aria-labelledby="q-title q-desc">
+  <title id="q-title">Question Mark Heading Glyph</title>
+  <desc id="q-desc">Hand-drawn marker question mark with an oscillating cobalt dot for interrogative headings.</desc>
+
+  <metadata>
+    <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
+      <hw:artifactType>heading-glyph</hw:artifactType>
+      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:geometryFormLanguage>hand-drawn-interrogative-stroke</hw:geometryFormLanguage>
+      <hw:reasoning>
+        <hw:intent>Provide an intuitive, instantly recognizable question mark glyph for introductory 'What Is It?' sections, replacing complex multi-object metaphors with pure typographic gestalt.</hw:intent>
+        <hw:approach>Drawn with loose, organic bezier contours mimicking quick whiteboard marker work. The hook carries primary ink weight while the detached base dot acts as an active cobalt focal point with subtle CIM-compliant breathing.</hw:approach>
+        <hw:tradeoffs>Avoided enclosing borders or background tiles to maintain maximum negative space and clean visual alignment with markdown H2 headers.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:metadata>
+  </metadata>
+
+  <style>
+    :root {
+      --hw-paper: #FFFFFF;
+      --hw-ink: #1B1B1D;
+      --hw-cobalt: #1D4ED8;
+      --hw-sketch: rgba(29, 78, 216, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-paper: #0F172A;
+        --hw-ink: #F8FAFC;
+        --hw-cobalt: #60A5FA;
+        --hw-sketch: rgba(96, 165, 250, 0.14);
+      }
+    }
+
+    .q-stroke {
+      fill: none;
+      stroke: var(--hw-ink);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease;
+    }
+
+    .q-shadow {
+      fill: none;
+      stroke: var(--hw-sketch);
+      stroke-width: 3.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .q-dot {
+      fill: var(--hw-cobalt);
+      stroke: var(--hw-ink);
+      stroke-width: 0.8;
+      transform-origin: 14px 22px;
+      animation: dot-pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+      transition: fill 0.2s ease, stroke 0.2s ease;
+    }
+
+    @keyframes dot-pulse {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      100% { transform: scale(1.25); opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .q-dot { animation: none; transform: none; }
+    }
+
+    @media (forced-colors: active) {
+      .q-stroke, .q-dot { stroke: CanvasText; }
+      .q-dot { fill: CanvasText; }
+    }
+  </style>
+
+  <!-- Offset Marker Wash -->
+  <path class="q-shadow"
+        d="M 9.2 8.4
+           C 9.0 4.6, 18.6 4.4, 18.8 8.8
+           C 18.9 12.0, 14.4 13.4, 14.2 16.6" />
+
+  <!-- Hand-Drawn Inked Hook -->
+  <path class="q-stroke"
+        d="M 9.2 8.4
+           C 9.0 4.6, 18.6 4.4, 18.8 8.8
+           C 18.9 12.0, 14.4 13.4, 14.2 16.6" />
+
+  <!-- Cobalt Terminal Node -->
+  <circle class="q-dot" cx="14" cy="22" r="2.1" />
+</svg>

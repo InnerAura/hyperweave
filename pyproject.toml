@@ -1,20 +1,22 @@
 [project]
 name = "hyperweave"
 dynamic = ["version"]
-description = "Artifact layer for agent-human representations. One API call, one SVG. Zero dependencies, renders in any markdown."
+description = "Visual CLI for agents. Generate deterministic SVG diagrams, charts, and tables with embedded machine-readable metadata. Zero JavaScript. Renders anywhere markdown does."
 requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]
 readme = "README.md"
 keywords = [
-    "ai-agents",
     "agent-memory",
     "agent-observability",
     "agent-visualization",
+    "ai-agents",
     "architecture-diagram",
     "artifacts",
+    "charts",
+    "cli",
     "code-visualization",
-    "developer-tools",
+    "data-visualization",
     "diagram",
     "diagram-as-code",
     "generative-ui",
@@ -24,6 +26,7 @@ keywords = [
     "profile-readme",
     "svg",
     "svg-generator",
+    "tables",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

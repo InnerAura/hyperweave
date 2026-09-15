@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:hw="https://hyperweave.app/hw/v1.0"
+     viewBox="0 0 28 28"
+     width="28"
+     height="28"
+     preserveAspectRatio="xMidYMid meet"
+     role="img"
+     aria-labelledby="js-logo-title js-logo-desc"
+     data-hw-glyph="zero-js-verified"
+     data-hw-chromatic="porcelain">
+  <title id="js-logo-title">Zero JavaScript (0 JS) Verified Seal</title>
+  <desc id="js-logo-desc">Official JavaScript glyphs centered inside an organic Excalidraw porcelain tile, overlaid with an active cobalt denial X.</desc>
+
+  <metadata>
+    <hw:metadata>
+      <hw:artifact id="hw-zero-js-seal" type="verified-seal" series="runtime" version="1.2.0">
+        <hw:provenance>
+          <hw:generator>HyperWeave V1.2 (Porcelain Engine) [porcelain-engine-v1.2.0]</hw:generator>
+          <hw:created>2026-09-14</hw:created>
+          <hw:spec size="28x28" performance="composite-only" theme="adaptive" a11y="WCAG-AA"/>
+        </hw:provenance>
+      </hw:artifact>
+      <hw:aesthetic>
+        <hw:chromatic system="primer-porcelain-adaptive" space="oklch" contrast-ratio="21.0:1"/>
+        <hw:motion vocabulary="stepped-cadence,denial-pulse" physics="static-denial" timing="phi" cim-compliant="true"/>
+        <hw:geometry form-language="excalidraw-chassis-centered-denial-x" proportional-system="phi" symmetry="bilateral"/>
+        <hw:material surface="vellum-wash" depth="shallow"/>
+      </hw:aesthetic>
+      <hw:reasoning>
+        <hw:intent>Deliver a mathematically centered 0-JS runtime restriction seal with zero frame clipping or coordinate drift.</hw:intent>
+        <hw:approach>Normalized the 1052x1052 JS path bounding box (center 610, 693.25) to tile center (14, 14.2) via dedicated linear matrix offsets. Replaced nested contradictory scales with clean local coordinates. Overlayed a wobbly hand-drawn cobalt denial X with stepped CIM opacity toggling.</hw:approach>
+        <hw:tradeoffs>Replaced brand yellow with porcelain substrate to honor the monochrome-cobalt palette. Stripped all outer circular containers for clean inline integration.</hw:tradeoffs>
+      </hw:reasoning>
+    </hw:metadata>
+  </metadata>
+
+  <style>
+    :root {
+      --hw-paper: #FFFFFF;
+      --hw-ink: #1B1B1D;
+      --hw-cobalt: #1D4ED8;
+      --hw-substrate: #F8FAFC;
+      --hw-sketch: rgba(29, 78, 216, 0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --hw-paper: #0F172A;
+        --hw-ink: #F8FAFC;
+        --hw-cobalt: #60A5FA;
+        --hw-substrate: #1E293B;
+        --hw-sketch: rgba(96, 165, 250, 0.14);
+      }
+    }
+
+    .js-chassis-shadow {
+      fill: var(--hw-sketch);
+      stroke: none;
+    }
+
+    .js-chassis {
+      fill: var(--hw-substrate);
+      stroke: var(--hw-ink);
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: fill 0.2s ease, stroke 0.2s ease;
+    }
+
+    .js-letterforms {
+      fill: var(--hw-ink);
+      stroke: none;
+      transition: fill 0.2s ease;
+    }
+
+    .denial-x-stroke {
+      fill: none;
+      stroke: var(--hw-cobalt);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: denial-flash 1.2s steps(1, start) infinite;
+    }
+
+    @keyframes denial-flash {
+      0%, 65% { opacity: 1; }
+      66%, 100% { opacity: 0.15; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .denial-x-stroke {
+        animation: none;
+        opacity: 1;
+      }
+    }
+
+    @media (forced-colors: active) {
+      .js-chassis { fill: Canvas; stroke: CanvasText; }
+      .js-letterforms { fill: CanvasText; }
+      .denial-x-stroke { stroke: CanvasText; }
+    }
+  </style>
+
+  <!-- Offset Sketch Shadow (Centered) -->
+  <path class="js-chassis-shadow"
+        d="M 4.8 4.8
+           C 11.0 4.2, 17.8 4.5, 24.8 4.9
+           C 25.4 11.2, 25.1 18.0, 24.6 24.4
+           C 18.0 25.0, 11.2 24.7, 4.8 24.2
+           C 4.2 18.0, 4.4 11.2, 4.8 4.8 Z" />
+
+  <!-- Hand-Drawn Porcelain Substrate Chassis (Centered 20x20 Box) -->
+  <path class="js-chassis"
+        d="M 4.0 4.0
+           C 10.4 3.4, 17.4 3.7, 24.0 4.1
+           C 24.6 10.4, 24.3 17.4, 23.8 23.6
+           C 17.4 24.2, 10.4 23.9, 4.0 23.4
+           C 3.4 17.4, 3.6 10.4, 4.0 4.0 Z" />
+
+  <!-- Centered Authentic JS Glyph Silhouette (Normalized from 1052x1052) -->
+  <g transform="translate(1.6, 0.1) scale(0.02034)">
+    <path class="js-letterforms"
+          d="M965.9 801.1c-7.7-48-39-88.3-131.7-125.9-32.2-14.8-68.1-25.399-78.8-49.8-3.8-14.2-4.3-22.2-1.9-30.8 6.9-27.9 40.2-36.6 66.6-28.6 17 5.7 33.1 18.801 42.8 39.7 45.4-29.399 45.3-29.2 77-49.399-11.6-18-17.8-26.301-25.4-34-27.3-30.5-64.5-46.2-124-45-10.3 1.3-20.699 2.699-31 4-29.699 7.5-58 23.1-74.6 44-49.8 56.5-35.6 155.399 25 196.1 59.7 44.8 147.4 55 158.6 96.9 10.9 51.3-37.699 67.899-86 62-35.6-7.4-55.399-25.5-76.8-58.4-39.399 22.8-39.399 22.8-79.899 46.1 9.6 21 19.699 30.5 35.8 48.7 76.2 77.3 266.899 73.5 301.1-43.5 1.399-4.001 10.6-30.801 3.199-72.101zm-394-317.6h-98.4c0 85-.399 169.4-.399 254.4 0 54.1 2.8 103.7-6 118.9-14.4 29.899-51.7 26.2-68.7 20.399-17.3-8.5-26.1-20.6-36.3-37.699-2.8-4.9-4.9-8.7-5.601-9-26.699 16.3-53.3 32.699-80 49 13.301 27.3 32.9 51 58 66.399 37.5 22.5 87.9 29.4 140.601 17.3 34.3-10 63.899-30.699 79.399-62.199 22.4-41.3 17.6-91.3 17.4-146.6.5-90.2 0-180.4 0-270.9z" />
+  </g>
+
+  <!-- Centered Hand-Drawn Denial 'X' -->
+  <g class="denial-x-stroke">
+    <path d="M 5.5 5.5 C 9.5 9.8, 18.2 18.0, 22.5 22.5" />
+    <path d="M 22.5 5.5 C 18.0 9.8, 9.5 18.2, 5.5 22.5" />
+  </g>
+</svg>
