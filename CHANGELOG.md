@@ -5,7 +5,7 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.7] - Unreleased
+## [0.4.7] - 2026-09-15
 
 Custom themes (genomes) now fail closed across every entry point, Python 3.10 is supported, matrix layouts wrap instead of clipping, and `POST /v1/compose` exposes the full compose contract.
 
