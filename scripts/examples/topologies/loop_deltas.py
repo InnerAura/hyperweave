@@ -38,7 +38,7 @@ REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO))
 
 from hyperweave.compose.engine import compose  # noqa: E402
-from hyperweave.core.models import ComposeSpec  # noqa: E402
+from scripts.examples.render import gallery_spec  # noqa: E402
 from scripts.extract_specimen_fixtures import extract_geometry  # noqa: E402
 
 CORPUS = REPO / "v04" / "v040" / "v044" / "loop"
@@ -699,7 +699,7 @@ def main() -> None:
         render_path = OUT / f"{slug}.svg"
         try:
             svg = compose(
-                ComposeSpec(
+                gallery_spec(
                     type="diagram",
                     genome_id="primer",
                     variant="porcelain",

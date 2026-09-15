@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 from hyperweave.compose.engine import compose
 from hyperweave.core.diagram import DiagramCapacityError, DiagramInputError
-from hyperweave.core.models import ComposeSpec
+from scripts.examples.render import gallery_spec
 
 if TYPE_CHECKING:
     import pathlib
@@ -52,7 +52,7 @@ def render(out: pathlib.Path, slug: str, spec: dict[str, Any], section: str) -> 
     """
     if "node_style" not in spec and any(n.get("kind") or n.get("glyph") for n in spec.get("nodes", [])):
         spec = {**spec, "node_style": "card+glyph"}
-    svg = compose(ComposeSpec(type="diagram", diagram=spec, **FACE)).svg
+    svg = compose(gallery_spec(type="diagram", diagram=spec, **FACE)).svg
     (out / section).mkdir(parents=True, exist_ok=True)
     (out / section / f"{slug}.svg").write_text(svg)
     return svg
@@ -66,7 +66,7 @@ def refusal(spec: dict[str, Any]) -> str:
     in the document rather than passing quietly.
     """
     try:
-        compose(ComposeSpec(type="diagram", diagram=spec, **FACE))
+        compose(gallery_spec(type="diagram", diagram=spec, **FACE))
     except (DiagramCapacityError, DiagramInputError) as exc:
         return str(exc)
     except Exception as exc:

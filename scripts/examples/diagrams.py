@@ -44,8 +44,8 @@ from hyperweave.compose.diagram.sizing import CROWN_DOMINANCE_MAX, voice_for  # 
 from hyperweave.compose.engine import compose  # noqa: E402
 from hyperweave.compose.geometry.text import measure_voice  # noqa: E402
 from hyperweave.config.loader import load_diagram_config, load_glyphs, load_paradigms  # noqa: E402
-from hyperweave.core.models import ComposeSpec  # noqa: E402
 from hyperweave.core.paradigm import MatrixVoice  # noqa: E402
+from scripts.examples.render import gallery_spec  # noqa: E402
 
 _TEXT_CFG = load_paradigms()["primer"].diagram
 # A CLOSED set is a trap for a new anatomy: an unlisted class is not graded
@@ -3010,7 +3010,7 @@ def build_topologies() -> int:
         for slug, _source, spec in stories:
             kwargs: dict[str, Any] = dict(type="diagram", diagram=spec, **ex.FACE)
             kwargs.update(_FIELD_STORY_OVERRIDES.get(slug, {}))
-            svg = compose(ComposeSpec(**kwargs)).svg
+            svg = compose(gallery_spec(**kwargs)).svg
             (out / "stories").mkdir(parents=True, exist_ok=True)
             (out / "stories" / f"{slug}.svg").write_text(svg)
             total += 1
@@ -3030,7 +3030,7 @@ def build_topologies() -> int:
                 # must be judgeable on the flagship face too.
                 twin = dict(kwargs)
                 twin.update(variant="porcelain", surface_face="light", motion="static")
-                (out / "stories" / f"{slug}-porcelain.svg").write_text(compose(ComposeSpec(**twin)).svg)
+                (out / "stories" / f"{slug}-porcelain.svg").write_text(compose(gallery_spec(**twin)).svg)
                 total += 1
                 lines += [
                     _identity_line("porcelain", "twin", topo, spec["subtitle"]),
@@ -3113,7 +3113,7 @@ def build_porcelain() -> None:
     for name in PARITY_NAMES:  # fixture ≡ preset
         spec = resolve_bundled_spec("diagram", name).value
         svg = compose(
-            ComposeSpec(
+            gallery_spec(
                 type="diagram",
                 genome_id="primer",
                 variant="porcelain",
@@ -3901,7 +3901,14 @@ def build_card_label() -> None:
         _assert_marks_resolve(slug, spec)
         surface: dict[str, Any] = {"palette": "fixed", "surface_face": face} if face else {"palette": "adaptive"}
         svg = compose(
-            ComposeSpec(type="diagram", genome_id="primer", variant=variant, ground="bare", diagram=spec, **surface)
+            gallery_spec(
+                type="diagram",
+                genome_id="primer",
+                variant=variant,
+                ground="bare",
+                diagram=spec,
+                **surface,
+            )
         ).svg
         (_CL_RENDERS / f"{slug}.svg").write_text(svg)
         register_elsewhere(
@@ -4096,7 +4103,13 @@ def build_primer_language() -> None:
             cells = []
             for sname, props in SURFACES:
                 svg = compose(
-                    ComposeSpec(type="diagram", genome_id="primer", variant=variant, diagram=spec, **props)
+                    gallery_spec(
+                        type="diagram",
+                        genome_id="primer",
+                        variant=variant,
+                        diagram=spec,
+                        **props,
+                    )
                 ).svg
                 fname = f"{preset}-{variant}-{sname}.svg"
                 (_PL_RENDERS / fname).write_text(svg)

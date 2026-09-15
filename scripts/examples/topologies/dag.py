@@ -28,7 +28,7 @@ from typing import Any
 
 from hyperweave.compose.engine import compose
 from hyperweave.core.diagram import DiagramCapacityError, DiagramInputError
-from hyperweave.core.models import ComposeSpec
+from scripts.examples.render import gallery_spec
 
 _REPO = pathlib.Path(__file__).resolve().parents[3]
 FAMILY = "dag"
@@ -671,7 +671,7 @@ def _render(slug: str, spec: dict[str, Any], section: str) -> str:
     if "node_style" not in spec and any(n.get("kind") or n.get("glyph") for n in spec.get("nodes", [])):
         spec = {**spec, "node_style": "card+glyph"}
     svg = compose(
-        ComposeSpec(
+        gallery_spec(
             type="diagram",
             genome_id="primer",
             variant="porcelain",
@@ -690,7 +690,7 @@ def _refusal(spec: dict[str, Any]) -> str:
     bite, which is a finding, not a pass."""
     try:
         compose(
-            ComposeSpec(
+            gallery_spec(
                 type="diagram",
                 genome_id="primer",
                 variant="porcelain",

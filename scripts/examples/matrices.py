@@ -19,10 +19,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.core.models import ComposeSpec
 from scripts.examples.manifest import Gallery
 from scripts.examples.markdown import Doc
-from scripts.examples.render import OUTPUTS, REPO, render, spec
+from scripts.examples.render import OUTPUTS, REPO, gallery_spec, render, spec
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -705,7 +704,7 @@ def _over_cap_artifact(gallery: Gallery) -> tuple[str, str]:
     }
     rel = f"boundaries/dim-over-cap-31_{FLAGSHIP}.svg"
     try:
-        render(ComposeSpec(type="matrix", genome_id=GENOME, variant=FLAGSHIP, matrix=payload))
+        render(gallery_spec(type="matrix", genome_id=GENOME, variant=FLAGSHIP, matrix=payload))
     except MatrixCapacityError as exc:
         write(gallery.root / rel, _error_badge(str(exc), status_code=422))
         return rel, str(exc)
@@ -771,7 +770,12 @@ def emit(gallery: Gallery) -> Path:
         "actual shadow:",
     )
     shadow = compose(
-        ComposeSpec(type="matrix", genome_id=GENOME, variant=FLAGSHIP, matrix=_matrix_fixture_specs()["check"])
+        gallery_spec(
+            type="matrix",
+            genome_id=GENOME,
+            variant=FLAGSHIP,
+            matrix=_matrix_fixture_specs()["check"],
+        )
     ).markdown
     doc.details("check.md", shadow)
 

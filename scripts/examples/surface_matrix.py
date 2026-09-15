@@ -48,7 +48,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_ROOT / "src"))
 
 from hyperweave.compose.engine import compose  # noqa: E402
-from hyperweave.core.models import ComposeSpec  # noqa: E402
+from scripts.examples.render import gallery_spec  # noqa: E402
 
 _OUT = _ROOT / "outputs" / "genomes" / "primer" / "surface"
 
@@ -249,7 +249,7 @@ _FRAMES: tuple[tuple[str, Any], ...] = (("matrix", _matrix_ir), ("diagram", _dia
 
 def _render(frame: str, variant: str, ground: str, palette: str, face: str, ir: dict[str, Any]) -> str:
     return compose(
-        ComposeSpec(
+        gallery_spec(
             type=frame,
             genome_id="primer",
             variant=variant,

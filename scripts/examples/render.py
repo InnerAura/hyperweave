@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -12,13 +13,16 @@ REPO = Path(__file__).resolve().parents[2]
 OUTPUTS = REPO / "outputs"
 
 
-# Galleries render with CDN fonts. An embedded woff2 subset is 15-35 KB per
-# artifact and roughly HALVES to DOUBLES the file — across ~820 gallery
-# artifacts that is tens of megabytes of base64 whose only job is offline
-# self-containment, which a local review gallery does not need. The committed
-# specimens under assets/examples/ keep `embed`: those are what other people's
-# READMEs load, and they must carry their own type.
-GALLERY_FONT_MODE = "cdn"
+# Galleries render with system fonts. An embedded woff2 subset is 15-35 KB per
+# artifact — across ~820 gallery artifacts that is tens of megabytes of base64
+# (and thousands of tokens per file read) whose only job is offline
+# self-containment, which a local review gallery does not need. `system` emits
+# no @font-face and no @import; geometry is identical because the solver
+# measures from the bundled LUTs in every mode. HW_GALLERY_FONT_MODE overrides
+# for a run that must inspect the embedded payload. The committed specimens
+# under assets/examples/ keep `embed`: those are what other people's READMEs
+# load, and they must carry their own type.
+GALLERY_FONT_MODE = os.environ.get("HW_GALLERY_FONT_MODE", "system")
 
 
 def spec(
@@ -40,8 +44,18 @@ def spec(
     Font delivery defaults to :data:`GALLERY_FONT_MODE`; pass ``font_mode``
     explicitly to override for one artifact.
     """
+    return gallery_spec(type=frame_type, genome_id=genome, title=title, value=value, state=state, glyph=glyph, **kwargs)
+
+
+def gallery_spec(**kwargs: Any) -> ComposeSpec:
+    """A ComposeSpec whose font delivery defaults to :data:`GALLERY_FONT_MODE`.
+
+    Every gallery, proofset, witness and topology exhibit builds its specs
+    through this one seam so the local review surface carries no font payload;
+    an explicit ``font_mode`` still wins for the one artifact that needs it.
+    """
     kwargs.setdefault("font_mode", GALLERY_FONT_MODE)
-    return ComposeSpec(type=frame_type, genome_id=genome, title=title, value=value, state=state, glyph=glyph, **kwargs)
+    return ComposeSpec(**kwargs)
 
 
 def render(compose_spec: ComposeSpec) -> str:

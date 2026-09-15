@@ -27,6 +27,7 @@ from hyperweave.core.enums import (
     GenomeId,
 )
 from hyperweave.core.models import ComposeSpec
+from scripts.examples.render import GALLERY_FONT_MODE, gallery_spec
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -314,12 +315,9 @@ LIVE_SPECS: list[dict[str, Any]] = [
 ]
 
 
-# Proofset artifacts ride CDN fonts. An embedded woff2 subset adds 15-35 KB to
-# every file — across the review surface that is tens of megabytes of base64
-# whose only job is offline self-containment, which a local gallery does not
-# need. The committed specimens under assets/examples/ keep `embed`: those load
-# in other people's READMEs and must carry their own type.
-_PROOFSET_FONT_MODE = "cdn"
+# Proofset artifacts ride the gallery font mode (system by default; see
+# scripts/examples/render.py). The committed specimens under assets/examples/
+# keep `embed`: those load in other people's READMEs and must carry their own type.
 
 
 def _compose(
@@ -330,7 +328,7 @@ def _compose(
     state: str = "active",
     glyph: str = "",
     *,
-    font_mode: str = _PROOFSET_FONT_MODE,
+    font_mode: str = GALLERY_FONT_MODE,
     motion: str = "static",
     regime: str = "normal",
     glyph_mode: str = "auto",
@@ -350,7 +348,7 @@ def _compose(
     palette: str = "",
     surface_face: str = "",
 ) -> str:
-    spec = ComposeSpec(
+    spec = gallery_spec(
         type=frame_type,
         genome_id=genome,
         title=title,
@@ -455,7 +453,7 @@ def _compose_connector(
     data_tokens: list[Any] | None = None,
 ) -> str:
     """Compose a stats/chart frame with pre-fetched connector data."""
-    spec = ComposeSpec(
+    spec = gallery_spec(
         type=frame_type,
         genome_id=genome,
         connector_data=connector_data,
@@ -1060,7 +1058,7 @@ async def _generate_multi_provider_marquee(proofset_root: Path) -> int:
 
     total = 0
     for genome in GenomeId:
-        spec = ComposeSpec(
+        spec = gallery_spec(
             type="marquee",
             genome_id=genome,
             variant="violet-teal" if genome == GenomeId.AUTOMATA else "",
