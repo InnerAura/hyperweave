@@ -2,14 +2,14 @@
 
 <!--
 <p align="center">
-  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-adaptive.svg" alt="HyperWeave Logo" width="100%"/>
+  <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-adaptive.svg" alt="HyperWeave Hero" width="100%"/>
 </p>
 -->
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-dark.svg.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-light.svg.svg">
-    <img alt="Logo" src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-light.svg.svg" width="50%">
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/banners/hw-banner-dark.svg" alt="Logo" width="100%"
+    >
   </picture>
 </p>
 
@@ -28,7 +28,7 @@
     <a href="#HTTP-API"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.http.svg" height="18" alt="" align="absmiddle" /> API</a>&ensp;·&ensp;
     <a href="#CLI"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.cli.svg" height="18" alt="" align="absmiddle" /> CLI</a>&ensp;·&ensp;
     <a href="#MCP"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.mcp.svg" height="18" alt="" align="absmiddle" /> MCP</a>&ensp;·&ensp;
-    <a href="SKILL.md"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.brand.markdown.svg" height="18" alt="" align="absmiddle" /> SKILL.md</a>
+    <a href="SKILL.md"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.markdown.svg" height="18" alt="" align="absmiddle" /> SKILL.md</a>
   </em>
 </p>
 
@@ -77,8 +77,8 @@ Agents need to show their work, and every obvious format gives something up. Che
 
 <p align="center">
   <picture>
-    <source srcset="assets/tables/format-comparison.light.svg" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/format-comparison.light.svg" alt="format comparison: SVG, Markdown, HTML" width="100%"
+    <source srcset="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/format-comparison.light.svg" media="(prefers-color-scheme: light)">
+    <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/tables/format-comparison.dark.svg" alt="format comparison: SVG, Markdown, HTML" width="100%"
     >
   </picture>
 </p>
@@ -793,7 +793,7 @@ hyperweave install-hook --genome cream   # any primer theme
 hyperweave install-hook --genome raw     # the paper receipt
 ```
 
-<a href="https://github.com/InnerAura/hyperweave/issues/new"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.glyph.open-sign.porcelain.svg" alt="" height="24" align="center" /> Open an issue</a> to request a missing agent harness.
+<a href="https://github.com/InnerAura/hyperweave/issues/new"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.glyph.open-sign.porcelain.svg" alt="Open an issue" height="20" width="20" align="center" /> Open an issue</a> to request a missing agent harness.
 
 ---
 
@@ -1614,7 +1614,7 @@ Four interfaces, one pipeline. Every path produces the same artifact through the
 </p>
 -->
 
-### <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.mcp.svg" alt="" height="24" align="center" /> MCP
+### <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.mcp.svg" alt="Model Context Protocol (MCP)" height="20" width="20" align="center" /> MCP
 
 ```json
 {
@@ -1655,7 +1655,7 @@ hw_compose(type="badge", title="BUILD", value="passing", genome="brutalist", res
 hw_discover(what="all")   # the capability registry; full agent contract at /llms-full.txt
 ```
 
-### <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.cli.svg" alt="" height="24" align="center" /> CLI
+### <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.cli.svg" alt="Command Line Interface (CLI)" height="20" width="20" align="center" /> CLI
 
 ```bash
 # Badge
@@ -1720,7 +1720,7 @@ hyperweave compose badge build passing --respond report
 hyperweave transform out.svg --patch patch.json --intent "rename entry node"
 ```
 
-### <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.http.svg" alt="" height="24" align="center" /> HTTP API
+### <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.entry-points.http.svg" alt="HTTP API" height="20" width="20" align="center" /> HTTP API
 
 ```bash
 # URL grammar: /v1/{type}/{title}/{value}/{genome}.{motion}
@@ -1846,7 +1846,7 @@ HyperWeave binds **live data** into any artifact through a unified token grammar
 - **Isolation:** each provider has its own circuit breaker, so one upstream outage can't trip the others.
 - **Escaping:** commas inside `text:` / `kv:` values escape as `\,`.
 
-<a href="https://github.com/InnerAura/hyperweave/issues/new"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.glyph.open-sign.porcelain.svg" alt="" height="24" align="center" /> Open an issue</a> to request a connector.
+<a href="https://github.com/InnerAura/hyperweave/issues/new"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.glyph.open-sign.porcelain.svg" alt="Open an issue" height="20" width="20" align="center" /> Open an issue</a> to request a connector.
 
 ---
 
@@ -1854,7 +1854,7 @@ HyperWeave binds **live data** into any artifact through a unified token grammar
 
 HyperWeave is early and would love your perspective.
 
-<a href="https://discord.gg/wVmcAZPQZ8"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.socials.discord.svg" alt="Discord" height="24" align="center" /> Join the Discord</a> to connect with the community and discuss the project. HyperWeave has a bit of everything, and we welcome contributions of any kind, from **code** to **docs** to **design**!
+<a href="https://discord.gg/wVmcAZPQZ8"><img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/glyphs/readme.social.discord.svg" alt="Discord" height="20" width="20" align="center" /> Join the Discord</a> to connect with the community and discuss the project. HyperWeave has a bit of everything, and we welcome contributions of any kind, from **code** to **docs** to **design**!
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/InnerAura/hyperweave/main/assets/strips/contributors.svg" alt="InnerAura Labs" width="100%"/>
