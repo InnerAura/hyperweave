@@ -86,6 +86,37 @@ reflects what actually animates, and deploys only ship from a green build.
 - `assets/examples/` has a large diff. It was last regenerated at 0.4.4, so it now carries 0.4.6's
   geometry and byte fixes too.
 
+## [0.4.6] - 2026-08-30
+
+The reference diagram gzips 48% lighter, glyph-mark opacity layers are gone, muted wires and inks clear their contrast floors, and adaptive files can flatten to a static light or dark theme.
+
+### Added
+- **Single-theme export:** Flatten an adaptive SVG to a fixed light or dark face at projection time with `project(..., face="light"|"dark")`.
+- **Inspection proofs:** `compose --proof` writes an inspection record plus resting and phi-beat motion frames beside the artifact. `hw doctor` checks raster readiness.
+- **Agent contract & reports:** `discover --agent` prints a digest-stamped machine contract. `--respond report` returns ok, URL, sizes, checks, and the proof from one call.
+- **Intent & machine output:** `--intent` on transform lands in the new artifact's lineage on CLI, HTTP, and MCP. `validate --json` prints the machine-readable report.
+- **Destination profiles:** `destinations.yaml` records where artifacts render (GitHub READMEs, slides, hero images) with dated width citations.
+
+### Changed
+- **48% lighter payloads:** Pinned-feature font subsets, dead-CSS elimination, and one dark-mode block per stylesheet cut the reference diagram from 90 KB to 46 KB gzipped.
+- **Pre-blended marks:** Glyph-mark `opacity="0.9"` group layers become the solid pre-blended `--dna-ink-icon` token, ending offscreen compositing for kind marks.
+- **Single-stroke comets:** One rounded bloom-filtered stroke replaces the 3-layer pulse stack, dropping the loop from 18 pulse paths to 6. The `composite-only` performance tier keeps the bare stroke.
+- **Accessible tree:** Decorative wires and choreography particles carry `aria-hidden="true"`. Multi-line labels merge into single `<text>` elements with `<tspan>` rows.
+- **Typed engine faults:** `PROJECTION_INVALID` and `ENGINE_INVARIANT` return exit 70 and HTTP 500 with an `engine fault:` prefix instead of tracebacks.
+- **Honest metadata:** `contrast-ratio` is the measured minimum over named role pairs, the performance tier derives from what each motion animates, and `data-hw-state` reads `frozen`.
+- **Semantic diffs:** `diff` reports field-level edge deltas for label, kind, relation, and motion. Two-node `pipeline` and `pipeline-vertical` now compose.
+- **Decision holders keep their aspect:** a chip-holder diamond scales along the chassis w/h line until its question and every chip corner sit inside the taper. The 3-chip holder shrinks from 327x170 to 272x141; the unused `--dna-shadow-opacity` token is no longer declared.
+
+### Fixed
+- **Contrast floors:** 37 minimal OKLCH lightness repairs bring muted wires to 3:1 and muted ink to 4.5:1 on both faces of every primer variant.
+- **Static export parsing:** Animation stripping edits byte spans within syntactic scopes and validates after every pass. All 239 malformed projections now parse.
+- **Material bindings:** The root id is stamped on every render, so committed material tokens bind to an element.
+- **Glyph coverage:** Every rendered codepoint is gated against the embedded font subset. Chart callouts and date ranges now embed theirs.
+
+### Notes
+- Engine faults exit 70. `validate` and `diff` output shapes changed. Most diagrams' declared performance tier flips to `paint-ok`.
+- `--proof` and raster export bake the light face; `project()` still refuses an adaptive artifact unless you pass `face`.
+
 ## [0.4.5] - 2026-08-29
 
 Expands region support across diagram layouts, tightens graph spacing and routing, refreshes light and dark themes, and fixes labels, framing, terminal output, and connector metrics.
