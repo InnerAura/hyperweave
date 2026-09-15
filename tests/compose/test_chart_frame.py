@@ -13,6 +13,7 @@ import pytest
 
 from hyperweave.compose.engine import compose
 from hyperweave.core.models import ComposeSpec
+from tests.helpers import rendered_text
 
 MOCK_POINTS = [
     {"date": "2025-01-01T00:00:00Z", "count": 100},
@@ -129,7 +130,7 @@ def test_chart_graceful_degradation_without_data() -> None:
     assert 'data-hw-status="stale"' in result.svg
     # No fabricated polyline and no leak of the old placeholder numbers.
     assert "<polyline" not in result.svg
-    assert "1200" not in result.svg and "1,200" not in result.svg
+    assert "1200" not in rendered_text(result.svg) and "1,200" not in rendered_text(result.svg)
     # Overlay communicates the truthful unavailable state.
     assert "DATA UNAVAILABLE" in result.svg
 
@@ -151,7 +152,7 @@ def test_chart_zero_stars_renders_empty_state() -> None:
     assert 'data-hw-status="empty"' in svg
     assert "NEW REPO" in svg
     # No placeholder leakage.
-    assert "1200" not in svg and "1,200" not in svg
+    assert "1200" not in rendered_text(svg) and "1,200" not in rendered_text(svg)
     # No fabricated polyline.
     assert "<polyline" not in svg
     # Hero shows 0 stars truthfully (not a comma-formatted 1,200).

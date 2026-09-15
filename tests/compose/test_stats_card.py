@@ -16,6 +16,7 @@ import pytest
 
 from hyperweave.compose.engine import compose
 from hyperweave.core.models import ComposeSpec
+from tests.helpers import rendered_text
 
 MOCK_STATS = {
     "username": "eli64s",
@@ -148,8 +149,8 @@ def test_stats_chrome_zero_stars_does_not_synthesize_placeholder() -> None:
     )
     svg = compose(spec).svg
     # No placeholder leakage in the embedded chart.
-    assert "1200" not in svg
-    assert "1,200" not in svg
+    assert "1200" not in rendered_text(svg)
+    assert "1,200" not in rendered_text(svg)
     # Compose still completes successfully with data-hw-frame marker (public name).
     assert 'data-hw-frame="card"' in svg
 

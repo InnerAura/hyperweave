@@ -1,4 +1,4 @@
-"""Test-only helpers for constructing inline genomes.
+"""Test-only helpers: inline genomes and the rendered text layer.
 
 ``build_minimal_genome_for_testing`` emits a COMPLETE minimal genome — one
 that passes the full custom-genome boundary (GenomeSpec grammar, the
@@ -13,6 +13,7 @@ Production code paths MUST NOT import from this module. Grep
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 from typing import Any
 
 _CHROMATIC_PREFIXES = ("#", "rgba(", "rgb(", "linear-gradient", "radial-gradient")
@@ -64,3 +65,13 @@ def build_minimal_genome_for_testing(**overrides: Any) -> dict[str, Any]:
         ]
         defaults["roles"] = {"core": chromatic}
     return defaults
+
+
+def rendered_text(svg: str) -> str:
+    """Every string the SVG paints, joined — the text layer only.
+
+    Provenance timestamps, digests, and base64 font bytes are volatile and can
+    spell any digit run; assertions about what a reader sees must look here.
+    """
+    ns = "{http://www.w3.org/2000/svg}"
+    return "\n".join(el.text for el in ET.fromstring(svg).iter() if el.tag in (f"{ns}text", f"{ns}tspan") and el.text)
