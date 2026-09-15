@@ -66,7 +66,6 @@ def compute_cell_layout(
     *,
     cell_pad: float,
     anchor: str,
-    text_inset: float,
     min_cell_w: int = 0,
 ) -> CellLayout:
     """Resolve a metric cell's geometry from label + value specs.
@@ -79,9 +78,9 @@ def compute_cell_layout(
     cell, so a short floored cell absorbed the slack as generous extra spacing
     while a wide content-driven cell stayed tight — inconsistent rhythm.) The
     effective minimum cell is thus ``min_cell_w + cell_pad``. ``label_x`` /
-    ``value_x`` are coordinates inside the cell: at ``text_inset`` for
-    ``anchor='start'``, at ``cell_w / 2`` for ``'middle'``, at
-    ``cell_w - text_inset`` for ``'end'``.
+    ``value_x`` are coordinates inside the cell: the near edge plus the
+    cell's side air for ``anchor='start'``, ``cell_w / 2`` for ``'middle'``,
+    the far edge minus that air for ``'end'``.
     """
     label_w = label.rendered_width
     value_w = value.rendered_width
@@ -89,7 +88,7 @@ def compute_cell_layout(
     cell_w = math.ceil(max(content_w, float(min_cell_w)) + cell_pad)
     # Left and right air are equal for every anchor: a start- or end-anchored
     # run sits at the same distance from its near edge that the far edge
-    # keeps from its ink, so ``text_inset`` never buys one side more room.
+    # keeps from its ink.
     side_air = (cell_w - content_w) / 2.0
     if anchor == "start":
         text_x = side_air

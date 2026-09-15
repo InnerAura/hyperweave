@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Awaitable, Callable
+    from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
     # What Starlette hands an @app.middleware("http") function as `call_next`.
     _CallNext = Callable[[Request], Awaitable[Response]]
@@ -249,6 +249,62 @@ class ComposeRequest(BaseModel):
     no pixels inline; the same shape the CLI/MCP surfaces return) |
     ``report`` (one bounded ``report/1`` document: ok, artifact, integrity,
     diagnostics, warnings, proof, next — never the SVG inline)."""
+    font_mode: str = "embed"
+    """Font delivery: embed (self-contained subset, default) | cdn (Google
+    Fonts @import) | system (fallback stacks, no @font-face)."""
+    pair: str = ""
+    """Cellular pairing modifier (automata only): a second solo tone for the
+    bifamily frames (strip, divider); other frames ignore it."""
+    state_glyph_shape: str = ""
+    """Badge state-indicator shape override: square | circle | diamond."""
+    data: str = ""
+    """Data tokens, comma-separated (``text:`` | ``kv:`` | ``gh:`` | ``pypi:`` |
+    ``npm:`` | …). Marquee, card, and matrix receive the resolved list; other
+    frames take the formatted value when ``value`` is empty."""
+    format: str = "svg"
+    """Byte format of the artifact: svg (live, default) | svg-static | png |
+    webp. ``respond=envelope|report`` serve it at ``url``; the inline ``svg``
+    and ``json`` responses always carry the live svg and say so."""
+    telemetry_data: dict[str, Any] | None = None
+    """Session data contract JSON (receipt frame)."""
+    receipt_display_name: str = ""
+    """Receipt footer identity name (the session's live title)."""
+    connector_data: dict[str, Any] | None = None
+    """Pre-fetched connector payload (card, chart, and the matrix registry adapter)."""
+    stats_username: str = ""
+    """GitHub username for the card frame."""
+    chart_owner: str = ""
+    """GitHub owner for the chart frame."""
+    chart_repo: str = ""
+    """GitHub repo for the chart frame."""
+    edge_motion: str = ""
+    """Diagram edge-motion override: dash | particle (replaces the spec's)."""
+    motion_register: str = ""
+    """Diagram choreography register: turn | drift | laps | budget | accumulate."""
+
+
+_BODY_KEYS = frozenset(ComposeRequest.model_fields) | {"target"}
+_TOKEN_LIST_FRAMES = frozenset({"marquee", "stats", "card", "matrix"})
+
+
+def _body_warnings(raw: object) -> list[str]:
+    """Keys the body model does not know are reported, never dropped in
+    silence: a typo'd field name is the difference between a default
+    artifact and the one the caller described."""
+    if not isinstance(raw, dict):
+        return []
+    unknown = sorted(str(key) for key in raw if key not in _BODY_KEYS)
+    if not unknown:
+        return []
+    return [
+        f"unknown key(s) ignored: {', '.join(unknown)}; not fields of POST /v1/compose "
+        "(matrix and diagram content goes under `matrix` / `diagram`)"
+    ]
+
+
+def _header_safe(text: str) -> str:
+    """HTTP header values are latin-1; escape anything wider."""
+    return text.encode("ascii", "backslashreplace").decode("ascii")
 
 
 # Composition endpoints
@@ -431,7 +487,7 @@ async def compose_badge_data_url(
         state_glyph_shape=state_glyph_shape,
         font_mode=font_mode,
     )
-    return _compose_and_respond_with_ttl(spec, request, ttl)
+    return _compose_and_respond(spec, request, ttl=ttl)
 
 
 @app.get(
@@ -522,7 +578,7 @@ async def compose_strip_url(
     )
 
     if data:
-        return _compose_and_respond_with_ttl(spec, request, ttl)
+        return _compose_and_respond(spec, request, ttl=ttl)
     return _compose_and_respond(spec, request)
 
 
@@ -734,7 +790,7 @@ async def compose_marquee_url(
     )
 
     if data:
-        return _compose_and_respond_with_ttl(spec, request, ttl)
+        return _compose_and_respond(spec, request, ttl=ttl)
     return _compose_and_respond(spec, request)
 
 
@@ -761,6 +817,7 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
             ),
         )
         return JSONResponse(err.envelope(), status_code=err.http_status)
+    warnings = _body_warnings(raw)
 
     # ── face: bake ONE scheme (fixed palette, explicit face) ──
     # Mirrors CLI --face: validated once, ahead of both response paths below,
@@ -797,13 +854,47 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         # and report/1 shapes are byte-identical to the CLI/MCP surfaces.
         from hyperweave.surfaces.registry import CallContext, dispatch
 
-        payload = _flat_body_to_compose_input(req, raw)
+        payload = _flat_body_to_compose_input(req)
         ctx = CallContext(surface="http", base_url=get_settings().public_base_url)
         try:
             result_dict = await dispatch("compose", payload, ctx)
         except HwError as exc:
             return JSONResponse(exc.envelope(), status_code=exc.http_status)
+        if warnings:
+            result_dict["warnings"] = [*result_dict.get("warnings", []), *warnings]
         return JSONResponse(result_dict)
+
+    # The inline shapes carry the live svg; a byte format is served at the
+    # envelope's url, so asking for one here is reported, not dropped.
+    if req.format != "svg":
+        warnings.append(
+            f"format={req.format!r} applies to respond=envelope|report, where url serves the projection; "
+            "this response carries the live svg"
+        )
+    data_tokens_resolved: list[Any] | None = None
+    ttl: int | None = None
+    value = req.value
+    if req.data:
+        try:
+            tokens = parse_data_tokens(req.data)
+            resolved, ttl = await resolve_data_tokens(tokens)
+        except ValueError as exc:
+            err = HwError(
+                HwErrorCode.SPEC_INVALID,
+                f"data parse: {exc}",
+                fix="use the token grammar: text:STRING | kv:KEY=VALUE | gh:owner/repo.metric | pypi:pkg.metric | …",
+            )
+            return JSONResponse(err.envelope(), status_code=err.http_status)
+        if req.type in _TOKEN_LIST_FRAMES:
+            data_tokens_resolved = list(resolved)
+        elif not value:
+            value = format_for_value(resolved)
+    diagram = req.diagram
+    if diagram is not None:
+        if req.edge_motion:
+            diagram = {**diagram, "edge_motion": req.edge_motion}
+        if req.motion_register:
+            diagram = {**diagram, "motion_register": req.motion_register}
 
     try:
         surface_ground, surface_palette = _resolve_surface_axes(req.surface, req.ground, req.palette)
@@ -832,21 +923,31 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
         genome_id=genome_id,
         genome_override=override,
         title=req.title,
-        value=req.value,
+        value=value,
         state=req.state,
         motion=req.motion,
         glyph=req.glyph,
         glyph_mode=req.glyph_mode,
+        font_mode=req.font_mode,
         regime=req.regime,
         size=req.size,
         shape=req.shape,
         variant=variant,
+        pair=req.pair,
+        state_glyph_shape=req.state_glyph_shape,
         metadata_tier=req.metadata_tier,
         divider_variant=req.divider_variant,
         marquee_direction=req.direction,
         marquee_speeds=req.speeds,
+        telemetry_data=req.telemetry_data,
+        receipt_display_name=req.receipt_display_name,
+        connector_data=req.connector_data,
+        stats_username=req.stats_username,
+        chart_owner=req.chart_owner,
+        chart_repo=req.chart_repo,
+        data_tokens=data_tokens_resolved,
         matrix=req.matrix,
-        diagram=req.diagram,
+        diagram=diagram,
         glyph_tint=req.glyph_tint,
         performance=req.performance,
         ground=surface_ground,
@@ -864,6 +965,8 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
             "width": result.width,
             "height": result.height,
         }
+        if result.warnings or warnings:
+            body["warnings"] = [*result.warnings, *warnings]
         if req.faces:
             from hyperweave.compose.surface import _emit_faces
 
@@ -876,16 +979,16 @@ async def compose_post(request: Request, req: ComposeRequest) -> Response:
                 return JSONResponse(err.envelope(), status_code=err.http_status)
             body["faces"] = _emit_faces(spec, base_url=get_settings().public_base_url, data_tokens=None)
         return JSONResponse(body)
-    return _compose_and_respond(spec, request)
+    return _compose_and_respond(spec, request, ttl=ttl, warnings=warnings)
 
 
-def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dict[str, Any]:
+def _flat_body_to_compose_input(req: ComposeRequest) -> dict[str, Any]:
     """Map the flat POST body to the compose-capability input model.
 
     The flat body carries content fields (title/value/matrix/diagram/…) at the
     top level; the capability's ``ComposeInput`` nests them under ``spec``. IR
     frames (matrix/diagram) pass their whole IR dict as ``spec``; other frames
-    fold the scalar content fields. ``data``/``format`` ride through when present.
+    fold the scalar content fields. ``data``/``format`` ride through.
     """
     if req.type in {"matrix", "diagram"}:
         # The IR schema PLUS the ComposeSpec-level params a matrix/diagram caller
@@ -893,17 +996,20 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
         # diagram's performance tier). compose_surface's envelope mapping
         # lifts these back out to ComposeSpec top-level fields — the same
         # forwarding contract the MCP/CLI surfaces honor.
-        spec: dict[str, Any] = dict(raw.get(req.type) or {})
+        spec: dict[str, Any] = dict((req.matrix if req.type == "matrix" else req.diagram) or {})
         spec["performance"] = req.performance
         # glyph_tint's diagram-IR field is enum-strict (no ''); forward only a
         # real selection (a matrix caller's rides the top-level ComposeSpec field).
         if req.glyph_tint:
             spec["glyph_tint"] = req.glyph_tint
-        connector = raw.get("connector_data")
-        if connector is not None:
-            spec["connector_data"] = connector
+        if req.connector_data is not None:
+            spec["connector_data"] = req.connector_data
         if req.genome_override is not None:
             spec["genome_override"] = req.genome_override
+        if req.type == "diagram" and req.edge_motion:
+            spec["edge_motion"] = req.edge_motion
+        if req.type == "diagram" and req.motion_register:
+            spec["motion_register"] = req.motion_register
     else:
         spec = {
             "title": req.title,
@@ -915,6 +1021,8 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
             "regime": req.regime,
             "size": req.size,
             "shape": req.shape,
+            "pair": req.pair,
+            "state_glyph_shape": req.state_glyph_shape,
             "divider_variant": req.divider_variant,
             "marquee_direction": req.direction,
             "glyph_tint": req.glyph_tint,
@@ -924,6 +1032,14 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
             spec["marquee_speeds"] = req.speeds
         if req.genome_override is not None:
             spec["genome_override"] = req.genome_override
+        if req.telemetry_data is not None:
+            spec["telemetry_data"] = req.telemetry_data
+        if req.connector_data is not None:
+            spec["connector_data"] = req.connector_data
+        for name in ("stats_username", "chart_owner", "chart_repo", "receipt_display_name"):
+            if getattr(req, name):
+                spec[name] = getattr(req, name)
+    spec["font_mode"] = req.font_mode
     # Surface axes forward through compose_surface's model_fields partition as
     # ComposeSpec top-level fields. `surface` is a preset (no ComposeSpec field) —
     # expand it to ground/palette here so only the axes travel; a bad preset/axis
@@ -942,8 +1058,8 @@ def _flat_body_to_compose_input(req: ComposeRequest, raw: dict[str, Any]) -> dic
         "genome": req.genome,
         "variant": req.variant,
         "spec": spec,
-        "data": str(raw.get("data", "")),
-        "format": str(raw.get("format", "svg")),
+        "data": req.data,
+        "format": req.format,
         "respond": req.respond if req.respond in ("envelope", "report") else "envelope",
     }
 
@@ -1488,7 +1604,7 @@ async def compose_chart_stars(
         pair=pair,
         font_mode=font_mode,
     )
-    return _compose_and_respond_with_ttl(spec, request, ttl=3600)
+    return _compose_and_respond(spec, request, ttl=3600)
 
 
 # card is the public frame name; /v1/card is the primary route. /v1/stats is a
@@ -1576,7 +1692,7 @@ async def compose_stats(
         pair=pair,
         font_mode=font_mode,
     )
-    return _compose_and_respond_with_ttl(spec, request, ttl=ttl)
+    return _compose_and_respond(spec, request, ttl=ttl)
 
 
 # Discovery endpoints
@@ -1927,81 +2043,44 @@ async def _resolve_data_param(data: str, *, fallback: str = "") -> tuple[str, in
     return formatted or fallback, min_ttl
 
 
-def _compose_and_respond(spec: Any, request: Request | None = None) -> Response:
-    import hashlib
+def _compose_and_respond(
+    spec: Any, request: Request | None = None, *, ttl: int | None = None, warnings: Sequence[str] = ()
+) -> Response:
+    """Render ``spec`` as image/svg+xml with ETag negotiation.
 
-    settings = get_settings()
-
-    etag = hashlib.sha256(spec.model_dump_json().encode()).hexdigest()[:16]
-    etag_header = f'"{etag}"'
-
-    if request is not None:
-        if_none_match = request.headers.get("if-none-match")
-        if if_none_match and _etag_matches(if_none_match, etag_header):
-            return Response(
-                status_code=304,
-                headers={
-                    "ETag": etag_header,
-                    # Pure-compose route: artifact has no upstream data and only
-                    # changes when HyperWeave version ships. Long Camo cache.
-                    "Cache-Control": f"public, max-age={settings.compose_cache_ttl}",
-                },
-            )
-
-    try:
-        result = compose(spec)
-        return Response(
-            content=result.svg,
-            media_type="image/svg+xml",
-            headers={
-                "Cache-Control": f"public, max-age={settings.compose_cache_ttl}",
-                "ETag": etag_header,
-                "X-HW-Genome": spec.genome_id,
-                "X-HW-Frame": spec.type,
-            },
-        )
-    except Exception as exc:
-        status_code = _classify_compose_exception(exc)
-        return Response(
-            content=_error_badge(str(exc), status_code=status_code),
-            media_type="image/svg+xml",
-            # HTTP 200 — Camo refuses to proxy 4xx image responses, which would
-            # cause the README to render a broken-image icon despite the server
-            # producing a valid SMPTE SVG. The error class travels in the SVG
-            # (``data-hw-status-code``, ``ERR_NNN`` slab) and the response header.
-            status_code=200,
-            headers=_error_response_headers(status_code),
-        )
-
-
-def _compose_and_respond_with_ttl(spec: Any, request: Request | None, ttl: int) -> Response:
-    """Like _compose_and_respond but with a custom TTL for live data strips."""
+    ``ttl`` marks a connector-fed artifact (short cache, stale-while-revalidate);
+    the default is the pure-compose tier, which only changes when a HyperWeave
+    version ships. Anything the caller must hear travels in ``X-HW-Warning``:
+    an image response has no body for it.
+    """
     import hashlib
 
     etag = hashlib.sha256(spec.model_dump_json().encode()).hexdigest()[:16]
     etag_header = f'"{etag}"'
+    if ttl is None:
+        cache_control = f"public, max-age={get_settings().compose_cache_ttl}"
+    else:
+        cache_control = f"public, max-age={ttl}, stale-while-revalidate=3600"
 
     if request is not None:
         if_none_match = request.headers.get("if-none-match")
         if if_none_match and _etag_matches(if_none_match, etag_header):
-            return Response(
-                status_code=304,
-                headers={"ETag": etag_header, "Cache-Control": f"public, max-age={ttl}"},
-            )
+            return Response(status_code=304, headers={"ETag": etag_header, "Cache-Control": cache_control})
 
     try:
         result = compose(spec)
-        return Response(
-            content=result.svg,
-            media_type="image/svg+xml",
-            headers={
-                "Cache-Control": f"public, max-age={ttl}, stale-while-revalidate=3600",
-                "ETag": etag_header,
-                "X-HW-Genome": spec.genome_id,
-                "X-HW-Frame": spec.type,
-                "X-HW-Cache-Tier": "connector",
-            },
-        )
+        headers = {
+            "Cache-Control": cache_control,
+            "ETag": etag_header,
+            "X-HW-Genome": spec.genome_id,
+            "X-HW-Frame": spec.type,
+        }
+        if ttl is not None:
+            headers["X-HW-Cache-Tier"] = "connector"
+        notes = [*warnings, *result.warnings]
+        if notes:
+            headers["X-HW-Warning"] = _header_safe(" | ".join(notes))
+        return Response(content=result.svg, media_type="image/svg+xml", headers=headers)
     except Exception as exc:
         status_code = _classify_compose_exception(exc)
         return Response(

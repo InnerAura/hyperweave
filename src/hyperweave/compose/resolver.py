@@ -1388,7 +1388,7 @@ def resolve_strip(
     # ── Per-cell adaptive widths via core/cell_layout.py ──
     # Single source of truth: every parameter that affects rendered cell
     # width (font family, size, weight, letter-spacing, cell_pad,
-    # min_cell_w, anchor, text_inset) is read from the paradigm YAML and
+    # min_cell_w, anchor) is read from the paradigm YAML and
     # passed once to ``compute_cell_layout``. The legacy split — where
     # the resolver measured at weight=700 and ls=0 while the template
     # rendered at weight=900 and ls=0.22em via CSS class — is removed.
@@ -1420,7 +1420,6 @@ def resolve_strip(
         cell_pad = 2 * strip_cfg.strip_pad if strip_cfg.owns_strip else strip_cfg.cell_pad
         cell_min_w = strip_cfg.cell_min_width
         text_anchor = strip_cfg.metric_text_anchor
-        text_inset = strip_cfg.metric_text_x
     else:
         value_size = profile.get("strip_metric_value_size", 18)
         label_size = profile.get("strip_metric_label_size", 7)
@@ -1433,7 +1432,6 @@ def resolve_strip(
         cell_pad = 20
         cell_min_w = min_metric_pitch
         text_anchor = "middle"
-        text_inset = 0
 
     cell_layouts_records: list[dict[str, Any]] = []
     for metric in metrics:
@@ -1456,7 +1454,6 @@ def resolve_strip(
             ),
             cell_pad=cell_pad,
             anchor=text_anchor,
-            text_inset=text_inset,
             min_cell_w=cell_min_w,
         )
         cell_layouts_records.append(asdict(layout))
@@ -1828,11 +1825,8 @@ def resolve_strip(
             else profile.get("strip_metric_value_y", 36)
         ),
         "strip_metric_value_skew": profile.get("strip_metric_value_skew", 0),
-        # Metric cell alignment — paradigm declares the text-anchor + x-offset
-        # so the shared metric loop in strip.svg.j2 doesn't need per-paradigm
-        # branches. Cellular → flush-left via ``start`` + inset 12;
-        # brutalist/chrome → centered via ``middle`` + fallback x (pitch//2).
-        "strip_metric_text_x": (strip_cfg.metric_text_x if strip_cfg else 0),
+        # Metric cell alignment — the paradigm declares the text-anchor so the
+        # shared metric loop in strip.svg.j2 needs no per-paradigm branch.
         "strip_metric_text_anchor": (strip_cfg.metric_text_anchor if strip_cfg else "middle"),
         "strip_identity_font": profile.get("strip_identity_font", "var(--dna-font-mono, 'SF Mono', monospace)"),
         "strip_metric_label_font": profile.get("strip_metric_label_font", "var(--dna-font-mono, 'SF Mono', monospace)"),

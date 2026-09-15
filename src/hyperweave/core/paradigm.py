@@ -405,17 +405,11 @@ class ParadigmStripConfig(FrozenModel):
     36px teal/amethyst cell columns at left and right). Zero disables."""
     flank_cell_size: int = 12
     """Cell size for bifamily flank grids in pixels."""
-    metric_text_x: int = 0
-    """Pixel inset from the cell edge for metric label+value text. Read
-    by :func:`compute_cell_layout` only when ``metric_text_anchor`` is
-    ``start`` (inset from the left edge) or ``end`` (inset from the
-    right edge). For the default ``middle`` anchor the text centers at
-    ``cell_w / 2`` and this field is unused."""
     metric_text_anchor: Literal["start", "middle", "end"] = "middle"
     """SVG ``text-anchor`` for metric label+value. ``middle`` is the
     canonical strip layout shared across all production paradigms
     (brutalist, chrome, cellular). ``start`` / ``end`` flush text to
-    the cell edge plus ``metric_text_x`` inset. One knob drives both
+    the cell edge with equal air on both sides. One knob drives both
     label and value so they share the same anchor grid."""
     label_font_weight: int = 400
     """CSS-rendered weight for metric labels. The resolver measures with

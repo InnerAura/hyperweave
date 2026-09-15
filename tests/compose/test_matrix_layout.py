@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from hyperweave.compose.matrix.infer import infer_matrix
@@ -428,6 +430,27 @@ class TestOptionalBlocks:
         assert [t.text for t in layout.axis.tick_labels] == ["0", "1k", "2k", "3k"]
         assert solve(load_fixture("check")).axis is None
 
+    @pytest.mark.parametrize(
+        ("axis_max", "expected"),
+        [
+            (1.0, ["0", "0.25", "0.5", "0.75", "1"]),
+            (3400, ["0", "1k", "2k", "3k"]),
+            (2_500_000, ["0", "500k", "1M", "1.5M", "2M", "2.5M"]),
+        ],
+    )
+    def test_axis_ticks_share_the_compact_formatter(self, axis_max: float, expected: list[str]) -> None:
+        """Ticks come from the one compact-number formatter in its lowercase-k
+        register: fractions keep their digits, millions read ``M``, never ``1000k``."""
+        spec = MatrixSpec(
+            title="T",
+            axis_max=axis_max,
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "b", "label": "B", "kind": "bar"}],
+            rows=[{"label": "r", "cells": [{"value": axis_max / 2}]}],
+        )
+        layout = solve(spec)
+        assert layout.axis is not None
+        assert [t.text for t in layout.axis.tick_labels] == expected
+
     def test_headline_chip(self) -> None:
         layout = solve(load_fixture("readcost"))
         assert layout.header.headline_chip is not None
@@ -671,7 +694,78 @@ class TestRelationalWidths:
             + [{"id": f"c{j}", "label": f"UNBREAKABLEHEADERWORDNUMBER{j}", "kind": "check"} for j in range(6)],
             rows=[{"label": "r", "cells": [{"state": "full"}] * 6}],
         )
-        with pytest.raises(MatrixCapacityError, match="shorten the widest headers"):
+        with pytest.raises(MatrixCapacityError, match="narrow the widest columns"):
+            solve(spec)
+
+    def test_headline_chip_that_cannot_fit_refuses_by_name(self) -> None:
+        """A chip wider than the masthead can hold never escapes the frame or
+        overlaps the title: the solve refuses with the measured need, the
+        room it had, and the value and label widths that make up the need."""
+        spec = MatrixSpec(
+            title="Realtime autonomous agent fleet telemetry",
+            headline={"value": "99.98%", "label": "System availability SLA " * 6},
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "v", "label": "V", "kind": "text"}],
+            rows=[{"label": "r", "cells": [{"value": "v"}]}],
+        )
+        with pytest.raises(MatrixCapacityError) as excinfo:
+            solve(spec)
+        message = str(excinfo.value)
+        assert re.search(r"headline chip needs \d+px \(value \d+px, label \d+px\)", message), message
+        assert re.search(r"\d+px is available beside the title", message), message
+
+    def test_headline_chip_keeps_the_title_at_least_an_ellipsis(self) -> None:
+        """Just inside the refusal the title still renders at its floor size,
+        ellipsized and reported, clear of the chip by the 24px gap."""
+        from hyperweave.compose.geometry.text import measure_voice
+
+        spec = MatrixSpec(
+            title="Realtime autonomous agent fleet telemetry",
+            headline={"value": "99.98%", "label": "System availability service level agreement for the fleet"},
+            columns=[{"id": "l", "label": "L", "role": "label"}, {"id": "v", "label": "V", "kind": "text"}],
+            rows=[{"label": "r", "cells": [{"value": "v"}]}],
+        )
+        layout = solve(spec)
+        assert layout.header.title is not None and layout.header.headline_chip is not None
+        assert layout.header.headline_chip.x >= CFG.margin_x - 0.01
+        voice = CFG.title_voice.model_copy(update={"size": layout.title_size})
+        title_right = layout.header.title.x + measure_voice(layout.header.title.text, voice)
+        assert title_right <= layout.header.headline_chip.x - 24.0 + 0.01
+        assert layout.header.title.text.endswith("…")
+        assert "masthead-title" in [d.rule for d in layout.diagnostics]
+
+    def test_declared_widths_grow_to_their_content_floor_and_say_so(self) -> None:
+        """A declared width narrower than the column's content floor is raised
+        to the floor and the solve reports it; no chip is ever ellipsized to
+        honor a number."""
+        spec = MatrixSpec(
+            title="T",
+            columns=[{"id": "l", "label": "L", "role": "label"}]
+            + [{"id": f"c{j}", "label": f"C{j}", "kind": "chip", "width": 70} for j in range(3)],
+            rows=[{"label": "r", "cells": [{"chips": ["none (opaque html)", "ok"]}] * 3}],
+        )
+        layout = solve(spec)
+        chips = [c for c in layout.cells if c.kind == "chip"]
+        assert len(chips) == 3
+        for cell in chips:
+            assert cell.box.w > 70.0
+            assert all(not chip.text.endswith("…") for chip in cell.chips)
+            for chip in cell.chips:
+                assert chip.rect.x >= cell.box.x - 0.01
+                assert chip.rect.x + chip.rect.w <= cell.box.x + cell.box.w + 0.01
+        raised = [d for d in layout.diagnostics if d.rule == "declared-width"]
+        assert len(raised) == 1
+        assert raised[0].measured.count("70px to") == 3
+
+    def test_declared_widths_that_cannot_fit_the_frame_refuse_by_name(self) -> None:
+        """Eight declared-narrow chip columns whose content floors exceed the
+        ceiling refuse by name instead of rendering eight columns of ``none…``."""
+        spec = MatrixSpec(
+            title="T",
+            columns=[{"id": "l", "label": "L", "role": "label"}]
+            + [{"id": f"c{j}", "label": f"C{j}", "kind": "chip", "width": 70} for j in range(8)],
+            rows=[{"label": "r", "cells": [{"chips": ["none (opaque html)", "ok"]}] * 8}],
+        )
+        with pytest.raises(MatrixCapacityError, match="narrow the widest columns"):
             solve(spec)
 
     def test_wide_headers_wrap_instead_of_refusing(self) -> None:

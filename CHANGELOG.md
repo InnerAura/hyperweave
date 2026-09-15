@@ -19,6 +19,11 @@ reflects what actually animates, and deploys only ship from a green build.
 - **JSON validation errors:** `validate --json` returns `{valid, error}` for setup failures such as
   bad JSON, unknown presets, and missing files.
 - **Title in compose output:** the artifact's name now ships alongside the text roles.
+- **POST body reaches every field:** `font_mode`, `pair`, `state_glyph_shape`, `data`, `format`,
+  `telemetry_data`, `receipt_display_name`, `connector_data`, `stats_username`, `chart_owner`,
+  `chart_repo`, `edge_motion`, and `motion_register` are `POST /v1/compose` body fields on every
+  response shape. An unknown key is reported in `warnings` (json, envelope, report) or the
+  `X-HW-Warning` header (svg) instead of being dropped.
 
 ### Security
 - **Markup injection via `genome_override`:** a hostile genome could inject `<script>` and CSS
@@ -57,6 +62,20 @@ reflects what actually animates, and deploys only ship from a green build.
   to truncate.
 - **Matrix pills keep their value at every state:** `CRITICAL` with state `none` renders as a
   pill in the none tint instead of a dash.
+- **Matrix headline chip refuses by name:** a chip wider than the masthead used to escape the
+  frame; it now refuses with the need and the room in px and the value and label widths.
+- **Matrix declared widths grow to their content floor:** a `width` below the widest chip, mark,
+  or header word is raised with a `declared-width` diagnostic; only at the 900px ceiling does the
+  table refuse. Column floors are whole pixels, so a column solved at its floor never ellipsizes
+  the run the floor was measured from.
+- **Matrix wrapped runs enter the font subset:** wrapped cell, note, and header runs reach the
+  subsetter, so embedded faces carry every glyph the table paints.
+- **Matrix axis ticks share the compact formatter:** `1k · 2k · 3k` and `2.5M`, never `1000k`;
+  values below a thousand keep their digits (`0.25`).
+- **Fitter below the ellipsis width renders nothing:** a budget narrower than `…` returns an empty
+  run and reports overflow instead of an ellipsis wider than its cell.
+- **Specimen fixtures:** 13 diagram fixture sources repointed to the moved hand specimens; the
+  suite skips only when the `v04/` corpus is absent and fails when a specimen is missing.
 - **Matrix bar axis grades the bar track:** gridlines and ticks land where the bars end; heat
   tiles in compressed columns never emit a negative-width rect; multi-paragraph notes stay inside
   their row.
@@ -80,6 +99,8 @@ reflects what actually animates, and deploys only ship from a green build.
 ### Removed
 - **`custom_glyph_svg`:** it silently discarded your SVG while marking the output
   `data-hw-glyph="custom"`. Now rejected as an unknown field.
+- **`metric_text_x` / `text_inset`:** the strip metric inset knob was read by nothing since the
+  symmetric-air law; the paradigm field and the `compute_cell_layout` parameter are gone.
 
 ### Notes
 - Metadata changes touch every artifact, but nothing moves a pixel.

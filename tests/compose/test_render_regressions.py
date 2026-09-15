@@ -88,7 +88,6 @@ def test_cell_layout_constant_padding_rhythm() -> None:
             TextSpec(value, sc.value_font_family, sc.value_font_size, sc.value_font_weight, sc.value_letter_spacing_em),
             cell_pad=sc.cell_pad,
             anchor=sc.metric_text_anchor,
-            text_inset=sc.metric_text_x,
             min_cell_w=sc.cell_min_width,
         )
         return lay.cell_w - lay.content_w

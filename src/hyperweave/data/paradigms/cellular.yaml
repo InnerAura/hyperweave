@@ -130,7 +130,7 @@ strip:
   flank_width: 36
   flank_cell_size: 12
   # Cell layout inherits the default centered alignment from
-  # ParadigmStripConfig (metric_text_anchor=middle, metric_text_x=0) —
+  # ParadigmStripConfig (metric_text_anchor=middle) —
   # cellular has no reason to diverge from brutalist/chrome on
   # alignment, since centered metrics read as the canonical strip
   # vocabulary across all three paradigms.

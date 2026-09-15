@@ -74,7 +74,7 @@
     "zone_y": 64.0
   },
   "port_tolerance": 2.5,
-  "source": "v04/v040/v044/loop/tap/cycle-tap-v3.svg",
+  "source": "v04/v040/v05.diagrams/loop/tap/cycle-tap-v3.svg",
   "viewbox": [
     0.0,
     0.0,

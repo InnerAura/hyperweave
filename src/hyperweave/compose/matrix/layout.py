@@ -22,7 +22,7 @@ import math
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from hyperweave.compose.geometry.text import measure_voice, truncate_to_width, widest_fragment, wrap_natural
+from hyperweave.compose.geometry.text import ELLIPSIS, measure_voice, truncate_to_width, widest_fragment, wrap_natural
 from hyperweave.compose.matrix.cells import (
     bar_track_w,
     build_cell,
@@ -57,6 +57,7 @@ from hyperweave.core.matrix import (
     CellState,
     ColRole,
     GlyphTint,
+    Headline,
     MatrixCapacityError,
     MatrixCell,
     MatrixColumn,
@@ -67,6 +68,7 @@ from hyperweave.core.matrix import (
     RowHeight,
     is_chain,
 )
+from hyperweave.core.text import format_compact_number
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -164,6 +166,21 @@ def compute_matrix_layout(
     naturals, floors, hard_floors = _natural_widths(
         spec, data_cols, cells_by_col, hero_j=hero_j, cfg=cfg, geometry=geometry
     )
+    raised = [
+        (column.label or column.id, float(column.width), hard_floors[j])
+        for j, column in enumerate(data_cols)
+        if column.width is not None and hard_floors[j] > float(column.width) + 0.5
+    ]
+    if raised:
+        diagnostics.append(
+            Diagnostic(
+                rule="declared-width",
+                measured="declared width below the content floor: "
+                + ", ".join(f"{name!r} {declared:.0f}px to {floor:.0f}px" for name, declared, floor in raised),
+                band="declared width >= content floor (widest header word, chip, mark, or summary run)",
+                suggestion="widen or drop the declared width, or shorten the column's content",
+            )
+        )
 
     # ── Adaptive frame width ─────────────────────────────────────────────
     # The frame fits its content: cfg.width is a CEILING, not a constant.
@@ -233,6 +250,8 @@ def compute_matrix_layout(
         masthead_w = _masthead_floor(title_w)
         width = min(math.ceil(max(content_w, masthead_w, footer_w, float(cfg.min_width))), ceiling)
     avail = width - 2 * margin
+    if spec.headline is not None:
+        _refuse_escaping_headline(spec.headline, title=spec.title, avail=avail, ceiling=ceiling, cfg=cfg)
 
     # ── Label column allocation ────────────────────────────────────────
     # Relational slack: the label takes its need while every data column
@@ -272,7 +291,7 @@ def compute_matrix_layout(
     right_occupant = masthead_right_w + 24.0 if (spec.headline is not None or legend_adjacent) else 0.0
     if spec.title:
         title_cap = avail - right_occupant
-        if 0 < title_cap < title_w:
+        if title_cap < title_w:
             title_size = _largest_fitting_title_size(title_text, title_cap, cfg)
             floor_voice = cfg.title_voice.model_copy(update={"size": title_size})
             if measure_voice(title_text, floor_voice) > title_cap:
@@ -792,10 +811,13 @@ def _natural_widths(
             + 2 * cfg.cell_pad_x
         )
         geometry_floor = content_floor(column.kind, cells_by_col[j], column, cfg=cfg, geometry=geometry)
-        text_floor = max(header_word, summary_w, geometry_floor)
+        # Whole pixels, as the label column: a floor equal to the ink to the
+        # last bit lands the cell's own fit check on the wrong side of a float.
+        text_floor = float(math.ceil(max(header_word, summary_w, geometry_floor)))
         if column.width is not None:
-            # A declared width is the caller's contract on both counts.
-            w = float(column.width)
+            # A declared width is the caller's contract down to the content
+            # floor; below it the column grows and the solve says so.
+            w = max(float(column.width), text_floor)
             hard = w
         elif column.kind in _FLEX_KINDS:
             # Flexible kinds absorb the remainder; their natural is the
@@ -842,8 +864,9 @@ def _capacity_message(
     widest = sorted(range(len(data_cols)), key=lambda j: hard_floors[j], reverse=True)[:3]
     names = ", ".join(repr(data_cols[j].label) for j in widest)
     return (
-        f"the column headers and a minimum label column need {deficit:.0f}px more than the {ceiling}px "
-        f"frame holds; shorten the widest headers ({names}) or split the table"
+        f"the column floors (widest header word, chip, mark, or summary run) and a minimum label column "
+        f"need {deficit:.0f}px more than the {ceiling}px frame holds; narrow the widest columns ({names}) "
+        "or split the table"
     )
 
 
@@ -1129,15 +1152,41 @@ def _last_filled_y(spec: MatrixSpec, j: int, row_y: Sequence[float], row_h: Sequ
     return row_y[last] + row_h[last] / 2
 
 
+def _headline_chip_widths(headline: Headline, cfg: ParadigmMatrixConfig) -> tuple[float, float, float]:
+    """Value ink, label ink, and the chip's outer width — the one spacing
+    math the width decision, the refusal, and the builder all read."""
+    value_w = measure_voice(headline.value, cfg.headline_voice)
+    label_w = measure_voice(headline.label, cfg.desc_voice) if headline.label else 0.0
+    return value_w, label_w, value_w + label_w + (10.0 if headline.label else 0.0) + 24.0
+
+
+def _refuse_escaping_headline(
+    headline: Headline, *, title: str, avail: float, ceiling: int, cfg: ParadigmMatrixConfig
+) -> None:
+    """The chip never leaves the frame. Beside a title it also leaves the
+    24px gap and room for the title's floor-size ellipsis, so the title
+    always renders and reports when it truncated."""
+    value_w, label_w, chip_w = _headline_chip_widths(headline, cfg)
+    if title:
+        floor_voice = cfg.title_voice.model_copy(update={"size": cfg.title_size_floor})
+        room = avail - 24.0 - measure_voice(ELLIPSIS, floor_voice)
+        where = "beside the title"
+    else:
+        room, where = avail, "on the masthead line"
+    if chip_w > room + 1e-6:
+        raise MatrixCapacityError(
+            f"the headline chip needs {chip_w:.0f}px (value {value_w:.0f}px, label {label_w:.0f}px), "
+            f"{room:.0f}px is available {where} at the {ceiling}px frame; shorten the headline value or label"
+        )
+
+
 def _masthead_right_width(
     spec: MatrixSpec, data_cols: Sequence[MatrixColumn], *, cfg: ParadigmMatrixConfig, chain: bool
 ) -> float:
     """Width the descriptor line's right occupant needs (headline chip or
-    indicator legend), mirroring the builders' own spacing math."""
+    indicator legend), one spacing math with the builders."""
     if spec.headline is not None:
-        value_w = measure_voice(spec.headline.value, cfg.headline_voice)
-        label_w = measure_voice(spec.headline.label, cfg.desc_voice) if spec.headline.label else 0.0
-        return value_w + label_w + (10.0 if spec.headline.label else 0.0) + 24.0
+        return _headline_chip_widths(spec.headline, cfg)[2]
     kinds = {c.kind for c in data_cols}
     labels: tuple[str, ...]
     if chain:
@@ -1190,9 +1239,7 @@ def _header_block(
     key_rects: list[RectSpec] = []
     right = margin + avail
     if spec.headline is not None:
-        value_w = measure_voice(spec.headline.value, cfg.headline_voice)
-        label_w = measure_voice(spec.headline.label, cfg.desc_voice) if spec.headline.label else 0.0
-        chip_w = value_w + label_w + (10.0 if spec.headline.label else 0.0) + 24.0
+        chip_w = _headline_chip_widths(spec.headline, cfg)[2]
         chip_h = 18.0
         chip_y = 41.0
         headline_chip = RectSpec(right - chip_w, chip_y, chip_w, chip_h, chip_h / 2)
@@ -1399,7 +1446,7 @@ def _axis_block(
     while v <= axis_max + 1e-9:
         x = x0 + (v / axis_max) * track_w
         grid.append(LineSpec(x, rows_top + 2.0, x, axis_top))
-        ticks.append(TextSpec(x=x, y=tick_y, anchor="middle", text=_fmt_tick(v)))
+        ticks.append(TextSpec(x=x, y=tick_y, anchor="middle", text=format_compact_number(v, lower_k=True)))
         v += step
     caption = (
         TextSpec(
@@ -1428,10 +1475,3 @@ def _nice_step(raw: float) -> float:
         if mult * mag <= raw:
             step = mult * mag
     return step
-
-
-def _fmt_tick(v: float) -> str:
-    if v >= 1000:
-        scaled = v / 1000.0
-        return f"{scaled:g}k"
-    return f"{v:g}"
