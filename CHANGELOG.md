@@ -5,107 +5,34 @@ All notable changes to HyperWeave are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.7] - Unreleased
 
-Custom genomes now work over HTTP, and all entry points share one validator. Performance metadata
-reflects what actually animates, and deploys only ship from a green build.
-
-**Breaking:** partial `--genome-file` files are now rejected, so genomes must be complete and valid.
-`validate-genome` exits 2 (was 1), and specs using `custom_glyph_svg` are rejected.
-
-### Added
-- **HTTP genome override:** `genome_override` now works on `POST /v1/compose`, matching the CLI's
-  `--genome-file` and the MCP parameter. All three run the same validation.
-- **JSON validation errors:** `validate --json` returns `{valid, error}` for setup failures such as
-  bad JSON, unknown presets, and missing files.
-- **Title in compose output:** the artifact's name now ships alongside the text roles.
-- **POST body reaches every field:** `font_mode`, `pair`, `state_glyph_shape`, `data`, `format`,
-  `telemetry_data`, `receipt_display_name`, `connector_data`, `stats_username`, `chart_owner`,
-  `chart_repo`, `edge_motion`, and `motion_register` are `POST /v1/compose` body fields on every
-  response shape. An unknown key is reported in `warnings` (json, envelope, report) or the
-  `X-HW-Warning` header (svg) instead of being dropped.
+Custom themes (genomes) now fail closed across every entry point, Python 3.10 is supported, matrix layouts wrap instead of clipping, and `POST /v1/compose` exposes the full compose contract.
 
 ### Security
-- **Markup injection via `genome_override`:** a hostile genome could inject `<script>` and CSS
-  through MCP, HTTP, or direct dispatch. Inline genomes now get full validation, and values are
-  escaped at the CSS and attribute sinks.
-- **Attribute injection via `state` and `size`:** ids, dispatch keys, and policy axes now share one
-  slug grammar, and root SVG attributes are escaped.
+- **Custom themes (genomes):** `--genome-file` and `genome_override` now receive full validation, with CSS and attribute values escaped across CLI, HTTP, MCP, and direct composition.
+- **SVG attributes:** states, sizes, ids, dispatch keys, and policy axes now share one validated slug grammar, and root attributes are XML-escaped.
 
 ### Changed
-- **Python 3.10+:** the install floor drops from 3.12 to 3.10; CI tests 3.10–3.13 and the publish
-  smoke installs the built wheel and sdist on 3.10 and 3.12.
-- **CI:** `ty` replaces `mypy` at a pinned version, quality and tests run as separate jobs, and
-  release notes draft from merged PRs. Deploys require a green workflow and a smoke-tested package.
-- **Performance tier is measured, not declared:** each frame's `performance` and `cim-compliant`
-  values come from the properties its motion animates. Badges, icons, stats, charts, strips,
-  marquees, animated dividers, and border motions now report `paint-ok`.
-- **Static exports drop motion claims:** `svg-static`, `png`, and `webp` rewrite motion metadata to
-  describe a still image, covering tier, vocabulary, physics, timing, and stagger.
-- **Metadata declares its units:** `hw:spec` carries `size-units="px"`, `hw:regions` declares
-  `units="user"` and its viewBox, and `duration-base` is renamed `rhythm-base`.
-- **`validate-genome`:** now runs the same validator as compose.
+- **Python 3.10+:** the install floor drops from 3.12 to 3.10; CI covers Python 3.10–3.13, and releases smoke-test the wheel and sdist at the floor.
+- **CI and releases:** pinned `ty` replaces `mypy`, quality and tests run separately, deploys require green CI, and merged PRs populate draft release notes.
+- **Motion metadata:** `performance` and `cim-compliant` now derive from rendered animation behavior; static exports clear motion claims.
+- **Metadata units:** `hw:spec` declares pixel dimensions, `hw:regions` declares user units and its viewBox, and `duration-base` becomes `rhythm-base`.
+- **POST compose parity:** `POST /v1/compose` now accepts the full caller-facing compose contract, including fonts, data, connectors, output format, motion, and `genome_override`. Unknown keys surface as warnings.
+- **Machine output:** `validate --json` reports setup failures consistently, `validate-genome` uses the compose validator, and compose output includes the artifact title beside its text roles.
 
 ### Fixed
-- **Matrix headers wrap inside their columns:** a header breaks into as many runs as it needs
-  and the header band grows; every column floors at its widest header word, its widest chip,
-  glyph, or check mark, with a cell pad on both sides, so nothing escapes its cell. Marks and
-  tiles compress before text does and the solve reports `column-compressed`; a table whose
-  widest words cannot fit the 900px frame refuses by name.
-- **Matrix text wraps instead of truncating:** cells, notes, and row labels wrap at word
-  boundaries with no line cap and rows grow to hold them; a run with no space breaks after
-  `/ - _ : .` joints (`matrix/layout.py:683` splits as a path). Row labels take their measured
-  width, fall back to wrapping past the ceiling with a `label-column` diagnostic, and the summary
-  label sizes the column too.
-- **Matrix masthead title always fits its line:** it takes the largest tenth-pixel size that
-  clears a headline chip or legend, floors at 23px, and reports `masthead-title` if it still had
-  to truncate.
-- **Matrix pills keep their value at every state:** `CRITICAL` with state `none` renders as a
-  pill in the none tint instead of a dash.
-- **Matrix headline chip refuses by name:** a chip wider than the masthead used to escape the
-  frame; it now refuses with the need and the room in px and the value and label widths.
-- **Matrix declared widths grow to their content floor:** a `width` below the widest chip, mark,
-  or header word is raised with a `declared-width` diagnostic; only at the 900px ceiling does the
-  table refuse. Column floors are whole pixels, so a column solved at its floor never ellipsizes
-  the run the floor was measured from.
-- **Matrix wrapped runs enter the font subset:** wrapped cell, note, and header runs reach the
-  subsetter, so embedded faces carry every glyph the table paints.
-- **Matrix axis ticks share the compact formatter:** `1k · 2k · 3k` and `2.5M`, never `1000k`;
-  values below a thousand keep their digits (`0.25`).
-- **Fitter below the ellipsis width renders nothing:** a budget narrower than `…` returns an empty
-  run and reports overflow instead of an ellipsis wider than its cell.
-- **Specimen fixtures:** 13 diagram fixture sources repointed to the moved hand specimens; the
-  suite skips only when the `v04/` corpus is absent and fails when a specimen is missing.
-- **Matrix bar axis grades the bar track:** gridlines and ticks land where the bars end; heat
-  tiles in compressed columns never emit a negative-width rect; multi-paragraph notes stay inside
-  their row.
-- **Chart axis ticks cascade through K, M, and B:** a 42M axis reads `20M · 40M · 60M`, never
-  `20000K`; ticks, hero callouts, and context-window labels share one formatter.
-- **One ellipsis character:** stats identity, subtitle, and metric truncation now end in `…` like
-  matrix, receipt, and raw text; a truncator handed no room renders nothing instead of the full run.
-- **Genomes fail closed:** invalid paradigm and variant slugs are rejected, along with non-finite or
-  negative durations, unknown motion ids, and out-of-range rgb/rgba values.
-- **Variant overrides are validated:** they used to merge after validation and skip the gate
-  entirely. They are now re-checked as the genome they render as, including WCAG pairs, with
-  control-plane keys refused.
-- **Color fields are typed:** 71 of the 84 color fields were unconstrained strings; all of them
-  now take a real color grammar — opaque by default, alpha only on atmospheric surfaces and
-  documented diagram edge washes, `transparent` only where a layer is documented to render absent.
-- **Warning amber on light backgrounds:** brutalist's 14 light variants now use `#B45309` at 4.06:1
-  to 4.39:1. The inherited `#F59E0B` measured 1.7:1 to 1.9:1.
-- **Contrast is always checked:** non-hex colors used to bypass the WCAG gate. Translucent colors
-  now composite over a fixed backdrop, and anything unresolvable is refused.
-
-### Removed
-- **`custom_glyph_svg`:** it silently discarded your SVG while marking the output
-  `data-hw-glyph="custom"`. Now rejected as an unknown field.
-- **`metric_text_x` / `text_inset`:** the strip metric inset knob was read by nothing since the
-  symmetric-air law; the paradigm field and the `compute_cell_layout` parameter are gone.
+- **Matrix sizing:** columns now floor to content width, wrap text, grow rows as needed, and refuse oversized tables with named diagnostics.
+- **Matrix mastheads:** titles shrink to clear headline chips and legends; oversized chips now refuse with measured width diagnostics.
+- **Matrix rendering:** pills preserve supplied values, bar axes align with their tracks, wrapped text enters font subsets, and heat tiles avoid negative geometry.
+- **Text fitting:** truncation uses a single `…`, undersized budgets render nothing, and chart ticks scale through K, M, and B.
+- **Genome validation:** invalid slugs, durations, motion ids, and colors are rejected; variant overrides are revalidated as rendered, and all color fields now use a real color grammar.
+- **Contrast:** brutalist light variants now use accessible warning amber, translucent colors composite against a fixed backdrop, and unresolvable colors are rejected.
 
 ### Notes
-- Metadata changes touch every artifact, but nothing moves a pixel.
-- `assets/examples/` has a large diff. It was last regenerated at 0.4.4, so it now carries 0.4.6's
-  geometry and byte fixes too.
+- **Breaking:** partial `--genome-file` inputs are rejected, invalid `validate-genome` calls exit 2 instead of 1, `custom_glyph_svg` is now unknown, and `metric_text_x` has been removed.
+- Matrix layouts may grow where they previously clipped or truncated; layouts wider than the 900px frame now refuse instead of rendering.
+- Metadata-only changes alter artifact bytes without changing rendered geometry.
 
 ## [0.4.6] - 2026-08-30
 
