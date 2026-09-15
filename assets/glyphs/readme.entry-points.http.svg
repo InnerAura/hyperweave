@@ -6,17 +6,17 @@
      role="img"
      aria-labelledby="http-title http-desc">
   <title id="http-title">HTTP API Action Glyph</title>
-  <desc id="http-desc">Hand-drawn HTTP API badge in HyperWeave marker-cobalt DNA featuring clean hand-lettered type and an integrated live endpoint ping beacon.</desc>
+  <desc id="http-desc">Hand-drawn HTTP API badge in high-contrast obsidian and electric cobalt with a pulsating radar beacon.</desc>
 
   <metadata>
     <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
       <hw:artifactType>inline-action-glyph</hw:artifactType>
-      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:chromaticSystem>hand-drawn-cobalt-high-contrast</hw:chromaticSystem>
       <hw:geometryFormLanguage>hand-drawn-terminal-card</hw:geometryFormLanguage>
       <hw:reasoning>
-        <hw:intent>Refactor the HTTP API badge to eliminate the distorted corner splotch, replacing it with an integrated HyperWeave live signal ping beacon that honors typographic clearance.</hw:intent>
-        <hw:approach>Removed the colliding S-curve wire. Respaced the hand-inked 'A-P-I' glyphs across x=5.2 to x=19.8 to maintain uniform kerning. Placed a precision 1.3px cobalt beacon at (22.2, 6.2) with a concentric CIM-compliant radar wave expanding via scale and opacity.</hw:approach>
-        <hw:tradeoffs>Eliminated decorative tail paths to prevent stroke collision at 24px micro viewports, prioritizing instant readability and semantic signal fidelity.</hw:tradeoffs>
+        <hw:intent>Deliver an authoritative, tactile HTTP API badge optimized for inline Markdown headings in dark mode.</hw:intent>
+        <hw:approach>Dark chassis switched to deep obsidian (#070B14) with pure white inking (#FFFFFF). Beacon upgraded to electric cobalt (#38BDF8) with a composite-only radar pulse. Purged non-CIM stroke transitions.</hw:approach>
+        <hw:tradeoffs>Increased stroke weights by ~20% over native baseline to resist dark-mode visual bleeding at 20px scale.</hw:tradeoffs>
       </hw:reasoning>
     </hw:metadata>
   </metadata>
@@ -24,27 +24,18 @@
   <style>
     :root {
       --hw-paper: #FFFFFF;
-      --hw-ink: #1B1B1D;
+      --hw-ink: #0F172A;
       --hw-cobalt: #1D4ED8;
-      --hw-sketch: rgba(29, 78, 216, 0.08);
+      --hw-sketch: rgba(29, 78, 216, 0.12);
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --hw-paper: #0F172A;
-        --hw-ink: #F8FAFC;
-        --hw-cobalt: #60A5FA;
-        --hw-sketch: rgba(96, 165, 250, 0.14);
+        --hw-paper: #070B14;
+        --hw-ink: #FFFFFF;
+        --hw-cobalt: #38BDF8;
+        --hw-sketch: rgba(56, 189, 248, 0.24);
       }
-    }
-
-    .sketch-plate {
-      fill: var(--hw-paper);
-      stroke: var(--hw-ink);
-      stroke-width: 1.35;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: fill 0.2s ease, stroke 0.2s ease;
     }
 
     .sketch-shadow {
@@ -52,24 +43,30 @@
       stroke: none;
     }
 
+    .sketch-plate {
+      fill: var(--hw-paper);
+      stroke: var(--hw-ink);
+      stroke-width: 1.65;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .letter-stroke {
       fill: none;
       stroke: var(--hw-ink);
-      stroke-width: 1.5;
+      stroke-width: 1.75;
       stroke-linecap: round;
       stroke-linejoin: round;
-      transition: stroke 0.2s ease;
     }
 
     .beacon-core {
       fill: var(--hw-cobalt);
-      transition: fill 0.2s ease;
     }
 
     .beacon-ring {
       fill: none;
       stroke: var(--hw-cobalt);
-      stroke-width: 0.8;
+      stroke-width: 1.1;
       transform-origin: 22.2px 6.2px;
       animation: beacon-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
     }
@@ -94,6 +91,7 @@
     }
 
     @media (forced-colors: active) {
+      .sketch-shadow { display: none; }
       .sketch-plate { stroke: CanvasText; fill: Canvas; }
       .letter-stroke { stroke: CanvasText; }
       .beacon-core { fill: CanvasText; }
@@ -101,15 +99,16 @@
     }
   </style>
 
-  <!-- Offset Sketch Shadow -->
+  <!-- Tactile Marker Underlay -->
   <path class="sketch-shadow"
-        d="M 3.2 4.4
-           C 9.6 3.9, 17.6 4.1, 24.8 4.6
-           C 25.3 9.4, 25.1 14.4, 24.5 19.3
-           C 17.8 19.8, 9.8 19.5, 3.0 19.0
-           C 2.6 14.1, 2.7 9.1, 3.2 4.4 Z" />
+        transform="translate(0.8, 0.9)"
+        d="M 3.2 3.8
+           C 9.6 3.2, 17.6 3.5, 24.8 4.0
+           C 25.3 8.9, 25.1 14.0, 24.5 18.7
+           C 17.8 19.2, 9.8 18.9, 3.0 18.4
+           C 2.6 13.5, 2.7 8.5, 3.2 3.8 Z" />
 
-  <!-- Hand-Drawn Whiteboard Chassis -->
+  <!-- Hand-Drawn Chassis -->
   <path class="sketch-plate"
         d="M 3.2 3.8
            C 9.6 3.2, 17.6 3.5, 24.8 4.0
@@ -117,21 +116,17 @@
            C 17.8 19.2, 9.8 18.9, 3.0 18.4
            C 2.6 13.5, 2.7 8.5, 3.2 3.8 Z" />
 
-  <!-- Hand-Drawn Lettering: A · P · I -->
+  <!-- Hand-Inked Lettering: A · P · I -->
   <g class="letter-group">
     <!-- Letter A -->
     <path class="letter-stroke"
-          d="M 5.4 15.8
-             L 7.8 7.4
-             L 10.4 15.8" />
+          d="M 5.4 15.8 L 7.8 7.4 L 10.4 15.8" />
     <path class="letter-stroke"
-          d="M 6.4 12.6
-             L 9.4 12.6" />
+          d="M 6.4 12.6 L 9.4 12.6" />
 
     <!-- Letter P -->
     <path class="letter-stroke"
-          d="M 12.6 7.4
-             L 12.6 15.8" />
+          d="M 12.6 7.4 L 12.6 15.8" />
     <path class="letter-stroke"
           d="M 12.6 7.4
              C 14.9 7.1, 16.2 8.0, 16.2 9.5
@@ -139,14 +134,11 @@
 
     <!-- Letter I -->
     <path class="letter-stroke"
-          d="M 18.6 7.4
-             L 18.6 15.8" />
+          d="M 18.6 7.4 L 18.6 15.8" />
     <path class="letter-stroke"
-          d="M 17.5 7.4
-             L 19.7 7.4" />
+          d="M 17.5 7.4 L 19.7 7.4" />
     <path class="letter-stroke"
-          d="M 17.5 15.8
-             L 19.7 15.8" />
+          d="M 17.5 15.8 L 19.7 15.8" />
   </g>
 
   <!-- Live Endpoint Signal Beacon -->

@@ -6,17 +6,17 @@
      role="img"
      aria-labelledby="cute-discord-title cute-discord-desc">
   <title id="cute-discord-title">Discord Community Glyph</title>
-  <desc id="cute-discord-desc">Hand-drawn Clyde mascot in cobalt marker ink with friendly proportions and micro breathing motion.</desc>
+  <desc id="cute-discord-desc">Hand-drawn Clyde mascot in high-contrast obsidian and electric cobalt marker ink with persistent specular eye glints.</desc>
 
   <metadata>
     <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
       <hw:artifactType>inline-action-glyph</hw:artifactType>
-      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:chromaticSystem>hand-drawn-cobalt-high-contrast</hw:chromaticSystem>
       <hw:geometryFormLanguage>hand-drawn-organic-clyde</hw:geometryFormLanguage>
       <hw:reasoning>
-        <hw:intent>Translate Discord's Clyde mascot into an expressive, cute, hand-drawn vector glyph matching HyperWeave's whiteboard sketch DNA at 24px inline link height.</hw:intent>
-        <hw:approach>Engineered an organic single-path silhouette of Clyde with rounded ears and softened cheeks. Added generous circular eyes with specular highlight nodes for warmth. Framed the stroke in bold marker ink (#1B1B1D) over white paper (#FFFFFF) with cobalt blue pupil fills (#1D4ED8). Added subtle CIM transform-only head-bobbing.</hw:approach>
-        <hw:tradeoffs>Rejected rigid SVG brand paths and dark glassy 3D orbs to preserve the tactile physical marker sketch feel.</hw:tradeoffs>
+        <hw:intent>Preserve Clyde's expressive friendly demeanor in dark mode while fixing ocular inversion bugs.</hw:intent>
+        <hw:approach>Decoupled specular eye reflections from the paper background variable to prevent dark-mode glint extinction. Offset the marker underlay by (0.8px, 0.9px), increased chassis stroke to 1.65px, and applied electric cobalt (#38BDF8) to the pupils.</hw:approach>
+        <hw:tradeoffs>Preserved cute micro head-bobbing purely via transform keyframes without CSS transition baggage.</hw:tradeoffs>
       </hw:reasoning>
     </hw:metadata>
   </metadata>
@@ -24,17 +24,19 @@
   <style>
     :root {
       --hw-paper: #FFFFFF;
-      --hw-ink: #1B1B1D;
+      --hw-ink: #0F172A;
       --hw-cobalt: #1D4ED8;
-      --hw-sketch: rgba(29, 78, 216, 0.08);
+      --hw-sketch: rgba(29, 78, 216, 0.12);
+      --hw-glint: #FFFFFF;
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --hw-paper: #0F172A;
-        --hw-ink: #F8FAFC;
-        --hw-cobalt: #60A5FA;
-        --hw-sketch: rgba(96, 165, 250, 0.15);
+        --hw-paper: #070B14;
+        --hw-ink: #FFFFFF;
+        --hw-cobalt: #38BDF8;
+        --hw-sketch: rgba(56, 189, 248, 0.24);
+        --hw-glint: #FFFFFF;
       }
     }
 
@@ -43,17 +45,17 @@
       animation: clyde-bob 3.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
     }
 
-    .clyde-body {
-      fill: var(--hw-paper);
-      stroke: var(--hw-ink);
-      stroke-width: 1.4;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
     .clyde-underlay {
       fill: var(--hw-sketch);
       stroke: none;
+    }
+
+    .clyde-body {
+      fill: var(--hw-paper);
+      stroke: var(--hw-ink);
+      stroke-width: 1.65;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .clyde-eye {
@@ -61,7 +63,7 @@
     }
 
     .eye-glint {
-      fill: var(--hw-paper);
+      fill: var(--hw-glint);
     }
 
     @keyframes clyde-bob {
@@ -76,10 +78,12 @@
     @media (prefers-reduced-motion: reduce) {
       .clyde-group {
         animation: none;
+        transform: none;
       }
     }
 
     @media (forced-colors: active) {
+      .clyde-underlay { display: none; }
       .clyde-body { stroke: CanvasText; fill: Canvas; }
       .clyde-eye { fill: CanvasText; }
       .eye-glint { fill: Canvas; }
@@ -87,11 +91,24 @@
   </style>
 
   <g class="clyde-group">
-    <!-- Sketch Underlay Accent -->
+    <!-- Offset Marker Underlay -->
     <path class="clyde-underlay"
-          d="M 8.2 6.8 C 10.4 6.2, 12.1 6.5, 14 6.5 C 15.9 6.5, 17.6 6.2, 19.8 6.8 C 20.6 7.1, 21.6 8.2, 22 9.2 C 23.4 11.9, 23.9 15.2, 23.3 16.6 C 22.6 17.8, 20.8 18.2, 19.2 18.2 L 17.8 16.5 C 16.4 17.1, 15 17.2, 14 17.2 C 13 17.2, 11.6 17.1, 10.2 16.5 L 8.8 18.2 C 7.2 18.2, 5.4 17.8, 4.7 16.6 C 4.1 15.2, 4.6 11.9, 6 9.2 C 6.4 8.2, 7.4 7.1, 8.2 6.8 Z" />
+          transform="translate(0.8, 0.9)"
+          d="M 8.2 6.8
+             C 10.4 6.1, 12.1 6.4, 14 6.4
+             C 15.9 6.4, 17.6 6.1, 19.8 6.8
+             C 20.7 7.2, 21.6 8.3, 22.1 9.4
+             C 23.5 12.1, 23.9 15.3, 23.3 16.7
+             C 22.5 17.9, 20.8 18.2, 19.2 18.2
+             L 17.7 16.5
+             C 16.3 17.1, 14.9 17.2, 14 17.2
+             C 13.1 17.2, 11.7 17.1, 10.3 16.5
+             L 8.8 18.2
+             C 7.2 18.2, 5.5 17.9, 4.7 16.7
+             C 4.1 15.3, 4.5 12.1, 5.9 9.4
+             C 6.4 8.3, 7.3 7.2, 8.2 6.8 Z" />
 
-    <!-- Cute Hand-Drawn Clyde Outline -->
+    <!-- Hand-Drawn Clyde Chassis -->
     <path class="clyde-body"
           d="M 8.2 6.8
              C 10.4 6.1, 12.1 6.4, 14 6.4
@@ -107,12 +124,12 @@
              C 4.1 15.3, 4.5 12.1, 5.9 9.4
              C 6.4 8.3, 7.3 7.2, 8.2 6.8 Z" />
 
-    <!-- Left Eye + Cute Specular Reflection -->
+    <!-- Left Eye + Specular Glint -->
     <circle class="clyde-eye" cx="10.4" cy="12.2" r="2.1" />
-    <circle class="eye-glint" cx="11.1" cy="11.5" r="0.7" />
+    <circle class="eye-glint" cx="11.1" cy="11.5" r="0.75" />
 
-    <!-- Right Eye + Cute Specular Reflection -->
+    <!-- Right Eye + Specular Glint -->
     <circle class="clyde-eye" cx="17.6" cy="12.2" r="2.1" />
-    <circle class="eye-glint" cx="18.3" cy="11.5" r="0.7" />
+    <circle class="eye-glint" cx="18.3" cy="11.5" r="0.75" />
   </g>
 </svg>

@@ -1,7 +1,7 @@
 [project]
 name = "hyperweave"
 dynamic = ["version"]
-description = "Visual CLI for agents. Generate deterministic SVG diagrams, charts, and tables with embedded machine-readable metadata. Zero JavaScript. Renders anywhere markdown does."
+description = "Visual CLI for agents. Generate deterministic SVG diagrams, charts, and tables with embedded structured metadata. Zero JavaScript. Renders anywhere markdown does."
 requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [{ name = "InnerAura Labs" }]

@@ -6,52 +6,50 @@
      role="img"
      aria-labelledby="mcp-title mcp-desc">
   <title id="mcp-title">Model Context Protocol</title>
-  <desc id="mcp-desc">Model Context Protocol official vector mark transformed into hand-drawn marker-cobalt aesthetic with CIM-compliant micro-motion.</desc>
+  <desc id="mcp-desc">Model Context Protocol official vector mark rendered as a solid high-contrast cobalt silhouette with an offset marker shadow.</desc>
 
   <metadata>
     <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
       <hw:artifactType>inline-action-glyph</hw:artifactType>
-      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:chromaticSystem>hand-drawn-cobalt-high-contrast</hw:chromaticSystem>
       <hw:geometryFormLanguage>monolithic-interlocking-link</hw:geometryFormLanguage>
       <hw:reasoning>
-        <hw:intent>Apply HyperWeave's hand-drawn marker-cobalt DNA to the official MCP brand mark while preserving 100% of its native coordinate geometry.</hw:intent>
-        <hw:approach>Mapped the compound path to an inked outline with cobalt fill. Transferred CSS tokens for adaptive light/dark switching and stepped cursor micro-motion.</hw:approach>
-        <hw:tradeoffs>Kept path geometry strictly untouched, transferring aesthetic purely through stroke weights, round caps/joins, and chromatic variables.</hw:tradeoffs>
+        <hw:intent>Restore instant legibility of the official MCP logo at 20px inline heading scale while maintaining tactile riso aesthetics in dark mode.</hw:intent>
+        <hw:approach>Stripped the perimeter stroke that caused dual-line railroad artifacting. Rendered the interlocking loops as a solid, high-luminance silhouette with an offset tactile marker underlay.</hw:approach>
+        <hw:tradeoffs>Avoided perimeter stroking on compound area paths; depth and tactile energy are achieved purely through offset registration and stepped micro-motion.</hw:tradeoffs>
       </hw:reasoning>
     </hw:metadata>
   </metadata>
 
   <style>
     :root {
-      --hw-paper: #FFFFFF;
-      --hw-ink: #1B1B1D;
       --hw-cobalt: #1D4ED8;
-      --hw-sketch: rgba(29, 78, 216, 0.06);
+      --hw-sketch: rgba(29, 78, 216, 0.18);
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --hw-paper: #0F172A;
-        --hw-ink: #F8FAFC;
-        --hw-cobalt: #60A5FA;
-        --hw-sketch: rgba(96, 165, 250, 0.12);
+        --hw-cobalt: #38BDF8;
+        --hw-sketch: rgba(56, 189, 248, 0.28);
       }
+    }
+
+    .mcp-group {
+      transform-origin: 12px 12px;
+      animation: mcp-pulse 2.5s steps(2, start) infinite alternate;
+    }
+
+    .sketch-bg {
+      fill: var(--hw-sketch);
     }
 
     .mcp-glyph {
       fill: var(--hw-cobalt);
-      stroke: var(--hw-ink);
-      stroke-width: 0.75;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transform-origin: 12px 12px;
-      animation: mcp-pulse 2s steps(2, start) infinite alternate;
-      transition: fill 0.2s ease, stroke 0.2s ease;
     }
 
     @keyframes mcp-pulse {
       0% {
-        opacity: 0.88;
+        opacity: 0.90;
         transform: scale(0.98);
       }
       100% {
@@ -61,7 +59,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .mcp-glyph {
+      .mcp-group {
         animation: none;
         opacity: 1;
         transform: none;
@@ -69,14 +67,23 @@
     }
 
     @media (forced-colors: active) {
+      .sketch-bg {
+        display: none;
+      }
       .mcp-glyph {
-        fill: CanvasText;
-        stroke: Canvas;
+        fill: SelectedItem;
       }
     }
   </style>
 
-  <!-- Preserved Structure with Transferred Style Substrate -->
-  <path class="mcp-glyph"
-        d="M13.85 0a4.16 4.16 0 0 0-2.95 1.217L1.456 10.66a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l9.442-9.442a2.49 2.49 0 0 1 3.541 0 2.49 2.49 0 0 1 0 3.541L8.59 12.97l-.1.1a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l.1-.098 7.03-7.034a2.49 2.49 0 0 1 3.542 0l.049.05a2.49 2.49 0 0 1 0 3.54l-8.54 8.54a1.96 1.96 0 0 0 0 2.755l1.753 1.753a.835.835 0 0 0 1.18 0 .835.835 0 0 0 0-1.18l-1.753-1.753a.266.266 0 0 1 0-.394l8.54-8.54a4.185 4.185 0 0 0 0-5.9l-.05-.05a4.16 4.16 0 0 0-2.95-1.218c-.2 0-.401.02-.6.048a4.17 4.17 0 0 0-1.17-3.552A4.16 4.16 0 0 0 13.85 0m0 3.333a.84.84 0 0 0-.59.245L6.275 10.56a4.186 4.186 0 0 0 0 5.902 4.186 4.186 0 0 0 5.902 0L19.16 9.48a.835.835 0 0 0 0-1.18.835.835 0 0 0-1.18 0l-6.985 6.984a2.49 2.49 0 0 1-3.54 0 2.49 2.49 0 0 1 0-3.54l6.983-6.985a.835.835 0 0 0 0-1.18.84.84 0 0 0-.59-.245" />
+  <g class="mcp-group">
+    <!-- Offset Tactile Riso Underlay -->
+    <path class="sketch-bg"
+          transform="translate(0.8, 0.9)"
+          d="M13.85 0a4.16 4.16 0 0 0-2.95 1.217L1.456 10.66a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l9.442-9.442a2.49 2.49 0 0 1 3.541 0 2.49 2.49 0 0 1 0 3.541L8.59 12.97l-.1.1a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l.1-.098 7.03-7.034a2.49 2.49 0 0 1 3.542 0l.049.05a2.49 2.49 0 0 1 0 3.54l-8.54 8.54a1.96 1.96 0 0 0 0 2.755l1.753 1.753a.835.835 0 0 0 1.18 0 .835.835 0 0 0 0-1.18l-1.753-1.753a.266.266 0 0 1 0-.394l8.54-8.54a4.185 4.185 0 0 0 0-5.9l-.05-.05a4.16 4.16 0 0 0-2.95-1.218c-.2 0-.401.02-.6.048a4.17 4.17 0 0 0-1.17-3.552A4.16 4.16 0 0 0 13.85 0m0 3.333a.84.84 0 0 0-.59.245L6.275 10.56a4.186 4.186 0 0 0 0 5.902 4.186 4.186 0 0 0 5.902 0L19.16 9.48a.835.835 0 0 0 0-1.18.835.835 0 0 0-1.18 0l-6.985 6.984a2.49 2.49 0 0 1-3.54 0 2.49 2.49 0 0 1 0-3.54l6.983-6.985a.835.835 0 0 0 0-1.18.84.84 0 0 0-.59-.245" />
+
+    <!-- Solid Silhouette Ribbon -->
+    <path class="mcp-glyph"
+          d="M13.85 0a4.16 4.16 0 0 0-2.95 1.217L1.456 10.66a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l9.442-9.442a2.49 2.49 0 0 1 3.541 0 2.49 2.49 0 0 1 0 3.541L8.59 12.97l-.1.1a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l.1-.098 7.03-7.034a2.49 2.49 0 0 1 3.542 0l.049.05a2.49 2.49 0 0 1 0 3.54l-8.54 8.54a1.96 1.96 0 0 0 0 2.755l1.753 1.753a.835.835 0 0 0 1.18 0 .835.835 0 0 0 0-1.18l-1.753-1.753a.266.266 0 0 1 0-.394l8.54-8.54a4.185 4.185 0 0 0 0-5.9l-.05-.05a4.16 4.16 0 0 0-2.95-1.218c-.2 0-.401.02-.6.048a4.17 4.17 0 0 0-1.17-3.552A4.16 4.16 0 0 0 13.85 0m0 3.333a.84.84 0 0 0-.59.245L6.275 10.56a4.186 4.186 0 0 0 0 5.902 4.186 4.186 0 0 0 5.902 0L19.16 9.48a.835.835 0 0 0 0-1.18.835.835 0 0 0-1.18 0l-6.985 6.984a2.49 2.49 0 0 1-3.54 0 2.49 2.49 0 0 1 0-3.54l6.983-6.985a.835.835 0 0 0 0-1.18.84.84 0 0 0-.59-.245" />
+  </g>
 </svg>

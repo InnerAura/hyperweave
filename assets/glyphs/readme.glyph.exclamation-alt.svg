@@ -6,33 +6,33 @@
      role="img"
      aria-labelledby="heading-what-title heading-what-desc">
   <title id="heading-what-title">What Is Hyperweave Glyph</title>
-  <desc id="heading-what-desc">A simple, wobbly, hand-drawn marker-ink question mark with a kinetic central point.</desc>
+  <desc id="heading-what-desc">Hand-drawn marker question mark in crisp white and electric cobalt with a pulsing tactile beacon point.</desc>
 
   <metadata>
     <hw:metadata xmlns:hw="https://hyperweave.app/hw/v1.0">
       <hw:artifactType>heading-glyph</hw:artifactType>
-      <hw:chromaticSystem>excalidraw-marker-cobalt</hw:chromaticSystem>
+      <hw:chromaticSystem>hand-drawn-cobalt-high-contrast</hw:chromaticSystem>
       <hw:geometryFormLanguage>wobbly-question-bobbing-dot</hw:geometryFormLanguage>
       <hw:reasoning>
-        <hw:intent>Create the simplest possible gestalt for a query header, prioritizing instant visual comprehension of 'What Is' over previous process diagrams.</hw:intent>
-        <hw:approach>Engineered a wobbly single-stroke marker path for the question mark chassis. Applied continuous CIM head-bobbing transform motion to the upper arc and a breathing pulse transform to the core dot at (15, 26). Utilized adaptive tokens to manage Ink/Cobalt/Paper substrate contrast.</hw:approach>
-        <hw:tradeoffs>Rejected complex input/output compiler visualization (Turns 2/3) in favor of the requested simple query symbol, trusting the text to detail the transformation mechanics.</hw:tradeoffs>
+        <hw:intent>Upgrade the inquiry heading glyph to stand out assertively against dark documentation panels.</hw:intent>
+        <hw:approach>Introduced an offset riso marker shadow underlay behind the query curve. Increased main stroke weight to 2.5px to counteract optical bleeding and set the breathing dot to electric cobalt (#38BDF8) with high-contrast ink framing.</hw:approach>
+        <hw:tradeoffs>Retained the simplified single-stroke question mark chassis while elevating physical depth via tactile registration offsets.</hw:tradeoffs>
       </hw:reasoning>
     </hw:metadata>
   </metadata>
 
   <style>
     :root {
-      --hw-ink: #1B1B1D;
+      --hw-ink: #0F172A;
       --hw-cobalt: #1D4ED8;
-      --hw-paper: #FFFFFF;
+      --hw-sketch: rgba(29, 78, 216, 0.14);
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --hw-ink: #F8FAFC;
-        --hw-cobalt: #60A5FA;
-        --hw-paper: #0F172A;
+        --hw-ink: #FFFFFF;
+        --hw-cobalt: #38BDF8;
+        --hw-sketch: rgba(56, 189, 248, 0.26);
       }
     }
 
@@ -41,10 +41,18 @@
       animation: question-bob 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
     }
 
+    .sketch-underlay {
+      fill: none;
+      stroke: var(--hw-sketch);
+      stroke-width: 3.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .wobbly-mark {
       fill: none;
       stroke: var(--hw-ink);
-      stroke-width: 2.1;
+      stroke-width: 2.5;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
@@ -52,7 +60,7 @@
     .breathing-dot {
       fill: var(--hw-cobalt);
       stroke: var(--hw-ink);
-      stroke-width: 1.2;
+      stroke-width: 1.6;
       transform-origin: 15px 26px;
       animation: dot-pulse 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
     }
@@ -63,7 +71,7 @@
     }
 
     @keyframes dot-pulse {
-      0% { transform: scale(0.85); opacity: 0.8; }
+      0% { transform: scale(0.85); opacity: 0.85; }
       100% { transform: scale(1.15); opacity: 1; }
     }
 
@@ -76,21 +84,29 @@
     }
 
     @media (forced-colors: active) {
+      .sketch-underlay { display: none; }
       .wobbly-mark { stroke: CanvasText; }
       .breathing-dot { fill: CanvasText; stroke: Canvas; }
     }
   </style>
 
   <g class="sketch-group">
-    <!-- Hand-Drawn Wobbly Question Mark chassis -->
+    <!-- Offset Tactile Marker Trace -->
+    <path class="sketch-underlay"
+          transform="translate(0.8, 0.9)"
+          d="M 15 21 C 15 15, 10 12, 10 8
+             C 10 4, 15 2, 20 5
+             C 24 8, 22 13, 20 15
+             L 15 21" />
+
+    <!-- Inked Question Mark Chassis -->
     <path class="wobbly-mark"
           d="M 15 21 C 15 15, 10 12, 10 8
              C 10 4, 15 2, 20 5
              C 24 8, 22 13, 20 15
-             L 15 21 L 15 21 Z"
-          transform="translate(-1, -1)" />
+             L 15 21" />
 
-    <!-- Kinetic Beacon Point -->
-    <circle class="breathing-dot" cx="15" cy="26" r="2.8" />
+    <!-- Electric Cobalt Beacon Dot -->
+    <circle class="breathing-dot" cx="15" cy="26" r="3.0" />
   </g>
 </svg>
