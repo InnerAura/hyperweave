@@ -34,6 +34,8 @@ from .parity.svgfacts import Facts, PathEl, css_tokens, parse_svg
 
 _REPO = Path(__file__).resolve().parents[2]
 _FIXTURES = _REPO / "tests" / "fixtures" / "specimens"
+_CORPUS = _REPO / "v04"
+"""The hand-specimen corpus: optional in a checkout, absent in CI."""
 
 # Every diagrams-v3 specimen is recreated by ONE preset that shares its name:
 # fixture name ≡ preset name (the board is 1:1). So there is no map and no gap
@@ -46,6 +48,17 @@ PARITY_NAMES: tuple[str, ...] = tuple(
 
 TWIN_VARIANTS = ("porcelain", "carbon", "dusk", "cream", "noir", "space", "anvil", "petrol")
 _TWIN_PRESET = "dag-providers"  # glyph-rich; same choice as the kit harness
+
+
+def _specimen_source(fixture: dict[str, object]) -> Path:
+    """The specimen's path. Skip only when the whole corpus is absent; a
+    present corpus missing one specimen is a broken fixture and fails."""
+    if not _CORPUS.exists():
+        pytest.skip(f"hand-specimen corpus absent from this checkout: {_CORPUS.name}/")
+    source = _REPO / str(fixture["source"])
+    if not source.exists():
+        pytest.fail(f"specimen missing from the corpus: {fixture['source']}")
+    return source
 
 
 def _fixture(name: str) -> dict[str, object]:
@@ -80,10 +93,7 @@ def _render(preset: str, *, variant: str = "porcelain", palette: str = "fixed") 
 def test_specimen_satisfies_own_laws(name: str) -> None:
     """Grader validation: the hand-authored ground truth passes its own laws."""
     fixture = _fixture(name)
-    source = _REPO / str(fixture["source"])
-    if not source.exists():
-        pytest.skip(f"hand specimen not present in this checkout: {fixture['source']}")
-    facts = parse_svg(source.read_text())
+    facts = parse_svg(_specimen_source(fixture).read_text())
     failures = [r for r in geometry_laws(facts, fixture, mode="self") if not r.ok]
     assert not failures, f"{name} (SPECIMEN — grader bug, not engine bug):\n" + "\n".join(str(f) for f in failures)
 
@@ -252,3 +262,12 @@ def test_axial_sole_satellite_spokes_stay_straight() -> None:
     )
     roots = sorted(x for _, x in s_rank)
     assert len(set(roots)) == 4, f"S-rank roots collapsed coincident (the retired forced mouth): {roots}"
+
+
+def test_missing_specimen_fails_when_the_corpus_is_present() -> None:
+    """With the corpus checked out, a fixture whose specimen is gone is a
+    failure to fix, never a skip to ignore."""
+    if not _CORPUS.exists():
+        pytest.skip(f"hand-specimen corpus absent from this checkout: {_CORPUS.name}/")
+    with pytest.raises(pytest.fail.Exception, match="specimen missing from the corpus"):
+        _specimen_source({"source": "v04/no-such-specimen.svg"})

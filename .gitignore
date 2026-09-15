@@ -19,6 +19,7 @@ node_modules/
 
 # testing
 .coverage
+_test_*.svg
 .coverage.*
 .fastest.coverage
 htmlcov/

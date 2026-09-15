@@ -143,3 +143,15 @@ def test_legacy_truncate_keeps_its_contract() -> None:
     assert truncate_to_width("alpha", 0.0, VOICE) == "alpha"
     cut = truncate_to_width(TEXT, 100.0, VOICE)
     assert cut.endswith(ELLIPSIS) and measure_voice(cut, VOICE) <= 100.0
+
+
+def test_no_room_for_the_ellipsis_renders_nothing() -> None:
+    """Below the ellipsis' own width nothing fits: the run is empty and the
+    fit reports overflow, never a lone ``…`` wider than its budget."""
+    ellipsis_w = measure_voice(ELLIPSIS, VOICE)
+    assert fit_line("abc", VOICE, 1.0) == ""
+    assert truncate_to_width("abc", ellipsis_w / 2, VOICE) == ""
+    assert truncate_to_width("abc", ellipsis_w, VOICE) == ELLIPSIS
+    result = fit("abc", VOICE, avail=1.0, max_lines=1)
+    assert result.runs == ("",)
+    assert result.overflow and result.truncated

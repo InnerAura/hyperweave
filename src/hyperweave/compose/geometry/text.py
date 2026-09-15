@@ -73,7 +73,9 @@ def measure_voice(text: str, voice: MatrixVoice) -> float:
 
 
 def truncate_to_width(text: str, max_w: float, voice: MatrixVoice) -> str:
-    """Longest prefix of ``text`` that fits ``max_w``, ellipsized.
+    """Longest prefix of ``text`` that fits ``max_w``, ellipsized; the bare
+    ellipsis when no character fits beside it, nothing when even the
+    ellipsis does not.
 
     Measurement-based (per-font LUTs), so the ellipsis lands where the ink
     actually runs out. The untruncated string stays in the payload by
@@ -92,7 +94,7 @@ def truncate_to_width(text: str, max_w: float, voice: MatrixVoice) -> str:
         else:
             hi = mid - 1
     if lo == 0:
-        return ELLIPSIS
+        return ELLIPSIS if measure_voice(ELLIPSIS, voice) <= max_w else ""
     return text[:lo].rstrip() + ELLIPSIS
 
 

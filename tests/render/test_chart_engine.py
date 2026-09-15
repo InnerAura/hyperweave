@@ -894,3 +894,16 @@ def test_build_chart_svg_no_placeholder_1200_leak(sample_viewport: Viewport) -> 
     rendered = "".join(str(v) for v in result.values())
     assert "1200" not in rendered
     assert "1,200" not in rendered
+
+
+def test_compact_number_keeps_sub_thousand_fractions_and_lowercases_k() -> None:
+    """One formatter for every axis: the matrix register writes thousands as
+    ``k``, millions stay ``M``, and fractional ticks below a thousand keep
+    their digits."""
+    assert format_compact_number(2.5) == "2.5"
+    assert format_compact_number(0.25) == "0.25"
+    assert format_compact_number(500.0) == "500"
+    assert format_compact_number(1000, lower_k=True) == "1k"
+    assert format_compact_number(2500, lower_k=True) == "2.5k"
+    assert format_compact_number(500_000, lower_k=True) == "500k"
+    assert format_compact_number(1_000_000, lower_k=True) == "1M"

@@ -272,22 +272,26 @@ def measure_text_trailing_bearing(
     ).trailing_bearing
 
 
-def format_compact_number(value: float, *, integer_k: bool = False) -> str:
+def format_compact_number(value: float, *, integer_k: bool = False, lower_k: bool = False) -> str:
     """Collapse a magnitude to its largest unit: ``1500 → 1.5K``, ``1500000 →
-    1.5M``, ``2e9 → 2B``; below 1000 the rounded integer. One decimal, with a
+    1.5M``, ``2e9 → 2B``; below 1000 the value as written with no trailing
+    zeros (``500``, ``2.5``, ``0.25``). One decimal above a thousand, with a
     trailing ``.0`` dropped, so axis ticks, hero callouts, and context-window
     labels all speak one register. ``integer_k`` rounds the K band to whole
     thousands (``196400 → 196K``) for the occupancy labels whose specimen
-    reads ``200K`` / ``196K``. Negative inputs format by magnitude.
+    reads ``200K`` / ``196K``. ``lower_k`` writes thousands as ``k`` (the
+    matrix axis register); ``M`` and ``B`` stay capitals because ``m`` reads
+    as milli. Negative inputs format by magnitude.
     """
     n = abs(value)
     for unit, divisor in (("B", 1_000_000_000), ("M", 1_000_000), ("K", 1_000)):
         if n >= divisor:
             scaled = n / divisor
+            suffix = "k" if unit == "K" and lower_k else unit
             if unit == "K" and integer_k:
-                return f"{round(scaled)}K"
-            return f"{scaled:.1f}".rstrip("0").rstrip(".") + unit
-    return f"{round(n)}"
+                return f"{round(scaled)}{suffix}"
+            return f"{scaled:.1f}".rstrip("0").rstrip(".") + suffix
+    return f"{n:g}"
 
 
 def format_duration(minutes: float) -> str:
